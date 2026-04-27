@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:MuscleCuties.ViewModels.Onboarding"
+    x:Class="MuscleCuties.Pages.Onboarding.ProfileSetupPage"
+    x:DataType="vm:ProfileSetupViewModel"
+    Shell.NavBarIsVisible="False">
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="28,48,28,32"
+            Spacing="0"
+            VerticalOptions="Center">
+
+            <Label
+                Text="Tell us about yourself"
+                Style="{StaticResource Headline}"
+                HorizontalOptions="Center"
+                Margin="0,0,0,6" />
+
+            <Label
+                Text="This helps us personalize your plan"
+                Style="{StaticResource MutedLabel}"
+                HorizontalOptions="Center"
+                HorizontalTextAlignment="Center"
+                Margin="0,0,0,32" />
+
+            <Border Style="{StaticResource CardPrimary}" Padding="24">
+                <VerticalStackLayout Spacing="14">
+
+                    <Border Style="{StaticResource InputContainer}">
+                        <Entry
+                            Placeholder="Your name"
+                            Text="{Binding Name}"
+                            MaxLength="50"
+                            ReturnType="Next" />
+                    </Border>
+
+                    <Border Style="{StaticResource InputContainer}">
+                        <DatePicker
+                            Date="{Binding BirthDate}"
+                            MinimumDate="{Binding MinBirthDate}"
+                            MaximumDate="{Binding MaxBirthDate}"
+                            Format="MMMM dd, yyyy" />
+                    </Border>
+
+                    <Border Style="{StaticResource CardSecondary}" Padding="12,10">
+                        <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+                            <Label
+                                Text="Imperial"
+                                Style="{StaticResource BodyLabel}"
+                                VerticalOptions="Center" />
+                            <Switch
+                                IsToggled="{Binding UseMetricSystem}"
+                                OnColor="{StaticResource Primary}"
+                                ThumbColor="{AppThemeBinding Light={StaticResource White},
+                                                             Dark={StaticResource Gray200}}" />
+                            <Label
+                                Text="Metric"
+                                Style="{StaticResource BodyLabel}"
+                                VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </Border>
+
+                    <Grid
+                        ColumnDefinitions="*, Auto"
+                        ColumnSpacing="10"
+                        IsVisible="{Binding UseMetricSystem}">
+                        <Border Grid.Column="0" Style="{StaticResource InputContainer}">
+                            <Picker
+                                Title="Select height"
+                                ItemsSource="{Binding MetricHeightOptions}"
+                                SelectedItem="{Binding SelectedHeightCm}" />
+                        </Border>
+                        <Label
+                            Grid.Column="1"
+                            Text="cm"
+                            Style="{StaticResource MutedLabel}"
+                            VerticalOptions="Center" />
+                    </Grid>
+
+                    <Grid
+                        ColumnDefinitions="*, Auto, *, Auto"
+                        ColumnSpacing="8"
+                        IsVisible="{Binding UseMetricSystem,
+                                   Converter={StaticResource InvertedBoolConverter}}">
+                        <Border Grid.Column="0" Style="{StaticResource InputContainer}">
+                            <Picker
+                                Title="Select"
+                                ItemsSource="{Binding FeetOptions}"
+                                SelectedItem="{Binding SelectedFeet}" />
+                        </Border>
+                        <Label
+                            Grid.Column="1"
+                            Text="ft"
+                            Style="{StaticResource MutedLabel}"
+                            VerticalOptions="Center" />
+                        <Border Grid.Column="2" Style="{StaticResource InputContainer}">
+                            <Picker
+                                Title="Height"
+                                ItemsSource="{Binding InchesOptions}"
+                                SelectedItem="{Binding SelectedInches}" />
+                        </Border>
+                        <Label
+                            Grid.Column="3"
+                            Text="in"
+                            Style="{StaticResource MutedLabel}"
+                            VerticalOptions="Center" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+
+                        <Border
+                            Grid.Column="0"
+                            Style="{StaticResource InputContainer}"
+                            IsVisible="{Binding UseMetricSystem}">
+                            <Picker
+                                Title="Select weight"
+                                ItemsSource="{Binding MetricWeightOptions}"
+                                SelectedItem="{Binding SelectedWeightKg}" />
+                        </Border>
+
+                        <Border
+                            Grid.Column="0"
+                            Style="{StaticResource InputContainer}"
+                            IsVisible="{Binding UseMetricSystem,
+                                       Converter={StaticResource InvertedBoolConverter}}">
+                            <Picker
+                                Title="Select weight"
+                                ItemsSource="{Binding ImperialWeightOptions}"
+                                SelectedItem="{Binding SelectedWeightLbs}" />
+                        </Border>
+
+                        <Label
+                            Grid.Column="1"
+                            Text="{Binding WeightUnit}"
+                            Style="{StaticResource MutedLabel}"
+                            VerticalOptions="Center" />
+                    </Grid>
+
+                    <Label
+                        Text="{Binding ErrorMessage}"
+                        Style="{StaticResource ErrorLabel}"
+                        IsVisible="{Binding ErrorMessage,
+                                   Converter={StaticResource StringToBoolConverter}}" />
+
+                    <Button
+                        Text="Continue"
+                        Command="{Binding ContinueCommand}"
+                        Margin="0,6,0,0" />
+
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

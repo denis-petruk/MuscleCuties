@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MuscleCuties.Pages.Workout.WorkoutPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:MuscleCuties.ViewModels.Workout"
+    x:DataType="vm:WorkoutViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,56,20,32" Spacing="14">
+
+            <!-- ── Header ──────────────────────────────────────────── -->
+            <VerticalStackLayout Spacing="2">
+                <Label
+                    Text="{Binding CurrentPhaseName, StringFormat='{0} plan'}"
+                    Style="{StaticResource EyebrowLabel}"
+                    CharacterSpacing="1.2" />
+                <Label
+                    Text="{Binding WeekTitle}"
+                    Style="{StaticResource SubHeadline}" />
+            </VerticalStackLayout>
+
+            <!-- ── Filter chips ────────────────────────────────────── -->
+            <CollectionView
+                ItemsSource="{Binding Filters}"
+                HeightRequest="44">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:FilterChipItem">
+                        <Border
+                            StrokeShape="RoundRectangle 999"
+                            StrokeThickness="0"
+                            Padding="14,9">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectFilterCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Label
+                                Text="{Binding Label}"
+                                FontSize="13"
+                                FontAttributes="Bold"
+                                VerticalOptions="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="TextColor" Value="{StaticResource White}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- ── Workout list ────────────────────────────────────── -->
+            <CollectionView ItemsSource="{Binding Workouts}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:WorkoutItem">
+                        <Border Style="{StaticResource CardPrimary}" Margin="0,0,0,12">
+                            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14">
+
+                                <Border
+                                    Grid.Column="0"
+                                    WidthRequest="56"
+                                    HeightRequest="56"
+                                    StrokeShape="RoundRectangle 14"
+                                    BackgroundColor="{Binding PhaseBackground}"
+                                    StrokeThickness="0"
+                                    VerticalOptions="Center">
+                                    <Image
+                                        Source="tab_train.png"
+                                        WidthRequest="26"
+                                        HeightRequest="26"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center" />
+
+                                </Border>
+
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label
+                                        Text="{Binding Tag}"
+                                        TextColor="{StaticResource Primary}"
+                                        FontSize="10"
+                                        FontAttributes="Bold"
+                                        CharacterSpacing="1.0" />
+                                    <Label
+                                        Text="{Binding Title}"
+                                        Style="{StaticResource SectionTitle}"
+                                        FontSize="18"
+                                        LineBreakMode="TailTruncation" />
+                                    <Label
+                                        Text="{Binding Duration}"
+                                        Style="{StaticResource CaptionLabel}" />
+                                </VerticalStackLayout>
+
+                                <Label
+                                    Grid.Column="2"
+                                    Text="›"
+                                    FontSize="24"
+                                    TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray500}}"
+                                    VerticalOptions="Center" />
+
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

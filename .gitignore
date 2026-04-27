@@ -1,0 +1,22 @@
+# Build outputs
+bin/
+obj/
+/packages/
+
+# Rider/ReSharper
+.idea/
+riderModule.iml
+/_ReSharper.Caches/
+
+# Superpowers tooling
+.superpowers/
+docs/superpowers/
+
+# Claude Code project settings
+.claude/
+
+# macOS
+.DS_Store
+
+# qodana
+qodana.yaml
