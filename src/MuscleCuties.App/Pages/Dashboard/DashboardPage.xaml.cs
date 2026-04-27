@@ -1,15 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MuscleCuties.Core.ViewModels;
 
 namespace MuscleCuties.App.Pages.Dashboard;
 
 public partial class DashboardPage : ContentPage
 {
-    public DashboardPage()
+    public DashboardPage(DashboardViewModel vm)
     {
         InitializeComponent();
+        BindingContext = vm;
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        await ((DashboardViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null);
     }
 }

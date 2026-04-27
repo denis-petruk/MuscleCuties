@@ -3,7 +3,7 @@
     x:Class="MuscleCuties.App.Pages.Nutrition.NutritionPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:vm="clr-namespace:MuscleCuties.ViewModels.Nutrition"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels;assembly=MuscleCuties.Core"
     x:DataType="vm:NutritionViewModel"
     Shell.NavBarIsVisible="False">
 

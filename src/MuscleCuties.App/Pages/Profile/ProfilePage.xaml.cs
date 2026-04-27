@@ -1,15 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MuscleCuties.Core.ViewModels;
 
 namespace MuscleCuties.App.Pages.Profile;
 
 public partial class ProfilePage : ContentPage
 {
-    public ProfilePage()
+    public ProfilePage(ProfileViewModel vm)
     {
         InitializeComponent();
+        BindingContext = vm;
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        await ((ProfileViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null);
     }
 }

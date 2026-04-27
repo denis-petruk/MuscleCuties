@@ -3,8 +3,8 @@
     x:Class="MuscleCuties.App.Pages.Dashboard.DashboardPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:vm="clr-namespace:MuscleCuties.ViewModels.Dashboard"
-    xmlns:converters="clr-namespace:MuscleCuties.Resources.Converters"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels;assembly=MuscleCuties.Core"
+    xmlns:converters="clr-namespace:MuscleCuties.App.Resources.Converters"
     x:DataType="vm:DashboardViewModel"
     Shell.NavBarIsVisible="False">
 

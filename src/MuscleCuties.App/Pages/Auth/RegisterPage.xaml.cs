@@ -1,15 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MuscleCuties.Core.ViewModels;
 
 namespace MuscleCuties.App.Pages.Auth;
 
 public partial class RegisterPage : ContentPage
 {
-    public RegisterPage()
+    public RegisterPage(RegisterViewModel vm)
     {
         InitializeComponent();
+        BindingContext = vm;
     }
 }
