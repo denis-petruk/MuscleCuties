@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="MuscleCuties.App.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:dashboard="clr-namespace:MuscleCuties.App.Pages.Dashboard"
+    xmlns:cycle="clr-namespace:MuscleCuties.App.Pages.Cycle"
+    xmlns:workout="clr-namespace:MuscleCuties.App.Pages.Workout"
+    xmlns:nutrition="clr-namespace:MuscleCuties.App.Pages.Nutrition"
+    xmlns:profile="clr-namespace:MuscleCuties.App.Pages.Profile"
+    Title="MuscleCuties">
+
+    <TabBar>
+        <ShellContent
+            Title="Today"
+            Icon="tab_today.png"
+            Route="DashboardPage"
+            ContentTemplate="{DataTemplate dashboard:DashboardPage}" />
+
+        <ShellContent
+            Title="Cycle"
+            Icon="tab_cycle.png"
+            Route="CyclePage"
+            ContentTemplate="{DataTemplate cycle:CyclePage}" />
+
+        <ShellContent
+            Title="Train"
+            Icon="tab_train.png"
+            Route="WorkoutPage"
+            ContentTemplate="{DataTemplate workout:WorkoutPage}" />
+
+        <ShellContent
+            Title="Nutrition"
+            Icon="tab_nutrition.png"
+            Route="NutritionPage"
+            ContentTemplate="{DataTemplate nutrition:NutritionPage}" />
+
+        <ShellContent
+            Title="You"
+            Icon="tab_you.png"
+            Route="ProfilePage"
+            ContentTemplate="{DataTemplate profile:ProfilePage}" />
+    </TabBar>
+
+</Shell>
