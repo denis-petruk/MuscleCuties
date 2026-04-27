@@ -13,5 +13,6 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="Microsoft.Maui.Graphics" Version="10.0.10" />
     </ItemGroup>
 </Project>
