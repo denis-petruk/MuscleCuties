@@ -7,12 +7,12 @@ namespace MuscleCuties.Core.Tests.Services;
 public class AuthServiceTests : IClassFixture<DatabaseFixture>
 {
     private readonly DatabaseFixture _fixture;
-    private readonly ISecureStorage _storage;
+    private readonly ITokenStorage _storage;
 
     public AuthServiceTests(DatabaseFixture fixture)
     {
         _fixture = fixture;
-        _storage = Substitute.For<ISecureStorage>();
+        _storage = Substitute.For<ITokenStorage>();
     }
 
     private AuthService CreateService() =>

@@ -1,6 +1,6 @@
 namespace MuscleCuties.Core.Services;
 
-public interface ISecureStorage
+public interface ITokenStorage
 {
     Task<string?> GetAsync(string key);
     Task SetAsync(string key, string value);

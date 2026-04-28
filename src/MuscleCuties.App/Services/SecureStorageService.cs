@@ -2,7 +2,7 @@ using MuscleCuties.Core.Services;
 
 namespace MuscleCuties.App.Services;
 
-public class SecureStorageService : ISecureStorage
+public class SecureStorageService : ITokenStorage
 {
     public Task<string?> GetAsync(string key) =>
         SecureStorage.Default.GetAsync(key);

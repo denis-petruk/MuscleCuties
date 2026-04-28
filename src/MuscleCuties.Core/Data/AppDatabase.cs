@@ -8,11 +8,7 @@ public class AppDatabase : DbContext
     private readonly IDbPathProvider? _pathProvider;
 
     public AppDatabase(DbContextOptions<AppDatabase> options) : base(options) { }
-
-    public AppDatabase(IDbPathProvider pathProvider)
-    {
-        _pathProvider = pathProvider;
-    }
+    
 
     public DbSet<User> Users => Set<User>();
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();

@@ -8,30 +8,34 @@ namespace MuscleCuties.Core.Services;
 public class AuthService : IAuthService
 {
     private const string UserIdKey = "current_user_id";
-    private readonly IUserRepository _userRepository;
-    private readonly ISecureStorage _secureStorage;
 
-    public AuthService(IUserRepository userRepository, ISecureStorage secureStorage)
+    private readonly IUserRepository _userRepository;
+    private readonly ITokenStorage _tokenStorage;
+
+    public AuthService(IUserRepository userRepository, ITokenStorage tokenStorage)
     {
         _userRepository = userRepository;
-        _secureStorage = secureStorage;
+        _tokenStorage = tokenStorage;
     }
 
     public async Task<User?> LoginAsync(string email, string password)
     {
         var user = await _userRepository.GetByEmailAsync(email);
-        if (user == null) return null;
+        if (user == null)
+            return null;
 
-        if (user.PasswordHash != HashPassword(password)) return null;
+        if (user.PasswordHash != HashPassword(password))
+            return null;
 
-        await _secureStorage.SetAsync(UserIdKey, user.Id.ToString());
+        await _tokenStorage.SetAsync(UserIdKey, user.Id.ToString());
         return user;
     }
 
     public async Task<User?> RegisterAsync(string email, string password)
     {
         var existing = await _userRepository.GetByEmailAsync(email);
-        if (existing != null) return null;
+        if (existing != null)
+            return null;
 
         var user = new User
         {
@@ -42,26 +46,27 @@ public class AuthService : IAuthService
         };
 
         await _userRepository.AddAsync(user);
-        await _secureStorage.SetAsync(UserIdKey, user.Id.ToString());
+        await _tokenStorage.SetAsync(UserIdKey, user.Id.ToString());
+
         return user;
     }
 
     public Task LogoutAsync()
     {
-        _secureStorage.Remove(UserIdKey);
+        _tokenStorage.Remove(UserIdKey);
         return Task.CompletedTask;
     }
 
     public async Task<bool> IsLoggedInAsync()
     {
-        var id = await _secureStorage.GetAsync(UserIdKey);
-        return id != null;
+        var id = await _tokenStorage.GetAsync(UserIdKey);
+        return !string.IsNullOrWhiteSpace(id);
     }
 
     public async Task<int> GetCurrentUserIdAsync()
     {
-        var id = await _secureStorage.GetAsync(UserIdKey);
-        return id != null ? int.Parse(id) : 0;
+        var id = await _tokenStorage.GetAsync(UserIdKey);
+        return int.TryParse(id, out var userId) ? userId : 0;
     }
 
     private static string HashPassword(string password)

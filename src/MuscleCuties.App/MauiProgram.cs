@@ -42,7 +42,7 @@ public static class MauiProgram
         });
 
         // Platform services
-        services.AddSingleton<ISecureStorage, SecureStorageService>();
+        services.AddSingleton<ITokenStorage, SecureStorageService>();
 
         // Repositories
         services.AddScoped<IUserRepository, UserRepository>();
