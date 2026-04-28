@@ -8,13 +8,6 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 
-# Superpowers tooling
-.superpowers/
-docs/superpowers/
-
-# Claude Code project settings
-.claude/
-
 # macOS
 .DS_Store
 
