@@ -147,8 +147,11 @@
                             <BoxView
                                 Grid.ColumnSpan="5"
                                 HeightRequest="1"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                                VerticalOptions="Start" />
+                                VerticalOptions="Start"
+                                Margin="0,-10,0,0"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" />
+
+                                
 
                             <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center" Spacing="2">
                                 <Label
