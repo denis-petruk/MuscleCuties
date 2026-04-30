@@ -5,10 +5,7 @@ namespace MuscleCuties.Core.Data;
 
 public class AppDatabase : DbContext
 {
-    private readonly IDbPathProvider? _pathProvider;
-
     public AppDatabase(DbContextOptions<AppDatabase> options) : base(options) { }
-    
 
     public DbSet<User> Users => Set<User>();
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
@@ -25,13 +22,4 @@ public class AppDatabase : DbContext
     public DbSet<FoodLog> FoodLogs => Set<FoodLog>();
     public DbSet<UserQuizResponse> UserQuizResponses => Set<UserQuizResponse>();
     public DbSet<DailyRecommendation> DailyRecommendations => Set<DailyRecommendation>();
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (optionsBuilder.IsConfigured)
-            return;
-
-        if (_pathProvider != null)
-            optionsBuilder.UseSqlite($"Filename={_pathProvider.GetDatabasePath()}");
-    }
 }
