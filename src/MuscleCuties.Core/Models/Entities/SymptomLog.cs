@@ -8,14 +8,10 @@ public class SymptomLog
     public int UserId { get; set; }
     public int CycleLogId { get; set; }
     public DateTime Date { get; set; }
-    public CyclePhase Phase { get; set; }
-    public int Pain { get; set; }
-    public int Energy { get; set; }
-    public int Sleep { get; set; }
-    public int Bloating { get; set; }
-    public int Appetite { get; set; }
-    public int Stress { get; set; }
+    public SymptomType SymptomType { get; set; }
+    public int Severity { get; set; } // 1–5
     public string? Notes { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     public CycleLog? CycleLog { get; set; }
 }

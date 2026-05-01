@@ -24,18 +24,15 @@ public class UserRepository(AppDatabase db) : BaseRepository<User>(db), IUserRep
         await _db.SaveChangesAsync();
     }
 
-    public async Task<UserBaselineProfile?> GetBaselineProfileAsync(int userId) =>
-        await _db.UserBaselineProfiles.FirstOrDefaultAsync(b => b.UserId == userId);
-
-    public async Task AddBaselineProfileAsync(UserBaselineProfile baseline)
+    public async Task AddSnapshotAsync(UserProfileSnapshot snapshot)
     {
-        await _db.UserBaselineProfiles.AddAsync(baseline);
+        await _db.UserProfileSnapshots.AddAsync(snapshot);
         await _db.SaveChangesAsync();
     }
 
-    public async Task UpdateBaselineProfileAsync(UserBaselineProfile baseline)
-    {
-        _db.UserBaselineProfiles.Update(baseline);
-        await _db.SaveChangesAsync();
-    }
+    public async Task<UserProfileSnapshot?> GetLatestSnapshotAsync(int userId) =>
+        await _db.UserProfileSnapshots
+            .Where(s => s.UserId == userId)
+            .OrderByDescending(s => s.CreatedAt)
+            .FirstOrDefaultAsync();
 }

@@ -39,20 +39,21 @@ public class NutritionService : INutritionService
 
     public async Task<float> GetConsumedCaloriesAsync(int userId, DateTime date)
     {
-        var logs = await _nutritionRepository.GetFoodLogsByDateAsync(userId, date);
-        return logs
-            .Where(l => l.FoodItem != null)
-            .Sum(l => l.FoodItem!.Calories * l.Grams / 100f);
+        var meals = await _nutritionRepository.GetLoggedMealsByDateAsync(userId, date);
+        return meals
+            .SelectMany(m => m.Entries)
+            .Where(e => e.FoodItem != null)
+            .Sum(e => e.FoodItem!.Calories * e.Grams / 100f);
     }
 
     public async Task<(float Protein, float Carbs, float Fats)> GetConsumedMacrosAsync(int userId, DateTime date)
     {
-        var logs = await _nutritionRepository.GetFoodLogsByDateAsync(userId, date);
-        var valid = logs.Where(l => l.FoodItem != null).ToList();
+        var meals = await _nutritionRepository.GetLoggedMealsByDateAsync(userId, date);
+        var entries = meals.SelectMany(m => m.Entries).Where(e => e.FoodItem != null).ToList();
         return (
-            valid.Sum(l => l.FoodItem!.Protein * l.Grams / 100f),
-            valid.Sum(l => l.FoodItem!.Carbs * l.Grams / 100f),
-            valid.Sum(l => l.FoodItem!.Fats * l.Grams / 100f)
+            entries.Sum(e => e.FoodItem!.Protein * e.Grams / 100f),
+            entries.Sum(e => e.FoodItem!.Carbs * e.Grams / 100f),
+            entries.Sum(e => e.FoodItem!.Fats * e.Grams / 100f)
         );
     }
 }

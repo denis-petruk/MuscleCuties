@@ -8,4 +8,6 @@ public interface IWorkoutRepository : IRepository<WorkoutPlan>
     Task<List<WorkoutDay>> GetWorkoutDaysByPlanAsync(int planId);
     Task<List<Exercise>> GetExercisesByDayAsync(int workoutDayId);
     Task<WorkoutPlan?> GetActivePlanAsync(int userId);
+    Task AddWorkoutLogAsync(WorkoutLog log);
+    Task<List<WorkoutLog>> GetWorkoutLogsByDateAsync(int userId, DateTime date);
 }

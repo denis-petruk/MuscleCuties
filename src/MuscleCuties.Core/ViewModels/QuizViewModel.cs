@@ -104,7 +104,7 @@ public partial class QuizViewModel : ObservableObject
         {
             var userId = await _authService.GetCurrentUserIdAsync();
             var responses = _selectedAnswers
-                .Select(pair => new UserQuizResponse { QuestionId = pair.QuestionId, AnswerId = pair.AnswerId })
+                .Select(pair => new UserQuizResponse { QuizQuestionId = pair.QuestionId, QuizAnswerId = pair.AnswerId })
                 .ToList();
             await _quizService.SaveAnswersAsync(userId, responses);
             _navigateToProfileSetup();

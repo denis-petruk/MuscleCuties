@@ -22,13 +22,12 @@ public class CycleViewModelTests
         {
             Id = 1,
             UserId = 1,
-            CycleStartDate = startDate,
+            StartDate = startDate,
             CycleLength = 28
         };
 
         _authService.GetCurrentUserIdAsync().Returns(1);
         _cycleService.GetCurrentCycleAsync(1).Returns(cycle);
-        _cycleService.CalculateCycleDay(startDate).Returns(11);
         _cycleService.GetCurrentPhaseAsync(1).Returns(CyclePhase.Follicular);
 
         var vm = CreateViewModel();

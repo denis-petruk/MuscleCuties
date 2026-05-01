@@ -8,8 +8,8 @@ public class User
     [Required] public string Email { get; set; } = null!;
     [Required] public string PasswordHash { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     public bool IsOnboardingComplete { get; set; }
 
     public UserProfile? UserProfile { get; set; }
-    public UserBaselineProfile? UserBaselineProfile { get; set; }
 }

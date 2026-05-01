@@ -51,7 +51,9 @@ public static class MauiProgram
         services.AddScoped<ISymptomRepository, SymptomRepository>();
         services.AddScoped<IWorkoutRepository, WorkoutRepository>();
         services.AddScoped<IQuizRepository, QuizRepository>();
-
+        services.AddScoped<IMealTemplateRepository, MealTemplateRepository>();
+        services.AddScoped<IFoodSyncRepository, FoodSyncRepository>();
+        services.AddScoped<IRecommendationRepository, RecommendationRepository>();
         // Services
         services.AddScoped<ICalorieCalculator, CalorieCalculator>();
         services.AddScoped<ICyclePhaseCalculator, CyclePhaseCalculator>();

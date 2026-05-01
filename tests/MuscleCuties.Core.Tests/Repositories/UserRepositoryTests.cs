@@ -65,22 +65,6 @@ public class UserRepositoryTests : IClassFixture<DatabaseFixture>
     }
 
     [Fact]
-    public async Task GetBaselineProfileAsync_AfterAddBaseline_ReturnsBaseline()
-    {
-        var repo = CreateRepo();
-        var user = new User { Email = "d@test.com", PasswordHash = "hash", CreatedAt = DateTime.UtcNow };
-        await repo.AddAsync(user);
-
-        var baseline = new UserBaselineProfile { UserId = user.Id, EnergyFollicular = 4 };
-        await repo.AddBaselineProfileAsync(baseline);
-
-        var result = await repo.GetBaselineProfileAsync(user.Id);
-
-        Assert.NotNull(result);
-        Assert.Equal(4, result.EnergyFollicular);
-    }
-
-    [Fact]
     public async Task UpdateProfileAsync_ChangedName_PersistsChange()
     {
         var repo = CreateRepo();
@@ -94,5 +78,43 @@ public class UserRepositoryTests : IClassFixture<DatabaseFixture>
 
         var result = await repo.GetProfileAsync(user.Id);
         Assert.Equal("After", result!.Name);
+    }
+    [Fact]
+    public async Task AddSnapshotAsync_ValidSnapshot_PersistedWithId()
+    {
+        var repo = CreateRepo();
+        var user = new User { Email = "snap1@test.com", PasswordHash = "hash", CreatedAt = DateTime.UtcNow };
+        await repo.AddAsync(user);
+
+        var snapshot = new UserProfileSnapshot
+        {
+            UserId = user.Id,
+            SnapshotReason = "Initial",
+            ProfileJson = "{\"Name\":\"Alice\"}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await repo.AddSnapshotAsync(snapshot);
+
+        Assert.True(snapshot.Id > 0);
+    }
+
+    [Fact]
+    public async Task GetLatestSnapshotAsync_AfterAdd_ReturnsIt()
+    {
+        var repo = CreateRepo();
+        var user = new User { Email = "snap2@test.com", PasswordHash = "hash", CreatedAt = DateTime.UtcNow };
+        await repo.AddAsync(user);
+
+        await repo.AddSnapshotAsync(new UserProfileSnapshot
+        {
+            UserId = user.Id,
+            SnapshotReason = "Initial",
+            ProfileJson = "{\"Name\":\"Bob\"}",
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var result = await repo.GetLatestSnapshotAsync(user.Id);
+        Assert.NotNull(result);
+        Assert.Equal("Initial", result.SnapshotReason);
     }
 }

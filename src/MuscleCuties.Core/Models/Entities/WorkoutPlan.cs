@@ -8,8 +8,8 @@ public class WorkoutPlan
     public int Id { get; set; }
     public int UserId { get; set; }
     [Required] public string Name { get; set; } = null!;
-    public int DaysPerWeek { get; set; }
-    public CyclePhase Phase { get; set; }
+    public bool IsActive { get; set; }
+    public CyclePhase? CyclePhaseTarget { get; set; }
     public DateTime CreatedAt { get; set; }
 
     public User? User { get; set; }

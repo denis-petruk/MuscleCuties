@@ -42,7 +42,8 @@ public partial class WorkoutViewModel : ObservableObject
             new FilterChipItem { Label = "All", IsSelected = true },
             new FilterChipItem { Label = "Strength" },
             new FilterChipItem { Label = "Cardio" },
-            new FilterChipItem { Label = "Yoga" }
+            new FilterChipItem { Label = "Yoga" },
+            new FilterChipItem { Label = "Recovery" }
         };
     }
 
@@ -61,7 +62,7 @@ public partial class WorkoutViewModel : ObservableObject
                 WorkoutDays = await _workoutRepository.GetWorkoutDaysByPlanAsync(ActivePlan.Id);
                 _allWorkouts = WorkoutDays.Select(d => new WorkoutItem
                 {
-                    Tag = phase.ToString().ToUpper(),
+                    Tag = GetPhaseWorkoutTag(phase),
                     Title = d.Name,
                     Duration = "45 min",
                     PhaseBackground = GetPhaseColor(phase)
@@ -104,6 +105,15 @@ public partial class WorkoutViewModel : ObservableObject
                 _allWorkouts.Where(w => w.Tag.Contains(selected.Label.ToUpper())));
         }
     }
+
+    private static string GetPhaseWorkoutTag(CyclePhase phase) => phase switch
+    {
+        CyclePhase.Menstrual  => "RECOVERY",
+        CyclePhase.Follicular => "STRENGTH",
+        CyclePhase.Ovulatory  => "CARDIO",
+        CyclePhase.Luteal     => "YOGA",
+        _                     => "STRENGTH"
+    };
 
     private static Color GetPhaseColor(CyclePhase phase) => phase switch
     {
