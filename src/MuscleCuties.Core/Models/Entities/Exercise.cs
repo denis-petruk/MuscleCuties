@@ -15,5 +15,5 @@ public class Exercise
     // Empty string means no joint constraints.
     public string JointAreas { get; set; } = string.Empty;
 
-    public ICollection<WorkoutExercise> WorkoutExercises { get; set; } = new List<WorkoutExercise>();
+    public ICollection<WorkoutDayExercise> WorkoutExercises { get; set; } = new List<WorkoutDayExercise>();
 }

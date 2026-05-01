@@ -96,7 +96,6 @@ public partial class ProfileSetupViewModel : ObservableObject
                 DateOfBirth = BirthDate,
                 Height = heightCm,
                 Weight = weightKg,
-                UseMetricSystem = UseMetricSystem,
                 Goal = Goal,
                 WorkoutDaysPerWeek = WorkoutDaysPerWeek,
                 CycleLength = CycleLength

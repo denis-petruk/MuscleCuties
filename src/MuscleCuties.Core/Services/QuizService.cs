@@ -9,13 +9,11 @@ public class QuizService : IQuizService
 {
     private readonly IUserRepository _userRepository;
     private readonly IQuizRepository _quizRepository;
-    private readonly AppDatabase _db;
 
-    public QuizService(IUserRepository userRepository, IQuizRepository quizRepository, AppDatabase db)
+    public QuizService(IUserRepository userRepository, IQuizRepository quizRepository)
     {
         _userRepository = userRepository;
         _quizRepository = quizRepository;
-        _db = db;
     }
 
     public async Task<List<QuizQuestion>> GetOnboardingQuestionsAsync()
@@ -30,19 +28,21 @@ public class QuizService : IQuizService
 
         var profile = await _userRepository.GetProfileAsync(userId);
         var isNew = profile == null;
-        profile ??= new UserProfile { UserId = userId, Name = string.Empty, DateOfBirth = DateTime.UtcNow };
-
-        var baseline = await _userRepository.GetBaselineProfileAsync(userId);
-        var isNewBaseline = baseline == null;
-        baseline ??= new UserBaselineProfile { UserId = userId };
+        profile ??= new UserProfile
+        {
+            UserId = userId,
+            Name = string.Empty,
+            DateOfBirth = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
 
         foreach (var response in responses)
         {
             response.UserId = userId;
             response.AnsweredAt = DateTime.UtcNow;
 
-            if (!questionMap.TryGetValue(response.QuestionId, out var question)) continue;
-            var answer = question.Answers.FirstOrDefault(a => a.Id == response.AnswerId);
+            if (!questionMap.TryGetValue(response.QuizQuestionId, out var question)) continue;
+            var answer = question.Answers.FirstOrDefault(a => a.Id == response.QuizAnswerId);
             if (answer == null) continue;
 
             switch (question.QuestionType)
@@ -50,51 +50,44 @@ public class QuizService : IQuizService
                 case QuizQuestionType.Goal:
                     profile.Goal = (UserGoal)answer.MappedValue;
                     break;
-                case QuizQuestionType.ExperienceLevel:
-                    profile.ExperienceLevel = answer.MappedValue;
-                    break;
                 case QuizQuestionType.WorkoutDaysPerWeek:
                     profile.WorkoutDaysPerWeek = answer.MappedValue;
                     break;
                 case QuizQuestionType.DietaryPreference:
-                    profile.DietaryPreference = (DietaryTag)answer.MappedValue;
-                    break;
-                case QuizQuestionType.MenstrualPain:
-                    baseline.PainMenstrual = answer.MappedValue;
-                    break;
-                case QuizQuestionType.MenstrualEnergy:
-                    baseline.EnergyMenstrual = answer.MappedValue;
-                    break;
-                case QuizQuestionType.FollicularPain:
-                    baseline.PainFollicular = answer.MappedValue;
-                    break;
-                case QuizQuestionType.FollicularEnergy:
-                    baseline.EnergyFollicular = answer.MappedValue;
-                    break;
-                case QuizQuestionType.OvulatoryPain:
-                    baseline.PainOvulatory = answer.MappedValue;
-                    break;
-                case QuizQuestionType.OvulatoryEnergy:
-                    baseline.EnergyOvulatory = answer.MappedValue;
-                    break;
-                case QuizQuestionType.LutealPain:
-                    baseline.PainLuteal = answer.MappedValue;
-                    break;
-                case QuizQuestionType.LutealEnergy:
-                    baseline.EnergyLuteal = answer.MappedValue;
+                    profile.DietaryTags = ((DietaryTag)answer.MappedValue).ToString();
                     break;
             }
         }
+
+        profile.UpdatedAt = DateTime.UtcNow;
 
         if (isNew)
             await _userRepository.AddProfileAsync(profile);
         else
             await _userRepository.UpdateProfileAsync(profile);
 
-        if (isNewBaseline)
-            await _userRepository.AddBaselineProfileAsync(baseline);
-        else
-            await _userRepository.UpdateBaselineProfileAsync(baseline);
+        var snapshotReason = isNew ? "Initial" : "QuizRetake";
+        var snapshot = new UserProfileSnapshot
+        {
+            UserId = userId,
+            SnapshotReason = snapshotReason,
+            ProfileJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                profile.Name,
+                profile.DateOfBirth,
+                profile.Height,
+                profile.Weight,
+                Goal = profile.Goal.ToString(),
+                profile.WorkoutDaysPerWeek,
+                profile.CycleLength,
+                profile.DietaryTags
+            }),
+            CreatedAt = DateTime.UtcNow
+        };
+        await _userRepository.AddSnapshotAsync(snapshot);
+
+        foreach (var response in responses)
+            response.UserProfileSnapshotId = snapshot.Id;
 
         await _quizRepository.AddResponsesAsync(responses);
 
@@ -102,6 +95,7 @@ public class QuizService : IQuizService
         if (user != null)
         {
             user.IsOnboardingComplete = true;
+            user.UpdatedAt = DateTime.UtcNow;
             await _userRepository.UpdateAsync(user);
         }
     }

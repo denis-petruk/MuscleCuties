@@ -26,15 +26,15 @@ public class CycleRepositoryTests : IClassFixture<DatabaseFixture>
         var user = await SeedUserAsync("cycle1@test.com");
         var repo = new CycleRepository(_fixture.Db);
 
-        var older = new CycleLog { UserId = user.Id, CycleStartDate = DateTime.UtcNow.AddDays(-28), CycleLength = 28, PeriodLength = 5 };
-        var newer = new CycleLog { UserId = user.Id, CycleStartDate = DateTime.UtcNow.AddDays(-5), CycleLength = 28, PeriodLength = 5 };
+        var older = new CycleLog { UserId = user.Id, StartDate = DateTime.UtcNow.AddDays(-28), CycleLength = 0, CreatedAt = DateTime.UtcNow };
+        var newer = new CycleLog { UserId = user.Id, StartDate = DateTime.UtcNow.AddDays(-5), CycleLength = 0, CreatedAt = DateTime.UtcNow };
         await repo.AddAsync(older);
         await repo.AddAsync(newer);
 
         var result = await repo.GetLatestCycleAsync(user.Id);
 
         Assert.NotNull(result);
-        Assert.Equal(newer.CycleStartDate, result.CycleStartDate);
+        Assert.Equal(newer.StartDate, result.StartDate);
     }
 
     [Fact]
@@ -54,12 +54,12 @@ public class CycleRepositoryTests : IClassFixture<DatabaseFixture>
         var user = await SeedUserAsync("cycle3@test.com");
         var repo = new CycleRepository(_fixture.Db);
 
-        await repo.AddAsync(new CycleLog { UserId = user.Id, CycleStartDate = DateTime.UtcNow.AddDays(-56), CycleLength = 28, PeriodLength = 5 });
-        await repo.AddAsync(new CycleLog { UserId = user.Id, CycleStartDate = DateTime.UtcNow.AddDays(-28), CycleLength = 28, PeriodLength = 5 });
+        await repo.AddAsync(new CycleLog { UserId = user.Id, StartDate = DateTime.UtcNow.AddDays(-56), CycleLength = 0, CreatedAt = DateTime.UtcNow });
+        await repo.AddAsync(new CycleLog { UserId = user.Id, StartDate = DateTime.UtcNow.AddDays(-28), CycleLength = 0, CreatedAt = DateTime.UtcNow });
 
         var result = await repo.GetCycleHistoryAsync(user.Id);
 
         Assert.Equal(2, result.Count);
-        Assert.True(result[0].CycleStartDate > result[1].CycleStartDate);
+        Assert.True(result[0].StartDate > result[1].StartDate);
     }
 }

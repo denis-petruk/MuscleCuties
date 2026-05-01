@@ -35,7 +35,8 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
             Weight = 65f,
             Goal = goal,
             WorkoutDaysPerWeek = 4,
-            CycleLength = 28
+            CycleLength = 28,
+            UpdatedAt = DateTime.UtcNow
         };
         await _fixture.Db.UserProfiles.AddAsync(profile);
         await _fixture.Db.SaveChangesAsync();
@@ -45,10 +46,7 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
     [Fact]
     public async Task CalculateDailyTargetsAsync_NoProfile_ReturnsDefaults()
     {
-        var service = CreateService();
-
-        var (cal, pro, carbs, fats) = await service.CalculateDailyTargetsAsync(9999, CyclePhase.Follicular);
-
+        var (cal, pro, _, _) = await CreateService().CalculateDailyTargetsAsync(9999, CyclePhase.Follicular);
         Assert.Equal(2000f, cal);
         Assert.Equal(120f, pro);
     }
@@ -57,10 +55,7 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
     public async Task CalculateDailyTargetsAsync_WithProfile_ReturnsPositiveValues()
     {
         var user = await SeedUserWithProfileAsync("nut1@test.com");
-        var service = CreateService();
-
-        var (cal, pro, carbs, fats) = await service.CalculateDailyTargetsAsync(user.Id, CyclePhase.Follicular);
-
+        var (cal, pro, carbs, fats) = await CreateService().CalculateDailyTargetsAsync(user.Id, CyclePhase.Follicular);
         Assert.True(cal > 0);
         Assert.True(pro > 0);
         Assert.True(carbs > 0);
@@ -70,54 +65,48 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
     [Fact]
     public async Task GetConsumedCaloriesAsync_NoLogs_ReturnsZero()
     {
-        var service = CreateService();
-
-        var result = await service.GetConsumedCaloriesAsync(9999, DateTime.UtcNow);
-
-        Assert.Equal(0f, result);
+        Assert.Equal(0f, await CreateService().GetConsumedCaloriesAsync(9999, DateTime.UtcNow));
     }
 
     [Fact]
-    public async Task GetConsumedCaloriesAsync_WithLogs_ReturnsSummedCalories()
+    public async Task GetConsumedCaloriesAsync_WithLoggedMeal_ReturnsSummedCalories()
     {
         var user = await SeedUserWithProfileAsync("nut2@test.com");
         var nutritionRepo = new NutritionRepository(_fixture.Db);
-        var item = new FoodItem { Name = "Oats", Calories = 389f, Protein = 17f, Carbs = 66f, Fats = 7f };
+        var item = new FoodItem { Name = "Oats", Calories = 389f, Protein = 17f, Carbs = 66f, Fats = 7f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
         await nutritionRepo.AddAsync(item);
-        await nutritionRepo.AddFoodLogAsync(new FoodLog
+
+        await nutritionRepo.AddLoggedMealAsync(new LoggedMeal
         {
             UserId = user.Id,
-            FoodItemId = item.Id,
             Date = DateTime.UtcNow.Date,
-            Grams = 100f,
-            MealType = MealType.Breakfast
+            MealType = MealType.Breakfast,
+            CreatedAt = DateTime.UtcNow,
+            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 100f }]
         });
 
-        var service = CreateService();
-        var result = await service.GetConsumedCaloriesAsync(user.Id, DateTime.UtcNow);
-
+        var result = await CreateService().GetConsumedCaloriesAsync(user.Id, DateTime.UtcNow);
         Assert.Equal(389f, result, precision: 0);
     }
 
     [Fact]
-    public async Task GetConsumedMacrosAsync_WithLogs_ReturnsSummedMacros()
+    public async Task GetConsumedMacrosAsync_WithLoggedMeal_ReturnsSummedMacros()
     {
         var user = await SeedUserWithProfileAsync("nut3@test.com");
         var nutritionRepo = new NutritionRepository(_fixture.Db);
-        var item = new FoodItem { Name = "Eggs", Calories = 143f, Protein = 13f, Carbs = 1f, Fats = 10f };
+        var item = new FoodItem { Name = "Eggs", Calories = 143f, Protein = 13f, Carbs = 1f, Fats = 10f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
         await nutritionRepo.AddAsync(item);
-        await nutritionRepo.AddFoodLogAsync(new FoodLog
+
+        await nutritionRepo.AddLoggedMealAsync(new LoggedMeal
         {
             UserId = user.Id,
-            FoodItemId = item.Id,
             Date = DateTime.UtcNow.Date,
-            Grams = 100f,
-            MealType = MealType.Breakfast
+            MealType = MealType.Breakfast,
+            CreatedAt = DateTime.UtcNow,
+            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 100f }]
         });
 
-        var service = CreateService();
-        var (pro, carbs, fats) = await service.GetConsumedMacrosAsync(user.Id, DateTime.UtcNow);
-
+        var (pro, carbs, fats) = await CreateService().GetConsumedMacrosAsync(user.Id, DateTime.UtcNow);
         Assert.Equal(13f, pro, precision: 0);
         Assert.Equal(1f, carbs, precision: 0);
         Assert.Equal(10f, fats, precision: 0);

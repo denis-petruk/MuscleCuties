@@ -8,11 +8,16 @@ public class CycleService : ICycleService
 {
     private readonly ICycleRepository _cycleRepository;
     private readonly IUserRepository _userRepository;
+    private readonly ICyclePhaseCalculator _calculator;
 
-    public CycleService(ICycleRepository cycleRepository, IUserRepository userRepository)
+    public CycleService(
+        ICycleRepository cycleRepository,
+        IUserRepository userRepository,
+        ICyclePhaseCalculator calculator)
     {
         _cycleRepository = cycleRepository;
         _userRepository = userRepository;
+        _calculator = calculator;
     }
 
     public async Task<CyclePhase> GetCurrentPhaseAsync(int userId)
@@ -23,8 +28,9 @@ public class CycleService : ICycleService
         var profile = await _userRepository.GetProfileAsync(userId);
         var cycleLength = profile?.CycleLength > 0 ? profile.CycleLength : 28;
 
-        var day = CalculateCycleDay(cycle.CycleStartDate);
-        return CalculatePhase(day, cycleLength);
+        var day = (int)(DateTime.UtcNow - cycle.StartDate).TotalDays + 1;
+        day = day < 1 ? 1 : day;
+        return _calculator.CalculatePhase(day, cycleLength);
     }
 
     public async Task<CycleLog?> GetCurrentCycleAsync(int userId) =>
@@ -32,13 +38,12 @@ public class CycleService : ICycleService
 
     public async Task StartNewCycleAsync(int userId)
     {
-        var profile = await _userRepository.GetProfileAsync(userId);
         var cycle = new CycleLog
         {
             UserId = userId,
-            CycleStartDate = DateTime.UtcNow,
-            CycleLength = profile?.CycleLength > 0 ? profile.CycleLength : 28,
-            PeriodLength = 5
+            StartDate = DateTime.UtcNow,
+            CycleLength = 0,
+            CreatedAt = DateTime.UtcNow
         };
         await _cycleRepository.AddAsync(cycle);
     }
@@ -48,22 +53,8 @@ public class CycleService : ICycleService
         var cycle = await _cycleRepository.GetLatestCycleAsync(userId);
         if (cycle == null) return;
 
-        cycle.CycleEndDate = DateTime.UtcNow;
+        cycle.EndDate = DateTime.UtcNow;
+        cycle.CycleLength = (int)(cycle.EndDate.Value - cycle.StartDate).TotalDays;
         await _cycleRepository.UpdateAsync(cycle);
-    }
-
-    public int CalculateCycleDay(DateTime cycleStartDate)
-    {
-        var day = (DateTime.UtcNow - cycleStartDate).Days + 1;
-        return day < 1 ? 1 : day;
-    }
-
-    public CyclePhase CalculatePhase(int cycleDay, int cycleLength)
-    {
-        if (cycleDay <= 5) return CyclePhase.Menstrual;
-        var ovulationDay = cycleLength - 14;
-        if (cycleDay <= ovulationDay - 2) return CyclePhase.Follicular;
-        if (cycleDay <= ovulationDay + 2) return CyclePhase.Ovulatory;
-        return CyclePhase.Luteal;
     }
 }

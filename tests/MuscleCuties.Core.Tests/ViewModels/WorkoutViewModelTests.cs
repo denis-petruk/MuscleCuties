@@ -19,11 +19,11 @@ public class WorkoutViewModelTests
     [Fact]
     public async Task LoadData_WithActivePlan_LoadsWorkoutDays()
     {
-        var plan = new WorkoutPlan { Id = 10, UserId = 1, Name = "Full Body", DaysPerWeek = 3, Phase = CyclePhase.Follicular };
+        var plan = new WorkoutPlan { Id = 10, UserId = 1, Name = "Full Body", CyclePhaseTarget = CyclePhase.Follicular };
         var days = new List<WorkoutDay>
         {
-            new WorkoutDay { Id = 1, WorkoutPlanId = 10, DayNumber = 1, Name = "Day 1" },
-            new WorkoutDay { Id = 2, WorkoutPlanId = 10, DayNumber = 2, Name = "Day 2" }
+            new WorkoutDay { Id = 1, WorkoutPlanId = 10, DayOfWeek = 1, Name = "Day 1" },
+            new WorkoutDay { Id = 2, WorkoutPlanId = 10, DayOfWeek = 2, Name = "Day 2" }
         };
 
         _authService.GetCurrentUserIdAsync().Returns(1);

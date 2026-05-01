@@ -17,8 +17,7 @@ public class QuizServiceTests : IClassFixture<DatabaseFixture>
     private QuizService CreateService() =>
         new QuizService(
             new UserRepository(_fixture.Db),
-            new QuizRepository(_fixture.Db),
-            _fixture.Db);
+            new QuizRepository(_fixture.Db));
 
     private async Task<User> SeedUserAsync(string email)
     {
@@ -57,14 +56,13 @@ public class QuizServiceTests : IClassFixture<DatabaseFixture>
 
         var response = new UserQuizResponse
         {
-            QuestionId = question.Id,
-            AnswerId = question.Answers.First().Id
+            QuizQuestionId = question.Id,
+            QuizAnswerId = question.Answers.First().Id
         };
 
         await service.SaveAnswersAsync(user.Id, [response]);
 
-        var complete = await service.IsOnboardingCompleteAsync(user.Id);
-        Assert.True(complete);
+        Assert.True(await service.IsOnboardingCompleteAsync(user.Id));
     }
 
     [Fact]
@@ -85,39 +83,39 @@ public class QuizServiceTests : IClassFixture<DatabaseFixture>
 
         await service.SaveAnswersAsync(user.Id, [new UserQuizResponse
         {
-            QuestionId = question.Id,
-            AnswerId = question.Answers.First().Id
+            QuizQuestionId = question.Id,
+            QuizAnswerId = question.Answers.First().Id
         }]);
 
-        var userRepo = new UserRepository(_fixture.Db);
-        var profile = await userRepo.GetProfileAsync(user.Id);
+        var profile = await new UserRepository(_fixture.Db).GetProfileAsync(user.Id);
         Assert.Equal(UserGoal.Strength, profile!.Goal);
     }
 
     [Fact]
-    public async Task SaveAnswersAsync_PainQuestion_SetsBaselineProfile()
+    public async Task SaveAnswersAsync_WritesUserProfileSnapshot()
     {
         var user = await SeedUserAsync("quiz4@test.com");
         var service = CreateService();
 
         var question = new QuizQuestion
         {
-            Question = "Menstrual pain?",
+            Question = "Goal?",
             OrderIndex = 3,
-            QuestionType = QuizQuestionType.MenstrualPain,
-            Answers = [new QuizAnswer { Text = "Moderate", OrderIndex = 1, MappedValue = 3 }]
+            QuestionType = QuizQuestionType.Goal,
+            Answers = [new QuizAnswer { Text = "Maintain", OrderIndex = 1, MappedValue = (int)UserGoal.MaintainHealth }]
         };
         await _fixture.Db.QuizQuestions.AddAsync(question);
         await _fixture.Db.SaveChangesAsync();
 
         await service.SaveAnswersAsync(user.Id, [new UserQuizResponse
         {
-            QuestionId = question.Id,
-            AnswerId = question.Answers.First().Id
+            QuizQuestionId = question.Id,
+            QuizAnswerId = question.Answers.First().Id
         }]);
 
-        var userRepo = new UserRepository(_fixture.Db);
-        var baseline = await userRepo.GetBaselineProfileAsync(user.Id);
-        Assert.Equal(3, baseline!.PainMenstrual);
+        var snapshot = await new UserRepository(_fixture.Db).GetLatestSnapshotAsync(user.Id);
+        Assert.NotNull(snapshot);
+        Assert.Equal("Initial", snapshot.SnapshotReason);
+        Assert.False(string.IsNullOrEmpty(snapshot.ProfileJson));
     }
 }

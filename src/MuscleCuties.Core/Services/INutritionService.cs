@@ -1,3 +1,4 @@
+using MuscleCuties.Core.Models.Entities;
 using MuscleCuties.Core.Models.Enums;
 
 namespace MuscleCuties.Core.Services;

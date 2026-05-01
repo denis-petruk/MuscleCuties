@@ -51,7 +51,7 @@ public partial class CycleViewModel : ObservableObject
             }
             else
             {
-                CurrentDay = _cycleService.CalculateCycleDay(cycle.CycleStartDate);
+                CurrentDay = (DateTime.Today - cycle.StartDate.Date).Days + 1;
                 CycleLength = cycle.CycleLength;
             }
 
