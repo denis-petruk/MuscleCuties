@@ -9,6 +9,4 @@ public interface ICycleService
     Task<CycleLog?> GetCurrentCycleAsync(int userId);
     Task StartNewCycleAsync(int userId);
     Task EndCurrentCycleAsync(int userId);
-    int CalculateCycleDay(DateTime cycleStartDate);
-    CyclePhase CalculatePhase(int cycleDay, int cycleLength);
 }

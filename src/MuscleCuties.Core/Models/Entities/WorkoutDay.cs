@@ -6,9 +6,9 @@ public class WorkoutDay
 {
     public int Id { get; set; }
     public int WorkoutPlanId { get; set; }
-    public int DayNumber { get; set; }
+    public int DayOfWeek { get; set; } 
     [Required] public string Name { get; set; } = null!;
 
     public WorkoutPlan? WorkoutPlan { get; set; }
-    public ICollection<WorkoutExercise> WorkoutExercises { get; set; } = new List<WorkoutExercise>();
+    public ICollection<WorkoutDayExercise> WorkoutDayExercises { get; set; } = new List<WorkoutDayExercise>();
 }

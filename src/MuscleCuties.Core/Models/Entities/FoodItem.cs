@@ -10,11 +10,23 @@ public class FoodItem
     public float Protein { get; set; }
     public float Carbs { get; set; }
     public float Fats { get; set; }
-    // mg per 100g
+    public float Fiber { get; set; }
     public float Iron { get; set; }
-    // µg per 100g
     public float VitaminB12 { get; set; }
+    public float VitaminC { get; set; }
+    public float VitaminD { get; set; }
+    public float VitaminA { get; set; }
+    public float VitaminB6 { get; set; }
+    public float Folate { get; set; }
+    public float Calcium { get; set; }
+    public float Magnesium { get; set; }
+    public float Zinc { get; set; }
     public bool IsCustom { get; set; }
+    public int? FdcId { get; set; }
+    public DateTime? LastSyncedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
-    public ICollection<FoodLog> FoodLogs { get; set; } = new List<FoodLog>();
+    public ICollection<LoggedMealEntry> LoggedMealEntries { get; set; } = new List<LoggedMealEntry>();
+    public ICollection<FoodItemVersion> Versions { get; set; } = new List<FoodItemVersion>();
 }

@@ -6,11 +6,13 @@ public class UserQuizResponse
 {
     public int Id { get; set; }
     public int UserId { get; set; }
-    public int QuestionId { get; set; }
-    public int AnswerId { get; set; }
+    public int QuizQuestionId { get; set; }
+    public int QuizAnswerId { get; set; }
     public DateTime AnsweredAt { get; set; } = DateTime.UtcNow;
+    public int? UserProfileSnapshotId { get; set; }
 
     [ForeignKey(nameof(UserId))] public User? User { get; set; }
-    [ForeignKey(nameof(QuestionId))] public QuizQuestion? Question { get; set; }
-    [ForeignKey(nameof(AnswerId))] public QuizAnswer? Answer { get; set; }
+    [ForeignKey(nameof(QuizQuestionId))] public QuizQuestion? Question { get; set; }
+    [ForeignKey(nameof(QuizAnswerId))] public QuizAnswer? Answer { get; set; }
+    [ForeignKey(nameof(UserProfileSnapshotId))] public UserProfileSnapshot? Snapshot { get; set; }
 }

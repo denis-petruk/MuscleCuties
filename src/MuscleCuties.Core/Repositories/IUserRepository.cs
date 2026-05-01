@@ -8,7 +8,6 @@ public interface IUserRepository : IRepository<User>
     Task<UserProfile?> GetProfileAsync(int userId);
     Task AddProfileAsync(UserProfile profile);
     Task UpdateProfileAsync(UserProfile profile);
-    Task<UserBaselineProfile?> GetBaselineProfileAsync(int userId);
-    Task AddBaselineProfileAsync(UserBaselineProfile baseline);
-    Task UpdateBaselineProfileAsync(UserBaselineProfile baseline);
+    Task AddSnapshotAsync(UserProfileSnapshot snapshot);
+    Task<UserProfileSnapshot?> GetLatestSnapshotAsync(int userId);
 }

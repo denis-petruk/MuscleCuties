@@ -11,13 +11,12 @@ public class UserProfile
     public DateTime DateOfBirth { get; set; }
     public float Height { get; set; }
     public float Weight { get; set; }
-    public bool UseMetricSystem { get; set; } = true;
     public UserGoal Goal { get; set; }
+    public WeightGoalPace WeightGoalPace { get; set; }
     public int WorkoutDaysPerWeek { get; set; }
     public int CycleLength { get; set; }
-    public WeightGoalPace WeightGoalPace { get; set; }
-    public DietaryTag DietaryPreference { get; set; }
-    public int ExperienceLevel { get; set; }
+    public string DietaryTags { get; set; } = string.Empty;
+    public DateTime UpdatedAt { get; set; }
 
     public User? User { get; set; }
 }

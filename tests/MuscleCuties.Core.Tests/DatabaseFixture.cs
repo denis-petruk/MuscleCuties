@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
+using MuscleCuties.Core.Models.Entities;
 
 namespace MuscleCuties.Core.Tests;
 
@@ -16,6 +17,8 @@ public class DatabaseFixture : IDisposable
         Db = new AppDatabase(options);
         Db.Database.OpenConnection();
         Db.Database.EnsureCreated();
+        Db.Users.Add(new User { Email = "seed@test.com", PasswordHash = "x", CreatedAt = DateTime.UtcNow });
+        Db.SaveChanges();
     }
 
     public void Dispose()

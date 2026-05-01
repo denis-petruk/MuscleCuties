@@ -9,12 +9,12 @@ public class CycleRepository(AppDatabase db) : BaseRepository<CycleLog>(db), ICy
     public async Task<CycleLog?> GetLatestCycleAsync(int userId) =>
         await _db.CycleLogs
             .Where(c => c.UserId == userId)
-            .OrderByDescending(c => c.CycleStartDate)
+            .OrderByDescending(c => c.StartDate)
             .FirstOrDefaultAsync();
 
     public async Task<List<CycleLog>> GetCycleHistoryAsync(int userId) =>
         await _db.CycleLogs
             .Where(c => c.UserId == userId)
-            .OrderByDescending(c => c.CycleStartDate)
+            .OrderByDescending(c => c.StartDate)
             .ToListAsync();
 }
