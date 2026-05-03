@@ -75,12 +75,12 @@ public partial class QuizViewModel : ObservableObject
             a.IsSelected = false;
         selectable.IsSelected = true;
         OnPropertyChanged(nameof(SelectedAnswer));
-        OnPropertyChanged(nameof(CurrentAnswers));
     }
 
     private async Task NextAsync()
     {
         var selected = SelectedAnswer;
+        if (selected is null) return;
 
         if (!IsLastQuestion)
         {
@@ -94,8 +94,7 @@ public partial class QuizViewModel : ObservableObject
             return;
         }
 
-        if (selected is null || CurrentQuestion is null)
-            return;
+        if (CurrentQuestion is null) return;
 
         RecordSelection(CurrentQuestion.Id, selected.Id);
 

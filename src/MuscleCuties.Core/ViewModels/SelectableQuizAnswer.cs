@@ -1,9 +1,10 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using MuscleCuties.Core.Models.Entities;
 
 namespace MuscleCuties.Core.ViewModels;
 
-public class SelectableQuizAnswer
+public partial class SelectableQuizAnswer : ObservableObject
 {
     public QuizAnswer Answer { get; set; } = null!;
-    public bool IsSelected { get; set; }
+    [ObservableProperty] private bool _isSelected;
 }

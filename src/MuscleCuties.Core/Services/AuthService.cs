@@ -59,8 +59,24 @@ public class AuthService : IAuthService
 
     public async Task<bool> IsLoggedInAsync()
     {
-        var id = await _tokenStorage.GetAsync(UserIdKey);
-        return !string.IsNullOrWhiteSpace(id);
+        var raw = await _tokenStorage.GetAsync(UserIdKey);
+        if (string.IsNullOrWhiteSpace(raw))
+            return false;
+
+        if (!int.TryParse(raw, out var userId) || userId <= 0)
+        {
+            _tokenStorage.Remove(UserIdKey);
+            return false;
+        }
+
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            _tokenStorage.Remove(UserIdKey);
+            return false;
+        }
+
+        return true;
     }
 
     public async Task<int> GetCurrentUserIdAsync()

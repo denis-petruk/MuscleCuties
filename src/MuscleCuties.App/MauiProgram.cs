@@ -60,6 +60,7 @@ public static class MauiProgram
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICycleService, CycleService>();
         services.AddScoped<INutritionService, NutritionService>();
+        services.AddScoped<IWorkoutService, WorkoutService>();
         services.AddScoped<IQuizService, QuizService>();
 
         // ViewModels — transient so each page gets a fresh instance
@@ -89,7 +90,7 @@ public static class MauiProgram
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<ICycleService>(),
             sp.GetRequiredService<INutritionService>(),
-            sp.GetRequiredService<IWorkoutRepository>(),
+            sp.GetRequiredService<IWorkoutService>(),
             () => Shell.Current.GoToAsync("//CyclePage"),
             () => Shell.Current.GoToAsync("//WorkoutPage"),
             () => Shell.Current.GoToAsync("//NutritionPage")));
@@ -103,10 +104,25 @@ public static class MauiProgram
             sp.GetRequiredService<ICycleService>(),
             sp.GetRequiredService<INutritionService>()));
 
+        services.AddSingleton<WorkoutDetailViewModelBag>();
+        services.AddTransient<Func<int, WorkoutDetailViewModel>>(sp => workoutDayId =>
+            new WorkoutDetailViewModel(
+                sp.GetRequiredService<IWorkoutRepository>(),
+                sp.GetRequiredService<IAuthService>(),
+                workoutDayId,
+                async () => await Shell.Current.GoToAsync("..")));
+
         services.AddTransient<WorkoutViewModel>(sp => new WorkoutViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<ICycleService>(),
-            sp.GetRequiredService<IWorkoutRepository>()));
+            sp.GetRequiredService<IWorkoutRepository>(),
+            workoutDayId =>
+            {
+                var factory = sp.GetRequiredService<Func<int, WorkoutDetailViewModel>>();
+                var bag = sp.GetRequiredService<WorkoutDetailViewModelBag>();
+                bag.Current = factory(workoutDayId);
+                Shell.Current.GoToAsync(nameof(WorkoutDetailPage));
+            }));
 
         services.AddTransient<ProfileViewModel>(sp => new ProfileViewModel(
             sp.GetRequiredService<IAuthService>(),
@@ -122,6 +138,7 @@ public static class MauiProgram
         services.AddTransient<CyclePage>();
         services.AddTransient<NutritionPage>();
         services.AddTransient<WorkoutPage>();
+        services.AddTransient<WorkoutDetailPage>();
         services.AddTransient<ProfilePage>();
 
         // Shell
@@ -129,6 +146,7 @@ public static class MauiProgram
 
 #if DEBUG
         builder.Logging.AddDebug();
+        
 #endif
 
         return builder.Build();

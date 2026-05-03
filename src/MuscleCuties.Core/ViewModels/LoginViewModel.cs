@@ -38,6 +38,12 @@ public partial class LoginViewModel : ObservableObject
 
     private async Task LoginAsync()
     {
+        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
+        {
+            ErrorMessage = "Email and password are required";
+            return;
+        }
+
         IsBusy = true;
         ErrorMessage = string.Empty;
         try

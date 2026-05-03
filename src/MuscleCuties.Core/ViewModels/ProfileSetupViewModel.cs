@@ -75,6 +75,12 @@ public partial class ProfileSetupViewModel : ObservableObject
 
     private async Task ContinueAsync()
     {
+        if (string.IsNullOrWhiteSpace(Name))
+        {
+            ErrorMessage = "Name is required";
+            return;
+        }
+
         IsBusy = true;
         ErrorMessage = string.Empty;
         try
@@ -89,19 +95,34 @@ public partial class ProfileSetupViewModel : ObservableObject
                 ? SelectedWeightKg
                 : SelectedWeightLbs * 0.453592f;
 
-            var profile = new UserProfile
+            var existing = await _userRepository.GetProfileAsync(userId);
+            if (existing == null)
             {
-                UserId = userId,
-                Name = Name,
-                DateOfBirth = BirthDate,
-                Height = heightCm,
-                Weight = weightKg,
-                Goal = Goal,
-                WorkoutDaysPerWeek = WorkoutDaysPerWeek,
-                CycleLength = CycleLength
-            };
-
-            await _userRepository.AddProfileAsync(profile);
+                var profile = new UserProfile
+                {
+                    UserId = userId,
+                    Name = Name,
+                    DateOfBirth = BirthDate,
+                    Height = heightCm,
+                    Weight = weightKg,
+                    Goal = Goal,
+                    WorkoutDaysPerWeek = WorkoutDaysPerWeek,
+                    CycleLength = CycleLength
+                };
+                await _userRepository.AddProfileAsync(profile);
+            }
+            else
+            {
+                existing.Name = Name;
+                existing.DateOfBirth = BirthDate;
+                existing.Height = heightCm;
+                existing.Weight = weightKg;
+                existing.Goal = Goal;
+                existing.WorkoutDaysPerWeek = WorkoutDaysPerWeek;
+                existing.CycleLength = CycleLength;
+                existing.UpdatedAt = DateTime.UtcNow;
+                await _userRepository.UpdateProfileAsync(existing);
+            }
             _navigateToDashboard();
         }
         finally

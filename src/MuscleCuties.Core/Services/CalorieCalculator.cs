@@ -1,7 +1,16 @@
+using MuscleCuties.Core.Models.Enums;
+
 namespace MuscleCuties.Core.Services;
 
 public class CalorieCalculator : ICalorieCalculator
 {
+    private readonly ICyclePhaseCalculator _cyclePhaseCalculator;
+
+    public CalorieCalculator(ICyclePhaseCalculator cyclePhaseCalculator)
+    {
+        _cyclePhaseCalculator = cyclePhaseCalculator;
+    }
+
     // Mifflin-St Jeor (women): 10W + 6.25H - 5A - 161
     public float CalculateBmr(float weightKg, float heightCm, int age)
         => 10f * weightKg + 6.25f * heightCm - 5f * age - 161f;
@@ -27,15 +36,11 @@ public class CalorieCalculator : ICalorieCalculator
         };
     }
 
-    // cyclePhase: 0=Menstrual, 1=Follicular, 2=Ovulatory, 3=Luteal
     public float AdjustForPhase(float calories, int cyclePhase)
-        => calories + cyclePhase switch
-        {
-            0 => -100f,
-            2 => +50f,
-            3 => +150f,
-            _ => 0f
-        };
+    {
+        var adjustment = _cyclePhaseCalculator.GetPhaseCalorieAdjustment((CyclePhase)cyclePhase);
+        return calories + adjustment;
+    }
 
     public float Clamp(float value, float min = 1200f, float max = 4000f)
         => MathF.Max(min, MathF.Min(max, value));

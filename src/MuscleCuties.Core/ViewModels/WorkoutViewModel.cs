@@ -26,23 +26,28 @@ public partial class WorkoutViewModel : ObservableObject
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public RelayCommand<FilterChipItem> SelectFilterCommand { get; }
+    public RelayCommand<WorkoutItem> OpenDetailCommand { get; }
 
     public WorkoutViewModel(
         IAuthService authService,
         ICycleService cycleService,
-        IWorkoutRepository workoutRepository)
+        IWorkoutRepository workoutRepository,
+        Action<int>? openDetail = null)
     {
         _authService = authService;
         _cycleService = cycleService;
         _workoutRepository = workoutRepository;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SelectFilterCommand = new RelayCommand<FilterChipItem>(SelectFilter);
+        OpenDetailCommand = new RelayCommand<WorkoutItem>(item =>
+        {
+            if (item is not null) openDetail?.Invoke(item.WorkoutDayId);
+        });
         Filters = new ObservableCollection<FilterChipItem>
         {
-            new FilterChipItem { Label = "All", IsSelected = true },
+            new FilterChipItem { Label = "All",      IsSelected = true },
             new FilterChipItem { Label = "Strength" },
             new FilterChipItem { Label = "Cardio" },
-            new FilterChipItem { Label = "Yoga" },
             new FilterChipItem { Label = "Recovery" }
         };
     }
@@ -62,9 +67,13 @@ public partial class WorkoutViewModel : ObservableObject
                 WorkoutDays = await _workoutRepository.GetWorkoutDaysByPlanAsync(ActivePlan.Id);
                 _allWorkouts = WorkoutDays.Select(d => new WorkoutItem
                 {
-                    Tag = GetPhaseWorkoutTag(phase),
-                    Title = d.Name,
-                    Duration = "45 min",
+                    WorkoutDayId  = d.Id,
+                    Tag           = d.WorkoutType.ToString().ToUpper(),
+                    Title         = d.Name,
+                    Duration      = $"{d.DurationMinutes} min",
+                    ExerciseCount = d.WorkoutDayExercises.Count,
+                    Subtitle      = $"{d.WorkoutDayExercises.Count} exercises · {d.DurationMinutes} min",
+                    WorkoutType   = d.WorkoutType,
                     PhaseBackground = GetPhaseColor(phase)
                 }).ToList();
             }
@@ -98,22 +107,14 @@ public partial class WorkoutViewModel : ObservableObject
         if (selected is null || selected.Label == "All")
         {
             Workouts = new ObservableCollection<WorkoutItem>(_allWorkouts);
+            return;
         }
-        else
-        {
-            Workouts = new ObservableCollection<WorkoutItem>(
-                _allWorkouts.Where(w => w.Tag.Contains(selected.Label.ToUpper())));
-        }
-    }
 
-    private static string GetPhaseWorkoutTag(CyclePhase phase) => phase switch
-    {
-        CyclePhase.Menstrual  => "RECOVERY",
-        CyclePhase.Follicular => "STRENGTH",
-        CyclePhase.Ovulatory  => "CARDIO",
-        CyclePhase.Luteal     => "YOGA",
-        _                     => "STRENGTH"
-    };
+        if (Enum.TryParse<WorkoutType>(selected.Label, out var typeFilter))
+            Workouts = new ObservableCollection<WorkoutItem>(_allWorkouts.Where(w => w.WorkoutType == typeFilter));
+        else
+            Workouts = new ObservableCollection<WorkoutItem>(_allWorkouts);
+    }
 
     private static Color GetPhaseColor(CyclePhase phase) => phase switch
     {

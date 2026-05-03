@@ -13,6 +13,7 @@ public class Exercise
     public MuscleGroup PrimaryMuscle { get; set; }
     public string? SecondaryMuscles { get; set; }
     public string JointAreas { get; set; } = string.Empty;
+    public bool IsInjuryFriendly { get; set; }
 
     public ICollection<WorkoutDayExercise> WorkoutExercises { get; set; } = new List<WorkoutDayExercise>();
 }

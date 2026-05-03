@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.ViewModels;
 
+[Obsolete("Frontend-blocked: delete after removing DataTemplate from NutritionPage.xaml line 155")]
 public class MealItem
 {
     public string Time { get; set; } = string.Empty;

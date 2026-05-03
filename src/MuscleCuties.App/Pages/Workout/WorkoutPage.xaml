@@ -71,6 +71,11 @@
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:WorkoutItem">
                         <Border Style="{StaticResource CardPrimary}" Margin="0,0,0,12">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenDetailCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14">
 
                                 <Border
@@ -103,7 +108,7 @@
                                         FontSize="18"
                                         LineBreakMode="TailTruncation" />
                                     <Label
-                                        Text="{Binding Duration}"
+                                        Text="{Binding Subtitle}"
                                         Style="{StaticResource CaptionLabel}" />
                                 </VerticalStackLayout>
 

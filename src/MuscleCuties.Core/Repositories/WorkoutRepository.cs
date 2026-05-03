@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Entities;
+using MuscleCuties.Core.Models.Enums;
 
 namespace MuscleCuties.Core.Repositories;
 
@@ -32,6 +33,8 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
         await _db.WorkoutPlans
             .Where(p => p.UserId == userId && p.IsActive)
             .Include(p => p.WorkoutDays)
+            .ThenInclude(d => d.WorkoutDayExercises)
+            .ThenInclude(we => we.Exercise)
             .FirstOrDefaultAsync();
 
     public async Task AddWorkoutLogAsync(WorkoutLog log)
@@ -44,4 +47,50 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
         await _db.WorkoutLogs
             .Where(l => l.UserId == userId && l.Date.Date == date.Date)
             .ToListAsync();
+
+    public async Task<WorkoutPlan?> GetPlanByPhaseAsync(int userId, CyclePhase phase) =>
+        await _db.WorkoutPlans
+            .Where(p => p.UserId == userId && p.CyclePhaseTarget == phase)
+            .Include(p => p.WorkoutDays)
+            .FirstOrDefaultAsync();
+
+    public async Task<Exercise?> GetExerciseByCodeAsync(string code) =>
+        await _db.Exercises.FirstOrDefaultAsync(e => e.Code == code);
+
+    public async Task<WorkoutDay?> GetWorkoutDayWithExercisesAsync(int workoutDayId) =>
+        await _db.WorkoutDays
+            .Where(d => d.Id == workoutDayId)
+            .Include(d => d.WorkoutDayExercises)
+            .ThenInclude(we => we.Exercise)
+            .FirstOrDefaultAsync();
+
+    public async Task<bool> AreExercisesSeededAsync() =>
+        await _db.Exercises.AnyAsync();
+
+    public async Task AddExercisesAsync(IEnumerable<Exercise> exercises)
+    {
+        await _db.Exercises.AddRangeAsync(exercises);
+        await _db.SaveChangesAsync();
+    }
+    public async Task<List<Exercise>> GetExercisesByCodesAsync(IEnumerable<string> codes)
+    {
+        var codeList = codes.ToList();
+        return await _db.Exercises
+            .Where(e => codeList.Contains(e.Code))
+            .ToListAsync();
+    }
+    public async Task<List<WorkoutPlan>> GetAllUserPlansAsync(int userId) =>
+        await _db.WorkoutPlans
+            .Where(p => p.UserId == userId)
+            .Include(p => p.WorkoutDays)
+            .ThenInclude(d => d.WorkoutDayExercises)
+            .ToListAsync();
+
+    public async Task DeactivateAllUserPlansAsync(int userId)
+    {
+        var plans = await _db.WorkoutPlans.Where(p => p.UserId == userId).ToListAsync();
+        foreach (var plan in plans)
+            plan.IsActive = false;
+        await _db.SaveChangesAsync();
+    }
 }

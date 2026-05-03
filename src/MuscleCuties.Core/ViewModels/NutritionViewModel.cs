@@ -23,6 +23,7 @@ public partial class NutritionViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _currentPhaseName = string.Empty;
     [ObservableProperty] private string _phaseFocusCopy = string.Empty;
+    // TODO(frontend-blocked): _meals is never populated in LoadDataAsync; wire or remove after NutritionPage redesign
     [ObservableProperty] private ObservableCollection<MealItem> _meals = new();
 
     public float CaloriesProgress =>

@@ -19,6 +19,7 @@ public class ProfileSetupViewModelTests
     public async Task Save_ValidData_CallsAddProfileAsync_AndNavigates()
     {
         _authService.GetCurrentUserIdAsync().Returns(1);
+        _userRepository.GetProfileAsync(Arg.Any<int>()).Returns((UserProfile?)null);
 
         var vm = CreateViewModel();
         vm.Name = "Jane";
@@ -39,6 +40,7 @@ public class ProfileSetupViewModelTests
     public async Task Save_WhenCalled_SetsBusy()
     {
         _authService.GetCurrentUserIdAsync().Returns(1);
+        _userRepository.GetProfileAsync(Arg.Any<int>()).Returns((UserProfile?)null);
 
         var vm = CreateViewModel();
         vm.Name = "Jane";
@@ -46,5 +48,25 @@ public class ProfileSetupViewModelTests
         await vm.SaveCommand.ExecuteAsync(null);
 
         Assert.False(vm.IsBusy);
+    }
+
+    [Fact]
+    public async Task Save_WhenProfileAlreadyExists_CallsUpdateProfileAsync_NotAdd()
+    {
+        var existing = new UserProfile { Id = 1, UserId = 1 };
+        _authService.GetCurrentUserIdAsync().Returns(1);
+        _userRepository.GetProfileAsync(Arg.Any<int>()).Returns(existing);
+
+        var vm = CreateViewModel();
+        vm.Name = "Jane";
+        vm.Height = 165f;
+        vm.Weight = 60f;
+        vm.WorkoutDaysPerWeek = 4;
+        vm.CycleLength = 28;
+
+        await vm.ContinueCommand.ExecuteAsync(null);
+
+        await _userRepository.Received(1).UpdateProfileAsync(Arg.Any<UserProfile>());
+        await _userRepository.DidNotReceive().AddProfileAsync(Arg.Any<UserProfile>());
     }
 }

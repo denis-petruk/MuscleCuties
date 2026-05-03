@@ -4,6 +4,7 @@ using MuscleCuties.Core.Models.Entities;
 
 namespace MuscleCuties.Core.Repositories;
 
+[Obsolete("Not injected anywhere. Remove AddScoped from MauiProgram.cs line 56 first, then delete this class")]
 public class RecommendationRepository(AppDatabase db) : BaseRepository<RecommendationSet>(db), IRecommendationRepository
 {
     public async Task<RecommendationSet?> GetSetByDateAsync(int userId, DateTime date) =>

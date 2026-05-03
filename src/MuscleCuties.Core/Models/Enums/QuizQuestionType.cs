@@ -13,5 +13,8 @@ public enum QuizQuestionType
     OvulatoryPain,
     OvulatoryEnergy,
     LutealPain,
-    LutealEnergy
+    LutealEnergy,
+    CycleSymptoms,
+    WorkoutTypePreference,
+    LifestyleStress
 }

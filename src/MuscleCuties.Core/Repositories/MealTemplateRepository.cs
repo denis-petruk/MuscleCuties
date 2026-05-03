@@ -4,6 +4,7 @@ using MuscleCuties.Core.Models.Entities;
 
 namespace MuscleCuties.Core.Repositories;
 
+[Obsolete("Not injected anywhere. Remove AddScoped from MauiProgram.cs line 54 first, then delete this class")]
 public class MealTemplateRepository(AppDatabase db) : BaseRepository<MealTemplate>(db), IMealTemplateRepository
 {
     public async Task<List<MealTemplate>> GetSystemTemplatesAsync() =>

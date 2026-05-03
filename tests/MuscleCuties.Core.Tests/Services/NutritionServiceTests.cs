@@ -18,7 +18,7 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
         new NutritionService(
             new UserRepository(_fixture.Db),
             new NutritionRepository(_fixture.Db),
-            new CalorieCalculator());
+            new CalorieCalculator(new CyclePhaseCalculator()));
 
     private async Task<User> SeedUserWithProfileAsync(string email, UserGoal goal = UserGoal.MaintainHealth)
     {

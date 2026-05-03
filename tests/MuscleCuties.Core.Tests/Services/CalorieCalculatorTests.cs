@@ -1,10 +1,12 @@
+using MuscleCuties.Core.Models.Enums;
 using MuscleCuties.Core.Services;
+using NSubstitute;
 
 namespace MuscleCuties.Core.Tests.Services;
 
 public class CalorieCalculatorTests
 {
-    private readonly CalorieCalculator _calc = new();
+    private readonly CalorieCalculator _calc = new CalorieCalculator(new CyclePhaseCalculator());
 
     [Fact]
     public void CalculateBmr_KnownInputs_ReturnsCorrectValue()
@@ -90,5 +92,18 @@ public class CalorieCalculatorTests
         var (protein, _, _) = _calc.CalculateMacros(2000f, 60f);
 
         Assert.Equal(60f * 1.8f, protein, precision: 1);
+    }
+
+    [Fact]
+    public void AdjustForPhase_DelegatesToCyclePhaseCalculator()
+    {
+        var mockCalc = Substitute.For<ICyclePhaseCalculator>();
+        mockCalc.GetPhaseCalorieAdjustment(CyclePhase.Luteal).Returns(200f);
+        var calc = new CalorieCalculator(mockCalc);
+
+        var result = calc.AdjustForPhase(1800f, (int)CyclePhase.Luteal);
+
+        Assert.Equal(2000f, result);
+        mockCalc.Received(1).GetPhaseCalorieAdjustment(CyclePhase.Luteal);
     }
 }

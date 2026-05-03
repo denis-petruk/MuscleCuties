@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MuscleCuties.Core.Models.Entities;
 using MuscleCuties.Core.Models.Enums;
-using MuscleCuties.Core.Repositories;
 using MuscleCuties.Core.Services;
 
 namespace MuscleCuties.Core.ViewModels;
@@ -11,7 +11,7 @@ public partial class DashboardViewModel : ObservableObject
     private readonly IAuthService _authService;
     private readonly ICycleService _cycleService;
     private readonly INutritionService _nutritionService;
-    private readonly IWorkoutRepository _workoutRepository;
+    private readonly IWorkoutService _workoutService;
     private readonly Action _openCycle;
     private readonly Action _openWorkout;
     private readonly Action _openNutrition;
@@ -26,6 +26,12 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private float _consumedFats;
     [ObservableProperty] private float _targetFats;
     [ObservableProperty] private bool _isBusy;
+
+    [ObservableProperty] private string _workoutTitle = "Rest Day";
+    [ObservableProperty] private string _workoutSubtitle = string.Empty;
+    [ObservableProperty] private string _workoutDurationText = string.Empty;
+    [ObservableProperty] private string _workoutIntensity = string.Empty;
+    [ObservableProperty] private string _workoutExercisesCount = "0";
 
     public string PhaseLabel => CurrentPhase.ToString();
 
@@ -69,10 +75,11 @@ public partial class DashboardViewModel : ObservableObject
         _                     => string.Empty
     };
 
-    public int ReadinessScore => 75;
-    public string ReadinessLabel => "Feeling energized";
-    public int RecoveryScore => 82;
-    public string RecoveryLabel => "Well rested";
+    // TODO: replace heuristic with HRV / resting HR from Apple Watch, Garmin, or Fitbit once wearable integration is added
+    [ObservableProperty] private int _readinessScore;
+    [ObservableProperty] private string _readinessLabel = string.Empty;
+    [ObservableProperty] private int _recoveryScore;
+    [ObservableProperty] private string _recoveryLabel = string.Empty;
 
     public float CaloriesProgress =>
         TargetCalories <= 0 ? 0f : Math.Clamp(ConsumedCalories / TargetCalories, 0f, 1f);
@@ -89,16 +96,39 @@ public partial class DashboardViewModel : ObservableObject
     public string FatsText => $"{(int)ConsumedFats}g / {(int)TargetFats}g";
     public float FatsProgress => TargetFats > 0 ? Math.Clamp(ConsumedFats / TargetFats, 0f, 1f) : 0f;
 
+    // TODO(frontend-blocked): HydrationConsumed is hardcoded, bound to DashboardPage.xaml:474
     public string HydrationConsumed => "1.8 L";
     public string HydrationGoal => "/ 2.5 L";
+    // TODO(frontend-blocked): SleepGoal is hardcoded
     public string SleepGoal => "8h";
-    public string SessionProgressText => "UPCOMING";
 
-    [ObservableProperty] private string _workoutTitle = "Rest Day";
-    public string WorkoutSubtitle => "Upper body · Push";
-    public string WorkoutDurationText => "45 min";
-    public string WorkoutExercisesCount => "6";
-    public string WorkoutIntensity => "Medium";
+    [ObservableProperty] private string _sessionProgressText = string.Empty;
+
+    private static string BuildWorkoutSubtitle(WorkoutDay day) => day.WorkoutType switch
+    {
+        WorkoutType.Cardio   => $"{day.WorkoutDayExercises.Count} rounds · {day.DurationMinutes} min",
+        WorkoutType.Recovery => $"{day.WorkoutDayExercises.Count} stretches · {day.DurationMinutes} min",
+        _                    => $"{day.WorkoutDayExercises.Count} exercises · {day.DurationMinutes} min"
+    };
+
+    private static string GetIntensityLabel(WorkoutType type, CyclePhase phase) => type switch
+    {
+        WorkoutType.Recovery => "GENTLE",
+        WorkoutType.Cardio   => phase switch
+        {
+            CyclePhase.Ovulatory  => "HIGH",
+            CyclePhase.Follicular => "MODERATE",
+            _                     => "LOW"
+        },
+        _ => phase switch
+        {
+            CyclePhase.Ovulatory  => "PEAK",
+            CyclePhase.Follicular => "HIGH",
+            CyclePhase.Luteal     => "MODERATE",
+            CyclePhase.Menstrual  => "LOW",
+            _                     => "MODERATE"
+        }
+    };
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand RefreshCommand { get; }
@@ -110,7 +140,7 @@ public partial class DashboardViewModel : ObservableObject
         IAuthService authService,
         ICycleService cycleService,
         INutritionService nutritionService,
-        IWorkoutRepository workoutRepository,
+        IWorkoutService workoutService,
         Action openCycle,
         Action openWorkout,
         Action openNutrition)
@@ -118,7 +148,7 @@ public partial class DashboardViewModel : ObservableObject
         _authService = authService;
         _cycleService = cycleService;
         _nutritionService = nutritionService;
-        _workoutRepository = workoutRepository;
+        _workoutService = workoutService;
         _openCycle = openCycle;
         _openWorkout = openWorkout;
         _openNutrition = openNutrition;
@@ -153,8 +183,32 @@ public partial class DashboardViewModel : ObservableObject
             ConsumedCarbs = consumedCarbs;
             ConsumedFats = consumedFats;
 
-            var plan = await _workoutRepository.GetActivePlanAsync(userId);
-            WorkoutTitle = plan?.Name ?? "Rest Day";
+            var todaysDay = await _workoutService.GetTodaysWorkoutAsync(userId);
+            if (todaysDay is not null)
+            {
+                WorkoutTitle          = todaysDay.Name;
+                WorkoutSubtitle       = BuildWorkoutSubtitle(todaysDay);
+                WorkoutDurationText   = $"{todaysDay.DurationMinutes} min";
+                WorkoutIntensity      = GetIntensityLabel(todaysDay.WorkoutType, CurrentPhase);
+                WorkoutExercisesCount = todaysDay.WorkoutDayExercises.Count.ToString();
+                SessionProgressText   = todaysDay.WorkoutType.ToString().ToUpper();
+            }
+            else
+            {
+                WorkoutTitle          = "Rest Day";
+                WorkoutSubtitle       = "Recovery day";
+                WorkoutDurationText   = string.Empty;
+                WorkoutIntensity      = string.Empty;
+                WorkoutExercisesCount = "0";
+                SessionProgressText   = "REST DAY";
+            }
+
+            var isRestDay = todaysDay is null;
+            // TODO: factor in actual sleep hours once UserProfile stores them (or wearable provides them)
+            ReadinessScore = ComputeReadinessScore(CurrentPhase, isRestDay);
+            ReadinessLabel = ReadinessLabelFor(ReadinessScore);
+            RecoveryScore  = ComputeRecoveryScore(CurrentPhase, isRestDay);
+            RecoveryLabel  = RecoveryLabelFor(RecoveryScore);
 
             NotifyMacroProperties();
         }
@@ -163,6 +217,51 @@ public partial class DashboardViewModel : ObservableObject
             IsBusy = false;
         }
     }
+
+    // Phase gives the base score; rest days get a small boost since there is no workout stress today.
+    // TODO: replace with Apple Watch / Garmin HRV data when wearable integration is added
+    private static int ComputeReadinessScore(CyclePhase phase, bool isRestDay)
+    {
+        var baseScore = phase switch
+        {
+            CyclePhase.Ovulatory  => 85,
+            CyclePhase.Follicular => 78,
+            CyclePhase.Luteal     => 65,
+            CyclePhase.Menstrual  => 55,
+            _                     => 70
+        };
+        return Math.Clamp(baseScore + (isRestDay ? 5 : 0), 0, 100);
+    }
+
+    // TODO: replace with Apple Watch / Garmin recovery metrics when wearable integration is added
+    private static int ComputeRecoveryScore(CyclePhase phase, bool isRestDay)
+    {
+        var baseScore = phase switch
+        {
+            CyclePhase.Ovulatory  => 88,
+            CyclePhase.Follicular => 80,
+            CyclePhase.Luteal     => 70,
+            CyclePhase.Menstrual  => 60,
+            _                     => 72
+        };
+        return Math.Clamp(baseScore + (isRestDay ? 8 : -5), 0, 100);
+    }
+
+    private static string ReadinessLabelFor(int score) => score switch
+    {
+        >= 80 => "Feeling energized",
+        >= 65 => "Ready to move",
+        >= 50 => "Take it steady",
+        _     => "Rest & restore"
+    };
+
+    private static string RecoveryLabelFor(int score) => score switch
+    {
+        >= 80 => "Well rested",
+        >= 65 => "Recovering well",
+        >= 50 => "Moderate fatigue",
+        _     => "Needs more rest"
+    };
 
     private void NotifyPhaseProperties()
     {

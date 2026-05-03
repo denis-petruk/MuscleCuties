@@ -9,11 +9,13 @@ public class QuizService : IQuizService
 {
     private readonly IUserRepository _userRepository;
     private readonly IQuizRepository _quizRepository;
+    private readonly IWorkoutService _workoutService;
 
-    public QuizService(IUserRepository userRepository, IQuizRepository quizRepository)
+    public QuizService(IUserRepository userRepository, IQuizRepository quizRepository, IWorkoutService workoutService)
     {
         _userRepository = userRepository;
         _quizRepository = quizRepository;
+        _workoutService = workoutService;
     }
 
     public async Task<List<QuizQuestion>> GetOnboardingQuestionsAsync()
@@ -98,6 +100,8 @@ public class QuizService : IQuizService
             user.UpdatedAt = DateTime.UtcNow;
             await _userRepository.UpdateAsync(user);
         }
+
+        await _workoutService.GenerateUserPlansAsync(userId, profile.Goal, profile.WorkoutDaysPerWeek);
     }
 
     public async Task<bool> IsOnboardingCompleteAsync(int userId)
