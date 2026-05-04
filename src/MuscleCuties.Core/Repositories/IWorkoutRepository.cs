@@ -11,6 +11,8 @@ public interface IWorkoutRepository : IRepository<WorkoutPlan>
     Task<WorkoutPlan?> GetActivePlanAsync(int userId);
     Task AddWorkoutLogAsync(WorkoutLog log);
     Task<List<WorkoutLog>> GetWorkoutLogsByDateAsync(int userId, DateTime date);
+    Task<int> GetWorkoutLogCountAsync(int userId);
+    Task<WorkoutLog?> GetLatestActiveWorkoutLogAsync(int userId);
     Task<WorkoutPlan?> GetPlanByPhaseAsync(int userId, CyclePhase phase);
     Task<Exercise?> GetExerciseByCodeAsync(string code);
     Task<List<Exercise>> GetExercisesByCodesAsync(IEnumerable<string> codes);

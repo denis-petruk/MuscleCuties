@@ -40,11 +40,15 @@ public class WorkoutService : IWorkoutService
             {
                 var type = dayTypes[i];
                 var exercises = await GetExercisesForType(type);
+                var recoveryType = type == WorkoutType.Recovery
+                    ? ClassifyRecovery(phase, goal)
+                    : RecoveryType.None;
                 var day = new WorkoutDay
                 {
                     DayOfWeek = dowSlots[i],
                     Name = BuildDayName(phase, type, i),
                     WorkoutType = type,
+                    RecoveryType = recoveryType,
                     DurationMinutes = type == WorkoutType.Recovery ? 20 : 45
                 };
                 foreach (var (ex, sets, reps, durSec) in exercises)
@@ -119,6 +123,18 @@ public class WorkoutService : IWorkoutService
 
     private static string BuildDayName(CyclePhase phase, WorkoutType type, int dayIndex) =>
         $"{phase} {type} Day {dayIndex + 1}";
+
+    private static RecoveryType ClassifyRecovery(CyclePhase phase, UserGoal goal) =>
+        phase switch
+        {
+            CyclePhase.Menstrual  => RecoveryType.PassiveRecovery,
+            CyclePhase.Follicular => RecoveryType.ActiveRecovery,
+            CyclePhase.Ovulatory  => RecoveryType.ActiveRecovery,
+            CyclePhase.Luteal     => goal == UserGoal.Strength
+                ? RecoveryType.PassiveRecovery
+                : RecoveryType.ActiveRecovery,
+            _ => RecoveryType.ActiveRecovery
+        };
 
     private async Task<List<(Exercise ex, int sets, int reps, int? durSec)>> GetExercisesForType(WorkoutType type) =>
         type switch

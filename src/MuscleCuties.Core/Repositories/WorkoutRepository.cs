@@ -48,6 +48,17 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
             .Where(l => l.UserId == userId && l.Date.Date == date.Date)
             .ToListAsync();
 
+    public async Task<int> GetWorkoutLogCountAsync(int userId) =>
+        await _db.WorkoutLogs.CountAsync(l => l.UserId == userId);
+
+    public async Task<WorkoutLog?> GetLatestActiveWorkoutLogAsync(int userId) =>
+        await _db.WorkoutLogs
+            .Include(l => l.WorkoutDay)
+            .Where(l => l.UserId == userId
+                     && l.WorkoutDay!.WorkoutType != WorkoutType.Recovery)
+            .OrderByDescending(l => l.Date)
+            .FirstOrDefaultAsync();
+
     public async Task<WorkoutPlan?> GetPlanByPhaseAsync(int userId, CyclePhase phase) =>
         await _db.WorkoutPlans
             .Where(p => p.UserId == userId && p.CyclePhaseTarget == phase)

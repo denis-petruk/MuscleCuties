@@ -127,6 +127,8 @@ public static class MauiProgram
         services.AddTransient<ProfileViewModel>(sp => new ProfileViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
+            sp.GetRequiredService<IWorkoutRepository>(),
+            sp.GetRequiredService<ICycleRepository>(),
             () => Shell.Current.GoToAsync("//LoginPage")));
 
         // Pages

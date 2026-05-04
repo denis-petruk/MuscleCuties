@@ -31,7 +31,7 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private string _workoutSubtitle = string.Empty;
     [ObservableProperty] private string _workoutDurationText = string.Empty;
     [ObservableProperty] private string _workoutIntensity = string.Empty;
-    [ObservableProperty] private string _workoutExercisesCount = "0";
+    [ObservableProperty] private string _workoutExercisesCount = string.Empty;
 
     public string PhaseLabel => CurrentPhase.ToString();
 
@@ -103,6 +103,14 @@ public partial class DashboardViewModel : ObservableObject
     public string SleepGoal => "8h";
 
     [ObservableProperty] private string _sessionProgressText = string.Empty;
+    [ObservableProperty] private bool _isRestDay;
+
+    public bool IsActiveWorkoutDay => !IsRestDay;
+
+    partial void OnIsRestDayChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsActiveWorkoutDay));
+    }
 
     private static string BuildWorkoutSubtitle(WorkoutDay day) => day.WorkoutType switch
     {
@@ -110,6 +118,15 @@ public partial class DashboardViewModel : ObservableObject
         WorkoutType.Recovery => $"{day.WorkoutDayExercises.Count} stretches · {day.DurationMinutes} min",
         _                    => $"{day.WorkoutDayExercises.Count} exercises · {day.DurationMinutes} min"
     };
+
+    private static string GetDashboardRecoveryCopy(CyclePhase phase, RecoveryType recoveryType) =>
+        (phase, recoveryType) switch
+        {
+            (CyclePhase.Menstrual, _)                         => "Your body is resetting. Full rest today.",
+            (CyclePhase.Luteal, RecoveryType.PassiveRecovery) => "Wind down gently. Full rest supports recovery.",
+            (_, RecoveryType.ActiveRecovery)                  => "Light movement to keep energy flowing.",
+            _                                                 => "Recovery day."
+        };
 
     private static string GetIntensityLabel(WorkoutType type, CyclePhase phase) => type switch
     {
@@ -186,28 +203,40 @@ public partial class DashboardViewModel : ObservableObject
             var todaysDay = await _workoutService.GetTodaysWorkoutAsync(userId);
             if (todaysDay is not null)
             {
-                WorkoutTitle          = todaysDay.Name;
-                WorkoutSubtitle       = BuildWorkoutSubtitle(todaysDay);
-                WorkoutDurationText   = $"{todaysDay.DurationMinutes} min";
-                WorkoutIntensity      = GetIntensityLabel(todaysDay.WorkoutType, CurrentPhase);
-                WorkoutExercisesCount = todaysDay.WorkoutDayExercises.Count.ToString();
-                SessionProgressText   = todaysDay.WorkoutType.ToString().ToUpper();
+                var isRecovery = todaysDay.WorkoutType == WorkoutType.Recovery;
+                IsRestDay = isRecovery;
+
+                WorkoutTitle = isRecovery
+                    ? (todaysDay.RecoveryType == RecoveryType.PassiveRecovery ? "Rest & Restore" : "Active Recovery")
+                    : todaysDay.Name;
+
+                WorkoutSubtitle = isRecovery
+                    ? GetDashboardRecoveryCopy(CurrentPhase, todaysDay.RecoveryType)
+                    : BuildWorkoutSubtitle(todaysDay);
+
+                WorkoutDurationText   = isRecovery ? string.Empty : $"{todaysDay.DurationMinutes} min";
+                WorkoutIntensity      = isRecovery ? string.Empty : GetIntensityLabel(todaysDay.WorkoutType, CurrentPhase);
+                WorkoutExercisesCount = isRecovery ? string.Empty : todaysDay.WorkoutDayExercises.Count.ToString();
+
+                SessionProgressText = isRecovery
+                    ? (todaysDay.RecoveryType == RecoveryType.PassiveRecovery ? "PASSIVE RECOVERY" : "ACTIVE RECOVERY")
+                    : todaysDay.WorkoutType.ToString().ToUpper();
             }
             else
             {
+                IsRestDay             = true;
                 WorkoutTitle          = "Rest Day";
-                WorkoutSubtitle       = "Recovery day";
+                WorkoutSubtitle       = "No workout scheduled today";
                 WorkoutDurationText   = string.Empty;
                 WorkoutIntensity      = string.Empty;
-                WorkoutExercisesCount = "0";
+                WorkoutExercisesCount = string.Empty;
                 SessionProgressText   = "REST DAY";
             }
 
-            var isRestDay = todaysDay is null;
             // TODO: factor in actual sleep hours once UserProfile stores them (or wearable provides them)
-            ReadinessScore = ComputeReadinessScore(CurrentPhase, isRestDay);
+            ReadinessScore = ComputeReadinessScore(CurrentPhase, IsRestDay);
             ReadinessLabel = ReadinessLabelFor(ReadinessScore);
-            RecoveryScore  = ComputeRecoveryScore(CurrentPhase, isRestDay);
+            RecoveryScore  = ComputeRecoveryScore(CurrentPhase, IsRestDay);
             RecoveryLabel  = RecoveryLabelFor(RecoveryScore);
 
             NotifyMacroProperties();

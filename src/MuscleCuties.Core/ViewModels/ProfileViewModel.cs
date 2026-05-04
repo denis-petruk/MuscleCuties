@@ -11,6 +11,8 @@ public partial class ProfileViewModel : ObservableObject
 {
     private readonly IAuthService _authService;
     private readonly IUserRepository _userRepository;
+    private readonly IWorkoutRepository _workoutRepository;
+    private readonly ICycleRepository _cycleRepository;
     private readonly Action _navigateToLogin;
 
     [ObservableProperty] private string _name = string.Empty;
@@ -19,15 +21,12 @@ public partial class ProfileViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _memberSince = string.Empty;
     [ObservableProperty] private int _cycleDays = 28;
-    // TODO(frontend-blocked): _preferences is hardcoded with 6 non-functional items; wire or remove after ProfilePage redesign
     [ObservableProperty] private ObservableCollection<PreferenceItem> _preferences = new();
+    [ObservableProperty] private int _sessionCount;
+    [ObservableProperty] private int _phasesTracked;
 
     public string UserInitial => Name.Length > 0 ? Name[0].ToString().ToUpper() : "?";
     public string UserName => Name;
-    // TODO(frontend-blocked): SessionCount is hardcoded 0, bound to ProfilePage.xaml:59
-    public int SessionCount => 0;
-    // TODO(frontend-blocked): PhasesTracked is hardcoded 0, bound to ProfilePage.xaml:97
-    public int PhasesTracked => 0;
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand LogoutCommand { get; }
@@ -35,10 +34,14 @@ public partial class ProfileViewModel : ObservableObject
     public ProfileViewModel(
         IAuthService authService,
         IUserRepository userRepository,
+        IWorkoutRepository workoutRepository,
+        ICycleRepository cycleRepository,
         Action navigateToLogin)
     {
         _authService = authService;
         _userRepository = userRepository;
+        _workoutRepository = workoutRepository;
+        _cycleRepository = cycleRepository;
         _navigateToLogin = navigateToLogin;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         LogoutCommand = new AsyncRelayCommand(LogoutAsync);
@@ -76,6 +79,11 @@ public partial class ProfileViewModel : ObservableObject
                 OnPropertyChanged(nameof(UserInitial));
                 OnPropertyChanged(nameof(UserName));
             }
+
+            SessionCount = await _workoutRepository.GetWorkoutLogCountAsync(userId);
+
+            var cycles = await _cycleRepository.GetCycleHistoryAsync(userId);
+            PhasesTracked = cycles.Count * 4;
         }
         finally
         {

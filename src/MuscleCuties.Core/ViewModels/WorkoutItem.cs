@@ -12,5 +12,6 @@ public class WorkoutItem
     public string Subtitle { get; set; } = string.Empty;
     public int ExerciseCount { get; set; }
     public WorkoutType WorkoutType { get; set; }
+    public RecoveryType RecoveryType { get; set; }
     public Color PhaseBackground { get; set; } = Colors.Transparent;
 }

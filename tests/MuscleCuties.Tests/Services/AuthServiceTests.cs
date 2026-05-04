@@ -1,0 +1,119 @@
+using MuscleCuties.Core.Repositories;
+using MuscleCuties.Core.Services;
+using NSubstitute;
+
+namespace MuscleCuties.Tests.Services;
+
+public class AuthServiceTests : IClassFixture<DatabaseFixture>
+{
+    private readonly DatabaseFixture _fixture;
+    private readonly ITokenStorage _storage;
+
+    public AuthServiceTests(DatabaseFixture fixture)
+    {
+        _fixture = fixture;
+        _storage = Substitute.For<ITokenStorage>();
+    }
+
+    private AuthService CreateService() =>
+        new AuthService(new UserRepository(_fixture.Db), _storage);
+
+    [Fact]
+    public async Task RegisterAsync_NewEmail_ReturnsUserAndStoresId()
+    {
+        var service = CreateService();
+
+        var user = await service.RegisterAsync("auth1@test.com", "password123");
+
+        Assert.NotNull(user);
+        Assert.Equal("auth1@test.com", user.Email);
+        await _storage.Received(1).SetAsync("current_user_id", user.Id.ToString());
+    }
+
+    [Fact]
+    public async Task RegisterAsync_DuplicateEmail_ReturnsNull()
+    {
+        var service = CreateService();
+        await service.RegisterAsync("auth2@test.com", "password123");
+
+        var result = await service.RegisterAsync("auth2@test.com", "other");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task LoginAsync_CorrectCredentials_ReturnsUserAndStoresId()
+    {
+        var service = CreateService();
+        await service.RegisterAsync("auth3@test.com", "secret");
+
+        var result = await service.LoginAsync("auth3@test.com", "secret");
+
+        Assert.NotNull(result);
+        await _storage.Received().SetAsync("current_user_id", Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task LoginAsync_WrongPassword_ReturnsNull()
+    {
+        var service = CreateService();
+        await service.RegisterAsync("auth4@test.com", "correct");
+
+        var result = await service.LoginAsync("auth4@test.com", "wrong");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task LoginAsync_UnknownEmail_ReturnsNull()
+    {
+        var service = CreateService();
+
+        var result = await service.LoginAsync("nobody@test.com", "pass");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task LogoutAsync_CallsRemove()
+    {
+        var service = CreateService();
+
+        await service.LogoutAsync();
+
+        _storage.Received(1).Remove("current_user_id");
+    }
+
+    [Fact]
+    public async Task IsLoggedInAsync_WhenStorageHasId_ReturnsTrue()
+    {
+        var service = CreateService();
+        _storage.GetAsync("current_user_id").Returns(Task.FromResult<string?>("1"));
+
+        var result = await service.IsLoggedInAsync();
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task IsLoggedInAsync_WhenStorageEmpty_ReturnsFalse()
+    {
+        var service = CreateService();
+        _storage.GetAsync("current_user_id").Returns(Task.FromResult<string?>(null));
+
+        var result = await service.IsLoggedInAsync();
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task GetCurrentUserIdAsync_WhenStored_ReturnsId()
+    {
+        var service = CreateService();
+        _storage.GetAsync("current_user_id").Returns(Task.FromResult<string?>("42"));
+
+        var result = await service.GetCurrentUserIdAsync();
+
+        Assert.Equal(42, result);
+    }
+}

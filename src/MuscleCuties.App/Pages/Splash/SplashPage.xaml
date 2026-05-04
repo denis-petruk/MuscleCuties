@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MuscleCuties.App.Pages.Splash.SplashPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource BackgroundDark}}">
+
+    <Grid>
+        <VerticalStackLayout
+            VerticalOptions="Center"
+            HorizontalOptions="Center"
+            Spacing="24">
+
+            <Label
+                Text="MuscleCuties"
+                FontFamily="FrauncesDisplay"
+                FontSize="36"
+                HorizontalOptions="Center"
+                TextColor="{StaticResource Primary}" />
+
+            <ActivityIndicator
+                IsRunning="True"
+                Color="{StaticResource Primary}"
+                HorizontalOptions="Center"
+                WidthRequest="32"
+                HeightRequest="32" />
+
+        </VerticalStackLayout>
+    </Grid>
+
+</ContentPage>

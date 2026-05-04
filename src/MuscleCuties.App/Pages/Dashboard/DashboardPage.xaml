@@ -143,7 +143,8 @@
                         <Grid
                             ColumnDefinitions="*, Auto, *, Auto, *"
                             Margin="10,2,0,0"
-                            Padding="0,10,0,0">
+                            Padding="0,10,0,0"
+                            IsVisible="{Binding IsActiveWorkoutDay}">
                             <BoxView
                                 Grid.ColumnSpan="5"
                                 HeightRequest="1"
@@ -214,7 +215,8 @@
                         <Button
                             Text="Start workout"
                             Command="{Binding OpenWorkoutCommand}"
-                            Margin="0,2,0,0" />
+                            Margin="0,2,0,0"
+                            IsVisible="{Binding IsActiveWorkoutDay}" />
 
                     </VerticalStackLayout>
                 </Border>
@@ -375,7 +377,7 @@
                                     VerticalOptions="Center" />
                             </Grid>
                             <ProgressBar
-                                Progress="{Binding CalorieProgress}"
+                                Progress="{Binding CaloriesProgress}"
                                 ProgressColor="{StaticResource Primary}"
                                 BackgroundColor="{StaticResource Gray300}"
                                 HeightRequest="8" />

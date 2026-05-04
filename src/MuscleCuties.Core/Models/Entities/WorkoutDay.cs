@@ -10,6 +10,7 @@ public class WorkoutDay
     public int DayOfWeek { get; set; }
     [Required] public string Name { get; set; } = null!;
     public WorkoutType WorkoutType { get; set; }
+    public RecoveryType RecoveryType { get; set; }
     public int DurationMinutes { get; set; }
 
     public WorkoutPlan? WorkoutPlan { get; set; }
