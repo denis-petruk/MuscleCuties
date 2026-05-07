@@ -5,13 +5,16 @@ namespace MuscleCuties.Core.Models.Entities;
 public class FoodItem
 {
     public int Id { get; set; }
-    [Required] public string Name { get; set; } = null!;
+    [Required][StringLength(40)] public string Name { get; set; } = null!;
     public float Calories { get; set; }
     public float Protein { get; set; }
     public float Carbs { get; set; }
     public float Fats { get; set; }
     public float Fiber { get; set; }
     public float Iron { get; set; }
+    public float Omega3 { get; set; }
+    public float Omega6 { get; set; }
+    public float Cholesterol { get; set; }
     public float VitaminB12 { get; set; }
     public float VitaminC { get; set; }
     public float VitaminD { get; set; }
@@ -22,6 +25,7 @@ public class FoodItem
     public float Magnesium { get; set; }
     public float Zinc { get; set; }
     public bool IsCustom { get; set; }
+    public bool FoodOrSupplement { get; set; }
     public int? FdcId { get; set; }
     public DateTime? LastSyncedAt { get; set; }
     public DateTime CreatedAt { get; set; }

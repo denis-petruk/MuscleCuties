@@ -33,10 +33,16 @@ A cycle-aware fitness and nutrition companion for women. MuscleCuties syncs work
 - Workout completions logged via `WorkoutLog` with a 0–100 completion percentage — used as the recommendation feedback signal
 
 ### Nutrition
-- Phase focus banner with cycle-phase color
-- Today's balance card: calorie row with progress bar, macro grid (protein, carbs, fat)
-- Meals list: time badge, meal type tag, name, calories
-- Meals logged as `LoggedMeal` + `LoggedMealEntry` rows, optionally from a saved `MealTemplate`
+- Phase insight strip with cycle-phase contextual advice
+- Calories ring (code-drawn arc chart) showing macro calorie split: protein, carbs, fat against daily target
+- Macro progress rows: protein / carbs / fats with progress bars and gram counts
+- Micronutrient spotlight: 4 phase-selected nutrients (Iron / Calcium / VitaminC / VitaminD for Menstrual; Magnesium / VitaminD / Omega-3 / Potassium for Luteal; etc.) with per-nutrient progress bars
+- Collapsible meal sections (Breakfast, Lunch, Dinner, Snacks) — each with a calorie total and inline food entry rows
+- Supplement section: separate from food; shows serving count and key nutrient summary per entry
+- Log sheet overlay (same pattern as WorkoutPage swap sheet): search field, food search results, grams entry for food, serving stepper for supplements
+- Food search is local-first with USDA FoodData Central fallback when fewer than 5 local results — offline graceful
+- `FoodItem.IsSupplement` bool distinguishes supplements (per-serving nutrient values) from food (per 100g)
+- Meals logged as `LoggedMeal` + `LoggedMealEntry` rows; `GramsConsumed` doubles as serving count for supplements
 
 ### You — Profile
 - Avatar circle with user initial
@@ -54,7 +60,7 @@ A `FloAccessToken` placeholder exists on `User` for a future Flo API integration
 
 Calorie targets support two modes: `Calculated` (BMR-derived via Mifflin-St Jeor, using date of birth and body metrics) and `Manual` (user-entered fixed target). Weight goal pace is configurable: `Steady` (~250–300 kcal delta) or `Aggressive` (~500 kcal delta).
 
-FoodItem micronutrients (Iron, Calcium, Magnesium, Zinc, vitamins B6/B12/C/D/A/Folate) are tracked per 100g. FDC sync health is audited via `FoodSyncLog` (run-level status) and `FoodItemVersion` (per-item nutrient history written before every upsert that changes values).
+FoodItem micronutrients (Iron, Calcium, Magnesium, Zinc, Omega-3, vitamins C/D) are tracked per 100g for food and per-serving for supplements. FDC sync health is audited via `FoodSyncLog` (run-level status) and `FoodItemVersion` (per-item nutrient history written before every upsert that changes values). The NutritionPage is fully implemented: food and supplement logging, macro ring, micronutrient spotlight, and phase-aware insights are all wired to real data.
 
 ---
 
@@ -165,7 +171,8 @@ MuscleCuties/
 │   │   │   ├── ICycleService.cs / CycleService.cs
 │   │   │   ├── ICyclePhaseCalculator.cs / CyclePhaseCalculator.cs  # Phase logic isolated here
 │   │   │   ├── ICalorieCalculator.cs / CalorieCalculator.cs        # Mifflin-St Jeor BMR
-│   │   │   ├── INutritionService.cs / NutritionService.cs
+│   │   │   ├── INutritionService.cs / NutritionService.cs          # Logging, totals, micronutrient aggregation
+│   │   │   ├── IFoodSyncService.cs / FoodSyncService.cs            # Local-first search + FDC fallback
 │   │   │   └── IQuizService.cs / QuizService.cs
 │   │   │
 │   │   └── ViewModels/
@@ -174,7 +181,7 @@ MuscleCuties/
 │   │       ├── DashboardViewModel.cs
 │   │       ├── CycleViewModel.cs       (+ CycleDayItem, PhaseItem)
 │   │       ├── WorkoutViewModel.cs     (+ WorkoutItem, FilterChipItem)
-│   │       ├── NutritionViewModel.cs   (+ MealItem)
+│   │       ├── NutritionViewModel.cs   (+ MealGroup, MealEntryItem, FoodSearchResultItem, SupplementEntryItem, MicronutrientSpotlightItem)
 │   │       ├── ProfileViewModel.cs     (+ PreferenceItem)
 │   │       └── SelectableQuizAnswer.cs
 │   │
