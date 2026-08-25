@@ -1,4 +1,5 @@
-using MuscleCuties.Core.ViewModels;
+using MuscleCuties.App.Pages;
+using MuscleCuties.Core.ViewModels.Quiz;
 
 namespace MuscleCuties.App.Pages.Onboarding;
 
@@ -10,11 +11,12 @@ public partial class QuizPage : ContentPage
         BindingContext = vm;
     }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
+
         var vm = (QuizViewModel)BindingContext;
         if (!vm.HasQuestion && !vm.IsBusy)
-            await vm.LoadQuestionsCommand.ExecuteAsync(null);
+            this.LoadAfterFirstRender(() => vm.LoadQuestionsCommand.ExecuteAsync(null));
     }
 }

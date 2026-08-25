@@ -15,8 +15,8 @@
         <MauiVersion>10.0.10</MauiVersion>
 
         <ApplicationTitle>MuscleCuties</ApplicationTitle>
-        <ApplicationId>com.companyname.musclecuties</ApplicationId>
-        <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+        <ApplicationId>com.denispetruk.musclecuties</ApplicationId>
+        <ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
         <ApplicationVersion>1</ApplicationVersion>
 
         <WindowsPackageType>None</WindowsPackageType>
@@ -29,22 +29,37 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#FFFFFF" />
-        <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128"/>
-        <MauiImage Include="Resources\Images\*" />
-        <MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
+        <MauiIcon
+            Include="Resources\AppIcon\appicon.png"
+            Color="#FFF8FB"
+            Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios'" />
+        <MauiSplashScreen
+            Include="Resources\Splash\splash.png"
+            Color="#FFF8FB"
+            BaseSize="320,180"
+            Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'maccatalyst'" />
+        <MauiImage Include="Resources\Images\*" Exclude="Resources\Images\musclecuties_logo*.svg" />
+        <MauiImage Update="Resources\Images\musclecuties_logo_light.png" Resize="True" BaseSize="360,200" />
+        <MauiImage Update="Resources\Images\musclecuties_logo_dark.png" Resize="True" BaseSize="360,200" />
+        <MauiImage Update="Resources\Images\musclecuties_logo_light_transparent.png" Resize="True" BaseSize="360,200" />
+        <MauiImage Update="Resources\Images\musclecuties_logo_dark_transparent.png" Resize="True" BaseSize="360,200" />
         <MauiFont Include="Resources\Fonts\*" />
         <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
+
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+        <ImageAsset Include="Assets.xcassets\**\*.*" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Maui" Version="13.0.0" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" Condition="'$(Configuration)' == 'Debug'" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\MuscleCuties.Core\MuscleCuties.Core.csproj" />
     </ItemGroup>
+
 </Project>

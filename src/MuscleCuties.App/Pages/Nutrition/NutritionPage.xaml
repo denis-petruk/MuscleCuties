@@ -3,203 +3,57 @@
     x:Class="MuscleCuties.App.Pages.Nutrition.NutritionPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels;assembly=MuscleCuties.Core"
+    xmlns:nutritionControls="clr-namespace:MuscleCuties.App.Controls.Nutrition"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
     x:DataType="vm:NutritionViewModel"
     Shell.NavBarIsVisible="False">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,56,20,32" Spacing="14">
-
-            <!-- ── Header ──────────────────────────────────────────── -->
-            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                    <Label
-                        Text="{Binding CurrentPhaseName, StringFormat='{0} phase'}"
-                        Style="{StaticResource EyebrowLabel}"
-                        CharacterSpacing="1.2" />
-                    <Label
-                        Text="Nutrition"
-                        Style="{StaticResource SubHeadline}" />
-                </VerticalStackLayout>
-                <Border
-                    Grid.Column="1"
-                    WidthRequest="40"
-                    HeightRequest="40"
-                    StrokeShape="RoundRectangle 20"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                    StrokeThickness="0"
-                    VerticalOptions="Center">
-                    <Path
-                        Data="M12 5v14M5 12h14"
-                        Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                        StrokeThickness="2.2"
-                        StrokeLineCap="Round"
-                        Aspect="Uniform"
-                        WidthRequest="18"
-                        HeightRequest="18"
-                        HorizontalOptions="Center"
-                        VerticalOptions="Center" />
-                </Border>
-            </Grid>
-
-            <!-- ── Phase focus card ────────────────────────────────── -->
-            <Border
-                BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseFollicularLight}, Dark={StaticResource CyclePhaseFollicularDark}}"
-                StrokeShape="RoundRectangle 22"
-                StrokeThickness="0"
-                Padding="18">
-                <VerticalStackLayout Spacing="6">
-                    <Label
-                        Text="PHASE FOCUS"
-                        TextColor="{AppThemeBinding Light={StaticResource CyclePhaseFollicularTextLight}, Dark={StaticResource CyclePhaseFollicularTextDark}}"
-                        FontSize="10"
-                        FontAttributes="Bold"
-                        CharacterSpacing="1.2"
-                        Opacity="0.75" />
-                    <Label
-                        Text="{Binding PhaseFocusCopy}"
-                        TextColor="{AppThemeBinding Light={StaticResource CyclePhaseFollicularTextLight}, Dark={StaticResource CyclePhaseFollicularTextDark}}"
-                        FontSize="14"
-                        LineBreakMode="WordWrap" />
-                </VerticalStackLayout>
-            </Border>
-
-            <!-- ── Today's balance card ────────────────────────────── -->
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="14">
-
-                    <Label
-                        Text="TODAY'S BALANCE"
-                        Style="{StaticResource EyebrowLabel}"
-                        CharacterSpacing="1.2" />
-
-                    <Grid ColumnDefinitions="*, Auto">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="20,56,20,32" Spacing="14">
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
                         <Label
-                            Text="{Binding CaloriesConsumed}"
-                            Style="{StaticResource AccentLabel}"
-                            FontSize="26"
-                            FontAttributes="Bold"
-                            VerticalOptions="Center" />
+                            Text="{Binding CurrentPhaseName, StringFormat='{0} phase'}"
+                            Style="{StaticResource EyebrowLabel}"
+                            CharacterSpacing="1.2" />
                         <Label
-                            Grid.Column="1"
-                            Text="{Binding CaloriesGoal}"
-                            Style="{StaticResource CaptionLabel}"
+                            Text="Nutrition"
+                            Style="{StaticResource SubHeadline}" />
+                    </VerticalStackLayout>
+
+                    <Border
+                        Grid.Column="1"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        StrokeShape="RoundRectangle 20"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                        StrokeThickness="0"
+                        VerticalOptions="Center">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleAddFoodPanelCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path
+                            Data="M12 5v14M5 12h14"
+                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                            StrokeThickness="2.2"
+                            StrokeLineCap="Round"
+                            Aspect="Uniform"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            HorizontalOptions="Center"
                             VerticalOptions="Center" />
-                    </Grid>
+                    </Border>
+                </Grid>
 
-                    <ProgressBar
-                        Progress="{Binding CalorieProgress}"
-                        ProgressColor="{StaticResource Primary}"
-                        BackgroundColor="{StaticResource Gray300}"
-                        HeightRequest="8" />
+                <nutritionControls:NutritionPhaseFocusCard />
+                <nutritionControls:NutritionBalanceCard />
+                <nutritionControls:AddMealPanel />
+                <nutritionControls:MealsList />
+            </VerticalStackLayout>
+        </ScrollView>
 
-                    <Grid ColumnDefinitions="*, *, *" ColumnSpacing="10">
-
-                        <VerticalStackLayout Grid.Column="0" Spacing="4">
-                            <Label Text="Protein" Style="{StaticResource CaptionLabel}" />
-                            <Label
-                                Text="{Binding ProteinText}"
-                                FontSize="13"
-                                FontAttributes="Bold"
-                                TextColor="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}" />
-                            <ProgressBar
-                                Progress="{Binding ProteinProgress}"
-                                ProgressColor="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}"
-                                BackgroundColor="{StaticResource Gray300}"
-                                HeightRequest="5" />
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Grid.Column="1" Spacing="4">
-                            <Label Text="Carbs" Style="{StaticResource CaptionLabel}" />
-                            <Label
-                                Text="{Binding CarbsText}"
-                                FontSize="13"
-                                FontAttributes="Bold"
-                                TextColor="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}" />
-                            <ProgressBar
-                                Progress="{Binding CarbsProgress}"
-                                ProgressColor="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}"
-                                BackgroundColor="{StaticResource Gray300}"
-                                HeightRequest="5" />
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Grid.Column="2" Spacing="4">
-                            <Label Text="Fat" Style="{StaticResource CaptionLabel}" />
-                            <Label
-                                Text="{Binding FatsText}"
-                                FontSize="13"
-                                FontAttributes="Bold"
-                                TextColor="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}" />
-                            <ProgressBar
-                                Progress="{Binding FatsProgress}"
-                                ProgressColor="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}"
-                                BackgroundColor="{StaticResource Gray300}"
-                                HeightRequest="5" />
-                        </VerticalStackLayout>
-
-                    </Grid>
-
-                </VerticalStackLayout>
-            </Border>
-
-            <!-- ── Meals section ───────────────────────────────────── -->
-            <Label
-                Text="MEALS"
-                Style="{StaticResource EyebrowLabel}"
-                CharacterSpacing="1.2"
-                Margin="4,6,4,0" />
-
-            <Border Style="{StaticResource CardPrimary}" Padding="4">
-                <CollectionView ItemsSource="{Binding Meals}">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="vm:MealItem">
-                            <VerticalStackLayout>
-                                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" Padding="12,14">
-
-                                    <Border
-                                        Grid.Column="0"
-                                        WidthRequest="52"
-                                        HeightRequest="44"
-                                        StrokeShape="RoundRectangle 12"
-                                        BackgroundColor="{StaticResource AccentSurface}"
-                                        StrokeThickness="0">
-                                        <Label
-                                            Text="{Binding Time}"
-                                            TextColor="{StaticResource Primary}"
-                                            FontSize="11"
-                                            FontAttributes="Bold"
-                                            HorizontalOptions="Center"
-                                            VerticalOptions="Center" />
-                                    </Border>
-
-                                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                        <Label
-                                            Text="{Binding MealType}"
-                                            TextColor="{StaticResource Primary}"
-                                            FontSize="10"
-                                            FontAttributes="Bold"
-                                            CharacterSpacing="1.0" />
-                                        <Label
-                                            Text="{Binding Name}"
-                                            Style="{StaticResource CardTitle}"
-                                            FontSize="15" />
-                                    </VerticalStackLayout>
-
-                                    <Label
-                                        Grid.Column="2"
-                                        Text="{Binding CaloriesText}"
-                                        Style="{StaticResource CaptionLabel}"
-                                        VerticalOptions="Center" />
-
-                                </Grid>
-                                <BoxView Margin="16,0" />
-                            </VerticalStackLayout>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </Border>
-
-        </VerticalStackLayout>
-    </ScrollView>
-
+        <nutritionControls:FoodSearchModal />
+        <nutritionControls:NutritionBreakdownModal />
+    </Grid>
 </ContentPage>

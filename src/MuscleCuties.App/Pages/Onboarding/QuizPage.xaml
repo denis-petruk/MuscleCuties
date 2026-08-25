@@ -3,7 +3,8 @@
     x:Name="QuizPageRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels;assembly=MuscleCuties.Core"
+    xmlns:quizModels="clr-namespace:MuscleCuties.Core.Models.UI.Quiz;assembly=MuscleCuties.Core"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Quiz;assembly=MuscleCuties.Core"
     x:Class="MuscleCuties.App.Pages.Onboarding.QuizPage"
     x:DataType="vm:QuizViewModel"
     Shell.NavBarIsVisible="False">
@@ -21,7 +22,7 @@
                     Grid.Column="0"
                     Progress="{Binding ProgressValue}"
                     ProgressColor="{StaticResource Primary}"
-                    BackgroundColor="{StaticResource Gray200}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                     HeightRequest="6"
                     VerticalOptions="Center" />
                 <Label
@@ -32,7 +33,7 @@
             </Grid>
 
             <Border
-                BackgroundColor="{StaticResource Secondary}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray900}}"
                 StrokeThickness="0"
                 StrokeShape="RoundRectangle 20"
                 Padding="12,4"
@@ -46,7 +47,7 @@
             </Border>
 
             <Label
-                Text="{Binding CurrentQuestion.Question}"
+                Text="{Binding CurrentQuestionText}"
                 Style="{StaticResource SubHeadline}"
                 IsVisible="{Binding HasQuestion}" />
 
@@ -82,7 +83,7 @@
                     BindableLayout.ItemsSource="{Binding CurrentAnswers}">
 
                     <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="vm:SelectableQuizAnswer">
+                        <DataTemplate x:DataType="quizModels:SelectableQuizAnswer">
 
                             <Border
                                 StrokeShape="RoundRectangle 18"
@@ -106,7 +107,7 @@
                                         TargetType="Border"
                                         Binding="{Binding IsSelected}"
                                         Value="True">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Secondary}" />
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray900}}" />
                                         <Setter Property="Stroke" Value="{StaticResource Primary}" />
                                         <Setter Property="StrokeThickness" Value="1.5" />
                                     </DataTrigger>
@@ -140,7 +141,7 @@
                                                 Binding="{Binding IsSelected}"
                                                 Value="False">
                                                 <Setter Property="BackgroundColor" Value="Transparent" />
-                                                <Setter Property="Stroke" Value="{StaticResource Gray400}" />
+                                                <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
                                             </DataTrigger>
                                         </Border.Triggers>
 
@@ -167,12 +168,22 @@
         <!-- ── Row 2 · Back + Next actions ──────────────────────────── -->
         <Grid
             Grid.Row="2"
+            RowDefinitions="Auto, Auto"
             ColumnDefinitions="Auto, *"
             ColumnSpacing="12"
             Padding="28,16,28,48"
             IsVisible="{Binding HasQuestion}">
 
+            <Label
+                Grid.Row="0"
+                Grid.ColumnSpan="2"
+                Text="{Binding ErrorMessage}"
+                Style="{StaticResource ErrorLabel}"
+                IsVisible="{Binding HasError}"
+                Margin="0,0,0,10" />
+
             <Border
+                Grid.Row="1"
                 Grid.Column="0"
                 Style="{StaticResource CardSecondary}"
                 IsVisible="{Binding IsFirstQuestion, Converter={StaticResource InvertedBoolConverter}}"
@@ -190,6 +201,7 @@
             </Border>
 
             <Button
+                Grid.Row="1"
                 Grid.Column="1"
                 Text="{Binding NextButtonText}"
                 Command="{Binding NextCommand}"

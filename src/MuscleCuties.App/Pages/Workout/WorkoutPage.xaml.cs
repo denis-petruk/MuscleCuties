@@ -1,4 +1,5 @@
-using MuscleCuties.Core.ViewModels;
+using MuscleCuties.App.Pages;
+using MuscleCuties.Core.ViewModels.Workout;
 
 namespace MuscleCuties.App.Pages.Workout;
 
@@ -10,9 +11,9 @@ public partial class WorkoutPage : ContentPage
         BindingContext = vm;
     }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
-        await ((WorkoutViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null);
+        this.LoadAfterFirstRender(() => ((WorkoutViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
     }
 }

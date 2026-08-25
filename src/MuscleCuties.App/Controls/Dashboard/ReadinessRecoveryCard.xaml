@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Dashboard.ReadinessRecoveryCard"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Dashboard;assembly=MuscleCuties.Core"
+    x:DataType="vm:DashboardViewModel">
+
+    <Border Style="{StaticResource CardPrimary}">
+        <VerticalStackLayout Spacing="14">
+            <Label
+                Text="READINESS &amp; RECOVERY"
+                Style="{StaticResource EyebrowLabel}"
+                CharacterSpacing="1.2" />
+
+            <Grid ColumnDefinitions="*, *" ColumnSpacing="16">
+                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center" Spacing="10">
+                    <Grid
+                        WidthRequest="88"
+                        HeightRequest="88"
+                        HorizontalOptions="Center">
+                        <Border
+                            StrokeShape="Ellipse"
+                            Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                            StrokeThickness="7"
+                            BackgroundColor="Transparent"
+                            WidthRequest="88"
+                            HeightRequest="88" />
+                        <Border
+                            StrokeShape="Ellipse"
+                            Stroke="{Binding ReadinessScore, Converter={StaticResource ReadinessScoreToColorConverter}}"
+                            StrokeThickness="7"
+                            BackgroundColor="Transparent"
+                            WidthRequest="88"
+                            HeightRequest="88" />
+                        <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center">
+                            <Label
+                                Text="{Binding ReadinessScore}"
+                                FontSize="22"
+                                FontAttributes="Bold"
+                                TextColor="{Binding ReadinessScore, Converter={StaticResource ReadinessScoreToColorConverter}}"
+                                HorizontalOptions="Center" />
+                            <Label
+                                Text="READY"
+                                FontSize="9"
+                                CharacterSpacing="0.5"
+                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
+                        <Label
+                            Text="Readiness"
+                            FontSize="13"
+                            FontAttributes="Bold"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                            HorizontalOptions="Center" />
+                        <Label
+                            Text="{Binding ReadinessLabel}"
+                            Style="{StaticResource CaptionLabel}"
+                            HorizontalOptions="Center"
+                            HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" Spacing="10">
+                    <Grid
+                        WidthRequest="88"
+                        HeightRequest="88"
+                        HorizontalOptions="Center">
+                        <Border
+                            StrokeShape="Ellipse"
+                            Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                            StrokeThickness="7"
+                            BackgroundColor="Transparent"
+                            WidthRequest="88"
+                            HeightRequest="88" />
+                        <Border
+                            StrokeShape="Ellipse"
+                            Stroke="{Binding RecoveryScore, Converter={StaticResource RecoveryScoreToColorConverter}}"
+                            StrokeThickness="7"
+                            BackgroundColor="Transparent"
+                            WidthRequest="88"
+                            HeightRequest="88" />
+                        <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center">
+                            <Label
+                                Text="{Binding RecoveryScore}"
+                                FontSize="22"
+                                FontAttributes="Bold"
+                                TextColor="{Binding RecoveryScore, Converter={StaticResource RecoveryScoreToColorConverter}}"
+                                HorizontalOptions="Center" />
+                            <Label
+                                Text="RECOV"
+                                FontSize="9"
+                                CharacterSpacing="0.5"
+                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
+                        <Label
+                            Text="Recovery"
+                            FontSize="13"
+                            FontAttributes="Bold"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                            HorizontalOptions="Center" />
+                        <Label
+                            Text="{Binding RecoveryLabel}"
+                            Style="{StaticResource CaptionLabel}"
+                            HorizontalOptions="Center"
+                            HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Grid>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

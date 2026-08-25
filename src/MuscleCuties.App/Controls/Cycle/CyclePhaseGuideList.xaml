@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Cycle.CyclePhaseGuideList"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:cycleModels="clr-namespace:MuscleCuties.Core.Models.UI.Cycle;assembly=MuscleCuties.Core"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Cycle;assembly=MuscleCuties.Core"
+    x:DataType="vm:CycleViewModel">
+
+    <VerticalStackLayout Spacing="14">
+        <Label
+            Text="PHASES"
+            Style="{StaticResource EyebrowLabel}"
+            CharacterSpacing="1.2"
+            Margin="4,6,4,0" />
+
+        <CollectionView ItemsSource="{Binding Phases}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="cycleModels:PhaseItem">
+                    <Border
+                        BackgroundColor="{Binding BackgroundColor}"
+                        StrokeShape="RoundRectangle 18"
+                        StrokeThickness="0"
+                        Padding="16,14"
+                        Margin="0,0,0,10">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding BindingContext.OpenPhaseDetailsCommand, Source={x:Reference Root}}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14">
+                            <Border
+                                Grid.Column="0"
+                                WidthRequest="36"
+                                HeightRequest="36"
+                                StrokeShape="RoundRectangle 18"
+                                BackgroundColor="{Binding BackgroundColor}"
+                                StrokeThickness="0"
+                                VerticalOptions="Center">
+                                <BoxView
+                                    WidthRequest="14"
+                                    HeightRequest="14"
+                                    CornerRadius="7"
+                                    BackgroundColor="{Binding TextColor}"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
+                            </Border>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label
+                                    Text="{Binding Name}"
+                                    TextColor="{Binding TextColor}"
+                                    FontSize="15"
+                                    FontAttributes="Bold" />
+                                <Label
+                                    Text="{Binding Description}"
+                                    TextColor="{Binding TextColor}"
+                                    FontSize="12"
+                                    Opacity="0.75" />
+                            </VerticalStackLayout>
+
+                            <Label
+                                Grid.Column="2"
+                                Text="›"
+                                TextColor="{Binding TextColor}"
+                                FontSize="22"
+                                VerticalOptions="Center"
+                                Opacity="0.6" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </VerticalStackLayout>
+</ContentView>

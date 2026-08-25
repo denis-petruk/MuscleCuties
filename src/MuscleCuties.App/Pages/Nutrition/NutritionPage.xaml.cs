@@ -1,4 +1,5 @@
-using MuscleCuties.Core.ViewModels;
+using MuscleCuties.App.Pages;
+using MuscleCuties.Core.ViewModels.Nutrition;
 
 namespace MuscleCuties.App.Pages.Nutrition;
 
@@ -10,9 +11,9 @@ public partial class NutritionPage : ContentPage
         BindingContext = vm;
     }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
-        await ((NutritionViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null);
+        this.LoadAfterFirstRender(() => ((NutritionViewModel)BindingContext).RefreshCommand.ExecuteAsync(null));
     }
 }

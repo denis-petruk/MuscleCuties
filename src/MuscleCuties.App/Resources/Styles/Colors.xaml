@@ -24,8 +24,11 @@
     <Color x:Key="AccentSurface">#FFF1F6</Color>
     <Color x:Key="AccentSurfaceDark">#3A2931</Color>
 
-    <!-- ── Input surface (InputContainer background = Gray200) ── -->
-    <Color x:Key="InputSurface">#F8EEF4</Color>
+    <!-- ── Input surfaces ─────────────────────────────────────── -->
+    <Color x:Key="InputSurface">#FFFCFE</Color>
+    <Color x:Key="InputSurfaceDark">#33242B</Color>
+    <Color x:Key="InputStroke">#EBD3DE</Color>
+    <Color x:Key="InputStrokeDark">#5A424C</Color>
 
     <!-- ── Text ───────────────────────────────────────────────── -->
     <Color x:Key="TextPrimary">#2B1D24</Color>
@@ -47,6 +50,7 @@
     <Color x:Key="Gray400">#D7B8C5</Color>
     <Color x:Key="Gray500">#AE8D9B</Color>
     <Color x:Key="Gray600">#8B6C79</Color>
+    <Color x:Key="Gray800">#5A424C</Color>
     <Color x:Key="Gray900">#4C3942</Color>
     <Color x:Key="Gray950">#2B1D24</Color>
 
@@ -100,6 +104,12 @@
     <!-- ── Nutrition macros ────────────────────────────────────── -->
     <Color x:Key="WaterLight">#4F8FC8</Color>
     <Color x:Key="WaterDark">#7DB5E1</Color>
+    <Color x:Key="WaterSurfaceLight">#EAF5FF</Color>
+    <Color x:Key="WaterSurfaceDark">#22364A</Color>
+    <Color x:Key="SleepLight">#745FA8</Color>
+    <Color x:Key="SleepDark">#C8B8F4</Color>
+    <Color x:Key="SleepSurfaceLight">#F1ECFF</Color>
+    <Color x:Key="SleepSurfaceDark">#342E4A</Color>
     <Color x:Key="ProteinLight">#A65AC8</Color>
     <Color x:Key="ProteinDark">#C792E6</Color>
     <Color x:Key="CarbsLight">#E3A13B</Color>
@@ -149,6 +159,8 @@
 
     <SolidColorBrush x:Key="WaterLightBrush"   Color="{StaticResource WaterLight}"/>
     <SolidColorBrush x:Key="WaterDarkBrush"    Color="{StaticResource WaterDark}"/>
+    <SolidColorBrush x:Key="SleepLightBrush"   Color="{StaticResource SleepLight}"/>
+    <SolidColorBrush x:Key="SleepDarkBrush"    Color="{StaticResource SleepDark}"/>
     <SolidColorBrush x:Key="ProteinLightBrush" Color="{StaticResource ProteinLight}"/>
     <SolidColorBrush x:Key="ProteinDarkBrush"  Color="{StaticResource ProteinDark}"/>
     <SolidColorBrush x:Key="CarbsLightBrush"   Color="{StaticResource CarbsLight}"/>

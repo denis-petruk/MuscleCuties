@@ -2,7 +2,9 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels;assembly=MuscleCuties.Core"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
+    xmlns:workoutControls="clr-namespace:MuscleCuties.App.Controls.Workout"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
     x:Class="MuscleCuties.App.Pages.Onboarding.ProfileSetupPage"
     x:DataType="vm:ProfileSetupViewModel"
     Shell.NavBarIsVisible="False">
@@ -11,6 +13,11 @@
             Padding="28,48,28,32"
             Spacing="0"
             VerticalOptions="Center">
+
+            <sharedControls:ThemeAwareBrandLogoImage
+                Style="{StaticResource BrandLogoImage}"
+                SemanticProperties.Description="MuscleCuties logo"
+                Margin="0,0,0,22" />
 
             <Label
                 Text="Tell us about yourself"
@@ -28,115 +35,155 @@
             <Border Style="{StaticResource CardPrimary}" Padding="24">
                 <VerticalStackLayout Spacing="14">
 
-                    <Border Style="{StaticResource InputContainer}">
-                        <Entry
-                            Placeholder="Your name"
-                            Text="{Binding Name}"
-                            MaxLength="50"
-                            ReturnType="Next" />
-                    </Border>
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Display name" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Used for greetings and your profile." Style="{StaticResource FormFieldHint}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Entry
+                                Placeholder="Your name"
+                                Text="{Binding Name}"
+                                MaxLength="50"
+                                ReturnType="Next" />
+                        </Border>
+                    </VerticalStackLayout>
 
-                    <Border Style="{StaticResource InputContainer}">
-                        <DatePicker
-                            Date="{Binding BirthDate}"
-                            MinimumDate="{Binding MinBirthDate}"
-                            MaximumDate="{Binding MaxBirthDate}"
-                            Format="MMMM dd, yyyy" />
-                    </Border>
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Birthday" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Helps personalize age-based plan estimates." Style="{StaticResource FormFieldHint}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <DatePicker
+                                Date="{Binding BirthDate}"
+                                MinimumDate="{Binding MinBirthDate}"
+                                MaximumDate="{Binding MaxBirthDate}"
+                                Format="MMMM dd, yyyy" />
+                        </Border>
+                    </VerticalStackLayout>
 
                     <Border Style="{StaticResource CardSecondary}" Padding="12,10">
-                        <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
-                            <Label
-                                Text="Imperial"
-                                Style="{StaticResource BodyLabel}"
-                                VerticalOptions="Center" />
-                            <Switch
-                                IsToggled="{Binding UseMetricSystem}"
-                                OnColor="{StaticResource Primary}"
-                                ThumbColor="{AppThemeBinding Light={StaticResource White},
-                                                             Dark={StaticResource Gray200}}" />
-                            <Label
-                                Text="Metric"
-                                Style="{StaticResource BodyLabel}"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
+                        <VerticalStackLayout Spacing="8">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Unit system" Style="{StaticResource FormFieldLabel}" />
+                                <Label Text="Sets whether the app starts with kg and cm or lb and inches." Style="{StaticResource FormFieldHint}" />
+                            </VerticalStackLayout>
+                            <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+                                <Label
+                                    Text="Imperial"
+                                    Style="{StaticResource BodyLabel}"
+                                    VerticalOptions="Center" />
+                                <Switch
+                                    IsToggled="{Binding UseMetricSystem}"
+                                    OnColor="{StaticResource Primary}"
+                                    ThumbColor="{AppThemeBinding Light={StaticResource White},
+                                                                 Dark={StaticResource Gray200}}" />
+                                <Label
+                                    Text="Metric"
+                                    Style="{StaticResource BodyLabel}"
+                                    VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
                     </Border>
 
-                    <Grid
-                        ColumnDefinitions="*, Auto"
-                        ColumnSpacing="10"
+                    <VerticalStackLayout
+                        Spacing="5"
                         IsVisible="{Binding UseMetricSystem}">
-                        <Border Grid.Column="0" Style="{StaticResource InputContainer}">
-                            <Picker
-                                Title="Select height"
-                                ItemsSource="{Binding MetricHeightOptions}"
-                                SelectedItem="{Binding SelectedHeightCm}" />
-                        </Border>
-                        <Label
-                            Grid.Column="1"
-                            Text="cm"
-                            Style="{StaticResource MutedLabel}"
-                            VerticalOptions="Center" />
-                    </Grid>
+                        <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Your current height, used for plan estimates." Style="{StaticResource FormFieldHint}" />
+                        <Grid
+                            ColumnDefinitions="*, Auto"
+                            ColumnSpacing="10">
+                            <Border Grid.Column="0" Style="{StaticResource InputContainer}">
+                                <Picker
+                                    Title="Select height"
+                                    ItemsSource="{Binding MetricHeightOptions}"
+                                    SelectedItem="{Binding SelectedHeightCm}" />
+                            </Border>
+                            <Label
+                                Grid.Column="1"
+                                Text="cm"
+                                Style="{StaticResource MutedLabel}"
+                                VerticalOptions="Center" />
+                        </Grid>
+                    </VerticalStackLayout>
 
-                    <Grid
-                        ColumnDefinitions="*, Auto, *, Auto"
-                        ColumnSpacing="8"
+                    <VerticalStackLayout
+                        Spacing="5"
                         IsVisible="{Binding UseMetricSystem,
                                    Converter={StaticResource InvertedBoolConverter}}">
-                        <Border Grid.Column="0" Style="{StaticResource InputContainer}">
-                            <Picker
-                                Title="Select"
-                                ItemsSource="{Binding FeetOptions}"
-                                SelectedItem="{Binding SelectedFeet}" />
-                        </Border>
-                        <Label
-                            Grid.Column="1"
-                            Text="ft"
-                            Style="{StaticResource MutedLabel}"
-                            VerticalOptions="Center" />
-                        <Border Grid.Column="2" Style="{StaticResource InputContainer}">
-                            <Picker
-                                Title="Height"
-                                ItemsSource="{Binding InchesOptions}"
-                                SelectedItem="{Binding SelectedInches}" />
-                        </Border>
-                        <Label
-                            Grid.Column="3"
-                            Text="in"
-                            Style="{StaticResource MutedLabel}"
-                            VerticalOptions="Center" />
-                    </Grid>
+                        <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Feet and inches for your current height." Style="{StaticResource FormFieldHint}" />
+                        <Grid
+                            ColumnDefinitions="*, Auto, *, Auto"
+                            ColumnSpacing="8">
+                            <Border Grid.Column="0" Style="{StaticResource InputContainer}">
+                                <Picker
+                                    Title="Feet"
+                                    ItemsSource="{Binding FeetOptions}"
+                                    SelectedItem="{Binding SelectedFeet}" />
+                            </Border>
+                            <Label
+                                Grid.Column="1"
+                                Text="ft"
+                                Style="{StaticResource MutedLabel}"
+                                VerticalOptions="Center" />
+                            <Border Grid.Column="2" Style="{StaticResource InputContainer}">
+                                <Picker
+                                    Title="Inches"
+                                    ItemsSource="{Binding InchesOptions}"
+                                    SelectedItem="{Binding SelectedInches}" />
+                            </Border>
+                            <Label
+                                Grid.Column="3"
+                                Text="in"
+                                Style="{StaticResource MutedLabel}"
+                                VerticalOptions="Center" />
+                        </Grid>
+                    </VerticalStackLayout>
 
-                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Weight" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Your current body weight for nutrition and workout planning." Style="{StaticResource FormFieldHint}" />
+                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
 
-                        <Border
-                            Grid.Column="0"
-                            Style="{StaticResource InputContainer}"
-                            IsVisible="{Binding UseMetricSystem}">
-                            <Picker
-                                Title="Select weight"
-                                ItemsSource="{Binding MetricWeightOptions}"
-                                SelectedItem="{Binding SelectedWeightKg}" />
-                        </Border>
+                            <Border
+                                Grid.Column="0"
+                                Style="{StaticResource InputContainer}"
+                                IsVisible="{Binding UseMetricSystem}">
+                                <Picker
+                                    Title="Select weight"
+                                    ItemsSource="{Binding MetricWeightOptions}"
+                                    SelectedItem="{Binding SelectedWeightKg}" />
+                            </Border>
 
-                        <Border
-                            Grid.Column="0"
-                            Style="{StaticResource InputContainer}"
-                            IsVisible="{Binding UseMetricSystem,
-                                       Converter={StaticResource InvertedBoolConverter}}">
-                            <Picker
-                                Title="Select weight"
-                                ItemsSource="{Binding ImperialWeightOptions}"
-                                SelectedItem="{Binding SelectedWeightLbs}" />
-                        </Border>
+                            <Border
+                                Grid.Column="0"
+                                Style="{StaticResource InputContainer}"
+                                IsVisible="{Binding UseMetricSystem,
+                                           Converter={StaticResource InvertedBoolConverter}}">
+                                <Picker
+                                    Title="Select weight"
+                                    ItemsSource="{Binding ImperialWeightOptions}"
+                                    SelectedItem="{Binding SelectedWeightLbs}" />
+                            </Border>
 
-                        <Label
-                            Grid.Column="1"
-                            Text="{Binding WeightUnit}"
-                            Style="{StaticResource MutedLabel}"
-                            VerticalOptions="Center" />
-                    </Grid>
+                            <Label
+                                Grid.Column="1"
+                                Text="{Binding WeightUnit}"
+                                Style="{StaticResource MutedLabel}"
+                                VerticalOptions="Center" />
+                        </Grid>
+                    </VerticalStackLayout>
+
+                    <Border Style="{StaticResource CardSecondary}" Padding="14">
+                        <VerticalStackLayout Spacing="10">
+                            <Label
+                                Text="WORKOUT PREFERENCES"
+                                Style="{StaticResource EyebrowLabel}" />
+                            <Label
+                                Text="Pick the activities you want plans to include later."
+                                Style="{StaticResource FormFieldHint}" />
+                            <workoutControls:WorkoutActivityPreferencePicker />
+                        </VerticalStackLayout>
+                    </Border>
 
                     <Label
                         Text="{Binding ErrorMessage}"
