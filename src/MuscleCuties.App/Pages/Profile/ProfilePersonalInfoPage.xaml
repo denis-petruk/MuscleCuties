@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MuscleCuties.App.Pages.Profile.ProfilePersonalInfoPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
+    x:DataType="vm:ProfilePersonalInfoViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,52,20,32" Spacing="16">
+            <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
+                <Button
+                    Text="‹"
+                    Style="{StaticResource ButtonLink}"
+                    FontSize="28"
+                    Padding="0"
+                    Command="{Binding BackCommand}" />
+                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                    <Label Text="Personal Info" Style="{StaticResource SubHeadline}" />
+                    <Label Text="Account, body metrics, and cycle logging" Style="{StaticResource CaptionLabel}" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="ACCOUNT" Style="{StaticResource EyebrowLabel}" />
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Display name" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Shown in greetings and profile areas." Style="{StaticResource FormFieldHint}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Entry Placeholder="Name" Text="{Binding Name}" MaxLength="50" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Email" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Used for your account and optional feedback replies." Style="{StaticResource FormFieldHint}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Entry Placeholder="Email address" Text="{Binding Email}" Keyboard="Email" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Birthday" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Helps estimate age-based nutrition and training settings." Style="{StaticResource FormFieldHint}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <DatePicker
+                                Date="{Binding BirthDate}"
+                                MinimumDate="{Binding MinBirthDate}"
+                                MaximumDate="{Binding MaxBirthDate}"
+                                Format="MMMM dd, yyyy" />
+                        </Border>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="BODY METRICS" Style="{StaticResource EyebrowLabel}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="5">
+                            <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
+                            <Label Text="Current height in centimeters." Style="{StaticResource FormFieldHint}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="cm" Text="{Binding HeightCm}" Keyboard="Numeric" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="5">
+                            <Label Text="Weight" Style="{StaticResource FormFieldLabel}" />
+                            <Label Text="Current body weight in kilograms." Style="{StaticResource FormFieldHint}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="kg" Text="{Binding WeightKg}" Keyboard="Numeric" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="CYCLE LOGGING" Style="{StaticResource EyebrowLabel}" />
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Logging method" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Choose how cycle phase changes will be recorded. Flo and lunar are placeholders for now." Style="{StaticResource FormFieldHint}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Picker
+                                Title="Logging method"
+                                ItemsSource="{Binding CycleLoggingModeOptions}"
+                                ItemDisplayBinding="{Binding Label}"
+                                SelectedItem="{Binding SelectedCycleLoggingModeOption}" />
+                        </Border>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <Label
+                Text="{Binding StatusMessage}"
+                Style="{StaticResource CaptionLabel}"
+                IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Button Text="Save personal info" Command="{Binding SaveCommand}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

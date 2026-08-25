@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Nutrition.FoodSearchModal"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:nutritionModels="clr-namespace:MuscleCuties.Core.Models.UI.Nutrition;assembly=MuscleCuties.Core"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
+    x:DataType="vm:NutritionViewModel"
+    IsVisible="{Binding HasFoodSearchResults}">
+
+    <Grid
+        BackgroundColor="#802B1D24"
+        Padding="20,56,20,36">
+        <Border
+            Style="{StaticResource CardPrimary}"
+            Padding="0"
+            Margin="0"
+            MaximumHeightRequest="640"
+            VerticalOptions="Center">
+
+            <Grid RowDefinitions="Auto, *, Auto">
+                <VerticalStackLayout
+                    Grid.Row="0"
+                    Padding="20,18,20,14"
+                    Spacing="12">
+
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Spacing="6">
+                            <Border
+                                BackgroundColor="{StaticResource Secondary}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 20"
+                                Padding="12,4"
+                                HorizontalOptions="Start">
+                                <Label
+                                    Text="{Binding FoodSearchResultsTitle}"
+                                    Style="{StaticResource EyebrowLabel}"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                            </Border>
+
+                            <Label
+                                Text="Choose food"
+                                Style="{StaticResource SubHeadline}"
+                                FontSize="24" />
+                            <Label
+                                Text="Tap the exact brand, preparation, or serving label that matches what you ate."
+                                Style="{StaticResource FormFieldHint}" />
+                        </VerticalStackLayout>
+
+                        <Border
+                            Grid.Column="1"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            StrokeShape="RoundRectangle 21"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
+                            StrokeThickness="0"
+                            VerticalOptions="Start">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding DismissFoodSearchResultsCommand}" />
+                            </Border.GestureRecognizers>
+                            <Path
+                                Data="M6 6L18 18M18 6L6 18"
+                                Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                StrokeThickness="2.2"
+                                StrokeLineCap="Round"
+                                Aspect="Uniform"
+                                WidthRequest="18"
+                                HeightRequest="18"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                        </Border>
+                    </Grid>
+
+                    <BoxView />
+                </VerticalStackLayout>
+
+                <CollectionView
+                    Grid.Row="1"
+                    ItemsSource="{Binding FoodSearchResults}"
+                    SelectionMode="None"
+                    VerticalScrollBarVisibility="Always"
+                    Margin="20,0,20,8">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="nutritionModels:FoodSearchResultItem">
+                            <Border
+                                StrokeShape="RoundRectangle 18"
+                                StrokeThickness="0"
+                                Padding="18,14"
+                                Margin="0,0,0,12"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
+                                <Border.Shadow>
+                                    <Shadow Brush="#2B1D24" Offset="0,3" Radius="12" Opacity="0.07" />
+                                </Border.Shadow>
+
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding BindingContext.SelectFoodResultCommand, Source={x:Reference Root}}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+
+                                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                        <Label
+                                            Text="{Binding Name}"
+                                            Style="{StaticResource AccentLabel}"
+                                            FontSize="15" />
+                                        <Label
+                                            Text="{Binding SourceSummary}"
+                                            Style="{StaticResource CaptionLabel}" />
+
+                                        <Border
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 14"
+                                            Padding="12,7"
+                                            Margin="0,4,0,0"
+                                            HorizontalOptions="Fill">
+                                            <Label
+                                                Text="{Binding NutritionSummary}"
+                                                Style="{StaticResource CaptionLabel}"
+                                                TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                        </Border>
+                                    </VerticalStackLayout>
+
+                                    <Border
+                                        Grid.Column="1"
+                                        WidthRequest="28"
+                                        HeightRequest="28"
+                                        StrokeShape="RoundRectangle 14"
+                                        BackgroundColor="{StaticResource Primary}"
+                                        Stroke="{StaticResource Primary}"
+                                        VerticalOptions="Center">
+                                        <Path
+                                            Data="M12 5v14M5 12h14"
+                                            Stroke="{StaticResource White}"
+                                            StrokeThickness="2.2"
+                                            StrokeLineCap="Round"
+                                            Aspect="Uniform"
+                                            WidthRequest="16"
+                                            HeightRequest="16"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Grid
+                    Grid.Row="2"
+                    Padding="20,4,20,20"
+                    IsVisible="{Binding ShowBrowseMoreFoods}">
+                    <Button
+                        Text="{Binding BrowseMoreFoodsButtonText}"
+                        Command="{Binding BrowseMoreFoodsCommand}"
+                        HeightRequest="52"
+                        CornerRadius="18" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentView>

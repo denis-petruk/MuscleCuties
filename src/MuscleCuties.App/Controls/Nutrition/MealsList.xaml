@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Nutrition.MealsList"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:nutritionModels="clr-namespace:MuscleCuties.Core.Models.UI.Nutrition;assembly=MuscleCuties.Core"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
+    x:DataType="vm:NutritionViewModel">
+
+    <VerticalStackLayout Spacing="14">
+        <Label
+            Text="MEALS"
+            Style="{StaticResource EyebrowLabel}"
+            CharacterSpacing="1.2"
+            Margin="4,6,4,0" />
+
+        <Border
+            Style="{StaticResource CardPrimary}"
+            Padding="16"
+            IsVisible="{Binding HasNoMeals}">
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="14">
+                <VerticalStackLayout Grid.Column="0" Spacing="4" VerticalOptions="Center">
+                    <Label
+                        Text="No meals logged yet"
+                        Style="{StaticResource CardTitle}"
+                        FontSize="15" />
+                    <Label
+                        Text="Breakfast, lunch, dinner, snack"
+                        Style="{StaticResource CaptionLabel}" />
+                </VerticalStackLayout>
+
+                <Button
+                    Grid.Column="1"
+                    Text="Log Meal"
+                    Command="{Binding OpenAddFoodPanelCommand}"
+                    WidthRequest="124"
+                    HeightRequest="48"
+                    CornerRadius="16"
+                    VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <Border
+            Style="{StaticResource CardPrimary}"
+            Padding="4"
+            IsVisible="{Binding HasMeals}">
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Meals}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="nutritionModels:MealItem">
+                        <VerticalStackLayout>
+                            <VerticalStackLayout.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding BindingContext.OpenMealBreakdownCommand, Source={x:Reference Root}}"
+                                    CommandParameter="{Binding .}" />
+                            </VerticalStackLayout.GestureRecognizers>
+
+                            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" Padding="12,14">
+                                <Border
+                                    Grid.Column="0"
+                                    WidthRequest="52"
+                                    HeightRequest="44"
+                                    StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource AccentSurface}"
+                                    StrokeThickness="0">
+                                    <Label
+                                        Text="{Binding Time}"
+                                        TextColor="{StaticResource Primary}"
+                                        FontSize="11"
+                                        FontAttributes="Bold"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center" />
+                                </Border>
+
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label
+                                        Text="{Binding MealType}"
+                                        TextColor="{StaticResource Primary}"
+                                        FontSize="10"
+                                        FontAttributes="Bold"
+                                        CharacterSpacing="1.0" />
+                                    <Label
+                                        Text="{Binding Name}"
+                                        Style="{StaticResource CardTitle}"
+                                        FontSize="15" />
+                                    <Label
+                                        Text="{Binding MacrosText}"
+                                        Style="{StaticResource CaptionLabel}" />
+                                    <Label
+                                        Text="{Binding FiberText}"
+                                        Style="{StaticResource CaptionLabel}" />
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout
+                                    Grid.Column="2"
+                                    Spacing="2"
+                                    VerticalOptions="Center"
+                                    HorizontalOptions="End">
+                                    <Label
+                                        Text="{Binding CaloriesText}"
+                                        Style="{StaticResource CaptionLabel}"
+                                        HorizontalTextAlignment="End" />
+                                    <Label
+                                        Text="View"
+                                        Style="{StaticResource AccentLabel}"
+                                        FontSize="12"
+                                        HorizontalTextAlignment="End" />
+                                    <Button
+                                        Text="Edit"
+                                        Style="{StaticResource ButtonLink}"
+                                        Command="{Binding BindingContext.EditMealCommand, Source={x:Reference Root}}"
+                                        CommandParameter="{Binding .}"
+                                        WidthRequest="54"
+                                        HeightRequest="32"
+                                        MinimumHeightRequest="32"
+                                        Padding="0"
+                                        FontSize="12" />
+                                </VerticalStackLayout>
+                            </Grid>
+                            <BoxView Margin="16,0" />
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </Border>
+    </VerticalStackLayout>
+</ContentView>

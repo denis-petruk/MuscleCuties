@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MuscleCuties.App.Pages.Profile.ProfileUnitsDisplayPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
+    x:DataType="vm:ProfileUnitsDisplayViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,52,20,32" Spacing="16">
+            <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
+                <Button
+                    Text="‹"
+                    Style="{StaticResource ButtonLink}"
+                    FontSize="28"
+                    Padding="0"
+                    Command="{Binding BackCommand}" />
+                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                    <Label Text="Units &amp; Display" Style="{StaticResource SubHeadline}" />
+                    <Label Text="Set the default measuring system for the app" Style="{StaticResource CaptionLabel}" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="DEFAULT SYSTEM" Style="{StaticResource EyebrowLabel}" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <VerticalStackLayout Spacing="3">
+                            <Label Text="{Binding UnitSystemText}" Style="{StaticResource CardTitle}" />
+                            <Label Text="Metric uses kg, g, cm, and km. Imperial uses lb, oz, in, and mi." Style="{StaticResource CaptionLabel}" />
+                        </VerticalStackLayout>
+                        <Switch
+                            Grid.Column="1"
+                            IsToggled="{Binding UseMetricSystem}"
+                            OnColor="{StaticResource Primary}"
+                            ThumbColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="UNIT DEFAULTS" Style="{StaticResource EyebrowLabel}" />
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                        <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
+                            <Label Text="Body weight" Style="{StaticResource FormFieldLabel}" />
+                            <Label Text="Used for profile weight and workout loads." Style="{StaticResource FormFieldHint}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="kg or lb" Text="{Binding BodyWeightUnit}" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
+                            <Label Text="Food mass" Style="{StaticResource FormFieldLabel}" />
+                            <Label Text="Default unit when logging ingredient amounts." Style="{StaticResource FormFieldHint}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="g or oz" Text="{Binding FoodMassUnit}" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
+                            <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
+                            <Label Text="Used for body metrics and plan estimates." Style="{StaticResource FormFieldHint}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="cm or in" Text="{Binding HeightUnit}" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
+                            <Label Text="Distance" Style="{StaticResource FormFieldLabel}" />
+                            <Label Text="Used for cardio and walking-style sessions." Style="{StaticResource FormFieldHint}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="km or mi" Text="{Binding DistanceUnit}" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Spacing="5">
+                            <Label Text="Energy" Style="{StaticResource FormFieldLabel}" />
+                            <Label Text="Used for nutrition totals and daily targets." Style="{StaticResource FormFieldHint}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="kcal" Text="{Binding EnergyUnit}" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Label
+                Text="{Binding StatusMessage}"
+                Style="{StaticResource CaptionLabel}"
+                IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Button Text="Save units" Command="{Binding SaveCommand}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Shared.MacroProgressGrid"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <Grid ColumnDefinitions="*, *, *" ColumnSpacing="10">
+        <VerticalStackLayout Grid.Column="0" Spacing="4">
+            <Label Text="Protein" Style="{StaticResource CaptionLabel}" />
+            <Label
+                Text="{Binding ProteinText, Source={x:Reference Root}}"
+                FontSize="13"
+                FontAttributes="Bold"
+                TextColor="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}" />
+            <ProgressBar
+                Progress="{Binding ProteinProgress, Source={x:Reference Root}}"
+                ProgressColor="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}"
+                BackgroundColor="{StaticResource Gray300}"
+                HeightRequest="5" />
+        </VerticalStackLayout>
+
+        <VerticalStackLayout Grid.Column="1" Spacing="4">
+            <Label Text="Carbs" Style="{StaticResource CaptionLabel}" />
+            <Label
+                Text="{Binding CarbsText, Source={x:Reference Root}}"
+                FontSize="13"
+                FontAttributes="Bold"
+                TextColor="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}" />
+            <ProgressBar
+                Progress="{Binding CarbsProgress, Source={x:Reference Root}}"
+                ProgressColor="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}"
+                BackgroundColor="{StaticResource Gray300}"
+                HeightRequest="5" />
+        </VerticalStackLayout>
+
+        <VerticalStackLayout Grid.Column="2" Spacing="4">
+            <Label Text="Fat" Style="{StaticResource CaptionLabel}" />
+            <Label
+                Text="{Binding FatsText, Source={x:Reference Root}}"
+                FontSize="13"
+                FontAttributes="Bold"
+                TextColor="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}" />
+            <ProgressBar
+                Progress="{Binding FatsProgress, Source={x:Reference Root}}"
+                ProgressColor="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}"
+                BackgroundColor="{StaticResource Gray300}"
+                HeightRequest="5" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentView>

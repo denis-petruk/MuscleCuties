@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Dashboard.DashboardNutritionCard"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Dashboard;assembly=MuscleCuties.Core"
+    x:DataType="vm:DashboardViewModel">
+
+    <Border Style="{StaticResource CardPrimary}">
+        <Border.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding OpenNutritionCommand}" />
+        </Border.GestureRecognizers>
+
+        <VerticalStackLayout Spacing="14">
+            <Grid ColumnDefinitions="*, Auto">
+                <VerticalStackLayout Spacing="3">
+                    <Label
+                        Text="NUTRITION"
+                        Style="{StaticResource EyebrowLabel}"
+                        CharacterSpacing="1.2" />
+                    <Label
+                        Text="Today's nutrition balance"
+                        Style="{StaticResource SectionTitle}"
+                        FontSize="20" />
+                </VerticalStackLayout>
+                <Label
+                    Grid.Column="1"
+                    Text="View all"
+                    Style="{StaticResource CaptionLabel}"
+                    TextColor="{StaticResource Primary}"
+                    VerticalOptions="End" />
+            </Grid>
+
+            <VerticalStackLayout Spacing="6">
+                <Grid ColumnDefinitions="*, Auto">
+                    <Label
+                        Text="{Binding CaloriesConsumed}"
+                        TextColor="{StaticResource Primary}"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center" />
+                    <Label
+                        Grid.Column="1"
+                        Text="{Binding CaloriesGoal}"
+                        Style="{StaticResource CaptionLabel}"
+                        VerticalOptions="Center" />
+                </Grid>
+                <ProgressBar
+                    Progress="{Binding CaloriesProgress}"
+                    ProgressColor="{StaticResource Primary}"
+                    BackgroundColor="{StaticResource Gray300}"
+                    HeightRequest="8" />
+            </VerticalStackLayout>
+
+            <sharedControls:MacroProgressGrid
+                ProteinText="{Binding ProteinText}"
+                ProteinProgress="{Binding ProteinProgress}"
+                CarbsText="{Binding CarbsText}"
+                CarbsProgress="{Binding CarbsProgress}"
+                FatsText="{Binding FatsText}"
+                FatsProgress="{Binding FatsProgress}" />
+        </VerticalStackLayout>
+    </Border>
+</ContentView>
