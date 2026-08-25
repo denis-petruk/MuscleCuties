@@ -1,4 +1,4 @@
-using MuscleCuties.Core.ViewModels;
+using MuscleCuties.Core.ViewModels.Profile;
 
 namespace MuscleCuties.App.Pages.Onboarding;
 

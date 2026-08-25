@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Workout.WorkoutActivityPreferencePicker"
+    x:Name="PreferencePickerRoot"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core">
+
+    <VerticalStackLayout
+        Spacing="8"
+        BindableLayout.ItemsSource="{Binding WorkoutActivityOptions}">
+        <BindableLayout.ItemTemplate>
+            <DataTemplate x:DataType="workoutModels:WorkoutActivityOptionItem">
+                <Border
+                    StrokeShape="RoundRectangle 16"
+                    StrokeThickness="1"
+                    Padding="14"
+                    MinimumHeightRequest="78"
+                    HorizontalOptions="Fill"
+                    Margin="0,0,0,2">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                            <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
+                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer
+                            Command="{Binding Source={x:Reference PreferencePickerRoot}, Path=BindingContext.ToggleWorkoutActivityCommand}"
+                            CommandParameter="{Binding .}" />
+                    </Border.GestureRecognizers>
+
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4" VerticalOptions="Center">
+                            <Label
+                                Text="{Binding Title}"
+                                FontSize="14"
+                                FontAttributes="Bold"
+                                LineBreakMode="WordWrap">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="TextColor" Value="{StaticResource White}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+
+                            <Label
+                                Text="{Binding Subtitle}"
+                                FontSize="12"
+                                LineBreakMode="WordWrap">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="TextColor" Value="{StaticResource White}" />
+                                        <Setter Property="Opacity" Value="0.9" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                        <Setter Property="Opacity" Value="1" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </VerticalStackLayout>
+
+                        <Border
+                            Grid.Column="1"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 999"
+                            Padding="8,4"
+                            VerticalOptions="Center">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="#33FFFFFF" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Label
+                                Text="{Binding Tag}"
+                                FontSize="9"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="TextColor" Value="{StaticResource White}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                    </Grid>
+                </Border>
+            </DataTemplate>
+        </BindableLayout.ItemTemplate>
+    </VerticalStackLayout>
+</ContentView>

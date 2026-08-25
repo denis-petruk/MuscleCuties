@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Cycle.CycleCalendarCard"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:cycleModels="clr-namespace:MuscleCuties.Core.Models.UI.Cycle;assembly=MuscleCuties.Core"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Cycle;assembly=MuscleCuties.Core"
+    x:DataType="vm:CycleViewModel">
+
+    <Border Style="{StaticResource CardPrimary}">
+        <VerticalStackLayout Spacing="14">
+            <Grid ColumnDefinitions="*, Auto">
+                <Label
+                    Text="{Binding CycleDaySummary}"
+                    Style="{StaticResource SectionTitle}"
+                    VerticalOptions="Center" />
+                <Label
+                    Grid.Column="1"
+                    Text="{Binding PeriodCountdownText}"
+                    Style="{StaticResource CaptionLabel}"
+                    VerticalOptions="Center" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                    <Label
+                        Text="{Binding PhaseLabel}"
+                        Style="{StaticResource AccentLabel}" />
+                    <Label
+                        Text="{Binding LastPhaseLogText}"
+                        Style="{StaticResource MutedLabel}"
+                        FontSize="12" />
+                </VerticalStackLayout>
+                <Button
+                    Grid.Column="1"
+                    Text="{Binding PhaseLogActionText}"
+                    Command="{Binding AdvancePhaseCommand}"
+                    HeightRequest="44"
+                    WidthRequest="128"
+                    FontSize="14"
+                    VerticalOptions="Center" />
+            </Grid>
+
+            <Label
+                Text="{Binding CalendarEditHintText}"
+                Style="{StaticResource MutedLabel}"
+                FontSize="12"
+                IsVisible="{Binding HasCalendarEditHint}" />
+
+            <CollectionView
+                ItemsSource="{Binding CalendarDays}"
+                HeightRequest="240">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout
+                        Orientation="Vertical"
+                        Span="7"
+                        HorizontalItemSpacing="5"
+                        VerticalItemSpacing="5" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="cycleModels:CycleDayItem">
+                        <Border
+                            BackgroundColor="{Binding BackgroundColor}"
+                            StrokeShape="RoundRectangle 10"
+                            Stroke="{Binding StrokeColor}"
+                            StrokeThickness="{Binding StrokeThickness}"
+                            StrokeDashArray="0"
+                            MinimumHeightRequest="34"
+                            HeightRequest="36"
+                            Margin="0">
+                            <Border.Triggers>
+                                <DataTrigger
+                                    TargetType="Border"
+                                    Binding="{Binding IsPredictedFuture}"
+                                    Value="True">
+                                    <Setter Property="StrokeDashArray" Value="3,2" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding BindingContext.OpenCalendarDayCommand, Source={x:Reference Root}}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Label
+                                Text="{Binding Day}"
+                                TextColor="{Binding TextColor}"
+                                FontSize="12"
+                                FontAttributes="Bold"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

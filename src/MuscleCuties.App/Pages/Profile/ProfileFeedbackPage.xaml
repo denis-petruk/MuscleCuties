@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MuscleCuties.App.Pages.Profile.ProfileFeedbackPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
+    x:DataType="vm:ProfileFeedbackViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,52,20,32" Spacing="16">
+            <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
+                <Button
+                    Text="‹"
+                    Style="{StaticResource ButtonLink}"
+                    FontSize="28"
+                    Padding="0"
+                    Command="{Binding BackCommand}" />
+                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                    <Label Text="Feedback" Style="{StaticResource SubHeadline}" />
+                    <Label Text="Private beta notes for the handsome, jacked developer" Style="{StaticResource CaptionLabel}" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <Border
+                Style="{StaticResource CardPrimary}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="SEND THE GOOD STUFF" Style="{StaticResource EyebrowLabel}" />
+                    <Label Text="Talk to the handsome, jacked developer" Style="{StaticResource SectionTitle}" />
+                    <Label
+                        Text="Bug, style issue, tiny annoyance, huge idea: put it here and the app will open a ready-to-send email."
+                        Style="{StaticResource BodyLabel}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="SORT IT" Style="{StaticResource EyebrowLabel}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="5">
+                            <Label Text="Topic" Style="{StaticResource FormFieldLabel}" />
+                            <Label Text="What part of the app this note is about." Style="{StaticResource FormFieldHint}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Picker
+                                    Title="Topic"
+                                    ItemsSource="{Binding TopicOptions}"
+                                    SelectedItem="{Binding SelectedTopic}" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="5">
+                            <Label Text="Priority" Style="{StaticResource FormFieldLabel}" />
+                            <Label Text="How urgent or important it feels to you." Style="{StaticResource FormFieldHint}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Picker
+                                    Title="Priority"
+                                    ItemsSource="{Binding PriorityOptions}"
+                                    SelectedItem="{Binding SelectedPriority}" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Screen or feature" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Helps point the feedback to the exact place in the app." Style="{StaticResource FormFieldHint}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Entry
+                                Placeholder="Example: Nutrition page"
+                                Text="{Binding ScreenName}" />
+                        </Border>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="REACH YOU BACK" Style="{StaticResource EyebrowLabel}" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="Include contact email" Style="{StaticResource CardTitle}" />
+                            <Label Text="Turn it off for anonymous-ish feedback text." Style="{StaticResource CaptionLabel}" />
+                        </VerticalStackLayout>
+                        <Switch
+                            Grid.Column="1"
+                            IsToggled="{Binding IncludeContactEmail}"
+                            OnColor="{StaticResource Primary}"
+                            ThumbColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
+                            VerticalOptions="Center" />
+                    </Grid>
+                    <VerticalStackLayout
+                        Spacing="5"
+                        IsVisible="{Binding IncludeContactEmail}">
+                        <Label Text="Reply email" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Only used if a follow-up would help understand your note." Style="{StaticResource FormFieldHint}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Entry Placeholder="Contact email" Text="{Binding ContactEmail}" Keyboard="Email" />
+                        </Border>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="WHAT HAPPENED" Style="{StaticResource EyebrowLabel}" />
+                        <Label Grid.Column="1" Text="{Binding FeedbackCountText}" Style="{StaticResource CaptionLabel}" />
+                    </Grid>
+                    <Label
+                        Text="Describe the bug, slow spot, confusing wording, or design detail you noticed."
+                        Style="{StaticResource FormFieldHint}" />
+                    <Border Style="{StaticResource InputContainer}" MinimumHeightRequest="146">
+                        <Editor
+                            Placeholder="Tell me what you noticed. What felt off, broken, slow, ugly, confusing?"
+                            Text="{Binding FeedbackText}"
+                            AutoSize="TextChanges" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="WHAT WOULD MAKE IT BETTER" Style="{StaticResource EyebrowLabel}" />
+                    <Label
+                        Text="Share the version you wish existed, even if it is rough."
+                        Style="{StaticResource FormFieldHint}" />
+                    <Border Style="{StaticResource InputContainer}" MinimumHeightRequest="146">
+                        <Editor
+                            Placeholder="Suggest the fix, better wording, missing control, or the version you wish existed."
+                            Text="{Binding AdjustmentText}"
+                            AutoSize="TextChanges" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <Label
+                Text="{Binding StatusMessage}"
+                Style="{StaticResource CaptionLabel}"
+                IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Button
+                Text="Send feedback"
+                Command="{Binding SendFeedbackCommand}"
+                IsEnabled="{Binding IsReadyToSend}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

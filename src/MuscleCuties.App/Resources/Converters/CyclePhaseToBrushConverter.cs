@@ -1,5 +1,5 @@
 using System.Globalization;
-using MuscleCuties.Core.Models.Enums;
+using MuscleCuties.Core.Models.Enums.Cycle;
 
 namespace MuscleCuties.App.Resources.Converters;
 
@@ -10,40 +10,18 @@ public class CyclePhaseToBrushConverter : IValueConverter
         if (value is not CyclePhase phase)
             return new SolidColorBrush(Colors.Transparent);
 
+        var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
+
         return phase switch
         {
-            CyclePhase.Menstrual  => new LinearGradientBrush(
-                new GradientStopCollection
-                {
-                    new GradientStop(Color.FromArgb("#FFD4E0"), 0f),
-                    new GradientStop(Color.FromArgb("#FFC0CB"), 1f)
-                },
-                new Point(0, 0), new Point(1, 1)),
-            CyclePhase.Follicular => new LinearGradientBrush(
-                new GradientStopCollection
-                {
-                    new GradientStop(Color.FromArgb("#D4F0D4"), 0f),
-                    new GradientStop(Color.FromArgb("#A8E6CF"), 1f)
-                },
-                new Point(0, 0), new Point(1, 1)),
-            CyclePhase.Ovulatory  => new LinearGradientBrush(
-                new GradientStopCollection
-                {
-                    new GradientStop(Color.FromArgb("#FFF3CD"), 0f),
-                    new GradientStop(Color.FromArgb("#FFE08A"), 1f)
-                },
-                new Point(0, 0), new Point(1, 1)),
-            CyclePhase.Luteal     => new LinearGradientBrush(
-                new GradientStopCollection
-                {
-                    new GradientStop(Color.FromArgb("#E8D4F0"), 0f),
-                    new GradientStop(Color.FromArgb("#D4A8E8"), 1f)
-                },
-                new Point(0, 0), new Point(1, 1)),
+            CyclePhase.Menstrual => new SolidColorBrush(Color.FromArgb(isDark ? "#5A3840" : "#F9D6D8")),
+            CyclePhase.Follicular => new SolidColorBrush(Color.FromArgb(isDark ? "#2E5230" : "#D6EED6")),
+            CyclePhase.Ovulatory => new SolidColorBrush(Color.FromArgb(isDark ? "#5A4A00" : "#FFF0C4")),
+            CyclePhase.Luteal => new SolidColorBrush(Color.FromArgb(isDark ? "#3E2A58" : "#E8D8F5")),
             _ => new SolidColorBrush(Colors.Transparent)
         };
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        throw new NotImplementedException();
+        throw new NotSupportedException($"{nameof(CyclePhaseToBrushConverter)} does not support reverse conversion.");
 }

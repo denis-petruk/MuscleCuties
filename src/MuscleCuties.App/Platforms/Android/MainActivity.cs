@@ -3,6 +3,7 @@ using Android.Content.PM;
 using Android.OS;
 
 namespace MuscleCuties.App;
+
 [Activity(
     Theme = "@style/Maui.SplashTheme",
     MainLauncher = true,

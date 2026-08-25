@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Workout.WorkoutExerciseCard"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core"
+    x:DataType="workoutModels:WorkoutExerciseItem">
+
+    <Border Style="{StaticResource WorkoutExerciseCard}">
+        <VerticalStackLayout Spacing="12">
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                <VerticalStackLayout Grid.Column="0" Spacing="4">
+                    <Label Text="{Binding Name}" Style="{StaticResource CardTitle}" FontSize="16" />
+                    <Label
+                        Text="{Binding Description}"
+                        Style="{StaticResource CaptionLabel}"
+                        LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+
+                <Border
+                    Grid.Column="1"
+                    Style="{StaticResource WorkoutPill}"
+                    VerticalOptions="Start">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer
+                            Command="{Binding OpenDetailCommand, Source={x:Reference Root}}"
+                            CommandParameter="{Binding CommandParameter, Source={x:Reference Root}}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="Info" Style="{StaticResource WorkoutPillText}" />
+                </Border>
+            </Grid>
+
+            <Grid ColumnDefinitions="*, *" ColumnSpacing="8">
+                <Border Style="{StaticResource WorkoutInfoTile}">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="TARGET" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                        <Label Text="{Binding TargetText}" Style="{StaticResource WorkoutInfoValue}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource WorkoutInfoTile}">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="PREVIOUS" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                        <Label
+                            Text="{Binding PreviousText}"
+                            Style="{StaticResource WorkoutInfoValue}"
+                            LineBreakMode="TailTruncation" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <Border Style="{StaticResource WorkoutInfoTile}">
+                <Grid ColumnDefinitions="Auto, *" ColumnSpacing="8">
+                    <Path
+                        Data="M4 14l5-5 4 4 7-8M15 5h5v5"
+                        Stroke="{StaticResource Primary}"
+                        StrokeThickness="2"
+                        StrokeLineCap="Round"
+                        StrokeLineJoin="Round"
+                        Aspect="Uniform"
+                        WidthRequest="18"
+                        HeightRequest="18"
+                        VerticalOptions="Center" />
+                    <Label
+                        Grid.Column="1"
+                        Text="{Binding RecommendationText}"
+                        TextColor="{StaticResource Primary}"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
+            <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8" IsVisible="{Binding UsesStrengthMetrics}">
+                <VerticalStackLayout Grid.Column="0" Spacing="5">
+                    <Label Text="SETS" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Entry
+                        Text="{Binding LoggedSetsText, Mode=TwoWay}"
+                        Keyboard="Numeric"
+                        HeightRequest="44" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="5">
+                    <Label Text="REPS" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Entry
+                        Text="{Binding LoggedRepsText, Mode=TwoWay}"
+                        Keyboard="Numeric"
+                        HeightRequest="44" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="2" Spacing="5" IsVisible="{Binding UsesWeight}">
+                    <Label Text="KG" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Entry
+                        Text="{Binding LoggedWeightText, Mode=TwoWay}"
+                        Keyboard="Numeric"
+                        HeightRequest="44" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <VerticalStackLayout
+                Spacing="5"
+                IsVisible="{Binding UsesDurationOnlyMetric}">
+                <Label Text="MINUTES" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                <Entry
+                    Text="{Binding LoggedDurationMinutesText, Mode=TwoWay}"
+                    Keyboard="Numeric"
+                    HeightRequest="44" />
+            </VerticalStackLayout>
+
+            <Grid
+                RowDefinitions="Auto, Auto"
+                ColumnDefinitions="*, *"
+                RowSpacing="8"
+                ColumnSpacing="8"
+                IsVisible="{Binding UsesCardioMetricGrid}">
+                <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5" IsVisible="{Binding UsesDurationMetric}">
+                    <Label Text="MINUTES" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Entry
+                        Text="{Binding LoggedDurationMinutesText, Mode=TwoWay}"
+                        Keyboard="Numeric"
+                        HeightRequest="44" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5" IsVisible="{Binding UsesDistanceMetric}">
+                    <Label Text="KM" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Entry
+                        Text="{Binding LoggedDistanceKmText, Mode=TwoWay}"
+                        Keyboard="Numeric"
+                        HeightRequest="44" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="5" IsVisible="{Binding UsesPaceMetric}">
+                    <Label Text="PACE / KM" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Entry
+                        Text="{Binding LoggedPaceText, Mode=TwoWay}"
+                        Placeholder="6:30"
+                        HeightRequest="44" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5" IsVisible="{Binding UsesHeartRateMetric}">
+                    <Label Text="AVG BPM" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Entry
+                        Text="{Binding LoggedHeartRateText, Mode=TwoWay}"
+                        Keyboard="Numeric"
+                        HeightRequest="44" />
+                </VerticalStackLayout>
+            </Grid>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

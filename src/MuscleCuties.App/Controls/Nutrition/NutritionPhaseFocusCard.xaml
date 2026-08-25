@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Nutrition.NutritionPhaseFocusCard"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
+    x:DataType="vm:NutritionViewModel">
+
+    <Border
+        Background="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
+        Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+        StrokeShape="RoundRectangle 22"
+        StrokeThickness="1"
+        Padding="22,20"
+        MinimumHeightRequest="138">
+        <VerticalStackLayout Spacing="14">
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                    <BoxView
+                        WidthRequest="7"
+                        HeightRequest="7"
+                        CornerRadius="3.5"
+                        BackgroundColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                        VerticalOptions="Center" />
+                    <Label
+                        Text="{Binding PhaseFocusBadgeText}"
+                        TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                        FontSize="10"
+                        FontAttributes="Bold"
+                        CharacterSpacing="1.2"
+                        VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <Border
+                    Grid.Column="1"
+                    WidthRequest="34"
+                    HeightRequest="34"
+                    StrokeShape="RoundRectangle 17"
+                    BackgroundColor="#22FFFFFF"
+                    Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                    StrokeThickness="1"
+                    VerticalOptions="Center">
+                    <Path
+                        Data="M7 5v14M17 5v14M7 11h10M10 5v14M14 5v14"
+                        Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                        StrokeThickness="1.8"
+                        StrokeLineCap="Round"
+                        Aspect="Uniform"
+                        WidthRequest="17"
+                        HeightRequest="17"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+            </Grid>
+
+            <VerticalStackLayout Spacing="5">
+                <Label
+                    Text="{Binding PhaseFocusTitle}"
+                    TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                    FontSize="24"
+                    FontAttributes="Bold"
+                    LineBreakMode="WordWrap" />
+                <Label
+                    Text="{Binding PhaseFocusCopy}"
+                    TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                    FontSize="16"
+                    FontAttributes="Bold"
+                    LineBreakMode="WordWrap" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

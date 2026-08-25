@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Nutrition.NutritionBalanceCard"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
+    x:DataType="vm:NutritionViewModel">
+
+    <Border Style="{StaticResource CardPrimary}">
+        <VerticalStackLayout Spacing="14">
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                <Label
+                    Text="TODAY'S BALANCE"
+                    Style="{StaticResource EyebrowLabel}"
+                    CharacterSpacing="1.2"
+                    VerticalOptions="Center" />
+                <Button
+                    Grid.Column="1"
+                    Text="Micros"
+                    Style="{StaticResource ButtonLink}"
+                    Command="{Binding OpenMicronutrientsModalCommand}"
+                    HeightRequest="36"
+                    MinimumHeightRequest="36"
+                    WidthRequest="78" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*, Auto">
+                <Label
+                    Text="{Binding CaloriesConsumed}"
+                    Style="{StaticResource AccentLabel}"
+                    FontSize="26"
+                    FontAttributes="Bold"
+                    VerticalOptions="Center" />
+                <Label
+                    Grid.Column="1"
+                    Text="{Binding CaloriesGoal}"
+                    Style="{StaticResource CaptionLabel}"
+                    VerticalOptions="Center" />
+            </Grid>
+
+            <ProgressBar
+                Progress="{Binding CaloriesProgress}"
+                ProgressColor="{StaticResource Primary}"
+                BackgroundColor="{StaticResource Gray300}"
+                HeightRequest="8" />
+
+            <sharedControls:MacroProgressGrid
+                ProteinText="{Binding ProteinText}"
+                ProteinProgress="{Binding ProteinProgress}"
+                CarbsText="{Binding CarbsText}"
+                CarbsProgress="{Binding CarbsProgress}"
+                FatsText="{Binding FatsText}"
+                FatsProgress="{Binding FatsProgress}" />
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

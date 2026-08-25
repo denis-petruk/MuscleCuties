@@ -2,6 +2,7 @@
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:mct="clr-namespace:CommunityToolkit.Maui.Converters;assembly=CommunityToolkit.Maui"
+             xmlns:converters="clr-namespace:MuscleCuties.App.Resources.Converters"
              x:Class="MuscleCuties.App.App">
     <Application.Resources>
         <ResourceDictionary>
@@ -11,7 +12,10 @@
             </ResourceDictionary.MergedDictionaries>
             <mct:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <mct:IsStringNotNullOrEmptyConverter x:Key="StringToBoolConverter" />
-            <mct:StateToBooleanConverter x:Key="StateToBooleanConverter" />
+            <converters:CyclePhaseToBrushConverter x:Key="CyclePhaseToBrushConverter" />
+            <converters:CyclePhaseToTextColorConverter x:Key="CyclePhaseToTextColorConverter" />
+            <converters:ReadinessScoreToColorConverter x:Key="ReadinessScoreToColorConverter" />
+            <converters:RecoveryScoreToColorConverter x:Key="RecoveryScoreToColorConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -1,4 +1,4 @@
-using MuscleCuties.Core.ViewModels;
+using MuscleCuties.Core.ViewModels.Auth;
 
 namespace MuscleCuties.App.Pages.Auth;
 

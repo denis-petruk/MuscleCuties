@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Workout.WorkoutActivityCard"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core"
+    x:DataType="workoutModels:WorkoutItem">
+
+    <Border
+        Style="{StaticResource CardPrimary}"
+        Padding="14"
+        Margin="0,0,0,10">
+        <Border.GestureRecognizers>
+            <TapGestureRecognizer
+                Command="{Binding OpenCommand, Source={x:Reference Root}}"
+                CommandParameter="{Binding CommandParameter, Source={x:Reference Root}}" />
+        </Border.GestureRecognizers>
+
+        <Grid RowDefinitions="Auto, Auto" RowSpacing="12">
+            <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12">
+
+                <Border
+                    Grid.Column="0"
+                    WidthRequest="48"
+                    HeightRequest="48"
+                    StrokeShape="RoundRectangle 14"
+                    BackgroundColor="{Binding ActivityBackground}"
+                    StrokeThickness="0"
+                    VerticalOptions="Center">
+                    <Label
+                        Text="{Binding DayLabel}"
+                        TextColor="{Binding ActivityTextColor}"
+                        FontSize="11"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                    <Label
+                        Text="{Binding Title}"
+                        Style="{StaticResource CardTitle}"
+                        FontSize="16"
+                        LineBreakMode="TailTruncation" />
+                    <Label
+                        Text="{Binding DetailsText}"
+                        Style="{StaticResource CaptionLabel}"
+                        LineBreakMode="TailTruncation" />
+                </VerticalStackLayout>
+
+                <Border
+                    Grid.Column="2"
+                    BackgroundColor="{Binding ActivityBackground}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 999"
+                    Padding="10,6"
+                    VerticalOptions="Center">
+                    <Label
+                        Text="{Binding Tag}"
+                        TextColor="{Binding ActivityTextColor}"
+                        FontSize="10"
+                        FontAttributes="Bold"
+                        CharacterSpacing="0.8"
+                        HorizontalTextAlignment="Center" />
+                </Border>
+            </Grid>
+
+            <HorizontalStackLayout Grid.Row="1" Spacing="8">
+                <Border Style="{StaticResource WorkoutPill}">
+                    <Label Text="{Binding Duration}" Style="{StaticResource WorkoutPillText}" />
+                </Border>
+                <Border Style="{StaticResource WorkoutPill}">
+                    <Label Text="{Binding ExerciseCountText}" Style="{StaticResource WorkoutPillText}" />
+                </Border>
+            </HorizontalStackLayout>
+        </Grid>
+    </Border>
+</ContentView>

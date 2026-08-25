@@ -3,33 +3,22 @@
     x:Class="MuscleCuties.App.Pages.Dashboard.DashboardPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels;assembly=MuscleCuties.Core"
-    xmlns:converters="clr-namespace:MuscleCuties.App.Resources.Converters"
+    xmlns:dashboardControls="clr-namespace:MuscleCuties.App.Controls.Dashboard"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Dashboard;assembly=MuscleCuties.Core"
+    xmlns:workoutControls="clr-namespace:MuscleCuties.App.Controls.Workout"
     x:DataType="vm:DashboardViewModel"
     Shell.NavBarIsVisible="False">
 
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <converters:CyclePhaseToBrushConverter x:Key="CyclePhaseToBrushConverter" />
-            <converters:ReadinessScoreToColorConverter x:Key="ReadinessScoreToColorConverter" />
-            <converters:RecoveryScoreToColorConverter x:Key="RecoveryScoreToColorConverter" />
-        </ResourceDictionary>
-    </ContentPage.Resources>
-
     <RefreshView
         Command="{Binding RefreshCommand}"
-        IsRefreshing="{Binding IsBusy}"
+        IsRefreshing="{Binding IsRefreshing}"
         RefreshColor="{StaticResource Primary}">
-
         <ScrollView>
             <VerticalStackLayout Padding="20,56,20,32" Spacing="14">
-
-                <!-- ── Header ──────────────────────────────────────────── -->
                 <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-
                     <VerticalStackLayout Spacing="2" VerticalOptions="Center">
                         <Label
-                            Text="{Binding TodayLabel, StringFormat='This week · {0}'}"
+                            Text="{Binding DashboardPhaseHeaderText}"
                             Style="{StaticResource EyebrowLabel}"
                             CharacterSpacing="1.2" />
                         <Label
@@ -37,504 +26,42 @@
                             Style="{StaticResource SubHeadline}" />
                     </VerticalStackLayout>
 
-                    <HorizontalStackLayout
+                    <Border
                         Grid.Column="1"
-                        Spacing="8"
-                        VerticalOptions="Center">
-
-                        <Border
-                            WidthRequest="40"
-                            HeightRequest="40"
-                            StrokeShape="RoundRectangle 20"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                            StrokeThickness="0">
-                            <Path
-                                Data="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0"
-                                Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                StrokeThickness="1.75"
-                                StrokeLineCap="Round"
-                                StrokeLineJoin="Round"
-                                Aspect="Uniform"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
-                        </Border>
-
-                    </HorizontalStackLayout>
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        StrokeShape="RoundRectangle 20"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                        StrokeThickness="0">
+                        <Path
+                            Data="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0"
+                            Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                            StrokeThickness="1.75"
+                            StrokeLineCap="Round"
+                            StrokeLineJoin="Round"
+                            Aspect="Uniform"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
                 </Grid>
 
-                <!-- ── Cycle phase card ───────────────────────────────── -->
-                <Border
-                    Background="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 22"
-                    Padding="20,18">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding OpenCycleCommand}" />
-                    </Border.GestureRecognizers>
+                <dashboardControls:DashboardPhaseCard />
 
-                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                        <VerticalStackLayout Spacing="6" VerticalOptions="Center">
-                            <Label
-                                Text="{Binding PhaseBadgeText}"
-                                Style="{StaticResource EyebrowLabel}"
-                                CharacterSpacing="0.8"
-                                Opacity="0.7" />
-                            <Label
-                                Text="{Binding PhaseTitle}"
-                                Style="{StaticResource SectionTitle}"
-                                FontSize="20" />
-                            <Label
-                                Text="{Binding PhaseShortAdvice}"
-                                Style="{StaticResource MutedLabel}"
-                                FontSize="13"
-                                Opacity="0.82"
-                                LineBreakMode="WordWrap" />
-                        </VerticalStackLayout>
+                <workoutControls:FeaturedWorkoutCard
+                    BadgeText="{Binding WorkoutBadgeText}"
+                    WorkoutTitle="{Binding WorkoutTitle}"
+                    Subtitle="{Binding WorkoutSubtitle}"
+                    DurationText="{Binding WorkoutDurationText}"
+                    ExercisesCount="{Binding WorkoutExercisesCount}"
+                    Intensity="{Binding WorkoutIntensity}"
+                    StartCommand="{Binding OpenWorkoutCommand}" />
 
-                        <Border
-                            Grid.Column="1"
-                            WidthRequest="52"
-                            HeightRequest="52"
-                            StrokeShape="RoundRectangle 26"
-                            BackgroundColor="{StaticResource White}"
-                            Opacity="0.35"
-                            StrokeThickness="0"
-                            VerticalOptions="Center" />
-                    </Grid>
-                </Border>
-
-                <!-- ── Today's Workout ───────────────────────────────── -->
-                <Border Style="{StaticResource CardPrimary}">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding OpenWorkoutCommand}" />
-                    </Border.GestureRecognizers>
-
-                    <VerticalStackLayout Spacing="12">
-
-                        <HorizontalStackLayout Spacing="6">
-                            <BoxView
-                                WidthRequest="6"
-                                HeightRequest="6"
-                                CornerRadius="3"
-                                BackgroundColor="{StaticResource Primary}"
-                                VerticalOptions="Center" />
-                            <Label
-                                Text="{Binding SessionProgressText}"
-                                TextColor="{StaticResource Primary}"
-                                FontSize="11"
-                                FontAttributes="Bold"
-                                CharacterSpacing="1.0"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-
-                        <VerticalStackLayout Spacing="4">
-                            <Label
-                                Text="{Binding WorkoutTitle}"
-                                Style="{StaticResource SectionTitle}"
-                                FontSize="22" />
-                            <Label
-                                Text="{Binding WorkoutSubtitle}"
-                                Style="{StaticResource MutedLabel}"
-                                FontSize="13" />
-                        </VerticalStackLayout>
-
-                        <Grid
-                            ColumnDefinitions="*, Auto, *, Auto, *"
-                            Margin="10,2,0,0"
-                            Padding="0,10,0,0">
-                            <BoxView
-                                Grid.ColumnSpan="5"
-                                HeightRequest="1"
-                                VerticalOptions="Start"
-                                Margin="0,-10,0,0"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" />
-
-                                
-
-                            <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center" Spacing="2">
-                                <Label
-                                    Text="{Binding WorkoutDurationText}"
-                                    Style="{StaticResource SectionTitle}"
-                                    FontSize="17"
-                                    HorizontalOptions="Center" />
-                                <Label
-                                    Text="DURATION"
-                                    Style="{StaticResource EyebrowLabel}"
-                                    CharacterSpacing="0.8"
-                                    FontSize="10"
-                                    HorizontalOptions="Center" />
-                            </VerticalStackLayout>
-
-                            <BoxView
-                                Grid.Column="1"
-                                WidthRequest="1"
-                                HeightRequest="36"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                                VerticalOptions="Center" />
-
-                            <VerticalStackLayout Grid.Column="2" HorizontalOptions="Center" Spacing="2">
-                                <Label
-                                    Text="{Binding WorkoutExercisesCount}"
-                                    Style="{StaticResource SectionTitle}"
-                                    FontSize="17"
-                                    HorizontalOptions="Center" />
-                                <Label
-                                    Text="EXERCISES"
-                                    Style="{StaticResource EyebrowLabel}"
-                                    CharacterSpacing="0.8"
-                                    FontSize="10"
-                                    HorizontalOptions="Center" />
-                            </VerticalStackLayout>
-
-                            <BoxView
-                                Grid.Column="3"
-                                WidthRequest="1"
-                                HeightRequest="36"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                                VerticalOptions="Center" />
-
-                            <VerticalStackLayout Grid.Column="4" HorizontalOptions="Center" Spacing="2">
-                                <Label
-                                    Text="{Binding WorkoutIntensity}"
-                                    Style="{StaticResource SectionTitle}"
-                                    FontSize="17"
-                                    HorizontalOptions="Center" />
-                                <Label
-                                    Text="INTENSITY"
-                                    Style="{StaticResource EyebrowLabel}"
-                                    CharacterSpacing="0.8"
-                                    FontSize="10"
-                                    HorizontalOptions="Center" />
-                            </VerticalStackLayout>
-
-                        </Grid>
-
-                        <Button
-                            Text="Start workout"
-                            Command="{Binding OpenWorkoutCommand}"
-                            Margin="0,2,0,0" />
-
-                    </VerticalStackLayout>
-                </Border>
-
-                <!-- ── Readiness + Recovery ───────────────────────────── -->
-                <Border Style="{StaticResource CardPrimary}">
-                    <VerticalStackLayout Spacing="14">
-
-                        <Label
-                            Text="READINESS &amp; RECOVERY"
-                            Style="{StaticResource EyebrowLabel}"
-                            CharacterSpacing="1.2" />
-
-                        <Grid ColumnDefinitions="*, *" ColumnSpacing="16">
-
-                            <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center" Spacing="10">
-                                <Grid
-                                    WidthRequest="88"
-                                    HeightRequest="88"
-                                    HorizontalOptions="Center">
-                                    <Border
-                                        StrokeShape="Ellipse"
-                                        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                                        StrokeThickness="7"
-                                        BackgroundColor="Transparent"
-                                        WidthRequest="88"
-                                        HeightRequest="88" />
-                                    <Border
-                                        StrokeShape="Ellipse"
-                                        Stroke="{Binding ReadinessScore, Converter={StaticResource ReadinessScoreToColorConverter}}"
-                                        StrokeThickness="7"
-                                        BackgroundColor="Transparent"
-                                        WidthRequest="88"
-                                        HeightRequest="88" />
-                                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center">
-                                        <Label
-                                            Text="{Binding ReadinessScore}"
-                                            FontSize="22"
-                                            FontAttributes="Bold"
-                                            TextColor="{Binding ReadinessScore, Converter={StaticResource ReadinessScoreToColorConverter}}"
-                                            HorizontalOptions="Center" />
-                                        <Label
-                                            Text="READY"
-                                            FontSize="9"
-                                            CharacterSpacing="0.5"
-                                            TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                            HorizontalOptions="Center" />
-                                    </VerticalStackLayout>
-                                </Grid>
-                                <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
-                                    <Label
-                                        Text="Readiness"
-                                        FontSize="13"
-                                        FontAttributes="Bold"
-                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                        HorizontalOptions="Center" />
-                                    <Label
-                                        Text="{Binding ReadinessLabel}"
-                                        Style="{StaticResource CaptionLabel}"
-                                        HorizontalOptions="Center"
-                                        HorizontalTextAlignment="Center" />
-                                </VerticalStackLayout>
-                            </VerticalStackLayout>
-
-                            <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" Spacing="10">
-                                <Grid
-                                    WidthRequest="88"
-                                    HeightRequest="88"
-                                    HorizontalOptions="Center">
-                                    <Border
-                                        StrokeShape="Ellipse"
-                                        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                                        StrokeThickness="7"
-                                        BackgroundColor="Transparent"
-                                        WidthRequest="88"
-                                        HeightRequest="88" />
-                                    <Border
-                                        StrokeShape="Ellipse"
-                                        Stroke="{Binding RecoveryScore, Converter={StaticResource RecoveryScoreToColorConverter}}"
-                                        StrokeThickness="7"
-                                        BackgroundColor="Transparent"
-                                        WidthRequest="88"
-                                        HeightRequest="88" />
-                                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center">
-                                        <Label
-                                            Text="{Binding RecoveryScore}"
-                                            FontSize="22"
-                                            FontAttributes="Bold"
-                                            TextColor="{Binding RecoveryScore, Converter={StaticResource RecoveryScoreToColorConverter}}"
-                                            HorizontalOptions="Center" />
-                                        <Label
-                                            Text="RECOV"
-                                            FontSize="9"
-                                            CharacterSpacing="0.5"
-                                            TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                            HorizontalOptions="Center" />
-                                    </VerticalStackLayout>
-                                </Grid>
-                                <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
-                                    <Label
-                                        Text="Recovery"
-                                        FontSize="13"
-                                        FontAttributes="Bold"
-                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                        HorizontalOptions="Center" />
-                                    <Label
-                                        Text="{Binding RecoveryLabel}"
-                                        Style="{StaticResource CaptionLabel}"
-                                        HorizontalOptions="Center"
-                                        HorizontalTextAlignment="Center" />
-                                </VerticalStackLayout>
-                            </VerticalStackLayout>
-
-                        </Grid>
-
-                    </VerticalStackLayout>
-                </Border>
-
-                <!-- ── Nutrition ─────────────────────────────────────── -->
-                <Border Style="{StaticResource CardPrimary}">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding OpenNutritionCommand}" />
-                    </Border.GestureRecognizers>
-
-                    <VerticalStackLayout Spacing="14">
-
-                        <Grid ColumnDefinitions="*, Auto">
-                            <VerticalStackLayout Spacing="3">
-                                <Label
-                                    Text="NUTRITION"
-                                    Style="{StaticResource EyebrowLabel}"
-                                    CharacterSpacing="1.2" />
-                                <Label
-                                    Text="Today's nutrition balance"
-                                    Style="{StaticResource SectionTitle}"
-                                    FontSize="20" />
-                            </VerticalStackLayout>
-                            <Label
-                                Grid.Column="1"
-                                Text="View all"
-                                Style="{StaticResource CaptionLabel}"
-                                TextColor="{StaticResource Primary}"
-                                VerticalOptions="End" />
-                        </Grid>
-
-                        <VerticalStackLayout Spacing="6">
-                            <Grid ColumnDefinitions="*, Auto">
-                                <Label
-                                    Text="{Binding CaloriesConsumed}"
-                                    TextColor="{StaticResource Primary}"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    VerticalOptions="Center" />
-                                <Label
-                                    Grid.Column="1"
-                                    Text="{Binding CaloriesGoal}"
-                                    Style="{StaticResource CaptionLabel}"
-                                    VerticalOptions="Center" />
-                            </Grid>
-                            <ProgressBar
-                                Progress="{Binding CalorieProgress}"
-                                ProgressColor="{StaticResource Primary}"
-                                BackgroundColor="{StaticResource Gray300}"
-                                HeightRequest="8" />
-                        </VerticalStackLayout>
-
-                        <Grid ColumnDefinitions="*, *, *" ColumnSpacing="10">
-
-                            <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                <Label Text="Protein" Style="{StaticResource CaptionLabel}" />
-                                <Label
-                                    Text="{Binding ProteinText}"
-                                    FontSize="13"
-                                    FontAttributes="Bold"
-                                    TextColor="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}" />
-                                <ProgressBar
-                                    Progress="{Binding ProteinProgress}"
-                                    ProgressColor="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}"
-                                    BackgroundColor="{StaticResource Gray300}"
-                                    HeightRequest="5" />
-                            </VerticalStackLayout>
-
-                            <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                <Label Text="Carbs" Style="{StaticResource CaptionLabel}" />
-                                <Label
-                                    Text="{Binding CarbsText}"
-                                    FontSize="13"
-                                    FontAttributes="Bold"
-                                    TextColor="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}" />
-                                <ProgressBar
-                                    Progress="{Binding CarbsProgress}"
-                                    ProgressColor="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}"
-                                    BackgroundColor="{StaticResource Gray300}"
-                                    HeightRequest="5" />
-                            </VerticalStackLayout>
-
-                            <VerticalStackLayout Grid.Column="2" Spacing="4">
-                                <Label Text="Fat" Style="{StaticResource CaptionLabel}" />
-                                <Label
-                                    Text="{Binding FatsText}"
-                                    FontSize="13"
-                                    FontAttributes="Bold"
-                                    TextColor="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}" />
-                                <ProgressBar
-                                    Progress="{Binding FatsProgress}"
-                                    ProgressColor="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}"
-                                    BackgroundColor="{StaticResource Gray300}"
-                                    HeightRequest="5" />
-                            </VerticalStackLayout>
-
-                        </Grid>
-
-                    </VerticalStackLayout>
-                </Border>
-
-                <!-- ── Today's Targets ────────────────────────────────── -->
-                <Border Style="{StaticResource CardPrimary}">
-                    <VerticalStackLayout Spacing="0">
-
-                        <Label
-                            Text="TODAY'S TARGETS"
-                            Style="{StaticResource EyebrowLabel}"
-                            CharacterSpacing="1.2"
-                            Margin="0,0,0,6" />
-
-                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" Padding="0,10">
-                            <Border
-                                Grid.Column="0"
-                                WidthRequest="40"
-                                HeightRequest="40"
-                                StrokeShape="RoundRectangle 12"
-                                BackgroundColor="{StaticResource AccentSurface}"
-                                StrokeThickness="0">
-                                <Path
-                                    Data="M12 2.5s7 7.5 7 12a7 7 0 1 1-14 0c0-4.5 7-12 7-12z"
-                                    Fill="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}"
-                                    Stroke="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}"
-                                    StrokeThickness="0.5"
-                                    Aspect="Uniform"
-                                    WidthRequest="18"
-                                    HeightRequest="18"
-                                    HorizontalOptions="Center"
-                                    VerticalOptions="Center" />
-                            </Border>
-                            <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                <Label
-                                    Text="Hydration"
-                                    FontSize="13"
-                                    FontAttributes="Bold"
-                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                <Label
-                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    FontSize="17"
-                                    FontAttributes="Bold">
-                                    <Label.FormattedText>
-                                        <FormattedString>
-                                            <Span Text="{Binding HydrationConsumed}" />
-                                            <Span Text=" " />
-                                            <Span
-                                                Text="{Binding HydrationGoal}"
-                                                FontSize="12"
-                                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                                FontAttributes="None" />
-                                        </FormattedString>
-                                    </Label.FormattedText>
-                                </Label>
-                            </VerticalStackLayout>
-                        </Grid>
-
-                        <BoxView />
-
-                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" Padding="0,10">
-                            <Border
-                                Grid.Column="0"
-                                WidthRequest="40"
-                                HeightRequest="40"
-                                StrokeShape="RoundRectangle 12"
-                                BackgroundColor="{StaticResource AccentSurface}"
-                                StrokeThickness="0">
-                                <Path
-                                    Data="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-                                    Fill="{StaticResource Primary}"
-                                    Stroke="{StaticResource Primary}"
-                                    StrokeThickness="0.5"
-                                    Aspect="Uniform"
-                                    WidthRequest="18"
-                                    HeightRequest="18"
-                                    HorizontalOptions="Center"
-                                    VerticalOptions="Center" />
-                            </Border>
-                            <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                <Label
-                                    Text="Sleep target"
-                                    FontSize="13"
-                                    FontAttributes="Bold"
-                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                <Label
-                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    FontSize="17"
-                                    FontAttributes="Bold">
-                                    <Label.FormattedText>
-                                        <FormattedString>
-                                            <Span Text="{Binding SleepGoal}" />
-                                            <Span Text=" " />
-                                            <Span
-                                                Text="tonight"
-                                                FontSize="12"
-                                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                                FontAttributes="None" />
-                                        </FormattedString>
-                                    </Label.FormattedText>
-                                </Label>
-                            </VerticalStackLayout>
-                        </Grid>
-
-                    </VerticalStackLayout>
-                </Border>
-
+                <dashboardControls:ReadinessRecoveryCard />
+                <dashboardControls:DashboardNutritionCard />
+                <dashboardControls:DashboardTargetsCard />
             </VerticalStackLayout>
         </ScrollView>
     </RefreshView>
-
 </ContentPage>

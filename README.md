@@ -1,71 +1,82 @@
 # MuscleCuties
 
-A cycle-aware fitness and nutrition companion for women. MuscleCuties syncs workout intensity, nutrition targets, and recovery guidance to the four phases of the menstrual cycle, delivering a personalized daily plan that respects how the body actually feels and performs throughout the month.
+MuscleCuties is a cycle-aware fitness and nutrition companion for women. It adapts workout intensity, calorie and macro targets, recovery cues, and daily guidance to the user's current menstrual-cycle phase: Menstrual, Follicular, Ovulatory, or Luteal.
 
----
+The core product idea is simple: training and nutrition plans should respect how energy, appetite, symptoms, and recovery can change across the cycle.
 
 ## Features
 
 ### Onboarding
-- Email / password registration with secure token storage
-- 12-question onboarding quiz capturing fitness goal, experience level, training frequency, dietary preference, and per-phase symptom baselines
-- Profile setup: name, date of birth, height, weight, unit preference (metric/imperial)
-- Quiz completion writes a `UserProfileSnapshot` with `SnapshotReason = Initial`; subsequent quiz retakes snapshot the previous profile before applying changes
 
-### Today — Dashboard
-- Time-aware greeting and date header
-- Active cycle phase badge with short contextual advice
-- Today's workout card: title, subtitle, duration, exercise count, intensity, and session progress within the week
-- Readiness and Recovery rings with color-coded scores (green >= 70, amber 40–69, red < 40)
-- Macro summary: calories with progress bar, protein / carbs / fat bars
-- Hydration and sleep targets
+- Email/password registration with secure local session storage.
+- A 12-question quiz captures goal, experience level, training frequency, dietary preference, and per-phase symptom baselines.
+- Profile setup captures name, birth date, height, weight, and unit preference.
+- Quiz answers create or update a partial `UserProfile` and write a `UserProfileSnapshot`.
+- Profile setup completes the same profile, writes a setup snapshot, and marks onboarding complete.
+
+### Today
+
+- Time-aware greeting and date header.
+- Active cycle phase badge with contextual guidance.
+- Workout summary from the active workout plan.
+- Readiness and recovery scores derived from cycle phase, nutrition progress, and workout load.
+- Daily calorie and macro targets with consumed totals from logged meals.
+- Hydration and sleep targets based on profile metrics and training frequency.
 
 ### Cycle
-- Month view calendar: 28-day grid color-coded by phase (menstrual / follicular / ovulatory / luteal)
-- Current day highlighted with a primary-pink stroke
-- Days-until-period counter
-- Phase legend cards with name and day-range description
+
+- 28-day cycle calendar colored by phase.
+- Current cycle day and current phase display.
+- Phase legend cards, phase detail pages, manual phase shifts, and editable day-level phase logs.
 
 ### Train
-- Phase-aware workout plan header
-- Filter chips: All / Strength / Cardio / Yoga / Recovery (horizontal scroll)
-- Workout cards: phase icon box, tag, title, duration, chevron nav
-- Workout completions logged via `WorkoutLog` with a 0–100 completion percentage — used as the recommendation feedback signal
+
+- Active workout plan header.
+- Filter chips for All, Strength, Cardio, Climb, Yoga, Pilates, and Recovery.
+- Workout cards generated from `WorkoutDay` rows.
+- Workout completion logs through `WorkoutLog`, with per-exercise sets, reps, weight, duration, distance, pace, and heart-rate fields.
+- Saved activity preferences for strength, climbing, yoga styles, Pilates, cardio, mobility, and active recovery.
 
 ### Nutrition
-- Phase focus banner with cycle-phase color
-- Today's balance card: calorie row with progress bar, macro grid (protein, carbs, fat)
-- Meals list: time badge, meal type tag, name, calories
-- Meals logged as `LoggedMeal` + `LoggedMealEntry` rows, optionally from a saved `MealTemplate`
 
-### You — Profile
-- Avatar circle with user initial
-- Stats grid: sessions, cycle days, phases tracked
-- Preferences list with chevron nav
-- Profile edits write a `UserProfileSnapshot` with `SnapshotReason = UserEdit` before applying changes
+- Phase-aware nutrition focus.
+- Daily calorie and macro targets calculated from profile data.
+- Logged meals stored as `LoggedMeal` plus `LoggedMealEntry` rows, including exact `LoggedAt` time.
+- Add-food flow searches foods, lets the user choose grams, meal type, and meal time, then refreshes daily totals.
+- Food items include macro and micronutrient fields, with FoodData Central IDs, sync logs, and version history for USDA-backed food data.
 
----
+### You
 
-## Current State (MVP)
+- User profile summary.
+- Editable personal info, nutrition settings, unit preferences, privacy page, and private feedback flow.
+- Logout.
 
-Architecture, repositories, services, and data layer are wired through DI with a clean bounded-context model (6 domains, 22 entities). ViewModels receive data from Services via async calls; the service-to-ViewModel integration is ongoing. The database is rebuilt from scratch on every launch via `EnsureCreated()` — no production data exists yet.
+## Current State
 
-A `FloAccessToken` placeholder exists on `User` for a future Flo API integration; it is not connected to anything. Recommendations are locally generated: `RecommendationService` produces a `RecommendationSet` per user per day, with typed children (`NutritionRecommendation`, `WorkoutRecommendation`, `WellnessRecommendation`) that carry an `ActedOnAt` feedback field.
+The app is a .NET MAUI MVP with platform-specific code isolated in `MuscleCuties.App` and business logic in `MuscleCuties.Core`.
 
-Calorie targets support two modes: `Calculated` (BMR-derived via Mifflin-St Jeor, using date of birth and body metrics) and `Manual` (user-entered fixed target). Weight goal pace is configurable: `Steady` (~250–300 kcal delta) or `Aggressive` (~500 kcal delta).
+The current data model has 5 bounded contexts:
 
-FoodItem micronutrients (Iron, Calcium, Magnesium, Zinc, vitamins B6/B12/C/D/A/Folate) are tracked per 100g. FDC sync health is audited via `FoodSyncLog` (run-level status) and `FoodItemVersion` (per-item nutrient history written before every upsert that changes values).
+- User
+- Quiz
+- Cycle
+- Nutrition
+- Workout
 
----
+The database is local SQLite. `AppDatabase.InitializeAsync()` runs on app start, creates the schema with `EnsureCreatedAsync()`, applies small compatibility updates for existing local databases, and seeds onboarding quiz questions, system meal templates, and starter food items idempotently. EF Core migrations are not configured yet.
 
-## Getting Started
+Nutrition targets are calculated from profile metrics using Mifflin-St Jeor BMR, activity multiplier, goal adjustment, phase adjustment, calorie clamping, and macro calculation. Manual calorie targets are not currently modeled.
 
-### Requirements
+FoodData Central sync is implemented in Core through `IFdcApiClient` and `IFoodSyncService`. The app reads the USDA key from the `FDC_API_KEY` environment variable and keeps search local-first before calling the remote API.
+
+## Requirements
+
 - .NET 10 SDK
 - MAUI workload: `dotnet workload install maui`
-- Android SDK (API 21+) or Xcode 15+ for iOS
+- Android SDK API 21+ or Xcode 15+ for iOS
+- Optional for USDA food sync: `FDC_API_KEY`
 
-### Run
+## Run
 
 ```bash
 # Android
@@ -78,172 +89,106 @@ dotnet build -t:Run -f net10.0-ios
 dotnet build -t:Run -f net10.0-maccatalyst
 ```
 
-### Tests
+## Tests
 
 ```bash
 dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj
 ```
 
-### First launch
-The database is created and seeded with quiz questions and system `MealTemplate` rows automatically on first run via `AppDatabase.InitializeAsync()`. Credentials are stored in platform `SecureStorage`.
-
----
-
 ## Project Layout
 
-```
+```text
 MuscleCuties/
 ├── src/
-│   ├── MuscleCuties.Core/              # Platform-agnostic business logic
-│   │   ├── Models/
-│   │   │   ├── Enums/
-│   │   │   │   ├── CyclePhase.cs
-│   │   │   │   ├── UserGoal.cs
-│   │   │   │   ├── DietaryTag.cs
-│   │   │   │   ├── MealType.cs
-│   │   │   │   ├── MuscleGroup.cs
-│   │   │   │   ├── CalorieMode.cs
-│   │   │   │   ├── WeightGoalPace.cs
-│   │   │   │   ├── QuizQuestionType.cs
-│   │   │   │   └── SymptomType.cs      # Cramps | Bloating | Fatigue | Headache | MoodSwings | Spotting | Other
-│   │   │   └── Entities/
-│   │   │       │   -- User domain --
-│   │   │       ├── User.cs
-│   │   │       ├── UserProfile.cs          # BMR fields; CalorieMode; WeightGoalPace; DietaryTags
-│   │   │       ├── UserProfileSnapshot.cs  # JSON snapshot on Initial | QuizRetake | UserEdit
-│   │   │       │   -- Cycle domain --
-│   │   │       ├── CycleLog.cs
-│   │   │       ├── SymptomLog.cs           # FK → CycleLog; typed via SymptomType enum; severity 1–5
-│   │   │       │   -- Quiz domain --
-│   │   │       ├── QuizQuestion.cs
-│   │   │       ├── QuizAnswer.cs
-│   │   │       ├── UserQuizResponse.cs     # FK → UserProfileSnapshot (set on quiz completion)
-│   │   │       │   -- Nutrition domain --
-│   │   │       ├── FoodItem.cs             # 12 micronutrient fields; IsCustom; FdcId; LastSyncedAt
-│   │   │       ├── FoodItemVersion.cs      # Nutrient history before each FDC upsert
-│   │   │       ├── FoodSyncLog.cs          # Per-sync-run audit: status, counts, errors
-│   │   │       ├── MealTemplate.cs         # Saved recipe; IsSystem for app-seeded templates
-│   │   │       ├── MealTemplateEntry.cs    # Ingredient row in a template
-│   │   │       ├── LoggedMeal.cs           # What the user actually ate; optional FK → MealTemplate
-│   │   │       ├── LoggedMealEntry.cs      # Individual food item + grams within a logged meal
-│   │   │       │   -- Workout domain --
-│   │   │       ├── Exercise.cs             # JointAreas for substitution logic
-│   │   │       ├── WorkoutPlan.cs          # CyclePhaseTarget; IsActive
-│   │   │       ├── WorkoutDay.cs
-│   │   │       ├── WorkoutDayExercise.cs   # Sets, Reps, DurationSeconds per exercise
-│   │   │       ├── WorkoutLog.cs           # Completion record: date, CompletionPercent, notes
-│   │   │       │   -- Recommendation domain --
-│   │   │       ├── RecommendationSet.cs            # One per user per day; CyclePhase; ExpiresAt
-│   │   │       ├── NutritionRecommendation.cs      # FK → MealTemplate; ActedOnAt + FK → LoggedMeal
-│   │   │       ├── WorkoutRecommendation.cs        # FK → WorkoutDay; ActedOnAt + FK → WorkoutLog
-│   │   │       └── WellnessRecommendation.cs       # Category enum; advice text; ActedOnAt
-│   │   │
+│   ├── MuscleCuties.Core/
 │   │   ├── Data/
-│   │   │   ├── AppDatabase.cs              # EF Core DbContext; all 22 DbSets; quiz + meal seed
+│   │   │   ├── AppDatabase.cs
 │   │   │   └── IDbPathProvider.cs
-│   │   │
+│   │   ├── Models/
+│   │   │   ├── Entities/
+│   │   │   └── Enums/
 │   │   ├── Repositories/
-│   │   │   ├── IRepository.cs / BaseRepository.cs
-│   │   │   │   -- User domain --
-│   │   │   ├── IUserRepository.cs / UserRepository.cs
-│   │   │   │   -- Cycle domain --
-│   │   │   ├── ICycleRepository.cs / CycleRepository.cs
-│   │   │   ├── ISymptomRepository.cs / SymptomRepository.cs
-│   │   │   │   -- Quiz domain --
-│   │   │   ├── IQuizRepository.cs / QuizRepository.cs
-│   │   │   │   -- Nutrition domain --
-│   │   │   ├── INutritionRepository.cs / NutritionRepository.cs    # FoodItem + LoggedMeal
-│   │   │   ├── IMealTemplateRepository.cs / MealTemplateRepository.cs
-│   │   │   ├── IFoodSyncRepository.cs / FoodSyncRepository.cs      # FoodSyncLog + FoodItemVersion
-│   │   │   │   -- Workout domain --
-│   │   │   ├── IWorkoutRepository.cs / WorkoutRepository.cs        # Plan + Day + Exercise + Log
-│   │   │   │   -- Recommendation domain --
-│   │   │   └── IRecommendationRepository.cs / RecommendationRepository.cs
-│   │   │
 │   │   ├── Services/
-│   │   │   ├── IAuthService.cs
-│   │   │   ├── ICycleService.cs / CycleService.cs
-│   │   │   ├── ICyclePhaseCalculator.cs / CyclePhaseCalculator.cs  # Phase logic isolated here
-│   │   │   ├── ICalorieCalculator.cs / CalorieCalculator.cs        # Mifflin-St Jeor BMR
-│   │   │   ├── INutritionService.cs / NutritionService.cs
-│   │   │   └── IQuizService.cs / QuizService.cs
-│   │   │
 │   │   └── ViewModels/
-│   │       ├── LoginViewModel.cs, RegisterViewModel.cs
-│   │       ├── QuizViewModel.cs, ProfileSetupViewModel.cs
-│   │       ├── DashboardViewModel.cs
-│   │       ├── CycleViewModel.cs       (+ CycleDayItem, PhaseItem)
-│   │       ├── WorkoutViewModel.cs     (+ WorkoutItem, FilterChipItem)
-│   │       ├── NutritionViewModel.cs   (+ MealItem)
-│   │       ├── ProfileViewModel.cs     (+ PreferenceItem)
-│   │       └── SelectableQuizAnswer.cs
-│   │
-│   └── MuscleCuties.App/               # MAUI host; platform code only
-│       ├── App.xaml(.cs)               # Startup routing: auth check → LoginPage or AppShell
-│       ├── AppShell.xaml(.cs)          # 5-tab TabBar + auth/onboarding route registrations
-│       ├── MauiProgram.cs              # DI container setup, font registration
-│       ├── Services/
-│       │   ├── MauiDbPathProvider.cs
-│       │   └── SecureStorageService.cs
+│   └── MuscleCuties.App/
 │       ├── Pages/
-│       │   ├── Auth/         LoginPage, RegisterPage
-│       │   ├── Onboarding/   QuizPage, ProfileSetupPage
-│       │   ├── Dashboard/    DashboardPage
-│       │   ├── Cycle/        CyclePage
-│       │   ├── Workout/      WorkoutPage
-│       │   ├── Nutrition/    NutritionPage
-│       │   └── Profile/      ProfilePage
-│       └── Resources/
-│           ├── Converters/   CyclePhaseToBrushConverter, ReadinessScoreToColorConverter,
-│           │                 RecoveryScoreToColorConverter
-│           ├── Fonts/        Nunito-Variable.ttf, Fraunces-Variable.ttf
-│           ├── Images/       tab_today.svg, tab_cycle.svg, tab_train.svg,
-│           │                 tab_nutrition.svg, tab_you.svg
-│           └── Styles/       Colors.xaml, Styles.xaml
-│
+│       ├── Resources/
+│       ├── Services/
+│       ├── App.xaml(.cs)
+│       ├── AppShell.xaml(.cs)
+│       └── MauiProgram.cs
 └── tests/
     └── MuscleCuties.Core.Tests/
-        ├── DatabaseFixture.cs          # Shared SQLite in-memory context
-        ├── Repositories/               # UserRepository, CycleRepository, NutritionRepository,
-        │                               # SymptomRepository, QuizRepository, MealTemplateRepository,
-        │                               # FoodSyncRepository, RecommendationRepository tests
-        ├── Services/                   # CalorieCalculator, CyclePhaseCalculator, CycleService,
-        │                               # NutritionService, QuizService tests
-        └── ViewModels/                 # Login, Register, Dashboard, Quiz, ProfileSetup,
-                                        # Nutrition, Cycle, Workout, Profile ViewModel tests
 ```
-
----
 
 ## Architecture
 
-The app follows MVVM with constructor-injected dependencies throughout. Business logic lives entirely in `MuscleCuties.Core`; `MuscleCuties.App` contains only MAUI-specific wiring and platform code.
+MuscleCuties follows MVVM with constructor-injected dependencies.
 
-### Startup flow
-1. `App.CreateWindow` fires `InitializeStartupAsync`
-2. `IAuthService.IsLoggedInAsync` checks `SecureStorage` for a persisted session token
-3. Logged-out → window root set to `LoginPage` (plain `ContentPage`, no Shell)
-4. Logged-in → window root set to `AppShell` (tabbed Shell)
-5. After successful login/registration, `App.ShowAuthenticatedRoot()` swaps the window page to `AppShell`
+- `MuscleCuties.Core` owns entities, enums, repositories, services, and ViewModels.
+- `MuscleCuties.App` owns MAUI startup, platform services, pages, Shell routes, and resources.
+- Repositories wrap EF Core access behind interfaces.
+- Services contain business rules where a domain has non-trivial behavior.
+- ViewModels expose page state and commands for MAUI pages.
 
-### Navigation
-- Tab pages (Dashboard, Cycle, Workout, Nutrition, Profile) are declared in the Shell `<TabBar>` and auto-registered as routes
-- Auth and onboarding pages are registered via `Routing.RegisterRoute` and pushed modally or as shell routes
+### Startup Flow
 
-### Bounded contexts
-Six domains. Each owns its entity files. Cross-domain reads go through service interfaces only — no direct EF `Include()` across domain boundaries.
+1. `App.CreateWindow` creates the Shell root.
+2. `App.OnStart` creates a scoped service provider.
+3. `AppDatabase.InitializeAsync()` creates and seeds the local database.
+4. `IAuthService.IsLoggedInAsync()` checks secure storage for `current_user_id`.
+5. Logged-in users navigate to `DashboardPage`; logged-out users navigate to `LoginPage`.
 
-| Domain | Owns | Exposes |
-|---|---|---|
-| User | User, UserProfile, UserProfileSnapshot | IUserRepository |
-| Cycle | CycleLog, SymptomLog | ICycleRepository, ISymptomRepository, ICycleService |
-| Quiz | QuizQuestion, QuizAnswer, UserQuizResponse | IQuizRepository, IQuizService |
-| Nutrition | FoodItem, FoodItemVersion, FoodSyncLog, MealTemplate, MealTemplateEntry, LoggedMeal, LoggedMealEntry | INutritionRepository, IMealTemplateRepository, IFoodSyncRepository, INutritionService |
-| Workout | Exercise, WorkoutPlan, WorkoutDay, WorkoutDayExercise, WorkoutLog | IWorkoutRepository |
-| Recommendation | RecommendationSet, NutritionRecommendation, WorkoutRecommendation, WellnessRecommendation | IRecommendationRepository |
+### Data Flow
 
-### Recommendation feedback loop
-`RecommendationService` generates one `RecommendationSet` per user per day (re-generated if stale). Each typed child (`NutritionRecommendation`, `WorkoutRecommendation`, `WellnessRecommendation`) carries an `ActedOnAt` timestamp and a FK back to the log row that satisfied it. This gives the future AI layer supervised labels: what was recommended, whether it was followed, and how quickly.
+```text
+MAUI Page -> ViewModel -> Service or Repository -> AppDatabase -> SQLite
+```
 
-### Data flow
-ViewModels → Services (async calls) → Repository interfaces → EF Core / SQLite
+## Data Model
+
+### User
+
+- `User`
+- `UserProfile`
+- `UserProfileSnapshot`
+
+### Quiz
+
+- `QuizQuestion`
+- `QuizAnswer`
+- `UserQuizResponse`
+
+### Cycle
+
+- `CycleLog`
+- `CyclePhaseLog`
+- `SymptomLog`
+
+### Nutrition
+
+- `FoodItem`
+- `FoodItemVersion`
+- `FoodSyncLog`
+- `MealTemplate`
+- `MealTemplateEntry`
+- `LoggedMeal`
+- `LoggedMealEntry`
+
+### Workout
+
+- `Exercise`
+- `WorkoutPlan`
+- `WorkoutDay`
+- `WorkoutDayExercise`
+- `WorkoutLog`
+- `WorkoutExerciseLog`
+
+## Development Notes
+
+- Keep business logic in `MuscleCuties.Core`.
+- Keep platform-specific code in `MuscleCuties.App`.
+- Prefer services for business workflows; use repositories for persistence details.
+- Add focused tests when changing Core behavior.
+- Keep README claims aligned with implemented code.
+- Never commit FoodData Central API keys; use `FDC_API_KEY` locally.

@@ -9,41 +9,60 @@
     xmlns:workout="clr-namespace:MuscleCuties.App.Pages.Workout"
     xmlns:nutrition="clr-namespace:MuscleCuties.App.Pages.Nutrition"
     xmlns:profile="clr-namespace:MuscleCuties.App.Pages.Profile"
+    xmlns:startup="clr-namespace:MuscleCuties.App.Pages.Startup"
     FlyoutBehavior="Disabled">
 
-    <!-- Auth entry point (initial route) -->
+    <ShellContent
+        Route="AppStartupPage"
+        ContentTemplate="{DataTemplate startup:AppStartupPage}"
+        Shell.NavBarIsVisible="False" />
+
     <ShellContent
         Route="LoginPage"
         ContentTemplate="{DataTemplate auth:LoginPage}"
         Shell.NavBarIsVisible="False" />
 
-    <!-- Main app TabBar -->
     <TabBar Route="MainTab">
-        <Tab Title="Today" Icon="tab_today.png">
+        <Tab
+            x:Name="TodayTab"
+            Title="Today"
+            Icon="tab_today.png">
             <ShellContent
                 Route="DashboardPage"
                 ContentTemplate="{DataTemplate dashboard:DashboardPage}"
                 Shell.NavBarIsVisible="False" />
         </Tab>
-        <Tab Title="Cycle" Icon="tab_cycle.png">
+        <Tab
+            x:Name="CycleTab"
+            Title="Cycle"
+            Icon="tab_cycle.png">
             <ShellContent
                 Route="CyclePage"
                 ContentTemplate="{DataTemplate cycle:CyclePage}"
                 Shell.NavBarIsVisible="False" />
         </Tab>
-        <Tab Title="Train" Icon="tab_train.png">
+        <Tab
+            x:Name="TrainTab"
+            Title="Train"
+            Icon="tab_train.png">
             <ShellContent
                 Route="WorkoutPage"
                 ContentTemplate="{DataTemplate workout:WorkoutPage}"
                 Shell.NavBarIsVisible="False" />
         </Tab>
-        <Tab Title="Nutrition" Icon="tab_nutrition.png">
+        <Tab
+            x:Name="NutritionTab"
+            Title="Nutrition"
+            Icon="tab_nutrition.png">
             <ShellContent
                 Route="NutritionPage"
                 ContentTemplate="{DataTemplate nutrition:NutritionPage}"
                 Shell.NavBarIsVisible="False" />
         </Tab>
-        <Tab Title="You" Icon="tab_you.png">
+        <Tab
+            x:Name="YouTab"
+            Title="You"
+            Icon="tab_you.png">
             <ShellContent
                 Route="ProfilePage"
                 ContentTemplate="{DataTemplate profile:ProfilePage}"

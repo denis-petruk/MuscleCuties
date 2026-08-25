@@ -3,159 +3,53 @@
     x:Class="MuscleCuties.App.Pages.Cycle.CyclePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels;assembly=MuscleCuties.Core"
+    xmlns:cycleControls="clr-namespace:MuscleCuties.App.Controls.Cycle"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Cycle;assembly=MuscleCuties.Core"
     x:DataType="vm:CycleViewModel"
     Shell.NavBarIsVisible="False">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,56,20,32" Spacing="14">
-
-            <!-- ── Header ──────────────────────────────────────────── -->
-            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                    <Label
-                        Text="YOUR CYCLE"
-                        Style="{StaticResource EyebrowLabel}"
-                        CharacterSpacing="1.2" />
-                    <Label
-                        Text="{Binding CurrentMonthLabel}"
-                        Style="{StaticResource SubHeadline}" />
-                </VerticalStackLayout>
-                <Border
-                    Grid.Column="1"
-                    WidthRequest="40"
-                    HeightRequest="40"
-                    StrokeShape="RoundRectangle 20"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                    StrokeThickness="0"
-                    VerticalOptions="Center">
-                    <Path
-                        Data="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-                        Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                        StrokeThickness="1.5"
-                        StrokeLineCap="Round"
-                        StrokeLineJoin="Round"
-                        Aspect="Uniform"
-                        WidthRequest="18"
-                        HeightRequest="18"
-                        HorizontalOptions="Center"
-                        VerticalOptions="Center" />
-                </Border>
-            </Grid>
-
-            <!-- ── Calendar card ───────────────────────────────────── -->
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="14">
-
-                    <Grid ColumnDefinitions="*, Auto">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="20,56,20,32" Spacing="14">
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
                         <Label
-                            Text="{Binding CurrentDay, StringFormat='Day {0} of 28'}"
-                            Style="{StaticResource SectionTitle}"
-                            VerticalOptions="Center" />
+                            Text="YOUR CYCLE"
+                            Style="{StaticResource EyebrowLabel}"
+                            CharacterSpacing="1.2" />
                         <Label
-                            Grid.Column="1"
-                            Text="{Binding DaysUntilPeriod, StringFormat='Period in {0}d'}"
-                            Style="{StaticResource CaptionLabel}"
+                            Text="{Binding CurrentMonthLabel}"
+                            Style="{StaticResource SubHeadline}" />
+                    </VerticalStackLayout>
+
+                    <Border
+                        Grid.Column="1"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        StrokeShape="RoundRectangle 20"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                        StrokeThickness="0"
+                        VerticalOptions="Center">
+                        <Path
+                            Data="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                            StrokeThickness="1.5"
+                            StrokeLineCap="Round"
+                            StrokeLineJoin="Round"
+                            Aspect="Uniform"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            HorizontalOptions="Center"
                             VerticalOptions="Center" />
-                    </Grid>
+                    </Border>
+                </Grid>
 
-                    <CollectionView
-                        ItemsSource="{Binding CalendarDays}"
-                        HeightRequest="220">
-                        <CollectionView.ItemsLayout>
-                            <GridItemsLayout
-                                Orientation="Vertical"
-                                Span="7"
-                                HorizontalItemSpacing="5"
-                                VerticalItemSpacing="5" />
-                        </CollectionView.ItemsLayout>
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="vm:CycleDayItem">
-                                <Border
-                                    BackgroundColor="{Binding BackgroundColor}"
-                                    StrokeShape="RoundRectangle 10"
-                                    Stroke="{Binding StrokeColor}"
-                                    StrokeThickness="{Binding StrokeThickness}"
-                                    HeightRequest="30"
-                                    Margin="0">
-                                    <Label
-                                        Text="{Binding Day}"
-                                        TextColor="{Binding TextColor}"
-                                        FontSize="12"
-                                        FontAttributes="Bold"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center" />
-                                </Border>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
+                <cycleControls:CycleCalendarCard />
+                <cycleControls:CyclePhaseGuideList />
+            </VerticalStackLayout>
+        </ScrollView>
 
-                </VerticalStackLayout>
-            </Border>
-
-            <!-- ── Phases section ─────────────────────────────────── -->
-            <Label
-                Text="PHASES"
-                Style="{StaticResource EyebrowLabel}"
-                CharacterSpacing="1.2"
-                Margin="4,6,4,0" />
-
-            <CollectionView ItemsSource="{Binding Phases}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="vm:PhaseItem">
-                        <Border
-                            BackgroundColor="{Binding BackgroundColor}"
-                            StrokeShape="RoundRectangle 18"
-                            StrokeThickness="0"
-                            Padding="16,14"
-                            Margin="0,0,0,10">
-                            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14">
-
-                                <Border
-                                    Grid.Column="0"
-                                    WidthRequest="36"
-                                    HeightRequest="36"
-                                    StrokeShape="RoundRectangle 18"
-                                    BackgroundColor="{Binding BackgroundColor}"
-                                    StrokeThickness="0"
-                                    VerticalOptions="Center">
-                                    <BoxView
-                                        WidthRequest="14"
-                                        HeightRequest="14"
-                                        CornerRadius="7"
-                                        BackgroundColor="{Binding TextColor}"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center" />
-                                </Border>
-
-                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                    <Label
-                                        Text="{Binding Name}"
-                                        TextColor="{Binding TextColor}"
-                                        FontSize="15"
-                                        FontAttributes="Bold" />
-                                    <Label
-                                        Text="{Binding Description}"
-                                        TextColor="{Binding TextColor}"
-                                        FontSize="12"
-                                        Opacity="0.75" />
-                                </VerticalStackLayout>
-
-                                <Label
-                                    Grid.Column="2"
-                                    Text="›"
-                                    TextColor="{Binding TextColor}"
-                                    FontSize="22"
-                                    VerticalOptions="Center"
-                                    Opacity="0.6" />
-
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-
-        </VerticalStackLayout>
-    </ScrollView>
-
+        <cycleControls:CycleDatePhaseModal />
+        <cycleControls:CycleWarningPopup />
+    </Grid>
 </ContentPage>

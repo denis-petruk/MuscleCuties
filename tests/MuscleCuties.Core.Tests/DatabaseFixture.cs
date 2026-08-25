@@ -1,6 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
-using MuscleCuties.Core.Models.Entities;
+using MuscleCuties.Core.Models.Entities.Cycle;
+using MuscleCuties.Core.Models.Entities.Nutrition;
+using MuscleCuties.Core.Models.Entities.Quiz;
+using MuscleCuties.Core.Models.Entities.Users;
+using MuscleCuties.Core.Models.Entities.Workout;
 
 namespace MuscleCuties.Core.Tests;
 

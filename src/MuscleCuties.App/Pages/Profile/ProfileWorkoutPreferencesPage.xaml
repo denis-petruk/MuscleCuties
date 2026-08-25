@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MuscleCuties.App.Pages.Profile.ProfileWorkoutPreferencesPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
+    xmlns:workoutControls="clr-namespace:MuscleCuties.App.Controls.Workout"
+    x:DataType="vm:ProfileWorkoutPreferencesViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,52,20,32" Spacing="16">
+            <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
+                <Button
+                    Text="‹"
+                    Style="{StaticResource ButtonLink}"
+                    FontSize="28"
+                    Padding="0"
+                    Command="{Binding BackCommand}" />
+                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                    <Label Text="Workout Preferences" Style="{StaticResource SubHeadline}" />
+                    <Label Text="Choose the ways you want your weekly plan to move" Style="{StaticResource CaptionLabel}" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="FAVORITE ACTIVITIES" Style="{StaticResource EyebrowLabel}" />
+                    <Label
+                        Text="These choices shape generated workouts, recovery sessions, and cardio days."
+                        Style="{StaticResource MutedLabel}" />
+                    <workoutControls:WorkoutActivityPreferencePicker />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label
+                Text="{Binding StatusMessage}"
+                Style="{StaticResource AccentLabel}"
+                IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Button
+                Text="Save workout preferences"
+                Command="{Binding SaveCommand}"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+
+            <ActivityIndicator
+                IsRunning="{Binding IsBusy}"
+                IsVisible="{Binding IsBusy}"
+                HorizontalOptions="Center" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

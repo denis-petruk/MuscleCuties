@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Dashboard.DashboardTargetsCard"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Dashboard;assembly=MuscleCuties.Core"
+    x:DataType="vm:DashboardViewModel">
+
+    <Border Style="{StaticResource CardPrimary}">
+        <VerticalStackLayout Spacing="0">
+            <Label
+                Text="TODAY'S TARGETS"
+                Style="{StaticResource EyebrowLabel}"
+                CharacterSpacing="1.2"
+                Margin="0,0,0,6" />
+
+            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" Padding="0,10">
+                <Border
+                    Grid.Column="0"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    StrokeShape="RoundRectangle 12"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource WaterSurfaceLight}, Dark={StaticResource WaterSurfaceDark}}"
+                    StrokeThickness="0">
+                    <Path
+                        Data="M12 2.5s7 7.5 7 12a7 7 0 1 1-14 0c0-4.5 7-12 7-12z"
+                        Fill="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}"
+                        Stroke="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}"
+                        StrokeThickness="0.5"
+                        Aspect="Uniform"
+                        WidthRequest="18"
+                        HeightRequest="18"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                    <Label
+                        Text="Hydration target"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}" />
+                    <Label
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                        FontSize="17"
+                        FontAttributes="Bold">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="{Binding HydrationConsumed}" />
+                                <Span Text=" " />
+                                <Span
+                                    Text="{Binding HydrationGoal}"
+                                    FontSize="12"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                    FontAttributes="None" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                </VerticalStackLayout>
+            </Grid>
+
+            <BoxView />
+
+            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" Padding="0,10">
+                <Border
+                    Grid.Column="0"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    StrokeShape="RoundRectangle 12"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource SleepSurfaceLight}, Dark={StaticResource SleepSurfaceDark}}"
+                    StrokeThickness="0">
+                    <Path
+                        Data="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                        Fill="{AppThemeBinding Light={StaticResource SleepLight}, Dark={StaticResource SleepDark}}"
+                        Stroke="{AppThemeBinding Light={StaticResource SleepLight}, Dark={StaticResource SleepDark}}"
+                        StrokeThickness="0.5"
+                        Aspect="Uniform"
+                        WidthRequest="18"
+                        HeightRequest="18"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                    <Label
+                        Text="Sleep target"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource SleepLight}, Dark={StaticResource SleepDark}}" />
+                    <Label
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                        FontSize="17"
+                        FontAttributes="Bold">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="{Binding SleepGoal}" />
+                                <Span Text=" " />
+                                <Span
+                                    Text="tonight"
+                                    FontSize="12"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                    FontAttributes="None" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                </VerticalStackLayout>
+            </Grid>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

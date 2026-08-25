@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MuscleCuties.App.Pages.Profile.ProfilePrivacyPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,52,20,32" Spacing="16">
+            <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
+                <Button
+                    Text="‹"
+                    Style="{StaticResource ButtonLink}"
+                    FontSize="28"
+                    Padding="0"
+                    Clicked="OnBackClicked" />
+                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                    <Label Text="Privacy" Style="{StaticResource SubHeadline}" />
+                    <Label Text="Private beta data and wellness boundaries" Style="{StaticResource CaptionLabel}" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <Border
+                Style="{StaticResource CardPrimary}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Your beta data stays private." Style="{StaticResource SectionTitle}" />
+                    <Label
+                        Text="MuscleCuties is here to help you plan training, nutrition, and cycle-aware routines. It is not medical advice, and your beta feedback is only for the handsome, jacked developer."
+                        Style="{StaticResource BodyLabel}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <Grid ColumnDefinitions="34,*" ColumnSpacing="12">
+                    <Border
+                        WidthRequest="28"
+                        HeightRequest="28"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 14"
+                        BackgroundColor="{StaticResource Primary}">
+                        <Label
+                            Text="1"
+                            TextColor="{StaticResource White}"
+                            FontAttributes="Bold"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" Spacing="7">
+                        <Label Text="Not Medical Direction" Style="{StaticResource CardTitle}" />
+                        <Label
+                            Text="The app does not diagnose, treat, prevent, or replace advice from a licensed clinician."
+                            Style="{StaticResource BodyLabel}" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <Grid ColumnDefinitions="34,*" ColumnSpacing="12">
+                    <Border
+                        WidthRequest="28"
+                        HeightRequest="28"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 14"
+                        BackgroundColor="{StaticResource Primary}">
+                        <Label
+                            Text="2"
+                            TextColor="{StaticResource White}"
+                            FontAttributes="Bold"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" Spacing="7">
+                        <Label Text="Private Beta" Style="{StaticResource CardTitle}" />
+                        <Label
+                            Text="Tester information is not sold, shared with advertisers, or passed to outside teams. Feedback is private to the handsome, jacked developer."
+                            Style="{StaticResource BodyLabel}" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <Grid ColumnDefinitions="34,*" ColumnSpacing="12">
+                    <Border
+                        WidthRequest="28"
+                        HeightRequest="28"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 14"
+                        BackgroundColor="{StaticResource Primary}">
+                        <Label
+                            Text="3"
+                            TextColor="{StaticResource White}"
+                            FontAttributes="Bold"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" Spacing="7">
+                        <Label Text="What Can Be Stored" Style="{StaticResource CardTitle}" />
+                        <Label
+                            Text="The app may store your profile, cycle records, nutrition logs, workout plans, settings, and feedback you choose to send."
+                            Style="{StaticResource BodyLabel}" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="YOUR CONTROL" Style="{StaticResource EyebrowLabel}" />
+                    <Label Text="You can edit your app information from Profile." Style="{StaticResource CardTitle}" />
+                    <BoxView />
+                    <Label
+                        Text="For beta data questions, removal requests, or privacy concerns, use Feedback. It opens a private email for the handsome, jacked developer."
+                        Style="{StaticResource BodyLabel}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="CARE NOTE" Style="{StaticResource EyebrowLabel}" />
+                    <Label
+                        Text="Cycle and nutrition patterns can be useful signals. Unusual pain, bleeding, fainting, severe fatigue, or sudden health changes should be discussed with a qualified medical professional."
+                        Style="{StaticResource BodyLabel}" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
