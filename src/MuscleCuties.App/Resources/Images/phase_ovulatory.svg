@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <circle
+    cx="24"
+    cy="24"
+    r="8.2"
+    fill="#FFF0C4"
+    stroke="#E3A13B"
+    stroke-width="2.8" />
+  <path
+    d="M24 5.5v6M24 36.5v6M5.5 24h6M36.5 24h6M10.9 10.9l4.2 4.2M32.9 32.9l4.2 4.2M37.1 10.9l-4.2 4.2M15.1 32.9l-4.2 4.2"
+    fill="none"
+    stroke="#E3A13B"
+    stroke-width="2.8"
+    stroke-linecap="round" />
+</svg>

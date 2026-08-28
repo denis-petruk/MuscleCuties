@@ -1,0 +1,9 @@
+{
+  "name": "phase_menstrual_blood_drops",
+  "version": 1,
+  "kind": "phase_visual",
+  "phase": "menstrual",
+  "visual": "blood_drops",
+  "loop": true,
+  "durationMs": 1800
+}
