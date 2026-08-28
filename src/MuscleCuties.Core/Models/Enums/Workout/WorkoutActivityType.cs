@@ -2,19 +2,12 @@ namespace MuscleCuties.Core.Models.Enums.Workout;
 
 public enum WorkoutActivityType
 {
-    Strength,
-    CardioIntervals,
-    ZoneTwoCardio,
+    StrengthHighIntensity,
+    HighVolumeStrength,
     RockClimbing,
-    YogaFlow,
-    PowerYoga,
-    YinYoga,
-    RestorativeYoga,
-    Pilates,
-    Mobility,
-    Walking,
+    Yoga,
+    Hiit,
     Cycling,
-    Swimming,
-    Dance,
-    ActiveRecovery
+    Running,
+    Swimming
 }
