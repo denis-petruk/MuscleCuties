@@ -33,6 +33,16 @@
                 </VerticalStackLayout>
             </Border>
 
+            <Border Style="{StaticResource CardPrimary}" IsVisible="{Binding IsStrengthStyleVisible}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="STRENGTH STYLE" Style="{StaticResource EyebrowLabel}" />
+                    <Label
+                        Text="Pick how strength sessions should feel when your phase and energy make room for it."
+                        Style="{StaticResource MutedLabel}" />
+                    <workoutControls:StrengthTrainingStylePicker />
+                </VerticalStackLayout>
+            </Border>
+
             <Label
                 Text="{Binding StatusMessage}"
                 Style="{StaticResource AccentLabel}"

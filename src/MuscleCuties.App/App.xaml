@@ -13,6 +13,9 @@
             <mct:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <mct:IsStringNotNullOrEmptyConverter x:Key="StringToBoolConverter" />
             <converters:CyclePhaseToBrushConverter x:Key="CyclePhaseToBrushConverter" />
+            <converters:StringToFluentIconConverter x:Key="StringToFluentIconConverter" />
+            <converters:StringToFluentIconImageSourceConverter x:Key="StringToFluentIconImageSourceConverter" />
+            <converters:BoolToChevronConverter x:Key="BoolToChevronConverter" />
             <converters:CyclePhaseToTextColorConverter x:Key="CyclePhaseToTextColorConverter" />
             <converters:ReadinessScoreToColorConverter x:Key="ReadinessScoreToColorConverter" />
             <converters:RecoveryScoreToColorConverter x:Key="RecoveryScoreToColorConverter" />

@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
     x:Class="MuscleCuties.App.Pages.Cycle.CyclePhaseDetailPage"
+    x:Name="Root"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:cycleModels="clr-namespace:MuscleCuties.Core.Models.UI.Cycle;assembly=MuscleCuties.Core"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Cycle;assembly=MuscleCuties.Core"
     x:DataType="vm:CyclePhaseDetailViewModel"
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20,52,20,32" Spacing="16">
+        <VerticalStackLayout Padding="20,52,20,32" Spacing="14">
+
+            <!-- Header -->
             <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
                 <Button
                     Text="‹"
@@ -23,105 +27,207 @@
                 </VerticalStackLayout>
             </Grid>
 
+            <!-- Hero card -->
             <Border
                 Background="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
                 Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
                 StrokeShape="RoundRectangle 22"
                 StrokeThickness="1"
                 Padding="22,20">
-                <VerticalStackLayout Spacing="12">
+                <VerticalStackLayout Spacing="10">
+
                     <HorizontalStackLayout Spacing="8">
-                        <BoxView
-                            WidthRequest="7"
-                            HeightRequest="7"
-                            CornerRadius="3.5"
-                            BackgroundColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                        <Image
+                            Source="{Binding PhaseIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                            WidthRequest="14"
+                            HeightRequest="14"
+                            Aspect="AspectFit"
                             VerticalOptions="Center" />
                         <Label
                             Text="{Binding PhaseWindow}"
                             Style="{StaticResource EyebrowLabel}"
                             TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                            CharacterSpacing="1.2"
-                            VerticalOptions="Center" />
+                            CharacterSpacing="1.2" />
                     </HorizontalStackLayout>
 
                     <Label
                         Text="{Binding Headline}"
                         TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
                         FontSize="25"
-                        FontAttributes="Bold"
-                        LineBreakMode="WordWrap" />
+                        FontAttributes="Bold" />
+
                     <Label
                         Text="{Binding Hook}"
                         TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                        FontSize="15"
-                        FontAttributes="Bold"
-                        LineBreakMode="WordWrap" />
+                        FontSize="14" />
+
+                    <sharedControls:PhaseVisualView
+                        Source="{Binding PhaseImageSource}"
+                        WidthRequest="150"
+                        HeightRequest="150"
+                        HorizontalOptions="Center"
+                        Margin="0,4,0,0" />
 
                     <Border
                         BackgroundColor="{AppThemeBinding Light=#40FFFFFF, Dark=#262B1D24}"
                         StrokeThickness="0"
                         StrokeShape="RoundRectangle 16"
-                        Padding="14,12">
+                        Padding="14,10">
                         <Label
                             Text="{Binding QuickRule}"
                             TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
                             FontSize="13"
-                            FontAttributes="Bold"
-                            LineBreakMode="WordWrap" />
+                            FontAttributes="Bold" />
                     </Border>
                 </VerticalStackLayout>
             </Border>
-
-            <Label
-                Text="WHY IT MATTERS"
-                Style="{StaticResource EyebrowLabel}"
-                Margin="4,6,4,0" />
+            <!-- Workouts -->
+            <Label Text="WORKOUTS" Style="{StaticResource EyebrowLabel}" Margin="4,6,4,0" />
             <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="{Binding WhyLead}" Style="{StaticResource BodyLabel}" />
-                    <VerticalStackLayout
-                        Spacing="10"
-                        BindableLayout.ItemsSource="{Binding WhyPoints}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding WorkoutLead}" Style="{StaticResource BodyLabel}" MaxLines="2" LineBreakMode="TailTruncation" />
+                    <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding WorkoutPoints}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Border
                                     BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 16"
-                                    Padding="14,12">
-                                    <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding Title}" Style="{StaticResource CardTitle}" />
-                                        <Label Text="{Binding Text}" Style="{StaticResource CaptionLabel}" />
-                                    </VerticalStackLayout>
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 20" Padding="10,7" Margin="0,0,6,6">
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Image
+                                            Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                            WidthRequest="14"
+                                            HeightRequest="14"
+                                            Aspect="AspectFit"
+                                            VerticalOptions="Center" />
+                                        <Label Text="{Binding Title}" Style="{StaticResource CardTitle}" FontSize="12.5" VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+                </VerticalStackLayout>
+            </Border>
+            <!-- At a glance -->
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="AT A GLANCE" Style="{StaticResource EyebrowLabel}" />
+
+                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                        <Grid ColumnDefinitions="24,70,*,60" ColumnSpacing="8">
+                            <Image
+                                Source="{Binding TrainingIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                WidthRequest="18"
+                                HeightRequest="18"
+                                Aspect="AspectFit"
+                                VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="Training" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
+                            <ProgressBar Grid.Column="2" Progress="{Binding TrainingSignal}"
+                                ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                VerticalOptions="Center" />
+                            <Label Grid.Column="3" Text="{Binding TrainingSignalText}" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                        </Grid>
+
+                        <Grid Grid.Row="1" ColumnDefinitions="24,70,*,60" ColumnSpacing="8">
+                            <Image
+                                Source="{Binding NutritionIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                WidthRequest="18"
+                                HeightRequest="18"
+                                Aspect="AspectFit"
+                                VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="Nutrition" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
+                            <ProgressBar Grid.Column="2" Progress="{Binding NutritionSignal}"
+                                ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                VerticalOptions="Center" />
+                            <Label Grid.Column="3" Text="{Binding NutritionSignalText}" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                        </Grid>
+
+                        <Grid Grid.Row="2" ColumnDefinitions="24,70,*,60" ColumnSpacing="8">
+                            <Image
+                                Source="{Binding RecoveryIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                WidthRequest="18"
+                                HeightRequest="18"
+                                Aspect="AspectFit"
+                                VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="Recovery" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
+                            <ProgressBar Grid.Column="2" Progress="{Binding RecoverySignal}"
+                                ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                VerticalOptions="Center" />
+                            <Label Grid.Column="3" Text="{Binding RecoverySignalText}" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                        </Grid>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Why it matters -->
+            <Label Text="WHY IT MATTERS" Style="{StaticResource EyebrowLabel}" Margin="4,6,4,0" />
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding WhyLead}" Style="{StaticResource BodyLabel}" MaxLines="2" LineBreakMode="TailTruncation" />
+                    <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding WhyPoints}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
+                                <Border
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 14" Padding="12,10">
+                                    <Grid ColumnDefinitions="22,*" ColumnSpacing="8">
+                                        <Image
+                                            Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                            WidthRequest="16"
+                                            HeightRequest="16"
+                                            Aspect="AspectFit"
+                                            VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource CardTitle}" FontSize="13.5" />
+                                    </Grid>
                                 </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
+            <!-- Watch this -->
+            <Border
+                Style="{StaticResource CardPrimary}"
+                BackgroundColor="{AppThemeBinding Light=#FFF3E0, Dark=#332B1A}">
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="22,*,20" ColumnSpacing="8">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleWatchCommand}" />
+                        </Grid.GestureRecognizers>
+                        <Image
+                            Source="{Binding WatchIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}, ConverterParameter=Warning}"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            Aspect="AspectFit"
+                            VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="Watch this" Style="{StaticResource CardTitle}" FontSize="14" VerticalOptions="Center" />
+                        <Label
+                            Grid.Column="2"
+                            Text="{Binding IsWatchExpanded, Converter={StaticResource BoolToChevronConverter}}"
+                            TextColor="{AppThemeBinding Light=#C77700, Dark=#E0A345}"
+                            FontSize="14"
+                            VerticalOptions="Center"
+                            HorizontalTextAlignment="End" />
+                    </Grid>
 
-            <Label
-                Text="NUTRITION"
-                Style="{StaticResource EyebrowLabel}"
-                Margin="4,6,4,0" />
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="{Binding NutritionLead}" Style="{StaticResource BodyLabel}" />
                     <VerticalStackLayout
                         Spacing="10"
-                        BindableLayout.ItemsSource="{Binding NutritionPoints}">
+                        Margin="0,10,0,0"
+                        IsVisible="{Binding IsWatchExpanded}"
+                        BindableLayout.ItemsSource="{Binding WatchPoints}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                    <BoxView
-                                        WidthRequest="7"
-                                        HeightRequest="7"
-                                        CornerRadius="3.5"
-                                        BackgroundColor="{StaticResource Primary}"
-                                        Margin="0,7,0,0" />
-                                    <VerticalStackLayout Grid.Column="1" Spacing="3">
-                                        <Label Text="{Binding Title}" Style="{StaticResource CardTitle}" FontSize="14" />
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                    <Image
+                                        Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}, ConverterParameter=Warning}"
+                                        WidthRequest="14"
+                                        HeightRequest="14"
+                                        Aspect="AspectFit"
+                                        Margin="0,10,0,0" />
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="{Binding Title}" Style="{StaticResource CardTitle}" FontSize="13" />
                                         <Label Text="{Binding Text}" Style="{StaticResource CaptionLabel}" />
                                     </VerticalStackLayout>
                                 </Grid>
@@ -130,53 +236,30 @@
                     </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
-
-            <Label
-                Text="WORKOUTS"
-                Style="{StaticResource EyebrowLabel}"
-                Margin="4,6,4,0" />
+            <!-- Nutrition -->
+            <Label Text="NUTRITION" Style="{StaticResource EyebrowLabel}" Margin="4,6,4,0" />
             <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="{Binding WorkoutLead}" Style="{StaticResource BodyLabel}" />
-                    <VerticalStackLayout
-                        Spacing="10"
-                        BindableLayout.ItemsSource="{Binding WorkoutPoints}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding NutritionLead}" Style="{StaticResource BodyLabel}" MaxLines="2" LineBreakMode="TailTruncation" />
+                    <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding NutritionPoints}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                    <BoxView
-                                        WidthRequest="7"
-                                        HeightRequest="7"
-                                        CornerRadius="3.5"
-                                        BackgroundColor="{StaticResource Primary}"
-                                        Margin="0,7,0,0" />
-                                    <VerticalStackLayout Grid.Column="1" Spacing="3">
-                                        <Label Text="{Binding Title}" Style="{StaticResource CardTitle}" FontSize="14" />
-                                        <Label Text="{Binding Text}" Style="{StaticResource CaptionLabel}" />
-                                    </VerticalStackLayout>
-                                </Grid>
+                                <Border
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 20" Padding="10,7" Margin="0,0,6,6">
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Image
+                                            Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                            WidthRequest="14"
+                                            HeightRequest="14"
+                                            Aspect="AspectFit"
+                                            VerticalOptions="Center" />
+                                        <Label Text="{Binding Title}" Style="{StaticResource CardTitle}" FontSize="12.5" VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+                                </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
-                    </VerticalStackLayout>
-                </VerticalStackLayout>
-            </Border>
-
-            <Label
-                Text="WATCH THIS"
-                Style="{StaticResource EyebrowLabel}"
-                Margin="4,6,4,0" />
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout
-                    Spacing="10"
-                    BindableLayout.ItemsSource="{Binding WatchPoints}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
-                            <VerticalStackLayout Spacing="3">
-                                <Label Text="{Binding Title}" Style="{StaticResource CardTitle}" FontSize="14" />
-                                <Label Text="{Binding Text}" Style="{StaticResource CaptionLabel}" />
-                            </VerticalStackLayout>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
+                    </FlexLayout>
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

@@ -26,12 +26,20 @@
             </Grid>
 
             <Grid ColumnDefinitions="*, Auto">
-                <Label
-                    Text="{Binding CaloriesConsumed}"
-                    Style="{StaticResource AccentLabel}"
-                    FontSize="26"
-                    FontAttributes="Bold"
-                    VerticalOptions="Center" />
+                <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
+                    <sharedControls:FitnessIconView
+                        Icon="Fire"
+                        IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                        WidthRequest="20"
+                        HeightRequest="20"
+                        VerticalOptions="Center" />
+                    <Label
+                        Text="{Binding CaloriesConsumed}"
+                        Style="{StaticResource AccentLabel}"
+                        FontSize="26"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center" />
+                </HorizontalStackLayout>
                 <Label
                     Grid.Column="1"
                     Text="{Binding CaloriesGoal}"

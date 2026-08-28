@@ -234,6 +234,36 @@ public partial class AppDatabase
                 new("Olive oil", 8f)
             ]),
         Template(
+            "Chicken Avocado Quinoa Bowl",
+            "Chicken, quinoa, avocado, red pepper, spinach, and olive oil for a regular high-protein training bowl.",
+            MealType.Lunch,
+            52,
+            [DietaryTag.GlutenFree, DietaryTag.LactoseFree],
+            [CyclePhase.Follicular, CyclePhase.Ovulatory],
+            [
+                new("Chicken breast, raw", 150f),
+                new("Quinoa, cooked", 130f),
+                new("Avocado, raw", 70f),
+                new("Red bell pepper, raw", 90f),
+                new("Spinach, raw", 50f),
+                new("Olive oil", 6f)
+            ]),
+        Template(
+            "Tuna Chickpea Power Plate",
+            "Tuna, chickpeas, red pepper, kale, avocado, and olive oil for B12, iron, vitamin C, fiber, and steady fats.",
+            MealType.Lunch,
+            54,
+            [DietaryTag.GlutenFree, DietaryTag.LactoseFree],
+            [CyclePhase.Ovulatory, CyclePhase.Luteal],
+            [
+                new("Tuna, canned in water", 120f),
+                new("Chickpeas, cooked", 120f),
+                new("Red bell pepper, raw", 90f),
+                new("Kale, raw", 70f),
+                new("Avocado, raw", 60f),
+                new("Olive oil", 5f)
+            ]),
+        Template(
             "Margherita Pizza Beans",
             "White beans baked with marinara, spinach, mozzarella, parmesan, and olive oil.",
             MealType.Dinner,
@@ -305,6 +335,34 @@ public partial class AppDatabase
                 new("Sweet potato, baked", 180f),
                 new("Kale, raw", 80f),
                 new("Olive oil", 7f)
+            ]),
+        Template(
+            "Salmon Bean Recovery Bowl",
+            "Salmon, cannellini beans, sweet potato, kale, and olive oil for protein, potassium, vitamin D, and comfort carbs.",
+            MealType.Dinner,
+            102,
+            [DietaryTag.GlutenFree, DietaryTag.LactoseFree],
+            [CyclePhase.Menstrual, CyclePhase.Luteal],
+            [
+                new("Salmon, cooked", 130f),
+                new("Cannellini beans, cooked", 170f),
+                new("Sweet potato, baked", 140f),
+                new("Kale, raw", 70f),
+                new("Olive oil", 6f)
+            ]),
+        Template(
+            "Turkey Pepperoni Egg Plate",
+            "Eggs, turkey pepperoni, spinach, sweet potato, and olive oil for a savory regular breakfast with enough fat for vitamin A.",
+            MealType.Breakfast,
+            32,
+            [DietaryTag.GlutenFree, DietaryTag.LactoseFree],
+            [CyclePhase.Follicular, CyclePhase.Ovulatory],
+            [
+                new("Eggs, whole, raw", 100f),
+                new("Turkey pepperoni", 20f),
+                new("Sweet potato, baked", 130f),
+                new("Spinach, raw", 60f),
+                new("Olive oil", 4f)
             ]),
         Template(
             "Carrot Hummus Crunch",

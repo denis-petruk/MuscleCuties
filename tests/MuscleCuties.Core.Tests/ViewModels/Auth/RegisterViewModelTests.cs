@@ -30,12 +30,12 @@ public class RegisterViewModelTests
     public async Task RegisterAsync_ValidCredentials_NavigatesToQuiz()
     {
         var user = new User { Id = 1, Email = "new@test.com", PasswordHash = "hash" };
-        _authService.RegisterAsync("new@test.com", "pass123").Returns(user);
+        _authService.RegisterAsync("new@test.com", "Pass123!").Returns(user);
 
         var vm = CreateViewModel();
         vm.Email = "new@test.com";
-        vm.Password = "pass123";
-        vm.ConfirmPassword = "pass123";
+        vm.Password = "Pass123!";
+        vm.ConfirmPassword = "Pass123!";
         await vm.RegisterCommand.ExecuteAsync(null);
 
         Assert.True(_navigatedToQuiz);
@@ -43,12 +43,42 @@ public class RegisterViewModelTests
     }
 
     [Fact]
-    public async Task RegisterAsync_PasswordMismatch_SetsErrorMessage()
+    public async Task RegisterAsync_InvalidEmail_SetsErrorMessage()
+    {
+        var vm = CreateViewModel();
+        vm.Email = "not-an-email";
+        vm.Password = "Pass123!";
+        vm.ConfirmPassword = "Pass123!";
+
+        await vm.RegisterCommand.ExecuteAsync(null);
+
+        Assert.Equal("Enter a valid email address.", vm.ErrorMessage);
+        Assert.False(_navigatedToQuiz);
+        await _authService.DidNotReceive().RegisterAsync(Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WeakPassword_SetsErrorMessage()
     {
         var vm = CreateViewModel();
         vm.Email = "new@test.com";
         vm.Password = "pass123";
-        vm.ConfirmPassword = "different";
+        vm.ConfirmPassword = "pass123";
+
+        await vm.RegisterCommand.ExecuteAsync(null);
+
+        Assert.Equal(AuthInputValidator.PasswordRequirementsMessage, vm.ErrorMessage);
+        Assert.False(_navigatedToQuiz);
+        await _authService.DidNotReceive().RegisterAsync(Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task RegisterAsync_PasswordMismatch_SetsErrorMessage()
+    {
+        var vm = CreateViewModel();
+        vm.Email = "new@test.com";
+        vm.Password = "Pass123!";
+        vm.ConfirmPassword = "Different123!";
         await vm.RegisterCommand.ExecuteAsync(null);
 
         Assert.Equal("Passwords do not match", vm.ErrorMessage);
@@ -63,8 +93,8 @@ public class RegisterViewModelTests
 
         var vm = CreateViewModel();
         vm.Email = "new@test.com";
-        vm.Password = "pass123";
-        vm.ConfirmPassword = "pass123";
+        vm.Password = "Pass123!";
+        vm.ConfirmPassword = "Pass123!";
         await vm.RegisterCommand.ExecuteAsync(null);
 
         Assert.Equal("Registration failed", vm.ErrorMessage);

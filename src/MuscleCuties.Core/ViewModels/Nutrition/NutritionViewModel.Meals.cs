@@ -95,6 +95,7 @@ public partial class NutritionViewModel
                 AddFoodMessage = $"{SelectedMealType} logged at {loggedAt:h:mm tt}.";
             }
 
+            TriggerCelebration();
             IsAddFoodPanelVisible = false;
             IsCustomFoodPanelVisible = false;
             SelectedFoodResult = null;
@@ -337,9 +338,7 @@ public partial class NutritionViewModel
             LoggedMealId = meal.Id,
             Time = meal.LoggedAt.ToString("h:mm tt", CultureInfo.CurrentCulture),
             MealType = meal.MealType.ToString().ToUpperInvariant(),
-            Name = entries.Count == 0
-                ? "Logged meal"
-                : string.Join(", ", entries.Select(e => $"{e.FoodItem!.Name} ({e.Grams:N0}g)")),
+            Name = BuildMealCardName(entries),
             CaloriesText = $"{macros.Calories:N0} kcal",
             MacrosText = macros.ToMacroText(),
             FiberText = BuildFiberText(micronutrients),
@@ -348,6 +347,32 @@ public partial class NutritionViewModel
             MacroItems = new ObservableCollection<MacroBreakdownItem>(BuildMacroBreakdownItems(macros)),
             Micronutrients = new ObservableCollection<DailyMicronutrientItem>(micronutrients)
         };
+    }
+
+    private static string BuildMealCardName(IReadOnlyList<LoggedMealEntry> entries)
+    {
+        var names = entries
+            .Select(entry => ShortenIngredientName(entry.FoodItem!.Name))
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return names.Count switch
+        {
+            0 => "Logged meal",
+            1 => names[0],
+            2 => $"{names[0]} + {names[1]}",
+            _ => $"{names[0]} + {names[1]} + {names.Count - 2} more"
+        };
+    }
+
+    private static string ShortenIngredientName(string name)
+    {
+        var cleanName = name
+            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault() ?? name.Trim();
+
+        return cleanName.Length <= 24 ? cleanName : $"{cleanName[..21]}...";
     }
 
     private static MealTemplateItem BuildMealTemplateItem(MealTemplate template)

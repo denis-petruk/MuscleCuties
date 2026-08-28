@@ -53,7 +53,12 @@ public class QuizService : IQuizService
             UpdatedAt = answeredAt
         };
 
-        foreach (var selection in selections)
+        var dietarySelections = selections
+            .Where(selection => selection.Question.QuestionType is QuizQuestionType.DietaryPreference)
+            .ToList();
+
+        foreach (var selection in selections.Where(selection =>
+                     selection.Question.QuestionType is not QuizQuestionType.DietaryPreference))
         {
             switch (selection.Question.QuestionType)
             {
@@ -67,15 +72,15 @@ public class QuizService : IQuizService
                 case QuizQuestionType.WorkoutDaysPerWeek:
                     profile.WorkoutDaysPerWeek = Math.Clamp(selection.Answer.MappedValue, 0, 7);
                     break;
-                case QuizQuestionType.DietaryPreference:
-                    profile.DietaryTags = BuildDietaryTags(selection.Answer.MappedValue);
-                    break;
                 case QuizQuestionType.CurrentCyclePhase:
                     profile.CycleTrackingMode = CycleTrackingMode.ManualPhaseLogging;
                     profile.CurrentCyclePhase = MapEnum(selection.Answer.MappedValue, CyclePhase.Follicular);
                     break;
             }
         }
+
+        if (dietarySelections.Count > 0)
+            profile.DietaryTags = BuildDietaryTags(dietarySelections.Select(selection => selection.Answer.MappedValue));
 
         if (profile.CycleTrackingMode is not CycleTrackingMode.ManualPhaseLogging)
             profile.CurrentCyclePhase = null;
@@ -123,13 +128,17 @@ public class QuizService : IQuizService
         IReadOnlyDictionary<int, QuizQuestion> questionMap,
         DateTime answeredAt)
     {
-        return responses
+        var selections = responses
             .Select(response => BuildSelection(userId, response, questionMap, answeredAt))
             .Where(selection => selection is not null)
             .Select(selection => selection!)
+            .ToList();
+
+        return selections
             .GroupBy(selection => selection.Question.Id)
-            .Select(group => group.Last())
+            .SelectMany(NormalizeQuestionSelections)
             .OrderBy(selection => selection.Question.OrderIndex)
+            .ThenBy(selection => selection.Answer.OrderIndex)
             .ToList();
     }
 
@@ -163,10 +172,33 @@ public class QuizService : IQuizService
     private static TrainingExperienceLevel MapTrainingExperience(int mappedValue) =>
         MapEnum(mappedValue, TrainingExperienceLevel.Unknown);
 
-    private static string BuildDietaryTags(int mappedValue)
+    private static IEnumerable<QuizSelection> NormalizeQuestionSelections(IGrouping<int, QuizSelection> group)
     {
-        var tag = MapEnum(mappedValue, DietaryTag.None);
-        return tag is DietaryTag.None ? string.Empty : tag.ToString();
+        var selections = group
+            .GroupBy(selection => selection.Answer.Id)
+            .Select(answerGroup => answerGroup.Last())
+            .ToList();
+
+        if (selections.First().Question.QuestionType is not QuizQuestionType.DietaryPreference)
+            return [selections.Last()];
+
+        var selectedTags = selections
+            .Where(selection => selection.Answer.MappedValue != (int)DietaryTag.None)
+            .ToList();
+
+        return selectedTags.Count > 0 ? selectedTags : [selections.Last()];
+    }
+
+    private static string BuildDietaryTags(IEnumerable<int> mappedValues)
+    {
+        var tags = mappedValues
+            .Select(value => MapEnum(value, DietaryTag.None))
+            .Where(tag => tag is not DietaryTag.None)
+            .Distinct()
+            .Select(tag => tag.ToString())
+            .ToList();
+
+        return string.Join(",", tags);
     }
 
     private static QuizProfileSnapshot BuildSnapshot(

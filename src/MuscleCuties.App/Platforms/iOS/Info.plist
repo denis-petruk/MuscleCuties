@@ -35,6 +35,19 @@
 		<key>UIImageRespectsSafeAreaInsets</key>
 		<false/>
 	</dict>
+	<key>NSHealthShareUsageDescription</key>
+	<string>MuscleCuties reads weekly steps and sleep averages to adjust calorie targets, readiness, and recovery.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>MuscleCuties does not write Health data. This permission is reserved for future workout syncing.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>musclecuties</string>
+			</array>
+		</dict>
+	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
 </dict>

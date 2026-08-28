@@ -1,3 +1,4 @@
+using MauiIcons.Core;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.ViewModels.Cycle;
 
@@ -9,6 +10,7 @@ public partial class CyclePhaseDetailPage : ContentPage
     public CyclePhaseDetailPage(CyclePhaseDetailViewModel vm)
     {
         InitializeComponent();
+        _ = new MauiIcon();
         BindingContext = vm;
     }
 

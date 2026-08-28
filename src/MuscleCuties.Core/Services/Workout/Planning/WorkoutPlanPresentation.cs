@@ -1,4 +1,3 @@
-using Microsoft.Maui.Graphics;
 using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Workout;
@@ -8,11 +7,21 @@ namespace MuscleCuties.Core.Services.Workout.Planning;
 public partial class WorkoutPlanner
 {
     public IReadOnlyList<WorkoutListItem> BuildWorkoutItems(
-        IReadOnlyCollection<WorkoutDay> workoutDays)
+        IReadOnlyCollection<WorkoutDay> workoutDays,
+        IReadOnlyCollection<WorkoutLog>? workoutLogs = null)
     {
         var daysByWeekday = workoutDays
             .GroupBy(day => day.DayOfWeek)
             .ToDictionary(group => group.Key, group => group.First());
+        var latestLogByWorkoutDayId = (workoutLogs ?? [])
+            .Where(log => log.WorkoutDayId > 0)
+            .GroupBy(log => log.WorkoutDayId)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .OrderByDescending(log => log.Date)
+                    .ThenByDescending(log => log.CreatedAt)
+                    .First());
 
         return Enumerable.Range(0, 7)
             .Select(dayOfWeek =>
@@ -20,10 +29,11 @@ public partial class WorkoutPlanner
                 if (!daysByWeekday.TryGetValue(dayOfWeek, out var day))
                     return BuildRestDayItem(dayOfWeek);
 
+                var latestLog = latestLogByWorkoutDayId.GetValueOrDefault(day.Id);
                 if (day.WorkoutType is WorkoutType.Rest)
-                    return BuildRestDayItem(day.DayOfWeek, day.Id);
+                    return BuildRestDayItem(day.DayOfWeek, day.Id, latestLog);
 
-                var activityTag = BuildActivityTag(day);
+                var activityTag = WorkoutActivityClassifier.BuildPrimaryTag(day);
                 return new WorkoutListItem(
                     day.Id,
                     activityTag,
@@ -31,9 +41,13 @@ public partial class WorkoutPlanner
                     day.Name,
                     BuildDurationText(day),
                     BuildExerciseCountText(day),
+                    BuildActivityCountText(day),
                     BuildDetailsText(day),
-                    GetActivityBackground(activityTag),
-                    GetActivityTextColor(activityTag));
+                    WorkoutActivityClassifier.GetBackground(activityTag),
+                    WorkoutActivityClassifier.GetTextColor(activityTag),
+                    false,
+                    BuildSessionProgressText(latestLog),
+                    IsWorkoutCompleted(latestLog));
             })
             .ToList();
     }
@@ -57,7 +71,8 @@ public partial class WorkoutPlanner
                 "Rest day",
                 "0",
                 "None",
-                "REST");
+                "REST",
+                WorkoutActivityClassifier.RestTag);
         }
 
         var completedLog = workoutLogs
@@ -73,17 +88,20 @@ public partial class WorkoutPlanner
                 "Rest day",
                 "0",
                 "None",
-                BuildSessionProgressText(completedLog));
+                BuildSessionProgressText(completedLog),
+                WorkoutActivityClassifier.RestTag);
         }
 
         var exerciseCount = todayWorkout.WorkoutDayExercises.Count;
+        var activityTag = WorkoutActivityClassifier.BuildPrimaryTag(todayWorkout);
         return new TodaysWorkoutSummary(
             todayWorkout.Name,
-            BuildWorkoutSubtitle(plan.Name, todayWorkout),
+            BuildWorkoutSubtitle(todayWorkout),
             BuildDurationText(todayWorkout),
             exerciseCount.ToString(),
             BuildWorkoutIntensity(phase, exerciseCount),
-            BuildSessionProgressText(completedLog));
+            BuildSessionProgressText(completedLog),
+            activityTag);
     }
 
     private static WorkoutDay? PickWorkoutForDate(
@@ -97,24 +115,74 @@ public partial class WorkoutPlanner
         return workoutDays.FirstOrDefault(day => day.DayOfWeek == dayOfWeek);
     }
 
-    private static string BuildWorkoutSubtitle(string planName, WorkoutDay workoutDay)
+    private static string BuildWorkoutSubtitle(WorkoutDay workoutDay)
     {
         var exerciseNames = workoutDay.WorkoutDayExercises
             .Select(exercise => exercise.Exercise?.Name)
             .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(name => name!)
             .Take(2)
             .ToList();
 
-        return exerciseNames.Count == 0
-            ? planName
-            : $"{planName} with {string.Join(" and ", exerciseNames)}";
+        if (workoutDay.WorkoutType is WorkoutType.Recovery)
+            return "Easy movement to improve circulation and leave you fresher.";
+
+        if (workoutDay.WorkoutType is WorkoutType.Cardio)
+            return BuildCardioSubtitle(workoutDay);
+
+        return BuildStrengthSubtitle(workoutDay, exerciseNames);
+    }
+
+    private static string BuildCardioSubtitle(WorkoutDay workoutDay)
+    {
+        if (HasActivityFocus(workoutDay, "HIIT", "Interval", "Sprint"))
+            return "Short conditioning blocks with recovery kept honest.";
+
+        if (HasActivityFocus(workoutDay, "Ride", "Zone 2", "Cycling"))
+            return "Steady aerobic work at a repeatable, conversational pace.";
+
+        if (HasActivityFocus(workoutDay, "Run", "Jog"))
+            return "Pace work with enough control to recover and repeat.";
+
+        if (HasActivityFocus(workoutDay, "Swimming"))
+            return "Pool conditioning with relaxed shoulders and clean breathing.";
+
+        return "Conditioning work paced so you can actually recover from it.";
+    }
+
+    private static string BuildStrengthSubtitle(
+        WorkoutDay workoutDay,
+        IReadOnlyList<string> exerciseNames)
+    {
+        if (HasActivityFocus(workoutDay, "Leg", "Squat", "Lunge", "Glute", "Hip Thrust"))
+            return "Legs and glutes first, with core work to keep the lift honest.";
+
+        if (HasActivityFocus(workoutDay, "Upper", "Row", "Pulldown", "Press", "Face Pull"))
+            return "Push and pull strength with enough shoulder balance.";
+
+        if (exerciseNames.Count > 0)
+            return $"{string.Join(" and ", exerciseNames)} anchor the session.";
+
+        return "Strength work with clear sets, reps, and room to progress.";
     }
 
     private static string BuildDurationText(WorkoutDay day)
     {
         var seconds = day.WorkoutDayExercises.Sum(exercise => exercise.DurationSeconds ?? 0);
+        var hasStrengthWork = day.WorkoutDayExercises.Any(exercise => exercise.Sets > 0 && exercise.Reps > 0);
+        if (seconds > 0 && hasStrengthWork)
+        {
+            var strengthMinutes = day.WorkoutType is WorkoutType.Strength
+                ? WorkoutDurationEstimator.EstimateStrengthMinutes(day.WorkoutDayExercises)
+                : 0;
+            return $"{Math.Max(1, strengthMinutes + (int)Math.Ceiling(seconds / 60d))} min";
+        }
+
         if (seconds > 0)
             return $"{Math.Max(1, (int)Math.Ceiling(seconds / 60d))} min";
+
+        if (day.WorkoutType is WorkoutType.Strength)
+            return $"{WorkoutDurationEstimator.EstimateStrengthMinutes(day.WorkoutDayExercises)} min";
 
         var exerciseCount = day.WorkoutDayExercises.Count;
         return exerciseCount == 0
@@ -126,6 +194,15 @@ public partial class WorkoutPlanner
     {
         var count = day.WorkoutDayExercises.Count;
         return count == 1 ? "1 exercise" : $"{count} exercises";
+    }
+
+    private static string BuildActivityCountText(WorkoutDay day)
+    {
+        if (day.WorkoutType is WorkoutType.Rest)
+            return "0 activities";
+
+        var count = CountActivityGroups(day);
+        return count == 1 ? "1 activity" : $"{count} activities";
     }
 
     private static string BuildDetailsText(WorkoutDay day)
@@ -158,14 +235,20 @@ public partial class WorkoutPlanner
     private static string BuildSessionProgressText(WorkoutLog? completedLog) =>
         completedLog switch
         {
-            { CompletionPercent: >= 100 } => "COMPLETED",
-            { CompletionPercent: > 0 } => $"{completedLog.CompletionPercent}% DONE",
-            _ => "UPCOMING"
+            { CompletionPercent: >= 100 } => "Completed",
+            { CompletionPercent: > 0 } => $"{completedLog.CompletionPercent}% done",
+            _ => "Upcoming"
         };
 
-    private static WorkoutListItem BuildRestDayItem(int dayOfWeek, int workoutDayId = 0)
+    private static bool IsWorkoutCompleted(WorkoutLog? completedLog) =>
+        completedLog?.CompletionPercent >= 100;
+
+    private static WorkoutListItem BuildRestDayItem(
+        int dayOfWeek,
+        int workoutDayId = 0,
+        WorkoutLog? latestLog = null)
     {
-        const string activityTag = "REST";
+        const string activityTag = WorkoutActivityClassifier.RestTag;
         return new WorkoutListItem(
             workoutDayId,
             activityTag,
@@ -173,40 +256,23 @@ public partial class WorkoutPlanner
             "Living happy life",
             "Rest day",
             "No exercises",
+            "0 activities",
             "Rest, recover, enjoy the day.",
-            GetActivityBackground(activityTag),
-            GetActivityTextColor(activityTag),
-            true);
+            WorkoutActivityClassifier.GetBackground(activityTag),
+            WorkoutActivityClassifier.GetTextColor(activityTag),
+            true,
+            BuildSessionProgressText(latestLog),
+            IsWorkoutCompleted(latestLog));
     }
-
-    private static string BuildActivityTag(WorkoutDay day)
-    {
-        if (HasActivityFocus(day, "Rock Climbing", "Climb"))
-            return "CLIMB";
-
-        if (HasActivityFocus(day, "Pilates"))
-            return "PILATES";
-
-        if (HasYogaFocus(day))
-            return "YOGA";
-
-        return day.WorkoutType switch
-        {
-            WorkoutType.Cardio => "CARDIO",
-            WorkoutType.Recovery => "RECOVERY",
-            WorkoutType.Rest => "REST",
-            _ => "STRENGTH"
-        };
-    }
-
-    private static bool HasYogaFocus(WorkoutDay day) =>
-        HasActivityFocus(day, "Yoga");
 
     private static bool HasActivityFocus(WorkoutDay day, params string[] terms) =>
         terms.Any(term => day.Name.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
         day.WorkoutDayExercises.Any(exercise =>
             terms.Any(term =>
                 exercise.Exercise?.Name.Contains(term, StringComparison.OrdinalIgnoreCase) == true));
+
+    private static int CountActivityGroups(WorkoutDay day) =>
+        WorkoutActivityClassifier.BuildActivityTags(day).Count(tag => tag != WorkoutActivityClassifier.RestTag);
 
     private static string FormatDayLabel(int dayOfWeek) =>
         dayOfWeek switch
@@ -221,27 +287,4 @@ public partial class WorkoutPlanner
             _ => $"DAY {dayOfWeek}"
         };
 
-    private static Color GetActivityBackground(string activityTag) => activityTag switch
-    {
-        "CARDIO" => Color.FromArgb("#E0F2F1"),
-        "CLIMB" => Color.FromArgb("#E7EEF8"),
-        "PILATES" => Color.FromArgb("#F4E6D7"),
-        "YOGA" => Color.FromArgb("#E8D8F5"),
-        "RECOVERY" => Color.FromArgb("#E8F5E9"),
-        "REST" => Color.FromArgb("#F0EFEA"),
-        "STRENGTH" => Color.FromArgb("#F8DFF1"),
-        _ => Color.FromArgb("#F8EEF4")
-    };
-
-    private static Color GetActivityTextColor(string activityTag) => activityTag switch
-    {
-        "CARDIO" => Color.FromArgb("#1F6F68"),
-        "CLIMB" => Color.FromArgb("#315D87"),
-        "PILATES" => Color.FromArgb("#8A5733"),
-        "YOGA" => Color.FromArgb("#5A3B80"),
-        "RECOVERY" => Color.FromArgb("#3A6B3A"),
-        "REST" => Color.FromArgb("#5F5A50"),
-        "STRENGTH" => Color.FromArgb("#8D3A5F"),
-        _ => Color.FromArgb("#5B4650")
-    };
 }

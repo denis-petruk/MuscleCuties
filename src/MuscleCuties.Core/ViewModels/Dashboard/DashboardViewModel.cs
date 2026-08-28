@@ -2,12 +2,15 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.Core.Models.UI.Cycle;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
 using MuscleCuties.Core.Services.Dashboard.Planning;
+using MuscleCuties.Core.Services.Health;
 using MuscleCuties.Core.Services.Nutrition;
+using MuscleCuties.Core.Services.Progress;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
 using MuscleCuties.Core.ViewModels.Common;
@@ -24,7 +27,9 @@ public partial class DashboardViewModel : ObservableObject
     private readonly ICycleService _cycleService;
     private readonly INutritionService _nutritionService;
     private readonly IWorkoutService _workoutService;
+    private readonly IProgressSummaryService _progressSummaryService;
     private readonly IDashboardPlanner _dashboardPlanner;
+    private readonly IHealthSyncService _healthSyncService;
     private readonly Action _openCycle;
     private readonly Action _openWorkout;
     private readonly Action _openNutrition;
@@ -56,15 +61,23 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private string _readinessLabel = string.Empty;
     [ObservableProperty] private int _recoveryScore;
     [ObservableProperty] private string _recoveryLabel = string.Empty;
-    [ObservableProperty] private string _sessionProgressText = "UPCOMING";
+    [ObservableProperty] private string _sessionProgressText = "Upcoming";
     [ObservableProperty] private string _workoutTitle = "Living happy life";
     [ObservableProperty] private string _workoutSubtitle = "Recovery day";
     [ObservableProperty] private string _workoutDurationText = "Rest day";
     [ObservableProperty] private string _workoutExercisesCount = "0";
     [ObservableProperty] private string _workoutIntensity = "Low";
+    [ObservableProperty] private Color _workoutActivityBackground = WorkoutActivityClassifier.GetBackground(WorkoutActivityClassifier.RestTag);
+    [ObservableProperty] private Color _workoutActivityTextColor = WorkoutActivityClassifier.GetTextColor(WorkoutActivityClassifier.RestTag);
     [ObservableProperty] private string _hydrationConsumed = "2.5 L";
     [ObservableProperty] private string _hydrationGoal = "target";
     [ObservableProperty] private string _sleepGoal = "8h";
+    [ObservableProperty] private int _workoutStreakDays;
+    [ObservableProperty] private int _nutritionStreakDays;
+    [ObservableProperty] private bool _isHealthSyncPromptVisible;
+    [ObservableProperty] private bool _isHealthSyncBusy;
+    [ObservableProperty] private string _healthSyncStatusText = "Not connected";
+    [ObservableProperty] private string _healthSyncMessage = string.Empty;
 
     public string PhaseLabel => CurrentPhase.ToString();
 
@@ -130,14 +143,8 @@ public partial class DashboardViewModel : ObservableObject
         _ => string.Empty
     };
 
-    public string PhaseIllustrationSource => CurrentPhase switch
-    {
-        CyclePhase.Menstrual => "phase_menstrual.png",
-        CyclePhase.Follicular => "phase_follicular.png",
-        CyclePhase.Ovulatory => "phase_ovulatory.png",
-        CyclePhase.Luteal => "phase_luteal.png",
-        _ => "phase_follicular.png"
-    };
+    public string PhaseIllustrationSource => CyclePhaseAssets.GetVisualSource(CurrentPhase);
+    public bool PhaseIllustrationUsesAnimation => CyclePhaseAssets.UsesAnimatedVisual(CurrentPhase);
 
     public int CurrentPhaseColumn => CurrentPhase switch
     {
@@ -160,7 +167,22 @@ public partial class DashboardViewModel : ObservableObject
         _ => "0%"
     };
 
-    public string WorkoutBadgeText => $"TODAY · {SessionProgressText}";
+    public string WorkoutBadgeText => IsTodaysWorkoutCompleted
+        ? "Workout completed"
+        : $"Today · {SessionProgressText}";
+    public bool IsTodaysWorkoutCompleted =>
+        string.Equals(SessionProgressText, "Completed", StringComparison.OrdinalIgnoreCase);
+    public string WorkoutActionText => IsTodaysWorkoutCompleted
+        ? "Edit workout"
+        : string.Equals(SessionProgressText, "REST", StringComparison.OrdinalIgnoreCase)
+            ? "Log rest day"
+            : "Start workout";
+    public string WorkoutStreakText => WorkoutStreakDays == 1
+        ? "1 day session streak"
+        : $"{WorkoutStreakDays} day session streak";
+    public string NutritionStreakText => NutritionStreakDays == 1
+        ? "1 day log streak"
+        : $"{NutritionStreakDays} day log streak";
 
     public float CaloriesProgress =>
         TargetCalories <= 0 ? 0f : Math.Clamp(ConsumedCalories / TargetCalories, 0f, 1f);
@@ -182,6 +204,9 @@ public partial class DashboardViewModel : ObservableObject
     public RelayCommand OpenCycleCommand { get; }
     public RelayCommand OpenWorkoutCommand { get; }
     public RelayCommand OpenNutritionCommand { get; }
+    public AsyncRelayCommand ConnectAppleHealthCommand { get; }
+    public AsyncRelayCommand ConnectWhoopCommand { get; }
+    public AsyncRelayCommand DismissHealthSyncPromptCommand { get; }
 
     public void RefreshThemeColors(bool useDarkTheme)
     {
@@ -198,7 +223,9 @@ public partial class DashboardViewModel : ObservableObject
         ICycleService cycleService,
         INutritionService nutritionService,
         IWorkoutService workoutService,
+        IProgressSummaryService progressSummaryService,
         IDashboardPlanner dashboardPlanner,
+        IHealthSyncService healthSyncService,
         Action openCycle,
         Action openWorkout,
         Action openNutrition)
@@ -208,7 +235,9 @@ public partial class DashboardViewModel : ObservableObject
         _cycleService = cycleService;
         _nutritionService = nutritionService;
         _workoutService = workoutService;
+        _progressSummaryService = progressSummaryService;
         _dashboardPlanner = dashboardPlanner;
+        _healthSyncService = healthSyncService;
         _openCycle = openCycle;
         _openWorkout = openWorkout;
         _openNutrition = openNutrition;
@@ -218,6 +247,9 @@ public partial class DashboardViewModel : ObservableObject
         OpenCycleCommand = new RelayCommand(() => _openCycle());
         OpenWorkoutCommand = new RelayCommand(() => _openWorkout());
         OpenNutritionCommand = new RelayCommand(() => _openNutrition());
+        ConnectAppleHealthCommand = new AsyncRelayCommand(() => ConnectHealthAsync(HealthDataSource.AppleHealth));
+        ConnectWhoopCommand = new AsyncRelayCommand(() => ConnectHealthAsync(HealthDataSource.Whoop));
+        DismissHealthSyncPromptCommand = new AsyncRelayCommand(DismissHealthSyncPromptAsync);
     }
 
     private async Task RefreshAsync()
@@ -241,6 +273,10 @@ public partial class DashboardViewModel : ObservableObject
             var userId = await _authService.GetCurrentUserIdAsync();
             var profile = await _userRepository.GetProfileAsync(userId);
             DisplayName = GetFirstName(profile?.Name);
+            var healthSummary = await _healthSyncService.GetCachedWeeklySummaryAsync(userId);
+            var healthStatus = await _healthSyncService.GetStatusAsync(userId);
+            HealthSyncStatusText = healthStatus.SummaryText;
+            IsHealthSyncPromptVisible = await _healthSyncService.ShouldShowPromptAsync(userId);
 
             var prediction = await _cycleService.GetPredictionAsync(userId) ??
                              new CyclePrediction
@@ -270,6 +306,10 @@ public partial class DashboardViewModel : ObservableObject
             ConsumedCarbs = consumed.Carbs;
             ConsumedFats = consumed.Fats;
 
+            var progress = await _progressSummaryService.GetSummaryAsync(userId, DateTime.Today);
+            WorkoutStreakDays = progress.WorkoutStreakDays;
+            NutritionStreakDays = progress.NutritionStreakDays;
+
             var workoutSummary = await _workoutService.GetTodaysSummaryAsync(userId, CurrentPhase, DateTime.Today);
             ApplyWorkoutSummary(workoutSummary);
 
@@ -279,7 +319,8 @@ public partial class DashboardViewModel : ObservableObject
                 CaloriesProgress,
                 profile?.Weight,
                 profile?.WorkoutDaysPerWeek ?? 0,
-                workoutSummary));
+                workoutSummary,
+                healthSummary));
 
             NotifyMacroProperties();
             NotifyUserLinkedProperties();
@@ -288,6 +329,32 @@ public partial class DashboardViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    private async Task ConnectHealthAsync(HealthDataSource source)
+    {
+        IsHealthSyncBusy = true;
+        try
+        {
+            var userId = await _authService.GetCurrentUserIdAsync();
+            var result = await _healthSyncService.SyncAsync(userId, source);
+            HealthSyncMessage = result.Message;
+            IsHealthSyncPromptVisible = !result.IsConnected;
+
+            if (result.IsConnected)
+                await _loadGate.RunAsync(LoadDataCoreAsync, force: true);
+        }
+        finally
+        {
+            IsHealthSyncBusy = false;
+        }
+    }
+
+    private async Task DismissHealthSyncPromptAsync()
+    {
+        var userId = await _authService.GetCurrentUserIdAsync();
+        await _healthSyncService.DismissPromptAsync(userId);
+        IsHealthSyncPromptVisible = false;
     }
 
     private void NotifyPhaseProperties()
@@ -300,6 +367,7 @@ public partial class DashboardViewModel : ObservableObject
         OnPropertyChanged(nameof(PhaseCardTitle));
         OnPropertyChanged(nameof(PhaseShortAdvice));
         OnPropertyChanged(nameof(PhaseIllustrationSource));
+        OnPropertyChanged(nameof(PhaseIllustrationUsesAnimation));
         OnPropertyChanged(nameof(CurrentPhaseColumn));
         OnPropertyChanged(nameof(PhaseTimeLeftValue));
         OnPropertyChanged(nameof(PhaseTimeLeftLabel));
@@ -337,7 +405,11 @@ public partial class DashboardViewModel : ObservableObject
         WorkoutExercisesCount = workoutSummary.ExercisesCount;
         WorkoutIntensity = workoutSummary.Intensity;
         SessionProgressText = workoutSummary.SessionProgressText;
+        WorkoutActivityBackground = WorkoutActivityClassifier.GetBackground(workoutSummary.ActivityTag);
+        WorkoutActivityTextColor = WorkoutActivityClassifier.GetTextColor(workoutSummary.ActivityTag);
         OnPropertyChanged(nameof(WorkoutBadgeText));
+        OnPropertyChanged(nameof(IsTodaysWorkoutCompleted));
+        OnPropertyChanged(nameof(WorkoutActionText));
     }
 
     private void ApplySupportSummary(DashboardSupportSummary supportSummary)
@@ -497,5 +569,22 @@ public partial class DashboardViewModel : ObservableObject
     partial void OnCycleInsightTextChanged(string value)
     {
         OnPropertyChanged(nameof(PhaseShortAdvice));
+    }
+
+    partial void OnSessionProgressTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(WorkoutBadgeText));
+        OnPropertyChanged(nameof(IsTodaysWorkoutCompleted));
+        OnPropertyChanged(nameof(WorkoutActionText));
+    }
+
+    partial void OnWorkoutStreakDaysChanged(int value)
+    {
+        OnPropertyChanged(nameof(WorkoutStreakText));
+    }
+
+    partial void OnNutritionStreakDaysChanged(int value)
+    {
+        OnPropertyChanged(nameof(NutritionStreakText));
     }
 }

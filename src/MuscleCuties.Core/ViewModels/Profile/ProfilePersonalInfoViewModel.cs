@@ -8,6 +8,7 @@ using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.UI.Common;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
+using MuscleCuties.Core.Services.Health;
 
 namespace MuscleCuties.Core.ViewModels.Profile;
 
@@ -15,6 +16,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
 {
     private readonly IAuthService _authService;
     private readonly IUserRepository _userRepository;
+    private readonly IHealthSyncService? _healthSyncService;
     private readonly Action _navigateBack;
 
     [ObservableProperty] private string _name = string.Empty;
@@ -30,7 +32,10 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
     [ObservableProperty] private string _workoutDaysPerWeek = "3";
     [ObservableProperty] private string _cycleLength = "28";
     [ObservableProperty] private string _statusMessage = string.Empty;
+    [ObservableProperty] private string _healthSyncStatusText = "Not connected";
+    [ObservableProperty] private string _healthSyncMessage = string.Empty;
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private bool _isHealthSyncBusy;
 
     public bool IsGoalPaceVisible => ProfileSelectionOptions.UsesWeightGoalPace(Goal);
     public IReadOnlyList<SelectionOption<CycleTrackingMode>> CycleLoggingModeOptions { get; } =
@@ -40,18 +45,24 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand SaveCommand { get; }
+    public AsyncRelayCommand ConnectAppleHealthCommand { get; }
+    public AsyncRelayCommand ConnectWhoopCommand { get; }
     public RelayCommand BackCommand { get; }
 
     public ProfilePersonalInfoViewModel(
         IAuthService authService,
         IUserRepository userRepository,
-        Action navigateBack)
+        Action navigateBack,
+        IHealthSyncService? healthSyncService = null)
     {
         _authService = authService;
         _userRepository = userRepository;
+        _healthSyncService = healthSyncService;
         _navigateBack = navigateBack;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
+        ConnectAppleHealthCommand = new AsyncRelayCommand(() => ConnectHealthAsync(HealthDataSource.AppleHealth));
+        ConnectWhoopCommand = new AsyncRelayCommand(() => ConnectHealthAsync(HealthDataSource.Whoop));
         BackCommand = new RelayCommand(_navigateBack);
         SelectedCycleLoggingModeOption = CycleLoggingModeOptions.First(option => option.Value == CycleTrackingMode);
     }
@@ -65,6 +76,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             var userId = await _authService.GetCurrentUserIdAsync();
             var user = await _userRepository.GetByIdAsync(userId);
             var profile = await _userRepository.GetProfileAsync(userId);
+            await RefreshHealthSyncStatusAsync(userId);
 
             Email = user?.Email ?? string.Empty;
 
@@ -105,10 +117,11 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             var user = await _userRepository.GetByIdAsync(userId);
             var profile = await _userRepository.GetProfileAsync(userId);
             var isNewProfile = profile is null;
+            var email = Email.Trim().ToLowerInvariant();
 
-            if (user is not null && !string.Equals(user.Email, Email.Trim(), StringComparison.OrdinalIgnoreCase))
+            if (user is not null && !string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase))
             {
-                user.Email = Email.Trim();
+                user.Email = email;
                 user.UpdatedAt = DateTime.UtcNow;
                 await _userRepository.UpdateAsync(user);
             }
@@ -138,7 +151,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
                 ProfileJson = JsonSerializer.Serialize(new
                 {
                     profile.Name,
-                    Email = Email.Trim(),
+                    Email = email,
                     profile.DateOfBirth,
                     profile.Height,
                     profile.Weight,
@@ -153,6 +166,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             });
 
             StatusMessage = "Personal info saved.";
+            _navigateBack();
         }
         finally
         {
@@ -173,7 +187,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(Email) || !Email.Contains('@', StringComparison.Ordinal))
+        if (!AuthInputValidator.IsValidEmail(Email))
         {
             StatusMessage = "Enter a valid email.";
             return false;
@@ -222,6 +236,37 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         CycleTrackingMode.LunarConnector => CycleTrackingMode.LunarConnector,
         _ => CycleTrackingMode.ManualPhaseLogging
     };
+
+    private async Task ConnectHealthAsync(HealthDataSource source)
+    {
+        if (_healthSyncService is null)
+        {
+            HealthSyncMessage = "Health sync is not available in this build.";
+            return;
+        }
+
+        IsHealthSyncBusy = true;
+        try
+        {
+            var userId = await _authService.GetCurrentUserIdAsync();
+            var result = await _healthSyncService.SyncAsync(userId, source);
+            HealthSyncMessage = result.Message;
+            await RefreshHealthSyncStatusAsync(userId);
+        }
+        finally
+        {
+            IsHealthSyncBusy = false;
+        }
+    }
+
+    private async Task RefreshHealthSyncStatusAsync(int userId)
+    {
+        if (_healthSyncService is null)
+            return;
+
+        var status = await _healthSyncService.GetStatusAsync(userId);
+        HealthSyncStatusText = status.SummaryText;
+    }
 
     partial void OnCycleTrackingModeChanged(CycleTrackingMode value)
     {

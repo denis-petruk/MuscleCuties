@@ -50,6 +50,19 @@ public class AuthServiceTests : IClassFixture<DatabaseFixture>
     }
 
     [Fact]
+    public async Task RegisterAsync_NormalizesEmailBeforeSaving()
+    {
+        var service = CreateService();
+
+        var user = await service.RegisterAsync("  Auth-Normalized@Test.COM  ", "password123");
+        var duplicate = await service.RegisterAsync("auth-normalized@test.com", "other");
+
+        Assert.NotNull(user);
+        Assert.Equal("auth-normalized@test.com", user.Email);
+        Assert.Null(duplicate);
+    }
+
+    [Fact]
     public async Task LoginAsync_CorrectCredentials_ReturnsUserAndStoresId()
     {
         var service = CreateService();
@@ -80,6 +93,41 @@ public class AuthServiceTests : IClassFixture<DatabaseFixture>
         var result = await service.LoginAsync("nobody@test.com", "pass");
 
         Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task SignInWithAppleAsync_NewAppleAccount_CreatesUserAndStoresId()
+    {
+        var service = CreateService();
+        var appleUserId = $"apple-{Guid.NewGuid():N}";
+        var email = $"apple-{Guid.NewGuid():N}@privaterelay.appleid.com";
+
+        var user = await service.SignInWithAppleAsync(new AppleSignInResult(appleUserId, email, "Apple Cutie"));
+
+        Assert.NotNull(user);
+        Assert.Equal(email, user.Email);
+        Assert.Equal(appleUserId, user.AppleUserId);
+        await _storage.Received(1).SetAsync("current_user_id", user.Id.ToString());
+    }
+
+    [Fact]
+    public async Task SignInWithAppleAsync_MatchingEmail_LinksExistingUser()
+    {
+        var service = CreateService();
+        var email = $"apple-link-{Guid.NewGuid():N}@test.com";
+        var existingUser = await service.RegisterAsync(email, "password123");
+        var appleUserId = $"apple-link-{Guid.NewGuid():N}";
+        _storage.ClearReceivedCalls();
+
+        var signedInUser = await service.SignInWithAppleAsync(new AppleSignInResult(appleUserId, email, null));
+        var linkedUser = await new UserRepository(_fixture.Db).GetByAppleUserIdAsync(appleUserId);
+
+        Assert.NotNull(existingUser);
+        Assert.NotNull(signedInUser);
+        Assert.NotNull(linkedUser);
+        Assert.Equal(existingUser.Id, signedInUser.Id);
+        Assert.Equal(existingUser.Id, linkedUser.Id);
+        await _storage.Received(1).SetAsync("current_user_id", existingUser.Id.ToString());
     }
 
     [Fact]

@@ -11,6 +11,19 @@
         <VerticalStackLayout Spacing="12">
             <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
                 <VerticalStackLayout Grid.Column="0" Spacing="4">
+                    <Border
+                        BackgroundColor="{Binding ActivityBackground}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 999"
+                        Padding="8,4"
+                        HorizontalOptions="Start">
+                        <Label
+                            Text="{Binding ActivityTitle}"
+                            TextColor="{Binding ActivityTextColor}"
+                            FontSize="10"
+                            FontAttributes="Bold"
+                            LineBreakMode="TailTruncation" />
+                    </Border>
                     <Label Text="{Binding Name}" Style="{StaticResource CardTitle}" FontSize="16" />
                     <Label
                         Text="{Binding Description}"
@@ -27,9 +40,73 @@
                             Command="{Binding OpenDetailCommand, Source={x:Reference Root}}"
                             CommandParameter="{Binding CommandParameter, Source={x:Reference Root}}" />
                     </Border.GestureRecognizers>
-                    <Label Text="Info" Style="{StaticResource WorkoutPillText}" />
+                    <Label Text="{Binding DetailsButtonText}" Style="{StaticResource WorkoutPillText}" />
                 </Border>
             </Grid>
+
+            <Border
+                Style="{StaticResource WorkoutInfoTile}"
+                IsVisible="{Binding IsExpanded}">
+                <VerticalStackLayout Spacing="10">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="WHY" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                        <Label
+                            Text="{Binding WhyText}"
+                            Style="{StaticResource BodyLabel}"
+                            LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
+                    <BoxView Opacity="0.55" />
+
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="HOW" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                        <Label
+                            Text="{Binding CuesText}"
+                            Style="{StaticResource BodyLabel}"
+                            LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="4" IsVisible="{Binding HasQuickTips}">
+                        <Label Text="QUICK TIPS" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                        <Label
+                            Text="{Binding QuickTipsText}"
+                            Style="{StaticResource BodyLabel}"
+                            LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
+                    <Grid
+                        ColumnDefinitions="Auto, *"
+                        ColumnSpacing="10"
+                        IsVisible="{Binding HasVideo}">
+                        <Border
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            StrokeShape="RoundRectangle 21"
+                            BackgroundColor="{StaticResource Primary}"
+                            StrokeThickness="0"
+                            VerticalOptions="Center">
+                            <Path
+                                Data="M8 5v14l11-7z"
+                                Fill="{StaticResource White}"
+                                Aspect="Uniform"
+                                WidthRequest="17"
+                                HeightRequest="17"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="VIDEO" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                            <Label
+                                Text="{Binding VideoStatusText}"
+                                Style="{StaticResource WorkoutInfoValue}" />
+                            <Label
+                                Text="{Binding VideoUrl}"
+                                Style="{StaticResource CaptionLabel}"
+                                LineBreakMode="TailTruncation" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
 
             <Grid ColumnDefinitions="*, *" ColumnSpacing="8">
                 <Border Style="{StaticResource WorkoutInfoTile}">
@@ -145,6 +222,32 @@
                         Keyboard="Numeric"
                         HeightRequest="44" />
                 </VerticalStackLayout>
+            </Grid>
+
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                <Label
+                    Text="{Binding LogStatusText}"
+                    Style="{StaticResource CaptionLabel}"
+                    VerticalOptions="Center" />
+                <Border
+                    Grid.Column="1"
+                    BackgroundColor="{Binding ActivityTextColor}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 14"
+                    Padding="16,10">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer
+                            Command="{Binding LogExerciseCommand, Source={x:Reference Root}}"
+                            CommandParameter="{Binding CommandParameter, Source={x:Reference Root}}" />
+                    </Border.GestureRecognizers>
+                    <Label
+                        Text="{Binding LogButtonText}"
+                        TextColor="{StaticResource White}"
+                        FontSize="12"
+                        FontAttributes="Bold"
+                        HorizontalTextAlignment="Center"
+                        VerticalTextAlignment="Center" />
+                </Border>
             </Grid>
         </VerticalStackLayout>
     </Border>

@@ -6,7 +6,8 @@ public sealed record TodaysWorkoutSummary(
     string DurationText,
     string ExercisesCount,
     string Intensity,
-    string SessionProgressText)
+    string SessionProgressText,
+    string ActivityTag = WorkoutActivityClassifier.RestTag)
 {
     public static TodaysWorkoutSummary RestDay { get; } =
         new(
@@ -15,5 +16,6 @@ public sealed record TodaysWorkoutSummary(
             "Rest day",
             "0",
             "None",
-            "REST");
+            "REST",
+            WorkoutActivityClassifier.RestTag);
 }

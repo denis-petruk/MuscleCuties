@@ -5,6 +5,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:cycleModels="clr-namespace:MuscleCuties.Core.Models.UI.Cycle;assembly=MuscleCuties.Core"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Cycle;assembly=MuscleCuties.Core"
     x:DataType="vm:CycleViewModel">
 
@@ -24,9 +25,17 @@
 
             <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
                 <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                    <Label
-                        Text="{Binding PhaseLabel}"
-                        Style="{StaticResource AccentLabel}" />
+                    <HorizontalStackLayout Spacing="7">
+                        <sharedControls:PhaseVisualView
+                            Source="{Binding CurrentPhaseVisualSource}"
+                            WidthRequest="22"
+                            HeightRequest="22"
+                            VerticalOptions="Center" />
+                        <Label
+                            Text="{Binding PhaseLabel}"
+                            Style="{StaticResource AccentLabel}"
+                            VerticalOptions="Center" />
+                    </HorizontalStackLayout>
                     <Label
                         Text="{Binding LastPhaseLogText}"
                         Style="{StaticResource MutedLabel}"
@@ -82,13 +91,25 @@
                                     Command="{Binding BindingContext.OpenCalendarDayCommand, Source={x:Reference Root}}"
                                     CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
-                            <Label
-                                Text="{Binding Day}"
-                                TextColor="{Binding TextColor}"
-                                FontSize="12"
-                                FontAttributes="Bold"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
+                            <Grid>
+                                <Image
+                                    Source="{Binding IconSource}"
+                                    IsVisible="{Binding IsNeutral, Converter={StaticResource InvertedBoolConverter}}"
+                                    WidthRequest="11"
+                                    HeightRequest="11"
+                                    Aspect="AspectFit"
+                                    Opacity="0.7"
+                                    HorizontalOptions="End"
+                                    VerticalOptions="Start"
+                                    Margin="0,3,4,0" />
+                                <Label
+                                    Text="{Binding Day}"
+                                    TextColor="{Binding TextColor}"
+                                    FontSize="12"
+                                    FontAttributes="Bold"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
+                            </Grid>
                         </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>

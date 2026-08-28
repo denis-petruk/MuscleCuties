@@ -16,7 +16,9 @@ using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
 using MuscleCuties.Core.Services.Dashboard.Planning;
+using MuscleCuties.Core.Services.Health;
 using MuscleCuties.Core.Services.Nutrition;
+using MuscleCuties.Core.Services.Progress;
 using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
@@ -37,10 +39,23 @@ public class DashboardViewModelTests
     private readonly ICycleService _cycleService = Substitute.For<ICycleService>();
     private readonly INutritionService _nutritionService = Substitute.For<INutritionService>();
     private readonly IWorkoutService _workoutService = Substitute.For<IWorkoutService>();
+    private readonly IProgressSummaryService _progressSummaryService = Substitute.For<IProgressSummaryService>();
     private readonly IDashboardPlanner _dashboardPlanner = new DashboardPlanner();
+    private readonly IHealthSyncService _healthSyncService = Substitute.For<IHealthSyncService>();
 
     private DashboardViewModel CreateViewModel() =>
-        new(_authService, _userRepository, _cycleService, _nutritionService, _workoutService, _dashboardPlanner, () => { }, () => { }, () => { });
+        new(
+            _authService,
+            _userRepository,
+            _cycleService,
+            _nutritionService,
+            _workoutService,
+            _progressSummaryService,
+            _dashboardPlanner,
+            _healthSyncService,
+            () => { },
+            () => { },
+            () => { });
 
     private void ConfigureDefaultUserData(CyclePhase phase = CyclePhase.Follicular)
     {
@@ -67,8 +82,13 @@ public class DashboardViewModelTests
         });
         _nutritionService.GetConsumedTotalsAsync(1, Arg.Any<DateTime>())
             .Returns(new MacroNutrients(800f, 60f, 100f, 25f));
+        _progressSummaryService.GetSummaryAsync(1, Arg.Any<DateTime>())
+            .Returns(new ProgressSummary(3, 2, 4));
         _workoutService.GetTodaysSummaryAsync(1, phase, Arg.Any<DateTime>())
             .Returns(TodaysWorkoutSummary.RestDay);
+        _healthSyncService.GetCachedWeeklySummaryAsync(1).Returns((HealthWeeklySummary?)null);
+        _healthSyncService.GetStatusAsync(1).Returns(new HealthSyncStatus(null, false, true, null, "Not connected"));
+        _healthSyncService.ShouldShowPromptAsync(1).Returns(false);
     }
 
     [Fact]
@@ -85,7 +105,7 @@ public class DashboardViewModelTests
         Assert.Equal(2000f, vm.TargetCalories);
         Assert.Equal(800f, vm.ConsumedCalories);
         Assert.Equal("Follicular", vm.PhaseLabel);
-        Assert.Equal("phase_follicular.png", vm.PhaseIllustrationSource);
+        Assert.Equal("phase_follicular_plant.json", vm.PhaseIllustrationSource);
         Assert.Contains("Denis", vm.Greetings);
         Assert.Equal("DAY 10 · FOLLICULAR PHASE", vm.PhaseBadgeText);
         Assert.Equal("THIS WEEK · FOLLICULAR", vm.DashboardPhaseHeaderText);
@@ -96,6 +116,8 @@ public class DashboardViewModelTests
         Assert.Equal("18d", vm.NextPeriodValue);
         Assert.Equal("2.5 L", vm.HydrationConsumed);
         Assert.Equal("8h", vm.SleepGoal);
+        Assert.Equal("2 day session streak", vm.WorkoutStreakText);
+        Assert.Equal("4 day log streak", vm.NutritionStreakText);
         Assert.False(vm.IsRefreshing);
     }
 
@@ -164,10 +186,11 @@ public class DashboardViewModelTests
         await vm.LoadDataCommand.ExecuteAsync(null);
 
         Assert.Equal("Lower Body", vm.WorkoutTitle);
-        Assert.Equal("32 min", vm.WorkoutDurationText);
+        Assert.Equal("52 min", vm.WorkoutDurationText);
         Assert.Equal("4", vm.WorkoutExercisesCount);
         Assert.Equal("High", vm.WorkoutIntensity);
-        Assert.Equal("COMPLETED", vm.SessionProgressText);
-        Assert.Equal("TODAY · COMPLETED", vm.WorkoutBadgeText);
+        Assert.Equal("Completed", vm.SessionProgressText);
+        Assert.Equal("Workout completed", vm.WorkoutBadgeText);
+        Assert.Equal("Edit workout", vm.WorkoutActionText);
     }
 }

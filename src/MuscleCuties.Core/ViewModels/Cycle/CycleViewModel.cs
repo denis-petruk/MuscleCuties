@@ -58,6 +58,9 @@ public partial class CycleViewModel : ObservableObject
         : "Log period start";
     public string PhaseLogActionText => HasActiveCycle ? "Next phase" : "Start cycle";
     public string PredictionSummary => HasActiveCycle ? $"Prediction from {CycleLength}d cycle" : "No active cycle yet";
+    public string CurrentPhaseIconSource => CyclePhaseAssets.GetIconSource(CurrentPhase);
+    public string CurrentPhaseVisualSource => CyclePhaseAssets.GetVisualSource(CurrentPhase);
+    public bool CurrentPhaseUsesAnimatedVisual => CyclePhaseAssets.UsesAnimatedVisual(CurrentPhase);
     public DateTime Today => DateTime.Today;
     public bool HasCalendarEditHint => !string.IsNullOrWhiteSpace(CalendarEditHintText);
     public bool HasPhaseEditStatus => !string.IsNullOrWhiteSpace(PhaseEditStatusText);
@@ -365,6 +368,7 @@ public partial class CycleViewModel : ObservableObject
                 CycleDay = cycleDay,
                 Date = date,
                 Phase = phase,
+                IconSource = CyclePhaseAssets.GetIconSource(phase),
                 IsToday = isToday,
                 IsNeutral = isNeutral,
                 HasPhaseShiftLog = hasPhaseShiftLog,
@@ -483,6 +487,9 @@ public partial class CycleViewModel : ObservableObject
                 Phase = CyclePhase.Menstrual,
                 Name = "Menstrual",
                 Description = "Days 1-5 · Low intensity, rest and recover",
+                IllustrationSource = CyclePhaseAssets.GetVisualSource(CyclePhase.Menstrual),
+                IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Menstrual),
+                UsesAnimatedIllustration = CyclePhaseAssets.UsesAnimatedVisual(CyclePhase.Menstrual),
                 BackgroundColor = GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme),
                 TextColor = GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme)
             },
@@ -491,6 +498,9 @@ public partial class CycleViewModel : ObservableObject
                 Phase = CyclePhase.Follicular,
                 Name = "Follicular",
                 Description = "Days 6-13 · Energy rising, great for strength training",
+                IllustrationSource = CyclePhaseAssets.GetVisualSource(CyclePhase.Follicular),
+                IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Follicular),
+                UsesAnimatedIllustration = CyclePhaseAssets.UsesAnimatedVisual(CyclePhase.Follicular),
                 BackgroundColor = GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme),
                 TextColor = GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme)
             },
@@ -499,6 +509,9 @@ public partial class CycleViewModel : ObservableObject
                 Phase = CyclePhase.Ovulatory,
                 Name = "Ovulatory",
                 Description = "Days 14-16 · Peak performance, max intensity",
+                IllustrationSource = CyclePhaseAssets.GetVisualSource(CyclePhase.Ovulatory),
+                IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Ovulatory),
+                UsesAnimatedIllustration = CyclePhaseAssets.UsesAnimatedVisual(CyclePhase.Ovulatory),
                 BackgroundColor = GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme),
                 TextColor = GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme)
             },
@@ -507,6 +520,9 @@ public partial class CycleViewModel : ObservableObject
                 Phase = CyclePhase.Luteal,
                 Name = "Luteal",
                 Description = "Days 17-28 · Moderate exercise, listen to your body",
+                IllustrationSource = CyclePhaseAssets.GetVisualSource(CyclePhase.Luteal),
+                IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Luteal),
+                UsesAnimatedIllustration = CyclePhaseAssets.UsesAnimatedVisual(CyclePhase.Luteal),
                 BackgroundColor = GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme),
                 TextColor = GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme)
             }
@@ -520,6 +536,8 @@ public partial class CycleViewModel : ObservableObject
                 Phase = item.Phase,
                 Name = item.Name,
                 Description = item.Description,
+                IconSource = item.IllustrationSource,
+                UsesAnimatedIcon = item.UsesAnimatedIllustration,
                 BackgroundColor = item.BackgroundColor,
                 TextColor = item.TextColor,
                 IsSelected = selectedPhase == item.Phase
@@ -673,6 +691,7 @@ public partial class CycleViewModel : ObservableObject
                 CycleDay = day.CycleDay,
                 Date = day.Date,
                 Phase = day.Phase,
+                IconSource = CyclePhaseAssets.GetIconSource(day.Phase),
                 IsToday = day.IsToday,
                 IsNeutral = day.IsNeutral,
                 HasPhaseShiftLog = day.HasPhaseShiftLog,
@@ -699,6 +718,9 @@ public partial class CycleViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(PhaseLabel));
         OnPropertyChanged(nameof(PhaseLogActionText));
+        OnPropertyChanged(nameof(CurrentPhaseIconSource));
+        OnPropertyChanged(nameof(CurrentPhaseVisualSource));
+        OnPropertyChanged(nameof(CurrentPhaseUsesAnimatedVisual));
     }
 
     partial void OnCurrentDayChanged(int value)
