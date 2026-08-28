@@ -9,7 +9,10 @@ public sealed record WorkoutListItem(
     string Title,
     string Duration,
     string ExerciseCountText,
+    string ActivityCountText,
     string DetailsText,
     Color ActivityBackground,
     Color ActivityTextColor,
-    bool IsRestDay = false);
+    bool IsRestDay = false,
+    string SessionProgressText = "Upcoming",
+    bool IsCompleted = false);

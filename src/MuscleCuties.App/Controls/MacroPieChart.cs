@@ -37,6 +37,41 @@ public class MacroPieChart : GraphicsView, IDrawable
         Color.FromArgb("#F0D8E2"),
         propertyChanged: Redraw);
 
+    public static readonly BindableProperty ProteinColorProperty = BindableProperty.Create(
+        nameof(ProteinColor),
+        typeof(Color),
+        typeof(MacroPieChart),
+        Color.FromArgb("#A65AC8"),
+        propertyChanged: Redraw);
+
+    public static readonly BindableProperty CarbsColorProperty = BindableProperty.Create(
+        nameof(CarbsColor),
+        typeof(Color),
+        typeof(MacroPieChart),
+        Color.FromArgb("#E3A13B"),
+        propertyChanged: Redraw);
+
+    public static readonly BindableProperty FatsColorProperty = BindableProperty.Create(
+        nameof(FatsColor),
+        typeof(Color),
+        typeof(MacroPieChart),
+        Color.FromArgb("#6F8E4E"),
+        propertyChanged: Redraw);
+
+    public static readonly BindableProperty InnerColorProperty = BindableProperty.Create(
+        nameof(InnerColor),
+        typeof(Color),
+        typeof(MacroPieChart),
+        Color.FromArgb("#FFFFFF"),
+        propertyChanged: Redraw);
+
+    public static readonly BindableProperty InnerStrokeColorProperty = BindableProperty.Create(
+        nameof(InnerStrokeColor),
+        typeof(Color),
+        typeof(MacroPieChart),
+        Color.FromArgb("#F0D8E2"),
+        propertyChanged: Redraw);
+
     public MacroPieChart()
     {
         Drawable = this;
@@ -68,13 +103,43 @@ public class MacroPieChart : GraphicsView, IDrawable
         set => SetValue(TrackColorProperty, value);
     }
 
+    public Color ProteinColor
+    {
+        get => (Color)GetValue(ProteinColorProperty);
+        set => SetValue(ProteinColorProperty, value);
+    }
+
+    public Color CarbsColor
+    {
+        get => (Color)GetValue(CarbsColorProperty);
+        set => SetValue(CarbsColorProperty, value);
+    }
+
+    public Color FatsColor
+    {
+        get => (Color)GetValue(FatsColorProperty);
+        set => SetValue(FatsColorProperty, value);
+    }
+
+    public Color InnerColor
+    {
+        get => (Color)GetValue(InnerColorProperty);
+        set => SetValue(InnerColorProperty, value);
+    }
+
+    public Color InnerStrokeColor
+    {
+        get => (Color)GetValue(InnerStrokeColorProperty);
+        set => SetValue(InnerStrokeColorProperty, value);
+    }
+
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         var values = new[]
         {
-            (Value: Math.Max(0f, ProteinValue), Color: Color.FromArgb("#A65AC8")),
-            (Value: Math.Max(0f, CarbsValue), Color: Color.FromArgb("#E3A13B")),
-            (Value: Math.Max(0f, FatsValue), Color: Color.FromArgb("#6F8E4E"))
+            (Value: Math.Max(0f, ProteinValue), Color: ProteinColor),
+            (Value: Math.Max(0f, CarbsValue), Color: CarbsColor),
+            (Value: Math.Max(0f, FatsValue), Color: FatsColor)
         };
 
         var size = Math.Min(dirtyRect.Width, dirtyRect.Height);
@@ -109,12 +174,10 @@ public class MacroPieChart : GraphicsView, IDrawable
         }
 
         var inset = diameter * 0.28f;
-        canvas.FillColor = Application.Current?.RequestedTheme == AppTheme.Dark
-            ? Color.FromArgb("#3A2931")
-            : Color.FromArgb("#FFFFFF");
+        canvas.FillColor = InnerColor;
         canvas.FillEllipse(x + inset, y + inset, diameter - inset * 2f, diameter - inset * 2f);
 
-        canvas.StrokeColor = Color.FromArgb("#F0D8E2");
+        canvas.StrokeColor = InnerStrokeColor;
         canvas.StrokeSize = 2f;
         canvas.DrawEllipse(x + inset, y + inset, diameter - inset * 2f, diameter - inset * 2f);
     }

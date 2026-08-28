@@ -91,6 +91,12 @@
                         ProteinValue="{Binding SelectedBreakdownProteinCalories}"
                         CarbsValue="{Binding SelectedBreakdownCarbsCalories}"
                         FatsValue="{Binding SelectedBreakdownFatsCalories}"
+                        ProteinColor="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}"
+                        CarbsColor="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}"
+                        FatsColor="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}"
+                        TrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                        InnerColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                        InnerStrokeColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
                         HorizontalOptions="Center"
                         VerticalOptions="Center" />
 

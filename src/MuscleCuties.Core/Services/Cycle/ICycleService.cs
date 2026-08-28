@@ -9,6 +9,7 @@ public interface ICycleService
     Task<CyclePhase> GetCurrentPhaseAsync(int userId);
     Task<CyclePrediction> GetPredictionAsync(int userId);
     Task<CycleLog?> GetCurrentCycleAsync(int userId);
+    Task<IReadOnlyList<CycleLog>> GetCycleHistoryAsync(int userId);
     Task<CyclePhaseLog?> GetLatestPhaseLogAsync(int userId);
     Task<IReadOnlyList<CyclePhaseLog>> GetRecentPhaseLogsAsync(int userId, int count);
     Task LogPhaseShiftAsync(int userId, CyclePhase phase, DateTime loggedAt, string? note);

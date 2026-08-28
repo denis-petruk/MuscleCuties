@@ -74,6 +74,133 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
         await _db.SaveChangesAsync();
     }
 
+    public async Task ReplaceWorkoutLogAsync(WorkoutLog log)
+    {
+        var dayStart = log.Date.Date;
+        var dayEnd = dayStart.AddDays(1);
+        var existingLogs = await _db.WorkoutLogs
+            .Include(l => l.ExerciseLogs)
+            .Where(l => l.UserId == log.UserId &&
+                        l.WorkoutDayId == log.WorkoutDayId &&
+                        l.Date >= dayStart &&
+                        l.Date < dayEnd)
+            .ToListAsync();
+
+        if (existingLogs.Count > 0)
+            _db.WorkoutLogs.RemoveRange(existingLogs);
+
+        log.Date = dayStart;
+        await _db.WorkoutLogs.AddAsync(log);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<WorkoutLog?> GetWorkoutLogForDayAsync(int userId, int workoutDayId, DateTime date)
+    {
+        var dayStart = date.Date;
+        var dayEnd = dayStart.AddDays(1);
+
+        return await _db.WorkoutLogs
+            .AsNoTracking()
+            .Include(l => l.ExerciseLogs)
+            .Where(l => l.UserId == userId &&
+                        l.WorkoutDayId == workoutDayId &&
+                        l.Date >= dayStart &&
+                        l.Date < dayEnd)
+            .OrderByDescending(l => l.CreatedAt)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task MergeWorkoutLogAsync(WorkoutLog log)
+    {
+        var dayStart = log.Date.Date;
+        var dayEnd = dayStart.AddDays(1);
+        var existingLogs = await _db.WorkoutLogs
+            .Include(l => l.ExerciseLogs)
+            .Where(l => l.UserId == log.UserId &&
+                        l.WorkoutDayId == log.WorkoutDayId &&
+                        l.Date >= dayStart &&
+                        l.Date < dayEnd)
+            .OrderByDescending(l => l.CreatedAt)
+            .ToListAsync();
+
+        if (existingLogs.Count == 0)
+        {
+            log.Date = dayStart;
+            await _db.WorkoutLogs.AddAsync(log);
+            await _db.SaveChangesAsync();
+            return;
+        }
+
+        var primaryLog = existingLogs[0];
+        primaryLog.Date = dayStart;
+        primaryLog.CompletionPercent = log.CompletionPercent;
+        primaryLog.Notes = log.Notes;
+        primaryLog.CreatedAt = log.CreatedAt;
+
+        foreach (var duplicateLog in existingLogs.Skip(1))
+        {
+            foreach (var duplicateExerciseLog in duplicateLog.ExerciseLogs.ToList())
+            {
+                var alreadyMoved = primaryLog.ExerciseLogs.Any(existing =>
+                    existing.WorkoutDayExerciseId == duplicateExerciseLog.WorkoutDayExerciseId);
+                if (alreadyMoved)
+                    continue;
+
+                primaryLog.ExerciseLogs.Add(new WorkoutExerciseLog
+                {
+                    WorkoutDayExerciseId = duplicateExerciseLog.WorkoutDayExerciseId,
+                    ExerciseId = duplicateExerciseLog.ExerciseId,
+                    CompletedSets = duplicateExerciseLog.CompletedSets,
+                    CompletedReps = duplicateExerciseLog.CompletedReps,
+                    WeightKg = duplicateExerciseLog.WeightKg,
+                    CompletedDurationSeconds = duplicateExerciseLog.CompletedDurationSeconds,
+                    DistanceKm = duplicateExerciseLog.DistanceKm,
+                    AverageHeartRateBpm = duplicateExerciseLog.AverageHeartRateBpm,
+                    PaceSecondsPerKm = duplicateExerciseLog.PaceSecondsPerKm,
+                    CreatedAt = duplicateExerciseLog.CreatedAt
+                });
+            }
+        }
+
+        foreach (var incomingLog in log.ExerciseLogs)
+        {
+            var existingExerciseLog = primaryLog.ExerciseLogs.FirstOrDefault(existing =>
+                existing.WorkoutDayExerciseId == incomingLog.WorkoutDayExerciseId);
+            if (existingExerciseLog is null)
+            {
+                primaryLog.ExerciseLogs.Add(new WorkoutExerciseLog
+                {
+                    WorkoutDayExerciseId = incomingLog.WorkoutDayExerciseId,
+                    ExerciseId = incomingLog.ExerciseId,
+                    CompletedSets = incomingLog.CompletedSets,
+                    CompletedReps = incomingLog.CompletedReps,
+                    WeightKg = incomingLog.WeightKg,
+                    CompletedDurationSeconds = incomingLog.CompletedDurationSeconds,
+                    DistanceKm = incomingLog.DistanceKm,
+                    AverageHeartRateBpm = incomingLog.AverageHeartRateBpm,
+                    PaceSecondsPerKm = incomingLog.PaceSecondsPerKm,
+                    CreatedAt = incomingLog.CreatedAt
+                });
+                continue;
+            }
+
+            existingExerciseLog.ExerciseId = incomingLog.ExerciseId;
+            existingExerciseLog.CompletedSets = incomingLog.CompletedSets;
+            existingExerciseLog.CompletedReps = incomingLog.CompletedReps;
+            existingExerciseLog.WeightKg = incomingLog.WeightKg;
+            existingExerciseLog.CompletedDurationSeconds = incomingLog.CompletedDurationSeconds;
+            existingExerciseLog.DistanceKm = incomingLog.DistanceKm;
+            existingExerciseLog.AverageHeartRateBpm = incomingLog.AverageHeartRateBpm;
+            existingExerciseLog.PaceSecondsPerKm = incomingLog.PaceSecondsPerKm;
+            existingExerciseLog.CreatedAt = incomingLog.CreatedAt;
+        }
+
+        if (existingLogs.Count > 1)
+            _db.WorkoutLogs.RemoveRange(existingLogs.Skip(1));
+
+        await _db.SaveChangesAsync();
+    }
+
     public async Task<List<WorkoutLog>> GetWorkoutLogsByDateAsync(int userId, DateTime date)
     {
         var dayStart = date.Date;
@@ -82,6 +209,23 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
         return await _db.WorkoutLogs
             .AsNoTracking()
             .Where(l => l.UserId == userId && l.Date >= dayStart && l.Date < dayEnd)
+            .ToListAsync();
+    }
+
+    public async Task<List<WorkoutLog>> GetWorkoutLogsByDateRangeAsync(
+        int userId,
+        DateTime startDate,
+        DateTime endDate)
+    {
+        var rangeStart = startDate.Date;
+        var rangeEnd = endDate.Date.AddDays(1);
+
+        return await _db.WorkoutLogs
+            .AsNoTracking()
+            .Include(l => l.WorkoutDay)
+            .Where(l => l.UserId == userId && l.Date >= rangeStart && l.Date < rangeEnd)
+            .OrderByDescending(l => l.Date)
+            .ThenByDescending(l => l.CreatedAt)
             .ToListAsync();
     }
 

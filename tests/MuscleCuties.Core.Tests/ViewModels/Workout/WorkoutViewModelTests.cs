@@ -74,7 +74,7 @@ public class WorkoutViewModelTests
         Assert.True(vm.HasWorkouts);
         Assert.False(vm.HasNoWorkouts);
         Assert.Equal("Full Body", vm.ActivePlanTitle);
-        Assert.Equal("2 workouts", vm.PlanSummaryText);
+        Assert.Equal("2 sessions", vm.PlanSummaryText);
         Assert.Equal(2, vm.Workouts.Count);
     }
 
@@ -161,7 +161,7 @@ public class WorkoutViewModelTests
         var vm = CreateViewModel();
         await vm.LoadDataCommand.ExecuteAsync(null);
 
-        Assert.Equal("TODAY STRENGTH", vm.FeaturedWorkoutBadgeText);
+        Assert.Equal("Today strength", vm.FeaturedWorkoutBadgeText);
         Assert.Equal("Lower body strength", vm.FeaturedWorkoutTitle);
         Assert.Equal("30 min", vm.FeaturedWorkoutDurationText);
         Assert.Equal("3", vm.FeaturedWorkoutExercisesCount);
@@ -345,7 +345,7 @@ public class WorkoutViewModelTests
         await vm.SaveWorkoutSessionCommand.ExecuteAsync(null);
 
         Assert.True(vm.ShowWorkoutRestDayState);
-        Assert.Equal("Log rest day", vm.WorkoutLogButtonText);
+        Assert.Equal("Save changes", vm.WorkoutLogButtonText);
         await _workoutService.Received(1).LogWorkoutSessionAsync(
             1,
             42,

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Models.Entities.Cycle;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Models.Entities.Quiz;
@@ -266,6 +267,25 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
         Assert.Equal(4, templates.Select(template => template.MealType).Distinct().Count());
         Assert.All(templates, template => Assert.Contains(DietaryTag.Vegan.ToString(), template.DietaryTags));
         Assert.Contains(templates, template => template.Name == "Vegan Pizza Beans");
+    }
+
+    [Fact]
+    public async Task GetReadyMealTemplatesAsync_WithNoDietaryPreference_IncludesMeatOrFishMeal()
+    {
+        await _fixture.Db.SeedReferenceDataAsync();
+        var user = await SeedUserWithProfileAsync("nut-regular-ready-meals@test.com");
+
+        var templates = await CreateServiceWithMealTemplates().GetReadyMealTemplatesAsync(
+            user.Id,
+            CyclePhase.Ovulatory,
+            new DateTime(2026, 8, 25));
+
+        Assert.Equal(4, templates.Count);
+        Assert.Contains(templates, template =>
+            template.Name.Contains("Chicken", StringComparison.OrdinalIgnoreCase) ||
+            template.Name.Contains("Salmon", StringComparison.OrdinalIgnoreCase) ||
+            template.Name.Contains("Tuna", StringComparison.OrdinalIgnoreCase) ||
+            template.Name.Contains("Turkey", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

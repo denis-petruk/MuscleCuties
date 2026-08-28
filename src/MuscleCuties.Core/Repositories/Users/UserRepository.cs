@@ -17,6 +17,11 @@ public class UserRepository(AppDatabase db) : BaseRepository<User>(db), IUserRep
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == email);
 
+    public async Task<User?> GetByAppleUserIdAsync(string appleUserId) =>
+        await _db.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.AppleUserId == appleUserId);
+
     public async Task<UserProfile?> GetProfileAsync(int userId) =>
         await _db.UserProfiles
             .AsNoTracking()

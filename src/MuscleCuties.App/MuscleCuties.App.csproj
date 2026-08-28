@@ -23,9 +23,28 @@
 
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
-        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+        <EnableAppleSignInEntitlements>false</EnableAppleSignInEntitlements>
+        <EnableAppleHealthEntitlements>true</EnableAppleHealthEntitlements>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(EnableAppleSignInEntitlements)' == 'true'">
+        <CodesignEntitlements>Platforms/iOS/Entitlements.plist</CodesignEntitlements>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(EnableAppleSignInEntitlements)' != 'true' and '$(EnableAppleHealthEntitlements)' == 'true'">
+        <CodesignEntitlements>Platforms/iOS/HealthEntitlements.plist</CodesignEntitlements>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst' and '$(EnableAppleSignInEntitlements)' == 'true'">
+        <CodesignEntitlements>Platforms/MacCatalyst/Entitlements.plist</CodesignEntitlements>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+        <EnableCodeSigning>false</EnableCodeSigning>
+        <BuildIpa>false</BuildIpa>
     </PropertyGroup>
 
     <ItemGroup>
@@ -38,11 +57,19 @@
             Color="#FFF8FB"
             BaseSize="320,180"
             Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'maccatalyst'" />
-        <MauiImage Include="Resources\Images\*" Exclude="Resources\Images\musclecuties_logo*.svg" />
+        <MauiImage Include="Resources\Images\*" Exclude="Resources\Images\musclecuties_logo*.svg;Resources\Images\streak_session.png;Resources\Images\streak_log.png" />
         <MauiImage Update="Resources\Images\musclecuties_logo_light.png" Resize="True" BaseSize="360,200" />
         <MauiImage Update="Resources\Images\musclecuties_logo_dark.png" Resize="True" BaseSize="360,200" />
         <MauiImage Update="Resources\Images\musclecuties_logo_light_transparent.png" Resize="True" BaseSize="360,200" />
         <MauiImage Update="Resources\Images\musclecuties_logo_dark_transparent.png" Resize="True" BaseSize="360,200" />
+        <MauiImage Update="Resources\Images\health_apple.png" Resize="True" BaseSize="96,96" />
+        <MauiImage Update="Resources\Images\health_whoop.png" Resize="True" BaseSize="96,96" />
+        <MauiImage Update="Resources\Images\icon_fire.svg" Resize="True" BaseSize="48,48" />
+        <MauiImage Update="Resources\Images\icon_muscle.svg" Resize="True" BaseSize="48,48" />
+        <MauiImage Update="Resources\Images\phase_menstrual.svg" Resize="True" BaseSize="96,96" />
+        <MauiImage Update="Resources\Images\phase_follicular.svg" Resize="True" BaseSize="96,96" />
+        <MauiImage Update="Resources\Images\phase_ovulatory.svg" Resize="True" BaseSize="96,96" />
+        <MauiImage Update="Resources\Images\phase_luteal.svg" Resize="True" BaseSize="96,96" />
         <MauiFont Include="Resources\Fonts\*" />
         <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
     </ItemGroup>
@@ -52,6 +79,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="AathifMahir.Maui.MauiIcons.Fluent" Version="6.0.0" />
         <PackageReference Include="CommunityToolkit.Maui" Version="13.0.0" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />

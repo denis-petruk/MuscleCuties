@@ -21,7 +21,10 @@ public partial class ProfileFeedbackViewModel : ObservableObject
     [ObservableProperty] private string _feedbackText = string.Empty;
     [ObservableProperty] private string _adjustmentText = string.Empty;
     [ObservableProperty] private string _statusMessage = string.Empty;
+    [ObservableProperty] private string _attachmentName = string.Empty;
+    [ObservableProperty] private string _attachmentStatus = string.Empty;
     [ObservableProperty] private bool _isBusy;
+    private FeedbackAttachment? _attachment;
 
     public IReadOnlyList<string> TopicOptions { get; } =
     [
@@ -44,9 +47,11 @@ public partial class ProfileFeedbackViewModel : ObservableObject
 
     public string FeedbackCountText => $"{FeedbackText.Length + AdjustmentText.Length} characters";
     public bool IsReadyToSend => !IsBusy && (!string.IsNullOrWhiteSpace(FeedbackText) || !string.IsNullOrWhiteSpace(AdjustmentText));
+    public bool HasAttachment => _attachment is not null;
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand SendFeedbackCommand { get; }
+    public RelayCommand RemoveAttachmentCommand { get; }
     public RelayCommand BackCommand { get; }
 
     public ProfileFeedbackViewModel(
@@ -61,7 +66,35 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         _navigateBack = navigateBack;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SendFeedbackCommand = new AsyncRelayCommand(SendFeedbackAsync);
+        RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
         BackCommand = new RelayCommand(_navigateBack);
+    }
+
+    public void AttachFile(
+        string fileName,
+        string filePath,
+        string? contentType,
+        long sizeBytes)
+    {
+        if (!FeedbackAttachmentPolicy.TryValidate(fileName, filePath, sizeBytes, out var message))
+        {
+            AttachmentStatus = message;
+            return;
+        }
+
+        _attachment = new FeedbackAttachment(
+            fileName,
+            filePath,
+            string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType,
+            sizeBytes);
+        AttachmentName = fileName;
+        AttachmentStatus = message;
+        OnPropertyChanged(nameof(HasAttachment));
+    }
+
+    public void SetAttachmentError(string message)
+    {
+        AttachmentStatus = message;
     }
 
     private async Task LoadDataAsync()
@@ -98,12 +131,16 @@ public partial class ProfileFeedbackViewModel : ObservableObject
                 ? string.IsNullOrWhiteSpace(ContactEmail) ? user?.Email ?? "Not provided" : ContactEmail.Trim()
                 : "Tester chose not to include contact email";
             var name = string.IsNullOrWhiteSpace(profile?.Name) ? "Beta tester" : profile.Name;
+            var attachmentText = _attachment is null
+                ? "None"
+                : $"{_attachment.FileName} ({_attachment.SizeBytes / 1024f:N1} KB)";
             var body =
                 $"From: {name}\n" +
                 $"Contact email: {email}\n" +
                 $"Topic: {SelectedTopic}\n" +
                 $"Priority: {SelectedPriority}\n" +
                 $"Screen or flow: {NormalizeOptional(ScreenName)}\n" +
+                $"Attachment: {attachmentText}\n" +
                 $"Created at: {DateTime.Now:g}\n\n" +
                 "Feedback:\n" +
                 $"{FeedbackText.Trim()}\n\n" +
@@ -111,7 +148,10 @@ public partial class ProfileFeedbackViewModel : ObservableObject
                 $"{AdjustmentText.Trim()}\n\n" +
                 "Private beta feedback for the handsome, jacked developer only.";
 
-            await _feedbackEmailService.SendFeedbackAsync($"MuscleCuties beta feedback - {SelectedTopic}", body);
+            IReadOnlyList<FeedbackAttachment> attachments = _attachment is null
+                ? Array.Empty<FeedbackAttachment>()
+                : [_attachment];
+            await _feedbackEmailService.SendFeedbackAsync($"MuscleCuties beta feedback - {SelectedTopic}", body, attachments);
             StatusMessage = "Feedback email is ready to send.";
         }
         catch (Exception)
@@ -143,4 +183,12 @@ public partial class ProfileFeedbackViewModel : ObservableObject
 
     private static string NormalizeOptional(string value) =>
         string.IsNullOrWhiteSpace(value) ? "Not specified" : value.Trim();
+
+    private void RemoveAttachment()
+    {
+        _attachment = null;
+        AttachmentName = string.Empty;
+        AttachmentStatus = "Attachment removed.";
+        OnPropertyChanged(nameof(HasAttachment));
+    }
 }

@@ -7,7 +7,21 @@
 
     <Grid ColumnDefinitions="*, *, *" ColumnSpacing="10">
         <VerticalStackLayout Grid.Column="0" Spacing="4">
-            <Label Text="Protein" Style="{StaticResource CaptionLabel}" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="5">
+                <Path
+                    Data="M4 9v6M7 8v8M17 9v6M14 8v8M7 12h7"
+                    Stroke="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}"
+                    StrokeThickness="1.7"
+                    StrokeLineCap="Round"
+                    Aspect="Uniform"
+                    WidthRequest="16"
+                    HeightRequest="16"
+                    VerticalOptions="Center" />
+                <Label
+                    Grid.Column="1"
+                    Text="Protein"
+                    Style="{StaticResource CaptionLabel}" />
+            </Grid>
             <Label
                 Text="{Binding ProteinText, Source={x:Reference Root}}"
                 FontSize="13"
@@ -21,7 +35,22 @@
         </VerticalStackLayout>
 
         <VerticalStackLayout Grid.Column="1" Spacing="4">
-            <Label Text="Carbs" Style="{StaticResource CaptionLabel}" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="5">
+                <Path
+                    Data="M9 18V5M9 7C6.5 7 5 5.8 5 4M9 10C6.5 10 5 8.8 5 7M9 13C6.5 13 5 11.8 5 10M9 7c2.5 0 4-1.2 4-3M9 10c2.5 0 4-1.2 4-3M9 13c2.5 0 4-1.2 4-3"
+                    Stroke="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}"
+                    StrokeThickness="1.5"
+                    StrokeLineCap="Round"
+                    StrokeLineJoin="Round"
+                    Aspect="Uniform"
+                    WidthRequest="16"
+                    HeightRequest="16"
+                    VerticalOptions="Center" />
+                <Label
+                    Grid.Column="1"
+                    Text="Carbs"
+                    Style="{StaticResource CaptionLabel}" />
+            </Grid>
             <Label
                 Text="{Binding CarbsText, Source={x:Reference Root}}"
                 FontSize="13"
@@ -35,7 +64,22 @@
         </VerticalStackLayout>
 
         <VerticalStackLayout Grid.Column="2" Spacing="4">
-            <Label Text="Fat" Style="{StaticResource CaptionLabel}" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="5">
+                <Path
+                    Data="M10 3C7 7 5 10 5 13a5 5 0 0 0 10 0c0-3-2-6-5-10z"
+                    Stroke="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}"
+                    StrokeThickness="1.6"
+                    StrokeLineCap="Round"
+                    StrokeLineJoin="Round"
+                    Aspect="Uniform"
+                    WidthRequest="16"
+                    HeightRequest="16"
+                    VerticalOptions="Center" />
+                <Label
+                    Grid.Column="1"
+                    Text="Fats"
+                    Style="{StaticResource CaptionLabel}" />
+            </Grid>
             <Label
                 Text="{Binding FatsText, Source={x:Reference Root}}"
                 FontSize="13"

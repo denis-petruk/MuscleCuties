@@ -6,6 +6,7 @@ namespace MuscleCuties.Core.Repositories.Users;
 public interface IUserRepository : IRepository<User>
 {
     Task<User?> GetByEmailAsync(string email);
+    Task<User?> GetByAppleUserIdAsync(string appleUserId);
     Task<UserProfile?> GetProfileAsync(int userId);
     Task AddProfileAsync(UserProfile profile);
     Task UpdateProfileAsync(UserProfile profile);

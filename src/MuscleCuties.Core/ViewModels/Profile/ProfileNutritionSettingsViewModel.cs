@@ -173,6 +173,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
             });
 
             StatusMessage = "Nutrition settings saved.";
+            _navigateBack();
         }
         finally
         {

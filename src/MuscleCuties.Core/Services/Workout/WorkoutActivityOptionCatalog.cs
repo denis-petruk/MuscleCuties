@@ -12,31 +12,22 @@ public static class WorkoutActivityOptionCatalog
         var defaults = selectedTypes.Count == 0
             ? new HashSet<WorkoutActivityType>
             {
-                WorkoutActivityType.Strength,
-                WorkoutActivityType.ZoneTwoCardio,
-                WorkoutActivityType.YogaFlow,
-                WorkoutActivityType.Mobility,
-                WorkoutActivityType.ActiveRecovery
+                WorkoutActivityType.HighVolumeStrength,
+                WorkoutActivityType.Cycling,
+                WorkoutActivityType.Yoga
             }
             : selectedTypes;
 
         return new ObservableCollection<WorkoutActivityOptionItem>(
         [
-            Option(WorkoutActivityType.Strength, "Strength", "Weights, machines, bodyweight", "LIFT", defaults),
-            Option(WorkoutActivityType.CardioIntervals, "Intervals", "Short pushes, clean recovery", "CARDIO", defaults),
-            Option(WorkoutActivityType.ZoneTwoCardio, "Zone 2 cardio", "Ride, walk, steady engine work", "CARDIO", defaults),
-            Option(WorkoutActivityType.RockClimbing, "Rock climbing", "Grip, skill, pulling power", "CLIMB", defaults),
-            Option(WorkoutActivityType.YogaFlow, "Yoga flow", "Breath, mobility, light strength", "YOGA", defaults),
-            Option(WorkoutActivityType.PowerYoga, "Power yoga", "A little sweat, still bendy", "YOGA", defaults),
-            Option(WorkoutActivityType.YinYoga, "Yin yoga", "Slow holds, nervous system downshift", "YOGA", defaults),
-            Option(WorkoutActivityType.RestorativeYoga, "Restorative yoga", "Soft reset, deep recovery", "YOGA", defaults),
-            Option(WorkoutActivityType.Pilates, "Pilates", "Core control and clean lines", "CORE", defaults),
-            Option(WorkoutActivityType.Mobility, "Mobility", "Joints, hips, shoulders", "FLOW", defaults),
-            Option(WorkoutActivityType.Walking, "Walking", "Easy movement that still counts", "WALK", defaults),
-            Option(WorkoutActivityType.Cycling, "Cycling", "Low-impact engine work", "RIDE", defaults),
-            Option(WorkoutActivityType.Swimming, "Swimming", "Smooth cardio, kind on joints", "SWIM", defaults),
-            Option(WorkoutActivityType.Dance, "Dance", "Cardio that does not feel like homework", "MOVE", defaults),
-            Option(WorkoutActivityType.ActiveRecovery, "Active recovery", "Perform and log lighter sessions", "EASY", defaults)
+            Option(WorkoutActivityType.StrengthHighIntensity, "Strength high intensity", "Lower volume, heavier work", "STRENGTH", defaults),
+            Option(WorkoutActivityType.HighVolumeStrength, "High volume strength", "More sets, muscle-building focus", "STRENGTH", defaults),
+            Option(WorkoutActivityType.RockClimbing, "Rock climbing", "Pull strength, grip, skill", "STRENGTH", defaults),
+            Option(WorkoutActivityType.Yoga, "Yoga", "Recovery, mobility, calm strength", "RECOVERY", defaults),
+            Option(WorkoutActivityType.Hiit, "HIIT", "Short hard conditioning", "CARDIO", defaults),
+            Option(WorkoutActivityType.Cycling, "Cycling", "Low-impact conditioning", "CARDIO", defaults),
+            Option(WorkoutActivityType.Running, "Running", "Intervals, tempo, steady miles", "CARDIO", defaults),
+            Option(WorkoutActivityType.Swimming, "Swimming", "Full-body conditioning", "CARDIO", defaults)
         ]);
     }
 

@@ -21,8 +21,13 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
     private readonly Action _navigateBack;
 
     [ObservableProperty] private ObservableCollection<WorkoutActivityOptionItem> _workoutActivityOptions = new();
+    [ObservableProperty] private ObservableCollection<StrengthTrainingStyleOptionItem> _strengthTrainingStyleOptions = new();
+    [ObservableProperty] private StrengthTrainingStyle _selectedStrengthTrainingStyle = StrengthTrainingStyle.ComfortableModerate;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isBusy;
+
+    public bool IsStrengthStyleVisible => WorkoutActivityOptions.Any(option =>
+        IsStrengthActivity(option.ActivityType) && option.IsSelected);
 
     public string SelectedWorkoutActivitiesText
     {
@@ -46,6 +51,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
     public AsyncRelayCommand SaveCommand { get; }
     public RelayCommand BackCommand { get; }
     public RelayCommand<WorkoutActivityOptionItem> ToggleWorkoutActivityCommand { get; }
+    public RelayCommand<StrengthTrainingStyleOptionItem> SelectStrengthTrainingStyleCommand { get; }
 
     public ProfileWorkoutPreferencesViewModel(
         IAuthService authService,
@@ -63,7 +69,9 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         BackCommand = new RelayCommand(_navigateBack);
         ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
+        SelectStrengthTrainingStyleCommand = new RelayCommand<StrengthTrainingStyleOptionItem>(SelectStrengthTrainingStyle);
         WorkoutActivityOptions = WorkoutActivityOptionCatalog.Build(new HashSet<WorkoutActivityType>());
+        StrengthTrainingStyleOptions = StrengthTrainingStyleOptionCatalog.Build(SelectedStrengthTrainingStyle);
     }
 
     private async Task LoadDataAsync()
@@ -75,8 +83,13 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
             var userId = await _authService.GetCurrentUserIdAsync();
             var profile = await _userRepository.GetProfileAsync(userId);
             var selectedTypes = WorkoutActivityPreferences.Parse(profile?.PreferredWorkoutActivityTypes);
+            SelectedStrengthTrainingStyle =
+                WorkoutActivityPreferences.ParseStrengthStyle(profile?.PreferredWorkoutActivityTypes);
             WorkoutActivityOptions = WorkoutActivityOptionCatalog.Build(selectedTypes);
+            StrengthTrainingStyleOptions =
+                StrengthTrainingStyleOptionCatalog.Build(SelectedStrengthTrainingStyle);
             OnPropertyChanged(nameof(SelectedWorkoutActivitiesText));
+            OnPropertyChanged(nameof(IsStrengthStyleVisible));
         }
         finally
         {
@@ -109,7 +122,9 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
                 return;
             }
 
-            profile.PreferredWorkoutActivityTypes = WorkoutActivityPreferences.Serialize(selectedTypes);
+            profile.PreferredWorkoutActivityTypes = WorkoutActivityPreferences.Serialize(
+                selectedTypes,
+                SelectedStrengthTrainingStyle);
             profile.UpdatedAt = DateTime.UtcNow;
 
             await _userRepository.UpdateProfileAsync(profile);
@@ -127,6 +142,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
             var phase = await _cycleService.GetCurrentPhaseAsync(userId);
             await _workoutService.RegenerateActivePlanAsync(userId, phase);
             StatusMessage = "Workout preferences saved.";
+            _navigateBack();
         }
         finally
         {
@@ -142,10 +158,35 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
         item.IsSelected = !item.IsSelected;
         StatusMessage = string.Empty;
         OnPropertyChanged(nameof(SelectedWorkoutActivitiesText));
+        OnPropertyChanged(nameof(IsStrengthStyleVisible));
+    }
+
+    private void SelectStrengthTrainingStyle(StrengthTrainingStyleOptionItem? item)
+    {
+        if (item is null)
+            return;
+
+        SelectedStrengthTrainingStyle = item.Style;
+        foreach (var option in StrengthTrainingStyleOptions)
+            option.IsSelected = option.Style == item.Style;
+
+        StatusMessage = string.Empty;
     }
 
     partial void OnWorkoutActivityOptionsChanged(ObservableCollection<WorkoutActivityOptionItem> value)
     {
         OnPropertyChanged(nameof(SelectedWorkoutActivitiesText));
+        OnPropertyChanged(nameof(IsStrengthStyleVisible));
     }
+
+    partial void OnSelectedStrengthTrainingStyleChanged(StrengthTrainingStyle value)
+    {
+        foreach (var option in StrengthTrainingStyleOptions)
+            option.IsSelected = option.Style == value;
+    }
+
+    private static bool IsStrengthActivity(WorkoutActivityType activityType) =>
+        activityType is WorkoutActivityType.StrengthHighIntensity or
+            WorkoutActivityType.HighVolumeStrength or
+            WorkoutActivityType.RockClimbing;
 }

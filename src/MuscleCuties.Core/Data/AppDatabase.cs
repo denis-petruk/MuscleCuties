@@ -67,7 +67,9 @@ public partial class AppDatabase : DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(u => u.Email).IsUnique();
+            entity.HasIndex(u => u.AppleUserId).IsUnique();
             entity.Property(u => u.Email).IsRequired().HasMaxLength(320);
+            entity.Property(u => u.AppleUserId).HasMaxLength(255);
             entity.Property(u => u.PasswordHash).IsRequired().HasMaxLength(512);
 
             entity.HasOne(u => u.UserProfile)
@@ -90,6 +92,7 @@ public partial class AppDatabase : DbContext
             entity.Property(p => p.DistanceUnit).IsRequired().HasMaxLength(12);
             entity.Property(p => p.EnergyUnit).IsRequired().HasMaxLength(12);
             entity.Property(p => p.NutritionGoalsJson).HasMaxLength(4000);
+            entity.Property(p => p.ProfileImagePath).HasMaxLength(1024);
             entity.ToTable(t =>
             {
                 t.HasCheckConstraint("CK_UserProfile_Height", "Height >= 0");

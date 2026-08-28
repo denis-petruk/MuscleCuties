@@ -62,7 +62,7 @@ public class WorkoutServiceTests : IClassFixture<DatabaseFixture>
         var summary = await service.GetPlanSummaryAsync(user.Id, CyclePhase.Follicular);
 
         Assert.NotNull(summary.ActivePlan);
-        Assert.StartsWith("Glow Plan", summary.ActivePlan!.Name);
+        Assert.Equal("Full body hypertrophy training", summary.ActivePlan!.Name);
         Assert.Equal(CyclePhase.Follicular, summary.ActivePlan.CyclePhaseTarget);
         Assert.Equal(7, summary.WorkoutDays.Count);
         Assert.Equal(7, summary.Workouts.Count);
@@ -172,7 +172,7 @@ public class WorkoutServiceTests : IClassFixture<DatabaseFixture>
         var detail = await service.GetWorkoutSessionDetailAsync(user.Id, day.Id);
         var exercise = detail.Exercises.Single();
 
-        Assert.Equal("Cardio", detail.Subtitle);
+        Assert.Equal("Steady aerobic work at a repeatable, conversational pace.", detail.Subtitle);
         Assert.True(exercise.UsesEnduranceMetrics);
         Assert.False(exercise.UsesStrengthMetrics);
         Assert.Equal("30 min steady", exercise.TargetText);

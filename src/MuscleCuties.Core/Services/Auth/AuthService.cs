@@ -22,7 +22,11 @@ public class AuthService : IAuthService
 
     public async Task<User?> LoginAsync(string email, string password)
     {
-        var user = await _userRepository.GetByEmailAsync(email);
+        var normalizedEmail = NormalizeEmail(email);
+        if (string.IsNullOrWhiteSpace(normalizedEmail))
+            return null;
+
+        var user = await _userRepository.GetByEmailAsync(normalizedEmail);
         if (user == null)
             return null;
 
@@ -36,13 +40,17 @@ public class AuthService : IAuthService
 
     public async Task<User?> RegisterAsync(string email, string password)
     {
-        var existing = await _userRepository.GetByEmailAsync(email);
+        var normalizedEmail = NormalizeEmail(email);
+        if (string.IsNullOrWhiteSpace(normalizedEmail))
+            return null;
+
+        var existing = await _userRepository.GetByEmailAsync(normalizedEmail);
         if (existing != null)
             return null;
 
         var user = new User
         {
-            Email = email,
+            Email = normalizedEmail,
             PasswordHash = HashPassword(password),
             CreatedAt = DateTime.UtcNow,
             IsOnboardingComplete = false
@@ -52,6 +60,41 @@ public class AuthService : IAuthService
         await _tokenStorage.SetAsync(UserIdKey, user.Id.ToString());
         _cachedUserId = user.Id;
 
+        return user;
+    }
+
+    public async Task<User?> SignInWithAppleAsync(AppleSignInResult appleAccount)
+    {
+        if (string.IsNullOrWhiteSpace(appleAccount.UserIdentifier))
+            return null;
+
+        var appleUserId = appleAccount.UserIdentifier.Trim();
+        var user = await _userRepository.GetByAppleUserIdAsync(appleUserId);
+
+        if (user is null && !string.IsNullOrWhiteSpace(appleAccount.Email))
+            user = await _userRepository.GetByEmailAsync(NormalizeEmail(appleAccount.Email));
+
+        if (user is null)
+        {
+            user = new User
+            {
+                Email = BuildAppleEmail(appleUserId, appleAccount.Email),
+                AppleUserId = appleUserId,
+                PasswordHash = HashPassword($"apple:{appleUserId}"),
+                CreatedAt = DateTime.UtcNow,
+                IsOnboardingComplete = false
+            };
+
+            await _userRepository.AddAsync(user);
+        }
+        else if (string.IsNullOrWhiteSpace(user.AppleUserId))
+        {
+            user.AppleUserId = appleUserId;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _userRepository.UpdateAsync(user);
+        }
+
+        await SetCurrentUserAsync(user.Id);
         return user;
     }
 
@@ -114,5 +157,24 @@ public class AuthService : IAuthService
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
         return Convert.ToBase64String(bytes);
+    }
+
+    private static string NormalizeEmail(string? email) =>
+        email?.Trim().ToLowerInvariant() ?? string.Empty;
+
+    private async Task SetCurrentUserAsync(int userId)
+    {
+        await _tokenStorage.SetAsync(UserIdKey, userId.ToString());
+        _cachedUserId = userId;
+    }
+
+    private static string BuildAppleEmail(string appleUserId, string? email)
+    {
+        if (!string.IsNullOrWhiteSpace(email))
+            return NormalizeEmail(email);
+
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(appleUserId));
+        var suffix = Convert.ToHexString(bytes)[..20].ToLowerInvariant();
+        return $"apple-{suffix}@privaterelay.musclecuties.local";
     }
 }

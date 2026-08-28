@@ -2,12 +2,15 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Graphics;
 using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.Core.Models.UI.Cycle;
 using MuscleCuties.Core.Models.UI.Workout;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Workout;
+using MuscleCuties.Core.Services.Workout.Planning;
 using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Workout;
@@ -27,32 +30,30 @@ public partial class WorkoutViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _currentPhaseName = string.Empty;
     [ObservableProperty] private string _weekTitle = "This week's plan";
-    [ObservableProperty] private string _featuredWorkoutBadgeText = "TODAY RECOVERY";
+    [ObservableProperty] private string _featuredWorkoutBadgeText = "Today recovery";
     [ObservableProperty] private string _featuredWorkoutTitle = "Living happy life";
     [ObservableProperty] private string _featuredWorkoutSubtitle = "Recovery day";
     [ObservableProperty] private string _featuredWorkoutDurationText = "Flexible";
     [ObservableProperty] private string _featuredWorkoutExercisesCount = "0";
     [ObservableProperty] private string _featuredWorkoutIntensity = "Light";
+    [ObservableProperty] private string _featuredWorkoutActionText = "Start workout";
+    [ObservableProperty] private Color _featuredWorkoutActivityBackground = WorkoutActivityClassifier.GetBackground(WorkoutActivityClassifier.StrengthTag);
+    [ObservableProperty] private Color _featuredWorkoutActivityTextColor = WorkoutActivityClassifier.GetTextColor(WorkoutActivityClassifier.StrengthTag);
     [ObservableProperty] private bool _isWorkoutModalVisible;
     [ObservableProperty] private bool _isWorkoutDetailLoading;
     [ObservableProperty] private bool _isSelectedWorkoutRestDay;
+    [ObservableProperty] private bool _isSelectedWorkoutCompleted;
     [ObservableProperty] private string _selectedWorkoutTitle = "Workout";
     [ObservableProperty] private string _selectedWorkoutSubtitle = string.Empty;
     [ObservableProperty] private string _selectedWorkoutSummaryText = string.Empty;
     [ObservableProperty] private string _workoutModalErrorText = string.Empty;
     [ObservableProperty] private string _workoutModalStatusText = string.Empty;
-    [ObservableProperty] private bool _isExerciseDetailModalVisible;
-    [ObservableProperty] private string _selectedExerciseName = string.Empty;
-    [ObservableProperty] private string _selectedExerciseDescription = string.Empty;
-    [ObservableProperty] private string _selectedExerciseTechniqueNotes = string.Empty;
-    [ObservableProperty] private string _selectedExerciseTargetText = string.Empty;
-    [ObservableProperty] private string _selectedExercisePreviousText = string.Empty;
-    [ObservableProperty] private string _selectedExerciseRecommendationText = string.Empty;
-    [ObservableProperty] private string _selectedExerciseVideoUrl = string.Empty;
-    [ObservableProperty] private string _selectedExerciseImageUrl = string.Empty;
     [ObservableProperty] private ObservableCollection<FilterChipItem> _filters = new();
     [ObservableProperty] private ObservableCollection<WorkoutItem> _workouts = new();
     [ObservableProperty] private ObservableCollection<WorkoutExerciseItem> _selectedWorkoutExercises = new();
+    [ObservableProperty] private ObservableCollection<WorkoutActivitySectionItem> _selectedWorkoutActivitySections = new();
+    [ObservableProperty] private int _celebrationToken;
+    [ObservableProperty] private string _celebrationIconSource = CyclePhaseAssets.FollicularAnimation;
 
     public bool HasWorkouts => !IsBusy && Workouts.Count > 0;
     public bool HasNoWorkouts => !IsBusy && Workouts.Count == 0;
@@ -65,7 +66,13 @@ public partial class WorkoutViewModel : ObservableObject
             if (sessionCount == 0)
                 return "No sessions scheduled yet";
 
-            return $"{sessionCount} workouts";
+            var activityCount = _allWorkouts
+                .Where(workout => !workout.IsRestDay)
+                .Sum(workout => ExtractCount(workout.ActivityCountText));
+
+            return activityCount > sessionCount
+                ? $"{sessionCount} sessions - {activityCount} activities"
+                : $"{sessionCount} sessions";
         }
     }
     public string EmptyWorkoutsTitle => ActivePlan is null
@@ -78,24 +85,26 @@ public partial class WorkoutViewModel : ObservableObject
         : "Try another filter or show the full week.";
     public string EmptyWorkoutsButtonText => ActivePlan is null ? "Refresh" : "Show All";
     public bool HasSelectedWorkoutExercises => !IsWorkoutDetailLoading && SelectedWorkoutExercises.Count > 0;
+    public bool HasSelectedWorkoutActivities => !IsWorkoutDetailLoading && SelectedWorkoutActivitySections.Count > 0;
     public bool ShowWorkoutRestDayState => !IsWorkoutDetailLoading && IsSelectedWorkoutRestDay;
+    public bool ShowWorkoutFooterAction => !IsWorkoutDetailLoading && IsSelectedWorkoutRestDay;
     public bool HasWorkoutModalError => !string.IsNullOrWhiteSpace(WorkoutModalErrorText);
     public bool HasWorkoutModalStatus => !string.IsNullOrWhiteSpace(WorkoutModalStatusText);
-    public bool HasSelectedExerciseVideo => !string.IsNullOrWhiteSpace(SelectedExerciseVideoUrl);
-    public bool HasSelectedExerciseImage => !string.IsNullOrWhiteSpace(SelectedExerciseImageUrl);
-    public string SelectedExerciseVideoText => HasSelectedExerciseVideo ? "Video saved" : "Video pending";
-    public string WorkoutLogButtonText => IsSelectedWorkoutRestDay ? "Log rest day" : "Log workout";
+    public string WorkoutLogButtonText => IsSelectedWorkoutCompleted
+        ? "Save changes"
+        : IsSelectedWorkoutRestDay ? "Log rest day" : "Log workout";
     private string SelectedFilterLabel => Filters.FirstOrDefault(f => f.IsSelected)?.Label ?? "All";
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand EmptyWorkoutsActionCommand { get; }
     public AsyncRelayCommand<WorkoutItem> OpenWorkoutCommand { get; }
     public AsyncRelayCommand SaveWorkoutSessionCommand { get; }
+    public AsyncRelayCommand<WorkoutExerciseItem> LogWorkoutExerciseCommand { get; }
+    public AsyncRelayCommand<WorkoutActivitySectionItem> LogWorkoutActivityCommand { get; }
     public RelayCommand<FilterChipItem> SelectFilterCommand { get; }
     public AsyncRelayCommand StartFeaturedWorkoutCommand { get; }
     public RelayCommand CloseWorkoutModalCommand { get; }
     public RelayCommand<WorkoutExerciseItem> OpenExerciseDetailCommand { get; }
-    public RelayCommand CloseExerciseDetailCommand { get; }
 
     public WorkoutViewModel(
         IAuthService authService,
@@ -109,19 +118,17 @@ public partial class WorkoutViewModel : ObservableObject
         EmptyWorkoutsActionCommand = new AsyncRelayCommand(HandleEmptyWorkoutsActionAsync, CanUseEmptyWorkoutsAction);
         OpenWorkoutCommand = new AsyncRelayCommand<WorkoutItem>(OpenWorkoutAsync);
         SaveWorkoutSessionCommand = new AsyncRelayCommand(SaveWorkoutSessionAsync);
+        LogWorkoutExerciseCommand = new AsyncRelayCommand<WorkoutExerciseItem>(LogWorkoutExerciseAsync);
+        LogWorkoutActivityCommand = new AsyncRelayCommand<WorkoutActivitySectionItem>(LogWorkoutActivityAsync);
         SelectFilterCommand = new RelayCommand<FilterChipItem>(SelectFilter);
         StartFeaturedWorkoutCommand = new AsyncRelayCommand(OpenFeaturedWorkoutAsync);
         CloseWorkoutModalCommand = new RelayCommand(CloseWorkoutModal);
         OpenExerciseDetailCommand = new RelayCommand<WorkoutExerciseItem>(OpenExerciseDetail);
-        CloseExerciseDetailCommand = new RelayCommand(CloseExerciseDetail);
         Filters = new ObservableCollection<FilterChipItem>
         {
             new FilterChipItem { Label = "All", IsSelected = true },
             new FilterChipItem { Label = "Strength" },
             new FilterChipItem { Label = "Cardio" },
-            new FilterChipItem { Label = "Climb" },
-            new FilterChipItem { Label = "Yoga" },
-            new FilterChipItem { Label = "Pilates" },
             new FilterChipItem { Label = "Recovery" }
         };
     }
@@ -193,7 +200,7 @@ public partial class WorkoutViewModel : ObservableObject
         if (featuredWorkout is null)
         {
             _featuredWorkout = null;
-            FeaturedWorkoutBadgeText = "TODAY RECOVERY";
+            FeaturedWorkoutBadgeText = "Today recovery";
             FeaturedWorkoutTitle = ActivePlan is null ? "No active plan" : "Living happy life";
             FeaturedWorkoutSubtitle = ActivePlan is null
                 ? "Your training sessions will appear once a plan exists."
@@ -201,16 +208,26 @@ public partial class WorkoutViewModel : ObservableObject
             FeaturedWorkoutDurationText = "Rest day";
             FeaturedWorkoutExercisesCount = "0";
             FeaturedWorkoutIntensity = "Light";
+            FeaturedWorkoutActionText = "Start workout";
+            FeaturedWorkoutActivityBackground = WorkoutActivityClassifier.GetBackground(WorkoutActivityClassifier.RestTag);
+            FeaturedWorkoutActivityTextColor = WorkoutActivityClassifier.GetTextColor(WorkoutActivityClassifier.RestTag);
             return;
         }
 
         _featuredWorkout = featuredWorkout;
-        FeaturedWorkoutBadgeText = $"TODAY {featuredWorkout.Tag}";
+        FeaturedWorkoutActivityBackground = featuredWorkout.ActivityBackground;
+        FeaturedWorkoutActivityTextColor = featuredWorkout.ActivityTextColor;
+        FeaturedWorkoutBadgeText = featuredWorkout.IsCompleted
+            ? "Workout completed"
+            : $"Today {FormatActivityTag(featuredWorkout.Tag)}";
         FeaturedWorkoutTitle = featuredWorkout.Title;
         FeaturedWorkoutSubtitle = featuredWorkout.DetailsText;
         FeaturedWorkoutDurationText = featuredWorkout.Duration;
         FeaturedWorkoutExercisesCount = ExtractExerciseCount(featuredWorkout.ExerciseCountText);
         FeaturedWorkoutIntensity = BuildFeaturedIntensity(featuredWorkout.Tag);
+        FeaturedWorkoutActionText = featuredWorkout.IsCompleted
+            ? "Edit workout"
+            : featuredWorkout.IsRestDay ? "Log rest day" : "Start workout";
     }
 
     private async Task HandleEmptyWorkoutsActionAsync()
@@ -229,6 +246,16 @@ public partial class WorkoutViewModel : ObservableObject
     private bool CanUseEmptyWorkoutsAction() =>
         !IsBusy;
 
+    private static string FormatActivityTag(string tag) =>
+        tag switch
+        {
+            WorkoutActivityClassifier.CardioTag => "cardio",
+            WorkoutActivityClassifier.RecoveryTag => "recovery",
+            WorkoutActivityClassifier.RestTag => "rest",
+            WorkoutActivityClassifier.StrengthTag => "strength",
+            _ => tag.ToLowerInvariant()
+        };
+
     private async Task OpenFeaturedWorkoutAsync()
     {
         if (_featuredWorkout is not null)
@@ -246,8 +273,11 @@ public partial class WorkoutViewModel : ObservableObject
         WorkoutModalStatusText = string.Empty;
         SelectedWorkoutTitle = workout.Title;
         SelectedWorkoutSubtitle = workout.Tag;
-        SelectedWorkoutSummaryText = $"{workout.Duration} with {workout.ExerciseCountText}";
-        IsSelectedWorkoutRestDay = false;
+        SelectedWorkoutSummaryText = string.IsNullOrWhiteSpace(workout.ActivityCountText)
+            ? $"{workout.Duration} with {workout.ExerciseCountText}"
+            : $"{workout.Duration} with {workout.ExerciseCountText} - {workout.ActivityCountText}";
+        IsSelectedWorkoutRestDay = workout.IsRestDay;
+        IsSelectedWorkoutCompleted = workout.IsCompleted;
 
         await LoadWorkoutSessionDetailAsync();
     }
@@ -266,12 +296,17 @@ public partial class WorkoutViewModel : ObservableObject
             SelectedWorkoutSubtitle = detail.Subtitle;
             SelectedWorkoutSummaryText = detail.SummaryText;
             SelectedWorkoutExercises = new ObservableCollection<WorkoutExerciseItem>(detail.Exercises);
+            SelectedWorkoutActivitySections = new ObservableCollection<WorkoutActivitySectionItem>(
+                detail.Activities.Count > 0
+                    ? detail.Activities
+                    : BuildFallbackActivitySections(detail.Exercises));
             IsSelectedWorkoutRestDay = detail.IsRestDay;
             WorkoutModalErrorText = string.Empty;
         }
         catch
         {
             SelectedWorkoutExercises.Clear();
+            SelectedWorkoutActivitySections.Clear();
             IsSelectedWorkoutRestDay = false;
             WorkoutModalErrorText = "Could not open this workout yet. Please refresh the plan and try again.";
         }
@@ -283,8 +318,41 @@ public partial class WorkoutViewModel : ObservableObject
 
     private async Task SaveWorkoutSessionAsync()
     {
+        if (_selectedWorkoutDayId <= 0)
+            return;
+
+        var exercises = SelectedWorkoutExercises.ToList();
+        await SaveWorkoutLogsAsync(
+            exercises,
+            IsSelectedWorkoutRestDay
+                ? "Rest day logged. Recovery counts too."
+                : "Session saved. Your next suggestions are updated.");
+    }
+
+    private async Task LogWorkoutExerciseAsync(WorkoutExerciseItem? exercise)
+    {
+        if (exercise is null)
+            return;
+
+        var action = exercise.IsLogged ? "updated" : "logged";
+        await SaveWorkoutLogsAsync([exercise], $"{exercise.Name} {action}.");
+    }
+
+    private async Task LogWorkoutActivityAsync(WorkoutActivitySectionItem? activity)
+    {
+        if (activity is null || activity.Exercises.Count == 0)
+            return;
+
+        var action = activity.IsLogged ? "updated" : "logged";
+        await SaveWorkoutLogsAsync(activity.Exercises.ToList(), $"{activity.Title} {action}.");
+    }
+
+    private async Task SaveWorkoutLogsAsync(
+        IReadOnlyCollection<WorkoutExerciseItem> exercises,
+        string successText)
+    {
         if (_selectedWorkoutDayId <= 0 ||
-            (!IsSelectedWorkoutRestDay && SelectedWorkoutExercises.Count == 0))
+            (!IsSelectedWorkoutRestDay && exercises.Count == 0))
         {
             return;
         }
@@ -292,23 +360,15 @@ public partial class WorkoutViewModel : ObservableObject
         try
         {
             var userId = await _authService.GetCurrentUserIdAsync();
-            var logs = SelectedWorkoutExercises
-                .Select(item => new WorkoutExerciseLogInput(
-                    item.WorkoutDayExerciseId,
-                    item.ExerciseId,
-                    ParsePositiveInt(item.LoggedSetsText),
-                    ParsePositiveInt(item.LoggedRepsText),
-                    ParseOptionalFloat(item.LoggedWeightText),
-                    ParseDurationSeconds(item.LoggedDurationMinutesText),
-                    ParseOptionalFloat(item.LoggedDistanceKmText),
-                    ParsePositiveNullableInt(item.LoggedHeartRateText),
-                    ParsePaceSecondsPerKm(item.LoggedPaceText)))
+            var logs = exercises
+                .GroupBy(exercise => exercise.WorkoutDayExerciseId)
+                .Select(group => BuildLogInput(group.Last()))
                 .ToList();
 
             await _workoutService.LogWorkoutSessionAsync(userId, _selectedWorkoutDayId, logs, DateTime.Today);
-            WorkoutModalStatusText = IsSelectedWorkoutRestDay
-                ? "Rest day logged. Recovery counts too."
-                : "Session saved. Your next suggestions are updated.";
+            WorkoutModalStatusText = successText;
+            IsSelectedWorkoutCompleted = IsSelectedWorkoutRestDay || IsEveryExerciseLoggedAfterSave(exercises);
+            TriggerCelebration();
             WorkoutModalErrorText = string.Empty;
             await LoadWorkoutSessionDetailAsync();
             _loadGate.MarkStale();
@@ -326,15 +386,41 @@ public partial class WorkoutViewModel : ObservableObject
         }
     }
 
+    private static WorkoutExerciseLogInput BuildLogInput(WorkoutExerciseItem item) =>
+        new(
+            item.WorkoutDayExerciseId,
+            item.ExerciseId,
+            ParsePositiveInt(item.LoggedSetsText),
+            ParsePositiveInt(item.LoggedRepsText),
+            ParseOptionalFloat(item.LoggedWeightText),
+            ParseDurationSeconds(item.LoggedDurationMinutesText),
+            ParseOptionalFloat(item.LoggedDistanceKmText),
+            ParsePositiveNullableInt(item.LoggedHeartRateText),
+            ParsePaceSecondsPerKm(item.LoggedPaceText));
+
+    private bool IsEveryExerciseLoggedAfterSave(IReadOnlyCollection<WorkoutExerciseItem> savedExercises)
+    {
+        var loggedIds = SelectedWorkoutExercises
+            .Where(exercise => exercise.IsLogged)
+            .Select(exercise => exercise.WorkoutDayExerciseId)
+            .ToHashSet();
+        foreach (var exercise in savedExercises)
+            loggedIds.Add(exercise.WorkoutDayExerciseId);
+
+        return SelectedWorkoutExercises.Count > 0 && loggedIds.Count >= SelectedWorkoutExercises.Count;
+    }
+
     private void CloseWorkoutModal()
     {
-        CloseExerciseDetail();
+        CollapseExerciseDetails();
         IsWorkoutModalVisible = false;
         IsWorkoutDetailLoading = false;
         WorkoutModalErrorText = string.Empty;
         WorkoutModalStatusText = string.Empty;
         IsSelectedWorkoutRestDay = false;
+        IsSelectedWorkoutCompleted = false;
         SelectedWorkoutExercises.Clear();
+        SelectedWorkoutActivitySections.Clear();
     }
 
     private void OpenExerciseDetail(WorkoutExerciseItem? exercise)
@@ -342,39 +428,32 @@ public partial class WorkoutViewModel : ObservableObject
         if (exercise is null)
             return;
 
-        SelectedExerciseName = exercise.Name;
-        SelectedExerciseDescription = exercise.Description;
-        SelectedExerciseTechniqueNotes = string.IsNullOrWhiteSpace(exercise.TechniqueNotes)
-            ? exercise.Description
-            : exercise.TechniqueNotes;
-        SelectedExerciseTargetText = exercise.TargetText;
-        SelectedExercisePreviousText = exercise.PreviousText;
-        SelectedExerciseRecommendationText = exercise.RecommendationText;
-        SelectedExerciseVideoUrl = exercise.VideoUrl;
-        SelectedExerciseImageUrl = exercise.ImageUrl;
-        IsExerciseDetailModalVisible = true;
+        var shouldExpand = !exercise.IsExpanded;
+        foreach (var item in SelectedWorkoutExercises)
+            item.IsExpanded = false;
+
+        exercise.IsExpanded = shouldExpand;
     }
 
-    private void CloseExerciseDetail()
+    private void CollapseExerciseDetails()
     {
-        IsExerciseDetailModalVisible = false;
-        SelectedExerciseName = string.Empty;
-        SelectedExerciseDescription = string.Empty;
-        SelectedExerciseTechniqueNotes = string.Empty;
-        SelectedExerciseTargetText = string.Empty;
-        SelectedExercisePreviousText = string.Empty;
-        SelectedExerciseRecommendationText = string.Empty;
-        SelectedExerciseVideoUrl = string.Empty;
-        SelectedExerciseImageUrl = string.Empty;
+        foreach (var exercise in SelectedWorkoutExercises)
+            exercise.IsExpanded = false;
     }
 
     private static string ExtractExerciseCount(string exerciseCountText)
     {
-        var firstToken = exerciseCountText
+        var count = ExtractCount(exerciseCountText);
+        return count > 0 ? count.ToString() : "0";
+    }
+
+    private static int ExtractCount(string text)
+    {
+        var firstToken = text
             .Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .FirstOrDefault();
 
-        return int.TryParse(firstToken, out var count) ? count.ToString() : "0";
+        return int.TryParse(firstToken, out var count) ? count : 0;
     }
 
     private static int ParsePositiveInt(string? value) =>
@@ -431,23 +510,17 @@ public partial class WorkoutViewModel : ObservableObject
         !workout.IsRestDay;
 
     private static bool IsRecoveryWorkoutItem(WorkoutItem workout) =>
-        !workout.IsRestDay && IsRecoveryTag(workout.Tag);
-
-    private static bool IsRecoveryTag(string tag) =>
-        tag.Contains("RECOVERY", StringComparison.OrdinalIgnoreCase);
+        !workout.IsRestDay && WorkoutActivityClassifier.IsRecoveryTag(workout.Tag);
 
     private static string BuildFeaturedIntensity(string tag)
     {
-        if (tag.Contains("RECOVERY", StringComparison.OrdinalIgnoreCase))
+        if (tag.Contains(WorkoutActivityClassifier.RecoveryTag, StringComparison.OrdinalIgnoreCase))
             return "Light";
 
-        if (tag.Contains("REST", StringComparison.OrdinalIgnoreCase))
+        if (tag.Contains(WorkoutActivityClassifier.RestTag, StringComparison.OrdinalIgnoreCase))
             return "None";
 
-        if (tag.Contains("YOGA", StringComparison.OrdinalIgnoreCase))
-            return "Steady";
-
-        if (tag.Contains("CARDIO", StringComparison.OrdinalIgnoreCase))
+        if (tag.Contains(WorkoutActivityClassifier.CardioTag, StringComparison.OrdinalIgnoreCase))
             return "Steady";
 
         return "Heavy";
@@ -466,6 +539,36 @@ public partial class WorkoutViewModel : ObservableObject
             _ => string.Empty
         };
 
+    private static IReadOnlyList<WorkoutActivitySectionItem> BuildFallbackActivitySections(
+        IReadOnlyList<WorkoutExerciseItem> exercises)
+    {
+        if (exercises.Count == 0)
+            return [];
+
+        const string activityTag = WorkoutActivityClassifier.StrengthTag;
+        return
+        [
+            new WorkoutActivitySectionItem
+            {
+                Tag = activityTag,
+                Title = WorkoutActivityClassifier.BuildSectionTitle(activityTag),
+                Subtitle = WorkoutActivityClassifier.BuildSectionSubtitle(activityTag),
+                SummaryText = $"{exercises.Count(exercise => exercise.IsLogged)} of {exercises.Count} logged",
+                ActivityBackground = WorkoutActivityClassifier.GetBackground(activityTag),
+                ActivityTextColor = WorkoutActivityClassifier.GetTextColor(activityTag),
+                Exercises = new ObservableCollection<WorkoutExerciseItem>(exercises)
+            }
+        ];
+    }
+
+    private void TriggerCelebration()
+    {
+        CelebrationIconSource = Enum.TryParse<CyclePhase>(CurrentPhaseName, out var phase)
+            ? CyclePhaseAssets.GetVisualSource(phase)
+            : CyclePhaseAssets.FollicularAnimation;
+        CelebrationToken++;
+    }
+
     private void NotifyWorkoutStateProperties()
     {
         OnPropertyChanged(nameof(HasWorkouts));
@@ -481,7 +584,9 @@ public partial class WorkoutViewModel : ObservableObject
     private void NotifyWorkoutModalProperties()
     {
         OnPropertyChanged(nameof(HasSelectedWorkoutExercises));
+        OnPropertyChanged(nameof(HasSelectedWorkoutActivities));
         OnPropertyChanged(nameof(ShowWorkoutRestDayState));
+        OnPropertyChanged(nameof(ShowWorkoutFooterAction));
         OnPropertyChanged(nameof(HasWorkoutModalError));
         OnPropertyChanged(nameof(HasWorkoutModalStatus));
         OnPropertyChanged(nameof(WorkoutLogButtonText));
@@ -502,6 +607,11 @@ public partial class WorkoutViewModel : ObservableObject
         NotifyWorkoutModalProperties();
     }
 
+    partial void OnSelectedWorkoutActivitySectionsChanged(ObservableCollection<WorkoutActivitySectionItem> value)
+    {
+        NotifyWorkoutModalProperties();
+    }
+
     partial void OnIsWorkoutDetailLoadingChanged(bool value)
     {
         NotifyWorkoutModalProperties();
@@ -510,6 +620,12 @@ public partial class WorkoutViewModel : ObservableObject
     partial void OnIsSelectedWorkoutRestDayChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowWorkoutRestDayState));
+        OnPropertyChanged(nameof(ShowWorkoutFooterAction));
+        OnPropertyChanged(nameof(WorkoutLogButtonText));
+    }
+
+    partial void OnIsSelectedWorkoutCompletedChanged(bool value)
+    {
         OnPropertyChanged(nameof(WorkoutLogButtonText));
     }
 
@@ -521,17 +637,6 @@ public partial class WorkoutViewModel : ObservableObject
     partial void OnWorkoutModalStatusTextChanged(string value)
     {
         NotifyWorkoutModalProperties();
-    }
-
-    partial void OnSelectedExerciseVideoUrlChanged(string value)
-    {
-        OnPropertyChanged(nameof(HasSelectedExerciseVideo));
-        OnPropertyChanged(nameof(SelectedExerciseVideoText));
-    }
-
-    partial void OnSelectedExerciseImageUrlChanged(string value)
-    {
-        OnPropertyChanged(nameof(HasSelectedExerciseImage));
     }
 
     partial void OnIsBusyChanged(bool value)

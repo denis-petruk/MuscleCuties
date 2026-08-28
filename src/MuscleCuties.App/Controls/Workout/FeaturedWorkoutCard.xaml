@@ -7,17 +7,22 @@
 
     <Border Style="{StaticResource CardPrimary}">
         <VerticalStackLayout Spacing="12">
+            <Border
+                HeightRequest="4"
+                BackgroundColor="{Binding AccentColor, Source={x:Reference Root}}"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 2" />
 
             <HorizontalStackLayout Spacing="6">
                 <BoxView
                     WidthRequest="6"
                     HeightRequest="6"
                     CornerRadius="3"
-                    BackgroundColor="{StaticResource Primary}"
+                    BackgroundColor="{Binding AccentTextColor, Source={x:Reference Root}}"
                     VerticalOptions="Center" />
                 <Label
                     Text="{Binding BadgeText, Source={x:Reference Root}}"
-                    TextColor="{StaticResource Primary}"
+                    TextColor="{Binding AccentTextColor, Source={x:Reference Root}}"
                     FontSize="11"
                     FontAttributes="Bold"
                     CharacterSpacing="1.0"
@@ -67,7 +72,7 @@
             </Grid>
 
             <Border
-                BackgroundColor="{StaticResource Primary}"
+                BackgroundColor="{Binding AccentTextColor, Source={x:Reference Root}}"
                 StrokeThickness="0"
                 StrokeShape="RoundRectangle 15"
                 HeightRequest="56"
@@ -79,15 +84,49 @@
                     Spacing="10"
                     HorizontalOptions="Center"
                     VerticalOptions="Center">
-                    <Path
-                        Data="M8 5v14l11-7z"
-                        Fill="{StaticResource White}"
-                        Aspect="Uniform"
-                        WidthRequest="17"
-                        HeightRequest="17"
-                        VerticalOptions="Center" />
+                    <Grid
+                        WidthRequest="18"
+                        HeightRequest="18"
+                        VerticalOptions="Center">
+                        <Path
+                            Data="M8 5v14l11-7z"
+                            Fill="{StaticResource White}"
+                            Aspect="Uniform"
+                            WidthRequest="17"
+                            HeightRequest="17"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center">
+                            <Path.Triggers>
+                                <DataTrigger
+                                    TargetType="Path"
+                                    Binding="{Binding ActionText, Source={x:Reference Root}}"
+                                    Value="Edit workout">
+                                    <Setter Property="IsVisible" Value="False" />
+                                </DataTrigger>
+                            </Path.Triggers>
+                        </Path>
+
+                        <Grid IsVisible="False">
+                            <Grid.Triggers>
+                                <DataTrigger
+                                    TargetType="Grid"
+                                    Binding="{Binding ActionText, Source={x:Reference Root}}"
+                                    Value="Edit workout">
+                                    <Setter Property="IsVisible" Value="True" />
+                                </DataTrigger>
+                            </Grid.Triggers>
+                            <Path
+                                Data="M4 20h4L18.5 9.5l-4-4L4 16v4z"
+                                Fill="{StaticResource White}"
+                                Aspect="Uniform"
+                                WidthRequest="18"
+                                HeightRequest="18"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                        </Grid>
+                    </Grid>
                     <Label
-                        Text="Start workout"
+                        Text="{Binding ActionText, Source={x:Reference Root}}"
                         TextColor="{StaticResource White}"
                         FontSize="16"
                         FontAttributes="Bold"

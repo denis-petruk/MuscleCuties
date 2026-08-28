@@ -104,6 +104,7 @@ public partial class ProfileUnitsDisplayViewModel : ObservableObject
             });
 
             StatusMessage = "Units saved.";
+            _navigateBack();
         }
         finally
         {

@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
+using MuscleCuties.App.Pages.Onboarding;
 using MuscleCuties.App.Services.Notifications;
 using MuscleCuties.Core.Data;
+using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 
 namespace MuscleCuties.App;
@@ -45,6 +47,21 @@ public partial class App : Application
         if (isLoggedIn)
         {
             var userId = await authService.GetCurrentUserIdAsync();
+            var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+            var user = await userRepository.GetByIdAsync(userId);
+            if (user is null)
+            {
+                await authService.LogoutAsync();
+                await Shell.Current.GoToAsync("//LoginPage", false);
+                return;
+            }
+
+            if (!user.IsOnboardingComplete)
+            {
+                await Shell.Current.GoToAsync(nameof(QuizPage), false);
+                return;
+            }
+
             await Shell.Current.GoToAsync("//DashboardPage", false);
 
             var notificationService = scope.ServiceProvider.GetRequiredService<ICyclePhaseNotificationService>();

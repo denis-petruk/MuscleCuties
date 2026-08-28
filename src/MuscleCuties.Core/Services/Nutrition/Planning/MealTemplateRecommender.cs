@@ -9,6 +9,17 @@ namespace MuscleCuties.Core.Services.Nutrition.Planning;
 internal static class MealTemplateRecommender
 {
     private const int RecommendationCount = 4;
+    private static readonly string[] MeatOrFishTerms =
+    [
+        "chicken",
+        "salmon",
+        "tuna",
+        "turkey",
+        "beef",
+        "shrimp",
+        "cod",
+        "pork"
+    ];
 
     private static readonly IReadOnlyList<MealType> MealOrder =
     [
@@ -25,6 +36,7 @@ internal static class MealTemplateRecommender
         CyclePhase phase)
     {
         var userDietaryTags = ParseDietaryTags(profile?.DietaryTags);
+        var preferMeatOrFish = userDietaryTags.Count == 0;
         var candidates = templates
             .Where(template => template.Entries.Count > 0)
             .Where(template => IsCompatibleWithDiet(template, userDietaryTags))
@@ -33,34 +45,46 @@ internal static class MealTemplateRecommender
         if (candidates.Count == 0)
             return [];
 
-        var selected = SelectBestDailySet(candidates, plan, phase);
+        var selected = SelectBestDailySet(candidates, plan, phase, preferMeatOrFish);
 
         if (selected.Count < RecommendationCount)
         {
             selected.AddRange(candidates
                 .Where(template => selected.All(existing => existing.Id != template.Id))
-                .OrderByDescending(template => ScoreTemplate(template, plan, phase))
+                .OrderByDescending(template => ScoreTemplate(template, plan, phase, preferMeatOrFish))
                 .ThenBy(template => template.SortOrder)
                 .ThenBy(template => template.Name)
                 .Take(RecommendationCount - selected.Count));
         }
 
         return selected
-            .OrderBy(template => MealOrder.IndexOf(template.MealType))
+            .OrderBy(template => GetMealOrderIndex(template.MealType))
             .ThenBy(template => template.SortOrder)
             .Take(RecommendationCount)
             .ToList();
     }
 
+    private static int GetMealOrderIndex(MealType mealType)
+    {
+        for (var index = 0; index < MealOrder.Count; index++)
+        {
+            if (MealOrder[index] == mealType)
+                return index;
+        }
+
+        return MealOrder.Count;
+    }
+
     private static List<MealTemplate> SelectBestDailySet(
         IReadOnlyCollection<MealTemplate> candidates,
         NutritionPlan plan,
-        CyclePhase phase)
+        CyclePhase phase,
+        bool preferMeatOrFish)
     {
         var candidateGroups = MealOrder
             .Select(mealType => candidates
                 .Where(template => template.MealType == mealType)
-                .OrderByDescending(template => ScoreTemplate(template, plan, phase))
+                .OrderByDescending(template => ScoreTemplate(template, plan, phase, preferMeatOrFish))
                 .ThenBy(template => template.SortOrder)
                 .ThenBy(template => template.Name)
                 .Take(5)
@@ -71,7 +95,7 @@ internal static class MealTemplateRecommender
         if (candidateGroups.Count == 0)
             return [];
 
-        var combinations = new List<List<MealTemplate>> { [] };
+        var combinations = new List<List<MealTemplate>> { new() };
         foreach (var group in candidateGroups)
         {
             combinations = combinations
@@ -84,7 +108,7 @@ internal static class MealTemplateRecommender
         }
 
         return combinations
-            .OrderByDescending(combination => ScoreDailySet(combination, plan, phase))
+            .OrderByDescending(combination => ScoreDailySet(combination, plan, phase, preferMeatOrFish))
             .ThenBy(combination => combination.Sum(template => template.SortOrder))
             .First();
     }
@@ -132,12 +156,14 @@ internal static class MealTemplateRecommender
     private static float ScoreTemplate(
         MealTemplate template,
         NutritionPlan plan,
-        CyclePhase phase)
+        CyclePhase phase,
+        bool preferMeatOrFish)
     {
         var mealTarget = plan.Meals.FirstOrDefault(meal => meal.MealType == template.MealType);
         var macros = CalculateMacros(template);
 
         return ScorePhaseFit(template, phase) +
+               (preferMeatOrFish && IsMeatOrFishTemplate(template) ? 18f : 0f) +
                ScoreMacroFit(macros, mealTarget) +
                ScoreMicronutrientCoverage(template, plan.Goals);
     }
@@ -145,16 +171,27 @@ internal static class MealTemplateRecommender
     private static float ScoreDailySet(
         IReadOnlyCollection<MealTemplate> templates,
         NutritionPlan plan,
-        CyclePhase phase)
+        CyclePhase phase,
+        bool preferMeatOrFish)
     {
         var macros = MacroNutrients.Sum(templates.Select(CalculateMacros));
         return 85f * Closeness(macros.Calories, plan.Calories) +
                70f * MinimumCoverage(macros.Protein, plan.Protein) +
                45f * Closeness(macros.Carbs, plan.Carbs) +
                45f * Closeness(macros.Fats, plan.Fats) +
+               (preferMeatOrFish && templates.Any(IsMeatOrFishTemplate) ? 65f : 0f) +
                templates.Sum(template => ScorePhaseFit(template, phase)) +
                ScoreDailyMicronutrientCoverage(templates, plan.Goals);
     }
+
+    private static bool IsMeatOrFishTemplate(MealTemplate template) =>
+        ContainsAny(template.Name, MeatOrFishTerms) ||
+        template.Entries.Any(entry =>
+            entry.FoodItem is not null &&
+            ContainsAny(entry.FoodItem.Name, MeatOrFishTerms));
+
+    private static bool ContainsAny(string value, IEnumerable<string> terms) =>
+        terms.Any(term => value.Contains(term, StringComparison.OrdinalIgnoreCase));
 
     private static float ScorePhaseFit(MealTemplate template, CyclePhase phase)
     {

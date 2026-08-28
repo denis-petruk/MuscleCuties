@@ -66,14 +66,54 @@
                 </Border>
             </Grid>
 
-            <HorizontalStackLayout Grid.Row="1" Spacing="8">
-                <Border Style="{StaticResource WorkoutPill}">
+            <FlexLayout
+                Grid.Row="1"
+                Direction="Row"
+                Wrap="Wrap"
+                AlignItems="Start">
+                <Border
+                    Style="{StaticResource WorkoutPill}"
+                    Margin="0,0,8,8">
                     <Label Text="{Binding Duration}" Style="{StaticResource WorkoutPillText}" />
                 </Border>
-                <Border Style="{StaticResource WorkoutPill}">
+                <Border
+                    Style="{StaticResource WorkoutPill}"
+                    Margin="0,0,8,8">
                     <Label Text="{Binding ExerciseCountText}" Style="{StaticResource WorkoutPillText}" />
                 </Border>
-            </HorizontalStackLayout>
+                <Border
+                    Style="{StaticResource WorkoutPill}"
+                    Margin="0,0,8,8">
+                    <Label Text="{Binding ActivityCountText}" Style="{StaticResource WorkoutPillText}" />
+                </Border>
+                <Border
+                    StrokeShape="RoundRectangle 999"
+                    StrokeThickness="0"
+                    Padding="10,6"
+                    Margin="0,0,8,8">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsCompleted}" Value="True">
+                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsCompleted}" Value="False">
+                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Label
+                        Text="{Binding SessionProgressText}"
+                        FontSize="12"
+                        FontAttributes="Bold">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsCompleted}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource White}" />
+                            </DataTrigger>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsCompleted}" Value="False">
+                                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+            </FlexLayout>
         </Grid>
     </Border>
 </ContentView>

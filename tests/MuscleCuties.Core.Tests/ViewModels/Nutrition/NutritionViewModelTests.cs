@@ -505,8 +505,9 @@ public class NutritionViewModelTests
             item.Goal == 2600f);
         Assert.Contains(vm.Micronutrients, item =>
             item.Name == "Vitamin A" &&
-            item.IsGoalHit);
-        Assert.Contains("1 of 12", vm.MicronutrientSummaryText);
+            item.Amount == 0f &&
+            !item.IsGoalHit);
+        Assert.Contains("0 of 12", vm.MicronutrientSummaryText);
         Assert.Equal("2.8g fiber", vm.DayFiberText);
     }
 

@@ -27,8 +27,14 @@ public partial class QuizViewModel : ObservableObject
 
     public QuizAnswer? SelectedAnswer =>
         CurrentAnswers.FirstOrDefault(a => a.IsSelected)?.Answer;
+    public IReadOnlyList<QuizAnswer> SelectedAnswers =>
+        CurrentAnswers
+            .Where(answer => answer.IsSelected)
+            .Select(answer => answer.Answer)
+            .ToList();
 
     public bool HasQuestion => CurrentQuestion != null;
+    public bool IsCurrentQuestionMultiAnswer => CurrentQuestion?.QuestionType is QuizQuestionType.DietaryPreference;
     public bool IsLoading => IsBusy;
     public bool HasNoQuestions => !IsBusy && Questions.Count == 0;
     public bool IsFirstQuestion => CurrentQuestionIndex == 0;
@@ -81,27 +87,37 @@ public partial class QuizViewModel : ObservableObject
     private void SelectAnswer(SelectableQuizAnswer? selectable)
     {
         if (selectable is null) return;
+        if (IsCurrentQuestionMultiAnswer)
+        {
+            ToggleMultiAnswer(selectable);
+            ErrorMessage = string.Empty;
+            OnPropertyChanged(nameof(SelectedAnswer));
+            OnPropertyChanged(nameof(SelectedAnswers));
+            return;
+        }
+
         foreach (var a in CurrentAnswers)
             a.IsSelected = false;
         selectable.IsSelected = true;
         ErrorMessage = string.Empty;
         OnPropertyChanged(nameof(SelectedAnswer));
+        OnPropertyChanged(nameof(SelectedAnswers));
     }
 
     private async Task NextAsync()
     {
-        var selected = SelectedAnswer;
+        var selectedAnswers = SelectedAnswers;
         if (CurrentQuestion is null)
             return;
 
-        if (selected is null)
+        if (selectedAnswers.Count == 0)
         {
             ErrorMessage = "Choose an answer to continue.";
             return;
         }
 
-        RecordSelection(CurrentQuestion.Id, selected.Id);
-        ApplyConditionalQuestionFlow(CurrentQuestion, selected);
+        RecordSelections(CurrentQuestion.Id, selectedAnswers.Select(answer => answer.Id));
+        ApplyConditionalQuestionFlow(CurrentQuestion, selectedAnswers[0]);
 
         if (CurrentQuestionIndex < Questions.Count - 1)
         {
@@ -140,22 +156,46 @@ public partial class QuizViewModel : ObservableObject
     private void BuildAnswers(QuizQuestion question)
     {
         ErrorMessage = string.Empty;
-        var saved = _selectedAnswers.FirstOrDefault(p => p.QuestionId == question.Id);
+        var savedAnswerIds = _selectedAnswers
+            .Where(pair => pair.QuestionId == question.Id)
+            .Select(pair => pair.AnswerId)
+            .ToHashSet();
         var list = question.Answers
             .Select(a => new SelectableQuizAnswer
             {
                 Answer = (QuizAnswer)a,
-                IsSelected = saved != default && saved.AnswerId == ((QuizAnswer)a).Id
+                IsSelected = savedAnswerIds.Contains(((QuizAnswer)a).Id)
             })
             .ToList();
         CurrentAnswers = new ObservableCollection<SelectableQuizAnswer>(list);
         OnPropertyChanged(nameof(SelectedAnswer));
+        OnPropertyChanged(nameof(SelectedAnswers));
+        OnPropertyChanged(nameof(IsCurrentQuestionMultiAnswer));
     }
 
-    private void RecordSelection(int questionId, int answerId)
+    private void RecordSelections(int questionId, IEnumerable<int> answerIds)
     {
         _selectedAnswers.RemoveAll(p => p.QuestionId == questionId);
-        _selectedAnswers.Add((questionId, answerId));
+        _selectedAnswers.AddRange(answerIds.Select(answerId => (questionId, answerId)));
+    }
+
+    private void ToggleMultiAnswer(SelectableQuizAnswer selectable)
+    {
+        var isNone = selectable.Answer.MappedValue == 0;
+
+        if (isNone)
+        {
+            foreach (var answer in CurrentAnswers)
+                answer.IsSelected = false;
+
+            selectable.IsSelected = true;
+            return;
+        }
+
+        selectable.IsSelected = !selectable.IsSelected;
+
+        foreach (var answer in CurrentAnswers.Where(answer => answer.Answer.MappedValue == 0))
+            answer.IsSelected = false;
     }
 
     private static List<QuizQuestion> BuildInitialQuestionFlow(IEnumerable<QuizQuestion> questions) =>
@@ -202,6 +242,7 @@ public partial class QuizViewModel : ObservableObject
     private void NotifyComputedProperties()
     {
         OnPropertyChanged(nameof(HasQuestion));
+        OnPropertyChanged(nameof(IsCurrentQuestionMultiAnswer));
         OnPropertyChanged(nameof(IsLoading));
         OnPropertyChanged(nameof(HasNoQuestions));
         OnPropertyChanged(nameof(IsFirstQuestion));

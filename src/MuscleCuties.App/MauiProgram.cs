@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui;
+using MauiIcons.Fluent;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
@@ -12,6 +13,8 @@ using MuscleCuties.App.Pages.Profile;
 using MuscleCuties.App.Pages.Startup;
 using MuscleCuties.App.Pages.Workout;
 using MuscleCuties.App.Services;
+using MuscleCuties.App.Services.Auth;
+using MuscleCuties.App.Services.Health;
 using MuscleCuties.App.Services.Notifications;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Repositories.Common;
@@ -24,8 +27,10 @@ using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
 using MuscleCuties.Core.Services.Dashboard.Planning;
+using MuscleCuties.Core.Services.Health;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Nutrition.Planning;
+using MuscleCuties.Core.Services.Progress;
 using MuscleCuties.Core.Services.Profile;
 using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.Services.Workout;
@@ -49,6 +54,7 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
+            .UseFluentMauiIcons()
             .ConfigureMauiHandlers(handlers =>
             {
 #if ANDROID
@@ -119,7 +125,18 @@ public static class MauiProgram
 
         // Platform services
         services.AddSingleton<ITokenStorage, SecureStorageService>();
+        services.AddSingleton<IAppleSignInService, AppleSignInService>();
         services.AddSingleton<ILocalNotificationService, LocalNotificationService>();
+#if ANDROID
+        services.AddSingleton<HealthConnectDataProvider>();
+        services.AddSingleton<IHealthDataProvider>(sp => sp.GetRequiredService<HealthConnectDataProvider>());
+#else
+        services.AddSingleton<AppleHealthDataProvider>();
+        services.AddSingleton<IHealthDataProvider>(sp => sp.GetRequiredService<AppleHealthDataProvider>());
+#endif
+        services.AddSingleton(WhoopOAuthOptions.FromEnvironment());
+        services.AddSingleton<IHealthDataProvider, WhoopDataProvider>();
+        services.AddSingleton<IHealthSyncService, HealthSyncService>();
         services.AddScoped<ICyclePhaseNotificationService, CyclePhaseNotificationService>();
         services.AddScoped<IFeedbackEmailService, FeedbackEmailService>();
 
@@ -151,18 +168,22 @@ public static class MauiProgram
         services.AddScoped<INutritionService, NutritionService>();
         services.AddScoped<IQuizService, QuizService>();
         services.AddScoped<IWorkoutService, WorkoutService>();
+        services.AddScoped<IProgressSummaryService, ProgressSummaryService>();
         // ViewModels — transient so each page gets a fresh instance
         services.AddTransient<LoginViewModel>(sp => new LoginViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IQuizService>(),
             () => NavigateTo("//DashboardPage"),
             () => NavigateTo(nameof(QuizPage)),
-            () => NavigateTo(nameof(RegisterPage))));
+            () => NavigateTo(nameof(RegisterPage)),
+            sp.GetRequiredService<IAppleSignInService>()));
 
         services.AddTransient<RegisterViewModel>(sp => new RegisterViewModel(
             sp.GetRequiredService<IAuthService>(),
             () => NavigateTo(nameof(QuizPage)),
-            () => NavigateTo("..")));
+            () => NavigateTo(".."),
+            sp.GetRequiredService<IAppleSignInService>(),
+            () => NavigateTo("//DashboardPage")));
 
         services.AddTransient<QuizViewModel>(sp => new QuizViewModel(
             sp.GetRequiredService<IAuthService>(),
@@ -172,7 +193,8 @@ public static class MauiProgram
         services.AddTransient<ProfileSetupViewModel>(sp => new ProfileSetupViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
-            () => NavigateTo("//DashboardPage")));
+            () => NavigateTo("//DashboardPage"),
+            sp.GetRequiredService<IHealthSyncService>()));
 
         services.AddTransient<DashboardViewModel>(sp => new DashboardViewModel(
             sp.GetRequiredService<IAuthService>(),
@@ -180,7 +202,9 @@ public static class MauiProgram
             sp.GetRequiredService<ICycleService>(),
             sp.GetRequiredService<INutritionService>(),
             sp.GetRequiredService<IWorkoutService>(),
+            sp.GetRequiredService<IProgressSummaryService>(),
             sp.GetRequiredService<IDashboardPlanner>(),
+            sp.GetRequiredService<IHealthSyncService>(),
             () => NavigateTo("//CyclePage"),
             () => NavigateTo("//WorkoutPage"),
             () => NavigateTo("//NutritionPage")));
@@ -207,13 +231,16 @@ public static class MauiProgram
         services.AddTransient<ProfileViewModel>(sp => new ProfileViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
+            sp.GetRequiredService<ICycleService>(),
+            sp.GetRequiredService<IProgressSummaryService>(),
             () => NavigateTo("//LoginPage"),
             NavigateTo));
 
         services.AddTransient<ProfilePersonalInfoViewModel>(sp => new ProfilePersonalInfoViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
-            () => NavigateTo("..")));
+            () => NavigateTo(".."),
+            sp.GetRequiredService<IHealthSyncService>()));
 
         services.AddTransient<ProfileNutritionSettingsViewModel>(sp => new ProfileNutritionSettingsViewModel(
             sp.GetRequiredService<IAuthService>(),
@@ -227,6 +254,11 @@ public static class MauiProgram
             sp.GetRequiredService<IUserRepository>(),
             sp.GetRequiredService<ICycleService>(),
             sp.GetRequiredService<IWorkoutService>(),
+            () => NavigateTo("..")));
+
+        services.AddTransient<ProfileHealthSyncViewModel>(sp => new ProfileHealthSyncViewModel(
+            sp.GetRequiredService<IAuthService>(),
+            sp.GetRequiredService<IHealthSyncService>(),
             () => NavigateTo("..")));
 
         services.AddTransient<ProfileUnitsDisplayViewModel>(sp => new ProfileUnitsDisplayViewModel(
@@ -255,6 +287,7 @@ public static class MauiProgram
         services.AddTransient<ProfilePersonalInfoPage>();
         services.AddTransient<ProfileNutritionSettingsPage>();
         services.AddTransient<ProfileWorkoutPreferencesPage>();
+        services.AddTransient<ProfileHealthSyncPage>();
         services.AddTransient<ProfileUnitsDisplayPage>();
         services.AddTransient<ProfileFeedbackPage>();
         services.AddTransient<ProfilePrivacyPage>();
@@ -271,6 +304,6 @@ public static class MauiProgram
 
     private static void NavigateTo(string route)
     {
-        MainThread.BeginInvokeOnMainThread(() => _ = Shell.Current.GoToAsync(route, true));
+        MainThread.BeginInvokeOnMainThread(() => _ = Shell.Current.GoToAsync(route, false));
     }
 }

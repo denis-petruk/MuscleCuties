@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
+using MuscleCuties.Core.Models.UI.Cycle;
 using MuscleCuties.Core.Models.UI.Nutrition;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
@@ -73,6 +74,8 @@ public partial class NutritionViewModel : ObservableObject
     [ObservableProperty] private string _customFoodFats = string.Empty;
     [ObservableProperty] private string _customFoodServingAmount = "100";
     [ObservableProperty] private string _selectedCustomFoodServingUnit = "g";
+    [ObservableProperty] private int _celebrationToken;
+    [ObservableProperty] private string _celebrationIconSource = CyclePhaseAssets.FollicularAnimation;
     private int _editingMealId;
 
     public float CaloriesProgress =>
@@ -367,6 +370,12 @@ public partial class NutritionViewModel : ObservableObject
         IsCustomFoodPanelVisible = false;
         IsFoodFinderExpanded = false;
         AddFoodMessage = string.Empty;
+    }
+
+    private void TriggerCelebration()
+    {
+        CelebrationIconSource = CyclePhaseAssets.GetVisualSource(CurrentPhase);
+        CelebrationToken++;
     }
 
     partial void OnCurrentPhaseNameChanged(string value)
