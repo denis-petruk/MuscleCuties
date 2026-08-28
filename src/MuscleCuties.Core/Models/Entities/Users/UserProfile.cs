@@ -28,6 +28,7 @@ public class UserProfile
     public string DistanceUnit { get; set; } = "km";
     public string EnergyUnit { get; set; } = "kcal";
     public string NutritionGoalsJson { get; set; } = string.Empty;
+    public string ProfileImagePath { get; set; } = string.Empty;
     public DateTime UpdatedAt { get; set; }
 
     public User? User { get; set; }

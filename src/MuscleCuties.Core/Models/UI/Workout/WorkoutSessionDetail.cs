@@ -6,4 +6,7 @@ public sealed record WorkoutSessionDetail(
     string Subtitle,
     string SummaryText,
     IReadOnlyList<WorkoutExerciseItem> Exercises,
-    bool IsRestDay = false);
+    bool IsRestDay = false)
+{
+    public IReadOnlyList<WorkoutActivitySectionItem> Activities { get; init; } = [];
+}
