@@ -1,14 +1,25 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Maui.Graphics;
+
 namespace MuscleCuties.Core.Models.UI.Workout;
 
-public class WorkoutExerciseItem
+public partial class WorkoutExerciseItem : ObservableObject
 {
+    [ObservableProperty] private bool _isExpanded;
+    [ObservableProperty] private bool _isLogged;
+
     public int WorkoutDayExerciseId { get; set; }
     public int ExerciseId { get; set; }
+    public string ActivityTag { get; set; } = string.Empty;
+    public string ActivityTitle { get; set; } = string.Empty;
+    public Color ActivityBackground { get; set; } = Colors.Transparent;
+    public Color ActivityTextColor { get; set; } = Colors.Black;
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
     public string VideoUrl { get; set; } = string.Empty;
     public string TechniqueNotes { get; set; } = string.Empty;
+    public string QuickTipsText { get; set; } = string.Empty;
     public string TargetText { get; set; } = string.Empty;
     public string PreviousText { get; set; } = string.Empty;
     public string RecommendationText { get; set; } = string.Empty;
@@ -34,4 +45,28 @@ public class WorkoutExerciseItem
     public string LoggedDistanceKmText { get; set; } = string.Empty;
     public string LoggedPaceText { get; set; } = string.Empty;
     public string LoggedHeartRateText { get; set; } = string.Empty;
+
+    public string DetailsButtonText => IsExpanded ? "Hide" : "Info";
+    public string LogButtonText => IsLogged ? "Update" : "Log";
+    public string LogStatusText => IsLogged ? "Logged today" : "Not logged yet";
+    public bool HasVideo => !string.IsNullOrWhiteSpace(VideoUrl);
+    public string VideoStatusText => HasVideo ? "Technique video saved" : string.Empty;
+    public string WhyText => string.IsNullOrWhiteSpace(Description)
+        ? "This movement supports today's workout focus and keeps the session balanced."
+        : Description;
+    public string CuesText => string.IsNullOrWhiteSpace(TechniqueNotes)
+        ? Description
+        : TechniqueNotes;
+    public bool HasQuickTips => !string.IsNullOrWhiteSpace(QuickTipsText);
+
+    partial void OnIsExpandedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(DetailsButtonText));
+    }
+
+    partial void OnIsLoggedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(LogButtonText));
+        OnPropertyChanged(nameof(LogStatusText));
+    }
 }

@@ -9,6 +9,8 @@ public partial class CyclePhaseOptionItem : ObservableObject
     public CyclePhase Phase { get; init; }
     public string Name { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
+    public string IconSource { get; init; } = string.Empty;
+    public bool UsesAnimatedIcon { get; init; }
     public Color BackgroundColor { get; init; } = Colors.Transparent;
     public Color TextColor { get; init; } = Colors.Black;
 
