@@ -19,7 +19,7 @@ public class AppDatabaseInitializationTests
         await db.InitializeAsync();
 
         Assert.Equal(13, await db.QuizQuestions.CountAsync());
-        Assert.Equal(13, await db.MealTemplates.CountAsync(t => t.IsSystem));
+        Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
         Assert.True(await db.FoodItems.CountAsync() >= 32);
         Assert.True(await db.MealTemplates.AnyAsync(t => t.Name == "Margherita Pizza Beans"));
         Assert.True(await db.MealTemplates.AnyAsync(t => t.Name == "Vegan Pizza Beans"));
@@ -41,7 +41,7 @@ public class AppDatabaseInitializationTests
         await db.InitializeAsync();
 
         Assert.Equal(13, await db.QuizQuestions.CountAsync());
-        Assert.Equal(13, await db.MealTemplates.CountAsync(t => t.IsSystem));
+        Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
         Assert.Equal(32, await db.FoodItems.CountAsync());
     }
 
@@ -63,7 +63,7 @@ public class AppDatabaseInitializationTests
 
         Assert.Empty(await db.Users.ToListAsync());
         Assert.Equal(13, await db.QuizQuestions.CountAsync());
-        Assert.Equal(13, await db.MealTemplates.CountAsync(t => t.IsSystem));
+        Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
         Assert.Equal(32, await db.FoodItems.CountAsync());
         Assert.True(await db.Exercises.CountAsync() >= 20);
     }

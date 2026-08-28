@@ -1,5 +1,6 @@
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
+using MuscleCuties.Core.Services.Health;
 using MuscleCuties.Core.Services.Workout.Planning;
 
 namespace MuscleCuties.Core.Services.Dashboard.Planning;
@@ -12,16 +13,17 @@ public class DashboardPlanner : IDashboardPlanner
         float caloriesProgress,
         float? weight,
         int workoutDaysPerWeek,
-        TodaysWorkoutSummary workoutSummary)
+        TodaysWorkoutSummary workoutSummary,
+        HealthWeeklySummary? healthSummary = null)
     {
-        var readinessScore = CalculateReadinessScore(phase, caloriesProgress, workoutDaysPerWeek);
-        var recoveryScore = CalculateRecoveryScore(phase, workoutSummary);
+        var readinessScore = CalculateReadinessScore(phase, caloriesProgress, workoutDaysPerWeek, healthSummary);
+        var recoveryScore = CalculateRecoveryScore(phase, caloriesProgress, workoutSummary, healthSummary);
 
         return new DashboardSupportSummary(
             BuildCycleInsightText(prediction),
-            BuildHydrationTarget(weight),
+            BuildHydrationTarget(weight, healthSummary),
             "target",
-            BuildSleepGoal(workoutDaysPerWeek),
+            BuildSleepGoal(workoutDaysPerWeek, healthSummary),
             readinessScore,
             BuildReadinessLabel(readinessScore),
             recoveryScore,
@@ -31,7 +33,8 @@ public class DashboardPlanner : IDashboardPlanner
     private static int CalculateReadinessScore(
         CyclePhase phase,
         float caloriesProgress,
-        int workoutDaysPerWeek)
+        int workoutDaysPerWeek,
+        HealthWeeklySummary? healthSummary)
     {
         var phaseAdjustment = phase switch
         {
@@ -51,12 +54,32 @@ public class DashboardPlanner : IDashboardPlanner
         };
 
         var trainingAdjustment = workoutDaysPerWeek >= 5 ? -3 : workoutDaysPerWeek >= 3 ? 2 : 0;
-        return Math.Clamp(72 + phaseAdjustment + nutritionAdjustment + trainingAdjustment, 0, 100);
+        var movementAdjustment = healthSummary?.AverageSteps switch
+        {
+            >= 11000 => 3,
+            >= 8000 => 2,
+            > 0 and < 4000 => -4,
+            _ => 0
+        };
+        var sleepAdjustment = healthSummary?.SleepQualityScore switch
+        {
+            >= 85 => 5,
+            >= 72 => 2,
+            > 0 and < 55 => -8,
+            _ => 0
+        };
+
+        return Math.Clamp(
+            72 + phaseAdjustment + nutritionAdjustment + trainingAdjustment + movementAdjustment + sleepAdjustment,
+            0,
+            100);
     }
 
     private static int CalculateRecoveryScore(
         CyclePhase phase,
-        TodaysWorkoutSummary workoutSummary)
+        float caloriesProgress,
+        TodaysWorkoutSummary workoutSummary,
+        HealthWeeklySummary? healthSummary)
     {
         var phaseAdjustment = phase switch
         {
@@ -67,8 +90,30 @@ public class DashboardPlanner : IDashboardPlanner
             _ => 0
         };
 
-        var completedWorkoutLoad = workoutSummary.SessionProgressText == "COMPLETED" ? -8 : 4;
-        return Math.Clamp(78 + phaseAdjustment + completedWorkoutLoad, 0, 100);
+        var completedWorkoutLoad = string.Equals(
+            workoutSummary.SessionProgressText,
+            "Completed",
+            StringComparison.OrdinalIgnoreCase)
+            ? -8
+            : 4;
+        var nutritionAdjustment = caloriesProgress switch
+        {
+            >= 0.75f and <= 1.15f => 4,
+            < 0.45f => -7,
+            _ => 0
+        };
+        var sleepAdjustment = healthSummary?.AverageSleepHours switch
+        {
+            >= 8.0 => 8,
+            >= 7.0 => 4,
+            > 0 and < 6.0 => -10,
+            _ => 0
+        };
+
+        return Math.Clamp(
+            78 + phaseAdjustment + completedWorkoutLoad + nutritionAdjustment + sleepAdjustment,
+            0,
+            100);
     }
 
     private static string BuildReadinessLabel(int score) => score switch
@@ -102,15 +147,23 @@ public class DashboardPlanner : IDashboardPlanner
             : $"Next period in {prediction.DaysUntilPeriod}d · Ovulation {ovulation}";
     }
 
-    private static string BuildHydrationTarget(float? weight)
+    private static string BuildHydrationTarget(float? weight, HealthWeeklySummary? healthSummary)
     {
         var liters = weight is > 0f
             ? Math.Clamp(weight.Value * 0.035f, 2f, 3.8f)
             : 2.5f;
 
+        if (healthSummary?.AverageSteps >= 10000)
+            liters = Math.Clamp(liters + 0.2f, 2f, 4.2f);
+
         return $"{liters:N1} L";
     }
 
-    private static string BuildSleepGoal(int workoutDaysPerWeek) =>
-        workoutDaysPerWeek >= 4 ? "8h" : "7.5h";
+    private static string BuildSleepGoal(int workoutDaysPerWeek, HealthWeeklySummary? healthSummary)
+    {
+        var goal = workoutDaysPerWeek >= 4 ? 8d : 7.5d;
+        return healthSummary is { HasSleepData: true }
+            ? $"{goal:N1}h target · {healthSummary.AverageSleepHours:N1}h avg"
+            : goal % 1d == 0d ? $"{goal:N0}h" : $"{goal:N1}h";
+    }
 }

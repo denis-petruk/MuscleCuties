@@ -3,8 +3,10 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Repositories.Nutrition;
 using MuscleCuties.Core.Repositories.Users;
+using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Services.Nutrition.Inputs;
 using MuscleCuties.Core.Services.Nutrition.Planning;
+using MuscleCuties.Core.Services.Health;
 
 namespace MuscleCuties.Core.Services.Nutrition;
 
@@ -15,6 +17,7 @@ public class NutritionService : INutritionService
     private readonly IMealTemplateRepository? _mealTemplateRepository;
     private readonly INutritionPlanner _nutritionPlanner;
     private readonly IFoodSyncService? _foodSyncService;
+    private readonly IHealthSyncService? _healthSyncService;
 
     public NutritionService(
         IUserRepository userRepository,
@@ -22,21 +25,25 @@ public class NutritionService : INutritionService
         ICalorieCalculator calorieCalculator,
         IFoodSyncService? foodSyncService = null,
         IMealTemplateRepository? mealTemplateRepository = null,
-        INutritionPlanner? nutritionPlanner = null)
+        INutritionPlanner? nutritionPlanner = null,
+        IHealthSyncService? healthSyncService = null)
     {
         _userRepository = userRepository;
         _nutritionRepository = nutritionRepository;
         _mealTemplateRepository = mealTemplateRepository;
         _nutritionPlanner = nutritionPlanner ?? new NutritionPlanner(calorieCalculator);
         _foodSyncService = foodSyncService;
+        _healthSyncService = healthSyncService;
     }
 
     public async Task<NutritionPlan> GetDailyPlanAsync(int userId, CyclePhase phase, DateTime date)
     {
         var profile = await _userRepository.GetProfileAsync(userId);
-        return profile is null
-            ? _nutritionPlanner.CreateFallbackPlan(phase)
-            : _nutritionPlanner.CreateDailyPlan(profile, phase, date);
+        if (profile is null)
+            return _nutritionPlanner.CreateFallbackPlan(phase);
+
+        var plan = _nutritionPlanner.CreateDailyPlan(profile, phase, date);
+        return await ApplyHealthEnergyAdjustmentAsync(userId, profile, phase, date, plan);
     }
 
     public async Task<(float Calories, float Protein, float Carbs, float Fats)> CalculateDailyTargetsAsync(int userId, CyclePhase phase)
@@ -44,6 +51,103 @@ public class NutritionService : INutritionService
         var plan = await GetDailyPlanAsync(userId, phase, DateTime.UtcNow);
         return (plan.Calories, plan.Protein, plan.Carbs, plan.Fats);
     }
+
+    private async Task<NutritionPlan> ApplyHealthEnergyAdjustmentAsync(
+        int userId,
+        UserProfile profile,
+        CyclePhase phase,
+        DateTime date,
+        NutritionPlan plan)
+    {
+        if (_healthSyncService is null)
+            return plan;
+
+        var summary = await _healthSyncService.GetCachedWeeklySummaryAsync(userId);
+        var age = CalculateAge(profile.DateOfBirth, date);
+        var calorieAdjustment = HealthEnergyAdjustment.CalculateDailyCalories(
+            summary,
+            profile.Weight,
+            age,
+            profile.WorkoutDaysPerWeek,
+            phase);
+
+        if (Math.Abs(calorieAdjustment) < 1f)
+            return plan;
+
+        var calories = RoundToNearest(Math.Clamp(plan.Calories + calorieAdjustment, 1200f, 4000f), 10f);
+        var macros = RebalanceMacros(calories, plan.Protein, plan.Carbs, plan.Fats, profile.Weight);
+
+        return plan with
+        {
+            Calories = calories,
+            Protein = macros.Protein,
+            Carbs = macros.Carbs,
+            Fats = macros.Fats,
+            Meals = BuildMealTargets(calories, macros.Protein, macros.Carbs, macros.Fats)
+        };
+    }
+
+    private static (float Protein, float Carbs, float Fats) RebalanceMacros(
+        float calories,
+        float protein,
+        float carbs,
+        float fats,
+        float weightKg)
+    {
+        var proteinCalories = protein * 4f;
+        var carbCalories = MathF.Max(carbs * 4f, 0f);
+        var fatCalories = MathF.Max(fats * 9f, 0f);
+        var nonProteinCalories = MathF.Max(calories - proteinCalories, calories * 0.35f);
+        var fatShare = carbCalories + fatCalories > 0f
+            ? fatCalories / (carbCalories + fatCalories)
+            : 0.32f;
+        var minimumFats = MathF.Max(weightKg * 0.6f, 35f);
+        var adjustedFats = MathF.Max(minimumFats, nonProteinCalories * fatShare / 9f);
+        var adjustedCarbs = MathF.Max((calories - proteinCalories - adjustedFats * 9f) / 4f, 0f);
+
+        return (
+            RoundToNearest(protein, 1f),
+            RoundToNearest(adjustedCarbs, 1f),
+            RoundToNearest(adjustedFats, 1f));
+    }
+
+    private static IReadOnlyCollection<MealNutritionTarget> BuildMealTargets(
+        float calories,
+        float protein,
+        float carbs,
+        float fats) =>
+    [
+        BuildMealTarget(MealType.Breakfast, 0.25f, calories, protein, carbs, fats),
+        BuildMealTarget(MealType.Lunch, 0.30f, calories, protein, carbs, fats),
+        BuildMealTarget(MealType.Dinner, 0.30f, calories, protein, carbs, fats),
+        BuildMealTarget(MealType.Snack, 0.15f, calories, protein, carbs, fats)
+    ];
+
+    private static MealNutritionTarget BuildMealTarget(
+        MealType mealType,
+        float share,
+        float calories,
+        float protein,
+        float carbs,
+        float fats) =>
+        new(
+            mealType,
+            RoundToNearest(calories * share, 10f),
+            RoundToNearest(protein * share, 1f),
+            RoundToNearest(carbs * share, 1f),
+            RoundToNearest(fats * share, 1f));
+
+    private static int CalculateAge(DateTime dateOfBirth, DateTime date)
+    {
+        var age = date.Year - dateOfBirth.Year;
+        if (dateOfBirth.Date > date.Date.AddYears(-age))
+            age--;
+
+        return Math.Clamp(age, 12, 100);
+    }
+
+    private static float RoundToNearest(float value, float nearest) =>
+        MathF.Round(value / nearest) * nearest;
 
     public async Task<MacroNutrients> GetConsumedTotalsAsync(int userId, DateTime date)
     {

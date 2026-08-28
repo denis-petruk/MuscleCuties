@@ -64,6 +64,32 @@
                         IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                         Margin="0,6,0,0" />
 
+                    <Grid ColumnDefinitions="*, Auto, *" ColumnSpacing="10" Margin="0,2">
+                        <BoxView
+                            HeightRequest="1"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource InputStrokeDark}}"
+                            VerticalOptions="Center" />
+                        <Label
+                            Grid.Column="1"
+                            Text="or"
+                            Style="{StaticResource CaptionLabel}"
+                            VerticalOptions="Center" />
+                        <BoxView
+                            Grid.Column="2"
+                            HeightRequest="1"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource InputStrokeDark}}"
+                            VerticalOptions="Center" />
+                    </Grid>
+
+                    <Button
+                        Text="Log In with Apple"
+                        Command="{Binding SignInWithAppleCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                        TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                        BorderColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                        BorderWidth="1" />
+
                     <ActivityIndicator
                         IsRunning="{Binding IsBusy}"
                         IsVisible="{Binding IsBusy}"

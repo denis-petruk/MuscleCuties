@@ -44,12 +44,14 @@ public class ProfileSetupViewModelTests
         vm.Weight = 60f;
         vm.WorkoutDaysPerWeek = 4;
         vm.CycleLength = 28;
+        vm.SetProfileImage("/tmp/profile_avatar.jpg");
 
         await vm.SaveCommand.ExecuteAsync(null);
 
         await _userRepository.Received(1).AddProfileAsync(Arg.Is<UserProfile>(p =>
             p.UserId == 1 &&
-            p.Name == "Jane"));
+            p.Name == "Jane" &&
+            p.ProfileImagePath == "/tmp/profile_avatar.jpg"));
         await _userRepository.Received(1).AddSnapshotAsync(Arg.Is<UserProfileSnapshot>(s =>
             s.UserId == 1 &&
             s.SnapshotReason == "InitialProfileSetup"));

@@ -160,6 +160,21 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
             .OrderBy(m => m.LoggedAt)
             .ToListAsync();
 
+    public async Task<List<LoggedMeal>> GetLoggedMealsByDateRangeAsync(
+        int userId,
+        DateTime startDate,
+        DateTime endDate)
+    {
+        var rangeStart = startDate.Date;
+        var rangeEnd = endDate.Date.AddDays(1);
+
+        return await _db.LoggedMeals
+            .AsNoTracking()
+            .Where(m => m.UserId == userId && m.LoggedAt >= rangeStart && m.LoggedAt < rangeEnd)
+            .OrderByDescending(m => m.LoggedAt)
+            .ToListAsync();
+    }
+
     public async Task<LoggedMeal?> GetLoggedMealAsync(int userId, int loggedMealId) =>
         await _db.LoggedMeals
             .AsNoTracking()

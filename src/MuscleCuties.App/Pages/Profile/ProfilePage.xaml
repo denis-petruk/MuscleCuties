@@ -5,6 +5,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:profileModels="clr-namespace:MuscleCuties.Core.Models.UI.Profile;assembly=MuscleCuties.Core"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
     x:DataType="vm:ProfileViewModel"
     Shell.NavBarIsVisible="False">
@@ -29,13 +30,25 @@
                             StrokeShape="RoundRectangle 31"
                             BackgroundColor="{StaticResource AccentSurface}"
                             StrokeThickness="0">
-                            <Label
-                                Text="{Binding UserInitial}"
-                                FontSize="26"
-                                FontAttributes="Bold"
-                                TextColor="{StaticResource Primary}"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnProfileImageTapped" />
+                            </Border.GestureRecognizers>
+                            <Grid>
+                                <Image
+                                    Source="{Binding ProfileImageSource}"
+                                    IsVisible="{Binding HasProfileImage}"
+                                    Aspect="AspectFit"
+                                    WidthRequest="54"
+                                    HeightRequest="54"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
+                                <sharedControls:ThemeAwareBrandLogoImage
+                                    IsVisible="{Binding HasNoProfileImage}"
+                                    WidthRequest="50"
+                                    HeightRequest="34"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
+                            </Grid>
                         </Border>
                         <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
                             <Label
@@ -48,23 +61,34 @@
                         </VerticalStackLayout>
                     </Grid>
 
-                    <Grid ColumnDefinitions="*, *, *" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8">
 
                         <Border
                             Grid.Column="0"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
                             StrokeShape="RoundRectangle 12"
                             StrokeThickness="0"
-                            Padding="12,10">
-                            <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
+                            Padding="8,10"
+                            MinimumHeightRequest="76">
+                            <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                                <HorizontalStackLayout HorizontalOptions="Center" Spacing="1">
+                                    <Image
+                                        Source="icon_muscle.png"
+                                        Aspect="AspectFit"
+                                        WidthRequest="24"
+                                        HeightRequest="24"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Text="{Binding WorkoutStreakDays}"
+                                        Style="{StaticResource SubHeadline}"
+                                        FontSize="22"
+                                        VerticalOptions="Center" />
+                                </HorizontalStackLayout>
                                 <Label
-                                    Text="{Binding SessionCount}"
-                                    Style="{StaticResource SubHeadline}"
-                                    FontSize="22"
-                                    HorizontalOptions="Center" />
-                                <Label
-                                    Text="Sessions"
+                                    Text="Session streak"
                                     Style="{StaticResource CaptionLabel}"
+                                    FontSize="9"
+                                    HorizontalTextAlignment="Center"
                                     HorizontalOptions="Center" />
                             </VerticalStackLayout>
                         </Border>
@@ -74,16 +98,27 @@
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
                             StrokeShape="RoundRectangle 12"
                             StrokeThickness="0"
-                            Padding="12,10">
-                            <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
+                            Padding="8,10"
+                            MinimumHeightRequest="76">
+                            <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                                <HorizontalStackLayout HorizontalOptions="Center" Spacing="1">
+                                    <sharedControls:FitnessIconView
+                                        Icon="Fire"
+                                        IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                        WidthRequest="24"
+                                        HeightRequest="24"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Text="{Binding NutritionStreakDays}"
+                                        Style="{StaticResource SubHeadline}"
+                                        FontSize="22"
+                                        VerticalOptions="Center" />
+                                </HorizontalStackLayout>
                                 <Label
-                                    Text="{Binding CycleDays}"
-                                    Style="{StaticResource SubHeadline}"
-                                    FontSize="22"
-                                    HorizontalOptions="Center" />
-                                <Label
-                                    Text="Day cycle"
+                                    Text="Log streak"
                                     Style="{StaticResource CaptionLabel}"
+                                    FontSize="9"
+                                    HorizontalTextAlignment="Center"
                                     HorizontalOptions="Center" />
                             </VerticalStackLayout>
                         </Border>
@@ -93,16 +128,27 @@
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
                             StrokeShape="RoundRectangle 12"
                             StrokeThickness="0"
-                            Padding="12,10">
-                            <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
+                            Padding="8,10"
+                            MinimumHeightRequest="76">
+                            <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                                <HorizontalStackLayout HorizontalOptions="Center" Spacing="1">
+                                    <Image
+                                        Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
+                                        Aspect="AspectFit"
+                                        WidthRequest="26"
+                                        HeightRequest="26"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Text="{Binding CyclesTracked}"
+                                        Style="{StaticResource SubHeadline}"
+                                        FontSize="22"
+                                        VerticalOptions="Center" />
+                                </HorizontalStackLayout>
                                 <Label
-                                    Text="{Binding PhasesTracked}"
-                                    Style="{StaticResource SubHeadline}"
-                                    FontSize="22"
-                                    HorizontalOptions="Center" />
-                                <Label
-                                    Text="Phases"
+                                    Text="Cycles logged"
                                     Style="{StaticResource CaptionLabel}"
+                                    FontSize="9"
+                                    HorizontalTextAlignment="Center"
                                     HorizontalOptions="Center" />
                             </VerticalStackLayout>
                         </Border>

@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:nutritionControls="clr-namespace:MuscleCuties.App.Controls.Nutrition"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
     x:DataType="vm:NutritionViewModel"
     Shell.NavBarIsVisible="False">
@@ -55,5 +56,8 @@
 
         <nutritionControls:FoodSearchModal />
         <nutritionControls:NutritionBreakdownModal />
+        <sharedControls:PhaseSaluteOverlay
+            x:Name="SaluteOverlay"
+            IconSource="{Binding CelebrationIconSource}" />
     </Grid>
 </ContentPage>

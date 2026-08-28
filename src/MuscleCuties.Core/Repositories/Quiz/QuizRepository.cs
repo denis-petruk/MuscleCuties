@@ -10,15 +10,33 @@ public class QuizRepository(AppDatabase db) : BaseRepository<QuizQuestion>(db), 
 {
     private const int CurrentAnswerOrderLimit = 1_000;
 
-    public async Task<List<QuizQuestion>> GetQuestionsWithAnswersAsync() =>
-        await _db.QuizQuestions
+    public async Task<List<QuizQuestion>> GetQuestionsWithAnswersAsync()
+    {
+        var questions = await _db.QuizQuestions
             .AsNoTracking()
             .Where(q => q.QuestionType != QuizQuestionType.CycleTrackingMode)
-            .Include(q => q.Answers
-                .Where(a => a.OrderIndex < CurrentAnswerOrderLimit)
-                .OrderBy(a => a.OrderIndex))
+            .Include(q => q.Answers)
             .OrderBy(q => q.OrderIndex)
             .ToListAsync();
+
+        foreach (var question in questions)
+        {
+            var currentAnswers = question.Answers
+                .Where(answer => answer.OrderIndex < CurrentAnswerOrderLimit)
+                .OrderBy(answer => answer.OrderIndex)
+                .ThenBy(answer => answer.Id)
+                .ToList();
+
+            question.Answers = currentAnswers.Count > 0
+                ? currentAnswers
+                : question.Answers
+                    .OrderBy(answer => answer.OrderIndex)
+                    .ThenBy(answer => answer.Id)
+                    .ToList();
+        }
+
+        return questions;
+    }
 
     public async Task<bool> AreQuestionsSeededAsync() =>
         await _db.QuizQuestions.AnyAsync();

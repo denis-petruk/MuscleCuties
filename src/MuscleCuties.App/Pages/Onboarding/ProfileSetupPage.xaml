@@ -12,7 +12,7 @@
         <VerticalStackLayout
             Padding="28,48,28,32"
             Spacing="0"
-            VerticalOptions="Center">
+            VerticalOptions="Fill">
 
             <sharedControls:ThemeAwareBrandLogoImage
                 Style="{StaticResource BrandLogoImage}"
@@ -34,6 +34,46 @@
 
             <Border Style="{StaticResource CardPrimary}" Padding="24">
                 <VerticalStackLayout Spacing="14">
+
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border
+                            WidthRequest="72"
+                            HeightRequest="72"
+                            StrokeShape="RoundRectangle 36"
+                            BackgroundColor="{StaticResource AccentSurface}"
+                            StrokeThickness="0">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnProfileImageTapped" />
+                            </Border.GestureRecognizers>
+                            <Grid>
+                                <Image
+                                    Source="{Binding ProfileImageSource}"
+                                    IsVisible="{Binding HasProfileImage}"
+                                    Aspect="AspectFill"
+                                    WidthRequest="72"
+                                    HeightRequest="72"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
+                                <sharedControls:ThemeAwareBrandLogoImage
+                                    IsVisible="{Binding HasNoProfileImage}"
+                                    WidthRequest="58"
+                                    HeightRequest="40"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                            <Label Text="Profile photo" Style="{StaticResource FormFieldLabel}" />
+                            <Label Text="Optional. Used on your profile and personal dashboard." Style="{StaticResource FormFieldHint}" />
+                            <Button
+                                Text="Choose photo"
+                                Style="{StaticResource ButtonLink}"
+                                Padding="0"
+                                HorizontalOptions="Start"
+                                Clicked="OnProfileImageButtonClicked" />
+                        </VerticalStackLayout>
+                    </Grid>
 
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Display name" Style="{StaticResource FormFieldLabel}" />
@@ -173,6 +213,110 @@
                         </Grid>
                     </VerticalStackLayout>
 
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Primary fitness goal" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Sets the direction for calories, workouts, and progress targets." Style="{StaticResource FormFieldHint}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Picker
+                                Title="Choose goal"
+                                ItemsSource="{Binding GoalOptions}"
+                                ItemDisplayBinding="{Binding Label}"
+                                SelectedItem="{Binding SelectedGoalOption}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Border Style="{StaticResource CardSecondary}" Padding="14">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <VerticalStackLayout Spacing="3">
+                                    <Label Text="HEALTH SYNC" Style="{StaticResource EyebrowLabel}" />
+                                    <Label Text="Optional weekly steps and sleep for smarter calories, readiness, and recovery." Style="{StaticResource FormFieldHint}" />
+                                </VerticalStackLayout>
+                                <Border
+                                    Grid.Column="1"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 14"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource Gray900}}"
+                                    Padding="10,6"
+                                    VerticalOptions="Start">
+                                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
+                                        <BoxView
+                                            WidthRequest="7"
+                                            HeightRequest="7"
+                                            CornerRadius="3.5"
+                                            BackgroundColor="{StaticResource Primary}"
+                                            VerticalOptions="Center" />
+                                        <Label
+                                            Grid.Column="1"
+                                            Text="Status"
+                                            Style="{StaticResource CaptionLabel}"
+                                            FontSize="11" />
+                                    </Grid>
+                                </Border>
+                            </Grid>
+
+                            <Border
+                                BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource Gray900}}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 14"
+                                Padding="12,10">
+                                <Label Text="{Binding HealthSyncStatusText}" Style="{StaticResource CardTitle}" FontSize="14" />
+                            </Border>
+
+                            <VerticalStackLayout Spacing="8">
+                                <Border
+                                    StrokeShape="RoundRectangle 16"
+                                    StrokeThickness="0"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                                    Padding="12">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ConnectAppleHealthCommand}" />
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="38,*,Auto" ColumnSpacing="12">
+                                        <Border
+                                            WidthRequest="38"
+                                            HeightRequest="38"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 12"
+                                            BackgroundColor="{StaticResource White}">
+                                            <Image Source="health_apple.png" Aspect="AspectFit" Margin="4" />
+                                        </Border>
+                                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                            <Label Text="Apple Health" Style="{StaticResource CardTitle}" />
+                                            <Label Text="Steps and sleep from iPhone." Style="{StaticResource CaptionLabel}" />
+                                        </VerticalStackLayout>
+                                        <Label Grid.Column="2" Text="›" FontSize="22" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <Border
+                                    StrokeShape="RoundRectangle 16"
+                                    StrokeThickness="0"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                                    Padding="12">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ConnectWhoopCommand}" />
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="38,*,Auto" ColumnSpacing="12">
+                                        <Border WidthRequest="38" HeightRequest="38" StrokeThickness="0" StrokeShape="RoundRectangle 12" BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+                                            <Image Source="health_whoop.png" Aspect="AspectFit" Margin="1" />
+                                        </Border>
+                                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                            <Label Text="Whoop" Style="{StaticResource CardTitle}" />
+                                            <Label Text="Direct recovery and sleep sync." Style="{StaticResource CaptionLabel}" />
+                                        </VerticalStackLayout>
+                                        <Label Grid.Column="2" Text="›" FontSize="22" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                                    </Grid>
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <Label
+                                Text="{Binding HealthSyncMessage}"
+                                Style="{StaticResource CaptionLabel}"
+                                IsVisible="{Binding HealthSyncMessage, Converter={StaticResource StringToBoolConverter}}" />
+                        </VerticalStackLayout>
+                    </Border>
+
                     <Border Style="{StaticResource CardSecondary}" Padding="14">
                         <VerticalStackLayout Spacing="10">
                             <Label
@@ -182,6 +326,21 @@
                                 Text="Pick the activities you want plans to include later."
                                 Style="{StaticResource FormFieldHint}" />
                             <workoutControls:WorkoutActivityPreferencePicker />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border
+                        Style="{StaticResource CardSecondary}"
+                        Padding="14"
+                        IsVisible="{Binding IsStrengthStyleVisible}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label
+                                Text="STRENGTH STYLE"
+                                Style="{StaticResource EyebrowLabel}" />
+                            <Label
+                                Text="Choose the version of strength training your plan should prefer when your phase is ready for it."
+                                Style="{StaticResource FormFieldHint}" />
+                            <workoutControls:StrengthTrainingStylePicker />
                         </VerticalStackLayout>
                     </Border>
 

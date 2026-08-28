@@ -44,10 +44,6 @@
                     </Border>
                 </Grid>
 
-                <workoutControls:WorkoutPlanSummaryCard
-                    PlanTitle="{Binding ActivePlanTitle}"
-                    SummaryText="{Binding PlanSummaryText}" />
-
                 <workoutControls:FeaturedWorkoutCard
                     BadgeText="{Binding FeaturedWorkoutBadgeText}"
                     WorkoutTitle="{Binding FeaturedWorkoutTitle}"
@@ -55,6 +51,9 @@
                     DurationText="{Binding FeaturedWorkoutDurationText}"
                     ExercisesCount="{Binding FeaturedWorkoutExercisesCount}"
                     Intensity="{Binding FeaturedWorkoutIntensity}"
+                    ActionText="{Binding FeaturedWorkoutActionText}"
+                    AccentColor="{Binding FeaturedWorkoutActivityBackground}"
+                    AccentTextColor="{Binding FeaturedWorkoutActivityTextColor}"
                     StartCommand="{Binding StartFeaturedWorkoutCommand}" />
 
                 <Grid
@@ -167,6 +166,9 @@
         </ScrollView>
 
         <workoutControls:WorkoutSessionModal IsVisible="{Binding IsWorkoutModalVisible}" />
+        <sharedControls:PhaseSaluteOverlay
+            x:Name="SaluteOverlay"
+            IconSource="{Binding CelebrationIconSource}" />
     </Grid>
 
 </ContentPage>

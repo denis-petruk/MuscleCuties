@@ -3,6 +3,7 @@
     x:Class="MuscleCuties.App.Pages.Profile.ProfileFeedbackPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
     x:DataType="vm:ProfileFeedbackViewModel"
     Shell.NavBarIsVisible="False">
@@ -25,13 +26,20 @@
             <Border
                 Style="{StaticResource CardPrimary}"
                 BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="SEND THE GOOD STUFF" Style="{StaticResource EyebrowLabel}" />
-                    <Label Text="Talk to the handsome, jacked developer" Style="{StaticResource SectionTitle}" />
-                    <Label
-                        Text="Bug, style issue, tiny annoyance, huge idea: put it here and the app will open a ready-to-send email."
-                        Style="{StaticResource BodyLabel}" />
-                </VerticalStackLayout>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="SEND THE GOOD STUFF" Style="{StaticResource EyebrowLabel}" />
+                        <Label Text="Talk to the handsome, jacked developer" Style="{StaticResource SectionTitle}" />
+                        <Label
+                            Text="Bug, style issue, tiny annoyance, huge idea: write it here and attach context when useful."
+                            Style="{StaticResource BodyLabel}" />
+                    </VerticalStackLayout>
+                    <sharedControls:ThemeAwareBrandLogoImage
+                        Grid.Column="1"
+                        WidthRequest="82"
+                        HeightRequest="48"
+                        VerticalOptions="Center" />
+                </Grid>
             </Border>
 
             <Border Style="{StaticResource CardPrimary}">
@@ -130,6 +138,46 @@
                             Text="{Binding AdjustmentText}"
                             AutoSize="TextChanges" />
                     </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="ATTACH CONTEXT" Style="{StaticResource EyebrowLabel}" />
+                            <Label Text="Screenshot, PDF, text, or log file under 10 MB." Style="{StaticResource FormFieldHint}" />
+                        </VerticalStackLayout>
+                        <Button
+                            Grid.Column="1"
+                            Text="Attach"
+                            Padding="14,8"
+                            Clicked="OnAttachFileClicked" />
+                    </Grid>
+
+                    <Border
+                        IsVisible="{Binding HasAttachment}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 14"
+                        Padding="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="{Binding AttachmentName}" Style="{StaticResource CardTitle}" FontSize="14" />
+                                <Label Text="Ready to include with the email." Style="{StaticResource CaptionLabel}" />
+                            </VerticalStackLayout>
+                            <Button
+                                Grid.Column="1"
+                                Text="Remove"
+                                Style="{StaticResource ButtonLink}"
+                                Command="{Binding RemoveAttachmentCommand}" />
+                        </Grid>
+                    </Border>
+
+                    <Label
+                        Text="{Binding AttachmentStatus}"
+                        Style="{StaticResource CaptionLabel}"
+                        IsVisible="{Binding AttachmentStatus, Converter={StaticResource StringToBoolConverter}}" />
                 </VerticalStackLayout>
             </Border>
 

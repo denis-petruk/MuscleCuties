@@ -35,30 +35,42 @@
             <Border Style="{StaticResource CardPrimary}" Padding="24">
                 <VerticalStackLayout Spacing="14">
 
-                    <Border Style="{StaticResource InputContainer}">
-                        <Entry
-                            Placeholder="Email"
-                            Text="{Binding Email}"
-                            Keyboard="Email"
-                            ReturnType="Next" />
-                    </Border>
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Email" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Used for login and account recovery." Style="{StaticResource FormFieldHint}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Entry
+                                Placeholder="name@example.com"
+                                Text="{Binding Email}"
+                                Keyboard="Email"
+                                ReturnType="Next" />
+                        </Border>
+                    </VerticalStackLayout>
 
-                    <Border Style="{StaticResource InputContainer}">
-                        <Entry
-                            Placeholder="Password"
-                            Text="{Binding Password}"
-                            IsPassword="True"
-                            ReturnType="Next" />
-                    </Border>
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Password" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="8+ characters with uppercase, lowercase, number, and symbol." Style="{StaticResource FormFieldHint}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Entry
+                                Placeholder="Create password"
+                                Text="{Binding Password}"
+                                IsPassword="True"
+                                ReturnType="Next" />
+                        </Border>
+                    </VerticalStackLayout>
 
-                    <Border Style="{StaticResource InputContainer}">
-                        <Entry
-                            Placeholder="Confirm Password"
-                            Text="{Binding ConfirmPassword}"
-                            IsPassword="True"
-                            ReturnType="Done"
-                            ReturnCommand="{Binding RegisterCommand}" />
-                    </Border>
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Confirm password" Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="Repeat it once so we know it was typed right." Style="{StaticResource FormFieldHint}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Entry
+                                Placeholder="Confirm password"
+                                Text="{Binding ConfirmPassword}"
+                                IsPassword="True"
+                                ReturnType="Done"
+                                ReturnCommand="{Binding RegisterCommand}" />
+                        </Border>
+                    </VerticalStackLayout>
 
                     <Label
                         Text="{Binding ErrorMessage}"
@@ -71,6 +83,32 @@
                         Command="{Binding RegisterCommand}"
                         IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                         Margin="0,6,0,0" />
+
+                    <Grid ColumnDefinitions="*, Auto, *" ColumnSpacing="10" Margin="0,2">
+                        <BoxView
+                            HeightRequest="1"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource InputStrokeDark}}"
+                            VerticalOptions="Center" />
+                        <Label
+                            Grid.Column="1"
+                            Text="or"
+                            Style="{StaticResource CaptionLabel}"
+                            VerticalOptions="Center" />
+                        <BoxView
+                            Grid.Column="2"
+                            HeightRequest="1"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource InputStrokeDark}}"
+                            VerticalOptions="Center" />
+                    </Grid>
+
+                    <Button
+                        Text="Sign in with Apple"
+                        Command="{Binding SignInWithAppleCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                        TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                        BorderColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                        BorderWidth="1" />
 
                     <ActivityIndicator
                         IsRunning="{Binding IsBusy}"

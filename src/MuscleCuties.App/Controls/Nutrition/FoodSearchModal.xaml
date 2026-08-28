@@ -47,7 +47,6 @@
                                 Text="Tap the exact brand, preparation, or serving label that matches what you ate."
                                 Style="{StaticResource FormFieldHint}" />
                         </VerticalStackLayout>
-
                         <Border
                             Grid.Column="1"
                             WidthRequest="42"

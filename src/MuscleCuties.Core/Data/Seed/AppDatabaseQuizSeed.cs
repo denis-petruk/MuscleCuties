@@ -95,18 +95,6 @@ public partial class AppDatabase
     [
         new()
         {
-            Question = "How would you like to track your cycle?",
-            OrderIndex = -2,
-            QuestionType = QuizQuestionType.CycleTrackingMode,
-            Answers =
-            [
-                Answer("Manual", 1, (int)CycleTrackingMode.ManualPhaseLogging),
-                Answer("Flo", 2, (int)CycleTrackingMode.FloConnector),
-                Answer("Lunar", 3, (int)CycleTrackingMode.LunarConnector)
-            ]
-        },
-        new()
-        {
             Question = "What phase are you in today?",
             OrderIndex = -1,
             QuestionType = QuizQuestionType.CurrentCyclePhase,
@@ -170,28 +158,43 @@ public partial class AppDatabase
                 Answer("Lactose-free", 5, (int)DietaryTag.LactoseFree)
             ]
         },
-        ScaleQuestion("How strong is your menstrual-phase discomfort usually?", 5, QuizQuestionType.MenstrualPain),
-        ScaleQuestion("How is your menstrual-phase energy usually?", 6, QuizQuestionType.MenstrualEnergy),
-        ScaleQuestion("How strong is your follicular-phase discomfort usually?", 7, QuizQuestionType.FollicularPain),
-        ScaleQuestion("How is your follicular-phase energy usually?", 8, QuizQuestionType.FollicularEnergy),
-        ScaleQuestion("How strong is your ovulatory-phase discomfort usually?", 9, QuizQuestionType.OvulatoryPain),
-        ScaleQuestion("How is your ovulatory-phase energy usually?", 10, QuizQuestionType.OvulatoryEnergy),
-        ScaleQuestion("How strong is your luteal-phase discomfort usually?", 11, QuizQuestionType.LutealPain),
-        ScaleQuestion("How is your luteal-phase energy usually?", 12, QuizQuestionType.LutealEnergy)
+        PainQuestion("During your period, how much does discomfort usually change your day?", 5, QuizQuestionType.MenstrualPain),
+        EnergyQuestion("During your period, how much energy do you usually have for training?", 6, QuizQuestionType.MenstrualEnergy),
+        PainQuestion("After bleeding eases, how much body discomfort is still hanging around?", 7, QuizQuestionType.FollicularPain),
+        EnergyQuestion("In follicular days, how ready do you feel to build momentum?", 8, QuizQuestionType.FollicularEnergy),
+        PainQuestion("Around ovulation, how much does your body ask you to hold back?", 9, QuizQuestionType.OvulatoryPain),
+        EnergyQuestion("Around ovulation, how available does power usually feel?", 10, QuizQuestionType.OvulatoryEnergy),
+        PainQuestion("In luteal days, how loud are PMS, soreness, or bloating?", 11, QuizQuestionType.LutealPain),
+        EnergyQuestion("In luteal days, how much energy do you usually have left for training?", 12, QuizQuestionType.LutealEnergy)
     ];
 
-    private static QuizQuestion ScaleQuestion(string question, int orderIndex, QuizQuestionType questionType) => new()
+    private static QuizQuestion PainQuestion(string question, int orderIndex, QuizQuestionType questionType) => new()
     {
         Question = question,
         OrderIndex = orderIndex,
         QuestionType = questionType,
         Answers =
         [
-            Answer("Very low", 1, 1),
-            Answer("Low", 2, 2),
-            Answer("Moderate", 3, 3),
-            Answer("High", 4, 4),
-            Answer("Very high", 5, 5)
+            Answer("Barely there", 1, 1),
+            Answer("Manageable", 2, 2),
+            Answer("Noticeable", 3, 3),
+            Answer("Rough", 4, 4),
+            Answer("Stops my day", 5, 5)
+        ]
+    };
+
+    private static QuizQuestion EnergyQuestion(string question, int orderIndex, QuizQuestionType questionType) => new()
+    {
+        Question = question,
+        OrderIndex = orderIndex,
+        QuestionType = questionType,
+        Answers =
+        [
+            Answer("Couch-level", 1, 1),
+            Answer("Slow but moving", 2, 2),
+            Answer("Steady", 3, 3),
+            Answer("Strong", 4, 4),
+            Answer("Ready to push", 5, 5)
         ]
     };
 

@@ -47,6 +47,9 @@ public class CycleService : ICycleService
     public async Task<CycleLog?> GetCurrentCycleAsync(int userId) =>
         await _cycleRepository.GetLatestCycleAsync(userId);
 
+    public async Task<IReadOnlyList<CycleLog>> GetCycleHistoryAsync(int userId) =>
+        await _cycleRepository.GetCycleHistoryAsync(userId);
+
     public async Task<CyclePhaseLog?> GetLatestPhaseLogAsync(int userId) =>
         await _cycleRepository.GetLatestPhaseLogAsync(userId);
 

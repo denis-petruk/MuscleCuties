@@ -3,6 +3,7 @@
     x:Class="MuscleCuties.App.Controls.Dashboard.DashboardPhaseCard"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Dashboard;assembly=MuscleCuties.Core"
     x:DataType="vm:DashboardViewModel">
 
@@ -17,11 +18,10 @@
 
         <VerticalStackLayout Spacing="10">
             <HorizontalStackLayout Spacing="8">
-                <BoxView
-                    WidthRequest="7"
-                    HeightRequest="7"
-                    CornerRadius="3.5"
-                    BackgroundColor="{Binding PhaseCardTextColor}"
+                <sharedControls:PhaseVisualView
+                    Source="{Binding PhaseIllustrationSource}"
+                    WidthRequest="18"
+                    HeightRequest="18"
                     VerticalOptions="Center" />
                 <Label
                     Text="{Binding PhaseStatusText}"

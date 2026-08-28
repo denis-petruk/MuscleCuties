@@ -23,6 +23,7 @@ internal sealed class SqliteSchemaMaintenance
 
     private async Task RepairAsync()
     {
+        await EnsureUserCompatibilityColumnsAsync();
         await EnsureLoggedMealTimeColumnAsync();
         await EnsureFoodItemMetadataColumnsAsync();
         await EnsureMealTemplateCompatibilityColumnsAsync();
@@ -31,6 +32,13 @@ internal sealed class SqliteSchemaMaintenance
         await EnsureWorkoutDayCompatibilityColumnsAsync();
         await EnsureWorkoutExerciseLogTableAsync();
         await EnsureCyclePhaseLogTableAsync();
+    }
+
+    private async Task EnsureUserCompatibilityColumnsAsync()
+    {
+        await EnsureNullableColumnAsync("Users", "AppleUserId", "TEXT");
+        await _db.Database.ExecuteSqlRawAsync(
+            "CREATE UNIQUE INDEX IF NOT EXISTS IX_Users_AppleUserId ON Users (AppleUserId)");
     }
 
     private async Task EnsureLoggedMealTimeColumnAsync()
@@ -89,6 +97,7 @@ internal sealed class SqliteSchemaMaintenance
         await EnsureTextColumnAsync("UserProfiles", "EnergyUnit", "kcal");
         await EnsureTextColumnAsync("UserProfiles", "NutritionGoalsJson", string.Empty);
         await EnsureTextColumnAsync("UserProfiles", "PreferredWorkoutActivityTypes", string.Empty);
+        await EnsureTextColumnAsync("UserProfiles", "ProfileImagePath", string.Empty);
         await EnsureUserProfileCycleTrackingModeConstraintAsync();
     }
 
@@ -135,6 +144,7 @@ internal sealed class SqliteSchemaMaintenance
                 "\"DistanceUnit\" TEXT NOT NULL, " +
                 "\"EnergyUnit\" TEXT NOT NULL, " +
                 "\"NutritionGoalsJson\" TEXT NOT NULL, " +
+                "\"ProfileImagePath\" TEXT NOT NULL, " +
                 "\"UpdatedAt\" TEXT NOT NULL, " +
                 "CONSTRAINT \"FK_UserProfiles_Users_UserId\" FOREIGN KEY (\"UserId\") REFERENCES \"Users\" (\"Id\") ON DELETE CASCADE, " +
                 "CONSTRAINT \"CK_UserProfile_Height\" CHECK (Height >= 0), " +
@@ -150,11 +160,11 @@ internal sealed class SqliteSchemaMaintenance
                 "\"Id\", \"UserId\", \"Name\", \"DateOfBirth\", \"Height\", \"Weight\", \"Goal\", \"WeightGoalPace\", " +
                 "\"TrainingExperienceLevel\", \"CycleTrackingMode\", \"CurrentCyclePhase\", \"WorkoutDaysPerWeek\", \"CycleLength\", \"DietaryTags\", " +
                 "\"PreferredWorkoutActivityTypes\", \"UnitSystem\", \"BodyWeightUnit\", \"FoodMassUnit\", \"HeightUnit\", " +
-                "\"DistanceUnit\", \"EnergyUnit\", \"NutritionGoalsJson\", \"UpdatedAt\") " +
+                "\"DistanceUnit\", \"EnergyUnit\", \"NutritionGoalsJson\", \"ProfileImagePath\", \"UpdatedAt\") " +
                 "SELECT \"Id\", \"UserId\", \"Name\", \"DateOfBirth\", \"Height\", \"Weight\", \"Goal\", \"WeightGoalPace\", " +
                 "\"TrainingExperienceLevel\", \"CycleTrackingMode\", \"CurrentCyclePhase\", \"WorkoutDaysPerWeek\", \"CycleLength\", \"DietaryTags\", " +
                 "\"PreferredWorkoutActivityTypes\", \"UnitSystem\", \"BodyWeightUnit\", \"FoodMassUnit\", \"HeightUnit\", " +
-                "\"DistanceUnit\", \"EnergyUnit\", \"NutritionGoalsJson\", \"UpdatedAt\" " +
+                "\"DistanceUnit\", \"EnergyUnit\", \"NutritionGoalsJson\", \"ProfileImagePath\", \"UpdatedAt\" " +
                 "FROM \"UserProfiles\"");
 
             await _db.Database.ExecuteSqlRawAsync("DROP TABLE \"UserProfiles\"");

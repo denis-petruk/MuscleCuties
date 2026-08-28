@@ -26,17 +26,6 @@
 
                 <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
                     <VerticalStackLayout Grid.Column="0" Spacing="6">
-                        <Border
-                            BackgroundColor="{StaticResource Secondary}"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 20"
-                            Padding="12,4"
-                            HorizontalOptions="Start">
-                            <Label
-                                Text="{Binding SelectedWorkoutSubtitle}"
-                                Style="{StaticResource EyebrowLabel}"
-                                TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                        </Border>
 
                         <Label
                             Text="{Binding SelectedWorkoutTitle}"
@@ -82,16 +71,76 @@
                     IsVisible="{Binding IsWorkoutDetailLoading}"
                     VerticalOptions="Center" />
 
-                <ScrollView IsVisible="{Binding HasSelectedWorkoutExercises}">
+                <ScrollView IsVisible="{Binding HasSelectedWorkoutActivities}">
                     <VerticalStackLayout
                         Padding="20,0,20,16"
-                        Spacing="12"
-                        BindableLayout.ItemsSource="{Binding SelectedWorkoutExercises}">
+                        Spacing="14"
+                        BindableLayout.ItemsSource="{Binding SelectedWorkoutActivitySections}">
                         <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="workoutModels:WorkoutExerciseItem">
-                                <workoutControls:WorkoutExerciseCard
-                                    OpenDetailCommand="{Binding BindingContext.OpenExerciseDetailCommand, Source={x:Reference Root}}"
-                                    CommandParameter="{Binding .}" />
+                            <DataTemplate x:DataType="workoutModels:WorkoutActivitySectionItem">
+                                <Border
+                                    BackgroundColor="{Binding ActivityBackground}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 22"
+                                    Padding="12">
+                                    <VerticalStackLayout Spacing="12">
+                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                                <Label
+                                                    Text="{Binding Title}"
+                                                    TextColor="{Binding ActivityTextColor}"
+                                                    FontSize="18"
+                                                    FontAttributes="Bold"
+                                                    LineBreakMode="WordWrap" />
+                                                <Label
+                                                    Text="{Binding Subtitle}"
+                                                    TextColor="{Binding ActivityTextColor}"
+                                                    FontSize="12"
+                                                    Opacity="0.82"
+                                                    LineBreakMode="WordWrap" />
+                                                <Label
+                                                    Text="{Binding SummaryText}"
+                                                    TextColor="{Binding ActivityTextColor}"
+                                                    FontSize="11"
+                                                    FontAttributes="Bold"
+                                                    Opacity="0.9" />
+                                            </VerticalStackLayout>
+
+                                            <Border
+                                                Grid.Column="1"
+                                                BackgroundColor="{Binding ActivityTextColor}"
+                                                StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 14"
+                                                Padding="12,10"
+                                                VerticalOptions="Start">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding BindingContext.LogWorkoutActivityCommand, Source={x:Reference Root}}"
+                                                        CommandParameter="{Binding .}" />
+                                                </Border.GestureRecognizers>
+                                                <Label
+                                                    Text="{Binding LogButtonText}"
+                                                    TextColor="{StaticResource White}"
+                                                    FontSize="12"
+                                                    FontAttributes="Bold"
+                                                    HorizontalTextAlignment="Center" />
+                                            </Border>
+                                        </Grid>
+
+                                        <VerticalStackLayout
+                                            Spacing="10"
+                                            BindableLayout.ItemsSource="{Binding Exercises}">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="workoutModels:WorkoutExerciseItem">
+                                                    <workoutControls:WorkoutExerciseCard
+                                                        OpenDetailCommand="{Binding BindingContext.OpenExerciseDetailCommand, Source={x:Reference Root}}"
+                                                        LogExerciseCommand="{Binding BindingContext.LogWorkoutExerciseCommand, Source={x:Reference Root}}"
+                                                        CommandParameter="{Binding .}" />
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </VerticalStackLayout>
+                                    </VerticalStackLayout>
+                                </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
@@ -147,6 +196,7 @@
                     HorizontalTextAlignment="Center" />
 
                 <Button
+                    IsVisible="{Binding ShowWorkoutFooterAction}"
                     Text="{Binding WorkoutLogButtonText}"
                     Command="{Binding SaveWorkoutSessionCommand}"
                     HeightRequest="52"
@@ -155,157 +205,5 @@
         </Grid>
         </Border>
 
-    <Grid
-        IsVisible="{Binding IsExerciseDetailModalVisible}"
-        BackgroundColor="#662B1D24"
-        Padding="0"
-        ZIndex="5">
-        <Border
-            Style="{StaticResource CardPrimary}"
-            Padding="0"
-            MaximumHeightRequest="560"
-            VerticalOptions="Center">
-            <Grid RowDefinitions="Auto, *, Auto">
-                <VerticalStackLayout
-                    Grid.Row="0"
-                    Padding="20,18,20,12"
-                    Spacing="12">
-                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                        <VerticalStackLayout Grid.Column="0" Spacing="6">
-                            <Border
-                                BackgroundColor="{StaticResource Secondary}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 20"
-                                Padding="12,4"
-                                HorizontalOptions="Start">
-                                <Label
-                                    Text="TECHNIQUE"
-                                    Style="{StaticResource EyebrowLabel}"
-                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                            </Border>
-
-                            <Label
-                                Text="{Binding SelectedExerciseName}"
-                                Style="{StaticResource SubHeadline}"
-                                FontSize="22"
-                                LineBreakMode="WordWrap" />
-                        </VerticalStackLayout>
-
-                        <Border
-                            Grid.Column="1"
-                            WidthRequest="42"
-                            HeightRequest="42"
-                            StrokeShape="RoundRectangle 21"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
-                            StrokeThickness="0"
-                            VerticalOptions="Start">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding CloseExerciseDetailCommand}" />
-                            </Border.GestureRecognizers>
-                            <Path
-                                Data="M6 6L18 18M18 6L6 18"
-                                Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                StrokeThickness="2.2"
-                                StrokeLineCap="Round"
-                                Aspect="Uniform"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
-                        </Border>
-                    </Grid>
-
-                    <BoxView />
-                </VerticalStackLayout>
-
-                <ScrollView Grid.Row="1">
-                    <VerticalStackLayout Padding="20,0,20,16" Spacing="12">
-                        <Border Style="{StaticResource WorkoutInfoTile}">
-                            <VerticalStackLayout Spacing="5">
-                                <Label Text="VIDEO" Style="{StaticResource EyebrowLabel}" FontSize="9" />
-                                <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
-                                    <Border
-                                        WidthRequest="42"
-                                        HeightRequest="42"
-                                        StrokeShape="RoundRectangle 21"
-                                        BackgroundColor="{StaticResource Primary}"
-                                        StrokeThickness="0"
-                                        VerticalOptions="Center">
-                                        <Path
-                                            Data="M8 5v14l11-7z"
-                                            Fill="{StaticResource White}"
-                                            Aspect="Uniform"
-                                            WidthRequest="17"
-                                            HeightRequest="17"
-                                            HorizontalOptions="Center"
-                                            VerticalOptions="Center" />
-                                    </Border>
-                                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                        <Label
-                                            Text="{Binding SelectedExerciseVideoText}"
-                                            Style="{StaticResource WorkoutInfoValue}" />
-                                        <Label
-                                            Text="{Binding SelectedExerciseVideoUrl}"
-                                            Style="{StaticResource CaptionLabel}"
-                                            LineBreakMode="TailTruncation"
-                                            IsVisible="{Binding HasSelectedExerciseVideo}" />
-                                    </VerticalStackLayout>
-                                </Grid>
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Border Style="{StaticResource WorkoutInfoTile}">
-                            <VerticalStackLayout Spacing="5">
-                                <Label Text="TARGET" Style="{StaticResource EyebrowLabel}" FontSize="9" />
-                                <Label
-                                    Text="{Binding SelectedExerciseTargetText}"
-                                    Style="{StaticResource WorkoutInfoValue}" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Border Style="{StaticResource WorkoutInfoTile}">
-                            <VerticalStackLayout Spacing="5">
-                                <Label Text="CUES" Style="{StaticResource EyebrowLabel}" FontSize="9" />
-                                <Label
-                                    Text="{Binding SelectedExerciseTechniqueNotes}"
-                                    Style="{StaticResource BodyLabel}"
-                                    LineBreakMode="WordWrap" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Border Style="{StaticResource WorkoutInfoTile}">
-                            <VerticalStackLayout Spacing="5">
-                                <Label Text="LAST LOG" Style="{StaticResource EyebrowLabel}" FontSize="9" />
-                                <Label
-                                    Text="{Binding SelectedExercisePreviousText}"
-                                    Style="{StaticResource WorkoutInfoValue}"
-                                    LineBreakMode="WordWrap" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Border Style="{StaticResource WorkoutInfoTile}">
-                            <VerticalStackLayout Spacing="5">
-                                <Label Text="TODAY" Style="{StaticResource EyebrowLabel}" FontSize="9" />
-                                <Label
-                                    Text="{Binding SelectedExerciseRecommendationText}"
-                                    TextColor="{StaticResource Primary}"
-                                    FontSize="13"
-                                    FontAttributes="Bold"
-                                    LineBreakMode="WordWrap" />
-                            </VerticalStackLayout>
-                        </Border>
-                    </VerticalStackLayout>
-                </ScrollView>
-
-                <Grid Grid.Row="2" Padding="20,0,20,20">
-                    <Button
-                        Text="Done"
-                        Command="{Binding CloseExerciseDetailCommand}"
-                        HeightRequest="48"
-                        CornerRadius="16" />
-                </Grid>
-            </Grid>
-        </Border>
-        </Grid>
     </Grid>
 </ContentView>

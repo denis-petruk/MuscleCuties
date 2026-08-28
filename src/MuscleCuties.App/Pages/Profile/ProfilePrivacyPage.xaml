@@ -3,6 +3,7 @@
     x:Class="MuscleCuties.App.Pages.Profile.ProfilePrivacyPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
@@ -23,11 +24,41 @@
             <Border
                 Style="{StaticResource CardPrimary}"
                 BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="Your beta data stays private." Style="{StaticResource SectionTitle}" />
-                    <Label
-                        Text="MuscleCuties is here to help you plan training, nutrition, and cycle-aware routines. It is not medical advice, and your beta feedback is only for the handsome, jacked developer."
-                        Style="{StaticResource BodyLabel}" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Your beta data stays private." Style="{StaticResource SectionTitle}" />
+                        <Label
+                            Text="Planning help, not medical advice. Your tester notes and app data are not sold, advertised with, or shared beyond the handsome, jacked developer."
+                            Style="{StaticResource BodyLabel}" />
+                    </VerticalStackLayout>
+                    <sharedControls:ThemeAwareBrandLogoImage
+                        Grid.Column="1"
+                        WidthRequest="82"
+                        HeightRequest="48"
+                        VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="DATA BOUNDARIES" Style="{StaticResource EyebrowLabel}" />
+                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                        <Grid ColumnDefinitions="94,*,54" ColumnSpacing="10">
+                            <Label Text="Profile" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
+                            <ProgressBar Progress="0.45" ProgressColor="{StaticResource Primary}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}" VerticalOptions="Center" Grid.Column="1" />
+                            <Label Text="Local" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" Grid.Column="2" />
+                        </Grid>
+                        <Grid Grid.Row="1" ColumnDefinitions="94,*,54" ColumnSpacing="10">
+                            <Label Text="Health" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
+                            <ProgressBar Progress="0.28" ProgressColor="{StaticResource Primary}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}" VerticalOptions="Center" Grid.Column="1" />
+                            <Label Text="Averages" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" Grid.Column="2" />
+                        </Grid>
+                        <Grid Grid.Row="2" ColumnDefinitions="94,*,54" ColumnSpacing="10">
+                            <Label Text="Feedback" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
+                            <ProgressBar Progress="0.18" ProgressColor="{StaticResource Primary}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}" VerticalOptions="Center" Grid.Column="1" />
+                            <Label Text="Email" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" Grid.Column="2" />
+                        </Grid>
+                    </Grid>
                 </VerticalStackLayout>
             </Border>
 
@@ -104,12 +135,36 @@
             </Border>
 
             <Border Style="{StaticResource CardPrimary}">
+                <Grid ColumnDefinitions="34,*" ColumnSpacing="12">
+                    <Border
+                        WidthRequest="28"
+                        HeightRequest="28"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 14"
+                        BackgroundColor="{StaticResource Primary}">
+                        <Label
+                            Text="4"
+                            TextColor="{StaticResource White}"
+                            FontAttributes="Bold"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" Spacing="7">
+                        <Label Text="Health Sync" Style="{StaticResource CardTitle}" />
+                        <Label
+                            Text="If you connect Apple Health, Health Connect, or Whoop, MuscleCuties uses weekly summaries for planning: steps, sleep, sleep quality, resting heart rate, and HRV when available. Raw samples are not kept in the app database."
+                            Style="{StaticResource BodyLabel}" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="YOUR CONTROL" Style="{StaticResource EyebrowLabel}" />
                     <Label Text="You can edit your app information from Profile." Style="{StaticResource CardTitle}" />
                     <BoxView />
                     <Label
-                        Text="For beta data questions, removal requests, or privacy concerns, use Feedback. It opens a private email for the handsome, jacked developer."
+                        Text="You can stop health sharing in Apple Health, Health Connect, or Whoop at any time. For beta data questions, removal requests, or privacy concerns, use Feedback. It opens a private email for the handsome, jacked developer."
                         Style="{StaticResource BodyLabel}" />
                 </VerticalStackLayout>
             </Border>

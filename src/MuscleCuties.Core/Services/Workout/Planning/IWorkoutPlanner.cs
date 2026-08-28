@@ -22,7 +22,8 @@ public interface IWorkoutPlanner
         DateTime createdAt);
 
     IReadOnlyList<WorkoutListItem> BuildWorkoutItems(
-        IReadOnlyCollection<WorkoutDay> workoutDays);
+        IReadOnlyCollection<WorkoutDay> workoutDays,
+        IReadOnlyCollection<WorkoutLog>? workoutLogs = null);
 
     TodaysWorkoutSummary BuildTodaysSummary(
         WorkoutPlan? plan,
