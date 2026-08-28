@@ -1,0 +1,9 @@
+{
+  "name": "phase_luteal_moon",
+  "version": 1,
+  "kind": "phase_visual",
+  "phase": "luteal",
+  "visual": "crescent_moon",
+  "loop": true,
+  "durationMs": 1800
+}
