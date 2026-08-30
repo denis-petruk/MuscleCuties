@@ -17,6 +17,7 @@ public class MealItem
     public ObservableCollection<MacroBreakdownItem> MacroItems { get; set; } = new();
     public ObservableCollection<DailyMicronutrientItem> Micronutrients { get; set; } = new();
 
+    public string MacrosSummaryText => $"P {Macros.Protein:N0}g · C {Macros.Carbs:N0}g · F {Macros.Fats:N0}g";
     public float ProteinCalories => Macros.Protein * 4f;
     public float CarbsCalories => Macros.Carbs * 4f;
     public float FatsCalories => Macros.Fats * 9f;

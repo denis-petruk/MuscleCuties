@@ -185,6 +185,9 @@ public class WorkoutService : IWorkoutService
                 DistanceKm = input.DistanceKm is >= 0f ? input.DistanceKm : null,
                 AverageHeartRateBpm = input.AverageHeartRateBpm is >= 0 ? input.AverageHeartRateBpm : null,
                 PaceSecondsPerKm = input.PaceSecondsPerKm is >= 0 ? input.PaceSecondsPerKm : null,
+                PowerWatts = input.PowerWatts is >= 0 ? input.PowerWatts : null,
+                CadenceRpm = input.CadenceRpm is >= 0 ? input.CadenceRpm : null,
+                EffortRating = input.EffortRating is >= 1 and <= 10 ? input.EffortRating : null,
                 CreatedAt = createdAt
             });
         }
@@ -267,7 +270,13 @@ public class WorkoutService : IWorkoutService
             UsesDistanceMetric = metricProfile.UsesDistance,
             UsesPaceMetric = metricProfile.UsesPace,
             UsesHeartRateMetric = metricProfile.UsesHeartRate,
+            UsesPowerMetric = metricProfile.UsesPower,
+            UsesCadenceMetric = metricProfile.UsesCadence,
+            UsesEffortMetric = metricProfile.UsesEffort,
             UsesWeight = !metricProfile.UsesEnduranceMetrics,
+            DurationLabel = metricProfile.UsesTimeUnderTension ? "MINUTES UNDER TENSION" : "MINUTES",
+            DistanceLabel = metricProfile.UsesSwimmingMetrics ? "METERS" : "KM",
+            PaceLabel = metricProfile.UsesSwimmingMetrics ? "PACE / 100M" : "PACE / KM",
             LoggedSetsText = currentLog is not null ? currentLog.CompletedSets.ToString() : dayExercise.Sets > 0 ? dayExercise.Sets.ToString() : string.Empty,
             LoggedRepsText = currentLog is not null ? currentLog.CompletedReps.ToString() : dayExercise.Reps > 0 ? dayExercise.Reps.ToString() : string.Empty,
             LoggedWeightText = currentLog?.WeightKg is >= 0f ? $"{currentLog.WeightKg.Value:0.#}" : BuildSuggestedWeightText(dayExercise, previousLog, metricProfile),
@@ -276,7 +285,10 @@ public class WorkoutService : IWorkoutService
                 : BuildSuggestedDurationMinutesText(dayExercise, previousLog, metricProfile),
             LoggedDistanceKmText = currentLog?.DistanceKm is >= 0f ? $"{currentLog.DistanceKm.Value:0.#}" : BuildSuggestedDistanceText(previousLog, metricProfile),
             LoggedPaceText = currentLog?.PaceSecondsPerKm is >= 0 ? FormatPace(currentLog.PaceSecondsPerKm.Value) : BuildSuggestedPaceText(previousLog, metricProfile),
-            LoggedHeartRateText = currentLog?.AverageHeartRateBpm is >= 0 ? currentLog.AverageHeartRateBpm.Value.ToString() : BuildSuggestedHeartRateText(previousLog, metricProfile)
+            LoggedHeartRateText = currentLog?.AverageHeartRateBpm is >= 0 ? currentLog.AverageHeartRateBpm.Value.ToString() : BuildSuggestedHeartRateText(previousLog, metricProfile),
+            LoggedPowerWattsText = currentLog?.PowerWatts is >= 0 ? currentLog.PowerWatts.Value.ToString() : BuildSuggestedPowerText(previousLog, metricProfile),
+            LoggedCadenceRpmText = currentLog?.CadenceRpm is >= 0 ? currentLog.CadenceRpm.Value.ToString() : BuildSuggestedCadenceText(previousLog, metricProfile),
+            LoggedEffortText = currentLog?.EffortRating is >= 1 and <= 10 ? currentLog.EffortRating.Value.ToString() : BuildSuggestedEffortText(previousLog, metricProfile)
         };
     }
 
@@ -295,14 +307,17 @@ public class WorkoutService : IWorkoutService
             tags.Add(WorkoutActivityClassifier.BuildPrimaryTag(day));
 
         return tags
-            .Select(tag =>
+            .Select((tag, index) =>
             {
                 var sectionExercises = itemsByTag.GetValueOrDefault(tag) ?? [];
                 return new WorkoutActivitySectionItem
                 {
+                    OrderIndex = index + 1,
+                    TotalActivities = tags.Count,
                     Tag = tag,
                     Title = WorkoutActivityClassifier.BuildSectionTitle(tag),
                     Subtitle = WorkoutActivityClassifier.BuildSectionSubtitle(tag),
+                    MetricText = BuildActivityMetricText(tag, sectionExercises),
                     SummaryText = BuildActivitySectionSummary(sectionExercises),
                     ActivityBackground = WorkoutActivityClassifier.GetBackground(tag),
                     ActivityTextColor = WorkoutActivityClassifier.GetTextColor(tag),
@@ -310,6 +325,39 @@ public class WorkoutService : IWorkoutService
                 };
             })
             .ToList();
+    }
+
+    private static string BuildActivityMetricText(
+        string activityTag,
+        IReadOnlyCollection<WorkoutExerciseItem> exercises)
+    {
+        if (exercises.Count == 0)
+            return "Ready to log";
+
+        if (activityTag == WorkoutActivityClassifier.StrengthTag)
+            return $"{exercises.Count} {(exercises.Count == 1 ? "exercise" : "exercises")}";
+
+        var totalSeconds = exercises
+            .Select(exercise => ParseMinutesToSeconds(exercise.LoggedDurationMinutesText))
+            .Where(seconds => seconds > 0)
+            .Sum();
+        var durationText = totalSeconds > 0 ? FormatDuration(totalSeconds) : string.Empty;
+
+        if (activityTag == WorkoutActivityClassifier.CardioTag)
+        {
+            var leadExercise = exercises.FirstOrDefault();
+            var cardioType = BuildCardioMetricName(leadExercise?.Name ?? string.Empty);
+            return string.IsNullOrWhiteSpace(durationText)
+                ? cardioType
+                : $"{cardioType} - {durationText}";
+        }
+
+        if (activityTag == WorkoutActivityClassifier.RecoveryTag)
+            return string.IsNullOrWhiteSpace(durationText)
+                ? "Easy recovery"
+                : $"{durationText} easy recovery";
+
+        return $"{exercises.Count} {(exercises.Count == 1 ? "movement" : "movements")}";
     }
 
     private static string BuildActivitySectionSummary(IReadOnlyCollection<WorkoutExerciseItem> exercises)
@@ -320,25 +368,91 @@ public class WorkoutService : IWorkoutService
             : $"{loggedCount} of {exercises.Count} logged";
     }
 
+    private static string BuildCardioMetricName(string name)
+    {
+        if (ContainsAny(name, "cycle", "cycling", "ride", "bike"))
+            return "Power, cadence, HR";
+
+        if (ContainsAny(name, "swim", "pool"))
+            return "Pace / 100m, distance, HR";
+
+        if (ContainsAny(name, "run", "jog", "sprint", "tempo"))
+            return "Pace, distance, HR";
+
+        if (ContainsAny(name, "hiit", "interval"))
+            return "Intervals, HR, effort";
+
+        return "Duration, distance, HR";
+    }
+
+    private static int ParseMinutesToSeconds(string value)
+    {
+        if (!float.TryParse(value, out var minutes))
+            return 0;
+
+        return (int)Math.Round(Math.Max(0f, minutes) * 60f);
+    }
+
+    private static string FormatDuration(int seconds)
+    {
+        if (seconds < 90)
+            return $"{seconds} sec";
+
+        var minutes = (int)Math.Ceiling(seconds / 60d);
+        return $"{minutes} min";
+    }
+
     private static ExerciseMetricProfile BuildMetricProfile(WorkoutDayExercise exercise, WorkoutType workoutType)
     {
         var name = exercise.Exercise?.Name ?? string.Empty;
         var isTimed = exercise.DurationSeconds is > 0;
-        var isDistanceCardio = IsDistanceCardioExercise(name);
+        var isTimeUnderTension = IsTimeUnderTensionExercise(name);
+        var isCycling = IsCyclingExercise(name);
+        var isRunning = IsRunningExercise(name);
+        var isSwimming = IsSwimmingExercise(name);
+        var isHiit = IsHiitExercise(name);
+        var isDistanceCardio = isCycling || isRunning || isSwimming || IsDistanceRecoveryExercise(name);
         var usesEndurance = isTimed ||
+                             isTimeUnderTension ||
                              IsRecoveryDurationExercise(name) ||
-                             (workoutType is WorkoutType.Cardio && isDistanceCardio);
+                             isCycling ||
+                             isRunning ||
+                             isSwimming ||
+                             isHiit;
 
         if (!usesEndurance)
             return ExerciseMetricProfile.Strength;
 
         return new ExerciseMetricProfile(
             UsesEnduranceMetrics: true,
-            UsesDuration: isTimed || workoutType is WorkoutType.Cardio or WorkoutType.Recovery,
+            UsesDuration: true,
             UsesDistance: isDistanceCardio,
-            UsesPace: isDistanceCardio,
-            UsesHeartRate: isDistanceCardio);
+            UsesPace: isRunning || isSwimming,
+            UsesHeartRate: isCycling || isRunning || isSwimming || isHiit || IsDistanceRecoveryExercise(name),
+            UsesPower: isCycling,
+            UsesCadence: isCycling,
+            UsesEffort: isCycling || isRunning || isSwimming || isHiit,
+            UsesTimeUnderTension: isTimeUnderTension,
+            UsesSwimmingMetrics: isSwimming);
     }
+
+    private static bool IsTimeUnderTensionExercise(string name) =>
+        ContainsAny(name, "plank", "copenhagen");
+
+    private static bool IsCyclingExercise(string name) =>
+        ContainsAny(name, "bike", "cycle", "cycling", "ride");
+
+    private static bool IsRunningExercise(string name) =>
+        ContainsAny(name, "run", "jog", "sprint", "tempo");
+
+    private static bool IsSwimmingExercise(string name) =>
+        ContainsAny(name, "swim", "pool");
+
+    private static bool IsHiitExercise(string name) =>
+        ContainsAny(name, "hiit", "interval") && !IsCyclingExercise(name) && !IsRunningExercise(name);
+
+    private static bool IsDistanceRecoveryExercise(string name) =>
+        ContainsAny(name, "walk");
 
     private static bool IsRecoveryDurationExercise(string name) =>
         ContainsAny(
@@ -350,22 +464,6 @@ public class WorkoutService : IWorkoutService
             "breathing",
             "pilates",
             "walk");
-
-    private static bool IsDistanceCardioExercise(string name) =>
-        ContainsAny(
-            name,
-            "bike",
-            "cycle",
-            "cycling",
-            "ride",
-            "walk",
-            "run",
-            "jog",
-            "sprint",
-            "swim",
-            "cardio",
-            "hiit",
-            "interval");
 
     private static string BuildExercisePurpose(Exercise? exercise, WorkoutType workoutType)
     {
@@ -620,9 +718,19 @@ public class WorkoutService : IWorkoutService
 
     private static string BuildTargetText(WorkoutDayExercise exercise, ExerciseMetricProfile metricProfile)
     {
+        if (metricProfile.UsesTimeUnderTension)
+            return exercise.DurationSeconds is > 0
+                ? $"{FormatDuration(exercise.DurationSeconds.Value)} under tension"
+                : "Time under tension";
+
+        if (metricProfile.UsesPower)
+            return exercise.DurationSeconds is > 0
+                ? $"{FormatDuration(exercise.DurationSeconds.Value)} - watts, rpm, HR"
+                : "Watts, rpm, HR";
+
         if (metricProfile.UsesEnduranceMetrics)
             return exercise.DurationSeconds is > 0
-                ? $"{Math.Ceiling(exercise.DurationSeconds.Value / 60d):0} min steady"
+                ? $"{FormatDuration(exercise.DurationSeconds.Value)} steady"
                 : "Steady effort";
 
         if (exercise.Sets > 0 && exercise.Reps > 0)
@@ -651,13 +759,25 @@ public class WorkoutService : IWorkoutService
     {
         var parts = new List<string>();
         if (metricProfile.UsesDuration && previousLog.CompletedDurationSeconds is > 0)
-            parts.Add($"{Math.Ceiling(previousLog.CompletedDurationSeconds.Value / 60d):0} min");
+            parts.Add(metricProfile.UsesTimeUnderTension
+                ? $"{FormatDuration(previousLog.CompletedDurationSeconds.Value)} tension"
+                : FormatDuration(previousLog.CompletedDurationSeconds.Value));
+        if (metricProfile.UsesPower && previousLog.PowerWatts is > 0)
+            parts.Add($"{previousLog.PowerWatts.Value} W");
+        if (metricProfile.UsesCadence && previousLog.CadenceRpm is > 0)
+            parts.Add($"{previousLog.CadenceRpm.Value} rpm");
         if (metricProfile.UsesDistance && previousLog.DistanceKm is > 0f)
-            parts.Add($"{previousLog.DistanceKm.Value:0.#} km");
+            parts.Add(metricProfile.UsesSwimmingMetrics
+                ? $"{previousLog.DistanceKm.Value:0.#} m"
+                : $"{previousLog.DistanceKm.Value:0.#} km");
         if (metricProfile.UsesPace && previousLog.PaceSecondsPerKm is > 0)
-            parts.Add($"{FormatPace(previousLog.PaceSecondsPerKm.Value)}/km");
+            parts.Add(metricProfile.UsesSwimmingMetrics
+                ? $"{FormatPace(previousLog.PaceSecondsPerKm.Value)}/100m"
+                : $"{FormatPace(previousLog.PaceSecondsPerKm.Value)}/km");
         if (metricProfile.UsesHeartRate && previousLog.AverageHeartRateBpm is > 0)
             parts.Add($"{previousLog.AverageHeartRateBpm.Value} bpm");
+        if (metricProfile.UsesEffort && previousLog.EffortRating is >= 1 and <= 10)
+            parts.Add($"effort {previousLog.EffortRating.Value}/10");
 
         return parts.Count == 0 ? "Logged before" : $"Last {string.Join(" with ", parts)}";
     }
@@ -667,10 +787,18 @@ public class WorkoutService : IWorkoutService
         WorkoutExerciseLog? previousLog,
         ExerciseMetricProfile metricProfile)
     {
+        if (metricProfile.UsesPower)
+            return previousLog?.PowerWatts is > 0
+                ? $"Start near {previousLog.PowerWatts.Value} W, keep cadence around 80-95 rpm, and let heart rate confirm the effort."
+                : "Log watts first if you have them, cadence around 80-95 rpm, plus heart rate and effort.";
+
         if (metricProfile.UsesPace)
             return previousLog?.PaceSecondsPerKm is > 0
                 ? $"Stay near {FormatPace(previousLog.PaceSecondsPerKm.Value)}/km and keep breathing smooth."
                 : "Log pace and heart rate so your cardio trend gets smarter.";
+
+        if (metricProfile.UsesTimeUnderTension)
+            return "Own every second. Stop before hips drop, shoulders pinch, or breathing disappears.";
 
         if (metricProfile.UsesEnduranceMetrics)
             return "Own the full time with clean, controlled form.";
@@ -729,6 +857,27 @@ public class WorkoutService : IWorkoutService
             ? previousLog.AverageHeartRateBpm.Value.ToString()
             : string.Empty;
 
+    private static string BuildSuggestedPowerText(
+        WorkoutExerciseLog? previousLog,
+        ExerciseMetricProfile metricProfile) =>
+        metricProfile.UsesPower && previousLog?.PowerWatts is > 0
+            ? previousLog.PowerWatts.Value.ToString()
+            : string.Empty;
+
+    private static string BuildSuggestedCadenceText(
+        WorkoutExerciseLog? previousLog,
+        ExerciseMetricProfile metricProfile) =>
+        metricProfile.UsesCadence && previousLog?.CadenceRpm is > 0
+            ? previousLog.CadenceRpm.Value.ToString()
+            : string.Empty;
+
+    private static string BuildSuggestedEffortText(
+        WorkoutExerciseLog? previousLog,
+        ExerciseMetricProfile metricProfile) =>
+        metricProfile.UsesEffort && previousLog?.EffortRating is >= 1 and <= 10
+            ? previousLog.EffortRating.Value.ToString()
+            : string.Empty;
+
     private static string FormatPace(int paceSecondsPerKm) =>
         $"{paceSecondsPerKm / 60}:{paceSecondsPerKm % 60:00}";
 
@@ -763,13 +912,23 @@ public class WorkoutService : IWorkoutService
         bool UsesDuration,
         bool UsesDistance,
         bool UsesPace,
-        bool UsesHeartRate)
+        bool UsesHeartRate,
+        bool UsesPower,
+        bool UsesCadence,
+        bool UsesEffort,
+        bool UsesTimeUnderTension,
+        bool UsesSwimmingMetrics)
     {
         public static ExerciseMetricProfile Strength { get; } = new(
             UsesEnduranceMetrics: false,
             UsesDuration: false,
             UsesDistance: false,
             UsesPace: false,
-            UsesHeartRate: false);
+            UsesHeartRate: false,
+            UsesPower: false,
+            UsesCadence: false,
+            UsesEffort: false,
+            UsesTimeUnderTension: false,
+            UsesSwimmingMetrics: false);
     }
 }

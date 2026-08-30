@@ -74,7 +74,7 @@ public class WorkoutViewModelTests
         Assert.True(vm.HasWorkouts);
         Assert.False(vm.HasNoWorkouts);
         Assert.Equal("Full Body", vm.ActivePlanTitle);
-        Assert.Equal("2 sessions", vm.PlanSummaryText);
+        Assert.Equal("2 training days - 5 full rest days", vm.PlanSummaryText);
         Assert.Equal(2, vm.Workouts.Count);
     }
 

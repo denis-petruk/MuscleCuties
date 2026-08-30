@@ -1,4 +1,4 @@
-using System.Diagnostics;
+using MuscleCuties.Core.Diagnostics;
 
 namespace MuscleCuties.App.Pages;
 
@@ -18,7 +18,7 @@ internal static class PageLoadExtensions
         }
         catch (Exception ex)
         {
-            Debug.WriteLine(ex);
+            AppDebugLog.Error("PageLoad", ex, "Deferred page load failed");
         }
     }
 }

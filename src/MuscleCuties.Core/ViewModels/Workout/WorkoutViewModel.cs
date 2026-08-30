@@ -62,17 +62,24 @@ public partial class WorkoutViewModel : ObservableObject
     {
         get
         {
-            var sessionCount = _allWorkouts.Count(workout => !workout.IsRestDay);
-            if (sessionCount == 0)
+            var trainingDayCount = _allWorkouts.Count(workout => !workout.IsRestDay);
+            if (trainingDayCount == 0)
                 return "No sessions scheduled yet";
 
+            var fullRestDayCount = _allWorkouts.Count(workout => workout.IsRestDay);
             var activityCount = _allWorkouts
                 .Where(workout => !workout.IsRestDay)
                 .Sum(workout => ExtractCount(workout.ActivityCountText));
+            var parts = new List<string>
+            {
+                $"{trainingDayCount} training {(trainingDayCount == 1 ? "day" : "days")}",
+                $"{fullRestDayCount} full rest {(fullRestDayCount == 1 ? "day" : "days")}"
+            };
 
-            return activityCount > sessionCount
-                ? $"{sessionCount} sessions - {activityCount} activities"
-                : $"{sessionCount} sessions";
+            if (activityCount > trainingDayCount)
+                parts.Add($"{activityCount} activities");
+
+            return string.Join(" - ", parts);
         }
     }
     public string EmptyWorkoutsTitle => ActivePlan is null
@@ -396,7 +403,10 @@ public partial class WorkoutViewModel : ObservableObject
             ParseDurationSeconds(item.LoggedDurationMinutesText),
             ParseOptionalFloat(item.LoggedDistanceKmText),
             ParsePositiveNullableInt(item.LoggedHeartRateText),
-            ParsePaceSecondsPerKm(item.LoggedPaceText));
+            ParsePaceSecondsPerKm(item.LoggedPaceText),
+            ParsePositiveNullableInt(item.LoggedPowerWattsText),
+            ParsePositiveNullableInt(item.LoggedCadenceRpmText),
+            ParseEffortRating(item.LoggedEffortText));
 
     private bool IsEveryExerciseLoggedAfterSave(IReadOnlyCollection<WorkoutExerciseItem> savedExercises)
     {
@@ -506,6 +516,12 @@ public partial class WorkoutViewModel : ObservableObject
         return decimalMinutes is > 0f ? (int)Math.Round(decimalMinutes.Value * 60f) : null;
     }
 
+    private static int? ParseEffortRating(string? value)
+    {
+        var effort = ParsePositiveNullableInt(value);
+        return effort is >= 1 and <= 10 ? effort : null;
+    }
+
     private static bool IsVisibleWorkoutItem(WorkoutItem workout) =>
         !workout.IsRestDay;
 
@@ -553,6 +569,7 @@ public partial class WorkoutViewModel : ObservableObject
                 Tag = activityTag,
                 Title = WorkoutActivityClassifier.BuildSectionTitle(activityTag),
                 Subtitle = WorkoutActivityClassifier.BuildSectionSubtitle(activityTag),
+                MetricText = $"{exercises.Count} {(exercises.Count == 1 ? "exercise" : "exercises")}",
                 SummaryText = $"{exercises.Count(exercise => exercise.IsLogged)} of {exercises.Count} logged",
                 ActivityBackground = WorkoutActivityClassifier.GetBackground(activityTag),
                 ActivityTextColor = WorkoutActivityClassifier.GetTextColor(activityTag),

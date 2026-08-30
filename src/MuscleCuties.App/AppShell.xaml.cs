@@ -1,9 +1,9 @@
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Extensions.DependencyInjection;
+
 using MuscleCuties.App.Pages.Auth;
 using MuscleCuties.App.Pages.Cycle;
 using MuscleCuties.App.Pages.Onboarding;
 using MuscleCuties.App.Pages.Profile;
+using MuscleCuties.Core.Diagnostics;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 
@@ -41,6 +41,9 @@ public partial class AppShell : Shell
         base.OnNavigating(args);
 
         var targetRoute = args.Target?.Location.OriginalString;
+        AppDebugLog.Write(
+            "Shell",
+            $"OnNavigating source={args.Source}, target='{targetRoute}', guarded={RequiresAuthenticatedUser(targetRoute)}.");
         if (_isRedirectingFromGuard || !RequiresAuthenticatedUser(targetRoute))
             return;
 
@@ -135,13 +138,16 @@ public partial class AppShell : Shell
         string? redirectRoute = null;
         try
         {
+            AppDebugLog.Write("Shell", $"Guard start for target='{targetRoute}'.");
             using var scope = _services.CreateScope();
             var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
             var userId = await authService.GetCurrentUserIdAsync();
+            AppDebugLog.Write("Shell", $"Guard current user id={userId}.");
             if (userId <= 0)
             {
                 args.Cancel();
                 redirectRoute = "//LoginPage";
+                AppDebugLog.Write("Shell", "Guard redirect: no current user.");
             }
             else
             {
@@ -152,13 +158,24 @@ public partial class AppShell : Shell
                     await authService.LogoutAsync();
                     args.Cancel();
                     redirectRoute = "//LoginPage";
+                    AppDebugLog.Write("Shell", "Guard redirect: token user row missing.");
                 }
                 else if (!user.IsOnboardingComplete && !AllowsOnboardingRoute(targetRoute))
                 {
                     args.Cancel();
-                    redirectRoute = nameof(QuizPage);
+                    redirectRoute = nameof(ProfileSetupPage);
+                    AppDebugLog.Write("Shell", $"Guard redirect: onboarding incomplete for target='{targetRoute}'.");
+                }
+                else
+                {
+                    AppDebugLog.Write("Shell", $"Guard allowed target='{targetRoute}'.");
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            AppDebugLog.Error("Shell", ex, $"Guard failed for target='{targetRoute}'");
+            throw;
         }
         finally
         {
@@ -171,7 +188,9 @@ public partial class AppShell : Shell
         _isRedirectingFromGuard = true;
         try
         {
+            AppDebugLog.Write("Shell", $"Guard navigating to redirect='{redirectRoute}'.");
             await MainThread.InvokeOnMainThreadAsync(() => GoToAsync(redirectRoute, false));
+            AppDebugLog.Write("Shell", $"Guard redirect complete='{redirectRoute}'.");
         }
         finally
         {
@@ -185,6 +204,8 @@ public partial class AppShell : Shell
             return false;
 
         return ContainsRoute(route, "DashboardPage") ||
+               ContainsRoute(route, "QuizPage") ||
+               ContainsRoute(route, "ProfileSetupPage") ||
                ContainsRoute(route, "Cycle") ||
                ContainsRoute(route, "Workout") ||
                ContainsRoute(route, "Nutrition") ||
@@ -196,5 +217,6 @@ public partial class AppShell : Shell
         route.Contains(segment, StringComparison.OrdinalIgnoreCase);
 
     private static bool AllowsOnboardingRoute(string route) =>
+        ContainsRoute(route, nameof(QuizPage)) ||
         ContainsRoute(route, nameof(ProfileSetupPage));
 }

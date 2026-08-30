@@ -5,6 +5,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:nutritionModels="clr-namespace:MuscleCuties.Core.Models.UI.Nutrition;assembly=MuscleCuties.Core"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
     x:DataType="vm:NutritionViewModel"
     IsVisible="{Binding IsAddFoodPanelVisible}">
@@ -13,10 +14,9 @@
         <VerticalStackLayout Spacing="12">
             <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
                 <VerticalStackLayout Spacing="2">
-                    <Label
+                    <sharedControls:IconSectionHeader
                         Text="{Binding AddMealPanelTitle}"
-                        Style="{StaticResource EyebrowLabel}"
-                        CharacterSpacing="1.2" />
+                        IconGlyph="DocumentAdd24" />
                     <Label
                         Text="{Binding MealIngredientsTotalText}"
                         Style="{StaticResource MutedLabel}"
@@ -36,19 +36,14 @@
                 Padding="14,10"
                 IsVisible="{Binding IsFoodFinderCollapsed}">
                 <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                    <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
-                        <Label
-                            Text="MEAL DRAFT"
-                            Style="{StaticResource EyebrowLabel}"
-                            FontSize="9"
-                            CharacterSpacing="1.1" />
-                        <Label
-                            Text="{Binding MealIngredientsTotalText}"
-                            Style="{StaticResource BodyLabel}"
-                            FontSize="13"
-                            FontAttributes="Bold"
-                            LineBreakMode="WordWrap" />
-                    </VerticalStackLayout>
+                    <Label
+                        Grid.Column="0"
+                        Text="{Binding MealIngredientsTotalText}"
+                        Style="{StaticResource BodyLabel}"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center"
+                        LineBreakMode="WordWrap" />
 
                     <Button
                         Grid.Column="1"
@@ -64,11 +59,9 @@
             <VerticalStackLayout
                 Spacing="8"
                 IsVisible="{Binding HasReadyMealTemplates}">
-                <Label
+                <sharedControls:IconSectionHeader
                     Text="READY MEALS"
-                    Style="{StaticResource EyebrowLabel}"
-                    FontSize="9"
-                    CharacterSpacing="1.1"
+                    IconGlyph="BowlSalad24"
                     Margin="2,0,2,0" />
 
                 <FlexLayout
@@ -118,11 +111,11 @@
                 Spacing="12"
                 IsVisible="{Binding IsFoodFinderVisible}">
                 <VerticalStackLayout Spacing="3">
+                    <sharedControls:IconSectionHeader
+                        Text="FIND INGREDIENT"
+                        IconGlyph="SearchInfo24" />
                     <Label
-                        Text="Find an ingredient"
-                        Style="{StaticResource FormFieldLabel}" />
-                    <Label
-                        Text="Search foods by name or brand, then choose the version that matches what you ate."
+                        Text="Name, brand, or saved food."
                         Style="{StaticResource FormFieldHint}" />
                 </VerticalStackLayout>
 
@@ -162,9 +155,6 @@
                         <Label
                             Text="Food name"
                             Style="{StaticResource FormFieldLabel}" />
-                        <Label
-                            Text="Use the name you want to see later in your saved foods."
-                            Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry
                                 Text="{Binding CustomFoodName}"
@@ -178,9 +168,6 @@
                             <Label
                                 Text="Calories"
                                 Style="{StaticResource FormFieldLabel}" />
-                            <Label
-                                Text="Energy for one serving."
-                                Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry
                                     Text="{Binding CustomFoodCalories}"
@@ -194,9 +181,6 @@
                             <Label
                                 Text="Protein"
                                 Style="{StaticResource FormFieldLabel}" />
-                            <Label
-                                Text="Protein grams per serving."
-                                Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry
                                     Text="{Binding CustomFoodProtein}"
@@ -212,9 +196,6 @@
                             <Label
                                 Text="Carbs"
                                 Style="{StaticResource FormFieldLabel}" />
-                            <Label
-                                Text="Carbohydrate grams per serving."
-                                Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry
                                     Text="{Binding CustomFoodCarbs}"
@@ -228,9 +209,6 @@
                             <Label
                                 Text="Fat"
                                 Style="{StaticResource FormFieldLabel}" />
-                            <Label
-                                Text="Fat grams per serving."
-                                Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry
                                     Text="{Binding CustomFoodFats}"
@@ -246,9 +224,6 @@
                             <Label
                                 Text="Serving size"
                                 Style="{StaticResource FormFieldLabel}" />
-                            <Label
-                                Text="Amount those nutrition numbers describe."
-                                Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry
                                     Text="{Binding CustomFoodServingAmount}"
@@ -261,9 +236,6 @@
                             <Label
                                 Text="Serving unit"
                                 Style="{StaticResource FormFieldLabel}" />
-                            <Label
-                                Text="Unit for the serving size."
-                                Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Picker
                                     ItemsSource="{Binding CustomFoodServingUnits}"
@@ -304,9 +276,6 @@
                         <Label
                             Text="Amount"
                             Style="{StaticResource FormFieldLabel}" />
-                        <Label
-                            Text="How many units you ate."
-                            Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry
                                 Text="{Binding FoodGrams}"
@@ -319,9 +288,6 @@
                         <Label
                             Text="Serving"
                             Style="{StaticResource FormFieldLabel}" />
-                        <Label
-                            Text="Pick label serving."
-                            Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Picker
                                 ItemsSource="{Binding ServingOptions}"
@@ -346,7 +312,7 @@
                         Text="Meal type"
                         Style="{StaticResource FormFieldLabel}" />
                     <Label
-                        Text="Groups ingredients into breakfast, lunch, dinner, or snack."
+                        Text="Breakfast, lunch, dinner, snack."
                         Style="{StaticResource FormFieldHint}" />
                     <Border Style="{StaticResource InputContainer}">
                         <Picker
@@ -361,7 +327,7 @@
                         Text="Meal time"
                         Style="{StaticResource FormFieldLabel}" />
                     <Label
-                        Text="When you ate it, so timing-sensitive foods can be tracked."
+                        Text="When you ate."
                         Style="{StaticResource FormFieldHint}" />
                     <Border Style="{StaticResource InputContainer}">
                         <TimePicker
@@ -374,10 +340,9 @@
             <VerticalStackLayout
                 Spacing="8"
                 IsVisible="{Binding HasMealIngredients}">
-                <Label
+                <sharedControls:IconSectionHeader
                     Text="INGREDIENTS"
-                    Style="{StaticResource EyebrowLabel}"
-                    CharacterSpacing="1.2" />
+                    IconGlyph="BowlChopsticks24" />
                 <VerticalStackLayout
                     Spacing="0"
                     BindableLayout.ItemsSource="{Binding MealIngredients}">

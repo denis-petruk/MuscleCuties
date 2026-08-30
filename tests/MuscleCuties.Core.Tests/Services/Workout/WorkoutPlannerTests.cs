@@ -152,7 +152,7 @@ public class WorkoutPlannerTests
         Assert.Equal(4, plan.WorkoutDays.Count(day => day.WorkoutType != WorkoutType.Rest));
         Assert.All(plan.WorkoutDays.Where(day => day.WorkoutType != WorkoutType.Rest), day => Assert.NotEmpty(day.WorkoutDayExercises));
         Assert.Equal(2, plan.WorkoutDays.Count(day => day.WorkoutType == WorkoutType.Strength));
-        Assert.Contains(plan.WorkoutDays, day => day.WorkoutType == WorkoutType.Cardio);
+        Assert.DoesNotContain(plan.WorkoutDays, day => day.WorkoutType == WorkoutType.Cardio);
         Assert.Contains(plan.WorkoutDays, day => day.WorkoutType == WorkoutType.Recovery);
         Assert.All(plan.WorkoutDays.Where(day => day.WorkoutType == WorkoutType.Rest), day => Assert.Empty(day.WorkoutDayExercises));
         Assert.Contains(plan.WorkoutDays.SelectMany(day => day.WorkoutDayExercises), exercise =>
@@ -193,7 +193,13 @@ public class WorkoutPlannerTests
         {
             Goal = UserGoal.FatLoss,
             TrainingExperienceLevel = TrainingExperienceLevel.Intermediate,
-            WorkoutDaysPerWeek = 4
+            WorkoutDaysPerWeek = 4,
+            PreferredWorkoutActivityTypes = WorkoutActivityPreferences.Serialize(
+            [
+                WorkoutActivityType.HighVolumeStrength,
+                WorkoutActivityType.Hiit,
+                WorkoutActivityType.Yoga
+            ])
         };
 
         var plan = _planner.BuildGeneratedPlan(
@@ -206,6 +212,29 @@ public class WorkoutPlannerTests
 
         Assert.Contains(plan.WorkoutDays, day =>
             day.Name == "HIIT conditioning" && day.WorkoutType == WorkoutType.Cardio);
+    }
+
+    [Fact]
+    public void BuildGeneratedPlan_NoCardioPreferenceUsesRecoveryInstead()
+    {
+        var profile = new UserProfile
+        {
+            Goal = UserGoal.FatLoss,
+            TrainingExperienceLevel = TrainingExperienceLevel.Intermediate,
+            WorkoutDaysPerWeek = 4
+        };
+
+        var plan = _planner.BuildGeneratedPlan(
+            9,
+            profile,
+            null,
+            BuildExerciseLibrary(),
+            CyclePhase.Follicular,
+            new DateTime(2026, 8, 17));
+
+        Assert.Equal("Strength-based fat loss training", plan.Name);
+        Assert.DoesNotContain(plan.WorkoutDays, day => day.WorkoutType == WorkoutType.Cardio);
+        Assert.Contains(plan.WorkoutDays, day => day.WorkoutType == WorkoutType.Recovery);
     }
 
     [Fact]
@@ -386,7 +415,7 @@ public class WorkoutPlannerTests
         Assert.Equal(7, plan.WorkoutDays.Count);
         Assert.Equal(4, plan.WorkoutDays.Count(day => day.WorkoutType != WorkoutType.Rest));
         Assert.Contains(plan.WorkoutDays.SelectMany(day => day.WorkoutDayExercises), exercise =>
-            exercise.Sets == 3 && exercise.Reps == 10);
+            exercise.Sets == 2 && exercise.Reps == 10);
     }
 
     [Fact]

@@ -28,7 +28,7 @@
                     </Border.Triggers>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer
-                            Command="{Binding Source={x:Reference StrengthStyleRoot}, Path=BindingContext.SelectStrengthTrainingStyleCommand}"
+                            Command="{Binding Source={x:Reference StrengthStyleRoot}, Path=SelectStyleCommand}"
                             CommandParameter="{Binding .}" />
                     </Border.GestureRecognizers>
 

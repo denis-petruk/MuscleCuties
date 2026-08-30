@@ -26,7 +26,7 @@
                 Margin="0,0,0,6" />
 
             <Label
-                Text="This helps us personalize your plan"
+                Text="Build your first plan"
                 Style="{StaticResource MutedLabel}"
                 HorizontalOptions="Center"
                 HorizontalTextAlignment="Center"
@@ -65,7 +65,7 @@
 
                         <VerticalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
                             <Label Text="Profile photo" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Optional. Used on your profile and personal dashboard." Style="{StaticResource FormFieldHint}" />
+                            <Label Text="Optional profile image." Style="{StaticResource FormFieldHint}" />
                             <Button
                                 Text="Choose photo"
                                 Style="{StaticResource ButtonLink}"
@@ -77,7 +77,7 @@
 
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Display name" Style="{StaticResource FormFieldLabel}" />
-                        <Label Text="Used for greetings and your profile." Style="{StaticResource FormFieldHint}" />
+                        <Label Text="For greetings." Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry
                                 Placeholder="Your name"
@@ -89,7 +89,7 @@
 
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Birthday" Style="{StaticResource FormFieldLabel}" />
-                        <Label Text="Helps personalize age-based plan estimates." Style="{StaticResource FormFieldHint}" />
+                        <Label Text="Age-based estimates." Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <DatePicker
                                 Date="{Binding BirthDate}"
@@ -103,7 +103,7 @@
                         <VerticalStackLayout Spacing="8">
                             <VerticalStackLayout Spacing="2">
                                 <Label Text="Unit system" Style="{StaticResource FormFieldLabel}" />
-                                <Label Text="Sets whether the app starts with kg and cm or lb and inches." Style="{StaticResource FormFieldHint}" />
+                                <Label Text="Metric or imperial defaults." Style="{StaticResource FormFieldHint}" />
                             </VerticalStackLayout>
                             <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
                                 <Label
@@ -127,7 +127,7 @@
                         Spacing="5"
                         IsVisible="{Binding UseMetricSystem}">
                         <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
-                        <Label Text="Your current height, used for plan estimates." Style="{StaticResource FormFieldHint}" />
+                        <Label Text="Current height." Style="{StaticResource FormFieldHint}" />
                         <Grid
                             ColumnDefinitions="*, Auto"
                             ColumnSpacing="10">
@@ -150,7 +150,7 @@
                         IsVisible="{Binding UseMetricSystem,
                                    Converter={StaticResource InvertedBoolConverter}}">
                         <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
-                        <Label Text="Feet and inches for your current height." Style="{StaticResource FormFieldHint}" />
+                        <Label Text="Feet and inches." Style="{StaticResource FormFieldHint}" />
                         <Grid
                             ColumnDefinitions="*, Auto, *, Auto"
                             ColumnSpacing="8">
@@ -181,7 +181,7 @@
 
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Weight" Style="{StaticResource FormFieldLabel}" />
-                        <Label Text="Your current body weight for nutrition and workout planning." Style="{StaticResource FormFieldHint}" />
+                        <Label Text="Current body weight." Style="{StaticResource FormFieldHint}" />
                         <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
 
                             <Border
@@ -215,7 +215,7 @@
 
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Primary fitness goal" Style="{StaticResource FormFieldLabel}" />
-                        <Label Text="Sets the direction for calories, workouts, and progress targets." Style="{StaticResource FormFieldHint}" />
+                        <Label Text="Calories, workouts, targets." Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Picker
                                 Title="Choose goal"
@@ -229,8 +229,8 @@
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                                 <VerticalStackLayout Spacing="3">
-                                    <Label Text="HEALTH SYNC" Style="{StaticResource EyebrowLabel}" />
-                                    <Label Text="Optional weekly steps and sleep for smarter calories, readiness, and recovery." Style="{StaticResource FormFieldHint}" />
+                                    <sharedControls:IconSectionHeader Text="HEALTH SYNC" IconGlyph="DocumentHeartPulse24" />
+                                    <Label Text="Optional steps and sleep." Style="{StaticResource FormFieldHint}" />
                                 </VerticalStackLayout>
                                 <Border
                                     Grid.Column="1"
@@ -283,9 +283,15 @@
                                         </Border>
                                         <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                                             <Label Text="Apple Health" Style="{StaticResource CardTitle}" />
-                                            <Label Text="Steps and sleep from iPhone." Style="{StaticResource CaptionLabel}" />
+                                            <Label Text="Steps and sleep." Style="{StaticResource CaptionLabel}" />
                                         </VerticalStackLayout>
-                                        <Label Grid.Column="2" Text="›" FontSize="22" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                                        <Image
+                                            Grid.Column="2"
+                                            Source="{Binding Source='ChevronRight24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            Aspect="AspectFit"
+                                            VerticalOptions="Center" />
                                     </Grid>
                                 </Border>
 
@@ -303,9 +309,15 @@
                                         </Border>
                                         <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                                             <Label Text="Whoop" Style="{StaticResource CardTitle}" />
-                                            <Label Text="Direct recovery and sleep sync." Style="{StaticResource CaptionLabel}" />
+                                            <Label Text="Recovery and sleep." Style="{StaticResource CaptionLabel}" />
                                         </VerticalStackLayout>
-                                        <Label Grid.Column="2" Text="›" FontSize="22" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                                        <Image
+                                            Grid.Column="2"
+                                            Source="{Binding Source='ChevronRight24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            Aspect="AspectFit"
+                                            VerticalOptions="Center" />
                                     </Grid>
                                 </Border>
                             </VerticalStackLayout>
@@ -319,13 +331,15 @@
 
                     <Border Style="{StaticResource CardSecondary}" Padding="14">
                         <VerticalStackLayout Spacing="10">
+                            <sharedControls:IconSectionHeader
+                                Text="ACTIVITY PREFERENCES"
+                                IconGlyph="Dumbbell24" />
                             <Label
-                                Text="WORKOUT PREFERENCES"
-                                Style="{StaticResource EyebrowLabel}" />
-                            <Label
-                                Text="Pick the activities you want plans to include later."
+                                Text="Strength required. Cardio optional."
                                 Style="{StaticResource FormFieldHint}" />
-                            <workoutControls:WorkoutActivityPreferencePicker />
+                            <workoutControls:WorkoutActivityPreferencePicker
+                                ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
+                                ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
                         </VerticalStackLayout>
                     </Border>
 
@@ -334,13 +348,14 @@
                         Padding="14"
                         IsVisible="{Binding IsStrengthStyleVisible}">
                         <VerticalStackLayout Spacing="10">
-                            <Label
+                            <sharedControls:IconSectionHeader
                                 Text="STRENGTH STYLE"
-                                Style="{StaticResource EyebrowLabel}" />
+                                IconGlyph="Flash24" />
                             <Label
-                                Text="Choose the version of strength training your plan should prefer when your phase is ready for it."
+                                Text="Choose the strength feel."
                                 Style="{StaticResource FormFieldHint}" />
-                            <workoutControls:StrengthTrainingStylePicker />
+                            <workoutControls:StrengthTrainingStylePicker
+                                SelectStyleCommand="{Binding SelectStrengthTrainingStyleCommand}" />
                         </VerticalStackLayout>
                     </Border>
 

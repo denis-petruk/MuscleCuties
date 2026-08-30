@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Core.Diagnostics;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
@@ -8,33 +9,60 @@ namespace MuscleCuties.Core.Data;
 
 public partial class AppDatabase
 {
+    private const int TemporaryQuizQuestionOrderIndex = 50_000;
     private const int TemporaryQuizAnswerOrderIndex = 10_000;
     private const int ObsoleteQuizAnswerOrderIndex = 1_000;
 
     private async Task SeedQuizQuestionsAsync()
     {
+        AppDebugLog.Write("QuizSeed", "SeedQuizQuestions start.");
         var seedQuestions = BuildQuizQuestions();
-        var existingQuestionTypes = await QuizQuestions
+        var seedQuestionTypes = seedQuestions
             .Select(question => question.QuestionType)
+            .ToHashSet();
+        var existingQuestions = await QuizQuestions
+            .Where(question => seedQuestionTypes.Contains(question.QuestionType))
             .ToListAsync();
+        AppDebugLog.Write(
+            "QuizSeed",
+            $"Seed question types={seedQuestionTypes.Count}, existing seeded question rows={existingQuestions.Count}.");
+
+        if (existingQuestions.Count > 0)
+        {
+            var temporaryOrder = TemporaryQuizQuestionOrderIndex;
+            foreach (var question in existingQuestions.OrderBy(question => question.Id))
+                question.OrderIndex = temporaryOrder++;
+
+            await SaveChangesAsync();
+            AppDebugLog.Write("QuizSeed", "Moved existing quiz questions to temporary order range.");
+        }
+
+        var existingQuestionTypes = existingQuestions
+            .Select(question => question.QuestionType)
+            .ToHashSet();
         var missingQuestions = seedQuestions
             .Where(question => !existingQuestionTypes.Contains(question.QuestionType))
             .ToList();
+        AppDebugLog.Write("QuizSeed", $"Missing seeded questions count={missingQuestions.Count}.");
 
         if (missingQuestions.Count > 0)
         {
             await QuizQuestions.AddRangeAsync(missingQuestions);
             await SaveChangesAsync();
+            AppDebugLog.Write("QuizSeed", "Inserted missing quiz questions.");
         }
 
         await RefreshExistingQuizAnswersAsync(seedQuestions);
+        AppDebugLog.Write("QuizSeed", "SeedQuizQuestions finished.");
     }
 
     private async Task RefreshExistingQuizAnswersAsync(IReadOnlyCollection<QuizQuestion> seedQuestions)
     {
+        AppDebugLog.Write("QuizSeed", "RefreshExistingQuizAnswers start.");
         var questions = await QuizQuestions
             .Include(question => question.Answers)
             .ToListAsync();
+        AppDebugLog.Write("QuizSeed", $"Questions loaded for answer refresh={questions.Count}.");
 
         foreach (var question in questions)
         {
@@ -47,6 +75,7 @@ public partial class AppDatabase
         }
 
         await SaveChangesAsync();
+        AppDebugLog.Write("QuizSeed", "Moved existing quiz answers to temporary order range.");
 
         foreach (var question in questions)
         {
@@ -54,6 +83,9 @@ public partial class AppDatabase
             if (seedQuestion is null)
                 continue;
 
+            AppDebugLog.Write(
+                "QuizSeed",
+                $"Refreshing question type={question.QuestionType}, existingAnswers={question.Answers.Count}, seededAnswers={seedQuestion.Answers.Count}.");
             question.Question = seedQuestion.Question;
             question.OrderIndex = seedQuestion.OrderIndex;
 
@@ -74,6 +106,9 @@ public partial class AppDatabase
                     OrderIndex = seedAnswer.OrderIndex,
                     MappedValue = seedAnswer.MappedValue
                 });
+                AppDebugLog.Write(
+                    "QuizSeed",
+                    $"Added missing answer mappedValue={seedAnswer.MappedValue} for question type={question.QuestionType}.");
             }
 
             var obsoleteOrder = ObsoleteQuizAnswerOrderIndex;
@@ -89,14 +124,15 @@ public partial class AppDatabase
         }
 
         await SaveChangesAsync();
+        AppDebugLog.Write("QuizSeed", "RefreshExistingQuizAnswers finished.");
     }
 
     private static List<QuizQuestion> BuildQuizQuestions() =>
     [
         new()
         {
-            Question = "What phase are you in today?",
-            OrderIndex = -1,
+            Question = "Current cycle phase?",
+            OrderIndex = 1,
             QuestionType = QuizQuestionType.CurrentCyclePhase,
             Answers =
             [
@@ -108,8 +144,8 @@ public partial class AppDatabase
         },
         new()
         {
-            Question = "What is your primary fitness goal?",
-            OrderIndex = 1,
+            Question = "Main fitness goal?",
+            OrderIndex = 2,
             QuestionType = QuizQuestionType.Goal,
             Answers =
             [
@@ -121,8 +157,8 @@ public partial class AppDatabase
         },
         new()
         {
-            Question = "How experienced are you with structured training?",
-            OrderIndex = 2,
+            Question = "Training experience?",
+            OrderIndex = 3,
             QuestionType = QuizQuestionType.ExperienceLevel,
             Answers =
             [
@@ -133,8 +169,8 @@ public partial class AppDatabase
         },
         new()
         {
-            Question = "How many days per week do you want to train?",
-            OrderIndex = 3,
+            Question = "Training days per week?",
+            OrderIndex = 4,
             QuestionType = QuizQuestionType.WorkoutDaysPerWeek,
             Answers =
             [
@@ -146,8 +182,8 @@ public partial class AppDatabase
         },
         new()
         {
-            Question = "Do you follow a dietary preference?",
-            OrderIndex = 4,
+            Question = "Dietary preference?",
+            OrderIndex = 5,
             QuestionType = QuizQuestionType.DietaryPreference,
             Answers =
             [
@@ -158,14 +194,14 @@ public partial class AppDatabase
                 Answer("Lactose-free", 5, (int)DietaryTag.LactoseFree)
             ]
         },
-        PainQuestion("During your period, how much does discomfort usually change your day?", 5, QuizQuestionType.MenstrualPain),
-        EnergyQuestion("During your period, how much energy do you usually have for training?", 6, QuizQuestionType.MenstrualEnergy),
-        PainQuestion("After bleeding eases, how much body discomfort is still hanging around?", 7, QuizQuestionType.FollicularPain),
-        EnergyQuestion("In follicular days, how ready do you feel to build momentum?", 8, QuizQuestionType.FollicularEnergy),
-        PainQuestion("Around ovulation, how much does your body ask you to hold back?", 9, QuizQuestionType.OvulatoryPain),
-        EnergyQuestion("Around ovulation, how available does power usually feel?", 10, QuizQuestionType.OvulatoryEnergy),
-        PainQuestion("In luteal days, how loud are PMS, soreness, or bloating?", 11, QuizQuestionType.LutealPain),
-        EnergyQuestion("In luteal days, how much energy do you usually have left for training?", 12, QuizQuestionType.LutealEnergy)
+        PainQuestion("Period discomfort?", 6, QuizQuestionType.MenstrualPain),
+        EnergyQuestion("Period training energy?", 7, QuizQuestionType.MenstrualEnergy),
+        PainQuestion("Follicular discomfort?", 9, QuizQuestionType.FollicularPain),
+        EnergyQuestion("Follicular energy?", 10, QuizQuestionType.FollicularEnergy),
+        PainQuestion("Ovulation discomfort?", 11, QuizQuestionType.OvulatoryPain),
+        EnergyQuestion("Ovulation power?", 12, QuizQuestionType.OvulatoryEnergy),
+        PainQuestion("Luteal symptoms?", 13, QuizQuestionType.LutealPain),
+        EnergyQuestion("Luteal training energy?", 14, QuizQuestionType.LutealEnergy)
     ];
 
     private static QuizQuestion PainQuestion(string question, int orderIndex, QuizQuestionType questionType) => new()

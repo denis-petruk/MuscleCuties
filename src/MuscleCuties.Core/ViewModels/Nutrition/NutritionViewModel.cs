@@ -59,7 +59,6 @@ public partial class NutritionViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<MacroBreakdownItem> _selectedBreakdownMacroItems = new();
     [ObservableProperty] private ObservableCollection<DailyMicronutrientItem> _selectedBreakdownMicronutrients = new();
     [ObservableProperty] private string _selectedBreakdownTitle = "Daily nutrition";
-    [ObservableProperty] private string _selectedBreakdownSubtitle = "All meals logged today";
     [ObservableProperty] private string _selectedBreakdownCaloriesText = "0 kcal";
     [ObservableProperty] private string _selectedBreakdownMacrosText = "P 0.0g · C 0.0g · F 0.0g";
     [ObservableProperty] private string _selectedBreakdownFiberText = "0.0g fiber";
@@ -76,6 +75,7 @@ public partial class NutritionViewModel : ObservableObject
     [ObservableProperty] private string _selectedCustomFoodServingUnit = "g";
     [ObservableProperty] private int _celebrationToken;
     [ObservableProperty] private string _celebrationIconSource = CyclePhaseAssets.FollicularAnimation;
+    private MealItem? _selectedBreakdownMeal;
     private int _editingMealId;
 
     public float CaloriesProgress =>
@@ -95,6 +95,14 @@ public partial class NutritionViewModel : ObservableObject
     public string PhaseFocusBadgeText => string.IsNullOrWhiteSpace(CurrentPhaseName)
         ? "PHASE FOCUS"
         : $"PHASE FOCUS · {CurrentPhaseName.ToUpperInvariant()}";
+    public string CurrentPhaseIconGlyph => CurrentPhase switch
+    {
+        CyclePhase.Menstrual => "Drop24",
+        CyclePhase.Follicular => "LeafThree24",
+        CyclePhase.Ovulatory => "Fire24",
+        CyclePhase.Luteal => "WeatherMoon24",
+        _ => "HeartCircle24"
+    };
     public IReadOnlyList<MealType> MealTypes { get; } = Enum.GetValues<MealType>();
     public IReadOnlyList<string> CustomFoodServingUnits => FoodServingOptions.CustomFoodUnits;
     public bool HasFoodSearchResults => FoodSearchResults.Count > 0;
@@ -126,6 +134,20 @@ public partial class NutritionViewModel : ObservableObject
     public string DayFiberText => BuildFiberText(Micronutrients);
     public bool HasSelectedBreakdownMacroItems => SelectedBreakdownMacroItems.Count > 0;
     public bool HasSelectedBreakdownMicronutrients => SelectedBreakdownMicronutrients.Count > 0;
+    public MealItem? SelectedBreakdownMeal
+    {
+        get => _selectedBreakdownMeal;
+        set
+        {
+            if (!SetProperty(ref _selectedBreakdownMeal, value))
+                return;
+
+            OnPropertyChanged(nameof(CanEditSelectedBreakdown));
+            EditSelectedBreakdownMealCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    public bool CanEditSelectedBreakdown => SelectedBreakdownMeal is not null;
     public string CustomFoodToggleText => IsCustomFoodPanelVisible ? "Hide custom food" : "Create custom food";
     public string FoodSearchResultsTitle => FoodSearchResults.Count == 0
         ? "PRODUCTS"
@@ -203,13 +225,13 @@ public partial class NutritionViewModel : ObservableObject
     public RelayCommand CollapseFoodFinderCommand { get; }
     public RelayCommand<MealIngredientItem> RemoveIngredientCommand { get; }
     public AsyncRelayCommand LogMealCommand { get; }
-    public AsyncRelayCommand<MealItem> EditMealCommand { get; }
     public RelayCommand<MealTemplateItem> ApplyReadyMealTemplateCommand { get; }
     public RelayCommand ToggleCustomFoodPanelCommand { get; }
     public AsyncRelayCommand CreateCustomFoodCommand { get; }
     public RelayCommand OpenMicronutrientsModalCommand { get; }
     public RelayCommand CloseMicronutrientsModalCommand { get; }
     public RelayCommand<MealItem> OpenMealBreakdownCommand { get; }
+    public AsyncRelayCommand EditSelectedBreakdownMealCommand { get; }
 
     public NutritionViewModel(
         IAuthService authService,
@@ -232,13 +254,13 @@ public partial class NutritionViewModel : ObservableObject
         CollapseFoodFinderCommand = new RelayCommand(CollapseFoodFinder);
         RemoveIngredientCommand = new RelayCommand<MealIngredientItem>(RemoveIngredient);
         LogMealCommand = new AsyncRelayCommand(LogMealAsync, CanLogMeal);
-        EditMealCommand = new AsyncRelayCommand<MealItem>(EditMealAsync);
         ApplyReadyMealTemplateCommand = new RelayCommand<MealTemplateItem>(ApplyReadyMealTemplate);
         ToggleCustomFoodPanelCommand = new RelayCommand(ToggleCustomFoodPanel);
         CreateCustomFoodCommand = new AsyncRelayCommand(CreateCustomFoodAsync);
         OpenMicronutrientsModalCommand = new RelayCommand(OpenDailyBreakdown);
         CloseMicronutrientsModalCommand = new RelayCommand(CloseBreakdownModal);
         OpenMealBreakdownCommand = new RelayCommand<MealItem>(OpenMealBreakdown);
+        EditSelectedBreakdownMealCommand = new AsyncRelayCommand(EditSelectedBreakdownMealAsync, () => CanEditSelectedBreakdown);
         MealIngredients.CollectionChanged += (_, _) => NotifyMealIngredientProperties();
     }
 
@@ -258,17 +280,17 @@ public partial class NutritionViewModel : ObservableObject
             PhaseFocusTitle = phase switch
             {
                 CyclePhase.Menstrual => "Iron + comfort",
-                CyclePhase.Follicular => "Build your fuel base",
-                CyclePhase.Ovulatory => "Peak-performance plate",
-                CyclePhase.Luteal => "Cravings, handled",
+                CyclePhase.Follicular => "Fuel base",
+                CyclePhase.Ovulatory => "Peak plate",
+                CyclePhase.Luteal => "Steady cravings",
                 _ => "Nutrition focus"
             };
             PhaseFocusCopy = phase switch
             {
-                CyclePhase.Menstrual => "Go for iron-rich meals, warm carbs, and gentle protein.",
-                CyclePhase.Follicular => "Pair clean carbs with lean protein while your energy climbs.",
-                CyclePhase.Ovulatory => "Keep macros balanced and hydration high for your strongest window.",
-                CyclePhase.Luteal => "Use complex carbs, fiber, and magnesium-rich foods to stay steady.",
+                CyclePhase.Menstrual => "Iron, warm carbs, easy protein.",
+                CyclePhase.Follicular => "Clean carbs, lean protein.",
+                CyclePhase.Ovulatory => "Hydrate, balance, push.",
+                CyclePhase.Luteal => "Fiber, magnesium, steady carbs.",
                 _ => string.Empty
             };
 
@@ -381,6 +403,11 @@ public partial class NutritionViewModel : ObservableObject
     partial void OnCurrentPhaseNameChanged(string value)
     {
         OnPropertyChanged(nameof(PhaseFocusBadgeText));
+    }
+
+    partial void OnCurrentPhaseChanged(CyclePhase value)
+    {
+        OnPropertyChanged(nameof(CurrentPhaseIconGlyph));
     }
 
     partial void OnIsEditingMealChanged(bool value)

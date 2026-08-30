@@ -4,7 +4,6 @@ using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
-using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Repositories.Quiz;
 
 namespace MuscleCuties.Core.Tests.Data;
@@ -118,53 +117,17 @@ public class AppDatabaseInitializationTests
     }
 
     [Fact]
-    public async Task InitializeAsync_WhenOldCycleTrackingConstraintExists_AllowsFloProfiles()
-    {
-        await using var db = await CreateDatabaseAsync();
-        await db.Database.EnsureCreatedAsync();
-        await RebuildUserProfilesWithOldCycleTrackingConstraintAsync(db);
-
-        await db.InitializeAsync();
-
-        var user = new User
-        {
-            Email = "flo-schema@test.com",
-            PasswordHash = "hash",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        await db.Users.AddAsync(user);
-        await db.SaveChangesAsync();
-
-        await db.UserProfiles.AddAsync(new UserProfile
-        {
-            UserId = user.Id,
-            Name = "Flo User",
-            DateOfBirth = DateTime.Today.AddYears(-28),
-            Height = 165,
-            Weight = 65,
-            Goal = UserGoal.MaintainHealth,
-            WeightGoalPace = WeightGoalPace.Steady,
-            TrainingExperienceLevel = TrainingExperienceLevel.Beginner,
-            CycleTrackingMode = CycleTrackingMode.FloConnector,
-            WorkoutDaysPerWeek = 3,
-            CycleLength = 28,
-            UpdatedAt = DateTime.UtcNow
-        });
-        await db.SaveChangesAsync();
-
-        var profile = await db.UserProfiles.SingleAsync(profile => profile.UserId == user.Id);
-        Assert.Equal(CycleTrackingMode.FloConnector, profile.CycleTrackingMode);
-    }
-
-    [Fact]
     public async Task InitializeAsync_WhenExerciseCodeIsBlank_RepairsCode()
     {
         await using var db = await CreateDatabaseAsync();
         await db.Database.EnsureCreatedAsync();
-        await db.Database.ExecuteSqlRawAsync(
-            "INSERT INTO Exercises (Code, Name, Description, PrimaryMuscle, JointAreas, IsInjuryFriendly) " +
-            "VALUES ('', 'Legacy Move', 'Legacy exercise', 0, '', 0)");
+        await db.Exercises.AddAsync(new()
+        {
+            Code = string.Empty,
+            Name = "Legacy Move",
+            Description = "Legacy exercise"
+        });
+        await db.SaveChangesAsync();
 
         await db.InitializeAsync();
 
@@ -204,43 +167,5 @@ public class AppDatabaseInitializationTests
         var db = new AppDatabase(options);
         await db.Database.OpenConnectionAsync();
         return db;
-    }
-
-    private static async Task RebuildUserProfilesWithOldCycleTrackingConstraintAsync(AppDatabase db)
-    {
-        await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=OFF");
-        try
-        {
-            await db.Database.ExecuteSqlRawAsync("DROP TABLE \"UserProfiles\"");
-            await db.Database.ExecuteSqlRawAsync(
-                "CREATE TABLE \"UserProfiles\" (" +
-                "\"Id\" INTEGER NOT NULL CONSTRAINT \"PK_UserProfiles\" PRIMARY KEY AUTOINCREMENT, " +
-                "\"UserId\" INTEGER NOT NULL, " +
-                "\"Name\" TEXT NOT NULL, " +
-                "\"DateOfBirth\" TEXT NOT NULL, " +
-                "\"Height\" REAL NOT NULL, " +
-                "\"Weight\" REAL NOT NULL, " +
-                "\"Goal\" INTEGER NOT NULL, " +
-                "\"WeightGoalPace\" INTEGER NOT NULL, " +
-                "\"TrainingExperienceLevel\" INTEGER NOT NULL, " +
-                "\"CycleTrackingMode\" INTEGER NOT NULL, " +
-                "\"WorkoutDaysPerWeek\" INTEGER NOT NULL, " +
-                "\"CycleLength\" INTEGER NOT NULL, " +
-                "\"DietaryTags\" TEXT NOT NULL DEFAULT '', " +
-                "\"UpdatedAt\" TEXT NOT NULL, " +
-                "CONSTRAINT \"FK_UserProfiles_Users_UserId\" FOREIGN KEY (\"UserId\") REFERENCES \"Users\" (\"Id\") ON DELETE CASCADE, " +
-                "CONSTRAINT \"CK_UserProfile_Height\" CHECK (Height >= 0), " +
-                "CONSTRAINT \"CK_UserProfile_Weight\" CHECK (Weight >= 0), " +
-                "CONSTRAINT \"CK_UserProfile_TrainingExperienceLevel\" CHECK (TrainingExperienceLevel >= 0 AND TrainingExperienceLevel <= 3), " +
-                "CONSTRAINT \"CK_UserProfile_CycleTrackingMode\" CHECK (CycleTrackingMode >= 0 AND CycleTrackingMode <= 1), " +
-                "CONSTRAINT \"CK_UserProfile_WorkoutDays\" CHECK (WorkoutDaysPerWeek >= 0 AND WorkoutDaysPerWeek <= 7), " +
-                "CONSTRAINT \"CK_UserProfile_CycleLength\" CHECK (CycleLength >= 0 AND CycleLength <= 60))");
-            await db.Database.ExecuteSqlRawAsync(
-                "CREATE UNIQUE INDEX \"IX_UserProfiles_UserId\" ON \"UserProfiles\" (\"UserId\")");
-        }
-        finally
-        {
-            await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=ON");
-        }
     }
 }

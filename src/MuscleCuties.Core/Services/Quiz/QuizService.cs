@@ -1,3 +1,4 @@
+using MuscleCuties.Core.Diagnostics;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
@@ -23,24 +24,38 @@ public class QuizService : IQuizService
 
     public async Task<List<QuizQuestion>> GetOnboardingQuestionsAsync()
     {
-        return await _quizRepository.GetQuestionsWithAnswersAsync();
+        AppDebugLog.Write("QuizService", "GetOnboardingQuestions start.");
+        var questions = await _quizRepository.GetQuestionsWithAnswersAsync();
+        AppDebugLog.Write(
+            "QuizService",
+            $"GetOnboardingQuestions returned questions={questions.Count}, usable={questions.Count(question => question.Answers.Count > 0)}.");
+        return questions;
     }
 
     public async Task SaveAnswersAsync(int userId, List<UserQuizResponse> responses)
     {
+        AppDebugLog.Write("QuizService", $"SaveAnswers start userId={userId}, responseCount={responses.Count}.");
         if (responses.Count == 0)
+        {
+            AppDebugLog.Write("QuizService", "SaveAnswers skipped: no responses.");
             return;
+        }
 
         var questions = await _quizRepository.GetQuestionsWithAnswersAsync();
+        AppDebugLog.Write("QuizService", $"SaveAnswers loaded question map count={questions.Count}.");
         var questionMap = questions.ToDictionary(q => q.Id);
         var answeredAt = DateTime.UtcNow;
         var selections = BuildValidSelections(userId, responses, questionMap, answeredAt);
 
         if (selections.Count == 0)
+        {
+            AppDebugLog.Write("QuizService", "SaveAnswers skipped: no valid selections.");
             return;
+        }
 
         var profile = await _userRepository.GetProfileAsync(userId);
         var isNew = profile == null;
+        AppDebugLog.Write("QuizService", $"SaveAnswers profile is new={isNew}, validSelections={selections.Count}.");
         profile ??= new UserProfile
         {
             UserId = userId,
@@ -88,9 +103,15 @@ public class QuizService : IQuizService
         profile.UpdatedAt = answeredAt;
 
         if (isNew)
+        {
             await _userRepository.AddProfileAsync(profile);
+            AppDebugLog.Write("QuizService", "SaveAnswers inserted profile.");
+        }
         else
+        {
             await _userRepository.UpdateProfileAsync(profile);
+            AppDebugLog.Write("QuizService", "SaveAnswers updated profile.");
+        }
 
         var snapshotReason = isNew ? "Initial" : "QuizRetake";
         var snapshot = new UserProfileSnapshot
@@ -101,19 +122,25 @@ public class QuizService : IQuizService
             CreatedAt = answeredAt
         };
         await _userRepository.AddSnapshotAsync(snapshot);
+        AppDebugLog.Write("QuizService", $"SaveAnswers snapshot created id={snapshot.Id}.");
 
         var validResponses = selections.Select(selection => selection.Response).ToList();
         foreach (var response in validResponses)
             response.UserProfileSnapshotId = snapshot.Id;
 
         await _quizRepository.AddResponsesAsync(validResponses);
+        AppDebugLog.Write("QuizService", $"SaveAnswers stored responses count={validResponses.Count}.");
 
         var user = await _userRepository.GetByIdAsync(userId);
         if (user != null)
         {
+            user.IsOnboardingComplete = true;
             user.UpdatedAt = answeredAt;
             await _userRepository.UpdateAsync(user);
+            AppDebugLog.Write("QuizService", "SaveAnswers marked onboarding complete.");
         }
+
+        AppDebugLog.Write("QuizService", "SaveAnswers finished.");
     }
 
     public async Task<bool> IsOnboardingCompleteAsync(int userId)

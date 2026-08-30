@@ -6,6 +6,7 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.UI.Common;
+using MuscleCuties.Core.Models.UI.Profile;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;

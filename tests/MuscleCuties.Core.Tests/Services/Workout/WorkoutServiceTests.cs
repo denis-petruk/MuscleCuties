@@ -161,8 +161,10 @@ public class WorkoutServiceTests : IClassFixture<DatabaseFixture>
                     ExerciseId = dayExercise.ExerciseId,
                     CompletedDurationSeconds = 1800,
                     DistanceKm = 5f,
-                    PaceSecondsPerKm = 360,
+                    PowerWatts = 160,
+                    CadenceRpm = 88,
                     AverageHeartRateBpm = 145,
+                    EffortRating = 6,
                     CreatedAt = DateTime.UtcNow.AddDays(-7)
                 }
             ]
@@ -175,13 +177,18 @@ public class WorkoutServiceTests : IClassFixture<DatabaseFixture>
         Assert.Equal("Steady aerobic work at a repeatable, conversational pace.", detail.Subtitle);
         Assert.True(exercise.UsesEnduranceMetrics);
         Assert.False(exercise.UsesStrengthMetrics);
-        Assert.Equal("30 min steady", exercise.TargetText);
-        Assert.Equal("Last 30 min with 5 km with 6:00/km with 145 bpm", exercise.PreviousText);
-        Assert.Equal("Stay near 6:00/km and keep breathing smooth.", exercise.RecommendationText);
+        Assert.True(exercise.UsesPowerMetric);
+        Assert.True(exercise.UsesCadenceMetric);
+        Assert.False(exercise.UsesPaceMetric);
+        Assert.Equal("30 min - watts, rpm, HR", exercise.TargetText);
+        Assert.Equal("Last 30 min with 160 W with 88 rpm with 5 km with 145 bpm with effort 6/10", exercise.PreviousText);
+        Assert.Equal("Start near 160 W, keep cadence around 80-95 rpm, and let heart rate confirm the effort.", exercise.RecommendationText);
         Assert.Equal("30", exercise.LoggedDurationMinutesText);
         Assert.Equal("5", exercise.LoggedDistanceKmText);
-        Assert.Equal("6:00", exercise.LoggedPaceText);
+        Assert.Equal("160", exercise.LoggedPowerWattsText);
+        Assert.Equal("88", exercise.LoggedCadenceRpmText);
         Assert.Equal("145", exercise.LoggedHeartRateText);
+        Assert.Equal("6", exercise.LoggedEffortText);
     }
 
     [Fact]
@@ -241,6 +248,55 @@ public class WorkoutServiceTests : IClassFixture<DatabaseFixture>
         Assert.Equal(5.5f, exerciseLog.DistanceKm);
         Assert.Equal(148, exerciseLog.AverageHeartRateBpm);
         Assert.Equal(327, exerciseLog.PaceSecondsPerKm);
+    }
+
+    [Fact]
+    public async Task LogWorkoutSessionAsync_MergesSeparateExerciseLogsForSameDay()
+    {
+        var user = await SeedUserWithProfileAsync("workout_svc_merge_log@test.com");
+        var service = CreateService();
+        var plan = new WorkoutPlan
+        {
+            UserId = user.Id,
+            Name = $"Merge plan {Guid.NewGuid()}",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        var exerciseA = await _fixture.Db.Exercises.FirstAsync(e => e.Name == "Hip Thrust");
+        var exerciseB = await _fixture.Db.Exercises.FirstAsync(e => e.Name == "Romanian Deadlift");
+        var day = new WorkoutDay
+        {
+            DayOfWeek = 1,
+            WorkoutType = WorkoutType.Strength,
+            Name = "Lower body strength"
+        };
+        var dayExerciseA = new WorkoutDayExercise { ExerciseId = exerciseA.Id, Sets = 4, Reps = 8 };
+        var dayExerciseB = new WorkoutDayExercise { ExerciseId = exerciseB.Id, Sets = 3, Reps = 10 };
+        day.WorkoutDayExercises.Add(dayExerciseA);
+        day.WorkoutDayExercises.Add(dayExerciseB);
+        plan.WorkoutDays.Add(day);
+        await _fixture.Db.WorkoutPlans.AddAsync(plan);
+        await _fixture.Db.SaveChangesAsync();
+
+        await service.LogWorkoutSessionAsync(
+            user.Id,
+            day.Id,
+            [new WorkoutExerciseLogInput(dayExerciseA.Id, exerciseA.Id, 4, 8, 50f)],
+            DateTime.Today);
+        await service.LogWorkoutSessionAsync(
+            user.Id,
+            day.Id,
+            [new WorkoutExerciseLogInput(dayExerciseB.Id, exerciseB.Id, 3, 10, 35f)],
+            DateTime.Today);
+
+        var log = await _fixture.Db.WorkoutLogs
+            .Include(workoutLog => workoutLog.ExerciseLogs)
+            .SingleAsync(workoutLog => workoutLog.UserId == user.Id && workoutLog.WorkoutDayId == day.Id);
+
+        Assert.Equal(100, log.CompletionPercent);
+        Assert.Equal(2, log.ExerciseLogs.Count);
+        Assert.Contains(log.ExerciseLogs, exerciseLog => exerciseLog.WorkoutDayExerciseId == dayExerciseA.Id);
+        Assert.Contains(log.ExerciseLogs, exerciseLog => exerciseLog.WorkoutDayExerciseId == dayExerciseB.Id);
     }
 
     [Fact]

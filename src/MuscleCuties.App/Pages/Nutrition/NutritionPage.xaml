@@ -30,7 +30,8 @@
                         StrokeShape="RoundRectangle 20"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
                         StrokeThickness="0"
-                        VerticalOptions="Center">
+                        VerticalOptions="Center"
+                        SemanticProperties.Description="Add meal">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding ToggleAddFoodPanelCommand}" />
                         </Border.GestureRecognizers>

@@ -33,19 +33,25 @@
                                 StrokeShape="RoundRectangle 20"
                                 Padding="12,4"
                                 HorizontalOptions="Start">
-                                <Label
-                                    Text="{Binding FoodSearchResultsTitle}"
-                                    Style="{StaticResource EyebrowLabel}"
-                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                                    <Image
+                                        Source="{Binding Source='SearchInfo24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                        WidthRequest="13"
+                                        HeightRequest="13"
+                                        Aspect="AspectFit"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Grid.Column="1"
+                                        Text="{Binding FoodSearchResultsTitle}"
+                                        Style="{StaticResource EyebrowLabel}"
+                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                </Grid>
                             </Border>
 
                             <Label
                                 Text="Choose food"
                                 Style="{StaticResource SubHeadline}"
                                 FontSize="24" />
-                            <Label
-                                Text="Tap the exact brand, preparation, or serving label that matches what you ate."
-                                Style="{StaticResource FormFieldHint}" />
                         </VerticalStackLayout>
                         <Border
                             Grid.Column="1"
@@ -71,7 +77,9 @@
                         </Border>
                     </Grid>
 
-                    <BoxView />
+                    <BoxView
+                        HeightRequest="1"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
                 </VerticalStackLayout>
 
                 <CollectionView
@@ -98,8 +106,25 @@
                                         CommandParameter="{Binding .}" />
                                 </Border.GestureRecognizers>
 
-                                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                                    <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                <Grid ColumnDefinitions="34, *, Auto" ColumnSpacing="12">
+                                    <Border
+                                        Grid.Column="0"
+                                        WidthRequest="34"
+                                        HeightRequest="34"
+                                        StrokeShape="RoundRectangle 17"
+                                        StrokeThickness="0"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                        VerticalOptions="Center">
+                                        <Image
+                                            Source="{Binding Source='Food24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                            WidthRequest="17"
+                                            HeightRequest="17"
+                                            Aspect="AspectFit"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center" />
+                                    </Border>
+
+                                    <VerticalStackLayout Grid.Column="1" Spacing="5">
                                         <Label
                                             Text="{Binding Name}"
                                             Style="{StaticResource AccentLabel}"
@@ -123,7 +148,7 @@
                                     </VerticalStackLayout>
 
                                     <Border
-                                        Grid.Column="1"
+                                        Grid.Column="2"
                                         WidthRequest="28"
                                         HeightRequest="28"
                                         StrokeShape="RoundRectangle 14"

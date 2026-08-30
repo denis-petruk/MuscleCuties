@@ -78,4 +78,30 @@ public class QuizRepositoryTests : IDisposable
 
         Assert.Equal("3 days", text);
     }
+
+    [Fact]
+    public async Task GetQuestionsWithAnswersAsync_WhenAnswerRefreshWasInterrupted_ReturnsFallbackAnswers()
+    {
+        var repo = new QuizRepository(_fixture.Db);
+        await repo.AddRangeQuestionsAsync(
+        [
+            new QuizQuestion
+            {
+                Question = "Current cycle phase?",
+                OrderIndex = 1,
+                QuestionType = QuizQuestionType.CurrentCyclePhase,
+                Answers =
+                [
+                    new QuizAnswer { Text = "Menstrual", OrderIndex = 10_000, MappedValue = 1 },
+                    new QuizAnswer { Text = "Follicular", OrderIndex = 10_001, MappedValue = 2 }
+                ]
+            }
+        ]);
+
+        var result = await repo.GetQuestionsWithAnswersAsync();
+
+        var phaseQuestion = result.Single(question => question.QuestionType == QuizQuestionType.CurrentCyclePhase);
+        Assert.NotEmpty(phaseQuestion.Answers);
+        Assert.Contains(phaseQuestion.Answers, answer => answer.Text == "Menstrual");
+    }
 }

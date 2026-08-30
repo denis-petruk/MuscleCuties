@@ -289,12 +289,12 @@ public class CycleViewModelTests
 
         var calendarDay = vm.CalendarDays.Single(day => day.Date == DateTime.Today);
         vm.OpenCalendarDayCommand.Execute(calendarDay);
-        vm.SelectPhaseOptionCommand.Execute(vm.PhaseEditOptions.Single(option => option.Phase == CyclePhase.Luteal));
+        vm.SelectPhaseOptionCommand.Execute(vm.PhaseEditOptions.Single(option => option.Phase == CyclePhase.Follicular));
         await vm.SaveDatePhaseCommand.ExecuteAsync(null);
 
         await _cycleService.Received(1).SetPhaseForDateAsync(
             1,
-            CyclePhase.Luteal,
+            CyclePhase.Follicular,
             Arg.Is<DateTime>(date => date.Date == DateTime.Today),
             "Calendar phase edit");
         Assert.False(vm.IsDatePhaseModalVisible);

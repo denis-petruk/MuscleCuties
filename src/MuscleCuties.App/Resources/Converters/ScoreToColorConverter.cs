@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace MuscleCuties.App.Resources.Converters;
 
-public abstract class ScoreToColorConverter : IValueConverter
+public class ScoreToColorConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
