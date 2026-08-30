@@ -87,6 +87,13 @@
                                         <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
                                             <VerticalStackLayout Grid.Column="0" Spacing="4">
                                                 <Label
+                                                    Text="{Binding OrderText}"
+                                                    TextColor="{Binding ActivityTextColor}"
+                                                    FontSize="10"
+                                                    FontAttributes="Bold"
+                                                    CharacterSpacing="1.0"
+                                                    Opacity="0.86" />
+                                                <Label
                                                     Text="{Binding Title}"
                                                     TextColor="{Binding ActivityTextColor}"
                                                     FontSize="18"
@@ -98,6 +105,12 @@
                                                     FontSize="12"
                                                     Opacity="0.82"
                                                     LineBreakMode="WordWrap" />
+                                                <Label
+                                                    Text="{Binding MetricText}"
+                                                    TextColor="{Binding ActivityTextColor}"
+                                                    FontSize="12"
+                                                    FontAttributes="Bold"
+                                                    Opacity="0.92" />
                                                 <Label
                                                     Text="{Binding SummaryText}"
                                                     TextColor="{Binding ActivityTextColor}"

@@ -178,7 +178,7 @@
             <VerticalStackLayout
                 Spacing="5"
                 IsVisible="{Binding UsesDurationOnlyMetric}">
-                <Label Text="MINUTES" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                <Label Text="{Binding DurationLabel}" Style="{StaticResource EyebrowLabel}" FontSize="9" />
                 <Entry
                     Text="{Binding LoggedDurationMinutesText, Mode=TwoWay}"
                     Keyboard="Numeric"
@@ -186,13 +186,13 @@
             </VerticalStackLayout>
 
             <Grid
-                RowDefinitions="Auto, Auto"
+                RowDefinitions="Auto, Auto, Auto, Auto"
                 ColumnDefinitions="*, *"
                 RowSpacing="8"
                 ColumnSpacing="8"
                 IsVisible="{Binding UsesCardioMetricGrid}">
                 <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5" IsVisible="{Binding UsesDurationMetric}">
-                    <Label Text="MINUTES" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Label Text="{Binding DurationLabel}" Style="{StaticResource EyebrowLabel}" FontSize="9" />
                     <Entry
                         Text="{Binding LoggedDurationMinutesText, Mode=TwoWay}"
                         Keyboard="Numeric"
@@ -200,7 +200,7 @@
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5" IsVisible="{Binding UsesDistanceMetric}">
-                    <Label Text="KM" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Label Text="{Binding DistanceLabel}" Style="{StaticResource EyebrowLabel}" FontSize="9" />
                     <Entry
                         Text="{Binding LoggedDistanceKmText, Mode=TwoWay}"
                         Keyboard="Numeric"
@@ -208,7 +208,7 @@
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="5" IsVisible="{Binding UsesPaceMetric}">
-                    <Label Text="PACE / KM" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Label Text="{Binding PaceLabel}" Style="{StaticResource EyebrowLabel}" FontSize="9" />
                     <Entry
                         Text="{Binding LoggedPaceText, Mode=TwoWay}"
                         Placeholder="6:30"
@@ -216,9 +216,33 @@
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5" IsVisible="{Binding UsesHeartRateMetric}">
-                    <Label Text="AVG BPM" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Label Text="{Binding HeartRateLabel}" Style="{StaticResource EyebrowLabel}" FontSize="9" />
                     <Entry
                         Text="{Binding LoggedHeartRateText, Mode=TwoWay}"
+                        Keyboard="Numeric"
+                        HeightRequest="44" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Row="2" Grid.Column="0" Spacing="5" IsVisible="{Binding UsesPowerMetric}">
+                    <Label Text="{Binding PowerLabel}" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Entry
+                        Text="{Binding LoggedPowerWattsText, Mode=TwoWay}"
+                        Keyboard="Numeric"
+                        HeightRequest="44" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="5" IsVisible="{Binding UsesCadenceMetric}">
+                    <Label Text="{Binding CadenceLabel}" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Entry
+                        Text="{Binding LoggedCadenceRpmText, Mode=TwoWay}"
+                        Keyboard="Numeric"
+                        HeightRequest="44" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Spacing="5" IsVisible="{Binding UsesEffortMetric}">
+                    <Label Text="{Binding EffortLabel}" Style="{StaticResource EyebrowLabel}" FontSize="9" />
+                    <Entry
+                        Text="{Binding LoggedEffortText, Mode=TwoWay}"
                         Keyboard="Numeric"
                         HeightRequest="44" />
                 </VerticalStackLayout>

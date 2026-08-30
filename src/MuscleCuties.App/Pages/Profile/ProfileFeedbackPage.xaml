@@ -28,7 +28,7 @@
                 BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="SEND THE GOOD STUFF" Style="{StaticResource EyebrowLabel}" />
+                        <sharedControls:IconSectionHeader Text="SEND THE GOOD STUFF" IconGlyph="ChatBubblesQuestion24" />
                         <Label Text="Talk to the handsome, jacked developer" Style="{StaticResource SectionTitle}" />
                         <Label
                             Text="Bug, style issue, tiny annoyance, huge idea: write it here and attach context when useful."
@@ -44,7 +44,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="SORT IT" Style="{StaticResource EyebrowLabel}" />
+                    <sharedControls:IconSectionHeader Text="SORT IT" IconGlyph="ChatBubblesQuestion24" />
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <VerticalStackLayout Grid.Column="0" Spacing="5">
                             <Label Text="Topic" Style="{StaticResource FormFieldLabel}" />
@@ -53,7 +53,8 @@
                                 <Picker
                                     Title="Topic"
                                     ItemsSource="{Binding TopicOptions}"
-                                    SelectedItem="{Binding SelectedTopic}" />
+                                    ItemDisplayBinding="{Binding Label}"
+                                    SelectedItem="{Binding SelectedTopicOption}" />
                             </Border>
                         </VerticalStackLayout>
 
@@ -64,13 +65,26 @@
                                 <Picker
                                     Title="Priority"
                                     ItemsSource="{Binding PriorityOptions}"
-                                    SelectedItem="{Binding SelectedPriority}" />
+                                    ItemDisplayBinding="{Binding Label}"
+                                    SelectedItem="{Binding SelectedPriorityOption}" />
                             </Border>
                         </VerticalStackLayout>
                     </Grid>
 
                     <VerticalStackLayout Spacing="5">
-                        <Label Text="Screen or feature" Style="{StaticResource FormFieldLabel}" />
+                        <Grid ColumnDefinitions="18,*" ColumnSpacing="6">
+                            <Image
+                                Source="{Binding Source='Target24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                WidthRequest="15"
+                                HeightRequest="15"
+                                Aspect="AspectFit"
+                                VerticalOptions="Center" />
+                            <Label
+                                Grid.Column="1"
+                                Text="Screen or feature"
+                                Style="{StaticResource FormFieldLabel}"
+                                VerticalOptions="Center" />
+                        </Grid>
                         <Label Text="Helps point the feedback to the exact place in the app." Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry
@@ -83,7 +97,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="REACH YOU BACK" Style="{StaticResource EyebrowLabel}" />
+                    <sharedControls:IconSectionHeader Text="REACH YOU BACK" IconGlyph="PersonChat24" />
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                         <VerticalStackLayout Spacing="2">
                             <Label Text="Include contact email" Style="{StaticResource CardTitle}" />
@@ -111,7 +125,7 @@
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="*,Auto">
-                        <Label Text="WHAT HAPPENED" Style="{StaticResource EyebrowLabel}" />
+                        <sharedControls:IconSectionHeader Text="WHAT HAPPENED" IconGlyph="Comment24" />
                         <Label Grid.Column="1" Text="{Binding FeedbackCountText}" Style="{StaticResource CaptionLabel}" />
                     </Grid>
                     <Label
@@ -128,7 +142,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="WHAT WOULD MAKE IT BETTER" Style="{StaticResource EyebrowLabel}" />
+                    <sharedControls:IconSectionHeader Text="WHAT WOULD MAKE IT BETTER" IconGlyph="SparkleCircle24" />
                     <Label
                         Text="Share the version you wish existed, even if it is rough."
                         Style="{StaticResource FormFieldHint}" />
@@ -145,7 +159,7 @@
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                         <VerticalStackLayout Spacing="4">
-                            <Label Text="ATTACH CONTEXT" Style="{StaticResource EyebrowLabel}" />
+                            <sharedControls:IconSectionHeader Text="ATTACH CONTEXT" IconGlyph="LinkSquare24" />
                             <Label Text="Screenshot, PDF, text, or log file under 10 MB." Style="{StaticResource FormFieldHint}" />
                         </VerticalStackLayout>
                         <Button

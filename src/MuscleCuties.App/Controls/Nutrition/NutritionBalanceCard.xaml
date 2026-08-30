@@ -10,19 +10,35 @@
     <Border Style="{StaticResource CardPrimary}">
         <VerticalStackLayout Spacing="14">
             <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                <Label
+                <sharedControls:IconSectionHeader
                     Text="TODAY'S BALANCE"
-                    Style="{StaticResource EyebrowLabel}"
-                    CharacterSpacing="1.2"
+                    IconGlyph="BowlSalad24"
                     VerticalOptions="Center" />
-                <Button
+                <Border
                     Grid.Column="1"
-                    Text="Micros"
-                    Style="{StaticResource ButtonLink}"
-                    Command="{Binding OpenMicronutrientsModalCommand}"
+                    StrokeShape="RoundRectangle 16"
+                    StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
+                    Padding="10,7"
                     HeightRequest="36"
-                    MinimumHeightRequest="36"
-                    WidthRequest="78" />
+                    VerticalOptions="Center">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenMicronutrientsModalCommand}" />
+                    </Border.GestureRecognizers>
+                    <HorizontalStackLayout Spacing="6">
+                        <Image
+                            Source="{Binding Source='Molecule24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                            WidthRequest="14"
+                            HeightRequest="14"
+                            Aspect="AspectFit"
+                            VerticalOptions="Center" />
+                        <Label
+                            Text="Micros"
+                            Style="{StaticResource CaptionLabel}"
+                            FontAttributes="Bold"
+                            VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </Border>
             </Grid>
 
             <Grid ColumnDefinitions="*, Auto">

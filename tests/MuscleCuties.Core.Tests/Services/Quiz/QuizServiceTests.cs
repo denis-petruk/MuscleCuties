@@ -45,7 +45,7 @@ public class QuizServiceTests : IClassFixture<DatabaseFixture>
     }
 
     [Fact]
-    public async Task SaveAnswersAsync_DoesNotCompleteOnboardingBeforeProfileSetup()
+    public async Task SaveAnswersAsync_CompletesOnboardingAfterQuiz()
     {
         var user = await SeedUserAsync("quiz2@test.com");
         var service = CreateService();
@@ -68,7 +68,7 @@ public class QuizServiceTests : IClassFixture<DatabaseFixture>
 
         await service.SaveAnswersAsync(user.Id, [response]);
 
-        Assert.False(await service.IsOnboardingCompleteAsync(user.Id));
+        Assert.True(await service.IsOnboardingCompleteAsync(user.Id));
     }
 
     [Fact]

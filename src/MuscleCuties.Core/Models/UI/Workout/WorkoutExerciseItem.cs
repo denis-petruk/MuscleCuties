@@ -29,15 +29,28 @@ public partial class WorkoutExerciseItem : ObservableObject
     public bool UsesDistanceMetric { get; set; }
     public bool UsesPaceMetric { get; set; }
     public bool UsesHeartRateMetric { get; set; }
+    public bool UsesPowerMetric { get; set; }
+    public bool UsesCadenceMetric { get; set; }
+    public bool UsesEffortMetric { get; set; }
     public bool UsesDurationOnlyMetric =>
         UsesDurationMetric &&
         !UsesDistanceMetric &&
         !UsesPaceMetric &&
-        !UsesHeartRateMetric;
+        !UsesHeartRateMetric &&
+        !UsesPowerMetric &&
+        !UsesCadenceMetric &&
+        !UsesEffortMetric;
     public bool UsesCardioMetricGrid =>
         UsesEnduranceMetrics &&
         !UsesDurationOnlyMetric;
     public bool UsesWeight { get; set; } = true;
+    public string DurationLabel { get; set; } = "MINUTES";
+    public string DistanceLabel { get; set; } = "KM";
+    public string PaceLabel { get; set; } = "PACE / KM";
+    public string HeartRateLabel { get; set; } = "AVG BPM";
+    public string PowerLabel { get; set; } = "WATTS";
+    public string CadenceLabel { get; set; } = "RPM";
+    public string EffortLabel { get; set; } = "EFFORT 1-10";
     public string LoggedSetsText { get; set; } = string.Empty;
     public string LoggedRepsText { get; set; } = string.Empty;
     public string LoggedWeightText { get; set; } = string.Empty;
@@ -45,6 +58,9 @@ public partial class WorkoutExerciseItem : ObservableObject
     public string LoggedDistanceKmText { get; set; } = string.Empty;
     public string LoggedPaceText { get; set; } = string.Empty;
     public string LoggedHeartRateText { get; set; } = string.Empty;
+    public string LoggedPowerWattsText { get; set; } = string.Empty;
+    public string LoggedCadenceRpmText { get; set; } = string.Empty;
+    public string LoggedEffortText { get; set; } = string.Empty;
 
     public string DetailsButtonText => IsExpanded ? "Hide" : "Info";
     public string LogButtonText => IsLogged ? "Update" : "Log";

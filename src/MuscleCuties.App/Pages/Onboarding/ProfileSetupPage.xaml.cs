@@ -53,7 +53,7 @@ public partial class ProfileSetupPage : ContentPage
     {
         try
         {
-            var imagePath = await ProfileImageFilePicker.PickAndStoreAsync();
+            var imagePath = await ProfileImagePicker.PickAndStoreAsync();
             if (!string.IsNullOrWhiteSpace(imagePath))
                 viewModel.SetProfileImage(imagePath);
         }

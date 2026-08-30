@@ -3,6 +3,7 @@
     x:Class="MuscleCuties.App.Pages.Profile.ProfilePersonalInfoPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
     x:DataType="vm:ProfilePersonalInfoViewModel"
     Shell.NavBarIsVisible="False">
@@ -24,7 +25,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="ACCOUNT" Style="{StaticResource EyebrowLabel}" />
+                    <sharedControls:IconSectionHeader Text="ACCOUNT" IconGlyph="PersonPill24" />
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Display name" Style="{StaticResource FormFieldLabel}" />
                         <Label Text="Shown in greetings and profile areas." Style="{StaticResource FormFieldHint}" />
@@ -57,7 +58,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="BODY METRICS" Style="{StaticResource EyebrowLabel}" />
+                    <sharedControls:IconSectionHeader Text="BODY METRICS" IconGlyph="Target24" />
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <VerticalStackLayout Grid.Column="0" Spacing="5">
                             <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
@@ -82,7 +83,7 @@
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                         <VerticalStackLayout Spacing="3">
-                            <Label Text="HEALTH SYNC" Style="{StaticResource EyebrowLabel}" />
+                            <sharedControls:IconSectionHeader Text="HEALTH SYNC" IconGlyph="DocumentHeartPulse24" />
                             <Label Text="Connect weekly steps and sleep to refine calories, readiness, and recovery." Style="{StaticResource FormFieldHint}" />
                         </VerticalStackLayout>
                         <Border
@@ -133,7 +134,13 @@
                                     <Label Text="Apple Health" Style="{StaticResource CardTitle}" />
                                     <Label Text="Steps and sleep from iPhone." Style="{StaticResource CaptionLabel}" />
                                 </VerticalStackLayout>
-                                <Label Grid.Column="2" Text="›" FontSize="22" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                                <Image
+                                    Grid.Column="2"
+                                    Source="{Binding Source='ChevronRight24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                    WidthRequest="18"
+                                    HeightRequest="18"
+                                    Aspect="AspectFit"
+                                    VerticalOptions="Center" />
                             </Grid>
                         </Border>
 
@@ -153,7 +160,13 @@
                                     <Label Text="Whoop" Style="{StaticResource CardTitle}" />
                                     <Label Text="Direct recovery and sleep sync." Style="{StaticResource CaptionLabel}" />
                                 </VerticalStackLayout>
-                                <Label Grid.Column="2" Text="›" FontSize="22" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                                <Image
+                                    Grid.Column="2"
+                                    Source="{Binding Source='ChevronRight24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                    WidthRequest="18"
+                                    HeightRequest="18"
+                                    Aspect="AspectFit"
+                                    VerticalOptions="Center" />
                             </Grid>
                         </Border>
                     </VerticalStackLayout>
@@ -167,7 +180,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="CYCLE LOGGING" Style="{StaticResource EyebrowLabel}" />
+                    <sharedControls:IconSectionHeader Text="CYCLE LOGGING" IconGlyph="HeartCircle24" />
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Logging method" Style="{StaticResource FormFieldLabel}" />
                         <Label Text="Choose how cycle phase changes will be recorded. Flo and lunar are planned connectors." Style="{StaticResource FormFieldHint}" />

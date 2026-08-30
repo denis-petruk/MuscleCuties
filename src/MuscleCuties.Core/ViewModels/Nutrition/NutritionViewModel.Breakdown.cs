@@ -67,9 +67,9 @@ public partial class NutritionViewModel
     {
         ApplyBreakdown(
             "Daily nutrition",
-            HasMeals ? "All meals logged today" : "No meals logged today",
             new MacroNutrients(ConsumedCalories, ConsumedProtein, ConsumedCarbs, ConsumedFats),
-            Micronutrients);
+            Micronutrients,
+            null);
     }
 
     private void OpenMealBreakdown(MealItem? meal)
@@ -79,21 +79,21 @@ public partial class NutritionViewModel
 
         ApplyBreakdown(
             $"{meal.MealType} breakdown",
-            $"{meal.Time} · {meal.Name}",
             meal.Macros,
-            meal.Micronutrients);
+            meal.Micronutrients,
+            meal);
     }
 
     private void ApplyBreakdown(
         string title,
-        string subtitle,
         MacroNutrients macros,
-        IEnumerable<DailyMicronutrientItem> micronutrients)
+        IEnumerable<DailyMicronutrientItem> micronutrients,
+        MealItem? meal)
     {
         var nutrients = micronutrients.ToList();
 
+        SelectedBreakdownMeal = meal;
         SelectedBreakdownTitle = title;
-        SelectedBreakdownSubtitle = subtitle;
         SelectedBreakdownCaloriesText = $"{macros.Calories:N0} kcal";
         SelectedBreakdownMacrosText = macros.ToMacroText();
         SelectedBreakdownFiberText = BuildFiberText(nutrients);
@@ -109,6 +109,17 @@ public partial class NutritionViewModel
     private void CloseBreakdownModal()
     {
         IsBreakdownModalVisible = false;
+        SelectedBreakdownMeal = null;
+    }
+
+    private async Task EditSelectedBreakdownMealAsync()
+    {
+        var meal = SelectedBreakdownMeal;
+        if (meal is null)
+            return;
+
+        CloseBreakdownModal();
+        await EditMealAsync(meal);
     }
 
     private static IEnumerable<MacroBreakdownItem> BuildMacroBreakdownItems(MacroNutrients macros)

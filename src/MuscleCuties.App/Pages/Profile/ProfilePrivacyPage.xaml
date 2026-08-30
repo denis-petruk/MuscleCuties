@@ -26,6 +26,12 @@
                 BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
                     <VerticalStackLayout Spacing="10">
+                        <Image
+                            Source="{Binding Source='ShieldCheckmark24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                            WidthRequest="24"
+                            HeightRequest="24"
+                            Aspect="AspectFit"
+                            HorizontalOptions="Start" />
                         <Label Text="Your beta data stays private." Style="{StaticResource SectionTitle}" />
                         <Label
                             Text="Planning help, not medical advice. Your tester notes and app data are not sold, advertised with, or shared beyond the handsome, jacked developer."
@@ -41,126 +47,171 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="DATA BOUNDARIES" Style="{StaticResource EyebrowLabel}" />
+                    <sharedControls:IconSectionHeader Text="DATA BOUNDARIES" IconGlyph="ShieldLock24" />
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
-                        <Grid ColumnDefinitions="94,*,54" ColumnSpacing="10">
+                        <Grid ColumnDefinitions="94,*" ColumnSpacing="10">
                             <Label Text="Profile" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
-                            <ProgressBar Progress="0.45" ProgressColor="{StaticResource Primary}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}" VerticalOptions="Center" Grid.Column="1" />
-                            <Label Text="Local" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" Grid.Column="2" />
+                            <Label
+                                Grid.Column="1"
+                                Text="Stored locally for account, settings, and planning."
+                                Style="{StaticResource CaptionLabel}"
+                                VerticalOptions="Center" />
                         </Grid>
-                        <Grid Grid.Row="1" ColumnDefinitions="94,*,54" ColumnSpacing="10">
+                        <Grid Grid.Row="1" ColumnDefinitions="94,*" ColumnSpacing="10">
                             <Label Text="Health" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
-                            <ProgressBar Progress="0.28" ProgressColor="{StaticResource Primary}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}" VerticalOptions="Center" Grid.Column="1" />
-                            <Label Text="Averages" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" Grid.Column="2" />
+                            <Label
+                                Grid.Column="1"
+                                Text="Weekly averages only when you connect a provider."
+                                Style="{StaticResource CaptionLabel}"
+                                VerticalOptions="Center" />
                         </Grid>
-                        <Grid Grid.Row="2" ColumnDefinitions="94,*,54" ColumnSpacing="10">
+                        <Grid Grid.Row="2" ColumnDefinitions="94,*" ColumnSpacing="10">
                             <Label Text="Feedback" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
-                            <ProgressBar Progress="0.18" ProgressColor="{StaticResource Primary}" BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}" VerticalOptions="Center" Grid.Column="1" />
-                            <Label Text="Email" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" Grid.Column="2" />
+                            <Label
+                                Grid.Column="1"
+                                Text="Sent by email only when you choose to send it."
+                                Style="{StaticResource CaptionLabel}"
+                                VerticalOptions="Center" />
                         </Grid>
                     </Grid>
                 </VerticalStackLayout>
             </Border>
 
             <Border Style="{StaticResource CardPrimary}">
-                <Grid ColumnDefinitions="34,*" ColumnSpacing="12">
+                <Grid ColumnDefinitions="36,*,28" ColumnSpacing="12">
                     <Border
-                        WidthRequest="28"
-                        HeightRequest="28"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                         StrokeThickness="0"
-                        StrokeShape="RoundRectangle 14"
-                        BackgroundColor="{StaticResource Primary}">
+                        StrokeShape="Ellipse"
+                        WidthRequest="32"
+                        HeightRequest="32"
+                        VerticalOptions="Start">
                         <Label
                             Text="1"
-                            TextColor="{StaticResource White}"
-                            FontAttributes="Bold"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
+                            Style="{StaticResource FormFieldLabel}"
+                            HorizontalTextAlignment="Center"
+                            VerticalTextAlignment="Center" />
                     </Border>
-                    <VerticalStackLayout Grid.Column="1" Spacing="7">
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="4">
                         <Label Text="Not Medical Direction" Style="{StaticResource CardTitle}" />
                         <Label
                             Text="The app does not diagnose, treat, prevent, or replace advice from a licensed clinician."
                             Style="{StaticResource BodyLabel}" />
                     </VerticalStackLayout>
+
+                    <Image
+                        Grid.Column="2"
+                        Source="{Binding Source='Stethoscope24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                        WidthRequest="24"
+                        HeightRequest="24"
+                        Aspect="AspectFit"
+                        VerticalOptions="Start" />
                 </Grid>
             </Border>
 
             <Border Style="{StaticResource CardPrimary}">
-                <Grid ColumnDefinitions="34,*" ColumnSpacing="12">
+                <Grid ColumnDefinitions="36,*,28" ColumnSpacing="12">
                     <Border
-                        WidthRequest="28"
-                        HeightRequest="28"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                         StrokeThickness="0"
-                        StrokeShape="RoundRectangle 14"
-                        BackgroundColor="{StaticResource Primary}">
+                        StrokeShape="Ellipse"
+                        WidthRequest="32"
+                        HeightRequest="32"
+                        VerticalOptions="Start">
                         <Label
                             Text="2"
-                            TextColor="{StaticResource White}"
-                            FontAttributes="Bold"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
+                            Style="{StaticResource FormFieldLabel}"
+                            HorizontalTextAlignment="Center"
+                            VerticalTextAlignment="Center" />
                     </Border>
-                    <VerticalStackLayout Grid.Column="1" Spacing="7">
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="4">
                         <Label Text="Private Beta" Style="{StaticResource CardTitle}" />
                         <Label
                             Text="Tester information is not sold, shared with advertisers, or passed to outside teams. Feedback is private to the handsome, jacked developer."
                             Style="{StaticResource BodyLabel}" />
                     </VerticalStackLayout>
+
+                    <Image
+                        Grid.Column="2"
+                        Source="{Binding Source='ShieldLock24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                        WidthRequest="24"
+                        HeightRequest="24"
+                        Aspect="AspectFit"
+                        VerticalOptions="Start" />
                 </Grid>
             </Border>
 
             <Border Style="{StaticResource CardPrimary}">
-                <Grid ColumnDefinitions="34,*" ColumnSpacing="12">
+                <Grid ColumnDefinitions="36,*,28" ColumnSpacing="12">
                     <Border
-                        WidthRequest="28"
-                        HeightRequest="28"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                         StrokeThickness="0"
-                        StrokeShape="RoundRectangle 14"
-                        BackgroundColor="{StaticResource Primary}">
+                        StrokeShape="Ellipse"
+                        WidthRequest="32"
+                        HeightRequest="32"
+                        VerticalOptions="Start">
                         <Label
                             Text="3"
-                            TextColor="{StaticResource White}"
-                            FontAttributes="Bold"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
+                            Style="{StaticResource FormFieldLabel}"
+                            HorizontalTextAlignment="Center"
+                            VerticalTextAlignment="Center" />
                     </Border>
-                    <VerticalStackLayout Grid.Column="1" Spacing="7">
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="4">
                         <Label Text="What Can Be Stored" Style="{StaticResource CardTitle}" />
                         <Label
                             Text="The app may store your profile, cycle records, nutrition logs, workout plans, settings, and feedback you choose to send."
                             Style="{StaticResource BodyLabel}" />
                     </VerticalStackLayout>
+
+                    <Image
+                        Grid.Column="2"
+                        Source="{Binding Source='HomeDatabase24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                        WidthRequest="24"
+                        HeightRequest="24"
+                        Aspect="AspectFit"
+                        VerticalOptions="Start" />
                 </Grid>
             </Border>
 
             <Border Style="{StaticResource CardPrimary}">
-                <Grid ColumnDefinitions="34,*" ColumnSpacing="12">
+                <Grid ColumnDefinitions="36,*,28" ColumnSpacing="12">
                     <Border
-                        WidthRequest="28"
-                        HeightRequest="28"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                         StrokeThickness="0"
-                        StrokeShape="RoundRectangle 14"
-                        BackgroundColor="{StaticResource Primary}">
+                        StrokeShape="Ellipse"
+                        WidthRequest="32"
+                        HeightRequest="32"
+                        VerticalOptions="Start">
                         <Label
                             Text="4"
-                            TextColor="{StaticResource White}"
-                            FontAttributes="Bold"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
+                            Style="{StaticResource FormFieldLabel}"
+                            HorizontalTextAlignment="Center"
+                            VerticalTextAlignment="Center" />
                     </Border>
-                    <VerticalStackLayout Grid.Column="1" Spacing="7">
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="4">
                         <Label Text="Health Sync" Style="{StaticResource CardTitle}" />
                         <Label
-                            Text="If you connect Apple Health, Health Connect, or Whoop, MuscleCuties uses weekly summaries for planning: steps, sleep, sleep quality, resting heart rate, and HRV when available. Raw samples are not kept in the app database."
+                            Text="If you connect Apple Health, Health Connect, or Whoop, MuscleCuties uses weekly summaries for planning. Readiness is calculated on your device from these weekly averages and is not shared with wearable providers."
                             Style="{StaticResource BodyLabel}" />
                     </VerticalStackLayout>
+
+                    <Image
+                        Grid.Column="2"
+                        Source="{Binding Source='DocumentHeartPulse24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                        WidthRequest="24"
+                        HeightRequest="24"
+                        Aspect="AspectFit"
+                        VerticalOptions="Start" />
                 </Grid>
             </Border>
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="YOUR CONTROL" Style="{StaticResource EyebrowLabel}" />
+                    <sharedControls:IconSectionHeader Text="YOUR CONTROL" IconGlyph="ShieldTask24" />
                     <Label Text="You can edit your app information from Profile." Style="{StaticResource CardTitle}" />
                     <BoxView />
                     <Label
@@ -171,7 +222,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="CARE NOTE" Style="{StaticResource EyebrowLabel}" />
+                    <sharedControls:IconSectionHeader Text="CARE NOTE" IconGlyph="ShieldError24" />
                     <Label
                         Text="Cycle and nutrition patterns can be useful signals. Unusual pain, bleeding, fainting, severe fatigue, or sudden health changes should be discussed with a qualified medical professional."
                         Style="{StaticResource BodyLabel}" />

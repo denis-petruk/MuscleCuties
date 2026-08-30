@@ -9,4 +9,7 @@ public sealed record WorkoutExerciseLogInput(
     int? CompletedDurationSeconds = null,
     float? DistanceKm = null,
     int? AverageHeartRateBpm = null,
-    int? PaceSecondsPerKm = null);
+    int? PaceSecondsPerKm = null,
+    int? PowerWatts = null,
+    int? CadenceRpm = null,
+    int? EffortRating = null);

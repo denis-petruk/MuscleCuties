@@ -12,10 +12,10 @@ public class QuizViewModelTests
 {
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
     private readonly IQuizService _quizService = Substitute.For<IQuizService>();
-    private bool _navigatedToProfileSetup;
+    private bool _navigatedToDashboard;
 
     private QuizViewModel CreateViewModel() =>
-        new(_authService, _quizService, () => _navigatedToProfileSetup = true);
+        new(_authService, _quizService, () => _navigatedToDashboard = true);
 
     private static List<QuizQuestion> CreateQuestions(int count)
     {
@@ -37,21 +37,8 @@ public class QuizViewModelTests
         return questions;
     }
 
-    private static List<QuizQuestion> CreateCycleTrackingQuestions() =>
+    private static List<QuizQuestion> CreateCyclePhaseQuestions() =>
     [
-        new()
-        {
-            Id = 1,
-            Question = "How would you like to track your cycle?",
-            OrderIndex = -2,
-            QuestionType = QuizQuestionType.CycleTrackingMode,
-            Answers =
-            [
-                new QuizAnswer { Id = 1, QuestionId = 1, Text = "Predict", OrderIndex = 1, MappedValue = (int)CycleTrackingMode.AutomaticPrediction },
-                new QuizAnswer { Id = 2, QuestionId = 1, Text = "Connect Flo", OrderIndex = 2, MappedValue = (int)CycleTrackingMode.FloConnector },
-                new QuizAnswer { Id = 3, QuestionId = 1, Text = "Manual", OrderIndex = 3, MappedValue = (int)CycleTrackingMode.ManualPhaseLogging }
-            ]
-        },
         new()
         {
             Id = 2,
@@ -158,57 +145,55 @@ public class QuizViewModelTests
         await vm.NextCommand.ExecuteAsync(null);
 
         await _quizService.Received(1).SaveAnswersAsync(1, Arg.Is<List<UserQuizResponse>>(responses => responses.Count == 2));
-        Assert.True(_navigatedToProfileSetup);
+        Assert.True(_navigatedToDashboard);
     }
 
     [Fact]
-    public async Task ManualCycleTracking_ShowsCurrentPhaseQuestionBeforeGoal()
+    public void BeforeFirstLoad_ShowsLoadingUntilPageStartsLoad()
     {
-        var questions = CreateCycleTrackingQuestions();
+        var vm = CreateViewModel();
+
+        Assert.True(vm.IsLoading);
+        Assert.False(vm.HasNoQuestions);
+    }
+
+    [Fact]
+    public async Task LoadQuestions_WhenEmpty_ShowsNoQuestionsStateAfterLoad()
+    {
+        _quizService.GetOnboardingQuestionsAsync().Returns([]);
+
+        var vm = CreateViewModel();
+        await vm.LoadQuestionsCommand.ExecuteAsync(null);
+
+        Assert.True(vm.HasLoadedQuestions);
+        Assert.False(vm.IsLoading);
+        Assert.True(vm.HasNoQuestions);
+    }
+
+    [Fact]
+    public async Task LoadQuestions_IncludesCurrentPhaseQuestionBeforeGoal()
+    {
+        var questions = CreateCyclePhaseQuestions();
         _quizService.GetOnboardingQuestionsAsync().Returns(questions);
 
         var vm = CreateViewModel();
         await vm.LoadQuestionsCommand.ExecuteAsync(null);
 
         Assert.Equal(2, vm.Questions.Count);
-        Assert.Equal(QuizQuestionType.CycleTrackingMode, vm.CurrentQuestion!.QuestionType);
-
-        vm.SelectAnswerCommand.Execute(vm.CurrentAnswers.Single(answer =>
-            answer.Answer.MappedValue == (int)CycleTrackingMode.ManualPhaseLogging));
-        await vm.NextCommand.ExecuteAsync(null);
-
-        Assert.Equal(3, vm.Questions.Count);
         Assert.Equal(QuizQuestionType.CurrentCyclePhase, vm.CurrentQuestion!.QuestionType);
     }
 
     [Fact]
-    public async Task AutomaticCycleTracking_SkipsCurrentPhaseQuestion()
+    public async Task Next_FromCurrentPhaseQuestion_AdvancesToGoal()
     {
-        var questions = CreateCycleTrackingQuestions();
+        var questions = CreateCyclePhaseQuestions();
         _quizService.GetOnboardingQuestionsAsync().Returns(questions);
 
         var vm = CreateViewModel();
         await vm.LoadQuestionsCommand.ExecuteAsync(null);
 
         vm.SelectAnswerCommand.Execute(vm.CurrentAnswers.Single(answer =>
-            answer.Answer.MappedValue == (int)CycleTrackingMode.AutomaticPrediction));
-        await vm.NextCommand.ExecuteAsync(null);
-
-        Assert.Equal(2, vm.Questions.Count);
-        Assert.Equal(QuizQuestionType.Goal, vm.CurrentQuestion!.QuestionType);
-    }
-
-    [Fact]
-    public async Task FloCycleTracking_SkipsCurrentPhaseQuestion()
-    {
-        var questions = CreateCycleTrackingQuestions();
-        _quizService.GetOnboardingQuestionsAsync().Returns(questions);
-
-        var vm = CreateViewModel();
-        await vm.LoadQuestionsCommand.ExecuteAsync(null);
-
-        vm.SelectAnswerCommand.Execute(vm.CurrentAnswers.Single(answer =>
-            answer.Answer.MappedValue == (int)CycleTrackingMode.FloConnector));
+            answer.Answer.MappedValue == (int)CyclePhase.Ovulatory));
         await vm.NextCommand.ExecuteAsync(null);
 
         Assert.Equal(2, vm.Questions.Count);

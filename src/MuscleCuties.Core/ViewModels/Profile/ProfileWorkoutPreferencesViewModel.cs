@@ -27,25 +27,9 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
 
     public bool IsStrengthStyleVisible => WorkoutActivityOptions.Any(option =>
-        IsStrengthActivity(option.ActivityType) && option.IsSelected);
-
-    public string SelectedWorkoutActivitiesText
-    {
-        get
-        {
-            var selected = WorkoutActivityOptions
-                .Where(option => option.IsSelected)
-                .Select(option => option.Title)
-                .ToList();
-
-            if (selected.Count == 0)
-                return "Pick at least one favorite way to move.";
-
-            var preview = selected.Take(3).ToList();
-            var suffix = selected.Count > preview.Count ? $" +{selected.Count - preview.Count}" : string.Empty;
-            return $"{string.Join(", ", preview)}{suffix}";
-        }
-    }
+        WorkoutActivityPreferences.IsStrengthActivity(option.ActivityType) && option.IsSelected);
+    public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions =>
+        WorkoutActivityOptionCatalog.BuildGroups(WorkoutActivityOptions);
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand SaveCommand { get; }
@@ -88,7 +72,6 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
             WorkoutActivityOptions = WorkoutActivityOptionCatalog.Build(selectedTypes);
             StrengthTrainingStyleOptions =
                 StrengthTrainingStyleOptionCatalog.Build(SelectedStrengthTrainingStyle);
-            OnPropertyChanged(nameof(SelectedWorkoutActivitiesText));
             OnPropertyChanged(nameof(IsStrengthStyleVisible));
         }
         finally
@@ -108,11 +91,13 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
                 .Select(option => option.ActivityType)
                 .ToList();
 
-            if (selectedTypes.Count == 0)
+            if (!selectedTypes.Any(WorkoutActivityPreferences.IsStrengthActivity))
             {
-                StatusMessage = "Choose at least one activity so your plan stays personal.";
+                StatusMessage = "Choose one strength style so your plan stays personal.";
                 return;
             }
+
+            selectedTypes = WorkoutActivityPreferences.EnsureRequired(selectedTypes).ToList();
 
             var userId = await _authService.GetCurrentUserIdAsync();
             var profile = await _userRepository.GetProfileAsync(userId);
@@ -155,9 +140,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
         if (item is null)
             return;
 
-        item.IsSelected = !item.IsSelected;
-        StatusMessage = string.Empty;
-        OnPropertyChanged(nameof(SelectedWorkoutActivitiesText));
+        StatusMessage = WorkoutActivityOptionCatalog.ToggleSelection(WorkoutActivityOptions, item);
+        OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
         OnPropertyChanged(nameof(IsStrengthStyleVisible));
     }
 
@@ -175,7 +159,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
 
     partial void OnWorkoutActivityOptionsChanged(ObservableCollection<WorkoutActivityOptionItem> value)
     {
-        OnPropertyChanged(nameof(SelectedWorkoutActivitiesText));
+        OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
         OnPropertyChanged(nameof(IsStrengthStyleVisible));
     }
 
@@ -184,9 +168,4 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
         foreach (var option in StrengthTrainingStyleOptions)
             option.IsSelected = option.Style == value;
     }
-
-    private static bool IsStrengthActivity(WorkoutActivityType activityType) =>
-        activityType is WorkoutActivityType.StrengthHighIntensity or
-            WorkoutActivityType.HighVolumeStrength or
-            WorkoutActivityType.RockClimbing;
 }

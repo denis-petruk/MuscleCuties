@@ -28,7 +28,7 @@
                             HeightRequest="88" />
                         <Border
                             StrokeShape="Ellipse"
-                            Stroke="{Binding ReadinessScore, Converter={StaticResource ReadinessScoreToColorConverter}}"
+                            Stroke="{Binding ReadinessScore, Converter={StaticResource ScoreToColorConverter}}"
                             StrokeThickness="7"
                             BackgroundColor="Transparent"
                             WidthRequest="88"
@@ -38,7 +38,7 @@
                                 Text="{Binding ReadinessScore}"
                                 FontSize="22"
                                 FontAttributes="Bold"
-                                TextColor="{Binding ReadinessScore, Converter={StaticResource ReadinessScoreToColorConverter}}"
+                                TextColor="{Binding ReadinessScore, Converter={StaticResource ScoreToColorConverter}}"
                                 HorizontalOptions="Center" />
                             <Label
                                 Text="READY"
@@ -78,7 +78,7 @@
                             HeightRequest="88" />
                         <Border
                             StrokeShape="Ellipse"
-                            Stroke="{Binding RecoveryScore, Converter={StaticResource RecoveryScoreToColorConverter}}"
+                            Stroke="{Binding RecoveryScore, Converter={StaticResource ScoreToColorConverter}}"
                             StrokeThickness="7"
                             BackgroundColor="Transparent"
                             WidthRequest="88"
@@ -88,7 +88,7 @@
                                 Text="{Binding RecoveryScore}"
                                 FontSize="22"
                                 FontAttributes="Bold"
-                                TextColor="{Binding RecoveryScore, Converter={StaticResource RecoveryScoreToColorConverter}}"
+                                TextColor="{Binding RecoveryScore, Converter={StaticResource ScoreToColorConverter}}"
                                 HorizontalOptions="Center" />
                             <Label
                                 Text="RECOV"

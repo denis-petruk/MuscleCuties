@@ -21,13 +21,13 @@ namespace MuscleCuties.Core.Tests.ViewModels.Auth;
 public class RegisterViewModelTests
 {
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
-    private bool _navigatedToQuiz;
+    private bool _navigatedToProfileSetup;
 
     private RegisterViewModel CreateViewModel() =>
-        new(_authService, () => _navigatedToQuiz = true, () => { });
+        new(_authService, () => _navigatedToProfileSetup = true, () => { });
 
     [Fact]
-    public async Task RegisterAsync_ValidCredentials_NavigatesToQuiz()
+    public async Task RegisterAsync_ValidCredentials_NavigatesToProfileSetup()
     {
         var user = new User { Id = 1, Email = "new@test.com", PasswordHash = "hash" };
         _authService.RegisterAsync("new@test.com", "Pass123!").Returns(user);
@@ -38,7 +38,7 @@ public class RegisterViewModelTests
         vm.ConfirmPassword = "Pass123!";
         await vm.RegisterCommand.ExecuteAsync(null);
 
-        Assert.True(_navigatedToQuiz);
+        Assert.True(_navigatedToProfileSetup);
         Assert.Empty(vm.ErrorMessage);
     }
 
@@ -53,7 +53,7 @@ public class RegisterViewModelTests
         await vm.RegisterCommand.ExecuteAsync(null);
 
         Assert.Equal("Enter a valid email address.", vm.ErrorMessage);
-        Assert.False(_navigatedToQuiz);
+        Assert.False(_navigatedToProfileSetup);
         await _authService.DidNotReceive().RegisterAsync(Arg.Any<string>(), Arg.Any<string>());
     }
 
@@ -68,7 +68,7 @@ public class RegisterViewModelTests
         await vm.RegisterCommand.ExecuteAsync(null);
 
         Assert.Equal(AuthInputValidator.PasswordRequirementsMessage, vm.ErrorMessage);
-        Assert.False(_navigatedToQuiz);
+        Assert.False(_navigatedToProfileSetup);
         await _authService.DidNotReceive().RegisterAsync(Arg.Any<string>(), Arg.Any<string>());
     }
 
@@ -82,7 +82,7 @@ public class RegisterViewModelTests
         await vm.RegisterCommand.ExecuteAsync(null);
 
         Assert.Equal("Passwords do not match", vm.ErrorMessage);
-        Assert.False(_navigatedToQuiz);
+        Assert.False(_navigatedToProfileSetup);
         await _authService.DidNotReceive().RegisterAsync(Arg.Any<string>(), Arg.Any<string>());
     }
 
@@ -98,6 +98,6 @@ public class RegisterViewModelTests
         await vm.RegisterCommand.ExecuteAsync(null);
 
         Assert.Equal("Registration failed", vm.ErrorMessage);
-        Assert.False(_navigatedToQuiz);
+        Assert.False(_navigatedToProfileSetup);
     }
 }

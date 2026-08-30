@@ -71,36 +71,49 @@ public partial class ProfileViewModel : ObservableObject
         {
             new()
             {
+                IconGlyph = "PersonPill24",
                 Title = "Personal Info",
                 Subtitle = "Name, email, body metrics, cycle, training basics",
                 Route = "ProfilePersonalInfoPage"
             },
             new()
             {
+                IconGlyph = "Food24",
                 Title = "Nutrition Settings",
                 Subtitle = "Dietary preferences, nutrition goal, custom macro and micro targets",
                 Route = "ProfileNutritionSettingsPage"
             },
             new()
             {
-                Title = "Workout Preferences",
-                Subtitle = "Strength, cardio, climbing, yoga, recovery, and favorite movement styles",
+                IconGlyph = "Dumbbell24",
+                Title = "Activity Preferences",
+                Subtitle = "Strength base, optional cardio, climbing, yoga, and recovery choices",
                 Route = "ProfileWorkoutPreferencesPage"
             },
             new()
             {
+                IconGlyph = "DocumentHeartPulse24",
+                Title = "Health Sync",
+                Subtitle = "Apple Health and Whoop readiness inputs",
+                Route = "ProfileHealthSyncPage"
+            },
+            new()
+            {
+                IconGlyph = "ChatBubblesQuestion24",
                 Title = "Feedback",
                 Subtitle = "Send private beta feedback to the handsome, jacked developer",
                 Route = "ProfileFeedbackPage"
             },
             new()
             {
+                IconGlyph = "ChatSettings24",
                 Title = "Units & Display",
                 Subtitle = "Metric or imperial defaults for body, food, and training",
                 Route = "ProfileUnitsDisplayPage"
             },
             new()
             {
+                IconGlyph = "ShieldLock24",
                 Title = "Privacy",
                 Subtitle = "Private beta, no medical advice, no sharing beyond the handsome, jacked developer",
                 Route = "ProfilePrivacyPage"

@@ -18,13 +18,12 @@ public partial class WorkoutPlanner
             return [];
 
         var baseline = ReadPhaseBaseline(snapshot, phase);
-        var preferences = WorkoutActivityPreferences.Parse(profile.PreferredWorkoutActivityTypes).ToHashSet();
-        var hasExplicitPreferences = preferences.Count > 0;
-        if (preferences.Count == 0)
-            preferences.UnionWith(BuildDefaultPreferences(profile));
-
-        if (hasExplicitPreferences && profile.Goal is UserGoal.Strength && !preferences.Any(IsStrengthActivity))
-            preferences.Add(WorkoutActivityType.HighVolumeStrength);
+        var parsedPreferences = WorkoutActivityPreferences.Parse(profile.PreferredWorkoutActivityTypes);
+        var hasExplicitPreferences = parsedPreferences.Count > 0;
+        var preferences = WorkoutActivityPreferences
+            .EnsureRequired(hasExplicitPreferences ? parsedPreferences : WorkoutActivityPreferences.BuildDefaultSelection())
+            .ToHashSet();
+        var hasCardioPreference = preferences.Any(WorkoutActivityPreferences.IsCardioActivity);
 
         var strengthStyle = WorkoutActivityPreferences.ParseStrengthStyle(profile.PreferredWorkoutActivityTypes);
         var preferredTemplates = hasExplicitPreferences
@@ -50,28 +49,11 @@ public partial class WorkoutPlanner
                 phase,
                 profile.Goal,
                 baseline,
-                strengthStyle));
+                strengthStyle,
+                hasCardioPreference));
         }
 
         return selected.Take(trainingDays).ToList();
-    }
-
-    private static IReadOnlySet<WorkoutActivityType> BuildDefaultPreferences(UserProfile profile)
-    {
-        var defaults = new HashSet<WorkoutActivityType>
-        {
-            WorkoutActivityType.HighVolumeStrength,
-            WorkoutActivityType.Cycling,
-            WorkoutActivityType.Yoga
-        };
-
-        if (profile.Goal is UserGoal.FatLoss)
-            defaults.Add(WorkoutActivityType.Hiit);
-
-        if (profile.Goal is UserGoal.Strength)
-            defaults.Add(WorkoutActivityType.StrengthHighIntensity);
-
-        return defaults;
     }
 
     private static IReadOnlyList<SessionTemplate> BuildPreferredTemplates(
@@ -376,9 +358,17 @@ public partial class WorkoutPlanner
         CyclePhase phase,
         UserGoal goal,
         PhaseBaseline baseline,
-        StrengthTrainingStyle strengthStyle)
+        StrengthTrainingStyle strengthStyle,
+        bool hasCardioPreference)
     {
-        var parts = slot.Groups
+        var groups = slot.Groups
+            .Select(group => group is WorkoutType.Cardio && !hasCardioPreference
+                ? WorkoutType.Recovery
+                : group)
+            .Distinct()
+            .ToList();
+
+        var parts = groups
             .Select(group => PickTemplateForGroup(
                 group,
                 candidates,
@@ -529,10 +519,10 @@ public partial class WorkoutPlanner
     {
         var score = goal switch
         {
-            UserGoal.Strength when IsStrengthActivity(template.ActivityType) => 6,
+            UserGoal.Strength when WorkoutActivityPreferences.IsStrengthActivity(template.ActivityType) => 6,
             UserGoal.FatLoss when template.ActivityType is WorkoutActivityType.Hiit or WorkoutActivityType.Running => 7,
-            UserGoal.FatLoss when IsCardioActivity(template.ActivityType) => 5,
-            UserGoal.MuscleTone when IsStrengthActivity(template.ActivityType) => 4,
+            UserGoal.FatLoss when WorkoutActivityPreferences.IsCardioActivity(template.ActivityType) => 5,
+            UserGoal.MuscleTone when WorkoutActivityPreferences.IsStrengthActivity(template.ActivityType) => 4,
             _ => 2
         };
 
@@ -589,17 +579,6 @@ public partial class WorkoutPlanner
             _ => -4
         };
     }
-
-    private static bool IsStrengthActivity(WorkoutActivityType activityType) =>
-        activityType is WorkoutActivityType.StrengthHighIntensity or
-            WorkoutActivityType.HighVolumeStrength or
-            WorkoutActivityType.RockClimbing;
-
-    private static bool IsCardioActivity(WorkoutActivityType activityType) =>
-        activityType is WorkoutActivityType.Hiit or
-            WorkoutActivityType.Cycling or
-            WorkoutActivityType.Running or
-            WorkoutActivityType.Swimming;
 
     private static bool IsAdvancedPhysiqueProfile(UserProfile profile) =>
         profile.TrainingExperienceLevel is TrainingExperienceLevel.Advanced &&

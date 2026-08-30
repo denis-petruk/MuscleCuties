@@ -47,7 +47,7 @@ public sealed class HealthSyncService : IHealthSyncService
     {
         var provider = _providers.FirstOrDefault(item => item.Source == source);
         if (provider is null)
-            return new HealthSyncResult(source, false, null, $"{source.ToDisplayName()} is not wired in this build yet.");
+            return new HealthSyncResult(source, false, null, $"{source.ToDisplayName()} is not available on this device yet.");
 
         if (!await provider.IsAvailableAsync(cancellationToken))
         {

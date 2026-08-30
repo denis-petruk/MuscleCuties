@@ -17,8 +17,7 @@
             <converters:StringToFluentIconImageSourceConverter x:Key="StringToFluentIconImageSourceConverter" />
             <converters:BoolToChevronConverter x:Key="BoolToChevronConverter" />
             <converters:CyclePhaseToTextColorConverter x:Key="CyclePhaseToTextColorConverter" />
-            <converters:ReadinessScoreToColorConverter x:Key="ReadinessScoreToColorConverter" />
-            <converters:RecoveryScoreToColorConverter x:Key="RecoveryScoreToColorConverter" />
+            <converters:ScoreToColorConverter x:Key="ScoreToColorConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
