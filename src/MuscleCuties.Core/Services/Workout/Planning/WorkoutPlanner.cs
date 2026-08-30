@@ -20,6 +20,8 @@ public partial class WorkoutPlanner : IWorkoutPlanner
         "Heavy full body training",
         "Controlled full body training",
         "Balanced strength and cardio training",
+        "Balanced strength training",
+        "Strength-based fat loss training",
         "Balanced recovery training",
         "Advanced physique strength",
         "Peak physique strength",

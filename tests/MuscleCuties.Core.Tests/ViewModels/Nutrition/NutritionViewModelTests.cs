@@ -103,8 +103,8 @@ public class NutritionViewModelTests
         Assert.Equal(30f, vm.ConsumedFats);
         Assert.Equal(CyclePhase.Ovulatory, vm.CurrentPhase);
         Assert.Equal("PHASE FOCUS · OVULATORY", vm.PhaseFocusBadgeText);
-        Assert.Equal("Peak-performance plate", vm.PhaseFocusTitle);
-        Assert.Contains("hydration", vm.PhaseFocusCopy);
+        Assert.Equal("Peak plate", vm.PhaseFocusTitle);
+        Assert.Contains("Hydrate", vm.PhaseFocusCopy);
     }
 
     [Fact]
@@ -449,6 +449,7 @@ public class NutritionViewModelTests
         Assert.Contains("Olive oil", meal.Name);
         Assert.Equal("88 kcal", meal.CaloriesText);
         Assert.Contains("F 10.0g", meal.MacrosText);
+        Assert.Equal("P 0g · C 0g · F 10g", meal.MacrosSummaryText);
         Assert.Equal("0.0g fiber", meal.FiberText);
     }
 
@@ -544,7 +545,7 @@ public class NutritionViewModelTests
 
         Assert.True(vm.IsBreakdownModalVisible);
         Assert.Equal("BREAKFAST breakdown", vm.SelectedBreakdownTitle);
-        Assert.Contains("Loaded meal", vm.SelectedBreakdownSubtitle);
+        Assert.True(vm.CanEditSelectedBreakdown);
         Assert.Equal("300 kcal", vm.SelectedBreakdownCaloriesText);
         Assert.Equal("P 20.0g · C 40.0g · F 6.0g", vm.SelectedBreakdownMacrosText);
     }

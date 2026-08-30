@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Models.Entities.Cycle;
+using MuscleCuties.Core.Diagnostics;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Entities.Workout;
-using MuscleCuties.Core.Data.Sqlite;
 
 namespace MuscleCuties.Core.Data;
 
@@ -47,7 +47,6 @@ public partial class AppDatabase : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
         ConfigureUserDomain(modelBuilder);
         ConfigureQuizDomain(modelBuilder);
         ConfigureCycleDomain(modelBuilder);
@@ -57,9 +56,152 @@ public partial class AppDatabase : DbContext
 
     public async Task InitializeAsync()
     {
-        await Database.EnsureCreatedAsync();
-        await SqliteSchemaMaintenance.RepairAsync(this);
+        AppDebugLog.Write("Database", "InitializeAsync start.");
+        var wasCreated = await Database.EnsureCreatedAsync();
+        AppDebugLog.Write("Database", $"EnsureCreated completed. wasCreated={wasCreated}.");
+
         await SeedReferenceDataAsync();
+        AppDebugLog.Write("Database", "InitializeAsync finished.");
+    }
+
+    public async Task SeedReferenceDataAsync()
+    {
+        AppDebugLog.Write("Database", "SeedReferenceData start.");
+        await TrySeedStepAsync(SeedQuizQuestionsAsync, nameof(SeedQuizQuestionsAsync));
+        await TrySeedStepAsync(SeedStarterFoodItemsAsync, nameof(SeedStarterFoodItemsAsync));
+        await TrySeedStepAsync(SeedSystemMealTemplatesAsync, nameof(SeedSystemMealTemplatesAsync));
+        await TrySeedStepAsync(SeedStarterExercisesAsync, nameof(SeedStarterExercisesAsync));
+        AppDebugLog.Write("Database", "SeedReferenceData finished.");
+    }
+
+    private static async Task TrySeedStepAsync(Func<Task> seedStep, string stepName)
+    {
+        try
+        {
+            AppDebugLog.Write("Database", $"Seed step start: {stepName}.");
+            await seedStep();
+            AppDebugLog.Write("Database", $"Seed step complete: {stepName}.");
+        }
+        catch (Exception ex)
+        {
+            AppDebugLog.Error("Database", ex, $"Seed step failed: {stepName}");
+        }
+    }
+
+    public async Task ResetAndSeedDebugDatabaseAsync()
+    {
+#if DEBUG
+        ChangeTracker.Clear();
+        AppDebugLog.Write("Database", "ResetAndSeedDebugDatabase start.");
+        await Database.EnsureDeletedAsync();
+        await Database.EnsureCreatedAsync();
+        await SeedReferenceDataAsync();
+        ChangeTracker.Clear();
+        AppDebugLog.Write("Database", "ResetAndSeedDebugDatabase finished.");
+#else
+        throw new InvalidOperationException("Debug database reset is only available in DEBUG builds.");
+#endif
+    }
+
+    public override int SaveChanges()
+    {
+        ValidatePendingChanges();
+        return base.SaveChanges();
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        ValidatePendingChanges();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        ValidatePendingChanges();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    public override Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
+    {
+        ValidatePendingChanges();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    private void ValidatePendingChanges()
+    {
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State is not (EntityState.Added or EntityState.Modified))
+                continue;
+
+            ValidateEntity(entry.Entity);
+        }
+    }
+
+    private static void ValidateEntity(object entity)
+    {
+        switch (entity)
+        {
+            case UserProfile profile:
+                Require(profile.Height >= 0, "Profile height cannot be negative.");
+                Require(profile.Weight >= 0, "Profile weight cannot be negative.");
+                Require((int)profile.TrainingExperienceLevel is >= 0 and <= 3, "Training experience is outside the supported range.");
+                Require((int)profile.CycleTrackingMode is >= 0 and <= 3, "Cycle tracking mode is outside the supported range.");
+                Require(profile.WorkoutDaysPerWeek is >= 0 and <= 7, "Workout days per week must be between 0 and 7.");
+                Require(profile.CycleLength is >= 0 and <= 60, "Cycle length must be between 0 and 60 days.");
+                break;
+
+            case CycleLog cycleLog:
+                Require(cycleLog.CycleLength >= 0, "Cycle length cannot be negative.");
+                break;
+
+            case SymptomLog symptomLog:
+                Require(symptomLog.Severity is >= 1 and <= 5, "Symptom severity must be between 1 and 5.");
+                break;
+
+            case MealTemplateEntry mealTemplateEntry:
+                Require(mealTemplateEntry.Grams > 0, "Meal template ingredient grams must be greater than zero.");
+                break;
+
+            case LoggedMealEntry loggedMealEntry:
+                Require(loggedMealEntry.Grams > 0, "Logged meal ingredient grams must be greater than zero.");
+                break;
+
+            case WorkoutDay workoutDay:
+                Require(workoutDay.DayOfWeek is >= 0 and <= 6, "Workout day must be between 0 and 6.");
+                break;
+
+            case WorkoutDayExercise workoutDayExercise:
+                Require(workoutDayExercise.Sets >= 0, "Workout exercise sets cannot be negative.");
+                Require(workoutDayExercise.Reps >= 0, "Workout exercise reps cannot be negative.");
+                Require(workoutDayExercise.DurationSeconds is null or > 0, "Workout exercise duration must be greater than zero.");
+                break;
+
+            case WorkoutLog workoutLog:
+                Require(workoutLog.CompletionPercent is >= 0 and <= 100, "Workout completion must be between 0 and 100 percent.");
+                break;
+
+            case WorkoutExerciseLog exerciseLog:
+                Require(exerciseLog.CompletedSets >= 0, "Completed sets cannot be negative.");
+                Require(exerciseLog.CompletedReps >= 0, "Completed reps cannot be negative.");
+                Require(exerciseLog.WeightKg is null or >= 0, "Workout weight cannot be negative.");
+                Require(exerciseLog.CompletedDurationSeconds is null or >= 0, "Completed duration cannot be negative.");
+                Require(exerciseLog.DistanceKm is null or >= 0, "Workout distance cannot be negative.");
+                Require(exerciseLog.AverageHeartRateBpm is null or >= 0, "Average heart rate cannot be negative.");
+                Require(exerciseLog.PaceSecondsPerKm is null or >= 0, "Workout pace cannot be negative.");
+                Require(exerciseLog.PowerWatts is null or >= 0, "Workout power cannot be negative.");
+                Require(exerciseLog.CadenceRpm is null or >= 0, "Workout cadence cannot be negative.");
+                Require(exerciseLog.EffortRating is null or >= 1 and <= 10, "Effort rating must be between 1 and 10.");
+                break;
+        }
+    }
+
+    private static void Require(bool condition, string message)
+    {
+        if (!condition)
+            throw new InvalidOperationException(message);
     }
 
     private static void ConfigureUserDomain(ModelBuilder modelBuilder)
@@ -93,15 +235,6 @@ public partial class AppDatabase : DbContext
             entity.Property(p => p.EnergyUnit).IsRequired().HasMaxLength(12);
             entity.Property(p => p.NutritionGoalsJson).HasMaxLength(4000);
             entity.Property(p => p.ProfileImagePath).HasMaxLength(1024);
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_UserProfile_Height", "Height >= 0");
-                t.HasCheckConstraint("CK_UserProfile_Weight", "Weight >= 0");
-                t.HasCheckConstraint("CK_UserProfile_TrainingExperienceLevel", "TrainingExperienceLevel >= 0 AND TrainingExperienceLevel <= 3");
-                t.HasCheckConstraint("CK_UserProfile_CycleTrackingMode", "CycleTrackingMode >= 0 AND CycleTrackingMode <= 3");
-                t.HasCheckConstraint("CK_UserProfile_WorkoutDays", "WorkoutDaysPerWeek >= 0 AND WorkoutDaysPerWeek <= 7");
-                t.HasCheckConstraint("CK_UserProfile_CycleLength", "CycleLength >= 0 AND CycleLength <= 60");
-            });
         });
 
         modelBuilder.Entity<UserProfileSnapshot>(entity =>
@@ -165,7 +298,6 @@ public partial class AppDatabase : DbContext
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-            entity.ToTable(t => t.HasCheckConstraint("CK_CycleLog_CycleLength", "CycleLength >= 0"));
         });
 
         modelBuilder.Entity<SymptomLog>(entity =>
@@ -181,7 +313,6 @@ public partial class AppDatabase : DbContext
                 .HasForeignKey(s => s.CycleLogId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.Property(s => s.Notes).HasMaxLength(1000);
-            entity.ToTable(t => t.HasCheckConstraint("CK_SymptomLog_Severity", "Severity >= 1 AND Severity <= 5"));
         });
 
         modelBuilder.Entity<CyclePhaseLog>(entity =>
@@ -262,7 +393,6 @@ public partial class AppDatabase : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.FoodItemId)
                 .OnDelete(DeleteBehavior.Restrict);
-            entity.ToTable(t => t.HasCheckConstraint("CK_MealTemplateEntry_Grams", "Grams > 0"));
         });
 
         modelBuilder.Entity<LoggedMeal>(entity =>
@@ -289,7 +419,6 @@ public partial class AppDatabase : DbContext
                 .WithMany(f => f.LoggedMealEntries)
                 .HasForeignKey(e => e.FoodItemId)
                 .OnDelete(DeleteBehavior.Restrict);
-            entity.ToTable(t => t.HasCheckConstraint("CK_LoggedMealEntry_Grams", "Grams > 0"));
         });
     }
 
@@ -328,7 +457,6 @@ public partial class AppDatabase : DbContext
                 .WithMany(p => p.WorkoutDays)
                 .HasForeignKey(d => d.WorkoutPlanId)
                 .OnDelete(DeleteBehavior.Cascade);
-            entity.ToTable(t => t.HasCheckConstraint("CK_WorkoutDay_DayOfWeek", "DayOfWeek >= 0 AND DayOfWeek <= 6"));
         });
 
         modelBuilder.Entity<WorkoutDayExercise>(entity =>
@@ -342,12 +470,6 @@ public partial class AppDatabase : DbContext
                 .WithMany(e => e.WorkoutExercises)
                 .HasForeignKey(e => e.ExerciseId)
                 .OnDelete(DeleteBehavior.Restrict);
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_WorkoutDayExercise_Sets", "Sets >= 0");
-                t.HasCheckConstraint("CK_WorkoutDayExercise_Reps", "Reps >= 0");
-                t.HasCheckConstraint("CK_WorkoutDayExercise_Duration", "DurationSeconds IS NULL OR DurationSeconds > 0");
-            });
         });
 
         modelBuilder.Entity<WorkoutLog>(entity =>
@@ -362,7 +484,6 @@ public partial class AppDatabase : DbContext
                 .WithMany()
                 .HasForeignKey(l => l.WorkoutDayId)
                 .OnDelete(DeleteBehavior.Restrict);
-            entity.ToTable(t => t.HasCheckConstraint("CK_WorkoutLog_CompletionPercent", "CompletionPercent >= 0 AND CompletionPercent <= 100"));
         });
 
         modelBuilder.Entity<WorkoutExerciseLog>(entity =>
@@ -381,17 +502,6 @@ public partial class AppDatabase : DbContext
                 .WithMany()
                 .HasForeignKey(l => l.ExerciseId)
                 .OnDelete(DeleteBehavior.Restrict);
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_WorkoutExerciseLog_Sets", "CompletedSets >= 0");
-                t.HasCheckConstraint("CK_WorkoutExerciseLog_Reps", "CompletedReps >= 0");
-                t.HasCheckConstraint("CK_WorkoutExerciseLog_Weight", "WeightKg IS NULL OR WeightKg >= 0");
-                t.HasCheckConstraint("CK_WorkoutExerciseLog_Duration", "CompletedDurationSeconds IS NULL OR CompletedDurationSeconds >= 0");
-                t.HasCheckConstraint("CK_WorkoutExerciseLog_Distance", "DistanceKm IS NULL OR DistanceKm >= 0");
-                t.HasCheckConstraint("CK_WorkoutExerciseLog_HeartRate", "AverageHeartRateBpm IS NULL OR AverageHeartRateBpm >= 0");
-                t.HasCheckConstraint("CK_WorkoutExerciseLog_Pace", "PaceSecondsPerKm IS NULL OR PaceSecondsPerKm >= 0");
-            });
         });
     }
-
 }

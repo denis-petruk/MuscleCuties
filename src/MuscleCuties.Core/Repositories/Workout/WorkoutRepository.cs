@@ -157,6 +157,9 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
                     DistanceKm = duplicateExerciseLog.DistanceKm,
                     AverageHeartRateBpm = duplicateExerciseLog.AverageHeartRateBpm,
                     PaceSecondsPerKm = duplicateExerciseLog.PaceSecondsPerKm,
+                    PowerWatts = duplicateExerciseLog.PowerWatts,
+                    CadenceRpm = duplicateExerciseLog.CadenceRpm,
+                    EffortRating = duplicateExerciseLog.EffortRating,
                     CreatedAt = duplicateExerciseLog.CreatedAt
                 });
             }
@@ -179,6 +182,9 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
                     DistanceKm = incomingLog.DistanceKm,
                     AverageHeartRateBpm = incomingLog.AverageHeartRateBpm,
                     PaceSecondsPerKm = incomingLog.PaceSecondsPerKm,
+                    PowerWatts = incomingLog.PowerWatts,
+                    CadenceRpm = incomingLog.CadenceRpm,
+                    EffortRating = incomingLog.EffortRating,
                     CreatedAt = incomingLog.CreatedAt
                 });
                 continue;
@@ -192,6 +198,9 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
             existingExerciseLog.DistanceKm = incomingLog.DistanceKm;
             existingExerciseLog.AverageHeartRateBpm = incomingLog.AverageHeartRateBpm;
             existingExerciseLog.PaceSecondsPerKm = incomingLog.PaceSecondsPerKm;
+            existingExerciseLog.PowerWatts = incomingLog.PowerWatts;
+            existingExerciseLog.CadenceRpm = incomingLog.CadenceRpm;
+            existingExerciseLog.EffortRating = incomingLog.EffortRating;
             existingExerciseLog.CreatedAt = incomingLog.CreatedAt;
         }
 

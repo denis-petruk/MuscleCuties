@@ -37,7 +37,6 @@
 
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Email" Style="{StaticResource FormFieldLabel}" />
-                        <Label Text="Used for login and account recovery." Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry
                                 Placeholder="name@example.com"
@@ -49,7 +48,6 @@
 
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Password" Style="{StaticResource FormFieldLabel}" />
-                        <Label Text="8+ characters with uppercase, lowercase, number, and symbol." Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry
                                 Placeholder="Create password"
@@ -61,7 +59,6 @@
 
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Confirm password" Style="{StaticResource FormFieldLabel}" />
-                        <Label Text="Repeat it once so we know it was typed right." Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry
                                 Placeholder="Confirm password"

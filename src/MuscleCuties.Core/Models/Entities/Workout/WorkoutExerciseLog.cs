@@ -13,6 +13,9 @@ public class WorkoutExerciseLog
     public float? DistanceKm { get; set; }
     public int? AverageHeartRateBpm { get; set; }
     public int? PaceSecondsPerKm { get; set; }
+    public int? PowerWatts { get; set; }
+    public int? CadenceRpm { get; set; }
+    public int? EffortRating { get; set; }
     public DateTime CreatedAt { get; set; }
 
     public WorkoutLog? WorkoutLog { get; set; }

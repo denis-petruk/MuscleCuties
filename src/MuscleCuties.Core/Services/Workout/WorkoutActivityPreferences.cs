@@ -6,6 +6,13 @@ public static class WorkoutActivityPreferences
 {
     private const string StrengthStylePrefix = "StrengthStyle:";
 
+    public static IReadOnlySet<WorkoutActivityType> BuildDefaultSelection() =>
+        new HashSet<WorkoutActivityType>
+        {
+            WorkoutActivityType.HighVolumeStrength,
+            WorkoutActivityType.Yoga
+        };
+
     public static IReadOnlySet<WorkoutActivityType> Parse(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -27,11 +34,39 @@ public static class WorkoutActivityPreferences
         StrengthTrainingStyle strengthTrainingStyle) =>
         string.Join(
             ',',
-            activityTypes
+            EnsureRequired(activityTypes)
                 .Distinct()
                 .OrderBy(activityType => activityType)
                 .Select(activityType => activityType.ToString())
                 .Concat([$"{StrengthStylePrefix}{strengthTrainingStyle}"]));
+
+    public static IReadOnlySet<WorkoutActivityType> EnsureRequired(
+        IEnumerable<WorkoutActivityType> activityTypes)
+    {
+        var selected = activityTypes.ToHashSet();
+
+        if (!selected.Any(IsStrengthActivity))
+            selected.Add(WorkoutActivityType.HighVolumeStrength);
+
+        if (!selected.Any(IsRecoveryActivity))
+            selected.Add(WorkoutActivityType.Yoga);
+
+        return selected;
+    }
+
+    public static bool IsStrengthActivity(WorkoutActivityType activityType) =>
+        activityType is WorkoutActivityType.StrengthHighIntensity or
+            WorkoutActivityType.HighVolumeStrength or
+            WorkoutActivityType.RockClimbing;
+
+    public static bool IsCardioActivity(WorkoutActivityType activityType) =>
+        activityType is WorkoutActivityType.Hiit or
+            WorkoutActivityType.Cycling or
+            WorkoutActivityType.Running or
+            WorkoutActivityType.Swimming;
+
+    public static bool IsRecoveryActivity(WorkoutActivityType activityType) =>
+        activityType is WorkoutActivityType.Yoga;
 
     public static StrengthTrainingStyle ParseStrengthStyle(string? value)
     {

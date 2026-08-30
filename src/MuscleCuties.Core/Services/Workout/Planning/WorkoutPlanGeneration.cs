@@ -16,7 +16,7 @@ public partial class WorkoutPlanner
     private const int HighEnergyThreshold = 4;      // energy >= this => ready for peak load
     private const int MinTrainingDaysPerWeek = 1;
     private const int MaxTrainingDaysPerWeek = 6;
-    private const string RestDayName = "Rest and recovery";
+    private const string RestDayName = "Living happy life";
 
     /// <summary>
     /// Represents where the user's body sits today on the training-readiness spectrum,
@@ -231,6 +231,9 @@ public partial class WorkoutPlanner
     {
         var baseline = ReadPhaseBaseline(snapshot, phase);
         var tier = DetermineIntensityTier(phase, baseline);
+        var hasCardioPreference = WorkoutActivityPreferences
+            .Parse(profile.PreferredWorkoutActivityTypes)
+            .Any(WorkoutActivityPreferences.IsCardioActivity);
 
         if (tier is TrainingIntensityTier.Recovery)
             return "Low intensity recovery training";
@@ -250,14 +253,16 @@ public partial class WorkoutPlanner
             (UserGoal.Strength, TrainingIntensityTier.Peak) => "Peak strength training",
             (UserGoal.Strength, TrainingIntensityTier.Deload) => "Controlled strength training",
             (UserGoal.Strength, _) => "Progressive strength training",
-            (UserGoal.FatLoss, TrainingIntensityTier.Peak) => "Interval conditioning training",
-            (UserGoal.FatLoss, TrainingIntensityTier.Deload) => "Low impact conditioning training",
-            (UserGoal.FatLoss, _) => "Conditioning and strength training",
+            (UserGoal.FatLoss, TrainingIntensityTier.Peak) when hasCardioPreference => "Interval conditioning training",
+            (UserGoal.FatLoss, TrainingIntensityTier.Deload) when hasCardioPreference => "Low impact conditioning training",
+            (UserGoal.FatLoss, _) when hasCardioPreference => "Conditioning and strength training",
+            (UserGoal.FatLoss, _) => "Strength-based fat loss training",
             (UserGoal.MuscleTone, TrainingIntensityTier.Peak) => "Heavy full body training",
             (UserGoal.MuscleTone, TrainingIntensityTier.Deload) => "Controlled full body training",
             (UserGoal.MuscleTone, _) => "Full body hypertrophy training",
             (UserGoal.MaintainHealth, TrainingIntensityTier.Deload) => "Balanced recovery training",
-            _ => "Balanced strength and cardio training"
+            (UserGoal.MaintainHealth, _) when hasCardioPreference => "Balanced strength and cardio training",
+            _ => "Balanced strength training"
         };
     }
 
@@ -350,6 +355,8 @@ public partial class WorkoutPlanner
     // Replaces a 15-branch if-chain with a data table that's easy to scan and extend.
     private static readonly (string[] Keywords, Func<CyclePhase, int> DurationSeconds)[] TimedExerciseDurations =
     [
+        (["Copenhagen Side Plank"], phase => phase is CyclePhase.Menstrual ? 40 : 60),
+        (["Side Plank", "Plank"], phase => phase is CyclePhase.Menstrual ? 45 : 60),
         (["Vinyasa Flow"], phase => phase is CyclePhase.Menstrual ? 1_500 : 1_800),
         (["Slow Flow Yoga"], phase => phase is CyclePhase.Menstrual ? 1_500 : 1_800),
         (["Yoga Flow"], phase => phase is CyclePhase.Menstrual ? 1_500 : 1_800),
@@ -410,7 +417,12 @@ public partial class WorkoutPlanner
     }
 
     private static bool IsTimedExercise(SessionTemplate template, string exerciseName) =>
-        template.IsTimed || template.TimedExerciseNames.Contains(exerciseName, StringComparer.OrdinalIgnoreCase);
+        template.IsTimed ||
+        template.TimedExerciseNames.Contains(exerciseName, StringComparer.OrdinalIgnoreCase) ||
+        IsTimeUnderTensionExercise(exerciseName);
+
+    private static bool IsTimeUnderTensionExercise(string exerciseName) =>
+        ContainsAny(exerciseName, "plank", "copenhagen");
 
     private static int[] BuildSchedule(int trainingDays) =>
         trainingDays switch

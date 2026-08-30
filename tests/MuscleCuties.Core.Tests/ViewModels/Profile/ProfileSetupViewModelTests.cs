@@ -25,13 +25,13 @@ public class ProfileSetupViewModelTests
 {
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
-    private bool _navigatedToDashboard;
+    private bool _navigatedToQuiz;
 
     private ProfileSetupViewModel CreateViewModel() =>
-        new(_authService, _userRepository, () => _navigatedToDashboard = true);
+        new(_authService, _userRepository, () => _navigatedToQuiz = true);
 
     [Fact]
-    public async Task Save_NewProfile_AddsSnapshotCompletesOnboardingAndNavigates()
+    public async Task Save_NewProfile_AddsSnapshotAndNavigatesToQuiz()
     {
         var user = new User { Id = 1, Email = "jane@test.com", PasswordHash = "hash" };
         _authService.GetCurrentUserIdAsync().Returns(1);
@@ -57,8 +57,8 @@ public class ProfileSetupViewModelTests
             s.SnapshotReason == "InitialProfileSetup"));
         await _userRepository.Received(1).UpdateAsync(Arg.Is<User>(u =>
             u.Id == 1 &&
-            u.IsOnboardingComplete));
-        Assert.True(_navigatedToDashboard);
+            !u.IsOnboardingComplete));
+        Assert.True(_navigatedToQuiz);
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class ProfileSetupViewModelTests
         await _userRepository.Received(1).AddSnapshotAsync(Arg.Is<UserProfileSnapshot>(s =>
             s.UserId == 1 &&
             s.SnapshotReason == "ProfileSetup"));
-        Assert.True(_navigatedToDashboard);
+        Assert.True(_navigatedToQuiz);
     }
 
     [Fact]

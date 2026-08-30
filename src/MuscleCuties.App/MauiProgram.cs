@@ -17,6 +17,7 @@ using MuscleCuties.App.Services.Auth;
 using MuscleCuties.App.Services.Health;
 using MuscleCuties.App.Services.Notifications;
 using MuscleCuties.Core.Data;
+using MuscleCuties.Core.Diagnostics;
 using MuscleCuties.Core.Repositories.Common;
 using MuscleCuties.Core.Repositories.Cycle;
 using MuscleCuties.Core.Repositories.Nutrition;
@@ -121,6 +122,7 @@ public static class MauiProgram
         {
             var path = sp.GetRequiredService<IDbPathProvider>().GetDatabasePath();
             opts.UseSqlite($"Filename={path}");
+            AppDebugLog.Write("Database", $"Path: {path}");
         });
 
         // Platform services
@@ -172,15 +174,14 @@ public static class MauiProgram
         // ViewModels — transient so each page gets a fresh instance
         services.AddTransient<LoginViewModel>(sp => new LoginViewModel(
             sp.GetRequiredService<IAuthService>(),
-            sp.GetRequiredService<IQuizService>(),
             () => NavigateTo("//DashboardPage"),
-            () => NavigateTo(nameof(QuizPage)),
+            () => NavigateTo(nameof(ProfileSetupPage)),
             () => NavigateTo(nameof(RegisterPage)),
             sp.GetRequiredService<IAppleSignInService>()));
 
         services.AddTransient<RegisterViewModel>(sp => new RegisterViewModel(
             sp.GetRequiredService<IAuthService>(),
-            () => NavigateTo(nameof(QuizPage)),
+            () => NavigateTo(nameof(ProfileSetupPage)),
             () => NavigateTo(".."),
             sp.GetRequiredService<IAppleSignInService>(),
             () => NavigateTo("//DashboardPage")));
@@ -188,12 +189,12 @@ public static class MauiProgram
         services.AddTransient<QuizViewModel>(sp => new QuizViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IQuizService>(),
-            () => NavigateTo(nameof(ProfileSetupPage))));
+            () => NavigateTo("//DashboardPage")));
 
         services.AddTransient<ProfileSetupViewModel>(sp => new ProfileSetupViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
-            () => NavigateTo("//DashboardPage"),
+            () => NavigateTo(nameof(QuizPage)),
             sp.GetRequiredService<IHealthSyncService>()));
 
         services.AddTransient<DashboardViewModel>(sp => new DashboardViewModel(
@@ -258,6 +259,11 @@ public static class MauiProgram
 
         services.AddTransient<ProfileHealthSyncViewModel>(sp => new ProfileHealthSyncViewModel(
             sp.GetRequiredService<IAuthService>(),
+            sp.GetRequiredService<IUserRepository>(),
+            sp.GetRequiredService<ICycleService>(),
+            sp.GetRequiredService<INutritionService>(),
+            sp.GetRequiredService<IWorkoutService>(),
+            sp.GetRequiredService<IDashboardPlanner>(),
             sp.GetRequiredService<IHealthSyncService>(),
             () => NavigateTo("..")));
 
@@ -297,6 +303,7 @@ public static class MauiProgram
 
 #if DEBUG
         builder.Logging.AddDebug();
+        builder.Logging.AddFilter(DbLoggerCategory.Database.Command.Name, LogLevel.Warning);
 #endif
 
         return builder.Build();
@@ -304,6 +311,20 @@ public static class MauiProgram
 
     private static void NavigateTo(string route)
     {
-        MainThread.BeginInvokeOnMainThread(() => _ = Shell.Current.GoToAsync(route, false));
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            try
+            {
+                AppDebugLog.Write("Navigation", $"GoToAsync start route='{route}'.");
+                await Shell.Current.GoToAsync(route, false);
+                AppDebugLog.Write(
+                    "Navigation",
+                    $"GoToAsync complete route='{route}', current='{Shell.Current.CurrentState?.Location}'.");
+            }
+            catch (Exception ex)
+            {
+                AppDebugLog.Error("Navigation", ex, $"Navigation to '{route}' failed");
+            }
+        });
     }
 }

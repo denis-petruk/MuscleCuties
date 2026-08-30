@@ -13,6 +13,7 @@
 
         <!-- ── Row 0 · Progress + Question header ──────────────────── -->
         <VerticalStackLayout
+            x:Name="QuestionHeader"
             Grid.Row="0"
             Padding="28,56,28,20"
             Spacing="16">
@@ -39,11 +40,20 @@
                 Padding="12,4"
                 HorizontalOptions="Start"
                 IsVisible="{Binding HasQuestion}">
-                <Label
-                    Text="Onboarding Quiz"
-                    Style="{StaticResource EyebrowLabel}"
-                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary},
-                                                Dark={StaticResource TextPrimaryDark}}" />
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                    <Image
+                        Source="{Binding CurrentQuestionIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                        WidthRequest="13"
+                        HeightRequest="13"
+                        Aspect="AspectFit"
+                        VerticalOptions="Center" />
+                    <Label
+                        Grid.Column="1"
+                        Text="QUIZ"
+                        Style="{StaticResource EyebrowLabel}"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary},
+                                                    Dark={StaticResource TextPrimaryDark}}" />
+                </Grid>
             </Border>
 
             <Label
@@ -56,28 +66,42 @@
         <!-- ── Row 1 · Answers / States ─────────────────────────────── -->
         <Grid Grid.Row="1" Padding="28,0">
 
-            <ActivityIndicator
-                IsRunning="{Binding IsLoading}"
-                IsVisible="{Binding IsLoading}"
-                HorizontalOptions="Center"
-                VerticalOptions="Center" />
-
             <VerticalStackLayout
-                IsVisible="{Binding HasNoQuestions}"
-                Spacing="8"
+                x:Name="LoadingStatePanel"
+                Spacing="10"
                 HorizontalOptions="Center"
                 VerticalOptions="Center">
+                <ActivityIndicator
+                    x:Name="LoadingIndicator"
+                    HorizontalOptions="Center" />
                 <Label
-                    Text="No questions available yet"
-                    Style="{StaticResource SectionTitle}"
-                    HorizontalTextAlignment="Center" />
-                <Label
-                    Text="We are working on a better quiz experience."
+                    Text="Getting questions ready"
                     Style="{StaticResource MutedLabel}"
                     HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
 
-            <ScrollView IsVisible="{Binding HasQuestion}">
+            <VerticalStackLayout
+                x:Name="EmptyStatePanel"
+                Spacing="10"
+                HorizontalOptions="Center"
+                VerticalOptions="Center">
+                <Label
+                    Text="{Binding QuestionsStateTitle}"
+                    Style="{StaticResource SectionTitle}"
+                    HorizontalTextAlignment="Center" />
+                <Label
+                    Text="{Binding QuestionsStateMessage}"
+                    Style="{StaticResource MutedLabel}"
+                    HorizontalTextAlignment="Center" />
+                <Button
+                    Text="Try again"
+                    Command="{Binding RetryLoadQuestionsCommand}"
+                    IsVisible="{Binding CanRetryQuestionsLoad}"
+                    Margin="0,8,0,0"
+                    HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <ScrollView x:Name="QuestionScroll">
                 <VerticalStackLayout
                     Spacing="12"
                     BindableLayout.ItemsSource="{Binding CurrentAnswers}">
@@ -113,16 +137,32 @@
                                     </DataTrigger>
                                 </Border.Triggers>
 
-                                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                                <Grid ColumnDefinitions="32, *, Auto" ColumnSpacing="12">
+                                    <Border
+                                        Grid.Column="0"
+                                        WidthRequest="32"
+                                        HeightRequest="32"
+                                        StrokeShape="RoundRectangle 16"
+                                        StrokeThickness="0"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                        VerticalOptions="Center">
+                                        <Image
+                                            Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                            WidthRequest="17"
+                                            HeightRequest="17"
+                                            Aspect="AspectFit"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center" />
+                                    </Border>
 
                                     <Label
-                                        Grid.Column="0"
+                                        Grid.Column="1"
                                         Text="{Binding Answer.Text}"
                                         Style="{StaticResource AccentLabel}"
                                         VerticalOptions="Center" />
 
                                     <Border
-                                        Grid.Column="1"
+                                        Grid.Column="2"
                                         WidthRequest="26"
                                         HeightRequest="26"
                                         StrokeShape="RoundRectangle 13"
@@ -167,12 +207,12 @@
 
         <!-- ── Row 2 · Back + Next actions ──────────────────────────── -->
         <Grid
+            x:Name="ActionPanel"
             Grid.Row="2"
             RowDefinitions="Auto, Auto"
             ColumnDefinitions="Auto, *"
             ColumnSpacing="12"
-            Padding="28,16,28,48"
-            IsVisible="{Binding HasQuestion}">
+            Padding="28,16,28,48">
 
             <Label
                 Grid.Row="0"
@@ -193,9 +233,11 @@
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding BackCommand}" />
                 </Border.GestureRecognizers>
-                <Label
-                    Text="←"
-                    Style="{StaticResource AccentLabel}"
+                <Image
+                    Source="{Binding Source='ChevronLeft24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                    WidthRequest="20"
+                    HeightRequest="20"
+                    Aspect="AspectFit"
                     HorizontalOptions="Center"
                     VerticalOptions="Center" />
             </Border>

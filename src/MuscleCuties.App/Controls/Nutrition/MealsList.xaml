@@ -5,22 +5,38 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:nutritionModels="clr-namespace:MuscleCuties.Core.Models.UI.Nutrition;assembly=MuscleCuties.Core"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
     x:DataType="vm:NutritionViewModel">
 
     <VerticalStackLayout Spacing="14">
-        <Label
+        <sharedControls:IconSectionHeader
             Text="MEALS"
-            Style="{StaticResource EyebrowLabel}"
-            CharacterSpacing="1.2"
+            IconGlyph="BowlChopsticks24"
             Margin="4,6,4,0" />
 
         <Border
             Style="{StaticResource CardPrimary}"
             Padding="16"
             IsVisible="{Binding HasNoMeals}">
-            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="14">
-                <VerticalStackLayout Grid.Column="0" Spacing="4" VerticalOptions="Center">
+            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14">
+                <Border
+                    Grid.Column="0"
+                    WidthRequest="42"
+                    HeightRequest="42"
+                    StrokeShape="RoundRectangle 21"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                    StrokeThickness="0"
+                    VerticalOptions="Center">
+                    <Image
+                        Source="{Binding Source='Food24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                        WidthRequest="20"
+                        HeightRequest="20"
+                        Aspect="AspectFit"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
                     <Label
                         Text="No meals logged yet"
                         Style="{StaticResource CardTitle}"
@@ -31,7 +47,7 @@
                 </VerticalStackLayout>
 
                 <Button
-                    Grid.Column="1"
+                    Grid.Column="2"
                     Text="Log Meal"
                     Command="{Binding OpenAddFoodPanelCommand}"
                     WidthRequest="124"
@@ -63,13 +79,20 @@
                                     StrokeShape="RoundRectangle 12"
                                     BackgroundColor="{StaticResource AccentSurface}"
                                     StrokeThickness="0">
-                                    <Label
-                                        Text="{Binding Time}"
-                                        TextColor="{StaticResource Primary}"
-                                        FontSize="11"
-                                        FontAttributes="Bold"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center" />
+                                    <VerticalStackLayout Spacing="1" HorizontalOptions="Center" VerticalOptions="Center">
+                                        <Image
+                                            Source="{Binding Source='CalendarClock24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                            WidthRequest="13"
+                                            HeightRequest="13"
+                                            Aspect="AspectFit"
+                                            HorizontalOptions="Center" />
+                                        <Label
+                                            Text="{Binding Time}"
+                                            TextColor="{StaticResource Primary}"
+                                            FontSize="10"
+                                            FontAttributes="Bold"
+                                            HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
                                 </Border>
 
                                 <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
@@ -84,10 +107,7 @@
                                         Style="{StaticResource CardTitle}"
                                         FontSize="15" />
                                     <Label
-                                        Text="{Binding MacrosText}"
-                                        Style="{StaticResource CaptionLabel}" />
-                                    <Label
-                                        Text="{Binding FiberText}"
+                                        Text="{Binding MacrosSummaryText}"
                                         Style="{StaticResource CaptionLabel}" />
                                 </VerticalStackLayout>
 
@@ -96,25 +116,25 @@
                                     Spacing="2"
                                     VerticalOptions="Center"
                                     HorizontalOptions="End">
-                                    <Label
-                                        Text="{Binding CaloriesText}"
-                                        Style="{StaticResource CaptionLabel}"
-                                        HorizontalTextAlignment="End" />
-                                    <Label
-                                        Text="View"
-                                        Style="{StaticResource AccentLabel}"
-                                        FontSize="12"
-                                        HorizontalTextAlignment="End" />
-                                    <Button
-                                        Text="Edit"
-                                        Style="{StaticResource ButtonLink}"
-                                        Command="{Binding BindingContext.EditMealCommand, Source={x:Reference Root}}"
-                                        CommandParameter="{Binding .}"
-                                        WidthRequest="54"
-                                        HeightRequest="32"
-                                        MinimumHeightRequest="32"
-                                        Padding="0"
-                                        FontSize="12" />
+                                    <HorizontalStackLayout Spacing="4" HorizontalOptions="End">
+                                        <sharedControls:FitnessIconView
+                                            Icon="Fire"
+                                            IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                            WidthRequest="13"
+                                            HeightRequest="13"
+                                            VerticalOptions="Center" />
+                                        <Label
+                                            Text="{Binding CaloriesText}"
+                                            Style="{StaticResource CaptionLabel}"
+                                            HorizontalTextAlignment="End"
+                                            VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+                                    <Image
+                                        Source="{Binding Source='ChevronRight24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                        WidthRequest="16"
+                                        HeightRequest="16"
+                                        Aspect="AspectFit"
+                                        HorizontalOptions="End" />
                                 </VerticalStackLayout>
                             </Grid>
                             <BoxView Margin="16,0" />

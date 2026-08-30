@@ -40,14 +40,11 @@
                     Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
                     StrokeThickness="1"
                     VerticalOptions="Center">
-                    <Path
-                        Data="M7 5v14M17 5v14M7 11h10M10 5v14M14 5v14"
-                        Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                        StrokeThickness="1.8"
-                        StrokeLineCap="Round"
-                        Aspect="Uniform"
+                    <Image
+                        Source="{Binding CurrentPhaseIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                         WidthRequest="17"
                         HeightRequest="17"
+                        Aspect="AspectFit"
                         HorizontalOptions="Center"
                         VerticalOptions="Center" />
                 </Border>

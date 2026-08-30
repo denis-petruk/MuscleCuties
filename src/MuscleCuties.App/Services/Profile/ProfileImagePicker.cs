@@ -1,14 +1,14 @@
 namespace MuscleCuties.App.Services.Profile;
 
-internal static class ProfileImageFilePicker
+internal static class ProfileImagePicker
 {
     public static async Task<string?> PickAndStoreAsync()
     {
-        var result = await FilePicker.Default.PickAsync(new PickOptions
+        var results = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions
         {
-            PickerTitle = "Choose profile image",
-            FileTypes = FilePickerFileType.Images
+            Title = "Choose profile image"
         });
+        var result = results.FirstOrDefault();
 
         if (result is null)
             return null;

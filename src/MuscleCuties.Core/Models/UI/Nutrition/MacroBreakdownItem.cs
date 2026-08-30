@@ -13,4 +13,11 @@ public class MacroBreakdownItem
     public string AmountText => $"{Grams:N1}g";
     public string CaloriesText => $"{Calories:N0} kcal";
     public string ProgressText => $"{Progress * 100f:N0}%";
+    public string IconGlyph => Name switch
+    {
+        "Protein" => "Dumbbell24",
+        "Carbs" => "FoodGrains24",
+        "Fats" => "Drop24",
+        _ => "Food24"
+    };
 }

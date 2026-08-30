@@ -3,6 +3,7 @@
     x:Class="MuscleCuties.App.Pages.Profile.ProfileWorkoutPreferencesPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
     xmlns:workoutControls="clr-namespace:MuscleCuties.App.Controls.Workout"
     x:DataType="vm:ProfileWorkoutPreferencesViewModel"
@@ -18,28 +19,31 @@
                     Padding="0"
                     Command="{Binding BackCommand}" />
                 <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                    <Label Text="Workout Preferences" Style="{StaticResource SubHeadline}" />
-                    <Label Text="Choose the ways you want your weekly plan to move" Style="{StaticResource CaptionLabel}" />
+                    <Label Text="Activity Preferences" Style="{StaticResource SubHeadline}" />
+                    <Label Text="Choose what your weekly plan can use" Style="{StaticResource CaptionLabel}" />
                 </VerticalStackLayout>
             </Grid>
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="FAVORITE ACTIVITIES" Style="{StaticResource EyebrowLabel}" />
+                    <sharedControls:IconSectionHeader Text="ACTIVITY PREFERENCES" IconGlyph="Dumbbell24" />
                     <Label
-                        Text="These choices shape generated workouts, recovery sessions, and cardio days."
+                        Text="Strength anchors the plan. Cardio only appears when you choose it. Yoga stays as the recovery fallback."
                         Style="{StaticResource MutedLabel}" />
-                    <workoutControls:WorkoutActivityPreferencePicker />
+                    <workoutControls:WorkoutActivityPreferencePicker
+                        ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
+                        ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
                 </VerticalStackLayout>
             </Border>
 
             <Border Style="{StaticResource CardPrimary}" IsVisible="{Binding IsStrengthStyleVisible}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="STRENGTH STYLE" Style="{StaticResource EyebrowLabel}" />
+                    <sharedControls:IconSectionHeader Text="STRENGTH STYLE" IconGlyph="Flash24" />
                     <Label
                         Text="Pick how strength sessions should feel when your phase and energy make room for it."
                         Style="{StaticResource MutedLabel}" />
-                    <workoutControls:StrengthTrainingStylePicker />
+                    <workoutControls:StrengthTrainingStylePicker
+                        SelectStyleCommand="{Binding SelectStrengthTrainingStyleCommand}" />
                 </VerticalStackLayout>
             </Border>
 

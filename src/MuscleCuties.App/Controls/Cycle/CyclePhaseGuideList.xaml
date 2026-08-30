@@ -51,11 +51,12 @@
                                     Opacity="0.75" />
                             </VerticalStackLayout>
 
-                            <Label
+                            <Image
                                 Grid.Column="2"
-                                Text="›"
-                                TextColor="{Binding TextColor}"
-                                FontSize="22"
+                                Source="{Binding Source='ChevronRight24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                WidthRequest="18"
+                                HeightRequest="18"
+                                Aspect="AspectFit"
                                 VerticalOptions="Center"
                                 Opacity="0.6" />
                         </Grid>
