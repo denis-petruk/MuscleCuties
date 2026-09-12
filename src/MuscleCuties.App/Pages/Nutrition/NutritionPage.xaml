@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage
     x:Class="MuscleCuties.App.Pages.Nutrition.NutritionPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -11,7 +12,11 @@
 
     <Grid>
         <ScrollView>
-            <VerticalStackLayout Padding="20,56,20,32" Spacing="14">
+            <VerticalStackLayout
+                Padding="20,56,20,32"
+                Spacing="14"
+                HorizontalOptions="Fill"
+                MaximumWidthRequest="640">
                 <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
                     <VerticalStackLayout Spacing="2" VerticalOptions="Center">
                         <Label
@@ -25,9 +30,9 @@
 
                     <Border
                         Grid.Column="1"
-                        WidthRequest="40"
-                        HeightRequest="40"
-                        StrokeShape="RoundRectangle 20"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        StrokeShape="RoundRectangle 22"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
                         StrokeThickness="0"
                         VerticalOptions="Center"
@@ -50,6 +55,16 @@
 
                 <nutritionControls:NutritionPhaseFocusCard />
                 <nutritionControls:NutritionBalanceCard />
+
+                <Button
+                    Text="Log a meal"
+                    Command="{Binding ToggleAddFoodPanelCommand}"
+                    IsVisible="{Binding IsAddFoodPanelVisible, Converter={StaticResource InvertedBoolConverter}}"
+                    CornerRadius="16"
+                    HeightRequest="48"
+                    FontAttributes="Bold"
+                    Margin="0,4" />
+
                 <nutritionControls:AddMealPanel />
                 <nutritionControls:MealsList />
             </VerticalStackLayout>
@@ -57,8 +72,10 @@
 
         <nutritionControls:FoodSearchModal />
         <nutritionControls:NutritionBreakdownModal />
+        <nutritionControls:MealSuggestionModal />
         <sharedControls:PhaseSaluteOverlay
             x:Name="SaluteOverlay"
             IconSource="{Binding CelebrationIconSource}" />
+        <sharedControls:PageLoadingOverlay />
     </Grid>
 </ContentPage>

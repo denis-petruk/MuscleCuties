@@ -2,7 +2,6 @@ using CommunityToolkit.Maui;
 using MauiIcons.Fluent;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Handlers;
 using MuscleCuties.App.Pages.Auth;
 using MuscleCuties.App.Pages.Cycle;
@@ -14,16 +13,14 @@ using MuscleCuties.App.Pages.Startup;
 using MuscleCuties.App.Pages.Workout;
 using MuscleCuties.App.Services;
 using MuscleCuties.App.Services.Auth;
-using MuscleCuties.App.Services.Health;
 using MuscleCuties.App.Services.Notifications;
 using MuscleCuties.Core.Data;
-using MuscleCuties.Core.Diagnostics;
-using MuscleCuties.Core.Repositories.Common;
 using MuscleCuties.Core.Repositories.Cycle;
 using MuscleCuties.Core.Repositories.Nutrition;
 using MuscleCuties.Core.Repositories.Quiz;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Repositories.Workout;
+using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
@@ -31,11 +28,14 @@ using MuscleCuties.Core.Services.Dashboard.Planning;
 using MuscleCuties.Core.Services.Health;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Nutrition.Planning;
-using MuscleCuties.Core.Services.Progress;
 using MuscleCuties.Core.Services.Profile;
+using MuscleCuties.Core.Services.Progress;
 using MuscleCuties.Core.Services.Quiz;
+using MuscleCuties.Core.Services.Notifications;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
+using MuscleCuties.Core.Models.Workout.Planning;
+using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.ViewModels.Auth;
 using MuscleCuties.Core.ViewModels.Cycle;
 using MuscleCuties.Core.ViewModels.Dashboard;
@@ -56,108 +56,135 @@ public static class MauiProgram
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
             .UseFluentMauiIcons()
-            .ConfigureMauiHandlers(handlers =>
-            {
-#if ANDROID
-                EntryHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-                {
-                    handler.PlatformView.BackgroundTintList =
-                        Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent);
-                    handler.PlatformView.SetBackgroundColor(Android.Graphics.Color.Transparent);
-                    handler.PlatformView.SetPadding(0, 0, 0, 0);
-                });
-                PickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-                {
-                    handler.PlatformView.BackgroundTintList =
-                        Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent);
-                    handler.PlatformView.SetBackgroundColor(Android.Graphics.Color.Transparent);
-                    handler.PlatformView.SetPadding(0, 0, 0, 0);
-                });
-                DatePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-                {
-                    handler.PlatformView.BackgroundTintList =
-                        Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent);
-                    handler.PlatformView.SetBackgroundColor(Android.Graphics.Color.Transparent);
-                    handler.PlatformView.SetPadding(0, 0, 0, 0);
-                });
-                TimePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-                {
-                    handler.PlatformView.BackgroundTintList =
-                        Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent);
-                    handler.PlatformView.SetBackgroundColor(Android.Graphics.Color.Transparent);
-                    handler.PlatformView.SetPadding(0, 0, 0, 0);
-                });
-#elif IOS || MACCATALYST
-                EntryHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-                {
-                    handler.PlatformView.BorderStyle = UIKit.UITextBorderStyle.None;
-                    handler.PlatformView.BackgroundColor = UIKit.UIColor.Clear;
-                });
-                PickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-                {
-                    handler.PlatformView.BorderStyle = UIKit.UITextBorderStyle.None;
-                    handler.PlatformView.BackgroundColor = UIKit.UIColor.Clear;
-                });
-                DatePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-                {
-                    handler.PlatformView.BackgroundColor = UIKit.UIColor.Clear;
-                });
-                TimePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-                {
-                    handler.PlatformView.BackgroundColor = UIKit.UIColor.Clear;
-                });
-#endif
-            })
+            .ConfigureMauiHandlers(ConfigureInputHandlers)
             .ConfigureFonts(fonts =>
             {
-                fonts.AddFont("OpenSans-Regular.ttf", "NunitoRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "FrauncesDisplay");
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
         var services = builder.Services;
+        RegisterPlatformServices(services);
+        RegisterRepositories(services);
+        RegisterDomainServices(services);
+        RegisterWorkoutPlanningServices(services);
+        RegisterViewModels(services);
+        RegisterPages(services);
+        ConfigureLogging(builder);
 
-        // Infrastructure
+        return builder.Build();
+    }
+
+    private static void ConfigureInputHandlers(IMauiHandlersCollection handlers)
+    {
+#if ANDROID
+        EntryHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
+        {
+            ClearAndroidInputChrome(handler.PlatformView);
+            ConfigureAndroidAutofill(handler.PlatformView, handler.VirtualView.AutomationId);
+        });
+        PickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
+            ClearAndroidInputChrome(handler.PlatformView));
+        DatePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
+            ClearAndroidInputChrome(handler.PlatformView));
+        TimePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
+            ClearAndroidInputChrome(handler.PlatformView));
+#elif IOS || MACCATALYST
+        EntryHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
+        {
+            handler.PlatformView.BorderStyle = UIKit.UITextBorderStyle.None;
+            handler.PlatformView.BackgroundColor = UIKit.UIColor.Clear;
+
+            var textContentType = handler.VirtualView.AutomationId switch
+            {
+                "LoginEmail" or "RegisterEmail" => UIKit.UITextContentType.Username,
+                "LoginPassword" => UIKit.UITextContentType.Password,
+                "RegisterPassword" or "RegisterConfirmPassword" => UIKit.UITextContentType.NewPassword,
+                _ => null
+            };
+
+            if (textContentType is not null)
+                handler.PlatformView.TextContentType = textContentType;
+        });
+        PickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
+        {
+            handler.PlatformView.BorderStyle = UIKit.UITextBorderStyle.None;
+            handler.PlatformView.BackgroundColor = UIKit.UIColor.Clear;
+        });
+        DatePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
+            handler.PlatformView.BackgroundColor = UIKit.UIColor.Clear);
+        TimePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
+            handler.PlatformView.BackgroundColor = UIKit.UIColor.Clear);
+#endif
+    }
+
+#if ANDROID
+    private static void ClearAndroidInputChrome(Android.Views.View view)
+    {
+        view.BackgroundTintList = Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent);
+        view.SetBackgroundColor(Android.Graphics.Color.Transparent);
+        view.SetPadding(0, 0, 0, 0);
+    }
+
+    private static void ConfigureAndroidAutofill(Android.Widget.EditText editText, string? automationId)
+    {
+        var hint = automationId switch
+        {
+            "LoginEmail" or "RegisterEmail" => Android.Views.View.AutofillHintEmailAddress,
+            "LoginPassword" => Android.Views.View.AutofillHintPassword,
+            "RegisterPassword" or "RegisterConfirmPassword" => "newPassword",
+            _ => null
+        };
+
+        if (hint is null) return;
+
+        editText.ImportantForAutofill = Android.Views.ImportantForAutofill.Yes;
+        editText.SetAutofillHints(hint);
+    }
+#endif
+
+    private static void RegisterPlatformServices(IServiceCollection services)
+    {
         services.AddSingleton<IDbPathProvider, MauiDbPathProvider>();
         services.AddDbContext<AppDatabase>((sp, opts) =>
         {
             var path = sp.GetRequiredService<IDbPathProvider>().GetDatabasePath();
             opts.UseSqlite($"Filename={path}");
-            AppDebugLog.Write("Database", $"Path: {path}");
         });
 
-        // Platform services
         services.AddSingleton<ITokenStorage, SecureStorageService>();
-        services.AddSingleton<IAppleSignInService, AppleSignInService>();
         services.AddSingleton<ILocalNotificationService, LocalNotificationService>();
 #if ANDROID
-        services.AddSingleton<HealthConnectDataProvider>();
-        services.AddSingleton<IHealthDataProvider>(sp => sp.GetRequiredService<HealthConnectDataProvider>());
+        services.AddSingleton<IPlatformSignInService, GoogleSignInService>();
 #else
-        services.AddSingleton<AppleHealthDataProvider>();
-        services.AddSingleton<IHealthDataProvider>(sp => sp.GetRequiredService<AppleHealthDataProvider>());
+        services.AddSingleton<AppleSignInService>();
+        services.AddSingleton<IAppleSignInService>(sp => sp.GetRequiredService<AppleSignInService>());
+        services.AddSingleton<IPlatformSignInService>(sp => sp.GetRequiredService<AppleSignInService>());
 #endif
-        services.AddSingleton(WhoopOAuthOptions.FromEnvironment());
-        services.AddSingleton<IHealthDataProvider, WhoopDataProvider>();
-        services.AddSingleton<IHealthSyncService, HealthSyncService>();
+
+        services.AddSingleton<IHealthSyncService, DisabledHealthSyncService>();
         services.AddScoped<ICyclePhaseNotificationService, CyclePhaseNotificationService>();
         services.AddScoped<IFeedbackEmailService, FeedbackEmailService>();
+    }
 
-        // Repositories
+    private static void RegisterRepositories(IServiceCollection services)
+    {
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICycleRepository, CycleRepository>();
         services.AddScoped<INutritionRepository, NutritionRepository>();
         services.AddScoped<ISymptomRepository, SymptomRepository>();
         services.AddScoped<IWorkoutRepository, WorkoutRepository>();
         services.AddScoped<IQuizRepository, QuizRepository>();
-        services.AddScoped<IMealTemplateRepository, MealTemplateRepository>();
         services.AddScoped<IFoodSyncRepository, FoodSyncRepository>();
-        // Services
-        services.AddSingleton(_ => new HttpClient
+    }
+
+    private static void RegisterDomainServices(IServiceCollection services)
+    {
+        services.AddHttpClient<IFdcApiClient, FdcApiClient>(client =>
         {
-            BaseAddress = FdcApiClient.BaseUri,
-            Timeout = TimeSpan.FromSeconds(8)
+            client.BaseAddress = FdcApiClient.BaseUri;
+            client.Timeout = TimeSpan.FromSeconds(8);
         });
-        services.AddScoped<IFdcApiClient, FdcApiClient>();
         services.AddScoped<IFoodSyncService, FoodSyncService>();
         services.AddScoped<ICalorieCalculator, CalorieCalculator>();
         services.AddScoped<INutritionPlanner, NutritionPlanner>();
@@ -165,97 +192,125 @@ public static class MauiProgram
         services.AddScoped<ICyclePredictionPlanner, CyclePredictionPlanner>();
         services.AddScoped<IDashboardPlanner, DashboardPlanner>();
         services.AddScoped<IWorkoutPlanner, WorkoutPlanner>();
+        services.AddScoped<IWorkoutPlanGenerator, WorkoutPlanGenerator>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICycleService, CycleService>();
+        services.AddScoped<ISuggestedMealService, SuggestedMealService>();
         services.AddScoped<INutritionService, NutritionService>();
         services.AddScoped<IQuizService, QuizService>();
         services.AddScoped<IWorkoutService, WorkoutService>();
         services.AddScoped<IProgressSummaryService, ProgressSummaryService>();
-        // ViewModels — transient so each page gets a fresh instance
+    }
+
+    private static void RegisterWorkoutPlanningServices(IServiceCollection services)
+    {
+        services.AddScoped<IWorkoutPlanningConfigRepository, WorkoutPlanningConfigRepository>();
+        services.AddSingleton(WorkoutPlanningConfig.CreateDefault());
+
+        services.AddSingleton<IReadinessEngine, ReadinessEngine>();
+        services.AddSingleton<IGatingEngine, GatingEngine>();
+
+        services.AddScoped<IReadinessRepository, ReadinessRepository>();
+        services.AddScoped<IWorkoutInjuryRepository, WorkoutInjuryRepository>();
+        services.AddScoped<IHealthReadinessBridge, HealthReadinessBridge>();
+        services.AddScoped<IDailyCheckInNotificationService, DailyCheckInNotificationService>();
+
+        services.AddScoped<IContributionLookup, ContributionLookup>();
+        services.AddScoped<IVolumeBudgetResolver, VolumeBudgetResolver>();
+        services.AddScoped<IWeekPlanGenerator, WeekPlanGenerator>();
+        services.AddScoped<IExercisePickerService, ExercisePickerService>();
+    }
+
+    private static void RegisterViewModels(IServiceCollection services)
+    {
         services.AddTransient<LoginViewModel>(sp => new LoginViewModel(
             sp.GetRequiredService<IAuthService>(),
-            () => NavigateTo("//DashboardPage"),
-            () => NavigateTo(nameof(ProfileSetupPage)),
-            () => NavigateTo(nameof(RegisterPage)),
-            sp.GetRequiredService<IAppleSignInService>()));
+            () => NavigateToAsync("//DashboardPage"),
+            () => NavigateToAsync($"//{nameof(ProfileSetupPage)}"),
+            () => NavigateToAsync(nameof(RegisterPage)),
+            sp.GetRequiredService<IPlatformSignInService>()));
 
         services.AddTransient<RegisterViewModel>(sp => new RegisterViewModel(
             sp.GetRequiredService<IAuthService>(),
-            () => NavigateTo(nameof(ProfileSetupPage)),
-            () => NavigateTo(".."),
-            sp.GetRequiredService<IAppleSignInService>(),
-            () => NavigateTo("//DashboardPage")));
+            () => NavigateToAsync($"//{nameof(ProfileSetupPage)}"),
+            () => NavigateToAsync(".."),
+            sp.GetRequiredService<IPlatformSignInService>(),
+            () => NavigateToAsync("//DashboardPage")));
+
+        services.AddSingleton<QuizQuestionCache>();
 
         services.AddTransient<QuizViewModel>(sp => new QuizViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IQuizService>(),
-            () => NavigateTo("//DashboardPage")));
+            sp.GetRequiredService<IAppPreloadService>(),
+            sp.GetRequiredService<QuizQuestionCache>(),
+            () => NavigateToAsync("//DashboardPage")));
 
         services.AddTransient<ProfileSetupViewModel>(sp => new ProfileSetupViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
-            () => NavigateTo(nameof(QuizPage)),
-            sp.GetRequiredService<IHealthSyncService>()));
+            sp.GetRequiredService<IQuizService>(),
+            sp.GetRequiredService<QuizQuestionCache>(),
+            () => NavigateToAsync($"//{nameof(QuizPage)}")));
 
-        services.AddTransient<DashboardViewModel>(sp => new DashboardViewModel(
+        services.AddSingleton<DashboardViewModel>(sp => new DashboardViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            () => NavigateToAsync("//CyclePage"),
+            () => NavigateToAsync("//WorkoutPage"),
+            () => NavigateToAsync("//NutritionPage"),
+            () => NavigateToAsync(nameof(DailyCheckInPage))));
+
+        services.AddTransient<DailyCheckInViewModel>(sp => new DailyCheckInViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
+            sp.GetRequiredService<IReadinessRepository>(),
+            sp.GetRequiredService<IHealthReadinessBridge>(),
             sp.GetRequiredService<ICycleService>(),
-            sp.GetRequiredService<INutritionService>(),
+            sp.GetRequiredService<IReadinessEngine>(),
+            sp.GetRequiredService<IDailyCheckInNotificationService>(),
             sp.GetRequiredService<IWorkoutService>(),
-            sp.GetRequiredService<IProgressSummaryService>(),
-            sp.GetRequiredService<IDashboardPlanner>(),
-            sp.GetRequiredService<IHealthSyncService>(),
-            () => NavigateTo("//CyclePage"),
-            () => NavigateTo("//WorkoutPage"),
-            () => NavigateTo("//NutritionPage")));
+            sp.GetRequiredService<IAppPreloadService>(),
+            () => NavigateToAsync("//DashboardPage")));
 
-        services.AddTransient<CycleViewModel>(sp => new CycleViewModel(
-            sp.GetRequiredService<IAuthService>(),
-            sp.GetRequiredService<ICycleService>(),
-            sp.GetRequiredService<IUserRepository>(),
-            phase => NavigateTo($"{nameof(CyclePhaseDetailPage)}?phase={phase}")));
+        services.AddSingleton<CycleViewModel>(sp => new CycleViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            phase => NavigateToAsync($"{nameof(CyclePhaseDetailPage)}?phase={phase}")));
 
-        services.AddTransient<CyclePhaseDetailViewModel>(sp => new CyclePhaseDetailViewModel(
-            () => NavigateTo("..")));
+        services.AddTransient<CyclePhaseDetailViewModel>(sp => new CyclePhaseDetailViewModel(() => NavigateToAsync("..")));
 
-        services.AddTransient<NutritionViewModel>(sp => new NutritionViewModel(
-            sp.GetRequiredService<IAuthService>(),
-            sp.GetRequiredService<ICycleService>(),
-            sp.GetRequiredService<INutritionService>()));
+        services.AddSingleton<NutritionViewModel>(sp => new NutritionViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>()));
 
-        services.AddTransient<WorkoutViewModel>(sp => new WorkoutViewModel(
-            sp.GetRequiredService<IAuthService>(),
-            sp.GetRequiredService<ICycleService>(),
-            sp.GetRequiredService<IWorkoutService>()));
+        services.AddSingleton<WorkoutViewModel>(sp => new WorkoutViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>()));
 
-        services.AddTransient<ProfileViewModel>(sp => new ProfileViewModel(
-            sp.GetRequiredService<IAuthService>(),
-            sp.GetRequiredService<IUserRepository>(),
-            sp.GetRequiredService<ICycleService>(),
-            sp.GetRequiredService<IProgressSummaryService>(),
-            () => NavigateTo("//LoginPage"),
-            NavigateTo));
+        services.AddSingleton<ProfileViewModel>(sp => new ProfileViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            new Lazy<IAppPreloadService>(sp.GetRequiredService<IAppPreloadService>),
+            () => NavigateToAsync("//LoginPage"),
+            NavigateToAsync));
 
         services.AddTransient<ProfilePersonalInfoViewModel>(sp => new ProfilePersonalInfoViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
-            () => NavigateTo(".."),
-            sp.GetRequiredService<IHealthSyncService>()));
+            sp.GetRequiredService<IAppPreloadService>(),
+            () => NavigateToAsync("//ProfilePage")));
 
         services.AddTransient<ProfileNutritionSettingsViewModel>(sp => new ProfileNutritionSettingsViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
             sp.GetRequiredService<ICycleService>(),
             sp.GetRequiredService<INutritionPlanner>(),
-            () => NavigateTo("..")));
+            sp.GetRequiredService<IAppPreloadService>(),
+            () => NavigateToAsync("//NutritionPage")));
 
         services.AddTransient<ProfileWorkoutPreferencesViewModel>(sp => new ProfileWorkoutPreferencesViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
             sp.GetRequiredService<ICycleService>(),
             sp.GetRequiredService<IWorkoutService>(),
-            () => NavigateTo("..")));
+            sp.GetRequiredService<IAppPreloadService>(),
+            () => NavigateToAsync("//WorkoutPage")));
 
         services.AddTransient<ProfileHealthSyncViewModel>(sp => new ProfileHealthSyncViewModel(
             sp.GetRequiredService<IAuthService>(),
@@ -265,26 +320,36 @@ public static class MauiProgram
             sp.GetRequiredService<IWorkoutService>(),
             sp.GetRequiredService<IDashboardPlanner>(),
             sp.GetRequiredService<IHealthSyncService>(),
-            () => NavigateTo("..")));
+            () => NavigateToAsync("..")));
 
         services.AddTransient<ProfileUnitsDisplayViewModel>(sp => new ProfileUnitsDisplayViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
-            () => NavigateTo("..")));
+            () => NavigateToAsync("//ProfilePage")));
 
         services.AddTransient<ProfileFeedbackViewModel>(sp => new ProfileFeedbackViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
             sp.GetRequiredService<IFeedbackEmailService>(),
-            () => NavigateTo("..")));
+            () => NavigateToAsync("//ProfilePage")));
 
-        // Pages
+        services.AddTransient<InjuryLogViewModel>(sp => new InjuryLogViewModel(
+            sp.GetRequiredService<IAuthService>(),
+            sp.GetRequiredService<IWorkoutInjuryRepository>(),
+            () => NavigateToAsync("..")));
+
+        services.AddSingleton<IAppPreloadService, AppPreloadService>();
+    }
+
+    private static void RegisterPages(IServiceCollection services)
+    {
         services.AddTransient<LoginPage>();
         services.AddTransient<AppStartupPage>();
         services.AddTransient<RegisterPage>();
         services.AddTransient<QuizPage>();
         services.AddTransient<ProfileSetupPage>();
         services.AddTransient<DashboardPage>();
+        services.AddTransient<DailyCheckInPage>();
         services.AddTransient<CyclePage>();
         services.AddTransient<CyclePhaseDetailPage>();
         services.AddTransient<NutritionPage>();
@@ -297,34 +362,25 @@ public static class MauiProgram
         services.AddTransient<ProfileUnitsDisplayPage>();
         services.AddTransient<ProfileFeedbackPage>();
         services.AddTransient<ProfilePrivacyPage>();
+        services.AddTransient<InjuryLogPage>();
 
-        // Shell
         services.AddSingleton<AppShell>();
+    }
 
+    private static void ConfigureLogging(MauiAppBuilder builder)
+    {
 #if DEBUG
         builder.Logging.AddDebug();
         builder.Logging.AddFilter(DbLoggerCategory.Database.Command.Name, LogLevel.Warning);
 #endif
-
-        return builder.Build();
     }
 
-    private static void NavigateTo(string route)
+    private static Task NavigateToAsync(string route)
     {
-        MainThread.BeginInvokeOnMainThread(async () =>
+        return MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            try
-            {
-                AppDebugLog.Write("Navigation", $"GoToAsync start route='{route}'.");
-                await Shell.Current.GoToAsync(route, false);
-                AppDebugLog.Write(
-                    "Navigation",
-                    $"GoToAsync complete route='{route}', current='{Shell.Current.CurrentState?.Location}'.");
-            }
-            catch (Exception ex)
-            {
-                AppDebugLog.Error("Navigation", ex, $"Navigation to '{route}' failed");
-            }
+            var shell = Shell.Current ?? throw new InvalidOperationException("Shell is not available.");
+            await shell.GoToAsync(route, false);
         });
     }
 }

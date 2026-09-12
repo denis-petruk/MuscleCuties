@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentView
     x:Class="MuscleCuties.App.Controls.Dashboard.ReadinessRecoveryCard"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -7,14 +8,30 @@
     x:DataType="vm:DashboardViewModel">
 
     <Border Style="{StaticResource CardPrimary}">
+        <Border.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding OpenDailyCheckInCommand}" />
+        </Border.GestureRecognizers>
         <VerticalStackLayout Spacing="14">
-            <Label
-                Text="READINESS &amp; RECOVERY"
-                Style="{StaticResource EyebrowLabel}"
-                CharacterSpacing="1.2" />
+            <Grid ColumnDefinitions="*, Auto">
+                <Label
+                    Text="READINESS &amp; RECOVERY"
+                    Style="{StaticResource EyebrowLabel}"
+                    CharacterSpacing="1.2" />
+                <Label
+                    Grid.Column="1"
+                    Text="Tap to check in"
+                    Style="{StaticResource CaptionLabel}"
+                    FontAttributes="Italic"
+                    VerticalOptions="Center"
+                    IsVisible="{Binding NeedsDailyCheckIn}" />
+            </Grid>
 
             <Grid ColumnDefinitions="*, *" ColumnSpacing="16">
-                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center" Spacing="10">
+                <VerticalStackLayout
+                    Grid.Column="0"
+                    HorizontalOptions="Center"
+                    Spacing="10"
+                    SemanticProperties.Description="{Binding ReadinessScore, StringFormat='Readiness score: {0}'}">
                     <Grid
                         WidthRequest="88"
                         HeightRequest="88"
@@ -64,7 +81,11 @@
                     </VerticalStackLayout>
                 </VerticalStackLayout>
 
-                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" Spacing="10">
+                <VerticalStackLayout
+                    Grid.Column="1"
+                    HorizontalOptions="Center"
+                    Spacing="10"
+                    SemanticProperties.Description="{Binding RecoveryScore, StringFormat='Recovery score: {0}'}">
                     <Grid
                         WidthRequest="88"
                         HeightRequest="88"

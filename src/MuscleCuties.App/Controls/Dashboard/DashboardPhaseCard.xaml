@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentView
     x:Class="MuscleCuties.App.Controls.Dashboard.DashboardPhaseCard"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -11,7 +12,8 @@
         BackgroundColor="{Binding PhaseCardBackgroundColor}"
         StrokeThickness="0"
         StrokeShape="RoundRectangle 22"
-        Padding="20,18">
+        Padding="20,18"
+        SemanticProperties.Description="{Binding PhaseCardTitle, StringFormat='Current cycle phase: {0}. Tap to view cycle details.'}">
         <Border.GestureRecognizers>
             <TapGestureRecognizer Command="{Binding OpenCycleCommand}" />
         </Border.GestureRecognizers>

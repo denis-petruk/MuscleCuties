@@ -1,4 +1,3 @@
-using Microsoft.Maui.ApplicationModel.Communication;
 using MuscleCuties.Core.Services.Profile;
 
 namespace MuscleCuties.App.Services;

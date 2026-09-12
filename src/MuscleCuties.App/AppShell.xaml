@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
+
 <Shell
     x:Class="MuscleCuties.App.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -10,6 +11,7 @@
     xmlns:nutrition="clr-namespace:MuscleCuties.App.Pages.Nutrition"
     xmlns:profile="clr-namespace:MuscleCuties.App.Pages.Profile"
     xmlns:startup="clr-namespace:MuscleCuties.App.Pages.Startup"
+    xmlns:onboarding="clr-namespace:MuscleCuties.App.Pages.Onboarding"
     FlyoutBehavior="Disabled">
 
     <ShellContent
@@ -20,6 +22,16 @@
     <ShellContent
         Route="LoginPage"
         ContentTemplate="{DataTemplate auth:LoginPage}"
+        Shell.NavBarIsVisible="False" />
+
+    <ShellContent
+        Route="ProfileSetupPage"
+        ContentTemplate="{DataTemplate onboarding:ProfileSetupPage}"
+        Shell.NavBarIsVisible="False" />
+
+    <ShellContent
+        Route="QuizPage"
+        ContentTemplate="{DataTemplate onboarding:QuizPage}"
         Shell.NavBarIsVisible="False" />
 
     <TabBar Route="MainTab">

@@ -1,5 +1,3 @@
-using Microsoft.Maui.Graphics;
-
 namespace MuscleCuties.App.Controls;
 
 public class MacroPieChart : GraphicsView, IDrawable
@@ -34,42 +32,42 @@ public class MacroPieChart : GraphicsView, IDrawable
         nameof(TrackColor),
         typeof(Color),
         typeof(MacroPieChart),
-        Color.FromArgb("#F0D8E2"),
+        Colors.Transparent,
         propertyChanged: Redraw);
 
     public static readonly BindableProperty ProteinColorProperty = BindableProperty.Create(
         nameof(ProteinColor),
         typeof(Color),
         typeof(MacroPieChart),
-        Color.FromArgb("#A65AC8"),
+        Colors.Transparent,
         propertyChanged: Redraw);
 
     public static readonly BindableProperty CarbsColorProperty = BindableProperty.Create(
         nameof(CarbsColor),
         typeof(Color),
         typeof(MacroPieChart),
-        Color.FromArgb("#E3A13B"),
+        Colors.Transparent,
         propertyChanged: Redraw);
 
     public static readonly BindableProperty FatsColorProperty = BindableProperty.Create(
         nameof(FatsColor),
         typeof(Color),
         typeof(MacroPieChart),
-        Color.FromArgb("#6F8E4E"),
+        Colors.Transparent,
         propertyChanged: Redraw);
 
     public static readonly BindableProperty InnerColorProperty = BindableProperty.Create(
         nameof(InnerColor),
         typeof(Color),
         typeof(MacroPieChart),
-        Color.FromArgb("#FFFFFF"),
+        Colors.Transparent,
         propertyChanged: Redraw);
 
     public static readonly BindableProperty InnerStrokeColorProperty = BindableProperty.Create(
         nameof(InnerStrokeColor),
         typeof(Color),
         typeof(MacroPieChart),
-        Color.FromArgb("#F0D8E2"),
+        Colors.Transparent,
         propertyChanged: Redraw);
 
     public MacroPieChart()

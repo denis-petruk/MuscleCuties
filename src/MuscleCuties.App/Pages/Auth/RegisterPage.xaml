@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -12,7 +13,9 @@
         <VerticalStackLayout
             Padding="28,48,28,32"
             Spacing="0"
-            VerticalOptions="Center">
+            VerticalOptions="Center"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="640">
 
             <sharedControls:ThemeAwareBrandLogoImage
                 Style="{StaticResource BrandLogoImage}"
@@ -39,6 +42,7 @@
                         <Label Text="Email" Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry
+                                AutomationId="RegisterEmail"
                                 Placeholder="name@example.com"
                                 Text="{Binding Email}"
                                 Keyboard="Email"
@@ -50,6 +54,7 @@
                         <Label Text="Password" Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry
+                                AutomationId="RegisterPassword"
                                 Placeholder="Create password"
                                 Text="{Binding Password}"
                                 IsPassword="True"
@@ -61,6 +66,7 @@
                         <Label Text="Confirm password" Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry
+                                AutomationId="RegisterConfirmPassword"
                                 Placeholder="Confirm password"
                                 Text="{Binding ConfirmPassword}"
                                 IsPassword="True"
@@ -99,8 +105,8 @@
                     </Grid>
 
                     <Button
-                        Text="Sign in with Apple"
-                        Command="{Binding SignInWithAppleCommand}"
+                        Text="{Binding PlatformRegisterButtonText}"
+                        Command="{Binding SignInWithPlatformCommand}"
                         IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
                         TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
@@ -110,16 +116,31 @@
                     <ActivityIndicator
                         IsRunning="{Binding IsBusy}"
                         IsVisible="{Binding IsBusy}"
-                        HorizontalOptions="Center" />
+                        HorizontalOptions="Center"
+                        SemanticProperties.Description="Creating account" />
 
                 </VerticalStackLayout>
             </Border>
 
-            <Button
-                Text="Already have an account? Log in"
-                Style="{StaticResource ButtonLink}"
-                Command="{Binding GoBackCommand}"
-                Margin="0,12,0,0" />
+            <HorizontalStackLayout
+                HorizontalOptions="Center"
+                Spacing="4"
+                Margin="0,16,0,0"
+                MinimumHeightRequest="44"
+                SemanticProperties.Description="Already have an account? Log in">
+                <HorizontalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding GoBackCommand}" />
+                </HorizontalStackLayout.GestureRecognizers>
+                <Label
+                    Text="Already have an account?"
+                    Style="{StaticResource CaptionLabel}"
+                    VerticalOptions="Center" />
+                <Label
+                    Text="Log in"
+                    Style="{StaticResource AccentLabel}"
+                    FontSize="13"
+                    VerticalOptions="Center" />
+            </HorizontalStackLayout>
 
         </VerticalStackLayout>
     </ScrollView>

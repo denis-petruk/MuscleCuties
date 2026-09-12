@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage
     x:Class="MuscleCuties.App.Pages.Workout.WorkoutPage"
     x:Name="WorkoutRoot"
@@ -13,7 +14,11 @@
 
     <Grid>
         <ScrollView>
-            <VerticalStackLayout Padding="20,56,20,32" Spacing="14">
+            <VerticalStackLayout
+                Padding="20,56,20,32"
+                Spacing="14"
+                HorizontalOptions="Fill"
+                MaximumWidthRequest="640">
 
                 <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
                     <VerticalStackLayout Spacing="2" VerticalOptions="Center">
@@ -28,12 +33,13 @@
 
                     <Border
                         Grid.Column="1"
-                        WidthRequest="40"
-                        HeightRequest="40"
-                        StrokeShape="RoundRectangle 20"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        StrokeShape="RoundRectangle 22"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
                         StrokeThickness="0"
-                        VerticalOptions="Center">
+                        VerticalOptions="Center"
+                        SemanticProperties.Description="Training">
                         <sharedControls:ThemeAwareImage
                             LightSource="tab_train.png"
                             DarkSource="tab_train_dark.png"
@@ -43,6 +49,10 @@
                             VerticalOptions="Center" />
                     </Border>
                 </Grid>
+
+                <workoutControls:WorkoutPlanSummaryCard
+                    PlanTitle="{Binding ActivePlanTitle}"
+                    SummaryText="{Binding PlanSummaryText}" />
 
                 <workoutControls:FeaturedWorkoutCard
                     BadgeText="{Binding FeaturedWorkoutBadgeText}"
@@ -54,6 +64,8 @@
                     ActionText="{Binding FeaturedWorkoutActionText}"
                     AccentColor="{Binding FeaturedWorkoutActivityBackground}"
                     AccentTextColor="{Binding FeaturedWorkoutActivityTextColor}"
+                    ActivitySections="{Binding FeaturedWorkoutActivitySections}"
+                    HasMultipleActivities="{Binding FeaturedWorkoutHasMultipleActivities}"
                     StartCommand="{Binding StartFeaturedWorkoutCommand}" />
 
                 <Grid
@@ -83,13 +95,15 @@
                             <Border
                                 StrokeShape="RoundRectangle 999"
                                 StrokeThickness="0"
-                                Padding="14,9">
+                                Padding="14,9"
+                                MinimumHeightRequest="44">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
                                         <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
                                     </DataTrigger>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
-                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}" />
+                                        <Setter Property="BackgroundColor"
+                                                Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}" />
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
@@ -107,7 +121,8 @@
                                             <Setter Property="TextColor" Value="{StaticResource White}" />
                                         </DataTrigger>
                                         <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
-                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                            <Setter Property="TextColor"
+                                                    Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                                         </DataTrigger>
                                     </Label.Triggers>
                                 </Label>
@@ -119,7 +134,8 @@
                 <ActivityIndicator
                     IsRunning="{Binding IsBusy}"
                     IsVisible="{Binding IsBusy}"
-                    Margin="0,24" />
+                    Margin="0,24"
+                    SemanticProperties.Description="Loading workouts" />
 
                 <Grid MinimumHeightRequest="420">
                     <Border
@@ -165,10 +181,13 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <workoutControls:WorkoutSessionModal IsVisible="{Binding IsWorkoutModalVisible}" />
+        <workoutControls:WorkoutSessionModal
+            x:Name="WorkoutModal"
+            IsOpen="{Binding IsWorkoutModalVisible}" />
         <sharedControls:PhaseSaluteOverlay
             x:Name="SaluteOverlay"
             IconSource="{Binding CelebrationIconSource}" />
+        <sharedControls:PageLoadingOverlay />
     </Grid>
 
 </ContentPage>

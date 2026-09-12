@@ -1,31 +1,39 @@
-using MuscleCuties.Core.Repositories.Common;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Entities.Users;
+using MuscleCuties.Core.Repositories.Common;
 
 namespace MuscleCuties.Core.Repositories.Users;
 
 public class UserRepository(AppDatabase db) : BaseRepository<User>(db), IUserRepository
 {
-    public new async Task<User?> GetByIdAsync(int id) =>
-        await _db.Users
+    public new async Task<User?> GetByIdAsync(int id)
+    {
+        return await _db.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == id);
+    }
 
-    public async Task<User?> GetByEmailAsync(string email) =>
-        await _db.Users
+    public async Task<User?> GetByEmailAsync(string email)
+    {
+        return await _db.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == email);
+    }
 
-    public async Task<User?> GetByAppleUserIdAsync(string appleUserId) =>
-        await _db.Users
+    public async Task<User?> GetByAppleUserIdAsync(string appleUserId)
+    {
+        return await _db.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.AppleUserId == appleUserId);
+    }
 
-    public async Task<UserProfile?> GetProfileAsync(int userId) =>
-        await _db.UserProfiles
+    public async Task<UserProfile?> GetProfileAsync(int userId)
+    {
+        return await _db.UserProfiles
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.UserId == userId);
+    }
 
     public async Task AddProfileAsync(UserProfile profile)
     {
@@ -46,10 +54,12 @@ public class UserRepository(AppDatabase db) : BaseRepository<User>(db), IUserRep
         await _db.SaveChangesAsync();
     }
 
-    public async Task<UserProfileSnapshot?> GetLatestSnapshotAsync(int userId) =>
-        await _db.UserProfileSnapshots
+    public async Task<UserProfileSnapshot?> GetLatestSnapshotAsync(int userId)
+    {
+        return await _db.UserProfileSnapshots
             .AsNoTracking()
             .Where(s => s.UserId == userId)
             .OrderByDescending(s => s.CreatedAt)
             .FirstOrDefaultAsync();
+    }
 }

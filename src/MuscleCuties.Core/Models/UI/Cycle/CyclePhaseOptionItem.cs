@@ -6,6 +6,7 @@ namespace MuscleCuties.Core.Models.UI.Cycle;
 
 public partial class CyclePhaseOptionItem : ObservableObject
 {
+    [ObservableProperty] private bool _isSelected;
     public CyclePhase Phase { get; init; }
     public string Name { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
@@ -13,6 +14,4 @@ public partial class CyclePhaseOptionItem : ObservableObject
     public bool UsesAnimatedIcon { get; init; }
     public Color BackgroundColor { get; init; } = Colors.Transparent;
     public Color TextColor { get; init; } = Colors.Black;
-
-    [ObservableProperty] private bool _isSelected;
 }

@@ -5,6 +5,7 @@ using Microsoft.Maui.Graphics;
 using MuscleCuties.Core.Models.Entities.Cycle;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.UI.Cycle;
+using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
@@ -13,62 +14,89 @@ using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Cycle;
 
-public partial class CycleViewModel : ObservableObject
+public partial class CycleViewModel : ObservableObject, IPageLoadAware
 {
-    private readonly IAuthService _authService;
-    private readonly ICycleService _cycleService;
-    private readonly IUserRepository _userRepository;
-    private readonly Action<CyclePhase> _openPhaseDetails;
-    private readonly ViewModelLoadGate _loadGate = new(TimeSpan.FromSeconds(20));
+    private readonly Func<DateTime> _currentDateProvider;
+    private readonly ViewModelLoadGate _loadGate = new(ViewModelLoadGate.PageFreshnessWindow);
+    private readonly Func<CyclePhase, Task> _openPhaseDetailsAsync;
     private readonly List<CyclePhaseLog> _phaseLogs = new();
-
-    private CycleDayItem? _selectedCalendarDay;
-    private CyclePhase? _suggestedPhase;
-    private CyclePhase? _cycleWarningSuggestedPhase;
+    private readonly IServiceScopeFactory _scopeFactory;
+    [ObservableProperty] private ObservableCollection<CycleDayItem> _calendarDays = new();
+    [ObservableProperty] private string _calendarEditHintText = string.Empty;
+    [ObservableProperty] private int _currentDay;
 
     [ObservableProperty] private CyclePhase _currentPhase;
-    [ObservableProperty] private int _currentDay;
     [ObservableProperty] private int _cycleLength;
-    [ObservableProperty] private int _daysUntilPeriod;
-    [ObservableProperty] private bool _isBusy;
-    [ObservableProperty] private bool _hasActiveCycle;
-    [ObservableProperty] private string _lastPhaseLogText = "No shift logged yet";
-    [ObservableProperty] private string _calendarEditHintText = string.Empty;
-    [ObservableProperty] private bool _isDatePhaseModalVisible;
-    [ObservableProperty] private bool _hasPhaseJumpWarning;
-    [ObservableProperty] private bool _useDarkTheme;
-    [ObservableProperty] private string _selectedCalendarDateText = string.Empty;
-    [ObservableProperty] private string _selectedCalendarPhaseText = string.Empty;
-    [ObservableProperty] private string _phaseEditStatusText = string.Empty;
-    [ObservableProperty] private string _phaseJumpWarningTitle = string.Empty;
-    [ObservableProperty] private string _phaseJumpWarningText = string.Empty;
-    [ObservableProperty] private bool _isCycleWarningPopupVisible;
-    [ObservableProperty] private string _cycleWarningTitle = string.Empty;
-    [ObservableProperty] private string _cycleWarningText = string.Empty;
     [ObservableProperty] private string _cycleWarningSuggestedActionText = "Use next phase";
-    [ObservableProperty] private ObservableCollection<CycleDayItem> _calendarDays = new();
+    private CyclePhase? _cycleWarningSuggestedPhase;
+    [ObservableProperty] private string _cycleWarningText = string.Empty;
+    [ObservableProperty] private string _cycleWarningTitle = string.Empty;
+    [ObservableProperty] private int _daysUntilPeriod;
+    [ObservableProperty] private bool _hasActiveCycle;
+    [ObservableProperty] private bool _hasPhaseJumpWarning;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    private bool _isBusy;
+    [ObservableProperty] private bool _isLoadError;
+    [ObservableProperty] private bool _isCycleWarningPopupVisible;
+    [ObservableProperty] private bool _isDatePhaseModalVisible;
+    [ObservableProperty] private string _lastPhaseLogText = "No shift logged yet";
     [ObservableProperty] private ObservableCollection<CyclePhaseOptionItem> _phaseEditOptions = new();
+    [ObservableProperty] private string _phaseEditStatusText = string.Empty;
+    [ObservableProperty] private string _phaseJumpWarningText = string.Empty;
+    [ObservableProperty] private string _phaseJumpWarningTitle = string.Empty;
     [ObservableProperty] private ObservableCollection<PhaseItem> _phases = new();
+    [ObservableProperty] private string _selectedCalendarDateText = string.Empty;
+
+    private CycleDayItem? _selectedCalendarDay;
+    [ObservableProperty] private string _selectedCalendarPhaseText = string.Empty;
+    private CyclePhase? _suggestedPhase;
+    [ObservableProperty] private bool _useDarkTheme;
+
+    public CycleViewModel(
+        IServiceScopeFactory scopeFactory,
+        Func<CyclePhase, Task>? openPhaseDetailsAsync = null,
+        Func<DateTime>? currentDateProvider = null)
+    {
+        _scopeFactory = scopeFactory;
+        _openPhaseDetailsAsync = openPhaseDetailsAsync ?? (_ => Task.CompletedTask);
+        _currentDateProvider = currentDateProvider ?? (() => DateTime.Today);
+        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
+        AdvancePhaseCommand = new AsyncRelayCommand(AdvancePhaseAsync, CanAdvancePhase);
+        OpenCalendarDayCommand = new RelayCommand<CycleDayItem>(OpenCalendarDay);
+        CloseDatePhaseModalCommand = new RelayCommand(CloseDatePhaseModal);
+        SelectPhaseOptionCommand = new RelayCommand<CyclePhaseOptionItem>(SelectPhaseOption);
+        SaveDatePhaseCommand = new AsyncRelayCommand(SaveDatePhaseAsync, CanSaveDatePhase);
+        UseSuggestedPhaseCommand = new RelayCommand(UseSuggestedPhase);
+        ReviewEarlierPhaseRecordsCommand = new RelayCommand(ReviewEarlierPhaseRecords);
+        CloseCycleWarningPopupCommand = new RelayCommand(CloseCycleWarningPopup);
+        UseCycleWarningSuggestedPhaseCommand = new AsyncRelayCommand(UseCycleWarningSuggestedPhaseAsync);
+        OpenPhaseDetailsCommand = new AsyncRelayCommand<PhaseItem>(OpenPhaseDetailsAsync);
+        Phases = BuildPhaseItems(UseDarkTheme);
+    }
+
+    public void Invalidate() => _loadGate.MarkStale();
 
     public string PhaseLabel => CurrentPhase.ToString();
-    public string CurrentMonthLabel => DateTime.Today.ToString("MMMM yyyy");
+    public string CurrentMonthLabel => CurrentDate.ToString("MMMM yyyy");
     public string CycleDaySummary => HasActiveCycle ? $"Day {CurrentDay} of {CycleLength}" : "Start cycle tracking";
+
     public string PeriodCountdownText => HasActiveCycle
         ? DaysUntilPeriod == 0 ? "Period due today" : $"Period in {DaysUntilPeriod}d"
         : "Log period start";
+
     public string PhaseLogActionText => HasActiveCycle ? "Next phase" : "Start cycle";
     public string PredictionSummary => HasActiveCycle ? $"Prediction from {CycleLength}d cycle" : "No active cycle yet";
     public string CurrentPhaseIconSource => CyclePhaseAssets.GetIconSource(CurrentPhase);
     public string CurrentPhaseVisualSource => CyclePhaseAssets.GetVisualSource(CurrentPhase);
     public bool CurrentPhaseUsesAnimatedVisual => CyclePhaseAssets.UsesAnimatedVisual(CurrentPhase);
-    public DateTime Today => DateTime.Today;
+    public DateTime Today => CurrentDate;
     public bool HasCalendarEditHint => !string.IsNullOrWhiteSpace(CalendarEditHintText);
     public bool HasPhaseEditStatus => !string.IsNullOrWhiteSpace(PhaseEditStatusText);
     public bool HasSuggestedPhase => _suggestedPhase is not null;
     public bool HasCycleWarningSuggestedPhase => _cycleWarningSuggestedPhase is not null;
     public IReadOnlyList<CyclePhase> PhaseOptions { get; } = Enum.GetValues<CyclePhase>();
 
-    // Legacy alias kept for existing tests
     public int CycleDay => CurrentDay;
 
     public AsyncRelayCommand LoadDataCommand { get; }
@@ -81,31 +109,10 @@ public partial class CycleViewModel : ObservableObject
     public RelayCommand ReviewEarlierPhaseRecordsCommand { get; }
     public RelayCommand CloseCycleWarningPopupCommand { get; }
     public AsyncRelayCommand UseCycleWarningSuggestedPhaseCommand { get; }
-    public RelayCommand<PhaseItem> OpenPhaseDetailsCommand { get; }
+    public AsyncRelayCommand<PhaseItem> OpenPhaseDetailsCommand { get; }
+    public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
 
-    public CycleViewModel(
-        IAuthService authService,
-        ICycleService cycleService,
-        IUserRepository userRepository,
-        Action<CyclePhase>? openPhaseDetails = null)
-    {
-        _authService = authService;
-        _cycleService = cycleService;
-        _userRepository = userRepository;
-        _openPhaseDetails = openPhaseDetails ?? (_ => { });
-        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
-        AdvancePhaseCommand = new AsyncRelayCommand(AdvancePhaseAsync, CanAdvancePhase);
-        OpenCalendarDayCommand = new RelayCommand<CycleDayItem>(OpenCalendarDay);
-        CloseDatePhaseModalCommand = new RelayCommand(CloseDatePhaseModal);
-        SelectPhaseOptionCommand = new RelayCommand<CyclePhaseOptionItem>(SelectPhaseOption);
-        SaveDatePhaseCommand = new AsyncRelayCommand(SaveDatePhaseAsync, CanSaveDatePhase);
-        UseSuggestedPhaseCommand = new RelayCommand(UseSuggestedPhase);
-        ReviewEarlierPhaseRecordsCommand = new RelayCommand(ReviewEarlierPhaseRecords);
-        CloseCycleWarningPopupCommand = new RelayCommand(CloseCycleWarningPopup);
-        UseCycleWarningSuggestedPhaseCommand = new AsyncRelayCommand(UseCycleWarningSuggestedPhaseAsync);
-        OpenPhaseDetailsCommand = new RelayCommand<PhaseItem>(OpenPhaseDetails);
-        Phases = BuildPhaseItems(UseDarkTheme);
-    }
+    private DateTime CurrentDate => _currentDateProvider().Date;
 
     public void RefreshThemeColors(bool useDarkTheme)
     {
@@ -133,10 +140,15 @@ public partial class CycleViewModel : ObservableObject
 
     private async Task RefreshCycleDataAsync()
     {
-        var userId = await _authService.GetCurrentUserIdAsync();
-        var prediction = await _cycleService.GetPredictionAsync(userId);
-        var user = await _userRepository.GetByIdAsync(userId);
-        var accountCreatedDate = user?.CreatedAt.Date ?? DateTime.Today;
+        using var scope = _scopeFactory.CreateScope();
+        var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+        var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
+        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+
+        var userId = await DataLoadScheduler.RunAsync(authService.GetCurrentUserIdAsync);
+        var prediction = await DataLoadScheduler.RunAsync(() => cycleService.GetPredictionAsync(userId));
+        var user = await DataLoadScheduler.RunAsync(() => userRepository.GetByIdAsync(userId));
+        var accountCreatedDate = user?.CreatedAt.Date ?? CurrentDate;
 
         HasActiveCycle = prediction.HasActiveCycle;
         CurrentDay = prediction.CurrentDay;
@@ -144,11 +156,11 @@ public partial class CycleViewModel : ObservableObject
         DaysUntilPeriod = prediction.DaysUntilPeriod;
         CurrentPhase = prediction.CurrentPhase;
 
-        var phaseLogs = await _cycleService.GetRecentPhaseLogsAsync(userId, 120);
+        var phaseLogs = await DataLoadScheduler.RunAsync(() => cycleService.GetRecentPhaseLogsAsync(userId, 120));
         _phaseLogs.Clear();
         _phaseLogs.AddRange(phaseLogs);
         var latestPhaseLog = phaseLogs.FirstOrDefault();
-        CalendarDays = BuildCalendarDays(prediction, phaseLogs, accountCreatedDate, UseDarkTheme);
+        CalendarDays = BuildCalendarDays(prediction, phaseLogs, accountCreatedDate, CurrentDate, UseDarkTheme);
         LastPhaseLogText = FormatLastPhaseLog(latestPhaseLog);
         Phases = BuildPhaseItems(UseDarkTheme);
 
@@ -165,11 +177,15 @@ public partial class CycleViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            var userId = await _authService.GetCurrentUserIdAsync();
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
+
+            var userId = await authService.GetCurrentUserIdAsync();
             var nextPhase = HasActiveCycle
                 ? CyclePhaseRules.GetNextPhase(CurrentPhase)
                 : CyclePhase.Menstrual;
-            await _cycleService.SetPhaseForDateAsync(userId, nextPhase, DateTime.Today, "Manual phase advance");
+            await cycleService.SetPhaseForDateAsync(userId, nextPhase, CurrentDate, "Manual phase advance");
             await RefreshCycleDataAsync();
         }
         catch (CyclePhaseOrderException ex)
@@ -206,12 +222,12 @@ public partial class CycleViewModel : ObservableObject
         SaveDatePhaseCommand.NotifyCanExecuteChanged();
     }
 
-    private void OpenPhaseDetails(PhaseItem? phase)
+    private async Task OpenPhaseDetailsAsync(PhaseItem? phase)
     {
         if (phase is null)
             return;
 
-        _openPhaseDetails(phase.Phase);
+        await _openPhaseDetailsAsync(phase.Phase);
     }
 
     private void CloseDatePhaseModal()
@@ -276,7 +292,8 @@ public partial class CycleViewModel : ObservableObject
             phaseOption.IsSelected = phaseOption.Phase == _suggestedPhase.Value;
 
         HasPhaseJumpWarning = false;
-        PhaseEditStatusText = $"{FormatPhaseName(_suggestedPhase.Value)} keeps the cycle in order. Tap Save phase to log it.";
+        PhaseEditStatusText =
+            $"{FormatPhaseName(_suggestedPhase.Value)} keeps the cycle in order. Tap Save phase to log it.";
         _suggestedPhase = null;
         OnPropertyChanged(nameof(HasSuggestedPhase));
         SaveDatePhaseCommand.NotifyCanExecuteChanged();
@@ -296,15 +313,22 @@ public partial class CycleViewModel : ObservableObject
         SaveDatePhaseCommand.NotifyCanExecuteChanged();
     }
 
-    private bool CanSaveDatePhase() => _selectedCalendarDay?.Date is not null;
+    private bool CanSaveDatePhase()
+    {
+        return _selectedCalendarDay?.Date is not null;
+    }
 
     private async Task SavePhaseForDateAsync(DateTime date, CyclePhase phase, string note)
     {
         IsBusy = true;
         try
         {
-            var userId = await _authService.GetCurrentUserIdAsync();
-            await _cycleService.SetPhaseForDateAsync(userId, phase, date, note);
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
+
+            var userId = await authService.GetCurrentUserIdAsync();
+            await cycleService.SetPhaseForDateAsync(userId, phase, date, note);
             CloseDatePhaseModal();
             await RefreshCycleDataAsync();
         }
@@ -314,7 +338,7 @@ public partial class CycleViewModel : ObservableObject
         }
         catch (InvalidOperationException ex)
         {
-            PhaseJumpWarningTitle = "This needs a quick fix";
+            PhaseJumpWarningTitle = "Let’s keep the cycle in order";
             PhaseJumpWarningText = ex.Message;
             HasPhaseJumpWarning = true;
         }
@@ -324,22 +348,30 @@ public partial class CycleViewModel : ObservableObject
         }
     }
 
-    private CyclePhase? GetSelectedPhase() =>
-        PhaseEditOptions.FirstOrDefault(option => option.IsSelected)?.Phase;
+    private CyclePhase? GetSelectedPhase()
+    {
+        return PhaseEditOptions.FirstOrDefault(option => option.IsSelected)?.Phase;
+    }
 
-    private bool CanAdvancePhase() => !IsBusy;
+    private bool CanAdvancePhase()
+    {
+        return !IsBusy;
+    }
 
-    private static string FormatLastPhaseLog(CyclePhaseLog? log) =>
-        log is null ? "No shift logged yet" : $"{log.Phase} logged {log.LoggedAt:MMM d}";
+    private static string FormatLastPhaseLog(CyclePhaseLog? log)
+    {
+        return log is null ? "No shift logged yet" : $"{log.Phase} logged {log.LoggedAt:MMM d}";
+    }
 
     private static ObservableCollection<CycleDayItem> BuildCalendarDays(
         CyclePrediction prediction,
         IReadOnlyCollection<CyclePhaseLog> phaseLogs,
         DateTime accountCreatedDate,
+        DateTime currentDate,
         bool useDarkTheme)
     {
         var items = new ObservableCollection<CycleDayItem>();
-        var today = DateTime.Today;
+        var today = currentDate.Date;
         var firstDayOfMonth = new DateTime(today.Year, today.Month, 1);
         var daysInMonth = DateTime.DaysInMonth(today.Year, today.Month);
         var cycleLength = CyclePhaseRules.NormalizeCycleLength(prediction.PredictedCycleLength);
@@ -360,7 +392,7 @@ public partial class CycleViewModel : ObservableObject
             var isPredictedFuture = date.Date > today.Date && !hasPhaseShiftLog && !isNeutral;
             var phase = isNeutral
                 ? prediction.CurrentPhase
-                : ResolveCalendarPhase(cycleDay, date, cycleLength, prediction, orderedPhaseLogs);
+                : ResolveCalendarPhase(cycleDay, date, cycleLength, prediction, orderedPhaseLogs, today);
 
             items.Add(new CycleDayItem
             {
@@ -373,12 +405,16 @@ public partial class CycleViewModel : ObservableObject
                 IsNeutral = isNeutral,
                 HasPhaseShiftLog = hasPhaseShiftLog,
                 IsPredictedFuture = isPredictedFuture,
-                BackgroundColor = isNeutral ? GetNeutralDayBackground(isToday, useDarkTheme) : GetDayBackground(phase, isToday, useDarkTheme),
-                TextColor = isToday ? GetTodayDayTextColor(useDarkTheme) : isNeutral ? GetNeutralDayTextColor(useDarkTheme) : GetPhaseTextColor(phase, useDarkTheme),
+                BackgroundColor = isNeutral
+                    ? GetNeutralDayBackground(isToday, useDarkTheme)
+                    : GetDayBackground(phase, isToday, useDarkTheme),
+                TextColor = isToday ? GetTodayDayTextColor(useDarkTheme) :
+                    isNeutral ? GetNeutralDayTextColor(useDarkTheme) : GetPhaseTextColor(phase, useDarkTheme),
                 StrokeColor = ResolveDayStrokeColor(phase, isToday, hasPhaseShiftLog, isPredictedFuture, useDarkTheme),
                 StrokeThickness = isToday ? 2 : hasPhaseShiftLog ? 1.25 : isPredictedFuture ? 1.15 : 0
             });
         }
+
         return items;
     }
 
@@ -401,7 +437,7 @@ public partial class CycleViewModel : ObservableObject
             return 0;
 
         var daysFromCycleStart = (date.Date - cycleStartDate.Value.Date).Days;
-        var normalizedOffset = ((daysFromCycleStart % cycleLength) + cycleLength) % cycleLength;
+        var normalizedOffset = (daysFromCycleStart % cycleLength + cycleLength) % cycleLength;
         return normalizedOffset + 1;
     }
 
@@ -410,7 +446,8 @@ public partial class CycleViewModel : ObservableObject
         DateTime date,
         int cycleLength,
         CyclePrediction prediction,
-        IReadOnlyList<CyclePhaseLog> orderedPhaseLogs)
+        IReadOnlyList<CyclePhaseLog> orderedPhaseLogs,
+        DateTime today)
     {
         var latestShift = orderedPhaseLogs
             .Where(log => log.LoggedAt.Date <= date.Date)
@@ -424,7 +461,7 @@ public partial class CycleViewModel : ObservableObject
         if (latestShift.LoggedAt.Date == date.Date)
             return latestShift.Phase;
 
-        if (date.Date == DateTime.Today && prediction.HasActiveCycle)
+        if (date.Date == today.Date && prediction.HasActiveCycle)
             return prediction.CurrentPhase;
 
         return CyclePhaseRules.ProjectPhaseFromLog(
@@ -440,8 +477,9 @@ public partial class CycleViewModel : ObservableObject
         return GetPhaseBackgroundColor(phase, useDarkTheme);
     }
 
-    private static Color GetPhaseBackgroundColor(CyclePhase phase, bool useDarkTheme) =>
-        phase switch
+    private static Color GetPhaseBackgroundColor(CyclePhase phase, bool useDarkTheme)
+    {
+        return phase switch
         {
             CyclePhase.Menstrual => Color.FromArgb(useDarkTheme ? "#5A3840" : "#F9D6D8"),
             CyclePhase.Follicular => Color.FromArgb(useDarkTheme ? "#2E5230" : "#D6EED6"),
@@ -449,40 +487,54 @@ public partial class CycleViewModel : ObservableObject
             CyclePhase.Luteal => Color.FromArgb(useDarkTheme ? "#3E2A58" : "#E8D8F5"),
             _ => Colors.Transparent
         };
+    }
 
-    private static Color GetNeutralDayBackground(bool isToday, bool useDarkTheme) =>
-        isToday
+    private static Color GetNeutralDayBackground(bool isToday, bool useDarkTheme)
+    {
+        return isToday
             ? Color.FromArgb(useDarkTheme ? "#AE8D9B" : "#8B7E86")
             : Color.FromArgb(useDarkTheme ? "#4C3942" : "#EEF0F2");
+    }
 
-    private static Color GetNeutralDayTextColor(bool useDarkTheme) =>
-        Color.FromArgb(useDarkTheme ? "#F8EEF4" : "#8B7E86");
-
-    private static Color GetTodayDayTextColor(bool useDarkTheme) =>
-        Color.FromArgb(useDarkTheme ? "#2B1D24" : "#FFFFFF");
-
-    private static Color GetPredictedDayStrokeColor(CyclePhase phase, bool useDarkTheme) => phase switch
+    private static Color GetNeutralDayTextColor(bool useDarkTheme)
     {
-        CyclePhase.Menstrual => Color.FromArgb(useDarkTheme ? "#F9D6D8" : "#B86B78"),
-        CyclePhase.Follicular => Color.FromArgb(useDarkTheme ? "#D6EED6" : "#679B67"),
-        CyclePhase.Ovulatory => Color.FromArgb(useDarkTheme ? "#FFF0C4" : "#B08A00"),
-        CyclePhase.Luteal => Color.FromArgb(useDarkTheme ? "#E8D8F5" : "#8B6AB8"),
-        _ => Color.FromArgb(useDarkTheme ? "#F8EEF4" : "#8B7E86")
-    };
+        return Color.FromArgb(useDarkTheme ? "#F8EEF4" : "#8B7E86");
+    }
 
-    private static Color GetPhaseTextColor(CyclePhase phase, bool useDarkTheme) => phase switch
+    private static Color GetTodayDayTextColor(bool useDarkTheme)
     {
-        CyclePhase.Menstrual => Color.FromArgb(useDarkTheme ? "#F9D6D8" : "#7A3A48"),
-        CyclePhase.Follicular => Color.FromArgb(useDarkTheme ? "#D6EED6" : "#3A6B3A"),
-        CyclePhase.Ovulatory => Color.FromArgb(useDarkTheme ? "#FFF0C4" : "#7A6000"),
-        CyclePhase.Luteal => Color.FromArgb(useDarkTheme ? "#E8D8F5" : "#5A3B80"),
-        _ => Color.FromArgb(useDarkTheme ? "#F8EEF4" : "#1F2937")
-    };
+        return Color.FromArgb(useDarkTheme ? "#2B1D24" : "#FFFFFF");
+    }
 
-    private static ObservableCollection<PhaseItem> BuildPhaseItems(bool useDarkTheme) =>
-        new()
+    private static Color GetPredictedDayStrokeColor(CyclePhase phase, bool useDarkTheme)
+    {
+        return phase switch
         {
-            new PhaseItem
+            CyclePhase.Menstrual => Color.FromArgb(useDarkTheme ? "#F9D6D8" : "#B86B78"),
+            CyclePhase.Follicular => Color.FromArgb(useDarkTheme ? "#D6EED6" : "#679B67"),
+            CyclePhase.Ovulatory => Color.FromArgb(useDarkTheme ? "#FFF0C4" : "#B08A00"),
+            CyclePhase.Luteal => Color.FromArgb(useDarkTheme ? "#E8D8F5" : "#8B6AB8"),
+            _ => Color.FromArgb(useDarkTheme ? "#F8EEF4" : "#8B7E86")
+        };
+    }
+
+    private static Color GetPhaseTextColor(CyclePhase phase, bool useDarkTheme)
+    {
+        return phase switch
+        {
+            CyclePhase.Menstrual => Color.FromArgb(useDarkTheme ? "#F9D6D8" : "#7A3A48"),
+            CyclePhase.Follicular => Color.FromArgb(useDarkTheme ? "#D6EED6" : "#3A6B3A"),
+            CyclePhase.Ovulatory => Color.FromArgb(useDarkTheme ? "#FFF0C4" : "#7A6000"),
+            CyclePhase.Luteal => Color.FromArgb(useDarkTheme ? "#E8D8F5" : "#5A3B80"),
+            _ => Color.FromArgb(useDarkTheme ? "#F8EEF4" : "#1F2937")
+        };
+    }
+
+    private static ObservableCollection<PhaseItem> BuildPhaseItems(bool useDarkTheme)
+    {
+        return new ObservableCollection<PhaseItem>
+        {
+            new()
             {
                 Phase = CyclePhase.Menstrual,
                 Name = "Menstrual",
@@ -493,7 +545,7 @@ public partial class CycleViewModel : ObservableObject
                 BackgroundColor = GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme),
                 TextColor = GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme)
             },
-            new PhaseItem
+            new()
             {
                 Phase = CyclePhase.Follicular,
                 Name = "Follicular",
@@ -504,7 +556,7 @@ public partial class CycleViewModel : ObservableObject
                 BackgroundColor = GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme),
                 TextColor = GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme)
             },
-            new PhaseItem
+            new()
             {
                 Phase = CyclePhase.Ovulatory,
                 Name = "Ovulatory",
@@ -515,7 +567,7 @@ public partial class CycleViewModel : ObservableObject
                 BackgroundColor = GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme),
                 TextColor = GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme)
             },
-            new PhaseItem
+            new()
             {
                 Phase = CyclePhase.Luteal,
                 Name = "Luteal",
@@ -527,9 +579,12 @@ public partial class CycleViewModel : ObservableObject
                 TextColor = GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme)
             }
         };
+    }
 
-    private static ObservableCollection<CyclePhaseOptionItem> BuildPhaseOptions(CyclePhase? selectedPhase, bool useDarkTheme) =>
-        new(BuildPhaseItems(useDarkTheme).Select(item =>
+    private static ObservableCollection<CyclePhaseOptionItem> BuildPhaseOptions(CyclePhase? selectedPhase,
+        bool useDarkTheme)
+    {
+        return new ObservableCollection<CyclePhaseOptionItem>(BuildPhaseItems(useDarkTheme).Select(item =>
         {
             return new CyclePhaseOptionItem
             {
@@ -543,6 +598,7 @@ public partial class CycleViewModel : ObservableObject
                 IsSelected = selectedPhase == item.Phase
             };
         }));
+    }
 
     private PhaseOrderWarning? BuildPhaseOrderWarning(DateTime date, CyclePhase selectedPhase)
     {
@@ -634,9 +690,13 @@ public partial class CycleViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            var userId = await _authService.GetCurrentUserIdAsync();
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
+
+            var userId = await authService.GetCurrentUserIdAsync();
             var suggestedPhase = _cycleWarningSuggestedPhase.Value;
-            await _cycleService.SetPhaseForDateAsync(userId, suggestedPhase, DateTime.Today, "Manual phase correction");
+            await cycleService.SetPhaseForDateAsync(userId, suggestedPhase, CurrentDate, "Manual phase correction");
             CloseCycleWarningPopup();
             await RefreshCycleDataAsync();
         }
@@ -657,17 +717,22 @@ public partial class CycleViewModel : ObservableObject
         }
     }
 
-    private static bool FollowsCycleOrder(CyclePhase from, CyclePhase to) =>
-        to == from || to == CyclePhaseRules.GetNextPhase(from);
+    private static bool FollowsCycleOrder(CyclePhase from, CyclePhase to)
+    {
+        return to == from || to == CyclePhaseRules.GetNextPhase(from);
+    }
 
-    private static string FormatCycleOrderWarningMessage(string message) =>
-        message
+    private static string FormatCycleOrderWarningMessage(string message)
+    {
+        return message
             .Replace("This phase would break the cycle order.", "This phase would skip a step.")
             .Replace("Cycle phases must follow order.", "This phase would skip a step.");
+    }
 
-    private static string FormatPhaseName(CyclePhase phase) => phase.ToString().ToLowerInvariant();
-
-    private readonly record struct PhaseOrderWarning(string Title, string Message, CyclePhase SuggestedPhase);
+    private static string FormatPhaseName(CyclePhase phase)
+    {
+        return phase.ToString().ToLowerInvariant();
+    }
 
     partial void OnUseDarkThemeChanged(bool value)
     {
@@ -766,4 +831,6 @@ public partial class CycleViewModel : ObservableObject
         OnPropertyChanged(nameof(PhaseLogActionText));
         OnPropertyChanged(nameof(PredictionSummary));
     }
+
+    private readonly record struct PhaseOrderWarning(string Title, string Message, CyclePhase SuggestedPhase);
 }

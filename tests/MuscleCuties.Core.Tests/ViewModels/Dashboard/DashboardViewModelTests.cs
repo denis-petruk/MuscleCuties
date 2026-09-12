@@ -1,61 +1,67 @@
-using NSubstitute;
+using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Entities.Workout;
+using MuscleCuties.Core.Models.Entities.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Cycle;
-using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.Core.Models.Enums.Quiz;
-using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.Core.Repositories.Common;
-using MuscleCuties.Core.Repositories.Cycle;
-using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Repositories.Quiz;
+using MuscleCuties.Core.Models.Nutrition;
+using MuscleCuties.Core.Models.UI.Cycle;
+using MuscleCuties.Core.Models.UI.Workout;
+using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.Repositories.Users;
-using MuscleCuties.Core.Repositories.Workout;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
 using MuscleCuties.Core.Services.Dashboard.Planning;
-using MuscleCuties.Core.Services.Health;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Progress;
-using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
-using MuscleCuties.Core.ViewModels.Auth;
-using MuscleCuties.Core.ViewModels.Cycle;
 using MuscleCuties.Core.ViewModels.Dashboard;
-using MuscleCuties.Core.ViewModels.Nutrition;
-using MuscleCuties.Core.ViewModels.Profile;
-using MuscleCuties.Core.ViewModels.Quiz;
-using MuscleCuties.Core.ViewModels.Workout;
+using NSubstitute;
 
 namespace MuscleCuties.Core.Tests.ViewModels.Dashboard;
 
 public class DashboardViewModelTests
 {
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
-    private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly ICycleService _cycleService = Substitute.For<ICycleService>();
-    private readonly INutritionService _nutritionService = Substitute.For<INutritionService>();
-    private readonly IWorkoutService _workoutService = Substitute.For<IWorkoutService>();
-    private readonly IProgressSummaryService _progressSummaryService = Substitute.For<IProgressSummaryService>();
     private readonly IDashboardPlanner _dashboardPlanner = new DashboardPlanner();
-    private readonly IHealthSyncService _healthSyncService = Substitute.For<IHealthSyncService>();
+    private readonly IReadinessRepository _readinessRepository = Substitute.For<IReadinessRepository>();
+    private readonly INutritionService _nutritionService = Substitute.For<INutritionService>();
+    private readonly IProgressSummaryService _progressSummaryService = Substitute.For<IProgressSummaryService>();
+    private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
+    private readonly IWorkoutService _workoutService = Substitute.For<IWorkoutService>();
 
-    private DashboardViewModel CreateViewModel() =>
-        new(
-            _authService,
-            _userRepository,
-            _cycleService,
-            _nutritionService,
-            _workoutService,
-            _progressSummaryService,
-            _dashboardPlanner,
-            _healthSyncService,
-            () => { },
-            () => { },
-            () => { });
+    private IServiceScopeFactory BuildScopeFactory()
+    {
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        serviceProvider.GetService(typeof(IAuthService)).Returns(_authService);
+        serviceProvider.GetService(typeof(IUserRepository)).Returns(_userRepository);
+        serviceProvider.GetService(typeof(ICycleService)).Returns(_cycleService);
+        serviceProvider.GetService(typeof(INutritionService)).Returns(_nutritionService);
+        serviceProvider.GetService(typeof(IWorkoutService)).Returns(_workoutService);
+        serviceProvider.GetService(typeof(IProgressSummaryService)).Returns(_progressSummaryService);
+        serviceProvider.GetService(typeof(IDashboardPlanner)).Returns(_dashboardPlanner);
+        serviceProvider.GetService(typeof(IReadinessRepository)).Returns(_readinessRepository);
+
+        var scope = Substitute.For<IServiceScope>();
+        scope.ServiceProvider.Returns(serviceProvider);
+
+        var scopeFactory = Substitute.For<IServiceScopeFactory>();
+        scopeFactory.CreateScope().Returns(scope);
+
+        return scopeFactory;
+    }
+
+    private DashboardViewModel CreateViewModel()
+    {
+        return new DashboardViewModel(
+            BuildScopeFactory(),
+            () => Task.CompletedTask,
+            () => Task.CompletedTask,
+            () => Task.CompletedTask,
+            () => Task.CompletedTask);
+    }
 
     private void ConfigureDefaultUserData(CyclePhase phase = CyclePhase.Follicular)
     {
@@ -86,9 +92,6 @@ public class DashboardViewModelTests
             .Returns(new ProgressSummary(3, 2, 4));
         _workoutService.GetTodaysSummaryAsync(1, phase, Arg.Any<DateTime>())
             .Returns(TodaysWorkoutSummary.RestDay);
-        _healthSyncService.GetCachedWeeklySummaryAsync(1).Returns((HealthWeeklySummary?)null);
-        _healthSyncService.GetStatusAsync(1).Returns(new HealthSyncStatus(null, false, true, null, "Not connected"));
-        _healthSyncService.ShouldShowPromptAsync(1).Returns(false);
     }
 
     [Fact]
@@ -105,7 +108,7 @@ public class DashboardViewModelTests
         Assert.Equal(2000f, vm.TargetCalories);
         Assert.Equal(800f, vm.ConsumedCalories);
         Assert.Equal("Follicular", vm.PhaseLabel);
-        Assert.Equal("phase_follicular_plant.json", vm.PhaseIllustrationSource);
+        Assert.Equal(CyclePhaseAssets.FollicularAnimation, vm.PhaseIllustrationSource);
         Assert.Contains("Denis", vm.Greetings);
         Assert.Equal("DAY 10 · FOLLICULAR PHASE", vm.PhaseBadgeText);
         Assert.Equal("THIS WEEK · FOLLICULAR", vm.DashboardPhaseHeaderText);
@@ -192,5 +195,170 @@ public class DashboardViewModelTests
         Assert.Equal("Completed", vm.SessionProgressText);
         Assert.Equal("Workout completed", vm.WorkoutBadgeText);
         Assert.Equal("Edit workout", vm.WorkoutActionText);
+    }
+
+    [Fact]
+    public async Task Invalidate_CausesNextLoadDataCommand_ToRefreshData()
+    {
+        ConfigureDefaultUserData();
+        _nutritionService.CalculateDailyTargetsAsync(1, CyclePhase.Follicular)
+            .Returns((2000f, 150f, 200f, 70f));
+
+        var vm = CreateViewModel();
+        await vm.LoadDataCommand.ExecuteAsync(null);
+
+        Assert.Equal(2000f, vm.TargetCalories);
+
+        // Change the data the service returns for the next load
+        _nutritionService.CalculateDailyTargetsAsync(1, CyclePhase.Follicular)
+            .Returns((2500f, 180f, 250f, 80f));
+
+        // Without Invalidate, the load gate would skip the reload because the data is still fresh
+        await vm.LoadDataCommand.ExecuteAsync(null);
+        Assert.Equal(2000f, vm.TargetCalories);
+
+        // After Invalidate, the next load should fetch fresh data
+        vm.Invalidate();
+        await vm.LoadDataCommand.ExecuteAsync(null);
+
+        Assert.Equal(2500f, vm.TargetCalories);
+    }
+
+    [Fact]
+    public void Greetings_MorningHour_ReturnsGoodMorning()
+    {
+        var vm = CreateViewModel();
+        var hour = DateTime.Now.Hour;
+        var greeting = vm.Greetings;
+
+        if (hour < 12)
+            Assert.StartsWith("Good morning", greeting);
+        else if (hour < 18)
+            Assert.StartsWith("Good afternoon", greeting);
+        else
+            Assert.StartsWith("Good evening", greeting);
+    }
+
+    [Fact]
+    public async Task Greetings_AfterLoad_IncludesFirstName()
+    {
+        ConfigureDefaultUserData();
+        _nutritionService.CalculateDailyTargetsAsync(1, CyclePhase.Follicular)
+            .Returns((2000f, 150f, 200f, 70f));
+
+        var vm = CreateViewModel();
+        await vm.LoadDataCommand.ExecuteAsync(null);
+
+        Assert.Contains("Denis", vm.Greetings);
+        Assert.DoesNotContain("Petruk", vm.Greetings);
+    }
+
+    [Fact]
+    public void Greetings_WithoutDisplayName_ReturnsGreetingOnly()
+    {
+        var vm = CreateViewModel();
+
+        // Before any load, DisplayName is empty
+        var greeting = vm.Greetings;
+
+        Assert.DoesNotContain(",", greeting);
+        Assert.True(
+            greeting.StartsWith("Good morning") ||
+            greeting.StartsWith("Good afternoon") ||
+            greeting.StartsWith("Good evening"));
+    }
+
+    [Fact]
+    public void PhaseStatusText_WithActiveCycle_ShowsDayAndLength()
+    {
+        var vm = CreateViewModel();
+
+        // Simulate an active cycle by setting properties directly
+        vm.CurrentPhase = CyclePhase.Ovulatory;
+        vm.CurrentCycleDay = 14;
+        vm.PredictedCycleLength = 30;
+
+        Assert.Equal("OVULATORY · DAY 14 / 30", vm.PhaseStatusText);
+    }
+
+    [Fact]
+    public void PhaseStatusText_WithZeroCycleDay_ShowsStartTracking()
+    {
+        var vm = CreateViewModel();
+
+        vm.CurrentPhase = CyclePhase.Follicular;
+        vm.CurrentCycleDay = 0;
+
+        Assert.Equal("FOLLICULAR · START TRACKING", vm.PhaseStatusText);
+    }
+
+    [Fact]
+    public void PhaseStatusText_AllPhases_FormatsCorrectly()
+    {
+        var vm = CreateViewModel();
+        vm.CurrentCycleDay = 5;
+        vm.PredictedCycleLength = 28;
+
+        vm.CurrentPhase = CyclePhase.Menstrual;
+        Assert.Equal("MENSTRUAL · DAY 5 / 28", vm.PhaseStatusText);
+
+        vm.CurrentPhase = CyclePhase.Luteal;
+        Assert.Equal("LUTEAL · DAY 5 / 28", vm.PhaseStatusText);
+    }
+
+    [Fact]
+    public async Task IsPageLoading_TrueDuringInitialLoad_FalseAfter()
+    {
+        ConfigureDefaultUserData();
+        _nutritionService.CalculateDailyTargetsAsync(1, CyclePhase.Follicular)
+            .Returns((2000f, 150f, 200f, 70f));
+
+        var vm = CreateViewModel();
+
+        // Before any load, IsBusy is false and HasLoaded is false, so IsPageLoading is false
+        Assert.False(vm.IsPageLoading);
+
+        var loadingStates = new List<bool>();
+        vm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(DashboardViewModel.IsPageLoading))
+                loadingStates.Add(vm.IsPageLoading);
+        };
+
+        await vm.LoadDataCommand.ExecuteAsync(null);
+
+        // After the load completes, IsPageLoading should be false
+        Assert.False(vm.IsPageLoading);
+
+        // During the load, IsPageLoading should have been true then reverted to false
+        Assert.Contains(true, loadingStates);
+        Assert.Equal(false, loadingStates.Last());
+    }
+
+    [Fact]
+    public async Task IsPageLoading_FalseOnSubsequentLoad_BecauseHasLoadedIsTrue()
+    {
+        ConfigureDefaultUserData();
+        _nutritionService.CalculateDailyTargetsAsync(1, CyclePhase.Follicular)
+            .Returns((2000f, 150f, 200f, 70f));
+
+        var vm = CreateViewModel();
+        await vm.LoadDataCommand.ExecuteAsync(null);
+
+        // Force a reload via Invalidate so the gate allows a second load
+        vm.Invalidate();
+
+        var loadingStates = new List<bool>();
+        vm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(DashboardViewModel.IsPageLoading))
+                loadingStates.Add(vm.IsPageLoading);
+        };
+
+        await vm.LoadDataCommand.ExecuteAsync(null);
+
+        // After Invalidate, HasLoaded is reset, so IsPageLoading transitions should occur again
+        Assert.Contains(true, loadingStates);
+        Assert.False(vm.IsPageLoading);
     }
 }

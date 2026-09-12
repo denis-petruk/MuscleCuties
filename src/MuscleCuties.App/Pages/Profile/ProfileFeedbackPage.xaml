@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage
     x:Class="MuscleCuties.App.Pages.Profile.ProfileFeedbackPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -9,7 +10,11 @@
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20,52,20,32" Spacing="16">
+        <VerticalStackLayout
+            Padding="20,52,20,32"
+            Spacing="16"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="640">
             <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
                 <Button
                     Text="‹"
@@ -19,7 +24,8 @@
                     Command="{Binding BackCommand}" />
                 <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                     <Label Text="Feedback" Style="{StaticResource SubHeadline}" />
-                    <Label Text="Private beta notes for the handsome, jacked developer" Style="{StaticResource CaptionLabel}" />
+                    <Label Text="Private beta notes for the handsome, jacked developer"
+                           Style="{StaticResource CaptionLabel}" />
                 </VerticalStackLayout>
             </Grid>
 
@@ -48,7 +54,6 @@
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <VerticalStackLayout Grid.Column="0" Spacing="5">
                             <Label Text="Topic" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="What part of the app this note is about." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Picker
                                     Title="Topic"
@@ -60,7 +65,6 @@
 
                         <VerticalStackLayout Grid.Column="1" Spacing="5">
                             <Label Text="Priority" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="How urgent or important it feels to you." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Picker
                                     Title="Priority"
@@ -85,7 +89,6 @@
                                 Style="{StaticResource FormFieldLabel}"
                                 VerticalOptions="Center" />
                         </Grid>
-                        <Label Text="Helps point the feedback to the exact place in the app." Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry
                                 Placeholder="Example: Nutrition page"
@@ -101,20 +104,21 @@
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                         <VerticalStackLayout Spacing="2">
                             <Label Text="Include contact email" Style="{StaticResource CardTitle}" />
-                            <Label Text="Turn it off for anonymous-ish feedback text." Style="{StaticResource CaptionLabel}" />
+                            <Label Text="Turn it off for anonymous-ish feedback text."
+                                   Style="{StaticResource CaptionLabel}" />
                         </VerticalStackLayout>
                         <Switch
                             Grid.Column="1"
                             IsToggled="{Binding IncludeContactEmail}"
                             OnColor="{StaticResource Primary}"
                             ThumbColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
-                            VerticalOptions="Center" />
+                            VerticalOptions="Center"
+                            SemanticProperties.Description="Include contact email in feedback" />
                     </Grid>
                     <VerticalStackLayout
                         Spacing="5"
                         IsVisible="{Binding IncludeContactEmail}">
                         <Label Text="Reply email" Style="{StaticResource FormFieldLabel}" />
-                        <Label Text="Only used if a follow-up would help understand your note." Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry Placeholder="Contact email" Text="{Binding ContactEmail}" Keyboard="Email" />
                         </Border>
@@ -128,9 +132,6 @@
                         <sharedControls:IconSectionHeader Text="WHAT HAPPENED" IconGlyph="Comment24" />
                         <Label Grid.Column="1" Text="{Binding FeedbackCountText}" Style="{StaticResource CaptionLabel}" />
                     </Grid>
-                    <Label
-                        Text="Describe the bug, slow spot, confusing wording, or design detail you noticed."
-                        Style="{StaticResource FormFieldHint}" />
                     <Border Style="{StaticResource InputContainer}" MinimumHeightRequest="146">
                         <Editor
                             Placeholder="Tell me what you noticed. What felt off, broken, slow, ugly, confusing?"
@@ -143,9 +144,6 @@
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
                     <sharedControls:IconSectionHeader Text="WHAT WOULD MAKE IT BETTER" IconGlyph="SparkleCircle24" />
-                    <Label
-                        Text="Share the version you wish existed, even if it is rough."
-                        Style="{StaticResource FormFieldHint}" />
                     <Border Style="{StaticResource InputContainer}" MinimumHeightRequest="146">
                         <Editor
                             Placeholder="Suggest the fix, better wording, missing control, or the version you wish existed."
@@ -160,7 +158,6 @@
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                         <VerticalStackLayout Spacing="4">
                             <sharedControls:IconSectionHeader Text="ATTACH CONTEXT" IconGlyph="LinkSquare24" />
-                            <Label Text="Screenshot, PDF, text, or log file under 10 MB." Style="{StaticResource FormFieldHint}" />
                         </VerticalStackLayout>
                         <Button
                             Grid.Column="1"

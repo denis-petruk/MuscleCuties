@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Core.Diagnostics;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
@@ -15,7 +14,6 @@ public partial class AppDatabase
 
     private async Task SeedQuizQuestionsAsync()
     {
-        AppDebugLog.Write("QuizSeed", "SeedQuizQuestions start.");
         var seedQuestions = BuildQuizQuestions();
         var seedQuestionTypes = seedQuestions
             .Select(question => question.QuestionType)
@@ -23,9 +21,6 @@ public partial class AppDatabase
         var existingQuestions = await QuizQuestions
             .Where(question => seedQuestionTypes.Contains(question.QuestionType))
             .ToListAsync();
-        AppDebugLog.Write(
-            "QuizSeed",
-            $"Seed question types={seedQuestionTypes.Count}, existing seeded question rows={existingQuestions.Count}.");
 
         if (existingQuestions.Count > 0)
         {
@@ -34,7 +29,6 @@ public partial class AppDatabase
                 question.OrderIndex = temporaryOrder++;
 
             await SaveChangesAsync();
-            AppDebugLog.Write("QuizSeed", "Moved existing quiz questions to temporary order range.");
         }
 
         var existingQuestionTypes = existingQuestions
@@ -43,26 +37,21 @@ public partial class AppDatabase
         var missingQuestions = seedQuestions
             .Where(question => !existingQuestionTypes.Contains(question.QuestionType))
             .ToList();
-        AppDebugLog.Write("QuizSeed", $"Missing seeded questions count={missingQuestions.Count}.");
 
         if (missingQuestions.Count > 0)
         {
             await QuizQuestions.AddRangeAsync(missingQuestions);
             await SaveChangesAsync();
-            AppDebugLog.Write("QuizSeed", "Inserted missing quiz questions.");
         }
 
         await RefreshExistingQuizAnswersAsync(seedQuestions);
-        AppDebugLog.Write("QuizSeed", "SeedQuizQuestions finished.");
     }
 
     private async Task RefreshExistingQuizAnswersAsync(IReadOnlyCollection<QuizQuestion> seedQuestions)
     {
-        AppDebugLog.Write("QuizSeed", "RefreshExistingQuizAnswers start.");
         var questions = await QuizQuestions
             .Include(question => question.Answers)
             .ToListAsync();
-        AppDebugLog.Write("QuizSeed", $"Questions loaded for answer refresh={questions.Count}.");
 
         foreach (var question in questions)
         {
@@ -75,7 +64,6 @@ public partial class AppDatabase
         }
 
         await SaveChangesAsync();
-        AppDebugLog.Write("QuizSeed", "Moved existing quiz answers to temporary order range.");
 
         foreach (var question in questions)
         {
@@ -83,9 +71,6 @@ public partial class AppDatabase
             if (seedQuestion is null)
                 continue;
 
-            AppDebugLog.Write(
-                "QuizSeed",
-                $"Refreshing question type={question.QuestionType}, existingAnswers={question.Answers.Count}, seededAnswers={seedQuestion.Answers.Count}.");
             question.Question = seedQuestion.Question;
             question.OrderIndex = seedQuestion.OrderIndex;
 
@@ -106,9 +91,6 @@ public partial class AppDatabase
                     OrderIndex = seedAnswer.OrderIndex,
                     MappedValue = seedAnswer.MappedValue
                 });
-                AppDebugLog.Write(
-                    "QuizSeed",
-                    $"Added missing answer mappedValue={seedAnswer.MappedValue} for question type={question.QuestionType}.");
             }
 
             var obsoleteOrder = ObsoleteQuizAnswerOrderIndex;
@@ -118,126 +100,161 @@ public partial class AppDatabase
             foreach (var answer in question.Answers
                          .Where(answer => !seededValues.Contains(answer.MappedValue))
                          .OrderBy(answer => answer.Id))
-            {
                 answer.OrderIndex = obsoleteOrder++;
-            }
         }
 
         await SaveChangesAsync();
-        AppDebugLog.Write("QuizSeed", "RefreshExistingQuizAnswers finished.");
     }
 
-    private static List<QuizQuestion> BuildQuizQuestions() =>
-    [
-        new()
-        {
-            Question = "Current cycle phase?",
-            OrderIndex = 1,
-            QuestionType = QuizQuestionType.CurrentCyclePhase,
-            Answers =
-            [
-                Answer("Menstrual", 1, (int)CyclePhase.Menstrual),
-                Answer("Follicular", 2, (int)CyclePhase.Follicular),
-                Answer("Ovulatory", 3, (int)CyclePhase.Ovulatory),
-                Answer("Luteal", 4, (int)CyclePhase.Luteal)
-            ]
-        },
-        new()
-        {
-            Question = "Main fitness goal?",
-            OrderIndex = 2,
-            QuestionType = QuizQuestionType.Goal,
-            Answers =
-            [
-                Answer("Lose fat", 1, (int)UserGoal.FatLoss),
-                Answer("Build muscle tone", 2, (int)UserGoal.MuscleTone),
-                Answer("Get stronger", 3, (int)UserGoal.Strength),
-                Answer("Maintain health", 4, (int)UserGoal.MaintainHealth)
-            ]
-        },
-        new()
-        {
-            Question = "Training experience?",
-            OrderIndex = 3,
-            QuestionType = QuizQuestionType.ExperienceLevel,
-            Answers =
-            [
-                Answer("Beginner", 1, 1),
-                Answer("Intermediate", 2, 2),
-                Answer("Advanced", 3, 3)
-            ]
-        },
-        new()
-        {
-            Question = "Training days per week?",
-            OrderIndex = 4,
-            QuestionType = QuizQuestionType.WorkoutDaysPerWeek,
-            Answers =
-            [
-                Answer("2 days", 1, 2),
-                Answer("3 days", 2, 3),
-                Answer("4 days", 3, 4),
-                Answer("5 days", 4, 5)
-            ]
-        },
-        new()
-        {
-            Question = "Dietary preference?",
-            OrderIndex = 5,
-            QuestionType = QuizQuestionType.DietaryPreference,
-            Answers =
-            [
-                Answer("No preference", 1, (int)DietaryTag.None),
-                Answer("Vegetarian", 2, (int)DietaryTag.Vegetarian),
-                Answer("Vegan", 3, (int)DietaryTag.Vegan),
-                Answer("Gluten-free", 4, (int)DietaryTag.GlutenFree),
-                Answer("Lactose-free", 5, (int)DietaryTag.LactoseFree)
-            ]
-        },
-        PainQuestion("Period discomfort?", 6, QuizQuestionType.MenstrualPain),
-        EnergyQuestion("Period training energy?", 7, QuizQuestionType.MenstrualEnergy),
-        PainQuestion("Follicular discomfort?", 9, QuizQuestionType.FollicularPain),
-        EnergyQuestion("Follicular energy?", 10, QuizQuestionType.FollicularEnergy),
-        PainQuestion("Ovulation discomfort?", 11, QuizQuestionType.OvulatoryPain),
-        EnergyQuestion("Ovulation power?", 12, QuizQuestionType.OvulatoryEnergy),
-        PainQuestion("Luteal symptoms?", 13, QuizQuestionType.LutealPain),
-        EnergyQuestion("Luteal training energy?", 14, QuizQuestionType.LutealEnergy)
-    ];
-
-    private static QuizQuestion PainQuestion(string question, int orderIndex, QuizQuestionType questionType) => new()
+    private static List<QuizQuestion> BuildQuizQuestions()
     {
-        Question = question,
-        OrderIndex = orderIndex,
-        QuestionType = questionType,
-        Answers =
+        return
         [
-            Answer("Barely there", 1, 1),
-            Answer("Manageable", 2, 2),
-            Answer("Noticeable", 3, 3),
-            Answer("Rough", 4, 4),
-            Answer("Stops my day", 5, 5)
-        ]
-    };
+            new QuizQuestion
+            {
+                Question = "Current cycle phase?",
+                OrderIndex = 1,
+                QuestionType = QuizQuestionType.CurrentCyclePhase,
+                Answers =
+                [
+                    Answer("Menstrual", 1, (int)CyclePhase.Menstrual),
+                    Answer("Follicular", 2, (int)CyclePhase.Follicular),
+                    Answer("Ovulatory", 3, (int)CyclePhase.Ovulatory),
+                    Answer("Luteal", 4, (int)CyclePhase.Luteal)
+                ]
+            },
+            new QuizQuestion
+            {
+                Question = "Main fitness goal?",
+                OrderIndex = 2,
+                QuestionType = QuizQuestionType.Goal,
+                Answers =
+                [
+                    Answer("Lose fat", 1, (int)UserGoal.FatLoss),
+                    Answer("Build muscle tone", 2, (int)UserGoal.MuscleTone),
+                    Answer("Get stronger", 3, (int)UserGoal.Strength),
+                    Answer("Maintain health", 4, (int)UserGoal.MaintainHealth)
+                ]
+            },
+            new QuizQuestion
+            {
+                Question = "Training experience?",
+                OrderIndex = 3,
+                QuestionType = QuizQuestionType.ExperienceLevel,
+                Answers =
+                [
+                    Answer("Beginner", 1, 1),
+                    Answer("Intermediate", 2, 2),
+                    Answer("Advanced", 3, 3)
+                ]
+            },
+            new QuizQuestion
+            {
+                Question = "Training days per week?",
+                OrderIndex = 4,
+                QuestionType = QuizQuestionType.WorkoutDaysPerWeek,
+                Answers =
+                [
+                    Answer("2 days", 1, 2),
+                    Answer("3 days", 2, 3),
+                    Answer("4 days", 3, 4),
+                    Answer("5 days", 4, 5)
+                ]
+            },
+            new QuizQuestion
+            {
+                Question = "Dietary preference?",
+                OrderIndex = 5,
+                QuestionType = QuizQuestionType.DietaryPreference,
+                Answers =
+                [
+                    Answer("No preference", 1, (int)DietaryTag.None),
+                    Answer("Vegetarian", 2, (int)DietaryTag.Vegetarian),
+                    Answer("Vegan", 3, (int)DietaryTag.Vegan),
+                    Answer("Gluten-free", 4, (int)DietaryTag.GlutenFree),
+                    Answer("Lactose-free", 5, (int)DietaryTag.LactoseFree)
+                ]
+            },
+            new QuizQuestion
+            {
+                Question = "Session length?",
+                OrderIndex = 6,
+                QuestionType = QuizQuestionType.SessionDuration,
+                Answers =
+                [
+                    Answer("30 min", 1, 1),
+                    Answer("45 min", 2, 2),
+                    Answer("60 min", 3, 3),
+                    Answer("75 min", 4, 4),
+                    Answer("90 min", 5, 5)
+                ]
+            },
+            new QuizQuestion
+            {
+                Question = "Available equipment?",
+                OrderIndex = 7,
+                QuestionType = QuizQuestionType.Equipment,
+                Answers =
+                [
+                    Answer("Full gym", 1, 1),
+                    Answer("Dumbbells and bands", 2, 2),
+                    Answer("Bodyweight only", 3, 3)
+                ]
+            },
+            PainQuestion("Period discomfort?", 8, QuizQuestionType.MenstrualPain),
+            EnergyQuestion("Period training energy?", 9, QuizQuestionType.MenstrualEnergy),
+            PainQuestion("Follicular discomfort?", 10, QuizQuestionType.FollicularPain),
+            EnergyQuestion("Follicular energy?", 11, QuizQuestionType.FollicularEnergy),
+            PainQuestion("Ovulation discomfort?", 12, QuizQuestionType.OvulatoryPain),
+            EnergyQuestion("Ovulation power?", 13, QuizQuestionType.OvulatoryEnergy),
+            PainQuestion("Luteal symptoms?", 14, QuizQuestionType.LutealPain),
+            EnergyQuestion("Luteal training energy?", 15, QuizQuestionType.LutealEnergy)
+        ];
+    }
 
-    private static QuizQuestion EnergyQuestion(string question, int orderIndex, QuizQuestionType questionType) => new()
+    private static QuizQuestion PainQuestion(string question, int orderIndex, QuizQuestionType questionType)
     {
-        Question = question,
-        OrderIndex = orderIndex,
-        QuestionType = questionType,
-        Answers =
-        [
-            Answer("Couch-level", 1, 1),
-            Answer("Slow but moving", 2, 2),
-            Answer("Steady", 3, 3),
-            Answer("Strong", 4, 4),
-            Answer("Ready to push", 5, 5)
-        ]
-    };
+        return new QuizQuestion
+        {
+            Question = question,
+            OrderIndex = orderIndex,
+            QuestionType = questionType,
+            Answers =
+            [
+                Answer("Barely there", 1, 1),
+                Answer("Manageable", 2, 2),
+                Answer("Noticeable", 3, 3),
+                Answer("Rough", 4, 4),
+                Answer("Stops my day", 5, 5)
+            ]
+        };
+    }
 
-    private static QuizAnswer Answer(string text, int orderIndex, int mappedValue) => new()
+    private static QuizQuestion EnergyQuestion(string question, int orderIndex, QuizQuestionType questionType)
     {
-        Text = text,
-        OrderIndex = orderIndex,
-        MappedValue = mappedValue
-    };
+        return new QuizQuestion
+        {
+            Question = question,
+            OrderIndex = orderIndex,
+            QuestionType = questionType,
+            Answers =
+            [
+                Answer("Couch-level", 1, 1),
+                Answer("Slow but moving", 2, 2),
+                Answer("Steady", 3, 3),
+                Answer("Strong", 4, 4),
+                Answer("Ready to push", 5, 5)
+            ]
+        };
+    }
+
+    private static QuizAnswer Answer(string text, int orderIndex, int mappedValue)
+    {
+        return new QuizAnswer
+        {
+            Text = text,
+            OrderIndex = orderIndex,
+            MappedValue = mappedValue
+        };
+    }
 }

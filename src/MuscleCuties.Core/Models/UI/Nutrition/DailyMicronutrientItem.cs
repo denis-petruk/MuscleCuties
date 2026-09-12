@@ -13,6 +13,7 @@ public class DailyMicronutrientItem
     public string AmountText => $"{Amount:N1}{Unit}";
     public string GoalText => $"/ {Goal:N1}{Unit}";
     public string ProgressText => Goal <= 0f ? "No target" : $"{Progress * 100f:N0}%";
+
     public string IconGlyph => Name switch
     {
         "Fiber" => "LeafThree24",

@@ -9,5 +9,8 @@ public class FoodServingOptionItem
 
     public string DisplayText => Label;
 
-    public override string ToString() => DisplayText;
+    public override string ToString()
+    {
+        return DisplayText;
+    }
 }

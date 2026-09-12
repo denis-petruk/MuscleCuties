@@ -1,7 +1,7 @@
-using MuscleCuties.Core.Repositories.Common;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Entities.Nutrition;
+using MuscleCuties.Core.Repositories.Common;
 
 namespace MuscleCuties.Core.Repositories.Nutrition;
 
@@ -19,11 +19,13 @@ public class FoodSyncRepository(AppDatabase db) : BaseRepository<FoodSyncLog>(db
         await _db.SaveChangesAsync();
     }
 
-    public async Task<FoodSyncLog?> GetLatestSyncLogAsync() =>
-        await _db.FoodSyncLogs
+    public async Task<FoodSyncLog?> GetLatestSyncLogAsync()
+    {
+        return await _db.FoodSyncLogs
             .AsNoTracking()
             .OrderByDescending(l => l.StartedAt)
             .FirstOrDefaultAsync();
+    }
 
     public async Task AddFoodItemVersionAsync(FoodItemVersion version)
     {

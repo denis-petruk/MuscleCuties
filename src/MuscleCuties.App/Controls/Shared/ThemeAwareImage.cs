@@ -1,5 +1,3 @@
-using Microsoft.Maui.ApplicationModel;
-
 namespace MuscleCuties.App.Controls.Shared;
 
 public class ThemeAwareImage : Image
@@ -8,17 +6,20 @@ public class ThemeAwareImage : Image
         nameof(LightSource),
         typeof(string),
         typeof(ThemeAwareImage),
-        default(string),
         propertyChanged: OnThemeSourceChanged);
 
     public static readonly BindableProperty DarkSourceProperty = BindableProperty.Create(
         nameof(DarkSource),
         typeof(string),
         typeof(ThemeAwareImage),
-        default(string),
         propertyChanged: OnThemeSourceChanged);
 
     private bool _isThemeHandlerAttached;
+
+    public ThemeAwareImage()
+    {
+        BackgroundColor = Colors.Transparent;
+    }
 
     public string? LightSource
     {
@@ -30,11 +31,6 @@ public class ThemeAwareImage : Image
     {
         get => (string?)GetValue(DarkSourceProperty);
         set => SetValue(DarkSourceProperty, value);
-    }
-
-    public ThemeAwareImage()
-    {
-        BackgroundColor = Colors.Transparent;
     }
 
     protected override void OnParentSet()
@@ -99,7 +95,10 @@ public class ThemeAwareImage : Image
         if (string.IsNullOrWhiteSpace(image))
             return;
 
-        void Apply() => Source = ImageSource.FromFile(image);
+        void Apply()
+        {
+            Source = ImageSource.FromFile(image);
+        }
 
         if (MainThread.IsMainThread)
             Apply();

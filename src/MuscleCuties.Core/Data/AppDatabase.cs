@@ -1,33 +1,31 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Models.Entities.Cycle;
-using MuscleCuties.Core.Diagnostics;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
+using MuscleCuties.Core.Models.Entities.Workout.Planning;
 using MuscleCuties.Core.Models.Entities.Workout;
 
 namespace MuscleCuties.Core.Data;
 
 public partial class AppDatabase : DbContext
 {
-    public AppDatabase(DbContextOptions<AppDatabase> options) : base(options) { }
+    public AppDatabase(DbContextOptions<AppDatabase> options) : base(options)
+    {
+    }
 
-    // User domain
     public DbSet<User> Users => Set<User>();
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
     public DbSet<UserProfileSnapshot> UserProfileSnapshots => Set<UserProfileSnapshot>();
 
-    // Quiz domain
     public DbSet<QuizQuestion> QuizQuestions => Set<QuizQuestion>();
     public DbSet<QuizAnswer> QuizAnswers => Set<QuizAnswer>();
     public DbSet<UserQuizResponse> UserQuizResponses => Set<UserQuizResponse>();
 
-    // Cycle domain
     public DbSet<CycleLog> CycleLogs => Set<CycleLog>();
     public DbSet<CyclePhaseLog> CyclePhaseLogs => Set<CyclePhaseLog>();
     public DbSet<SymptomLog> SymptomLogs => Set<SymptomLog>();
 
-    // Nutrition domain
     public DbSet<FoodItem> FoodItems => Set<FoodItem>();
     public DbSet<FoodItemVersion> FoodItemVersions => Set<FoodItemVersion>();
     public DbSet<FoodSyncLog> FoodSyncLogs => Set<FoodSyncLog>();
@@ -36,13 +34,25 @@ public partial class AppDatabase : DbContext
     public DbSet<LoggedMeal> LoggedMeals => Set<LoggedMeal>();
     public DbSet<LoggedMealEntry> LoggedMealEntries => Set<LoggedMealEntry>();
 
-    // Workout domain
+    public DbSet<DailyReadinessLog> DailyReadinessLogs => Set<DailyReadinessLog>();
+    public DbSet<WorkoutInjuryLog> WorkoutInjuryLogs => Set<WorkoutInjuryLog>();
+
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<WorkoutPlan> WorkoutPlans => Set<WorkoutPlan>();
     public DbSet<WorkoutDay> WorkoutDays => Set<WorkoutDay>();
     public DbSet<WorkoutDayExercise> WorkoutDayExercises => Set<WorkoutDayExercise>();
     public DbSet<WorkoutLog> WorkoutLogs => Set<WorkoutLog>();
     public DbSet<WorkoutExerciseLog> WorkoutExerciseLogs => Set<WorkoutExerciseLog>();
+
+    public DbSet<WorkoutMuscleGroup> WorkoutMuscleGroups => Set<WorkoutMuscleGroup>();
+    public DbSet<GoalTierWeight> GoalTierWeights => Set<GoalTierWeight>();
+    public DbSet<WorkoutExerciseDefinition> WorkoutExerciseDefinitions => Set<WorkoutExerciseDefinition>();
+    public DbSet<ExerciseMuscleContribution> ExerciseMuscleContributions => Set<ExerciseMuscleContribution>();
+    public DbSet<SessionArchetype> SessionArchetypes => Set<SessionArchetype>();
+    public DbSet<SlotTemplate> SlotTemplates => Set<SlotTemplate>();
+    public DbSet<WeekTemplate> WeekTemplates => Set<WeekTemplate>();
+    public DbSet<VolumeBudgetRow> VolumeBudgetRows => Set<VolumeBudgetRow>();
+    public DbSet<WorkoutPlanningConfigEntry> WorkoutPlanningConfigEntries => Set<WorkoutPlanningConfigEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -52,52 +62,53 @@ public partial class AppDatabase : DbContext
         ConfigureCycleDomain(modelBuilder);
         ConfigureNutritionDomain(modelBuilder);
         ConfigureWorkoutDomain(modelBuilder);
+        ConfigureWorkoutPlanningDomain(modelBuilder);
+        ConfigureWorkoutPlanningReferenceDomain(modelBuilder);
     }
 
     public async Task InitializeAsync()
     {
-        AppDebugLog.Write("Database", "InitializeAsync start.");
-        var wasCreated = await Database.EnsureCreatedAsync();
-        AppDebugLog.Write("Database", $"EnsureCreated completed. wasCreated={wasCreated}.");
-
+        await Database.EnsureCreatedAsync();
         await SeedReferenceDataAsync();
-        AppDebugLog.Write("Database", "InitializeAsync finished.");
+    }
+
+    public async Task InitializeStartupAsync()
+    {
+        await Database.EnsureCreatedAsync();
+        await SeedQuizQuestionsAsync();
     }
 
     public async Task SeedReferenceDataAsync()
     {
-        AppDebugLog.Write("Database", "SeedReferenceData start.");
-        await TrySeedStepAsync(SeedQuizQuestionsAsync, nameof(SeedQuizQuestionsAsync));
-        await TrySeedStepAsync(SeedStarterFoodItemsAsync, nameof(SeedStarterFoodItemsAsync));
-        await TrySeedStepAsync(SeedSystemMealTemplatesAsync, nameof(SeedSystemMealTemplatesAsync));
-        await TrySeedStepAsync(SeedStarterExercisesAsync, nameof(SeedStarterExercisesAsync));
-        AppDebugLog.Write("Database", "SeedReferenceData finished.");
+        await SeedQuizQuestionsAsync();
+        await SeedDeferredReferenceDataAsync();
     }
 
-    private static async Task TrySeedStepAsync(Func<Task> seedStep, string stepName)
+    public async Task SeedDeferredReferenceDataAsync()
     {
-        try
-        {
-            AppDebugLog.Write("Database", $"Seed step start: {stepName}.");
-            await seedStep();
-            AppDebugLog.Write("Database", $"Seed step complete: {stepName}.");
-        }
-        catch (Exception ex)
-        {
-            AppDebugLog.Error("Database", ex, $"Seed step failed: {stepName}");
-        }
+        if (await WorkoutMuscleGroups.AnyAsync())
+            return;
+
+        await SeedStarterFoodItemsAsync();
+        await SeedStarterMealTemplatesAsync();
+        await SeedWorkoutPlanningDataAsync();
+    }
+
+    public async Task SeedWorkoutPlanningDataAsync()
+    {
+        await SeedWorkoutPlanningReferenceDataAsync();
+        await SeedStarterExercisesAsync();
+        await MirrorPlanningExercisesToWorkoutCatalogAsync();
     }
 
     public async Task ResetAndSeedDebugDatabaseAsync()
     {
 #if DEBUG
         ChangeTracker.Clear();
-        AppDebugLog.Write("Database", "ResetAndSeedDebugDatabase start.");
         await Database.EnsureDeletedAsync();
         await Database.EnsureCreatedAsync();
         await SeedReferenceDataAsync();
         ChangeTracker.Clear();
-        AppDebugLog.Write("Database", "ResetAndSeedDebugDatabase finished.");
 #else
         throw new InvalidOperationException("Debug database reset is only available in DEBUG builds.");
 #endif
@@ -147,8 +158,10 @@ public partial class AppDatabase : DbContext
             case UserProfile profile:
                 Require(profile.Height >= 0, "Profile height cannot be negative.");
                 Require(profile.Weight >= 0, "Profile weight cannot be negative.");
-                Require((int)profile.TrainingExperienceLevel is >= 0 and <= 3, "Training experience is outside the supported range.");
-                Require((int)profile.CycleTrackingMode is >= 0 and <= 3, "Cycle tracking mode is outside the supported range.");
+                Require((int)profile.TrainingExperienceLevel is >= 0 and <= 3,
+                    "Training experience is outside the supported range.");
+                Require((int)profile.CycleTrackingMode is >= 0 and <= 3,
+                    "Cycle tracking mode is outside the supported range.");
                 Require(profile.WorkoutDaysPerWeek is >= 0 and <= 7, "Workout days per week must be between 0 and 7.");
                 Require(profile.CycleLength is >= 0 and <= 60, "Cycle length must be between 0 and 60 days.");
                 break;
@@ -176,11 +189,19 @@ public partial class AppDatabase : DbContext
             case WorkoutDayExercise workoutDayExercise:
                 Require(workoutDayExercise.Sets >= 0, "Workout exercise sets cannot be negative.");
                 Require(workoutDayExercise.Reps >= 0, "Workout exercise reps cannot be negative.");
-                Require(workoutDayExercise.DurationSeconds is null or > 0, "Workout exercise duration must be greater than zero.");
+                Require(workoutDayExercise.DurationSeconds is null or > 0,
+                    "Workout exercise duration must be greater than zero.");
                 break;
 
             case WorkoutLog workoutLog:
-                Require(workoutLog.CompletionPercent is >= 0 and <= 100, "Workout completion must be between 0 and 100 percent.");
+                Require(workoutLog.CompletionPercent is >= 0 and <= 100,
+                    "Workout completion must be between 0 and 100 percent.");
+                break;
+
+            case DailyReadinessLog readiness:
+                Require(readiness.Energy is >= 1 and <= 5, "Energy must be between 1 and 5.");
+                Require(readiness.Pain is >= 0 and <= 3, "Pain must be between 0 and 3.");
+                Require(readiness.ReadinessScore is >= 0 and <= 100, "Readiness score must be between 0 and 100.");
                 break;
 
             case WorkoutExerciseLog exerciseLog:
@@ -226,6 +247,8 @@ public partial class AppDatabase : DbContext
             entity.Property(p => p.CycleTrackingMode).HasConversion<int>();
             entity.Property(p => p.Name).IsRequired().HasMaxLength(120);
             entity.Property(p => p.DietaryTags).HasMaxLength(250);
+            entity.Property(p => p.EquipmentLevel).HasMaxLength(50);
+            entity.Property(p => p.PhaseBaselinesJson).HasMaxLength(500);
             entity.Property(p => p.PreferredWorkoutActivityTypes).HasMaxLength(500);
             entity.Property(p => p.UnitSystem).IsRequired().HasMaxLength(20);
             entity.Property(p => p.BodyWeightUnit).IsRequired().HasMaxLength(12);
@@ -450,7 +473,7 @@ public partial class AppDatabase : DbContext
 
         modelBuilder.Entity<WorkoutDay>(entity =>
         {
-            entity.HasIndex(d => new { d.WorkoutPlanId, d.DayOfWeek }).IsUnique();
+            entity.HasIndex(d => new { d.WorkoutPlanId, d.DayOfWeek });
             entity.Property(d => d.WorkoutType).HasConversion<int>();
             entity.Property(d => d.Name).IsRequired().HasMaxLength(160);
             entity.HasOne(d => d.WorkoutPlan)
@@ -504,4 +527,112 @@ public partial class AppDatabase : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
+
+    private static void ConfigureWorkoutPlanningDomain(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<DailyReadinessLog>(entity =>
+        {
+            entity.HasIndex(e => new { e.UserId, e.Date }).IsUnique();
+            entity.Property(e => e.Phase).IsRequired().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<WorkoutInjuryLog>(entity =>
+        {
+            entity.ToTable("EngineInjuryLogs");
+            entity.HasIndex(e => new { e.UserId, e.Date });
+            entity.Property(e => e.Site).IsRequired().HasMaxLength(40);
+            entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
+        });
+    }
+
+    private static void ConfigureWorkoutPlanningReferenceDomain(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<WorkoutMuscleGroup>(entity =>
+        {
+            entity.ToTable("EngineMuscleGroups");
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(40);
+        });
+
+        modelBuilder.Entity<GoalTierWeight>(entity =>
+        {
+            entity.HasIndex(e => new { e.Goal, e.MuscleGroupId }).IsUnique();
+            entity.Property(e => e.Goal).HasConversion<int>();
+            entity.Property(e => e.Tier).HasConversion<int>();
+            entity.HasOne(e => e.MuscleGroup)
+                .WithMany()
+                .HasForeignKey(e => e.MuscleGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<WorkoutExerciseDefinition>(entity =>
+        {
+            entity.ToTable("EngineExercises");
+            entity.HasIndex(e => e.Name);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(120);
+            entity.Property(e => e.Pattern).HasConversion<int>();
+            entity.Property(e => e.Required).HasConversion<int>();
+            entity.Property(e => e.Contraindications).HasConversion<int>();
+            entity.Property(e => e.PreferredFor).HasConversion<int>();
+        });
+
+        modelBuilder.Entity<ExerciseMuscleContribution>(entity =>
+        {
+            entity.HasIndex(e => new { e.ExerciseId, e.MuscleGroupId }).IsUnique();
+            entity.HasOne(e => e.Exercise)
+                .WithMany(ex => ex.MuscleContributions)
+                .HasForeignKey(e => e.ExerciseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.MuscleGroup)
+                .WithMany()
+                .HasForeignKey(e => e.MuscleGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<SessionArchetype>(entity =>
+        {
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(10);
+            entity.Property(e => e.DisplayName).IsRequired().HasMaxLength(60);
+        });
+
+        modelBuilder.Entity<SlotTemplate>(entity =>
+        {
+            entity.HasIndex(e => new { e.ArchetypeId, e.Order }).IsUnique();
+            entity.Property(e => e.Block).HasConversion<int>();
+            entity.Property(e => e.AllowedPatternsJson).IsRequired().HasMaxLength(500);
+            entity.HasOne(e => e.Archetype)
+                .WithMany(a => a.SlotTemplates)
+                .HasForeignKey(e => e.ArchetypeId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.PrimaryMuscle)
+                .WithMany()
+                .HasForeignKey(e => e.PrimaryMuscleId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<WeekTemplate>(entity =>
+        {
+            entity.HasIndex(e => e.DaysPerWeek).IsUnique();
+            entity.Property(e => e.ArchetypeSequenceJson).IsRequired().HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<VolumeBudgetRow>(entity =>
+        {
+            entity.HasIndex(e => new { e.DaysPerWeek, e.MuscleGroupId }).IsUnique();
+            entity.HasOne(e => e.MuscleGroup)
+                .WithMany()
+                .HasForeignKey(e => e.MuscleGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<WorkoutPlanningConfigEntry>(entity =>
+        {
+            entity.ToTable("EngineConfig");
+            entity.HasIndex(e => new { e.Section, e.Key }).IsUnique();
+            entity.Property(e => e.Section).IsRequired().HasMaxLength(30);
+            entity.Property(e => e.Key).IsRequired().HasMaxLength(60);
+            entity.Property(e => e.Value).IsRequired().HasMaxLength(500);
+        });
+    }
+
 }

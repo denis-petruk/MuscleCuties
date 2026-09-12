@@ -1,14 +1,5 @@
-using MuscleCuties.Core.Models.Entities.Cycle;
-using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
-using MuscleCuties.Core.Models.Entities.Workout;
-using MuscleCuties.Core.Repositories.Common;
-using MuscleCuties.Core.Repositories.Cycle;
-using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Repositories.Quiz;
 using MuscleCuties.Core.Repositories.Users;
-using MuscleCuties.Core.Repositories.Workout;
 
 namespace MuscleCuties.Core.Tests.Repositories.Users;
 
@@ -21,7 +12,10 @@ public class UserRepositoryTests : IClassFixture<DatabaseFixture>
         _fixture = fixture;
     }
 
-    private UserRepository CreateRepo() => new UserRepository(_fixture.Db);
+    private UserRepository CreateRepo()
+    {
+        return new UserRepository(_fixture.Db);
+    }
 
     [Fact]
     public async Task AddAsync_ValidUser_UserPersistedWithId()
@@ -64,7 +58,8 @@ public class UserRepositoryTests : IClassFixture<DatabaseFixture>
         var user = new User { Email = "c@test.com", PasswordHash = "hash", CreatedAt = DateTime.UtcNow };
         await repo.AddAsync(user);
 
-        var profile = new UserProfile { UserId = user.Id, Name = "Alice", DateOfBirth = new DateTime(1995, 1, 1), Height = 165, Weight = 60 };
+        var profile = new UserProfile
+        { UserId = user.Id, Name = "Alice", DateOfBirth = new DateTime(1995, 1, 1), Height = 165, Weight = 60 };
         await repo.AddProfileAsync(profile);
 
         var result = await repo.GetProfileAsync(user.Id);
@@ -79,7 +74,8 @@ public class UserRepositoryTests : IClassFixture<DatabaseFixture>
         var repo = CreateRepo();
         var user = new User { Email = "e@test.com", PasswordHash = "hash", CreatedAt = DateTime.UtcNow };
         await repo.AddAsync(user);
-        var profile = new UserProfile { UserId = user.Id, Name = "Before", DateOfBirth = new DateTime(1995, 1, 1), Height = 165, Weight = 60 };
+        var profile = new UserProfile
+        { UserId = user.Id, Name = "Before", DateOfBirth = new DateTime(1995, 1, 1), Height = 165, Weight = 60 };
         await repo.AddProfileAsync(profile);
 
         profile.Name = "After";
@@ -88,6 +84,7 @@ public class UserRepositoryTests : IClassFixture<DatabaseFixture>
         var result = await repo.GetProfileAsync(user.Id);
         Assert.Equal("After", result!.Name);
     }
+
     [Fact]
     public async Task AddSnapshotAsync_ValidSnapshot_PersistedWithId()
     {

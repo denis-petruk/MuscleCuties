@@ -1,27 +1,13 @@
-using NSubstitute;
+using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.Entities.Cycle;
-using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
-using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
-using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.Core.Models.Enums.Quiz;
-using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
-using MuscleCuties.Core.Services.Nutrition;
-using MuscleCuties.Core.Services.Quiz;
-using MuscleCuties.Core.ViewModels.Auth;
 using MuscleCuties.Core.ViewModels.Cycle;
-using MuscleCuties.Core.ViewModels.Dashboard;
-using MuscleCuties.Core.ViewModels.Nutrition;
-using MuscleCuties.Core.ViewModels.Profile;
-using MuscleCuties.Core.ViewModels.Quiz;
-using MuscleCuties.Core.ViewModels.Workout;
+using NSubstitute;
 
 namespace MuscleCuties.Core.Tests.ViewModels.Cycle;
 
@@ -31,8 +17,28 @@ public class CycleViewModelTests
     private readonly ICycleService _cycleService = Substitute.For<ICycleService>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
 
-    private CycleViewModel CreateViewModel() =>
-        new(_authService, _cycleService, _userRepository);
+    private IServiceScopeFactory BuildScopeFactory()
+    {
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        serviceProvider.GetService(typeof(IAuthService)).Returns(_authService);
+        serviceProvider.GetService(typeof(ICycleService)).Returns(_cycleService);
+        serviceProvider.GetService(typeof(IUserRepository)).Returns(_userRepository);
+
+        var scope = Substitute.For<IServiceScope>();
+        scope.ServiceProvider.Returns(serviceProvider);
+
+        var scopeFactory = Substitute.For<IServiceScopeFactory>();
+        scopeFactory.CreateScope().Returns(scope);
+
+        return scopeFactory;
+    }
+
+    private CycleViewModel CreateViewModel(DateTime? currentDate = null)
+    {
+        return new CycleViewModel(
+            BuildScopeFactory(),
+            currentDateProvider: () => currentDate ?? DateTime.Today);
+    }
 
     private void SetupCurrentUser(int userId = 1, DateTime? createdAt = null)
     {
@@ -188,10 +194,11 @@ public class CycleViewModelTests
     public async Task LoadData_FutureProjectedCalendarDaysAreMarkedAsPredictions()
     {
         SetupCurrentUser();
+        var currentDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 15);
         _cycleService.GetPredictionAsync(1).Returns(new CyclePrediction
         {
             HasActiveCycle = true,
-            CurrentCycleStartDate = DateTime.Today.AddDays(-9),
+            CurrentCycleStartDate = currentDate.AddDays(-9),
             CurrentDay = 10,
             PredictedCycleLength = 28,
             CurrentPhase = CyclePhase.Follicular,
@@ -199,11 +206,11 @@ public class CycleViewModelTests
         });
         _cycleService.GetRecentPhaseLogsAsync(1, Arg.Any<int>()).Returns(Array.Empty<CyclePhaseLog>());
 
-        var vm = CreateViewModel();
+        var vm = CreateViewModel(currentDate);
         await vm.LoadDataCommand.ExecuteAsync(null);
 
-        var futureDay = vm.CalendarDays.First(day => day.Date > DateTime.Today);
-        var today = vm.CalendarDays.Single(day => day.Date == DateTime.Today);
+        var futureDay = vm.CalendarDays.First(day => day.Date > currentDate);
+        var today = vm.CalendarDays.Single(day => day.Date == currentDate);
 
         Assert.True(futureDay.IsPredictedFuture);
         Assert.True(futureDay.StrokeThickness > 0);
@@ -214,11 +221,12 @@ public class CycleViewModelTests
     public async Task LoadData_FutureLoggedShiftIsNotMarkedAsPrediction()
     {
         SetupCurrentUser();
-        var futureLogDate = DateTime.Today.AddDays(1);
+        var currentDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 15);
+        var futureLogDate = currentDate.AddDays(1);
         _cycleService.GetPredictionAsync(1).Returns(new CyclePrediction
         {
             HasActiveCycle = true,
-            CurrentCycleStartDate = DateTime.Today.AddDays(-9),
+            CurrentCycleStartDate = currentDate.AddDays(-9),
             CurrentDay = 10,
             PredictedCycleLength = 28,
             CurrentPhase = CyclePhase.Follicular,
@@ -230,11 +238,11 @@ public class CycleViewModelTests
                 UserId = 1,
                 Phase = CyclePhase.Ovulatory,
                 LoggedAt = futureLogDate,
-                CreatedAt = DateTime.Today
+                CreatedAt = currentDate
             }
         ]);
 
-        var vm = CreateViewModel();
+        var vm = CreateViewModel(currentDate);
         await vm.LoadDataCommand.ExecuteAsync(null);
 
         var loggedFutureDay = vm.CalendarDays.Single(day => day.Date == futureLogDate.Date);
@@ -289,7 +297,8 @@ public class CycleViewModelTests
 
         var calendarDay = vm.CalendarDays.Single(day => day.Date == DateTime.Today);
         vm.OpenCalendarDayCommand.Execute(calendarDay);
-        vm.SelectPhaseOptionCommand.Execute(vm.PhaseEditOptions.Single(option => option.Phase == CyclePhase.Follicular));
+        vm.SelectPhaseOptionCommand.Execute(vm.PhaseEditOptions.Single(option =>
+            option.Phase == CyclePhase.Follicular));
         await vm.SaveDatePhaseCommand.ExecuteAsync(null);
 
         await _cycleService.Received(1).SetPhaseForDateAsync(
@@ -458,7 +467,8 @@ public class CycleViewModelTests
 
         var calendarDay = vm.CalendarDays.Single(day => day.Date == targetDate);
         vm.OpenCalendarDayCommand.Execute(calendarDay);
-        vm.SelectPhaseOptionCommand.Execute(vm.PhaseEditOptions.Single(option => option.Phase == CyclePhase.Follicular));
+        vm.SelectPhaseOptionCommand.Execute(vm.PhaseEditOptions.Single(option =>
+            option.Phase == CyclePhase.Follicular));
         await vm.SaveDatePhaseCommand.ExecuteAsync(null);
 
         Assert.True(vm.HasPhaseJumpWarning);

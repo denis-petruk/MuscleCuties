@@ -81,30 +81,33 @@ public static class FdcFoodMapper
         return item;
     }
 
-    public static bool HasNutrientChanges(FoodItem existing, FdcFoodDetail detail) =>
-        HasChanged(existing.Calories, GetCalories(detail)) ||
-        HasChanged(existing.Protein, GetNutrient(detail, Protein, ProteinNumber)) ||
-        HasChanged(existing.Carbs, GetNutrient(detail, Carbs, CarbsNumber)) ||
-        HasChanged(existing.Fats, GetNutrient(detail, Fats, FatsNumber)) ||
-        HasChanged(existing.Fiber, GetNutrient(detail, Fiber, FiberNumber)) ||
-        HasChanged(existing.Iron, GetNutrient(detail, Iron, IronNumber)) ||
-        HasChanged(existing.VitaminB12, GetNutrient(detail, VitaminB12, VitaminB12Number)) ||
-        HasChanged(existing.VitaminC, GetNutrient(detail, VitaminC, VitaminCNumber)) ||
-        HasChanged(existing.VitaminD, GetNutrient(detail, VitaminD, VitaminDNumber)) ||
-        HasChanged(existing.VitaminA, GetNutrient(detail, VitaminA, VitaminANumber)) ||
-        HasChanged(existing.VitaminB6, GetNutrient(detail, VitaminB6, VitaminB6Number)) ||
-        HasChanged(existing.Folate, GetNutrient(detail, Folate, FolateNumber)) ||
-        HasChanged(existing.Calcium, GetNutrient(detail, Calcium, CalciumNumber)) ||
-        HasChanged(existing.Magnesium, GetNutrient(detail, Magnesium, MagnesiumNumber)) ||
-        HasChanged(existing.Zinc, GetNutrient(detail, Zinc, ZincNumber)) ||
-        HasChanged(existing.Potassium, GetNutrient(detail, Potassium, PotassiumNumber)) ||
-        !string.Equals(
-            existing.ServingOptionsJson,
-            FoodServingOptions.CreateOptionsJson(detail),
-            StringComparison.Ordinal);
+    public static bool HasNutrientChanges(FoodItem existing, FdcFoodDetail detail)
+    {
+        return HasChanged(existing.Calories, GetCalories(detail)) ||
+               HasChanged(existing.Protein, GetNutrient(detail, Protein, ProteinNumber)) ||
+               HasChanged(existing.Carbs, GetNutrient(detail, Carbs, CarbsNumber)) ||
+               HasChanged(existing.Fats, GetNutrient(detail, Fats, FatsNumber)) ||
+               HasChanged(existing.Fiber, GetNutrient(detail, Fiber, FiberNumber)) ||
+               HasChanged(existing.Iron, GetNutrient(detail, Iron, IronNumber)) ||
+               HasChanged(existing.VitaminB12, GetNutrient(detail, VitaminB12, VitaminB12Number)) ||
+               HasChanged(existing.VitaminC, GetNutrient(detail, VitaminC, VitaminCNumber)) ||
+               HasChanged(existing.VitaminD, GetNutrient(detail, VitaminD, VitaminDNumber)) ||
+               HasChanged(existing.VitaminA, GetNutrient(detail, VitaminA, VitaminANumber)) ||
+               HasChanged(existing.VitaminB6, GetNutrient(detail, VitaminB6, VitaminB6Number)) ||
+               HasChanged(existing.Folate, GetNutrient(detail, Folate, FolateNumber)) ||
+               HasChanged(existing.Calcium, GetNutrient(detail, Calcium, CalciumNumber)) ||
+               HasChanged(existing.Magnesium, GetNutrient(detail, Magnesium, MagnesiumNumber)) ||
+               HasChanged(existing.Zinc, GetNutrient(detail, Zinc, ZincNumber)) ||
+               HasChanged(existing.Potassium, GetNutrient(detail, Potassium, PotassiumNumber)) ||
+               !string.Equals(
+                   existing.ServingOptionsJson,
+                   FoodServingOptions.CreateOptionsJson(detail),
+                   StringComparison.Ordinal);
+    }
 
-    public static string CreateNutrientSnapshot(FoodItem item) =>
-        JsonSerializer.Serialize(new
+    public static string CreateNutrientSnapshot(FoodItem item)
+    {
+        return JsonSerializer.Serialize(new
         {
             item.Calories,
             item.Protein,
@@ -131,6 +134,7 @@ public static class FdcFoodMapper
             item.ServingSizeUnit,
             item.ServingOptionsJson
         });
+    }
 
     private static float GetNutrient(FdcFoodDetail detail, int nutrientId, string nutrientNumber)
     {
@@ -193,11 +197,15 @@ public static class FdcFoodMapper
                name.Contains("Energy", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static float GetAmount(FdcFoodDetailNutrient nutrient) =>
-        nutrient.Amount ?? nutrient.Value ?? 0f;
+    private static float GetAmount(FdcFoodDetailNutrient nutrient)
+    {
+        return nutrient.Amount ?? nutrient.Value ?? 0f;
+    }
 
-    private static bool HasChanged(float current, float next) =>
-        Math.Abs(current - next) > 0.001f;
+    private static bool HasChanged(float current, float next)
+    {
+        return Math.Abs(current - next) > 0.001f;
+    }
 
     private static string? Clean(string? value)
     {

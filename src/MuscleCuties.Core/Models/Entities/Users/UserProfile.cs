@@ -20,6 +20,9 @@ public class UserProfile
     public int WorkoutDaysPerWeek { get; set; }
     public int CycleLength { get; set; }
     public string DietaryTags { get; set; } = string.Empty;
+    public int SessionDurationMinutes { get; set; } = 60;
+    public string EquipmentLevel { get; set; } = "FullGym";
+    public string PhaseBaselinesJson { get; set; } = string.Empty;
     public string PreferredWorkoutActivityTypes { get; set; } = string.Empty;
     public string UnitSystem { get; set; } = "Metric";
     public string BodyWeightUnit { get; set; } = "kg";

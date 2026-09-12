@@ -17,5 +17,4 @@ public interface IFoodSyncService
         CancellationToken cancellationToken = default);
 
     Task<FoodItem?> FetchDetailAsync(int fdcId, CancellationToken cancellationToken = default);
-    Task<int> SeedFoodsAsync(IEnumerable<int> fdcIds, CancellationToken cancellationToken = default);
 }

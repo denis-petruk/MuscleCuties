@@ -5,8 +5,10 @@ namespace MuscleCuties.Core.Services.Health;
 
 public sealed class HealthSyncService : IHealthSyncService
 {
+    private static readonly TimeSpan SyncTimeout = TimeSpan.FromSeconds(45);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly IReadOnlyList<IHealthDataProvider> _providers;
+    private readonly SemaphoreSlim _syncGate = new(1, 1);
     private readonly ITokenStorage _tokenStorage;
 
     public HealthSyncService(IEnumerable<IHealthDataProvider> providers, ITokenStorage tokenStorage)
@@ -14,6 +16,16 @@ public sealed class HealthSyncService : IHealthSyncService
         _providers = providers.ToList();
         _tokenStorage = tokenStorage;
     }
+
+    private IHealthDataProvider? DeviceHealthProvider =>
+        _providers.FirstOrDefault(provider =>
+            provider.Source is HealthDataSource.AppleHealth or HealthDataSource.HealthConnect);
+
+    public HealthDataSource DeviceHealthSource =>
+        DeviceHealthProvider?.Source ?? HealthDataSource.AppleHealth;
+
+    public string DeviceHealthDisplayName =>
+        DeviceHealthProvider?.DisplayName ?? DeviceHealthSource.ToDisplayName();
 
     public async Task<HealthSyncStatus> GetStatusAsync(int userId)
     {
@@ -30,8 +42,11 @@ public sealed class HealthSyncService : IHealthSyncService
 
     public async Task<bool> ShouldShowPromptAsync(int userId)
     {
-        var status = await GetStatusAsync(userId);
-        return !status.IsConnected && !status.PromptDismissed;
+        var state = await ReadStateAsync(userId);
+        if (state.IsConnected || state.PromptDismissed)
+            return false;
+
+        return await HasAvailableProviderAsync();
     }
 
     public async Task DismissPromptAsync(int userId)
@@ -47,24 +62,55 @@ public sealed class HealthSyncService : IHealthSyncService
     {
         var provider = _providers.FirstOrDefault(item => item.Source == source);
         if (provider is null)
-            return new HealthSyncResult(source, false, null, $"{source.ToDisplayName()} is not available on this device yet.");
+            return new HealthSyncResult(source, false, null,
+                $"{source.ToDisplayName()} is not available on this device yet.");
 
-        if (!await provider.IsAvailableAsync(cancellationToken))
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(SyncTimeout);
+        var syncToken = timeoutCts.Token;
+        var gateHeld = false;
+
+        try
         {
-            await WriteStateAsync(userId, new StoredHealthSyncState(source, false, false, null));
-            return new HealthSyncResult(source, false, null, BuildUnavailableMessage(provider));
-        }
+            await _syncGate.WaitAsync(syncToken);
+            gateHeld = true;
 
-        var summary = await provider.ReadWeeklySummaryAsync(DateTime.Today, cancellationToken);
-        if (summary is null)
+            if (!await provider.IsAvailableAsync(syncToken))
+            {
+                await WriteStateAsync(userId, new StoredHealthSyncState(source, false, false, null));
+                return new HealthSyncResult(source, false, null, BuildUnavailableMessage(provider));
+            }
+
+            var summary = await provider.ReadWeeklySummaryAsync(DateTime.Today, syncToken);
+            if (summary is null)
+            {
+                await WriteStateAsync(userId, new StoredHealthSyncState(source, false, false, null));
+                return new HealthSyncResult(source, false, null, BuildEmptyDataMessage(provider));
+            }
+
+            await _tokenStorage.SetAsync(SummaryKey(userId), JsonSerializer.Serialize(summary, JsonOptions));
+            await WriteStateAsync(userId, new StoredHealthSyncState(source, true, true, summary.SyncedAt));
+            return new HealthSyncResult(source, true, summary, $"{provider.DisplayName} is connected.");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            await WriteStateAsync(userId, new StoredHealthSyncState(source, false, false, null));
-            return new HealthSyncResult(source, false, null, BuildEmptyDataMessage(provider));
+            throw;
         }
-
-        await _tokenStorage.SetAsync(SummaryKey(userId), JsonSerializer.Serialize(summary, JsonOptions));
-        await WriteStateAsync(userId, new StoredHealthSyncState(source, true, true, summary.SyncedAt));
-        return new HealthSyncResult(source, true, summary, $"{provider.DisplayName} is connected.");
+        catch (OperationCanceledException)
+        {
+            return new HealthSyncResult(source, false, null,
+                $"{provider.DisplayName} took too long to respond. Try again when it is ready.");
+        }
+        catch (Exception)
+        {
+            return new HealthSyncResult(source, false, null,
+                $"{provider.DisplayName} could not sync right now. Check permissions and try again.");
+        }
+        finally
+        {
+            if (gateHeld)
+                _syncGate.Release();
+        }
     }
 
     public async Task<HealthWeeklySummary?> GetCachedWeeklySummaryAsync(int userId)
@@ -103,8 +149,10 @@ public sealed class HealthSyncService : IHealthSyncService
         }
     }
 
-    private Task WriteStateAsync(int userId, StoredHealthSyncState state) =>
-        _tokenStorage.SetAsync(StateKey(userId), JsonSerializer.Serialize(state, JsonOptions));
+    private Task WriteStateAsync(int userId, StoredHealthSyncState state)
+    {
+        return _tokenStorage.SetAsync(StateKey(userId), JsonSerializer.Serialize(state, JsonOptions));
+    }
 
     private static string BuildSummaryText(StoredHealthSyncState state, HealthWeeklySummary? summary)
     {
@@ -117,21 +165,49 @@ public sealed class HealthSyncService : IHealthSyncService
         return $"{state.SelectedSource.Value.ToDisplayName()} · {summary.MovementSummary} · {summary.SleepSummary}";
     }
 
-    private static string BuildUnavailableMessage(IHealthDataProvider provider) =>
-        provider is IHealthDataProviderDiagnostics diagnostics
+    private static string BuildUnavailableMessage(IHealthDataProvider provider)
+    {
+        return provider is IHealthDataProviderDiagnostics diagnostics
             ? diagnostics.UnavailableMessage
             : $"{provider.DisplayName} is not available on this device yet.";
+    }
 
-    private static string BuildEmptyDataMessage(IHealthDataProvider provider) =>
-        provider is IHealthDataProviderDiagnostics diagnostics
+    private static string BuildEmptyDataMessage(IHealthDataProvider provider)
+    {
+        return provider is IHealthDataProviderDiagnostics diagnostics
             ? diagnostics.EmptyDataMessage
             : $"{provider.DisplayName} did not return step or sleep data yet.";
+    }
 
-    private static bool IsSupportedSource(HealthDataSource? source) =>
-        source is null || Enum.IsDefined(source.Value);
+    private async Task<bool> HasAvailableProviderAsync()
+    {
+        foreach (var provider in _providers)
+            try
+            {
+                if (await provider.IsAvailableAsync())
+                    return true;
+            }
+            catch
+            {
+            }
 
-    private static string StateKey(int userId) => $"health_sync_state_{userId}";
-    private static string SummaryKey(int userId) => $"health_sync_weekly_summary_{userId}";
+        return false;
+    }
+
+    private static bool IsSupportedSource(HealthDataSource? source)
+    {
+        return source is null || Enum.IsDefined(source.Value);
+    }
+
+    private static string StateKey(int userId)
+    {
+        return $"health_sync_state_{userId}";
+    }
+
+    private static string SummaryKey(int userId)
+    {
+        return $"health_sync_weekly_summary_{userId}";
+    }
 
     private sealed record StoredHealthSyncState(
         HealthDataSource? SelectedSource,

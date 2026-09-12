@@ -2,7 +2,6 @@ namespace MuscleCuties.Core.Services.Nutrition;
 
 public interface ICalorieCalculator
 {
-    // Mifflin-St Jeor equation (women): 10W + 6.25H - 5A - 161
     float CalculateBmr(float weightKg, float heightCm, int age);
     float ApplyActivityMultiplier(float bmr, int workoutDaysPerWeek);
     float AdjustForGoal(float tdee, int userGoal, int weightGoalPace);

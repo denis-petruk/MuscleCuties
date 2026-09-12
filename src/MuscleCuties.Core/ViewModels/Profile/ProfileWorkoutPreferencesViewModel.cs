@@ -6,6 +6,7 @@ using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.UI.Workout;
 using MuscleCuties.Core.Repositories.Users;
+using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Workout;
@@ -14,49 +15,59 @@ namespace MuscleCuties.Core.ViewModels.Profile;
 
 public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
 {
+    private readonly IAppPreloadService _preloadService;
     private readonly IAuthService _authService;
-    private readonly IUserRepository _userRepository;
     private readonly ICycleService _cycleService;
+    private readonly Func<Task> _navigateBackAsync;
+    private readonly IUserRepository _userRepository;
     private readonly IWorkoutService _workoutService;
-    private readonly Action _navigateBack;
-
-    [ObservableProperty] private ObservableCollection<WorkoutActivityOptionItem> _workoutActivityOptions = new();
-    [ObservableProperty] private ObservableCollection<StrengthTrainingStyleOptionItem> _strengthTrainingStyleOptions = new();
-    [ObservableProperty] private StrengthTrainingStyle _selectedStrengthTrainingStyle = StrengthTrainingStyle.ComfortableModerate;
-    [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isBusy;
 
-    public bool IsStrengthStyleVisible => WorkoutActivityOptions.Any(option =>
-        WorkoutActivityPreferences.IsStrengthActivity(option.ActivityType) && option.IsSelected);
-    public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions =>
-        WorkoutActivityOptionCatalog.BuildGroups(WorkoutActivityOptions);
+    [ObservableProperty]
+    private StrengthTrainingStyle _selectedStrengthTrainingStyle = StrengthTrainingStyle.ComfortableModerate;
 
-    public AsyncRelayCommand LoadDataCommand { get; }
-    public AsyncRelayCommand SaveCommand { get; }
-    public RelayCommand BackCommand { get; }
-    public RelayCommand<WorkoutActivityOptionItem> ToggleWorkoutActivityCommand { get; }
-    public RelayCommand<StrengthTrainingStyleOptionItem> SelectStrengthTrainingStyleCommand { get; }
+    [ObservableProperty] private string _statusMessage = string.Empty;
+
+    [ObservableProperty]
+    private ObservableCollection<StrengthTrainingStyleOptionItem> _strengthTrainingStyleOptions = new();
+
+    [ObservableProperty] private ObservableCollection<WorkoutActivityOptionItem> _workoutActivityOptions = new();
 
     public ProfileWorkoutPreferencesViewModel(
         IAuthService authService,
         IUserRepository userRepository,
         ICycleService cycleService,
         IWorkoutService workoutService,
-        Action navigateBack)
+        IAppPreloadService preloadService,
+        Func<Task> navigateBackAsync)
     {
         _authService = authService;
         _userRepository = userRepository;
         _cycleService = cycleService;
         _workoutService = workoutService;
-        _navigateBack = navigateBack;
+        _preloadService = preloadService;
+        _navigateBackAsync = navigateBackAsync;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
-        BackCommand = new RelayCommand(_navigateBack);
+        BackCommand = new AsyncRelayCommand(_navigateBackAsync);
         ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
-        SelectStrengthTrainingStyleCommand = new RelayCommand<StrengthTrainingStyleOptionItem>(SelectStrengthTrainingStyle);
+        SelectStrengthTrainingStyleCommand =
+            new RelayCommand<StrengthTrainingStyleOptionItem>(SelectStrengthTrainingStyle);
         WorkoutActivityOptions = WorkoutActivityOptionCatalog.Build(new HashSet<WorkoutActivityType>());
         StrengthTrainingStyleOptions = StrengthTrainingStyleOptionCatalog.Build(SelectedStrengthTrainingStyle);
     }
+
+    public bool IsStrengthStyleVisible => WorkoutActivityOptions.Any(option =>
+        WorkoutActivityPreferences.IsStrengthActivity(option.ActivityType) && option.IsSelected);
+
+    public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions =>
+        WorkoutActivityOptionCatalog.BuildGroups(WorkoutActivityOptions);
+
+    public AsyncRelayCommand LoadDataCommand { get; }
+    public AsyncRelayCommand SaveCommand { get; }
+    public AsyncRelayCommand BackCommand { get; }
+    public RelayCommand<WorkoutActivityOptionItem> ToggleWorkoutActivityCommand { get; }
+    public RelayCommand<StrengthTrainingStyleOptionItem> SelectStrengthTrainingStyleCommand { get; }
 
     private async Task LoadDataAsync()
     {
@@ -126,8 +137,10 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
 
             var phase = await _cycleService.GetCurrentPhaseAsync(userId);
             await _workoutService.RegenerateActivePlanAsync(userId, phase);
+            _preloadService.InvalidateWorkout();
+            _preloadService.InvalidateDashboard();
             StatusMessage = "Workout preferences saved.";
-            _navigateBack();
+            await _navigateBackAsync();
         }
         finally
         {

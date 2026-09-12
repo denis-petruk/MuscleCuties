@@ -1,19 +1,6 @@
-using MuscleCuties.Core.Models.Entities.Cycle;
 using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
-using MuscleCuties.Core.Models.Entities.Users;
-using MuscleCuties.Core.Models.Entities.Workout;
-using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.Core.Models.Enums.Quiz;
-using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.Core.Repositories.Common;
-using MuscleCuties.Core.Repositories.Cycle;
 using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Repositories.Quiz;
-using MuscleCuties.Core.Repositories.Users;
-using MuscleCuties.Core.Repositories.Workout;
 
 namespace MuscleCuties.Core.Tests.Repositories.Nutrition;
 
@@ -21,14 +8,35 @@ public class NutritionRepositoryTests : IDisposable
 {
     private readonly DatabaseFixture _fixture = new();
 
-    public void Dispose() => _fixture.Dispose();
+    public void Dispose()
+    {
+        _fixture.Dispose();
+    }
 
     [Fact]
     public async Task SearchFoodItemsAsync_MatchingQuery_ReturnsResults()
     {
         var repo = new NutritionRepository(_fixture.Db);
-        await repo.AddAsync(new FoodItem { Name = "Chicken Breast", Calories = 165, Protein = 31, Carbs = 0, Fats = 3.6f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
-        await repo.AddAsync(new FoodItem { Name = "Brown Rice", Calories = 216, Protein = 5, Carbs = 44, Fats = 1.8f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
+        await repo.AddAsync(new FoodItem
+        {
+            Name = "Chicken Breast",
+            Calories = 165,
+            Protein = 31,
+            Carbs = 0,
+            Fats = 3.6f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+        await repo.AddAsync(new FoodItem
+        {
+            Name = "Brown Rice",
+            Calories = 216,
+            Protein = 5,
+            Carbs = 44,
+            Fats = 1.8f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
 
         var results = await repo.SearchFoodItemsAsync("chicken");
 
@@ -40,8 +48,22 @@ public class NutritionRepositoryTests : IDisposable
     public async Task SearchFoodItemsAsync_MultipleWords_MatchesAllTokens()
     {
         var repo = new NutritionRepository(_fixture.Db);
-        await repo.AddAsync(new FoodItem { Name = "Chicken Breast Raw", Calories = 120, Protein = 22.5f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
-        await repo.AddAsync(new FoodItem { Name = "Chicken Thigh Raw", Calories = 144, Protein = 19.6f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
+        await repo.AddAsync(new FoodItem
+        {
+            Name = "Chicken Breast Raw",
+            Calories = 120,
+            Protein = 22.5f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+        await repo.AddAsync(new FoodItem
+        {
+            Name = "Chicken Thigh Raw",
+            Calories = 144,
+            Protein = 19.6f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
 
         var results = await repo.SearchFoodItemsAsync("chicken breast");
 
@@ -53,8 +75,22 @@ public class NutritionRepositoryTests : IDisposable
     public async Task SearchFoodItemsAsync_PluralQuery_MatchesSingularFoodName()
     {
         var repo = new NutritionRepository(_fixture.Db);
-        await repo.AddAsync(new FoodItem { Name = "Oatmeal Dry", Calories = 389, Protein = 16.9f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
-        await repo.AddAsync(new FoodItem { Name = "Brown Rice", Calories = 216, Protein = 5, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
+        await repo.AddAsync(new FoodItem
+        {
+            Name = "Oatmeal Dry",
+            Calories = 389,
+            Protein = 16.9f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+        await repo.AddAsync(new FoodItem
+        {
+            Name = "Brown Rice",
+            Calories = 216,
+            Protein = 5,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
 
         var results = await repo.SearchFoodItemsAsync("oats");
 
@@ -66,8 +102,22 @@ public class NutritionRepositoryTests : IDisposable
     public async Task SearchFoodItemsAsync_PunctuationQuery_MatchesFoodName()
     {
         var repo = new NutritionRepository(_fixture.Db);
-        await repo.AddAsync(new FoodItem { Name = "Oat Milk", Calories = 45, Protein = 1.2f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
-        await repo.AddAsync(new FoodItem { Name = "Almond Butter", Calories = 614, Protein = 21, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
+        await repo.AddAsync(new FoodItem
+        {
+            Name = "Oat Milk",
+            Calories = 45,
+            Protein = 1.2f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+        await repo.AddAsync(new FoodItem
+        {
+            Name = "Almond Butter",
+            Calories = 614,
+            Protein = 21,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
 
         var results = await repo.SearchFoodItemsAsync("oat-milk");
 
@@ -115,7 +165,16 @@ public class NutritionRepositoryTests : IDisposable
     public async Task AddLoggedMealAsync_WithEntries_CanBeRetrievedByDate()
     {
         var repo = new NutritionRepository(_fixture.Db);
-        var item = new FoodItem { Name = "Apple", Calories = 52, Protein = 0.3f, Carbs = 14, Fats = 0.2f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+        var item = new FoodItem
+        {
+            Name = "Apple",
+            Calories = 52,
+            Protein = 0.3f,
+            Carbs = 14,
+            Fats = 0.2f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
         await repo.AddAsync(item);
 
         var today = DateTime.UtcNow.Date;
@@ -142,7 +201,16 @@ public class NutritionRepositoryTests : IDisposable
     public async Task GetLoggedMealsByDateAsync_OrdersMealsByLoggedTimeAscending()
     {
         var repo = new NutritionRepository(_fixture.Db);
-        var item = new FoodItem { Name = "Carrot", Calories = 41, Protein = 0.9f, Carbs = 9.6f, Fats = 0.2f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+        var item = new FoodItem
+        {
+            Name = "Carrot",
+            Calories = 41,
+            Protein = 0.9f,
+            Carbs = 9.6f,
+            Fats = 0.2f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
         await repo.AddAsync(item);
 
         var today = DateTime.UtcNow.Date;
@@ -174,7 +242,16 @@ public class NutritionRepositoryTests : IDisposable
     public async Task DeleteLoggedMealAsync_RemovesFromDb()
     {
         var repo = new NutritionRepository(_fixture.Db);
-        var item = new FoodItem { Name = "Banana", Calories = 89, Protein = 1.1f, Carbs = 23, Fats = 0.3f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+        var item = new FoodItem
+        {
+            Name = "Banana",
+            Calories = 89,
+            Protein = 1.1f,
+            Carbs = 23,
+            Fats = 0.3f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
         await repo.AddAsync(item);
 
         var meal = new LoggedMeal

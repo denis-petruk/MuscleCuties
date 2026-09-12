@@ -1,4 +1,3 @@
-using MuscleCuties.App.Pages;
 using MuscleCuties.App.Services.Profile;
 using MuscleCuties.Core.ViewModels.Profile;
 
@@ -8,14 +7,14 @@ public partial class ProfileSetupPage : ContentPage
 {
     public ProfileSetupPage(ProfileSetupViewModel vm)
     {
-        InitializeComponent();
+        this.InitializeWithTiming(InitializeComponent);
         BindingContext = vm;
     }
 
-    protected override void OnAppearing()
+    protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
-        base.OnAppearing();
-        this.LoadAfterFirstRender(() => ((ProfileSetupViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
+        base.OnNavigatedTo(args);
+        this.BeginPageLoad(() => ((ProfileSetupViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
     }
 
     private async void OnProfileImageTapped(object? sender, TappedEventArgs e)
@@ -26,6 +25,16 @@ public partial class ProfileSetupPage : ContentPage
     private async void OnProfileImageButtonClicked(object? sender, EventArgs e)
     {
         await ShowProfileImageActionsAsync();
+    }
+
+    private async void OnContinueClicked(object? sender, EventArgs e)
+    {
+        Unfocus();
+
+        if (BindingContext is not ProfileSetupViewModel viewModel)
+            return;
+
+        await viewModel.ContinueCommand.ExecuteAsync(null);
     }
 
     private async Task ShowProfileImageActionsAsync()
@@ -57,7 +66,7 @@ public partial class ProfileSetupPage : ContentPage
             if (!string.IsNullOrWhiteSpace(imagePath))
                 viewModel.SetProfileImage(imagePath);
         }
-        catch (Exception)
+        catch
         {
             await DisplayAlertAsync("Profile photo", "Could not change the image on this device right now.", "OK");
         }

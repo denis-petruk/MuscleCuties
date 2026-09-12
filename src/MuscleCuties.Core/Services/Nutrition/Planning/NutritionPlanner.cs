@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Models.Nutrition.Planning;
 
 namespace MuscleCuties.Core.Services.Nutrition.Planning;
 
@@ -21,10 +22,14 @@ public class NutritionPlanner : INutritionPlanner
         _calorieCalculator = calorieCalculator;
     }
 
-    public NutritionPlan CreateDailyPlan(UserProfile profile, CyclePhase phase, DateTime date)
+    public NutritionPlan CreateDailyPlan(
+        UserProfile profile,
+        CyclePhase phase,
+        DateTime date,
+        BreakfastPreference breakfastPreference = BreakfastPreference.Savoury)
     {
         if (!HasUsableMetrics(profile))
-            return CreateFallbackPlan(phase);
+            return CreateFallbackPlan(phase, breakfastPreference);
 
         var age = CalculateAge(profile.DateOfBirth, date);
         var bmr = _calorieCalculator.CalculateBmr(profile.Weight, profile.Height, age);
@@ -39,9 +44,7 @@ public class NutritionPlanner : INutritionPlanner
         var phaseAdjustment = CalculatePhaseAdjustment(phase, profile.Goal);
         var calories = RoundToNearest(
             _calorieCalculator.Clamp(
-                tdee + goalAdjustment + phaseAdjustment,
-                MinimumCalories,
-                MaximumCalories),
+                tdee + goalAdjustment + phaseAdjustment),
             10f);
         var macros = CalculateMacros(calories, profile.Weight, profile.Goal, phase);
         var fiber = CalculateFiber(calories, phase);
@@ -81,10 +84,13 @@ public class NutritionPlanner : INutritionPlanner
             GetPhaseFocus(phase),
             BuildNotes(profile),
             goals,
-            BuildMealTargets(calories, macros.Protein, macros.Carbs, macros.Fats));
+            BuildMealTargets(calories, macros.Protein, macros.Carbs, macros.Fats, breakfastPreference),
+            breakfastPreference);
     }
 
-    public NutritionPlan CreateFallbackPlan(CyclePhase phase)
+    public NutritionPlan CreateFallbackPlan(
+        CyclePhase phase,
+        BreakfastPreference breakfastPreference = BreakfastPreference.Savoury)
     {
         return new NutritionPlan(
             DefaultCalories,
@@ -102,13 +108,16 @@ public class NutritionPlanner : INutritionPlanner
             GetPhaseFocus(phase),
             ["Complete profile setup to personalize targets."],
             ProfileNutritionGoals.FromCalculated(DefaultCalories, DefaultProtein, DefaultCarbs, DefaultFats, 28f, 2.3f),
-            BuildMealTargets(DefaultCalories, DefaultProtein, DefaultCarbs, DefaultFats));
+            BuildMealTargets(DefaultCalories, DefaultProtein, DefaultCarbs, DefaultFats, breakfastPreference),
+            breakfastPreference);
     }
 
-    private static bool HasUsableMetrics(UserProfile profile) =>
-        profile.Height >= 100f &&
-        profile.Weight >= 30f &&
-        profile.DateOfBirth.Year > 1900;
+    private static bool HasUsableMetrics(UserProfile profile)
+    {
+        return profile.Height >= 100f &&
+               profile.Weight >= 30f &&
+               profile.DateOfBirth.Year > 1900;
+    }
 
     private static int CalculateAge(DateTime dateOfBirth, DateTime date)
     {
@@ -225,14 +234,17 @@ public class NutritionPlanner : INutritionPlanner
         return RoundToNearest(Math.Clamp(weightKg * 0.035f + trainingBonus + phaseBonus, 1.8f, 4.0f), 0.1f);
     }
 
-    private static string GetPhaseFocus(CyclePhase phase) => phase switch
+    private static string GetPhaseFocus(CyclePhase phase)
     {
-        CyclePhase.Menstrual => "Prioritize iron, protein, warm meals, and steady hydration.",
-        CyclePhase.Follicular => "Use the rising-energy window for balanced protein and training carbs.",
-        CyclePhase.Ovulatory => "Support peak output with protein, carbs, and extra fluids.",
-        CyclePhase.Luteal => "Plan filling carbs, fiber, magnesium-rich foods, and steady snacks.",
-        _ => "Keep meals balanced and consistent."
-    };
+        return phase switch
+        {
+            CyclePhase.Menstrual => "Prioritize iron, protein, warm meals, and steady hydration.",
+            CyclePhase.Follicular => "Use the rising-energy window for balanced protein and training carbs.",
+            CyclePhase.Ovulatory => "Support peak output with protein, carbs, and extra fluids.",
+            CyclePhase.Luteal => "Plan filling carbs, fiber, magnesium-rich foods, and steady snacks.",
+            _ => "Keep meals balanced and consistent."
+        };
+    }
 
     private static IReadOnlyCollection<string> BuildNotes(UserProfile profile)
     {
@@ -260,13 +272,24 @@ public class NutritionPlanner : INutritionPlanner
         float calories,
         float protein,
         float carbs,
-        float fats) =>
-    [
-        BuildMealTarget(MealType.Breakfast, 0.25f, calories, protein, carbs, fats),
-        BuildMealTarget(MealType.Lunch, 0.30f, calories, protein, carbs, fats),
-        BuildMealTarget(MealType.Dinner, 0.30f, calories, protein, carbs, fats),
-        BuildMealTarget(MealType.Snack, 0.15f, calories, protein, carbs, fats)
-    ];
+        float fats,
+        BreakfastPreference breakfastPreference)
+    {
+        var (breakfastShare, lunchShare, dinnerShare) = breakfastPreference switch
+        {
+            BreakfastPreference.Sweet => (0.20f, 0.32f, 0.28f),
+            _ => (0.25f, 0.35f, 0.27f)
+        };
+        var snackShare = 1f - breakfastShare - lunchShare - dinnerShare;
+
+        return
+        [
+            BuildMealTarget(MealType.Breakfast, breakfastShare, calories, protein, carbs, fats),
+            BuildMealTarget(MealType.Lunch, lunchShare, calories, protein, carbs, fats),
+            BuildMealTarget(MealType.Dinner, dinnerShare, calories, protein, carbs, fats),
+            BuildMealTarget(MealType.Snack, snackShare, calories, protein, carbs, fats)
+        ];
+    }
 
     private static MealNutritionTarget BuildMealTarget(
         MealType mealType,
@@ -274,14 +297,18 @@ public class NutritionPlanner : INutritionPlanner
         float calories,
         float protein,
         float carbs,
-        float fats) =>
-        new(
+        float fats)
+    {
+        return new MealNutritionTarget(
             mealType,
             RoundToNearest(calories * share, 10f),
             RoundToNearest(protein * share, 1f),
             RoundToNearest(carbs * share, 1f),
             RoundToNearest(fats * share, 1f));
+    }
 
-    private static float RoundToNearest(float value, float nearest) =>
-        MathF.Round(value / nearest) * nearest;
+    private static float RoundToNearest(float value, float nearest)
+    {
+        return MathF.Round(value / nearest) * nearest;
+    }
 }

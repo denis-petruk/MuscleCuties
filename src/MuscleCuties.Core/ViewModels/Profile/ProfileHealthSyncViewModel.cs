@@ -13,30 +13,23 @@ namespace MuscleCuties.Core.ViewModels.Profile;
 public partial class ProfileHealthSyncViewModel : ObservableObject
 {
     private readonly IAuthService _authService;
-    private readonly IUserRepository _userRepository;
     private readonly ICycleService _cycleService;
-    private readonly INutritionService _nutritionService;
-    private readonly IWorkoutService _workoutService;
     private readonly IDashboardPlanner _dashboardPlanner;
     private readonly IHealthSyncService _healthSyncService;
-    private readonly Action _navigateBack;
+    private readonly Func<Task> _navigateBackAsync;
+    private readonly INutritionService _nutritionService;
+    private readonly IUserRepository _userRepository;
+    private readonly IWorkoutService _workoutService;
 
     [ObservableProperty] private bool _isBusy;
-    [ObservableProperty] private bool _isConnected;
-    [ObservableProperty] private bool _isAppleHealthConnected;
-    [ObservableProperty] private bool _isWhoopConnected;
-    [ObservableProperty] private string _statusText = "Not connected";
     [ObservableProperty] private string _lastSyncedText = "No sync yet";
-    [ObservableProperty] private string _statusMessage = string.Empty;
+
+    [ObservableProperty]
+    private string _readinessExplanationText = "Estimated from cycle, nutrition logs, and today's plan.";
+
     [ObservableProperty] private int _readinessScore = 72;
-    [ObservableProperty] private string _readinessExplanationText = "Estimated from cycle, nutrition logs, and today's plan.";
-
-    public string ReadinessScoreText => ReadinessScore > 0 ? ReadinessScore.ToString() : "--";
-
-    public AsyncRelayCommand LoadDataCommand { get; }
-    public AsyncRelayCommand ConnectAppleHealthCommand { get; }
-    public AsyncRelayCommand ConnectWhoopCommand { get; }
-    public RelayCommand BackCommand { get; }
+    [ObservableProperty] private string _statusMessage = string.Empty;
+    [ObservableProperty] private string _statusText = "Not connected";
 
     public ProfileHealthSyncViewModel(
         IAuthService authService,
@@ -46,7 +39,7 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
         IWorkoutService workoutService,
         IDashboardPlanner dashboardPlanner,
         IHealthSyncService healthSyncService,
-        Action navigateBack)
+        Func<Task> navigateBackAsync)
     {
         _authService = authService;
         _userRepository = userRepository;
@@ -55,12 +48,15 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
         _workoutService = workoutService;
         _dashboardPlanner = dashboardPlanner;
         _healthSyncService = healthSyncService;
-        _navigateBack = navigateBack;
+        _navigateBackAsync = navigateBackAsync;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
-        ConnectAppleHealthCommand = new AsyncRelayCommand(() => ConnectAsync(HealthDataSource.AppleHealth));
-        ConnectWhoopCommand = new AsyncRelayCommand(() => ConnectAsync(HealthDataSource.Whoop));
-        BackCommand = new RelayCommand(_navigateBack);
+        BackCommand = new AsyncRelayCommand(_navigateBackAsync);
     }
+
+    public string ReadinessScoreText => ReadinessScore > 0 ? ReadinessScore.ToString() : "--";
+
+    public AsyncRelayCommand LoadDataCommand { get; }
+    public AsyncRelayCommand BackCommand { get; }
 
     private async Task LoadDataAsync()
     {
@@ -68,22 +64,6 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
         try
         {
             var userId = await _authService.GetCurrentUserIdAsync();
-            await ApplyStatusAsync(userId);
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    private async Task ConnectAsync(HealthDataSource source)
-    {
-        IsBusy = true;
-        try
-        {
-            var userId = await _authService.GetCurrentUserIdAsync();
-            var result = await _healthSyncService.SyncAsync(userId, source);
-            StatusMessage = result.Message;
             await ApplyStatusAsync(userId);
         }
         finally
@@ -111,9 +91,6 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
             workoutSummary,
             healthSummary);
 
-        IsConnected = status.IsConnected;
-        IsAppleHealthConnected = status.IsConnected && status.SelectedSource is HealthDataSource.AppleHealth;
-        IsWhoopConnected = status.IsConnected && status.SelectedSource is HealthDataSource.Whoop;
         StatusText = status.SummaryText;
         LastSyncedText = status.LastSyncedAt is null
             ? "No sync yet"

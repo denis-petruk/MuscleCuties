@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage
     x:Class="MuscleCuties.App.Pages.Dashboard.DashboardPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -10,12 +11,17 @@
     x:DataType="vm:DashboardViewModel"
     Shell.NavBarIsVisible="False">
 
-    <RefreshView
-        Command="{Binding RefreshCommand}"
-        IsRefreshing="{Binding IsRefreshing}"
-        RefreshColor="{StaticResource Primary}">
-        <ScrollView>
-            <VerticalStackLayout Padding="20,56,20,32" Spacing="14">
+    <Grid>
+        <RefreshView
+            Command="{Binding RefreshCommand}"
+            IsRefreshing="{Binding IsRefreshing}"
+            RefreshColor="{StaticResource Primary}">
+            <ScrollView>
+            <VerticalStackLayout
+                Padding="20,56,20,32"
+                Spacing="14"
+                HorizontalOptions="Fill"
+                MaximumWidthRequest="640">
                 <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
                     <VerticalStackLayout Spacing="2" VerticalOptions="Center">
                         <Label
@@ -29,11 +35,12 @@
 
                     <Border
                         Grid.Column="1"
-                        WidthRequest="40"
-                        HeightRequest="40"
-                        StrokeShape="RoundRectangle 20"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        StrokeShape="RoundRectangle 22"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                        StrokeThickness="0">
+                        StrokeThickness="0"
+                        SemanticProperties.Description="Notifications">
                         <Path
                             Data="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0"
                             Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
@@ -52,10 +59,13 @@
                     <Border
                         Grid.Column="0"
                         Style="{StaticResource WorkoutPill}"
-                        Padding="10,8">
+                        Padding="10,8"
+                        MinimumHeightRequest="44"
+                        SemanticProperties.Description="{Binding WorkoutStreakText, StringFormat='Workout streak: {0}'}">
                         <HorizontalStackLayout Spacing="2" HorizontalOptions="Center">
-                            <Image
-                                Source="icon_muscle.png"
+                            <sharedControls:ThemeAwareImage
+                                LightSource="icon_muscle.png"
+                                DarkSource="icon_muscle_dark.png"
                                 Aspect="AspectFit"
                                 WidthRequest="22"
                                 HeightRequest="22"
@@ -70,11 +80,14 @@
                     <Border
                         Grid.Column="1"
                         Style="{StaticResource WorkoutPill}"
-                        Padding="10,8">
+                        Padding="10,8"
+                        MinimumHeightRequest="44"
+                        SemanticProperties.Description="{Binding NutritionStreakText, StringFormat='Nutrition streak: {0}'}">
                         <HorizontalStackLayout Spacing="2" HorizontalOptions="Center">
-                            <sharedControls:FitnessIconView
-                                Icon="Fire"
-                                IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                            <sharedControls:ThemeAwareImage
+                                LightSource="icon_fire.png"
+                                DarkSource="icon_fire_dark.png"
+                                Aspect="AspectFit"
                                 WidthRequest="22"
                                 HeightRequest="22"
                                 VerticalOptions="Center" />
@@ -98,12 +111,16 @@
                     ActionText="{Binding WorkoutActionText}"
                     AccentColor="{Binding WorkoutActivityBackground}"
                     AccentTextColor="{Binding WorkoutActivityTextColor}"
+                    ActivitySections="{Binding WorkoutActivitySections}"
+                    HasMultipleActivities="{Binding HasMultipleActivities}"
                     StartCommand="{Binding OpenWorkoutCommand}" />
 
                 <dashboardControls:ReadinessRecoveryCard />
                 <dashboardControls:DashboardNutritionCard />
                 <dashboardControls:DashboardTargetsCard />
             </VerticalStackLayout>
-        </ScrollView>
-    </RefreshView>
+            </ScrollView>
+        </RefreshView>
+        <sharedControls:PageLoadingOverlay />
+    </Grid>
 </ContentPage>

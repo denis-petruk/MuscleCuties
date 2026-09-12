@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage
     x:Class="MuscleCuties.App.Pages.Profile.ProfileNutritionSettingsPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -9,7 +10,11 @@
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20,52,20,32" Spacing="16">
+        <VerticalStackLayout
+            Padding="20,52,20,32"
+            Spacing="16"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="640">
             <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
                 <Button
                     Text="‹"
@@ -28,9 +33,6 @@
                     <sharedControls:IconSectionHeader Text="GOAL" IconGlyph="Target24" />
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Nutrition goal" Style="{StaticResource FormFieldLabel}" />
-                        <Label
-                            Text="Adjusts calories and macros."
-                            Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Picker
                                 Title="Choose goal"
@@ -44,9 +46,6 @@
                         Spacing="5"
                         IsVisible="{Binding IsGoalPaceVisible}">
                         <Label Text="Goal pace" Style="{StaticResource FormFieldLabel}" />
-                        <Label
-                            Text="Deficit or strength push."
-                            Style="{StaticResource FormFieldHint}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Picker
                                 Title="Choose pace"
@@ -61,9 +60,6 @@
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
                     <sharedControls:IconSectionHeader Text="DIETARY PREFERENCES" IconGlyph="LeafThree24" />
-                    <Label
-                        Text="Used for search and meal ideas."
-                        Style="{StaticResource FormFieldHint}" />
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                         <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="8">
                             <Image
@@ -75,7 +71,6 @@
                             <CheckBox IsChecked="{Binding IsVegetarian}" Color="{StaticResource Primary}" />
                             <VerticalStackLayout Spacing="1" VerticalOptions="Center">
                                 <Label Text="Vegetarian" Style="{StaticResource FormFieldLabel}" />
-                                <Label Text="No animal meat" Style="{StaticResource FormFieldHint}" />
                             </VerticalStackLayout>
                         </HorizontalStackLayout>
                         <HorizontalStackLayout Grid.Row="0" Grid.Column="1" Spacing="8">
@@ -88,7 +83,6 @@
                             <CheckBox IsChecked="{Binding IsVegan}" Color="{StaticResource Primary}" />
                             <VerticalStackLayout Spacing="1" VerticalOptions="Center">
                                 <Label Text="Vegan" Style="{StaticResource FormFieldLabel}" />
-                                <Label Text="Plant only" Style="{StaticResource FormFieldHint}" />
                             </VerticalStackLayout>
                         </HorizontalStackLayout>
                         <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="8">
@@ -101,7 +95,6 @@
                             <CheckBox IsChecked="{Binding IsGlutenFree}" Color="{StaticResource Primary}" />
                             <VerticalStackLayout Spacing="1" VerticalOptions="Center">
                                 <Label Text="Gluten-free" Style="{StaticResource FormFieldLabel}" />
-                                <Label Text="No wheat, barley" Style="{StaticResource FormFieldHint}" />
                             </VerticalStackLayout>
                         </HorizontalStackLayout>
                         <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="8">
@@ -114,7 +107,6 @@
                             <CheckBox IsChecked="{Binding IsLactoseFree}" Color="{StaticResource Primary}" />
                             <VerticalStackLayout Spacing="1" VerticalOptions="Center">
                                 <Label Text="Lactose-free" Style="{StaticResource FormFieldLabel}" />
-                                <Label Text="Low lactose" Style="{StaticResource FormFieldHint}" />
                             </VerticalStackLayout>
                         </HorizontalStackLayout>
                     </Grid>
@@ -131,13 +123,9 @@
                 IsVisible="{Binding AreAdvancedSettingsVisible}">
                 <VerticalStackLayout Spacing="12">
                     <sharedControls:IconSectionHeader Text="MACRO TARGETS" IconGlyph="Beaker24" />
-                    <Label
-                        Text="Auto-filled. Edit when needed."
-                        Style="{StaticResource FormFieldHint}" />
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                         <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
                             <Label Text="Daily calories" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Daily energy." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="kcal" Text="{Binding CaloriesGoal}" Keyboard="Numeric" />
                             </Border>
@@ -145,7 +133,6 @@
 
                         <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
                             <Label Text="Protein" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Muscle repair." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="g" Text="{Binding ProteinGoal}" Keyboard="Numeric" />
                             </Border>
@@ -153,7 +140,6 @@
 
                         <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
                             <Label Text="Carbs" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Training fuel." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="g" Text="{Binding CarbsGoal}" Keyboard="Numeric" />
                             </Border>
@@ -161,7 +147,6 @@
 
                         <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
                             <Label Text="Fats" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Hormones." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="g" Text="{Binding FatsGoal}" Keyboard="Numeric" />
                             </Border>
@@ -169,7 +154,6 @@
 
                         <VerticalStackLayout Grid.Row="2" Grid.Column="0" Spacing="5">
                             <Label Text="Fiber" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Digestion." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="g" Text="{Binding FiberGoal}" Keyboard="Numeric" />
                             </Border>
@@ -177,7 +161,6 @@
 
                         <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="5">
                             <Label Text="Water" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Hydration." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="L" Text="{Binding WaterGoal}" Keyboard="Numeric" />
                             </Border>
@@ -191,13 +174,10 @@
                 IsVisible="{Binding AreAdvancedSettingsVisible}">
                 <VerticalStackLayout Spacing="12">
                     <sharedControls:IconSectionHeader Text="MICRO TARGETS" IconGlyph="PersonPill24" />
-                    <Label
-                        Text="Optional custom targets."
-                        Style="{StaticResource FormFieldHint}" />
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10"
+                          RowSpacing="10">
                         <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
                             <Label Text="Iron" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Blood and oxygen." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="mg" Text="{Binding IronGoal}" Keyboard="Numeric" />
                             </Border>
@@ -205,7 +185,6 @@
 
                         <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
                             <Label Text="Vitamin B12" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Nerves and energy." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="mcg" Text="{Binding VitaminB12Goal}" Keyboard="Numeric" />
                             </Border>
@@ -213,7 +192,6 @@
 
                         <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
                             <Label Text="Vitamin C" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Collagen and immunity." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="mg" Text="{Binding VitaminCGoal}" Keyboard="Numeric" />
                             </Border>
@@ -221,7 +199,6 @@
 
                         <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
                             <Label Text="Vitamin D" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Bones and recovery." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="mcg" Text="{Binding VitaminDGoal}" Keyboard="Numeric" />
                             </Border>
@@ -229,7 +206,6 @@
 
                         <VerticalStackLayout Grid.Row="2" Grid.Column="0" Spacing="5">
                             <Label Text="Vitamin A" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Skin and vision." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="mcg" Text="{Binding VitaminAGoal}" Keyboard="Numeric" />
                             </Border>
@@ -237,7 +213,6 @@
 
                         <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="5">
                             <Label Text="Vitamin B6" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Protein metabolism." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="mg" Text="{Binding VitaminB6Goal}" Keyboard="Numeric" />
                             </Border>
@@ -245,7 +220,6 @@
 
                         <VerticalStackLayout Grid.Row="3" Grid.Column="0" Spacing="5">
                             <Label Text="Folate" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Cells and blood." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="mcg" Text="{Binding FolateGoal}" Keyboard="Numeric" />
                             </Border>
@@ -253,7 +227,6 @@
 
                         <VerticalStackLayout Grid.Row="3" Grid.Column="1" Spacing="5">
                             <Label Text="Calcium" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Bones and muscles." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="mg" Text="{Binding CalciumGoal}" Keyboard="Numeric" />
                             </Border>
@@ -261,7 +234,6 @@
 
                         <VerticalStackLayout Grid.Row="4" Grid.Column="0" Spacing="5">
                             <Label Text="Magnesium" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Sleep and recovery." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="mg" Text="{Binding MagnesiumGoal}" Keyboard="Numeric" />
                             </Border>
@@ -269,7 +241,6 @@
 
                         <VerticalStackLayout Grid.Row="4" Grid.Column="1" Spacing="5">
                             <Label Text="Zinc" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Immunity and repair." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="mg" Text="{Binding ZincGoal}" Keyboard="Numeric" />
                             </Border>
@@ -277,7 +248,6 @@
 
                         <VerticalStackLayout Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Spacing="5">
                             <Label Text="Potassium" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Fluid and muscles." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="mg" Text="{Binding PotassiumGoal}" Keyboard="Numeric" />
                             </Border>

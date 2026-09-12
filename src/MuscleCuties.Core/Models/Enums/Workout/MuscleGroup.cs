@@ -18,5 +18,12 @@ public enum MuscleGroup
     Hamstrings,
     Calves,
     HipFlexors,
-    Adductors
+    Adductors,
+    GluteMax,
+    GluteMed,
+    Lats,
+    MidBack,
+    Core,
+    Erectors,
+    Grip
 }

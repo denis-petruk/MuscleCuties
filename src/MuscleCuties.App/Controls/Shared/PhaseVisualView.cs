@@ -1,5 +1,4 @@
-using Microsoft.Maui.Dispatching;
-using Microsoft.Maui.Graphics;
+using MuscleCuties.App.Resources.Styles;
 
 namespace MuscleCuties.App.Controls.Shared;
 
@@ -15,11 +14,12 @@ public class PhaseVisualView : ContentView
         string.Empty,
         propertyChanged: OnSourceChanged);
 
-    private readonly Image _staticImage;
     private readonly GraphicsView _animationView;
     private readonly PhaseAnimationDrawable _drawable = new();
-    private IDispatcherTimer? _timer;
+
+    private readonly Image _staticImage;
     private DateTime _animationStartedAt;
+    private IDispatcherTimer? _timer;
 
     public PhaseVisualView()
     {
@@ -124,8 +124,10 @@ public class PhaseVisualView : ContentView
         _animationView.Invalidate();
     }
 
-    private static bool IsAnimatedSource(string source) =>
-        source.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
+    private static bool IsAnimatedSource(string source)
+    {
+        return source.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
+    }
 
     private sealed class PhaseAnimationDrawable : IDrawable
     {
@@ -168,22 +170,22 @@ public class PhaseVisualView : ContentView
                 canvas,
                 new PointF(50f, 24f + wave * 3f),
                 28f,
-                Color.FromArgb("#F7A6B0"),
-                Color.FromArgb("#8F3A46"));
+                Palette("PhaseVisualMenstrualDropPrimary"),
+                Palette("PhaseVisualMenstrualStrokePrimary"));
 
             DrawDrop(
                 canvas,
                 new PointF(28f, 48f - wave * 2f),
                 16f,
-                Color.FromArgb("#F3B7BE"),
-                Color.FromArgb("#9A4550"));
+                Palette("PhaseVisualMenstrualDropSecondary"),
+                Palette("PhaseVisualMenstrualStrokeSecondary"));
 
             DrawDrop(
                 canvas,
                 new PointF(72f, 51f + wave * 2.5f),
                 17f,
-                Color.FromArgb("#E88996"),
-                Color.FromArgb("#8F3A46"));
+                Palette("PhaseVisualMenstrualDropTertiary"),
+                Palette("PhaseVisualMenstrualStrokePrimary"));
         }
 
         private static void DrawSun(ICanvas canvas, float progress)
@@ -194,7 +196,7 @@ public class PhaseVisualView : ContentView
             var rayEnd = 43f + pulse * 4f;
             var seamlessRotation = progress * FullTurn / 12f;
 
-            canvas.StrokeColor = Color.FromArgb("#C99414");
+            canvas.StrokeColor = Palette("PhaseVisualOvulatoryRay");
             canvas.StrokeSize = 5f;
             canvas.StrokeLineCap = LineCap.Round;
 
@@ -206,14 +208,14 @@ public class PhaseVisualView : ContentView
                 canvas.DrawLine(start.X, start.Y, end.X, end.Y);
             }
 
-            canvas.FillColor = Color.FromArgb("#FFE7A3");
+            canvas.FillColor = Palette("PhaseVisualOvulatoryFill");
             canvas.FillCircle(center.X, center.Y, 23f + pulse * 1.8f);
 
-            canvas.StrokeColor = Color.FromArgb("#8D6B00");
+            canvas.StrokeColor = Palette("PhaseVisualOvulatoryStroke");
             canvas.StrokeSize = 3f;
             canvas.DrawCircle(center.X, center.Y, 21f + pulse * 1.3f);
 
-            canvas.FillColor = Color.FromArgb("#FFF5D2");
+            canvas.FillColor = Palette("PhaseVisualOvulatoryHighlight");
             canvas.FillCircle(43f, 42f, 5f + pulse);
         }
 
@@ -223,10 +225,10 @@ public class PhaseVisualView : ContentView
             var sway = MathF.Sin(progress * FullTurn) * 2.4f;
             var stemTop = 76f - 43f * grow;
 
-            canvas.FillColor = Color.FromArgb("#334C8F51");
+            canvas.FillColor = Palette("PhaseVisualFollicularShadow");
             canvas.FillEllipse(28f, 78f, 44f, 10f);
 
-            canvas.StrokeColor = Color.FromArgb("#3F7D43");
+            canvas.StrokeColor = Palette("PhaseVisualFollicularStroke");
             canvas.StrokeSize = 5f;
             canvas.StrokeLineCap = LineCap.Round;
             canvas.DrawLine(50f, 80f, 50f + sway, stemTop);
@@ -236,26 +238,26 @@ public class PhaseVisualView : ContentView
                 new PointF(50f, 62f),
                 new PointF(22f - sway, 47f),
                 17f,
-                Color.FromArgb("#BDE8BF"),
-                Color.FromArgb("#3F7D43"));
+                Palette("PhaseVisualFollicularLeafOne"),
+                Palette("PhaseVisualFollicularStroke"));
 
             DrawLeaf(
                 canvas,
                 new PointF(50f, 54f),
                 new PointF(77f + sway, 37f),
                 16f,
-                Color.FromArgb("#D7F4D8"),
-                Color.FromArgb("#3F7D43"));
+                Palette("PhaseVisualFollicularLeafTwo"),
+                Palette("PhaseVisualFollicularStroke"));
 
             DrawLeaf(
                 canvas,
                 new PointF(50f + sway, stemTop + 3f),
                 new PointF(50f + sway, 18f),
                 13f,
-                Color.FromArgb("#E8F8E8"),
-                Color.FromArgb("#3F7D43"));
+                Palette("PhaseVisualFollicularLeafThree"),
+                Palette("PhaseVisualFollicularStroke"));
 
-            canvas.FillColor = Color.FromArgb("#C85A87");
+            canvas.FillColor = Palette("PhaseVisualAccent");
             canvas.FillCircle(50f + sway, stemTop + 4f, 3f);
         }
 
@@ -278,21 +280,21 @@ public class PhaseVisualView : ContentView
             moon.CurveTo(46f, 35f, 55f, 21f, 68f, 14f);
             moon.Close();
 
-            canvas.FillColor = Color.FromArgb("#EFE4FF");
+            canvas.FillColor = Palette("PhaseVisualLutealFill");
             canvas.FillPath(moon);
 
-            canvas.StrokeColor = Color.FromArgb("#745398");
+            canvas.StrokeColor = Palette("PhaseVisualLutealStroke");
             canvas.StrokeSize = 3f;
             canvas.StrokeLineCap = LineCap.Round;
             canvas.DrawPath(moon);
 
-            canvas.StrokeColor = Color.FromArgb("#B799D6");
+            canvas.StrokeColor = Palette("PhaseVisualLutealDetail");
             canvas.StrokeSize = 1.6f;
             canvas.DrawArc(45f, 21f, 28f, 56f, 101f, 257f, false, false);
 
             canvas.RestoreState();
 
-            canvas.FillColor = Color.FromArgb("#C85A87");
+            canvas.FillColor = Palette("PhaseVisualAccent");
             canvas.FillCircle(68f, 25f + bob * 0.5f, 2f + glow * 0.7f);
             canvas.FillCircle(78f, 40f - bob * 0.4f, 1.7f + glow * 0.6f);
             canvas.FillCircle(68f, 65f + bob * 0.35f, 1.8f + glow * 0.5f);
@@ -321,13 +323,13 @@ public class PhaseVisualView : ContentView
             canvas.StrokeLineCap = LineCap.Round;
             canvas.DrawPath(drop);
 
-            canvas.FillColor = Color.FromArgb("#55FFFFFF");
+            canvas.FillColor = Palette("PhaseVisualHighlight");
             canvas.FillEllipse(centerX - halfWidth * 0.36f, top.Y + size * 0.35f, halfWidth * 0.26f, size * 0.26f);
         }
 
         private static void DrawStar(ICanvas canvas, float centerX, float centerY, float size)
         {
-            canvas.StrokeColor = Color.FromArgb("#C85A87");
+            canvas.StrokeColor = Palette("PhaseVisualAccent");
             canvas.StrokeSize = 2f;
             canvas.StrokeLineCap = LineCap.Round;
             canvas.DrawLine(centerX - size, centerY, centerX + size, centerY);
@@ -348,7 +350,8 @@ public class PhaseVisualView : ContentView
             var path = new PathF();
             path.MoveTo(root.X, root.Y);
             path.CurveTo(leftControl.X, leftControl.Y, tip.X - normalX * 0.12f, tip.Y - normalY * 0.12f, tip.X, tip.Y);
-            path.CurveTo(tip.X + normalX * 0.12f, tip.Y + normalY * 0.12f, rightControl.X, rightControl.Y, root.X, root.Y);
+            path.CurveTo(tip.X + normalX * 0.12f, tip.Y + normalY * 0.12f, rightControl.X, rightControl.Y, root.X,
+                root.Y);
             path.Close();
 
             canvas.FillColor = fill;
@@ -359,9 +362,16 @@ public class PhaseVisualView : ContentView
             canvas.DrawPath(path);
         }
 
-        private static PointF PointOnCircle(PointF center, float radius, float angleRadians) =>
-            new(
+        private static PointF PointOnCircle(PointF center, float radius, float angleRadians)
+        {
+            return new PointF(
                 center.X + radius * MathF.Cos(angleRadians),
                 center.Y + radius * MathF.Sin(angleRadians));
+        }
+
+        private static Color Palette(string key)
+        {
+            return AppThemeResources.GetColor(key, Colors.Transparent) ?? Colors.Transparent;
+        }
     }
 }

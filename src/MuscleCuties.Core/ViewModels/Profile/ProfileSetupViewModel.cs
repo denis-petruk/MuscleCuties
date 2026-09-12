@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Diagnostics;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
@@ -10,41 +10,70 @@ using MuscleCuties.Core.Models.UI.Profile;
 using MuscleCuties.Core.Models.UI.Workout;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
-using MuscleCuties.Core.Services.Health;
+using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.Services.Workout;
+using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Profile;
 
 public partial class ProfileSetupViewModel : ObservableObject
 {
     private readonly IAuthService _authService;
+    private readonly Func<Task> _navigateToQuizAsync;
+    private readonly IQuizService _quizService;
+    private readonly QuizQuestionCache _quizQuestionCache;
     private readonly IUserRepository _userRepository;
-    private readonly IHealthSyncService? _healthSyncService;
-    private readonly Action _navigateToQuiz;
+    [ObservableProperty] private DateTime _birthDate = DateTime.Today.AddYears(-25);
+    [ObservableProperty] private int _cycleLength = 28;
+    [ObservableProperty] private string _errorMessage = string.Empty;
+    [ObservableProperty] private UserGoal _goal = UserGoal.MaintainHealth;
     private bool _hasLoadedProfile;
+    [ObservableProperty] private bool _isBusy;
 
     [ObservableProperty] private string _name = string.Empty;
-    [ObservableProperty] private DateTime _birthDate = DateTime.Today.AddYears(-25);
-    [ObservableProperty] private bool _useMetricSystem = true;
-    [ObservableProperty] private UserGoal _goal = UserGoal.MaintainHealth;
-    [ObservableProperty] private SelectionOption<UserGoal>? _selectedGoalOption;
-    [ObservableProperty] private int _workoutDaysPerWeek = 3;
-    [ObservableProperty] private int _cycleLength = 28;
-    [ObservableProperty] private bool _isBusy;
-    [ObservableProperty] private bool _isHealthSyncBusy;
-    [ObservableProperty] private string _errorMessage = string.Empty;
-    [ObservableProperty] private string _healthSyncStatusText = "Not connected";
-    [ObservableProperty] private string _healthSyncMessage = string.Empty;
     [ObservableProperty] private string _profileImagePath = string.Empty;
+    [ObservableProperty] private int _selectedFeet = 5;
+    [ObservableProperty] private SelectionOption<UserGoal>? _selectedGoalOption;
 
     [ObservableProperty] private int _selectedHeightCm = 165;
-    [ObservableProperty] private int _selectedFeet = 5;
     [ObservableProperty] private int _selectedInches = 6;
+
+    [ObservableProperty]
+    private StrengthTrainingStyle _selectedStrengthTrainingStyle = StrengthTrainingStyle.ComfortableModerate;
+
     [ObservableProperty] private int _selectedWeightKg = 65;
     [ObservableProperty] private int _selectedWeightLbs = 143;
+
+    [ObservableProperty]
+    private ObservableCollection<StrengthTrainingStyleOptionItem> _strengthTrainingStyleOptions = new();
+
+    [ObservableProperty] private bool _useMetricSystem = true;
     [ObservableProperty] private ObservableCollection<WorkoutActivityOptionItem> _workoutActivityOptions = new();
-    [ObservableProperty] private ObservableCollection<StrengthTrainingStyleOptionItem> _strengthTrainingStyleOptions = new();
-    [ObservableProperty] private StrengthTrainingStyle _selectedStrengthTrainingStyle = StrengthTrainingStyle.ComfortableModerate;
+    [ObservableProperty] private int _workoutDaysPerWeek = 3;
+
+    public ProfileSetupViewModel(
+        IAuthService authService,
+        IUserRepository userRepository,
+        IQuizService quizService,
+        QuizQuestionCache quizQuestionCache,
+        Func<Task> navigateToQuizAsync)
+    {
+        _authService = authService;
+        _userRepository = userRepository;
+        _quizService = quizService;
+        _quizQuestionCache = quizQuestionCache;
+        _navigateToQuizAsync = navigateToQuizAsync;
+        ContinueCommand = new AsyncRelayCommand(ContinueAsync);
+        LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
+        SelectMetricUnitsCommand = new RelayCommand(() => UseMetricSystem = true);
+        SelectImperialUnitsCommand = new RelayCommand(() => UseMetricSystem = false);
+        ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
+        SelectStrengthTrainingStyleCommand =
+            new RelayCommand<StrengthTrainingStyleOptionItem>(SelectStrengthTrainingStyle);
+        SelectedGoalOption = GoalOptions.First(option => option.Value == Goal);
+        WorkoutActivityOptions = WorkoutActivityOptionCatalog.Build(new HashSet<WorkoutActivityType>());
+        StrengthTrainingStyleOptions = StrengthTrainingStyleOptionCatalog.Build(SelectedStrengthTrainingStyle);
+    }
 
     public DateTime MinBirthDate { get; } = DateTime.Today.AddYears(-100);
     public DateTime MaxBirthDate { get; } = DateTime.Today.AddYears(-12);
@@ -55,15 +84,18 @@ public partial class ProfileSetupViewModel : ObservableObject
     public List<int> MetricWeightOptions { get; } = Enumerable.Range(30, 171).ToList();
     public List<int> ImperialWeightOptions { get; } = Enumerable.Range(66, 375).ToList();
     public IReadOnlyList<SelectionOption<UserGoal>> GoalOptions { get; } = ProfileSelectionOptions.Goals;
+    public bool UseImperialSystem => !UseMetricSystem;
+
     public bool IsStrengthStyleVisible => WorkoutActivityOptions.Any(option =>
         WorkoutActivityPreferences.IsStrengthActivity(option.ActivityType) && option.IsSelected);
+
     public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions =>
         WorkoutActivityOptionCatalog.BuildGroups(WorkoutActivityOptions);
 
     public string WeightUnit => UseMetricSystem ? "kg" : "lbs";
-    public bool HasProfileImage => !string.IsNullOrWhiteSpace(ProfileImagePath);
+    public bool HasProfileImage => IsExistingProfileImage(ProfileImagePath);
     public bool HasNoProfileImage => !HasProfileImage;
-    public string ProfileImageSource => ProfileImagePath;
+    public string ProfileImageSource => HasProfileImage ? ProfileImagePath : string.Empty;
 
     public float Height
     {
@@ -79,111 +111,71 @@ public partial class ProfileSetupViewModel : ObservableObject
 
     public AsyncRelayCommand ContinueCommand { get; }
     public AsyncRelayCommand LoadDataCommand { get; }
-    public AsyncRelayCommand ConnectAppleHealthCommand { get; }
-    public AsyncRelayCommand ConnectWhoopCommand { get; }
+    public RelayCommand SelectMetricUnitsCommand { get; }
+    public RelayCommand SelectImperialUnitsCommand { get; }
     public RelayCommand<WorkoutActivityOptionItem> ToggleWorkoutActivityCommand { get; }
     public RelayCommand<StrengthTrainingStyleOptionItem> SelectStrengthTrainingStyleCommand { get; }
 
-    // Alias for tests that use SaveCommand
     public AsyncRelayCommand SaveCommand => ContinueCommand;
-
-    public ProfileSetupViewModel(
-        IAuthService authService,
-        IUserRepository userRepository,
-        Action navigateToQuiz,
-        IHealthSyncService? healthSyncService = null)
-    {
-        _authService = authService;
-        _userRepository = userRepository;
-        _healthSyncService = healthSyncService;
-        _navigateToQuiz = navigateToQuiz;
-        ContinueCommand = new AsyncRelayCommand(ContinueAsync);
-        LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
-        ConnectAppleHealthCommand = new AsyncRelayCommand(() => ConnectHealthAsync(HealthDataSource.AppleHealth));
-        ConnectWhoopCommand = new AsyncRelayCommand(() => ConnectHealthAsync(HealthDataSource.Whoop));
-        ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
-        SelectStrengthTrainingStyleCommand = new RelayCommand<StrengthTrainingStyleOptionItem>(SelectStrengthTrainingStyle);
-        SelectedGoalOption = GoalOptions.First(option => option.Value == Goal);
-        WorkoutActivityOptions = WorkoutActivityOptionCatalog.Build(new HashSet<WorkoutActivityType>());
-        StrengthTrainingStyleOptions = StrengthTrainingStyleOptionCatalog.Build(SelectedStrengthTrainingStyle);
-    }
 
     private async Task LoadDataAsync()
     {
-        AppDebugLog.Write("ProfileSetup", "LoadData started.");
-        try
-        {
-            var userId = await _authService.GetCurrentUserIdAsync();
-            AppDebugLog.Write("ProfileSetup", $"LoadData current user id={userId}.");
-            var profile = await _userRepository.GetProfileAsync(userId);
-            AppDebugLog.Write("ProfileSetup", $"LoadData profile exists={profile is not null}.");
-            if (profile is not null)
-            {
-                Name = profile.Name;
-                BirthDate = profile.DateOfBirth == default ? BirthDate : profile.DateOfBirth;
-                Goal = profile.Goal;
-                ProfileImagePath = profile.ProfileImagePath;
-                SelectedGoalOption = GoalOptions.FirstOrDefault(option => option.Value == Goal)
-                                     ?? GoalOptions.First(option => option.Value == UserGoal.MaintainHealth);
-                WorkoutActivityOptions = WorkoutActivityOptionCatalog.Build(
-                    WorkoutActivityPreferences.Parse(profile.PreferredWorkoutActivityTypes));
-                SelectedStrengthTrainingStyle =
-                    WorkoutActivityPreferences.ParseStrengthStyle(profile.PreferredWorkoutActivityTypes);
-                StrengthTrainingStyleOptions =
-                    StrengthTrainingStyleOptionCatalog.Build(SelectedStrengthTrainingStyle);
-                _hasLoadedProfile = true;
-            }
+        var userId = await _authService.GetCurrentUserIdAsync();
+        var profile = await _userRepository.GetProfileAsync(userId);
+        if (profile is null)
+            return;
 
-            await RefreshHealthSyncStatusAsync(userId);
-            AppDebugLog.Write("ProfileSetup", "LoadData finished.");
-        }
-        catch (Exception ex)
-        {
-            AppDebugLog.Error("ProfileSetup", ex, "LoadData failed");
-            throw;
-        }
+        Name = profile.Name;
+        BirthDate = profile.DateOfBirth == default ? BirthDate : profile.DateOfBirth;
+        Goal = profile.Goal;
+        ProfileImagePath = profile.ProfileImagePath;
+        SelectedGoalOption = GoalOptions.FirstOrDefault(option => option.Value == Goal)
+                             ?? GoalOptions.First(option => option.Value == UserGoal.MaintainHealth);
+        WorkoutActivityOptions = WorkoutActivityOptionCatalog.Build(
+            WorkoutActivityPreferences.Parse(profile.PreferredWorkoutActivityTypes));
+        SelectedStrengthTrainingStyle =
+            WorkoutActivityPreferences.ParseStrengthStyle(profile.PreferredWorkoutActivityTypes);
+        StrengthTrainingStyleOptions =
+            StrengthTrainingStyleOptionCatalog.Build(SelectedStrengthTrainingStyle);
+        _hasLoadedProfile = true;
     }
 
     partial void OnUseMetricSystemChanged(bool value)
     {
         OnPropertyChanged(nameof(WeightUnit));
+        OnPropertyChanged(nameof(UseImperialSystem));
     }
 
     private async Task ContinueAsync()
     {
-        AppDebugLog.Write("ProfileSetup", "Continue started.");
         IsBusy = true;
         ErrorMessage = string.Empty;
         try
         {
-            var userId = await _authService.GetCurrentUserIdAsync();
-            AppDebugLog.Write("ProfileSetup", $"Continue current user id={userId}.");
+            var userId = await DataLoadScheduler.RunAsync(_authService.GetCurrentUserIdAsync);
             var selectedActivities = WorkoutActivityOptions
                 .Where(option => option.IsSelected)
                 .Select(option => option.ActivityType)
                 .ToList();
-            AppDebugLog.Write("ProfileSetup", $"Continue selected activities count={selectedActivities.Count}.");
 
             if (!selectedActivities.Any(WorkoutActivityPreferences.IsStrengthActivity))
             {
                 ErrorMessage = "Pick one strength style so your plan has a real base.";
-                AppDebugLog.Write("ProfileSetup", "Continue blocked: no strength activity selected.");
                 return;
             }
 
             selectedActivities = WorkoutActivityPreferences.EnsureRequired(selectedActivities).ToList();
 
-            float heightCm = UseMetricSystem
+            var heightCm = UseMetricSystem
                 ? SelectedHeightCm
                 : (SelectedFeet * 12 + SelectedInches) * 2.54f;
 
-            float weightKg = UseMetricSystem
+            var weightKg = UseMetricSystem
                 ? SelectedWeightKg
                 : SelectedWeightLbs * 0.453592f;
 
-            var profile = await _userRepository.GetProfileAsync(userId);
+            var profile = await DataLoadScheduler.RunAsync(() => _userRepository.GetProfileAsync(userId));
             var isNewProfile = profile is null;
-            AppDebugLog.Write("ProfileSetup", $"Continue profile is new={isNewProfile}.");
 
             profile ??= new UserProfile
             {
@@ -207,30 +199,27 @@ public partial class ProfileSetupViewModel : ObservableObject
                     selectedActivities,
                     SelectedStrengthTrainingStyle);
             }
+
             profile.WorkoutDaysPerWeek = profile.WorkoutDaysPerWeek > 0
                 ? profile.WorkoutDaysPerWeek
                 : WorkoutDaysPerWeek;
             profile.CycleLength = profile.CycleLength > 0
                 ? profile.CycleLength
-                : CycleLength > 0 ? CycleLength : 28;
+                : CycleLength > 0
+                    ? CycleLength
+                    : 28;
             profile.UpdatedAt = DateTime.UtcNow;
 
             if (isNewProfile)
-            {
-                await _userRepository.AddProfileAsync(profile);
-                AppDebugLog.Write("ProfileSetup", "Continue inserted profile.");
-            }
+                await DataLoadScheduler.RunAsync(() => _userRepository.AddProfileAsync(profile));
             else
-            {
-                await _userRepository.UpdateProfileAsync(profile);
-                AppDebugLog.Write("ProfileSetup", "Continue updated profile.");
-            }
+                await DataLoadScheduler.RunAsync(() => _userRepository.UpdateProfileAsync(profile));
 
-            await _userRepository.AddSnapshotAsync(new UserProfileSnapshot
+            await DataLoadScheduler.RunAsync(() => _userRepository.AddSnapshotAsync(new UserProfileSnapshot
             {
                 UserId = userId,
                 SnapshotReason = isNewProfile ? "InitialProfileSetup" : "ProfileSetup",
-                ProfileJson = System.Text.Json.JsonSerializer.Serialize(new
+                ProfileJson = JsonSerializer.Serialize(new
                 {
                     profile.Name,
                     profile.DateOfBirth,
@@ -247,28 +236,26 @@ public partial class ProfileSetupViewModel : ObservableObject
                     profile.PreferredWorkoutActivityTypes
                 }),
                 CreatedAt = DateTime.UtcNow
-            });
+            }));
 
-            var user = await _userRepository.GetByIdAsync(userId);
+            var user = await DataLoadScheduler.RunAsync(() => _userRepository.GetByIdAsync(userId));
             if (user is not null)
             {
                 user.UpdatedAt = DateTime.UtcNow;
-                await _userRepository.UpdateAsync(user);
-                AppDebugLog.Write("ProfileSetup", $"Continue touched user row. OnboardingComplete={user.IsOnboardingComplete}.");
+                await DataLoadScheduler.RunAsync(() => _userRepository.UpdateAsync(user));
             }
 
-            AppDebugLog.Write("ProfileSetup", "Continue navigating to QuizPage.");
-            _navigateToQuiz();
+            await _quizQuestionCache.GetOrLoadAsync(() =>
+                DataLoadScheduler.RunAsync(_quizService.GetOnboardingQuestionsAsync));
+            await _navigateToQuizAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            AppDebugLog.Error("ProfileSetup", ex, "Continue failed");
-            throw;
+            ErrorMessage = "We could not finish setup. Please try again.";
         }
         finally
         {
             IsBusy = false;
-            AppDebugLog.Write("ProfileSetup", "Continue finished.");
         }
     }
 
@@ -306,37 +293,6 @@ public partial class ProfileSetupViewModel : ObservableObject
         OnPropertyChanged(nameof(IsStrengthStyleVisible));
     }
 
-    private async Task ConnectHealthAsync(HealthDataSource source)
-    {
-        if (_healthSyncService is null)
-        {
-            HealthSyncMessage = "Health sync is not available in this build.";
-            return;
-        }
-
-        IsHealthSyncBusy = true;
-        try
-        {
-            var userId = await _authService.GetCurrentUserIdAsync();
-            var result = await _healthSyncService.SyncAsync(userId, source);
-            HealthSyncMessage = result.Message;
-            await RefreshHealthSyncStatusAsync(userId);
-        }
-        finally
-        {
-            IsHealthSyncBusy = false;
-        }
-    }
-
-    private async Task RefreshHealthSyncStatusAsync(int userId)
-    {
-        if (_healthSyncService is null)
-            return;
-
-        var status = await _healthSyncService.GetStatusAsync(userId);
-        HealthSyncStatusText = status.SummaryText;
-    }
-
     partial void OnGoalChanged(UserGoal value)
     {
         var selected = GoalOptions.FirstOrDefault(option => option.Value == value);
@@ -361,5 +317,10 @@ public partial class ProfileSetupViewModel : ObservableObject
         OnPropertyChanged(nameof(HasProfileImage));
         OnPropertyChanged(nameof(HasNoProfileImage));
         OnPropertyChanged(nameof(ProfileImageSource));
+    }
+
+    private static bool IsExistingProfileImage(string path)
+    {
+        return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
     }
 }

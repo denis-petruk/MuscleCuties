@@ -1,7 +1,7 @@
 using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.Core.Models.UI.Workout;
 using MuscleCuties.Core.Services.Cycle.Planning;
 using MuscleCuties.Core.Services.Health;
-using MuscleCuties.Core.Services.Workout.Planning;
 
 namespace MuscleCuties.Core.Services.Dashboard.Planning;
 
@@ -14,9 +14,12 @@ public class DashboardPlanner : IDashboardPlanner
         float? weight,
         int workoutDaysPerWeek,
         TodaysWorkoutSummary workoutSummary,
-        HealthWeeklySummary? healthSummary = null)
+        HealthWeeklySummary? healthSummary = null,
+        int? recordedReadinessScore = null)
     {
-        var readinessScore = CalculateReadinessScore(phase, caloriesProgress, workoutDaysPerWeek, healthSummary);
+        var readinessScore = recordedReadinessScore is not null
+            ? Math.Clamp(recordedReadinessScore.Value, 0, 100)
+            : CalculateReadinessScore(phase, caloriesProgress, workoutDaysPerWeek, healthSummary);
         var recoveryScore = CalculateRecoveryScore(phase, caloriesProgress, workoutSummary, healthSummary);
 
         return new DashboardSupportSummary(
@@ -116,21 +119,27 @@ public class DashboardPlanner : IDashboardPlanner
             100);
     }
 
-    private static string BuildReadinessLabel(int score) => score switch
+    private static string BuildReadinessLabel(int score)
     {
-        >= 85 => "Strong training day",
-        >= 70 => "Steady energy",
-        >= 55 => "Keep it moderate",
-        _ => "Prioritize gentle movement"
-    };
+        return score switch
+        {
+            >= 85 => "Strong training day",
+            >= 70 => "Steady energy",
+            >= 55 => "Keep it moderate",
+            _ => "Prioritize gentle movement"
+        };
+    }
 
-    private static string BuildRecoveryLabel(int score) => score switch
+    private static string BuildRecoveryLabel(int score)
     {
-        >= 85 => "Well recovered",
-        >= 70 => "Mostly recovered",
-        >= 55 => "Needs care",
-        _ => "Rest comes first"
-    };
+        return score switch
+        {
+            >= 85 => "Well recovered",
+            >= 70 => "Mostly recovered",
+            >= 55 => "Needs care",
+            _ => "Rest comes first"
+        };
+    }
 
     private static string BuildCycleInsightText(CyclePrediction prediction)
     {
@@ -164,6 +173,8 @@ public class DashboardPlanner : IDashboardPlanner
         var goal = workoutDaysPerWeek >= 4 ? 8d : 7.5d;
         return healthSummary is { HasSleepData: true }
             ? $"{goal:N1}h target · {healthSummary.AverageSleepHours:N1}h avg"
-            : goal % 1d == 0d ? $"{goal:N0}h" : $"{goal:N1}h";
+            : goal % 1d == 0d
+                ? $"{goal:N0}h"
+                : $"{goal:N1}h";
     }
 }
