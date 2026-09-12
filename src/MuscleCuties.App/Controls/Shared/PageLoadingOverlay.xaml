@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Shared.PageLoadingOverlay"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    InputTransparent="False">
+
+    <ContentView.Triggers>
+        <MultiTrigger TargetType="ContentView">
+            <MultiTrigger.Conditions>
+                <BindingCondition Binding="{Binding IsPageLoading}" Value="False" />
+                <BindingCondition Binding="{Binding IsLoadError}" Value="False" />
+            </MultiTrigger.Conditions>
+            <Setter Property="IsVisible" Value="False" />
+        </MultiTrigger>
+    </ContentView.Triggers>
+
+    <Grid
+        BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
+        Padding="24">
+
+        <!-- Loading state -->
+        <VerticalStackLayout
+            IsVisible="{Binding IsPageLoading}"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            Spacing="10">
+            <ActivityIndicator
+                Color="{StaticResource Primary}"
+                IsRunning="{Binding IsPageLoading}"
+                SemanticProperties.Description="Loading page data" />
+            <Label
+                Text="Loading your data"
+                Style="{StaticResource MutedLabel}"
+                HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <!-- Error state -->
+        <VerticalStackLayout
+            IsVisible="{Binding IsLoadError}"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            Spacing="16">
+            <Label
+                Text="Something went wrong"
+                Style="{StaticResource SectionTitle}"
+                HorizontalTextAlignment="Center" />
+            <Label
+                Text="We could not load your data. Please try again."
+                Style="{StaticResource MutedLabel}"
+                HorizontalTextAlignment="Center" />
+            <Button
+                Text="Retry"
+                Command="{Binding LoadDataCommand}"
+                Style="{StaticResource ButtonLink}"
+                HorizontalOptions="Center"
+                SemanticProperties.Description="Retry loading data" />
+        </VerticalStackLayout>
+
+    </Grid>
+</ContentView>

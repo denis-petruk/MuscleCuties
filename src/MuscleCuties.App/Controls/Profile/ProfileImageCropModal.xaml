@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Profile.ProfileImageCropModal"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    IsVisible="False">
+
+    <Grid BackgroundColor="{StaticResource ModalScrim}" Padding="20">
+        <Border
+            Style="{StaticResource CardPrimary}"
+            Padding="0"
+            MaximumWidthRequest="400"
+            HorizontalOptions="Center"
+            VerticalOptions="Center">
+
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="0">
+
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="20,18,20,14">
+                    <Label
+                        Text="Crop photo"
+                        Style="{StaticResource SubHeadline}"
+                        FontSize="24"
+                        VerticalOptions="Center" />
+                    <Border
+                        Grid.Column="1"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        StrokeShape="RoundRectangle 22"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
+                        StrokeThickness="0"
+                        SemanticProperties.Description="Cancel crop">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnCancelTapped" />
+                        </Border.GestureRecognizers>
+                        <Path
+                            Data="M6 6L18 18M18 6L6 18"
+                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                            StrokeThickness="2.2"
+                            StrokeLineCap="Round"
+                            Aspect="Uniform"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+                </Grid>
+
+                <Border
+                    Grid.Row="1"
+                    x:Name="CropViewport"
+                    WidthRequest="260"
+                    HeightRequest="260"
+                    StrokeShape="RoundRectangle 130"
+                    StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
+                    HorizontalOptions="Center"
+                    Margin="20,0">
+                    <Grid>
+                        <Grid.GestureRecognizers>
+                            <PanGestureRecognizer PanUpdated="OnPanUpdated" />
+                            <PinchGestureRecognizer PinchUpdated="OnPinchUpdated" />
+                        </Grid.GestureRecognizers>
+                        <Image
+                            x:Name="CropImage"
+                            Aspect="AspectFill"
+                            WidthRequest="260"
+                            HeightRequest="260" />
+                    </Grid>
+                </Border>
+
+                <Label
+                    Grid.Row="2"
+                    Text="Pinch to zoom, drag to reposition"
+                    Style="{StaticResource CaptionLabel}"
+                    HorizontalTextAlignment="Center"
+                    Margin="20,10,20,0" />
+
+                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="12" Padding="20,16,20,20">
+                    <Button
+                        Grid.Column="0"
+                        Text="Cancel"
+                        Clicked="OnCancelTapped"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                        HeightRequest="52"
+                        CornerRadius="18" />
+                    <Button
+                        Grid.Column="1"
+                        Text="Use Photo"
+                        Clicked="OnUsePhotoTapped"
+                        HeightRequest="52"
+                        CornerRadius="18" />
+                </Grid>
+
+            </Grid>
+        </Border>
+    </Grid>
+</ContentView>
