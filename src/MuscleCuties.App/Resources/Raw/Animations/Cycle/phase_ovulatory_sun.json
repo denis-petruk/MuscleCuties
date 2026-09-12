@@ -1,0 +1,10 @@
+{
+  "name": "phase_ovulatory_sun",
+  "version": 1,
+  "kind": "phase_visual",
+  "renderer": "PhaseVisualView",
+  "phase": "ovulatory",
+  "visual": "sun_burst",
+  "loop": true,
+  "durationMs": 1800
+}
