@@ -3,7 +3,9 @@ namespace MuscleCuties.Core.Services.Nutrition;
 public class CalorieCalculator : ICalorieCalculator
 {
     public float CalculateBmr(float weightKg, float heightCm, int age)
-        => 10f * weightKg + 6.25f * heightCm - 5f * age - 161f;
+    {
+        return 10f * weightKg + 6.25f * heightCm - 5f * age - 161f;
+    }
 
     public float ApplyActivityMultiplier(float bmr, int workoutDaysPerWeek)
     {
@@ -30,18 +32,21 @@ public class CalorieCalculator : ICalorieCalculator
         };
     }
 
-    // cyclePhase: 0=Menstrual, 1=Follicular, 2=Ovulatory, 3=Luteal
     public float AdjustForPhase(float calories, int cyclePhase)
-        => calories + cyclePhase switch
+    {
+        return calories + cyclePhase switch
         {
             0 => -100f,
             2 => +50f,
             3 => +150f,
             _ => 0f
         };
+    }
 
     public float Clamp(float value, float min = 1200f, float max = 4000f)
-        => MathF.Max(min, MathF.Min(max, value));
+    {
+        return MathF.Max(min, MathF.Min(max, value));
+    }
 
     public (float Protein, float Carbs, float Fats) CalculateMacros(float targetCalories, float weightKg)
     {

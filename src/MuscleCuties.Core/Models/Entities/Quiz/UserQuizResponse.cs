@@ -15,5 +15,7 @@ public class UserQuizResponse
     [ForeignKey(nameof(UserId))] public User? User { get; set; }
     [ForeignKey(nameof(QuizQuestionId))] public QuizQuestion? Question { get; set; }
     [ForeignKey(nameof(QuizAnswerId))] public QuizAnswer? Answer { get; set; }
-    [ForeignKey(nameof(UserProfileSnapshotId))] public UserProfileSnapshot? Snapshot { get; set; }
+
+    [ForeignKey(nameof(UserProfileSnapshotId))]
+    public UserProfileSnapshot? Snapshot { get; set; }
 }

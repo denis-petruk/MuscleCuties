@@ -1,56 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>UIDeviceFamily</key>
-	<array>
-		<integer>1</integer>
-		<integer>2</integer>
-	</array>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>arm64</string>
-	</array>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UILaunchScreen</key>
-	<dict>
-		<key>UIColorName</key>
-		<string>LaunchBackground</string>
-		<key>UIImageName</key>
-		<string>LaunchLogo</string>
-		<key>UIImageRespectsSafeAreaInsets</key>
-		<false/>
-	</dict>
-	<key>NSHealthShareUsageDescription</key>
-	<string>MuscleCuties reads weekly steps and sleep averages to adjust calorie targets, readiness, and recovery.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>MuscleCuties does not write Health data. This permission is reserved for future workout syncing.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>MuscleCuties opens your photo library only when you choose a profile photo.</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>musclecuties</string>
-			</array>
-		</dict>
-	</array>
-	<key>XSAppIconAssets</key>
-	<string>Assets.xcassets/appicon.appiconset</string>
-</dict>
+    <dict>
+        <key>LSRequiresIPhoneOS</key>
+        <true/>
+        <key>UIDeviceFamily</key>
+        <array>
+            <integer>1</integer>
+            <integer>2</integer>
+        </array>
+        <key>UIRequiredDeviceCapabilities</key>
+        <array>
+            <string>arm64</string>
+        </array>
+        <key>UIBackgroundModes</key>
+        <array>
+            <string>fetch</string>
+        </array>
+        <key>UISupportedInterfaceOrientations</key>
+        <array>
+            <string>UIInterfaceOrientationPortrait</string>
+            <string>UIInterfaceOrientationLandscapeLeft</string>
+            <string>UIInterfaceOrientationLandscapeRight</string>
+        </array>
+        <key>UISupportedInterfaceOrientations~ipad</key>
+        <array>
+            <string>UIInterfaceOrientationPortrait</string>
+            <string>UIInterfaceOrientationPortraitUpsideDown</string>
+            <string>UIInterfaceOrientationLandscapeLeft</string>
+            <string>UIInterfaceOrientationLandscapeRight</string>
+        </array>
+        <key>UILaunchScreen</key>
+        <dict>
+            <key>UIColorName</key>
+            <string>LaunchBackground</string>
+            <key>UIImageName</key>
+            <string>LaunchLogo</string>
+            <key>UIImageRespectsSafeAreaInsets</key>
+            <false/>
+        </dict>
+        <key>UIApplicationSceneManifest</key>
+        <dict>
+            <key>UIApplicationSupportsMultipleScenes</key>
+            <false/>
+            <key>UISceneConfigurations</key>
+            <dict>
+                <key>UIWindowSceneSessionRoleApplication</key>
+                <array>
+                    <dict>
+                        <key>UISceneConfigurationName</key>
+                        <string>__MAUI_DEFAULT_SCENE_CONFIGURATION__</string>
+                        <key>UISceneDelegateClassName</key>
+                        <string>SceneDelegate</string>
+                    </dict>
+                </array>
+            </dict>
+        </dict>
+        <key>NSHealthShareUsageDescription</key>
+        <string>MuscleCuties reads weekly steps and sleep averages to adjust calorie targets, readiness, and recovery.
+        </string>
+        <key>NSHealthUpdateUsageDescription</key>
+        <string>MuscleCuties does not write Health data. This permission is reserved for future workout syncing.
+        </string>
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>MuscleCuties opens your photo library only when you choose a profile photo.</string>
+        <key>CFBundleURLTypes</key>
+        <array>
+            <dict>
+                <key>CFBundleURLName</key>
+                <string>MuscleCuties Whoop callback</string>
+                <key>CFBundleTypeRole</key>
+                <string>Editor</string>
+                <key>CFBundleURLSchemes</key>
+                <array>
+                    <string>musclecuties</string>
+                </array>
+            </dict>
+        </array>
+        <key>XSAppIconAssets</key>
+        <string>Assets.xcassets/appicon.appiconset</string>
+    </dict>
 </plist>

@@ -1,35 +1,29 @@
+using MuscleCuties.Core.Services.Auth;
 #if IOS || MACCATALYST
 using AuthenticationServices;
 using Foundation;
-using Microsoft.Maui.ApplicationModel;
 using UIKit;
 #endif
-using MuscleCuties.Core.Services.Auth;
 
 namespace MuscleCuties.App.Services.Auth;
 
-public sealed class AppleSignInService : IAppleSignInService
+public sealed class AppleSignInService : IAppleSignInService, IPlatformSignInService
 {
-#if IOS || MACCATALYST
-    private ASAuthorizationController? _activeController;
-    private AppleAuthorizationDelegate? _activeDelegate;
-    private ApplePresentationContextProvider? _activeContextProvider;
-#endif
-
     public Task<AppleSignInResult?> SignInAsync(CancellationToken cancellationToken = default)
     {
 #if IOS || MACCATALYST
+        if (_activeController is not null)
+            return Task.FromResult<AppleSignInResult?>(null);
+
         var completion = new TaskCompletionSource<AppleSignInResult?>(
             TaskCreationOptions.RunContinuationsAsynchronously);
 
         if (cancellationToken.CanBeCanceled)
-        {
             cancellationToken.Register(() =>
             {
                 ClearActiveSession();
                 completion.TrySetCanceled(cancellationToken);
             });
-        }
 
         MainThread.BeginInvokeOnMainThread(() => StartAppleSignIn(completion));
         return completion.Task;
@@ -38,28 +32,57 @@ public sealed class AppleSignInService : IAppleSignInService
 #endif
     }
 
+    public string ProviderName => "Apple";
+    public string LoginButtonText => "Log In with Apple";
+    public string RegisterButtonText => "Sign in with Apple";
+
+    public async Task<PlatformSignInResult?> SignInWithProviderAsync(CancellationToken cancellationToken = default)
+    {
+        var appleAccount = await SignInAsync(cancellationToken);
+        return appleAccount is null
+            ? null
+            : new PlatformSignInResult(
+                "apple",
+                appleAccount.UserIdentifier,
+                appleAccount.Email,
+                appleAccount.FullName);
+    }
+#if IOS || MACCATALYST
+    private ASAuthorizationController? _activeController;
+    private AppleAuthorizationDelegate? _activeDelegate;
+    private ApplePresentationContextProvider? _activeContextProvider;
+#endif
+
 #if IOS || MACCATALYST
     private void StartAppleSignIn(TaskCompletionSource<AppleSignInResult?> completion)
     {
-        var provider = new ASAuthorizationAppleIdProvider();
-        var request = provider.CreateRequest();
-        request.RequestedScopes =
-        [
-            ASAuthorizationScope.FullName,
-            ASAuthorizationScope.Email
-        ];
+        try
+        {
+            var provider = new ASAuthorizationAppleIdProvider();
+            var request = provider.CreateRequest();
+            request.RequestedScopes =
+            [
+                ASAuthorizationScope.FullName,
+                ASAuthorizationScope.Email
+            ];
 
-        var controller = new ASAuthorizationController([request]);
-        var authorizationDelegate = new AppleAuthorizationDelegate(completion, ClearActiveSession);
-        var contextProvider = new ApplePresentationContextProvider();
+            var controller = new ASAuthorizationController([request]);
+            var authorizationDelegate = new AppleAuthorizationDelegate(completion, ClearActiveSession);
+            var contextProvider = new ApplePresentationContextProvider();
 
-        _activeController = controller;
-        _activeDelegate = authorizationDelegate;
-        _activeContextProvider = contextProvider;
+            _activeController = controller;
+            _activeDelegate = authorizationDelegate;
+            _activeContextProvider = contextProvider;
 
-        controller.Delegate = authorizationDelegate;
-        controller.PresentationContextProvider = contextProvider;
-        controller.PerformRequests();
+            controller.Delegate = authorizationDelegate;
+            controller.PresentationContextProvider = contextProvider;
+            controller.PerformRequests();
+        }
+        catch (Exception ex)
+        {
+            ClearActiveSession();
+            completion.TrySetException(ex);
+        }
     }
 
     private void ClearActiveSession()
@@ -104,13 +127,28 @@ public sealed class AppleSignInService : IAppleSignInService
         {
             try
             {
-                completion.TrySetException(new InvalidOperationException(
-                    error.LocalizedDescription ?? "Apple sign in could not finish."));
+                if (error.Code == 1001)
+                {
+                    completion.TrySetResult(null);
+                    return;
+                }
+
+                completion.TrySetException(new InvalidOperationException(BuildErrorMessage(error)));
             }
             finally
             {
                 clearActiveSession();
             }
+        }
+
+        private static string BuildErrorMessage(NSError error)
+        {
+            if (error.Domain == "com.apple.AuthenticationServices.AuthorizationError" &&
+                error.Code == 1000)
+                return
+                    "Apple login is not ready for this build. Enable Sign in with Apple in the provisioning profile, then try again.";
+
+            return error.LocalizedDescription ?? "Apple login could not finish. Please try again.";
         }
 
         private static string? BuildFullName(NSPersonNameComponents? fullName)

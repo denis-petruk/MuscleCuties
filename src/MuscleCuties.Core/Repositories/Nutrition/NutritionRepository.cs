@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
-using MuscleCuties.Core.Repositories.Common;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Entities.Nutrition;
+using MuscleCuties.Core.Repositories.Common;
 
 namespace MuscleCuties.Core.Repositories.Nutrition;
 
@@ -48,7 +48,8 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
         {
             var capturedToken = token;
             var normalizedToken = NormalizeToken(capturedToken);
-            var hasNormalizedVariant = !string.Equals(capturedToken, normalizedToken, StringComparison.OrdinalIgnoreCase);
+            var hasNormalizedVariant =
+                !string.Equals(capturedToken, normalizedToken, StringComparison.OrdinalIgnoreCase);
 
             var tokenPattern = $"%{capturedToken}%";
             var normalizedPattern = $"%{normalizedToken}%";
@@ -72,30 +73,6 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
             .ToListAsync();
     }
 
-    private static string NormalizeToken(string token)
-    {
-        if (token.Length <= 3 || token.Any(char.IsDigit))
-            return token;
-
-        if (token.EndsWith("ies", StringComparison.OrdinalIgnoreCase))
-            return $"{token[..^3]}y";
-
-        if (token.EndsWith("oes", StringComparison.OrdinalIgnoreCase) ||
-            token.EndsWith("ses", StringComparison.OrdinalIgnoreCase) ||
-            token.EndsWith("xes", StringComparison.OrdinalIgnoreCase) ||
-            token.EndsWith("zes", StringComparison.OrdinalIgnoreCase) ||
-            token.EndsWith("ches", StringComparison.OrdinalIgnoreCase) ||
-            token.EndsWith("shes", StringComparison.OrdinalIgnoreCase))
-        {
-            return token[..^2];
-        }
-
-        if (token.EndsWith('s') && !token.EndsWith("ss", StringComparison.OrdinalIgnoreCase))
-            return token[..^1];
-
-        return token;
-    }
-
     public async Task<List<FoodItem>> GetFoodItemsByIdsAsync(IEnumerable<int> foodItemIds)
     {
         var ids = foodItemIds.Where(id => id > 0).Distinct().ToList();
@@ -108,10 +85,12 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
             .ToListAsync();
     }
 
-    public async Task<FoodItem?> GetFoodItemByFdcIdAsync(int fdcId) =>
-        await _db.FoodItems
+    public async Task<FoodItem?> GetFoodItemByFdcIdAsync(int fdcId)
+    {
+        return await _db.FoodItems
             .AsNoTracking()
             .FirstOrDefaultAsync(f => f.FdcId == fdcId);
+    }
 
     public async Task<List<FoodItem>> GetFoodItemsByFdcIdsAsync(IEnumerable<int> fdcIds)
     {
@@ -146,19 +125,23 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
         await _db.SaveChangesAsync();
     }
 
-    public async Task<FoodItem?> GetFoodItemAsync(int foodItemId) =>
-        await _db.FoodItems
+    public async Task<FoodItem?> GetFoodItemAsync(int foodItemId)
+    {
+        return await _db.FoodItems
             .AsNoTracking()
             .FirstOrDefaultAsync(f => f.Id == foodItemId);
+    }
 
-    public async Task<List<LoggedMeal>> GetLoggedMealsByDateAsync(int userId, DateTime date) =>
-        await _db.LoggedMeals
+    public async Task<List<LoggedMeal>> GetLoggedMealsByDateAsync(int userId, DateTime date)
+    {
+        return await _db.LoggedMeals
             .AsNoTracking()
             .Where(m => m.UserId == userId && m.LoggedAt >= date.Date && m.LoggedAt < date.Date.AddDays(1))
             .Include(m => m.Entries)
             .ThenInclude(e => e.FoodItem)
             .OrderBy(m => m.LoggedAt)
             .ToListAsync();
+    }
 
     public async Task<List<LoggedMeal>> GetLoggedMealsByDateRangeAsync(
         int userId,
@@ -175,13 +158,15 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
             .ToListAsync();
     }
 
-    public async Task<LoggedMeal?> GetLoggedMealAsync(int userId, int loggedMealId) =>
-        await _db.LoggedMeals
+    public async Task<LoggedMeal?> GetLoggedMealAsync(int userId, int loggedMealId)
+    {
+        return await _db.LoggedMeals
             .AsNoTracking()
             .Where(m => m.UserId == userId && m.Id == loggedMealId)
             .Include(m => m.Entries)
             .ThenInclude(e => e.FoodItem)
             .FirstOrDefaultAsync();
+    }
 
     public async Task AddLoggedMealAsync(LoggedMeal meal)
     {
@@ -218,13 +203,11 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
 
         _db.LoggedMealEntries.RemoveRange(existing.Entries);
         foreach (var entry in meal.Entries)
-        {
             existing.Entries.Add(new LoggedMealEntry
             {
                 FoodItemId = entry.FoodItemId,
                 Grams = entry.Grams
             });
-        }
 
         await _db.SaveChangesAsync();
     }
@@ -233,5 +216,27 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
     {
         _db.LoggedMeals.Remove(meal);
         await _db.SaveChangesAsync();
+    }
+
+    private static string NormalizeToken(string token)
+    {
+        if (token.Length <= 3 || token.Any(char.IsDigit))
+            return token;
+
+        if (token.EndsWith("ies", StringComparison.OrdinalIgnoreCase))
+            return $"{token[..^3]}y";
+
+        if (token.EndsWith("oes", StringComparison.OrdinalIgnoreCase) ||
+            token.EndsWith("ses", StringComparison.OrdinalIgnoreCase) ||
+            token.EndsWith("xes", StringComparison.OrdinalIgnoreCase) ||
+            token.EndsWith("zes", StringComparison.OrdinalIgnoreCase) ||
+            token.EndsWith("ches", StringComparison.OrdinalIgnoreCase) ||
+            token.EndsWith("shes", StringComparison.OrdinalIgnoreCase))
+            return token[..^2];
+
+        if (token.EndsWith('s') && !token.EndsWith("ss", StringComparison.OrdinalIgnoreCase))
+            return token[..^1];
+
+        return token;
     }
 }

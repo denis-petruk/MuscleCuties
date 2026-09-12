@@ -1,25 +1,14 @@
 using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Core.Models.Entities.Cycle;
 using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
-using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.Core.Services.Nutrition.Inputs;
-using MuscleCuties.Core.Repositories.Common;
-using MuscleCuties.Core.Repositories.Cycle;
+using MuscleCuties.Core.Models.Nutrition.Inputs;
+using MuscleCuties.Core.Models.Nutrition.Planning;
 using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Repositories.Quiz;
 using MuscleCuties.Core.Repositories.Users;
-using MuscleCuties.Core.Repositories.Workout;
-using MuscleCuties.Core.Services.Auth;
-using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Nutrition;
-using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.Services.Nutrition.Planning;
 
 namespace MuscleCuties.Core.Tests.Services.Nutrition;
@@ -33,18 +22,13 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
         _fixture = fixture;
     }
 
-    private NutritionService CreateService() =>
-        new NutritionService(
+    private NutritionService CreateService()
+    {
+        return new NutritionService(
             new UserRepository(_fixture.Db),
             new NutritionRepository(_fixture.Db),
             new CalorieCalculator());
-
-    private NutritionService CreateServiceWithMealTemplates() =>
-        new NutritionService(
-            new UserRepository(_fixture.Db),
-            new NutritionRepository(_fixture.Db),
-            new CalorieCalculator(),
-            mealTemplateRepository: new MealTemplateRepository(_fixture.Db));
+    }
 
     private async Task<User> SeedUserWithProfileAsync(string email, UserGoal goal = UserGoal.MaintainHealth)
     {
@@ -110,17 +94,31 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
     }
 
     [Fact]
-    public async Task GetConsumedCaloriesAsync_NoLogs_ReturnsZero()
+    public async Task GetConsumedTotalsAsync_NoLogs_ReturnsZero()
     {
-        Assert.Equal(0f, await CreateService().GetConsumedCaloriesAsync(9999, DateTime.UtcNow));
+        var result = await CreateService().GetConsumedTotalsAsync(9999, DateTime.UtcNow);
+
+        Assert.Equal(0f, result.Calories);
+        Assert.Equal(0f, result.Protein);
+        Assert.Equal(0f, result.Carbs);
+        Assert.Equal(0f, result.Fats);
     }
 
     [Fact]
-    public async Task GetConsumedCaloriesAsync_WithLoggedMeal_ReturnsSummedCalories()
+    public async Task GetConsumedTotalsAsync_WithLoggedMeal_ReturnsSummedCalories()
     {
         var user = await SeedUserWithProfileAsync("nut2@test.com");
         var nutritionRepo = new NutritionRepository(_fixture.Db);
-        var item = new FoodItem { Name = "Oats", Calories = 389f, Protein = 17f, Carbs = 66f, Fats = 7f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+        var item = new FoodItem
+        {
+            Name = "Oats",
+            Calories = 389f,
+            Protein = 17f,
+            Carbs = 66f,
+            Fats = 7f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
         await nutritionRepo.AddAsync(item);
 
         await nutritionRepo.AddLoggedMealAsync(new LoggedMeal
@@ -133,16 +131,25 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
             Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 100f }]
         });
 
-        var result = await CreateService().GetConsumedCaloriesAsync(user.Id, DateTime.UtcNow);
-        Assert.Equal(389f, result, precision: 0);
+        var result = await CreateService().GetConsumedTotalsAsync(user.Id, DateTime.UtcNow);
+        Assert.Equal(389f, result.Calories, 0);
     }
 
     [Fact]
-    public async Task GetConsumedMacrosAsync_WithLoggedMeal_ReturnsSummedMacros()
+    public async Task GetConsumedTotalsAsync_WithLoggedMeal_ReturnsSummedMacros()
     {
         var user = await SeedUserWithProfileAsync("nut3@test.com");
         var nutritionRepo = new NutritionRepository(_fixture.Db);
-        var item = new FoodItem { Name = "Eggs", Calories = 143f, Protein = 13f, Carbs = 1f, Fats = 10f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+        var item = new FoodItem
+        {
+            Name = "Eggs",
+            Calories = 143f,
+            Protein = 13f,
+            Carbs = 1f,
+            Fats = 10f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
         await nutritionRepo.AddAsync(item);
 
         await nutritionRepo.AddLoggedMealAsync(new LoggedMeal
@@ -155,10 +162,10 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
             Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 100f }]
         });
 
-        var (pro, carbs, fats) = await CreateService().GetConsumedMacrosAsync(user.Id, DateTime.UtcNow);
-        Assert.Equal(13f, pro, precision: 0);
-        Assert.Equal(1f, carbs, precision: 0);
-        Assert.Equal(10f, fats, precision: 0);
+        var result = await CreateService().GetConsumedTotalsAsync(user.Id, DateTime.UtcNow);
+        Assert.Equal(13f, result.Protein, 0);
+        Assert.Equal(1f, result.Carbs, 0);
+        Assert.Equal(10f, result.Fats, 0);
     }
 
     [Fact]
@@ -166,7 +173,16 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
     {
         var user = await SeedUserWithProfileAsync("nut-totals@test.com");
         var nutritionRepo = new NutritionRepository(_fixture.Db);
-        var item = new FoodItem { Name = "Yogurt", Calories = 90f, Protein = 8f, Carbs = 9f, Fats = 2f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+        var item = new FoodItem
+        {
+            Name = "Yogurt",
+            Calories = 90f,
+            Protein = 8f,
+            Carbs = 9f,
+            Fats = 2f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
         await nutritionRepo.AddAsync(item);
 
         await nutritionRepo.AddLoggedMealAsync(new LoggedMeal
@@ -181,18 +197,36 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
 
         var totals = await CreateService().GetConsumedTotalsAsync(user.Id, DateTime.UtcNow);
 
-        Assert.Equal(135f, totals.Calories, precision: 0);
-        Assert.Equal(12f, totals.Protein, precision: 0);
-        Assert.Equal(13.5f, totals.Carbs, precision: 1);
-        Assert.Equal(3f, totals.Fats, precision: 0);
+        Assert.Equal(135f, totals.Calories, 0);
+        Assert.Equal(12f, totals.Protein, 0);
+        Assert.Equal(13.5f, totals.Carbs, 1);
+        Assert.Equal(3f, totals.Fats, 0);
     }
 
     [Fact]
     public async Task SearchFoodItemsAsync_FiltersFoodsMissingCalories()
     {
         var nutritionRepo = new NutritionRepository(_fixture.Db);
-        await nutritionRepo.AddAsync(new FoodItem { Name = "Brokenfilter oats complete", Calories = 389f, Protein = 16.9f, Carbs = 66.3f, Fats = 6.9f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
-        await nutritionRepo.AddAsync(new FoodItem { Name = "Brokenfilter oats missing calories", Calories = 0f, Protein = 16.9f, Carbs = 66.3f, Fats = 6.9f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow });
+        await nutritionRepo.AddAsync(new FoodItem
+        {
+            Name = "Brokenfilter oats complete",
+            Calories = 389f,
+            Protein = 16.9f,
+            Carbs = 66.3f,
+            Fats = 6.9f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+        await nutritionRepo.AddAsync(new FoodItem
+        {
+            Name = "Brokenfilter oats missing calories",
+            Calories = 0f,
+            Protein = 16.9f,
+            Carbs = 66.3f,
+            Fats = 6.9f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
 
         var results = await CreateService().SearchFoodItemsAsync("brokenfilter");
 
@@ -205,7 +239,6 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
     {
         var nutritionRepo = new NutritionRepository(_fixture.Db);
         for (var i = 1; i <= 20; i++)
-        {
             await nutritionRepo.AddAsync(new FoodItem
             {
                 Name = $"Localpage food {i}",
@@ -216,7 +249,6 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             });
-        }
 
         var results = await CreateService().SearchFoodItemsAsync("localpage", 15, 2);
 
@@ -247,45 +279,6 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
         var saved = await _fixture.Db.FoodItems.FindAsync(food.Id);
         Assert.NotNull(saved);
         Assert.Equal("Protein pudding", saved.Name);
-    }
-
-    [Fact]
-    public async Task GetReadyMealTemplatesAsync_WithVeganPreference_ReturnsFourCompatibleMeals()
-    {
-        await _fixture.Db.SeedReferenceDataAsync();
-        var user = await SeedUserWithProfileAsync("nut-vegan-ready-meals@test.com");
-        var profile = await _fixture.Db.UserProfiles.SingleAsync(p => p.UserId == user.Id);
-        profile.DietaryTags = DietaryTag.Vegan.ToString();
-        await _fixture.Db.SaveChangesAsync();
-
-        var templates = await CreateServiceWithMealTemplates().GetReadyMealTemplatesAsync(
-            user.Id,
-            CyclePhase.Luteal,
-            new DateTime(2026, 8, 25));
-
-        Assert.Equal(4, templates.Count);
-        Assert.Equal(4, templates.Select(template => template.MealType).Distinct().Count());
-        Assert.All(templates, template => Assert.Contains(DietaryTag.Vegan.ToString(), template.DietaryTags));
-        Assert.Contains(templates, template => template.Name == "Vegan Pizza Beans");
-    }
-
-    [Fact]
-    public async Task GetReadyMealTemplatesAsync_WithNoDietaryPreference_IncludesMeatOrFishMeal()
-    {
-        await _fixture.Db.SeedReferenceDataAsync();
-        var user = await SeedUserWithProfileAsync("nut-regular-ready-meals@test.com");
-
-        var templates = await CreateServiceWithMealTemplates().GetReadyMealTemplatesAsync(
-            user.Id,
-            CyclePhase.Ovulatory,
-            new DateTime(2026, 8, 25));
-
-        Assert.Equal(4, templates.Count);
-        Assert.Contains(templates, template =>
-            template.Name.Contains("Chicken", StringComparison.OrdinalIgnoreCase) ||
-            template.Name.Contains("Salmon", StringComparison.OrdinalIgnoreCase) ||
-            template.Name.Contains("Tuna", StringComparison.OrdinalIgnoreCase) ||
-            template.Name.Contains("Turkey", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -320,16 +313,27 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
     }
 
     [Fact]
-    public async Task LogFoodAsync_StoresMealWithExactLoggedTime()
+    public async Task LogMealAsync_StoresMealWithExactLoggedTime()
     {
         var user = await SeedUserWithProfileAsync("nut-log@test.com");
         var nutritionRepo = new NutritionRepository(_fixture.Db);
-        var item = new FoodItem { Name = "Olive oil", Calories = 884f, Fats = 100f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+        var item = new FoodItem
+        {
+            Name = "Olive oil",
+            Calories = 884f,
+            Fats = 100f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
         await nutritionRepo.AddAsync(item);
 
         var loggedAt = DateTime.Today.AddHours(12).AddMinutes(30);
 
-        await CreateService().LogFoodAsync(user.Id, item.Id, 10f, MealType.Snack, loggedAt);
+        await CreateService().LogMealAsync(
+            user.Id,
+            [new MealIngredientInput(item.Id, 10f)],
+            MealType.Snack,
+            loggedAt);
 
         var meals = await nutritionRepo.GetLoggedMealsByDateAsync(user.Id, loggedAt.Date);
         var meal = Assert.Single(meals);
@@ -338,8 +342,9 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
         Assert.Equal(10f, meal.Entries.Single().Grams);
     }
 
-    private static LoggedMeal BuildMealWithEntry(DateTime loggedAt, FoodItem food, float grams) =>
-        new()
+    private static LoggedMeal BuildMealWithEntry(DateTime loggedAt, FoodItem food, float grams)
+    {
+        return new LoggedMeal
         {
             Date = loggedAt.Date,
             LoggedAt = loggedAt,
@@ -352,14 +357,31 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
                 }
             ]
         };
+    }
 
     [Fact]
     public async Task LogMealAsync_StoresOneMealWithMultipleIngredients()
     {
         var user = await SeedUserWithProfileAsync("nut-meal@test.com");
         var nutritionRepo = new NutritionRepository(_fixture.Db);
-        var oats = new FoodItem { Name = "Oats", Calories = 389f, Protein = 16.9f, Carbs = 66.3f, Fats = 6.9f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
-        var oil = new FoodItem { Name = "Olive oil", Calories = 884f, Fats = 100f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+        var oats = new FoodItem
+        {
+            Name = "Oats",
+            Calories = 389f,
+            Protein = 16.9f,
+            Carbs = 66.3f,
+            Fats = 6.9f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        var oil = new FoodItem
+        {
+            Name = "Olive oil",
+            Calories = 884f,
+            Fats = 100f,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
         await nutritionRepo.AddAsync(oats);
         await nutritionRepo.AddAsync(oil);
 
@@ -381,14 +403,19 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
     }
 
     [Fact]
-    public async Task LogFoodAsync_WhenUserMissing_ThrowsFriendlyErrorBeforeSaving()
+    public async Task LogMealAsync_WhenUserMissing_ThrowsFriendlyErrorBeforeSaving()
     {
         var nutritionRepo = new NutritionRepository(_fixture.Db);
-        var item = new FoodItem { Name = "Carrot", Calories = 41f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+        var item = new FoodItem
+        { Name = "Carrot", Calories = 41f, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
         await nutritionRepo.AddAsync(item);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            CreateService().LogFoodAsync(999999, item.Id, 100f, MealType.Snack, DateTime.Today.AddHours(10)));
+            CreateService().LogMealAsync(
+                999999,
+                [new MealIngredientInput(item.Id, 100f)],
+                MealType.Snack,
+                DateTime.Today.AddHours(10)));
 
         Assert.Equal("Current user no longer exists. Please sign in again.", ex.Message);
     }

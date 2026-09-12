@@ -60,9 +60,9 @@ public static class WorkoutActivityOptionCatalog
         new(
             WorkoutActivityType.Yoga,
             "Yoga",
-            "The recovery baseline for mobility, breath, and longer calm sessions.",
+            "Optional longer mobility, breath, and calm strength sessions.",
             ActivityGroup.Recovery,
-            true,
+            false,
             "LeafThree24")
     ];
 
@@ -79,8 +79,9 @@ public static class WorkoutActivityOptionCatalog
     }
 
     public static IReadOnlyList<WorkoutActivityGroupSection> BuildGroups(
-        IEnumerable<WorkoutActivityOptionItem> options) =>
-        options
+        IEnumerable<WorkoutActivityOptionItem> options)
+    {
+        return options
             .GroupBy(option => option.Tag)
             .Select(group =>
             {
@@ -92,6 +93,7 @@ public static class WorkoutActivityOptionCatalog
                     group.ToList());
             })
             .ToList();
+    }
 
     public static string ToggleSelection(
         IEnumerable<WorkoutActivityOptionItem> options,
@@ -105,22 +107,15 @@ public static class WorkoutActivityOptionCatalog
                 return "Keep one strength style selected so your plan has a strong base.";
         }
 
-        if (item.IsSelected && WorkoutActivityPreferences.IsRecoveryActivity(item.ActivityType))
-        {
-            var selectedRecoveryCount = options.Count(option =>
-                option.IsSelected && WorkoutActivityPreferences.IsRecoveryActivity(option.ActivityType));
-            if (selectedRecoveryCount <= 1)
-                return "Yoga stays as your recovery fallback when no other recovery option is ready yet.";
-        }
-
         item.IsSelected = !item.IsSelected;
         return string.Empty;
     }
 
     private static WorkoutActivityOptionItem ToOptionItem(
         ActivityDefinition definition,
-        IReadOnlySet<WorkoutActivityType> selectedTypes) =>
-        new()
+        IReadOnlySet<WorkoutActivityType> selectedTypes)
+    {
+        return new WorkoutActivityOptionItem
         {
             ActivityType = definition.ActivityType,
             Title = definition.Title,
@@ -132,42 +127,51 @@ public static class WorkoutActivityOptionCatalog
             IsRequired = definition.IsCoreDefault,
             IsSelected = selectedTypes.Contains(definition.ActivityType)
         };
+    }
 
-    private static string GetGroupTitle(ActivityGroup group) =>
-        group switch
+    private static string GetGroupTitle(ActivityGroup group)
+    {
+        return group switch
         {
             ActivityGroup.Strength => "Strength",
             ActivityGroup.Cardio => "Cardio",
             ActivityGroup.Recovery => "Recovery",
             _ => string.Empty
         };
+    }
 
-    private static string GetGroupDescription(ActivityGroup group) =>
-        group switch
+    private static string GetGroupDescription(ActivityGroup group)
+    {
+        return group switch
         {
             ActivityGroup.Strength => "Required. Choose at least one strength base.",
-            ActivityGroup.Cardio => "Optional. If you skip it, the plan uses recovery instead.",
-            ActivityGroup.Recovery => "Always keeps a gentle baseline available.",
+            ActivityGroup.Cardio => "Optional. If you skip it, the plan uses basic recovery instead.",
+            ActivityGroup.Recovery => "Optional. Basic recovery is already built into the plan.",
             _ => string.Empty
         };
+    }
 
-    private static string GetGroupTag(ActivityGroup group) =>
-        group switch
+    private static string GetGroupTag(ActivityGroup group)
+    {
+        return group switch
         {
             ActivityGroup.Strength => "STRENGTH",
             ActivityGroup.Cardio => "CARDIO",
             ActivityGroup.Recovery => "RECOVERY",
             _ => string.Empty
         };
+    }
 
-    private static string GetGroupIconGlyph(string tag) =>
-        tag switch
+    private static string GetGroupIconGlyph(string tag)
+    {
+        return tag switch
         {
             "STRENGTH" => "Dumbbell24",
             "CARDIO" => "PulseSquare24",
             "RECOVERY" => "LeafThree24",
             _ => "Circle24"
         };
+    }
 
     private sealed record ActivityDefinition(
         WorkoutActivityType ActivityType,

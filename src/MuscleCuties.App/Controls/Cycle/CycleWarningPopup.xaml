@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentView
     x:Class="MuscleCuties.App.Controls.Cycle.CycleWarningPopup"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -9,7 +10,7 @@
     ZIndex="3">
 
     <Grid
-        BackgroundColor="#332B1D24"
+        BackgroundColor="{StaticResource LightInkOverlay}"
         Padding="20,0,20,34">
         <Border
             Style="{StaticResource CardPrimary}"
@@ -47,12 +48,13 @@
 
                     <Border
                         Grid.Column="2"
-                        WidthRequest="34"
-                        HeightRequest="34"
-                        StrokeShape="RoundRectangle 17"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        StrokeShape="RoundRectangle 22"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
                         StrokeThickness="0"
-                        VerticalOptions="Start">
+                        VerticalOptions="Start"
+                        SemanticProperties.Description="Dismiss warning">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding CloseCycleWarningPopupCommand}" />
                         </Border.GestureRecognizers>
@@ -76,13 +78,13 @@
                     <Button
                         Text="{Binding CycleWarningSuggestedActionText}"
                         Command="{Binding UseCycleWarningSuggestedPhaseCommand}"
-                        HeightRequest="46"
+                        HeightRequest="52"
                         FontSize="13" />
                     <Button
                         Grid.Column="1"
                         Text="Forgot to log shift"
                         Command="{Binding ReviewEarlierPhaseRecordsCommand}"
-                        HeightRequest="46"
+                        HeightRequest="52"
                         FontSize="13"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
@@ -91,7 +93,7 @@
                 <Button
                     Text="Got it"
                     Command="{Binding CloseCycleWarningPopupCommand}"
-                    HeightRequest="46"
+                    HeightRequest="52"
                     IsVisible="{Binding HasCycleWarningSuggestedPhase, Converter={StaticResource InvertedBoolConverter}}" />
             </VerticalStackLayout>
         </Border>

@@ -18,7 +18,7 @@ public partial class CyclePhaseDetailPage : ContentPage
     {
         set
         {
-            if (Enum.TryParse<CyclePhase>(value, ignoreCase: true, out var phase))
+            if (Enum.TryParse<CyclePhase>(value, true, out var phase))
                 ((CyclePhaseDetailViewModel)BindingContext).Load(phase);
         }
     }

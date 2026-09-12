@@ -113,9 +113,7 @@ public static partial class FoodSearchResultFilter
             return trimmed;
 
         if (trimmed.Any(char.IsLetter) && trimmed == trimmed.ToUpperInvariant())
-        {
             return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(trimmed.ToLowerInvariant());
-        }
 
         return trimmed;
     }
@@ -160,9 +158,7 @@ public static partial class FoodSearchResultFilter
         if (normalizedName == $"{firstToken} raw" ||
             normalizedName.StartsWith($"{firstToken} raw ", StringComparison.OrdinalIgnoreCase) ||
             normalizedName.StartsWith($"{firstToken} fresh", StringComparison.OrdinalIgnoreCase))
-        {
             return 1;
-        }
 
         if (normalizedName.StartsWith($"{firstToken} ", StringComparison.OrdinalIgnoreCase))
             return 2;
@@ -202,19 +198,24 @@ public static partial class FoodSearchResultFilter
             : 1;
     }
 
-    private static int DataTypeRank(string? dataType) => dataType?.Trim().ToUpperInvariant() switch
+    private static int DataTypeRank(string? dataType)
     {
-        "FOUNDATION" => 0,
-        "SR LEGACY" => 1,
-        "SURVEY (FNDDS)" => 2,
-        "BRANDED" => 3,
-        _ => 4
-    };
+        return dataType?.Trim().ToUpperInvariant() switch
+        {
+            "FOUNDATION" => 0,
+            "SR LEGACY" => 1,
+            "SURVEY (FNDDS)" => 2,
+            "BRANDED" => 3,
+            _ => 4
+        };
+    }
 
-    private static int CountPrimaryMacros(FoodItem food) =>
-        Convert.ToInt32(food.Protein > 0f) +
-        Convert.ToInt32(food.Carbs > 0f) +
-        Convert.ToInt32(food.Fats > 0f);
+    private static int CountPrimaryMacros(FoodItem food)
+    {
+        return Convert.ToInt32(food.Protein > 0f) +
+               Convert.ToInt32(food.Carbs > 0f) +
+               Convert.ToInt32(food.Fats > 0f);
+    }
 
     private static int CountSearchPrimaryMacros(FdcFoodSearchResult result)
     {
@@ -243,19 +244,23 @@ public static partial class FoodSearchResultFilter
             NormalizeSearchText(food.GtinUpc ?? string.Empty));
     }
 
-    private static string BuildPrimarySearchableText(FoodItem food) =>
-        string.Join(
+    private static string BuildPrimarySearchableText(FoodItem food)
+    {
+        return string.Join(
             " ",
             food.Name,
             food.BrandName,
             food.BrandOwner,
             food.GtinUpc);
+    }
 
-    private static string BuildFullSearchableText(FoodItem food) =>
-        string.Join(
+    private static string BuildFullSearchableText(FoodItem food)
+    {
+        return string.Join(
             " ",
             BuildPrimarySearchableText(food),
             food.Ingredients);
+    }
 
     private static string BuildDedupKey(FdcFoodSearchResult result)
     {
@@ -272,38 +277,50 @@ public static partial class FoodSearchResultFilter
             NormalizeSearchText(result.GtinUpc ?? string.Empty));
     }
 
-    private static string BuildPrimarySearchableText(FdcFoodSearchResult result) =>
-        string.Join(
+    private static string BuildPrimarySearchableText(FdcFoodSearchResult result)
+    {
+        return string.Join(
             " ",
             result.Description,
             result.BrandName,
             result.BrandOwner,
             result.GtinUpc);
+    }
 
-    private static string BuildFullSearchableText(FdcFoodSearchResult result) =>
-        string.Join(
+    private static string BuildFullSearchableText(FdcFoodSearchResult result)
+    {
+        return string.Join(
             " ",
             BuildPrimarySearchableText(result),
             result.Ingredients);
+    }
 
-    private static bool HasBrandIdentifier(FdcFoodSearchResult result) =>
-        !string.IsNullOrWhiteSpace(result.BrandName) ||
-        !string.IsNullOrWhiteSpace(result.BrandOwner) ||
-        !string.IsNullOrWhiteSpace(result.GtinUpc);
+    private static bool HasBrandIdentifier(FdcFoodSearchResult result)
+    {
+        return !string.IsNullOrWhiteSpace(result.BrandName) ||
+               !string.IsNullOrWhiteSpace(result.BrandOwner) ||
+               !string.IsNullOrWhiteSpace(result.GtinUpc);
+    }
 
-    private static bool IsBranded(string? dataType) =>
-        string.Equals(dataType?.Trim(), "Branded", StringComparison.OrdinalIgnoreCase);
+    private static bool IsBranded(string? dataType)
+    {
+        return string.Equals(dataType?.Trim(), "Branded", StringComparison.OrdinalIgnoreCase);
+    }
 
-    private static List<string> Tokenize(string query) =>
-        NormalizeSearchText(query)
+    private static List<string> Tokenize(string query)
+    {
+        return NormalizeSearchText(query)
             .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Where(token => token.Length > 1)
             .Where(token => !StopWords.Contains(token))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
 
-    private static string NormalizeName(string name) =>
-        NormalizeSearchText(name);
+    private static string NormalizeName(string name)
+    {
+        return NormalizeSearchText(name);
+    }
 
     private static string NormalizeSearchText(string value)
     {
@@ -330,9 +347,7 @@ public static partial class FoodSearchResultFilter
             token.EndsWith("zes", StringComparison.OrdinalIgnoreCase) ||
             token.EndsWith("ches", StringComparison.OrdinalIgnoreCase) ||
             token.EndsWith("shes", StringComparison.OrdinalIgnoreCase))
-        {
             return token[..^2];
-        }
 
         if (token.EndsWith('s') && !token.EndsWith("ss", StringComparison.OrdinalIgnoreCase))
             return token[..^1];

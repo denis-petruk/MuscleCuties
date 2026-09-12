@@ -1,14 +1,16 @@
 using System.Collections.ObjectModel;
+using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.UI.Nutrition;
+using MuscleCuties.Core.Services.Nutrition;
 
 namespace MuscleCuties.Core.ViewModels.Nutrition;
 
 public partial class NutritionViewModel
 {
     private const int FoodSearchPageSize = 15;
+    private string _activeFoodSearchQuery = string.Empty;
 
     private int _foodSearchPageNumber;
-    private string _activeFoodSearchQuery = string.Empty;
 
     private async Task SearchFoodAsync()
     {
@@ -21,7 +23,7 @@ public partial class NutritionViewModel
 
         try
         {
-            await LoadFoodSearchPageAsync(SearchQuery.Trim(), 1, replaceResults: true);
+            await LoadFoodSearchPageAsync(SearchQuery.Trim(), 1, true);
         }
         finally
         {
@@ -39,7 +41,7 @@ public partial class NutritionViewModel
 
         try
         {
-            await LoadFoodSearchPageAsync(_activeFoodSearchQuery, _foodSearchPageNumber + 1, replaceResults: false);
+            await LoadFoodSearchPageAsync(_activeFoodSearchQuery, _foodSearchPageNumber + 1, false);
         }
         finally
         {
@@ -49,7 +51,10 @@ public partial class NutritionViewModel
 
     private async Task LoadFoodSearchPageAsync(string query, int pageNumber, bool replaceResults)
     {
-        var foods = await _nutritionService.SearchFoodItemsAsync(query, FoodSearchPageSize, pageNumber);
+        using var scope = _scopeFactory.CreateScope();
+        var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
+
+        var foods = await nutritionService.SearchFoodItemsAsync(query, FoodSearchPageSize, pageNumber);
         var items = foods.Select(CreateFoodSearchResultItem).ToList();
 
         if (replaceResults)
@@ -100,13 +105,17 @@ public partial class NutritionViewModel
         HasMoreFoodResults = false;
     }
 
-    private bool CanSearchFood() =>
-        !IsBusy && !IsBrowsingMoreFoods && !string.IsNullOrWhiteSpace(SearchQuery);
+    private bool CanSearchFood()
+    {
+        return !IsBusy && !IsBrowsingMoreFoods && !string.IsNullOrWhiteSpace(SearchQuery);
+    }
 
-    private bool CanBrowseMoreFoodResults() =>
-        !IsBusy &&
-        !IsBrowsingMoreFoods &&
-        HasFoodSearchResults &&
-        HasMoreFoodResults &&
-        !string.IsNullOrWhiteSpace(_activeFoodSearchQuery);
+    private bool CanBrowseMoreFoodResults()
+    {
+        return !IsBusy &&
+               !IsBrowsingMoreFoods &&
+               HasFoodSearchResults &&
+               HasMoreFoodResults &&
+               !string.IsNullOrWhiteSpace(_activeFoodSearchQuery);
+    }
 }

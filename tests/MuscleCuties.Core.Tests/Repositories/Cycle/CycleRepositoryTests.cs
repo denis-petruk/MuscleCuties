@@ -1,15 +1,7 @@
 using MuscleCuties.Core.Models.Entities.Cycle;
-using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
-using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
-using MuscleCuties.Core.Repositories.Common;
 using MuscleCuties.Core.Repositories.Cycle;
-using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Repositories.Quiz;
-using MuscleCuties.Core.Repositories.Users;
-using MuscleCuties.Core.Repositories.Workout;
 
 namespace MuscleCuties.Core.Tests.Repositories.Cycle;
 
@@ -36,8 +28,15 @@ public class CycleRepositoryTests : IClassFixture<DatabaseFixture>
         var user = await SeedUserAsync("cycle1@test.com");
         var repo = new CycleRepository(_fixture.Db);
 
-        var older = new CycleLog { UserId = user.Id, StartDate = DateTime.UtcNow.AddDays(-28), CycleLength = 0, CreatedAt = DateTime.UtcNow };
-        var newer = new CycleLog { UserId = user.Id, StartDate = DateTime.UtcNow.AddDays(-5), CycleLength = 0, CreatedAt = DateTime.UtcNow };
+        var older = new CycleLog
+        {
+            UserId = user.Id,
+            StartDate = DateTime.UtcNow.AddDays(-28),
+            CycleLength = 0,
+            CreatedAt = DateTime.UtcNow
+        };
+        var newer = new CycleLog
+        { UserId = user.Id, StartDate = DateTime.UtcNow.AddDays(-5), CycleLength = 0, CreatedAt = DateTime.UtcNow };
         await repo.AddAsync(older);
         await repo.AddAsync(newer);
 
@@ -64,8 +63,20 @@ public class CycleRepositoryTests : IClassFixture<DatabaseFixture>
         var user = await SeedUserAsync("cycle3@test.com");
         var repo = new CycleRepository(_fixture.Db);
 
-        await repo.AddAsync(new CycleLog { UserId = user.Id, StartDate = DateTime.UtcNow.AddDays(-56), CycleLength = 0, CreatedAt = DateTime.UtcNow });
-        await repo.AddAsync(new CycleLog { UserId = user.Id, StartDate = DateTime.UtcNow.AddDays(-28), CycleLength = 0, CreatedAt = DateTime.UtcNow });
+        await repo.AddAsync(new CycleLog
+        {
+            UserId = user.Id,
+            StartDate = DateTime.UtcNow.AddDays(-56),
+            CycleLength = 0,
+            CreatedAt = DateTime.UtcNow
+        });
+        await repo.AddAsync(new CycleLog
+        {
+            UserId = user.Id,
+            StartDate = DateTime.UtcNow.AddDays(-28),
+            CycleLength = 0,
+            CreatedAt = DateTime.UtcNow
+        });
 
         var result = await repo.GetCycleHistoryAsync(user.Id);
 

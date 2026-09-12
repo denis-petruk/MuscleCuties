@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentView
     x:Class="MuscleCuties.App.Controls.Cycle.CycleDatePhaseModal"
     x:Name="Root"
@@ -11,8 +12,11 @@
     IsVisible="{Binding IsDatePhaseModalVisible}">
 
     <Grid
-        BackgroundColor="#802B1D24"
+        BackgroundColor="{StaticResource ModalScrim}"
         Padding="20,56,20,36">
+        <Grid.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding CloseDatePhaseModalCommand}" />
+        </Grid.GestureRecognizers>
         <Border
             Style="{StaticResource CardPrimary}"
             Padding="0"
@@ -52,12 +56,13 @@
 
                         <Border
                             Grid.Column="1"
-                            WidthRequest="42"
-                            HeightRequest="42"
-                            StrokeShape="RoundRectangle 21"
+                            WidthRequest="44"
+                            HeightRequest="44"
+                            StrokeShape="RoundRectangle 22"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
                             StrokeThickness="0"
-                            VerticalOptions="Start">
+                            VerticalOptions="Start"
+                            SemanticProperties.Description="Close cycle date editor">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding CloseDatePhaseModalCommand}" />
                             </Border.GestureRecognizers>
@@ -92,7 +97,9 @@
                                     StrokeShape="RoundRectangle 18"
                                     Stroke="{Binding TextColor}"
                                     StrokeThickness="0"
-                                    Padding="16,14">
+                                    Padding="16,14"
+                                    MinimumHeightRequest="60"
+                                    SemanticProperties.Description="{Binding Name, StringFormat='Select {0} phase'}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
                                             Command="{Binding BindingContext.SelectPhaseOptionCommand, Source={x:Reference Root}}"

@@ -1,4 +1,3 @@
-using System.Net.Http;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Repositories.Nutrition;
 
@@ -8,10 +7,10 @@ public partial class FoodSyncService : IFoodSyncService
 {
     private const int DefaultSearchPageSize = 15;
     private static readonly TimeSpan InteractiveSearchTimeout = TimeSpan.FromSeconds(5);
+    private readonly IFdcApiClient _fdcApiClient;
+    private readonly IFoodSyncRepository _foodSyncRepository;
 
     private readonly INutritionRepository _nutritionRepository;
-    private readonly IFoodSyncRepository _foodSyncRepository;
-    private readonly IFdcApiClient _fdcApiClient;
 
     public FoodSyncService(
         INutritionRepository nutritionRepository,
@@ -53,7 +52,6 @@ public partial class FoodSyncService : IFoodSyncService
             var detailIds = SelectDetailRefreshIds(remoteResults);
             IReadOnlyList<FdcFoodDetail> fetchedDetails = [];
             if (detailIds.Count > 0)
-            {
                 try
                 {
                     fetchedDetails = await GetRemoteDetailsAsync(detailIds, timeout.Token);
@@ -66,7 +64,6 @@ public partial class FoodSyncService : IFoodSyncService
                 {
                     errors.Add($"FDC detail refresh failed: {ex.Message}");
                 }
-            }
 
             var details = BuildDetailsFromSearchResults(
                 remoteResults,
@@ -103,12 +100,14 @@ public partial class FoodSyncService : IFoodSyncService
         string query,
         int pageSize = DefaultSearchPageSize,
         int pageNumber = 1,
-        CancellationToken cancellationToken = default) =>
-        _fdcApiClient.SearchFoodsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return _fdcApiClient.SearchFoodsAsync(
             query,
             Math.Clamp(pageSize, 1, 50),
             Math.Max(1, pageNumber),
             cancellationToken);
+    }
 
     public async Task<FoodItem?> FetchDetailAsync(int fdcId, CancellationToken cancellationToken = default)
     {
@@ -138,27 +137,4 @@ public partial class FoodSyncService : IFoodSyncService
         }
     }
 
-    public async Task<int> SeedFoodsAsync(IEnumerable<int> fdcIds, CancellationToken cancellationToken = default)
-    {
-        var log = await StartLogAsync();
-        var errors = new List<string>();
-
-        try
-        {
-            var details = await _fdcApiClient.GetFoodsAsync(fdcIds, cancellationToken);
-            await UpsertFoodsAsync(details, log, errors);
-            await CompleteLogAsync(log, BuildStatus(log, errors), errors);
-            return log.ItemsUpserted;
-        }
-        catch (InvalidOperationException ex)
-        {
-            await CompleteLogAsync(log, "Failed", errors, ex);
-            throw;
-        }
-        catch (HttpRequestException ex)
-        {
-            await CompleteLogAsync(log, "Failed", errors, ex);
-            return log.ItemsUpserted;
-        }
-    }
 }

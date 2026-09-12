@@ -32,6 +32,7 @@ public partial class WorkoutExerciseItem : ObservableObject
     public bool UsesPowerMetric { get; set; }
     public bool UsesCadenceMetric { get; set; }
     public bool UsesEffortMetric { get; set; }
+
     public bool UsesDurationOnlyMetric =>
         UsesDurationMetric &&
         !UsesDistanceMetric &&
@@ -40,9 +41,11 @@ public partial class WorkoutExerciseItem : ObservableObject
         !UsesPowerMetric &&
         !UsesCadenceMetric &&
         !UsesEffortMetric;
+
     public bool UsesCardioMetricGrid =>
         UsesEnduranceMetrics &&
         !UsesDurationOnlyMetric;
+
     public bool UsesWeight { get; set; } = true;
     public string DurationLabel { get; set; } = "MINUTES";
     public string DistanceLabel { get; set; } = "KM";
@@ -67,12 +70,15 @@ public partial class WorkoutExerciseItem : ObservableObject
     public string LogStatusText => IsLogged ? "Logged today" : "Not logged yet";
     public bool HasVideo => !string.IsNullOrWhiteSpace(VideoUrl);
     public string VideoStatusText => HasVideo ? "Technique video saved" : string.Empty;
+
     public string WhyText => string.IsNullOrWhiteSpace(Description)
         ? "This movement supports today's workout focus and keeps the session balanced."
         : Description;
+
     public string CuesText => string.IsNullOrWhiteSpace(TechniqueNotes)
         ? Description
         : TechniqueNotes;
+
     public bool HasQuickTips => !string.IsNullOrWhiteSpace(QuickTipsText);
 
     partial void OnIsExpandedChanged(bool value)

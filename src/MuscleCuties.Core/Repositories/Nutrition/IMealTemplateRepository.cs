@@ -1,5 +1,5 @@
-using MuscleCuties.Core.Repositories.Common;
 using MuscleCuties.Core.Models.Entities.Nutrition;
+using MuscleCuties.Core.Repositories.Common;
 
 namespace MuscleCuties.Core.Repositories.Nutrition;
 

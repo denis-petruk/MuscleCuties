@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentView
     x:Class="MuscleCuties.App.Controls.Nutrition.NutritionPhaseFocusCard"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -33,13 +34,14 @@
 
                 <Border
                     Grid.Column="1"
-                    WidthRequest="34"
-                    HeightRequest="34"
-                    StrokeShape="RoundRectangle 17"
-                    BackgroundColor="#22FFFFFF"
+                    WidthRequest="42"
+                    HeightRequest="42"
+                    StrokeShape="RoundRectangle 21"
+                    BackgroundColor="{StaticResource WhiteOverlaySubtle}"
                     Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
                     StrokeThickness="1"
-                    VerticalOptions="Center">
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="Current cycle phase icon">
                     <Image
                         Source="{Binding CurrentPhaseIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                         WidthRequest="17"

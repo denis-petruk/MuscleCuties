@@ -1,4 +1,4 @@
-using MuscleCuties.App.Pages;
+using System.ComponentModel;
 using MuscleCuties.Core.ViewModels.Workout;
 
 namespace MuscleCuties.App.Pages.Workout;
@@ -9,26 +9,24 @@ public partial class WorkoutPage : ContentPage
 
     public WorkoutPage(WorkoutViewModel vm)
     {
-        InitializeComponent();
+        this.InitializeWithTiming(InitializeComponent);
         BindingContext = vm;
         vm.PropertyChanged += OnViewModelPropertyChanged;
     }
 
-    protected override void OnAppearing()
+    protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
-        base.OnAppearing();
-        this.LoadAfterFirstRender(() => ((WorkoutViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
+        base.OnNavigatedTo(args);
+        this.BeginPageLoad(() => ((WorkoutViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
     }
 
-    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(WorkoutViewModel.CelebrationToken) ||
             BindingContext is not WorkoutViewModel viewModel ||
             viewModel.CelebrationToken <= 0 ||
             viewModel.CelebrationToken == _lastCelebrationToken)
-        {
             return;
-        }
 
         _lastCelebrationToken = viewModel.CelebrationToken;
         MainThread.BeginInvokeOnMainThread(async () =>

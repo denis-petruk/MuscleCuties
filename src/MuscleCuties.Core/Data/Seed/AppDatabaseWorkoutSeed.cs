@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Core.Models.Entities.Workout.Planning;
 using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Models.Enums.Workout;
 
@@ -45,81 +46,218 @@ public partial class AppDatabase
             await SaveChangesAsync();
     }
 
-    private static List<Exercise> BuildStarterExercises() =>
-    [
-        Exercise("Goblet Squat", "A controlled squat pattern for quads, glutes, and full-body bracing.", MuscleGroup.Quads, "Glutes,Hamstrings"),
-        Exercise("Hip Thrust", "A hip-extension strength movement focused on glutes.", MuscleGroup.Glutes, "Hamstrings,Abs"),
-        Exercise("Barbell Hip Thrust", "A heavy hip-extension movement for progressive glute strength.", MuscleGroup.Glutes, "Hamstrings,Abs"),
-        Exercise("Romanian Deadlift", "A hip-hinge movement for hamstrings, glutes, and posterior-chain control.", MuscleGroup.Hamstrings, "Glutes,LowerBack", "LowerBack"),
-        Exercise("Single-Leg Romanian Deadlift", "A single-leg hinge for hamstrings, glutes, balance, and hip control.", MuscleGroup.Hamstrings, "Glutes,LowerBack", "LowerBack,Hip"),
-        Exercise("Cable Pull-Through", "A cable hinge pattern that builds glutes and hamstrings with lower spinal demand.", MuscleGroup.Glutes, "Hamstrings,LowerBack"),
-        Exercise("Step-Up", "A single-leg lower-body exercise for glutes, quads, and balance.", MuscleGroup.Glutes, "Quads,Calves"),
-        Exercise("Reverse Lunge", "A single-leg strength movement with controlled knee and hip loading.", MuscleGroup.Quads, "Glutes,Hamstrings", "Knee"),
-        Exercise("Bulgarian Split Squat", "A high-return single-leg squat for glutes, quads, and balance.", MuscleGroup.Glutes, "Quads,Hamstrings", "Knee,Hip"),
-        Exercise("Walking Lunge", "A dynamic single-leg pattern for glutes, quads, conditioning, and coordination.", MuscleGroup.Quads, "Glutes,Hamstrings", "Knee"),
-        Exercise("Leg Press", "A stable lower-body strength movement that lets quads and glutes take more volume.", MuscleGroup.Quads, "Glutes,Hamstrings", "Knee"),
-        Exercise("Leg Extension", "A focused quad accessory for extra thigh volume without taxing the whole body.", MuscleGroup.Quads, string.Empty, "Knee"),
-        Exercise("Seated Leg Curl", "A hamstring isolation movement for knee-flexion strength and posterior-leg balance.", MuscleGroup.Hamstrings, string.Empty, "Knee"),
-        Exercise("Glute Bridge", "A low-impact glute exercise that works well for lighter cycle phases.", MuscleGroup.Glutes, "Hamstrings,Abs"),
-        Exercise("Cable Glute Kickback", "A glute accessory that trains hip extension with a long squeeze and low systemic fatigue.", MuscleGroup.Glutes, "Hamstrings"),
-        Exercise("Cable Hip Abduction", "A glute medius accessory for hip shape, pelvic control, and single-leg stability.", MuscleGroup.Glutes, "HipFlexors"),
-        Exercise("Back Extension", "A posterior-chain accessory that can bias glutes, hamstrings, or lower back by setup.", MuscleGroup.Glutes, "Hamstrings,LowerBack", "LowerBack"),
-        Exercise("Calf Raise", "A simple calf-strength movement for lower-leg support.", MuscleGroup.Calves, string.Empty),
-        Exercise("Incline Push-Up", "A scalable upper-body push pattern for chest, shoulders, and triceps.", MuscleGroup.Chest, "FrontShoulders,Triceps", "Wrist,Shoulder"),
-        Exercise("Incline Dumbbell Press", "A chest and shoulder press that supports upper-body strength progression.", MuscleGroup.Chest, "FrontShoulders,Triceps", "Shoulder"),
-        Exercise("Dumbbell Row", "A back-strength exercise for lats, upper back, and shoulder support.", MuscleGroup.UpperBack, "Biceps,RearShoulders"),
-        Exercise("Chest Supported Row", "A strict horizontal pull for upper-back thickness without lower-back cheating.", MuscleGroup.UpperBack, "Biceps,RearShoulders"),
-        Exercise("Single-Arm Cable Row", "A unilateral cable row for lats, upper back, and balanced pulling strength.", MuscleGroup.UpperBack, "Biceps,RearShoulders"),
-        Exercise("Seated Cable Row", "A controlled horizontal pull for upper-back strength.", MuscleGroup.UpperBack, "Biceps,RearShoulders"),
-        Exercise("Lat Pulldown", "A vertical pulling exercise for back strength and posture support.", MuscleGroup.UpperBack, "Biceps,RearShoulders"),
-        Exercise("Assisted Pull-Up", "A vertical pull progression for back width, biceps, grip, and torso control.", MuscleGroup.UpperBack, "Biceps,Forearms"),
-        Exercise("Overhead Press", "A shoulder press pattern for upper-body strength.", MuscleGroup.FrontShoulders, "SideShoulders,Triceps", "Shoulder"),
-        Exercise("Lateral Raise", "A shoulder accessory movement for side delts.", MuscleGroup.SideShoulders, string.Empty, "Shoulder"),
-        Exercise("Cable Lateral Raise", "A constant-tension side-delt accessory for shoulder shape.", MuscleGroup.SideShoulders, string.Empty, "Shoulder"),
-        Exercise("Rear Delt Fly", "A rear-shoulder accessory for posture, shoulder balance, and upper-back detail.", MuscleGroup.RearShoulders, "UpperBack", "Shoulder"),
-        Exercise("Face Pull", "A rear-shoulder and upper-back accessory for posture and shoulder balance.", MuscleGroup.RearShoulders, "UpperBack"),
-        Exercise("Biceps Curl", "A simple arm accessory movement.", MuscleGroup.Biceps, "Forearms", "Elbow"),
-        Exercise("Triceps Pressdown", "A simple arm accessory movement for triceps.", MuscleGroup.Triceps, string.Empty, "Elbow"),
-        Exercise("Dead Bug", "A low-impact core stability drill.", MuscleGroup.Abs, "HipFlexors"),
-        Exercise("Side Plank", "A lateral core stability exercise.", MuscleGroup.Obliques, "Abs,SideShoulders", "Shoulder"),
-        Exercise("Copenhagen Side Plank", "An advanced side-plank variation for adductors, obliques, and hip stability.", MuscleGroup.Adductors, "Obliques,Abs", "Hip"),
-        Exercise("Pallof Press", "An anti-rotation core exercise for trunk stability.", MuscleGroup.Obliques, "Abs"),
-        Exercise("Cable Woodchop", "A rotational core drill for obliques, rib control, and athletic trunk strength.", MuscleGroup.Obliques, "Abs"),
-        Exercise("Bird Dog", "A low-impact core and hip stability drill.", MuscleGroup.Abs, "Glutes,LowerBack"),
-        Exercise("Plank", "A core endurance exercise for trunk stiffness and shoulder support.", MuscleGroup.Abs, "FrontShoulders", "Shoulder"),
-        Exercise("Hanging Knee Raise", "A hip-flexion and lower-ab drill for advanced trunk control.", MuscleGroup.Abs, "HipFlexors,Forearms", "Shoulder"),
-        Exercise("Reverse Crunch", "A controlled lower-ab pattern that trains pelvis position without spinal loading.", MuscleGroup.Abs, "HipFlexors"),
-        Exercise("Bike Intervals", "Low-impact conditioning intervals for cardio capacity.", MuscleGroup.Quads, "Glutes,Calves"),
-        Exercise("HIIT Intervals", "Short hard conditioning blocks with enough recovery to keep each interval powerful.", MuscleGroup.Quads, "Glutes,Calves,Abs", "Knee"),
-        Exercise("Cycling Intervals", "Bike-based conditioning for stronger legs and repeatable aerobic power.", MuscleGroup.Quads, "Glutes,Calves"),
-        Exercise("Running Intervals", "Run-based conditioning built around pace, heart rate, and clean repeat efforts.", MuscleGroup.Calves, "Glutes,Quads,Hamstrings", "Knee"),
-        Exercise("Tempo Run", "A controlled faster run for aerobic capacity without turning every minute into a sprint.", MuscleGroup.Calves, "Glutes,Quads,Hamstrings", "Knee"),
-        Exercise("Easy Run", "A low-stress jog for easy aerobic work and recovery-friendly movement.", MuscleGroup.Calves, "Glutes,Quads,Hamstrings", "Knee"),
-        Exercise("Zone 2 Ride", "Steady low-impact cardio for endurance and recovery.", MuscleGroup.Quads, "Glutes,Calves"),
-        Exercise("Easy Walk", "Gentle low-impact movement for recovery days.", MuscleGroup.Calves, "Glutes,Quads"),
-        Exercise("Mobility Flow", "A full-body mobility sequence for recovery and joint range.", MuscleGroup.HipFlexors, "Abs,Glutes"),
-        Exercise("Yoga Flow", "A recovery-focused flow for breath, mobility, and light strength.", MuscleGroup.Abs, "Glutes,HipFlexors"),
-        Exercise("Slow Flow Yoga", "A longer steady yoga practice for breath, positions, and calm strength.", MuscleGroup.Abs, "Glutes,HipFlexors"),
-        Exercise("Hip Opening Yoga", "A lower-body yoga sequence for hips, glutes, adductors, and relaxed range.", MuscleGroup.HipFlexors, "Glutes,Adductors"),
-        Exercise("Vinyasa Flow", "A continuous yoga flow for heat, balance, breath, and controlled transitions.", MuscleGroup.Abs, "Glutes,FrontShoulders", "Shoulder,Wrist"),
-        Exercise("Power Yoga", "A stronger yoga practice for heat, balance, and control.", MuscleGroup.Abs, "Glutes,FrontShoulders", "Shoulder,Wrist"),
-        Exercise("Yin Yoga", "Slow supported holds for hips, back, and nervous-system downshift.", MuscleGroup.HipFlexors, "Glutes,LowerBack"),
-        Exercise("Restorative Yoga", "A gentle recovery practice built around breath and supported positions.", MuscleGroup.Abs, "HipFlexors"),
-        Exercise("Pilates Flow", "A core-control session with smooth transitions and steady breathing.", MuscleGroup.Abs, "Obliques,HipFlexors"),
-        Exercise("Active Recovery Flow", "Light movement for circulation, mobility, and better recovery.", MuscleGroup.HipFlexors, "Abs,Glutes"),
-        Exercise("Breathing Reset", "A downshift drill for calm breathing and relaxed bracing.", MuscleGroup.Abs, string.Empty),
-        Exercise("Rock Climbing", "A skill-based climbing session for grip, pulling strength, and body tension.", MuscleGroup.UpperBack, "Biceps,Forearms,Abs", "Shoulder,Wrist,Elbow"),
-        Exercise("Swimming", "Low-impact cardio for smooth conditioning and joint-friendly volume.", MuscleGroup.UpperBack, "Chest,Glutes,Quads"),
-        Exercise("Dance Cardio", "Rhythmic conditioning that builds coordination and aerobic work capacity.", MuscleGroup.Calves, "Glutes,Quads,Abs")
-    ];
+    private async Task MirrorPlanningExercisesToWorkoutCatalogAsync()
+    {
+        var planningExercises = await WorkoutExerciseDefinitions
+            .AsNoTracking()
+            .Include(exercise => exercise.MuscleContributions)
+            .ToListAsync();
+        if (planningExercises.Count == 0)
+            return;
+
+        var existing = await Exercises.ToListAsync();
+        var existingNames = existing
+            .Select(exercise => NormalizeExerciseName(exercise.Name))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var existingCodes = existing
+            .Select(exercise => exercise.Code)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var additions = new List<Exercise>();
+
+        foreach (var planningExercise in planningExercises)
+        {
+            var code = $"ENGINE_{planningExercise.Id}";
+            if (existingCodes.Contains(code) || existingNames.Contains(NormalizeExerciseName(planningExercise.Name)))
+                continue;
+
+            var primaryMuscleId = planningExercise.MuscleContributions
+                .OrderByDescending(contribution => contribution.Fraction)
+                .Select(contribution => contribution.MuscleGroupId)
+                .FirstOrDefault();
+            var primaryMuscle = MapPlanningMuscle(primaryMuscleId);
+            var secondaryMuscles = planningExercise.MuscleContributions
+                .Where(contribution => contribution.MuscleGroupId != primaryMuscleId)
+                .OrderByDescending(contribution => contribution.Fraction)
+                .Select(contribution => MapPlanningMuscle(contribution.MuscleGroupId).ToString())
+                .Distinct()
+                .ToList();
+
+            additions.Add(new Exercise
+            {
+                Code = code,
+                Name = planningExercise.Name,
+                Description = BuildPlanningExerciseDescription(planningExercise.Pattern, primaryMuscle),
+                TechniqueNotes = BuildPlanningTechniqueNotes(planningExercise.Pattern),
+                PrimaryMuscle = primaryMuscle,
+                SecondaryMuscles = string.Join(',', secondaryMuscles),
+                JointAreas = BuildJointAreas(planningExercise.Contraindications),
+                IsInjuryFriendly = planningExercise.Contraindications == InjuryFlag.None
+            });
+            existingCodes.Add(code);
+            existingNames.Add(NormalizeExerciseName(planningExercise.Name));
+        }
+
+        if (additions.Count == 0)
+            return;
+
+        await Exercises.AddRangeAsync(additions);
+        await SaveChangesAsync();
+    }
+
+    private static List<Exercise> BuildStarterExercises()
+    {
+        return
+        [
+            Exercise("Goblet Squat", "A controlled squat pattern for quads, glutes, and full-body bracing.",
+                MuscleGroup.Quads, "Glutes,Hamstrings"),
+            Exercise("Hip Thrust", "A hip-extension strength movement focused on glutes.", MuscleGroup.Glutes,
+                "Hamstrings,Abs"),
+            Exercise("Barbell Hip Thrust", "A heavy hip-extension movement for progressive glute strength.",
+                MuscleGroup.Glutes, "Hamstrings,Abs"),
+            Exercise("Romanian Deadlift", "A hip-hinge movement for hamstrings, glutes, and posterior-chain control.",
+                MuscleGroup.Hamstrings, "Glutes,LowerBack", "LowerBack"),
+            Exercise("Single-Leg Romanian Deadlift",
+                "A single-leg hinge for hamstrings, glutes, balance, and hip control.", MuscleGroup.Hamstrings,
+                "Glutes,LowerBack", "LowerBack,Hip"),
+            Exercise("Cable Pull-Through",
+                "A cable hinge pattern that builds glutes and hamstrings with lower spinal demand.", MuscleGroup.Glutes,
+                "Hamstrings,LowerBack"),
+            Exercise("Step-Up", "A single-leg lower-body exercise for glutes, quads, and balance.", MuscleGroup.Glutes,
+                "Quads,Calves"),
+            Exercise("Reverse Lunge", "A single-leg strength movement with controlled knee and hip loading.",
+                MuscleGroup.Quads, "Glutes,Hamstrings", "Knee"),
+            Exercise("Bulgarian Split Squat", "A high-return single-leg squat for glutes, quads, and balance.",
+                MuscleGroup.Glutes, "Quads,Hamstrings", "Knee,Hip"),
+            Exercise("Walking Lunge", "A dynamic single-leg pattern for glutes, quads, conditioning, and coordination.",
+                MuscleGroup.Quads, "Glutes,Hamstrings", "Knee"),
+            Exercise("Leg Press", "A stable lower-body strength movement that lets quads and glutes take more volume.",
+                MuscleGroup.Quads, "Glutes,Hamstrings", "Knee"),
+            Exercise("Leg Extension", "A focused quad accessory for extra thigh volume without taxing the whole body.",
+                MuscleGroup.Quads, string.Empty, "Knee"),
+            Exercise("Seated Leg Curl",
+                "A hamstring isolation movement for knee-flexion strength and posterior-leg balance.",
+                MuscleGroup.Hamstrings, string.Empty, "Knee"),
+            Exercise("Glute Bridge", "A low-impact glute exercise that works well for lighter cycle phases.",
+                MuscleGroup.Glutes, "Hamstrings,Abs"),
+            Exercise("Cable Glute Kickback",
+                "A glute accessory that trains hip extension with a long squeeze and low systemic fatigue.",
+                MuscleGroup.Glutes, "Hamstrings"),
+            Exercise("Cable Hip Abduction",
+                "A glute medius accessory for hip shape, pelvic control, and single-leg stability.", MuscleGroup.Glutes,
+                "HipFlexors"),
+            Exercise("Back Extension",
+                "A posterior-chain accessory that can bias glutes, hamstrings, or lower back by setup.",
+                MuscleGroup.Glutes, "Hamstrings,LowerBack", "LowerBack"),
+            Exercise("Calf Raise", "A simple calf-strength movement for lower-leg support.", MuscleGroup.Calves,
+                string.Empty),
+            Exercise("Incline Push-Up", "A scalable upper-body push pattern for chest, shoulders, and triceps.",
+                MuscleGroup.Chest, "FrontShoulders,Triceps", "Wrist,Shoulder"),
+            Exercise("Incline Dumbbell Press",
+                "A chest and shoulder press that supports upper-body strength progression.", MuscleGroup.Chest,
+                "FrontShoulders,Triceps", "Shoulder"),
+            Exercise("Dumbbell Row", "A back-strength exercise for lats, upper back, and shoulder support.",
+                MuscleGroup.UpperBack, "Biceps,RearShoulders"),
+            Exercise("Chest Supported Row",
+                "A strict horizontal pull for upper-back thickness without lower-back cheating.", MuscleGroup.UpperBack,
+                "Biceps,RearShoulders"),
+            Exercise("Single-Arm Cable Row",
+                "A unilateral cable row for lats, upper back, and balanced pulling strength.", MuscleGroup.UpperBack,
+                "Biceps,RearShoulders"),
+            Exercise("Seated Cable Row", "A controlled horizontal pull for upper-back strength.", MuscleGroup.UpperBack,
+                "Biceps,RearShoulders"),
+            Exercise("Lat Pulldown", "A vertical pulling exercise for back strength and posture support.",
+                MuscleGroup.UpperBack, "Biceps,RearShoulders"),
+            Exercise("Assisted Pull-Up", "A vertical pull progression for back width, biceps, grip, and torso control.",
+                MuscleGroup.UpperBack, "Biceps,Forearms"),
+            Exercise("Overhead Press", "A shoulder press pattern for upper-body strength.", MuscleGroup.FrontShoulders,
+                "SideShoulders,Triceps", "Shoulder"),
+            Exercise("Lateral Raise", "A shoulder accessory movement for side delts.", MuscleGroup.SideShoulders,
+                string.Empty, "Shoulder"),
+            Exercise("Cable Lateral Raise", "A constant-tension side-delt accessory for shoulder shape.",
+                MuscleGroup.SideShoulders, string.Empty, "Shoulder"),
+            Exercise("Rear Delt Fly", "A rear-shoulder accessory for posture, shoulder balance, and upper-back detail.",
+                MuscleGroup.RearShoulders, "UpperBack", "Shoulder"),
+            Exercise("Face Pull", "A rear-shoulder and upper-back accessory for posture and shoulder balance.",
+                MuscleGroup.RearShoulders, "UpperBack"),
+            Exercise("Biceps Curl", "A simple arm accessory movement.", MuscleGroup.Biceps, "Forearms", "Elbow"),
+            Exercise("Triceps Pressdown", "A simple arm accessory movement for triceps.", MuscleGroup.Triceps,
+                string.Empty, "Elbow"),
+            Exercise("Dead Bug", "A low-impact core stability drill.", MuscleGroup.Abs, "HipFlexors"),
+            Exercise("Side Plank", "A lateral core stability exercise.", MuscleGroup.Obliques, "Abs,SideShoulders",
+                "Shoulder"),
+            Exercise("Copenhagen Side Plank",
+                "An advanced side-plank variation for adductors, obliques, and hip stability.", MuscleGroup.Adductors,
+                "Obliques,Abs", "Hip"),
+            Exercise("Pallof Press", "An anti-rotation core exercise for trunk stability.", MuscleGroup.Obliques,
+                "Abs"),
+            Exercise("Cable Woodchop",
+                "A rotational core drill for obliques, rib control, and athletic trunk strength.", MuscleGroup.Obliques,
+                "Abs"),
+            Exercise("Bird Dog", "A low-impact core and hip stability drill.", MuscleGroup.Abs, "Glutes,LowerBack"),
+            Exercise("Plank", "A core endurance exercise for trunk stiffness and shoulder support.", MuscleGroup.Abs,
+                "FrontShoulders", "Shoulder"),
+            Exercise("Hanging Knee Raise", "A hip-flexion and lower-ab drill for advanced trunk control.",
+                MuscleGroup.Abs, "HipFlexors,Forearms", "Shoulder"),
+            Exercise("Reverse Crunch",
+                "A controlled lower-ab pattern that trains pelvis position without spinal loading.", MuscleGroup.Abs,
+                "HipFlexors"),
+            Exercise("Bike Intervals", "Low-impact conditioning intervals for cardio capacity.", MuscleGroup.Quads,
+                "Glutes,Calves"),
+            Exercise("HIIT Intervals",
+                "Short hard conditioning blocks with enough recovery to keep each interval powerful.",
+                MuscleGroup.Quads, "Glutes,Calves,Abs", "Knee"),
+            Exercise("Cycling Intervals", "Bike-based conditioning for stronger legs and repeatable aerobic power.",
+                MuscleGroup.Quads, "Glutes,Calves"),
+            Exercise("Running Intervals",
+                "Run-based conditioning built around pace, heart rate, and clean repeat efforts.", MuscleGroup.Calves,
+                "Glutes,Quads,Hamstrings", "Knee"),
+            Exercise("Tempo Run",
+                "A controlled faster run for aerobic capacity without turning every minute into a sprint.",
+                MuscleGroup.Calves, "Glutes,Quads,Hamstrings", "Knee"),
+            Exercise("Easy Run", "A low-stress jog for easy aerobic work and recovery-friendly movement.",
+                MuscleGroup.Calves, "Glutes,Quads,Hamstrings", "Knee"),
+            Exercise("Zone 2 Ride", "Steady low-impact cardio for endurance and recovery.", MuscleGroup.Quads,
+                "Glutes,Calves"),
+            Exercise("Easy Walk", "Gentle low-impact movement for recovery days.", MuscleGroup.Calves, "Glutes,Quads"),
+            Exercise("Mobility Flow", "A full-body mobility sequence for recovery and joint range.",
+                MuscleGroup.HipFlexors, "Abs,Glutes"),
+            Exercise("Yoga Flow", "A recovery-focused flow for breath, mobility, and light strength.", MuscleGroup.Abs,
+                "Glutes,HipFlexors"),
+            Exercise("Slow Flow Yoga", "A longer steady yoga practice for breath, positions, and calm strength.",
+                MuscleGroup.Abs, "Glutes,HipFlexors"),
+            Exercise("Hip Opening Yoga", "A lower-body yoga sequence for hips, glutes, adductors, and relaxed range.",
+                MuscleGroup.HipFlexors, "Glutes,Adductors"),
+            Exercise("Vinyasa Flow", "A continuous yoga flow for heat, balance, breath, and controlled transitions.",
+                MuscleGroup.Abs, "Glutes,FrontShoulders", "Shoulder,Wrist"),
+            Exercise("Power Yoga", "A stronger yoga practice for heat, balance, and control.", MuscleGroup.Abs,
+                "Glutes,FrontShoulders", "Shoulder,Wrist"),
+            Exercise("Yin Yoga", "Slow supported holds for hips, back, and nervous-system downshift.",
+                MuscleGroup.HipFlexors, "Glutes,LowerBack"),
+            Exercise("Restorative Yoga", "A gentle recovery practice built around breath and supported positions.",
+                MuscleGroup.Abs, "HipFlexors"),
+            Exercise("Pilates Flow", "A core-control session with smooth transitions and steady breathing.",
+                MuscleGroup.Abs, "Obliques,HipFlexors"),
+            Exercise("Active Recovery Flow", "Light movement for circulation, mobility, and better recovery.",
+                MuscleGroup.HipFlexors, "Abs,Glutes"),
+            Exercise("Breathing Reset", "A downshift drill for calm breathing and relaxed bracing.", MuscleGroup.Abs,
+                string.Empty),
+            Exercise("Rock Climbing", "A skill-based climbing session for grip, pulling strength, and body tension.",
+                MuscleGroup.UpperBack, "Biceps,Forearms,Abs", "Shoulder,Wrist,Elbow"),
+            Exercise("Swimming", "Low-impact cardio for smooth conditioning and joint-friendly volume.",
+                MuscleGroup.UpperBack, "Chest,Glutes,Quads"),
+            Exercise("Dance Cardio", "Rhythmic conditioning that builds coordination and aerobic work capacity.",
+                MuscleGroup.Calves, "Glutes,Quads,Abs")
+        ];
+    }
 
     private static Exercise Exercise(
         string name,
         string description,
         MuscleGroup primaryMuscle,
         string secondaryMuscles,
-        string jointAreas = "") =>
-        new()
+        string jointAreas = "")
+    {
+        return new Exercise
         {
             Code = BuildExerciseCode(name),
             Name = name,
@@ -129,9 +267,12 @@ public partial class AppDatabase
             JointAreas = jointAreas,
             IsInjuryFriendly = !HasJointStress(jointAreas)
         };
+    }
 
-    private static bool HasJointStress(string jointAreas) =>
-        !string.IsNullOrWhiteSpace(jointAreas);
+    private static bool HasJointStress(string jointAreas)
+    {
+        return !string.IsNullOrWhiteSpace(jointAreas);
+    }
 
     private static string BuildUniqueExerciseCode(string name, ISet<string> usedCodes)
     {
@@ -171,5 +312,80 @@ public partial class AppDatabase
 
         var code = builder.ToString().Trim('_');
         return string.IsNullOrWhiteSpace(code) ? "EXERCISE" : code;
+    }
+
+    private static MuscleGroup MapPlanningMuscle(int muscleId) => muscleId switch
+    {
+        1 => MuscleGroup.Glutes,
+        2 => MuscleGroup.Hamstrings,
+        3 => MuscleGroup.GluteMed,
+        4 => MuscleGroup.Adductors,
+        5 => MuscleGroup.Quads,
+        6 => MuscleGroup.Lats,
+        7 => MuscleGroup.UpperBack,
+        8 => MuscleGroup.SideShoulders,
+        9 => MuscleGroup.Chest,
+        10 => MuscleGroup.Biceps,
+        11 => MuscleGroup.Triceps,
+        12 => MuscleGroup.Core,
+        13 => MuscleGroup.Calves,
+        _ => MuscleGroup.Core
+    };
+
+    private static string BuildPlanningExerciseDescription(MovementPattern pattern, MuscleGroup primaryMuscle)
+    {
+        return pattern switch
+        {
+            MovementPattern.HipThrust => "Hip extension focused on glute strength and control.",
+            MovementPattern.HipHinge => "A hip hinge that trains the posterior chain through a controlled range.",
+            MovementPattern.KneeFlexion => "Direct hamstring work through knee flexion.",
+            MovementPattern.SquatPattern => "A squat pattern for quads, glutes, and bracing strength.",
+            MovementPattern.Lunge => "Single-leg strength work for balance, quads, and glutes.",
+            MovementPattern.HipAbduction => "Hip abduction for lateral glute strength and pelvic control.",
+            MovementPattern.HipAdduction => "Adductor strength for hip stability and lower-body balance.",
+            MovementPattern.VerticalPull => "Vertical pulling for lats, upper back, and arm strength.",
+            MovementPattern.HorizontalPull => "Horizontal pulling for upper-back strength and shoulder control.",
+            MovementPattern.VerticalPush => "Overhead pressing for shoulder and triceps strength.",
+            MovementPattern.HorizontalPush => "Pressing work for chest, shoulders, and triceps.",
+            MovementPattern.LateralRaise => "Focused lateral shoulder work with low systemic fatigue.",
+            MovementPattern.RearDelt => "Rear-shoulder work for balanced pressing and pulling mechanics.",
+            MovementPattern.ElbowFlexion => "Direct biceps work through controlled elbow flexion.",
+            MovementPattern.ElbowExtension => "Direct triceps work through controlled elbow extension.",
+            MovementPattern.AntiExtension => "Core training that resists excessive lower-back extension.",
+            MovementPattern.AntiRotation => "Core training that resists trunk rotation.",
+            MovementPattern.AntiLateralFlexion => "Core training that resists side bending.",
+            MovementPattern.CalfRaise => "Calf strength through a full ankle range of motion.",
+            MovementPattern.Climbing => "Climbing practice for pulling strength, grip, and body tension.",
+            _ => $"Controlled {primaryMuscle.ToString().ToLowerInvariant()} training."
+        };
+    }
+
+    private static string BuildPlanningTechniqueNotes(MovementPattern pattern) => pattern switch
+    {
+        MovementPattern.HipThrust => "Keep the ribs stacked, drive through the feet, and finish with the glutes instead of the lower back.",
+        MovementPattern.HipHinge => "Push the hips back, keep the load close, and stop when the hamstrings limit the range.",
+        MovementPattern.SquatPattern => "Brace before descending, keep the whole foot planted, and let the knees track with the toes.",
+        MovementPattern.Lunge => "Use a stable stance, lower under control, and push through the working foot.",
+        MovementPattern.VerticalPull or MovementPattern.HorizontalPull => "Set the shoulder blades, pull with the elbows, and control the return.",
+        MovementPattern.VerticalPush or MovementPattern.HorizontalPush => "Keep the torso stable, use a controlled lowering phase, and avoid forcing painful range.",
+        MovementPattern.AntiExtension or MovementPattern.AntiRotation or MovementPattern.AntiLateralFlexion => "Brace while breathing normally and stop before the spine loses position.",
+        MovementPattern.Climbing => "Keep the hips close to the wall, use the feet deliberately, and avoid gripping harder than needed.",
+        _ => "Use a controlled range, keep the target joint aligned, and stop if the movement causes sharp pain."
+    };
+
+    private static string BuildJointAreas(InjuryFlag flags)
+    {
+        var areas = new List<string>();
+        if (flags.HasFlag(InjuryFlag.Knee)) areas.Add("Knee");
+        if (flags.HasFlag(InjuryFlag.Ankle) || flags.HasFlag(InjuryFlag.Metatarsal)) areas.Add("Ankle");
+        if (flags.HasFlag(InjuryFlag.Shoulder)) areas.Add("Shoulder");
+        if (flags.HasFlag(InjuryFlag.LowBack)) areas.Add("LowerBack");
+        if (flags.HasFlag(InjuryFlag.Wrist)) areas.Add("Wrist");
+        return string.Join(',', areas);
+    }
+
+    private static string NormalizeExerciseName(string name)
+    {
+        return string.Concat(name.Where(char.IsLetterOrDigit)).ToUpperInvariant();
     }
 }

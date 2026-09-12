@@ -1,23 +1,16 @@
 using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Core.Models.Entities.Cycle;
 using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
-using MuscleCuties.Core.Models.Entities.Users;
-using MuscleCuties.Core.Models.Entities.Workout;
-using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Services.Auth;
-using MuscleCuties.Core.Services.Cycle;
-using MuscleCuties.Core.Services.Quiz;
+using MuscleCuties.Core.Services.Nutrition;
 
 namespace MuscleCuties.Core.Tests.Services.Nutrition;
 
 public class FoodSyncServiceTests : IDisposable
 {
-    private readonly DatabaseFixture _fixture = new();
-    private readonly NutritionRepository _nutritionRepository;
-    private readonly FoodSyncRepository _foodSyncRepository;
     private readonly FakeFdcApiClient _fdcApiClient = new();
+    private readonly DatabaseFixture _fixture = new();
+    private readonly FoodSyncRepository _foodSyncRepository;
+    private readonly NutritionRepository _nutritionRepository;
     private readonly FoodSyncService _service;
 
     public FoodSyncServiceTests()
@@ -27,7 +20,10 @@ public class FoodSyncServiceTests : IDisposable
         _service = new FoodSyncService(_nutritionRepository, _foodSyncRepository, _fdcApiClient);
     }
 
-    public void Dispose() => _fixture.Dispose();
+    public void Dispose()
+    {
+        _fixture.Dispose();
+    }
 
     [Fact]
     public async Task SearchAsync_WhenQueryIsBlank_DoesNotCallRemoteOrLog()
@@ -43,7 +39,6 @@ public class FoodSyncServiceTests : IDisposable
     public async Task SearchAsync_WhenLocalHasResults_StillRefreshesRemoteCandidates()
     {
         for (var i = 1; i <= 5; i++)
-        {
             await _nutritionRepository.AddAsync(new FoodItem
             {
                 Name = $"Rolled oats {i}",
@@ -51,7 +46,6 @@ public class FoodSyncServiceTests : IDisposable
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             });
-        }
 
         var results = await _service.SearchAsync("oats");
 
@@ -71,7 +65,6 @@ public class FoodSyncServiceTests : IDisposable
     public async Task SearchAsync_WhenLocalResultsAreDuplicates_StillCallsRemote()
     {
         for (var i = 1; i <= 5; i++)
-        {
             await _nutritionRepository.AddAsync(new FoodItem
             {
                 Name = i % 2 == 0 ? "CHICKEN" : "Chicken",
@@ -80,7 +73,6 @@ public class FoodSyncServiceTests : IDisposable
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             });
-        }
 
         _fdcApiClient.SearchResults.Add(new FdcFoodSearchResult
         {
@@ -175,7 +167,7 @@ public class FoodSyncServiceTests : IDisposable
             });
         }
 
-        var results = await _service.SearchAsync("paged food", pageSize: 15, pageNumber: 2);
+        var results = await _service.SearchAsync("paged food", 15, 2);
 
         Assert.Equal(15, results.Count);
         Assert.Equal(2, _fdcApiClient.LastSearchPageNumber);
@@ -310,8 +302,9 @@ public class FoodSyncServiceTests : IDisposable
         Assert.Contains("\"Calories\":100", version.NutrientJson);
     }
 
-    private static FdcFoodDetail BuildDetail(int fdcId, string name, params (int Id, float Amount)[] nutrients) =>
-        new()
+    private static FdcFoodDetail BuildDetail(int fdcId, string name, params (int Id, float Amount)[] nutrients)
+    {
+        return new FdcFoodDetail
         {
             FdcId = fdcId,
             Description = name,
@@ -324,6 +317,7 @@ public class FoodSyncServiceTests : IDisposable
                 })
                 .ToList()
         };
+    }
 
     private sealed class FakeFdcApiClient : IFdcApiClient
     {

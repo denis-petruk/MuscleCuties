@@ -27,7 +27,6 @@ public partial class FoodSyncService
         var versions = new List<FoodItemVersion>();
 
         foreach (var detail in detailList)
-        {
             try
             {
                 existingByFdcId.TryGetValue(detail.FdcId, out var existing);
@@ -45,7 +44,6 @@ public partial class FoodSyncService
                 log.ItemsFailed++;
                 errors.Add($"FDC food {detail.FdcId}: {ex.Message}");
             }
-        }
 
         await _foodSyncRepository.AddFoodItemVersionsAsync(versions);
         await _nutritionRepository.SaveFoodItemsAsync(newItems, updatedItems);
@@ -75,7 +73,6 @@ public partial class FoodSyncService
         var now = DateTime.UtcNow;
 
         if (existing is not null && FdcFoodMapper.HasNutrientChanges(existing, detail))
-        {
             versions.Add(new FoodItemVersion
             {
                 FoodItemId = existing.Id,
@@ -83,7 +80,6 @@ public partial class FoodSyncService
                 VersionedAt = now,
                 ChangeSource = "FDC"
             });
-        }
 
         return FdcFoodMapper.ApplyToFoodItem(detail, existing, now);
     }

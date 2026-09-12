@@ -1,6 +1,7 @@
 using System.Globalization;
 using MauiIcons.Core;
 using MauiIcons.Fluent;
+using MuscleCuties.App.Resources.Styles;
 
 namespace MuscleCuties.App.Resources.Converters;
 
@@ -13,11 +14,13 @@ public sealed class StringToFluentIconImageSourceConverter : IValueConverter
             : FluentIcons.QuestionCircle24;
 
         var color = ResolveColor(parameter);
-        return icon.ToImageSource(color, 24d, false);
+        return icon.ToImageSource(color, 24d);
     }
 
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
         throw new NotSupportedException();
+    }
 
     private static Color ResolveColor(object? parameter)
     {
@@ -26,10 +29,8 @@ public sealed class StringToFluentIconImageSourceConverter : IValueConverter
         var resourceKey = theme == AppTheme.Dark ? "TextPrimaryDark" : "TextPrimary";
 
         if (string.Equals(key, "Warning", StringComparison.OrdinalIgnoreCase))
-            return theme == AppTheme.Dark ? Color.FromArgb("#E0A345") : Color.FromArgb("#C77700");
+            return AppThemeResources.GetColor("WarningAccentLight", "WarningAccentDark", Colors.Black);
 
-        return Application.Current?.Resources.TryGetValue(resourceKey, out var value) == true && value is Color color
-            ? color
-            : Colors.Black;
+        return AppThemeResources.GetColor(resourceKey, Colors.Black) ?? Colors.Black;
     }
 }

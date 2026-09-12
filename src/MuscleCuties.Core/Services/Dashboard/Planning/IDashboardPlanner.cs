@@ -1,7 +1,7 @@
 using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.Core.Models.UI.Workout;
 using MuscleCuties.Core.Services.Cycle.Planning;
 using MuscleCuties.Core.Services.Health;
-using MuscleCuties.Core.Services.Workout.Planning;
 
 namespace MuscleCuties.Core.Services.Dashboard.Planning;
 
@@ -14,5 +14,6 @@ public interface IDashboardPlanner
         float? weight,
         int workoutDaysPerWeek,
         TodaysWorkoutSummary workoutSummary,
-        HealthWeeklySummary? healthSummary = null);
+        HealthWeeklySummary? healthSummary = null,
+        int? recordedReadinessScore = null);
 }

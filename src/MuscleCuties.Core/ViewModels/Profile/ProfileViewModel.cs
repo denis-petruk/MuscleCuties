@@ -4,7 +4,9 @@ using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.UI.Profile;
+using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Repositories.Users;
+using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Progress;
@@ -12,61 +14,44 @@ using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Profile;
 
-public partial class ProfileViewModel : ObservableObject
+public partial class ProfileViewModel : ObservableObject, IPageLoadAware
 {
-    private readonly IAuthService _authService;
-    private readonly IUserRepository _userRepository;
-    private readonly ICycleService _cycleService;
-    private readonly IProgressSummaryService _progressSummaryService;
-    private readonly Action _navigateToLogin;
-    private readonly Action<string> _navigateToPreference;
-    private readonly ViewModelLoadGate _loadGate = new(TimeSpan.FromSeconds(30));
-
-    [ObservableProperty] private string _name = string.Empty;
+    private readonly Lazy<IAppPreloadService> _preloadService;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ViewModelLoadGate _loadGate = new(ViewModelLoadGate.PageFreshnessWindow);
+    private readonly Func<Task> _navigateToLoginAsync;
+    private readonly Func<string, Task> _navigateToPreferenceAsync;
+    [ObservableProperty] private int _completedSessions;
+    [ObservableProperty] private CyclePhase _currentPhase = CyclePhase.Follicular;
+    [ObservableProperty] private int _cycleDays = 28;
+    [ObservableProperty] private int _cyclesTracked;
     [ObservableProperty] private string _email = string.Empty;
     [ObservableProperty] private UserGoal _goal;
-    [ObservableProperty] private bool _isBusy;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    private bool _isBusy;
+    [ObservableProperty] private bool _isLoadError;
     [ObservableProperty] private string _memberSince = string.Empty;
-    [ObservableProperty] private int _cycleDays = 28;
-    [ObservableProperty] private int _completedSessions;
-    [ObservableProperty] private int _workoutStreakDays;
+
+    [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private int _nutritionStreakDays;
-    [ObservableProperty] private int _cyclesTracked;
-    [ObservableProperty] private CyclePhase _currentPhase = CyclePhase.Follicular;
-    [ObservableProperty] private string _profileImagePath = string.Empty;
     [ObservableProperty] private ObservableCollection<PreferenceItem> _preferences = new();
-
-    public string UserInitial => Name.Length > 0 ? Name[0].ToString().ToUpper() : "?";
-    public string UserName => Name;
-    public int SessionCount => CompletedSessions;
-    public int PhasesTracked => WorkoutStreakDays;
-    public string CyclesTrackedText => CyclesTracked == 1 ? "1 cycle" : $"{CyclesTracked} cycles";
-    public string CurrentPhaseLabel => CurrentPhase.ToString();
-    public bool HasProfileImage => !string.IsNullOrWhiteSpace(ProfileImagePath);
-    public bool HasNoProfileImage => !HasProfileImage;
-    public string ProfileImageSource => ProfileImagePath;
-
-    public AsyncRelayCommand LoadDataCommand { get; }
-    public AsyncRelayCommand LogoutCommand { get; }
-    public RelayCommand<PreferenceItem> OpenPreferenceCommand { get; }
+    [ObservableProperty] private string _profileImagePath = string.Empty;
+    [ObservableProperty] private int _workoutStreakDays;
 
     public ProfileViewModel(
-        IAuthService authService,
-        IUserRepository userRepository,
-        ICycleService cycleService,
-        IProgressSummaryService progressSummaryService,
-        Action navigateToLogin,
-        Action<string>? navigateToPreference = null)
+        IServiceScopeFactory scopeFactory,
+        Lazy<IAppPreloadService> preloadService,
+        Func<Task> navigateToLoginAsync,
+        Func<string, Task>? navigateToPreferenceAsync = null)
     {
-        _authService = authService;
-        _userRepository = userRepository;
-        _cycleService = cycleService;
-        _progressSummaryService = progressSummaryService;
-        _navigateToLogin = navigateToLogin;
-        _navigateToPreference = navigateToPreference ?? (_ => { });
+        _scopeFactory = scopeFactory;
+        _preloadService = preloadService;
+        _navigateToLoginAsync = navigateToLoginAsync;
+        _navigateToPreferenceAsync = navigateToPreferenceAsync ?? (_ => Task.CompletedTask);
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
         LogoutCommand = new AsyncRelayCommand(LogoutAsync);
-        OpenPreferenceCommand = new RelayCommand<PreferenceItem>(OpenPreference);
+        OpenPreferenceCommand = new AsyncRelayCommand<PreferenceItem>(OpenPreferenceAsync);
         Preferences = new ObservableCollection<PreferenceItem>
         {
             new()
@@ -92,13 +77,6 @@ public partial class ProfileViewModel : ObservableObject
             },
             new()
             {
-                IconGlyph = "DocumentHeartPulse24",
-                Title = "Health Sync",
-                Subtitle = "Apple Health and Whoop readiness inputs",
-                Route = "ProfileHealthSyncPage"
-            },
-            new()
-            {
                 IconGlyph = "ChatBubblesQuestion24",
                 Title = "Feedback",
                 Subtitle = "Send private beta feedback to the handsome, jacked developer",
@@ -121,14 +99,37 @@ public partial class ProfileViewModel : ObservableObject
         };
     }
 
+    public string UserInitial => Name.Length > 0 ? Name[0].ToString().ToUpper() : "?";
+    public string UserName => Name;
+    public int SessionCount => CompletedSessions;
+    public int PhasesTracked => WorkoutStreakDays;
+    public string CyclesTrackedText => CyclesTracked == 1 ? "1 cycle" : $"{CyclesTracked} cycles";
+    public string CurrentPhaseLabel => CurrentPhase.ToString();
+    public bool HasProfileImage => IsExistingProfileImage(ProfileImagePath);
+    public bool HasNoProfileImage => !HasProfileImage;
+    public string ProfileImageSource => HasProfileImage ? ProfileImagePath : string.Empty;
+
+    public void Invalidate() => _loadGate.MarkStale();
+
+    public AsyncRelayCommand LoadDataCommand { get; }
+    public AsyncRelayCommand LogoutCommand { get; }
+    public AsyncRelayCommand<PreferenceItem> OpenPreferenceCommand { get; }
+    public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
+
     private async Task LoadDataCoreAsync()
     {
         IsBusy = true;
         try
         {
-            var userId = await _authService.GetCurrentUserIdAsync();
-            var user = await _userRepository.GetByIdAsync(userId);
-            var profile = await _userRepository.GetProfileAsync(userId);
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+            var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
+            var progressSummaryService = scope.ServiceProvider.GetRequiredService<IProgressSummaryService>();
+
+            var userId = await DataLoadScheduler.RunAsync(authService.GetCurrentUserIdAsync);
+            var user = await DataLoadScheduler.RunAsync(() => userRepository.GetByIdAsync(userId));
+            var profile = await DataLoadScheduler.RunAsync(() => userRepository.GetProfileAsync(userId));
 
             if (user is not null)
             {
@@ -146,14 +147,15 @@ public partial class ProfileViewModel : ObservableObject
                 OnPropertyChanged(nameof(UserName));
             }
 
-            var progress = await _progressSummaryService.GetSummaryAsync(userId, DateTime.Today);
+            var progress = await DataLoadScheduler.RunAsync(() =>
+                progressSummaryService.GetSummaryAsync(userId, DateTime.Today));
             CompletedSessions = progress.CompletedWorkoutSessions;
             WorkoutStreakDays = progress.WorkoutStreakDays;
             NutritionStreakDays = progress.NutritionStreakDays;
 
-            var prediction = await _cycleService.GetPredictionAsync(userId);
+            var prediction = await DataLoadScheduler.RunAsync(() => cycleService.GetPredictionAsync(userId));
             CurrentPhase = prediction.CurrentPhase;
-            var cycleHistory = await _cycleService.GetCycleHistoryAsync(userId);
+            var cycleHistory = await DataLoadScheduler.RunAsync(() => cycleService.GetCycleHistoryAsync(userId));
             CyclesTracked = cycleHistory.Count;
         }
         finally
@@ -167,8 +169,12 @@ public partial class ProfileViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            await _authService.LogoutAsync();
-            _navigateToLogin();
+            _preloadService.Value.InvalidateAll();
+
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            await authService.LogoutAsync();
+            await _navigateToLoginAsync();
         }
         finally
         {
@@ -176,24 +182,28 @@ public partial class ProfileViewModel : ObservableObject
         }
     }
 
-    private void OpenPreference(PreferenceItem? item)
+    private async Task OpenPreferenceAsync(PreferenceItem? item)
     {
         if (item is null || string.IsNullOrWhiteSpace(item.Route))
             return;
 
-        _navigateToPreference(item.Route);
+        await _navigateToPreferenceAsync(item.Route);
     }
 
     public async Task UpdateProfileImageAsync(string? imagePath)
     {
-        var userId = await _authService.GetCurrentUserIdAsync();
-        var profile = await _userRepository.GetProfileAsync(userId);
+        using var scope = _scopeFactory.CreateScope();
+        var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+
+        var userId = await authService.GetCurrentUserIdAsync();
+        var profile = await userRepository.GetProfileAsync(userId);
         if (profile is null)
             return;
 
         profile.ProfileImagePath = string.IsNullOrWhiteSpace(imagePath) ? string.Empty : imagePath.Trim();
         profile.UpdatedAt = DateTime.UtcNow;
-        await _userRepository.UpdateProfileAsync(profile);
+        await userRepository.UpdateProfileAsync(profile);
         ProfileImagePath = profile.ProfileImagePath;
     }
 
@@ -228,5 +238,10 @@ public partial class ProfileViewModel : ObservableObject
         OnPropertyChanged(nameof(HasProfileImage));
         OnPropertyChanged(nameof(HasNoProfileImage));
         OnPropertyChanged(nameof(ProfileImageSource));
+    }
+
+    private static bool IsExistingProfileImage(string path)
+    {
+        return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
     }
 }

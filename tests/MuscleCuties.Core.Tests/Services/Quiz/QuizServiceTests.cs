@@ -5,8 +5,11 @@ using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Repositories.Cycle;
 using MuscleCuties.Core.Repositories.Quiz;
 using MuscleCuties.Core.Repositories.Users;
+using MuscleCuties.Core.Services.Cycle;
+using MuscleCuties.Core.Services.Cycle.Planning;
 using MuscleCuties.Core.Services.Quiz;
 
 namespace MuscleCuties.Core.Tests.Services.Quiz;
@@ -20,10 +23,13 @@ public class QuizServiceTests : IClassFixture<DatabaseFixture>
         _fixture = fixture;
     }
 
-    private QuizService CreateService() =>
-        new QuizService(
-            new UserRepository(_fixture.Db),
-            new QuizRepository(_fixture.Db));
+    private QuizService CreateService()
+    {
+        var userRepo = new UserRepository(_fixture.Db);
+        var cycleRepo = new CycleRepository(_fixture.Db);
+        var cycleService = new CycleService(cycleRepo, userRepo, new CyclePredictionPlanner(new CyclePhaseCalculator()));
+        return new QuizService(userRepo, new QuizRepository(_fixture.Db), cycleService);
+    }
 
     private async Task<User> SeedUserAsync(string email)
     {
@@ -87,11 +93,14 @@ public class QuizServiceTests : IClassFixture<DatabaseFixture>
         await _fixture.Db.QuizQuestions.AddAsync(question);
         await _fixture.Db.SaveChangesAsync();
 
-        await service.SaveAnswersAsync(user.Id, [new UserQuizResponse
-        {
-            QuizQuestionId = question.Id,
-            QuizAnswerId = question.Answers.First().Id
-        }]);
+
+        await service.SaveAnswersAsync(user.Id, [
+            new UserQuizResponse
+            {
+                QuizQuestionId = question.Id,
+                QuizAnswerId = question.Answers.First().Id
+            }
+        ]);
 
         var profile = await new UserRepository(_fixture.Db).GetProfileAsync(user.Id);
         Assert.Equal(UserGoal.Strength, profile!.Goal);
@@ -113,11 +122,13 @@ public class QuizServiceTests : IClassFixture<DatabaseFixture>
         await _fixture.Db.QuizQuestions.AddAsync(question);
         await _fixture.Db.SaveChangesAsync();
 
-        await service.SaveAnswersAsync(user.Id, [new UserQuizResponse
-        {
-            QuizQuestionId = question.Id,
-            QuizAnswerId = question.Answers.First().Id
-        }]);
+        await service.SaveAnswersAsync(user.Id, [
+            new UserQuizResponse
+            {
+                QuizQuestionId = question.Id,
+                QuizAnswerId = question.Answers.First().Id
+            }
+        ]);
 
         var snapshot = await new UserRepository(_fixture.Db).GetLatestSnapshotAsync(user.Id);
         Assert.NotNull(snapshot);
@@ -145,7 +156,13 @@ public class QuizServiceTests : IClassFixture<DatabaseFixture>
                 Question = "Experience?",
                 OrderIndex = 31,
                 QuestionType = QuizQuestionType.ExperienceLevel,
-                Answers = [new QuizAnswer { Text = "Intermediate", OrderIndex = 1, MappedValue = (int)TrainingExperienceLevel.Intermediate }]
+                Answers =
+                [
+                    new QuizAnswer
+                    {
+                        Text = "Intermediate", OrderIndex = 1, MappedValue = (int)TrainingExperienceLevel.Intermediate
+                    }
+                ]
             },
             new()
             {
@@ -159,7 +176,10 @@ public class QuizServiceTests : IClassFixture<DatabaseFixture>
                 Question = "Diet?",
                 OrderIndex = 33,
                 QuestionType = QuizQuestionType.DietaryPreference,
-                Answers = [new QuizAnswer { Text = "Vegetarian", OrderIndex = 1, MappedValue = (int)DietaryTag.Vegetarian }]
+                Answers =
+                [
+                    new QuizAnswer { Text = "Vegetarian", OrderIndex = 1, MappedValue = (int)DietaryTag.Vegetarian }
+                ]
             },
             new()
             {
@@ -200,8 +220,10 @@ public class QuizServiceTests : IClassFixture<DatabaseFixture>
         using var document = JsonDocument.Parse(snapshot.ProfileJson);
         var root = document.RootElement;
         Assert.Equal("Intermediate", root.GetProperty("TrainingExperienceLevel").GetString());
-        Assert.Equal(4, root.GetProperty("CyclePhaseBaselines").GetProperty("Menstrual").GetProperty("Pain").GetInt32());
-        Assert.Equal(2, root.GetProperty("CyclePhaseBaselines").GetProperty("Menstrual").GetProperty("Energy").GetInt32());
+        Assert.Equal(4,
+            root.GetProperty("CyclePhaseBaselines").GetProperty("Menstrual").GetProperty("Pain").GetInt32());
+        Assert.Equal(2,
+            root.GetProperty("CyclePhaseBaselines").GetProperty("Menstrual").GetProperty("Energy").GetInt32());
         Assert.Equal(6, root.GetProperty("QuizResponses").GetArrayLength());
 
         var savedResponses = await _fixture.Db.UserQuizResponses

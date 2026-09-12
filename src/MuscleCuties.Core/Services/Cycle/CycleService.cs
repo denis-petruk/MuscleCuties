@@ -9,8 +9,8 @@ namespace MuscleCuties.Core.Services.Cycle;
 public class CycleService : ICycleService
 {
     private readonly ICycleRepository _cycleRepository;
-    private readonly IUserRepository _userRepository;
     private readonly ICyclePredictionPlanner _predictionPlanner;
+    private readonly IUserRepository _userRepository;
 
     public CycleService(
         ICycleRepository cycleRepository,
@@ -44,26 +44,49 @@ public class CycleService : ICycleService
         return prediction;
     }
 
-    public async Task<CycleLog?> GetCurrentCycleAsync(int userId) =>
-        await _cycleRepository.GetLatestCycleAsync(userId);
+    public async Task<CycleLog?> GetCurrentCycleAsync(int userId)
+    {
+        return await _cycleRepository.GetLatestCycleAsync(userId);
+    }
 
-    public async Task<IReadOnlyList<CycleLog>> GetCycleHistoryAsync(int userId) =>
-        await _cycleRepository.GetCycleHistoryAsync(userId);
+    public async Task<IReadOnlyList<CycleLog>> GetCycleHistoryAsync(int userId)
+    {
+        return await _cycleRepository.GetCycleHistoryAsync(userId);
+    }
 
-    public async Task<CyclePhaseLog?> GetLatestPhaseLogAsync(int userId) =>
-        await _cycleRepository.GetLatestPhaseLogAsync(userId);
+    public async Task<CyclePhaseLog?> GetLatestPhaseLogAsync(int userId)
+    {
+        return await _cycleRepository.GetLatestPhaseLogAsync(userId);
+    }
 
-    public async Task<IReadOnlyList<CyclePhaseLog>> GetRecentPhaseLogsAsync(int userId, int count) =>
-        await _cycleRepository.GetRecentPhaseLogsAsync(userId, count);
+    public async Task<IReadOnlyList<CyclePhaseLog>> GetRecentPhaseLogsAsync(int userId, int count)
+    {
+        return await _cycleRepository.GetRecentPhaseLogsAsync(userId, count);
+    }
 
     public async Task LogPhaseShiftAsync(int userId, CyclePhase phase, DateTime loggedAt, string? note)
     {
-        await SavePhaseLogAsync(userId, phase, loggedAt, note, updateExistingDate: false);
+        await SavePhaseLogAsync(userId, phase, loggedAt, note, false);
     }
 
     public async Task SetPhaseForDateAsync(int userId, CyclePhase phase, DateTime loggedAt, string? note)
     {
-        await SavePhaseLogAsync(userId, phase, loggedAt, note, updateExistingDate: true);
+        await SavePhaseLogAsync(userId, phase, loggedAt, note, true);
+    }
+
+    public async Task StartNewCycleAsync(int userId)
+    {
+        await AlignCycleToPeriodStartAsync(userId, DateTime.UtcNow.Date);
+    }
+
+    public async Task EndCurrentCycleAsync(int userId)
+    {
+        var cycle = await _cycleRepository.GetLatestCycleAsync(userId);
+        if (cycle == null) return;
+
+        cycle.EndDate = DateTime.UtcNow;
+        cycle.CycleLength = Math.Max(1, (int)(cycle.EndDate.Value.Date - cycle.StartDate.Date).TotalDays);
+        await _cycleRepository.UpdateAsync(cycle);
     }
 
     private async Task SavePhaseLogAsync(
@@ -161,33 +184,36 @@ public class CycleService : ICycleService
     {
         var latestPhaseLog = orderedLogs.LastOrDefault(log => log.LoggedAt.Date <= date.Date);
         if (latestPhaseLog is not null)
-        {
             return CyclePhaseRules.ProjectPhaseFromLog(
                 new CyclePhaseLogProjection(latestPhaseLog.Phase, latestPhaseLog.LoggedAt),
                 date,
                 cycleLength);
-        }
 
         var latestCycle = await _cycleRepository.GetLatestCycleAsync(userId);
         if (latestCycle is null || latestCycle.StartDate.Date > date.Date)
             return null;
 
         var daysFromCycleStart = (date.Date - latestCycle.StartDate.Date).Days;
-        var normalizedOffset = ((daysFromCycleStart % cycleLength) + cycleLength) % cycleLength;
+        var normalizedOffset = (daysFromCycleStart % cycleLength + cycleLength) % cycleLength;
         return CyclePhaseRules.CalculatePhase(normalizedOffset + 1, cycleLength);
     }
 
-    private static bool FollowsCycleOrder(CyclePhase from, CyclePhase to) =>
-        to == from || to == CyclePhaseRules.GetNextPhase(from);
-
-    private static CyclePhase GetPreviousPhase(CyclePhase phase) => phase switch
+    private static bool FollowsCycleOrder(CyclePhase from, CyclePhase to)
     {
-        CyclePhase.Menstrual => CyclePhase.Luteal,
-        CyclePhase.Follicular => CyclePhase.Menstrual,
-        CyclePhase.Ovulatory => CyclePhase.Follicular,
-        CyclePhase.Luteal => CyclePhase.Ovulatory,
-        _ => CyclePhase.Menstrual
-    };
+        return to == from || to == CyclePhaseRules.GetNextPhase(from);
+    }
+
+    private static CyclePhase GetPreviousPhase(CyclePhase phase)
+    {
+        return phase switch
+        {
+            CyclePhase.Menstrual => CyclePhase.Luteal,
+            CyclePhase.Follicular => CyclePhase.Menstrual,
+            CyclePhase.Ovulatory => CyclePhase.Follicular,
+            CyclePhase.Luteal => CyclePhase.Ovulatory,
+            _ => CyclePhase.Menstrual
+        };
+    }
 
     private async Task SwitchToManualTrackingAsync(int userId, CyclePhase phase)
     {
@@ -213,21 +239,6 @@ public class CycleService : ICycleService
 
         profile.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateProfileAsync(profile);
-    }
-
-    public async Task StartNewCycleAsync(int userId)
-    {
-        await AlignCycleToPeriodStartAsync(userId, DateTime.UtcNow.Date);
-    }
-
-    public async Task EndCurrentCycleAsync(int userId)
-    {
-        var cycle = await _cycleRepository.GetLatestCycleAsync(userId);
-        if (cycle == null) return;
-
-        cycle.EndDate = DateTime.UtcNow;
-        cycle.CycleLength = Math.Max(1, (int)(cycle.EndDate.Value.Date - cycle.StartDate.Date).TotalDays);
-        await _cycleRepository.UpdateAsync(cycle);
     }
 
     private async Task<CycleLog> AlignCycleToPeriodStartAsync(int userId, DateTime periodStartDate)

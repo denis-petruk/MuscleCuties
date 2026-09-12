@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage
     x:Class="MuscleCuties.App.Pages.Profile.ProfileUnitsDisplayPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -9,7 +10,11 @@
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20,52,20,32" Spacing="16">
+        <VerticalStackLayout
+            Padding="20,52,20,32"
+            Spacing="16"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="640">
             <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
                 <Button
                     Text="‹"
@@ -26,18 +31,77 @@
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="14">
                     <sharedControls:IconSectionHeader Text="DEFAULT SYSTEM" IconGlyph="ChatSettings24" />
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                    <VerticalStackLayout Spacing="10">
                         <VerticalStackLayout Spacing="3">
                             <Label Text="{Binding UnitSystemText}" Style="{StaticResource CardTitle}" />
-                            <Label Text="Metric uses kg, g, cm, and km. Imperial uses lb, oz, in, and mi." Style="{StaticResource CaptionLabel}" />
+                            <Label Text="Metric uses kg, g, cm, and km. Imperial uses lb, oz, in, and mi."
+                                   Style="{StaticResource CaptionLabel}" />
                         </VerticalStackLayout>
-                        <Switch
-                            Grid.Column="1"
-                            IsToggled="{Binding UseMetricSystem}"
-                            OnColor="{StaticResource Primary}"
-                            ThumbColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
-                            VerticalOptions="Center" />
-                    </Grid>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Border
+                                Padding="12,10"
+                                MinimumHeightRequest="52"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 16"
+                                SemanticProperties.Description="Select Imperial units">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectImperialUnitsCommand}" />
+                                </Border.GestureRecognizers>
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label
+                                    Text="Imperial"
+                                    Style="{StaticResource BodyLabel}"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding UseImperialSystem}"
+                                                     Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource White}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+
+                            <Border
+                                Grid.Column="1"
+                                Padding="12,10"
+                                MinimumHeightRequest="52"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 16"
+                                SemanticProperties.Description="Select Metric units">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectMetricUnitsCommand}" />
+                                </Border.GestureRecognizers>
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label
+                                    Text="Metric"
+                                    Style="{StaticResource BodyLabel}"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding UseMetricSystem}"
+                                                     Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource White}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
 
@@ -47,7 +111,6 @@
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                         <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
                             <Label Text="Body weight" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Used for profile weight and workout loads." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="kg or lb" Text="{Binding BodyWeightUnit}" />
                             </Border>
@@ -55,7 +118,6 @@
 
                         <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
                             <Label Text="Food mass" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Default unit when logging ingredient amounts." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="g or oz" Text="{Binding FoodMassUnit}" />
                             </Border>
@@ -63,7 +125,6 @@
 
                         <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
                             <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Used for body metrics and plan estimates." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="cm or in" Text="{Binding HeightUnit}" />
                             </Border>
@@ -71,7 +132,6 @@
 
                         <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
                             <Label Text="Distance" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Used for cardio and walking-style sessions." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="km or mi" Text="{Binding DistanceUnit}" />
                             </Border>
@@ -79,7 +139,6 @@
 
                         <VerticalStackLayout Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Spacing="5">
                             <Label Text="Energy" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Used for nutrition totals and daily targets." Style="{StaticResource FormFieldHint}" />
                             <Border Style="{StaticResource InputContainer}">
                                 <Entry Placeholder="kcal" Text="{Binding EnergyUnit}" />
                             </Border>

@@ -1,9 +1,11 @@
-
+using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 using MuscleCuties.App.Pages.Auth;
 using MuscleCuties.App.Pages.Cycle;
 using MuscleCuties.App.Pages.Onboarding;
+using MuscleCuties.App.Pages.Dashboard;
 using MuscleCuties.App.Pages.Profile;
-using MuscleCuties.Core.Diagnostics;
+using MuscleCuties.App.Pages.Workout;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 
@@ -12,20 +14,25 @@ namespace MuscleCuties.App;
 public partial class AppShell : Shell
 {
     private readonly IServiceProvider _services;
-    private bool _isThemeHandlerAttached;
-    private bool _isResettingProfileRoute;
+    private readonly ILogger<AppShell> _logger;
+    private readonly Stopwatch _navigationStopwatch = new();
     private bool _isRedirectingFromGuard;
+    private bool _isResettingProfileRoute;
+    private bool _isThemeHandlerAttached;
+    private bool _authVerified;
 
-    public AppShell(IServiceProvider services)
+    public AppShell(
+        IServiceProvider services,
+        ILogger<AppShell> logger)
     {
         _services = services;
+        _logger = logger;
         InitializeComponent();
         AttachThemeHandler();
         ApplyTabIcons(ResolveTheme(Application.Current?.RequestedTheme ?? AppTheme.Unspecified));
 
+        Routing.RegisterRoute(nameof(DailyCheckInPage), typeof(DailyCheckInPage));
         Routing.RegisterRoute(nameof(RegisterPage), typeof(RegisterPage));
-        Routing.RegisterRoute(nameof(QuizPage), typeof(QuizPage));
-        Routing.RegisterRoute(nameof(ProfileSetupPage), typeof(ProfileSetupPage));
         Routing.RegisterRoute(nameof(CyclePhaseDetailPage), typeof(CyclePhaseDetailPage));
         Routing.RegisterRoute(nameof(ProfilePersonalInfoPage), typeof(ProfilePersonalInfoPage));
         Routing.RegisterRoute(nameof(ProfileNutritionSettingsPage), typeof(ProfileNutritionSettingsPage));
@@ -34,6 +41,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(ProfileUnitsDisplayPage), typeof(ProfileUnitsDisplayPage));
         Routing.RegisterRoute(nameof(ProfileFeedbackPage), typeof(ProfileFeedbackPage));
         Routing.RegisterRoute(nameof(ProfilePrivacyPage), typeof(ProfilePrivacyPage));
+        Routing.RegisterRoute(nameof(InjuryLogPage), typeof(InjuryLogPage));
     }
 
     protected override void OnNavigating(ShellNavigatingEventArgs args)
@@ -41,32 +49,35 @@ public partial class AppShell : Shell
         base.OnNavigating(args);
 
         var targetRoute = args.Target?.Location.OriginalString;
-        AppDebugLog.Write(
-            "Shell",
-            $"OnNavigating source={args.Source}, target='{targetRoute}', guarded={RequiresAuthenticatedUser(targetRoute)}.");
-        if (_isRedirectingFromGuard || !RequiresAuthenticatedUser(targetRoute))
+        _navigationStopwatch.Restart();
+        _logger.LogInformation("Navigation started. Target={TargetRoute}, Source={Source}.", targetRoute, args.Source);
+
+        if (IsAuthResetRoute(targetRoute))
+            _authVerified = false;
+
+        if (_isRedirectingFromGuard ||
+            _authVerified ||
+            !RequiresAuthenticatedUser(targetRoute))
             return;
 
         var deferral = args.GetDeferral();
-        _ = GuardAuthenticatedNavigationAsync(args, deferral, targetRoute!);
-    }
-
-    protected override void OnHandlerChanged()
-    {
-        base.OnHandlerChanged();
-        ApplyTabIcons(ResolveTheme(Application.Current?.RequestedTheme ?? AppTheme.Unspecified));
+        _ = VerifyAuthenticatedNavigationAsync(args, deferral, targetRoute!);
     }
 
     protected override void OnNavigated(ShellNavigatedEventArgs args)
     {
         base.OnNavigated(args);
+        _navigationStopwatch.Stop();
+        _logger.LogInformation(
+            "Navigation presented in {ElapsedMilliseconds} ms. Current={CurrentRoute}, Source={Source}.",
+            _navigationStopwatch.ElapsedMilliseconds,
+            args.Current?.Location.OriginalString,
+            args.Source);
 
         if (_isResettingProfileRoute ||
             !IsTabSwitch(args.Source) ||
             CurrentItem?.CurrentItem?.Route != "YouTab")
-        {
             return;
-        }
 
         var location = CurrentState?.Location?.OriginalString ?? string.Empty;
         if (location.EndsWith(nameof(ProfilePage), StringComparison.OrdinalIgnoreCase))
@@ -97,7 +108,10 @@ public partial class AppShell : Shell
 
     private void OnRequestedThemeChanged(object? sender, AppThemeChangedEventArgs e)
     {
-        void Apply() => ApplyTabIcons(ResolveTheme(e.RequestedTheme));
+        void Apply()
+        {
+            ApplyTabIcons(ResolveTheme(e.RequestedTheme));
+        }
 
         if (MainThread.IsMainThread)
             Apply();
@@ -125,12 +139,14 @@ public partial class AppShell : Shell
         return appInfoTheme == AppTheme.Unspecified ? AppTheme.Light : appInfoTheme;
     }
 
-    private static bool IsTabSwitch(ShellNavigationSource source) =>
-        source is ShellNavigationSource.ShellItemChanged or
+    private static bool IsTabSwitch(ShellNavigationSource source)
+    {
+        return source is ShellNavigationSource.ShellItemChanged or
             ShellNavigationSource.ShellSectionChanged or
             ShellNavigationSource.ShellContentChanged;
+    }
 
-    private async Task GuardAuthenticatedNavigationAsync(
+    private async Task VerifyAuthenticatedNavigationAsync(
         ShellNavigatingEventArgs args,
         ShellNavigatingDeferral deferral,
         string targetRoute)
@@ -138,44 +154,38 @@ public partial class AppShell : Shell
         string? redirectRoute = null;
         try
         {
-            AppDebugLog.Write("Shell", $"Guard start for target='{targetRoute}'.");
             using var scope = _services.CreateScope();
             var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var userId = await authService.GetCurrentUserIdAsync();
-            AppDebugLog.Write("Shell", $"Guard current user id={userId}.");
+            var userId = await Task.Run(authService.GetCurrentUserIdAsync);
             if (userId <= 0)
             {
                 args.Cancel();
                 redirectRoute = "//LoginPage";
-                AppDebugLog.Write("Shell", "Guard redirect: no current user.");
             }
             else
             {
                 var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-                var user = await userRepository.GetByIdAsync(userId);
+                var user = await Task.Run(() => userRepository.GetByIdAsync(userId));
                 if (user is null)
                 {
-                    await authService.LogoutAsync();
+                    await Task.Run(authService.LogoutAsync);
                     args.Cancel();
                     redirectRoute = "//LoginPage";
-                    AppDebugLog.Write("Shell", "Guard redirect: token user row missing.");
                 }
                 else if (!user.IsOnboardingComplete && !AllowsOnboardingRoute(targetRoute))
                 {
                     args.Cancel();
-                    redirectRoute = nameof(ProfileSetupPage);
-                    AppDebugLog.Write("Shell", $"Guard redirect: onboarding incomplete for target='{targetRoute}'.");
+                    redirectRoute = $"//{nameof(ProfileSetupPage)}";
                 }
                 else
                 {
-                    AppDebugLog.Write("Shell", $"Guard allowed target='{targetRoute}'.");
+                    _authVerified = true;
                 }
             }
         }
         catch (Exception ex)
         {
-            AppDebugLog.Error("Shell", ex, $"Guard failed for target='{targetRoute}'");
-            throw;
+            _logger.LogError(ex, "Navigation preparation failed for route {Route}.", targetRoute);
         }
         finally
         {
@@ -188,9 +198,11 @@ public partial class AppShell : Shell
         _isRedirectingFromGuard = true;
         try
         {
-            AppDebugLog.Write("Shell", $"Guard navigating to redirect='{redirectRoute}'.");
-            await MainThread.InvokeOnMainThreadAsync(() => GoToAsync(redirectRoute, false));
-            AppDebugLog.Write("Shell", $"Guard redirect complete='{redirectRoute}'.");
+            await MainThread.InvokeOnMainThreadAsync(async () => { await GoToAsync(redirectRoute, false); });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Navigation guard redirect failed for route {Route}.", redirectRoute);
         }
         finally
         {
@@ -203,7 +215,8 @@ public partial class AppShell : Shell
         if (string.IsNullOrWhiteSpace(route))
             return false;
 
-        return ContainsRoute(route, "DashboardPage") ||
+        return ContainsRoute(route, "DailyCheckIn") ||
+               ContainsRoute(route, "DashboardPage") ||
                ContainsRoute(route, "QuizPage") ||
                ContainsRoute(route, "ProfileSetupPage") ||
                ContainsRoute(route, "Cycle") ||
@@ -213,10 +226,22 @@ public partial class AppShell : Shell
                ContainsRoute(route, "MainTab");
     }
 
-    private static bool ContainsRoute(string route, string segment) =>
-        route.Contains(segment, StringComparison.OrdinalIgnoreCase);
+    private static bool ContainsRoute(string route, string segment)
+    {
+        return route.Contains(segment, StringComparison.OrdinalIgnoreCase);
+    }
 
-    private static bool AllowsOnboardingRoute(string route) =>
-        ContainsRoute(route, nameof(QuizPage)) ||
-        ContainsRoute(route, nameof(ProfileSetupPage));
+    private static bool AllowsOnboardingRoute(string route)
+    {
+        return ContainsRoute(route, nameof(QuizPage)) ||
+               ContainsRoute(route, nameof(ProfileSetupPage));
+    }
+
+    private static bool IsAuthResetRoute(string? route)
+    {
+        if (string.IsNullOrWhiteSpace(route))
+            return false;
+
+        return ContainsRoute(route, "Login") || ContainsRoute(route, "Register");
+    }
 }

@@ -1,18 +1,95 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentView
     x:Class="MuscleCuties.App.Controls.Workout.FeaturedWorkoutCard"
     x:Name="Root"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core">
 
     <Border Style="{StaticResource CardPrimary}">
         <VerticalStackLayout Spacing="12">
-            <Border
-                HeightRequest="4"
-                BackgroundColor="{Binding AccentColor, Source={x:Reference Root}}"
-                StrokeThickness="0"
-                StrokeShape="RoundRectangle 2" />
 
+            <!-- Activity type color split -->
+            <Grid HeightRequest="48" ColumnSpacing="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Single activity: full width -->
+                <Border
+                    Grid.ColumnSpan="2"
+                    StrokeShape="RoundRectangle 10"
+                    StrokeThickness="0"
+                    Padding="14,0"
+                    BackgroundColor="{Binding AccentColor, Source={x:Reference Root}}"
+                    IsVisible="{Binding HasSingleActivity, Source={x:Reference Root}}">
+                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center" HorizontalOptions="Center">
+                        <Label
+                            Text="{Binding PrimaryActivityTitle, Source={x:Reference Root}}"
+                            TextColor="{Binding AccentTextColor, Source={x:Reference Root}}"
+                            FontSize="13"
+                            FontAttributes="Bold"
+                            VerticalOptions="Center" />
+                        <Label
+                            Text="{Binding PrimaryActivityCount, Source={x:Reference Root}}"
+                            TextColor="{Binding AccentTextColor, Source={x:Reference Root}}"
+                            FontSize="12"
+                            Opacity="0.8"
+                            VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </Border>
+
+                <!-- Multiple activities: 50/50 split -->
+                <Border
+                    Grid.Column="0"
+                    StrokeShape="RoundRectangle 10,0,10,0"
+                    StrokeThickness="0"
+                    Padding="10,0"
+                    BackgroundColor="{Binding PrimaryActivityBackground, Source={x:Reference Root}}"
+                    IsVisible="{Binding HasMultipleActivities, Source={x:Reference Root}}">
+                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="1">
+                        <Label
+                            Text="{Binding PrimaryActivityTitle, Source={x:Reference Root}}"
+                            TextColor="{Binding PrimaryActivityTextColor, Source={x:Reference Root}}"
+                            FontSize="12"
+                            FontAttributes="Bold"
+                            HorizontalOptions="Center" />
+                        <Label
+                            Text="{Binding PrimaryActivityCount, Source={x:Reference Root}}"
+                            TextColor="{Binding PrimaryActivityTextColor, Source={x:Reference Root}}"
+                            FontSize="10"
+                            Opacity="0.8"
+                            HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border
+                    Grid.Column="1"
+                    StrokeShape="RoundRectangle 0,10,0,10"
+                    StrokeThickness="0"
+                    Padding="10,0"
+                    BackgroundColor="{Binding SecondaryActivityBackground, Source={x:Reference Root}}"
+                    IsVisible="{Binding HasMultipleActivities, Source={x:Reference Root}}">
+                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="1">
+                        <Label
+                            Text="{Binding SecondaryActivityTitle, Source={x:Reference Root}}"
+                            TextColor="{Binding SecondaryActivityTextColor, Source={x:Reference Root}}"
+                            FontSize="12"
+                            FontAttributes="Bold"
+                            HorizontalOptions="Center" />
+                        <Label
+                            Text="{Binding SecondaryActivityCount, Source={x:Reference Root}}"
+                            TextColor="{Binding SecondaryActivityTextColor, Source={x:Reference Root}}"
+                            FontSize="10"
+                            Opacity="0.8"
+                            HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <!-- Badge -->
             <HorizontalStackLayout Spacing="6">
                 <BoxView
                     WidthRequest="6"
@@ -29,6 +106,7 @@
                     VerticalOptions="Center" />
             </HorizontalStackLayout>
 
+            <!-- Title and subtitle -->
             <VerticalStackLayout Spacing="4">
                 <Label
                     Text="{Binding WorkoutTitle, Source={x:Reference Root}}"
@@ -42,6 +120,7 @@
                     LineBreakMode="WordWrap" />
             </VerticalStackLayout>
 
+            <!-- Metrics row -->
             <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8" Margin="0,2,0,0">
                 <Border Style="{StaticResource WorkoutMetricTile}">
                     <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
@@ -71,12 +150,14 @@
                 </Border>
             </Grid>
 
+            <!-- Action button -->
             <Border
                 BackgroundColor="{Binding AccentTextColor, Source={x:Reference Root}}"
                 StrokeThickness="0"
                 StrokeShape="RoundRectangle 15"
                 HeightRequest="56"
-                Margin="0,2,0,0">
+                Margin="0,2,0,0"
+                SemanticProperties.Description="{Binding ActionText, Source={x:Reference Root}}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding StartCommand, Source={x:Reference Root}}" />
                 </Border.GestureRecognizers>

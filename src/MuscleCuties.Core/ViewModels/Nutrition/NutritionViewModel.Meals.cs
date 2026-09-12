@@ -2,9 +2,14 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.Core.Models.Enums.Nutrition;
+using MuscleCuties.Core.Models.Nutrition;
+using MuscleCuties.Core.Models.Nutrition.Inputs;
 using MuscleCuties.Core.Models.UI.Nutrition;
+using Microsoft.Extensions.DependencyInjection;
+using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Nutrition;
-using MuscleCuties.Core.Services.Nutrition.Inputs;
+using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Nutrition;
 
@@ -69,7 +74,11 @@ public partial class NutritionViewModel
         IsBusy = true;
         try
         {
-            var userId = await _authService.GetCurrentUserIdAsync();
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
+
+            var userId = await authService.GetCurrentUserIdAsync();
             var loggedAt = DateTime.Today.Add(SelectedMealTime);
             var ingredients = MealIngredients
                 .Select(i => new MealIngredientInput(i.FoodItemId, i.Grams))
@@ -77,7 +86,7 @@ public partial class NutritionViewModel
 
             if (IsEditingMeal)
             {
-                await _nutritionService.UpdateMealAsync(
+                await nutritionService.UpdateMealAsync(
                     userId,
                     _editingMealId,
                     ingredients,
@@ -87,7 +96,7 @@ public partial class NutritionViewModel
             }
             else
             {
-                await _nutritionService.LogMealAsync(
+                await nutritionService.LogMealAsync(
                     userId,
                     ingredients,
                     SelectedMealType,
@@ -109,7 +118,7 @@ public partial class NutritionViewModel
             _editingMealId = 0;
 
             _loadGate.MarkStale();
-            await _loadGate.RunAsync(LoadDataCoreAsync, force: true);
+            await _loadGate.RunAsync(LoadDataCoreAsync, true);
         }
         catch (InvalidOperationException ex)
         {
@@ -137,8 +146,12 @@ public partial class NutritionViewModel
         IsBusy = true;
         try
         {
-            var userId = await _authService.GetCurrentUserIdAsync();
-            var loggedMeal = await _nutritionService.GetLoggedMealAsync(userId, meal.LoggedMealId);
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
+
+            var userId = await authService.GetCurrentUserIdAsync();
+            var loggedMeal = await nutritionService.GetLoggedMealAsync(userId, meal.LoggedMealId);
 
             if (loggedMeal is null)
             {
@@ -154,27 +167,95 @@ public partial class NutritionViewModel
         }
     }
 
-    private void ApplyReadyMealTemplate(MealTemplateItem? template)
+    private async Task SetBreakfastPreferenceAsync(string? preference)
     {
-        if (template is null || template.Ingredients.Count == 0)
+        if (string.IsNullOrWhiteSpace(preference))
             return;
 
-        MealIngredients.Clear();
-        foreach (var ingredient in template.Ingredients)
-            MealIngredients.Add(CopyIngredient(ingredient));
+        BreakfastPreference = Enum.TryParse<BreakfastPreference>(preference, true, out var parsed)
+            ? parsed
+            : BreakfastPreference.Savoury;
 
-        SelectedMealType = template.MealType;
-        if (!IsEditingMeal)
-            SelectedMealTime = DateTime.Now.TimeOfDay;
+        OnPropertyChanged(nameof(IsSavouryBreakfast));
+        OnPropertyChanged(nameof(IsSweetBreakfast));
 
-        IsAddFoodPanelVisible = true;
-        IsFoodFinderExpanded = false;
-        SelectedFoodResult = null;
-        SearchQuery = string.Empty;
-        FoodSearchResults = [];
-        ResetFoodSearchPaging();
-        AddFoodMessage = $"{template.Name} added. Adjust the time or log it.";
-        NotifyMealIngredientProperties();
+        using var scope = _scopeFactory.CreateScope();
+        var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+        var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
+
+        var userId = await authService.GetCurrentUserIdAsync();
+        var plan = await nutritionService.GetDailyPlanAsync(userId, CurrentPhase, DateTime.Today, BreakfastPreference);
+        TargetCalories = plan.Calories;
+        TargetProtein = plan.Protein;
+        TargetCarbs = plan.Carbs;
+        TargetFats = plan.Fats;
+        NotifyDisplayProperties();
+        NotifyMealTargetProperties();
+
+        await LoadMealIdeasAsync(userId, CurrentPhase);
+    }
+
+    private async Task LoadMealIdeasAsync(int userId, CyclePhase phase)
+    {
+        IsLoadingMealIdeas = true;
+        NotifyMealIdeaProperties();
+
+        try
+        {
+            using var ideaScope = _scopeFactory.CreateScope();
+            var nutritionService = ideaScope.ServiceProvider.GetRequiredService<INutritionService>();
+
+            var mealTypes = new[] { MealType.Breakfast, MealType.Lunch, MealType.Dinner, MealType.Snack };
+            foreach (var mealType in mealTypes)
+            {
+                var suggestions = await DataLoadScheduler.RunAsync(() =>
+                    nutritionService.GetSuggestedMealsAsync(
+                        userId, mealType, BreakfastPreference, phase, DateTime.Today));
+
+                var items = suggestions.Select(MealSuggestionItem.FromSuggestedMeal).ToList();
+
+                switch (mealType)
+                {
+                    case MealType.Breakfast:
+                        BreakfastSuggestions = new ObservableCollection<MealSuggestionItem>(items);
+                        break;
+                    case MealType.Lunch:
+                        LunchSuggestions = new ObservableCollection<MealSuggestionItem>(items);
+                        break;
+                    case MealType.Dinner:
+                        DinnerSuggestions = new ObservableCollection<MealSuggestionItem>(items);
+                        break;
+                    case MealType.Snack:
+                        SnackSuggestions = new ObservableCollection<MealSuggestionItem>(items);
+                        break;
+                }
+            }
+        }
+        catch
+        {
+        }
+        finally
+        {
+            IsLoadingMealIdeas = false;
+            NotifyMealIdeaProperties();
+        }
+    }
+
+    private void NotifyMealIdeaProperties()
+    {
+        OnPropertyChanged(nameof(HasBreakfastSuggestions));
+        OnPropertyChanged(nameof(HasLunchSuggestions));
+        OnPropertyChanged(nameof(HasDinnerSuggestions));
+        OnPropertyChanged(nameof(HasSnackSuggestions));
+        OnPropertyChanged(nameof(HasAnyMealIdeas));
+    }
+
+    private void NotifyMealTargetProperties()
+    {
+        OnPropertyChanged(nameof(BreakfastTargetText));
+        OnPropertyChanged(nameof(LunchTargetText));
+        OnPropertyChanged(nameof(DinnerTargetText));
+        OnPropertyChanged(nameof(SnackTargetText));
     }
 
     private void BeginMealEdit(LoggedMeal meal)
@@ -250,8 +331,9 @@ public partial class NutritionViewModel
         };
     }
 
-    private static MealIngredientItem CreateIngredient(MealIngredientItem ingredient, float grams) =>
-        new()
+    private static MealIngredientItem CreateIngredient(MealIngredientItem ingredient, float grams)
+    {
+        return new MealIngredientItem
         {
             FoodItemId = ingredient.FoodItemId,
             Name = ingredient.Name,
@@ -264,9 +346,11 @@ public partial class NutritionViewModel
             Fats = ingredient.Fats,
             SourceSummary = ingredient.SourceSummary
         };
+    }
 
-    private static MealIngredientItem CreateIngredient(FoodItem food, float grams) =>
-        new()
+    private static MealIngredientItem CreateIngredient(FoodItem food, float grams)
+    {
+        return new MealIngredientItem
         {
             FoodItemId = food.Id,
             Name = food.Name,
@@ -279,9 +363,11 @@ public partial class NutritionViewModel
             Fats = food.Fats,
             SourceSummary = BuildSourceSummary(food)
         };
+    }
 
-    private static MealIngredientItem CopyIngredient(MealIngredientItem ingredient) =>
-        new()
+    private static MealIngredientItem CopyIngredient(MealIngredientItem ingredient)
+    {
+        return new MealIngredientItem
         {
             FoodItemId = ingredient.FoodItemId,
             Name = ingredient.Name,
@@ -294,10 +380,15 @@ public partial class NutritionViewModel
             Fats = ingredient.Fats,
             SourceSummary = ingredient.SourceSummary
         };
+    }
 
     private async Task<MacroNutrients> LoadMealsAsync(int userId)
     {
-        var meals = await _nutritionService.GetLoggedMealsByDateAsync(userId, DateTime.Today);
+        using var mealScope = _scopeFactory.CreateScope();
+        var nutritionService = mealScope.ServiceProvider.GetRequiredService<INutritionService>();
+
+        var meals = await DataLoadScheduler.RunAsync(() =>
+            nutritionService.GetLoggedMealsByDateAsync(userId, DateTime.Today));
         var mealList = meals.ToList();
         var allEntries = meals.SelectMany(meal => meal.Entries).ToList();
 
@@ -309,12 +400,6 @@ public partial class NutritionViewModel
         return MacroNutrients.SumMealEntries(allEntries);
     }
 
-    private async Task LoadReadyMealTemplatesAsync(int userId, CyclePhase phase)
-    {
-        var templates = await _nutritionService.GetReadyMealTemplatesAsync(userId, phase, DateTime.Today) ?? [];
-        ReadyMealTemplates = new ObservableCollection<MealTemplateItem>(
-            templates.Select(BuildMealTemplateItem));
-    }
 
     private void ReplaceMeals(IEnumerable<MealItem> meals)
     {
@@ -375,25 +460,6 @@ public partial class NutritionViewModel
         return cleanName.Length <= 24 ? cleanName : $"{cleanName[..21]}...";
     }
 
-    private static MealTemplateItem BuildMealTemplateItem(MealTemplate template)
-    {
-        var ingredients = template.Entries
-            .Where(entry => entry.FoodItem is not null)
-            .Select(entry => CreateIngredient(entry.FoodItem!, entry.Grams))
-            .ToList();
-        var calories = ingredients.Sum(ingredient => ingredient.CaloriesForAmount);
-        var ingredientLabel = ingredients.Count == 1 ? "ingredient" : "ingredients";
-
-        return new MealTemplateItem
-        {
-            MealTemplateId = template.Id,
-            Name = template.Name,
-            Description = template.Description ?? string.Empty,
-            MealType = template.MealType,
-            SummaryText = $"{ingredients.Count} {ingredientLabel} · {calories:N0} kcal",
-            Ingredients = ingredients
-        };
-    }
 
     private void NotifyMealIngredientProperties()
     {
@@ -404,13 +470,17 @@ public partial class NutritionViewModel
         LogMealCommand.NotifyCanExecuteChanged();
     }
 
-    private bool CanAddIngredient() =>
-        !IsBusy &&
-        SelectedFoodResult is not null &&
-        SelectedServingOption is not null &&
-        HasCalories(SelectedFoodResult.Calories) &&
-        TryParseAmount(FoodGrams, out _);
+    private bool CanAddIngredient()
+    {
+        return !IsBusy &&
+               SelectedFoodResult is not null &&
+               SelectedServingOption is not null &&
+               HasCalories(SelectedFoodResult.Calories) &&
+               TryParseAmount(FoodGrams, out _);
+    }
 
-    private bool CanLogMeal() =>
-        !IsBusy && MealIngredients.Count > 0;
+    private bool CanLogMeal()
+    {
+        return !IsBusy && MealIngredients.Count > 0;
+    }
 }

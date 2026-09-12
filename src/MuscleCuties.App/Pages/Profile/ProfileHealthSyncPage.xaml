@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage
     x:Class="MuscleCuties.App.Pages.Profile.ProfileHealthSyncPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -9,7 +10,11 @@
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20,52,20,32" Spacing="16">
+        <VerticalStackLayout
+            Padding="20,52,20,32"
+            Spacing="16"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="640">
             <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
                 <Button
                     Text="‹"
@@ -34,7 +39,7 @@
                     <VerticalStackLayout Grid.Column="1" Spacing="7">
                         <Label Text="Make planning less blind" Style="{StaticResource SectionTitle}" />
                         <Label
-                            Text="MuscleCuties only keeps weekly averages needed for planning: steps, sleep, sleep quality, resting heart rate, and HRV when a provider supports them."
+                            Text="Health sync is paused while native providers are being isolated. No Apple Health, Health Connect, or Whoop data is read in this build."
                             Style="{StaticResource BodyLabel}" />
                     </VerticalStackLayout>
                 </Grid>
@@ -75,98 +80,15 @@
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <VerticalStackLayout Spacing="3">
                             <Label Text="Calories" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Weekly steps can gently raise or lower daily targets." Style="{StaticResource FormFieldHint}" />
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="1" Spacing="3">
                             <Label Text="Today's plan" Style="{StaticResource FormFieldLabel}" />
-                            <Label Text="Readiness adjusts sets, cardio length, and recovery time." Style="{StaticResource FormFieldHint}" />
                         </VerticalStackLayout>
                     </Grid>
                 </VerticalStackLayout>
             </Border>
 
-            <sharedControls:IconSectionHeader
-                Text="CONNECT"
-                IconGlyph="LinkSquare24"
-                Margin="4,6,4,0" />
-
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <Border
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="0"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                        Padding="12">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ConnectAppleHealthCommand}" />
-                        </Border.GestureRecognizers>
-                        <Grid ColumnDefinitions="38,*,Auto" ColumnSpacing="12">
-                            <Border WidthRequest="38" HeightRequest="38" StrokeThickness="0" StrokeShape="RoundRectangle 12" BackgroundColor="{StaticResource White}">
-                                <Image Source="health_apple.png" Aspect="AspectFit" Margin="4" />
-                            </Border>
-                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                <HorizontalStackLayout Spacing="7">
-                                    <Label Text="Apple Health" Style="{StaticResource CardTitle}" />
-                                    <BoxView
-                                        IsVisible="{Binding IsAppleHealthConnected}"
-                                        WidthRequest="7"
-                                        HeightRequest="7"
-                                        CornerRadius="3.5"
-                                        BackgroundColor="{StaticResource ReadinessHighLight}"
-                                        VerticalOptions="Center" />
-                                </HorizontalStackLayout>
-                                <Label Text="Steps and sleep from iPhone." Style="{StaticResource CaptionLabel}" />
-                            </VerticalStackLayout>
-                            <Image
-                                Grid.Column="2"
-                                Source="{Binding Source='ChevronRight24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                Aspect="AspectFit"
-                                VerticalOptions="Center" />
-                        </Grid>
-                    </Border>
-
-                    <Border
-                        StrokeShape="RoundRectangle 16"
-                        StrokeThickness="0"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                        Padding="12">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ConnectWhoopCommand}" />
-                        </Border.GestureRecognizers>
-                        <Grid ColumnDefinitions="38,*,Auto" ColumnSpacing="12">
-                            <Border WidthRequest="38" HeightRequest="38" StrokeThickness="0" StrokeShape="RoundRectangle 12" BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
-                                <Image Source="health_whoop.png" Aspect="AspectFit" Margin="1" />
-                            </Border>
-                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                <HorizontalStackLayout Spacing="7">
-                                    <Label Text="Whoop" Style="{StaticResource CardTitle}" />
-                                    <BoxView
-                                        IsVisible="{Binding IsWhoopConnected}"
-                                        WidthRequest="7"
-                                        HeightRequest="7"
-                                        CornerRadius="3.5"
-                                        BackgroundColor="{StaticResource ReadinessHighLight}"
-                                        VerticalOptions="Center" />
-                                </HorizontalStackLayout>
-                                <Label Text="Direct recovery and sleep sync." Style="{StaticResource CaptionLabel}" />
-                            </VerticalStackLayout>
-                            <Image
-                                Grid.Column="2"
-                                Source="{Binding Source='ChevronRight24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                Aspect="AspectFit"
-                                VerticalOptions="Center" />
-                        </Grid>
-                    </Border>
-
-                    <Label
-                        Text="If nothing is connected, readiness is estimated from what you log manually. Whoop uses OAuth and stores only secure access tokens plus weekly planning summaries."
-                        Style="{StaticResource FormFieldHint}" />
-                </VerticalStackLayout>
-            </Border>
+            <!-- TODO(health-sync): Restore provider connection controls after native-provider diagnostics are complete. -->
 
             <Label
                 Text="{Binding StatusMessage}"

@@ -4,10 +4,11 @@ using Microsoft.Maui.Graphics;
 
 namespace MuscleCuties.Core.Models.UI.Workout;
 
-public partial class WorkoutActivitySectionItem : ObservableObject
+public class WorkoutActivitySectionItem : ObservableObject
 {
     public int OrderIndex { get; init; }
     public int TotalActivities { get; init; }
+
     public string OrderText => TotalActivities <= 1
         ? "Activity block"
         : OrderIndex <= 1
@@ -15,6 +16,7 @@ public partial class WorkoutActivitySectionItem : ObservableObject
             : OrderIndex >= TotalActivities
                 ? "Finish here"
                 : "Then continue";
+
     public string Tag { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
     public string Subtitle { get; init; } = string.Empty;

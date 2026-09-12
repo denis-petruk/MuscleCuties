@@ -22,7 +22,6 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(CarbsProgress));
         OnPropertyChanged(nameof(FatsText));
         OnPropertyChanged(nameof(FatsProgress));
-        OnPropertyChanged(nameof(DayFiberText));
     }
 
     partial void OnConsumedCaloriesChanged(float value)
@@ -65,7 +64,6 @@ public partial class NutritionViewModel
     {
         OnPropertyChanged(nameof(HasFoodSearchResults));
         OnPropertyChanged(nameof(ShowBrowseMoreFoods));
-        OnPropertyChanged(nameof(FoodSearchResultsTitle));
         BrowseMoreFoodsCommand.NotifyCanExecuteChanged();
     }
 
@@ -97,31 +95,6 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(HasNoMeals));
     }
 
-    partial void OnReadyMealTemplatesChanged(ObservableCollection<MealTemplateItem> value)
-    {
-        OnPropertyChanged(nameof(HasReadyMealTemplates));
-    }
-
-    partial void OnMicronutrientsChanged(ObservableCollection<DailyMicronutrientItem> value)
-    {
-        OnPropertyChanged(nameof(MicronutrientSummaryText));
-        OnPropertyChanged(nameof(DayFiberText));
-    }
-
-    partial void OnSelectedBreakdownMacroItemsChanged(ObservableCollection<MacroBreakdownItem> value)
-    {
-        OnPropertyChanged(nameof(HasSelectedBreakdownMacroItems));
-    }
-
-    partial void OnSelectedBreakdownMicronutrientsChanged(ObservableCollection<DailyMicronutrientItem> value)
-    {
-        OnPropertyChanged(nameof(HasSelectedBreakdownMicronutrients));
-    }
-
-    partial void OnSelectedMealTimeChanged(TimeSpan value)
-    {
-        OnPropertyChanged(nameof(SelectedMealTimeText));
-    }
 
     partial void OnSelectedFoodResultChanged(FoodSearchResultItem? value)
     {
@@ -131,7 +104,6 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(SelectedFoodText));
         OnPropertyChanged(nameof(SelectedFoodSourceText));
         OnPropertyChanged(nameof(HasSelectedFoodSource));
-        OnPropertyChanged(nameof(SelectedFoodServingText));
         OnPropertyChanged(nameof(SelectedFoodAmountText));
         AddIngredientCommand.NotifyCanExecuteChanged();
     }
@@ -147,7 +119,6 @@ public partial class NutritionViewModel
         if (!_isApplyingServingDefaults)
             ApplyDefaultServingAmount(SelectedFoodResult, value);
 
-        OnPropertyChanged(nameof(SelectedFoodServingText));
         OnPropertyChanged(nameof(SelectedFoodAmountText));
         AddIngredientCommand.NotifyCanExecuteChanged();
     }

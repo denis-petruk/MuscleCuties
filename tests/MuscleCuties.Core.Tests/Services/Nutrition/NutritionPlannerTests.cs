@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Models.Nutrition.Planning;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Nutrition.Planning;
 
@@ -9,16 +10,16 @@ namespace MuscleCuties.Core.Tests.Services.Nutrition;
 
 public class NutritionPlannerTests
 {
-    private readonly NutritionPlanner _planner = new(new CalorieCalculator());
     private readonly DateTime _date = new(2026, 8, 11);
+    private readonly NutritionPlanner _planner = new(new CalorieCalculator());
 
     [Fact]
     public void CreateDailyPlan_StrengthProfile_CreatesSmallSurplusAndMealTargets()
     {
         var profile = CreateProfile(
             UserGoal.Strength,
-            workoutDaysPerWeek: 5,
-            experienceLevel: TrainingExperienceLevel.Advanced);
+            5,
+            TrainingExperienceLevel.Advanced);
 
         var plan = _planner.CreateDailyPlan(profile, CyclePhase.Follicular, _date);
 
@@ -86,8 +87,9 @@ public class NutritionPlannerTests
     private static UserProfile CreateProfile(
         UserGoal goal,
         int workoutDaysPerWeek = 4,
-        TrainingExperienceLevel experienceLevel = TrainingExperienceLevel.Intermediate) =>
-        new()
+        TrainingExperienceLevel experienceLevel = TrainingExperienceLevel.Intermediate)
+    {
+        return new UserProfile
         {
             UserId = 1,
             Name = "Test",
@@ -101,4 +103,5 @@ public class NutritionPlannerTests
             CycleLength = 28,
             UpdatedAt = DateTime.UtcNow
         };
+    }
 }

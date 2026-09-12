@@ -2,12 +2,14 @@ using System.Globalization;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Entities.Users;
+using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Models.Nutrition.Planning;
 using MuscleCuties.Core.Models.UI.Common;
 using MuscleCuties.Core.Models.UI.Profile;
 using MuscleCuties.Core.Repositories.Users;
+using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Nutrition.Planning;
@@ -19,76 +21,83 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
     private const float MinimumEditableCalories = 1000f;
     private const float MaximumEditableCalories = 5000f;
 
+    private readonly IAppPreloadService _preloadService;
     private readonly IAuthService _authService;
-    private readonly IUserRepository _userRepository;
     private readonly ICycleService _cycleService;
+    private readonly Func<Task> _navigateBackAsync;
     private readonly INutritionPlanner _nutritionPlanner;
-    private readonly Action _navigateBack;
-    private UserProfile? _loadedProfile;
-    private CyclePhase _currentPhase = CyclePhase.Follicular;
-    private bool _hasSavedCustomGoals;
-    private bool _isSyncingTargets;
-
-    [ObservableProperty] private UserGoal _goal;
-    [ObservableProperty] private WeightGoalPace _weightGoalPace;
-    [ObservableProperty] private SelectionOption<UserGoal>? _selectedGoalOption;
-    [ObservableProperty] private SelectionOption<WeightGoalPace>? _selectedWeightGoalPaceOption;
-    [ObservableProperty] private bool _isVegetarian;
-    [ObservableProperty] private bool _isVegan;
-    [ObservableProperty] private bool _isGlutenFree;
-    [ObservableProperty] private bool _isLactoseFree;
+    private readonly IUserRepository _userRepository;
     [ObservableProperty] private bool _areAdvancedSettingsVisible;
+    [ObservableProperty] private string _calciumGoal = string.Empty;
     [ObservableProperty] private string _caloriesGoal = string.Empty;
-    [ObservableProperty] private string _proteinGoal = string.Empty;
     [ObservableProperty] private string _carbsGoal = string.Empty;
+    private CyclePhase _currentPhase = CyclePhase.Follicular;
     [ObservableProperty] private string _fatsGoal = string.Empty;
     [ObservableProperty] private string _fiberGoal = string.Empty;
-    [ObservableProperty] private string _waterGoal = string.Empty;
+    [ObservableProperty] private string _folateGoal = string.Empty;
+
+    [ObservableProperty] private UserGoal _goal;
+    private bool _hasSavedCustomGoals;
     [ObservableProperty] private string _ironGoal = string.Empty;
+    [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private bool _isGlutenFree;
+    [ObservableProperty] private bool _isLactoseFree;
+    private bool _isSyncingTargets;
+    [ObservableProperty] private bool _isVegan;
+    [ObservableProperty] private bool _isVegetarian;
+    private UserProfile? _loadedProfile;
+    [ObservableProperty] private string _magnesiumGoal = string.Empty;
+    [ObservableProperty] private string _potassiumGoal = string.Empty;
+    [ObservableProperty] private string _proteinGoal = string.Empty;
+    [ObservableProperty] private SelectionOption<UserGoal>? _selectedGoalOption;
+    [ObservableProperty] private SelectionOption<WeightGoalPace>? _selectedWeightGoalPaceOption;
+    [ObservableProperty] private string _statusMessage = string.Empty;
+    [ObservableProperty] private string _vitaminAGoal = string.Empty;
     [ObservableProperty] private string _vitaminB12Goal = string.Empty;
+    [ObservableProperty] private string _vitaminB6Goal = string.Empty;
     [ObservableProperty] private string _vitaminCGoal = string.Empty;
     [ObservableProperty] private string _vitaminDGoal = string.Empty;
-    [ObservableProperty] private string _vitaminAGoal = string.Empty;
-    [ObservableProperty] private string _vitaminB6Goal = string.Empty;
-    [ObservableProperty] private string _folateGoal = string.Empty;
-    [ObservableProperty] private string _calciumGoal = string.Empty;
-    [ObservableProperty] private string _magnesiumGoal = string.Empty;
+    [ObservableProperty] private string _waterGoal = string.Empty;
+    [ObservableProperty] private WeightGoalPace _weightGoalPace;
     [ObservableProperty] private string _zincGoal = string.Empty;
-    [ObservableProperty] private string _potassiumGoal = string.Empty;
-    [ObservableProperty] private string _statusMessage = string.Empty;
-    [ObservableProperty] private bool _isBusy;
-
-    public IReadOnlyList<SelectionOption<UserGoal>> GoalOptions { get; } = ProfileSelectionOptions.Goals;
-    public IReadOnlyList<SelectionOption<WeightGoalPace>> WeightGoalPaceOptions { get; } =
-        ProfileSelectionOptions.WeightGoalPaces;
-    public bool IsGoalPaceVisible => ProfileSelectionOptions.UsesWeightGoalPace(Goal);
-    public string AdvancedSettingsButtonText => AreAdvancedSettingsVisible
-        ? "Hide advanced settings"
-        : "Advanced settings";
-    public AsyncRelayCommand LoadDataCommand { get; }
-    public AsyncRelayCommand SaveCommand { get; }
-    public RelayCommand BackCommand { get; }
-    public RelayCommand ToggleAdvancedSettingsCommand { get; }
 
     public ProfileNutritionSettingsViewModel(
         IAuthService authService,
         IUserRepository userRepository,
         ICycleService cycleService,
         INutritionPlanner nutritionPlanner,
-        Action navigateBack)
+        IAppPreloadService preloadService,
+        Func<Task> navigateBackAsync)
     {
         _authService = authService;
         _userRepository = userRepository;
         _cycleService = cycleService;
         _nutritionPlanner = nutritionPlanner;
-        _navigateBack = navigateBack;
+        _preloadService = preloadService;
+        _navigateBackAsync = navigateBackAsync;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
-        BackCommand = new RelayCommand(_navigateBack);
+        BackCommand = new AsyncRelayCommand(_navigateBackAsync);
         ToggleAdvancedSettingsCommand = new RelayCommand(ToggleAdvancedSettings);
         SelectedGoalOption = GoalOptions.First(option => option.Value == Goal);
         SelectedWeightGoalPaceOption = WeightGoalPaceOptions.First(option => option.Value == WeightGoalPace);
     }
+
+    public IReadOnlyList<SelectionOption<UserGoal>> GoalOptions { get; } = ProfileSelectionOptions.Goals;
+
+    public IReadOnlyList<SelectionOption<WeightGoalPace>> WeightGoalPaceOptions { get; } =
+        ProfileSelectionOptions.WeightGoalPaces;
+
+    public bool IsGoalPaceVisible => ProfileSelectionOptions.UsesWeightGoalPace(Goal);
+
+    public string AdvancedSettingsButtonText => AreAdvancedSettingsVisible
+        ? "Hide advanced settings"
+        : "Advanced settings";
+
+    public AsyncRelayCommand LoadDataCommand { get; }
+    public AsyncRelayCommand SaveCommand { get; }
+    public AsyncRelayCommand BackCommand { get; }
+    public RelayCommand ToggleAdvancedSettingsCommand { get; }
 
     private async Task LoadDataAsync()
     {
@@ -156,6 +165,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
                 profile.NutritionGoalsJson = goals.HasAnyValue ? goals.ToJson() : string.Empty;
                 _hasSavedCustomGoals = goals.HasAnyValue;
             }
+
             profile.UpdatedAt = DateTime.UtcNow;
 
             await _userRepository.UpdateProfileAsync(profile);
@@ -173,8 +183,9 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
                 CreatedAt = DateTime.UtcNow
             });
 
+            _preloadService.InvalidateAll();
             StatusMessage = "Nutrition settings saved.";
-            _navigateBack();
+            await _navigateBackAsync();
         }
         finally
         {
@@ -308,9 +319,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
             ParseOptionalGoal(ProteinGoal) is not { } protein ||
             ParseOptionalGoal(CarbsGoal) is not { } carbs ||
             ParseOptionalGoal(FatsGoal) is not { } fats)
-        {
             return;
-        }
 
         var calories = RoundToNearest(protein * 4f + carbs * 4f + fats * 9f, 10f);
         if (calories is < MinimumEditableCalories or > MaximumEditableCalories)
@@ -379,13 +388,16 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
         };
     }
 
-    private float GetMinimumProteinPerKg() => Goal switch
+    private float GetMinimumProteinPerKg()
     {
-        UserGoal.FatLoss => 1.8f,
-        UserGoal.Strength => 1.7f,
-        UserGoal.MuscleTone => 1.5f,
-        _ => 1.2f
-    };
+        return Goal switch
+        {
+            UserGoal.FatLoss => 1.8f,
+            UserGoal.Strength => 1.7f,
+            UserGoal.MuscleTone => 1.5f,
+            _ => 1.2f
+        };
+    }
 
     private float CalculateFiberTarget(float calories)
     {
@@ -404,8 +416,9 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
             : (protein / total, carbs / total, fats / total);
     }
 
-    private ProfileNutritionGoals BuildGoals() =>
-        new(
+    private ProfileNutritionGoals BuildGoals()
+    {
+        return new ProfileNutritionGoals(
             ParseOptionalGoal(CaloriesGoal),
             ParseOptionalGoal(ProteinGoal),
             ParseOptionalGoal(CarbsGoal),
@@ -423,10 +436,13 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
             ParseOptionalGoal(MagnesiumGoal),
             ParseOptionalGoal(ZincGoal),
             ParseOptionalGoal(PotassiumGoal));
+    }
 
-    private static bool HasTag(string tags, DietaryTag tag) =>
-        tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    private static bool HasTag(string tags, DietaryTag tag)
+    {
+        return tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Any(value => string.Equals(value, tag.ToString(), StringComparison.OrdinalIgnoreCase));
+    }
 
     private static float? ParseOptionalGoal(string value)
     {
@@ -441,11 +457,15 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
             : null;
     }
 
-    private static string FormatGoal(float? value) =>
-        value is > 0f ? value.Value.ToString("0.##", CultureInfo.CurrentCulture) : string.Empty;
+    private static string FormatGoal(float? value)
+    {
+        return value is > 0f ? value.Value.ToString("0.##", CultureInfo.CurrentCulture) : string.Empty;
+    }
 
-    private static float RoundToNearest(float value, float nearest) =>
-        nearest <= 0f ? value : MathF.Round(value / nearest) * nearest;
+    private static float RoundToNearest(float value, float nearest)
+    {
+        return nearest <= 0f ? value : MathF.Round(value / nearest) * nearest;
+    }
 
     partial void OnGoalChanged(UserGoal value)
     {

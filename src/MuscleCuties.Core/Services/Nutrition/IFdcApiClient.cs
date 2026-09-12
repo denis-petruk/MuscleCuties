@@ -1,5 +1,3 @@
-using MuscleCuties.Core.Services.Nutrition;
-
 namespace MuscleCuties.Core.Services.Nutrition;
 
 public interface IFdcApiClient

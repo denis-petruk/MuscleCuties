@@ -2,6 +2,12 @@
 bin/
 obj/
 /packages/
+.env
+*.p12
+*.mobileprovision
+*.user
+appsettings.local.json
+.claude
 
 # Rider/ReSharper
 .idea/

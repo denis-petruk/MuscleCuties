@@ -1,7 +1,4 @@
 using MuscleCuties.Core.Services.Nutrition;
-using MuscleCuties.Core.Services.Auth;
-using MuscleCuties.Core.Services.Cycle;
-using MuscleCuties.Core.Services.Quiz;
 
 namespace MuscleCuties.Core.Tests.Services.Nutrition;
 
@@ -12,8 +9,8 @@ public class FdcFoodMapperTests
     {
         var syncedAt = new DateTime(2026, 7, 13, 12, 0, 0, DateTimeKind.Utc);
         var detail = BuildDetail(
-            fdcId: 173904,
-            name: "Oats, rolled, dry",
+            173904,
+            "Oats, rolled, dry",
             (1008, 389f),
             (1003, 16.9f),
             (1005, 66.3f),
@@ -128,10 +125,10 @@ public class FdcFoodMapperTests
             Description = "Carrots, raw",
             FoodNutrients =
             [
-                new() { NutrientId = 1008, Value = 41f },
-                new() { NutrientId = 1003, Value = 0.93f },
-                new() { NutrientId = 1005, Value = 9.58f },
-                new() { NutrientId = 1004, Value = 0.24f }
+                new FdcFoodDetailNutrient { NutrientId = 1008, Value = 41f },
+                new FdcFoodDetailNutrient { NutrientId = 1003, Value = 0.93f },
+                new FdcFoodDetailNutrient { NutrientId = 1005, Value = 9.58f },
+                new FdcFoodDetailNutrient { NutrientId = 1004, Value = 0.24f }
             ]
         };
 
@@ -152,10 +149,10 @@ public class FdcFoodMapperTests
             Description = "Carrots, raw",
             FoodNutrients =
             [
-                new() { Number = "208", Amount = 41f },
-                new() { Number = "203", Amount = 0.93f },
-                new() { Number = "205", Amount = 9.58f },
-                new() { Number = "204", Amount = 0.24f }
+                new FdcFoodDetailNutrient { Number = "208", Amount = 41f },
+                new FdcFoodDetailNutrient { Number = "203", Amount = 0.93f },
+                new FdcFoodDetailNutrient { Number = "205", Amount = 9.58f },
+                new FdcFoodDetailNutrient { Number = "204", Amount = 0.24f }
             ]
         };
 
@@ -176,10 +173,10 @@ public class FdcFoodMapperTests
             Description = "Oats, rolled, dry",
             FoodNutrients =
             [
-                new() { NutrientId = 2047, Value = 389f },
-                new() { NutrientId = 1003, Value = 16.9f },
-                new() { NutrientId = 1005, Value = 66.3f },
-                new() { NutrientId = 1004, Value = 6.9f }
+                new FdcFoodDetailNutrient { NutrientId = 2047, Value = 389f },
+                new FdcFoodDetailNutrient { NutrientId = 1003, Value = 16.9f },
+                new FdcFoodDetailNutrient { NutrientId = 1005, Value = 66.3f },
+                new FdcFoodDetailNutrient { NutrientId = 1004, Value = 6.9f }
             ]
         };
 
@@ -201,8 +198,9 @@ public class FdcFoodMapperTests
         Assert.Equal("Chicken Breast", item.Name);
     }
 
-    private static FdcFoodDetail BuildDetail(int fdcId, string name, params (int Id, float Amount)[] nutrients) =>
-        new()
+    private static FdcFoodDetail BuildDetail(int fdcId, string name, params (int Id, float Amount)[] nutrients)
+    {
+        return new FdcFoodDetail
         {
             FdcId = fdcId,
             Description = name,
@@ -215,4 +213,5 @@ public class FdcFoodMapperTests
                 })
                 .ToList()
         };
+    }
 }

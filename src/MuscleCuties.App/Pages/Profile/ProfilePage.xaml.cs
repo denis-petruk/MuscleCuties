@@ -1,4 +1,3 @@
-using MuscleCuties.App.Pages;
 using MuscleCuties.App.Services.Profile;
 using MuscleCuties.Core.ViewModels.Profile;
 
@@ -8,14 +7,14 @@ public partial class ProfilePage : ContentPage
 {
     public ProfilePage(ProfileViewModel vm)
     {
-        InitializeComponent();
+        this.InitializeWithTiming(InitializeComponent);
         BindingContext = vm;
     }
 
-    protected override void OnAppearing()
+    protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
-        base.OnAppearing();
-        this.LoadAfterFirstRender(() => ((ProfileViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
+        base.OnNavigatedTo(args);
+        this.BeginPageLoad(() => ((ProfileViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
     }
 
     private async void OnLogoutClicked(object? sender, EventArgs e)
@@ -57,11 +56,15 @@ public partial class ProfilePage : ContentPage
     {
         try
         {
-            var imagePath = await ProfileImagePicker.PickAndStoreAsync();
-            if (!string.IsNullOrWhiteSpace(imagePath))
-                await viewModel.UpdateProfileImageAsync(imagePath);
+            var rawPath = await ProfileImagePicker.PickAndStoreAsync();
+            if (string.IsNullOrWhiteSpace(rawPath))
+                return;
+
+            var croppedPath = await CropModal.ShowAsync(rawPath);
+            if (!string.IsNullOrWhiteSpace(croppedPath))
+                await viewModel.UpdateProfileImageAsync(croppedPath);
         }
-        catch (Exception)
+        catch
         {
             await DisplayAlertAsync("Profile image", "Could not change the image on this device right now.", "OK");
         }

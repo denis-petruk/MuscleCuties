@@ -105,7 +105,8 @@ public sealed class LocalNotificationService : ILocalNotificationService
     }
 #pragma warning restore CA1416
 #elif IOS || MACCATALYST
-    private static async Task<bool> ScheduleAppleAsync(int notificationId, string title, string body, DateTime scheduledAt)
+    private static async Task<bool> ScheduleAppleAsync(int notificationId, string title, string body,
+        DateTime scheduledAt)
     {
         var center = UNUserNotificationCenter.Current;
         var isAuthorized = await RequestAppleAuthorizationAsync(center);

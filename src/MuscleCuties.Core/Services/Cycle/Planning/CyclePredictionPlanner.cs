@@ -87,11 +87,15 @@ public class CyclePredictionPlanner : ICyclePredictionPlanner
         return (CyclePhaseRules.DefaultCycleLength, "default");
     }
 
-    private static bool IsUsableCycleLength(int cycleLength) =>
-        cycleLength is >= CyclePhaseRules.MinimumCycleLength and <= CyclePhaseRules.MaximumCycleLength;
+    private static bool IsUsableCycleLength(int cycleLength)
+    {
+        return cycleLength is >= CyclePhaseRules.MinimumCycleLength and <= CyclePhaseRules.MaximumCycleLength;
+    }
 
-    private static int ClampCycleLength(int cycleLength) =>
-        CyclePhaseRules.NormalizeCycleLength(cycleLength);
+    private static int ClampCycleLength(int cycleLength)
+    {
+        return CyclePhaseRules.NormalizeCycleLength(cycleLength);
+    }
 
     private static IEnumerable<int> CalculateStartDateLengths(IEnumerable<CycleLog> history)
     {

@@ -14,8 +14,6 @@ public class Exercise
     public string? TechniqueNotes { get; set; }
     public MuscleGroup PrimaryMuscle { get; set; }
     public string? SecondaryMuscles { get; set; }
-    // Comma-separated joint areas this exercise stresses (Shoulder, Knee, LowerBack, Wrist, Hip, Elbow).
-    // Empty string means no joint constraints.
     public string JointAreas { get; set; } = string.Empty;
     public bool IsInjuryFriendly { get; set; }
 

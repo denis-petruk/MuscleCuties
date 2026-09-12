@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentView
     x:Class="MuscleCuties.App.Controls.Nutrition.FoodSearchModal"
     x:Name="Root"
@@ -10,13 +11,18 @@
     IsVisible="{Binding HasFoodSearchResults}">
 
     <Grid
-        BackgroundColor="#802B1D24"
+        BackgroundColor="{StaticResource ModalScrim}"
         Padding="20,56,20,36">
+        <Grid.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding DismissFoodSearchResultsCommand}" />
+        </Grid.GestureRecognizers>
         <Border
             Style="{StaticResource CardPrimary}"
             Padding="0"
             Margin="0"
             MaximumHeightRequest="640"
+            MaximumWidthRequest="560"
+            HorizontalOptions="Fill"
             VerticalOptions="Center">
 
             <Grid RowDefinitions="Auto, *, Auto">
@@ -27,27 +33,6 @@
 
                     <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
                         <VerticalStackLayout Spacing="6">
-                            <Border
-                                BackgroundColor="{StaticResource Secondary}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 20"
-                                Padding="12,4"
-                                HorizontalOptions="Start">
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
-                                    <Image
-                                        Source="{Binding Source='SearchInfo24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                        WidthRequest="13"
-                                        HeightRequest="13"
-                                        Aspect="AspectFit"
-                                        VerticalOptions="Center" />
-                                    <Label
-                                        Grid.Column="1"
-                                        Text="{Binding FoodSearchResultsTitle}"
-                                        Style="{StaticResource EyebrowLabel}"
-                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                                </Grid>
-                            </Border>
-
                             <Label
                                 Text="Choose food"
                                 Style="{StaticResource SubHeadline}"
@@ -55,12 +40,13 @@
                         </VerticalStackLayout>
                         <Border
                             Grid.Column="1"
-                            WidthRequest="42"
-                            HeightRequest="42"
-                            StrokeShape="RoundRectangle 21"
+                            WidthRequest="44"
+                            HeightRequest="44"
+                            StrokeShape="RoundRectangle 22"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
                             StrokeThickness="0"
-                            VerticalOptions="Start">
+                            VerticalOptions="Start"
+                            SemanticProperties.Description="Close food search">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DismissFoodSearchResultsCommand}" />
                             </Border.GestureRecognizers>
@@ -97,7 +83,7 @@
                                 Margin="0,0,0,12"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
                                 <Border.Shadow>
-                                    <Shadow Brush="#2B1D24" Offset="0,3" Radius="12" Opacity="0.07" />
+                                    <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,3" Radius="12" Opacity="0.07" />
                                 </Border.Shadow>
 
                                 <Border.GestureRecognizers>
@@ -149,12 +135,13 @@
 
                                     <Border
                                         Grid.Column="2"
-                                        WidthRequest="28"
-                                        HeightRequest="28"
-                                        StrokeShape="RoundRectangle 14"
+                                        WidthRequest="44"
+                                        HeightRequest="44"
+                                        StrokeShape="RoundRectangle 22"
                                         BackgroundColor="{StaticResource Primary}"
                                         Stroke="{StaticResource Primary}"
-                                        VerticalOptions="Center">
+                                        VerticalOptions="Center"
+                                        SemanticProperties.Description="Add food item">
                                         <Path
                                             Data="M12 5v14M5 12h14"
                                             Stroke="{StaticResource White}"

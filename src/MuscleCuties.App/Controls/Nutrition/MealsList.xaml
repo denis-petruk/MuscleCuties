@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentView
     x:Class="MuscleCuties.App.Controls.Nutrition.MealsList"
     x:Name="Root"
@@ -38,12 +39,9 @@
                 </Border>
                 <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
                     <Label
-                        Text="No meals logged yet"
+                        Text="Log your first meal"
                         Style="{StaticResource CardTitle}"
                         FontSize="15" />
-                    <Label
-                        Text="Breakfast, lunch, dinner, snack"
-                        Style="{StaticResource CaptionLabel}" />
                 </VerticalStackLayout>
 
                 <Button
@@ -64,7 +62,8 @@
             <VerticalStackLayout BindableLayout.ItemsSource="{Binding Meals}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="nutritionModels:MealItem">
-                        <VerticalStackLayout>
+                        <VerticalStackLayout
+                            SemanticProperties.Description="{Binding Name, StringFormat='Meal: {0}. Tap to view breakdown.'}">
                             <VerticalStackLayout.GestureRecognizers>
                                 <TapGestureRecognizer
                                     Command="{Binding BindingContext.OpenMealBreakdownCommand, Source={x:Reference Root}}"
@@ -77,9 +76,10 @@
                                     WidthRequest="52"
                                     HeightRequest="44"
                                     StrokeShape="RoundRectangle 12"
-                                    BackgroundColor="{StaticResource AccentSurface}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
                                     StrokeThickness="0">
-                                    <VerticalStackLayout Spacing="1" HorizontalOptions="Center" VerticalOptions="Center">
+                                    <VerticalStackLayout Spacing="1" HorizontalOptions="Center"
+                                                         VerticalOptions="Center">
                                         <Image
                                             Source="{Binding Source='CalendarClock24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                                             WidthRequest="13"
@@ -117,9 +117,10 @@
                                     VerticalOptions="Center"
                                     HorizontalOptions="End">
                                     <HorizontalStackLayout Spacing="4" HorizontalOptions="End">
-                                        <sharedControls:FitnessIconView
-                                            Icon="Fire"
-                                            IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                        <sharedControls:ThemeAwareImage
+                                            LightSource="icon_fire.png"
+                                            DarkSource="icon_fire_dark.png"
+                                            Aspect="AspectFit"
                                             WidthRequest="13"
                                             HeightRequest="13"
                                             VerticalOptions="Center" />

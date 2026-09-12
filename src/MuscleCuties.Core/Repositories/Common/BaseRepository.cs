@@ -12,13 +12,24 @@ public abstract class BaseRepository<T> : IRepository<T> where T : class
         _db = db;
     }
 
-    public async Task<T?> GetByIdAsync(int id) =>
-        await _db.Set<T>().FindAsync(id);
+    public async Task<T?> GetByIdAsync(int id)
+    {
+        return await _db.Set<T>().FindAsync(id);
+    }
 
-    public async Task<List<T>> GetAllAsync() =>
-        await _db.Set<T>()
+    public async Task<T?> GetByIdNoTrackingAsync(int id)
+    {
+        return await _db.Set<T>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id);
+    }
+
+    public async Task<List<T>> GetAllAsync()
+    {
+        return await _db.Set<T>()
             .AsNoTracking()
             .ToListAsync();
+    }
 
     public async Task AddAsync(T entity)
     {

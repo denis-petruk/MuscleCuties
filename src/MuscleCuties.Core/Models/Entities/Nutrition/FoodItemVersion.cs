@@ -6,7 +6,7 @@ public class FoodItemVersion
     public int FoodItemId { get; set; }
     public string NutrientJson { get; set; } = null!;
     public DateTime VersionedAt { get; set; }
-    public string ChangeSource { get; set; } = null!; // FDC | User
+    public string ChangeSource { get; set; } = null!;
 
     public FoodItem? FoodItem { get; set; }
 }

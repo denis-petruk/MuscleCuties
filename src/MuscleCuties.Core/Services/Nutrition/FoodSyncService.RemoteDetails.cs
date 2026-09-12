@@ -30,36 +30,44 @@ public partial class FoodSyncService
     {
         var details = new List<FdcFoodDetail>();
         foreach (var batch in fdcIds.Distinct().Chunk(DetailBatchSize))
-        {
             details.AddRange(await _fdcApiClient.GetFoodsAsync(batch, cancellationToken));
-        }
 
         return details;
     }
 
-    private static List<int> SelectDetailRefreshIds(IReadOnlyList<FdcFoodSearchResult> remoteResults) =>
-        remoteResults
+    private static List<int> SelectDetailRefreshIds(IReadOnlyList<FdcFoodSearchResult> remoteResults)
+    {
+        return remoteResults
             .Where(NeedsDetailRefresh)
             .Select(result => result.FdcId)
             .Distinct()
             .Take(DetailRefreshLimit)
             .ToList();
+    }
 
-    private static bool NeedsDetailRefresh(FdcFoodSearchResult result) =>
-        !HasSearchCalories(result) || CountSearchPrimaryMacros(result) < 2;
+    private static bool NeedsDetailRefresh(FdcFoodSearchResult result)
+    {
+        return !HasSearchCalories(result) || CountSearchPrimaryMacros(result) < 2;
+    }
 
-    private static bool HasSearchCalories(FdcFoodSearchResult result) =>
-        HasSearchNutrient(result, Calories) ||
-        HasSearchNutrient(result, CaloriesAtwaterGeneral) ||
-        HasSearchNutrient(result, CaloriesAtwaterSpecific);
+    private static bool HasSearchCalories(FdcFoodSearchResult result)
+    {
+        return HasSearchNutrient(result, Calories) ||
+               HasSearchNutrient(result, CaloriesAtwaterGeneral) ||
+               HasSearchNutrient(result, CaloriesAtwaterSpecific);
+    }
 
-    private static bool HasSearchNutrient(FdcFoodSearchResult result, int nutrientId) =>
-        result.FoodNutrients.Any(n => n.NutrientId == nutrientId && n.Value is > 0f);
+    private static bool HasSearchNutrient(FdcFoodSearchResult result, int nutrientId)
+    {
+        return result.FoodNutrients.Any(n => n.NutrientId == nutrientId && n.Value is > 0f);
+    }
 
-    private static int CountSearchPrimaryMacros(FdcFoodSearchResult result) =>
-        Convert.ToInt32(HasSearchNutrient(result, Protein)) +
-        Convert.ToInt32(HasSearchNutrient(result, Carbs)) +
-        Convert.ToInt32(HasSearchNutrient(result, Fats));
+    private static int CountSearchPrimaryMacros(FdcFoodSearchResult result)
+    {
+        return Convert.ToInt32(HasSearchNutrient(result, Protein)) +
+               Convert.ToInt32(HasSearchNutrient(result, Carbs)) +
+               Convert.ToInt32(HasSearchNutrient(result, Fats));
+    }
 
     private static List<FdcFoodDetail> BuildDetailsFromSearchResults(
         IReadOnlyList<FdcFoodSearchResult> searchResults,
@@ -96,7 +104,8 @@ public partial class FoodSyncService
         detail.Ingredients = FirstPresent(detail.Ingredients, result.Ingredients);
         detail.ServingSize ??= result.ServingSize;
         detail.ServingSizeUnit = FirstPresent(detail.ServingSizeUnit, result.ServingSizeUnit);
-        detail.HouseholdServingFullText = FirstPresent(detail.HouseholdServingFullText, result.HouseholdServingFullText);
+        detail.HouseholdServingFullText =
+            FirstPresent(detail.HouseholdServingFullText, result.HouseholdServingFullText);
         detail.PackageWeight = FirstPresent(detail.PackageWeight, result.PackageWeight);
 
         foreach (var nutrient in result.FoodNutrients.Where(n => n.NutrientId > 0 && n.Value.HasValue))
@@ -130,24 +139,26 @@ public partial class FoodSyncService
         };
 
         foreach (var nutrient in result.FoodNutrients.Where(n => n.NutrientId > 0 && n.Value.HasValue))
-        {
             detail.FoodNutrients.Add(new FdcFoodDetailNutrient
             {
                 NutrientId = nutrient.NutrientId,
                 Value = nutrient.Value
             });
-        }
 
         return detail;
     }
 
-    private static bool HasNutrient(FdcFoodDetail detail, int nutrientId) =>
-        detail.FoodNutrients.Any(n =>
+    private static bool HasNutrient(FdcFoodDetail detail, int nutrientId)
+    {
+        return detail.FoodNutrients.Any(n =>
         {
             var detailNutrientId = n.Nutrient?.Id > 0 ? n.Nutrient.Id : n.NutrientId;
             return detailNutrientId == nutrientId;
         });
+    }
 
-    private static string? FirstPresent(params string?[] values) =>
-        values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim();
+    private static string? FirstPresent(params string?[] values)
+    {
+        return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim();
+    }
 }

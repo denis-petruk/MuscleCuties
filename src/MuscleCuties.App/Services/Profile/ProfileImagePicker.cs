@@ -8,7 +8,8 @@ internal static class ProfileImagePicker
         {
             Title = "Choose profile image"
         });
-        var result = results.FirstOrDefault();
+        var selectedPhotos = results.ToList();
+        var result = selectedPhotos.FirstOrDefault();
 
         if (result is null)
             return null;
@@ -19,7 +20,7 @@ internal static class ProfileImagePicker
 
         var folder = Path.Combine(FileSystem.AppDataDirectory, "profile");
         Directory.CreateDirectory(folder);
-        var destinationPath = Path.Combine(folder, $"profile_avatar{extension.ToLowerInvariant()}");
+        var destinationPath = Path.Combine(folder, $"profile_raw{extension.ToLowerInvariant()}");
 
         await using var source = await result.OpenReadAsync();
         await using var destination = File.Create(destinationPath);

@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using Microsoft.Maui.Graphics;
 using MuscleCuties.Core.Models.Entities.Nutrition;
+using MuscleCuties.Core.Models.Nutrition;
+using MuscleCuties.Core.Models.Nutrition.Planning;
 using MuscleCuties.Core.Models.UI.Nutrition;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Nutrition.Planning;
@@ -12,9 +14,9 @@ public partial class NutritionViewModel
     private static readonly IReadOnlyList<MicronutrientDefinition> MicronutrientDefinitions =
     [
         new("Fiber", "Fiber", "g", 25f, food => food.Fiber),
-        new("Vitamins", "Vitamin A", "mcg", 700f, food => food.VitaminA, RequiresDietaryFat: true),
+        new("Vitamins", "Vitamin A", "mcg", 700f, food => food.VitaminA, true),
         new("Vitamins", "Vitamin C", "mg", 75f, food => food.VitaminC),
-        new("Vitamins", "Vitamin D", "mcg", 15f, food => food.VitaminD, RequiresDietaryFat: true),
+        new("Vitamins", "Vitamin D", "mcg", 15f, food => food.VitaminD, true),
         new("Vitamins", "Vitamin B6", "mg", 1.3f, food => food.VitaminB6),
         new("Vitamins", "Vitamin B12", "mcg", 2.4f, food => food.VitaminB12),
         new("Vitamins", "Folate", "mcg", 400f, food => food.Folate),
@@ -27,8 +29,10 @@ public partial class NutritionViewModel
 
     private static IEnumerable<DailyMicronutrientItem> BuildMicronutrients(
         IEnumerable<LoggedMeal> meals,
-        ProfileNutritionGoals goals) =>
-        BuildMicronutrients(meals, meals, goals);
+        ProfileNutritionGoals goals)
+    {
+        return BuildMicronutrients(meals, meals, goals);
+    }
 
     private static IEnumerable<DailyMicronutrientItem> BuildMicronutrients(
         IEnumerable<LoggedMeal> sourceMeals,
@@ -158,8 +162,10 @@ public partial class NutritionViewModel
         ];
     }
 
-    private static float CalculateMacroShare(float calories, float totalCalories) =>
-        totalCalories <= 0f ? 0f : Math.Clamp(calories / totalCalories, 0f, 1f);
+    private static float CalculateMacroShare(float calories, float totalCalories)
+    {
+        return totalCalories <= 0f ? 0f : Math.Clamp(calories / totalCalories, 0f, 1f);
+    }
 
     private static string BuildFiberText(IEnumerable<DailyMicronutrientItem> micronutrients)
     {
@@ -184,8 +190,9 @@ public partial class NutritionViewModel
         Func<FoodItem, float> ValueSelector,
         bool RequiresDietaryFat = false)
     {
-        public float GoalSelector(ProfileNutritionGoals goals) =>
-            Name switch
+        public float GoalSelector(ProfileNutritionGoals goals)
+        {
+            return Name switch
             {
                 "Fiber" => UseGoal(goals.Fiber, Goal),
                 "Vitamin A" => UseGoal(goals.VitaminA, Goal),
@@ -201,8 +208,11 @@ public partial class NutritionViewModel
                 "Potassium" => UseGoal(goals.Potassium, Goal),
                 _ => Goal
             };
+        }
 
-        private static float UseGoal(float? customGoal, float fallback) =>
-            customGoal is > 0f ? customGoal.Value : fallback;
+        private static float UseGoal(float? customGoal, float fallback)
+        {
+            return customGoal is > 0f ? customGoal.Value : fallback;
+        }
     }
 }

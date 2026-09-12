@@ -1,17 +1,7 @@
-using NSubstitute;
-using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
-using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Services.Auth;
-using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.ViewModels.Auth;
-using MuscleCuties.Core.ViewModels.Cycle;
-using MuscleCuties.Core.ViewModels.Dashboard;
-using MuscleCuties.Core.ViewModels.Nutrition;
-using MuscleCuties.Core.ViewModels.Profile;
-using MuscleCuties.Core.ViewModels.Quiz;
-using MuscleCuties.Core.ViewModels.Workout;
+using NSubstitute;
 
 namespace MuscleCuties.Core.Tests.ViewModels.Auth;
 
@@ -21,12 +11,22 @@ public class LoginViewModelTests
     private bool _navigatedToDashboard;
     private bool _navigatedToProfileSetup;
 
-    private LoginViewModel CreateViewModel() =>
-        new(
+    private LoginViewModel CreateViewModel()
+    {
+        return new LoginViewModel(
             _authService,
-            () => _navigatedToDashboard = true,
-            () => _navigatedToProfileSetup = true,
-            () => { });
+            () =>
+            {
+                _navigatedToDashboard = true;
+                return Task.CompletedTask;
+            },
+            () =>
+            {
+                _navigatedToProfileSetup = true;
+                return Task.CompletedTask;
+            },
+            () => Task.CompletedTask);
+    }
 
     [Fact]
     public async Task LoginAsync_ValidCredentials_OnboardingComplete_NavigatesToDashboard()

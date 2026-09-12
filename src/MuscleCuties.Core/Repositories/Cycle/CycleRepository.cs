@@ -1,33 +1,39 @@
-using MuscleCuties.Core.Repositories.Common;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Entities.Cycle;
+using MuscleCuties.Core.Repositories.Common;
 
 namespace MuscleCuties.Core.Repositories.Cycle;
 
 public class CycleRepository(AppDatabase db) : BaseRepository<CycleLog>(db), ICycleRepository
 {
-    public async Task<CycleLog?> GetLatestCycleAsync(int userId) =>
-        await _db.CycleLogs
+    public async Task<CycleLog?> GetLatestCycleAsync(int userId)
+    {
+        return await _db.CycleLogs
             .AsNoTracking()
             .Where(c => c.UserId == userId)
             .OrderByDescending(c => c.StartDate)
             .FirstOrDefaultAsync();
+    }
 
-    public async Task<List<CycleLog>> GetCycleHistoryAsync(int userId) =>
-        await _db.CycleLogs
+    public async Task<List<CycleLog>> GetCycleHistoryAsync(int userId)
+    {
+        return await _db.CycleLogs
             .AsNoTracking()
             .Where(c => c.UserId == userId)
             .OrderByDescending(c => c.StartDate)
             .ToListAsync();
+    }
 
-    public async Task<CyclePhaseLog?> GetLatestPhaseLogAsync(int userId) =>
-        await _db.CyclePhaseLogs
+    public async Task<CyclePhaseLog?> GetLatestPhaseLogAsync(int userId)
+    {
+        return await _db.CyclePhaseLogs
             .AsNoTracking()
             .Where(l => l.UserId == userId)
             .OrderByDescending(l => l.LoggedAt)
             .ThenByDescending(l => l.CreatedAt)
             .FirstOrDefaultAsync();
+    }
 
     public async Task<CyclePhaseLog?> GetLatestPhaseLogOnOrBeforeAsync(int userId, DateTime date)
     {
@@ -53,14 +59,16 @@ public class CycleRepository(AppDatabase db) : BaseRepository<CycleLog>(db), ICy
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<CyclePhaseLog>> GetRecentPhaseLogsAsync(int userId, int count) =>
-        await _db.CyclePhaseLogs
+    public async Task<List<CyclePhaseLog>> GetRecentPhaseLogsAsync(int userId, int count)
+    {
+        return await _db.CyclePhaseLogs
             .AsNoTracking()
             .Where(l => l.UserId == userId)
             .OrderByDescending(l => l.LoggedAt)
             .ThenByDescending(l => l.CreatedAt)
             .Take(Math.Max(1, count))
             .ToListAsync();
+    }
 
     public async Task AddPhaseLogAsync(CyclePhaseLog log)
     {

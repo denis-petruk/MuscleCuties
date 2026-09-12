@@ -1,20 +1,7 @@
-using NSubstitute;
-using MuscleCuties.Core.Models.Entities.Cycle;
-using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
-using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Services.Auth;
-using MuscleCuties.Core.Services.Cycle;
-using MuscleCuties.Core.Services.Nutrition;
-using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.ViewModels.Auth;
-using MuscleCuties.Core.ViewModels.Cycle;
-using MuscleCuties.Core.ViewModels.Dashboard;
-using MuscleCuties.Core.ViewModels.Nutrition;
-using MuscleCuties.Core.ViewModels.Profile;
-using MuscleCuties.Core.ViewModels.Quiz;
-using MuscleCuties.Core.ViewModels.Workout;
+using NSubstitute;
 
 namespace MuscleCuties.Core.Tests.ViewModels.Auth;
 
@@ -23,8 +10,17 @@ public class RegisterViewModelTests
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
     private bool _navigatedToProfileSetup;
 
-    private RegisterViewModel CreateViewModel() =>
-        new(_authService, () => _navigatedToProfileSetup = true, () => { });
+    private RegisterViewModel CreateViewModel()
+    {
+        return new RegisterViewModel(
+            _authService,
+            () =>
+            {
+                _navigatedToProfileSetup = true;
+                return Task.CompletedTask;
+            },
+            () => Task.CompletedTask);
+    }
 
     [Fact]
     public async Task RegisterAsync_ValidCredentials_NavigatesToProfileSetup()

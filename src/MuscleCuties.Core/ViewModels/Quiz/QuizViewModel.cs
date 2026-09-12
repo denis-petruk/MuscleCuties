@@ -1,70 +1,113 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Diagnostics;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.UI.Quiz;
+using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Quiz;
+using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Quiz;
 
 public partial class QuizViewModel : ObservableObject
 {
-    private const int QuestionLoadTimeoutSeconds = 10;
-
     private readonly IAuthService _authService;
+    private readonly Func<Task> _navigateToDashboardAsync;
+    private readonly IAppPreloadService _preloadService;
+    private readonly QuizQuestionCache _quizQuestionCache;
     private readonly IQuizService _quizService;
-    private readonly Action _navigateToDashboard;
     private readonly List<(int QuestionId, int AnswerId)> _selectedAnswers = new();
-    private QuizLoadState _loadState = QuizLoadState.NotStarted;
 
-    [ObservableProperty]
-    private List<QuizQuestion> _questions = new();
-
+    [ObservableProperty] private ObservableCollection<SelectableQuizAnswer> _currentAnswers = new();
     [ObservableProperty] private QuizQuestion? _currentQuestion;
     [ObservableProperty] private int _currentQuestionIndex;
 
     [ObservableProperty]
-    private bool _isBusy;
-
-    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasError))]
+    [NotifyPropertyChangedFor(nameof(QuestionsStateMessage))]
     private string _errorMessage = string.Empty;
 
-    [ObservableProperty] private ObservableCollection<SelectableQuizAnswer> _currentAnswers = new();
-    [ObservableProperty] private bool _hasQuestion;
-    [ObservableProperty] private bool _hasLoadedQuestions;
-    [ObservableProperty] private bool _isLoading = true;
-    [ObservableProperty] private bool _hasNoQuestions;
-    [ObservableProperty] private bool _canRetryQuestionsLoad;
+    [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private bool _isPreparingDashboard;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanRetryQuestionsLoad))]
+    [NotifyPropertyChangedFor(nameof(HasLoadedQuestions))]
+    [NotifyPropertyChangedFor(nameof(HasNoQuestions))]
+    [NotifyPropertyChangedFor(nameof(HasQuestion))]
+    [NotifyPropertyChangedFor(nameof(IsEmptyStateVisible))]
+    [NotifyPropertyChangedFor(nameof(IsLayoutVisible))]
+    [NotifyPropertyChangedFor(nameof(IsLoading))]
+    [NotifyPropertyChangedFor(nameof(IsLoadingVisible))]
+    [NotifyPropertyChangedFor(nameof(QuestionsStateTitle))]
+    [NotifyPropertyChangedFor(nameof(QuestionsStateMessage))]
+    private QuizLoadState _loadState = QuizLoadState.Loading;
+
+    [ObservableProperty] private List<QuizQuestion> _questions = new();
+
+    public QuizViewModel(
+        IAuthService authService,
+        IQuizService quizService,
+        IAppPreloadService preloadService,
+        QuizQuestionCache quizQuestionCache,
+        Func<Task> navigateToDashboardAsync)
+    {
+        _authService = authService;
+        _quizService = quizService;
+        _preloadService = preloadService;
+        _quizQuestionCache = quizQuestionCache;
+        _navigateToDashboardAsync = navigateToDashboardAsync;
+
+        LoadQuestionsCommand = new AsyncRelayCommand(LoadQuestionsAsync);
+        RetryLoadQuestionsCommand = new AsyncRelayCommand(RetryLoadQuestionsAsync);
+        SelectAnswerCommand = new RelayCommand<SelectableQuizAnswer>(SelectAnswer);
+        NextCommand = new AsyncRelayCommand(NextAsync);
+        BackCommand = new RelayCommand(Back, () => !IsFirstQuestion);
+    }
+
+    public AsyncRelayCommand LoadQuestionsCommand { get; }
+    public AsyncRelayCommand RetryLoadQuestionsCommand { get; }
+    public RelayCommand<SelectableQuizAnswer> SelectAnswerCommand { get; }
+    public AsyncRelayCommand NextCommand { get; }
+    public RelayCommand BackCommand { get; }
 
     public QuizAnswer? FirstSelectedAnswer =>
-        CurrentAnswers.FirstOrDefault(a => a.IsSelected)?.Answer;
+        CurrentAnswers.FirstOrDefault(answer => answer.IsSelected)?.Answer;
+
     public QuizAnswer? SelectedAnswer => FirstSelectedAnswer;
+
     public IReadOnlyList<QuizAnswer> SelectedAnswers =>
         CurrentAnswers
             .Where(answer => answer.IsSelected)
             .Select(answer => answer.Answer)
             .ToList();
 
+    public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
+    public bool CanRetryQuestionsLoad => LoadState is QuizLoadState.Empty or QuizLoadState.Failed;
+    public bool HasLoadedQuestions => LoadState is QuizLoadState.Ready or QuizLoadState.Empty;
+    public bool HasNoQuestions => LoadState is QuizLoadState.Empty;
+    public bool HasQuestion => LoadState is QuizLoadState.Ready && CurrentQuestion is not null;
+    public bool IsEmptyStateVisible => LoadState is QuizLoadState.Empty or QuizLoadState.Failed;
+    public bool IsLayoutVisible => LoadState is QuizLoadState.Ready;
+    public bool IsLoading => LoadState is QuizLoadState.Loading;
+    public bool IsLoadingVisible => IsLoading;
     public bool IsCurrentQuestionMultiAnswer => CurrentQuestion?.QuestionType is QuizQuestionType.DietaryPreference;
     public bool IsFirstQuestion => CurrentQuestionIndex == 0;
     public bool IsLastQuestion => Questions.Count > 0 && CurrentQuestionIndex == Questions.Count - 1;
-    public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
-    public float ProgressValue => Questions.Count > 0 ? (float)(CurrentQuestionIndex + 1) / Questions.Count : 0f;
-    public string ProgressText => Questions.Count > 0
-        ? $"{CurrentQuestionIndex + 1} / {Questions.Count}"
-        : string.Empty;
-    public string NextButtonText => IsLastQuestion ? "Finish" : "Next";
+    public float ProgressValue => Questions.Count == 0 ? 0f : (float)(CurrentQuestionIndex + 1) / Questions.Count;
+
     public string CurrentQuestionText => CurrentQuestion?.Question ?? string.Empty;
-    public string QuestionsStateTitle => _loadState == QuizLoadState.Failed
-        ? "Questions could not load"
-        : "No quiz questions found";
-    public string QuestionsStateMessage => _loadState == QuizLoadState.Failed
-        ? ErrorMessage
-        : "Tap Try again so the starter quiz can refresh.";
+    public string NextButtonText => IsLastQuestion ? "Finish" : "Next";
+    public string ProgressText => Questions.Count == 0 ? string.Empty : $"{CurrentQuestionIndex + 1} / {Questions.Count}";
+    public string QuestionsStateTitle => HasNoQuestions ? "No quiz questions found" : "Questions could not load";
+
+    public string QuestionsStateMessage => HasNoQuestions
+        ? "Restart the app once so the starter quiz can seed."
+        : ErrorMessage;
+
     public string CurrentQuestionIconGlyph => CurrentQuestion?.QuestionType switch
     {
         QuizQuestionType.Goal => "Target24",
@@ -83,276 +126,118 @@ public partial class QuizViewModel : ObservableObject
         _ => "CheckmarkCircle24"
     };
 
-    public AsyncRelayCommand LoadQuestionsCommand { get; }
-    public AsyncRelayCommand RetryLoadQuestionsCommand { get; }
-    public RelayCommand<SelectableQuizAnswer> SelectAnswerCommand { get; }
-    public AsyncRelayCommand NextCommand { get; }
-    public RelayCommand BackCommand { get; }
-
-    public QuizViewModel(
-        IAuthService authService,
-        IQuizService quizService,
-        Action navigateToDashboard)
-    {
-        _authService = authService;
-        _quizService = quizService;
-        _navigateToDashboard = navigateToDashboard;
-        LoadQuestionsCommand = new AsyncRelayCommand(LoadQuestionsAsync);
-        RetryLoadQuestionsCommand = new AsyncRelayCommand(LoadQuestionsAsync);
-        SelectAnswerCommand = new RelayCommand<SelectableQuizAnswer>(SelectAnswer);
-        NextCommand = new AsyncRelayCommand(NextAsync);
-        BackCommand = new RelayCommand(Back, () => !IsFirstQuestion);
-    }
-
     public async Task EnsureQuestionsLoadedAsync()
     {
-        AppDebugLog.Write("QuizVM", $"EnsureQuestionsLoaded state={_loadState}, isBusy={IsBusy}.");
-        if (_loadState is QuizLoadState.Loading or QuizLoadState.Ready)
-        {
-            AppDebugLog.Write("QuizVM", "EnsureQuestionsLoaded skipped.");
+        if (HasLoadedQuestions || IsBusy)
             return;
-        }
 
         await LoadQuestionsAsync();
     }
 
     private async Task LoadQuestionsAsync()
     {
-        AppDebugLog.Write("QuizVM", "LoadQuestions start.");
-        IsBusy = true;
-        SetLoadState(QuizLoadState.Loading);
-        ErrorMessage = string.Empty;
+        BeginLoading();
+
         try
         {
-            AppDebugLog.Write("QuizVM", "Requesting onboarding questions from service.");
-            var loaded = await _quizService
-                .GetOnboardingQuestionsAsync()
-                .WaitAsync(TimeSpan.FromSeconds(QuestionLoadTimeoutSeconds));
-            AppDebugLog.Write("QuizVM", $"Service returned {loaded.Count} questions.");
-
-            Questions = loaded
-                .Where(question => question.Answers.Count > 0)
-                .OrderBy(question => question.OrderIndex)
-                .ThenBy(question => question.Id)
-                .ToList();
-            AppDebugLog.Write("QuizVM", $"Usable questions after answer filter: {Questions.Count}.");
-
-            CurrentQuestionIndex = 0;
-            CurrentQuestion = Questions.FirstOrDefault();
-            if (CurrentQuestion != null)
-            {
-                AppDebugLog.Write(
-                    "QuizVM",
-                    $"Current question id={CurrentQuestion.Id}, type={CurrentQuestion.QuestionType}, answers={CurrentQuestion.Answers.Count}.");
-                BuildAnswers(CurrentQuestion);
-            }
-            else
-            {
-                AppDebugLog.Write("QuizVM", "No current question. Moving to empty state.");
-                CurrentAnswers = [];
-            }
-
-            SetLoadState(CurrentQuestion is null ? QuizLoadState.Empty : QuizLoadState.Ready);
-            AppDebugLog.Write("QuizVM", $"LoadQuestions state after load={_loadState}.");
+            var loadedQuestions = await _quizQuestionCache.GetOrLoadAsync(
+                () => DataLoadScheduler.RunAsync(_quizService.GetOnboardingQuestionsAsync));
+            ApplyQuestions(loadedQuestions);
         }
-        catch (TimeoutException)
-        {
-            ClearQuestionState();
-            ErrorMessage = "Questions are taking too long to load. Try again.";
-            SetLoadState(QuizLoadState.Failed);
-            AppDebugLog.Write("QuizVM", "LoadQuestions timed out.");
-        }
-        catch (Exception ex)
+        catch
         {
             ClearQuestionState();
             ErrorMessage = "Questions could not load. Please reopen this page.";
-            SetLoadState(QuizLoadState.Failed);
-            AppDebugLog.Error("QuizVM", ex, "LoadQuestions failed");
+            ShowEmptyState(false);
         }
         finally
         {
             IsBusy = false;
-            NotifyComputedProperties();
-            AppDebugLog.Write(
-                "QuizVM",
-                $"LoadQuestions finished. state={_loadState}, isLoading={IsLoading}, hasQuestion={HasQuestion}, hasNoQuestions={HasNoQuestions}.");
         }
+    }
+
+    private async Task RetryLoadQuestionsAsync()
+    {
+        _quizQuestionCache.Clear();
+        await LoadQuestionsAsync();
     }
 
     private void SelectAnswer(SelectableQuizAnswer? selectable)
     {
-        if (selectable is null) return;
-        if (IsCurrentQuestionMultiAnswer)
-        {
-            ToggleMultiAnswer(selectable);
-            ErrorMessage = string.Empty;
-            OnPropertyChanged(nameof(FirstSelectedAnswer));
-            OnPropertyChanged(nameof(SelectedAnswer));
-            OnPropertyChanged(nameof(SelectedAnswers));
+        if (selectable is null)
             return;
-        }
 
-        foreach (var a in CurrentAnswers)
-            a.IsSelected = false;
-        selectable.IsSelected = true;
         ErrorMessage = string.Empty;
-        OnPropertyChanged(nameof(FirstSelectedAnswer));
-        OnPropertyChanged(nameof(SelectedAnswer));
-        OnPropertyChanged(nameof(SelectedAnswers));
+
+        if (IsCurrentQuestionMultiAnswer)
+            ToggleMultiAnswer(selectable);
+        else
+            SelectSingleAnswer(selectable);
+
+        NotifySelectionProperties();
     }
 
     private async Task NextAsync()
     {
-        AppDebugLog.Write(
-            "QuizVM",
-            $"Next start. index={CurrentQuestionIndex}, total={Questions.Count}, selected={SelectedAnswers.Count}.");
-        var selectedAnswers = SelectedAnswers;
-        if (CurrentQuestion is null)
-        {
-            AppDebugLog.Write("QuizVM", "Next ignored: no current question.");
+        if (CurrentQuestion is null || IsBusy)
             return;
-        }
 
+        var selectedAnswers = SelectedAnswers;
         if (selectedAnswers.Count == 0)
         {
             ErrorMessage = "Choose an answer to continue.";
-            AppDebugLog.Write("QuizVM", "Next blocked: no answer selected.");
             return;
         }
 
         RecordSelections(CurrentQuestion.Id, selectedAnswers.Select(answer => answer.Id));
 
-        if (CurrentQuestionIndex < Questions.Count - 1)
+        if (!IsLastQuestion)
         {
-            CurrentQuestionIndex++;
-            CurrentQuestion = Questions[CurrentQuestionIndex];
-            AppDebugLog.Write(
-                "QuizVM",
-                $"Next moved to index={CurrentQuestionIndex}, questionId={CurrentQuestion.Id}, type={CurrentQuestion.QuestionType}.");
-            BuildAnswers(CurrentQuestion);
-            NotifyComputedProperties();
+            MoveToQuestion(CurrentQuestionIndex + 1);
             return;
         }
 
-        IsBusy = true;
-        try
-        {
-            var userId = await _authService.GetCurrentUserIdAsync();
-            AppDebugLog.Write("QuizVM", $"Finishing quiz for userId={userId}, answers={_selectedAnswers.Count}.");
-            var responses = _selectedAnswers
-                .Select(pair => new UserQuizResponse { QuizQuestionId = pair.QuestionId, QuizAnswerId = pair.AnswerId })
-                .ToList();
-            await _quizService.SaveAnswersAsync(userId, responses);
-            AppDebugLog.Write("QuizVM", "Quiz saved. Navigating to dashboard.");
-            _navigateToDashboard();
-        }
-        catch (Exception ex)
-        {
-            AppDebugLog.Error("QuizVM", ex, "Next failed while saving quiz");
-            throw;
-        }
-        finally
-        {
-            IsBusy = false;
-            AppDebugLog.Write("QuizVM", "Next finished.");
-        }
+        await SaveAnswersAsync();
     }
 
     private void Back()
     {
-        if (IsFirstQuestion) return;
-        CurrentQuestionIndex--;
-        CurrentQuestion = Questions[CurrentQuestionIndex];
-        BuildAnswers(CurrentQuestion);
-        NotifyComputedProperties();
+        if (IsFirstQuestion)
+            return;
+
+        MoveToQuestion(CurrentQuestionIndex - 1);
     }
 
-    private void BuildAnswers(QuizQuestion question)
+    private void BeginLoading()
     {
-        AppDebugLog.Write("QuizVM", $"BuildAnswers questionId={question.Id}, answerCount={question.Answers.Count}.");
+        IsBusy = true;
         ErrorMessage = string.Empty;
-        var savedAnswerIds = _selectedAnswers
-            .Where(pair => pair.QuestionId == question.Id)
-            .Select(pair => pair.AnswerId)
-            .ToHashSet();
-        var list = question.Answers
-            .Select(answer => new SelectableQuizAnswer
-            {
-                Answer = answer,
-                QuestionType = question.QuestionType,
-                IsSelected = savedAnswerIds.Contains(answer.Id)
-            })
+        LoadState = QuizLoadState.Loading;
+    }
+
+    private void ApplyQuestions(IEnumerable<QuizQuestion> loadedQuestions)
+    {
+        Questions = loadedQuestions
+            .Where(question => question.Answers.Count > 0)
+            .OrderBy(question => question.OrderIndex)
+            .ThenBy(question => question.Id)
             .ToList();
-        CurrentAnswers = new ObservableCollection<SelectableQuizAnswer>(list);
-        OnPropertyChanged(nameof(FirstSelectedAnswer));
-        OnPropertyChanged(nameof(SelectedAnswer));
-        OnPropertyChanged(nameof(SelectedAnswers));
-        OnPropertyChanged(nameof(IsCurrentQuestionMultiAnswer));
-    }
 
-    private void RecordSelections(int questionId, IEnumerable<int> answerIds)
-    {
-        _selectedAnswers.RemoveAll(p => p.QuestionId == questionId);
-        _selectedAnswers.AddRange(answerIds.Select(answerId => (questionId, answerId)));
-    }
-
-    private void ToggleMultiAnswer(SelectableQuizAnswer selectable)
-    {
-        var isNone = selectable.Answer.MappedValue == 0;
-
-        if (isNone)
+        if (Questions.Count == 0)
         {
-            foreach (var answer in CurrentAnswers)
-                answer.IsSelected = false;
-
-            selectable.IsSelected = true;
+            ClearQuestionState();
+            ShowEmptyState(true);
             return;
         }
 
-        selectable.IsSelected = !selectable.IsSelected;
-
-        foreach (var answer in CurrentAnswers.Where(answer => answer.Answer.MappedValue == 0))
-            answer.IsSelected = false;
+        MoveToQuestion(0);
+        LoadState = QuizLoadState.Ready;
     }
 
-    private void NotifyComputedProperties()
+    private void ShowEmptyState(bool noQuestions)
     {
-        OnPropertyChanged(nameof(IsCurrentQuestionMultiAnswer));
-        OnPropertyChanged(nameof(IsFirstQuestion));
-        OnPropertyChanged(nameof(IsLastQuestion));
-        OnPropertyChanged(nameof(HasError));
-        OnPropertyChanged(nameof(ProgressValue));
-        OnPropertyChanged(nameof(ProgressText));
-        OnPropertyChanged(nameof(NextButtonText));
-        OnPropertyChanged(nameof(CurrentQuestionText));
-        OnPropertyChanged(nameof(QuestionsStateTitle));
-        OnPropertyChanged(nameof(QuestionsStateMessage));
-        OnPropertyChanged(nameof(CurrentQuestionIconGlyph));
-        BackCommand.NotifyCanExecuteChanged();
-    }
-
-    private void SetLoadState(QuizLoadState loadState)
-    {
-        if (_loadState == loadState)
-            return;
-
-        AppDebugLog.Write("QuizVM", $"LoadState {_loadState} -> {loadState}.");
-        _loadState = loadState;
-        RefreshLoadStateFlags();
+        LoadState = noQuestions ? QuizLoadState.Empty : QuizLoadState.Failed;
         NotifyComputedProperties();
-    }
-
-    private void RefreshLoadStateFlags()
-    {
-        IsLoading = _loadState is QuizLoadState.NotStarted or QuizLoadState.Loading;
-        HasQuestion = CurrentQuestion is not null && _loadState == QuizLoadState.Ready;
-        HasLoadedQuestions = _loadState is QuizLoadState.Ready or QuizLoadState.Empty;
-        HasNoQuestions = _loadState is QuizLoadState.Empty or QuizLoadState.Failed;
-        CanRetryQuestionsLoad = _loadState is QuizLoadState.Empty or QuizLoadState.Failed;
-
-        AppDebugLog.Write(
-            "QuizVM",
-            $"Flags refreshed: isLoading={IsLoading}, hasQuestion={HasQuestion}, hasLoaded={HasLoadedQuestions}, hasNoQuestions={HasNoQuestions}, canRetry={CanRetryQuestionsLoad}.");
     }
 
     private void ClearQuestionState()
@@ -361,14 +246,140 @@ public partial class QuizViewModel : ObservableObject
         CurrentQuestion = null;
         CurrentAnswers = [];
         CurrentQuestionIndex = 0;
+        NotifySelectionProperties();
     }
 
-    private enum QuizLoadState
+    private void MoveToQuestion(int index)
     {
-        NotStarted,
-        Loading,
-        Ready,
-        Empty,
-        Failed
+        CurrentQuestionIndex = Math.Clamp(index, 0, Questions.Count - 1);
+        CurrentQuestion = Questions[CurrentQuestionIndex];
+        BuildAnswers(CurrentQuestion);
+        NotifyComputedProperties();
+    }
+
+    private void BuildAnswers(QuizQuestion question)
+    {
+        var savedAnswerIds = _selectedAnswers
+            .Where(selection => selection.QuestionId == question.Id)
+            .Select(selection => selection.AnswerId)
+            .ToHashSet();
+
+        CurrentAnswers = new ObservableCollection<SelectableQuizAnswer>(
+            question.Answers
+                .OrderBy(answer => answer.OrderIndex)
+                .ThenBy(answer => answer.Id)
+                .Select(answer => new SelectableQuizAnswer
+                {
+                    Answer = answer,
+                    QuestionType = question.QuestionType,
+                    IsSelected = savedAnswerIds.Contains(answer.Id)
+                }));
+
+        NotifySelectionProperties();
+    }
+
+    private void SelectSingleAnswer(SelectableQuizAnswer selectedAnswer)
+    {
+        foreach (var answer in CurrentAnswers)
+            answer.IsSelected = ReferenceEquals(answer, selectedAnswer);
+    }
+
+    private void ToggleMultiAnswer(SelectableQuizAnswer selectedAnswer)
+    {
+        var isNoneAnswer = selectedAnswer.Answer.MappedValue == 0;
+
+        if (isNoneAnswer)
+        {
+            foreach (var answer in CurrentAnswers)
+                answer.IsSelected = false;
+
+            selectedAnswer.IsSelected = true;
+            return;
+        }
+
+        selectedAnswer.IsSelected = !selectedAnswer.IsSelected;
+        foreach (var answer in CurrentAnswers.Where(answer => answer.Answer.MappedValue == 0))
+            answer.IsSelected = false;
+    }
+
+    private void RecordSelections(int questionId, IEnumerable<int> answerIds)
+    {
+        _selectedAnswers.RemoveAll(selection => selection.QuestionId == questionId);
+        _selectedAnswers.AddRange(answerIds.Select(answerId => (questionId, answerId)));
+    }
+
+    private async Task SaveAnswersAsync()
+    {
+        var totalStopwatch = Stopwatch.StartNew();
+        IsBusy = true;
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            IsPreparingDashboard = true;
+
+            var userId = await DataLoadScheduler.RunAsync(_authService.GetCurrentUserIdAsync);
+            var responses = _selectedAnswers
+                .Select(selection => new UserQuizResponse
+                {
+                    QuizQuestionId = selection.QuestionId,
+                    QuizAnswerId = selection.AnswerId
+                })
+                .ToList();
+
+            var stageStopwatch = Stopwatch.StartNew();
+            await DataLoadScheduler.RunAsync(() => _quizService.SaveAnswersAsync(userId, responses));
+            Trace.WriteLine(
+                $"[Performance][Quiz] Answers and profile saved in {stageStopwatch.ElapsedMilliseconds} ms.");
+
+            _preloadService.InvalidateAll();
+            stageStopwatch.Restart();
+            await _preloadService.PreloadAllAsync();
+            Trace.WriteLine(
+                $"[Performance][Quiz] All pages prepared in {stageStopwatch.ElapsedMilliseconds} ms.");
+
+            stageStopwatch.Restart();
+            await _navigateToDashboardAsync();
+            Trace.WriteLine(
+                $"[Performance][Quiz] Dashboard navigation completed in {stageStopwatch.ElapsedMilliseconds} ms; " +
+                $"total sync={totalStopwatch.ElapsedMilliseconds} ms.");
+        }
+        catch
+        {
+            IsPreparingDashboard = false;
+            ErrorMessage = "We could not save your answers. Please try again.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    partial void OnCurrentQuestionChanged(QuizQuestion? value)
+    {
+        OnPropertyChanged(nameof(CurrentQuestionText));
+        OnPropertyChanged(nameof(CurrentQuestionIconGlyph));
+    }
+
+    private void NotifySelectionProperties()
+    {
+        OnPropertyChanged(nameof(FirstSelectedAnswer));
+        OnPropertyChanged(nameof(SelectedAnswer));
+        OnPropertyChanged(nameof(SelectedAnswers));
+    }
+
+    private void NotifyComputedProperties()
+    {
+        OnPropertyChanged(nameof(IsCurrentQuestionMultiAnswer));
+        OnPropertyChanged(nameof(IsFirstQuestion));
+        OnPropertyChanged(nameof(IsLastQuestion));
+        OnPropertyChanged(nameof(ProgressValue));
+        OnPropertyChanged(nameof(ProgressText));
+        OnPropertyChanged(nameof(NextButtonText));
+        OnPropertyChanged(nameof(CurrentQuestionText));
+        OnPropertyChanged(nameof(QuestionsStateTitle));
+        OnPropertyChanged(nameof(QuestionsStateMessage));
+        OnPropertyChanged(nameof(CurrentQuestionIconGlyph));
+        BackCommand.NotifyCanExecuteChanged();
     }
 }

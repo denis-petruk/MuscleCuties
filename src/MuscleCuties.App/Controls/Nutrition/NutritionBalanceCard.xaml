@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentView
     x:Class="MuscleCuties.App.Controls.Nutrition.NutritionBalanceCard"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -43,11 +44,12 @@
 
             <Grid ColumnDefinitions="*, Auto">
                 <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
-                    <sharedControls:FitnessIconView
-                        Icon="Fire"
-                        IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
-                        WidthRequest="20"
-                        HeightRequest="20"
+                    <sharedControls:ThemeAwareImage
+                        LightSource="icon_fire.png"
+                        DarkSource="icon_fire_dark.png"
+                        Aspect="AspectFit"
+                        WidthRequest="22"
+                        HeightRequest="22"
                         VerticalOptions="Center" />
                     <Label
                         Text="{Binding CaloriesConsumed}"
@@ -66,7 +68,7 @@
             <ProgressBar
                 Progress="{Binding CaloriesProgress}"
                 ProgressColor="{StaticResource Primary}"
-                BackgroundColor="{StaticResource Gray300}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
                 HeightRequest="8" />
 
             <sharedControls:MacroProgressGrid
