@@ -1,0 +1,15 @@
+namespace MuscleCuties.Core.Models.Workout.Logging;
+
+public sealed record WorkoutExerciseLogInput(
+    int WorkoutDayExerciseId,
+    int ExerciseId,
+    int CompletedSets,
+    int CompletedReps,
+    float? WeightKg,
+    int? CompletedDurationSeconds = null,
+    float? DistanceKm = null,
+    int? AverageHeartRateBpm = null,
+    int? PaceSecondsPerKm = null,
+    int? PowerWatts = null,
+    int? CadenceRpm = null,
+    int? EffortRating = null);
