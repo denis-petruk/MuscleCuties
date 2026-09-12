@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Entities.Users;
+using MuscleCuties.Core.Models.Enums.Cycle;
 
 namespace MuscleCuties.Core.Models.Entities.Workout;
 

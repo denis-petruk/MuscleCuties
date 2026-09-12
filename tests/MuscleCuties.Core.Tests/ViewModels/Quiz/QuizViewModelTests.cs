@@ -1,27 +1,39 @@
-using NSubstitute;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
+using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.ViewModels.Quiz;
+using NSubstitute;
 
 namespace MuscleCuties.Core.Tests.ViewModels.Quiz;
 
 public class QuizViewModelTests
 {
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
+    private readonly IAppPreloadService _preloadService = Substitute.For<IAppPreloadService>();
     private readonly IQuizService _quizService = Substitute.For<IQuizService>();
     private bool _navigatedToDashboard;
 
-    private QuizViewModel CreateViewModel() =>
-        new(_authService, _quizService, () => _navigatedToDashboard = true);
+    private QuizViewModel CreateViewModel()
+    {
+        return new QuizViewModel(
+            _authService,
+            _quizService,
+            _preloadService,
+            new QuizQuestionCache(),
+            () =>
+            {
+                _navigatedToDashboard = true;
+                return Task.CompletedTask;
+            });
+    }
 
     private static List<QuizQuestion> CreateQuestions(int count)
     {
         var questions = new List<QuizQuestion>();
-        for (int i = 0; i < count; i++)
-        {
+        for (var i = 0; i < count; i++)
             questions.Add(new QuizQuestion
             {
                 Id = i + 1,
@@ -29,40 +41,50 @@ public class QuizViewModelTests
                 OrderIndex = i,
                 Answers = new List<QuizAnswer>
                 {
-                    new QuizAnswer { Id = (i * 2) + 1, QuestionId = i + 1, Text = "Answer A", MappedValue = 1 },
-                    new QuizAnswer { Id = (i * 2) + 2, QuestionId = i + 1, Text = "Answer B", MappedValue = 2 }
+                    new() { Id = i * 2 + 1, QuestionId = i + 1, Text = "Answer A", MappedValue = 1 },
+                    new() { Id = i * 2 + 2, QuestionId = i + 1, Text = "Answer B", MappedValue = 2 }
                 }
             });
-        }
         return questions;
     }
 
-    private static List<QuizQuestion> CreateCyclePhaseQuestions() =>
-    [
-        new()
-        {
-            Id = 2,
-            Question = "What phase are you in today?",
-            OrderIndex = -1,
-            QuestionType = QuizQuestionType.CurrentCyclePhase,
-            Answers =
-            [
-                new QuizAnswer { Id = 4, QuestionId = 2, Text = "Menstrual", OrderIndex = 1, MappedValue = (int)CyclePhase.Menstrual },
-                new QuizAnswer { Id = 5, QuestionId = 2, Text = "Ovulatory", OrderIndex = 2, MappedValue = (int)CyclePhase.Ovulatory }
-            ]
-        },
-        new()
-        {
-            Id = 3,
-            Question = "Goal?",
-            OrderIndex = 1,
-            QuestionType = QuizQuestionType.Goal,
-            Answers =
-            [
-                new QuizAnswer { Id = 6, QuestionId = 3, Text = "Strength", OrderIndex = 1, MappedValue = 2 }
-            ]
-        }
-    ];
+    private static List<QuizQuestion> CreateCyclePhaseQuestions()
+    {
+        return
+        [
+            new QuizQuestion
+            {
+                Id = 2,
+                Question = "What phase are you in today?",
+                OrderIndex = -1,
+                QuestionType = QuizQuestionType.CurrentCyclePhase,
+                Answers =
+                [
+                    new QuizAnswer
+                    {
+                        Id = 4, QuestionId = 2, Text = "Menstrual", OrderIndex = 1,
+                        MappedValue = (int)CyclePhase.Menstrual
+                    },
+                    new QuizAnswer
+                    {
+                        Id = 5, QuestionId = 2, Text = "Ovulatory", OrderIndex = 2,
+                        MappedValue = (int)CyclePhase.Ovulatory
+                    }
+                ]
+            },
+            new QuizQuestion
+            {
+                Id = 3,
+                Question = "Goal?",
+                OrderIndex = 1,
+                QuestionType = QuizQuestionType.Goal,
+                Answers =
+                [
+                    new QuizAnswer { Id = 6, QuestionId = 3, Text = "Strength", OrderIndex = 1, MappedValue = 2 }
+                ]
+            }
+        ];
+    }
 
     [Fact]
     public async Task LoadQuestions_PopulatesQuestions_SetsCurrentQuestion()
@@ -144,7 +166,8 @@ public class QuizViewModelTests
         vm.SelectAnswerCommand.Execute(vm.CurrentAnswers.First());
         await vm.NextCommand.ExecuteAsync(null);
 
-        await _quizService.Received(1).SaveAnswersAsync(1, Arg.Is<List<UserQuizResponse>>(responses => responses.Count == 2));
+        await _quizService.Received(1)
+            .SaveAnswersAsync(1, Arg.Is<List<UserQuizResponse>>(responses => responses.Count == 2));
         Assert.True(_navigatedToDashboard);
     }
 
@@ -155,6 +178,9 @@ public class QuizViewModelTests
 
         Assert.True(vm.IsLoading);
         Assert.False(vm.HasNoQuestions);
+        Assert.False(vm.IsLayoutVisible);
+        Assert.True(vm.IsLoadingVisible);
+        Assert.False(vm.IsEmptyStateVisible);
     }
 
     [Fact]
@@ -168,6 +194,9 @@ public class QuizViewModelTests
         Assert.True(vm.HasLoadedQuestions);
         Assert.False(vm.IsLoading);
         Assert.True(vm.HasNoQuestions);
+        Assert.False(vm.IsLayoutVisible);
+        Assert.False(vm.IsLoadingVisible);
+        Assert.True(vm.IsEmptyStateVisible);
     }
 
     [Fact]
@@ -181,6 +210,9 @@ public class QuizViewModelTests
 
         Assert.Equal(2, vm.Questions.Count);
         Assert.Equal(QuizQuestionType.CurrentCyclePhase, vm.CurrentQuestion!.QuestionType);
+        Assert.True(vm.IsLayoutVisible);
+        Assert.False(vm.IsLoadingVisible);
+        Assert.False(vm.IsEmptyStateVisible);
     }
 
     [Fact]

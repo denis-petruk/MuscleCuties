@@ -1,101 +1,177 @@
-using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 using MuscleCuties.App.Pages.Onboarding;
 using MuscleCuties.App.Services.Notifications;
 using MuscleCuties.Core.Data;
-using MuscleCuties.Core.Diagnostics;
 using MuscleCuties.Core.Repositories.Users;
+using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
+using MuscleCuties.Core.Services.Notifications;
+using MuscleCuties.Core.Services.Workout.Planning;
 
 namespace MuscleCuties.App;
 
 public partial class App : Application
 {
-#if DEBUG
-    private static readonly bool ResetDatabaseOnDebugStart = false;
-#endif
-
     private readonly IServiceProvider _services;
+    private int _referenceSeedStarted;
+    private int _startupStarted;
 
     public App(IServiceProvider services)
     {
         _services = services;
         InitializeComponent();
+        SyncActivityTheme();
+        RequestedThemeChanged += (_, e) => SyncActivityTheme(e.RequestedTheme);
+    }
+
+    private static void SyncActivityTheme(AppTheme? theme = null)
+    {
+        var resolved = theme ?? Current?.RequestedTheme ?? AppTheme.Unspecified;
+        if (resolved == AppTheme.Unspecified)
+            resolved = AppInfo.RequestedTheme == AppTheme.Unspecified ? AppTheme.Light : AppInfo.RequestedTheme;
+
+        WorkoutActivityClassifier.IsDarkTheme = resolved == AppTheme.Dark;
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        return new Window(_services.GetRequiredService<AppShell>());
+        var window = new Window(_services.GetRequiredService<AppShell>());
+        window.Created += OnWindowCreated;
+        window.Resumed += OnWindowResumed;
+        return window;
     }
 
-    protected override async void OnStart()
+    private void OnWindowCreated(object? sender, EventArgs e)
     {
-        base.OnStart();
+        BeginStartup();
+    }
 
-        AppDebugLog.Write("Startup", "OnStart begin.");
+    internal void BeginStartup()
+    {
+        if (Interlocked.Exchange(ref _startupStarted, 1) != 0)
+            return;
+
+        _ = InitializeAndRouteAsync();
+    }
+
+    private async Task InitializeAndRouteAsync()
+    {
         try
         {
             using var scope = _services.CreateScope();
             var database = scope.ServiceProvider.GetRequiredService<AppDatabase>();
-#if DEBUG
-            AppDebugLog.Write("Startup", $"Database reset on debug start: {ResetDatabaseOnDebugStart}.");
-            if (ResetDatabaseOnDebugStart)
-            {
-                AppDebugLog.Write("Startup", "ResetAndSeedDebugDatabaseAsync start.");
-                await database.ResetAndSeedDebugDatabaseAsync();
-                AppDebugLog.Write("Startup", "ResetAndSeedDebugDatabaseAsync complete.");
-            }
-            else
-            {
-                AppDebugLog.Write("Startup", "InitializeAsync start.");
-                await database.InitializeAsync();
-                AppDebugLog.Write("Startup", "InitializeAsync complete.");
-            }
-#else
-            await database.InitializeAsync();
-#endif
+            await Task.Run(database.InitializeStartupAsync);
 
             var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var isLoggedIn = await authService.IsLoggedInAsync();
-            AppDebugLog.Write("Startup", $"IsLoggedInAsync returned {isLoggedIn}.");
+            var isLoggedIn = await Task.Run(authService.IsLoggedInAsync);
             if (isLoggedIn)
             {
-                var userId = await authService.GetCurrentUserIdAsync();
-                AppDebugLog.Write("Startup", $"Current user id: {userId}.");
+                var userId = await Task.Run(authService.GetCurrentUserIdAsync);
                 var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-                var user = await userRepository.GetByIdAsync(userId);
+                var user = await Task.Run(() => userRepository.GetByIdAsync(userId));
                 if (user is null)
                 {
-                    AppDebugLog.Write("Startup", "User token exists but user row is missing. Logging out.");
-                    await authService.LogoutAsync();
-                    await Shell.Current.GoToAsync("//LoginPage", false);
-                    AppDebugLog.Write("Startup", "Navigated to LoginPage after missing user.");
+                    await Task.Run(authService.LogoutAsync);
+                    await NavigateFromStartupAsync("//LoginPage");
+                    StartReferenceDataSeed();
                     return;
                 }
 
-                AppDebugLog.Write("Startup", $"User loaded. OnboardingComplete={user.IsOnboardingComplete}.");
                 if (!user.IsOnboardingComplete)
                 {
-                    await Shell.Current.GoToAsync(nameof(ProfileSetupPage), false);
-                    AppDebugLog.Write("Startup", "Navigated to ProfileSetupPage.");
+                    await NavigateFromStartupAsync($"//{nameof(ProfileSetupPage)}");
+                    StartReferenceDataSeed();
                     return;
                 }
 
-                await Shell.Current.GoToAsync("//DashboardPage", false);
-                AppDebugLog.Write("Startup", "Navigated to DashboardPage.");
-
-                var notificationService = scope.ServiceProvider.GetRequiredService<ICyclePhaseNotificationService>();
-                await notificationService.NotifyIfPhaseChangedAsync(userId);
-                AppDebugLog.Write("Startup", "Cycle phase notification check complete.");
+                await SeedAndPreloadAsync(database, userId);
                 return;
             }
 
-            await Shell.Current.GoToAsync("//LoginPage", false);
-            AppDebugLog.Write("Startup", "Navigated to LoginPage.");
+            await NavigateFromStartupAsync("//LoginPage");
+            StartReferenceDataSeed();
         }
         catch (Exception ex)
         {
-            AppDebugLog.Error("Startup", ex, "OnStart failed");
-            throw;
+            Trace.WriteLine($"[Startup] InitializeAndRouteAsync failed: {ex}");
+            await NavigateFromStartupAsync("//LoginPage");
         }
+    }
+
+    private async Task SeedAndPreloadAsync(AppDatabase database, int userId)
+    {
+        await Task.Run(database.SeedDeferredReferenceDataAsync);
+
+        var preloadService = _services.GetRequiredService<IAppPreloadService>();
+        await preloadService.PreloadAllAsync();
+        await NavigateFromStartupAsync("//DashboardPage");
+
+        _ = ScheduleNotificationsAsync(userId);
+    }
+
+    private static Task NavigateFromStartupAsync(string route)
+    {
+        return MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            var shell = Shell.Current ?? throw new InvalidOperationException("Shell is not available yet.");
+            await shell.GoToAsync(route, false);
+        });
+    }
+
+    private async Task ScheduleNotificationsAsync(int userId)
+    {
+        try
+        {
+            using var scope = _services.CreateScope();
+            var cycleNotifications = scope.ServiceProvider.GetRequiredService<ICyclePhaseNotificationService>();
+            var checkInNotifications = scope.ServiceProvider.GetRequiredService<IDailyCheckInNotificationService>();
+            await cycleNotifications.NotifyIfPhaseChangedAsync(userId);
+            await checkInNotifications.ScheduleCheckInReminderAsync(userId);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Startup] ScheduleNotificationsAsync failed: {ex.Message}");
+        }
+    }
+
+    private void OnWindowResumed(object? sender, EventArgs e)
+    {
+        _ = HandleDayChangeAsync();
+    }
+
+    private async Task HandleDayChangeAsync()
+    {
+        try
+        {
+            var preloadService = _services.GetRequiredService<IAppPreloadService>();
+            if (DateTime.Today <= preloadService.LastLoadedDate)
+                return;
+
+            await preloadService.RefreshAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Startup] HandleDayChangeAsync failed: {ex.Message}");
+        }
+    }
+
+    private void StartReferenceDataSeed()
+    {
+        if (Interlocked.Exchange(ref _referenceSeedStarted, 1) != 0)
+            return;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var scope = _services.CreateScope();
+                var database = scope.ServiceProvider.GetRequiredService<AppDatabase>();
+                await database.SeedDeferredReferenceDataAsync();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"[Startup] StartReferenceDataSeed failed: {ex.Message}");
+            }
+        });
     }
 }

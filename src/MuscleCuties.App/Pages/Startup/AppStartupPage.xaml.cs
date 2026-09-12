@@ -1,13 +1,9 @@
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Controls;
-using Microsoft.Maui.Graphics;
+using MuscleCuties.App.Resources.Styles;
 
 namespace MuscleCuties.App.Pages.Startup;
 
 public partial class AppStartupPage : ContentPage
 {
-    private static readonly Color LightBackground = Color.FromArgb("#FFF8FB");
-    private static readonly Color DarkBackground = Color.FromArgb("#2B1D24");
     private bool _isThemeHandlerAttached;
 
     public AppStartupPage()
@@ -20,6 +16,9 @@ public partial class AppStartupPage : ContentPage
     {
         base.OnAppearing();
         ApplyTheme();
+
+        if (Application.Current is App app)
+            app.BeginStartup();
 
         if (!_isThemeHandlerAttached && Application.Current is not null)
         {
@@ -52,7 +51,7 @@ public partial class AppStartupPage : ContentPage
 
         var isDark = theme == AppTheme.Dark;
 
-        var background = isDark ? DarkBackground : LightBackground;
+        var background = AppThemeResources.GetColor(theme, "PageBackground", "PageBackgroundDark");
         BackgroundColor = background;
         StartupRoot.BackgroundColor = background;
         StartupLogo.Source = ImageSource.FromFile(isDark

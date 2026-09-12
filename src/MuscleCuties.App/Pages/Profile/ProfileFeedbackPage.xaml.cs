@@ -1,5 +1,3 @@
-using System.IO;
-using MuscleCuties.App.Pages;
 using MuscleCuties.Core.ViewModels.Profile;
 
 namespace MuscleCuties.App.Pages.Profile;
@@ -12,10 +10,10 @@ public partial class ProfileFeedbackPage : ContentPage
         BindingContext = vm;
     }
 
-    protected override void OnAppearing()
+    protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
-        base.OnAppearing();
-        this.LoadAfterFirstRender(() => ((ProfileFeedbackViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
+        base.OnNavigatedTo(args);
+        this.BeginPageLoad(() => ((ProfileFeedbackViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
     }
 
     private async void OnAttachFileClicked(object? sender, EventArgs e)

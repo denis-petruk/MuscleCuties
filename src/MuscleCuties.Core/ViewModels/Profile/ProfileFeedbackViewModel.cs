@@ -12,22 +12,40 @@ namespace MuscleCuties.Core.ViewModels.Profile;
 public partial class ProfileFeedbackViewModel : ObservableObject
 {
     private readonly IAuthService _authService;
-    private readonly IUserRepository _userRepository;
     private readonly IFeedbackEmailService _feedbackEmailService;
-    private readonly Action _navigateBack;
-    private SelectionOption<FeedbackTopic>? _selectedTopicOption;
-    private SelectionOption<FeedbackPriority>? _selectedPriorityOption;
-
-    [ObservableProperty] private string _contactEmail = string.Empty;
-    [ObservableProperty] private bool _includeContactEmail = true;
-    [ObservableProperty] private string _screenName = string.Empty;
-    [ObservableProperty] private string _feedbackText = string.Empty;
+    private readonly Func<Task> _navigateBackAsync;
+    private readonly IUserRepository _userRepository;
     [ObservableProperty] private string _adjustmentText = string.Empty;
-    [ObservableProperty] private string _statusMessage = string.Empty;
+    private FeedbackAttachment? _attachment;
     [ObservableProperty] private string _attachmentName = string.Empty;
     [ObservableProperty] private string _attachmentStatus = string.Empty;
+
+    [ObservableProperty] private string _contactEmail = string.Empty;
+    [ObservableProperty] private string _feedbackText = string.Empty;
+    [ObservableProperty] private bool _includeContactEmail = true;
     [ObservableProperty] private bool _isBusy;
-    private FeedbackAttachment? _attachment;
+    [ObservableProperty] private string _screenName = string.Empty;
+    private SelectionOption<FeedbackPriority>? _selectedPriorityOption;
+    private SelectionOption<FeedbackTopic>? _selectedTopicOption;
+    [ObservableProperty] private string _statusMessage = string.Empty;
+
+    public ProfileFeedbackViewModel(
+        IAuthService authService,
+        IUserRepository userRepository,
+        IFeedbackEmailService feedbackEmailService,
+        Func<Task> navigateBackAsync)
+    {
+        _authService = authService;
+        _userRepository = userRepository;
+        _feedbackEmailService = feedbackEmailService;
+        _navigateBackAsync = navigateBackAsync;
+        LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
+        SendFeedbackCommand = new AsyncRelayCommand(SendFeedbackAsync);
+        RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
+        BackCommand = new AsyncRelayCommand(_navigateBackAsync);
+        SelectedTopicOption = TopicOptions.First();
+        SelectedPriorityOption = PriorityOptions.First();
+    }
 
     public IReadOnlyList<SelectionOption<FeedbackTopic>> TopicOptions { get; } =
         ProfileSelectionOptions.FeedbackTopics;
@@ -36,10 +54,14 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         ProfileSelectionOptions.FeedbackPriorities;
 
     public string FeedbackCountText => $"{FeedbackText.Length + AdjustmentText.Length} characters";
-    public bool IsReadyToSend => !IsBusy && (!string.IsNullOrWhiteSpace(FeedbackText) || !string.IsNullOrWhiteSpace(AdjustmentText));
+
+    public bool IsReadyToSend =>
+        !IsBusy && (!string.IsNullOrWhiteSpace(FeedbackText) || !string.IsNullOrWhiteSpace(AdjustmentText));
+
     public bool HasAttachment => _attachment is not null;
     public string SelectedTopicLabel => SelectedTopicOption?.Label ?? "Design or style";
     public string SelectedPriorityLabel => SelectedPriorityOption?.Label ?? "Nice to improve";
+
     public SelectionOption<FeedbackTopic>? SelectedTopicOption
     {
         get => _selectedTopicOption;
@@ -67,25 +89,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand SendFeedbackCommand { get; }
     public RelayCommand RemoveAttachmentCommand { get; }
-    public RelayCommand BackCommand { get; }
-
-    public ProfileFeedbackViewModel(
-        IAuthService authService,
-        IUserRepository userRepository,
-        IFeedbackEmailService feedbackEmailService,
-        Action navigateBack)
-    {
-        _authService = authService;
-        _userRepository = userRepository;
-        _feedbackEmailService = feedbackEmailService;
-        _navigateBack = navigateBack;
-        LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
-        SendFeedbackCommand = new AsyncRelayCommand(SendFeedbackAsync);
-        RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
-        BackCommand = new RelayCommand(_navigateBack);
-        SelectedTopicOption = TopicOptions.First();
-        SelectedPriorityOption = PriorityOptions.First();
-    }
+    public AsyncRelayCommand BackCommand { get; }
 
     public void AttachFile(
         string fileName,
@@ -168,8 +172,10 @@ public partial class ProfileFeedbackViewModel : ObservableObject
             IReadOnlyList<FeedbackAttachment> attachments = _attachment is null
                 ? Array.Empty<FeedbackAttachment>()
                 : [_attachment];
-            await _feedbackEmailService.SendFeedbackAsync($"MuscleCuties beta feedback - {SelectedTopicLabel}", body, attachments);
+            await _feedbackEmailService.SendFeedbackAsync($"MuscleCuties beta feedback - {SelectedTopicLabel}", body,
+                attachments);
             StatusMessage = "Feedback email is ready to send.";
+            await _navigateBackAsync();
         }
         catch (Exception)
         {
@@ -198,8 +204,10 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         OnPropertyChanged(nameof(IsReadyToSend));
     }
 
-    private static string NormalizeOptional(string value) =>
-        string.IsNullOrWhiteSpace(value) ? "Not specified" : value.Trim();
+    private static string NormalizeOptional(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "Not specified" : value.Trim();
+    }
 
     private void RemoveAttachment()
     {

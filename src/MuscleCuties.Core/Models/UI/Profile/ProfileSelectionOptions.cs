@@ -47,6 +47,8 @@ internal static class ProfileSelectionOptions
         new(FeedbackPriority.TinyPolish, "Tiny polish", "TargetEdit24")
     ];
 
-    public static bool UsesWeightGoalPace(UserGoal goal) =>
-        goal is UserGoal.FatLoss or UserGoal.Strength;
+    public static bool UsesWeightGoalPace(UserGoal goal)
+    {
+        return goal is UserGoal.FatLoss or UserGoal.Strength;
+    }
 }

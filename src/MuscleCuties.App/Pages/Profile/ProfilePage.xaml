@@ -1,24 +1,29 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage
     x:Class="MuscleCuties.App.Pages.Profile.ProfilePage"
     x:Name="Root"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:profileModels="clr-namespace:MuscleCuties.Core.Models.UI.Profile;assembly=MuscleCuties.Core"
+    xmlns:profileControls="clr-namespace:MuscleCuties.App.Controls.Profile"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
     x:DataType="vm:ProfileViewModel"
     Shell.NavBarIsVisible="False">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,56,20,32" Spacing="14">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout
+            Padding="20,56,20,32"
+            Spacing="14"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="640">
 
-            <!-- ── Header ──────────────────────────────────────────── -->
             <Label
                 Text="You"
                 Style="{StaticResource SubHeadline}" />
 
-            <!-- ── Profile card ────────────────────────────────────── -->
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="16">
 
@@ -28,8 +33,9 @@
                             WidthRequest="62"
                             HeightRequest="62"
                             StrokeShape="RoundRectangle 31"
-                            BackgroundColor="{StaticResource AccentSurface}"
-                            StrokeThickness="0">
+                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                            StrokeThickness="0"
+                            SemanticProperties.Description="Change profile photo">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnProfileImageTapped" />
                             </Border.GestureRecognizers>
@@ -37,15 +43,17 @@
                                 <Image
                                     Source="{Binding ProfileImageSource}"
                                     IsVisible="{Binding HasProfileImage}"
-                                    Aspect="AspectFit"
-                                    WidthRequest="54"
-                                    HeightRequest="54"
+                                    Aspect="AspectFill"
+                                    WidthRequest="62"
+                                    HeightRequest="62"
                                     HorizontalOptions="Center"
                                     VerticalOptions="Center" />
-                                <sharedControls:ThemeAwareBrandLogoImage
+                                <Image
                                     IsVisible="{Binding HasNoProfileImage}"
-                                    WidthRequest="50"
-                                    HeightRequest="34"
+                                    Source="{AppThemeBinding Light=musclecuties_logo_light_transparent.png, Dark=musclecuties_logo_dark_transparent.png}"
+                                    Aspect="AspectFill"
+                                    WidthRequest="62"
+                                    HeightRequest="62"
                                     HorizontalOptions="Center"
                                     VerticalOptions="Center" />
                             </Grid>
@@ -69,11 +77,13 @@
                             StrokeShape="RoundRectangle 12"
                             StrokeThickness="0"
                             Padding="8,10"
-                            MinimumHeightRequest="76">
+                            MinimumHeightRequest="76"
+                            SemanticProperties.Description="{Binding WorkoutStreakDays, StringFormat='Workout session streak: {0} days'}">
                             <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
                                 <HorizontalStackLayout HorizontalOptions="Center" Spacing="1">
-                                    <Image
-                                        Source="icon_muscle.png"
+                                    <sharedControls:ThemeAwareImage
+                                        LightSource="icon_muscle.png"
+                                        DarkSource="icon_muscle_dark.png"
                                         Aspect="AspectFit"
                                         WidthRequest="24"
                                         HeightRequest="24"
@@ -99,12 +109,14 @@
                             StrokeShape="RoundRectangle 12"
                             StrokeThickness="0"
                             Padding="8,10"
-                            MinimumHeightRequest="76">
+                            MinimumHeightRequest="76"
+                            SemanticProperties.Description="{Binding NutritionStreakDays, StringFormat='Nutrition log streak: {0} days'}">
                             <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
                                 <HorizontalStackLayout HorizontalOptions="Center" Spacing="1">
-                                    <sharedControls:FitnessIconView
-                                        Icon="Fire"
-                                        IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                    <sharedControls:ThemeAwareImage
+                                        LightSource="icon_fire.png"
+                                        DarkSource="icon_fire_dark.png"
+                                        Aspect="AspectFit"
                                         WidthRequest="24"
                                         HeightRequest="24"
                                         VerticalOptions="Center" />
@@ -129,11 +141,13 @@
                             StrokeShape="RoundRectangle 12"
                             StrokeThickness="0"
                             Padding="8,10"
-                            MinimumHeightRequest="76">
+                            MinimumHeightRequest="76"
+                            SemanticProperties.Description="{Binding CyclesTracked, StringFormat='Cycles logged: {0}'}">
                             <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
                                 <HorizontalStackLayout HorizontalOptions="Center" Spacing="1">
-                                    <Image
-                                        Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
+                                    <sharedControls:ThemeAwareImage
+                                        LightSource="tab_cycle.png"
+                                        DarkSource="tab_cycle_dark.png"
                                         Aspect="AspectFit"
                                         WidthRequest="26"
                                         HeightRequest="26"
@@ -158,7 +172,6 @@
                 </VerticalStackLayout>
             </Border>
 
-            <!-- ── Preferences section ─────────────────────────────── -->
             <Label
                 Text="PREFERENCES"
                 Style="{StaticResource EyebrowLabel}"
@@ -214,7 +227,10 @@
                 TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
                 Margin="0,8,0,0" />
 
-        </VerticalStackLayout>
-    </ScrollView>
+            </VerticalStackLayout>
+        </ScrollView>
+        <sharedControls:PageLoadingOverlay />
+        <profileControls:ProfileImageCropModal x:Name="CropModal" />
+    </Grid>
 
 </ContentPage>

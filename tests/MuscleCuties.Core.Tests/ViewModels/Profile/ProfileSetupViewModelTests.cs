@@ -1,34 +1,34 @@
-using NSubstitute;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Repositories.Common;
-using MuscleCuties.Core.Repositories.Cycle;
-using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Repositories.Quiz;
 using MuscleCuties.Core.Repositories.Users;
-using MuscleCuties.Core.Repositories.Workout;
 using MuscleCuties.Core.Services.Auth;
-using MuscleCuties.Core.Services.Cycle;
-using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Quiz;
-using MuscleCuties.Core.ViewModels.Auth;
-using MuscleCuties.Core.ViewModels.Cycle;
-using MuscleCuties.Core.ViewModels.Dashboard;
-using MuscleCuties.Core.ViewModels.Nutrition;
 using MuscleCuties.Core.ViewModels.Profile;
-using MuscleCuties.Core.ViewModels.Quiz;
-using MuscleCuties.Core.ViewModels.Workout;
+using NSubstitute;
 
 namespace MuscleCuties.Core.Tests.ViewModels.Profile;
 
 public class ProfileSetupViewModelTests
 {
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
+    private readonly IQuizService _quizService = Substitute.For<IQuizService>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private bool _navigatedToQuiz;
 
-    private ProfileSetupViewModel CreateViewModel() =>
-        new(_authService, _userRepository, () => _navigatedToQuiz = true);
+    private ProfileSetupViewModel CreateViewModel()
+    {
+        _quizService.GetOnboardingQuestionsAsync().Returns([]);
+        return new ProfileSetupViewModel(
+            _authService,
+            _userRepository,
+            _quizService,
+            new QuizQuestionCache(),
+            () =>
+            {
+                _navigatedToQuiz = true;
+                return Task.CompletedTask;
+            });
+    }
 
     [Fact]
     public async Task Save_NewProfile_AddsSnapshotAndNavigatesToQuiz()
@@ -69,7 +69,7 @@ public class ProfileSetupViewModelTests
             Id = 10,
             UserId = 1,
             Name = string.Empty,
-            Goal = MuscleCuties.Core.Models.Enums.Users.UserGoal.Strength,
+            Goal = UserGoal.Strength,
             WorkoutDaysPerWeek = 4,
             CycleLength = 0
         };

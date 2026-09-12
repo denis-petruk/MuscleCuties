@@ -30,14 +30,14 @@ public static partial class FoodServingOptions
 
     private static IReadOnlyList<FoodServingOption> StandardOptions { get; } =
     [
-        new FoodServingOption { Label = "g", Unit = "g", Grams = 1f, Source = "Standard" },
-        new FoodServingOption { Label = "oz", Unit = "oz", Grams = 28.3495f, Source = "Standard" },
-        new FoodServingOption { Label = "lb", Unit = "lb", Grams = 453.592f, Source = "Standard" },
-        new FoodServingOption { Label = "ml", Unit = "ml", Grams = 1f, Source = "Standard" },
-        new FoodServingOption { Label = "cup", Unit = "cup", Grams = 240f, Source = "Standard" },
-        new FoodServingOption { Label = "fl oz", Unit = "fl oz", Grams = 29.5735f, Source = "Standard" },
-        new FoodServingOption { Label = "tbsp", Unit = "tbsp", Grams = 15f, Source = "Standard" },
-        new FoodServingOption { Label = "tsp", Unit = "tsp", Grams = 5f, Source = "Standard" }
+        new() { Label = "g", Unit = "g", Grams = 1f, Source = "Standard" },
+        new() { Label = "oz", Unit = "oz", Grams = 28.3495f, Source = "Standard" },
+        new() { Label = "lb", Unit = "lb", Grams = 453.592f, Source = "Standard" },
+        new() { Label = "ml", Unit = "ml", Grams = 1f, Source = "Standard" },
+        new() { Label = "cup", Unit = "cup", Grams = 240f, Source = "Standard" },
+        new() { Label = "fl oz", Unit = "fl oz", Grams = 29.5735f, Source = "Standard" },
+        new() { Label = "tbsp", Unit = "tbsp", Grams = 15f, Source = "Standard" },
+        new() { Label = "tsp", Unit = "tsp", Grams = 5f, Source = "Standard" }
     ];
 
     public static string? CreateOptionsJson(FdcFoodDetail detail)
@@ -52,7 +52,6 @@ public static partial class FoodServingOptions
 
         if (food.ServingSize is > 0f &&
             TryConvertToGrams(food.ServingSize.Value, food.ServingSizeUnit, out var servingGrams))
-        {
             AddDistinctOption(
                 options,
                 new FoodServingOption
@@ -62,7 +61,6 @@ public static partial class FoodServingOptions
                     Grams = servingGrams,
                     Source = "Serving"
                 });
-        }
 
         foreach (var option in StandardOptions)
             AddDistinctOption(options, option);
@@ -119,7 +117,6 @@ public static partial class FoodServingOptions
 
         if (detail.ServingSize is > 0f &&
             TryConvertToGrams(detail.ServingSize.Value, detail.ServingSizeUnit, out var servingGrams))
-        {
             AddDistinctOption(
                 options,
                 new FoodServingOption
@@ -129,10 +126,8 @@ public static partial class FoodServingOptions
                     Grams = servingGrams,
                     Source = "FDC"
                 });
-        }
 
         if (TryParsePackageWeight(detail.PackageWeight, out var containerGrams))
-        {
             AddDistinctOption(
                 options,
                 new FoodServingOption
@@ -142,7 +137,6 @@ public static partial class FoodServingOptions
                     Grams = containerGrams,
                     Source = "FDC"
                 });
-        }
 
         foreach (var portion in detail.FoodPortions)
         {
@@ -200,7 +194,7 @@ public static partial class FoodServingOptions
         if (string.IsNullOrWhiteSpace(packageWeight))
             return false;
 
-        foreach (Match match in PackageWeightRegex().Matches(packageWeight).Cast<Match>().Reverse())
+        foreach (var match in PackageWeightRegex().Matches(packageWeight).Reverse())
         {
             if (!float.TryParse(match.Groups["amount"].Value, out var amount))
                 continue;
@@ -220,11 +214,9 @@ public static partial class FoodServingOptions
         var label = CleanLabel(option.Label);
         if (options.Any(existing =>
                 string.Equals(existing.Label, label, StringComparison.OrdinalIgnoreCase) ||
-                Math.Abs(existing.Grams - option.Grams) < 0.01f &&
-                string.Equals(existing.Unit, option.Unit, StringComparison.OrdinalIgnoreCase)))
-        {
+                (Math.Abs(existing.Grams - option.Grams) < 0.01f &&
+                 string.Equals(existing.Unit, option.Unit, StringComparison.OrdinalIgnoreCase))))
             return;
-        }
 
         options.Add(new FoodServingOption
         {
@@ -255,13 +247,19 @@ public static partial class FoodServingOptions
         };
     }
 
-    private static string CleanLabel(string value) =>
-        WhiteSpaceRegex().Replace(value.Trim(), " ");
+    private static string CleanLabel(string value)
+    {
+        return WhiteSpaceRegex().Replace(value.Trim(), " ");
+    }
 
-    private static string? FirstPresent(params string?[] values) =>
-        values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+    private static string? FirstPresent(params string?[] values)
+    {
+        return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+    }
 
-    [GeneratedRegex(@"(?<amount>\d+(?:\.\d+)?)\s*(?<unit>kg|kilograms?|g|grams?|mg|milligrams?|lb|lbs|pounds?|oz|ounces?)", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(
+        @"(?<amount>\d+(?:\.\d+)?)\s*(?<unit>kg|kilograms?|g|grams?|mg|milligrams?|lb|lbs|pounds?|oz|ounces?)",
+        RegexOptions.IgnoreCase)]
     private static partial Regex PackageWeightRegex();
 
     [GeneratedRegex(@"\s+")]

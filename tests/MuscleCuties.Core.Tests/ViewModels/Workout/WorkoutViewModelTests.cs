@@ -1,34 +1,15 @@
-using NSubstitute;
-using MuscleCuties.Core.Models.Entities.Cycle;
-using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
-using MuscleCuties.Core.Models.Entities.Users;
+using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
-using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.Core.Models.Enums.Quiz;
-using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.UI.Workout;
-using MuscleCuties.Core.Repositories.Common;
-using MuscleCuties.Core.Repositories.Cycle;
-using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Repositories.Quiz;
-using MuscleCuties.Core.Repositories.Users;
-using MuscleCuties.Core.Repositories.Workout;
+using MuscleCuties.Core.Models.Workout.Logging;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
-using MuscleCuties.Core.Services.Nutrition;
-using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
-using MuscleCuties.Core.ViewModels.Auth;
-using MuscleCuties.Core.ViewModels.Cycle;
-using MuscleCuties.Core.ViewModels.Dashboard;
-using MuscleCuties.Core.ViewModels.Nutrition;
-using MuscleCuties.Core.ViewModels.Profile;
-using MuscleCuties.Core.ViewModels.Quiz;
 using MuscleCuties.Core.ViewModels.Workout;
+using NSubstitute;
 
 namespace MuscleCuties.Core.Tests.ViewModels.Workout;
 
@@ -38,8 +19,26 @@ public class WorkoutViewModelTests
     private readonly ICycleService _cycleService = Substitute.For<ICycleService>();
     private readonly IWorkoutService _workoutService = Substitute.For<IWorkoutService>();
 
-    private WorkoutViewModel CreateViewModel() =>
-        new(_authService, _cycleService, _workoutService);
+    private IServiceScopeFactory BuildScopeFactory()
+    {
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        serviceProvider.GetService(typeof(IAuthService)).Returns(_authService);
+        serviceProvider.GetService(typeof(ICycleService)).Returns(_cycleService);
+        serviceProvider.GetService(typeof(IWorkoutService)).Returns(_workoutService);
+
+        var scope = Substitute.For<IServiceScope>();
+        scope.ServiceProvider.Returns(serviceProvider);
+
+        var scopeFactory = Substitute.For<IServiceScopeFactory>();
+        scopeFactory.CreateScope().Returns(scope);
+
+        return scopeFactory;
+    }
+
+    private WorkoutViewModel CreateViewModel()
+    {
+        return new WorkoutViewModel(BuildScopeFactory());
+    }
 
     private void StubReloadAfterSave()
     {
@@ -51,11 +50,12 @@ public class WorkoutViewModelTests
     [Fact]
     public async Task LoadData_WithActivePlan_LoadsWorkoutDays()
     {
-        var plan = new WorkoutPlan { Id = 10, UserId = 1, Name = "Full Body", CyclePhaseTarget = CyclePhase.Follicular };
+        var plan = new WorkoutPlan
+        { Id = 10, UserId = 1, Name = "Full Body", CyclePhaseTarget = CyclePhase.Follicular };
         var days = new List<WorkoutDay>
         {
-            new WorkoutDay { Id = 1, WorkoutPlanId = 10, DayOfWeek = 1, Name = "Day 1" },
-            new WorkoutDay { Id = 2, WorkoutPlanId = 10, DayOfWeek = 2, Name = "Day 2" }
+            new() { Id = 1, WorkoutPlanId = 10, DayOfWeek = 1, Name = "Day 1" },
+            new() { Id = 2, WorkoutPlanId = 10, DayOfWeek = 2, Name = "Day 2" }
         };
 
         _authService.GetCurrentUserIdAsync().Returns(1);
@@ -100,10 +100,11 @@ public class WorkoutViewModelTests
     [Fact]
     public async Task SelectFilter_WithNoMatchingWorkout_ShowsFilterEmptyStateAndCanShowAll()
     {
-        var plan = new WorkoutPlan { Id = 10, UserId = 1, Name = "Full Body", CyclePhaseTarget = CyclePhase.Follicular };
+        var plan = new WorkoutPlan
+        { Id = 10, UserId = 1, Name = "Full Body", CyclePhaseTarget = CyclePhase.Follicular };
         var days = new List<WorkoutDay>
         {
-            new WorkoutDay { Id = 1, WorkoutPlanId = 10, DayOfWeek = 1, Name = "Strength day" }
+            new() { Id = 1, WorkoutPlanId = 10, DayOfWeek = 1, Name = "Strength day" }
         };
 
         _authService.GetCurrentUserIdAsync().Returns(1);
@@ -207,6 +208,8 @@ public class WorkoutViewModelTests
         Assert.Equal("Lower body strength", vm.SelectedWorkoutTitle);
         Assert.Single(vm.SelectedWorkoutExercises);
         Assert.True(vm.HasSelectedWorkoutExercises);
+        Assert.True(vm.ShowWorkoutFooterAction);
+        Assert.Equal("Submit workout", vm.WorkoutLogButtonText);
     }
 
     [Fact]
@@ -258,7 +261,53 @@ public class WorkoutViewModelTests
                 logs.Single().CompletedReps == 10 &&
                 logs.Single().WeightKg == 25f),
             DateTime.Today);
-        Assert.True(vm.HasWorkoutModalStatus);
+        Assert.False(vm.IsWorkoutModalVisible);
+    }
+
+    [Fact]
+    public async Task SaveWorkoutSessionCommand_WithMissingStrengthWeight_DoesNotSave()
+    {
+        _authService.GetCurrentUserIdAsync().Returns(1);
+        _workoutService.GetWorkoutSessionDetailAsync(1, 42)
+            .Returns(new WorkoutSessionDetail(
+                42,
+                "Lower body strength",
+                "Strength",
+                "1 exercise",
+                [
+                    new WorkoutExerciseItem
+                    {
+                        WorkoutDayExerciseId = 7,
+                        ExerciseId = 8,
+                        Name = "Goblet Squat",
+                        TargetText = "3 sets x 10 reps",
+                        PreviousText = "No previous log",
+                        RecommendationText = "Pick a steady starting weight.",
+                        LoggedSetsText = "3",
+                        LoggedRepsText = "10",
+                        LoggedWeightText = string.Empty
+                    }
+                ]));
+
+        var vm = CreateViewModel();
+        await vm.OpenWorkoutCommand.ExecuteAsync(new WorkoutItem
+        {
+            WorkoutDayId = 42,
+            Tag = "STRENGTH",
+            Title = "Lower body strength",
+            Duration = "24 min",
+            ExerciseCountText = "1 exercise"
+        });
+
+        await vm.SaveWorkoutSessionCommand.ExecuteAsync(null);
+
+        Assert.True(vm.HasWorkoutModalError);
+        Assert.Contains("Add kg", vm.WorkoutModalErrorText);
+        await _workoutService.DidNotReceive().LogWorkoutSessionAsync(
+            Arg.Any<int>(),
+            Arg.Any<int>(),
+            Arg.Any<IReadOnlyCollection<WorkoutExerciseLogInput>>(),
+            Arg.Any<DateTime>());
     }
 
     [Fact]
@@ -329,7 +378,7 @@ public class WorkoutViewModelTests
                 "Pure rest day",
                 "No exercises today.",
                 [],
-                IsRestDay: true));
+                true));
 
         var vm = CreateViewModel();
         await vm.OpenWorkoutCommand.ExecuteAsync(new WorkoutItem
@@ -344,8 +393,7 @@ public class WorkoutViewModelTests
 
         await vm.SaveWorkoutSessionCommand.ExecuteAsync(null);
 
-        Assert.True(vm.ShowWorkoutRestDayState);
-        Assert.Equal("Save changes", vm.WorkoutLogButtonText);
+        Assert.False(vm.IsWorkoutModalVisible);
         await _workoutService.Received(1).LogWorkoutSessionAsync(
             1,
             42,

@@ -1,83 +1,113 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.UI.Cycle;
+using MuscleCuties.Core.Models.UI.Workout;
+using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
 using MuscleCuties.Core.Services.Dashboard.Planning;
-using MuscleCuties.Core.Services.Health;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Progress;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
+using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Dashboard;
 
-public partial class DashboardViewModel : ObservableObject
+public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 {
     private const string ManualPredictionSource = "manual phase log";
     private const string ProfilePhasePredictionSource = "profile phase";
 
-    private readonly IAuthService _authService;
-    private readonly IUserRepository _userRepository;
-    private readonly ICycleService _cycleService;
-    private readonly INutritionService _nutritionService;
-    private readonly IWorkoutService _workoutService;
-    private readonly IProgressSummaryService _progressSummaryService;
-    private readonly IDashboardPlanner _dashboardPlanner;
-    private readonly IHealthSyncService _healthSyncService;
-    private readonly Action _openCycle;
-    private readonly Action _openWorkout;
-    private readonly Action _openNutrition;
-    private readonly ViewModelLoadGate _loadGate = new(TimeSpan.FromSeconds(20));
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ViewModelLoadGate _loadGate = new(ViewModelLoadGate.PageFreshnessWindow);
+    private readonly Func<Task> _openCycleAsync;
+    private readonly Func<Task> _openDailyCheckInAsync;
+    private readonly Func<Task> _openNutritionAsync;
+    private readonly Func<Task> _openWorkoutAsync;
+    [ObservableProperty] private float _consumedCalories;
+    [ObservableProperty] private float _consumedCarbs;
+    [ObservableProperty] private float _consumedFats;
+    [ObservableProperty] private float _consumedProtein;
+    [ObservableProperty] private int _currentCycleDay;
 
     [ObservableProperty] private CyclePhase _currentPhase = CyclePhase.Follicular;
-    [ObservableProperty] private bool _hasActiveCycle;
-    [ObservableProperty] private bool _usePhaseCardColor;
-    [ObservableProperty] private bool _useDarkTheme;
-    [ObservableProperty] private Color _phaseCardBackgroundColor = Color.FromArgb("#FFF1F6");
-    [ObservableProperty] private Color _phaseCardTextColor = Color.FromArgb("#8B4E68");
-    [ObservableProperty] private Color _phaseCardDividerColor = Color.FromArgb("#EBD3DE");
-    [ObservableProperty] private float _consumedCalories;
-    [ObservableProperty] private float _targetCalories;
-    [ObservableProperty] private float _consumedProtein;
-    [ObservableProperty] private float _targetProtein;
-    [ObservableProperty] private float _consumedCarbs;
-    [ObservableProperty] private float _targetCarbs;
-    [ObservableProperty] private float _consumedFats;
-    [ObservableProperty] private float _targetFats;
-    [ObservableProperty] private bool _isBusy;
-    [ObservableProperty] private bool _isRefreshing;
-    [ObservableProperty] private string _displayName = string.Empty;
-    [ObservableProperty] private int _currentCycleDay;
-    [ObservableProperty] private int _predictedCycleLength = 28;
-    [ObservableProperty] private int _daysUntilPeriod;
     [ObservableProperty] private string _cycleInsightText = string.Empty;
-    [ObservableProperty] private int _readinessScore;
+    [ObservableProperty] private int _daysUntilPeriod;
+    [ObservableProperty] private string _displayName = string.Empty;
+    [ObservableProperty] private bool _hasActiveCycle;
+    [ObservableProperty] private string _hydrationConsumed = "2.5 L";
+    [ObservableProperty] private string _hydrationGoal = "target";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    private bool _isBusy;
+    [ObservableProperty] private bool _isLoadError;
+    [ObservableProperty] private bool _isRefreshing;
+    [ObservableProperty] private bool _needsDailyCheckIn;
+    [ObservableProperty] private int _nutritionStreakDays;
+    [ObservableProperty] private Color _phaseCardBackgroundColor = Color.FromArgb("#FFF1F6");
+    [ObservableProperty] private Color _phaseCardDividerColor = Color.FromArgb("#EBD3DE");
+    [ObservableProperty] private Color _phaseCardTextColor = Color.FromArgb("#8B4E68");
+    [ObservableProperty] private int _predictedCycleLength = 28;
     [ObservableProperty] private string _readinessLabel = string.Empty;
-    [ObservableProperty] private int _recoveryScore;
+    [ObservableProperty] private int _readinessScore;
     [ObservableProperty] private string _recoveryLabel = string.Empty;
+    [ObservableProperty] private int _recoveryScore;
     [ObservableProperty] private string _sessionProgressText = "Upcoming";
-    [ObservableProperty] private string _workoutTitle = "Living happy life";
-    [ObservableProperty] private string _workoutSubtitle = "Recovery day";
+    [ObservableProperty] private string _sleepGoal = "8h";
+    [ObservableProperty] private float _targetCalories;
+    [ObservableProperty] private float _targetCarbs;
+    [ObservableProperty] private float _targetFats;
+    [ObservableProperty] private float _targetProtein;
+    [ObservableProperty] private bool _useDarkTheme;
+    [ObservableProperty] private bool _usePhaseCardColor;
+
+    [ObservableProperty]
+    private Color _workoutActivityBackground =
+        WorkoutActivityClassifier.GetBackground(WorkoutActivityClassifier.RestTag);
+
+    [ObservableProperty]
+    private Color _workoutActivityTextColor =
+        WorkoutActivityClassifier.GetTextColor(WorkoutActivityClassifier.RestTag);
+
     [ObservableProperty] private string _workoutDurationText = "Rest day";
     [ObservableProperty] private string _workoutExercisesCount = "0";
     [ObservableProperty] private string _workoutIntensity = "Low";
-    [ObservableProperty] private Color _workoutActivityBackground = WorkoutActivityClassifier.GetBackground(WorkoutActivityClassifier.RestTag);
-    [ObservableProperty] private Color _workoutActivityTextColor = WorkoutActivityClassifier.GetTextColor(WorkoutActivityClassifier.RestTag);
-    [ObservableProperty] private string _hydrationConsumed = "2.5 L";
-    [ObservableProperty] private string _hydrationGoal = "target";
-    [ObservableProperty] private string _sleepGoal = "8h";
     [ObservableProperty] private int _workoutStreakDays;
-    [ObservableProperty] private int _nutritionStreakDays;
-    [ObservableProperty] private bool _isHealthSyncPromptVisible;
-    [ObservableProperty] private bool _isHealthSyncBusy;
-    [ObservableProperty] private string _healthSyncStatusText = "Not connected";
-    [ObservableProperty] private string _healthSyncMessage = string.Empty;
+    [ObservableProperty] private string _workoutSubtitle = "Recovery day";
+    [ObservableProperty] private string _workoutTitle = "Living happy life";
+    [ObservableProperty] private ObservableCollection<WorkoutActivitySection> _workoutActivitySections = [];
+    [ObservableProperty] private bool _hasMultipleActivities;
+    [ObservableProperty] private bool _isRestDay = true;
+
+    public DashboardViewModel(
+        IServiceScopeFactory scopeFactory,
+        Func<Task> openCycleAsync,
+        Func<Task> openWorkoutAsync,
+        Func<Task> openNutritionAsync,
+        Func<Task> openDailyCheckInAsync)
+    {
+        _scopeFactory = scopeFactory;
+        _openCycleAsync = openCycleAsync;
+        _openWorkoutAsync = openWorkoutAsync;
+        _openNutritionAsync = openNutritionAsync;
+        _openDailyCheckInAsync = openDailyCheckInAsync;
+
+        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
+        RefreshCommand = new AsyncRelayCommand(RefreshAsync);
+        OpenCycleCommand = new AsyncRelayCommand(_openCycleAsync);
+        OpenWorkoutCommand = new AsyncRelayCommand(_openWorkoutAsync);
+        OpenNutritionCommand = new AsyncRelayCommand(_openNutritionAsync);
+        OpenDailyCheckInCommand = new AsyncRelayCommand(_openDailyCheckInAsync, () => NeedsDailyCheckIn);
+    }
+
+    public void Invalidate() => _loadGate.MarkStale();
 
     public string PhaseLabel => CurrentPhase.ToString();
 
@@ -158,6 +188,7 @@ public partial class DashboardViewModel : ObservableObject
     public string PhaseTimeLeftValue => CurrentCycleDay <= 0 ? "--" : $"{CalculateDaysLeftInCurrentPhase()}d";
     public string PhaseTimeLeftLabel => CurrentPhase is CyclePhase.Ovulatory ? "PEAK LEFT" : "PHASE LEFT";
     public string NextPeriodValue => DaysUntilPeriod <= 0 ? "Today" : $"{DaysUntilPeriod}d";
+
     public string LoadAdjustmentText => CurrentPhase switch
     {
         CyclePhase.Menstrual => "-10%",
@@ -167,19 +198,28 @@ public partial class DashboardViewModel : ObservableObject
         _ => "0%"
     };
 
+    public string WorkoutActivityTypesText =>
+        WorkoutActivitySections.Count > 0
+            ? string.Join(" + ", WorkoutActivitySections.Select(s => s.Title.Replace(" activity", "")))
+            : "Rest";
+
     public string WorkoutBadgeText => IsTodaysWorkoutCompleted
         ? "Workout completed"
         : $"Today · {SessionProgressText}";
+
     public bool IsTodaysWorkoutCompleted =>
         string.Equals(SessionProgressText, "Completed", StringComparison.OrdinalIgnoreCase);
+
     public string WorkoutActionText => IsTodaysWorkoutCompleted
         ? "Edit workout"
         : string.Equals(SessionProgressText, "REST", StringComparison.OrdinalIgnoreCase)
             ? "Log rest day"
             : "Start workout";
+
     public string WorkoutStreakText => WorkoutStreakDays == 1
         ? "1 day session streak"
         : $"{WorkoutStreakDays} day session streak";
+
     public string NutritionStreakText => NutritionStreakDays == 1
         ? "1 day log streak"
         : $"{NutritionStreakDays} day log streak";
@@ -201,12 +241,11 @@ public partial class DashboardViewModel : ObservableObject
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand RefreshCommand { get; }
-    public RelayCommand OpenCycleCommand { get; }
-    public RelayCommand OpenWorkoutCommand { get; }
-    public RelayCommand OpenNutritionCommand { get; }
-    public AsyncRelayCommand ConnectAppleHealthCommand { get; }
-    public AsyncRelayCommand ConnectWhoopCommand { get; }
-    public AsyncRelayCommand DismissHealthSyncPromptCommand { get; }
+    public AsyncRelayCommand OpenCycleCommand { get; }
+    public AsyncRelayCommand OpenWorkoutCommand { get; }
+    public AsyncRelayCommand OpenNutritionCommand { get; }
+    public AsyncRelayCommand OpenDailyCheckInCommand { get; }
+    public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
 
     public void RefreshThemeColors(bool useDarkTheme)
     {
@@ -217,47 +256,12 @@ public partial class DashboardViewModel : ObservableObject
         OnPropertyChanged(nameof(RecoveryScore));
     }
 
-    public DashboardViewModel(
-        IAuthService authService,
-        IUserRepository userRepository,
-        ICycleService cycleService,
-        INutritionService nutritionService,
-        IWorkoutService workoutService,
-        IProgressSummaryService progressSummaryService,
-        IDashboardPlanner dashboardPlanner,
-        IHealthSyncService healthSyncService,
-        Action openCycle,
-        Action openWorkout,
-        Action openNutrition)
-    {
-        _authService = authService;
-        _userRepository = userRepository;
-        _cycleService = cycleService;
-        _nutritionService = nutritionService;
-        _workoutService = workoutService;
-        _progressSummaryService = progressSummaryService;
-        _dashboardPlanner = dashboardPlanner;
-        _healthSyncService = healthSyncService;
-        _openCycle = openCycle;
-        _openWorkout = openWorkout;
-        _openNutrition = openNutrition;
-
-        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
-        RefreshCommand = new AsyncRelayCommand(RefreshAsync);
-        OpenCycleCommand = new RelayCommand(() => _openCycle());
-        OpenWorkoutCommand = new RelayCommand(() => _openWorkout());
-        OpenNutritionCommand = new RelayCommand(() => _openNutrition());
-        ConnectAppleHealthCommand = new AsyncRelayCommand(() => ConnectHealthAsync(HealthDataSource.AppleHealth));
-        ConnectWhoopCommand = new AsyncRelayCommand(() => ConnectHealthAsync(HealthDataSource.Whoop));
-        DismissHealthSyncPromptCommand = new AsyncRelayCommand(DismissHealthSyncPromptAsync);
-    }
-
     private async Task RefreshAsync()
     {
         IsRefreshing = true;
         try
         {
-            await _loadGate.RunAsync(LoadDataCoreAsync, force: true);
+            await _loadGate.RunAsync(LoadDataCoreAsync, true);
         }
         finally
         {
@@ -270,21 +274,31 @@ public partial class DashboardViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            var userId = await _authService.GetCurrentUserIdAsync();
-            var profile = await _userRepository.GetProfileAsync(userId);
-            DisplayName = GetFirstName(profile?.Name);
-            var healthSummary = await _healthSyncService.GetCachedWeeklySummaryAsync(userId);
-            var healthStatus = await _healthSyncService.GetStatusAsync(userId);
-            HealthSyncStatusText = healthStatus.SummaryText;
-            IsHealthSyncPromptVisible = await _healthSyncService.ShouldShowPromptAsync(userId);
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+            var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
+            var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
+            var workoutService = scope.ServiceProvider.GetRequiredService<IWorkoutService>();
+            var progressSummaryService = scope.ServiceProvider.GetRequiredService<IProgressSummaryService>();
+            var dashboardPlanner = scope.ServiceProvider.GetRequiredService<IDashboardPlanner>();
+            var readinessRepository = scope.ServiceProvider.GetRequiredService<IReadinessRepository>();
 
-            var prediction = await _cycleService.GetPredictionAsync(userId) ??
+            var userId = await DataLoadScheduler.RunAsync(authService.GetCurrentUserIdAsync);
+            var profile = await DataLoadScheduler.RunAsync(() => userRepository.GetProfileAsync(userId));
+            DisplayName = GetFirstName(profile?.Name);
+
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var readinessLog = await DataLoadScheduler.RunAsync(() => readinessRepository.GetForAsync(userId, today));
+            NeedsDailyCheckIn = readinessLog is null;
+
+            var prediction = await DataLoadScheduler.RunAsync(() => cycleService.GetPredictionAsync(userId)) ??
                              new CyclePrediction
                              {
                                  CurrentPhase = CyclePhase.Follicular,
                                  PredictedCycleLength = profile?.CycleLength > 0 ? profile.CycleLength : 28,
                                  PredictionSource = "default"
-            };
+                             };
             HasActiveCycle = prediction.HasActiveCycle;
             UsePhaseCardColor = ShouldUsePhaseCardColor(prediction);
             CurrentPhase = prediction.CurrentPhase;
@@ -294,33 +308,38 @@ public partial class DashboardViewModel : ObservableObject
             RefreshPhaseCardColors();
             NotifyPhaseProperties();
 
-            var (calories, protein, carbs, fats) = await _nutritionService.CalculateDailyTargetsAsync(userId, CurrentPhase);
+            var (calories, protein, carbs, fats) =
+                await DataLoadScheduler.RunAsync(() =>
+                    nutritionService.CalculateDailyTargetsAsync(userId, CurrentPhase));
             TargetCalories = calories;
             TargetProtein = protein;
             TargetCarbs = carbs;
             TargetFats = fats;
 
-            var consumed = await _nutritionService.GetConsumedTotalsAsync(userId, DateTime.Today);
+            var consumed = await DataLoadScheduler.RunAsync(() =>
+                nutritionService.GetConsumedTotalsAsync(userId, DateTime.Today));
             ConsumedCalories = consumed.Calories;
             ConsumedProtein = consumed.Protein;
             ConsumedCarbs = consumed.Carbs;
             ConsumedFats = consumed.Fats;
 
-            var progress = await _progressSummaryService.GetSummaryAsync(userId, DateTime.Today);
+            var progress = await DataLoadScheduler.RunAsync(() =>
+                progressSummaryService.GetSummaryAsync(userId, DateTime.Today));
             WorkoutStreakDays = progress.WorkoutStreakDays;
             NutritionStreakDays = progress.NutritionStreakDays;
 
-            var workoutSummary = await _workoutService.GetTodaysSummaryAsync(userId, CurrentPhase, DateTime.Today);
+            var workoutSummary = await DataLoadScheduler.RunAsync(() =>
+                workoutService.GetTodaysSummaryAsync(userId, CurrentPhase, DateTime.Today));
             ApplyWorkoutSummary(workoutSummary);
 
-            ApplySupportSummary(_dashboardPlanner.BuildSupportSummary(
+            ApplySupportSummary(dashboardPlanner.BuildSupportSummary(
                 prediction,
                 CurrentPhase,
                 CaloriesProgress,
                 profile?.Weight,
                 profile?.WorkoutDaysPerWeek ?? 0,
                 workoutSummary,
-                healthSummary));
+                recordedReadinessScore: readinessLog?.ReadinessScore));
 
             NotifyMacroProperties();
             NotifyUserLinkedProperties();
@@ -329,32 +348,6 @@ public partial class DashboardViewModel : ObservableObject
         {
             IsBusy = false;
         }
-    }
-
-    private async Task ConnectHealthAsync(HealthDataSource source)
-    {
-        IsHealthSyncBusy = true;
-        try
-        {
-            var userId = await _authService.GetCurrentUserIdAsync();
-            var result = await _healthSyncService.SyncAsync(userId, source);
-            HealthSyncMessage = result.Message;
-            IsHealthSyncPromptVisible = !result.IsConnected;
-
-            if (result.IsConnected)
-                await _loadGate.RunAsync(LoadDataCoreAsync, force: true);
-        }
-        finally
-        {
-            IsHealthSyncBusy = false;
-        }
-    }
-
-    private async Task DismissHealthSyncPromptAsync()
-    {
-        var userId = await _authService.GetCurrentUserIdAsync();
-        await _healthSyncService.DismissPromptAsync(userId);
-        IsHealthSyncPromptVisible = false;
     }
 
     private void NotifyPhaseProperties()
@@ -407,9 +400,16 @@ public partial class DashboardViewModel : ObservableObject
         SessionProgressText = workoutSummary.SessionProgressText;
         WorkoutActivityBackground = WorkoutActivityClassifier.GetBackground(workoutSummary.ActivityTag);
         WorkoutActivityTextColor = WorkoutActivityClassifier.GetTextColor(workoutSummary.ActivityTag);
+        IsRestDay = workoutSummary.ActivityTag == WorkoutActivityClassifier.RestTag;
+
+        var sections = workoutSummary.ActivitySections ?? [];
+        WorkoutActivitySections = new ObservableCollection<WorkoutActivitySection>(sections);
+        HasMultipleActivities = sections.Count > 1;
+
         OnPropertyChanged(nameof(WorkoutBadgeText));
         OnPropertyChanged(nameof(IsTodaysWorkoutCompleted));
         OnPropertyChanged(nameof(WorkoutActionText));
+        OnPropertyChanged(nameof(WorkoutActivityTypesText));
     }
 
     private void ApplySupportSummary(DashboardSupportSummary supportSummary)
@@ -424,8 +424,10 @@ public partial class DashboardViewModel : ObservableObject
         RecoveryLabel = supportSummary.RecoveryLabel;
     }
 
-    private string FormatPhaseBadge(string phaseName) =>
-        CurrentCycleDay > 0 ? $"DAY {CurrentCycleDay} · {phaseName}" : phaseName;
+    private string FormatPhaseBadge(string phaseName)
+    {
+        return CurrentCycleDay > 0 ? $"DAY {CurrentCycleDay} · {phaseName}" : phaseName;
+    }
 
     private int CalculateDaysLeftInCurrentPhase()
     {
@@ -435,7 +437,7 @@ public partial class DashboardViewModel : ObservableObject
 
         for (var offset = 1; offset <= cycleLength; offset++)
         {
-            var projectedDay = ((currentDay - 1 + offset) % cycleLength) + 1;
+            var projectedDay = (currentDay - 1 + offset) % cycleLength + 1;
             if (CyclePhaseRules.CalculatePhase(projectedDay, cycleLength) != CurrentPhase)
                 break;
 
@@ -454,8 +456,10 @@ public partial class DashboardViewModel : ObservableObject
         return trimmed.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
     }
 
-    private static string FirstPresent(params string[] values) =>
-        values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? string.Empty;
+    private static string FirstPresent(params string[] values)
+    {
+        return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? string.Empty;
+    }
 
     private void RefreshPhaseCardColors()
     {
@@ -470,50 +474,72 @@ public partial class DashboardViewModel : ObservableObject
             : GetNeutralDividerColor(UseDarkTheme);
     }
 
-    private static bool IsManualPhasePrediction(CyclePrediction prediction) =>
-        string.Equals(prediction.PredictionSource, ManualPredictionSource, StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsProfilePhasePrediction(CyclePrediction prediction) =>
-        string.Equals(prediction.PredictionSource, ProfilePhasePredictionSource, StringComparison.OrdinalIgnoreCase);
-
-    private static bool ShouldUsePhaseCardColor(CyclePrediction prediction) =>
-        prediction.HasActiveCycle || IsManualPhasePrediction(prediction) || IsProfilePhasePrediction(prediction);
-
-    private static Color GetPhaseBackgroundColor(CyclePhase phase, bool useDarkTheme) => phase switch
+    private static bool IsManualPhasePrediction(CyclePrediction prediction)
     {
-        CyclePhase.Menstrual => Color.FromArgb(useDarkTheme ? "#5A3840" : "#F9D6D8"),
-        CyclePhase.Follicular => Color.FromArgb(useDarkTheme ? "#2E5230" : "#D6EED6"),
-        CyclePhase.Ovulatory => Color.FromArgb(useDarkTheme ? "#5A4A00" : "#FFF0C4"),
-        CyclePhase.Luteal => Color.FromArgb(useDarkTheme ? "#3E2A58" : "#E8D8F5"),
-        _ => GetNeutralCardBackgroundColor(useDarkTheme)
-    };
+        return string.Equals(prediction.PredictionSource, ManualPredictionSource, StringComparison.OrdinalIgnoreCase);
+    }
 
-    private static Color GetPhaseTextColor(CyclePhase phase, bool useDarkTheme) => phase switch
+    private static bool IsProfilePhasePrediction(CyclePrediction prediction)
     {
-        CyclePhase.Menstrual => Color.FromArgb(useDarkTheme ? "#F9D6D8" : "#7A3A48"),
-        CyclePhase.Follicular => Color.FromArgb(useDarkTheme ? "#D6EED6" : "#3A6B3A"),
-        CyclePhase.Ovulatory => Color.FromArgb(useDarkTheme ? "#FFF0C4" : "#7A6000"),
-        CyclePhase.Luteal => Color.FromArgb(useDarkTheme ? "#E8D8F5" : "#5A3B80"),
-        _ => GetNeutralCardTextColor(useDarkTheme)
-    };
+        return string.Equals(prediction.PredictionSource, ProfilePhasePredictionSource,
+            StringComparison.OrdinalIgnoreCase);
+    }
 
-    private static Color GetPhaseDividerColor(CyclePhase phase, bool useDarkTheme) => phase switch
+    private static bool ShouldUsePhaseCardColor(CyclePrediction prediction)
     {
-        CyclePhase.Menstrual => Color.FromArgb(useDarkTheme ? "#7A4A54" : "#E8B7BE"),
-        CyclePhase.Follicular => Color.FromArgb(useDarkTheme ? "#447146" : "#B8D9B8"),
-        CyclePhase.Ovulatory => Color.FromArgb(useDarkTheme ? "#776516" : "#E6CF88"),
-        CyclePhase.Luteal => Color.FromArgb(useDarkTheme ? "#5A3F78" : "#D4BCEB"),
-        _ => GetNeutralDividerColor(useDarkTheme)
-    };
+        return prediction.HasActiveCycle || IsManualPhasePrediction(prediction) || IsProfilePhasePrediction(prediction);
+    }
 
-    private static Color GetNeutralCardBackgroundColor(bool useDarkTheme) =>
-        Color.FromArgb(useDarkTheme ? "#3A2931" : "#FFF1F6");
+    private static Color GetPhaseBackgroundColor(CyclePhase phase, bool useDarkTheme)
+    {
+        return phase switch
+        {
+            CyclePhase.Menstrual => Color.FromArgb(useDarkTheme ? "#5A3840" : "#F9D6D8"),
+            CyclePhase.Follicular => Color.FromArgb(useDarkTheme ? "#2E5230" : "#D6EED6"),
+            CyclePhase.Ovulatory => Color.FromArgb(useDarkTheme ? "#5A4A00" : "#FFF0C4"),
+            CyclePhase.Luteal => Color.FromArgb(useDarkTheme ? "#3E2A58" : "#E8D8F5"),
+            _ => GetNeutralCardBackgroundColor(useDarkTheme)
+        };
+    }
 
-    private static Color GetNeutralCardTextColor(bool useDarkTheme) =>
-        Color.FromArgb(useDarkTheme ? "#F8EEF4" : "#5B4650");
+    private static Color GetPhaseTextColor(CyclePhase phase, bool useDarkTheme)
+    {
+        return phase switch
+        {
+            CyclePhase.Menstrual => Color.FromArgb(useDarkTheme ? "#F9D6D8" : "#7A3A48"),
+            CyclePhase.Follicular => Color.FromArgb(useDarkTheme ? "#D6EED6" : "#3A6B3A"),
+            CyclePhase.Ovulatory => Color.FromArgb(useDarkTheme ? "#FFF0C4" : "#7A6000"),
+            CyclePhase.Luteal => Color.FromArgb(useDarkTheme ? "#E8D8F5" : "#5A3B80"),
+            _ => GetNeutralCardTextColor(useDarkTheme)
+        };
+    }
 
-    private static Color GetNeutralDividerColor(bool useDarkTheme) =>
-        Color.FromArgb(useDarkTheme ? "#5A424C" : "#EBD3DE");
+    private static Color GetPhaseDividerColor(CyclePhase phase, bool useDarkTheme)
+    {
+        return phase switch
+        {
+            CyclePhase.Menstrual => Color.FromArgb(useDarkTheme ? "#7A4A54" : "#E8B7BE"),
+            CyclePhase.Follicular => Color.FromArgb(useDarkTheme ? "#447146" : "#B8D9B8"),
+            CyclePhase.Ovulatory => Color.FromArgb(useDarkTheme ? "#776516" : "#E6CF88"),
+            CyclePhase.Luteal => Color.FromArgb(useDarkTheme ? "#5A3F78" : "#D4BCEB"),
+            _ => GetNeutralDividerColor(useDarkTheme)
+        };
+    }
+
+    private static Color GetNeutralCardBackgroundColor(bool useDarkTheme)
+    {
+        return Color.FromArgb(useDarkTheme ? "#3A2931" : "#FFF1F6");
+    }
+
+    private static Color GetNeutralCardTextColor(bool useDarkTheme)
+    {
+        return Color.FromArgb(useDarkTheme ? "#F8EEF4" : "#5B4650");
+    }
+
+    private static Color GetNeutralDividerColor(bool useDarkTheme)
+    {
+        return Color.FromArgb(useDarkTheme ? "#5A424C" : "#EBD3DE");
+    }
 
     partial void OnCurrentPhaseChanged(CyclePhase value)
     {
@@ -586,5 +612,10 @@ public partial class DashboardViewModel : ObservableObject
     partial void OnNutritionStreakDaysChanged(int value)
     {
         OnPropertyChanged(nameof(NutritionStreakText));
+    }
+
+    partial void OnNeedsDailyCheckInChanged(bool value)
+    {
+        OpenDailyCheckInCommand.NotifyCanExecuteChanged();
     }
 }

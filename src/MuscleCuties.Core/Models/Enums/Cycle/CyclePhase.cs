@@ -5,5 +5,6 @@ public enum CyclePhase
     Menstrual,
     Follicular,
     Ovulatory,
-    Luteal
+    Luteal,
+    Unknown
 }

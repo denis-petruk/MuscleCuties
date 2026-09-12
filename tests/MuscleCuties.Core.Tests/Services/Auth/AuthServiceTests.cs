@@ -1,13 +1,5 @@
-using MuscleCuties.Core.Repositories.Common;
-using MuscleCuties.Core.Repositories.Cycle;
-using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Repositories.Quiz;
 using MuscleCuties.Core.Repositories.Users;
-using MuscleCuties.Core.Repositories.Workout;
 using MuscleCuties.Core.Services.Auth;
-using MuscleCuties.Core.Services.Cycle;
-using MuscleCuties.Core.Services.Nutrition;
-using MuscleCuties.Core.Services.Quiz;
 using NSubstitute;
 
 namespace MuscleCuties.Core.Tests.Services.Auth;
@@ -23,8 +15,10 @@ public class AuthServiceTests : IClassFixture<DatabaseFixture>
         _storage = Substitute.For<ITokenStorage>();
     }
 
-    private AuthService CreateService() =>
-        new AuthService(new UserRepository(_fixture.Db), _storage);
+    private AuthService CreateService()
+    {
+        return new AuthService(new UserRepository(_fixture.Db), _storage);
+    }
 
     [Fact]
     public async Task RegisterAsync_NewEmail_ReturnsUserAndStoresId()

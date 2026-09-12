@@ -6,7 +6,7 @@ public partial class PhaseSaluteOverlay : ContentView
         nameof(IconSource),
         typeof(string),
         typeof(PhaseSaluteOverlay),
-        "phase_follicular_plant.json");
+        "Animations/Cycle/phase_follicular_plant.json");
 
     public PhaseSaluteOverlay()
     {

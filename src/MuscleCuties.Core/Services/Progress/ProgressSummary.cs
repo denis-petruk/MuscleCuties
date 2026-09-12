@@ -39,7 +39,7 @@ public sealed class ProgressSummaryService : IProgressSummaryService
             .Where(log => log.CompletionPercent >= 100)
             .ToList();
         var completedSessionCount = completedWorkoutLogs
-            .Select(log => new { Date = log.Date.Date, log.WorkoutDayId })
+            .Select(log => new { log.Date.Date, log.WorkoutDayId })
             .Distinct()
             .Count();
 

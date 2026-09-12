@@ -11,14 +11,18 @@ public static class WorkoutActivityClassifier
     public const string RecoveryTag = "RECOVERY";
     public const string RestTag = "REST";
 
-    public static string BuildPrimaryTag(WorkoutDay day) =>
-        day.WorkoutType switch
+    public static bool IsDarkTheme { get; set; }
+
+    public static string BuildPrimaryTag(WorkoutDay day)
+    {
+        return day.WorkoutType switch
         {
             WorkoutType.Cardio => CardioTag,
             WorkoutType.Recovery => RecoveryTag,
             WorkoutType.Rest => RestTag,
             _ => StrengthTag
         };
+    }
 
     public static IReadOnlyList<string> BuildActivityTags(WorkoutDay day)
     {
@@ -57,8 +61,9 @@ public static class WorkoutActivityClassifier
         };
     }
 
-    public static string BuildSectionTitle(string activityTag) =>
-        activityTag switch
+    public static string BuildSectionTitle(string activityTag)
+    {
+        return activityTag switch
         {
             CardioTag => "Cardio activity",
             RecoveryTag => "Recovery activity",
@@ -66,9 +71,11 @@ public static class WorkoutActivityClassifier
             StrengthTag => "Strength activity",
             _ => "Workout activity"
         };
+    }
 
-    public static string BuildSectionSubtitle(string activityTag) =>
-        activityTag switch
+    public static string BuildSectionSubtitle(string activityTag)
+    {
+        return activityTag switch
         {
             CardioTag => "Log one cardio piece when you finish it.",
             RecoveryTag => "Log one recovery piece when it is done.",
@@ -76,33 +83,73 @@ public static class WorkoutActivityClassifier
             StrengthTag => "Log one lift at a time, or finish this strength block together.",
             _ => "Log this block as you complete it."
         };
+    }
 
-    public static Color GetBackground(string activityTag) => activityTag switch
+    public static Color GetBackground(string activityTag) => GetBackground(activityTag, IsDarkTheme);
+
+    public static Color GetBackground(string activityTag, bool isDark)
     {
-        CardioTag => Color.FromArgb("#E0F2F1"),
-        RecoveryTag => Color.FromArgb("#E8F5E9"),
-        RestTag => Color.FromArgb("#F0EFEA"),
-        StrengthTag => Color.FromArgb("#F8DFF1"),
-        _ => Color.FromArgb("#F8EEF4")
-    };
+        if (isDark)
+        {
+            return activityTag switch
+            {
+                CardioTag => Color.FromArgb("#1A3A38"),
+                RecoveryTag => Color.FromArgb("#1E3520"),
+                RestTag => Color.FromArgb("#2E2B26"),
+                StrengthTag => Color.FromArgb("#3D2435"),
+                _ => Color.FromArgb("#3A2931")
+            };
+        }
 
-    public static Color GetTextColor(string activityTag) => activityTag switch
+        return activityTag switch
+        {
+            CardioTag => Color.FromArgb("#E0F2F1"),
+            RecoveryTag => Color.FromArgb("#E8F5E9"),
+            RestTag => Color.FromArgb("#F0EFEA"),
+            StrengthTag => Color.FromArgb("#F8DFF1"),
+            _ => Color.FromArgb("#F8EEF4")
+        };
+    }
+
+    public static Color GetTextColor(string activityTag) => GetTextColor(activityTag, IsDarkTheme);
+
+    public static Color GetTextColor(string activityTag, bool isDark)
     {
-        CardioTag => Color.FromArgb("#1F6F68"),
-        RecoveryTag => Color.FromArgb("#3A6B3A"),
-        RestTag => Color.FromArgb("#5F5A50"),
-        StrengthTag => Color.FromArgb("#8D3A5F"),
-        _ => Color.FromArgb("#5B4650")
-    };
+        if (isDark)
+        {
+            return activityTag switch
+            {
+                CardioTag => Color.FromArgb("#7ECBC5"),
+                RecoveryTag => Color.FromArgb("#8FBF8F"),
+                RestTag => Color.FromArgb("#B5AFA3"),
+                StrengthTag => Color.FromArgb("#D98AAF"),
+                _ => Color.FromArgb("#AE8D9B")
+            };
+        }
 
-    public static bool IsRecoveryTag(string tag) =>
-        tag.Contains(RecoveryTag, StringComparison.OrdinalIgnoreCase);
+        return activityTag switch
+        {
+            CardioTag => Color.FromArgb("#1F6F68"),
+            RecoveryTag => Color.FromArgb("#3A6B3A"),
+            RestTag => Color.FromArgb("#5F5A50"),
+            StrengthTag => Color.FromArgb("#8D3A5F"),
+            _ => Color.FromArgb("#5B4650")
+        };
+    }
 
-    public static bool IsRestTag(string tag) =>
-        tag.Contains(RestTag, StringComparison.OrdinalIgnoreCase);
+    public static bool IsRecoveryTag(string tag)
+    {
+        return tag.Contains(RecoveryTag, StringComparison.OrdinalIgnoreCase);
+    }
 
-    private static bool IsRecoveryExercise(string name) =>
-        ContainsAny(
+    public static bool IsRestTag(string tag)
+    {
+        return tag.Contains(RestTag, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsRecoveryExercise(string name)
+    {
+        return ContainsAny(
             name,
             "yoga",
             "vinyasa",
@@ -112,9 +159,11 @@ public static class WorkoutActivityClassifier
             "pilates",
             "stretch",
             "cooldown");
+    }
 
-    private static bool IsCardioExercise(string name) =>
-        ContainsAny(
+    private static bool IsCardioExercise(string name)
+    {
+        return ContainsAny(
             name,
             "bike",
             "cycle",
@@ -128,7 +177,10 @@ public static class WorkoutActivityClassifier
             "hiit",
             "interval",
             "tempo");
+    }
 
-    private static bool ContainsAny(string value, params string[] terms) =>
-        terms.Any(term => value.Contains(term, StringComparison.OrdinalIgnoreCase));
+    private static bool ContainsAny(string value, params string[] terms)
+    {
+        return terms.Any(term => value.Contains(term, StringComparison.OrdinalIgnoreCase));
+    }
 }

@@ -1,5 +1,3 @@
-using System.IO;
-
 namespace MuscleCuties.Core.Services.Profile;
 
 public static class FeedbackAttachmentPolicy

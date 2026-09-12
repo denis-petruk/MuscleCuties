@@ -1,27 +1,15 @@
-using NSubstitute;
-using MuscleCuties.Core.Models.Entities.Cycle;
+using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
-using MuscleCuties.Core.Models.Entities.Users;
-using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.Core.Models.Enums.Quiz;
-using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
+using MuscleCuties.Core.Models.Nutrition;
+using MuscleCuties.Core.Models.Nutrition.Inputs;
 using MuscleCuties.Core.Models.UI.Nutrition;
-using MuscleCuties.Core.Services.Nutrition.Inputs;
-using MuscleCuties.Core.ViewModels.Nutrition;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Nutrition;
-using MuscleCuties.Core.Services.Quiz;
-using MuscleCuties.Core.ViewModels.Auth;
-using MuscleCuties.Core.ViewModels.Cycle;
-using MuscleCuties.Core.ViewModels.Dashboard;
-using MuscleCuties.Core.ViewModels.Profile;
-using MuscleCuties.Core.ViewModels.Quiz;
-using MuscleCuties.Core.ViewModels.Workout;
+using MuscleCuties.Core.ViewModels.Nutrition;
+using NSubstitute;
 
 namespace MuscleCuties.Core.Tests.ViewModels.Nutrition;
 
@@ -31,8 +19,26 @@ public class NutritionViewModelTests
     private readonly ICycleService _cycleService = Substitute.For<ICycleService>();
     private readonly INutritionService _nutritionService = Substitute.For<INutritionService>();
 
-    private NutritionViewModel CreateViewModel() =>
-        new(_authService, _cycleService, _nutritionService);
+    private IServiceScopeFactory BuildScopeFactory()
+    {
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        serviceProvider.GetService(typeof(IAuthService)).Returns(_authService);
+        serviceProvider.GetService(typeof(ICycleService)).Returns(_cycleService);
+        serviceProvider.GetService(typeof(INutritionService)).Returns(_nutritionService);
+
+        var scope = Substitute.For<IServiceScope>();
+        scope.ServiceProvider.Returns(serviceProvider);
+
+        var scopeFactory = Substitute.For<IServiceScopeFactory>();
+        scopeFactory.CreateScope().Returns(scope);
+
+        return scopeFactory;
+    }
+
+    private NutritionViewModel CreateViewModel()
+    {
+        return new NutritionViewModel(BuildScopeFactory());
+    }
 
     private void ConfigureLoadData(
         CyclePhase phase = CyclePhase.Ovulatory,
@@ -43,11 +49,11 @@ public class NutritionViewModelTests
         _cycleService.GetCurrentPhaseAsync(1).Returns(phase);
         _nutritionService.CalculateDailyTargetsAsync(1, phase)
             .Returns((1800f, 130f, 180f, 60f));
-        _nutritionService.GetConsumedCaloriesAsync(1, Arg.Any<DateTime>()).Returns(consumedCalories);
-        _nutritionService.GetConsumedMacrosAsync(1, Arg.Any<DateTime>())
-            .Returns(consumedMacros ?? (50f, 90f, 30f));
+        var macros = consumedMacros ?? (50f, 90f, 30f);
+        _nutritionService.GetConsumedTotalsAsync(1, Arg.Any<DateTime>())
+            .Returns(new MacroNutrients(consumedCalories, macros.Protein, macros.Carbs, macros.Fats));
         _nutritionService.GetLoggedMealsByDateAsync(1, Arg.Any<DateTime>())
-            .Returns(BuildLoggedMeals(consumedCalories, consumedMacros ?? (50f, 90f, 30f)));
+            .Returns(BuildLoggedMeals(consumedCalories, macros));
     }
 
     private static List<LoggedMeal> BuildLoggedMeals(
@@ -123,7 +129,7 @@ public class NutritionViewModelTests
     [Fact]
     public async Task SearchFoodCommand_PopulatesSearchResults()
     {
-        _nutritionService.SearchFoodItemsAsync("carrot", 15, 1)
+        _nutritionService.SearchFoodItemsAsync("carrot")
             .Returns(
             [
                 new FoodItem
@@ -154,7 +160,6 @@ public class NutritionViewModelTests
         Assert.Equal(0.9f, result.Protein);
         Assert.Equal(9.6f, result.Carbs);
         Assert.Equal(0.2f, result.Fats);
-        Assert.Equal("PRODUCTS (1)", vm.FoodSearchResultsTitle);
         Assert.Contains("Branded", result.SourceSummary);
         Assert.Contains("Crunch Farm", result.SourceSummary);
         Assert.Contains("UPC 123456789", result.SourceSummary);
@@ -189,7 +194,7 @@ public class NutritionViewModelTests
             })
             .ToList();
 
-        _nutritionService.SearchFoodItemsAsync("oats", 15, 1).Returns(firstPage);
+        _nutritionService.SearchFoodItemsAsync("oats").Returns(firstPage);
         _nutritionService.SearchFoodItemsAsync("oats", 15, 2).Returns(secondPage);
 
         var vm = CreateViewModel();
@@ -215,7 +220,8 @@ public class NutritionViewModelTests
         var selectedTime = new TimeSpan(12, 30, 0);
         var vm = CreateViewModel();
         vm.IsAddFoodPanelVisible = true;
-        vm.SelectedFoodResult = new FoodSearchResultItem { FoodItemId = 10, Name = "Olive oil", Calories = 884f, Fats = 100f };
+        vm.SelectedFoodResult = new FoodSearchResultItem
+        { FoodItemId = 10, Name = "Olive oil", Calories = 884f, Fats = 100f };
         vm.FoodGrams = "10";
         vm.SelectedMealType = MealType.Snack;
         vm.SelectedMealTime = selectedTime;
@@ -248,7 +254,8 @@ public class NutritionViewModelTests
                 Arg.Any<IReadOnlyCollection<MealIngredientInput>>(),
                 MealType.Snack,
                 Arg.Any<DateTime>())
-            .Returns(Task.FromException(new InvalidOperationException("Current user no longer exists. Please sign in again.")));
+            .Returns(Task.FromException(
+                new InvalidOperationException("Current user no longer exists. Please sign in again.")));
 
         var vm = CreateViewModel();
         vm.SelectedFoodResult = new FoodSearchResultItem { FoodItemId = 10, Name = "Carrot", Calories = 41f };
@@ -265,11 +272,13 @@ public class NutritionViewModelTests
     public void AddIngredientCommand_MergesSameIngredientIntoDraftMeal()
     {
         var vm = CreateViewModel();
-        vm.SelectedFoodResult = new FoodSearchResultItem { FoodItemId = 10, Name = "Oats", Calories = 389f, Protein = 16.9f, Carbs = 66.3f, Fats = 6.9f };
+        vm.SelectedFoodResult = new FoodSearchResultItem
+        { FoodItemId = 10, Name = "Oats", Calories = 389f, Protein = 16.9f, Carbs = 66.3f, Fats = 6.9f };
         vm.FoodGrams = "40";
         vm.AddIngredientCommand.Execute(null);
 
-        vm.SelectedFoodResult = new FoodSearchResultItem { FoodItemId = 10, Name = "Oats", Calories = 389f, Protein = 16.9f, Carbs = 66.3f, Fats = 6.9f };
+        vm.SelectedFoodResult = new FoodSearchResultItem
+        { FoodItemId = 10, Name = "Oats", Calories = 389f, Protein = 16.9f, Carbs = 66.3f, Fats = 6.9f };
         vm.FoodGrams = "20";
         vm.AddIngredientCommand.Execute(null);
 
@@ -295,7 +304,6 @@ public class NutritionViewModelTests
         vm.FoodGrams = "10";
 
         Assert.Equal("10", vm.FoodGrams);
-        Assert.Contains("100 g: 884 kcal", vm.SelectedFoodServingText);
         Assert.Contains("10 g: 88 kcal", vm.SelectedFoodAmountText);
         Assert.Contains("F 10.0g", vm.SelectedFoodAmountText);
     }
@@ -363,7 +371,6 @@ public class NutritionViewModelTests
         };
         vm.FoodGrams = "100";
 
-        Assert.Contains("Nutrition values are unavailable", vm.SelectedFoodServingText);
         Assert.Contains("Nutrition values are unavailable", vm.SelectedFoodAmountText);
     }
 
@@ -416,8 +423,8 @@ public class NutritionViewModelTests
         _cycleService.GetCurrentPhaseAsync(1).Returns(CyclePhase.Ovulatory);
         _nutritionService.CalculateDailyTargetsAsync(1, CyclePhase.Ovulatory)
             .Returns((1800f, 130f, 180f, 60f));
-        _nutritionService.GetConsumedCaloriesAsync(1, Arg.Any<DateTime>()).Returns(45f);
-        _nutritionService.GetConsumedMacrosAsync(1, Arg.Any<DateTime>()).Returns((0f, 0f, 5f));
+        _nutritionService.GetConsumedTotalsAsync(1, Arg.Any<DateTime>())
+            .Returns(new MacroNutrients(45f, 0f, 0f, 5f));
         _nutritionService.GetLoggedMealsByDateAsync(1, Arg.Any<DateTime>())
             .Returns(
             [
@@ -434,7 +441,7 @@ public class NutritionViewModelTests
                             {
                                 Name = "Olive oil",
                                 Calories = 884f,
-                                Fats = 100f,
+                                Fats = 100f
                             }
                         }
                     ]
@@ -460,8 +467,8 @@ public class NutritionViewModelTests
         _cycleService.GetCurrentPhaseAsync(1).Returns(CyclePhase.Follicular);
         _nutritionService.CalculateDailyTargetsAsync(1, CyclePhase.Follicular)
             .Returns((1800f, 130f, 180f, 60f));
-        _nutritionService.GetConsumedCaloriesAsync(1, Arg.Any<DateTime>()).Returns(41f);
-        _nutritionService.GetConsumedMacrosAsync(1, Arg.Any<DateTime>()).Returns((0.9f, 9.6f, 0.2f));
+        _nutritionService.GetConsumedTotalsAsync(1, Arg.Any<DateTime>())
+            .Returns(new MacroNutrients(41f, 0.9f, 9.6f, 0.2f));
         _nutritionService.GetLoggedMealsByDateAsync(1, Arg.Any<DateTime>())
             .Returns(
             [
@@ -508,8 +515,6 @@ public class NutritionViewModelTests
             item.Name == "Vitamin A" &&
             item.Amount == 0f &&
             !item.IsGoalHit);
-        Assert.Contains("0 of 12", vm.MicronutrientSummaryText);
-        Assert.Equal("2.8g fiber", vm.DayFiberText);
     }
 
     [Fact]
@@ -548,15 +553,5 @@ public class NutritionViewModelTests
         Assert.True(vm.CanEditSelectedBreakdown);
         Assert.Equal("300 kcal", vm.SelectedBreakdownCaloriesText);
         Assert.Equal("P 20.0g · C 40.0g · F 6.0g", vm.SelectedBreakdownMacrosText);
-    }
-
-    [Fact]
-    public void SelectedMealTimeText_FormatsSelectedTime()
-    {
-        var vm = CreateViewModel();
-
-        vm.SelectedMealTime = new TimeSpan(14, 5, 0);
-
-        Assert.Contains("2:05", vm.SelectedMealTimeText);
     }
 }

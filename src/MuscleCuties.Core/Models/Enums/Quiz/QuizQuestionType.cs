@@ -15,5 +15,7 @@ public enum QuizQuestionType
     LutealPain,
     LutealEnergy,
     CycleTrackingMode,
-    CurrentCyclePhase
+    CurrentCyclePhase,
+    SessionDuration,
+    Equipment
 }

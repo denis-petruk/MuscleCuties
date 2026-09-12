@@ -8,8 +8,10 @@ public static class CyclePhaseRules
     public const int MinimumCycleLength = 18;
     public const int MaximumCycleLength = 60;
 
-    public static int NormalizeCycleLength(int cycleLength) =>
-        Math.Clamp(cycleLength > 0 ? cycleLength : DefaultCycleLength, MinimumCycleLength, MaximumCycleLength);
+    public static int NormalizeCycleLength(int cycleLength)
+    {
+        return Math.Clamp(cycleLength > 0 ? cycleLength : DefaultCycleLength, MinimumCycleLength, MaximumCycleLength);
+    }
 
     public static CyclePhase CalculatePhase(int cycleDay, int cycleLength)
     {
@@ -40,21 +42,24 @@ public static class CyclePhaseRules
         };
     }
 
-    public static CyclePhase GetNextPhase(CyclePhase phase) => phase switch
+    public static CyclePhase GetNextPhase(CyclePhase phase)
     {
-        CyclePhase.Menstrual => CyclePhase.Follicular,
-        CyclePhase.Follicular => CyclePhase.Ovulatory,
-        CyclePhase.Ovulatory => CyclePhase.Luteal,
-        CyclePhase.Luteal => CyclePhase.Menstrual,
-        _ => CyclePhase.Menstrual
-    };
+        return phase switch
+        {
+            CyclePhase.Menstrual => CyclePhase.Follicular,
+            CyclePhase.Follicular => CyclePhase.Ovulatory,
+            CyclePhase.Ovulatory => CyclePhase.Luteal,
+            CyclePhase.Luteal => CyclePhase.Menstrual,
+            _ => CyclePhase.Menstrual
+        };
+    }
 
     public static CyclePhase ProjectPhaseFromLog(CyclePhaseLogProjection phaseLog, DateTime date, int cycleLength)
     {
         var normalizedCycleLength = NormalizeCycleLength(cycleLength);
         var anchorDay = GetPhaseAnchorDay(phaseLog.Phase, normalizedCycleLength);
         var daysSinceShift = Math.Max(0, (date.Date - phaseLog.LoggedAt.Date).Days);
-        var projectedCycleDay = ((anchorDay - 1 + daysSinceShift) % normalizedCycleLength) + 1;
+        var projectedCycleDay = (anchorDay - 1 + daysSinceShift) % normalizedCycleLength + 1;
 
         return CalculatePhase(projectedCycleDay, normalizedCycleLength);
     }

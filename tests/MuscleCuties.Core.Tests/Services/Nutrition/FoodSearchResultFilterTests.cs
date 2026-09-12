@@ -1,12 +1,5 @@
-using MuscleCuties.Core.Models.Entities.Cycle;
 using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
-using MuscleCuties.Core.Models.Entities.Users;
-using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Services.Nutrition;
-using MuscleCuties.Core.Services.Auth;
-using MuscleCuties.Core.Services.Cycle;
-using MuscleCuties.Core.Services.Quiz;
 
 namespace MuscleCuties.Core.Tests.Services.Nutrition;
 

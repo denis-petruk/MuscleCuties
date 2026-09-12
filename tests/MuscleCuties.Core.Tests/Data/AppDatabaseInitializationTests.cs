@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
+using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
+using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Repositories.Quiz;
@@ -17,7 +19,7 @@ public class AppDatabaseInitializationTests
 
         await db.InitializeAsync();
 
-        Assert.Equal(13, await db.QuizQuestions.CountAsync());
+        Assert.Equal(15, await db.QuizQuestions.CountAsync());
         Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
         Assert.True(await db.FoodItems.CountAsync() >= 32);
         Assert.True(await db.MealTemplates.AnyAsync(t => t.Name == "Margherita Pizza Beans"));
@@ -32,6 +34,33 @@ public class AppDatabaseInitializationTests
     }
 
     [Fact]
+    public async Task InitializeStartupAsync_SeedsQuizWithoutHeavyReferenceData()
+    {
+        await using var db = await CreateDatabaseAsync();
+
+        await db.InitializeStartupAsync();
+
+        Assert.Equal(15, await db.QuizQuestions.CountAsync());
+        Assert.Empty(await db.MealTemplates.ToListAsync());
+        Assert.Empty(await db.FoodItems.ToListAsync());
+        Assert.Empty(await db.Exercises.ToListAsync());
+    }
+
+    [Fact]
+    public async Task SeedDeferredReferenceDataAsync_AddsFoodsMealsAndExercisesAfterStartup()
+    {
+        await using var db = await CreateDatabaseAsync();
+
+        await db.InitializeStartupAsync();
+        await db.SeedDeferredReferenceDataAsync();
+
+        Assert.Equal(15, await db.QuizQuestions.CountAsync());
+        Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
+        Assert.Equal(60, await db.FoodItems.CountAsync());
+        Assert.True(await db.Exercises.CountAsync() >= 20);
+    }
+
+    [Fact]
     public async Task InitializeAsync_WhenCalledTwice_DoesNotDuplicateStartupData()
     {
         await using var db = await CreateDatabaseAsync();
@@ -39,9 +68,9 @@ public class AppDatabaseInitializationTests
         await db.InitializeAsync();
         await db.InitializeAsync();
 
-        Assert.Equal(13, await db.QuizQuestions.CountAsync());
+        Assert.Equal(15, await db.QuizQuestions.CountAsync());
         Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
-        Assert.Equal(32, await db.FoodItems.CountAsync());
+        Assert.Equal(60, await db.FoodItems.CountAsync());
     }
 
     [Fact]
@@ -49,7 +78,7 @@ public class AppDatabaseInitializationTests
     {
         await using var db = await CreateDatabaseAsync();
         await db.InitializeAsync();
-        await db.Users.AddAsync(new()
+        await db.Users.AddAsync(new User
         {
             Email = "debug-reset@test.com",
             PasswordHash = "hash",
@@ -61,9 +90,9 @@ public class AppDatabaseInitializationTests
         await db.ResetAndSeedDebugDatabaseAsync();
 
         Assert.Empty(await db.Users.ToListAsync());
-        Assert.Equal(13, await db.QuizQuestions.CountAsync());
+        Assert.Equal(15, await db.QuizQuestions.CountAsync());
         Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
-        Assert.Equal(32, await db.FoodItems.CountAsync());
+        Assert.Equal(60, await db.FoodItems.CountAsync());
         Assert.True(await db.Exercises.CountAsync() >= 20);
     }
 
@@ -79,7 +108,7 @@ public class AppDatabaseInitializationTests
             QuestionType = QuizQuestionType.Goal,
             Answers =
             [
-                new() { Text = "Maintain health", OrderIndex = 1, MappedValue = 3 }
+                new QuizAnswer { Text = "Maintain health", OrderIndex = 1, MappedValue = 3 }
             ]
         });
         await db.SaveChangesAsync();
@@ -88,7 +117,7 @@ public class AppDatabaseInitializationTests
 
         Assert.True(await db.QuizQuestions.AnyAsync(q => q.QuestionType == QuizQuestionType.CurrentCyclePhase));
         Assert.False(await db.QuizQuestions.AnyAsync(q => q.QuestionType == QuizQuestionType.CycleTrackingMode));
-        Assert.Equal(13, await db.QuizQuestions.Select(q => q.QuestionType).Distinct().CountAsync());
+        Assert.Equal(15, await db.QuizQuestions.Select(q => q.QuestionType).Distinct().CountAsync());
     }
 
     [Fact]
@@ -103,9 +132,11 @@ public class AppDatabaseInitializationTests
             QuestionType = QuizQuestionType.CycleTrackingMode,
             Answers =
             [
-                new() { Text = "Automatic", OrderIndex = 1, MappedValue = (int)CycleTrackingMode.AutomaticPrediction },
-                new() { Text = "Flo", OrderIndex = 2, MappedValue = (int)CycleTrackingMode.FloConnector },
-                new() { Text = "Manual", OrderIndex = 3, MappedValue = (int)CycleTrackingMode.ManualPhaseLogging }
+                new QuizAnswer
+                    { Text = "Automatic", OrderIndex = 1, MappedValue = (int)CycleTrackingMode.AutomaticPrediction },
+                new QuizAnswer { Text = "Flo", OrderIndex = 2, MappedValue = (int)CycleTrackingMode.FloConnector },
+                new QuizAnswer
+                    { Text = "Manual", OrderIndex = 3, MappedValue = (int)CycleTrackingMode.ManualPhaseLogging }
             ]
         });
         await db.SaveChangesAsync();
@@ -113,7 +144,8 @@ public class AppDatabaseInitializationTests
         await db.InitializeAsync();
 
         var onboardingQuestions = await new QuizRepository(db).GetQuestionsWithAnswersAsync();
-        Assert.DoesNotContain(onboardingQuestions, question => question.QuestionType == QuizQuestionType.CycleTrackingMode);
+        Assert.DoesNotContain(onboardingQuestions,
+            question => question.QuestionType == QuizQuestionType.CycleTrackingMode);
     }
 
     [Fact]
@@ -121,7 +153,7 @@ public class AppDatabaseInitializationTests
     {
         await using var db = await CreateDatabaseAsync();
         await db.Database.EnsureCreatedAsync();
-        await db.Exercises.AddAsync(new()
+        await db.Exercises.AddAsync(new Exercise
         {
             Code = string.Empty,
             Name = "Legacy Move",
@@ -140,7 +172,7 @@ public class AppDatabaseInitializationTests
     {
         await using var db = await CreateDatabaseAsync();
         await db.Database.EnsureCreatedAsync();
-        await db.FoodItems.AddAsync(new()
+        await db.FoodItems.AddAsync(new FoodItem
         {
             Name = "Olive oil",
             FdcId = 172187,
@@ -155,7 +187,7 @@ public class AppDatabaseInitializationTests
         Assert.Equal(884f, oliveOil.Calories);
         Assert.Equal(100f, oliveOil.Fats);
         Assert.Equal("Starter", oliveOil.DataType);
-        Assert.Equal(32, await db.FoodItems.CountAsync());
+        Assert.Equal(60, await db.FoodItems.CountAsync());
     }
 
     private static async Task<AppDatabase> CreateDatabaseAsync()
@@ -168,4 +200,5 @@ public class AppDatabaseInitializationTests
         await db.Database.OpenConnectionAsync();
         return db;
     }
+
 }

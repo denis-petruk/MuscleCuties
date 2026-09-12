@@ -6,12 +6,13 @@ public static class WorkoutActivityPreferences
 {
     private const string StrengthStylePrefix = "StrengthStyle:";
 
-    public static IReadOnlySet<WorkoutActivityType> BuildDefaultSelection() =>
-        new HashSet<WorkoutActivityType>
+    public static IReadOnlySet<WorkoutActivityType> BuildDefaultSelection()
+    {
+        return new HashSet<WorkoutActivityType>
         {
-            WorkoutActivityType.HighVolumeStrength,
-            WorkoutActivityType.Yoga
+            WorkoutActivityType.HighVolumeStrength
         };
+    }
 
     public static IReadOnlySet<WorkoutActivityType> Parse(string? value)
     {
@@ -26,19 +27,23 @@ public static class WorkoutActivityPreferences
             .ToHashSet();
     }
 
-    public static string Serialize(IEnumerable<WorkoutActivityType> activityTypes) =>
-        Serialize(activityTypes, StrengthTrainingStyle.ComfortableModerate);
+    public static string Serialize(IEnumerable<WorkoutActivityType> activityTypes)
+    {
+        return Serialize(activityTypes, StrengthTrainingStyle.ComfortableModerate);
+    }
 
     public static string Serialize(
         IEnumerable<WorkoutActivityType> activityTypes,
-        StrengthTrainingStyle strengthTrainingStyle) =>
-        string.Join(
+        StrengthTrainingStyle strengthTrainingStyle)
+    {
+        return string.Join(
             ',',
             EnsureRequired(activityTypes)
                 .Distinct()
                 .OrderBy(activityType => activityType)
                 .Select(activityType => activityType.ToString())
                 .Concat([$"{StrengthStylePrefix}{strengthTrainingStyle}"]));
+    }
 
     public static IReadOnlySet<WorkoutActivityType> EnsureRequired(
         IEnumerable<WorkoutActivityType> activityTypes)
@@ -48,25 +53,28 @@ public static class WorkoutActivityPreferences
         if (!selected.Any(IsStrengthActivity))
             selected.Add(WorkoutActivityType.HighVolumeStrength);
 
-        if (!selected.Any(IsRecoveryActivity))
-            selected.Add(WorkoutActivityType.Yoga);
-
         return selected;
     }
 
-    public static bool IsStrengthActivity(WorkoutActivityType activityType) =>
-        activityType is WorkoutActivityType.StrengthHighIntensity or
+    public static bool IsStrengthActivity(WorkoutActivityType activityType)
+    {
+        return activityType is WorkoutActivityType.StrengthHighIntensity or
             WorkoutActivityType.HighVolumeStrength or
             WorkoutActivityType.RockClimbing;
+    }
 
-    public static bool IsCardioActivity(WorkoutActivityType activityType) =>
-        activityType is WorkoutActivityType.Hiit or
+    public static bool IsCardioActivity(WorkoutActivityType activityType)
+    {
+        return activityType is WorkoutActivityType.Hiit or
             WorkoutActivityType.Cycling or
             WorkoutActivityType.Running or
             WorkoutActivityType.Swimming;
+    }
 
-    public static bool IsRecoveryActivity(WorkoutActivityType activityType) =>
-        activityType is WorkoutActivityType.Yoga;
+    public static bool IsRecoveryActivity(WorkoutActivityType activityType)
+    {
+        return activityType is WorkoutActivityType.Yoga;
+    }
 
     public static StrengthTrainingStyle ParseStrengthStyle(string? value)
     {
@@ -79,7 +87,7 @@ public static class WorkoutActivityPreferences
                 continue;
 
             var rawStyle = part[StrengthStylePrefix.Length..];
-            if (Enum.TryParse<StrengthTrainingStyle>(rawStyle, ignoreCase: true, out var style))
+            if (Enum.TryParse<StrengthTrainingStyle>(rawStyle, true, out var style))
                 return style;
         }
 
@@ -91,7 +99,7 @@ public static class WorkoutActivityPreferences
         if (value.StartsWith(StrengthStylePrefix, StringComparison.OrdinalIgnoreCase))
             return null;
 
-        if (Enum.TryParse<WorkoutActivityType>(value, ignoreCase: true, out var activityType))
+        if (Enum.TryParse<WorkoutActivityType>(value, true, out var activityType))
             return activityType;
 
         var normalized = value.Replace(" ", string.Empty).Replace("-", string.Empty);

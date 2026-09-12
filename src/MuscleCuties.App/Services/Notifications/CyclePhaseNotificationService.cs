@@ -1,5 +1,4 @@
 using System.Globalization;
-using Microsoft.Maui.Storage;
 using MuscleCuties.Core.Models.Entities.Cycle;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Services.Cycle;
@@ -122,33 +121,46 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
         int cycleLength)
     {
         if (latestPhaseLog is not null)
-        {
             return CyclePhaseRules.ProjectPhaseFromLog(
                 new CyclePhaseLogProjection(latestPhaseLog.Phase, latestPhaseLog.LoggedAt),
                 date,
                 cycleLength);
-        }
 
-        var projectedCycleDay = ((prediction.CurrentDay - 1 + dayOffset) % cycleLength) + 1;
+        var projectedCycleDay = (prediction.CurrentDay - 1 + dayOffset) % cycleLength + 1;
         return CyclePhaseRules.CalculatePhase(projectedCycleDay, cycleLength);
     }
 
-    private static string BuildLastPhaseKey(int userId) => $"cycle.phase.last.{userId}";
-
-    private static string BuildLastNotificationDateKey(int userId) => $"cycle.phase.notificationDate.{userId}";
-
-    private static int BuildTodayNotificationId(int userId) => 740_000 + Math.Abs(userId % 10_000);
-
-    private static int BuildNextNotificationId(int userId) => 760_000 + Math.Abs(userId % 10_000);
-
-    private static string FormatPhase(CyclePhase phase) => phase switch
+    private static string BuildLastPhaseKey(int userId)
     {
-        CyclePhase.Menstrual => "the menstrual phase",
-        CyclePhase.Follicular => "the follicular phase",
-        CyclePhase.Ovulatory => "the ovulatory phase",
-        CyclePhase.Luteal => "the luteal phase",
-        _ => "a new cycle phase"
-    };
+        return $"cycle.phase.last.{userId}";
+    }
+
+    private static string BuildLastNotificationDateKey(int userId)
+    {
+        return $"cycle.phase.notificationDate.{userId}";
+    }
+
+    private static int BuildTodayNotificationId(int userId)
+    {
+        return 740_000 + Math.Abs(userId % 10_000);
+    }
+
+    private static int BuildNextNotificationId(int userId)
+    {
+        return 760_000 + Math.Abs(userId % 10_000);
+    }
+
+    private static string FormatPhase(CyclePhase phase)
+    {
+        return phase switch
+        {
+            CyclePhase.Menstrual => "the menstrual phase",
+            CyclePhase.Follicular => "the follicular phase",
+            CyclePhase.Ovulatory => "the ovulatory phase",
+            CyclePhase.Luteal => "the luteal phase",
+            _ => "a new cycle phase"
+        };
+    }
 
     private readonly record struct PhaseChangeReminder(DateTime Date, CyclePhase Phase);
 }

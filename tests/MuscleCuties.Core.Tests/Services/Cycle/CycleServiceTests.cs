@@ -1,25 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Models.Entities.Cycle;
-using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
-using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
-using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.Core.Repositories.Common;
 using MuscleCuties.Core.Repositories.Cycle;
-using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Repositories.Quiz;
 using MuscleCuties.Core.Repositories.Users;
-using MuscleCuties.Core.Repositories.Workout;
-using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
-using MuscleCuties.Core.Services.Nutrition;
-using MuscleCuties.Core.Services.Quiz;
 
 namespace MuscleCuties.Core.Tests.Services.Cycle;
 
@@ -32,11 +19,13 @@ public class CycleServiceTests : IClassFixture<DatabaseFixture>
         _fixture = fixture;
     }
 
-    private CycleService CreateService() =>
-        new CycleService(
+    private CycleService CreateService()
+    {
+        return new CycleService(
             new CycleRepository(_fixture.Db),
             new UserRepository(_fixture.Db),
             new CyclePredictionPlanner(new CyclePhaseCalculator()));
+    }
 
     private async Task<User> SeedUserAsync(string email)
     {

@@ -1,4 +1,5 @@
 using System.Globalization;
+using MuscleCuties.App.Resources.Styles;
 
 namespace MuscleCuties.App.Resources.Converters;
 
@@ -7,13 +8,13 @@ public class ScoreToColorConverter : IValueConverter
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         var score = value is int i ? i : 0;
-        var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
-
-        return score >= 70 ? Color.FromArgb(isDark ? "#7FD197" : "#58A873")
-             : score >= 40 ? Color.FromArgb(isDark ? "#F0C15D" : "#D9A441")
-             : Color.FromArgb(isDark ? "#F08B8B" : "#D16B6B");
+        return score >= 70 ? AppThemeResources.GetColor("ReadinessHighLight", "ReadinessHighDark")
+            : score >= 40 ? AppThemeResources.GetColor("ReadinessMediumLight", "ReadinessMediumDark")
+            : AppThemeResources.GetColor("ReadinessLowLight", "ReadinessLowDark");
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
         throw new NotSupportedException($"{GetType().Name} does not support reverse conversion.");
+    }
 }

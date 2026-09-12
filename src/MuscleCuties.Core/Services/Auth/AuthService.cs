@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-using MuscleCuties.Core.Diagnostics;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Repositories.Users;
 
@@ -9,10 +8,10 @@ namespace MuscleCuties.Core.Services.Auth;
 public class AuthService : IAuthService
 {
     private const string UserIdKey = "current_user_id";
+    private readonly SemaphoreSlim _resolveUserLock = new(1, 1);
+    private readonly ITokenStorage _tokenStorage;
 
     private readonly IUserRepository _userRepository;
-    private readonly ITokenStorage _tokenStorage;
-    private readonly SemaphoreSlim _resolveUserLock = new(1, 1);
     private int? _cachedUserId;
 
     public AuthService(IUserRepository userRepository, ITokenStorage tokenStorage)
@@ -23,49 +22,26 @@ public class AuthService : IAuthService
 
     public async Task<User?> LoginAsync(string email, string password)
     {
-        AppDebugLog.Write("Auth", "LoginAsync start.");
         var normalizedEmail = NormalizeEmail(email);
-        if (string.IsNullOrWhiteSpace(normalizedEmail))
-        {
-            AppDebugLog.Write("Auth", "LoginAsync rejected: empty email.");
-            return null;
-        }
+        if (string.IsNullOrWhiteSpace(normalizedEmail)) return null;
 
         var user = await _userRepository.GetByEmailAsync(normalizedEmail);
-        if (user == null)
-        {
-            AppDebugLog.Write("Auth", "LoginAsync rejected: user not found.");
-            return null;
-        }
+        if (user == null) return null;
 
-        if (user.PasswordHash != HashPassword(password))
-        {
-            AppDebugLog.Write("Auth", $"LoginAsync rejected: password mismatch for userId={user.Id}.");
-            return null;
-        }
+        if (user.PasswordHash != HashPassword(password)) return null;
 
         await _tokenStorage.SetAsync(UserIdKey, user.Id.ToString());
         _cachedUserId = user.Id;
-        AppDebugLog.Write("Auth", $"LoginAsync success userId={user.Id}, onboardingComplete={user.IsOnboardingComplete}.");
         return user;
     }
 
     public async Task<User?> RegisterAsync(string email, string password)
     {
-        AppDebugLog.Write("Auth", "RegisterAsync start.");
         var normalizedEmail = NormalizeEmail(email);
-        if (string.IsNullOrWhiteSpace(normalizedEmail))
-        {
-            AppDebugLog.Write("Auth", "RegisterAsync rejected: empty email.");
-            return null;
-        }
+        if (string.IsNullOrWhiteSpace(normalizedEmail)) return null;
 
         var existing = await _userRepository.GetByEmailAsync(normalizedEmail);
-        if (existing != null)
-        {
-            AppDebugLog.Write("Auth", "RegisterAsync rejected: email already exists.");
-            return null;
-        }
+        if (existing != null) return null;
 
         var user = new User
         {
@@ -79,22 +55,15 @@ public class AuthService : IAuthService
         await _tokenStorage.SetAsync(UserIdKey, user.Id.ToString());
         _cachedUserId = user.Id;
 
-        AppDebugLog.Write("Auth", $"RegisterAsync success userId={user.Id}.");
         return user;
     }
 
     public async Task<User?> SignInWithAppleAsync(AppleSignInResult appleAccount)
     {
-        AppDebugLog.Write("Auth", "SignInWithAppleAsync start.");
-        if (string.IsNullOrWhiteSpace(appleAccount.UserIdentifier))
-        {
-            AppDebugLog.Write("Auth", "SignInWithAppleAsync rejected: missing Apple user identifier.");
-            return null;
-        }
+        if (string.IsNullOrWhiteSpace(appleAccount.UserIdentifier)) return null;
 
         var appleUserId = appleAccount.UserIdentifier.Trim();
         var user = await _userRepository.GetByAppleUserIdAsync(appleUserId);
-        AppDebugLog.Write("Auth", $"SignInWithAppleAsync existing Apple user found={user is not null}.");
 
         if (user is null && !string.IsNullOrWhiteSpace(appleAccount.Email))
             user = await _userRepository.GetByEmailAsync(NormalizeEmail(appleAccount.Email));
@@ -111,24 +80,54 @@ public class AuthService : IAuthService
             };
 
             await _userRepository.AddAsync(user);
-            AppDebugLog.Write("Auth", $"SignInWithAppleAsync created userId={user.Id}.");
         }
         else if (string.IsNullOrWhiteSpace(user.AppleUserId))
         {
             user.AppleUserId = appleUserId;
             user.UpdatedAt = DateTime.UtcNow;
             await _userRepository.UpdateAsync(user);
-            AppDebugLog.Write("Auth", $"SignInWithAppleAsync linked existing userId={user.Id}.");
         }
 
         await SetCurrentUserAsync(user.Id);
-        AppDebugLog.Write("Auth", $"SignInWithAppleAsync success userId={user.Id}, onboardingComplete={user.IsOnboardingComplete}.");
+        return user;
+    }
+
+    public async Task<User?> SignInWithExternalProviderAsync(PlatformSignInResult account)
+    {
+        var provider = NormalizeProvider(account.Provider);
+        if (provider == "apple")
+            return await SignInWithAppleAsync(new AppleSignInResult(
+                account.UserIdentifier,
+                account.Email,
+                account.FullName));
+
+        if (string.IsNullOrWhiteSpace(account.UserIdentifier)) return null;
+
+        var normalizedEmail = NormalizeEmail(account.Email);
+        var user = string.IsNullOrWhiteSpace(normalizedEmail)
+            ? null
+            : await _userRepository.GetByEmailAsync(normalizedEmail);
+
+        if (user is null)
+        {
+            var providerUserId = account.UserIdentifier.Trim();
+            user = new User
+            {
+                Email = BuildExternalProviderEmail(provider, providerUserId, account.Email),
+                PasswordHash = HashPassword($"{provider}:{providerUserId}"),
+                CreatedAt = DateTime.UtcNow,
+                IsOnboardingComplete = false
+            };
+
+            await _userRepository.AddAsync(user);
+        }
+
+        await SetCurrentUserAsync(user.Id);
         return user;
     }
 
     public Task LogoutAsync()
     {
-        AppDebugLog.Write("Auth", "LogoutAsync.");
         _cachedUserId = null;
         _tokenStorage.Remove(UserIdKey);
         return Task.CompletedTask;
@@ -147,33 +146,19 @@ public class AuthService : IAuthService
 
     private async Task<int> ResolveCurrentUserIdAsync()
     {
-        if (_cachedUserId is int cachedUserId)
-        {
-            AppDebugLog.Write("Auth", $"ResolveCurrentUserId cache hit userId={cachedUserId}.");
-            return cachedUserId;
-        }
+        if (_cachedUserId is int cachedUserId) return cachedUserId;
 
-        AppDebugLog.Write("Auth", "ResolveCurrentUserId waiting for lock.");
         await _resolveUserLock.WaitAsync();
         try
         {
-            if (_cachedUserId is int resolvedUserId)
-            {
-                AppDebugLog.Write("Auth", $"ResolveCurrentUserId cache hit after lock userId={resolvedUserId}.");
-                return resolvedUserId;
-            }
+            if (_cachedUserId is int resolvedUserId) return resolvedUserId;
 
             var id = await _tokenStorage.GetAsync(UserIdKey);
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                AppDebugLog.Write("Auth", "ResolveCurrentUserId no stored token.");
-                return 0;
-            }
+            if (string.IsNullOrWhiteSpace(id)) return 0;
 
             if (!int.TryParse(id, out var userId) || userId <= 0)
             {
                 _tokenStorage.Remove(UserIdKey);
-                AppDebugLog.Write("Auth", "ResolveCurrentUserId removed invalid stored token.");
                 return 0;
             }
 
@@ -181,18 +166,15 @@ public class AuthService : IAuthService
             if (user is not null)
             {
                 _cachedUserId = userId;
-                AppDebugLog.Write("Auth", $"ResolveCurrentUserId resolved userId={userId}.");
                 return userId;
             }
 
             _tokenStorage.Remove(UserIdKey);
-            AppDebugLog.Write("Auth", $"ResolveCurrentUserId removed token because userId={userId} is missing.");
             return 0;
         }
         finally
         {
             _resolveUserLock.Release();
-            AppDebugLog.Write("Auth", "ResolveCurrentUserId lock released.");
         }
     }
 
@@ -202,8 +184,17 @@ public class AuthService : IAuthService
         return Convert.ToBase64String(bytes);
     }
 
-    private static string NormalizeEmail(string? email) =>
-        email?.Trim().ToLowerInvariant() ?? string.Empty;
+    private static string NormalizeEmail(string? email)
+    {
+        return email?.Trim().ToLowerInvariant() ?? string.Empty;
+    }
+
+    private static string NormalizeProvider(string? provider)
+    {
+        return string.IsNullOrWhiteSpace(provider)
+            ? "external"
+            : provider.Trim().ToLowerInvariant();
+    }
 
     private async Task SetCurrentUserAsync(int userId)
     {
@@ -219,5 +210,15 @@ public class AuthService : IAuthService
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(appleUserId));
         var suffix = Convert.ToHexString(bytes)[..20].ToLowerInvariant();
         return $"apple-{suffix}@privaterelay.musclecuties.local";
+    }
+
+    private static string BuildExternalProviderEmail(string provider, string providerUserId, string? email)
+    {
+        if (!string.IsNullOrWhiteSpace(email))
+            return NormalizeEmail(email);
+
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes($"{provider}:{providerUserId}"));
+        var suffix = Convert.ToHexString(bytes)[..20].ToLowerInvariant();
+        return $"{provider}-{suffix}@auth.musclecuties.local";
     }
 }

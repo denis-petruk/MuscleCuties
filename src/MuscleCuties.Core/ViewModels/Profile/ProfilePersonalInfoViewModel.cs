@@ -8,65 +8,59 @@ using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.UI.Common;
 using MuscleCuties.Core.Models.UI.Profile;
 using MuscleCuties.Core.Repositories.Users;
+using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
-using MuscleCuties.Core.Services.Health;
 
 namespace MuscleCuties.Core.ViewModels.Profile;
 
 public partial class ProfilePersonalInfoViewModel : ObservableObject
 {
     private readonly IAuthService _authService;
+    private readonly IAppPreloadService _preloadService;
+    private readonly Func<Task> _navigateBackAsync;
     private readonly IUserRepository _userRepository;
-    private readonly IHealthSyncService? _healthSyncService;
-    private readonly Action _navigateBack;
+    [ObservableProperty] private DateTime _birthDate = DateTime.Today.AddYears(-25);
+    [ObservableProperty] private string _cycleLength = "28";
+    [ObservableProperty] private CycleTrackingMode _cycleTrackingMode = CycleTrackingMode.ManualPhaseLogging;
+    [ObservableProperty] private string _email = string.Empty;
+    [ObservableProperty] private UserGoal _goal;
+    [ObservableProperty] private string _heightCm = string.Empty;
+    [ObservableProperty] private bool _isBusy;
 
     [ObservableProperty] private string _name = string.Empty;
-    [ObservableProperty] private string _email = string.Empty;
-    [ObservableProperty] private DateTime _birthDate = DateTime.Today.AddYears(-25);
-    [ObservableProperty] private string _heightCm = string.Empty;
-    [ObservableProperty] private string _weightKg = string.Empty;
-    [ObservableProperty] private UserGoal _goal;
-    [ObservableProperty] private WeightGoalPace _weightGoalPace;
-    [ObservableProperty] private TrainingExperienceLevel _trainingExperienceLevel = TrainingExperienceLevel.Beginner;
-    [ObservableProperty] private CycleTrackingMode _cycleTrackingMode = CycleTrackingMode.ManualPhaseLogging;
     [ObservableProperty] private SelectionOption<CycleTrackingMode>? _selectedCycleLoggingModeOption;
-    [ObservableProperty] private string _workoutDaysPerWeek = "3";
-    [ObservableProperty] private string _cycleLength = "28";
     [ObservableProperty] private string _statusMessage = string.Empty;
-    [ObservableProperty] private string _healthSyncStatusText = "Not connected";
-    [ObservableProperty] private string _healthSyncMessage = string.Empty;
-    [ObservableProperty] private bool _isBusy;
-    [ObservableProperty] private bool _isHealthSyncBusy;
-
-    public bool IsGoalPaceVisible => ProfileSelectionOptions.UsesWeightGoalPace(Goal);
-    public IReadOnlyList<SelectionOption<CycleTrackingMode>> CycleLoggingModeOptions { get; } =
-        ProfileSelectionOptions.CycleLoggingModes;
-    public DateTime MinBirthDate { get; } = DateTime.Today.AddYears(-100);
-    public DateTime MaxBirthDate { get; } = DateTime.Today.AddYears(-12);
-
-    public AsyncRelayCommand LoadDataCommand { get; }
-    public AsyncRelayCommand SaveCommand { get; }
-    public AsyncRelayCommand ConnectAppleHealthCommand { get; }
-    public AsyncRelayCommand ConnectWhoopCommand { get; }
-    public RelayCommand BackCommand { get; }
+    [ObservableProperty] private TrainingExperienceLevel _trainingExperienceLevel = TrainingExperienceLevel.Beginner;
+    [ObservableProperty] private WeightGoalPace _weightGoalPace;
+    [ObservableProperty] private string _weightKg = string.Empty;
+    [ObservableProperty] private string _workoutDaysPerWeek = "3";
 
     public ProfilePersonalInfoViewModel(
         IAuthService authService,
         IUserRepository userRepository,
-        Action navigateBack,
-        IHealthSyncService? healthSyncService = null)
+        IAppPreloadService preloadService,
+        Func<Task> navigateBackAsync)
     {
         _authService = authService;
         _userRepository = userRepository;
-        _healthSyncService = healthSyncService;
-        _navigateBack = navigateBack;
+        _preloadService = preloadService;
+        _navigateBackAsync = navigateBackAsync;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
-        ConnectAppleHealthCommand = new AsyncRelayCommand(() => ConnectHealthAsync(HealthDataSource.AppleHealth));
-        ConnectWhoopCommand = new AsyncRelayCommand(() => ConnectHealthAsync(HealthDataSource.Whoop));
-        BackCommand = new RelayCommand(_navigateBack);
+        BackCommand = new AsyncRelayCommand(_navigateBackAsync);
         SelectedCycleLoggingModeOption = CycleLoggingModeOptions.First(option => option.Value == CycleTrackingMode);
     }
+
+    public bool IsGoalPaceVisible => ProfileSelectionOptions.UsesWeightGoalPace(Goal);
+
+    public IReadOnlyList<SelectionOption<CycleTrackingMode>> CycleLoggingModeOptions { get; } =
+        ProfileSelectionOptions.CycleLoggingModes;
+
+    public DateTime MinBirthDate { get; } = DateTime.Today.AddYears(-100);
+    public DateTime MaxBirthDate { get; } = DateTime.Today.AddYears(-12);
+    public AsyncRelayCommand LoadDataCommand { get; }
+    public AsyncRelayCommand SaveCommand { get; }
+    public AsyncRelayCommand BackCommand { get; }
 
     private async Task LoadDataAsync()
     {
@@ -77,7 +71,6 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             var userId = await _authService.GetCurrentUserIdAsync();
             var user = await _userRepository.GetByIdAsync(userId);
             var profile = await _userRepository.GetProfileAsync(userId);
-            await RefreshHealthSyncStatusAsync(userId);
 
             Email = user?.Email ?? string.Empty;
 
@@ -166,8 +159,9 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
                 CreatedAt = DateTime.UtcNow
             });
 
+            _preloadService.InvalidateAll();
             StatusMessage = "Personal info saved.";
-            _navigateBack();
+            await _navigateBackAsync();
         }
         finally
         {
@@ -216,57 +210,35 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         return true;
     }
 
-    private static float ParseFloat(string value) =>
-        float.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out var current)
+    private static float ParseFloat(string value)
+    {
+        return float.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out var current)
             ? current
             : float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var invariant)
                 ? invariant
                 : 0f;
-
-    private static int ParseInt(string value) =>
-        int.TryParse(value, NumberStyles.Integer, CultureInfo.CurrentCulture, out var current)
-            ? current
-            : 0;
-
-    private static string FormatNumber(float value) =>
-        value <= 0f ? string.Empty : value.ToString("0.#", CultureInfo.CurrentCulture);
-
-    private static CycleTrackingMode NormalizeCycleLoggingMode(CycleTrackingMode mode) => mode switch
-    {
-        CycleTrackingMode.FloConnector => CycleTrackingMode.FloConnector,
-        CycleTrackingMode.LunarConnector => CycleTrackingMode.LunarConnector,
-        _ => CycleTrackingMode.ManualPhaseLogging
-    };
-
-    private async Task ConnectHealthAsync(HealthDataSource source)
-    {
-        if (_healthSyncService is null)
-        {
-            HealthSyncMessage = "Health sync is not available in this build.";
-            return;
-        }
-
-        IsHealthSyncBusy = true;
-        try
-        {
-            var userId = await _authService.GetCurrentUserIdAsync();
-            var result = await _healthSyncService.SyncAsync(userId, source);
-            HealthSyncMessage = result.Message;
-            await RefreshHealthSyncStatusAsync(userId);
-        }
-        finally
-        {
-            IsHealthSyncBusy = false;
-        }
     }
 
-    private async Task RefreshHealthSyncStatusAsync(int userId)
+    private static int ParseInt(string value)
     {
-        if (_healthSyncService is null)
-            return;
+        return int.TryParse(value, NumberStyles.Integer, CultureInfo.CurrentCulture, out var current)
+            ? current
+            : 0;
+    }
 
-        var status = await _healthSyncService.GetStatusAsync(userId);
-        HealthSyncStatusText = status.SummaryText;
+    private static string FormatNumber(float value)
+    {
+        return value <= 0f ? string.Empty : value.ToString("0.#", CultureInfo.CurrentCulture);
+    }
+
+    private static CycleTrackingMode NormalizeCycleLoggingMode(CycleTrackingMode mode)
+    {
+        return mode switch
+        {
+            CycleTrackingMode.FloConnector => CycleTrackingMode.FloConnector,
+            CycleTrackingMode.LunarConnector => CycleTrackingMode.LunarConnector,
+            _ => CycleTrackingMode.ManualPhaseLogging
+        };
     }
 
     partial void OnCycleTrackingModeChanged(CycleTrackingMode value)

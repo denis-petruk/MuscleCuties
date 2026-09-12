@@ -6,13 +6,13 @@ namespace MuscleCuties.Core.Tests.Services.Workout;
 public class WorkoutActivityOptionCatalogTests
 {
     [Fact]
-    public void Build_WithEmptySelectionSelectsStrengthAndRecoveryOnly()
+    public void Build_WithEmptySelectionSelectsStrengthOnly()
     {
         var options = WorkoutActivityOptionCatalog.Build(new HashSet<WorkoutActivityType>());
 
         Assert.Contains(options, option =>
             option.ActivityType == WorkoutActivityType.HighVolumeStrength && option.IsSelected);
-        Assert.Contains(options, option =>
+        Assert.DoesNotContain(options, option =>
             option.ActivityType == WorkoutActivityType.Yoga && option.IsSelected);
         Assert.DoesNotContain(options, option =>
             WorkoutActivityPreferences.IsCardioActivity(option.ActivityType) && option.IsSelected);
@@ -47,18 +47,20 @@ public class WorkoutActivityOptionCatalogTests
     }
 
     [Fact]
-    public void ToggleSelection_KeepsRequiredFallbacks()
+    public void ToggleSelection_KeepsStrengthRequiredAndAllowsYogaOptional()
     {
         var options = WorkoutActivityOptionCatalog.Build(new HashSet<WorkoutActivityType>());
         var strength = options.Single(option => option.ActivityType == WorkoutActivityType.HighVolumeStrength);
         var recovery = options.Single(option => option.ActivityType == WorkoutActivityType.Yoga);
 
         var strengthMessage = WorkoutActivityOptionCatalog.ToggleSelection(options, strength);
+        WorkoutActivityOptionCatalog.ToggleSelection(options, recovery);
         var recoveryMessage = WorkoutActivityOptionCatalog.ToggleSelection(options, recovery);
 
         Assert.True(strength.IsSelected);
-        Assert.True(recovery.IsSelected);
+        Assert.False(recovery.IsRequired);
+        Assert.False(recovery.IsSelected);
         Assert.Contains("strength", strengthMessage, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("recovery", recoveryMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, recoveryMessage);
     }
 }

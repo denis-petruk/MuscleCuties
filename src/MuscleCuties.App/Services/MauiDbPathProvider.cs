@@ -6,6 +6,8 @@ public sealed class MauiDbPathProvider : IDbPathProvider
 {
     private const string DatabaseFileName = "musclecuties.db3";
 
-    public string GetDatabasePath() =>
-        Path.Combine(FileSystem.AppDataDirectory, DatabaseFileName);
+    public string GetDatabasePath()
+    {
+        return Path.Combine(FileSystem.AppDataDirectory, DatabaseFileName);
+    }
 }

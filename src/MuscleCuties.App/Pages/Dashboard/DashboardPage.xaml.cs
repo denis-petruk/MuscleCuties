@@ -1,15 +1,16 @@
-using MuscleCuties.App.Pages;
 using MuscleCuties.Core.ViewModels.Dashboard;
 
 namespace MuscleCuties.App.Pages.Dashboard;
 
 public partial class DashboardPage : ContentPage
 {
+    private readonly DashboardViewModel _viewModel;
     private bool _isThemeHandlerAttached;
 
     public DashboardPage(DashboardViewModel vm)
     {
-        InitializeComponent();
+        this.InitializeWithTiming(InitializeComponent);
+        _viewModel = vm;
         BindingContext = vm;
     }
 
@@ -17,8 +18,16 @@ public partial class DashboardPage : ContentPage
     {
         base.OnAppearing();
         AttachThemeHandler();
-        ((DashboardViewModel)BindingContext).RefreshThemeColors(IsDarkTheme());
-        this.LoadAfterFirstRender(() => ((DashboardViewModel)BindingContext).RefreshCommand.ExecuteAsync(null));
+    }
+
+    protected override void OnNavigatedTo(NavigatedToEventArgs args)
+    {
+        base.OnNavigatedTo(args);
+        this.BeginPageLoad(async () =>
+        {
+            await _viewModel.LoadDataCommand.ExecuteAsync(null);
+            _viewModel.RefreshThemeColors(IsDarkTheme());
+        });
     }
 
     protected override void OnDisappearing()
@@ -47,9 +56,11 @@ public partial class DashboardPage : ContentPage
 
     private void OnRequestedThemeChanged(object? sender, AppThemeChangedEventArgs e)
     {
-        ((DashboardViewModel)BindingContext).RefreshThemeColors(e.RequestedTheme == AppTheme.Dark);
+        _viewModel.RefreshThemeColors(e.RequestedTheme == AppTheme.Dark);
     }
 
-    private static bool IsDarkTheme() =>
-        Application.Current?.RequestedTheme == AppTheme.Dark;
+    private static bool IsDarkTheme()
+    {
+        return Application.Current?.RequestedTheme == AppTheme.Dark;
+    }
 }

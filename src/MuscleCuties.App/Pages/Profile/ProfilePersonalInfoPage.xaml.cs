@@ -1,4 +1,3 @@
-using MuscleCuties.App.Pages;
 using MuscleCuties.Core.ViewModels.Profile;
 
 namespace MuscleCuties.App.Pages.Profile;
@@ -11,9 +10,10 @@ public partial class ProfilePersonalInfoPage : ContentPage
         BindingContext = vm;
     }
 
-    protected override void OnAppearing()
+    protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
-        base.OnAppearing();
-        this.LoadAfterFirstRender(() => ((ProfilePersonalInfoViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
+        base.OnNavigatedTo(args);
+        this.BeginPageLoad(() =>
+            ((ProfilePersonalInfoViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
     }
 }

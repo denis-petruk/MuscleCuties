@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -12,7 +13,9 @@
         <VerticalStackLayout
             Padding="28,48,28,32"
             Spacing="0"
-            VerticalOptions="Center">
+            VerticalOptions="Center"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="640">
 
             <sharedControls:ThemeAwareBrandLogoImage
                 Style="{StaticResource BrandLogoImage}"
@@ -37,6 +40,7 @@
 
                     <Border Style="{StaticResource InputContainer}">
                         <Entry
+                            AutomationId="LoginEmail"
                             Placeholder="Email"
                             Text="{Binding Email}"
                             Keyboard="Email"
@@ -45,6 +49,7 @@
 
                     <Border Style="{StaticResource InputContainer}">
                         <Entry
+                            AutomationId="LoginPassword"
                             Placeholder="Password"
                             Text="{Binding Password}"
                             IsPassword="True"
@@ -82,8 +87,8 @@
                     </Grid>
 
                     <Button
-                        Text="Log In with Apple"
-                        Command="{Binding SignInWithAppleCommand}"
+                        Text="{Binding PlatformLoginButtonText}"
+                        Command="{Binding SignInWithPlatformCommand}"
                         IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
                         TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
@@ -93,17 +98,31 @@
                     <ActivityIndicator
                         IsRunning="{Binding IsBusy}"
                         IsVisible="{Binding IsBusy}"
-                        HorizontalOptions="Center" />
+                        HorizontalOptions="Center"
+                        SemanticProperties.Description="Signing in" />
 
                 </VerticalStackLayout>
             </Border>
 
-            <Button
-                Text="Don't have an account? Sign up"
-                Style="{StaticResource ButtonLink}"
-                Command="{Binding GoToRegisterCommand}"
-
-                Margin="0,12,0,0" />
+            <HorizontalStackLayout
+                HorizontalOptions="Center"
+                Spacing="4"
+                Margin="0,16,0,0"
+                MinimumHeightRequest="44"
+                SemanticProperties.Description="Don't have an account? Sign up">
+                <HorizontalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding GoToRegisterCommand}" />
+                </HorizontalStackLayout.GestureRecognizers>
+                <Label
+                    Text="Don't have an account?"
+                    Style="{StaticResource CaptionLabel}"
+                    VerticalOptions="Center" />
+                <Label
+                    Text="Sign up"
+                    Style="{StaticResource AccentLabel}"
+                    FontSize="13"
+                    VerticalOptions="Center" />
+            </HorizontalStackLayout>
 
         </VerticalStackLayout>
     </ScrollView>

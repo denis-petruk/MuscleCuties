@@ -1,56 +1,69 @@
-using MuscleCuties.Core.Repositories.Common;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Entities.Workout;
+using MuscleCuties.Core.Repositories.Common;
 
 namespace MuscleCuties.Core.Repositories.Workout;
 
 public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db), IWorkoutRepository
 {
-    public async Task<WorkoutPlan?> GetPlanWithDaysAsync(int planId) =>
-        await _db.WorkoutPlans
+    public async Task<WorkoutPlan?> GetPlanWithDaysAsync(int planId)
+    {
+        return await _db.WorkoutPlans
             .AsNoTracking()
             .Include(p => p.WorkoutDays)
             .ThenInclude(d => d.WorkoutDayExercises)
             .ThenInclude(we => we.Exercise)
             .FirstOrDefaultAsync(p => p.Id == planId);
+    }
 
-    public async Task<WorkoutDay?> GetWorkoutDayWithExercisesAsync(int workoutDayId) =>
-        await _db.WorkoutDays
+    public async Task<WorkoutDay?> GetWorkoutDayWithExercisesAsync(int workoutDayId)
+    {
+        return await _db.WorkoutDays
             .AsNoTracking()
             .Include(d => d.WorkoutDayExercises)
             .ThenInclude(we => we.Exercise)
             .FirstOrDefaultAsync(d => d.Id == workoutDayId);
+    }
 
-    public async Task<List<WorkoutDay>> GetWorkoutDaysByPlanAsync(int planId) =>
-        await _db.WorkoutDays
+    public async Task<List<WorkoutDay>> GetWorkoutDaysByPlanAsync(int planId)
+    {
+        return await _db.WorkoutDays
             .AsNoTracking()
             .Where(d => d.WorkoutPlanId == planId)
             .Include(d => d.WorkoutDayExercises)
             .ThenInclude(we => we.Exercise)
             .OrderBy(d => d.DayOfWeek)
+            .ThenBy(d => d.Id)
             .ToListAsync();
+    }
 
-    public async Task<List<Exercise>> GetExercisesByDayAsync(int workoutDayId) =>
-        await _db.WorkoutDayExercises
+    public async Task<List<Exercise>> GetExercisesByDayAsync(int workoutDayId)
+    {
+        return await _db.WorkoutDayExercises
             .AsNoTracking()
             .Where(we => we.WorkoutDayId == workoutDayId)
             .Include(we => we.Exercise)
             .Select(we => we.Exercise!)
             .ToListAsync();
+    }
 
-    public async Task<List<Exercise>> GetAllExercisesAsync() =>
-        await _db.Exercises
+    public async Task<List<Exercise>> GetAllExercisesAsync()
+    {
+        return await _db.Exercises
             .AsNoTracking()
             .OrderBy(e => e.Name)
             .ToListAsync();
+    }
 
-    public async Task<WorkoutPlan?> GetActivePlanAsync(int userId) =>
-        await _db.WorkoutPlans
+    public async Task<WorkoutPlan?> GetActivePlanAsync(int userId)
+    {
+        return await _db.WorkoutPlans
             .AsNoTracking()
             .Where(p => p.UserId == userId && p.IsActive)
             .Include(p => p.WorkoutDays)
             .FirstOrDefaultAsync();
+    }
 
     public async Task<WorkoutPlan> ReplaceActivePlanAsync(WorkoutPlan plan)
     {
@@ -138,7 +151,6 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
         primaryLog.CreatedAt = log.CreatedAt;
 
         foreach (var duplicateLog in existingLogs.Skip(1))
-        {
             foreach (var duplicateExerciseLog in duplicateLog.ExerciseLogs.ToList())
             {
                 var alreadyMoved = primaryLog.ExerciseLogs.Any(existing =>
@@ -163,7 +175,6 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
                     CreatedAt = duplicateExerciseLog.CreatedAt
                 });
             }
-        }
 
         foreach (var incomingLog in log.ExerciseLogs)
         {

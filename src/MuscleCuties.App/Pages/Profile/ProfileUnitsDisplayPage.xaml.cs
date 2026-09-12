@@ -1,4 +1,3 @@
-using MuscleCuties.App.Pages;
 using MuscleCuties.Core.ViewModels.Profile;
 
 namespace MuscleCuties.App.Pages.Profile;
@@ -11,9 +10,10 @@ public partial class ProfileUnitsDisplayPage : ContentPage
         BindingContext = vm;
     }
 
-    protected override void OnAppearing()
+    protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
-        base.OnAppearing();
-        this.LoadAfterFirstRender(() => ((ProfileUnitsDisplayViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
+        base.OnNavigatedTo(args);
+        this.BeginPageLoad(() =>
+            ((ProfileUnitsDisplayViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
     }
 }

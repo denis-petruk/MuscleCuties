@@ -1,19 +1,17 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using MuscleCuties.Core.Services.Nutrition;
 
 namespace MuscleCuties.Core.Services.Nutrition;
 
 public class FdcApiClient : IFdcApiClient
 {
-    public static readonly Uri BaseUri = new("https://api.nal.usda.gov/fdc/v1/");
-
     private const int MaxRateLimitRetries = 1;
+    public static readonly Uri BaseUri = new("https://api.nal.usda.gov/fdc/v1/");
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private readonly string? _apiKey;
 
     private readonly HttpClient _httpClient;
-    private readonly string? _apiKey;
 
     public FdcApiClient(HttpClient httpClient)
         : this(httpClient, Environment.GetEnvironmentVariable("FDC_API_KEY"))
@@ -28,6 +26,11 @@ public class FdcApiClient : IFdcApiClient
         if (_httpClient.BaseAddress is null)
             _httpClient.BaseAddress = BaseUri;
     }
+
+    private string ApiKey =>
+        string.IsNullOrWhiteSpace(_apiKey)
+            ? throw new InvalidOperationException("FDC_API_KEY is not configured.")
+            : _apiKey;
 
     public async Task<IReadOnlyList<FdcFoodSearchResult>> SearchFoodsAsync(
         string query,
@@ -52,7 +55,7 @@ public class FdcApiClient : IFdcApiClient
 
         using var response = await SendWithRetryAsync(
             () => new HttpRequestMessage(HttpMethod.Get, path),
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
 
         if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.NotFound)
             return [];
@@ -60,7 +63,9 @@ public class FdcApiClient : IFdcApiClient
         ThrowIfConfigurationError(response);
         response.EnsureSuccessStatusCode();
 
-        var payload = await response.Content.ReadFromJsonAsync<FdcFoodSearchResponse>(JsonOptions, cancellationToken);
+        var payload = await response.Content
+            .ReadFromJsonAsync<FdcFoodSearchResponse>(JsonOptions, cancellationToken)
+            .ConfigureAwait(false);
         return payload?.Foods ?? [];
     }
 
@@ -72,7 +77,7 @@ public class FdcApiClient : IFdcApiClient
         var path = $"food/{fdcId}?format=abridged&api_key={Uri.EscapeDataString(ApiKey)}";
         using var response = await SendWithRetryAsync(
             () => new HttpRequestMessage(HttpMethod.Get, path),
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
 
         if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.NotFound)
             return null;
@@ -80,7 +85,9 @@ public class FdcApiClient : IFdcApiClient
         ThrowIfConfigurationError(response);
         response.EnsureSuccessStatusCode();
 
-        return await response.Content.ReadFromJsonAsync<FdcFoodDetail>(JsonOptions, cancellationToken);
+        return await response.Content
+            .ReadFromJsonAsync<FdcFoodDetail>(JsonOptions, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task<IReadOnlyList<FdcFoodDetail>> GetFoodsAsync(
@@ -102,7 +109,7 @@ public class FdcApiClient : IFdcApiClient
 
                 return request;
             },
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
 
         if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.NotFound)
             return [];
@@ -110,13 +117,10 @@ public class FdcApiClient : IFdcApiClient
         ThrowIfConfigurationError(response);
         response.EnsureSuccessStatusCode();
 
-        return await response.Content.ReadFromJsonAsync<List<FdcFoodDetail>>(JsonOptions, cancellationToken) ?? [];
+        return await response.Content
+                   .ReadFromJsonAsync<List<FdcFoodDetail>>(JsonOptions, cancellationToken)
+                   .ConfigureAwait(false) ?? [];
     }
-
-    private string ApiKey =>
-        string.IsNullOrWhiteSpace(_apiKey)
-            ? throw new InvalidOperationException("FDC_API_KEY is not configured.")
-            : _apiKey;
 
     private static void ThrowIfConfigurationError(HttpResponseMessage response)
     {
@@ -137,12 +141,12 @@ public class FdcApiClient : IFdcApiClient
             var response = await _httpClient.SendAsync(
                 request,
                 HttpCompletionOption.ResponseHeadersRead,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             if (response.StatusCode == HttpStatusCode.TooManyRequests && rateLimitRetries < MaxRateLimitRetries)
             {
                 response.Dispose();
-                await Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken);
+                await Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken).ConfigureAwait(false);
                 rateLimitRetries++;
                 continue;
             }

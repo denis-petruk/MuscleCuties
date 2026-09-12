@@ -27,7 +27,8 @@ public static class FatSolubleVitaminAbsorption
         IEnumerable<LoggedMeal> dailyMeals)
     {
         var nearbyFat = dailyMeals
-            .Where(candidate => Math.Abs((candidate.LoggedAt - meal.LoggedAt).TotalMinutes) <= AbsorptionWindow.TotalMinutes)
+            .Where(candidate =>
+                Math.Abs((candidate.LoggedAt - meal.LoggedAt).TotalMinutes) <= AbsorptionWindow.TotalMinutes)
             .SelectMany(candidate => candidate.Entries)
             .Where(entry => entry.FoodItem is not null)
             .Sum(entry => entry.FoodItem!.Fats * entry.Grams / 100f);

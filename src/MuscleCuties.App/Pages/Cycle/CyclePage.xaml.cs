@@ -1,4 +1,3 @@
-using MuscleCuties.App.Pages;
 using MuscleCuties.Core.ViewModels.Cycle;
 
 namespace MuscleCuties.App.Pages.Cycle;
@@ -9,17 +8,25 @@ public partial class CyclePage : ContentPage
 
     public CyclePage(CycleViewModel vm)
     {
-        InitializeComponent();
+        this.InitializeWithTiming(InitializeComponent);
         BindingContext = vm;
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        var vm = (CycleViewModel)BindingContext;
         AttachThemeHandler();
-        vm.RefreshThemeColors(IsDarkTheme());
-        this.LoadAfterFirstRender(() => vm.LoadDataCommand.ExecuteAsync(null));
+    }
+
+    protected override void OnNavigatedTo(NavigatedToEventArgs args)
+    {
+        base.OnNavigatedTo(args);
+        var vm = (CycleViewModel)BindingContext;
+        this.BeginPageLoad(async () =>
+        {
+            await vm.LoadDataCommand.ExecuteAsync(null);
+            vm.RefreshThemeColors(IsDarkTheme());
+        });
     }
 
     protected override void OnDisappearing()
@@ -51,6 +58,8 @@ public partial class CyclePage : ContentPage
         ((CycleViewModel)BindingContext).RefreshThemeColors(e.RequestedTheme == AppTheme.Dark);
     }
 
-    private static bool IsDarkTheme() =>
-        Application.Current?.RequestedTheme == AppTheme.Dark;
+    private static bool IsDarkTheme()
+    {
+        return Application.Current?.RequestedTheme == AppTheme.Dark;
+    }
 }

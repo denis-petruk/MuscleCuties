@@ -1,5 +1,7 @@
 using System.Globalization;
-using MuscleCuties.Core.Services.Nutrition.Inputs;
+using Microsoft.Extensions.DependencyInjection;
+using MuscleCuties.Core.Models.Nutrition.Inputs;
+using MuscleCuties.Core.Services.Nutrition;
 
 namespace MuscleCuties.Core.ViewModels.Nutrition;
 
@@ -27,7 +29,10 @@ public partial class NutritionViewModel
         IsBusy = true;
         try
         {
-            var food = await _nutritionService.CreateCustomFoodAsync(new CustomFoodInput(
+            using var scope = _scopeFactory.CreateScope();
+            var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
+
+            var food = await nutritionService.CreateCustomFoodAsync(new CustomFoodInput(
                 CustomFoodName,
                 servingAmount,
                 SelectedCustomFoodServingUnit,

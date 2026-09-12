@@ -1,5 +1,5 @@
+using System.Diagnostics;
 using MuscleCuties.Core.Services.Health;
-
 #if ANDROID
 using Android.Content.PM;
 using Microsoft.Maui.ApplicationModel;
@@ -11,12 +11,8 @@ public sealed class HealthConnectDataProvider : IHealthDataProvider, IHealthData
 {
     private const string HealthConnectPackageName = "com.google.android.apps.healthdata";
 
-    public HealthDataSource Source => HealthDataSource.AppleHealth;
+    public HealthDataSource Source => HealthDataSource.HealthConnect;
     public string DisplayName => "Health Connect";
-    public string UnavailableMessage =>
-        "Health Connect needs the Health Connect app installed, runtime permissions approved, and Play Console health permissions review before Android sync can read data.";
-    public string EmptyDataMessage =>
-        "Health Connect is available, but it has not returned weekly steps, sleep, resting heart rate, or HRV yet.";
 
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
     {
@@ -41,6 +37,15 @@ public sealed class HealthConnectDataProvider : IHealthDataProvider, IHealthData
 
     public Task<HealthWeeklySummary?> ReadWeeklySummaryAsync(
         DateTime today,
-        CancellationToken cancellationToken = default) =>
-        Task.FromResult<HealthWeeklySummary?>(null);
+        CancellationToken cancellationToken = default)
+    {
+        Trace.WriteLine("[HealthConnect] Provider not yet implemented; returning null.");
+        return Task.FromResult<HealthWeeklySummary?>(null);
+    }
+
+    public string UnavailableMessage =>
+        "Health Connect needs the Health Connect app installed, runtime permissions approved, and Play Console health permissions review before Android sync can read data.";
+
+    public string EmptyDataMessage =>
+        "Health Connect is available, but it has not returned weekly steps, sleep, resting heart rate, or HRV yet.";
 }

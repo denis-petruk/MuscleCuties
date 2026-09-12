@@ -1,61 +1,54 @@
-using MuscleCuties.Core.Diagnostics;
+using System.Text.Json;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Models.Enums.Workout;
+using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Core.Repositories.Quiz;
 using MuscleCuties.Core.Repositories.Users;
+using MuscleCuties.Core.Services.Cycle;
+using MuscleCuties.Core.Services.Workout.Planning;
 
 namespace MuscleCuties.Core.Services.Quiz;
 
 public class QuizService : IQuizService
 {
-    private readonly IUserRepository _userRepository;
     private readonly IQuizRepository _quizRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly ICycleService _cycleService;
 
     public QuizService(
         IUserRepository userRepository,
-        IQuizRepository quizRepository)
+        IQuizRepository quizRepository,
+        ICycleService cycleService)
     {
         _userRepository = userRepository;
         _quizRepository = quizRepository;
+        _cycleService = cycleService;
     }
 
     public async Task<List<QuizQuestion>> GetOnboardingQuestionsAsync()
     {
-        AppDebugLog.Write("QuizService", "GetOnboardingQuestions start.");
-        var questions = await _quizRepository.GetQuestionsWithAnswersAsync();
-        AppDebugLog.Write(
-            "QuizService",
-            $"GetOnboardingQuestions returned questions={questions.Count}, usable={questions.Count(question => question.Answers.Count > 0)}.");
-        return questions;
+        return await _quizRepository.GetQuestionsWithAnswersAsync();
     }
 
     public async Task SaveAnswersAsync(int userId, List<UserQuizResponse> responses)
     {
-        AppDebugLog.Write("QuizService", $"SaveAnswers start userId={userId}, responseCount={responses.Count}.");
         if (responses.Count == 0)
-        {
-            AppDebugLog.Write("QuizService", "SaveAnswers skipped: no responses.");
             return;
-        }
 
         var questions = await _quizRepository.GetQuestionsWithAnswersAsync();
-        AppDebugLog.Write("QuizService", $"SaveAnswers loaded question map count={questions.Count}.");
         var questionMap = questions.ToDictionary(q => q.Id);
         var answeredAt = DateTime.UtcNow;
         var selections = BuildValidSelections(userId, responses, questionMap, answeredAt);
 
         if (selections.Count == 0)
-        {
-            AppDebugLog.Write("QuizService", "SaveAnswers skipped: no valid selections.");
             return;
-        }
 
         var profile = await _userRepository.GetProfileAsync(userId);
         var isNew = profile == null;
-        AppDebugLog.Write("QuizService", $"SaveAnswers profile is new={isNew}, validSelections={selections.Count}.");
         profile ??= new UserProfile
         {
             UserId = userId,
@@ -74,7 +67,6 @@ public class QuizService : IQuizService
 
         foreach (var selection in selections.Where(selection =>
                      selection.Question.QuestionType is not QuizQuestionType.DietaryPreference))
-        {
             switch (selection.Question.QuestionType)
             {
                 case QuizQuestionType.Goal:
@@ -91,11 +83,18 @@ public class QuizService : IQuizService
                     profile.CycleTrackingMode = CycleTrackingMode.ManualPhaseLogging;
                     profile.CurrentCyclePhase = MapEnum(selection.Answer.MappedValue, CyclePhase.Follicular);
                     break;
+                case QuizQuestionType.SessionDuration:
+                    profile.SessionDurationMinutes = MapSessionDuration(selection.Answer.MappedValue);
+                    break;
+                case QuizQuestionType.Equipment:
+                    profile.EquipmentLevel = MapEquipment(selection.Answer.MappedValue);
+                    break;
             }
-        }
 
         if (dietarySelections.Count > 0)
             profile.DietaryTags = BuildDietaryTags(dietarySelections.Select(selection => selection.Answer.MappedValue));
+
+        profile.PhaseBaselinesJson = BuildPhaseBaselinesJson(selections);
 
         if (profile.CycleTrackingMode is not CycleTrackingMode.ManualPhaseLogging)
             profile.CurrentCyclePhase = null;
@@ -103,33 +102,29 @@ public class QuizService : IQuizService
         profile.UpdatedAt = answeredAt;
 
         if (isNew)
-        {
             await _userRepository.AddProfileAsync(profile);
-            AppDebugLog.Write("QuizService", "SaveAnswers inserted profile.");
-        }
         else
-        {
             await _userRepository.UpdateProfileAsync(profile);
-            AppDebugLog.Write("QuizService", "SaveAnswers updated profile.");
-        }
+
+        if (profile.CurrentCyclePhase is not null)
+            await _cycleService.SetPhaseForDateAsync(
+                userId, profile.CurrentCyclePhase.Value, DateTime.UtcNow, "Set from onboarding quiz");
 
         var snapshotReason = isNew ? "Initial" : "QuizRetake";
         var snapshot = new UserProfileSnapshot
         {
             UserId = userId,
             SnapshotReason = snapshotReason,
-            ProfileJson = System.Text.Json.JsonSerializer.Serialize(BuildSnapshot(profile, selections, answeredAt)),
+            ProfileJson = JsonSerializer.Serialize(BuildSnapshot(profile, selections, answeredAt)),
             CreatedAt = answeredAt
         };
         await _userRepository.AddSnapshotAsync(snapshot);
-        AppDebugLog.Write("QuizService", $"SaveAnswers snapshot created id={snapshot.Id}.");
 
         var validResponses = selections.Select(selection => selection.Response).ToList();
         foreach (var response in validResponses)
             response.UserProfileSnapshotId = snapshot.Id;
 
         await _quizRepository.AddResponsesAsync(validResponses);
-        AppDebugLog.Write("QuizService", $"SaveAnswers stored responses count={validResponses.Count}.");
 
         var user = await _userRepository.GetByIdAsync(userId);
         if (user != null)
@@ -137,10 +132,7 @@ public class QuizService : IQuizService
             user.IsOnboardingComplete = true;
             user.UpdatedAt = answeredAt;
             await _userRepository.UpdateAsync(user);
-            AppDebugLog.Write("QuizService", "SaveAnswers marked onboarding complete.");
         }
-
-        AppDebugLog.Write("QuizService", "SaveAnswers finished.");
     }
 
     public async Task<bool> IsOnboardingCompleteAsync(int userId)
@@ -190,14 +182,73 @@ public class QuizService : IQuizService
         return new QuizSelection(response, question, answer);
     }
 
+    private static int MapSessionDuration(int mappedValue)
+    {
+        return mappedValue switch
+        {
+            1 => 30,
+            2 => 45,
+            3 => 60,
+            4 => 75,
+            5 => 90,
+            _ => 60
+        };
+    }
+
+    private static string MapEquipment(int mappedValue)
+    {
+        return mappedValue switch
+        {
+            1 => Equipment.FullGym.ToString(),
+            2 => Equipment.HomeDumbbellsBands.ToString(),
+            3 => Equipment.Bodyweight.ToString(),
+            _ => Equipment.FullGym.ToString()
+        };
+    }
+
+    private static string BuildPhaseBaselinesJson(IReadOnlyCollection<QuizSelection> selections)
+    {
+        var values = selections
+            .Where(s => IsBaselineQuestion(s.Question.QuestionType))
+            .GroupBy(s => s.Question.QuestionType)
+            .ToDictionary(g => g.Key, g => g.Last().Answer.MappedValue);
+
+        if (values.Count == 0)
+            return string.Empty;
+
+        var baselines = new CyclePhaseBaselines(
+            new PhaseBaseline(
+                values.GetValueOrDefault(QuizQuestionType.MenstrualPain, 3),
+                values.GetValueOrDefault(QuizQuestionType.MenstrualEnergy, 2)),
+            new PhaseBaseline(
+                values.GetValueOrDefault(QuizQuestionType.FollicularPain, 1),
+                values.GetValueOrDefault(QuizQuestionType.FollicularEnergy, 4)),
+            new PhaseBaseline(
+                values.GetValueOrDefault(QuizQuestionType.OvulatoryPain, 2),
+                values.GetValueOrDefault(QuizQuestionType.OvulatoryEnergy, 5)),
+            new PhaseBaseline(
+                values.GetValueOrDefault(QuizQuestionType.LutealPain, 3),
+                values.GetValueOrDefault(QuizQuestionType.LutealEnergy, 3)));
+
+        return AdaptiveProfileMapper.SerializeBaselines(baselines);
+    }
+
+    private static bool IsBaselineQuestion(QuizQuestionType type) =>
+        type is QuizQuestionType.MenstrualPain or QuizQuestionType.MenstrualEnergy
+            or QuizQuestionType.FollicularPain or QuizQuestionType.FollicularEnergy
+            or QuizQuestionType.OvulatoryPain or QuizQuestionType.OvulatoryEnergy
+            or QuizQuestionType.LutealPain or QuizQuestionType.LutealEnergy;
+
     private static TEnum MapEnum<TEnum>(int value, TEnum fallback)
         where TEnum : struct, Enum
     {
         return Enum.IsDefined(typeof(TEnum), value) ? (TEnum)(object)value : fallback;
     }
 
-    private static TrainingExperienceLevel MapTrainingExperience(int mappedValue) =>
-        MapEnum(mappedValue, TrainingExperienceLevel.Unknown);
+    private static TrainingExperienceLevel MapTrainingExperience(int mappedValue)
+    {
+        return MapEnum(mappedValue, TrainingExperienceLevel.Unknown);
+    }
 
     private static IEnumerable<QuizSelection> NormalizeQuestionSelections(IGrouping<int, QuizSelection> group)
     {
@@ -283,8 +334,10 @@ public class QuizService : IQuizService
 
     private static int? GetNullableValue(
         IReadOnlyDictionary<QuizQuestionType, int> values,
-        QuizQuestionType questionType) =>
-        values.TryGetValue(questionType, out var value) ? value : null;
+        QuizQuestionType questionType)
+    {
+        return values.TryGetValue(questionType, out var value) ? value : null;
+    }
 
     private sealed record QuizSelection(
         UserQuizResponse Response,

@@ -1,12 +1,5 @@
 using MuscleCuties.Core.Models.Enums.Cycle;
-using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.Core.Models.Enums.Quiz;
-using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle.Planning;
-using MuscleCuties.Core.Services.Nutrition;
-using MuscleCuties.Core.Services.Quiz;
 
 namespace MuscleCuties.Core.Tests.Services.Cycle;
 
@@ -19,7 +12,7 @@ public class CyclePhaseCalculatorTests
     [InlineData(5, 28, CyclePhase.Menstrual)]
     [InlineData(6, 28, CyclePhase.Follicular)]
     [InlineData(12, 28, CyclePhase.Follicular)]
-    [InlineData(13, 28, CyclePhase.Ovulatory)]  // ovulationDay=14, day 12..16
+    [InlineData(13, 28, CyclePhase.Ovulatory)]
     [InlineData(16, 28, CyclePhase.Ovulatory)]
     [InlineData(17, 28, CyclePhase.Luteal)]
     [InlineData(28, 28, CyclePhase.Luteal)]

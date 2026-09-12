@@ -2,10 +2,9 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Authentication;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Health;
 
@@ -15,13 +14,15 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
 {
     private const string TokenStorageKey = "whoop_oauth_token_set";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     private static readonly HttpClient Client = new()
     {
         Timeout = TimeSpan.FromSeconds(12)
     };
 
-    private readonly ITokenStorage _tokenStorage;
     private readonly WhoopOAuthOptions _options;
+
+    private readonly ITokenStorage _tokenStorage;
 
     public WhoopDataProvider(ITokenStorage tokenStorage, WhoopOAuthOptions options)
     {
@@ -31,10 +32,6 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
 
     public HealthDataSource Source => HealthDataSource.Whoop;
     public string DisplayName => "Whoop";
-    public string UnavailableMessage =>
-        "Whoop needs a developer Client ID plus a secure token exchange endpoint before it can connect.";
-    public string EmptyDataMessage =>
-        "Whoop connected, but it has not returned recovery or sleep data for this week yet.";
 
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
     {
@@ -80,6 +77,12 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
             DateTime.UtcNow);
     }
 
+    public string UnavailableMessage =>
+        "Whoop needs a developer Client ID plus a secure token exchange endpoint before it can connect.";
+
+    public string EmptyDataMessage =>
+        "Whoop connected, but it has not returned recovery or sleep data for this week yet.";
+
     private async Task<WhoopTokenSet?> GetUsableTokenSetAsync(CancellationToken cancellationToken)
     {
         var stored = await ReadStoredTokenSetAsync();
@@ -90,9 +93,9 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
         {
             var refreshed = await RequestTokenAsync(
                 "refresh_token",
-                code: null,
-                refreshToken: stored.RefreshToken,
-                existingRefreshToken: stored.RefreshToken,
+                null,
+                stored.RefreshToken,
+                stored.RefreshToken,
                 cancellationToken);
 
             if (refreshed is not null)
@@ -104,14 +107,18 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
 
     private async Task<WhoopTokenSet?> AuthenticateAsync(CancellationToken cancellationToken)
     {
-        var state = Guid.NewGuid().ToString("N");
+        var state = Convert.ToHexString(RandomNumberGenerator.GetBytes(4));
         var authUri = BuildAuthUri(state);
 
         WebAuthenticatorResult result;
         try
         {
-            result = await MainThread.InvokeOnMainThreadAsync(
-                () => WebAuthenticator.Default.AuthenticateAsync(authUri, _options.RedirectUri));
+            result = await MainThread.InvokeOnMainThreadAsync(() =>
+                WebAuthenticator.Default.AuthenticateAsync(authUri, _options.RedirectUri, cancellationToken));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
@@ -128,8 +135,8 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
         return await RequestTokenAsync(
             "authorization_code",
             code,
-            refreshToken: null,
-            existingRefreshToken: null,
+            null,
+            null,
             cancellationToken);
     }
 
@@ -140,51 +147,20 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
         string? existingRefreshToken,
         CancellationToken cancellationToken)
     {
-        var response = _options.TokenExchangeEndpoint is null
-            ? await RequestTokenDirectlyAsync(grantType, code, refreshToken, cancellationToken)
-            : await RequestTokenThroughBackendAsync(grantType, code, refreshToken, cancellationToken);
+        var response = await RequestTokenThroughBackendAsync(grantType, code, refreshToken, cancellationToken);
 
         if (response is null || string.IsNullOrWhiteSpace(response.AccessToken))
             return null;
 
         var tokenSet = new WhoopTokenSet(
             response.AccessToken,
-            string.IsNullOrWhiteSpace(response.RefreshToken) ? existingRefreshToken ?? string.Empty : response.RefreshToken,
+            string.IsNullOrWhiteSpace(response.RefreshToken)
+                ? existingRefreshToken ?? string.Empty
+                : response.RefreshToken,
             DateTime.UtcNow.AddSeconds(Math.Max(300, response.ExpiresIn)));
 
         await _tokenStorage.SetAsync(TokenStorageKey, JsonSerializer.Serialize(tokenSet, JsonOptions));
         return tokenSet;
-    }
-
-    private async Task<WhoopTokenResponse?> RequestTokenDirectlyAsync(
-        string grantType,
-        string? code,
-        string? refreshToken,
-        CancellationToken cancellationToken)
-    {
-        var values = new Dictionary<string, string>
-        {
-            ["grant_type"] = grantType,
-            ["client_id"] = _options.ClientId,
-            ["client_secret"] = _options.ClientSecret
-        };
-
-        if (grantType == "authorization_code" && !string.IsNullOrWhiteSpace(code))
-        {
-            values["code"] = code;
-            values["redirect_uri"] = _options.RedirectUri.ToString();
-        }
-        else if (!string.IsNullOrWhiteSpace(refreshToken))
-        {
-            values["refresh_token"] = refreshToken;
-        }
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, _options.TokenEndpoint)
-        {
-            Content = new FormUrlEncodedContent(values)
-        };
-
-        return await SendTokenRequestAsync(request, cancellationToken);
     }
 
     private async Task<WhoopTokenResponse?> RequestTokenThroughBackendAsync(
@@ -193,6 +169,9 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
         string? refreshToken,
         CancellationToken cancellationToken)
     {
+        if (_options.TokenExchangeEndpoint is null)
+            return null;
+
         using var request = new HttpRequestMessage(HttpMethod.Post, _options.TokenExchangeEndpoint)
         {
             Content = JsonContent.Create(new
@@ -202,7 +181,8 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
                 client_id = _options.ClientId,
                 code,
                 refresh_token = refreshToken,
-                redirect_uri = _options.RedirectUri.ToString()
+                redirect_uri = _options.RedirectUri.ToString(),
+                scope = _options.Scope
             })
         };
 
@@ -222,6 +202,10 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
             await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             return await JsonSerializer.DeserializeAsync<WhoopTokenResponse>(stream, JsonOptions, cancellationToken);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch
         {
             return null;
@@ -236,7 +220,7 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
     {
         using var document = await GetJsonAsync(
             accessToken,
-            $"developer/v2/recovery{BuildDateRangeQuery(start, end, limit: 25)}",
+            $"developer/v2/recovery{BuildDateRangeQuery(start, end, 25)}",
             cancellationToken);
 
         if (document is null)
@@ -272,7 +256,7 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
     {
         using var document = await GetJsonAsync(
             accessToken,
-            $"developer/v2/activity/sleep{BuildDateRangeQuery(start, end, limit: 25)}",
+            $"developer/v2/activity/sleep{BuildDateRangeQuery(start, end, 25)}",
             cancellationToken);
 
         if (document is null)
@@ -284,10 +268,9 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
         foreach (var record in EnumerateRecords(document.RootElement))
         {
             if (TryGetNestedDouble(record, out var totalSleepMillis, "score", "stage_summary", "total_sleep_time_milli")
-                || TryGetNestedDouble(record, out totalSleepMillis, "score", "stage_summary", "total_in_bed_time_milli"))
-            {
+                || TryGetNestedDouble(record, out totalSleepMillis, "score", "stage_summary",
+                    "total_in_bed_time_milli"))
                 sleepHours.Add(totalSleepMillis / 1000d / 60d / 60d);
-            }
 
             if (TryGetNestedDouble(record, out var performance, "score", "sleep_performance_percentage"))
                 sleepScores.Add(performance);
@@ -320,6 +303,10 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
 
             await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
@@ -356,17 +343,21 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
         }
     }
 
-    private static string BuildDateRangeQuery(DateTime start, DateTime end, int limit) =>
-        "?" + BuildQuery(
+    private static string BuildDateRangeQuery(DateTime start, DateTime end, int limit)
+    {
+        return "?" + BuildQuery(
             ("start", start.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture)),
             ("end", end.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture)),
             ("limit", limit.ToString(CultureInfo.InvariantCulture)));
+    }
 
-    private static string BuildQuery(params (string Key, string Value)[] values) =>
-        string.Join(
+    private static string BuildQuery(params (string Key, string Value)[] values)
+    {
+        return string.Join(
             "&",
             values.Select(item =>
                 $"{Uri.EscapeDataString(item.Key)}={Uri.EscapeDataString(item.Value)}"));
+    }
 
     private static IEnumerable<JsonElement> EnumerateRecords(JsonElement element)
     {
@@ -395,10 +386,8 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
         var current = element;
 
         foreach (var segment in path)
-        {
             if (current.ValueKind != JsonValueKind.Object || !current.TryGetProperty(segment, out current))
                 return false;
-        }
 
         if (current.ValueKind == JsonValueKind.Number)
             return current.TryGetDouble(out value);
@@ -409,21 +398,28 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
         return false;
     }
 
-    private static double Average(IReadOnlyCollection<double> values) =>
-        values.Count == 0 ? 0d : values.Average();
-
-    private static int AverageAsInt(IReadOnlyCollection<double> values) =>
-        values.Count == 0 ? 0 : (int)Math.Round(values.Average());
-
-    private static int EstimateSleepScore(double averageSleepHours) => averageSleepHours switch
+    private static double Average(IReadOnlyCollection<double> values)
     {
-        >= 8.0 => 92,
-        >= 7.0 => 84,
-        >= 6.0 => 72,
-        >= 5.0 => 58,
-        > 0 => 45,
-        _ => 0
-    };
+        return values.Count == 0 ? 0d : values.Average();
+    }
+
+    private static int AverageAsInt(IReadOnlyCollection<double> values)
+    {
+        return values.Count == 0 ? 0 : (int)Math.Round(values.Average());
+    }
+
+    private static int EstimateSleepScore(double averageSleepHours)
+    {
+        return averageSleepHours switch
+        {
+            >= 8.0 => 92,
+            >= 7.0 => 84,
+            >= 6.0 => 72,
+            >= 5.0 => 58,
+            > 0 => 45,
+            _ => 0
+        };
+    }
 
     private sealed record WhoopTokenSet(
         string AccessToken,
@@ -431,9 +427,12 @@ public sealed class WhoopDataProvider : IHealthDataProvider, IHealthDataProvider
         DateTime ExpiresAtUtc);
 
     private sealed record WhoopTokenResponse(
-        [property: JsonPropertyName("access_token")] string? AccessToken,
-        [property: JsonPropertyName("refresh_token")] string? RefreshToken,
-        [property: JsonPropertyName("expires_in")] int ExpiresIn);
+        [property: JsonPropertyName("access_token")]
+        string? AccessToken,
+        [property: JsonPropertyName("refresh_token")]
+        string? RefreshToken,
+        [property: JsonPropertyName("expires_in")]
+        int ExpiresIn);
 
     private sealed record WhoopRecoveryMetrics(
         int RecoveryScore,

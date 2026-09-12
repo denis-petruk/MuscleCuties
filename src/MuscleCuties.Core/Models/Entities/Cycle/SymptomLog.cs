@@ -9,7 +9,7 @@ public class SymptomLog
     public int CycleLogId { get; set; }
     public DateTime Date { get; set; }
     public SymptomType SymptomType { get; set; }
-    public int Severity { get; set; } // 1–5
+    public int Severity { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
 

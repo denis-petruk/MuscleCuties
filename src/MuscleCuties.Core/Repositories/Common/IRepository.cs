@@ -3,6 +3,7 @@ namespace MuscleCuties.Core.Repositories.Common;
 public interface IRepository<T> where T : class
 {
     Task<T?> GetByIdAsync(int id);
+    Task<T?> GetByIdNoTrackingAsync(int id);
     Task<List<T>> GetAllAsync();
     Task AddAsync(T entity);
     Task UpdateAsync(T entity);

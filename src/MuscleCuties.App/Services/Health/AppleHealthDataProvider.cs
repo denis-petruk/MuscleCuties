@@ -1,5 +1,4 @@
 using MuscleCuties.Core.Services.Health;
-
 #if IOS
 using Foundation;
 using HealthKit;
@@ -11,13 +10,11 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthDataPr
 {
     public HealthDataSource Source => HealthDataSource.AppleHealth;
     public string DisplayName => "Apple Health";
-    public string UnavailableMessage => "Apple Health is available on iPhone after HealthKit is enabled for the app and the user allows access.";
-    public string EmptyDataMessage => "Apple Health is connected, but it has not shared steps, sleep, resting heart rate, or HRV yet.";
 
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
     {
 #if IOS
-        return Task.FromResult(HKHealthStore.IsHealthDataAvailable);
+        return Task.FromResult(CanRequestHealthAuthorization() && HKHealthStore.IsHealthDataAvailable);
 #else
         return Task.FromResult(false);
 #endif
@@ -30,7 +27,7 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthDataPr
 #if IOS
         try
         {
-            if (!HKHealthStore.IsHealthDataAvailable)
+            if (!CanRequestHealthAuthorization() || !HKHealthStore.IsHealthDataAvailable)
                 return null;
 
             var store = new HKHealthStore();
@@ -48,14 +45,14 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthDataPr
                 requestedTypes.Add(hrvType);
 
             var readTypes = new NSSet<HKObjectType>(requestedTypes.ToArray());
-            var authorized = await RequestAuthorizationAsync(store, readTypes);
+            var authorized = await RequestAuthorizationAsync(store, readTypes, cancellationToken);
             if (!authorized)
                 return null;
 
             var end = today.Date.AddDays(1);
             var start = end.AddDays(-7);
-            var averageSteps = await ReadAverageStepsAsync(store, stepType, start, end);
-            var averageSleepHours = await ReadAverageSleepHoursAsync(store, sleepType, start, end);
+            var averageSteps = await ReadAverageStepsAsync(store, stepType, start, end, cancellationToken);
+            var averageSleepHours = await ReadAverageSleepHoursAsync(store, sleepType, start, end, cancellationToken);
             var restingHeartRate = restingHeartRateType is null
                 ? 0
                 : await ReadAverageQuantityAsync(
@@ -63,7 +60,8 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthDataPr
                     restingHeartRateType,
                     HKUnit.Count.UnitDividedBy(HKUnit.Minute),
                     start,
-                    end);
+                    end,
+                    cancellationToken);
             var hrvScore = hrvType is null
                 ? 0
                 : await ReadAverageQuantityAsync(
@@ -71,7 +69,8 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthDataPr
                     hrvType,
                     HKUnit.CreateSecondUnit(HKMetricPrefix.Milli),
                     start,
-                    end);
+                    end,
+                    cancellationToken);
 
             if (averageSteps <= 0 && averageSleepHours <= 0 && restingHeartRate <= 0 && hrvScore <= 0)
                 return null;
@@ -96,6 +95,10 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthDataPr
                 hrvScore,
                 DateTime.UtcNow);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch
         {
             return null;
@@ -106,21 +109,52 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthDataPr
 #endif
     }
 
-#if IOS
-    private static Task<bool> RequestAuthorizationAsync(HKHealthStore store, NSSet<HKObjectType> readTypes)
+    public string UnavailableMessage => IsUnsupportedDebugDevice()
+        ? "Apple Health is disabled in this debug build. Use a signed iPhone build with HealthKit entitlements to connect it."
+        : "Apple Health is available on iPhone after HealthKit is enabled for the app and the user allows access.";
+
+    public string EmptyDataMessage =>
+        "Apple Health is connected, but it has not shared steps, sleep, resting heart rate, or HRV yet.";
+
+    private static bool IsUnsupportedDebugDevice()
     {
-        var tcs = new TaskCompletionSource<bool>();
-        store.RequestAuthorizationToShare(null, readTypes, (success, _) => tcs.TrySetResult(success));
-        return tcs.Task;
+#if IOS && DEBUG
+        return DeviceInfo.Current.DeviceType == DeviceType.Virtual;
+#else
+        return false;
+#endif
     }
 
-    private static Task<int> ReadAverageStepsAsync(
+#if IOS
+    private static bool CanRequestHealthAuthorization()
+    {
+#if DEBUG
+        if (DeviceInfo.Current.DeviceType == DeviceType.Virtual)
+            return false;
+#endif
+        return true;
+    }
+
+    private static async Task<bool> RequestAuthorizationAsync(
+        HKHealthStore store,
+        NSSet<HKObjectType> readTypes,
+        CancellationToken cancellationToken)
+    {
+        var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var cancellationRegistration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+        store.RequestAuthorizationToShare(null, readTypes, (success, _) => tcs.TrySetResult(success));
+        return await tcs.Task.ConfigureAwait(false);
+    }
+
+    private static async Task<int> ReadAverageStepsAsync(
         HKHealthStore store,
         HKQuantityType stepType,
         DateTime start,
-        DateTime end)
+        DateTime end,
+        CancellationToken cancellationToken)
     {
-        var tcs = new TaskCompletionSource<int>();
+        var tcs = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var cancellationRegistration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
         var predicate = HKQuery.GetPredicateForSamples(ToNSDate(start), ToNSDate(end), HKQueryOptions.StrictStartDate);
         var query = new HKStatisticsQuery(stepType, predicate, HKStatisticsOptions.CumulativeSum, (_, result, error) =>
         {
@@ -135,16 +169,18 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthDataPr
         });
 
         store.ExecuteQuery(query);
-        return tcs.Task;
+        return await tcs.Task.ConfigureAwait(false);
     }
 
-    private static Task<double> ReadAverageSleepHoursAsync(
+    private static async Task<double> ReadAverageSleepHoursAsync(
         HKHealthStore store,
         HKCategoryType sleepType,
         DateTime start,
-        DateTime end)
+        DateTime end,
+        CancellationToken cancellationToken)
     {
-        var tcs = new TaskCompletionSource<double>();
+        var tcs = new TaskCompletionSource<double>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var cancellationRegistration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
         var predicate = HKQuery.GetPredicateForSamples(ToNSDate(start), ToNSDate(end), HKQueryOptions.StrictStartDate);
         var query = new HKSampleQuery(sleepType, predicate, nuint.MaxValue, [], (_, samples, error) =>
         {
@@ -157,38 +193,42 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthDataPr
             var hours = samples
                 .OfType<HKCategorySample>()
                 .Where(IsAsleepSample)
-                .Sum(sample => Math.Max(0d, sample.EndDate.SecondsSinceReferenceDate - sample.StartDate.SecondsSinceReferenceDate) / 3600d);
+                .Sum(sample => Math.Max(0d,
+                    sample.EndDate.SecondsSinceReferenceDate - sample.StartDate.SecondsSinceReferenceDate) / 3600d);
 
             tcs.TrySetResult(Math.Round(hours / 7d, 1));
         });
 
         store.ExecuteQuery(query);
-        return tcs.Task;
+        return await tcs.Task.ConfigureAwait(false);
     }
 
-    private static Task<int> ReadAverageQuantityAsync(
+    private static async Task<int> ReadAverageQuantityAsync(
         HKHealthStore store,
         HKQuantityType quantityType,
         HKUnit unit,
         DateTime start,
-        DateTime end)
+        DateTime end,
+        CancellationToken cancellationToken)
     {
-        var tcs = new TaskCompletionSource<int>();
+        var tcs = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var cancellationRegistration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
         var predicate = HKQuery.GetPredicateForSamples(ToNSDate(start), ToNSDate(end), HKQueryOptions.StrictStartDate);
-        var query = new HKStatisticsQuery(quantityType, predicate, HKStatisticsOptions.DiscreteAverage, (_, result, error) =>
-        {
-            if (error is not null)
+        var query = new HKStatisticsQuery(quantityType, predicate, HKStatisticsOptions.DiscreteAverage,
+            (_, result, error) =>
             {
-                tcs.TrySetResult(0);
-                return;
-            }
+                if (error is not null)
+                {
+                    tcs.TrySetResult(0);
+                    return;
+                }
 
-            var average = result?.AverageQuantity()?.GetDoubleValue(unit) ?? 0d;
-            tcs.TrySetResult((int)Math.Round(average));
-        });
+                var average = result?.AverageQuantity()?.GetDoubleValue(unit) ?? 0d;
+                tcs.TrySetResult((int)Math.Round(average));
+            });
 
         store.ExecuteQuery(query);
-        return tcs.Task;
+        return await tcs.Task.ConfigureAwait(false);
     }
 
     private static bool IsAsleepSample(HKCategorySample sample)

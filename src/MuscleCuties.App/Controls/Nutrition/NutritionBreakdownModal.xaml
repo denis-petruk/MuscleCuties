@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+
 <ContentView
     x:Class="MuscleCuties.App.Controls.Nutrition.NutritionBreakdownModal"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -10,13 +11,18 @@
     IsVisible="{Binding IsBreakdownModalVisible}">
 
     <Grid
-        BackgroundColor="#802B1D24"
+        BackgroundColor="{StaticResource ModalScrim}"
         Padding="20,56,20,36">
+        <Grid.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding CloseMicronutrientsModalCommand}" />
+        </Grid.GestureRecognizers>
         <Border
             Style="{StaticResource CardPrimary}"
             Padding="0"
             Margin="0"
             MaximumHeightRequest="720"
+            MaximumWidthRequest="560"
+            HorizontalOptions="Fill"
             VerticalOptions="Center">
 
             <Grid RowDefinitions="Auto, Auto, *">
@@ -27,27 +33,6 @@
 
                     <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
                         <VerticalStackLayout Spacing="6">
-                            <Border
-                                BackgroundColor="{StaticResource Secondary}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 20"
-                                Padding="12,4"
-                                HorizontalOptions="Start">
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
-                                    <Image
-                                        Source="{Binding Source='Molecule24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                        WidthRequest="13"
-                                        HeightRequest="13"
-                                        Aspect="AspectFit"
-                                        VerticalOptions="Center" />
-                                    <Label
-                                        Grid.Column="1"
-                                        Text="BREAKDOWN"
-                                        Style="{StaticResource EyebrowLabel}"
-                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                                </Grid>
-                            </Border>
-
                             <Label
                                 Text="{Binding SelectedBreakdownTitle}"
                                 Style="{StaticResource SubHeadline}"
@@ -60,12 +45,13 @@
 
                         <Border
                             Grid.Column="1"
-                            WidthRequest="42"
-                            HeightRequest="42"
-                            StrokeShape="RoundRectangle 21"
+                            WidthRequest="44"
+                            HeightRequest="44"
+                            StrokeShape="RoundRectangle 22"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
                             StrokeThickness="0"
-                            VerticalOptions="Start">
+                            VerticalOptions="Start"
+                            SemanticProperties.Description="Close nutrition breakdown">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding CloseMicronutrientsModalCommand}" />
                             </Border.GestureRecognizers>
@@ -127,8 +113,10 @@
                             StrokeThickness="0"
                             BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                             Padding="10,8"
+                            MinimumHeightRequest="44"
                             HorizontalOptions="Start"
-                            IsVisible="{Binding CanEditSelectedBreakdown}">
+                            IsVisible="{Binding CanEditSelectedBreakdown}"
+                            SemanticProperties.Description="Edit meal">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding EditSelectedBreakdownMealCommand}" />
                             </Border.GestureRecognizers>
@@ -168,7 +156,7 @@
                                             Grid.Column="2"
                                             Progress="{Binding Progress}"
                                             ProgressColor="{Binding Color}"
-                                            BackgroundColor="{StaticResource Gray300}"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
                                             HeightRequest="5"
                                             VerticalOptions="Center" />
                                         <Label
@@ -199,7 +187,7 @@
                                 Margin="0,0,0,10"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
                                 <Border.Shadow>
-                                    <Shadow Brush="#2B1D24" Offset="0,3" Radius="12" Opacity="0.06" />
+                                            <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,3" Radius="12" Opacity="0.06" />
                                 </Border.Shadow>
 
                                 <VerticalStackLayout Spacing="10">
@@ -252,7 +240,7 @@
                                         <ProgressBar
                                             Progress="{Binding Progress}"
                                             ProgressColor="{StaticResource Primary}"
-                                            BackgroundColor="{StaticResource Gray300}"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
                                             HeightRequest="6"
                                             VerticalOptions="Center">
                                             <ProgressBar.Triggers>

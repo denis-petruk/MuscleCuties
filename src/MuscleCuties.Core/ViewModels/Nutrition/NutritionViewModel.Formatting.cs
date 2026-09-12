@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using MuscleCuties.Core.Models.Entities.Nutrition;
+using MuscleCuties.Core.Models.Nutrition;
 using MuscleCuties.Core.Models.UI.Nutrition;
 using MuscleCuties.Core.Services.Nutrition;
 
@@ -18,25 +19,25 @@ public partial class NutritionViewModel
             return BuildNutritionForGrams(food, 100f);
 
         var previewAmount = GetServingPreviewAmount(option.Label);
-        return $"{FormatServingAmount(previewAmount, option.Label)}: {BuildNutritionForGrams(food, option.Grams * previewAmount)}";
-    }
-
-    private static string BuildServingNutritionPreview(FoodSearchResultItem food, FoodServingOptionItem option)
-    {
-        var previewAmount = GetServingPreviewAmount(option.Label);
-        return $"{FormatServingAmount(previewAmount, option.Label)}: {BuildNutritionForGrams(food, option.Grams * previewAmount)}";
+        return
+            $"{FormatServingAmount(previewAmount, option.Label)}: {BuildNutritionForGrams(food, option.Grams * previewAmount)}";
     }
 
     private static string BuildNutritionForGrams(FoodSearchResultItem food, float grams)
-        => MacroNutrients
+    {
+        return MacroNutrients
             .FromPer100g(food.Calories, food.Protein, food.Carbs, food.Fats, grams)
             .ToNutritionText();
+    }
 
     private static string BuildNutritionForGrams(FoodItem food, float grams)
-        => MacroNutrients.FromFood(food, grams).ToNutritionText();
+    {
+        return MacroNutrients.FromFood(food, grams).ToNutritionText();
+    }
 
-    private static FoodSearchResultItem CreateFoodSearchResultItem(FoodItem food) =>
-        new()
+    private static FoodSearchResultItem CreateFoodSearchResultItem(FoodItem food)
+    {
+        return new FoodSearchResultItem
         {
             FoodItemId = food.Id,
             Name = food.Name,
@@ -50,6 +51,7 @@ public partial class NutritionViewModel
             SourceSummary = BuildSourceSummary(food),
             NutritionSummary = BuildNutritionSummary(food)
         };
+    }
 
     private static List<FoodServingOptionItem> BuildServingOptionItems(FoodSearchResultItem food)
     {
@@ -137,25 +139,31 @@ public partial class NutritionViewModel
             : "1";
     }
 
-    private static bool IsSingleUnitServing(FoodServingOptionItem option) =>
-        string.Equals(option.Label, "serving", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(option.Label, "container", StringComparison.OrdinalIgnoreCase) ||
-        !string.Equals(option.Source, "Standard", StringComparison.OrdinalIgnoreCase) &&
-        !IsStandardOptionLabel(option.Label);
+    private static bool IsSingleUnitServing(FoodServingOptionItem option)
+    {
+        return string.Equals(option.Label, "serving", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(option.Label, "container", StringComparison.OrdinalIgnoreCase) ||
+               (!string.Equals(option.Source, "Standard", StringComparison.OrdinalIgnoreCase) &&
+                !IsStandardOptionLabel(option.Label));
+    }
 
-    private static bool IsStandardAmountUnit(FoodServingOptionItem option) =>
-        option.Grams > 0f &&
-        string.Equals(option.Source, "Standard", StringComparison.OrdinalIgnoreCase);
+    private static bool IsStandardAmountUnit(FoodServingOptionItem option)
+    {
+        return option.Grams > 0f &&
+               string.Equals(option.Source, "Standard", StringComparison.OrdinalIgnoreCase);
+    }
 
-    private static bool IsStandardOptionLabel(string label) =>
-        string.Equals(label, "g", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(label, "oz", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(label, "lb", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(label, "ml", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(label, "cup", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(label, "fl oz", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(label, "tbsp", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(label, "tsp", StringComparison.OrdinalIgnoreCase);
+    private static bool IsStandardOptionLabel(string label)
+    {
+        return string.Equals(label, "g", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(label, "oz", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(label, "lb", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(label, "ml", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(label, "cup", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(label, "fl oz", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(label, "tbsp", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(label, "tsp", StringComparison.OrdinalIgnoreCase);
+    }
 
     private static string BuildSourceSummary(FoodItem food)
     {
@@ -182,25 +190,29 @@ public partial class NutritionViewModel
         return string.Join(" · ", parts);
     }
 
-    private static string? FirstPresent(params string?[] values) =>
-        values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim();
+    private static string? FirstPresent(params string?[] values)
+    {
+        return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim();
+    }
 
-    private static bool HasCalories(float calories) =>
-        calories > 0f;
+    private static bool HasCalories(float calories)
+    {
+        return calories > 0f;
+    }
 
     private static bool TryParseAmount(string value, out float amount)
     {
         if (!float.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out amount) &&
             !float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out amount))
-        {
             amount = 0f;
-        }
 
         return amount > 0f;
     }
 
-    private static string FormatServingAmount(float amount, string label) =>
-        $"{FormatAmountInput(amount)} {label}";
+    private static string FormatServingAmount(float amount, string label)
+    {
+        return $"{FormatAmountInput(amount)} {label}";
+    }
 
     private static string FormatAmountInput(float amount)
     {
@@ -210,6 +222,8 @@ public partial class NutritionViewModel
             : amount.ToString("0.##", CultureInfo.CurrentCulture);
     }
 
-    private static float GetServingPreviewAmount(string label) =>
-        string.Equals(label, "g", StringComparison.OrdinalIgnoreCase) ? 100f : 1f;
+    private static float GetServingPreviewAmount(string label)
+    {
+        return string.Equals(label, "g", StringComparison.OrdinalIgnoreCase) ? 100f : 1f;
+    }
 }

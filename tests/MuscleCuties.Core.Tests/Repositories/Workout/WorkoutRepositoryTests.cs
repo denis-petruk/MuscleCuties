@@ -1,14 +1,5 @@
-using MuscleCuties.Core.Models.Entities.Cycle;
-using MuscleCuties.Core.Models.Entities.Nutrition;
-using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Entities.Workout;
-using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.Core.Repositories.Common;
-using MuscleCuties.Core.Repositories.Cycle;
-using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Repositories.Quiz;
-using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Repositories.Workout;
 
 namespace MuscleCuties.Core.Tests.Repositories.Workout;
@@ -85,7 +76,14 @@ public class WorkoutRepositoryTests : IClassFixture<DatabaseFixture>
         await _fixture.Db.SaveChangesAsync();
 
         var today = DateTime.UtcNow.Date;
-        await repo.AddWorkoutLogAsync(new WorkoutLog { UserId = user.Id, WorkoutDayId = day.Id, Date = today, CompletionPercent = 75, CreatedAt = DateTime.UtcNow });
+        await repo.AddWorkoutLogAsync(new WorkoutLog
+        {
+            UserId = user.Id,
+            WorkoutDayId = day.Id,
+            Date = today,
+            CompletionPercent = 75,
+            CreatedAt = DateTime.UtcNow
+        });
 
         var results = await repo.GetWorkoutLogsByDateAsync(user.Id, today);
         Assert.Single(results);

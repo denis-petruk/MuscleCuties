@@ -10,36 +10,41 @@ namespace MuscleCuties.Core.ViewModels.Profile;
 public partial class ProfileUnitsDisplayViewModel : ObservableObject
 {
     private readonly IAuthService _authService;
+    private readonly Func<Task> _navigateBackAsync;
     private readonly IUserRepository _userRepository;
-    private readonly Action _navigateBack;
-
-    [ObservableProperty] private bool _useMetricSystem = true;
     [ObservableProperty] private string _bodyWeightUnit = "kg";
-    [ObservableProperty] private string _foodMassUnit = "g";
-    [ObservableProperty] private string _heightUnit = "cm";
     [ObservableProperty] private string _distanceUnit = "km";
     [ObservableProperty] private string _energyUnit = "kcal";
-    [ObservableProperty] private string _statusMessage = string.Empty;
+    [ObservableProperty] private string _foodMassUnit = "g";
+    [ObservableProperty] private string _heightUnit = "cm";
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private string _statusMessage = string.Empty;
 
-    public string UnitSystemText => UseMetricSystem ? "Metric defaults" : "Imperial and US defaults";
-
-    public AsyncRelayCommand LoadDataCommand { get; }
-    public AsyncRelayCommand SaveCommand { get; }
-    public RelayCommand BackCommand { get; }
+    [ObservableProperty] private bool _useMetricSystem = true;
 
     public ProfileUnitsDisplayViewModel(
         IAuthService authService,
         IUserRepository userRepository,
-        Action navigateBack)
+        Func<Task> navigateBackAsync)
     {
         _authService = authService;
         _userRepository = userRepository;
-        _navigateBack = navigateBack;
+        _navigateBackAsync = navigateBackAsync;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
-        BackCommand = new RelayCommand(_navigateBack);
+        SelectMetricUnitsCommand = new RelayCommand(() => UseMetricSystem = true);
+        SelectImperialUnitsCommand = new RelayCommand(() => UseMetricSystem = false);
+        BackCommand = new AsyncRelayCommand(_navigateBackAsync);
     }
+
+    public string UnitSystemText => UseMetricSystem ? "Metric defaults" : "Imperial and US defaults";
+    public bool UseImperialSystem => !UseMetricSystem;
+
+    public AsyncRelayCommand LoadDataCommand { get; }
+    public AsyncRelayCommand SaveCommand { get; }
+    public RelayCommand SelectMetricUnitsCommand { get; }
+    public RelayCommand SelectImperialUnitsCommand { get; }
+    public AsyncRelayCommand BackCommand { get; }
 
     private async Task LoadDataAsync()
     {
@@ -53,7 +58,9 @@ public partial class ProfileUnitsDisplayViewModel : ObservableObject
                 return;
 
             UseMetricSystem = !string.Equals(profile.UnitSystem, "Imperial", StringComparison.OrdinalIgnoreCase);
-            BodyWeightUnit = string.IsNullOrWhiteSpace(profile.BodyWeightUnit) ? BodyWeightUnit : profile.BodyWeightUnit;
+            BodyWeightUnit = string.IsNullOrWhiteSpace(profile.BodyWeightUnit)
+                ? BodyWeightUnit
+                : profile.BodyWeightUnit;
             FoodMassUnit = string.IsNullOrWhiteSpace(profile.FoodMassUnit) ? FoodMassUnit : profile.FoodMassUnit;
             HeightUnit = string.IsNullOrWhiteSpace(profile.HeightUnit) ? HeightUnit : profile.HeightUnit;
             DistanceUnit = string.IsNullOrWhiteSpace(profile.DistanceUnit) ? DistanceUnit : profile.DistanceUnit;
@@ -104,7 +111,7 @@ public partial class ProfileUnitsDisplayViewModel : ObservableObject
             });
 
             StatusMessage = "Units saved.";
-            _navigateBack();
+            await _navigateBackAsync();
         }
         finally
         {
@@ -131,8 +138,11 @@ public partial class ProfileUnitsDisplayViewModel : ObservableObject
 
         EnergyUnit = "kcal";
         OnPropertyChanged(nameof(UnitSystemText));
+        OnPropertyChanged(nameof(UseImperialSystem));
     }
 
-    private static string NormalizeUnit(string value, string fallback) =>
-        string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+    private static string NormalizeUnit(string value, string fallback)
+    {
+        return string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+    }
 }
