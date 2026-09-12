@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.App.Pages.Dashboard.DailyCheckInPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Dashboard;assembly=MuscleCuties.Core"
+    x:DataType="vm:DailyCheckInViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="*, Auto">
+
+        <!-- Check-in -->
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout
+                Padding="20,56,20,24"
+                Spacing="14"
+                HorizontalOptions="Fill"
+                MaximumWidthRequest="640">
+
+                <!-- Header -->
+                <VerticalStackLayout x:Name="HeaderCard" Spacing="4">
+                    <Label
+                        Text="Daily check-in"
+                        Style="{StaticResource SubHeadline}"
+                        FontSize="24" />
+                    <Label
+                        Text="How are you feeling today?"
+                        Style="{StaticResource MutedLabel}" />
+                </VerticalStackLayout>
+
+                <!-- Sleep -->
+                <Border x:Name="SleepCard" Style="{StaticResource CardPrimary}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <Label
+                                Grid.Column="0"
+                                Text="Sleep last night"
+                                Style="{StaticResource CardTitle}" />
+                            <Label
+                                Grid.Column="1"
+                                Text="{Binding SleepDisplay}"
+                                Style="{StaticResource AccentLabel}"
+                                VerticalOptions="Center" />
+                        </Grid>
+                        <Slider
+                            Minimum="0"
+                            Maximum="14"
+                            Value="{Binding SleepHours}"
+                            MinimumTrackColor="{StaticResource Primary}"
+                            MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                            ThumbColor="{StaticResource Primary}"
+                            SemanticProperties.Description="Sleep hours slider" />
+                        <Grid ColumnDefinitions="*, *">
+                            <Label
+                                Grid.Column="0"
+                                Text="0h"
+                                Style="{StaticResource CaptionLabel}"
+                                HorizontalOptions="Start" />
+                            <Label
+                                Grid.Column="1"
+                                Text="14h"
+                                Style="{StaticResource CaptionLabel}"
+                                HorizontalOptions="End" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Energy -->
+                <Border x:Name="EnergyCard" Style="{StaticResource CardPrimary}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Energy level" Style="{StaticResource CardTitle}" />
+                        <HorizontalStackLayout
+                            x:Name="EnergyChipsContainer"
+                            Spacing="8"
+                            HorizontalOptions="Center">
+
+                            <Border
+                                x:Name="EnergyChip1"
+                                WidthRequest="48"
+                                HeightRequest="48"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 24"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnEnergyTapped" CommandParameter="1" />
+                                </Border.GestureRecognizers>
+                                <Label
+                                    Text="1"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            </Border>
+
+                            <Border
+                                x:Name="EnergyChip2"
+                                WidthRequest="48"
+                                HeightRequest="48"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 24"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnEnergyTapped" CommandParameter="2" />
+                                </Border.GestureRecognizers>
+                                <Label
+                                    Text="2"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            </Border>
+
+                            <Border
+                                x:Name="EnergyChip3"
+                                WidthRequest="48"
+                                HeightRequest="48"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 24"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnEnergyTapped" CommandParameter="3" />
+                                </Border.GestureRecognizers>
+                                <Label
+                                    Text="3"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            </Border>
+
+                            <Border
+                                x:Name="EnergyChip4"
+                                WidthRequest="48"
+                                HeightRequest="48"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 24"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnEnergyTapped" CommandParameter="4" />
+                                </Border.GestureRecognizers>
+                                <Label
+                                    Text="4"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            </Border>
+
+                            <Border
+                                x:Name="EnergyChip5"
+                                WidthRequest="48"
+                                HeightRequest="48"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 24"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnEnergyTapped" CommandParameter="5" />
+                                </Border.GestureRecognizers>
+                                <Label
+                                    Text="5"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            </Border>
+
+                        </HorizontalStackLayout>
+                        <Grid ColumnDefinitions="*, *">
+                            <Label
+                                Grid.Column="0"
+                                Text="Low"
+                                Style="{StaticResource CaptionLabel}"
+                                HorizontalOptions="Start" />
+                            <Label
+                                Grid.Column="1"
+                                Text="High"
+                                Style="{StaticResource CaptionLabel}"
+                                HorizontalOptions="End" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Pain -->
+                <Border x:Name="PainCard" Style="{StaticResource CardPrimary}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Pain level" Style="{StaticResource CardTitle}" />
+                        <Grid ColumnDefinitions="*, *, *, *" ColumnSpacing="8">
+
+                            <Border
+                                x:Name="PainChip0"
+                                Grid.Column="0"
+                                MinimumHeightRequest="48"
+                                HeightRequest="48"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                                SemanticProperties.Description="No pain">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnPainTapped" CommandParameter="0" />
+                                </Border.GestureRecognizers>
+                                <Label
+                                    Text="None"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="12"
+                                    FontAttributes="Bold"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            </Border>
+
+                            <Border
+                                x:Name="PainChip1"
+                                Grid.Column="1"
+                                MinimumHeightRequest="48"
+                                HeightRequest="48"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                                SemanticProperties.Description="Mild pain">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnPainTapped" CommandParameter="1" />
+                                </Border.GestureRecognizers>
+                                <Label
+                                    Text="Mild"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="12"
+                                    FontAttributes="Bold"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            </Border>
+
+                            <Border
+                                x:Name="PainChip2"
+                                Grid.Column="2"
+                                MinimumHeightRequest="48"
+                                HeightRequest="48"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                                SemanticProperties.Description="Moderate pain">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnPainTapped" CommandParameter="2" />
+                                </Border.GestureRecognizers>
+                                <Label
+                                    Text="Moderate"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="12"
+                                    FontAttributes="Bold"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            </Border>
+
+                            <Border
+                                x:Name="PainChip3"
+                                Grid.Column="3"
+                                MinimumHeightRequest="48"
+                                HeightRequest="48"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                                SemanticProperties.Description="Severe pain">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnPainTapped" CommandParameter="3" />
+                                </Border.GestureRecognizers>
+                                <Label
+                                    Text="Severe"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="12"
+                                    FontAttributes="Bold"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            </Border>
+
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Bloating -->
+                <Border x:Name="BloatingCard" Style="{StaticResource CardPrimary}">
+                    <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                        <Label
+                            Grid.Column="0"
+                            Text="Bloating"
+                            Style="{StaticResource CardTitle}"
+                            VerticalOptions="Center" />
+                        <Switch
+                            Grid.Column="1"
+                            IsToggled="{Binding HasBloating}"
+                            OnColor="{StaticResource Primary}"
+                            ThumbColor="{StaticResource White}"
+                            VerticalOptions="Center"
+                            SemanticProperties.Description="Toggle bloating" />
+                    </Grid>
+                </Border>
+
+                <!-- Body weight -->
+                <Border x:Name="WeightCard" Style="{StaticResource CardPrimary}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Body weight (optional)" Style="{StaticResource CardTitle}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Entry
+                                Placeholder="kg"
+                                Text="{Binding BodyWeight}"
+                                Keyboard="Numeric"
+                                ReturnType="Done" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Result -->
+                <Border
+                    x:Name="ResultCard"
+                    Style="{StaticResource CardPrimary}"
+                    IsVisible="{Binding IsCompleted}">
+                    <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                        <Label
+                            Text="READINESS"
+                            Style="{StaticResource EyebrowLabel}"
+                            CharacterSpacing="1.2"
+                            HorizontalOptions="Center" />
+                        <Label
+                            Text="{Binding ReadinessScoreText}"
+                            FontFamily="OpenSansSemibold"
+                            FontSize="52"
+                            FontAttributes="Bold"
+                            TextColor="{StaticResource Primary}"
+                            HorizontalOptions="Center"
+                            HorizontalTextAlignment="Center" />
+                        <Label
+                            Text="{Binding ReadinessTierText}"
+                            Style="{StaticResource SectionTitle}"
+                            HorizontalOptions="Center"
+                            HorizontalTextAlignment="Center" />
+                        <Label
+                            Text="{Binding SessionSummaryText}"
+                            Style="{StaticResource MutedLabel}"
+                            HorizontalOptions="Center"
+                            HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Actions -->
+        <VerticalStackLayout
+            x:Name="ActionArea"
+            Grid.Row="1"
+            Padding="20,12,20,36"
+            Spacing="0"
+            IsVisible="{Binding IsCompleted, Converter={StaticResource InvertedBoolConverter}}"
+            BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+            <BoxView HeightRequest="1" Margin="0,0,0,12" />
+            <Button
+                Text="Submit"
+                Command="{Binding SubmitCommand}" />
+            <Button
+                Text="Skip for now"
+                Style="{StaticResource ButtonLink}"
+                Command="{Binding SkipCommand}" />
+        </VerticalStackLayout>
+
+    </Grid>
+
+</ContentPage>
