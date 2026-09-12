@@ -1,0 +1,10 @@
+{
+  "name": "phase_follicular_plant",
+  "version": 1,
+  "kind": "phase_visual",
+  "renderer": "PhaseVisualView",
+  "phase": "follicular",
+  "visual": "plant_growth",
+  "loop": true,
+  "durationMs": 1800
+}
