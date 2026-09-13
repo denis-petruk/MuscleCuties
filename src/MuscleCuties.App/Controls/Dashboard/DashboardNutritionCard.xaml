@@ -15,53 +15,43 @@
 
         <VerticalStackLayout Spacing="14">
             <Grid ColumnDefinitions="*, Auto">
-                <VerticalStackLayout Spacing="3">
-                    <Label
-                        Text="NUTRITION"
-                        Style="{StaticResource EyebrowLabel}"
-                        CharacterSpacing="1.2" />
-                    <Label
-                        Text="Today's nutrition balance"
-                        Style="{StaticResource SectionTitle}"
-                        FontSize="20" />
-                </VerticalStackLayout>
+                <Label Text="Today's nutrition" Style="{StaticResource SectionTitle}" VerticalOptions="Center" />
                 <Label
                     Grid.Column="1"
                     Text="View all"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{StaticResource Primary}"
-                    VerticalOptions="End" />
+                    VerticalOptions="Center" />
             </Grid>
 
-            <VerticalStackLayout Spacing="6">
-                <Grid ColumnDefinitions="*, Auto">
-                    <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
-                        <sharedControls:ThemeAwareImage
-                            LightSource="icon_fire.png"
-                            DarkSource="icon_fire_dark.png"
-                            Aspect="AspectFit"
-                            WidthRequest="18"
-                            HeightRequest="18"
-                            VerticalOptions="Center" />
-                        <Label
-                            Text="{Binding CaloriesConsumed}"
-                            TextColor="{StaticResource Primary}"
-                            FontSize="16"
-                            FontAttributes="Bold"
-                            VerticalOptions="Center" />
-                    </HorizontalStackLayout>
-                    <Label
-                        Grid.Column="1"
-                        Text="{Binding CaloriesGoal}"
-                        Style="{StaticResource CaptionLabel}"
+            <Grid ColumnDefinitions="*, Auto">
+                <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
+                    <sharedControls:ThemeAwareImage
+                        LightSource="icon_fire.png"
+                        DarkSource="icon_fire_dark.png"
+                        Aspect="AspectFit"
+                        WidthRequest="18"
+                        HeightRequest="18"
                         VerticalOptions="Center" />
-                </Grid>
-                <ProgressBar
-                    Progress="{Binding CaloriesProgress}"
-                    ProgressColor="{StaticResource Primary}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                    HeightRequest="8" />
-            </VerticalStackLayout>
+                    <Label
+                        Text="{Binding CaloriesConsumed}"
+                        TextColor="{StaticResource Primary}"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center" />
+                </HorizontalStackLayout>
+                <Label
+                    Grid.Column="1"
+                    Text="{Binding CaloriesGoal}"
+                    Style="{StaticResource CaptionLabel}"
+                    VerticalOptions="Center" />
+            </Grid>
+            <ProgressBar
+                Progress="{Binding CaloriesProgress}"
+                ProgressColor="{StaticResource Primary}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                HeightRequest="8"
+                Margin="0,-8,0,0" />
 
             <sharedControls:MacroProgressGrid
                 ProteinText="{Binding ProteinText}"

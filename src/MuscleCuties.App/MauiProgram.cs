@@ -59,8 +59,7 @@ public static class MauiProgram
             .ConfigureMauiHandlers(ConfigureInputHandlers)
             .ConfigureFonts(fonts =>
             {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                fonts.AddFont("Inter-Variable.ttf", "Inter");
             });
 
         var services = builder.Services;

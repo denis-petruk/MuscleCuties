@@ -12,7 +12,7 @@
 
     <VerticalStackLayout Spacing="14">
         <sharedControls:IconSectionHeader
-            Text="MEALS"
+            Text="Meals"
             IconGlyph="BowlChopsticks24"
             Margin="4,6,4,0" />
 
@@ -37,20 +37,19 @@
                         HorizontalOptions="Center"
                         VerticalOptions="Center" />
                 </Border>
-                <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
-                    <Label
-                        Text="Log your first meal"
-                        Style="{StaticResource CardTitle}"
-                        FontSize="15" />
-                </VerticalStackLayout>
+                <Label
+                    Grid.Column="1"
+                    Text="Log your first meal"
+                    Style="{StaticResource CardTitle}"
+                    FontSize="15"
+                    VerticalOptions="Center" />
 
                 <Button
                     Grid.Column="2"
                     Text="Log Meal"
                     Command="{Binding OpenAddFoodPanelCommand}"
                     WidthRequest="124"
-                    HeightRequest="48"
-                    CornerRadius="16"
+                    MinimumHeightRequest="48"
                     VerticalOptions="Center" />
             </Grid>
         </Border>
@@ -101,7 +100,7 @@
                                         TextColor="{StaticResource Primary}"
                                         FontSize="10"
                                         FontAttributes="Bold"
-                                        CharacterSpacing="1.0" />
+                                        />
                                     <Label
                                         Text="{Binding Name}"
                                         Style="{StaticResource CardTitle}"

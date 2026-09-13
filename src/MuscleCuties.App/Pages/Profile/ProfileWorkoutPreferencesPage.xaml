@@ -12,45 +12,27 @@
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="20,52,20,32"
+            Padding="20,40,20,32"
             Spacing="16"
             HorizontalOptions="Fill"
             MaximumWidthRequest="640">
-            <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
-                <Button
-                    Text="‹"
-                    Style="{StaticResource ButtonLink}"
-                    FontSize="28"
-                    Padding="0"
-                    Command="{Binding BackCommand}" />
-                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                    <Label Text="Activity Preferences" Style="{StaticResource SubHeadline}" />
-                    <Label Text="Choose what your weekly plan can use" Style="{StaticResource CaptionLabel}" />
-                </VerticalStackLayout>
-            </Grid>
+            <sharedControls:PageHeader
+                Title="Activity preferences"
+                Subtitle="Choose what your weekly plan can use"
+                BackCommand="{Binding BackCommand}" />
 
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="ACTIVITY PREFERENCES" IconGlyph="Dumbbell24" />
-                    <Label
-                        Text="Strength anchors the plan. Cardio and yoga only appear when you choose them. Basic recovery is added automatically."
-                        Style="{StaticResource MutedLabel}" />
+            <VerticalStackLayout Spacing="12">
+                    <sharedControls:IconSectionHeader Text="Activities" IconGlyph="Dumbbell24" />
                     <workoutControls:WorkoutActivityPreferencePicker
                         ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
                         ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
-                </VerticalStackLayout>
-            </Border>
+            </VerticalStackLayout>
 
-            <Border Style="{StaticResource CardPrimary}" IsVisible="{Binding IsStrengthStyleVisible}">
-                <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="STRENGTH STYLE" IconGlyph="Flash24" />
-                    <Label
-                        Text="Pick how strength sessions should feel when your phase and energy make room for it."
-                        Style="{StaticResource MutedLabel}" />
+            <VerticalStackLayout Spacing="12" IsVisible="{Binding IsStrengthStyleVisible}">
+                    <sharedControls:IconSectionHeader Text="Strength style" IconGlyph="Flash24" />
                     <workoutControls:StrengthTrainingStylePicker
                         SelectStyleCommand="{Binding SelectStrengthTrainingStyleCommand}" />
-                </VerticalStackLayout>
-            </Border>
+            </VerticalStackLayout>
 
             <Label
                 Text="{Binding StatusMessage}"

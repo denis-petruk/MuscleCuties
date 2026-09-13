@@ -15,8 +15,8 @@
     <Grid>
         <ScrollView>
             <VerticalStackLayout
-            Padding="20,56,20,32"
-            Spacing="14"
+            Padding="20,40,20,32"
+            Spacing="16"
             HorizontalOptions="Fill"
             MaximumWidthRequest="640">
 
@@ -24,8 +24,7 @@
                 Text="You"
                 Style="{StaticResource SubHeadline}" />
 
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="16">
+            <VerticalStackLayout Spacing="16">
 
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="14">
                         <Border
@@ -33,8 +32,9 @@
                             WidthRequest="62"
                             HeightRequest="62"
                             StrokeShape="RoundRectangle 31"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
-                            StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                        Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                        StrokeThickness="1"
                             SemanticProperties.Description="Change profile photo">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnProfileImageTapped" />
@@ -73,9 +73,10 @@
 
                         <Border
                             Grid.Column="0"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                             StrokeShape="RoundRectangle 12"
-                            StrokeThickness="0"
+                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                            StrokeThickness="1"
                             Padding="8,10"
                             MinimumHeightRequest="76"
                             SemanticProperties.Description="{Binding WorkoutStreakDays, StringFormat='Workout session streak: {0} days'}">
@@ -105,9 +106,10 @@
 
                         <Border
                             Grid.Column="1"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                             StrokeShape="RoundRectangle 12"
-                            StrokeThickness="0"
+                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                            StrokeThickness="1"
                             Padding="8,10"
                             MinimumHeightRequest="76"
                             SemanticProperties.Description="{Binding NutritionStreakDays, StringFormat='Nutrition log streak: {0} days'}">
@@ -137,9 +139,10 @@
 
                         <Border
                             Grid.Column="2"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                             StrokeShape="RoundRectangle 12"
-                            StrokeThickness="0"
+                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                            StrokeThickness="1"
                             Padding="8,10"
                             MinimumHeightRequest="76"
                             SemanticProperties.Description="{Binding CyclesTracked, StringFormat='Cycles logged: {0}'}">
@@ -169,14 +172,9 @@
 
                     </Grid>
 
-                </VerticalStackLayout>
-            </Border>
+            </VerticalStackLayout>
 
-            <Label
-                Text="PREFERENCES"
-                Style="{StaticResource EyebrowLabel}"
-                CharacterSpacing="1.2"
-                Margin="4,6,4,0" />
+            <Label Text="Settings" Style="{StaticResource SectionTitle}" Margin="2,8,2,0" />
 
             <Border Style="{StaticResource CardPrimary}" Padding="4">
                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding Preferences}">

@@ -32,18 +32,6 @@
 
                     <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
                         <VerticalStackLayout Spacing="6">
-                            <Border
-                                BackgroundColor="{StaticResource Secondary}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 20"
-                                Padding="12,4"
-                                HorizontalOptions="Start">
-                                <Label
-                                    Text="CYCLE DATE"
-                                    Style="{StaticResource EyebrowLabel}"
-                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                            </Border>
-
                             <Label
                                 Text="{Binding SelectedCalendarDateText}"
                                 Style="{StaticResource SubHeadline}"
@@ -94,7 +82,7 @@
                             <DataTemplate x:DataType="cycleModels:CyclePhaseOptionItem">
                                 <Border
                                     BackgroundColor="{Binding BackgroundColor}"
-                                    StrokeShape="RoundRectangle 18"
+                                    StrokeShape="RoundRectangle 14"
                                     Stroke="{Binding TextColor}"
                                     StrokeThickness="0"
                                     Padding="16,14"

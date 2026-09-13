@@ -14,14 +14,9 @@ public class FdcApiClient : IFdcApiClient
     private readonly HttpClient _httpClient;
 
     public FdcApiClient(HttpClient httpClient)
-        : this(httpClient, Environment.GetEnvironmentVariable("FDC_API_KEY"))
-    {
-    }
-
-    public FdcApiClient(HttpClient httpClient, string? apiKey)
     {
         _httpClient = httpClient;
-        _apiKey = apiKey;
+        _apiKey = Environment.GetEnvironmentVariable("FDC_API_KEY");
 
         if (_httpClient.BaseAddress is null)
             _httpClient.BaseAddress = BaseUri;

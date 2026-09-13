@@ -9,6 +9,13 @@ obj/
 appsettings.local.json
 .claude
 
+# Local AI-assisted design context
+.codex/
+**/.codex/
+.impeccable/
+PRODUCT.md
+DESIGN.md
+
 # Rider/ReSharper
 .idea/
 riderModule.iml

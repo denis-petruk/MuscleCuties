@@ -274,9 +274,9 @@ public class WorkoutService : IWorkoutService
             UsesCadenceMetric = metricProfile.UsesCadence,
             UsesEffortMetric = metricProfile.UsesEffort,
             UsesWeight = !metricProfile.UsesEnduranceMetrics,
-            DurationLabel = metricProfile.UsesTimeUnderTension ? "MINUTES UNDER TENSION" : "MINUTES",
-            DistanceLabel = metricProfile.UsesSwimmingMetrics ? "METERS" : "KM",
-            PaceLabel = metricProfile.UsesSwimmingMetrics ? "PACE / 100M" : "PACE / KM",
+            DurationLabel = metricProfile.UsesTimeUnderTension ? "Minutes under tension" : "Minutes",
+            DistanceLabel = metricProfile.UsesSwimmingMetrics ? "Meters" : "km",
+            PaceLabel = metricProfile.UsesSwimmingMetrics ? "Pace / 100m" : "Pace / km",
             LoggedSetsText = currentLog is not null ? currentLog.CompletedSets.ToString() :
                 dayExercise.Sets > 0 ? dayExercise.Sets.ToString() : string.Empty,
             LoggedRepsText = currentLog is not null ? currentLog.CompletedReps.ToString() :
