@@ -89,8 +89,7 @@ public partial class ProfileSetupViewModel : ObservableObject
     public bool IsStrengthStyleVisible => WorkoutActivityOptions.Any(option =>
         WorkoutActivityPreferences.IsStrengthActivity(option.ActivityType) && option.IsSelected);
 
-    public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions =>
-        WorkoutActivityOptionCatalog.BuildGroups(WorkoutActivityOptions);
+    public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions { get; private set; } = [];
 
     public string WeightUnit => UseMetricSystem ? "kg" : "lbs";
     public bool HasProfileImage => IsExistingProfileImage(ProfileImagePath);
@@ -120,8 +119,11 @@ public partial class ProfileSetupViewModel : ObservableObject
 
     private async Task LoadDataAsync()
     {
-        var userId = await _authService.GetCurrentUserIdAsync();
-        var profile = await _userRepository.GetProfileAsync(userId);
+        var profile = await DataLoadScheduler.RunAsync(async () =>
+        {
+            var userId = await _authService.GetCurrentUserIdAsync();
+            return await _userRepository.GetProfileAsync(userId);
+        });
         if (profile is null)
             return;
 
@@ -131,12 +133,13 @@ public partial class ProfileSetupViewModel : ObservableObject
         ProfileImagePath = profile.ProfileImagePath;
         SelectedGoalOption = GoalOptions.FirstOrDefault(option => option.Value == Goal)
                              ?? GoalOptions.First(option => option.Value == UserGoal.MaintainHealth);
-        WorkoutActivityOptions = WorkoutActivityOptionCatalog.Build(
-            WorkoutActivityPreferences.Parse(profile.PreferredWorkoutActivityTypes));
+        var selectedActivities = WorkoutActivityPreferences.Parse(profile.PreferredWorkoutActivityTypes);
+        var loadedOptions = WorkoutActivityOptionCatalog.Build(selectedActivities);
+        foreach (var option in WorkoutActivityOptions)
+            option.IsSelected = loadedOptions.Any(loaded => loaded.ActivityType == option.ActivityType && loaded.IsSelected);
         SelectedStrengthTrainingStyle =
             WorkoutActivityPreferences.ParseStrengthStyle(profile.PreferredWorkoutActivityTypes);
-        StrengthTrainingStyleOptions =
-            StrengthTrainingStyleOptionCatalog.Build(SelectedStrengthTrainingStyle);
+        OnPropertyChanged(nameof(IsStrengthStyleVisible));
         _hasLoadedProfile = true;
     }
 
@@ -265,7 +268,6 @@ public partial class ProfileSetupViewModel : ObservableObject
             return;
 
         ErrorMessage = WorkoutActivityOptionCatalog.ToggleSelection(WorkoutActivityOptions, item);
-        OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
         OnPropertyChanged(nameof(IsStrengthStyleVisible));
     }
 
@@ -289,6 +291,7 @@ public partial class ProfileSetupViewModel : ObservableObject
 
     partial void OnWorkoutActivityOptionsChanged(ObservableCollection<WorkoutActivityOptionItem> value)
     {
+        GroupedWorkoutActivityOptions = WorkoutActivityOptionCatalog.BuildGroups(value);
         OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
         OnPropertyChanged(nameof(IsStrengthStyleVisible));
     }

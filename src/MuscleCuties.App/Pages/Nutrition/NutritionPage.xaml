@@ -6,6 +6,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:nutritionControls="clr-namespace:MuscleCuties.App.Controls.Nutrition"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
     x:DataType="vm:NutritionViewModel"
     Shell.NavBarIsVisible="False">
@@ -61,17 +62,38 @@
                     FontAttributes="Bold"
                     Margin="0,4" />
 
-                <nutritionControls:AddMealPanel />
+                <Button
+                    Text="Suggest a meal"
+                    Command="{Binding OpenSuggestMealCommand}"
+                    Style="{StaticResource ButtonLink}"
+                    ImageSource="{Binding Source='Lightbulb24', Converter={StaticResource StringToFluentIconImageSourceConverter}}" />
+                <ActivityIndicator
+                    IsRunning="{Binding IsLoadingMealIdeas}"
+                    IsVisible="{Binding IsLoadingMealIdeas}" />
+                <toolkit:LazyView
+                    x:Name="MealEditor"
+                    x:TypeArguments="nutritionControls:AddMealPanel"
+                    IsVisible="{Binding IsAddFoodPanelVisible}" />
                 <nutritionControls:MealsList />
             </VerticalStackLayout>
         </ScrollView>
 
-        <nutritionControls:FoodSearchModal />
-        <nutritionControls:NutritionBreakdownModal />
-        <nutritionControls:MealSuggestionModal />
-        <sharedControls:PhaseSaluteOverlay
+        <toolkit:LazyView
+            x:Name="FoodSearch"
+            x:TypeArguments="nutritionControls:FoodSearchModal"
+            IsVisible="{Binding HasFoodSearchResults}" />
+        <toolkit:LazyView
+            x:Name="Breakdown"
+            x:TypeArguments="nutritionControls:NutritionBreakdownModal"
+            IsVisible="{Binding IsBreakdownModalVisible}" />
+        <toolkit:LazyView
+            x:Name="Suggestions"
+            x:TypeArguments="nutritionControls:MealSuggestionModal"
+            IsVisible="{Binding IsSuggestionModalVisible}" />
+        <toolkit:LazyView
             x:Name="SaluteOverlay"
-            IconSource="{Binding CelebrationIconSource}" />
+            x:TypeArguments="sharedControls:PhaseSaluteOverlay"
+            InputTransparent="True" />
         <sharedControls:PageLoadingOverlay />
     </Grid>
 </ContentPage>

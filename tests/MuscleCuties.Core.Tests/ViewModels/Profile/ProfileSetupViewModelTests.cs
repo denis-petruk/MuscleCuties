@@ -1,8 +1,10 @@
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Quiz;
+using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.ViewModels.Profile;
 using NSubstitute;
 
@@ -28,6 +30,38 @@ public class ProfileSetupViewModelTests
                 _navigatedToQuiz = true;
                 return Task.CompletedTask;
             });
+    }
+
+    [Fact]
+    public async Task LoadData_UpdatesSelectionsWithoutRebuildingActivityGroups()
+    {
+        _authService.GetCurrentUserIdAsync().Returns(1);
+        _userRepository.GetProfileAsync(1).Returns(new UserProfile
+        {
+            UserId = 1,
+            PreferredWorkoutActivityTypes = WorkoutActivityPreferences.Serialize(
+                [WorkoutActivityType.HighVolumeStrength, WorkoutActivityType.Running],
+                StrengthTrainingStyle.ExpressHard)
+        });
+        var vm = CreateViewModel();
+        var groups = vm.GroupedWorkoutActivityOptions;
+        var options = vm.WorkoutActivityOptions;
+        var strengthOptions = vm.StrengthTrainingStyleOptions;
+
+        await vm.LoadDataCommand.ExecuteAsync(null);
+
+        Assert.Same(groups, vm.GroupedWorkoutActivityOptions);
+        Assert.Same(options, vm.WorkoutActivityOptions);
+        Assert.Same(strengthOptions, vm.StrengthTrainingStyleOptions);
+        var running = Assert.Single(options, option => option.ActivityType == WorkoutActivityType.Running);
+        Assert.True(running.IsSelected);
+        Assert.Equal(StrengthTrainingStyle.ExpressHard, vm.SelectedStrengthTrainingStyle);
+        Assert.True(Assert.Single(strengthOptions, option => option.Style == StrengthTrainingStyle.ExpressHard).IsSelected);
+
+        vm.ToggleWorkoutActivityCommand.Execute(running);
+
+        Assert.False(running.IsSelected);
+        Assert.Same(groups, vm.GroupedWorkoutActivityOptions);
     }
 
     [Fact]

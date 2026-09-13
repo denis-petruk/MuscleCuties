@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using MuscleCuties.App.Controls.Shared;
 
 namespace MuscleCuties.App.Controls.Workout;
 
 public partial class WorkoutSessionModal : ContentView
 {
+    private bool _hasContent;
     public static readonly BindableProperty IsOpenProperty =
         BindableProperty.Create(nameof(IsOpen), typeof(bool), typeof(WorkoutSessionModal), false,
             propertyChanged: OnIsOpenChanged);
@@ -16,7 +18,6 @@ public partial class WorkoutSessionModal : ContentView
 
     public WorkoutSessionModal()
     {
-        InitializeComponent();
         IsVisible = false;
     }
 
@@ -27,6 +28,14 @@ public partial class WorkoutSessionModal : ContentView
 
         if ((bool)newValue)
         {
+            if (!modal._hasContent)
+            {
+                var started = Stopwatch.GetTimestamp();
+                modal.InitializeComponent();
+                modal._hasContent = true;
+                Trace.WriteLine($"[Performance][WorkoutSessionModal] Deferred view initialized in {Stopwatch.GetElapsedTime(started).TotalMilliseconds:F1} ms.");
+            }
+
             modal.IsVisible = true;
             ModalTransition.PlayShow(modal);
         }

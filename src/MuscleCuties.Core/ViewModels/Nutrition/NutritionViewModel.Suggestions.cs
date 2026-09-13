@@ -5,6 +5,7 @@ using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.UI.Nutrition;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Nutrition;
+using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Nutrition;
 
@@ -17,6 +18,8 @@ public partial class NutritionViewModel
     [ObservableProperty] private ObservableCollection<MealSuggestionItem> _mealSuggestions = new();
     [ObservableProperty] private string _suggestionTargetText = string.Empty;
 
+    private readonly HashSet<string> _shownConceptNames = new();
+
     public bool HasMealSuggestions => MealSuggestions.Count > 0;
     public bool HasNoMealSuggestions => !IsLoadingSuggestions && !IsMealTypePickerVisible && MealSuggestions.Count == 0;
     public bool ShowSuggestionResults => !IsMealTypePickerVisible;
@@ -27,6 +30,7 @@ public partial class NutritionViewModel
         IsMealTypePickerVisible = true;
         IsSuggestionModalVisible = true;
         MealSuggestions.Clear();
+        _shownConceptNames.Clear();
         SuggestionTargetText = string.Empty;
         NotifySuggestionProperties();
     }
@@ -41,7 +45,10 @@ public partial class NutritionViewModel
 
     private void RefreshSuggestions()
     {
-        _ = LoadSuggestionsAsync();
+        foreach (var item in MealSuggestions)
+            _shownConceptNames.Add(item.ConceptName);
+
+        _ = LoadSuggestionsAsync(_shownConceptNames);
     }
 
     private void CloseSuggestionModal()
@@ -49,10 +56,11 @@ public partial class NutritionViewModel
         IsSuggestionModalVisible = false;
         IsMealTypePickerVisible = false;
         MealSuggestions.Clear();
+        _shownConceptNames.Clear();
         NotifySuggestionProperties();
     }
 
-    private async Task LoadSuggestionsAsync()
+    private async Task LoadSuggestionsAsync(IReadOnlySet<string>? excludeConceptNames = null)
     {
         IsLoadingSuggestions = true;
         MealSuggestions.Clear();
@@ -63,8 +71,6 @@ public partial class NutritionViewModel
             using var scope = _scopeFactory.CreateScope();
             var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
             var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
-
-            var userId = await authService.GetCurrentUserIdAsync();
 
             var breakfastShare = IsSweetBreakfast ? 0.20f : 0.25f;
             var lunchShare = IsSweetBreakfast ? 0.32f : 0.35f;
@@ -80,11 +86,23 @@ public partial class NutritionViewModel
                 _ => "Meal suggestion"
             };
 
-            var suggestions = await nutritionService.GetSuggestedMealsAsync(
-                userId, SuggestionMealType, BreakfastPreference, CurrentPhase, DateTime.Today);
+            var mealType = SuggestionMealType;
+            var breakfastPreference = BreakfastPreference;
+            var phase = CurrentPhase;
+            var date = DateTime.Today;
+            var exclude = excludeConceptNames;
+            var suggestions = await DataLoadScheduler.RunAsync(async () =>
+            {
+                var userId = await authService.GetCurrentUserIdAsync();
+                var meals = await nutritionService.GetSuggestedMealsAsync(
+                    userId, mealType, breakfastPreference, phase, date, exclude);
+                return meals.Select(MealSuggestionItem.FromSuggestedMeal).ToList();
+            });
 
-            foreach (var suggestion in suggestions)
-                MealSuggestions.Add(MealSuggestionItem.FromSuggestedMeal(suggestion));
+            foreach (var item in suggestions)
+                _shownConceptNames.Add(item.ConceptName);
+
+            MealSuggestions = new ObservableCollection<MealSuggestionItem>(suggestions);
         }
         catch
         {
@@ -101,10 +119,8 @@ public partial class NutritionViewModel
         if (suggestion is null || suggestion.Components.Count == 0)
             return;
 
-        MealIngredients.Clear();
-        foreach (var component in suggestion.Components)
-        {
-            MealIngredients.Add(new MealIngredientItem
+        MealIngredients = new ObservableCollection<MealIngredientItem>(suggestion.Components
+            .Select(component => new MealIngredientItem
             {
                 FoodItemId = component.FoodItemId,
                 Name = component.Name,
@@ -115,8 +131,7 @@ public partial class NutritionViewModel
                 Protein = component.Protein,
                 Carbs = component.Carbs,
                 Fats = component.Fats
-            });
-        }
+            }));
 
         SelectedMealType = SuggestionMealType;
         SelectedMealTime = DateTime.Now.TimeOfDay;

@@ -10,47 +10,8 @@
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
     x:DataType="vm:NutritionViewModel">
 
-    <VerticalStackLayout Spacing="14">
-
-        <!-- Loading indicator for meal ideas -->
-        <ActivityIndicator
-            IsRunning="{Binding IsLoadingMealIdeas}"
-            IsVisible="{Binding IsLoadingMealIdeas}"
-            HorizontalOptions="Center"
-            Color="{StaticResource Primary}" />
-        <!-- Suggest a meal -->
         <Border
-            StrokeShape="RoundRectangle 14"
-            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-            StrokeThickness="1"
-            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-            MinimumHeightRequest="44"
-            Padding="14,0"
-            Margin="0,2"
-            SemanticProperties.Description="Suggest a meal">
-            <Border.GestureRecognizers>
-                <TapGestureRecognizer
-                    Command="{Binding BindingContext.OpenSuggestMealCommand, Source={x:Reference Root}}" />
-            </Border.GestureRecognizers>
-            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center" VerticalOptions="Center" MinimumHeightRequest="44">
-                <Image
-                    Source="{Binding Source='Lightbulb24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                    WidthRequest="18"
-                    HeightRequest="18"
-                    Aspect="AspectFit"
-                    VerticalOptions="Center" />
-                <Label
-                    Text="Suggest a meal"
-                    Style="{StaticResource AccentLabel}"
-                    FontSize="13"
-                    VerticalOptions="Center" />
-            </HorizontalStackLayout>
-        </Border>
-
-        <!-- Food entry panel (toggleable) -->
-        <Border
-            Style="{StaticResource CardPrimary}"
-            IsVisible="{Binding IsAddFoodPanelVisible}">
+            Style="{StaticResource CardPrimary}">
             <VerticalStackLayout Spacing="12">
 
                 <!-- Header with close button -->
@@ -406,5 +367,4 @@
             </VerticalStackLayout>
         </Border>
 
-    </VerticalStackLayout>
 </ContentView>

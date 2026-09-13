@@ -12,5 +12,6 @@ public interface ISuggestedMealService
         BreakfastPreference breakfastPreference,
         CyclePhase phase,
         DateTime date,
-        float consumedCalories);
+        float consumedCalories,
+        IReadOnlySet<string>? excludeConceptNames = null);
 }
