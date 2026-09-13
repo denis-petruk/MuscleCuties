@@ -5,17 +5,18 @@
     x:Name="Root"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
-    <Grid ColumnDefinitions="20,*" ColumnSpacing="6">
+    <Grid ColumnDefinitions="24,*" ColumnSpacing="8">
         <Image
             Source="{Binding IconGlyph, Source={x:Reference Root}, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-            WidthRequest="16"
-            HeightRequest="16"
+            WidthRequest="18"
+            HeightRequest="18"
             Aspect="AspectFit"
             VerticalOptions="Center" />
         <Label
             Grid.Column="1"
             Text="{Binding Text, Source={x:Reference Root}}"
-            Style="{StaticResource EyebrowLabel}"
+            Style="{StaticResource SectionTitle}"
+            FontSize="16"
             VerticalOptions="Center" />
     </Grid>
 </ContentView>

@@ -344,10 +344,11 @@ public partial class QuizViewModel : ObservableObject
                 $"[Performance][Quiz] Dashboard navigation completed in {stageStopwatch.ElapsedMilliseconds} ms; " +
                 $"total sync={totalStopwatch.ElapsedMilliseconds} ms.");
         }
-        catch
+        catch (Exception ex)
         {
             IsPreparingDashboard = false;
             ErrorMessage = "We could not save your answers. Please try again.";
+            Trace.WriteLine($"[ERROR][Quiz] SaveAnswersAsync failed: {ex}");
         }
         finally
         {

@@ -11,11 +11,7 @@
     x:DataType="vm:CycleViewModel">
 
     <VerticalStackLayout Spacing="14">
-        <Label
-            Text="PHASES"
-            Style="{StaticResource EyebrowLabel}"
-            CharacterSpacing="1.2"
-            Margin="4,6,4,0" />
+        <Label Text="Explore each phase" Style="{StaticResource SectionTitle}" Margin="2,8,2,0" />
 
         <VerticalStackLayout
             Spacing="0"
@@ -24,11 +20,11 @@
                 <DataTemplate x:DataType="cycleModels:PhaseItem">
                     <Border
                         BackgroundColor="{Binding BackgroundColor}"
-                        StrokeShape="RoundRectangle 18"
+                        StrokeShape="RoundRectangle 14"
                         StrokeThickness="0"
-                        Padding="16,14"
+                        Padding="16"
                         Margin="0,0,0,10"
-                        MinimumHeightRequest="60"
+                        MinimumHeightRequest="68"
                         SemanticProperties.Description="{Binding Name, StringFormat='View {0} phase guide'}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer

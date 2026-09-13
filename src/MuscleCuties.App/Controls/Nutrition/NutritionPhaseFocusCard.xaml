@@ -10,7 +10,7 @@
     <Border
         Background="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
         Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-        StrokeShape="RoundRectangle 22"
+        StrokeShape="RoundRectangle 16"
         StrokeThickness="1"
         Padding="22,20"
         MinimumHeightRequest="138">
@@ -28,7 +28,6 @@
                         TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
                         FontSize="10"
                         FontAttributes="Bold"
-                        CharacterSpacing="1.2"
                         VerticalOptions="Center" />
                 </HorizontalStackLayout>
 

@@ -47,13 +47,13 @@ public partial class WorkoutExerciseItem : ObservableObject
         !UsesDurationOnlyMetric;
 
     public bool UsesWeight { get; set; } = true;
-    public string DurationLabel { get; set; } = "MINUTES";
-    public string DistanceLabel { get; set; } = "KM";
-    public string PaceLabel { get; set; } = "PACE / KM";
-    public string HeartRateLabel { get; set; } = "AVG BPM";
-    public string PowerLabel { get; set; } = "WATTS";
+    public string DurationLabel { get; set; } = "Minutes";
+    public string DistanceLabel { get; set; } = "km";
+    public string PaceLabel { get; set; } = "Pace / km";
+    public string HeartRateLabel { get; set; } = "Avg bpm";
+    public string PowerLabel { get; set; } = "Watts";
     public string CadenceLabel { get; set; } = "RPM";
-    public string EffortLabel { get; set; } = "EFFORT 1-10";
+    public string EffortLabel { get; set; } = "Effort 1-10";
     public string LoggedSetsText { get; set; } = string.Empty;
     public string LoggedRepsText { get; set; } = string.Empty;
     public string LoggedWeightText { get; set; } = string.Empty;

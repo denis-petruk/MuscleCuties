@@ -4,6 +4,7 @@
     x:Class="MuscleCuties.App.Pages.Profile.InjuryLogPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
     xmlns:ui="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core"
     x:DataType="vm:InjuryLogViewModel"
@@ -14,19 +15,32 @@
         <!-- Header -->
         <VerticalStackLayout
             Grid.Row="0"
-            Padding="20,52,20,12"
+            Padding="20,40,20,12"
             Spacing="2">
 
             <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="8">
-                <Button
-                    Text="&#x2039;"
-                    Style="{StaticResource ButtonLink}"
-                    FontSize="28"
-                    Padding="0"
-                    Command="{Binding NavigateBackCommand}" />
+                <Border
+                    WidthRequest="44"
+                    HeightRequest="44"
+                    StrokeShape="RoundRectangle 14"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                    StrokeThickness="1"
+                    SemanticProperties.Description="Go back">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NavigateBackCommand}" />
+                    </Border.GestureRecognizers>
+                    <Image
+                        Source="{Binding Source='ChevronLeft24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                        WidthRequest="20"
+                        HeightRequest="20"
+                        Aspect="AspectFit"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
                 <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                     <Label
-                        Text="Injury Log"
+                        Text="Injury log"
                         Style="{StaticResource SubHeadline}" />
                     <Label
                         Text="Track injuries and see blocked exercises"
@@ -114,9 +128,8 @@
 
                 <!-- Active injuries -->
                 <Label
-                    Text="ACTIVE INJURIES"
-                    Style="{StaticResource EyebrowLabel}"
-                    CharacterSpacing="1.2"
+                    Text="Active injuries"
+                    Style="{StaticResource SectionTitle}"
                     Margin="4,8,4,0" />
 
                 <CollectionView
@@ -197,9 +210,8 @@
                     IsVisible="{Binding HasBlockedExercises}">
                     <VerticalStackLayout Spacing="8">
                         <Label
-                            Text="BLOCKED EXERCISES"
-                            Style="{StaticResource EyebrowLabel}"
-                            CharacterSpacing="1.2" />
+                            Text="Blocked exercises"
+                            Style="{StaticResource SectionTitle}" />
                         <CollectionView
                             ItemsSource="{Binding BlockedExerciseNames}"
                             ItemSizingStrategy="MeasureFirstItem">
@@ -221,9 +233,8 @@
                     IsVisible="{Binding HasRehabExercises}">
                     <VerticalStackLayout Spacing="8">
                         <Label
-                            Text="RECOMMENDED REHAB"
-                            Style="{StaticResource EyebrowLabel}"
-                            CharacterSpacing="1.2" />
+                            Text="Recommended rehab"
+                            Style="{StaticResource SectionTitle}" />
                         <CollectionView
                             ItemsSource="{Binding RehabExerciseNames}"
                             ItemSizingStrategy="MeasureFirstItem">
@@ -245,9 +256,8 @@
                     IsVisible="{Binding HasBlockedCardio}">
                     <VerticalStackLayout Spacing="8">
                         <Label
-                            Text="BLOCKED CARDIO"
-                            Style="{StaticResource EyebrowLabel}"
-                            CharacterSpacing="1.2" />
+                            Text="Blocked cardio"
+                            Style="{StaticResource SectionTitle}" />
                         <CollectionView
                             ItemsSource="{Binding BlockedCardioNames}"
                             ItemSizingStrategy="MeasureFirstItem">
