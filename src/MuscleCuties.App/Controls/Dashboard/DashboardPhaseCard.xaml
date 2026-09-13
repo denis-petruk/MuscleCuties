@@ -11,14 +11,14 @@
     <Border
         BackgroundColor="{Binding PhaseCardBackgroundColor}"
         StrokeThickness="0"
-        StrokeShape="RoundRectangle 22"
-        Padding="20,18"
+        StrokeShape="RoundRectangle 16"
+        Padding="20"
         SemanticProperties.Description="{Binding PhaseCardTitle, StringFormat='Current cycle phase: {0}. Tap to view cycle details.'}">
         <Border.GestureRecognizers>
             <TapGestureRecognizer Command="{Binding OpenCycleCommand}" />
         </Border.GestureRecognizers>
 
-        <VerticalStackLayout Spacing="10">
+        <VerticalStackLayout Spacing="12">
             <HorizontalStackLayout Spacing="8">
                 <sharedControls:PhaseVisualView
                     Source="{Binding PhaseIllustrationSource}"
@@ -27,53 +27,50 @@
                     VerticalOptions="Center" />
                 <Label
                     Text="{Binding PhaseStatusText}"
-                    Style="{StaticResource EyebrowLabel}"
+                    Style="{StaticResource FormFieldLabel}"
                     TextColor="{Binding PhaseCardTextColor}"
-                    CharacterSpacing="1"
                     VerticalOptions="Center" />
             </HorizontalStackLayout>
 
-            <VerticalStackLayout Spacing="4">
-                <Label
-                    Text="{Binding PhaseCardTitle}"
-                    Style="{StaticResource SectionTitle}"
-                    TextColor="{Binding PhaseCardTextColor}"
-                    FontSize="23"
-                    LineBreakMode="WordWrap" />
-                <Label
-                    Text="{Binding PhaseShortAdvice}"
-                    TextColor="{Binding PhaseCardTextColor}"
-                    FontSize="14"
-                    FontAttributes="Bold"
-                    LineBreakMode="WordWrap" />
-            </VerticalStackLayout>
+            <Label
+                Text="{Binding PhaseCardTitle}"
+                Style="{StaticResource SectionTitle}"
+                TextColor="{Binding PhaseCardTextColor}"
+                FontSize="24"
+                LineBreakMode="WordWrap" />
+            <Label
+                Text="{Binding PhaseShortAdvice}"
+                TextColor="{Binding PhaseCardTextColor}"
+                FontSize="15"
+                LineBreakMode="WordWrap"
+                Margin="0,-6,0,0" />
 
             <Grid
                 RowDefinitions="Auto, 8"
                 ColumnDefinitions="*, *, *, *"
                 ColumnSpacing="4"
-                RowSpacing="12">
+                    RowSpacing="8">
                 <Label
-                    Text="MENSTRUAL"
-                    Style="{StaticResource EyebrowLabel}"
+                    Text="Menstrual"
+                    Style="{StaticResource CaptionLabel}"
                     TextColor="{AppThemeBinding Light={StaticResource CyclePhaseMenstrualTextLight}, Dark={StaticResource CyclePhaseMenstrualTextDark}}"
                     FontSize="9" />
                 <Label
                     Grid.Column="1"
-                    Text="FOLLICULAR"
-                    Style="{StaticResource EyebrowLabel}"
+                    Text="Follicular"
+                    Style="{StaticResource CaptionLabel}"
                     TextColor="{AppThemeBinding Light={StaticResource CyclePhaseFollicularTextLight}, Dark={StaticResource CyclePhaseFollicularTextDark}}"
                     FontSize="9" />
                 <Label
                     Grid.Column="2"
-                    Text="OVULATORY"
-                    Style="{StaticResource EyebrowLabel}"
+                    Text="Ovulatory"
+                    Style="{StaticResource CaptionLabel}"
                     TextColor="{AppThemeBinding Light={StaticResource CyclePhaseOvulatoryTextLight}, Dark={StaticResource CyclePhaseOvulatoryTextDark}}"
                     FontSize="9" />
                 <Label
                     Grid.Column="3"
-                    Text="LUTEAL"
-                    Style="{StaticResource EyebrowLabel}"
+                    Text="Luteal"
+                    Style="{StaticResource CaptionLabel}"
                     TextColor="{AppThemeBinding Light={StaticResource CyclePhaseLutealTextLight}, Dark={StaticResource CyclePhaseLutealTextDark}}"
                     FontSize="9"
                     HorizontalTextAlignment="End" />
@@ -114,29 +111,33 @@
                     VerticalOptions="Center" />
             </Grid>
 
-            <Grid ColumnDefinitions="*, Auto, *, Auto, *" Padding="0">
+            <Grid ColumnDefinitions="*, Auto, *, Auto, *" RowDefinitions="Auto, Auto" RowSpacing="2" Padding="0,12,0,0">
                 <BoxView
+                    Grid.RowSpan="2"
                     Grid.ColumnSpan="5"
                     HeightRequest="1"
                     BackgroundColor="{Binding PhaseCardDividerColor}"
                     Opacity="0.55"
                     VerticalOptions="Start" />
 
-                <VerticalStackLayout Grid.Column="0" Padding="0,12,0,0" Spacing="2">
-                    <Label
-                        Text="{Binding PhaseTimeLeftValue}"
-                        Style="{StaticResource SectionTitle}"
-                        TextColor="{Binding PhaseCardTextColor}"
-                        FontSize="18" />
-                    <Label
-                        Text="{Binding PhaseTimeLeftLabel}"
-                        Style="{StaticResource EyebrowLabel}"
-                        TextColor="{Binding PhaseCardTextColor}"
-                        FontSize="9"
-                        CharacterSpacing="1" />
-                </VerticalStackLayout>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Text="{Binding PhaseTimeLeftValue}"
+                    Style="{StaticResource SectionTitle}"
+                    TextColor="{Binding PhaseCardTextColor}"
+                    FontSize="18" />
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Text="{Binding PhaseTimeLeftLabel}"
+                    Style="{StaticResource CaptionLabel}"
+                    TextColor="{Binding PhaseCardTextColor}"
+                    FontSize="9" />
 
                 <BoxView
+                    Grid.Row="0"
+                    Grid.RowSpan="2"
                     Grid.Column="1"
                     WidthRequest="1"
                     HeightRequest="38"
@@ -144,21 +145,26 @@
                     Opacity="0.65"
                     VerticalOptions="End" />
 
-                <VerticalStackLayout Grid.Column="2" Padding="12,12,0,0" Spacing="2">
-                    <Label
-                        Text="{Binding NextPeriodValue}"
-                        Style="{StaticResource SectionTitle}"
-                        TextColor="{Binding PhaseCardTextColor}"
-                        FontSize="18" />
-                    <Label
-                        Text="NEXT PERIOD"
-                        Style="{StaticResource EyebrowLabel}"
-                        TextColor="{Binding PhaseCardTextColor}"
-                        FontSize="9"
-                        CharacterSpacing="1" />
-                </VerticalStackLayout>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Text="{Binding NextPeriodValue}"
+                    Style="{StaticResource SectionTitle}"
+                    TextColor="{Binding PhaseCardTextColor}"
+                    FontSize="18"
+                    Margin="12,0,0,0" />
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Text="Next period"
+                    Style="{StaticResource CaptionLabel}"
+                    TextColor="{Binding PhaseCardTextColor}"
+                    FontSize="9"
+                    Margin="12,0,0,0" />
 
                 <BoxView
+                    Grid.Row="0"
+                    Grid.RowSpan="2"
                     Grid.Column="3"
                     WidthRequest="1"
                     HeightRequest="38"
@@ -166,19 +172,22 @@
                     Opacity="0.65"
                     VerticalOptions="End" />
 
-                <VerticalStackLayout Grid.Column="4" Padding="12,12,0,0" Spacing="2">
-                    <Label
-                        Text="{Binding LoadAdjustmentText}"
-                        Style="{StaticResource SectionTitle}"
-                        TextColor="{Binding PhaseCardTextColor}"
-                        FontSize="18" />
-                    <Label
-                        Text="LOAD"
-                        Style="{StaticResource EyebrowLabel}"
-                        TextColor="{Binding PhaseCardTextColor}"
-                        FontSize="9"
-                        CharacterSpacing="1" />
-                </VerticalStackLayout>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="4"
+                    Text="{Binding LoadAdjustmentText}"
+                    Style="{StaticResource SectionTitle}"
+                    TextColor="{Binding PhaseCardTextColor}"
+                    FontSize="18"
+                    Margin="12,0,0,0" />
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="4"
+                    Text="Load"
+                    Style="{StaticResource CaptionLabel}"
+                    TextColor="{Binding PhaseCardTextColor}"
+                    FontSize="9"
+                    Margin="12,0,0,0" />
             </Grid>
         </VerticalStackLayout>
     </Border>

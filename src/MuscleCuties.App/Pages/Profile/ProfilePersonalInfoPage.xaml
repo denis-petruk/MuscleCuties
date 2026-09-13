@@ -11,26 +11,18 @@
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="20,52,20,32"
+            Padding="20,40,20,32"
             Spacing="16"
             HorizontalOptions="Fill"
             MaximumWidthRequest="640">
-            <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
-                <Button
-                    Text="‹"
-                    Style="{StaticResource ButtonLink}"
-                    FontSize="28"
-                    Padding="0"
-                    Command="{Binding BackCommand}" />
-                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                    <Label Text="Personal Info" Style="{StaticResource SubHeadline}" />
-                    <Label Text="Account, body metrics, and cycle logging" Style="{StaticResource CaptionLabel}" />
-                </VerticalStackLayout>
-            </Grid>
+            <sharedControls:PageHeader
+                Title="Personal info"
+                Subtitle="Account, body metrics, and cycle logging"
+                BackCommand="{Binding BackCommand}" />
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="ACCOUNT" IconGlyph="PersonPill24" />
+                    <sharedControls:IconSectionHeader Text="Account" IconGlyph="PersonPill24" />
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Display name" Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">
@@ -60,7 +52,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="BODY METRICS" IconGlyph="Target24" />
+                    <sharedControls:IconSectionHeader Text="Body metrics" IconGlyph="Target24" />
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <VerticalStackLayout Grid.Column="0" Spacing="5">
                             <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
@@ -83,7 +75,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="CYCLE LOGGING" IconGlyph="HeartCircle24" />
+                    <sharedControls:IconSectionHeader Text="Cycle logging" IconGlyph="HeartCircle24" />
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Logging method" Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">

@@ -9,159 +9,132 @@
     x:Class="MuscleCuties.App.Pages.Onboarding.ProfileSetupPage"
     x:DataType="vm:ProfileSetupViewModel"
     Shell.NavBarIsVisible="False">
+
     <ScrollView>
         <VerticalStackLayout
-            Padding="28,48,28,32"
-            Spacing="0"
-            VerticalOptions="Fill"
+            Padding="24,32,24,40"
+            Spacing="24"
             HorizontalOptions="Fill"
             MaximumWidthRequest="640">
 
             <sharedControls:ThemeAwareBrandLogoImage
-                Style="{StaticResource BrandLogoImage}"
-                SemanticProperties.Description="MuscleCuties logo"
-                Margin="0,0,0,22" />
-
-            <Label
-                Text="Tell us about yourself"
-                Style="{StaticResource Headline}"
+                WidthRequest="132"
+                HeightRequest="72"
                 HorizontalOptions="Center"
-                Margin="0,0,0,6" />
+                Aspect="AspectFit"
+                SemanticProperties.Description="MuscleCuties" />
 
-            <Label
-                Text="Build your first plan"
-                Style="{StaticResource MutedLabel}"
-                HorizontalOptions="Center"
-                HorizontalTextAlignment="Center"
-                Margin="0,0,0,32" />
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Tell us about yourself" Style="{StaticResource Headline}" />
+                <Label Text="This shapes your first training and nutrition plan." Style="{StaticResource MutedLabel}" />
+            </VerticalStackLayout>
 
-            <Border Style="{StaticResource CardPrimary}" Padding="24">
-                <VerticalStackLayout Spacing="14">
-
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                        <Border
-                            WidthRequest="72"
-                            HeightRequest="72"
-                            StrokeShape="RoundRectangle 36"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
-                            StrokeThickness="0">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnProfileImageTapped" />
-                            </Border.GestureRecognizers>
-                            <Grid>
-                                <Image
-                                    Source="{Binding ProfileImageSource}"
-                                    IsVisible="{Binding HasProfileImage}"
-                                    Aspect="AspectFill"
-                                    WidthRequest="72"
-                                    HeightRequest="72"
-                                    HorizontalOptions="Center"
-                                    VerticalOptions="Center" />
-                                <Image
-                                    IsVisible="{Binding HasNoProfileImage}"
-                                    Source="{AppThemeBinding Light=musclecuties_logo_light_transparent.png, Dark=musclecuties_logo_dark_transparent.png}"
-                                    Aspect="AspectFill"
-                                    WidthRequest="72"
-                                    HeightRequest="72"
-                                    HorizontalOptions="Center"
-                                    VerticalOptions="Center" />
-                            </Grid>
-                        </Border>
-
-                        <VerticalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
-                            <Label Text="Profile photo" Style="{StaticResource FormFieldLabel}" />
-                            <Button
-                                Text="Choose photo"
-                                Style="{StaticResource ButtonLink}"
-                                Padding="0"
-                                HorizontalOptions="Start"
-                                Clicked="OnProfileImageButtonClicked" />
-                        </VerticalStackLayout>
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                <Border
+                    WidthRequest="80"
+                    HeightRequest="80"
+                    StrokeShape="RoundRectangle 40"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                    StrokeThickness="1">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnProfileImageTapped" />
+                    </Border.GestureRecognizers>
+                    <Grid>
+                        <Image Source="{Binding ProfileImageSource}" IsVisible="{Binding HasProfileImage}" Aspect="AspectFill" />
+                        <Image
+                            IsVisible="{Binding HasNoProfileImage}"
+                            Source="{AppThemeBinding Light=musclecuties_logo_light_transparent.png, Dark=musclecuties_logo_dark_transparent.png}"
+                            Aspect="AspectFit"
+                            Margin="8" />
                     </Grid>
+                </Border>
 
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Display name" Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
-                            <Entry
-                                AutomationId="ProfileSetupNameEntry"
-                                Placeholder="Your name"
-                                Text="{Binding Name}"
-                                MaxLength="50"
-                                ReturnType="Next" />
-                        </Border>
-                    </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                    <Label Text="Profile photo" Style="{StaticResource CardTitle}" />
+                    <Button
+                        Text="Choose from Photos"
+                        Style="{StaticResource ButtonLink}"
+                        Padding="0"
+                        HorizontalOptions="Start"
+                        Clicked="OnProfileImageButtonClicked"
+                        SemanticProperties.Description="Choose a profile photo from Photos" />
+                </VerticalStackLayout>
+            </Grid>
 
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Birthday" Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
-                            <DatePicker
-                                AutomationId="ProfileSetupBirthDatePicker"
-                                Date="{Binding BirthDate}"
-                                MinimumDate="{Binding MinBirthDate}"
-                                MaximumDate="{Binding MaxBirthDate}"
-                                Format="MMMM dd, yyyy" />
-                        </Border>
-                    </VerticalStackLayout>
+            <VerticalStackLayout Spacing="12">
+                <Label Text="Personal details" Style="{StaticResource SectionTitle}" />
+                <Border Style="{StaticResource FormSection}">
+                    <VerticalStackLayout Spacing="16">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Display name" Style="{StaticResource FormFieldLabel}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Entry
+                                    AutomationId="ProfileSetupNameEntry"
+                                    Placeholder="Your name"
+                                    Text="{Binding Name}"
+                                    MaxLength="50"
+                                    ReturnType="Next"
+                                    SemanticProperties.Description="Display name" />
+                            </Border>
+                        </VerticalStackLayout>
 
-                    <Border Style="{StaticResource CardSecondary}" Padding="12">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Birthday" Style="{StaticResource FormFieldLabel}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <DatePicker
+                                    AutomationId="ProfileSetupBirthDatePicker"
+                                    Date="{Binding BirthDate}"
+                                    MinimumDate="{Binding MinBirthDate}"
+                                    MaximumDate="{Binding MaxBirthDate}"
+                                    Format="MMMM dd, yyyy"
+                                    SemanticProperties.Description="Birthday" />
+                            </Border>
+                        </VerticalStackLayout>
+
                         <VerticalStackLayout Spacing="8">
-                            <Label Text="Unit system" Style="{StaticResource FormFieldLabel}" />
+                            <Label Text="Units" Style="{StaticResource FormFieldLabel}" />
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                                <Border
-                                    Padding="12,10"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource Gray900}}"
-                                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                                    StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 16">
+                                <Border Padding="12" StrokeShape="RoundRectangle 12" StrokeThickness="1">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding SelectImperialUnitsCommand}" />
                                     </Border.GestureRecognizers>
                                     <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}"
-                                                     Value="True">
+                                        <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="True">
                                             <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
                                             <Setter Property="Stroke" Value="{StaticResource Primary}" />
                                         </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="False">
+                                            <Setter Property="BackgroundColor" Value="Transparent" />
+                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+                                        </DataTrigger>
                                     </Border.Triggers>
-                                    <Label
-                                        Text="Imperial"
-                                        Style="{StaticResource BodyLabel}"
-                                        FontAttributes="Bold"
-                                        HorizontalTextAlignment="Center">
+                                    <Label Text="Imperial" Style="{StaticResource BodyLabel}" FontAttributes="Bold" HorizontalTextAlignment="Center">
                                         <Label.Triggers>
-                                            <DataTrigger TargetType="Label" Binding="{Binding UseImperialSystem}"
-                                                         Value="True">
+                                            <DataTrigger TargetType="Label" Binding="{Binding UseImperialSystem}" Value="True">
                                                 <Setter Property="TextColor" Value="{StaticResource White}" />
                                             </DataTrigger>
                                         </Label.Triggers>
                                     </Label>
                                 </Border>
 
-                                <Border
-                                    Grid.Column="1"
-                                    Padding="12,10"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource Gray900}}"
-                                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                                    StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 16">
+                                <Border Grid.Column="1" Padding="12" StrokeShape="RoundRectangle 12" StrokeThickness="1">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding SelectMetricUnitsCommand}" />
                                     </Border.GestureRecognizers>
                                     <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}"
-                                                     Value="True">
+                                        <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="True">
                                             <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
                                             <Setter Property="Stroke" Value="{StaticResource Primary}" />
                                         </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="False">
+                                            <Setter Property="BackgroundColor" Value="Transparent" />
+                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+                                        </DataTrigger>
                                     </Border.Triggers>
-                                    <Label
-                                        Text="Metric"
-                                        Style="{StaticResource BodyLabel}"
-                                        FontAttributes="Bold"
-                                        HorizontalTextAlignment="Center">
+                                    <Label Text="Metric" Style="{StaticResource BodyLabel}" FontAttributes="Bold" HorizontalTextAlignment="Center">
                                         <Label.Triggers>
-                                            <DataTrigger TargetType="Label" Binding="{Binding UseMetricSystem}"
-                                                         Value="True">
+                                            <DataTrigger TargetType="Label" Binding="{Binding UseMetricSystem}" Value="True">
                                                 <Setter Property="TextColor" Value="{StaticResource White}" />
                                             </DataTrigger>
                                         </Label.Triggers>
@@ -169,153 +142,88 @@
                                 </Border>
                             </Grid>
                         </VerticalStackLayout>
-                    </Border>
 
-                    <VerticalStackLayout
-                        Spacing="5"
-                        IsVisible="{Binding UseMetricSystem}">
-                        <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
-                        <Grid
-                            ColumnDefinitions="*, Auto"
-                            ColumnSpacing="10">
-                            <Border Grid.Column="0" Style="{StaticResource InputContainer}">
-                                <Picker
-                                    AutomationId="ProfileSetupMetricHeightPicker"
-                                    Title="Select height"
-                                    ItemsSource="{Binding MetricHeightOptions}"
-                                    SelectedItem="{Binding SelectedHeightCm}" />
-                            </Border>
-                            <Label
-                                Grid.Column="1"
-                                Text="cm"
-                                Style="{StaticResource MutedLabel}"
-                                VerticalOptions="Center" />
-                        </Grid>
-                    </VerticalStackLayout>
-
-                    <VerticalStackLayout
-                        Spacing="5"
-                        IsVisible="{Binding UseMetricSystem,
-                                   Converter={StaticResource InvertedBoolConverter}}">
-                        <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
-                        <Grid
-                            ColumnDefinitions="*, Auto, *, Auto"
-                            ColumnSpacing="8">
-                            <Border Grid.Column="0" Style="{StaticResource InputContainer}">
-                                <Picker
-                                    AutomationId="ProfileSetupFeetPicker"
-                                    Title="Feet"
-                                    ItemsSource="{Binding FeetOptions}"
-                                    SelectedItem="{Binding SelectedFeet}" />
-                            </Border>
-                            <Label
-                                Grid.Column="1"
-                                Text="ft"
-                                Style="{StaticResource MutedLabel}"
-                                VerticalOptions="Center" />
-                            <Border Grid.Column="2" Style="{StaticResource InputContainer}">
-                                <Picker
-                                    AutomationId="ProfileSetupInchesPicker"
-                                    Title="Inches"
-                                    ItemsSource="{Binding InchesOptions}"
-                                    SelectedItem="{Binding SelectedInches}" />
-                            </Border>
-                            <Label
-                                Grid.Column="3"
-                                Text="in"
-                                Style="{StaticResource MutedLabel}"
-                                VerticalOptions="Center" />
-                        </Grid>
-                    </VerticalStackLayout>
-
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Weight" Style="{StaticResource FormFieldLabel}" />
-                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
-
-                            <Border
-                                Grid.Column="0"
-                                Style="{StaticResource InputContainer}"
-                                IsVisible="{Binding UseMetricSystem}">
-                                <Picker
-                                    AutomationId="ProfileSetupMetricWeightPicker"
-                                    Title="Select weight"
-                                    ItemsSource="{Binding MetricWeightOptions}"
-                                    SelectedItem="{Binding SelectedWeightKg}" />
-                            </Border>
-
-                            <Border
-                                Grid.Column="0"
-                                Style="{StaticResource InputContainer}"
-                                IsVisible="{Binding UseMetricSystem,
-                                           Converter={StaticResource InvertedBoolConverter}}">
-                                <Picker
-                                    AutomationId="ProfileSetupImperialWeightPicker"
-                                    Title="Select weight"
-                                    ItemsSource="{Binding ImperialWeightOptions}"
-                                    SelectedItem="{Binding SelectedWeightLbs}" />
-                            </Border>
-
-                            <Label
-                                Grid.Column="1"
-                                Text="{Binding WeightUnit}"
-                                Style="{StaticResource MutedLabel}"
-                                VerticalOptions="Center" />
-                        </Grid>
-                    </VerticalStackLayout>
-
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Primary fitness goal" Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
-                            <Picker
-                                AutomationId="ProfileSetupGoalPicker"
-                                Title="Choose goal"
-                                ItemsSource="{Binding GoalOptions}"
-                                ItemDisplayBinding="{Binding Label}"
-                                SelectedItem="{Binding SelectedGoalOption}" />
-                        </Border>
-                    </VerticalStackLayout>
-
-                    <!-- TODO(health-sync): Re-enable Apple Health and Whoop during the native-provider pass. -->
-
-                    <Border Style="{StaticResource CardSecondary}" Padding="14">
-                        <VerticalStackLayout Spacing="10">
-                            <sharedControls:IconSectionHeader
-                                Text="ACTIVITY PREFERENCES"
-                                IconGlyph="Dumbbell24" />
-                            <workoutControls:WorkoutActivityPreferencePicker
-                                ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
-                                ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
+                        <VerticalStackLayout Spacing="6" IsVisible="{Binding UseMetricSystem}">
+                            <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Picker
+                                        AutomationId="ProfileSetupMetricHeightPicker"
+                                        Title="Select height"
+                                        ItemsSource="{Binding MetricHeightOptions}"
+                                        SelectedItem="{Binding SelectedHeightCm}" />
+                                </Border>
+                                <Label Grid.Column="1" Text="cm" Style="{StaticResource MutedLabel}" VerticalOptions="Center" />
+                            </Grid>
                         </VerticalStackLayout>
-                    </Border>
 
-                    <Border
-                        Style="{StaticResource CardSecondary}"
-                        Padding="14"
-                        IsVisible="{Binding IsStrengthStyleVisible}">
-                        <VerticalStackLayout Spacing="10">
-                            <sharedControls:IconSectionHeader
-                                Text="STRENGTH STYLE"
-                                IconGlyph="Flash24" />
-                            <workoutControls:StrengthTrainingStylePicker
-                                SelectStyleCommand="{Binding SelectStrengthTrainingStyleCommand}" />
+                        <VerticalStackLayout Spacing="6" IsVisible="{Binding UseMetricSystem, Converter={StaticResource InvertedBoolConverter}}">
+                            <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
+                            <Grid ColumnDefinitions="*,Auto,*,Auto" ColumnSpacing="8">
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Picker AutomationId="ProfileSetupFeetPicker" Title="Feet" ItemsSource="{Binding FeetOptions}" SelectedItem="{Binding SelectedFeet}" />
+                                </Border>
+                                <Label Grid.Column="1" Text="ft" Style="{StaticResource MutedLabel}" VerticalOptions="Center" />
+                                <Border Grid.Column="2" Style="{StaticResource InputContainer}">
+                                    <Picker AutomationId="ProfileSetupInchesPicker" Title="Inches" ItemsSource="{Binding InchesOptions}" SelectedItem="{Binding SelectedInches}" />
+                                </Border>
+                                <Label Grid.Column="3" Text="in" Style="{StaticResource MutedLabel}" VerticalOptions="Center" />
+                            </Grid>
                         </VerticalStackLayout>
-                    </Border>
 
-                    <Label
-                        Text="{Binding ErrorMessage}"
-                        Style="{StaticResource ErrorLabel}"
-                        IsVisible="{Binding ErrorMessage,
-                                   Converter={StaticResource StringToBoolConverter}}" />
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Weight" Style="{StaticResource FormFieldLabel}" />
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                <Border Style="{StaticResource InputContainer}" IsVisible="{Binding UseMetricSystem}">
+                                    <Picker AutomationId="ProfileSetupMetricWeightPicker" Title="Select weight" ItemsSource="{Binding MetricWeightOptions}" SelectedItem="{Binding SelectedWeightKg}" />
+                                </Border>
+                                <Border Style="{StaticResource InputContainer}" IsVisible="{Binding UseMetricSystem, Converter={StaticResource InvertedBoolConverter}}">
+                                    <Picker AutomationId="ProfileSetupImperialWeightPicker" Title="Select weight" ItemsSource="{Binding ImperialWeightOptions}" SelectedItem="{Binding SelectedWeightLbs}" />
+                                </Border>
+                                <Label Grid.Column="1" Text="{Binding WeightUnit}" Style="{StaticResource MutedLabel}" VerticalOptions="Center" />
+                            </Grid>
+                        </VerticalStackLayout>
 
-                    <Button
-                        Text="Continue"
-                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                        Clicked="OnContinueClicked"
-                        Margin="0,6,0,0" />
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Primary fitness goal" Style="{StaticResource FormFieldLabel}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Picker
+                                    AutomationId="ProfileSetupGoalPicker"
+                                    Title="Choose goal"
+                                    ItemsSource="{Binding GoalOptions}"
+                                    ItemDisplayBinding="{Binding Label}"
+                                    SelectedItem="{Binding SelectedGoalOption}"
+                                    SemanticProperties.Description="Primary fitness goal" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
 
-                </VerticalStackLayout>
-            </Border>
+            <!-- TODO(health-sync): Re-enable Apple Health and Whoop during the native-provider pass. -->
 
+            <VerticalStackLayout Spacing="12">
+                <sharedControls:IconSectionHeader Text="Activities you enjoy" IconGlyph="Dumbbell24" />
+                <workoutControls:WorkoutActivityPreferencePicker
+                    ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
+                    ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="12" IsVisible="{Binding IsStrengthStyleVisible}">
+                <sharedControls:IconSectionHeader Text="Strength style" IconGlyph="Flash24" />
+                <workoutControls:StrengthTrainingStylePicker SelectStyleCommand="{Binding SelectStrengthTrainingStyleCommand}" />
+            </VerticalStackLayout>
+
+            <Label
+                Text="{Binding ErrorMessage}"
+                Style="{StaticResource ErrorLabel}"
+                IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Button
+                Text="Continue"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                Clicked="OnContinueClicked"
+                SemanticProperties.Hint="Continue to your personalized questions" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
