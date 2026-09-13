@@ -114,7 +114,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         RefreshSuggestionsCommand = new RelayCommand(RefreshSuggestions);
         AcceptSuggestionCommand = new RelayCommand<MealSuggestionItem>(AcceptSuggestion);
         SelectSuggestionMealTypeCommand = new RelayCommand<MealType>(SelectSuggestionMealType);
-        MealIngredients.CollectionChanged += (_, _) => NotifyMealIngredientProperties();
+        MealIngredients.CollectionChanged += OnMealIngredientsCollectionChanged;
     }
 
     public float CaloriesProgress =>

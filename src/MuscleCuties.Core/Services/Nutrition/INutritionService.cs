@@ -28,7 +28,8 @@ public interface INutritionService
         MealType mealType,
         BreakfastPreference breakfastPreference,
         CyclePhase phase,
-        DateTime date);
+        DateTime date,
+        IReadOnlySet<string>? excludeConceptNames = null);
     Task LogMealAsync(
         int userId,
         IReadOnlyCollection<MealIngredientInput> ingredients,

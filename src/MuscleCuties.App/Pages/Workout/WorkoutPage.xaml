@@ -5,6 +5,7 @@
     x:Name="WorkoutRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Workout;assembly=MuscleCuties.Core"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:workoutControls="clr-namespace:MuscleCuties.App.Controls.Workout"
@@ -13,175 +14,174 @@
     Shell.NavBarIsVisible="False">
 
     <Grid>
-        <ScrollView>
-            <VerticalStackLayout
-                Padding="20,40,20,32"
-                Spacing="16"
-                HorizontalOptions="Fill"
-                MaximumWidthRequest="640">
+        <CollectionView ItemsSource="{Binding Workouts}" SelectionMode="None">
+            <CollectionView.Header>
+                <VerticalStackLayout
+                    Padding="20,40,20,32"
+                    Spacing="16"
+                    HorizontalOptions="Fill"
+                    MaximumWidthRequest="640">
 
-                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12" RowDefinitions="Auto, Auto" RowSpacing="2">
-                    <Label
-                        Grid.Row="0" Grid.Column="0"
-                        Text="{Binding WeekTitle}"
-                        Style="{StaticResource SubHeadline}"
-                        VerticalOptions="Center" />
-                    <Label
-                        Grid.Row="1" Grid.Column="0"
-                        Text="{Binding CurrentPhaseName, StringFormat='{0} plan'}"
-                        Style="{StaticResource MutedLabel}"
-                        VerticalOptions="Center" />
-
-                    <Border
-                        Grid.Column="1" Grid.RowSpan="2"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        StrokeShape="RoundRectangle 22"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                        StrokeThickness="0"
-                        VerticalOptions="Center"
-                        SemanticProperties.Description="Training">
-                        <sharedControls:ThemeAwareImage
-                            LightSource="tab_train.png"
-                            DarkSource="tab_train_dark.png"
-                            WidthRequest="21"
-                            HeightRequest="21"
-                            HorizontalOptions="Center"
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12" RowDefinitions="Auto, Auto" RowSpacing="2">
+                        <Label
+                            Grid.Row="0" Grid.Column="0"
+                            Text="{Binding WeekTitle}"
+                            Style="{StaticResource SubHeadline}"
                             VerticalOptions="Center" />
-                    </Border>
-                </Grid>
+                        <Label
+                            Grid.Row="1" Grid.Column="0"
+                            Text="{Binding CurrentPhaseName, StringFormat='{0} plan'}"
+                            Style="{StaticResource MutedLabel}"
+                            VerticalOptions="Center" />
 
-                <workoutControls:WorkoutPlanSummaryCard
-                    PlanTitle="{Binding ActivePlanTitle}"
-                    SummaryText="{Binding PlanSummaryText}" />
-
-                <workoutControls:FeaturedWorkoutCard
-                    BadgeText="{Binding FeaturedWorkoutBadgeText}"
-                    WorkoutTitle="{Binding FeaturedWorkoutTitle}"
-                    Subtitle="{Binding FeaturedWorkoutSubtitle}"
-                    DurationText="{Binding FeaturedWorkoutDurationText}"
-                    ExercisesCount="{Binding FeaturedWorkoutExercisesCount}"
-                    Intensity="{Binding FeaturedWorkoutIntensity}"
-                    ActionText="{Binding FeaturedWorkoutActionText}"
-                    AccentColor="{Binding FeaturedWorkoutActivityBackground}"
-                    AccentTextColor="{Binding FeaturedWorkoutActivityTextColor}"
-                    ActivitySections="{Binding FeaturedWorkoutActivitySections}"
-                    HasMultipleActivities="{Binding FeaturedWorkoutHasMultipleActivities}"
-                    StartCommand="{Binding StartFeaturedWorkoutCommand}" />
-
-                <VerticalStackLayout Spacing="2" Margin="0,6,0,0">
-                    <Label Text="Activity schedule" Style="{StaticResource SectionTitle}" />
-                    <Label
-                        Text="{Binding PlanSummaryText}"
-                        Style="{StaticResource MutedLabel}"
-                        FontSize="13" />
-                </VerticalStackLayout>
-
-                <CollectionView
-                    ItemsSource="{Binding Filters}"
-                    HeightRequest="44">
-                    <CollectionView.ItemsLayout>
-                        <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
-                    </CollectionView.ItemsLayout>
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="workoutModels:FilterChipItem">
-                            <Border
-                                StrokeShape="RoundRectangle 999"
-                                StrokeThickness="0"
-                                Padding="14,9"
-                                MinimumHeightRequest="44">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                    </DataTrigger>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
-                                        <Setter Property="BackgroundColor"
-                                                Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer
-                                        Command="{Binding Source={x:Reference WorkoutRoot}, Path=BindingContext.SelectFilterCommand}"
-                                        CommandParameter="{Binding .}" />
-                                </Border.GestureRecognizers>
-                                <Label
-                                    Text="{Binding Label}"
-                                    FontSize="13"
-                                    FontAttributes="Bold"
-                                    VerticalOptions="Center">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                            <Setter Property="TextColor" Value="{StaticResource White}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
-                                            <Setter Property="TextColor"
-                                                    Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-
-                <ActivityIndicator
-                    IsRunning="{Binding IsBusy}"
-                    IsVisible="{Binding IsBusy}"
-                    Margin="0,24"
-                    SemanticProperties.Description="Loading workouts" />
-
-                <Grid>
-                    <Border
-                        Style="{StaticResource CardPrimary}"
-                        Padding="16"
-                        IsVisible="{Binding HasNoWorkouts}"
-                        VerticalOptions="Start">
-                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="14" RowDefinitions="Auto, Auto" RowSpacing="4">
-                            <Label
-                                Grid.Row="0" Grid.Column="0"
-                                Text="{Binding EmptyWorkoutsTitle}"
-                                Style="{StaticResource CardTitle}"
-                                FontSize="15"
+                        <Border
+                            Grid.Column="1" Grid.RowSpan="2"
+                            WidthRequest="44"
+                            HeightRequest="44"
+                            StrokeShape="RoundRectangle 22"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                            StrokeThickness="0"
+                            VerticalOptions="Center"
+                            SemanticProperties.Description="Training">
+                            <sharedControls:ThemeAwareImage
+                                LightSource="tab_train.png"
+                                DarkSource="tab_train_dark.png"
+                                WidthRequest="21"
+                                HeightRequest="21"
+                                HorizontalOptions="Center"
                                 VerticalOptions="Center" />
-                            <Label
-                                Grid.Row="1" Grid.Column="0"
-                                Text="{Binding EmptyWorkoutsSubtitle}"
-                                Style="{StaticResource CaptionLabel}"
-                                VerticalOptions="Center" />
+                        </Border>
+                    </Grid>
 
-                            <Button
-                                Grid.Column="1" Grid.RowSpan="2"
-                                Text="{Binding EmptyWorkoutsButtonText}"
-                                Command="{Binding EmptyWorkoutsActionCommand}"
-                                WidthRequest="118"
-                                MinimumHeightRequest="48"
-                                VerticalOptions="Center" />
-                        </Grid>
-                    </Border>
+                    <workoutControls:WorkoutPlanSummaryCard
+                        PlanTitle="{Binding ActivePlanTitle}"
+                        SummaryText="{Binding PlanSummaryText}" />
 
-                    <VerticalStackLayout
-                        IsVisible="{Binding HasWorkouts}"
-                        Spacing="0"
-                        BindableLayout.ItemsSource="{Binding Workouts}">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="workoutModels:WorkoutItem">
-                                <workoutControls:WorkoutActivityCard
-                                    OpenCommand="{Binding Source={x:Reference WorkoutRoot}, Path=BindingContext.OpenWorkoutCommand}"
-                                    CommandParameter="{Binding .}" />
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
+                    <workoutControls:FeaturedWorkoutCard
+                        BadgeText="{Binding FeaturedWorkoutBadgeText}"
+                        WorkoutTitle="{Binding FeaturedWorkoutTitle}"
+                        Subtitle="{Binding FeaturedWorkoutSubtitle}"
+                        DurationText="{Binding FeaturedWorkoutDurationText}"
+                        ExercisesCount="{Binding FeaturedWorkoutExercisesCount}"
+                        Intensity="{Binding FeaturedWorkoutIntensity}"
+                        ActionText="{Binding FeaturedWorkoutActionText}"
+                        AccentColor="{Binding FeaturedWorkoutActivityBackground}"
+                        AccentTextColor="{Binding FeaturedWorkoutActivityTextColor}"
+                        ActivitySections="{Binding FeaturedWorkoutActivitySections}"
+                        HasMultipleActivities="{Binding FeaturedWorkoutHasMultipleActivities}"
+                        StartCommand="{Binding StartFeaturedWorkoutCommand}" />
+
+                    <VerticalStackLayout Spacing="2" Margin="0,6,0,0">
+                        <Label Text="Activity schedule" Style="{StaticResource SectionTitle}" />
+                        <Label
+                            Text="{Binding PlanSummaryText}"
+                            Style="{StaticResource MutedLabel}"
+                            FontSize="13" />
                     </VerticalStackLayout>
-                </Grid>
 
-            </VerticalStackLayout>
-        </ScrollView>
+                    <CollectionView
+                        ItemsSource="{Binding Filters}"
+                        HeightRequest="44">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="workoutModels:FilterChipItem">
+                                <Border
+                                    StrokeShape="RoundRectangle 999"
+                                    StrokeThickness="0"
+                                    Padding="14,9"
+                                    MinimumHeightRequest="44">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                            <Setter Property="BackgroundColor"
+                                                    Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference WorkoutRoot}, Path=BindingContext.SelectFilterCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+                                    <Label
+                                        Text="{Binding Label}"
+                                        FontSize="13"
+                                        FontAttributes="Bold"
+                                        VerticalOptions="Center">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="TextColor" Value="{StaticResource White}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
+                                                <Setter Property="TextColor"
+                                                        Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <ActivityIndicator
+                        IsRunning="{Binding IsBusy}"
+                        IsVisible="{Binding IsBusy}"
+                        Margin="0,24"
+                        SemanticProperties.Description="Loading workouts" />
+                </VerticalStackLayout>
+            </CollectionView.Header>
+            <CollectionView.EmptyView>
+                <Border
+                    Style="{StaticResource CardPrimary}"
+                    Padding="16"
+                    Margin="20,0,20,32"
+                    MaximumWidthRequest="640"
+                    IsVisible="{Binding HasNoWorkouts}"
+                    VerticalOptions="Start">
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="14" RowDefinitions="Auto, Auto" RowSpacing="4">
+                        <Label
+                            Grid.Row="0" Grid.Column="0"
+                            Text="{Binding EmptyWorkoutsTitle}"
+                            Style="{StaticResource CardTitle}"
+                            FontSize="15"
+                            VerticalOptions="Center" />
+                        <Label
+                            Grid.Row="1" Grid.Column="0"
+                            Text="{Binding EmptyWorkoutsSubtitle}"
+                            Style="{StaticResource CaptionLabel}"
+                            VerticalOptions="Center" />
+
+                        <Button
+                            Grid.Column="1" Grid.RowSpan="2"
+                            Text="{Binding EmptyWorkoutsButtonText}"
+                            Command="{Binding EmptyWorkoutsActionCommand}"
+                            WidthRequest="118"
+                            MinimumHeightRequest="48"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="workoutModels:WorkoutItem">
+                    <workoutControls:WorkoutActivityCard
+                        Margin="20,0,20,12"
+                        MaximumWidthRequest="640"
+                        OpenCommand="{Binding Source={x:Reference WorkoutRoot}, Path=BindingContext.OpenWorkoutCommand}"
+                        CommandParameter="{Binding .}" />
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
 
         <workoutControls:WorkoutSessionModal
             x:Name="WorkoutModal"
             IsOpen="{Binding IsWorkoutModalVisible}" />
-        <sharedControls:PhaseSaluteOverlay
+        <toolkit:LazyView
             x:Name="SaluteOverlay"
-            IconSource="{Binding CelebrationIconSource}" />
+            x:TypeArguments="sharedControls:PhaseSaluteOverlay"
+            InputTransparent="True" />
         <sharedControls:PageLoadingOverlay />
     </Grid>
 

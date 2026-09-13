@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using MauiIcons.Core;
+using MauiIcons.Fluent;
 using MuscleCuties.App.Resources.Styles;
 using MuscleCuties.Core.Models.UI.Workout;
 
@@ -127,6 +129,9 @@ public partial class FeaturedWorkoutCard : ContentView
 
     public bool HasSingleActivity => !HasMultipleActivities;
 
+    public ImageSource ActionIcon => (ActionText == "Edit workout" ? FluentIcons.Edit24 : FluentIcons.Play24)
+        .ToImageSource(Colors.White, 15d);
+
     public string PrimaryActivityTitle { get; private set; } = string.Empty;
     public string PrimaryActivityCount { get; private set; } = string.Empty;
     public Color PrimaryActivityBackground { get; private set; } = Colors.Transparent;
@@ -149,6 +154,10 @@ public partial class FeaturedWorkoutCard : ContentView
         if (propertyName == nameof(HasMultipleActivities))
         {
             OnPropertyChanged(nameof(HasSingleActivity));
+        }
+        else if (propertyName == nameof(ActionText))
+        {
+            OnPropertyChanged(nameof(ActionIcon));
         }
     }
 

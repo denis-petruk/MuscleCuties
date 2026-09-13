@@ -52,12 +52,16 @@
                                     Opacity="0.75" />
                             </VerticalStackLayout>
 
-                            <Image
+                            <Path
                                 Grid.Column="2"
-                                Source="{Binding Source='ChevronRight24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                Aspect="AspectFit"
+                                Data="M9 18l6-6-6-6"
+                                Stroke="{Binding TextColor}"
+                                StrokeThickness="2"
+                                StrokeLineCap="Round"
+                                StrokeLineJoin="Round"
+                                Aspect="Uniform"
+                                WidthRequest="14"
+                                HeightRequest="14"
                                 VerticalOptions="Center"
                                 Opacity="0.6" />
                         </Grid>

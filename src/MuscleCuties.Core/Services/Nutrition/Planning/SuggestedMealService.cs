@@ -35,7 +35,8 @@ public sealed class SuggestedMealService : ISuggestedMealService
         BreakfastPreference breakfastPreference,
         CyclePhase phase,
         DateTime date,
-        float consumedCalories)
+        float consumedCalories,
+        IReadOnlySet<string>? excludeConceptNames = null)
     {
         var profile = await _userRepository.GetProfileAsync(userId);
         var plan = profile is not null
@@ -73,6 +74,9 @@ public sealed class SuggestedMealService : ISuggestedMealService
 
         foreach (var concept in concepts)
         {
+            if (excludeConceptNames is not null && excludeConceptNames.Contains(concept.Name))
+                continue;
+
             if (concept.IncompatibleDietaryTags.Overlaps(dietaryTags))
                 continue;
 
