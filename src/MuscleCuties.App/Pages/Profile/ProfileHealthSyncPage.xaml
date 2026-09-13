@@ -11,22 +11,14 @@
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="20,52,20,32"
+            Padding="20,40,20,32"
             Spacing="16"
             HorizontalOptions="Fill"
             MaximumWidthRequest="640">
-            <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
-                <Button
-                    Text="‹"
-                    Style="{StaticResource ButtonLink}"
-                    FontSize="28"
-                    Padding="0"
-                    Command="{Binding BackCommand}" />
-                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                    <Label Text="Health Sync" Style="{StaticResource SubHeadline}" />
-                    <Label Text="Steps, sleep, readiness, recovery" Style="{StaticResource CaptionLabel}" />
-                </VerticalStackLayout>
-            </Grid>
+            <sharedControls:PageHeader
+                Title="Health sync"
+                Subtitle="Steps, sleep, readiness, and recovery"
+                BackCommand="{Binding BackCommand}" />
 
             <Border
                 Style="{StaticResource CardPrimary}"
@@ -47,7 +39,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="CURRENT STATUS" IconGlyph="HeartPulse32" />
+                    <sharedControls:IconSectionHeader Text="Current status" IconGlyph="HeartPulse32" />
                     <Label Text="{Binding StatusText}" Style="{StaticResource CardTitle}" />
                     <Label Text="{Binding LastSyncedText}" Style="{StaticResource CaptionLabel}" />
 

@@ -133,8 +133,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public float FatsProgress => TargetFats > 0 ? Math.Clamp(ConsumedFats / TargetFats, 0f, 1f) : 0f;
 
     public string PhaseFocusBadgeText => string.IsNullOrWhiteSpace(CurrentPhaseName)
-        ? "PHASE FOCUS"
-        : $"PHASE FOCUS · {CurrentPhaseName.ToUpperInvariant()}";
+        ? "Phase focus"
+        : $"Phase focus · {CurrentPhaseName}";
 
     public string CurrentPhaseIconGlyph => CurrentPhase switch
     {
@@ -168,13 +168,13 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public bool IsSavouryBreakfast => BreakfastPreference == BreakfastPreference.Savoury;
     public bool IsSweetBreakfast => BreakfastPreference == BreakfastPreference.Sweet;
 
-    public string BreakfastTargetText => $"BREAKFAST ({(int)(TargetCalories * (IsSweetBreakfast ? 0.20f : 0.25f))} kcal)";
-    public string LunchTargetText => $"LUNCH ({(int)(TargetCalories * (IsSweetBreakfast ? 0.32f : 0.35f))} kcal)";
-    public string DinnerTargetText => $"DINNER ({(int)(TargetCalories * (IsSweetBreakfast ? 0.28f : 0.27f))} kcal)";
-    public string SnackTargetText => $"SNACK ({(int)(TargetCalories * (IsSweetBreakfast ? 0.20f : 0.13f))} kcal)";
+    public string BreakfastTargetText => $"Breakfast ({(int)(TargetCalories * (IsSweetBreakfast ? 0.20f : 0.25f))} kcal)";
+    public string LunchTargetText => $"Lunch ({(int)(TargetCalories * (IsSweetBreakfast ? 0.32f : 0.35f))} kcal)";
+    public string DinnerTargetText => $"Dinner ({(int)(TargetCalories * (IsSweetBreakfast ? 0.28f : 0.27f))} kcal)";
+    public string SnackTargetText => $"Snack ({(int)(TargetCalories * (IsSweetBreakfast ? 0.20f : 0.13f))} kcal)";
     public bool HasMeals => Meals.Count > 0;
     public bool HasNoMeals => Meals.Count == 0;
-    public string AddMealPanelTitle => IsEditingMeal ? "EDIT MEAL" : "BUILD MEAL";
+    public string AddMealPanelTitle => IsEditingMeal ? "Edit meal" : "Build meal";
 
     public MealItem? SelectedBreakdownMeal
     {

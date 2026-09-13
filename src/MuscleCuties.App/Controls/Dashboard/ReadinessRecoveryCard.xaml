@@ -11,12 +11,11 @@
         <Border.GestureRecognizers>
             <TapGestureRecognizer Command="{Binding OpenDailyCheckInCommand}" />
         </Border.GestureRecognizers>
-        <VerticalStackLayout Spacing="14">
+        <VerticalStackLayout Spacing="16">
             <Grid ColumnDefinitions="*, Auto">
                 <Label
-                    Text="READINESS &amp; RECOVERY"
-                    Style="{StaticResource EyebrowLabel}"
-                    CharacterSpacing="1.2" />
+                    Text="Readiness and recovery"
+                    Style="{StaticResource SectionTitle}" />
                 <Label
                     Grid.Column="1"
                     Text="Tap to check in"
@@ -58,27 +57,25 @@
                                 TextColor="{Binding ReadinessScore, Converter={StaticResource ScoreToColorConverter}}"
                                 HorizontalOptions="Center" />
                             <Label
-                                Text="READY"
-                                FontSize="9"
-                                CharacterSpacing="0.5"
+                                Text="Ready"
+                                FontSize="10"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                 HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Grid>
 
-                    <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
-                        <Label
-                            Text="Readiness"
-                            FontSize="13"
-                            FontAttributes="Bold"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                            HorizontalOptions="Center" />
-                        <Label
-                            Text="{Binding ReadinessLabel}"
-                            Style="{StaticResource CaptionLabel}"
-                            HorizontalOptions="Center"
-                            HorizontalTextAlignment="Center" />
-                    </VerticalStackLayout>
+                    <Label
+                        Text="Readiness"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                        HorizontalOptions="Center" />
+                    <Label
+                        Text="{Binding ReadinessLabel}"
+                        Style="{StaticResource CaptionLabel}"
+                        HorizontalOptions="Center"
+                        HorizontalTextAlignment="Center"
+                        Margin="0,-8,0,0" />
                 </VerticalStackLayout>
 
                 <VerticalStackLayout
@@ -112,27 +109,25 @@
                                 TextColor="{Binding RecoveryScore, Converter={StaticResource ScoreToColorConverter}}"
                                 HorizontalOptions="Center" />
                             <Label
-                                Text="RECOV"
-                                FontSize="9"
-                                CharacterSpacing="0.5"
+                                Text="Recovery"
+                                FontSize="10"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                 HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Grid>
 
-                    <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
-                        <Label
-                            Text="Recovery"
-                            FontSize="13"
-                            FontAttributes="Bold"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                            HorizontalOptions="Center" />
-                        <Label
-                            Text="{Binding RecoveryLabel}"
-                            Style="{StaticResource CaptionLabel}"
-                            HorizontalOptions="Center"
-                            HorizontalTextAlignment="Center" />
-                    </VerticalStackLayout>
+                    <Label
+                        Text="Recovery"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                        HorizontalOptions="Center" />
+                    <Label
+                        Text="{Binding RecoveryLabel}"
+                        Style="{StaticResource CaptionLabel}"
+                        HorizontalOptions="Center"
+                        HorizontalTextAlignment="Center"
+                        Margin="0,-8,0,0" />
                 </VerticalStackLayout>
             </Grid>
         </VerticalStackLayout>

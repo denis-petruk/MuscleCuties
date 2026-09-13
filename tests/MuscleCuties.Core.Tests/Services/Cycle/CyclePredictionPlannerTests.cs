@@ -85,8 +85,8 @@ public class CyclePredictionPlannerTests
     [Theory]
     [InlineData(1, CyclePhase.Menstrual)]
     [InlineData(6, CyclePhase.Follicular)]
-    [InlineData(38, CyclePhase.Follicular)]  // Day before ovulatory window
-    [InlineData(39, CyclePhase.Ovulatory)]   // ovulationDay - 2 = 39
+    [InlineData(39, CyclePhase.Follicular)]  // Day before ovulatory window
+    [InlineData(40, CyclePhase.Ovulatory)]   // Ovulatory window starts two dates before prediction
     [InlineData(41, CyclePhase.Ovulatory)]   // ovulationDay = 41
     [InlineData(43, CyclePhase.Ovulatory)]   // ovulationDay + 2 = 43
     [InlineData(44, CyclePhase.Luteal)]      // First luteal day

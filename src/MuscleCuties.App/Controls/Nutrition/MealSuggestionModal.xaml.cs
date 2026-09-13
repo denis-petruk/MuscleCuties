@@ -10,6 +10,11 @@ public partial class MealSuggestionModal : ContentView
         InitializeComponent();
     }
 
+    private void OnSuggestionsSizeChanged(object? sender, EventArgs e)
+    {
+        SuggestionLayout.Span = SuggestionCollection.Width >= 360 ? 2 : 1;
+    }
+
     protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         base.OnPropertyChanged(propertyName);
