@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Models.Enums.Cycle;
@@ -89,6 +90,55 @@ public class NutritionViewModelTests
                 ]
             }
         ];
+    }
+
+    [Fact]
+    public async Task LoadData_ReplacesMealsOnceWithoutPerItemNotifications()
+    {
+        ConfigureLoadData();
+        var vm = CreateViewModel();
+        var originalMeals = vm.Meals;
+        var collectionChanges = 0;
+        var replacements = 0;
+        originalMeals.CollectionChanged += (_, _) => collectionChanges++;
+        vm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(vm.Meals))
+                replacements++;
+        };
+
+        await vm.LoadDataCommand.ExecuteAsync(null);
+
+        Assert.NotSame(originalMeals, vm.Meals);
+        Assert.Equal(0, collectionChanges);
+        Assert.Equal(1, replacements);
+        Assert.Single(vm.Meals);
+        Assert.True(vm.HasMeals);
+    }
+
+    [Fact]
+    public void ReplacingMealIngredients_KeepsDraftAndCommandNotificationsConnected()
+    {
+        var vm = CreateViewModel();
+        var previousIngredients = vm.MealIngredients;
+        vm.MealIngredients = new ObservableCollection<MealIngredientItem>();
+        var notifications = 0;
+        vm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(vm.HasMealIngredients))
+                notifications++;
+        };
+
+        previousIngredients.Add(new MealIngredientItem());
+        Assert.Equal(0, notifications);
+
+        vm.MealIngredients.Add(new MealIngredientItem { FoodItemId = 1, Grams = 100 });
+        Assert.Equal(1, notifications);
+        Assert.True(vm.LogMealCommand.CanExecute(null));
+
+        vm.MealIngredients.Clear();
+        Assert.Equal(2, notifications);
+        Assert.False(vm.LogMealCommand.CanExecute(null));
     }
 
     [Fact]

@@ -260,9 +260,9 @@ public partial class NutritionViewModel
 
     private void BeginMealEdit(LoggedMeal meal)
     {
-        MealIngredients.Clear();
-        foreach (var entry in meal.Entries.Where(entry => entry.FoodItem is not null))
-            MealIngredients.Add(CreateIngredient(entry.FoodItem!, entry.Grams));
+        MealIngredients = new ObservableCollection<MealIngredientItem>(meal.Entries
+            .Where(entry => entry.FoodItem is not null)
+            .Select(entry => CreateIngredient(entry.FoodItem!, entry.Grams)));
 
         _editingMealId = meal.Id;
         IsEditingMeal = true;
@@ -392,24 +392,12 @@ public partial class NutritionViewModel
         var mealList = meals.ToList();
         var allEntries = meals.SelectMany(meal => meal.Entries).ToList();
 
-        ReplaceMeals(mealList.Select(meal => BuildMealItem(meal, mealList)));
+        Meals = new ObservableCollection<MealItem>(mealList.Select(meal => BuildMealItem(meal, mealList)));
 
         Micronutrients = new ObservableCollection<DailyMicronutrientItem>(
             BuildMicronutrients(mealList, _micronutrientGoals));
 
         return MacroNutrients.SumMealEntries(allEntries);
-    }
-
-
-    private void ReplaceMeals(IEnumerable<MealItem> meals)
-    {
-        Meals.Clear();
-
-        foreach (var meal in meals)
-            Meals.Add(meal);
-
-        OnPropertyChanged(nameof(HasMeals));
-        OnPropertyChanged(nameof(HasNoMeals));
     }
 
     private MealItem BuildMealItem(LoggedMeal meal, IReadOnlyCollection<LoggedMeal> dailyMeals)
