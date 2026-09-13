@@ -18,23 +18,22 @@
             RefreshColor="{StaticResource Primary}">
             <ScrollView>
             <VerticalStackLayout
-                Padding="20,56,20,32"
-                Spacing="14"
+                Padding="20,40,20,32"
+                Spacing="16"
                 HorizontalOptions="Fill"
                 MaximumWidthRequest="640">
-                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                        <Label
-                            Text="{Binding DashboardPhaseHeaderText}"
-                            Style="{StaticResource EyebrowLabel}"
-                            CharacterSpacing="1.2" />
-                        <Label
-                            Text="{Binding Greetings}"
-                            Style="{StaticResource SubHeadline}" />
-                    </VerticalStackLayout>
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12" RowDefinitions="Auto, Auto" RowSpacing="2">
+                    <Label
+                        Text="{Binding Greetings}"
+                        Style="{StaticResource SubHeadline}" />
+                    <Label
+                        Grid.Row="1"
+                        Text="{Binding DashboardPhaseHeaderText}"
+                        Style="{StaticResource MutedLabel}" />
 
                     <Border
                         Grid.Column="1"
+                        Grid.RowSpan="2"
                         WidthRequest="44"
                         HeightRequest="44"
                         StrokeShape="RoundRectangle 22"
@@ -55,7 +54,9 @@
                     </Border>
                 </Grid>
 
-                <Grid ColumnDefinitions="*, *" ColumnSpacing="8">
+                <dashboardControls:DashboardPhaseCard />
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                     <Border
                         Grid.Column="0"
                         Style="{StaticResource WorkoutPill}"
@@ -67,8 +68,8 @@
                                 LightSource="icon_muscle.png"
                                 DarkSource="icon_muscle_dark.png"
                                 Aspect="AspectFit"
-                                WidthRequest="22"
-                                HeightRequest="22"
+                                WidthRequest="20"
+                                HeightRequest="20"
                                 VerticalOptions="Center" />
                             <Label
                                 Text="{Binding WorkoutStreakText}"
@@ -88,8 +89,8 @@
                                 LightSource="icon_fire.png"
                                 DarkSource="icon_fire_dark.png"
                                 Aspect="AspectFit"
-                                WidthRequest="22"
-                                HeightRequest="22"
+                                WidthRequest="20"
+                                HeightRequest="20"
                                 VerticalOptions="Center" />
                             <Label
                                 Text="{Binding NutritionStreakText}"
@@ -98,8 +99,6 @@
                         </HorizontalStackLayout>
                     </Border>
                 </Grid>
-
-                <dashboardControls:DashboardPhaseCard />
 
                 <workoutControls:FeaturedWorkoutCard
                     BadgeText="{Binding WorkoutBadgeText}"

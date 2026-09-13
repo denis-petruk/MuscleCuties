@@ -77,7 +77,7 @@
         <MauiImage Update="Resources\Images\tab_nutrition_dark.svg" Resize="True" BaseSize="24,24"/>
         <MauiImage Update="Resources\Images\tab_you.svg" Resize="True" BaseSize="24,24"/>
         <MauiImage Update="Resources\Images\tab_you_dark.svg" Resize="True" BaseSize="24,24"/>
-        <MauiFont Include="Resources\Fonts\*"/>
+        <MauiFont Include="Resources\Fonts\*.ttf"/>
         <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)"/>
     </ItemGroup>
 

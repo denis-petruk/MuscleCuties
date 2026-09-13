@@ -327,12 +327,10 @@ public class DashboardViewModelTests
 
         await vm.LoadDataCommand.ExecuteAsync(null);
 
-        // After the load completes, IsPageLoading should be false
         Assert.False(vm.IsPageLoading);
 
-        // During the load, IsPageLoading should have been true then reverted to false
         Assert.Contains(true, loadingStates);
-        Assert.Equal(false, loadingStates.Last());
+        Assert.False(loadingStates.Last());
     }
 
     [Fact]

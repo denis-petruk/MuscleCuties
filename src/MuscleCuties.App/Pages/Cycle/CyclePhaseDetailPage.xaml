@@ -13,28 +13,20 @@
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="20,52,20,32"
-            Spacing="14"
+            Padding="20,40,20,32"
+            Spacing="16"
             HorizontalOptions="Fill"
             MaximumWidthRequest="640">
 
-            <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
-                <Button
-                    Text="‹"
-                    Style="{StaticResource ButtonLink}"
-                    FontSize="28"
-                    Padding="0"
-                    Command="{Binding BackCommand}" />
-                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                    <Label Text="{Binding PhaseName}" Style="{StaticResource SubHeadline}" />
-                    <Label Text="{Binding PhaseWindow}" Style="{StaticResource CaptionLabel}" />
-                </VerticalStackLayout>
-            </Grid>
+            <sharedControls:PageHeader
+                Title="{Binding PhaseName}"
+                Subtitle="{Binding PhaseWindow}"
+                BackCommand="{Binding BackCommand}" />
 
             <Border
                 Background="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
                 Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                StrokeShape="RoundRectangle 22"
+                StrokeShape="RoundRectangle 16"
                 StrokeThickness="1"
                 Padding="22,20">
                 <VerticalStackLayout Spacing="10">
@@ -48,9 +40,9 @@
                             VerticalOptions="Center" />
                         <Label
                             Text="{Binding PhaseWindow}"
-                            Style="{StaticResource EyebrowLabel}"
+                            Style="{StaticResource FormFieldLabel}"
                             TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                            CharacterSpacing="1.2" />
+                            />
                     </HorizontalStackLayout>
 
                     <Label
@@ -84,7 +76,7 @@
                     </Border>
                 </VerticalStackLayout>
             </Border>
-            <Label Text="WORKOUTS" Style="{StaticResource EyebrowLabel}" Margin="4,6,4,0" />
+            <Label Text="Workouts" Style="{StaticResource SectionTitle}" Margin="2,8,2,0" />
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{Binding WorkoutLead}" Style="{StaticResource BodyLabel}" MaxLines="2"
@@ -113,7 +105,7 @@
             </Border>
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="AT A GLANCE" Style="{StaticResource EyebrowLabel}" />
+                    <Label Text="At a glance" Style="{StaticResource SectionTitle}" />
 
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
                         <Grid ColumnDefinitions="24,70,*,60" ColumnSpacing="8">
@@ -173,7 +165,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Label Text="WHY IT MATTERS" Style="{StaticResource EyebrowLabel}" Margin="4,6,4,0" />
+            <Label Text="Why it matters" Style="{StaticResource SectionTitle}" Margin="2,8,2,0" />
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{Binding WhyLead}" Style="{StaticResource BodyLabel}" MaxLines="2"
@@ -254,7 +246,7 @@
                     </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
-            <Label Text="NUTRITION" Style="{StaticResource EyebrowLabel}" Margin="4,6,4,0" />
+            <Label Text="Nutrition" Style="{StaticResource SectionTitle}" Margin="2,8,2,0" />
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{Binding NutritionLead}" Style="{StaticResource BodyLabel}" MaxLines="2"

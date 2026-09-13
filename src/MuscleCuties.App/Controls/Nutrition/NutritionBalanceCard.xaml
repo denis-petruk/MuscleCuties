@@ -12,7 +12,7 @@
         <VerticalStackLayout Spacing="14">
             <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
                 <sharedControls:IconSectionHeader
-                    Text="TODAY'S BALANCE"
+                    Text="Today's balance"
                     IconGlyph="BowlSalad24"
                     VerticalOptions="Center" />
                 <Border
@@ -21,7 +21,7 @@
                     StrokeThickness="0"
                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
                     Padding="10,7"
-                    HeightRequest="36"
+                    MinimumHeightRequest="36"
                     VerticalOptions="Center">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding OpenMicronutrientsModalCommand}" />

@@ -75,7 +75,7 @@
                 <Grid ColumnDefinitions="*, *" ColumnSpacing="8">
                     <Border Style="{StaticResource WorkoutInfoTile}" Padding="8,6">
                         <VerticalStackLayout Spacing="1">
-                            <Label Text="TARGET" Style="{StaticResource EyebrowLabel}" FontSize="8" />
+                            <Label Text="Target" Style="{StaticResource EyebrowLabel}" FontSize="8" />
                             <Label
                                 Text="{Binding TargetText}"
                                 Style="{StaticResource WorkoutInfoValue}"
@@ -114,29 +114,27 @@
                     IsVisible="{Binding IsExpanded}"
                     Padding="10,8">
                     <VerticalStackLayout Spacing="8">
-                        <VerticalStackLayout Spacing="3">
-                            <Label Text="WHY" Style="{StaticResource EyebrowLabel}" FontSize="8" />
-                            <Label
-                                Text="{Binding WhyText}"
-                                Style="{StaticResource CaptionLabel}"
-                                LineBreakMode="WordWrap" />
-                        </VerticalStackLayout>
+                        <Label Text="Why" Style="{StaticResource EyebrowLabel}" FontSize="8" />
+                        <Label
+                            Text="{Binding WhyText}"
+                            Style="{StaticResource CaptionLabel}"
+                            LineBreakMode="WordWrap"
+                            Margin="0,-5,0,0" />
 
                         <BoxView HeightRequest="1" Opacity="0.15"
                                  BackgroundColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
 
-                        <VerticalStackLayout Spacing="3">
-                            <Label Text="HOW" Style="{StaticResource EyebrowLabel}" FontSize="8" />
-                            <Label
-                                Text="{Binding CuesText}"
-                                Style="{StaticResource CaptionLabel}"
-                                LineBreakMode="WordWrap" />
-                        </VerticalStackLayout>
+                        <Label Text="How" Style="{StaticResource EyebrowLabel}" FontSize="8" />
+                        <Label
+                            Text="{Binding CuesText}"
+                            Style="{StaticResource CaptionLabel}"
+                            LineBreakMode="WordWrap"
+                            Margin="0,-5,0,0" />
 
                         <VerticalStackLayout Spacing="3" IsVisible="{Binding HasQuickTips}">
                             <BoxView HeightRequest="1" Opacity="0.15"
                                      BackgroundColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                            <Label Text="TIPS" Style="{StaticResource EyebrowLabel}" FontSize="8" />
+                            <Label Text="Tips" Style="{StaticResource EyebrowLabel}" FontSize="8" />
                             <Label
                                 Text="{Binding QuickTipsText}"
                                 Style="{StaticResource CaptionLabel}"
@@ -171,7 +169,7 @@
                                     VerticalOptions="Center" />
                             </Border>
                             <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                <Label Text="VIDEO" Style="{StaticResource EyebrowLabel}" FontSize="8" />
+                                <Label Text="Video" Style="{StaticResource EyebrowLabel}" FontSize="8" />
                                 <Label
                                     Text="{Binding VideoUrl}"
                                     Style="{StaticResource CaptionLabel}"
@@ -182,49 +180,46 @@
                         <BoxView HeightRequest="1" Opacity="0.15"
                                  BackgroundColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
 
-                        <VerticalStackLayout Spacing="1">
-                            <Label Text="PREVIOUS" Style="{StaticResource EyebrowLabel}" FontSize="8" />
-                            <Label
-                                Text="{Binding PreviousText}"
-                                Style="{StaticResource WorkoutInfoValue}"
-                                FontSize="12"
-                                LineBreakMode="TailTruncation" />
-                        </VerticalStackLayout>
+                        <Label Text="Previous" Style="{StaticResource EyebrowLabel}" FontSize="8" />
+                        <Label
+                            Text="{Binding PreviousText}"
+                            Style="{StaticResource WorkoutInfoValue}"
+                            FontSize="12"
+                            LineBreakMode="TailTruncation"
+                            Margin="0,-5,0,0" />
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Strength inputs -->
-                <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8" IsVisible="{Binding UsesStrengthMetrics}">
-                    <VerticalStackLayout Grid.Column="0" Spacing="4">
-                        <Label Text="SETS" Style="{StaticResource EyebrowLabel}" FontSize="8" />
-                        <Entry
-                            Text="{Binding LoggedSetsText, Mode=TwoWay}"
-                            Keyboard="Numeric"
-                            MinimumHeightRequest="44"
-                            HeightRequest="44"
-                            FontSize="14" />
-                    </VerticalStackLayout>
+                <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8" RowDefinitions="Auto, Auto" RowSpacing="4" IsVisible="{Binding UsesStrengthMetrics}">
+                    <Label Grid.Row="0" Grid.Column="0" Text="Sets" Style="{StaticResource EyebrowLabel}" FontSize="8" />
+                    <Entry
+                        Grid.Row="1" Grid.Column="0"
+                        Text="{Binding LoggedSetsText, Mode=TwoWay}"
+                        Keyboard="Numeric"
+                        MinimumHeightRequest="44"
+                        HeightRequest="44"
+                        FontSize="14" />
 
-                    <VerticalStackLayout Grid.Column="1" Spacing="4">
-                        <Label Text="REPS" Style="{StaticResource EyebrowLabel}" FontSize="8" />
-                        <Entry
-                            Text="{Binding LoggedRepsText, Mode=TwoWay}"
-                            Keyboard="Numeric"
-                            MinimumHeightRequest="44"
-                            HeightRequest="44"
-                            FontSize="14" />
-                    </VerticalStackLayout>
+                    <Label Grid.Row="0" Grid.Column="1" Text="Reps" Style="{StaticResource EyebrowLabel}" FontSize="8" />
+                    <Entry
+                        Grid.Row="1" Grid.Column="1"
+                        Text="{Binding LoggedRepsText, Mode=TwoWay}"
+                        Keyboard="Numeric"
+                        MinimumHeightRequest="44"
+                        HeightRequest="44"
+                        FontSize="14" />
 
-                    <VerticalStackLayout Grid.Column="2" Spacing="4" IsVisible="{Binding UsesWeight}">
-                        <Label Text="KG" Style="{StaticResource EyebrowLabel}" FontSize="8" />
-                        <Entry
-                            Text="{Binding LoggedWeightText, Mode=TwoWay}"
-                            Placeholder="0"
-                            Keyboard="Numeric"
-                            MinimumHeightRequest="44"
-                            HeightRequest="44"
-                            FontSize="14" />
-                    </VerticalStackLayout>
+                    <Label Grid.Row="0" Grid.Column="2" Text="kg" Style="{StaticResource EyebrowLabel}" FontSize="8" IsVisible="{Binding UsesWeight}" />
+                    <Entry
+                        Grid.Row="1" Grid.Column="2"
+                        Text="{Binding LoggedWeightText, Mode=TwoWay}"
+                        Placeholder="0"
+                        Keyboard="Numeric"
+                        MinimumHeightRequest="44"
+                        HeightRequest="44"
+                        FontSize="14"
+                        IsVisible="{Binding UsesWeight}" />
                 </Grid>
 
                 <!-- Duration input -->

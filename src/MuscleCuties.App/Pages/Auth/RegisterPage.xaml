@@ -1,148 +1,116 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <ContentPage
+    x:Class="MuscleCuties.App.Pages.Auth.RegisterPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Auth;assembly=MuscleCuties.Core"
-    x:Class="MuscleCuties.App.Pages.Auth.RegisterPage"
     x:DataType="vm:RegisterViewModel"
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="28,48,28,32"
+            Padding="24,36,24,32"
             Spacing="0"
-            VerticalOptions="Center"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="640">
+            MaximumWidthRequest="520">
 
             <sharedControls:ThemeAwareBrandLogoImage
-                Style="{StaticResource BrandLogoImage}"
-                SemanticProperties.Description="MuscleCuties logo"
-                Margin="0,0,0,22" />
-
-            <Label
-                Text="Create Account"
-                Style="{StaticResource Headline}"
+                WidthRequest="132"
+                HeightRequest="72"
                 HorizontalOptions="Center"
-                Margin="0,0,0,6" />
+                Aspect="AspectFit"
+                SemanticProperties.Description="MuscleCuties" />
 
-            <Label
-                Text="Start your journey today"
-                Style="{StaticResource MutedLabel}"
-                HorizontalOptions="Center"
-                HorizontalTextAlignment="Center"
-                Margin="0,0,0,32" />
+            <Label Text="Create your account" Style="{StaticResource Headline}" Margin="0,20,0,8" />
+            <Label Text="One profile, shaped around you." Style="{StaticResource MutedLabel}" Margin="0,0,0,28" />
 
-            <Border Style="{StaticResource CardPrimary}" Padding="24">
-                <VerticalStackLayout Spacing="14">
-
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Email" Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
-                            <Entry
-                                AutomationId="RegisterEmail"
-                                Placeholder="name@example.com"
-                                Text="{Binding Email}"
-                                Keyboard="Email"
-                                ReturnType="Next" />
-                        </Border>
-                    </VerticalStackLayout>
-
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Password" Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
-                            <Entry
-                                AutomationId="RegisterPassword"
-                                Placeholder="Create password"
-                                Text="{Binding Password}"
-                                IsPassword="True"
-                                ReturnType="Next" />
-                        </Border>
-                    </VerticalStackLayout>
-
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Confirm password" Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
-                            <Entry
-                                AutomationId="RegisterConfirmPassword"
-                                Placeholder="Confirm password"
-                                Text="{Binding ConfirmPassword}"
-                                IsPassword="True"
-                                ReturnType="Done"
-                                ReturnCommand="{Binding RegisterCommand}" />
-                        </Border>
-                    </VerticalStackLayout>
-
-                    <Label
-                        Text="{Binding ErrorMessage}"
-                        Style="{StaticResource ErrorLabel}"
-                        IsVisible="{Binding ErrorMessage,
-                                    Converter={StaticResource StringToBoolConverter}}" />
-
-                    <Button
-                        Text="Create Account"
-                        Command="{Binding RegisterCommand}"
-                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                        Margin="0,6,0,0" />
-
-                    <Grid ColumnDefinitions="*, Auto, *" ColumnSpacing="10" Margin="0,2">
-                        <BoxView
-                            HeightRequest="1"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource InputStrokeDark}}"
-                            VerticalOptions="Center" />
-                        <Label
-                            Grid.Column="1"
-                            Text="or"
-                            Style="{StaticResource CaptionLabel}"
-                            VerticalOptions="Center" />
-                        <BoxView
-                            Grid.Column="2"
-                            HeightRequest="1"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource InputStrokeDark}}"
-                            VerticalOptions="Center" />
-                    </Grid>
-
-                    <Button
-                        Text="{Binding PlatformRegisterButtonText}"
-                        Command="{Binding SignInWithPlatformCommand}"
-                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                        TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
-                        BorderColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                        BorderWidth="1" />
-
-                    <ActivityIndicator
-                        IsRunning="{Binding IsBusy}"
-                        IsVisible="{Binding IsBusy}"
-                        HorizontalOptions="Center"
-                        SemanticProperties.Description="Creating account" />
-
+            <VerticalStackLayout Spacing="18">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Email" Style="{StaticResource FormFieldLabel}" />
+                    <Border Style="{StaticResource InputContainer}">
+                        <Entry
+                            AutomationId="RegisterEmail"
+                            Placeholder="name@example.com"
+                            Text="{Binding Email}"
+                            Keyboard="Email"
+                            ReturnType="Next"
+                            SemanticProperties.Description="Email address" />
+                    </Border>
                 </VerticalStackLayout>
-            </Border>
+
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Password" Style="{StaticResource FormFieldLabel}" />
+                    <Border Style="{StaticResource InputContainer}">
+                        <Entry
+                            AutomationId="RegisterPassword"
+                            Placeholder="At least 8 characters"
+                            Text="{Binding Password}"
+                            IsPassword="True"
+                            ReturnType="Next"
+                            SemanticProperties.Description="Create password" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Confirm password" Style="{StaticResource FormFieldLabel}" />
+                    <Border Style="{StaticResource InputContainer}">
+                        <Entry
+                            AutomationId="RegisterConfirmPassword"
+                            Placeholder="Repeat password"
+                            Text="{Binding ConfirmPassword}"
+                            IsPassword="True"
+                            ReturnType="Done"
+                            ReturnCommand="{Binding RegisterCommand}"
+                            SemanticProperties.Description="Confirm password" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <Label
+                    Text="{Binding ErrorMessage}"
+                    Style="{StaticResource ErrorLabel}"
+                    IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+                <Button
+                    Text="Create account"
+                    Command="{Binding RegisterCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+
+                <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="12" Margin="0,2">
+                    <BoxView VerticalOptions="Center" />
+                    <Label Grid.Column="1" Text="or" Style="{StaticResource CaptionLabel}" />
+                    <BoxView Grid.Column="2" VerticalOptions="Center" />
+                </Grid>
+
+                <Button
+                    Text="{Binding PlatformRegisterButtonText}"
+                    Command="{Binding SignInWithPlatformCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                    TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                    BorderColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                    BorderWidth="1" />
+
+                <ActivityIndicator
+                    IsRunning="{Binding IsBusy}"
+                    IsVisible="{Binding IsBusy}"
+                    HorizontalOptions="Center"
+                    SemanticProperties.Description="Creating account" />
+            </VerticalStackLayout>
 
             <HorizontalStackLayout
                 HorizontalOptions="Center"
                 Spacing="4"
-                Margin="0,16,0,0"
+                Margin="0,24,0,0"
                 MinimumHeightRequest="44"
-                SemanticProperties.Description="Already have an account? Log in">
+                SemanticProperties.Description="Return to login">
                 <HorizontalStackLayout.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding GoBackCommand}" />
                 </HorizontalStackLayout.GestureRecognizers>
-                <Label
-                    Text="Already have an account?"
-                    Style="{StaticResource CaptionLabel}"
-                    VerticalOptions="Center" />
-                <Label
-                    Text="Log in"
-                    Style="{StaticResource AccentLabel}"
-                    FontSize="13"
-                    VerticalOptions="Center" />
+                <Label Text="Already have an account?" Style="{StaticResource MutedLabel}" VerticalOptions="Center" />
+                <Label Text="Log in" Style="{StaticResource AccentLabel}" VerticalOptions="Center" />
             </HorizontalStackLayout>
-
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

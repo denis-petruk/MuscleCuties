@@ -422,7 +422,7 @@ public partial class NutritionViewModel
         {
             LoggedMealId = meal.Id,
             Time = meal.LoggedAt.ToString("h:mm tt", CultureInfo.CurrentCulture),
-            MealType = meal.MealType.ToString().ToUpperInvariant(),
+            MealType = meal.MealType.ToString(),
             Name = BuildMealCardName(entries),
             CaloriesText = $"{macros.Calories:N0} kcal",
             MacrosText = macros.ToMacroText(),
