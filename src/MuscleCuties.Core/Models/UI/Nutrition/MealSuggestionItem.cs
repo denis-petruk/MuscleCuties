@@ -23,9 +23,9 @@ public class MealSuggestionItem
 
     public string StyleLabel => Style switch
     {
-        MealStyle.Bowl => "BOWL",
-        MealStyle.Complex => "COMPLEX DISH",
-        _ => "PLATED"
+        MealStyle.Bowl => "Bowl",
+        MealStyle.Complex => "Complex dish",
+        _ => "Plated"
     };
 
     public string StyleDescription => Style switch
@@ -108,18 +108,18 @@ public class MealSuggestionComponentItem
     public float Carbs { get; set; }
     public float Fats { get; set; }
 
-    public string TypeLabel => ComponentType.ToString().ToUpperInvariant();
+    public string TypeLabel => ComponentType.ToString();
 
     public string RoleLabel => Role switch
     {
-        ComponentRole.CarbBase => "BASE",
-        ComponentRole.ProteinBase => "PROTEIN",
-        ComponentRole.SideSalad => "SIDE SALAD",
-        ComponentRole.InDishVegetable => "IN DISH",
-        ComponentRole.SauceOnSide => "ON SIDE",
-        ComponentRole.SaucePairedProtein => "WITH PROTEIN",
-        ComponentRole.InDishSauce => "MIXED IN",
-        _ => "ITEM"
+        ComponentRole.CarbBase => "Base",
+        ComponentRole.ProteinBase => "Protein",
+        ComponentRole.SideSalad => "Side salad",
+        ComponentRole.InDishVegetable => "In dish",
+        ComponentRole.SauceOnSide => "On side",
+        ComponentRole.SaucePairedProtein => "With protein",
+        ComponentRole.InDishSauce => "Mixed in",
+        _ => "Item"
     };
 
     public string PortionText => $"{Grams:N0}g";

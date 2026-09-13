@@ -13,13 +13,9 @@
 
             <VerticalStackLayout Grid.Column="0" Spacing="5" VerticalOptions="Center">
                 <Label
-                    Text="ACTIVE PLAN"
-                    Style="{StaticResource EyebrowLabel}"
-                    CharacterSpacing="1.2" />
-                <Label
                     Text="{Binding PlanTitle, Source={x:Reference Root}}"
                     Style="{StaticResource SectionTitle}"
-                    FontSize="21" />
+                    FontSize="20" />
                 <Label
                     Text="{Binding SummaryText, Source={x:Reference Root}}"
                     Style="{StaticResource MutedLabel}"

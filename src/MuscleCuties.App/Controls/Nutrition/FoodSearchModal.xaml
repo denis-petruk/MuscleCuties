@@ -32,12 +32,11 @@
                     Spacing="12">
 
                     <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                        <VerticalStackLayout Spacing="6">
-                            <Label
-                                Text="Choose food"
-                                Style="{StaticResource SubHeadline}"
-                                FontSize="24" />
-                        </VerticalStackLayout>
+                        <Label
+                            Text="Choose food"
+                            Style="{StaticResource SubHeadline}"
+                            FontSize="24"
+                            VerticalOptions="Center" />
                         <Border
                             Grid.Column="1"
                             WidthRequest="44"
@@ -72,19 +71,17 @@
                     Grid.Row="1"
                     ItemsSource="{Binding FoodSearchResults}"
                     SelectionMode="None"
-                    VerticalScrollBarVisibility="Always"
+                    VerticalScrollBarVisibility="Default"
                     Margin="20,0,20,8">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="nutritionModels:FoodSearchResultItem">
                             <Border
-                                StrokeShape="RoundRectangle 18"
-                                StrokeThickness="0"
-                                Padding="18,14"
-                                Margin="0,0,0,12"
+                                StrokeShape="RoundRectangle 14"
+                                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                                StrokeThickness="1"
+                                Padding="16,14"
+                                Margin="0,0,0,10"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
-                                <Border.Shadow>
-                                    <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,3" Radius="12" Opacity="0.07" />
-                                </Border.Shadow>
 
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
@@ -159,16 +156,13 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
-                <Grid
+                <Button
                     Grid.Row="2"
-                    Padding="20,4,20,20"
-                    IsVisible="{Binding ShowBrowseMoreFoods}">
-                    <Button
-                        Text="{Binding BrowseMoreFoodsButtonText}"
-                        Command="{Binding BrowseMoreFoodsCommand}"
-                        HeightRequest="52"
-                        CornerRadius="18" />
-                </Grid>
+                    Text="{Binding BrowseMoreFoodsButtonText}"
+                    Command="{Binding BrowseMoreFoodsCommand}"
+                    MinimumHeightRequest="52"
+                    Margin="20,4,20,20"
+                    IsVisible="{Binding ShowBrowseMoreFoods}" />
             </Grid>
         </Border>
     </Grid>

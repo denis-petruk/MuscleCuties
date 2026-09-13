@@ -15,24 +15,25 @@
     <Grid>
         <ScrollView>
             <VerticalStackLayout
-                Padding="20,56,20,32"
-                Spacing="14"
+                Padding="20,40,20,32"
+                Spacing="16"
                 HorizontalOptions="Fill"
                 MaximumWidthRequest="640">
 
-                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                        <Label
-                            Text="{Binding CurrentPhaseName, StringFormat='{0} plan'}"
-                            Style="{StaticResource EyebrowLabel}"
-                            CharacterSpacing="1.2" />
-                        <Label
-                            Text="{Binding WeekTitle}"
-                            Style="{StaticResource SubHeadline}" />
-                    </VerticalStackLayout>
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12" RowDefinitions="Auto, Auto" RowSpacing="2">
+                    <Label
+                        Grid.Row="0" Grid.Column="0"
+                        Text="{Binding WeekTitle}"
+                        Style="{StaticResource SubHeadline}"
+                        VerticalOptions="Center" />
+                    <Label
+                        Grid.Row="1" Grid.Column="0"
+                        Text="{Binding CurrentPhaseName, StringFormat='{0} plan'}"
+                        Style="{StaticResource MutedLabel}"
+                        VerticalOptions="Center" />
 
                     <Border
-                        Grid.Column="1"
+                        Grid.Column="1" Grid.RowSpan="2"
                         WidthRequest="44"
                         HeightRequest="44"
                         StrokeShape="RoundRectangle 22"
@@ -68,21 +69,13 @@
                     HasMultipleActivities="{Binding FeaturedWorkoutHasMultipleActivities}"
                     StartCommand="{Binding StartFeaturedWorkoutCommand}" />
 
-                <Grid
-                    ColumnDefinitions="*, Auto"
-                    ColumnSpacing="12"
-                    Margin="0,6,0,0">
-                    <VerticalStackLayout Grid.Column="0" Spacing="2">
-                        <Label
-                            Text="ACTIVITY SCHEDULE"
-                            Style="{StaticResource EyebrowLabel}"
-                            CharacterSpacing="1.2" />
-                        <Label
-                            Text="{Binding PlanSummaryText}"
-                            Style="{StaticResource MutedLabel}"
-                            FontSize="13" />
-                    </VerticalStackLayout>
-                </Grid>
+                <VerticalStackLayout Spacing="2" Margin="0,6,0,0">
+                    <Label Text="Activity schedule" Style="{StaticResource SectionTitle}" />
+                    <Label
+                        Text="{Binding PlanSummaryText}"
+                        Style="{StaticResource MutedLabel}"
+                        FontSize="13" />
+                </VerticalStackLayout>
 
                 <CollectionView
                     ItemsSource="{Binding Filters}"
@@ -137,36 +130,38 @@
                     Margin="0,24"
                     SemanticProperties.Description="Loading workouts" />
 
-                <Grid MinimumHeightRequest="420">
+                <Grid>
                     <Border
                         Style="{StaticResource CardPrimary}"
                         Padding="16"
                         IsVisible="{Binding HasNoWorkouts}"
                         VerticalOptions="Start">
-                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="14">
-                            <VerticalStackLayout Grid.Column="0" Spacing="4" VerticalOptions="Center">
-                                <Label
-                                    Text="{Binding EmptyWorkoutsTitle}"
-                                    Style="{StaticResource CardTitle}"
-                                    FontSize="15" />
-                                <Label
-                                    Text="{Binding EmptyWorkoutsSubtitle}"
-                                    Style="{StaticResource CaptionLabel}" />
-                            </VerticalStackLayout>
+                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="14" RowDefinitions="Auto, Auto" RowSpacing="4">
+                            <Label
+                                Grid.Row="0" Grid.Column="0"
+                                Text="{Binding EmptyWorkoutsTitle}"
+                                Style="{StaticResource CardTitle}"
+                                FontSize="15"
+                                VerticalOptions="Center" />
+                            <Label
+                                Grid.Row="1" Grid.Column="0"
+                                Text="{Binding EmptyWorkoutsSubtitle}"
+                                Style="{StaticResource CaptionLabel}"
+                                VerticalOptions="Center" />
 
                             <Button
-                                Grid.Column="1"
+                                Grid.Column="1" Grid.RowSpan="2"
                                 Text="{Binding EmptyWorkoutsButtonText}"
                                 Command="{Binding EmptyWorkoutsActionCommand}"
                                 WidthRequest="118"
-                                HeightRequest="48"
-                                CornerRadius="16"
+                                MinimumHeightRequest="48"
                                 VerticalOptions="Center" />
                         </Grid>
                     </Border>
 
                     <VerticalStackLayout
                         IsVisible="{Binding HasWorkouts}"
+                        Spacing="0"
                         BindableLayout.ItemsSource="{Binding Workouts}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="workoutModels:WorkoutItem">

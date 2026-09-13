@@ -105,7 +105,7 @@
                     IsVisible="{Binding IsFoodFinderVisible}">
                     <VerticalStackLayout Spacing="3">
                         <sharedControls:IconSectionHeader
-                            Text="FIND INGREDIENT"
+                            Text="Find ingredient"
                             IconGlyph="SearchInfo24" />
                         <Label
                             Text="Name, brand, or saved food."
@@ -330,7 +330,7 @@
                     Spacing="8"
                     IsVisible="{Binding HasMealIngredients}">
                     <sharedControls:IconSectionHeader
-                        Text="INGREDIENTS"
+                        Text="Ingredients"
                         IconGlyph="BowlChopsticks24" />
                     <VerticalStackLayout
                         Spacing="0"

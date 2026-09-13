@@ -113,11 +113,11 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
     public string TodayLabel => DateTime.Today.ToString("dddd, MMM d");
 
-    public string DashboardPhaseHeaderText => $"This week · {CurrentPhase}".ToUpperInvariant();
+    public string DashboardPhaseHeaderText => $"This week · {CurrentPhase}";
 
     public string PhaseStatusText => CurrentCycleDay > 0
-        ? $"{CurrentPhase.ToString().ToUpperInvariant()} · DAY {CurrentCycleDay} / {PredictedCycleLength}"
-        : $"{CurrentPhase.ToString().ToUpperInvariant()} · START TRACKING";
+        ? $"{CurrentPhase} · Day {CurrentCycleDay} / {PredictedCycleLength}"
+        : $"{CurrentPhase} · Start tracking";
 
     public string Greetings
     {
@@ -139,11 +139,11 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
     public string PhaseBadgeText => CurrentPhase switch
     {
-        CyclePhase.Menstrual => FormatPhaseBadge("MENSTRUAL PHASE"),
-        CyclePhase.Follicular => FormatPhaseBadge("FOLLICULAR PHASE"),
-        CyclePhase.Ovulatory => FormatPhaseBadge("OVULATORY PHASE"),
-        CyclePhase.Luteal => FormatPhaseBadge("LUTEAL PHASE"),
-        _ => "UNKNOWN PHASE"
+        CyclePhase.Menstrual => FormatPhaseBadge("Menstrual phase"),
+        CyclePhase.Follicular => FormatPhaseBadge("Follicular phase"),
+        CyclePhase.Ovulatory => FormatPhaseBadge("Ovulatory phase"),
+        CyclePhase.Luteal => FormatPhaseBadge("Luteal phase"),
+        _ => "Unknown phase"
     };
 
     public string PhaseTitle => CurrentPhase switch
@@ -186,7 +186,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
     };
 
     public string PhaseTimeLeftValue => CurrentCycleDay <= 0 ? "--" : $"{CalculateDaysLeftInCurrentPhase()}d";
-    public string PhaseTimeLeftLabel => CurrentPhase is CyclePhase.Ovulatory ? "PEAK LEFT" : "PHASE LEFT";
+    public string PhaseTimeLeftLabel => CurrentPhase is CyclePhase.Ovulatory ? "Peak left" : "Phase left";
     public string NextPeriodValue => DaysUntilPeriod <= 0 ? "Today" : $"{DaysUntilPeriod}d";
 
     public string LoadAdjustmentText => CurrentPhase switch
@@ -426,7 +426,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
     private string FormatPhaseBadge(string phaseName)
     {
-        return CurrentCycleDay > 0 ? $"DAY {CurrentCycleDay} · {phaseName}" : phaseName;
+        return CurrentCycleDay > 0 ? $"Day {CurrentCycleDay} · {phaseName}" : phaseName;
     }
 
     private int CalculateDaysLeftInCurrentPhase()
