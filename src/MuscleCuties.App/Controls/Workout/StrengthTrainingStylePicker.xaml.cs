@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Windows.Input;
 
 namespace MuscleCuties.App.Controls.Workout;
@@ -9,6 +10,11 @@ public partial class StrengthTrainingStylePicker : ContentView
         typeof(ICommand),
         typeof(StrengthTrainingStylePicker));
 
+    public static readonly BindableProperty ItemsSourceProperty = BindableProperty.Create(
+        nameof(ItemsSource),
+        typeof(IEnumerable),
+        typeof(StrengthTrainingStylePicker));
+
     public StrengthTrainingStylePicker()
     {
         InitializeComponent();
@@ -18,5 +24,11 @@ public partial class StrengthTrainingStylePicker : ContentView
     {
         get => (ICommand?)GetValue(SelectStyleCommandProperty);
         set => SetValue(SelectStyleCommandProperty, value);
+    }
+
+    public IEnumerable? ItemsSource
+    {
+        get => (IEnumerable?)GetValue(ItemsSourceProperty);
+        set => SetValue(ItemsSourceProperty, value);
     }
 }

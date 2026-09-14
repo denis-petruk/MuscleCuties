@@ -2,10 +2,9 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using MuscleCuties.App.Pages.Auth;
 using MuscleCuties.App.Pages.Cycle;
-using MuscleCuties.App.Pages.Onboarding;
 using MuscleCuties.App.Pages.Dashboard;
+using MuscleCuties.App.Pages.Onboarding;
 using MuscleCuties.App.Pages.Profile;
-using MuscleCuties.App.Pages.Workout;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 
@@ -13,6 +12,8 @@ namespace MuscleCuties.App;
 
 public partial class AppShell : Shell
 {
+    private const double NavigationBudgetMilliseconds = 100;
+
     private readonly IServiceProvider _services;
     private readonly ILogger<AppShell> _logger;
     private readonly Stopwatch _navigationStopwatch = new();
@@ -68,11 +69,24 @@ public partial class AppShell : Shell
     {
         base.OnNavigated(args);
         _navigationStopwatch.Stop();
-        _logger.LogInformation(
-            "Navigation presented in {ElapsedMilliseconds} ms. Current={CurrentRoute}, Source={Source}.",
-            _navigationStopwatch.ElapsedMilliseconds,
-            args.Current?.Location.OriginalString,
-            args.Source);
+        var elapsedMilliseconds = _navigationStopwatch.Elapsed.TotalMilliseconds;
+        if (elapsedMilliseconds > NavigationBudgetMilliseconds)
+        {
+            _logger.LogWarning(
+                "Navigation exceeded the {BudgetMilliseconds} ms budget: {ElapsedMilliseconds:F1} ms. Current={CurrentRoute}, Source={Source}.",
+                NavigationBudgetMilliseconds,
+                elapsedMilliseconds,
+                args.Current?.Location.OriginalString,
+                args.Source);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "Navigation presented in {ElapsedMilliseconds:F1} ms. Current={CurrentRoute}, Source={Source}.",
+                elapsedMilliseconds,
+                args.Current?.Location.OriginalString,
+                args.Source);
+        }
 
         if (_isResettingProfileRoute ||
             !IsTabSwitch(args.Source) ||
@@ -144,6 +158,11 @@ public partial class AppShell : Shell
         return source is ShellNavigationSource.ShellItemChanged or
             ShellNavigationSource.ShellSectionChanged or
             ShellNavigationSource.ShellContentChanged;
+    }
+
+    internal void MarkAuthenticationVerified()
+    {
+        _authVerified = true;
     }
 
     private async Task VerifyAuthenticatedNavigationAsync(

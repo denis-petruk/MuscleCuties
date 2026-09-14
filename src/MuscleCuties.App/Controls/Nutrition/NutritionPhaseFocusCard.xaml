@@ -14,57 +14,59 @@
         StrokeThickness="1"
         Padding="22,20"
         MinimumHeightRequest="138">
-        <VerticalStackLayout Spacing="14">
-            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
-                    <BoxView
-                        WidthRequest="7"
-                        HeightRequest="7"
-                        CornerRadius="3.5"
-                        BackgroundColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                        VerticalOptions="Center" />
-                    <Label
-                        Text="{Binding PhaseFocusBadgeText}"
-                        TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                        FontSize="10"
-                        FontAttributes="Bold"
-                        VerticalOptions="Center" />
-                </HorizontalStackLayout>
-
-                <Border
-                    Grid.Column="1"
-                    WidthRequest="42"
-                    HeightRequest="42"
-                    StrokeShape="RoundRectangle 21"
-                    BackgroundColor="{StaticResource WhiteOverlaySubtle}"
-                    Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                    StrokeThickness="1"
-                    VerticalOptions="Center"
-                    SemanticProperties.Description="Current cycle phase icon">
-                    <Image
-                        Source="{Binding CurrentPhaseIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                        WidthRequest="17"
-                        HeightRequest="17"
-                        Aspect="AspectFit"
-                        HorizontalOptions="Center"
-                        VerticalOptions="Center" />
-                </Border>
-            </Grid>
-
-            <VerticalStackLayout Spacing="5">
+        <Grid RowDefinitions="Auto, 14, Auto, 5, Auto" ColumnDefinitions="*, Auto" ColumnSpacing="12">
+            <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="8" VerticalOptions="Center">
+                <BoxView
+                    WidthRequest="7"
+                    HeightRequest="7"
+                    CornerRadius="3.5"
+                    BackgroundColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                    VerticalOptions="Center" />
                 <Label
-                    Text="{Binding PhaseFocusTitle}"
+                    Text="{Binding PhaseFocusBadgeText}"
                     TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                    FontSize="24"
+                    FontSize="10"
                     FontAttributes="Bold"
-                    LineBreakMode="WordWrap" />
-                <Label
-                    Text="{Binding PhaseFocusCopy}"
-                    TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                    FontSize="16"
-                    FontAttributes="Bold"
-                    LineBreakMode="WordWrap" />
-            </VerticalStackLayout>
-        </VerticalStackLayout>
+                    VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <Border
+                Grid.Row="0"
+                Grid.Column="1"
+                Grid.RowSpan="5"
+                WidthRequest="42"
+                HeightRequest="42"
+                StrokeShape="RoundRectangle 21"
+                BackgroundColor="{StaticResource WhiteOverlaySubtle}"
+                Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                StrokeThickness="1"
+                VerticalOptions="Start"
+                SemanticProperties.Description="Current cycle phase icon">
+                <Image
+                    Source="{Binding CurrentPhaseIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                    WidthRequest="17"
+                    HeightRequest="17"
+                    Aspect="AspectFit"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+            </Border>
+
+            <Label
+                Grid.Row="2"
+                Grid.Column="0"
+                Text="{Binding PhaseFocusTitle}"
+                TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                FontSize="24"
+                FontAttributes="Bold"
+                LineBreakMode="WordWrap" />
+            <Label
+                Grid.Row="4"
+                Grid.Column="0"
+                Text="{Binding PhaseFocusCopy}"
+                TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                FontSize="16"
+                FontAttributes="Bold"
+                LineBreakMode="WordWrap" />
+        </Grid>
     </Border>
 </ContentView>

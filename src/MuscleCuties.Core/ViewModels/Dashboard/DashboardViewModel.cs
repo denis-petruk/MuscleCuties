@@ -173,8 +173,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
         _ => string.Empty
     };
 
-    public string PhaseIllustrationSource => CyclePhaseAssets.GetVisualSource(CurrentPhase);
-    public bool PhaseIllustrationUsesAnimation => CyclePhaseAssets.UsesAnimatedVisual(CurrentPhase);
+    public string PhaseIconSource => CyclePhaseAssets.GetIconSource(CurrentPhase);
 
     public int CurrentPhaseColumn => CurrentPhase switch
     {
@@ -274,25 +273,30 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
         IsBusy = true;
         try
         {
-            using var scope = _scopeFactory.CreateScope();
-            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-            var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
-            var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
-            var workoutService = scope.ServiceProvider.GetRequiredService<IWorkoutService>();
-            var progressSummaryService = scope.ServiceProvider.GetRequiredService<IProgressSummaryService>();
-            var dashboardPlanner = scope.ServiceProvider.GetRequiredService<IDashboardPlanner>();
-            var readinessRepository = scope.ServiceProvider.GetRequiredService<IReadinessRepository>();
-
-            var userId = await DataLoadScheduler.RunAsync(authService.GetCurrentUserIdAsync);
-            var profile = await DataLoadScheduler.RunAsync(() => userRepository.GetProfileAsync(userId));
-            DisplayName = GetFirstName(profile?.Name);
+            var userId = await RunScopedAsync(services =>
+                services.GetRequiredService<IAuthService>().GetCurrentUserIdAsync());
 
             var today = DateOnly.FromDateTime(DateTime.Today);
-            var readinessLog = await DataLoadScheduler.RunAsync(() => readinessRepository.GetForAsync(userId, today));
+            var profileTask = RunScopedAsync(services =>
+                services.GetRequiredService<IUserRepository>().GetProfileAsync(userId));
+            var readinessTask = RunScopedAsync(services =>
+                services.GetRequiredService<IReadinessRepository>().GetForAsync(userId, today));
+            var predictionTask = RunScopedAsync(services =>
+                services.GetRequiredService<ICycleService>().GetPredictionAsync(userId));
+            var consumedTask = RunScopedAsync(services =>
+                services.GetRequiredService<INutritionService>()
+                    .GetConsumedTotalsAsync(userId, DateTime.Today));
+            var progressTask = RunScopedAsync(services =>
+                services.GetRequiredService<IProgressSummaryService>()
+                    .GetSummaryAsync(userId, DateTime.Today));
+
+            var profile = await profileTask;
+            DisplayName = GetFirstName(profile?.Name);
+
+            var readinessLog = await readinessTask;
             NeedsDailyCheckIn = readinessLog is null;
 
-            var prediction = await DataLoadScheduler.RunAsync(() => cycleService.GetPredictionAsync(userId)) ??
+            var prediction = await predictionTask ??
                              new CyclePrediction
                              {
                                  CurrentPhase = CyclePhase.Follicular,
@@ -308,30 +312,34 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
             RefreshPhaseCardColors();
             NotifyPhaseProperties();
 
-            var (calories, protein, carbs, fats) =
-                await DataLoadScheduler.RunAsync(() =>
-                    nutritionService.CalculateDailyTargetsAsync(userId, CurrentPhase));
+            var targetsTask = RunScopedAsync(services =>
+                services.GetRequiredService<INutritionService>()
+                    .CalculateDailyTargetsAsync(userId, CurrentPhase));
+            var workoutTask = RunScopedAsync(services =>
+                services.GetRequiredService<IWorkoutService>()
+                    .GetTodaysSummaryAsync(userId, CurrentPhase, DateTime.Today));
+
+            var (calories, protein, carbs, fats) = await targetsTask;
             TargetCalories = calories;
             TargetProtein = protein;
             TargetCarbs = carbs;
             TargetFats = fats;
 
-            var consumed = await DataLoadScheduler.RunAsync(() =>
-                nutritionService.GetConsumedTotalsAsync(userId, DateTime.Today));
+            var consumed = await consumedTask;
             ConsumedCalories = consumed.Calories;
             ConsumedProtein = consumed.Protein;
             ConsumedCarbs = consumed.Carbs;
             ConsumedFats = consumed.Fats;
 
-            var progress = await DataLoadScheduler.RunAsync(() =>
-                progressSummaryService.GetSummaryAsync(userId, DateTime.Today));
+            var progress = await progressTask;
             WorkoutStreakDays = progress.WorkoutStreakDays;
             NutritionStreakDays = progress.NutritionStreakDays;
 
-            var workoutSummary = await DataLoadScheduler.RunAsync(() =>
-                workoutService.GetTodaysSummaryAsync(userId, CurrentPhase, DateTime.Today));
+            var workoutSummary = await workoutTask;
             ApplyWorkoutSummary(workoutSummary);
 
+            using var plannerScope = _scopeFactory.CreateScope();
+            var dashboardPlanner = plannerScope.ServiceProvider.GetRequiredService<IDashboardPlanner>();
             ApplySupportSummary(dashboardPlanner.BuildSupportSummary(
                 prediction,
                 CurrentPhase,
@@ -350,6 +358,15 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
         }
     }
 
+    private Task<T> RunScopedAsync<T>(Func<IServiceProvider, Task<T>> operation)
+    {
+        return DataLoadScheduler.RunAsync(async () =>
+        {
+            using var scope = _scopeFactory.CreateScope();
+            return await operation(scope.ServiceProvider);
+        });
+    }
+
     private void NotifyPhaseProperties()
     {
         OnPropertyChanged(nameof(PhaseLabel));
@@ -359,8 +376,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
         OnPropertyChanged(nameof(PhaseTitle));
         OnPropertyChanged(nameof(PhaseCardTitle));
         OnPropertyChanged(nameof(PhaseShortAdvice));
-        OnPropertyChanged(nameof(PhaseIllustrationSource));
-        OnPropertyChanged(nameof(PhaseIllustrationUsesAnimation));
+        OnPropertyChanged(nameof(PhaseIconSource));
         OnPropertyChanged(nameof(CurrentPhaseColumn));
         OnPropertyChanged(nameof(PhaseTimeLeftValue));
         OnPropertyChanged(nameof(PhaseTimeLeftLabel));

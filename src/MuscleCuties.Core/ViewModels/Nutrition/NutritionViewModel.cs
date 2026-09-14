@@ -279,14 +279,14 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         IsBusy = true;
         try
         {
-            using var scope = _scopeFactory.CreateScope();
-            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
-            var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
+            var userId = await RunScopedAsync(services =>
+                services.GetRequiredService<IAuthService>().GetCurrentUserIdAsync());
 
-            var userId = await DataLoadScheduler.RunAsync(authService.GetCurrentUserIdAsync);
-            var phase = await DataLoadScheduler.RunAsync(() => cycleService.GetCurrentPhaseAsync(userId));
+            var phaseTask = RunScopedAsync(services =>
+                services.GetRequiredService<ICycleService>().GetCurrentPhaseAsync(userId));
+            var mealsTask = LoadMealsAsync(userId);
 
+            var phase = await phaseTask;
             CurrentPhase = phase;
             CurrentPhaseName = phase.ToString();
             PhaseFocusTitle = phase switch
@@ -306,8 +306,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
                 _ => string.Empty
             };
 
-            var plan = await DataLoadScheduler.RunAsync(() =>
-                nutritionService.GetDailyPlanAsync(userId, phase, DateTime.Today, BreakfastPreference));
+            var plan = await RunScopedAsync(services =>
+                services.GetRequiredService<INutritionService>()
+                    .GetDailyPlanAsync(userId, phase, DateTime.Today, BreakfastPreference));
             if (plan is not null)
             {
                 TargetCalories = plan.Calories;
@@ -319,8 +320,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
             else
             {
                 var (calories, protein, carbs, fats) =
-                    await DataLoadScheduler.RunAsync(() =>
-                        nutritionService.CalculateDailyTargetsAsync(userId, phase));
+                    await RunScopedAsync(services =>
+                        services.GetRequiredService<INutritionService>()
+                            .CalculateDailyTargetsAsync(userId, phase));
                 TargetCalories = calories;
                 TargetProtein = protein;
                 TargetCarbs = carbs;
@@ -334,7 +336,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
                     2.3f);
             }
 
-            var consumed = await LoadMealsAsync(userId);
+            var consumed = await mealsTask;
             ConsumedCalories = consumed.Calories;
             ConsumedProtein = consumed.Protein;
             ConsumedCarbs = consumed.Carbs;
@@ -348,6 +350,15 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         {
             IsBusy = false;
         }
+    }
+
+    private Task<T> RunScopedAsync<T>(Func<IServiceProvider, Task<T>> operation)
+    {
+        return DataLoadScheduler.RunAsync(async () =>
+        {
+            using var scope = _scopeFactory.CreateScope();
+            return await operation(scope.ServiceProvider);
+        });
     }
 
     private void ToggleAddFoodPanel()

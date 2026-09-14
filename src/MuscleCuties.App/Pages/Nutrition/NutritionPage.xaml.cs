@@ -12,15 +12,15 @@ public partial class NutritionPage : ContentPage
 
     public NutritionPage(NutritionViewModel vm)
     {
-        var started = Stopwatch.GetTimestamp();
         this.InitializeWithTiming(InitializeComponent);
         _viewModel = vm;
-        this.BindWithTiming(vm, started);
     }
 
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
+        if (BindingContext is null)
+            BindingContext = _viewModel;
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         this.BeginPageLoad(async () =>
@@ -28,6 +28,14 @@ public partial class NutritionPage : ContentPage
             await _viewModel.LoadDataCommand.ExecuteAsync(null);
             await LoadRequestedViewsAsync();
         });
+        this.BeginDeferredLoad(LoadDeferredCardsAsync);
+    }
+
+    private async Task LoadDeferredCardsAsync()
+    {
+        await PhaseFocusLazy.LoadIfNeededAsync(true);
+        await Task.Yield();
+        await BalanceCardLazy.LoadIfNeededAsync(true);
     }
 
     protected override void OnNavigatedFrom(NavigatedFromEventArgs args)

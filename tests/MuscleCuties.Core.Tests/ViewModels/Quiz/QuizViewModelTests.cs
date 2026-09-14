@@ -1,6 +1,7 @@
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
+using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Quiz;
@@ -230,5 +231,129 @@ public class QuizViewModelTests
 
         Assert.Equal(2, vm.Questions.Count);
         Assert.Equal(QuizQuestionType.Goal, vm.CurrentQuestion!.QuestionType);
+    }
+
+    [Fact]
+    public async Task Next_FromMaintainGoal_SkipsGoalPace()
+    {
+        var questions = CreateGoalPaceQuestions();
+        _quizService.GetOnboardingQuestionsAsync().Returns(questions);
+
+        var vm = CreateViewModel();
+        await vm.LoadQuestionsCommand.ExecuteAsync(null);
+        vm.SelectAnswerCommand.Execute(vm.CurrentAnswers.Single(answer =>
+            answer.Answer.MappedValue == (int)UserGoal.MaintainHealth));
+
+        await vm.NextCommand.ExecuteAsync(null);
+
+        Assert.Equal(QuizQuestionType.ExperienceLevel, vm.CurrentQuestion!.QuestionType);
+        Assert.Equal("2 / 2", vm.ProgressText);
+    }
+
+    [Fact]
+    public async Task Next_FromStrengthGoal_ShowsGoalPace()
+    {
+        var questions = CreateGoalPaceQuestions();
+        _quizService.GetOnboardingQuestionsAsync().Returns(questions);
+
+        var vm = CreateViewModel();
+        await vm.LoadQuestionsCommand.ExecuteAsync(null);
+        vm.SelectAnswerCommand.Execute(vm.CurrentAnswers.Single(answer =>
+            answer.Answer.MappedValue == (int)UserGoal.Strength));
+
+        await vm.NextCommand.ExecuteAsync(null);
+
+        Assert.Equal(QuizQuestionType.GoalPace, vm.CurrentQuestion!.QuestionType);
+        Assert.Equal("2 / 3", vm.ProgressText);
+    }
+
+    [Fact]
+    public async Task PhasePair_RecordsPainAndEnergyAsTwoResponses()
+    {
+        var questions = CreatePhasePairQuestions();
+        _quizService.GetOnboardingQuestionsAsync().Returns(questions);
+        _authService.GetCurrentUserIdAsync().Returns(1);
+
+        var vm = CreateViewModel();
+        await vm.LoadQuestionsCommand.ExecuteAsync(null);
+        vm.PainSliderValue = 1;
+        vm.EnergySliderValue = 4;
+
+        await vm.NextCommand.ExecuteAsync(null);
+
+        await _quizService.Received(1).SaveAnswersAsync(1,
+            Arg.Is<List<UserQuizResponse>>(responses =>
+                responses.Count == 2 &&
+                responses.Any(response => response.QuizAnswerId == 15) &&
+                responses.Any(response => response.QuizAnswerId == 24)));
+        Assert.True(vm.IsCurrentQuestionPhasePair);
+        Assert.Equal("Severe", vm.PainSliderLabel);
+        Assert.Equal("Strong", vm.EnergySliderLabel);
+    }
+
+    private static List<QuizQuestion> CreateGoalPaceQuestions()
+    {
+        return
+        [
+            new QuizQuestion
+            {
+                Id = 10,
+                OrderIndex = 1,
+                QuestionType = QuizQuestionType.Goal,
+                Question = "Goal?",
+                Answers =
+                [
+                    new QuizAnswer { Id = 101, Text = "Strength", MappedValue = (int)UserGoal.Strength },
+                    new QuizAnswer { Id = 102, Text = "Maintain", MappedValue = (int)UserGoal.MaintainHealth }
+                ]
+            },
+            new QuizQuestion
+            {
+                Id = 11,
+                OrderIndex = 2,
+                QuestionType = QuizQuestionType.GoalPace,
+                Question = "How fast?",
+                Answers =
+                [
+                    new QuizAnswer { Id = 111, Text = "Steady", MappedValue = (int)WeightGoalPace.Steady },
+                    new QuizAnswer { Id = 112, Text = "Aggressive", MappedValue = (int)WeightGoalPace.Aggressive }
+                ]
+            },
+            new QuizQuestion
+            {
+                Id = 12,
+                OrderIndex = 3,
+                QuestionType = QuizQuestionType.ExperienceLevel,
+                Question = "Experience?",
+                Answers = [new QuizAnswer { Id = 121, Text = "Beginner", MappedValue = 1 }]
+            }
+        ];
+    }
+
+    private static List<QuizQuestion> CreatePhasePairQuestions()
+    {
+        return
+        [
+            new QuizQuestion
+            {
+                Id = 20,
+                OrderIndex = 1,
+                QuestionType = QuizQuestionType.MenstrualPain,
+                Question = "Pain?",
+                Answers = Enumerable.Range(1, 5)
+                    .Select(value => new QuizAnswer { Id = 10 + value, Text = $"Pain {value}", MappedValue = value })
+                    .ToList()
+            },
+            new QuizQuestion
+            {
+                Id = 21,
+                OrderIndex = 2,
+                QuestionType = QuizQuestionType.MenstrualEnergy,
+                Question = "Energy?",
+                Answers = Enumerable.Range(1, 5)
+                    .Select(value => new QuizAnswer { Id = 20 + value, Text = $"Energy {value}", MappedValue = value })
+                    .ToList()
+            }
+        ];
     }
 }

@@ -131,7 +131,12 @@
                 </Grid>
             </VerticalStackLayout>
 
-            <ScrollView Grid.Row="1" Padding="24,0" MaximumWidthRequest="640" HorizontalOptions="Fill">
+            <ScrollView
+                Grid.Row="1"
+                Padding="24,0"
+                MaximumWidthRequest="640"
+                HorizontalOptions="Fill"
+                IsVisible="{Binding IsStandardAnswerListVisible}">
                 <VerticalStackLayout
                     Padding="0,4,0,20"
                     Spacing="10"
@@ -223,6 +228,65 @@
                 </VerticalStackLayout>
             </ScrollView>
 
+            <ScrollView
+                Grid.Row="1"
+                Padding="24,4,24,20"
+                MaximumWidthRequest="640"
+                HorizontalOptions="Fill"
+                IsVisible="{Binding IsCurrentQuestionPhasePair}">
+                <VerticalStackLayout Spacing="24">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Label Text="Discomfort" Style="{StaticResource CardTitle}" />
+                            <Label
+                                Grid.Column="1"
+                                Text="{Binding PainSliderLabel}"
+                                Style="{StaticResource AccentLabel}" />
+                        </Grid>
+                        <Slider
+                            Minimum="1"
+                            Maximum="5"
+                            Value="{Binding PainSliderValue, Mode=TwoWay}"
+                            MinimumTrackColor="{StaticResource Primary}"
+                            MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                            ThumbColor="{StaticResource Primary}"
+                            SemanticProperties.Description="Usual phase discomfort"
+                            SemanticProperties.Hint="Severe on the left, none on the right" />
+                        <Grid ColumnDefinitions="*,*">
+                            <Label Text="Severe" Style="{StaticResource MutedLabel}" />
+                            <Label Grid.Column="1" Text="None" Style="{StaticResource MutedLabel}" HorizontalTextAlignment="End" />
+                        </Grid>
+                    </VerticalStackLayout>
+
+                    <BoxView
+                        HeightRequest="1"
+                        Color="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Label Text="Training energy" Style="{StaticResource CardTitle}" />
+                            <Label
+                                Grid.Column="1"
+                                Text="{Binding EnergySliderLabel}"
+                                Style="{StaticResource AccentLabel}" />
+                        </Grid>
+                        <Slider
+                            Minimum="1"
+                            Maximum="5"
+                            Value="{Binding EnergySliderValue, Mode=TwoWay}"
+                            MinimumTrackColor="{StaticResource Primary}"
+                            MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                            ThumbColor="{StaticResource Primary}"
+                            SemanticProperties.Description="Usual phase training energy"
+                            SemanticProperties.Hint="Very low on the left, peak energy on the right" />
+                        <Grid ColumnDefinitions="*,*">
+                            <Label Text="Very low" Style="{StaticResource MutedLabel}" />
+                            <Label Grid.Column="1" Text="Peak" Style="{StaticResource MutedLabel}" HorizontalTextAlignment="End" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </ScrollView>
+
             <Grid
                 Grid.Row="2"
                 Padding="24,16,24,32"
@@ -254,11 +318,15 @@
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnBackTapped" />
                     </Border.GestureRecognizers>
-                    <Image
-                        Source="{Binding Source='ChevronLeft24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                    <Path
+                        Data="M15 19l-7-7 7-7"
+                        Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                        StrokeThickness="2"
+                        StrokeLineCap="Round"
+                        StrokeLineJoin="Round"
                         WidthRequest="20"
                         HeightRequest="20"
-                        Aspect="AspectFit"
+                        Aspect="Uniform"
                         HorizontalOptions="Center"
                         VerticalOptions="Center" />
                 </Border>

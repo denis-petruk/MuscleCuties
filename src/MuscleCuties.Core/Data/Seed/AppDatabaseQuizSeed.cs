@@ -138,8 +138,19 @@ public partial class AppDatabase
             },
             new QuizQuestion
             {
-                Question = "Training experience?",
+                Question = "How fast do you want to progress?",
                 OrderIndex = 3,
+                QuestionType = QuizQuestionType.GoalPace,
+                Answers =
+                [
+                    Answer("Steady", 1, (int)WeightGoalPace.Steady),
+                    Answer("Aggressive", 2, (int)WeightGoalPace.Aggressive)
+                ]
+            },
+            new QuizQuestion
+            {
+                Question = "Training experience?",
+                OrderIndex = 4,
                 QuestionType = QuizQuestionType.ExperienceLevel,
                 Answers =
                 [
@@ -151,7 +162,7 @@ public partial class AppDatabase
             new QuizQuestion
             {
                 Question = "Training days per week?",
-                OrderIndex = 4,
+                OrderIndex = 5,
                 QuestionType = QuizQuestionType.WorkoutDaysPerWeek,
                 Answers =
                 [
@@ -164,7 +175,7 @@ public partial class AppDatabase
             new QuizQuestion
             {
                 Question = "Dietary preference?",
-                OrderIndex = 5,
+                OrderIndex = 6,
                 QuestionType = QuizQuestionType.DietaryPreference,
                 Answers =
                 [
@@ -178,7 +189,7 @@ public partial class AppDatabase
             new QuizQuestion
             {
                 Question = "Session length?",
-                OrderIndex = 6,
+                OrderIndex = 7,
                 QuestionType = QuizQuestionType.SessionDuration,
                 Answers =
                 [
@@ -192,7 +203,7 @@ public partial class AppDatabase
             new QuizQuestion
             {
                 Question = "Available equipment?",
-                OrderIndex = 7,
+                OrderIndex = 8,
                 QuestionType = QuizQuestionType.Equipment,
                 Answers =
                 [
@@ -201,14 +212,14 @@ public partial class AppDatabase
                     Answer("Bodyweight only", 3, 3)
                 ]
             },
-            PainQuestion("Period discomfort?", 8, QuizQuestionType.MenstrualPain),
-            EnergyQuestion("Period training energy?", 9, QuizQuestionType.MenstrualEnergy),
-            PainQuestion("Follicular discomfort?", 10, QuizQuestionType.FollicularPain),
-            EnergyQuestion("Follicular energy?", 11, QuizQuestionType.FollicularEnergy),
-            PainQuestion("Ovulation discomfort?", 12, QuizQuestionType.OvulatoryPain),
-            EnergyQuestion("Ovulation power?", 13, QuizQuestionType.OvulatoryEnergy),
-            PainQuestion("Luteal symptoms?", 14, QuizQuestionType.LutealPain),
-            EnergyQuestion("Luteal training energy?", 15, QuizQuestionType.LutealEnergy)
+            PainQuestion("Period discomfort?", 9, QuizQuestionType.MenstrualPain),
+            EnergyQuestion("Period training energy?", 10, QuizQuestionType.MenstrualEnergy),
+            PainQuestion("Follicular discomfort?", 11, QuizQuestionType.FollicularPain),
+            EnergyQuestion("Follicular energy?", 12, QuizQuestionType.FollicularEnergy),
+            PainQuestion("Ovulation discomfort?", 13, QuizQuestionType.OvulatoryPain),
+            EnergyQuestion("Ovulation power?", 14, QuizQuestionType.OvulatoryEnergy),
+            PainQuestion("Luteal symptoms?", 15, QuizQuestionType.LutealPain),
+            EnergyQuestion("Luteal training energy?", 16, QuizQuestionType.LutealEnergy)
         ];
     }
 

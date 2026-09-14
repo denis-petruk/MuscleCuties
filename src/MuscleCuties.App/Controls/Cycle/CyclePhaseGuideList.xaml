@@ -6,15 +6,14 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:cycleModels="clr-namespace:MuscleCuties.Core.Models.UI.Cycle;assembly=MuscleCuties.Core"
-    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Cycle;assembly=MuscleCuties.Core"
     x:DataType="vm:CycleViewModel">
 
-    <VerticalStackLayout Spacing="14">
+    <Grid RowDefinitions="Auto, Auto" RowSpacing="14">
         <Label Text="Explore each phase" Style="{StaticResource SectionTitle}" Margin="2,8,2,0" />
 
         <VerticalStackLayout
-            Spacing="0"
+            Grid.Row="1"
             BindableLayout.ItemsSource="{Binding Phases}">
             <BindableLayout.ItemTemplate>
                 <DataTemplate x:DataType="cycleModels:PhaseItem">
@@ -31,29 +30,37 @@
                                 Command="{Binding BindingContext.OpenPhaseDetailsCommand, Source={x:Reference Root}}"
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
-                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14">
-                            <sharedControls:PhaseVisualView
+                        <Grid
+                            ColumnDefinitions="Auto,*,Auto"
+                            RowDefinitions="Auto,Auto"
+                            ColumnSpacing="14"
+                            RowSpacing="2">
+                            <Image
                                 Grid.Column="0"
+                                Grid.RowSpan="2"
                                 WidthRequest="36"
                                 HeightRequest="36"
-                                Source="{Binding IllustrationSource}"
+                                Source="{Binding IconSource}"
+                                Aspect="AspectFit"
                                 VerticalOptions="Center" />
 
-                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                <Label
-                                    Text="{Binding Name}"
-                                    TextColor="{Binding TextColor}"
-                                    FontSize="15"
-                                    FontAttributes="Bold" />
-                                <Label
-                                    Text="{Binding Description}"
-                                    TextColor="{Binding TextColor}"
-                                    FontSize="12"
-                                    Opacity="0.75" />
-                            </VerticalStackLayout>
+                            <Label
+                                Grid.Column="1"
+                                Text="{Binding Name}"
+                                TextColor="{Binding TextColor}"
+                                FontSize="15"
+                                FontAttributes="Bold" />
+                            <Label
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Text="{Binding Description}"
+                                TextColor="{Binding TextColor}"
+                                FontSize="12"
+                                Opacity="0.75" />
 
                             <Path
                                 Grid.Column="2"
+                                Grid.RowSpan="2"
                                 Data="M9 18l6-6-6-6"
                                 Stroke="{Binding TextColor}"
                                 StrokeThickness="2"
@@ -69,5 +76,5 @@
                 </DataTemplate>
             </BindableLayout.ItemTemplate>
         </VerticalStackLayout>
-    </VerticalStackLayout>
+    </Grid>
 </ContentView>
