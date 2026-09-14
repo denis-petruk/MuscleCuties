@@ -12,15 +12,15 @@ public partial class WorkoutPage : ContentPage
 
     public WorkoutPage(WorkoutViewModel vm)
     {
-        var started = Stopwatch.GetTimestamp();
         this.InitializeWithTiming(InitializeComponent);
         _viewModel = vm;
-        this.BindWithTiming(vm, started);
     }
 
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
+        if (BindingContext is null)
+            BindingContext = _viewModel;
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         this.BeginPageLoad(() => _viewModel.LoadDataCommand.ExecuteAsync(null));

@@ -209,11 +209,6 @@
                     ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
             </VerticalStackLayout>
 
-            <VerticalStackLayout Spacing="12" IsVisible="{Binding IsStrengthStyleVisible}">
-                <sharedControls:IconSectionHeader Text="Strength style" IconGlyph="Flash24" />
-                <workoutControls:StrengthTrainingStylePicker SelectStyleCommand="{Binding SelectStrengthTrainingStyleCommand}" />
-            </VerticalStackLayout>
-
             <Label
                 Text="{Binding ErrorMessage}"
                 Style="{StaticResource ErrorLabel}"

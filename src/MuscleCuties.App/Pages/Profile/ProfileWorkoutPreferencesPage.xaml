@@ -31,6 +31,7 @@
             <VerticalStackLayout Spacing="12" IsVisible="{Binding IsStrengthStyleVisible}">
                     <sharedControls:IconSectionHeader Text="Strength style" IconGlyph="Flash24" />
                     <workoutControls:StrengthTrainingStylePicker
+                        ItemsSource="{Binding StrengthTrainingStyleOptions}"
                         SelectStyleCommand="{Binding SelectStrengthTrainingStyleCommand}" />
             </VerticalStackLayout>
 

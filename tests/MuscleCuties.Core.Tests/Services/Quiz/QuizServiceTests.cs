@@ -5,12 +5,14 @@ using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Repositories.Cycle;
 using MuscleCuties.Core.Repositories.Quiz;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
 using MuscleCuties.Core.Services.Quiz;
+using MuscleCuties.Core.Services.Workout;
 
 namespace MuscleCuties.Core.Tests.Services.Quiz;
 
@@ -264,5 +266,51 @@ public class QuizServiceTests : IClassFixture<DatabaseFixture>
         var profile = await new UserRepository(_fixture.Db).GetProfileAsync(user.Id);
         Assert.Equal(CycleTrackingMode.ManualPhaseLogging, profile!.CycleTrackingMode);
         Assert.Equal(CyclePhase.Ovulatory, profile.CurrentCyclePhase);
+    }
+
+    [Fact]
+    public async Task SaveAnswersAsync_MapsGoalPaceAndInfersStrengthStyleFromDuration()
+    {
+        var user = await SeedUserAsync("quiz-goal-pace@test.com");
+        var service = CreateService();
+        var questions = new List<QuizQuestion>
+        {
+            new()
+            {
+                Question = "Goal?",
+                OrderIndex = 301,
+                QuestionType = QuizQuestionType.Goal,
+                Answers = [new QuizAnswer { Text = "Strength", MappedValue = (int)UserGoal.Strength }]
+            },
+            new()
+            {
+                Question = "How fast?",
+                OrderIndex = 302,
+                QuestionType = QuizQuestionType.GoalPace,
+                Answers = [new QuizAnswer { Text = "Aggressive", MappedValue = (int)WeightGoalPace.Aggressive }]
+            },
+            new()
+            {
+                Question = "Session length?",
+                OrderIndex = 303,
+                QuestionType = QuizQuestionType.SessionDuration,
+                Answers = [new QuizAnswer { Text = "45 min", MappedValue = 2 }]
+            }
+        };
+        await _fixture.Db.QuizQuestions.AddRangeAsync(questions);
+        await _fixture.Db.SaveChangesAsync();
+
+        await service.SaveAnswersAsync(user.Id, questions.Select(question => new UserQuizResponse
+        {
+            QuizQuestionId = question.Id,
+            QuizAnswerId = question.Answers.Single().Id
+        }).ToList());
+
+        var profile = await new UserRepository(_fixture.Db).GetProfileAsync(user.Id);
+        Assert.Equal(WeightGoalPace.Aggressive, profile!.WeightGoalPace);
+        Assert.Equal(45, profile.SessionDurationMinutes);
+        Assert.Equal(
+            StrengthTrainingStyle.ExpressHard,
+            WorkoutActivityPreferences.ParseStrengthStyle(profile.PreferredWorkoutActivityTypes));
     }
 }

@@ -1,3 +1,4 @@
+using MuscleCuties.App.Controls.Profile;
 using MuscleCuties.App.Services.Profile;
 using MuscleCuties.Core.ViewModels.Profile;
 
@@ -5,16 +6,20 @@ namespace MuscleCuties.App.Pages.Profile;
 
 public partial class ProfilePage : ContentPage
 {
+    private readonly ProfileViewModel _viewModel;
+
     public ProfilePage(ProfileViewModel vm)
     {
         this.InitializeWithTiming(InitializeComponent);
-        BindingContext = vm;
+        _viewModel = vm;
     }
 
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
-        this.BeginPageLoad(() => ((ProfileViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
+        if (BindingContext is null)
+            BindingContext = _viewModel;
+        this.BeginPageLoad(() => _viewModel.LoadDataCommand.ExecuteAsync(null));
     }
 
     private async void OnLogoutClicked(object? sender, EventArgs e)
@@ -60,7 +65,9 @@ public partial class ProfilePage : ContentPage
             if (string.IsNullOrWhiteSpace(rawPath))
                 return;
 
-            var croppedPath = await CropModal.ShowAsync(rawPath);
+            await CropModalLazy.LoadIfNeededAsync(true);
+            var cropModal = (ProfileImageCropModal)CropModalLazy.Content;
+            var croppedPath = await cropModal.ShowAsync(rawPath);
             if (!string.IsNullOrWhiteSpace(croppedPath))
                 await viewModel.UpdateProfileImageAsync(croppedPath);
         }

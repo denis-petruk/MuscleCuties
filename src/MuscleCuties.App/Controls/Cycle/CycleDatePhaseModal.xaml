@@ -25,22 +25,24 @@
             VerticalOptions="Center">
 
             <Grid RowDefinitions="Auto, *, Auto">
-                <VerticalStackLayout
+                <Grid
                     Grid.Row="0"
-                    Padding="20,18,20,12"
-                    Spacing="12">
+                    RowDefinitions="Auto, Auto"
+                    RowSpacing="12"
+                    Padding="20,18,20,12">
 
                     <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                        <VerticalStackLayout Spacing="6">
+                        <Grid RowDefinitions="Auto, Auto" RowSpacing="6">
                             <Label
                                 Text="{Binding SelectedCalendarDateText}"
                                 Style="{StaticResource SubHeadline}"
                                 FontSize="24" />
 
                             <Label
+                                Grid.Row="1"
                                 Text="{Binding SelectedCalendarPhaseText}"
                                 Style="{StaticResource MutedLabel}" />
-                        </VerticalStackLayout>
+                        </Grid>
 
                         <Border
                             Grid.Column="1"
@@ -68,10 +70,11 @@
                     </Grid>
 
                     <BoxView
+                        Grid.Row="1"
                         HeightRequest="1"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                         Opacity="0.7" />
-                </VerticalStackLayout>
+                </Grid>
 
                 <ScrollView Grid.Row="1">
                     <VerticalStackLayout
@@ -109,18 +112,19 @@
                                             HeightRequest="34"
                                             VerticalOptions="Center" />
 
-                                        <VerticalStackLayout Grid.Column="1" Spacing="3">
+                                        <Grid Grid.Column="1" RowDefinitions="Auto, Auto" RowSpacing="3">
                                             <Label
                                                 Text="{Binding Name}"
                                                 TextColor="{Binding TextColor}"
                                                 FontSize="15"
                                                 FontAttributes="Bold" />
                                             <Label
+                                                Grid.Row="1"
                                                 Text="{Binding Description}"
                                                 TextColor="{Binding TextColor}"
                                                 FontSize="12"
                                                 Opacity="0.75" />
-                                        </VerticalStackLayout>
+                                        </Grid>
 
                                         <Border
                                             Grid.Column="2"
@@ -140,7 +144,7 @@
                                                 </DataTrigger>
                                             </Border.Triggers>
                                             <Label
-                                                Text="✓"
+                                                Text="&#x2713;"
                                                 TextColor="{StaticResource White}"
                                                 FontSize="13"
                                                 FontAttributes="Bold"
@@ -155,30 +159,33 @@
                     </VerticalStackLayout>
                 </ScrollView>
 
-                <VerticalStackLayout
+                <Grid
                     Grid.Row="2"
-                    Padding="20,0,20,20"
-                    Spacing="12">
+                    RowDefinitions="Auto, Auto, Auto"
+                    RowSpacing="12"
+                    Padding="20,0,20,20">
                     <Label
                         Text="{Binding PhaseEditStatusText}"
                         Style="{StaticResource ErrorLabel}"
                         IsVisible="{Binding HasPhaseEditStatus}" />
 
                     <Border
+                        Grid.Row="1"
                         IsVisible="{Binding HasPhaseJumpWarning}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray900}}"
                         Stroke="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
                         StrokeThickness="1"
                         StrokeShape="RoundRectangle 18"
                         Padding="16,14">
-                        <VerticalStackLayout Spacing="10">
+                        <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="10">
                             <Label
                                 Text="{Binding PhaseJumpWarningTitle}"
                                 Style="{StaticResource CardTitle}" />
                             <Label
+                                Grid.Row="1"
                                 Text="{Binding PhaseJumpWarningText}"
                                 Style="{StaticResource MutedLabel}" />
-                            <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                            <Grid Grid.Row="2" ColumnDefinitions="*, *" ColumnSpacing="10">
                                 <Button
                                     Text="Use next phase"
                                     Command="{Binding UseSuggestedPhaseCommand}"
@@ -194,15 +201,16 @@
                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                             </Grid>
-                        </VerticalStackLayout>
+                        </Grid>
                     </Border>
 
                     <Button
+                        Grid.Row="2"
                         Text="Save phase"
                         Command="{Binding SaveDatePhaseCommand}"
                         HeightRequest="52"
                         IsVisible="{Binding HasPhaseJumpWarning, Converter={StaticResource InvertedBoolConverter}}" />
-                </VerticalStackLayout>
+                </Grid>
             </Grid>
         </Border>
     </Grid>

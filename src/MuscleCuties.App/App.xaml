@@ -18,6 +18,7 @@
             <converters:BoolToChevronConverter x:Key="BoolToChevronConverter" />
             <converters:CyclePhaseToTextColorConverter x:Key="CyclePhaseToTextColorConverter" />
             <converters:ScoreToColorConverter x:Key="ScoreToColorConverter" />
+            <converters:StringToGeometryConverter x:Key="StringToGeometryConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
