@@ -46,17 +46,13 @@ public class ProfileSetupViewModelTests
         var vm = CreateViewModel();
         var groups = vm.GroupedWorkoutActivityOptions;
         var options = vm.WorkoutActivityOptions;
-        var strengthOptions = vm.StrengthTrainingStyleOptions;
 
         await vm.LoadDataCommand.ExecuteAsync(null);
 
         Assert.Same(groups, vm.GroupedWorkoutActivityOptions);
         Assert.Same(options, vm.WorkoutActivityOptions);
-        Assert.Same(strengthOptions, vm.StrengthTrainingStyleOptions);
         var running = Assert.Single(options, option => option.ActivityType == WorkoutActivityType.Running);
         Assert.True(running.IsSelected);
-        Assert.Equal(StrengthTrainingStyle.ExpressHard, vm.SelectedStrengthTrainingStyle);
-        Assert.True(Assert.Single(strengthOptions, option => option.Style == StrengthTrainingStyle.ExpressHard).IsSelected);
 
         vm.ToggleWorkoutActivityCommand.Execute(running);
 

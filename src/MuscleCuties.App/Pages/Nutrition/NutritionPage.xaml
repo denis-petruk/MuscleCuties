@@ -2,9 +2,11 @@
 
 <ContentPage
     x:Class="MuscleCuties.App.Pages.Nutrition.NutritionPage"
+    x:Name="NutritionRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:nutritionControls="clr-namespace:MuscleCuties.App.Controls.Nutrition"
+    xmlns:nutritionModels="clr-namespace:MuscleCuties.Core.Models.UI.Nutrition;assembly=MuscleCuties.Core"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
@@ -12,71 +14,215 @@
     Shell.NavBarIsVisible="False">
 
     <Grid>
-        <ScrollView>
-            <VerticalStackLayout
-                Padding="20,40,20,32"
-                Spacing="16"
-                HorizontalOptions="Fill"
-                MaximumWidthRequest="640">
-                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                    <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+        <CollectionView
+            ItemsSource="{Binding Meals}"
+            MaximumWidthRequest="680"
+            SelectionMode="None">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.Header>
+                <VerticalStackLayout Padding="20,40,20,16" Spacing="16">
+                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="4">
+                        <Label Text="Nutrition" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
                         <Label
-                            Text="Nutrition"
-                            Style="{StaticResource SubHeadline}" />
-                        <Label Text="{Binding CurrentPhaseName, StringFormat='{0} phase'}" Style="{StaticResource MutedLabel}" />
-                    </VerticalStackLayout>
+                            Grid.Row="1"
+                            Text="{Binding CurrentPhaseName, StringFormat='{0} phase'}"
+                            Style="{StaticResource MutedLabel}" />
+
+                        <Border
+                            Grid.Column="1"
+                            Grid.RowSpan="2"
+                            WidthRequest="44"
+                            HeightRequest="44"
+                            StrokeShape="RoundRectangle 22"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                            StrokeThickness="0"
+                            VerticalOptions="Center"
+                            SemanticProperties.Description="Add meal">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleAddFoodPanelCommand}" />
+                            </Border.GestureRecognizers>
+                            <Path
+                                Data="M12 5v14M5 12h14"
+                                Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                StrokeThickness="2.2"
+                                StrokeLineCap="Round"
+                                Aspect="Uniform"
+                                WidthRequest="18"
+                                HeightRequest="18"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                        </Border>
+                    </Grid>
+
+                    <toolkit:LazyView
+                        x:Name="PhaseFocusLazy"
+                        x:TypeArguments="nutritionControls:NutritionPhaseFocusCard" />
+                    <toolkit:LazyView
+                        x:Name="BalanceCardLazy"
+                        x:TypeArguments="nutritionControls:NutritionBalanceCard" />
+
+                    <Button
+                        Text="Log a meal"
+                        Command="{Binding ToggleAddFoodPanelCommand}"
+                        IsVisible="{Binding IsAddFoodPanelVisible, Converter={StaticResource InvertedBoolConverter}}"
+                        MinimumHeightRequest="52"
+                        FontAttributes="Bold"
+                        Margin="0,4" />
+
+                    <Button
+                        Text="Suggest a meal"
+                        Command="{Binding OpenSuggestMealCommand}"
+                        Style="{StaticResource ButtonLink}"
+                        ImageSource="{Binding Source='LightbulbFilament24', Converter={StaticResource StringToFluentIconImageSourceConverter}}" />
+                    <ActivityIndicator
+                        IsRunning="{Binding IsLoadingMealIdeas}"
+                        IsVisible="{Binding IsLoadingMealIdeas}" />
+                    <toolkit:LazyView
+                        x:Name="MealEditor"
+                        x:TypeArguments="nutritionControls:AddMealPanel"
+                        IsVisible="{Binding IsAddFoodPanelVisible}" />
+
+                    <sharedControls:IconSectionHeader
+                        Text="Meals"
+                        IconGlyph="BowlChopsticks24"
+                        Margin="4,6,4,0" />
 
                     <Border
-                        Grid.Column="1"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        StrokeShape="RoundRectangle 22"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                        StrokeThickness="0"
-                        VerticalOptions="Center"
-                        SemanticProperties.Description="Add meal">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ToggleAddFoodPanelCommand}" />
-                        </Border.GestureRecognizers>
-                        <Path
-                            Data="M12 5v14M5 12h14"
-                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                            StrokeThickness="2.2"
-                            StrokeLineCap="Round"
-                            Aspect="Uniform"
-                            WidthRequest="18"
-                            HeightRequest="18"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
+                        Style="{StaticResource CardPrimary}"
+                        Padding="16"
+                        IsVisible="{Binding HasNoMeals}">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border
+                                WidthRequest="42"
+                                HeightRequest="42"
+                                StrokeShape="RoundRectangle 21"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                StrokeThickness="0"
+                                VerticalOptions="Center">
+                                <Image
+                                    Source="{Binding Source='Food24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                    WidthRequest="20"
+                                    HeightRequest="20"
+                                    Aspect="AspectFit" />
+                            </Border>
+                            <Label
+                                Grid.Column="1"
+                                Text="Log your first meal"
+                                Style="{StaticResource CardTitle}"
+                                FontSize="15"
+                                VerticalOptions="Center" />
+                            <Button
+                                Grid.Column="2"
+                                Text="Log Meal"
+                                Command="{Binding OpenAddFoodPanelCommand}"
+                                WidthRequest="124"
+                                MinimumHeightRequest="48"
+                                VerticalOptions="Center" />
+                        </Grid>
                     </Border>
-                </Grid>
+                </VerticalStackLayout>
+            </CollectionView.Header>
 
-                <nutritionControls:NutritionPhaseFocusCard />
-                <nutritionControls:NutritionBalanceCard />
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="nutritionModels:MealItem">
+                    <Border
+                        Style="{StaticResource CardPrimary}"
+                        Margin="20,0"
+                        Padding="12,14"
+                        SemanticProperties.Description="{Binding Name, StringFormat='Meal: {0}. Tap to view breakdown.'}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding BindingContext.OpenMealBreakdownCommand, Source={x:Reference NutritionRoot}}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border
+                                WidthRequest="52"
+                                HeightRequest="44"
+                                StrokeShape="RoundRectangle 12"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
+                                StrokeThickness="0">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="1" HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Path
+                                        Data="{Binding MealTypeIconData, Converter={StaticResource StringToGeometryConverter}}"
+                                        Stroke="{StaticResource Primary}"
+                                        StrokeThickness="1.5"
+                                        StrokeLineCap="Round"
+                                        StrokeLineJoin="Round"
+                                        Aspect="Uniform"
+                                        WidthRequest="16"
+                                        HeightRequest="16"
+                                        HorizontalOptions="Center" />
+                                    <Label
+                                        Grid.Row="1"
+                                        Text="{Binding Time}"
+                                        TextColor="{StaticResource Primary}"
+                                        FontSize="10"
+                                        FontAttributes="Bold"
+                                        HorizontalOptions="Center" />
+                                </Grid>
+                            </Border>
 
-                <Button
-                    Text="Log a meal"
-                    Command="{Binding ToggleAddFoodPanelCommand}"
-                    IsVisible="{Binding IsAddFoodPanelVisible, Converter={StaticResource InvertedBoolConverter}}"
-                    MinimumHeightRequest="52"
-                    FontAttributes="Bold"
-                    Margin="0,4" />
+                            <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="2" VerticalOptions="Center">
+                                <Label
+                                    Text="{Binding MealType}"
+                                    TextColor="{StaticResource Primary}"
+                                    FontSize="10"
+                                    FontAttributes="Bold" />
+                                <Label
+                                    Grid.Row="1"
+                                    Text="{Binding Name}"
+                                    Style="{StaticResource CardTitle}"
+                                    FontSize="15"
+                                    MaxLines="1"
+                                    LineBreakMode="TailTruncation" />
+                                <Label
+                                    Grid.Row="2"
+                                    Text="{Binding MacrosSummaryText}"
+                                    Style="{StaticResource CaptionLabel}"
+                                    MaxLines="1"
+                                    LineBreakMode="TailTruncation" />
+                            </Grid>
 
-                <Button
-                    Text="Suggest a meal"
-                    Command="{Binding OpenSuggestMealCommand}"
-                    Style="{StaticResource ButtonLink}"
-                    ImageSource="{Binding Source='Lightbulb24', Converter={StaticResource StringToFluentIconImageSourceConverter}}" />
-                <ActivityIndicator
-                    IsRunning="{Binding IsLoadingMealIdeas}"
-                    IsVisible="{Binding IsLoadingMealIdeas}" />
-                <toolkit:LazyView
-                    x:Name="MealEditor"
-                    x:TypeArguments="nutritionControls:AddMealPanel"
-                    IsVisible="{Binding IsAddFoodPanelVisible}" />
-                <nutritionControls:MealsList />
-            </VerticalStackLayout>
-        </ScrollView>
+                            <Grid
+                                Grid.Column="2"
+                                RowDefinitions="Auto,Auto"
+                                RowSpacing="2"
+                                VerticalOptions="Center"
+                                HorizontalOptions="End">
+                                <HorizontalStackLayout Spacing="4" HorizontalOptions="End">
+                                    <Image
+                                        Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                                        Aspect="AspectFit"
+                                        WidthRequest="13"
+                                        HeightRequest="13"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Text="{Binding CaloriesText}"
+                                        Style="{StaticResource CaptionLabel}"
+                                        HorizontalTextAlignment="End"
+                                        VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+                                <Image
+                                    Grid.Row="1"
+                                    Source="{Binding Source='ChevronRight24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                    WidthRequest="16"
+                                    HeightRequest="16"
+                                    Aspect="AspectFit"
+                                    HorizontalOptions="End" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.Footer>
+                <Grid HeightRequest="32" />
+            </CollectionView.Footer>
+        </CollectionView>
 
         <toolkit:LazyView
             x:Name="FoodSearch"

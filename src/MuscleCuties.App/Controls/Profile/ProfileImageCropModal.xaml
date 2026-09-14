@@ -4,6 +4,8 @@
     x:Class="MuscleCuties.App.Controls.Profile.ProfileImageCropModal"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:MuscleCuties.App.Controls.Profile"
+    x:DataType="local:ProfileImageCropModal"
     IsVisible="False">
 
     <Grid BackgroundColor="{StaticResource ModalScrim}" Padding="20">

@@ -23,51 +23,54 @@
             VerticalOptions="Center">
 
             <Grid RowDefinitions="Auto, *, Auto">
-                <VerticalStackLayout
+                <Grid
                     Grid.Row="0"
                     Padding="20,18,20,12"
-                    Spacing="12">
+                    RowDefinitions="Auto, Auto, Auto"
+                    RowSpacing="0"
+                    ColumnDefinitions="*, Auto"
+                    ColumnSpacing="12">
 
-                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12" RowDefinitions="Auto, Auto" RowSpacing="6">
-                        <Label
-                            Grid.Row="0" Grid.Column="0"
-                            Text="{Binding SelectedWorkoutTitle}"
-                            Style="{StaticResource SubHeadline}"
-                            FontSize="24"
-                            LineBreakMode="WordWrap" />
+                    <Label
+                        Grid.Row="0" Grid.Column="0"
+                        Text="{Binding SelectedWorkoutTitle}"
+                        Style="{StaticResource SubHeadline}"
+                        FontSize="24"
+                        LineBreakMode="WordWrap"
+                        Margin="0,0,0,6" />
 
-                        <Label
-                            Grid.Row="1" Grid.Column="0"
-                            Text="{Binding SelectedWorkoutSummaryText}"
-                            Style="{StaticResource MutedLabel}" />
+                    <Label
+                        Grid.Row="1" Grid.Column="0"
+                        Text="{Binding SelectedWorkoutSummaryText}"
+                        Style="{StaticResource MutedLabel}"
+                        Margin="0,0,0,12" />
 
-                        <Border
-                            Grid.Column="1" Grid.RowSpan="2"
-                            WidthRequest="44"
-                            HeightRequest="44"
-                            StrokeShape="RoundRectangle 22"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
-                            StrokeThickness="0"
-                            VerticalOptions="Start"
-                            SemanticProperties.Description="Close workout">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding CloseWorkoutModalCommand}" />
-                            </Border.GestureRecognizers>
-                            <Path
-                                Data="M6 6L18 18M18 6L6 18"
-                                Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                StrokeThickness="2.2"
-                                StrokeLineCap="Round"
-                                Aspect="Uniform"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
-                        </Border>
-                    </Grid>
+                    <Border
+                        Grid.Column="1" Grid.RowSpan="2"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        StrokeShape="RoundRectangle 22"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
+                        StrokeThickness="0"
+                        VerticalOptions="Start"
+                        SemanticProperties.Description="Close workout">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding CloseWorkoutModalCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path
+                            Data="M6 6L18 18M18 6L6 18"
+                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                            StrokeThickness="2.2"
+                            StrokeLineCap="Round"
+                            Aspect="Uniform"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
 
-                    <BoxView />
-                </VerticalStackLayout>
+                    <BoxView Grid.Row="2" Grid.ColumnSpan="2" />
+                </Grid>
 
                 <Grid Grid.Row="1">
                     <ActivityIndicator
@@ -207,22 +210,25 @@
                     </Border>
                 </Grid>
 
-                <VerticalStackLayout
+                <Grid
                     Grid.Row="2"
                     Padding="20,0,20,20"
-                    Spacing="10">
+                    RowDefinitions="Auto, Auto"
+                    RowSpacing="10">
                     <Label
+                        Grid.Row="0"
                         Text="{Binding WorkoutModalStatusText}"
                         Style="{StaticResource AccentLabel}"
                         IsVisible="{Binding HasWorkoutModalStatus}"
                         HorizontalTextAlignment="Center" />
 
                     <Button
+                        Grid.Row="1"
                         IsVisible="{Binding ShowWorkoutFooterAction}"
                         Text="{Binding WorkoutLogButtonText}"
                         Command="{Binding SaveWorkoutSessionCommand}"
                         MinimumHeightRequest="52" />
-                </VerticalStackLayout>
+                </Grid>
             </Grid>
         </Border>
 

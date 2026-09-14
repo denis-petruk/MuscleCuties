@@ -158,7 +158,7 @@ public class NutritionViewModelTests
         Assert.Equal(90f, vm.ConsumedCarbs);
         Assert.Equal(30f, vm.ConsumedFats);
         Assert.Equal(CyclePhase.Ovulatory, vm.CurrentPhase);
-        Assert.Equal("PHASE FOCUS · OVULATORY", vm.PhaseFocusBadgeText);
+        Assert.Equal("Phase focus · Ovulatory", vm.PhaseFocusBadgeText);
         Assert.Equal("Peak plate", vm.PhaseFocusTitle);
         Assert.Contains("Hydrate", vm.PhaseFocusCopy);
     }
@@ -599,7 +599,7 @@ public class NutritionViewModelTests
         vm.OpenMealBreakdownCommand.Execute(vm.Meals.Single());
 
         Assert.True(vm.IsBreakdownModalVisible);
-        Assert.Equal("BREAKFAST breakdown", vm.SelectedBreakdownTitle);
+        Assert.Equal("Breakfast breakdown", vm.SelectedBreakdownTitle);
         Assert.True(vm.CanEditSelectedBreakdown);
         Assert.Equal("300 kcal", vm.SelectedBreakdownCaloriesText);
         Assert.Equal("P 20.0g · C 40.0g · F 6.0g", vm.SelectedBreakdownMacrosText);

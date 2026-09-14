@@ -6,9 +6,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:dashboardControls="clr-namespace:MuscleCuties.App.Controls.Dashboard"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Dashboard;assembly=MuscleCuties.Core"
-    xmlns:workoutControls="clr-namespace:MuscleCuties.App.Controls.Workout"
     x:DataType="vm:DashboardViewModel"
+    Loaded="OnDashboardLoaded"
     Shell.NavBarIsVisible="False">
 
     <Grid>
@@ -17,109 +18,110 @@
             IsRefreshing="{Binding IsRefreshing}"
             RefreshColor="{StaticResource Primary}">
             <ScrollView>
-            <VerticalStackLayout
-                Padding="20,40,20,32"
-                Spacing="16"
-                HorizontalOptions="Fill"
-                MaximumWidthRequest="640">
-                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12" RowDefinitions="Auto, Auto" RowSpacing="2">
-                    <Label
-                        Text="{Binding Greetings}"
-                        Style="{StaticResource SubHeadline}" />
-                    <Label
+                <Grid
+                    Padding="20,40,20,32"
+                    HorizontalOptions="Fill"
+                    MaximumWidthRequest="640"
+                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                    RowSpacing="16">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="2">
+                        <Label Text="{Binding Greetings}" Style="{StaticResource SubHeadline}" />
+                        <Label
+                            Grid.Row="1"
+                            Text="{Binding DashboardPhaseHeaderText}"
+                            Style="{StaticResource MutedLabel}" />
+
+                        <Border
+                            Grid.Column="1"
+                            Grid.RowSpan="2"
+                            WidthRequest="44"
+                            HeightRequest="44"
+                            StrokeShape="RoundRectangle 22"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                            StrokeThickness="0"
+                            SemanticProperties.Description="Notifications">
+                            <Path
+                                Data="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0"
+                                Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                StrokeThickness="1.75"
+                                StrokeLineCap="Round"
+                                StrokeLineJoin="Round"
+                                Aspect="Uniform"
+                                WidthRequest="18"
+                                HeightRequest="18"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                        </Border>
+                    </Grid>
+
+                    <toolkit:LazyView
+                        x:Name="PhaseCardLazy"
                         Grid.Row="1"
-                        Text="{Binding DashboardPhaseHeaderText}"
-                        Style="{StaticResource MutedLabel}" />
+                        x:TypeArguments="dashboardControls:DashboardPhaseCard" />
 
-                    <Border
-                        Grid.Column="1"
-                        Grid.RowSpan="2"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        StrokeShape="RoundRectangle 22"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                        StrokeThickness="0"
-                        SemanticProperties.Description="Notifications">
-                        <Path
-                            Data="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0"
-                            Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                            StrokeThickness="1.75"
-                            StrokeLineCap="Round"
-                            StrokeLineJoin="Round"
-                            Aspect="Uniform"
-                            WidthRequest="18"
-                            HeightRequest="18"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
-                    </Border>
+                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Border
+                            Style="{StaticResource WorkoutPill}"
+                            Padding="10,8"
+                            MinimumHeightRequest="44"
+                            SemanticProperties.Description="{Binding WorkoutStreakText, StringFormat='Workout streak: {0}'}">
+                            <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="2" HorizontalOptions="Center">
+                                <Image
+                                    Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
+                                    Aspect="AspectFit"
+                                    WidthRequest="20"
+                                    HeightRequest="20"
+                                    VerticalOptions="Center" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding WorkoutStreakText}"
+                                    Style="{StaticResource WorkoutPillText}"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Style="{StaticResource WorkoutPill}"
+                            Padding="10,8"
+                            MinimumHeightRequest="44"
+                            SemanticProperties.Description="{Binding NutritionStreakText, StringFormat='Nutrition streak: {0}'}">
+                            <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="2" HorizontalOptions="Center">
+                                <Image
+                                    Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                                    Aspect="AspectFit"
+                                    WidthRequest="20"
+                                    HeightRequest="20"
+                                    VerticalOptions="Center" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding NutritionStreakText}"
+                                    Style="{StaticResource WorkoutPillText}"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <toolkit:LazyView
+                        x:Name="WorkoutCardLazy"
+                        Grid.Row="3"
+                        x:TypeArguments="dashboardControls:DashboardWorkoutCard" />
+                    <toolkit:LazyView
+                        x:Name="ReadinessLazy"
+                        Grid.Row="4"
+                        x:TypeArguments="dashboardControls:ReadinessRecoveryCard" />
+                    <toolkit:LazyView
+                        x:Name="NutritionLazy"
+                        Grid.Row="5"
+                        x:TypeArguments="dashboardControls:DashboardNutritionCard" />
+                    <toolkit:LazyView
+                        x:Name="TargetsLazy"
+                        Grid.Row="6"
+                        x:TypeArguments="dashboardControls:DashboardTargetsCard" />
                 </Grid>
-
-                <dashboardControls:DashboardPhaseCard />
-
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                    <Border
-                        Grid.Column="0"
-                        Style="{StaticResource WorkoutPill}"
-                        Padding="10,8"
-                        MinimumHeightRequest="44"
-                        SemanticProperties.Description="{Binding WorkoutStreakText, StringFormat='Workout streak: {0}'}">
-                        <HorizontalStackLayout Spacing="2" HorizontalOptions="Center">
-                            <sharedControls:ThemeAwareImage
-                                LightSource="icon_muscle.png"
-                                DarkSource="icon_muscle_dark.png"
-                                Aspect="AspectFit"
-                                WidthRequest="20"
-                                HeightRequest="20"
-                                VerticalOptions="Center" />
-                            <Label
-                                Text="{Binding WorkoutStreakText}"
-                                Style="{StaticResource WorkoutPillText}"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </Border>
-
-                    <Border
-                        Grid.Column="1"
-                        Style="{StaticResource WorkoutPill}"
-                        Padding="10,8"
-                        MinimumHeightRequest="44"
-                        SemanticProperties.Description="{Binding NutritionStreakText, StringFormat='Nutrition streak: {0}'}">
-                        <HorizontalStackLayout Spacing="2" HorizontalOptions="Center">
-                            <sharedControls:ThemeAwareImage
-                                LightSource="icon_fire.png"
-                                DarkSource="icon_fire_dark.png"
-                                Aspect="AspectFit"
-                                WidthRequest="20"
-                                HeightRequest="20"
-                                VerticalOptions="Center" />
-                            <Label
-                                Text="{Binding NutritionStreakText}"
-                                Style="{StaticResource WorkoutPillText}"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </Border>
-                </Grid>
-
-                <workoutControls:FeaturedWorkoutCard
-                    BadgeText="{Binding WorkoutBadgeText}"
-                    WorkoutTitle="{Binding WorkoutTitle}"
-                    Subtitle="{Binding WorkoutSubtitle}"
-                    DurationText="{Binding WorkoutDurationText}"
-                    ExercisesCount="{Binding WorkoutExercisesCount}"
-                    Intensity="{Binding WorkoutIntensity}"
-                    ActionText="{Binding WorkoutActionText}"
-                    AccentColor="{Binding WorkoutActivityBackground}"
-                    AccentTextColor="{Binding WorkoutActivityTextColor}"
-                    ActivitySections="{Binding WorkoutActivitySections}"
-                    HasMultipleActivities="{Binding HasMultipleActivities}"
-                    StartCommand="{Binding OpenWorkoutCommand}" />
-
-                <dashboardControls:ReadinessRecoveryCard />
-                <dashboardControls:DashboardNutritionCard />
-                <dashboardControls:DashboardTargetsCard />
-            </VerticalStackLayout>
             </ScrollView>
         </RefreshView>
+
         <sharedControls:PageLoadingOverlay />
     </Grid>
 </ContentPage>

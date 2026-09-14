@@ -43,19 +43,14 @@
                             StrokeThickness="0"
                             VerticalOptions="Center"
                             SemanticProperties.Description="Training">
-                            <sharedControls:ThemeAwareImage
-                                LightSource="tab_train.png"
-                                DarkSource="tab_train_dark.png"
+                            <Image
+                                Source="{AppThemeBinding Light=tab_train.png, Dark=tab_train_dark.png}"
                                 WidthRequest="21"
                                 HeightRequest="21"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
                         </Border>
                     </Grid>
-
-                    <workoutControls:WorkoutPlanSummaryCard
-                        PlanTitle="{Binding ActivePlanTitle}"
-                        SummaryText="{Binding PlanSummaryText}" />
 
                     <workoutControls:FeaturedWorkoutCard
                         BadgeText="{Binding FeaturedWorkoutBadgeText}"
@@ -79,52 +74,54 @@
                             FontSize="13" />
                     </VerticalStackLayout>
 
-                    <CollectionView
-                        ItemsSource="{Binding Filters}"
-                        HeightRequest="44">
-                        <CollectionView.ItemsLayout>
-                            <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
-                        </CollectionView.ItemsLayout>
-                        <CollectionView.ItemTemplate>
+                    <FlexLayout
+                        Direction="Row"
+                        Wrap="NoWrap"
+                        AlignItems="Stretch"
+                        BindableLayout.ItemsSource="{Binding Filters}">
+                        <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="workoutModels:FilterChipItem">
-                                <Border
-                                    StrokeShape="RoundRectangle 999"
-                                    StrokeThickness="0"
-                                    Padding="14,9"
-                                    MinimumHeightRequest="44">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
-                                            <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer
-                                            Command="{Binding Source={x:Reference WorkoutRoot}, Path=BindingContext.SelectFilterCommand}"
-                                            CommandParameter="{Binding .}" />
-                                    </Border.GestureRecognizers>
-                                    <Label
-                                        Text="{Binding Label}"
-                                        FontSize="13"
-                                        FontAttributes="Bold"
-                                        VerticalOptions="Center">
-                                        <Label.Triggers>
-                                            <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="TextColor" Value="{StaticResource White}" />
+                                <Grid FlexLayout.Basis="25%" Padding="4,0">
+                                    <Border
+                                        StrokeShape="RoundRectangle 999"
+                                        StrokeThickness="0"
+                                        Padding="8,9"
+                                        MinimumHeightRequest="44">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
                                             </DataTrigger>
-                                            <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
-                                                <Setter Property="TextColor"
-                                                        Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                                <Setter Property="BackgroundColor"
+                                                        Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}" />
                                             </DataTrigger>
-                                        </Label.Triggers>
-                                    </Label>
-                                </Border>
+                                        </Border.Triggers>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={x:Reference WorkoutRoot}, Path=BindingContext.SelectFilterCommand}"
+                                                CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
+                                        <Label
+                                            Text="{Binding Label}"
+                                            FontSize="12"
+                                            FontAttributes="Bold"
+                                            HorizontalTextAlignment="Center"
+                                            VerticalOptions="Center">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="TextColor" Value="{StaticResource White}" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
+                                                    <Setter Property="TextColor"
+                                                            Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </Border>
+                                </Grid>
                             </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
 
                     <ActivityIndicator
                         IsRunning="{Binding IsBusy}"

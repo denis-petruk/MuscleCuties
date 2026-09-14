@@ -4,12 +4,13 @@ namespace MuscleCuties.App.Pages.Cycle;
 
 public partial class CyclePage : ContentPage
 {
+    private readonly CycleViewModel _viewModel;
     private bool _isThemeHandlerAttached;
 
     public CyclePage(CycleViewModel vm)
     {
         this.InitializeWithTiming(InitializeComponent);
-        BindingContext = vm;
+        _viewModel = vm;
     }
 
     protected override void OnAppearing()
@@ -21,12 +22,19 @@ public partial class CyclePage : ContentPage
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
-        var vm = (CycleViewModel)BindingContext;
+        if (BindingContext is null)
+            BindingContext = _viewModel;
         this.BeginPageLoad(async () =>
         {
-            await vm.LoadDataCommand.ExecuteAsync(null);
-            vm.RefreshThemeColors(IsDarkTheme());
+            await _viewModel.LoadDataCommand.ExecuteAsync(null);
+            _viewModel.RefreshThemeColors(IsDarkTheme());
         });
+        this.BeginDeferredLoad(LoadDeferredContentAsync);
+    }
+
+    private async Task LoadDeferredContentAsync()
+    {
+        await PhaseGuideLazy.LoadIfNeededAsync(true);
     }
 
     protected override void OnDisappearing()
@@ -55,7 +63,12 @@ public partial class CyclePage : ContentPage
 
     private void OnRequestedThemeChanged(object? sender, AppThemeChangedEventArgs e)
     {
-        ((CycleViewModel)BindingContext).RefreshThemeColors(e.RequestedTheme == AppTheme.Dark);
+        _viewModel.RefreshThemeColors(e.RequestedTheme == AppTheme.Dark);
+    }
+
+    internal void PrepareTheme()
+    {
+        _viewModel.RefreshThemeColors(IsDarkTheme());
     }
 
     private static bool IsDarkTheme()

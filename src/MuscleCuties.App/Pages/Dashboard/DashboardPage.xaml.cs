@@ -6,6 +6,7 @@ namespace MuscleCuties.App.Pages.Dashboard;
 public partial class DashboardPage : ContentPage
 {
     private readonly DashboardViewModel _viewModel;
+    private Task? _deferredCardsLoad;
     private bool _isThemeHandlerAttached;
 
     public DashboardPage(DashboardViewModel vm)
@@ -30,6 +31,29 @@ public partial class DashboardPage : ContentPage
             await _viewModel.LoadDataCommand.ExecuteAsync(null);
             _viewModel.RefreshThemeColors(IsDarkTheme());
         });
+    }
+
+    private void OnDashboardLoaded(object? sender, EventArgs e)
+    {
+        this.BeginDeferredLoad(LoadDeferredCardsAsync);
+    }
+
+    private Task LoadDeferredCardsAsync()
+    {
+        return _deferredCardsLoad ??= LoadDeferredCardsCoreAsync();
+    }
+
+    private async Task LoadDeferredCardsCoreAsync()
+    {
+        await PhaseCardLazy.LoadIfNeededAsync(true);
+        await Task.Yield();
+        await WorkoutCardLazy.LoadIfNeededAsync(true);
+        await Task.Yield();
+        await ReadinessLazy.LoadIfNeededAsync(true);
+        await Task.Yield();
+        await NutritionLazy.LoadIfNeededAsync(true);
+        await Task.Yield();
+        await TargetsLazy.LoadIfNeededAsync(true);
     }
 
     protected override void OnDisappearing()

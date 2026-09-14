@@ -38,14 +38,8 @@ public partial class ProfileSetupViewModel : ObservableObject
     [ObservableProperty] private int _selectedHeightCm = 165;
     [ObservableProperty] private int _selectedInches = 6;
 
-    [ObservableProperty]
-    private StrengthTrainingStyle _selectedStrengthTrainingStyle = StrengthTrainingStyle.ComfortableModerate;
-
     [ObservableProperty] private int _selectedWeightKg = 65;
     [ObservableProperty] private int _selectedWeightLbs = 143;
-
-    [ObservableProperty]
-    private ObservableCollection<StrengthTrainingStyleOptionItem> _strengthTrainingStyleOptions = new();
 
     [ObservableProperty] private bool _useMetricSystem = true;
     [ObservableProperty] private ObservableCollection<WorkoutActivityOptionItem> _workoutActivityOptions = new();
@@ -68,11 +62,8 @@ public partial class ProfileSetupViewModel : ObservableObject
         SelectMetricUnitsCommand = new RelayCommand(() => UseMetricSystem = true);
         SelectImperialUnitsCommand = new RelayCommand(() => UseMetricSystem = false);
         ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
-        SelectStrengthTrainingStyleCommand =
-            new RelayCommand<StrengthTrainingStyleOptionItem>(SelectStrengthTrainingStyle);
         SelectedGoalOption = GoalOptions.First(option => option.Value == Goal);
         WorkoutActivityOptions = WorkoutActivityOptionCatalog.Build(new HashSet<WorkoutActivityType>());
-        StrengthTrainingStyleOptions = StrengthTrainingStyleOptionCatalog.Build(SelectedStrengthTrainingStyle);
     }
 
     public DateTime MinBirthDate { get; } = DateTime.Today.AddYears(-100);
@@ -85,9 +76,6 @@ public partial class ProfileSetupViewModel : ObservableObject
     public List<int> ImperialWeightOptions { get; } = Enumerable.Range(66, 375).ToList();
     public IReadOnlyList<SelectionOption<UserGoal>> GoalOptions { get; } = ProfileSelectionOptions.Goals;
     public bool UseImperialSystem => !UseMetricSystem;
-
-    public bool IsStrengthStyleVisible => WorkoutActivityOptions.Any(option =>
-        WorkoutActivityPreferences.IsStrengthActivity(option.ActivityType) && option.IsSelected);
 
     public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions { get; private set; } = [];
 
@@ -113,7 +101,6 @@ public partial class ProfileSetupViewModel : ObservableObject
     public RelayCommand SelectMetricUnitsCommand { get; }
     public RelayCommand SelectImperialUnitsCommand { get; }
     public RelayCommand<WorkoutActivityOptionItem> ToggleWorkoutActivityCommand { get; }
-    public RelayCommand<StrengthTrainingStyleOptionItem> SelectStrengthTrainingStyleCommand { get; }
 
     public AsyncRelayCommand SaveCommand => ContinueCommand;
 
@@ -137,9 +124,6 @@ public partial class ProfileSetupViewModel : ObservableObject
         var loadedOptions = WorkoutActivityOptionCatalog.Build(selectedActivities);
         foreach (var option in WorkoutActivityOptions)
             option.IsSelected = loadedOptions.Any(loaded => loaded.ActivityType == option.ActivityType && loaded.IsSelected);
-        SelectedStrengthTrainingStyle =
-            WorkoutActivityPreferences.ParseStrengthStyle(profile.PreferredWorkoutActivityTypes);
-        OnPropertyChanged(nameof(IsStrengthStyleVisible));
         _hasLoadedProfile = true;
     }
 
@@ -163,7 +147,7 @@ public partial class ProfileSetupViewModel : ObservableObject
 
             if (!selectedActivities.Any(WorkoutActivityPreferences.IsStrengthActivity))
             {
-                ErrorMessage = "Pick one strength style so your plan has a real base.";
+                ErrorMessage = "Pick at least one strength activity to anchor your plan.";
                 return;
             }
 
@@ -200,7 +184,7 @@ public partial class ProfileSetupViewModel : ObservableObject
                 profile.WeightGoalPace = WeightGoalPace.Steady;
                 profile.PreferredWorkoutActivityTypes = WorkoutActivityPreferences.Serialize(
                     selectedActivities,
-                    SelectedStrengthTrainingStyle);
+                    StrengthTrainingStyle.ComfortableModerate);
             }
 
             profile.WorkoutDaysPerWeek = profile.WorkoutDaysPerWeek > 0
@@ -268,19 +252,6 @@ public partial class ProfileSetupViewModel : ObservableObject
             return;
 
         ErrorMessage = WorkoutActivityOptionCatalog.ToggleSelection(WorkoutActivityOptions, item);
-        OnPropertyChanged(nameof(IsStrengthStyleVisible));
-    }
-
-    private void SelectStrengthTrainingStyle(StrengthTrainingStyleOptionItem? item)
-    {
-        if (item is null)
-            return;
-
-        SelectedStrengthTrainingStyle = item.Style;
-        foreach (var option in StrengthTrainingStyleOptions)
-            option.IsSelected = option.Style == item.Style;
-
-        ErrorMessage = string.Empty;
     }
 
     public void SetProfileImage(string? imagePath)
@@ -293,7 +264,6 @@ public partial class ProfileSetupViewModel : ObservableObject
     {
         GroupedWorkoutActivityOptions = WorkoutActivityOptionCatalog.BuildGroups(value);
         OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
-        OnPropertyChanged(nameof(IsStrengthStyleVisible));
     }
 
     partial void OnGoalChanged(UserGoal value)
@@ -307,12 +277,6 @@ public partial class ProfileSetupViewModel : ObservableObject
     {
         if (value is not null && Goal != value.Value)
             Goal = value.Value;
-    }
-
-    partial void OnSelectedStrengthTrainingStyleChanged(StrengthTrainingStyle value)
-    {
-        foreach (var option in StrengthTrainingStyleOptions)
-            option.IsSelected = option.Style == value;
     }
 
     partial void OnProfileImagePathChanged(string value)

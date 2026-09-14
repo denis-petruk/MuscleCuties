@@ -17,7 +17,7 @@
             Padding="18,16"
             MaximumWidthRequest="420"
             VerticalOptions="End">
-            <VerticalStackLayout Spacing="12">
+            <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="12">
                 <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12">
                     <Border
                         WidthRequest="34"
@@ -35,16 +35,17 @@
                             VerticalOptions="Center" />
                     </Border>
 
-                    <VerticalStackLayout Grid.Column="1" Spacing="4">
+                    <Grid Grid.Column="1" RowDefinitions="Auto, Auto" RowSpacing="4">
                         <Label
                             Text="{Binding CycleWarningTitle}"
                             Style="{StaticResource CardTitle}"
                             LineBreakMode="WordWrap" />
                         <Label
+                            Grid.Row="1"
                             Text="{Binding CycleWarningText}"
                             Style="{StaticResource MutedLabel}"
                             LineBreakMode="WordWrap" />
-                    </VerticalStackLayout>
+                    </Grid>
 
                     <Border
                         Grid.Column="2"
@@ -72,6 +73,7 @@
                 </Grid>
 
                 <Grid
+                    Grid.Row="1"
                     ColumnDefinitions="*, *"
                     ColumnSpacing="10"
                     IsVisible="{Binding HasCycleWarningSuggestedPhase}">
@@ -91,11 +93,12 @@
                 </Grid>
 
                 <Button
+                    Grid.Row="2"
                     Text="Got it"
                     Command="{Binding CloseCycleWarningPopupCommand}"
                     HeightRequest="52"
                     IsVisible="{Binding HasCycleWarningSuggestedPhase, Converter={StaticResource InvertedBoolConverter}}" />
-            </VerticalStackLayout>
+            </Grid>
         </Border>
     </Grid>
 </ContentView>

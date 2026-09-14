@@ -6,24 +6,26 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:cycleControls="clr-namespace:MuscleCuties.App.Controls.Cycle"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Cycle;assembly=MuscleCuties.Core"
     x:DataType="vm:CycleViewModel"
     Shell.NavBarIsVisible="False">
 
     <Grid>
         <ScrollView>
-            <VerticalStackLayout
+            <Grid
                 Padding="20,40,20,32"
-                Spacing="16"
+                RowDefinitions="Auto, Auto, Auto"
+                RowSpacing="16"
                 HorizontalOptions="Fill"
                 MaximumWidthRequest="640">
                 <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                    <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+                    <Grid RowDefinitions="Auto, Auto" RowSpacing="4" VerticalOptions="Center">
                         <Label
                             Text="{Binding CurrentMonthLabel}"
                             Style="{StaticResource SubHeadline}" />
-                        <Label Text="Your cycle" Style="{StaticResource MutedLabel}" />
-                    </VerticalStackLayout>
+                        <Label Grid.Row="1" Text="Your cycle" Style="{StaticResource MutedLabel}" />
+                    </Grid>
 
                     <Border
                         Grid.Column="1"
@@ -48,13 +50,20 @@
                     </Border>
                 </Grid>
 
-                <cycleControls:CycleCalendarCard />
-                <cycleControls:CyclePhaseGuideList />
-            </VerticalStackLayout>
+                <cycleControls:CycleCalendarCard Grid.Row="1" />
+                <toolkit:LazyView
+                    x:Name="PhaseGuideLazy"
+                    Grid.Row="2"
+                    x:TypeArguments="cycleControls:CyclePhaseGuideList" />
+            </Grid>
         </ScrollView>
 
-        <cycleControls:CycleDatePhaseModal />
-        <cycleControls:CycleWarningPopup />
+        <toolkit:LazyView
+            x:TypeArguments="cycleControls:CycleDatePhaseModal"
+            IsVisible="{Binding IsDatePhaseModalVisible}" />
+        <toolkit:LazyView
+            x:TypeArguments="cycleControls:CycleWarningPopup"
+            IsVisible="{Binding IsCycleWarningPopupVisible}" />
         <sharedControls:PageLoadingOverlay />
     </Grid>
 </ContentPage>

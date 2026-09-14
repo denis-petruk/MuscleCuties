@@ -5,11 +5,13 @@
     x:Name="StrengthStyleRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:workoutModels="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core">
+    xmlns:controls="clr-namespace:MuscleCuties.App.Controls.Workout"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core"
+    x:DataType="controls:StrengthTrainingStylePicker">
 
     <VerticalStackLayout
         Spacing="10"
-        BindableLayout.ItemsSource="{Binding StrengthTrainingStyleOptions}">
+        BindableLayout.ItemsSource="{Binding ItemsSource, Source={x:Reference StrengthStyleRoot}}">
         <BindableLayout.ItemTemplate>
             <DataTemplate x:DataType="workoutModels:StrengthTrainingStyleOptionItem">
                 <Border

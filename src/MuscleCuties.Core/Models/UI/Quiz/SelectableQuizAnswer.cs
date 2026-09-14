@@ -15,6 +15,9 @@ public partial class SelectableQuizAnswer : ObservableObject
     public string IconGlyph => QuestionType switch
     {
         QuizQuestionType.Goal => BuildGoalIcon(),
+        QuizQuestionType.GoalPace => Answer.MappedValue == (int)WeightGoalPace.Aggressive
+            ? "Flash24"
+            : "Gauge24",
         QuizQuestionType.ExperienceLevel => BuildExperienceIcon(),
         QuizQuestionType.WorkoutDaysPerWeek => "CalendarWorkWeek24",
         QuizQuestionType.DietaryPreference => BuildDietIcon(),

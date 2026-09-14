@@ -25,77 +25,85 @@
             HorizontalOptions="Fill"
             VerticalOptions="Center">
 
-            <Grid RowDefinitions="Auto, *">
-                <VerticalStackLayout
+            <Grid RowDefinitions="Auto, Auto, *">
+                <!-- Row 0: Title + action buttons -->
+                <Grid
                     Grid.Row="0"
-                    Padding="20,18,20,14"
-                    Spacing="12">
+                    ColumnDefinitions="*, Auto, Auto"
+                    RowDefinitions="Auto, Auto"
+                    ColumnSpacing="10"
+                    RowSpacing="4"
+                    Padding="20,18,20,12">
+                    <Label
+                        Grid.Row="0" Grid.Column="0"
+                        Text="Meal ideas"
+                        Style="{StaticResource SubHeadline}"
+                        FontSize="22" />
+                    <Label
+                        Grid.Row="1" Grid.Column="0"
+                        Text="{Binding SuggestionTargetText}"
+                        Style="{StaticResource MutedLabel}" />
 
-                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-                        <VerticalStackLayout Spacing="4">
-                            <Label
-                                Text="Meal ideas"
-                                Style="{StaticResource SubHeadline}"
-                                FontSize="22" />
-                            <Label
-                                Text="{Binding SuggestionTargetText}"
-                                Style="{StaticResource MutedLabel}" />
-                        </VerticalStackLayout>
+                    <Border
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Grid.RowSpan="2"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        StrokeShape="RoundRectangle 22"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                        StrokeThickness="0"
+                        VerticalOptions="Start"
+                        SemanticProperties.Description="Refresh meal suggestions">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding RefreshSuggestionsCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path
+                            Data="M17.65 6.35A7.958 7.958 0 0012 4a8 8 0 00-8 8 8 8 0 008 8 7.985 7.985 0 005.93-2.65l-1.46-1.46A5.98 5.98 0 0112 18a6 6 0 01-6-6 6 6 0 016-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                            Fill="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                            Aspect="Uniform"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
 
-                        <Border
-                            Grid.Column="1"
-                            WidthRequest="44"
-                            HeightRequest="44"
-                            StrokeShape="RoundRectangle 22"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                            StrokeThickness="0"
-                            VerticalOptions="Start"
-                            SemanticProperties.Description="Refresh meal suggestions">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding RefreshSuggestionsCommand}" />
-                            </Border.GestureRecognizers>
-                            <Path
-                                Data="M17.65 6.35A7.958 7.958 0 0012 4a8 8 0 00-8 8 8 8 0 008 8 7.985 7.985 0 005.93-2.65l-1.46-1.46A5.98 5.98 0 0112 18a6 6 0 01-6-6 6 6 0 016-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
-                                Fill="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                Aspect="Uniform"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
-                        </Border>
+                    <Border
+                        Grid.Row="0"
+                        Grid.Column="2"
+                        Grid.RowSpan="2"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        StrokeShape="RoundRectangle 22"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
+                        StrokeThickness="0"
+                        VerticalOptions="Start"
+                        SemanticProperties.Description="Close suggestions">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding CloseSuggestionModalCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path
+                            Data="M6 6L18 18M18 6L6 18"
+                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                            StrokeThickness="2.2"
+                            StrokeLineCap="Round"
+                            Aspect="Uniform"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+                </Grid>
 
-                        <Border
-                            Grid.Column="2"
-                            WidthRequest="44"
-                            HeightRequest="44"
-                            StrokeShape="RoundRectangle 22"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
-                            StrokeThickness="0"
-                            VerticalOptions="Start"
-                            SemanticProperties.Description="Close suggestions">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding CloseSuggestionModalCommand}" />
-                            </Border.GestureRecognizers>
-                            <Path
-                                Data="M6 6L18 18M18 6L6 18"
-                                Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                StrokeThickness="2.2"
-                                StrokeLineCap="Round"
-                                Aspect="Uniform"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
-                        </Border>
-                    </Grid>
-
-                    <BoxView
-                        HeightRequest="1"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
-                </VerticalStackLayout>
+                <!-- Row 1: Divider -->
+                <BoxView
+                    Grid.Row="1"
+                    Margin="20,0,20,0"
+                    HeightRequest="1"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                 <VerticalStackLayout
-                    Grid.Row="1"
+                    Grid.Row="2"
                     IsVisible="{Binding IsMealTypePickerVisible}"
                     Spacing="12"
                     Padding="20,12,20,20"
@@ -137,7 +145,7 @@
                 </VerticalStackLayout>
 
                 <ActivityIndicator
-                    Grid.Row="1"
+                    Grid.Row="2"
                     IsRunning="{Binding IsLoadingSuggestions}"
                     IsVisible="{Binding IsLoadingSuggestions}"
                     Color="{StaticResource Primary}"
@@ -148,7 +156,7 @@
                     SemanticProperties.Description="Loading meal suggestions" />
 
                 <VerticalStackLayout
-                    Grid.Row="1"
+                    Grid.Row="2"
                     IsVisible="{Binding HasNoMealSuggestions}"
                     Spacing="10"
                     HorizontalOptions="Center"
@@ -176,7 +184,7 @@
 
                 <CollectionView
                     x:Name="SuggestionCollection"
-                    Grid.Row="1"
+                    Grid.Row="2"
                     ItemsSource="{Binding MealSuggestions}"
                     SelectionMode="None"
                     IsVisible="{Binding HasMealSuggestions}"
@@ -199,24 +207,24 @@
                                 StrokeThickness="1"
                                 Padding="14"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
-                                <Grid RowDefinitions="54, Auto, Auto, Auto" RowSpacing="8">
-                                    <VerticalStackLayout Grid.Row="0" Spacing="4" VerticalOptions="Start">
-                                        <Label
-                                            Text="{Binding ConceptName}"
-                                            Style="{StaticResource AccentLabel}"
-                                            FontSize="15"
-                                            FontAttributes="Bold"
-                                            MaxLines="1"
-                                            LineBreakMode="TailTruncation" />
-                                        <Label
-                                            Text="{Binding ConceptDescription}"
-                                            Style="{StaticResource CaptionLabel}"
-                                            FontSize="12"
-                                            MaxLines="2"
-                                            LineBreakMode="TailTruncation" />
-                                    </VerticalStackLayout>
+                                <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto" RowSpacing="4">
+                                    <Label
+                                        Grid.Row="0"
+                                        Text="{Binding ConceptName}"
+                                        Style="{StaticResource AccentLabel}"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        MaxLines="1"
+                                        LineBreakMode="TailTruncation" />
+                                    <Label
+                                        Grid.Row="1"
+                                        Text="{Binding ConceptDescription}"
+                                        Style="{StaticResource CaptionLabel}"
+                                        FontSize="12"
+                                        MaxLines="2"
+                                        LineBreakMode="TailTruncation" />
 
-                                    <HorizontalStackLayout Grid.Row="1" Spacing="6">
+                                    <HorizontalStackLayout Grid.Row="2" Spacing="6">
                                         <Border
                                             StrokeShape="RoundRectangle 999"
                                             StrokeThickness="0"
@@ -238,13 +246,13 @@
                                     </HorizontalStackLayout>
 
                                     <Label
-                                        Grid.Row="2"
+                                        Grid.Row="3"
                                         Text="{Binding MacrosText}"
                                         Style="{StaticResource CaptionLabel}"
                                         FontSize="11" />
 
                                     <Border
-                                        Grid.Row="3"
+                                        Grid.Row="4"
                                         StrokeShape="RoundRectangle 12"
                                         StrokeThickness="0"
                                         BackgroundColor="{StaticResource Primary}"

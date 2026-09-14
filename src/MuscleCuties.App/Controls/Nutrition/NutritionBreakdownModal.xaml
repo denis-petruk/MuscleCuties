@@ -25,56 +25,60 @@
             HorizontalOptions="Fill"
             VerticalOptions="Center">
 
-            <Grid RowDefinitions="Auto, Auto, *">
-                <VerticalStackLayout
+            <Grid RowDefinitions="Auto, Auto, Auto, *">
+                <!-- Row 0: Title + close button -->
+                <Grid
                     Grid.Row="0"
-                    Padding="20,18,20,14"
-                    Spacing="12">
+                    ColumnDefinitions="*, Auto"
+                    RowDefinitions="Auto, Auto"
+                    ColumnSpacing="12"
+                    RowSpacing="6"
+                    Padding="20,18,20,12">
+                    <Label
+                        Grid.Row="0" Grid.Column="0"
+                        Text="{Binding SelectedBreakdownTitle}"
+                        Style="{StaticResource SubHeadline}"
+                        FontSize="24" />
+                    <Label
+                        Grid.Row="1" Grid.Column="0"
+                        Text="{Binding SelectedBreakdownNutrientSummaryText}"
+                        Style="{StaticResource MutedLabel}" />
+                    <Border
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Grid.RowSpan="2"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        StrokeShape="RoundRectangle 22"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
+                        StrokeThickness="0"
+                        VerticalOptions="Start"
+                        SemanticProperties.Description="Close nutrition breakdown">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding CloseMicronutrientsModalCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path
+                            Data="M6 6L18 18M18 6L6 18"
+                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                            StrokeThickness="2.2"
+                            StrokeLineCap="Round"
+                            Aspect="Uniform"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+                </Grid>
 
-                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                        <VerticalStackLayout Spacing="6">
-                            <Label
-                                Text="{Binding SelectedBreakdownTitle}"
-                                Style="{StaticResource SubHeadline}"
-                                FontSize="24" />
-
-                            <Label
-                                Text="{Binding SelectedBreakdownNutrientSummaryText}"
-                                Style="{StaticResource MutedLabel}" />
-                        </VerticalStackLayout>
-
-                        <Border
-                            Grid.Column="1"
-                            WidthRequest="44"
-                            HeightRequest="44"
-                            StrokeShape="RoundRectangle 22"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
-                            StrokeThickness="0"
-                            VerticalOptions="Start"
-                            SemanticProperties.Description="Close nutrition breakdown">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding CloseMicronutrientsModalCommand}" />
-                            </Border.GestureRecognizers>
-                            <Path
-                                Data="M6 6L18 18M18 6L6 18"
-                                Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                StrokeThickness="2.2"
-                                StrokeLineCap="Round"
-                                Aspect="Uniform"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
-                        </Border>
-                    </Grid>
-
-                    <BoxView
-                        HeightRequest="1"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
-                </VerticalStackLayout>
+                <!-- Row 1: Divider -->
+                <BoxView
+                    Grid.Row="1"
+                    Margin="20,0,20,14"
+                    HeightRequest="1"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                 <Grid
-                    Grid.Row="1"
+                    Grid.Row="2"
                     ColumnDefinitions="132, *"
                     ColumnSpacing="16"
                     Padding="20,0,20,16">
@@ -93,22 +97,27 @@
                         HorizontalOptions="Center"
                         VerticalOptions="Center" />
 
-                    <VerticalStackLayout
+                    <Grid
                         Grid.Column="1"
-                        Spacing="10"
+                        RowDefinitions="Auto, Auto, Auto, Auto, Auto"
+                        RowSpacing="10"
                         VerticalOptions="Center">
                         <Label
+                            Grid.Row="0"
                             Text="{Binding SelectedBreakdownCaloriesText}"
                             Style="{StaticResource AccentLabel}"
                             FontSize="22" />
                         <Label
+                            Grid.Row="1"
                             Text="{Binding SelectedBreakdownMacrosText}"
                             Style="{StaticResource CaptionLabel}" />
                         <Label
+                            Grid.Row="2"
                             Text="{Binding SelectedBreakdownFiberText}"
                             Style="{StaticResource CaptionLabel}" />
 
                         <Border
+                            Grid.Row="3"
                             StrokeShape="RoundRectangle 16"
                             StrokeThickness="0"
                             BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
@@ -136,6 +145,7 @@
                         </Border>
 
                         <VerticalStackLayout
+                            Grid.Row="4"
                             Spacing="7"
                             BindableLayout.ItemsSource="{Binding SelectedBreakdownMacroItems}">
                             <BindableLayout.ItemTemplate>
@@ -169,11 +179,11 @@
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                         </VerticalStackLayout>
-                    </VerticalStackLayout>
+                    </Grid>
                 </Grid>
 
                 <CollectionView
-                    Grid.Row="2"
+                    Grid.Row="3"
                     ItemsSource="{Binding SelectedBreakdownMicronutrients}"
                     SelectionMode="None"
                     VerticalScrollBarVisibility="Always"
@@ -187,83 +197,94 @@
                                 Margin="0,0,0,10"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
                                 <Border.Shadow>
-                                            <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,3" Radius="12" Opacity="0.06" />
+                                    <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,3" Radius="12" Opacity="0.06" />
                                 </Border.Shadow>
 
-                                <VerticalStackLayout Spacing="10">
-                                    <Grid ColumnDefinitions="34, *, Auto" ColumnSpacing="10">
-                                        <Border
-                                            Grid.Column="0"
-                                            WidthRequest="34"
-                                            HeightRequest="34"
-                                            StrokeShape="RoundRectangle 17"
-                                            StrokeThickness="0"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                            VerticalOptions="Center">
-                                            <Image
-                                                Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                                WidthRequest="17"
-                                                HeightRequest="17"
-                                                Aspect="AspectFit"
-                                                HorizontalOptions="Center"
-                                                VerticalOptions="Center" />
-                                        </Border>
-
-                                        <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                            <Label
-                                                Text="{Binding Group}"
-                                                Style="{StaticResource EyebrowLabel}"
-                                                FontSize="9"
-                                                CharacterSpacing="1.1" />
-                                            <Label
-                                                Text="{Binding Name}"
-                                                Style="{StaticResource CardTitle}"
-                                                FontSize="15" />
-                                        </VerticalStackLayout>
-
-                                        <HorizontalStackLayout
-                                            Grid.Column="2"
-                                            Spacing="3"
-                                            VerticalOptions="Center">
-                                            <Label
-                                                Text="{Binding AmountText}"
-                                                Style="{StaticResource AccentLabel}"
-                                                FontSize="13" />
-                                            <Label
-                                                Text="{Binding GoalText}"
-                                                Style="{StaticResource CaptionLabel}"
-                                                VerticalOptions="Center" />
-                                        </HorizontalStackLayout>
-                                    </Grid>
-
-                                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
-                                        <ProgressBar
-                                            Progress="{Binding Progress}"
-                                            ProgressColor="{StaticResource Primary}"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                                            HeightRequest="6"
-                                            VerticalOptions="Center">
-                                            <ProgressBar.Triggers>
-                                                <DataTrigger
-                                                    TargetType="ProgressBar"
-                                                    Binding="{Binding IsGoalHit}"
-                                                    Value="True">
-                                                    <Setter
-                                                        Property="ProgressColor"
-                                                        Value="{AppThemeBinding Light={StaticResource ReadinessHighLight}, Dark={StaticResource ReadinessHighDark}}" />
-                                                </DataTrigger>
-                                            </ProgressBar.Triggers>
-                                        </ProgressBar>
-
-                                        <Label
-                                            Grid.Column="1"
-                                            Text="{Binding ProgressText}"
-                                            Style="{StaticResource CaptionLabel}"
-                                            WidthRequest="44"
-                                            HorizontalTextAlignment="End"
+                                <Grid
+                                    RowDefinitions="Auto, 10, Auto"
+                                    ColumnDefinitions="34, *, Auto"
+                                    ColumnSpacing="10">
+                                    <Border
+                                        Grid.Row="0"
+                                        Grid.Column="0"
+                                        Grid.RowSpan="3"
+                                        WidthRequest="34"
+                                        HeightRequest="34"
+                                        StrokeShape="RoundRectangle 17"
+                                        StrokeThickness="0"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                        VerticalOptions="Center">
+                                        <Image
+                                            Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                            WidthRequest="17"
+                                            HeightRequest="17"
+                                            Aspect="AspectFit"
+                                            HorizontalOptions="Center"
                                             VerticalOptions="Center" />
+                                    </Border>
+
+                                    <Grid
+                                        Grid.Row="0"
+                                        Grid.Column="1"
+                                        RowDefinitions="Auto, Auto"
+                                        RowSpacing="2">
+                                        <Label
+                                            Grid.Row="0"
+                                            Text="{Binding Group}"
+                                            Style="{StaticResource EyebrowLabel}"
+                                            FontSize="9"
+                                            CharacterSpacing="1.1" />
+                                        <Label
+                                            Grid.Row="1"
+                                            Text="{Binding Name}"
+                                            Style="{StaticResource CardTitle}"
+                                            FontSize="15" />
                                     </Grid>
-                                </VerticalStackLayout>
+
+                                    <HorizontalStackLayout
+                                        Grid.Row="0"
+                                        Grid.Column="2"
+                                        Spacing="3"
+                                        VerticalOptions="Center">
+                                        <Label
+                                            Text="{Binding AmountText}"
+                                            Style="{StaticResource AccentLabel}"
+                                            FontSize="13" />
+                                        <Label
+                                            Text="{Binding GoalText}"
+                                            Style="{StaticResource CaptionLabel}"
+                                            VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+
+                                    <ProgressBar
+                                        Grid.Row="2"
+                                        Grid.Column="1"
+                                        Progress="{Binding Progress}"
+                                        ProgressColor="{StaticResource Primary}"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                        HeightRequest="6"
+                                        VerticalOptions="Center">
+                                        <ProgressBar.Triggers>
+                                            <DataTrigger
+                                                TargetType="ProgressBar"
+                                                Binding="{Binding IsGoalHit}"
+                                                Value="True">
+                                                <Setter
+                                                    Property="ProgressColor"
+                                                    Value="{AppThemeBinding Light={StaticResource ReadinessHighLight}, Dark={StaticResource ReadinessHighDark}}" />
+                                            </DataTrigger>
+                                        </ProgressBar.Triggers>
+                                    </ProgressBar>
+
+                                    <Label
+                                        Grid.Row="2"
+                                        Grid.Column="2"
+                                        Text="{Binding ProgressText}"
+                                        Style="{StaticResource CaptionLabel}"
+                                        WidthRequest="44"
+                                        HorizontalTextAlignment="End"
+                                        VerticalOptions="Center" />
+                                </Grid>
                             </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>

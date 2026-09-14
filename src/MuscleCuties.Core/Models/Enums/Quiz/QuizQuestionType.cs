@@ -17,5 +17,6 @@ public enum QuizQuestionType
     CycleTrackingMode,
     CurrentCyclePhase,
     SessionDuration,
-    Equipment
+    Equipment,
+    GoalPace
 }

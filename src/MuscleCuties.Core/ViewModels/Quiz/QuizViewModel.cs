@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Enums.Quiz;
+using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.UI.Quiz;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
@@ -32,6 +33,8 @@ public partial class QuizViewModel : ObservableObject
 
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isPreparingDashboard;
+    [ObservableProperty] private double _painSliderValue = 3;
+    [ObservableProperty] private double _energySliderValue = 3;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanRetryQuestionsLoad))]
@@ -95,13 +98,31 @@ public partial class QuizViewModel : ObservableObject
     public bool IsLoading => LoadState is QuizLoadState.Loading;
     public bool IsLoadingVisible => IsLoading;
     public bool IsCurrentQuestionMultiAnswer => CurrentQuestion?.QuestionType is QuizQuestionType.DietaryPreference;
-    public bool IsFirstQuestion => CurrentQuestionIndex == 0;
-    public bool IsLastQuestion => Questions.Count > 0 && CurrentQuestionIndex == Questions.Count - 1;
-    public float ProgressValue => Questions.Count == 0 ? 0f : (float)(CurrentQuestionIndex + 1) / Questions.Count;
+    public bool IsCurrentQuestionPhasePair => IsPainQuestion(CurrentQuestion?.QuestionType);
+    public bool IsStandardAnswerListVisible => !IsCurrentQuestionPhasePair;
+    public bool IsFirstQuestion => FindPreviousVisibleQuestionIndex(CurrentQuestionIndex) < 0;
+    public bool IsLastQuestion => Questions.Count > 0 && FindNextVisibleQuestionIndex(CurrentQuestionIndex) < 0;
+    public float ProgressValue => VisualQuestionCount == 0
+        ? 0f
+        : (float)CurrentVisualQuestionNumber / VisualQuestionCount;
 
-    public string CurrentQuestionText => CurrentQuestion?.Question ?? string.Empty;
+    public string CurrentQuestionText => IsCurrentQuestionPhasePair
+        ? PhasePairTitle
+        : CurrentQuestion?.Question ?? string.Empty;
     public string NextButtonText => IsLastQuestion ? "Finish" : "Next";
-    public string ProgressText => Questions.Count == 0 ? string.Empty : $"{CurrentQuestionIndex + 1} / {Questions.Count}";
+    public string ProgressText => VisualQuestionCount == 0
+        ? string.Empty
+        : $"{CurrentVisualQuestionNumber} / {VisualQuestionCount}";
+    public string PhasePairTitle => CurrentQuestion?.QuestionType switch
+    {
+        QuizQuestionType.MenstrualPain => "How does your period usually feel?",
+        QuizQuestionType.FollicularPain => "How does your follicular phase usually feel?",
+        QuizQuestionType.OvulatoryPain => "How does ovulation usually feel?",
+        QuizQuestionType.LutealPain => "How does your luteal phase usually feel?",
+        _ => string.Empty
+    };
+    public string PainSliderLabel => GetPainLabel(ToSliderStep(PainSliderValue));
+    public string EnergySliderLabel => GetEnergyLabel(ToSliderStep(EnergySliderValue));
     public string QuestionsStateTitle => HasNoQuestions ? "No quiz questions found" : "Questions could not load";
 
     public string QuestionsStateMessage => HasNoQuestions
@@ -111,6 +132,7 @@ public partial class QuizViewModel : ObservableObject
     public string CurrentQuestionIconGlyph => CurrentQuestion?.QuestionType switch
     {
         QuizQuestionType.Goal => "Target24",
+        QuizQuestionType.GoalPace => "Gauge24",
         QuizQuestionType.ExperienceLevel => "Dumbbell24",
         QuizQuestionType.WorkoutDaysPerWeek => "CalendarWorkWeek24",
         QuizQuestionType.DietaryPreference => "Food24",
@@ -182,18 +204,28 @@ public partial class QuizViewModel : ObservableObject
         if (CurrentQuestion is null || IsBusy)
             return;
 
-        var selectedAnswers = SelectedAnswers;
-        if (selectedAnswers.Count == 0)
+        if (IsCurrentQuestionPhasePair)
         {
-            ErrorMessage = "Choose an answer to continue.";
-            return;
+            if (!RecordPhasePairSelections(CurrentQuestion))
+                return;
         }
+        else
+        {
+            var selectedAnswers = SelectedAnswers;
+            if (selectedAnswers.Count == 0)
+            {
+                ErrorMessage = "Choose an answer to continue.";
+                return;
+            }
 
-        RecordSelections(CurrentQuestion.Id, selectedAnswers.Select(answer => answer.Id));
+            RecordSelections(CurrentQuestion.Id, selectedAnswers.Select(answer => answer.Id));
+            if (CurrentQuestion.QuestionType is QuizQuestionType.Goal && !ShouldShowGoalPace())
+                RemoveSelections(QuizQuestionType.GoalPace);
+        }
 
         if (!IsLastQuestion)
         {
-            MoveToQuestion(CurrentQuestionIndex + 1);
+            MoveToQuestion(FindNextVisibleQuestionIndex(CurrentQuestionIndex));
             return;
         }
 
@@ -205,7 +237,7 @@ public partial class QuizViewModel : ObservableObject
         if (IsFirstQuestion)
             return;
 
-        MoveToQuestion(CurrentQuestionIndex - 1);
+        MoveToQuestion(FindPreviousVisibleQuestionIndex(CurrentQuestionIndex));
     }
 
     private void BeginLoading()
@@ -254,6 +286,7 @@ public partial class QuizViewModel : ObservableObject
         CurrentQuestionIndex = Math.Clamp(index, 0, Questions.Count - 1);
         CurrentQuestion = Questions[CurrentQuestionIndex];
         BuildAnswers(CurrentQuestion);
+        RestorePhasePairValues(CurrentQuestion);
         NotifyComputedProperties();
     }
 
@@ -308,6 +341,147 @@ public partial class QuizViewModel : ObservableObject
         _selectedAnswers.AddRange(answerIds.Select(answerId => (questionId, answerId)));
     }
 
+    private bool RecordPhasePairSelections(QuizQuestion painQuestion)
+    {
+        var energyQuestion = GetPairedEnergyQuestion(painQuestion.QuestionType);
+        if (energyQuestion is null)
+        {
+            ErrorMessage = "This phase check-in could not be saved. Please try again.";
+            return false;
+        }
+
+        var painValue = 6 - ToSliderStep(PainSliderValue);
+        var energyValue = ToSliderStep(EnergySliderValue);
+        var painAnswer = painQuestion.Answers.FirstOrDefault(answer => answer.MappedValue == painValue);
+        var energyAnswer = energyQuestion.Answers.FirstOrDefault(answer => answer.MappedValue == energyValue);
+        if (painAnswer is null || energyAnswer is null)
+        {
+            ErrorMessage = "This phase check-in could not be saved. Please try again.";
+            return false;
+        }
+
+        ErrorMessage = string.Empty;
+        RecordSelections(painQuestion.Id, [painAnswer.Id]);
+        RecordSelections(energyQuestion.Id, [energyAnswer.Id]);
+        return true;
+    }
+
+    private void RestorePhasePairValues(QuizQuestion question)
+    {
+        if (!IsPainQuestion(question.QuestionType))
+            return;
+
+        var painValue = GetSavedMappedValue(question) ?? 3;
+        var energyQuestion = GetPairedEnergyQuestion(question.QuestionType);
+        var energyValue = energyQuestion is null ? 3 : GetSavedMappedValue(energyQuestion) ?? 3;
+        PainSliderValue = 6 - Math.Clamp(painValue, 1, 5);
+        EnergySliderValue = Math.Clamp(energyValue, 1, 5);
+    }
+
+    private int? GetSavedMappedValue(QuizQuestion question)
+    {
+        var answerId = _selectedAnswers
+            .LastOrDefault(selection => selection.QuestionId == question.Id)
+            .AnswerId;
+        return question.Answers.FirstOrDefault(answer => answer.Id == answerId)?.MappedValue;
+    }
+
+    private QuizQuestion? GetPairedEnergyQuestion(QuizQuestionType painType)
+    {
+        var energyType = painType switch
+        {
+            QuizQuestionType.MenstrualPain => QuizQuestionType.MenstrualEnergy,
+            QuizQuestionType.FollicularPain => QuizQuestionType.FollicularEnergy,
+            QuizQuestionType.OvulatoryPain => QuizQuestionType.OvulatoryEnergy,
+            QuizQuestionType.LutealPain => QuizQuestionType.LutealEnergy,
+            _ => (QuizQuestionType?)null
+        };
+        return energyType is null
+            ? null
+            : Questions.FirstOrDefault(question => question.QuestionType == energyType);
+    }
+
+    private int FindNextVisibleQuestionIndex(int currentIndex)
+    {
+        for (var index = currentIndex + 1; index < Questions.Count; index++)
+            if (!ShouldSkipQuestion(Questions[index]))
+                return index;
+
+        return -1;
+    }
+
+    private int FindPreviousVisibleQuestionIndex(int currentIndex)
+    {
+        for (var index = currentIndex - 1; index >= 0; index--)
+            if (!ShouldSkipQuestion(Questions[index]))
+                return index;
+
+        return -1;
+    }
+
+    private bool ShouldSkipQuestion(QuizQuestion question)
+    {
+        return IsEnergyQuestion(question.QuestionType) ||
+               question.QuestionType is QuizQuestionType.GoalPace && !ShouldShowGoalPace();
+    }
+
+    private bool ShouldShowGoalPace()
+    {
+        var goalQuestion = Questions.FirstOrDefault(question => question.QuestionType is QuizQuestionType.Goal);
+        if (goalQuestion is null)
+            return false;
+
+        var selectedGoal = GetSavedMappedValue(goalQuestion);
+        return selectedGoal is null || selectedGoal is (int)UserGoal.FatLoss or (int)UserGoal.Strength;
+    }
+
+    private void RemoveSelections(QuizQuestionType questionType)
+    {
+        var questionIds = Questions
+            .Where(question => question.QuestionType == questionType)
+            .Select(question => question.Id)
+            .ToHashSet();
+        _selectedAnswers.RemoveAll(selection => questionIds.Contains(selection.QuestionId));
+    }
+
+    private int VisualQuestionCount => Questions.Count(question => !ShouldSkipQuestion(question));
+
+    private int CurrentVisualQuestionNumber => Questions
+        .Take(CurrentQuestionIndex + 1)
+        .Count(question => !ShouldSkipQuestion(question));
+
+    private static bool IsPainQuestion(QuizQuestionType? type)
+    {
+        return type is QuizQuestionType.MenstrualPain or QuizQuestionType.FollicularPain or
+            QuizQuestionType.OvulatoryPain or QuizQuestionType.LutealPain;
+    }
+
+    private static bool IsEnergyQuestion(QuizQuestionType type)
+    {
+        return type is QuizQuestionType.MenstrualEnergy or QuizQuestionType.FollicularEnergy or
+            QuizQuestionType.OvulatoryEnergy or QuizQuestionType.LutealEnergy;
+    }
+
+    private static int ToSliderStep(double value) => Math.Clamp((int)Math.Round(value), 1, 5);
+
+    private static string GetPainLabel(int value) => value switch
+    {
+        1 => "Severe",
+        2 => "Rough",
+        3 => "Noticeable",
+        4 => "Manageable",
+        _ => "None"
+    };
+
+    private static string GetEnergyLabel(int value) => value switch
+    {
+        1 => "Very low",
+        2 => "Low",
+        3 => "Steady",
+        4 => "Strong",
+        _ => "Peak"
+    };
+
     private async Task SaveAnswersAsync()
     {
         var totalStopwatch = Stopwatch.StartNew();
@@ -334,12 +508,13 @@ public partial class QuizViewModel : ObservableObject
 
             _preloadService.InvalidateAll();
             stageStopwatch.Restart();
-            await _preloadService.PreloadAllAsync();
+            await _preloadService.PreloadDashboardAsync();
             Trace.WriteLine(
-                $"[Performance][Quiz] All pages prepared in {stageStopwatch.ElapsedMilliseconds} ms.");
+                $"[Performance][Quiz] Dashboard data prepared in {stageStopwatch.ElapsedMilliseconds} ms.");
 
             stageStopwatch.Restart();
             await _navigateToDashboardAsync();
+            _ = _preloadService.PreloadRemainingAsync();
             Trace.WriteLine(
                 $"[Performance][Quiz] Dashboard navigation completed in {stageStopwatch.ElapsedMilliseconds} ms; " +
                 $"total sync={totalStopwatch.ElapsedMilliseconds} ms.");
@@ -362,6 +537,16 @@ public partial class QuizViewModel : ObservableObject
         OnPropertyChanged(nameof(CurrentQuestionIconGlyph));
     }
 
+    partial void OnPainSliderValueChanged(double value)
+    {
+        OnPropertyChanged(nameof(PainSliderLabel));
+    }
+
+    partial void OnEnergySliderValueChanged(double value)
+    {
+        OnPropertyChanged(nameof(EnergySliderLabel));
+    }
+
     private void NotifySelectionProperties()
     {
         OnPropertyChanged(nameof(FirstSelectedAnswer));
@@ -372,6 +557,8 @@ public partial class QuizViewModel : ObservableObject
     private void NotifyComputedProperties()
     {
         OnPropertyChanged(nameof(IsCurrentQuestionMultiAnswer));
+        OnPropertyChanged(nameof(IsCurrentQuestionPhasePair));
+        OnPropertyChanged(nameof(IsStandardAnswerListVisible));
         OnPropertyChanged(nameof(IsFirstQuestion));
         OnPropertyChanged(nameof(IsLastQuestion));
         OnPropertyChanged(nameof(ProgressValue));
@@ -381,6 +568,9 @@ public partial class QuizViewModel : ObservableObject
         OnPropertyChanged(nameof(QuestionsStateTitle));
         OnPropertyChanged(nameof(QuestionsStateMessage));
         OnPropertyChanged(nameof(CurrentQuestionIconGlyph));
+        OnPropertyChanged(nameof(PhasePairTitle));
+        OnPropertyChanged(nameof(PainSliderLabel));
+        OnPropertyChanged(nameof(EnergySliderLabel));
         BackCommand.NotifyCanExecuteChanged();
     }
 }

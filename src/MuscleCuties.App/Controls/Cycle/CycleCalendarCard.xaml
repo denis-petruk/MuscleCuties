@@ -2,16 +2,15 @@
 
 <ContentView
     x:Class="MuscleCuties.App.Controls.Cycle.CycleCalendarCard"
-    x:Name="Root"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:cycleModels="clr-namespace:MuscleCuties.Core.Models.UI.Cycle;assembly=MuscleCuties.Core"
+    xmlns:cycleControls="clr-namespace:MuscleCuties.App.Controls.Cycle"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Cycle;assembly=MuscleCuties.Core"
     x:DataType="vm:CycleViewModel">
 
     <Border Style="{StaticResource CardPrimary}">
-        <VerticalStackLayout Spacing="14">
+        <Grid RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="14">
             <Grid ColumnDefinitions="*, Auto">
                 <Label
                     Text="{Binding CycleDaySummary}"
@@ -24,24 +23,26 @@
                     VerticalOptions="Center" />
             </Grid>
 
-            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                    <HorizontalStackLayout Spacing="7">
+            <Grid Grid.Row="1" ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                <Grid RowDefinitions="Auto, Auto" RowSpacing="2" VerticalOptions="Center">
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="7">
                         <sharedControls:PhaseVisualView
                             Source="{Binding CurrentPhaseVisualSource}"
                             WidthRequest="22"
                             HeightRequest="22"
                             VerticalOptions="Center" />
                         <Label
+                            Grid.Column="1"
                             Text="{Binding PhaseLabel}"
                             Style="{StaticResource AccentLabel}"
                             VerticalOptions="Center" />
-                    </HorizontalStackLayout>
+                    </Grid>
                     <Label
+                        Grid.Row="1"
                         Text="{Binding LastPhaseLogText}"
                         Style="{StaticResource MutedLabel}"
                         FontSize="12" />
-                </VerticalStackLayout>
+                </Grid>
                 <Button
                     Grid.Column="1"
                     Text="{Binding PhaseLogActionText}"
@@ -54,69 +55,16 @@
             </Grid>
 
             <Label
+                Grid.Row="2"
                 Text="{Binding CalendarEditHintText}"
                 Style="{StaticResource MutedLabel}"
                 FontSize="12"
                 IsVisible="{Binding HasCalendarEditHint}" />
 
-            <CollectionView
+            <cycleControls:CycleMonthGrid
+                Grid.Row="3"
                 ItemsSource="{Binding CalendarDays}"
-                HeightRequest="240">
-                <CollectionView.ItemsLayout>
-                    <GridItemsLayout
-                        Orientation="Vertical"
-                        Span="7"
-                        HorizontalItemSpacing="5"
-                        VerticalItemSpacing="5" />
-                </CollectionView.ItemsLayout>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="cycleModels:CycleDayItem">
-                        <Border
-                            BackgroundColor="{Binding BackgroundColor}"
-                            StrokeShape="RoundRectangle 10"
-                            Stroke="{Binding StrokeColor}"
-                            StrokeThickness="{Binding StrokeThickness}"
-                            StrokeDashArray="0"
-                            MinimumHeightRequest="34"
-                            HeightRequest="36"
-                            Margin="0"
-                            SemanticProperties.Description="{Binding Day, StringFormat='Cycle day {0}'}">
-                            <Border.Triggers>
-                                <DataTrigger
-                                    TargetType="Border"
-                                    Binding="{Binding IsPredictedFuture}"
-                                    Value="True">
-                                    <Setter Property="StrokeDashArray" Value="3,2" />
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Command="{Binding BindingContext.OpenCalendarDayCommand, Source={x:Reference Root}}"
-                                    CommandParameter="{Binding .}" />
-                            </Border.GestureRecognizers>
-                            <Grid>
-                                <Image
-                                    Source="{Binding IconSource}"
-                                    IsVisible="{Binding IsNeutral, Converter={StaticResource InvertedBoolConverter}}"
-                                    WidthRequest="11"
-                                    HeightRequest="11"
-                                    Aspect="AspectFit"
-                                    Opacity="0.7"
-                                    HorizontalOptions="End"
-                                    VerticalOptions="Start"
-                                    Margin="0,3,4,0" />
-                                <Label
-                                    Text="{Binding Day}"
-                                    TextColor="{Binding TextColor}"
-                                    FontSize="12"
-                                    FontAttributes="Bold"
-                                    HorizontalOptions="Center"
-                                    VerticalOptions="Center" />
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </VerticalStackLayout>
+                DaySelectedCommand="{Binding OpenCalendarDayCommand}" />
+        </Grid>
     </Border>
 </ContentView>
