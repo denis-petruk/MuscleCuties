@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using MauiIcons.Core;
 using MauiIcons.Fluent;
@@ -9,12 +10,21 @@ public sealed class StringToFluentIconImageSourceConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        var icon = value is string glyphName && Enum.TryParse<FluentIcons>(glyphName, out var parsedIcon)
-            ? parsedIcon
-            : FluentIcons.QuestionCircle24;
+        var icon = ResolveIcon(value);
 
         var color = ResolveColor(parameter);
         return icon.ToImageSource(color, 24d);
+    }
+
+    private static FluentIcons ResolveIcon(object? value)
+    {
+        if (value is string glyphName && Enum.TryParse<FluentIcons>(glyphName, out var parsedIcon))
+            return parsedIcon;
+
+        if (value is string missingGlyph && !string.IsNullOrWhiteSpace(missingGlyph))
+            Trace.WriteLine($"[Icons] Unknown Fluent icon '{missingGlyph}'.");
+
+        return FluentIcons.QuestionCircle24;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -27,6 +37,12 @@ public sealed class StringToFluentIconImageSourceConverter : IValueConverter
         var key = parameter as string;
         var theme = Application.Current?.RequestedTheme ?? AppTheme.Unspecified;
         var resourceKey = theme == AppTheme.Dark ? "TextPrimaryDark" : "TextPrimary";
+
+        if (string.Equals(key, "White", StringComparison.OrdinalIgnoreCase))
+            return Colors.White;
+
+        if (string.Equals(key, "Accent", StringComparison.OrdinalIgnoreCase))
+            return AppThemeResources.GetColor("Primary", "SecondaryDarkText", Colors.Black);
 
         if (string.Equals(key, "Warning", StringComparison.OrdinalIgnoreCase))
             return AppThemeResources.GetColor("WarningAccentLight", "WarningAccentDark", Colors.Black);

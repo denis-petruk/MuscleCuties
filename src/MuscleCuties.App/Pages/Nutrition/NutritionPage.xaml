@@ -72,14 +72,30 @@
                         FontAttributes="Bold"
                         Margin="0,4" />
 
-                    <Button
-                        Text="Suggest a meal"
-                        Command="{Binding OpenSuggestMealCommand}"
-                        Style="{StaticResource ButtonLink}"
-                        ImageSource="{Binding Source='LightbulbFilament24', Converter={StaticResource StringToFluentIconImageSourceConverter}}" />
-                    <ActivityIndicator
-                        IsRunning="{Binding IsLoadingMealIdeas}"
-                        IsVisible="{Binding IsLoadingMealIdeas}" />
+                    <Border
+                        Padding="12,8"
+                        MinimumHeightRequest="44"
+                        BackgroundColor="Transparent"
+                        StrokeThickness="0"
+                        HorizontalOptions="Center"
+                        SemanticProperties.Description="Suggest a meal">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenSuggestMealCommand}" />
+                        </Border.GestureRecognizers>
+                        <HorizontalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
+                            <Path
+                                Data="M9 18h6M10 22h4M8.5 14.5A6 6 0 1 1 15.5 14.5C14.5 15.3 14 16 14 18h-4c0-2-.5-2.7-1.5-3.5Z"
+                                Style="{StaticResource NutritionLineIcon}"
+                                Stroke="{StaticResource Primary}"
+                                WidthRequest="20"
+                                HeightRequest="20" />
+                            <Label
+                                Text="Suggest a meal"
+                                Style="{StaticResource AccentLabel}"
+                                FontSize="14"
+                                VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </Border>
                     <toolkit:LazyView
                         x:Name="MealEditor"
                         x:TypeArguments="nutritionControls:AddMealPanel"
@@ -102,11 +118,11 @@
                                 BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                 StrokeThickness="0"
                                 VerticalOptions="Center">
-                                <Image
-                                    Source="{Binding Source='Food24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                <Path
+                                    Data="M3 2v7c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2V2M6 2v20M15 2v8h4M19 2v20"
+                                    Style="{StaticResource NutritionLineIcon}"
                                     WidthRequest="20"
-                                    HeightRequest="20"
-                                    Aspect="AspectFit" />
+                                    HeightRequest="20" />
                             </Border>
                             <Label
                                 Grid.Column="1"
@@ -227,15 +243,19 @@
         <toolkit:LazyView
             x:Name="FoodSearch"
             x:TypeArguments="nutritionControls:FoodSearchModal"
-            IsVisible="{Binding HasFoodSearchResults}" />
+            InputTransparent="{Binding IsFoodSearchModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView
             x:Name="Breakdown"
             x:TypeArguments="nutritionControls:NutritionBreakdownModal"
-            IsVisible="{Binding IsBreakdownModalVisible}" />
+            InputTransparent="{Binding IsBreakdownModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView
             x:Name="Suggestions"
             x:TypeArguments="nutritionControls:MealSuggestionModal"
-            IsVisible="{Binding IsSuggestionModalVisible}" />
+            InputTransparent="{Binding IsSuggestionModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
+        <toolkit:LazyView
+            x:Name="MealDetail"
+            x:TypeArguments="nutritionControls:MealDetailModal"
+            InputTransparent="{Binding IsMealDetailVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView
             x:Name="SaluteOverlay"
             x:TypeArguments="sharedControls:PhaseSaluteOverlay"

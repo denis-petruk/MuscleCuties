@@ -6,7 +6,6 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:MuscleCuties.App.Controls.Workout">
-
     <Border
         Style="{StaticResource CardPrimary}"
         BindingContext="{x:Reference Root}"

@@ -63,6 +63,9 @@ public partial class NutritionViewModel
 
     partial void OnFoodSearchResultsChanged(ObservableCollection<FoodSearchResultItem> value)
     {
+        if (value.Count == 0)
+            IsFoodSearchModalVisible = false;
+
         OnPropertyChanged(nameof(HasFoodSearchResults));
         OnPropertyChanged(nameof(ShowBrowseMoreFoods));
         BrowseMoreFoodsCommand.NotifyCanExecuteChanged();

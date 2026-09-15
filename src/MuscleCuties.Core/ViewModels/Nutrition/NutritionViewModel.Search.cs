@@ -79,6 +79,7 @@ public partial class NutritionViewModel
             : !replaceResults && items.Count == 0
                 ? "No more foods found for this search."
                 : string.Empty;
+        IsFoodSearchModalVisible = FoodSearchResults.Count > 0;
     }
 
     private void SelectFoodResult(FoodSearchResultItem? food)
@@ -87,14 +88,14 @@ public partial class NutritionViewModel
             return;
 
         SelectedFoodResult = food;
-        FoodSearchResults = [];
+        IsFoodSearchModalVisible = false;
         ResetFoodSearchPaging();
         AddFoodMessage = string.Empty;
     }
 
     private void DismissFoodSearchResults()
     {
-        FoodSearchResults = [];
+        IsFoodSearchModalVisible = false;
         ResetFoodSearchPaging();
     }
 

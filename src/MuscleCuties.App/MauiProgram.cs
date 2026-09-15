@@ -61,6 +61,7 @@ public static class MauiProgram
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("Inter-Variable.ttf", "Inter");
+                fonts.AddFont("Fluent_Icons_Regular.ttf", "FluentIcons");
             });
 
         var services = builder.Services;
