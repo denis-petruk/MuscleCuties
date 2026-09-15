@@ -48,6 +48,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private bool _isCustomFoodPanelVisible;
     [ObservableProperty] private bool _isEditingMeal;
     [ObservableProperty] private bool _isFoodFinderExpanded;
+    [ObservableProperty] private bool _isFoodSearchModalVisible;
     [ObservableProperty] private ObservableCollection<MealIngredientItem> _mealIngredients = new();
     [ObservableProperty] private ObservableCollection<MealItem> _meals = new();
     private ProfileNutritionGoals _micronutrientGoals = ProfileNutritionGoals.Empty;
@@ -55,11 +56,6 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private string _phaseFocusCopy = string.Empty;
     [ObservableProperty] private string _phaseFocusTitle = string.Empty;
     [ObservableProperty] private BreakfastPreference _breakfastPreference = BreakfastPreference.Savoury;
-    [ObservableProperty] private ObservableCollection<MealSuggestionItem> _breakfastSuggestions = new();
-    [ObservableProperty] private ObservableCollection<MealSuggestionItem> _lunchSuggestions = new();
-    [ObservableProperty] private ObservableCollection<MealSuggestionItem> _dinnerSuggestions = new();
-    [ObservableProperty] private ObservableCollection<MealSuggestionItem> _snackSuggestions = new();
-    [ObservableProperty] private bool _isLoadingMealIdeas;
     [ObservableProperty] private string _searchQuery = string.Empty;
     [ObservableProperty] private string _selectedBreakdownCaloriesText = "0 kcal";
     [ObservableProperty] private float _selectedBreakdownCarbsCalories;
@@ -114,6 +110,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         RefreshSuggestionsCommand = new RelayCommand(RefreshSuggestions);
         AcceptSuggestionCommand = new RelayCommand<MealSuggestionItem>(AcceptSuggestion);
         SelectSuggestionMealTypeCommand = new RelayCommand<MealType>(SelectSuggestionMealType);
+        OpenMealDetailCommand = new RelayCommand<MealSuggestionItem>(OpenMealDetail);
+        CloseMealDetailCommand = new RelayCommand(CloseMealDetail);
         MealIngredients.CollectionChanged += OnMealIngredientsCollectionChanged;
     }
 
@@ -159,12 +157,6 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
 
     public bool IsFoodFinderCollapsed => !IsFoodFinderVisible;
     public bool IsSelectedFoodEditorVisible => SelectedFoodResult is not null;
-    public bool HasBreakfastSuggestions => BreakfastSuggestions.Count > 0;
-    public bool HasLunchSuggestions => LunchSuggestions.Count > 0;
-    public bool HasDinnerSuggestions => DinnerSuggestions.Count > 0;
-    public bool HasSnackSuggestions => SnackSuggestions.Count > 0;
-    public bool HasAnyMealIdeas => HasBreakfastSuggestions || HasLunchSuggestions ||
-                                   HasDinnerSuggestions || HasSnackSuggestions;
     public bool IsSavouryBreakfast => BreakfastPreference == BreakfastPreference.Savoury;
     public bool IsSweetBreakfast => BreakfastPreference == BreakfastPreference.Sweet;
 
@@ -211,7 +203,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     }
 
     public string LogMealButtonText => HasMealIngredients
-        ? IsEditingMeal ? "Save meal" : "Log meal"
+        ? IsEditingMeal ? "Save meal" : "Add meal"
         : "Add ingredients first";
 
     public string SelectedFoodText => SelectedFoodResult?.Name ?? "No food selected";
@@ -267,6 +259,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public RelayCommand RefreshSuggestionsCommand { get; }
     public RelayCommand<MealSuggestionItem> AcceptSuggestionCommand { get; }
     public RelayCommand<MealType> SelectSuggestionMealTypeCommand { get; }
+    public RelayCommand<MealSuggestionItem> OpenMealDetailCommand { get; }
+    public RelayCommand CloseMealDetailCommand { get; }
     public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
 
     private Task RefreshAsync()
@@ -344,7 +338,6 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
             NotifyDisplayProperties();
             IsBusy = false;
 
-            await LoadMealIdeasAsync(userId, phase);
         }
         finally
         {

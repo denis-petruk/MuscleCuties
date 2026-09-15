@@ -19,11 +19,12 @@
                 ColumnDefinitions="24,*"
                 ColumnSpacing="8"
                 VerticalOptions="Center">
-                <Image
-                    Source="{Binding Source='BowlSalad24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                <Path
+                    Data="M3 11h18c0 5-4 9-9 9s-9-4-9-9ZM7 11c0-3 2-5 5-5s5 2 5 5M12 3v3"
+                    Style="{StaticResource NutritionLineIcon}"
+                    Stroke="{StaticResource Primary}"
                     WidthRequest="18"
                     HeightRequest="18"
-                    Aspect="AspectFit"
                     VerticalOptions="Center" />
                 <Label
                     Grid.Column="1"
@@ -45,11 +46,12 @@
                     <TapGestureRecognizer Command="{Binding OpenMicronutrientsModalCommand}" />
                 </Border.GestureRecognizers>
                 <Grid ColumnDefinitions="14,Auto" ColumnSpacing="6">
-                    <Image
-                        Source="{Binding Source='Molecule24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                    <Path
+                        Data="M7 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM17 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM7 23a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM9 5l6 4M9 19l6-4M7 7v10"
+                        Style="{StaticResource NutritionLineIcon}"
+                        Stroke="{StaticResource Primary}"
                         WidthRequest="14"
                         HeightRequest="14"
-                        Aspect="AspectFit"
                         VerticalOptions="Center" />
                     <Label
                         Grid.Column="1"

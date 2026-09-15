@@ -67,9 +67,17 @@ public partial class ProfilePage : ContentPage
 
             await CropModalLazy.LoadIfNeededAsync(true);
             var cropModal = (ProfileImageCropModal)CropModalLazy.Content;
-            var croppedPath = await cropModal.ShowAsync(rawPath);
-            if (!string.IsNullOrWhiteSpace(croppedPath))
-                await viewModel.UpdateProfileImageAsync(croppedPath);
+            CropModalLazy.InputTransparent = false;
+            try
+            {
+                var croppedPath = await cropModal.ShowAsync(rawPath);
+                if (!string.IsNullOrWhiteSpace(croppedPath))
+                    await viewModel.UpdateProfileImageAsync(croppedPath);
+            }
+            finally
+            {
+                CropModalLazy.InputTransparent = true;
+            }
         }
         catch
         {

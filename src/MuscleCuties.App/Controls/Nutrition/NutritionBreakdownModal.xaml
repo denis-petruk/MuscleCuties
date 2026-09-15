@@ -1,32 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ContentView
+<sharedControls:AnimatedModalView
     x:Class="MuscleCuties.App.Controls.Nutrition.NutritionBreakdownModal"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:MuscleCuties.App.Controls"
     xmlns:nutritionModels="clr-namespace:MuscleCuties.Core.Models.UI.Nutrition;assembly=MuscleCuties.Core"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
     x:DataType="vm:NutritionViewModel"
-    IsVisible="{Binding IsBreakdownModalVisible}">
+    IsOpen="{Binding IsBreakdownModalVisible}">
 
     <Grid
         BackgroundColor="{StaticResource ModalScrim}"
-        Padding="20,56,20,36">
+        Padding="16,48,16,24">
         <Grid.GestureRecognizers>
             <TapGestureRecognizer Command="{Binding CloseMicronutrientsModalCommand}" />
         </Grid.GestureRecognizers>
         <Border
-            Style="{StaticResource CardPrimary}"
-            Padding="0"
-            Margin="0"
+            Style="{StaticResource ModalSurface}"
+            MinimumHeightRequest="560"
             MaximumHeightRequest="720"
-            MaximumWidthRequest="560"
             HorizontalOptions="Fill"
-            VerticalOptions="Center">
+            VerticalOptions="Fill">
 
             <Grid RowDefinitions="Auto, Auto, Auto, *">
-                <!-- Row 0: Title + close button -->
                 <Grid
                     Grid.Row="0"
                     ColumnDefinitions="*, Auto"
@@ -37,49 +35,33 @@
                     <Label
                         Grid.Row="0" Grid.Column="0"
                         Text="{Binding SelectedBreakdownTitle}"
-                        Style="{StaticResource SubHeadline}"
-                        FontSize="24" />
+                        Style="{StaticResource ModalTitle}" />
                     <Label
                         Grid.Row="1" Grid.Column="0"
                         Text="{Binding SelectedBreakdownNutrientSummaryText}"
-                        Style="{StaticResource MutedLabel}" />
+                        Style="{StaticResource ModalSubtitle}" />
                     <Border
                         Grid.Row="0"
                         Grid.Column="1"
                         Grid.RowSpan="2"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        StrokeShape="RoundRectangle 22"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
-                        StrokeThickness="0"
+                        Style="{StaticResource ModalIconButton}"
                         VerticalOptions="Start"
                         SemanticProperties.Description="Close nutrition breakdown">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding CloseMicronutrientsModalCommand}" />
                         </Border.GestureRecognizers>
-                        <Path
-                            Data="M6 6L18 18M18 6L6 18"
-                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                            StrokeThickness="2.2"
-                            StrokeLineCap="Round"
-                            Aspect="Uniform"
-                            WidthRequest="18"
-                            HeightRequest="18"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
+                        <Path Style="{StaticResource ModalCloseIcon}" />
                     </Border>
                 </Grid>
 
-                <!-- Row 1: Divider -->
                 <BoxView
                     Grid.Row="1"
-                    Margin="20,0,20,14"
-                    HeightRequest="1"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
+                    Style="{StaticResource ModalDivider}"
+                    Margin="20,0,20,14" />
 
                 <Grid
                     Grid.Row="2"
-                    ColumnDefinitions="132, *"
+                    ColumnDefinitions="120, *"
                     ColumnSpacing="16"
                     Padding="20,0,20,16">
 
@@ -102,11 +84,19 @@
                         RowDefinitions="Auto, Auto, Auto, Auto, Auto"
                         RowSpacing="10"
                         VerticalOptions="Center">
-                        <Label
-                            Grid.Row="0"
-                            Text="{Binding SelectedBreakdownCaloriesText}"
-                            Style="{StaticResource AccentLabel}"
-                            FontSize="22" />
+                        <HorizontalStackLayout Grid.Row="0" Spacing="7">
+                            <Image
+                                Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                                WidthRequest="20"
+                                HeightRequest="20"
+                                Aspect="AspectFit"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="{Binding SelectedBreakdownCaloriesText}"
+                                Style="{StaticResource AccentLabel}"
+                                FontSize="20"
+                                VerticalOptions="Center" />
+                        </HorizontalStackLayout>
                         <Label
                             Grid.Row="1"
                             Text="{Binding SelectedBreakdownMacrosText}"
@@ -151,11 +141,12 @@
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="nutritionModels:MacroBreakdownItem">
                                     <Grid ColumnDefinitions="22, 58, *, Auto" ColumnSpacing="8">
-                                        <Image
-                                            Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                        <Path
+                                            Data="{Binding IconPathData, Converter={StaticResource StringToGeometryConverter}}"
+                                            Style="{StaticResource NutritionLineIcon}"
+                                            Stroke="{Binding Color}"
                                             WidthRequest="15"
                                             HeightRequest="15"
-                                            Aspect="AspectFit"
                                             VerticalOptions="Center" />
                                         <Label
                                             Grid.Column="1"
@@ -187,18 +178,28 @@
                     ItemsSource="{Binding SelectedBreakdownMicronutrients}"
                     SelectionMode="None"
                     VerticalScrollBarVisibility="Always"
-                    Margin="20,0,20,20">
+                    Margin="20,0,20,20"
+                    VerticalOptions="Fill">
+                    <CollectionView.Header>
+                        <Grid ColumnDefinitions="*,Auto" Padding="0,2,0,10" ColumnSpacing="12">
+                            <Label
+                                Text="Micronutrients"
+                                Style="{StaticResource SectionTitle}"
+                                FontSize="16"
+                                VerticalOptions="Center" />
+                            <Label
+                                Grid.Column="1"
+                                Text="Daily targets"
+                                Style="{StaticResource CaptionLabel}"
+                                VerticalOptions="Center" />
+                        </Grid>
+                    </CollectionView.Header>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="nutritionModels:DailyMicronutrientItem">
                             <Border
-                                StrokeShape="RoundRectangle 18"
-                                StrokeThickness="0"
+                                Style="{StaticResource ModalListItem}"
                                 Padding="16,14"
-                                Margin="0,0,0,10"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
-                                <Border.Shadow>
-                                    <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,3" Radius="12" Opacity="0.06" />
-                                </Border.Shadow>
+                                Margin="0,0,0,8">
 
                                 <Grid
                                     RowDefinitions="Auto, 10, Auto"
@@ -214,11 +215,12 @@
                                         StrokeThickness="0"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                         VerticalOptions="Center">
-                                        <Image
-                                            Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                        <Path
+                                            Data="{Binding IconPathData, Converter={StaticResource StringToGeometryConverter}}"
+                                            Style="{StaticResource NutritionLineIcon}"
+                                            Stroke="{StaticResource Primary}"
                                             WidthRequest="17"
                                             HeightRequest="17"
-                                            Aspect="AspectFit"
                                             HorizontalOptions="Center"
                                             VerticalOptions="Center" />
                                     </Border>
@@ -292,4 +294,4 @@
             </Grid>
         </Border>
     </Grid>
-</ContentView>
+</sharedControls:AnimatedModalView>

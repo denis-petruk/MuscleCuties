@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Diagnostics;
 using MuscleCuties.Core.ViewModels.Cycle;
 
 namespace MuscleCuties.App.Pages.Cycle;
@@ -24,12 +26,41 @@ public partial class CyclePage : ContentPage
         base.OnNavigatedTo(args);
         if (BindingContext is null)
             BindingContext = _viewModel;
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         this.BeginPageLoad(async () =>
         {
             await _viewModel.LoadDataCommand.ExecuteAsync(null);
             _viewModel.RefreshThemeColors(IsDarkTheme());
         });
         this.BeginDeferredLoad(LoadDeferredContentAsync);
+    }
+
+    protected override void OnNavigatedFrom(NavigatedFromEventArgs args)
+    {
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        base.OnNavigatedFrom(args);
+    }
+
+    private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not (nameof(CycleViewModel.IsDatePhaseModalVisible) or
+            nameof(CycleViewModel.IsCycleWarningPopupVisible)))
+            return;
+
+        try
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await DatePhaseModal.LoadIfNeededAsync(_viewModel.IsDatePhaseModalVisible);
+                await WarningPopup.LoadIfNeededAsync(_viewModel.IsCycleWarningPopupVisible);
+            });
+        }
+        catch (Exception exception)
+        {
+            Trace.WriteLine($"[CyclePage] Could not present modal: {exception}");
+            _viewModel.IsLoadError = true;
+        }
     }
 
     private async Task LoadDeferredContentAsync()

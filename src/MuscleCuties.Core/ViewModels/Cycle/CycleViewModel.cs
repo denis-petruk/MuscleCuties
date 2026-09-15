@@ -243,12 +243,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
     private void CloseDatePhaseModal()
     {
         IsDatePhaseModalVisible = false;
-        HasPhaseJumpWarning = false;
-        PhaseEditStatusText = string.Empty;
-        _selectedCalendarDay = null;
-        _suggestedPhase = null;
-        OnPropertyChanged(nameof(HasSuggestedPhase));
-        SaveDatePhaseCommand.NotifyCanExecuteChanged();
     }
 
     private void SelectPhaseOption(CyclePhaseOptionItem? option)
@@ -685,11 +679,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
     private void CloseCycleWarningPopup()
     {
         IsCycleWarningPopupVisible = false;
-        CycleWarningTitle = string.Empty;
-        CycleWarningText = string.Empty;
-        CycleWarningSuggestedActionText = "Use next phase";
-        _cycleWarningSuggestedPhase = null;
-        OnPropertyChanged(nameof(HasCycleWarningSuggestedPhase));
     }
 
     private async Task UseCycleWarningSuggestedPhaseAsync()
