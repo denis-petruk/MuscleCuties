@@ -280,22 +280,24 @@ public class CycleViewModelTests
     [Fact]
     public async Task OpenCalendarDayAndSave_WritesSelectedPhaseForThatDate()
     {
-        SetupCurrentUser();
+        var currentDate = new DateTime(2026, 9, 10);
+        var cycleStartDate = new DateTime(2026, 9, 1);
+        SetupCurrentUser(createdAt: cycleStartDate);
         _cycleService.GetPredictionAsync(1).Returns(new CyclePrediction
         {
             HasActiveCycle = true,
-            CurrentCycleStartDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1),
-            CurrentDay = DateTime.Today.Day,
+            CurrentCycleStartDate = cycleStartDate,
+            CurrentDay = 10,
             PredictedCycleLength = 28,
             CurrentPhase = CyclePhase.Follicular,
             DaysUntilPeriod = 14
         });
         _cycleService.GetRecentPhaseLogsAsync(1, Arg.Any<int>()).Returns(Array.Empty<CyclePhaseLog>());
 
-        var vm = CreateViewModel();
+        var vm = CreateViewModel(currentDate);
         await vm.LoadDataCommand.ExecuteAsync(null);
 
-        var calendarDay = vm.CalendarDays.Single(day => day.Date == DateTime.Today);
+        var calendarDay = vm.CalendarDays.Single(day => day.Date == currentDate);
         vm.OpenCalendarDayCommand.Execute(calendarDay);
         vm.SelectPhaseOptionCommand.Execute(vm.PhaseEditOptions.Single(option =>
             option.Phase == CyclePhase.Follicular));
@@ -304,7 +306,7 @@ public class CycleViewModelTests
         await _cycleService.Received(1).SetPhaseForDateAsync(
             1,
             CyclePhase.Follicular,
-            Arg.Is<DateTime>(date => date.Date == DateTime.Today),
+            Arg.Is<DateTime>(date => date.Date == currentDate),
             "Calendar phase edit");
         Assert.False(vm.IsDatePhaseModalVisible);
     }
@@ -654,5 +656,29 @@ public class CycleViewModelTests
         Assert.False(vm.HasCycleWarningSuggestedPhase);
         Assert.Equal("Fix the missed shift first", vm.CycleWarningTitle);
         Assert.Contains("Forgot to log shift", vm.CycleWarningText);
+    }
+
+    [Fact]
+    public async Task RefreshThemeColors_WhenThemeIsUnchanged_PreservesCalendarCollection()
+    {
+        SetupCurrentUser();
+        _cycleService.GetPredictionAsync(1).Returns(new CyclePrediction
+        {
+            HasActiveCycle = true,
+            CurrentDay = 10,
+            CurrentCycleStartDate = DateTime.Today.AddDays(-9),
+            PredictedCycleLength = 28,
+            CurrentPhase = CyclePhase.Follicular,
+            DaysUntilPeriod = 18
+        });
+        _cycleService.GetRecentPhaseLogsAsync(1, Arg.Any<int>()).Returns(Array.Empty<CyclePhaseLog>());
+
+        var vm = CreateViewModel();
+        await vm.LoadDataCommand.ExecuteAsync(null);
+        var calendar = vm.CalendarDays;
+
+        vm.RefreshThemeColors(false);
+
+        Assert.Same(calendar, vm.CalendarDays);
     }
 }

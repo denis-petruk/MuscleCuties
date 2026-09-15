@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Models.Enums.Cycle;
@@ -92,6 +93,55 @@ public class NutritionViewModelTests
     }
 
     [Fact]
+    public async Task LoadData_ReplacesMealsOnceWithoutPerItemNotifications()
+    {
+        ConfigureLoadData();
+        var vm = CreateViewModel();
+        var originalMeals = vm.Meals;
+        var collectionChanges = 0;
+        var replacements = 0;
+        originalMeals.CollectionChanged += (_, _) => collectionChanges++;
+        vm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(vm.Meals))
+                replacements++;
+        };
+
+        await vm.LoadDataCommand.ExecuteAsync(null);
+
+        Assert.NotSame(originalMeals, vm.Meals);
+        Assert.Equal(0, collectionChanges);
+        Assert.Equal(1, replacements);
+        Assert.Single(vm.Meals);
+        Assert.True(vm.HasMeals);
+    }
+
+    [Fact]
+    public void ReplacingMealIngredients_KeepsDraftAndCommandNotificationsConnected()
+    {
+        var vm = CreateViewModel();
+        var previousIngredients = vm.MealIngredients;
+        vm.MealIngredients = new ObservableCollection<MealIngredientItem>();
+        var notifications = 0;
+        vm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(vm.HasMealIngredients))
+                notifications++;
+        };
+
+        previousIngredients.Add(new MealIngredientItem());
+        Assert.Equal(0, notifications);
+
+        vm.MealIngredients.Add(new MealIngredientItem { FoodItemId = 1, Grams = 100 });
+        Assert.Equal(1, notifications);
+        Assert.True(vm.LogMealCommand.CanExecute(null));
+
+        vm.MealIngredients.Clear();
+        Assert.Equal(2, notifications);
+        Assert.False(vm.LogMealCommand.CanExecute(null));
+    }
+
+    [Fact]
     public async Task LoadData_SetsTargetsAndConsumed()
     {
         ConfigureLoadData();
@@ -108,7 +158,7 @@ public class NutritionViewModelTests
         Assert.Equal(90f, vm.ConsumedCarbs);
         Assert.Equal(30f, vm.ConsumedFats);
         Assert.Equal(CyclePhase.Ovulatory, vm.CurrentPhase);
-        Assert.Equal("PHASE FOCUS · OVULATORY", vm.PhaseFocusBadgeText);
+        Assert.Equal("Phase focus · Ovulatory", vm.PhaseFocusBadgeText);
         Assert.Equal("Peak plate", vm.PhaseFocusTitle);
         Assert.Contains("Hydrate", vm.PhaseFocusCopy);
     }
@@ -549,7 +599,7 @@ public class NutritionViewModelTests
         vm.OpenMealBreakdownCommand.Execute(vm.Meals.Single());
 
         Assert.True(vm.IsBreakdownModalVisible);
-        Assert.Equal("BREAKFAST breakdown", vm.SelectedBreakdownTitle);
+        Assert.Equal("Breakfast breakdown", vm.SelectedBreakdownTitle);
         Assert.True(vm.CanEditSelectedBreakdown);
         Assert.Equal("300 kcal", vm.SelectedBreakdownCaloriesText);
         Assert.Equal("P 20.0g · C 40.0g · F 6.0g", vm.SelectedBreakdownMacrosText);

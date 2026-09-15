@@ -11,26 +11,18 @@
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="20,52,20,32"
+            Padding="20,40,20,32"
             Spacing="16"
             HorizontalOptions="Fill"
             MaximumWidthRequest="640">
-            <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
-                <Button
-                    Text="‹"
-                    Style="{StaticResource ButtonLink}"
-                    FontSize="28"
-                    Padding="0"
-                    Command="{Binding BackCommand}" />
-                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                    <Label Text="Nutrition Settings" Style="{StaticResource SubHeadline}" />
-                    <Label Text="Preferences and targets" Style="{StaticResource CaptionLabel}" />
-                </VerticalStackLayout>
-            </Grid>
+            <sharedControls:PageHeader
+                Title="Nutrition settings"
+                Subtitle="Preferences and targets"
+                BackCommand="{Binding BackCommand}" />
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="GOAL" IconGlyph="Target24" />
+                    <sharedControls:IconSectionHeader Text="Goal" IconGlyph="Target24" />
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Nutrition goal" Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">
@@ -59,7 +51,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="DIETARY PREFERENCES" IconGlyph="LeafThree24" />
+                    <sharedControls:IconSectionHeader Text="Dietary preferences" IconGlyph="LeafThree24" />
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                         <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="8">
                             <Image
@@ -122,7 +114,7 @@
                 Style="{StaticResource CardPrimary}"
                 IsVisible="{Binding AreAdvancedSettingsVisible}">
                 <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="MACRO TARGETS" IconGlyph="Beaker24" />
+                    <sharedControls:IconSectionHeader Text="Macro targets" IconGlyph="Beaker24" />
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                         <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
                             <Label Text="Daily calories" Style="{StaticResource FormFieldLabel}" />
@@ -173,7 +165,7 @@
                 Style="{StaticResource CardPrimary}"
                 IsVisible="{Binding AreAdvancedSettingsVisible}">
                 <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="MICRO TARGETS" IconGlyph="PersonPill24" />
+                    <sharedControls:IconSectionHeader Text="Micronutrient targets" IconGlyph="PersonPill24" />
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10"
                           RowSpacing="10">
                         <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">

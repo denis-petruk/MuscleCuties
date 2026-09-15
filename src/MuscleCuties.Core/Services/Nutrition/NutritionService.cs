@@ -159,14 +159,15 @@ public class NutritionService : INutritionService
         MealType mealType,
         BreakfastPreference breakfastPreference,
         CyclePhase phase,
-        DateTime date)
+        DateTime date,
+        IReadOnlySet<string>? excludeConceptNames = null)
     {
         if (_suggestedMealService is null)
             return [];
 
         var consumed = await GetConsumedTotalsAsync(userId, date);
         return await _suggestedMealService.SuggestAsync(
-            userId, mealType, breakfastPreference, phase, date, consumed.Calories);
+            userId, mealType, breakfastPreference, phase, date, consumed.Calories, excludeConceptNames);
     }
 
     public async Task LogMealAsync(

@@ -4,7 +4,9 @@
     x:Class="MuscleCuties.App.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:MuscleCuties.App"
     xmlns:auth="clr-namespace:MuscleCuties.App.Pages.Auth"
+    x:DataType="local:AppShell"
     xmlns:dashboard="clr-namespace:MuscleCuties.App.Pages.Dashboard"
     xmlns:cycle="clr-namespace:MuscleCuties.App.Pages.Cycle"
     xmlns:workout="clr-namespace:MuscleCuties.App.Pages.Workout"
@@ -40,6 +42,7 @@
             Title="Today"
             Icon="tab_today.png">
             <ShellContent
+                x:Name="DashboardContent"
                 Route="DashboardPage"
                 ContentTemplate="{DataTemplate dashboard:DashboardPage}"
                 Shell.NavBarIsVisible="False" />
@@ -49,6 +52,7 @@
             Title="Cycle"
             Icon="tab_cycle.png">
             <ShellContent
+                x:Name="CycleContent"
                 Route="CyclePage"
                 ContentTemplate="{DataTemplate cycle:CyclePage}"
                 Shell.NavBarIsVisible="False" />
@@ -58,6 +62,7 @@
             Title="Train"
             Icon="tab_train.png">
             <ShellContent
+                x:Name="WorkoutContent"
                 Route="WorkoutPage"
                 ContentTemplate="{DataTemplate workout:WorkoutPage}"
                 Shell.NavBarIsVisible="False" />
@@ -67,6 +72,7 @@
             Title="Nutrition"
             Icon="tab_nutrition.png">
             <ShellContent
+                x:Name="NutritionContent"
                 Route="NutritionPage"
                 ContentTemplate="{DataTemplate nutrition:NutritionPage}"
                 Shell.NavBarIsVisible="False" />
@@ -76,6 +82,7 @@
             Title="You"
             Icon="tab_you.png">
             <ShellContent
+                x:Name="ProfileContent"
                 Route="ProfilePage"
                 ContentTemplate="{DataTemplate profile:ProfilePage}"
                 Shell.NavBarIsVisible="False" />

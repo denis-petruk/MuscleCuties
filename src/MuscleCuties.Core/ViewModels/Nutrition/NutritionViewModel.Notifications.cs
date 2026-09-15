@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using MuscleCuties.Core.Models.UI.Nutrition;
 
 namespace MuscleCuties.Core.ViewModels.Nutrition;
@@ -62,6 +63,9 @@ public partial class NutritionViewModel
 
     partial void OnFoodSearchResultsChanged(ObservableCollection<FoodSearchResultItem> value)
     {
+        if (value.Count == 0)
+            IsFoodSearchModalVisible = false;
+
         OnPropertyChanged(nameof(HasFoodSearchResults));
         OnPropertyChanged(nameof(ShowBrowseMoreFoods));
         BrowseMoreFoodsCommand.NotifyCanExecuteChanged();
@@ -93,6 +97,21 @@ public partial class NutritionViewModel
     {
         OnPropertyChanged(nameof(HasMeals));
         OnPropertyChanged(nameof(HasNoMeals));
+    }
+
+    partial void OnMealIngredientsChanged(
+        ObservableCollection<MealIngredientItem>? oldValue,
+        ObservableCollection<MealIngredientItem> newValue)
+    {
+        if (oldValue is not null)
+            oldValue.CollectionChanged -= OnMealIngredientsCollectionChanged;
+        newValue.CollectionChanged += OnMealIngredientsCollectionChanged;
+        NotifyMealIngredientProperties();
+    }
+
+    private void OnMealIngredientsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs args)
+    {
+        NotifyMealIngredientProperties();
     }
 
 

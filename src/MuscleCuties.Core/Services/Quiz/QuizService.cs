@@ -9,6 +9,7 @@ using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Core.Repositories.Quiz;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Cycle;
+using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
 
 namespace MuscleCuties.Core.Services.Quiz;
@@ -71,7 +72,9 @@ public class QuizService : IQuizService
             {
                 case QuizQuestionType.Goal:
                     profile.Goal = MapEnum(selection.Answer.MappedValue, UserGoal.MaintainHealth);
-                    profile.WeightGoalPace = WeightGoalPace.Steady;
+                    break;
+                case QuizQuestionType.GoalPace:
+                    profile.WeightGoalPace = MapEnum(selection.Answer.MappedValue, WeightGoalPace.Steady);
                     break;
                 case QuizQuestionType.ExperienceLevel:
                     profile.TrainingExperienceLevel = MapTrainingExperience(selection.Answer.MappedValue);
@@ -90,6 +93,17 @@ public class QuizService : IQuizService
                     profile.EquipmentLevel = MapEquipment(selection.Answer.MappedValue);
                     break;
             }
+
+        if (!selections.Any(selection => selection.Question.QuestionType is QuizQuestionType.GoalPace) ||
+            profile.Goal is not (UserGoal.FatLoss or UserGoal.Strength))
+            profile.WeightGoalPace = WeightGoalPace.Steady;
+
+        var strengthStyle = profile.SessionDurationMinutes is > 0 and <= 45
+            ? StrengthTrainingStyle.ExpressHard
+            : StrengthTrainingStyle.ComfortableModerate;
+        profile.PreferredWorkoutActivityTypes = WorkoutActivityPreferences.Serialize(
+            WorkoutActivityPreferences.Parse(profile.PreferredWorkoutActivityTypes),
+            strengthStyle);
 
         if (dietarySelections.Count > 0)
             profile.DietaryTags = BuildDietaryTags(dietarySelections.Select(selection => selection.Answer.MappedValue));

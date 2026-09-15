@@ -5,23 +5,25 @@
     x:Name="StrengthStyleRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:workoutModels="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core">
+    xmlns:controls="clr-namespace:MuscleCuties.App.Controls.Workout"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core"
+    x:DataType="controls:StrengthTrainingStylePicker">
 
     <VerticalStackLayout
-        Spacing="8"
-        BindableLayout.ItemsSource="{Binding StrengthTrainingStyleOptions}">
+        Spacing="10"
+        BindableLayout.ItemsSource="{Binding ItemsSource, Source={x:Reference StrengthStyleRoot}}">
         <BindableLayout.ItemTemplate>
             <DataTemplate x:DataType="workoutModels:StrengthTrainingStyleOptionItem">
                 <Border
-                    StrokeShape="RoundRectangle 16"
+                    StrokeShape="RoundRectangle 14"
                     StrokeThickness="1"
-                    Padding="14"
-                    MinimumHeightRequest="60"
+                    Padding="16,14"
+                    MinimumHeightRequest="72"
                     HorizontalOptions="Fill"
                     SemanticProperties.Description="{Binding Title}">
                     <Border.Triggers>
                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource CardSurfaceDark}}" />
                             <Setter Property="Stroke" Value="{StaticResource Primary}" />
                         </DataTrigger>
                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
@@ -37,40 +39,47 @@
                             CommandParameter="{Binding .}" />
                     </Border.GestureRecognizers>
 
-                    <VerticalStackLayout Spacing="4">
+                    <Grid ColumnDefinitions="*,22" ColumnSpacing="12">
+                        <VerticalStackLayout Spacing="4">
                         <Label
                             Text="{Binding Title}"
-                            FontSize="14"
+                            Style="{StaticResource BodyLabel}"
                             FontAttributes="Bold"
-                            LineBreakMode="WordWrap">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                    <Setter Property="TextColor" Value="{StaticResource White}" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
-                                    <Setter Property="TextColor"
-                                            Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
+                            LineBreakMode="WordWrap" />
 
                         <Label
                             Text="{Binding Subtitle}"
-                            FontSize="12"
-                            LineBreakMode="WordWrap">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                    <Setter Property="TextColor" Value="{StaticResource White}" />
-                                    <Setter Property="Opacity" Value="0.9" />
+                            Style="{StaticResource MutedLabel}"
+                            FontSize="13"
+                            LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+
+                        <Border
+                            Grid.Column="1"
+                            WidthRequest="22"
+                            HeightRequest="22"
+                            StrokeShape="RoundRectangle 11"
+                            VerticalOptions="Center">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                    <Setter Property="Stroke" Value="{StaticResource Primary}" />
                                 </DataTrigger>
-                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
-                                    <Setter Property="TextColor"
-                                            Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                    <Setter Property="Opacity" Value="1" />
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                    <Setter Property="BackgroundColor" Value="Transparent" />
+                                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
                                 </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                    </VerticalStackLayout>
+                            </Border.Triggers>
+                            <BoxView
+                                WidthRequest="8"
+                                HeightRequest="8"
+                                CornerRadius="4"
+                                Color="{StaticResource White}"
+                                IsVisible="{Binding IsSelected}"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                        </Border>
+                    </Grid>
                 </Border>
             </DataTemplate>
         </BindableLayout.ItemTemplate>
