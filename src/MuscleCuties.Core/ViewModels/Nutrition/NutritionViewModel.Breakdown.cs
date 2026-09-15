@@ -113,7 +113,6 @@ public partial class NutritionViewModel
     private void CloseBreakdownModal()
     {
         IsBreakdownModalVisible = false;
-        SelectedBreakdownMeal = null;
     }
 
     private async Task EditSelectedBreakdownMealAsync()

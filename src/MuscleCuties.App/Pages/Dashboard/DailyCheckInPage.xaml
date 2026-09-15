@@ -13,8 +13,8 @@
         <!-- Check-in -->
         <ScrollView Grid.Row="0">
             <VerticalStackLayout
-                Padding="20,56,20,24"
-                Spacing="14"
+                Padding="20,40,20,24"
+                Spacing="16"
                 HorizontalOptions="Fill"
                 MaximumWidthRequest="640">
 
@@ -87,7 +87,7 @@
                                 </Border.GestureRecognizers>
                                 <Label
                                     Text="1"
-                                    FontFamily="OpenSansSemibold"
+                                    FontFamily="Inter"
                                     FontSize="15"
                                     FontAttributes="Bold"
                                     HorizontalOptions="Center"
@@ -107,7 +107,7 @@
                                 </Border.GestureRecognizers>
                                 <Label
                                     Text="2"
-                                    FontFamily="OpenSansSemibold"
+                                    FontFamily="Inter"
                                     FontSize="15"
                                     FontAttributes="Bold"
                                     HorizontalOptions="Center"
@@ -127,7 +127,7 @@
                                 </Border.GestureRecognizers>
                                 <Label
                                     Text="3"
-                                    FontFamily="OpenSansSemibold"
+                                    FontFamily="Inter"
                                     FontSize="15"
                                     FontAttributes="Bold"
                                     HorizontalOptions="Center"
@@ -147,7 +147,7 @@
                                 </Border.GestureRecognizers>
                                 <Label
                                     Text="4"
-                                    FontFamily="OpenSansSemibold"
+                                    FontFamily="Inter"
                                     FontSize="15"
                                     FontAttributes="Bold"
                                     HorizontalOptions="Center"
@@ -167,7 +167,7 @@
                                 </Border.GestureRecognizers>
                                 <Label
                                     Text="5"
-                                    FontFamily="OpenSansSemibold"
+                                    FontFamily="Inter"
                                     FontSize="15"
                                     FontAttributes="Bold"
                                     HorizontalOptions="Center"
@@ -211,7 +211,7 @@
                                 </Border.GestureRecognizers>
                                 <Label
                                     Text="None"
-                                    FontFamily="OpenSansSemibold"
+                                    FontFamily="Inter"
                                     FontSize="12"
                                     FontAttributes="Bold"
                                     HorizontalOptions="Center"
@@ -233,7 +233,7 @@
                                 </Border.GestureRecognizers>
                                 <Label
                                     Text="Mild"
-                                    FontFamily="OpenSansSemibold"
+                                    FontFamily="Inter"
                                     FontSize="12"
                                     FontAttributes="Bold"
                                     HorizontalOptions="Center"
@@ -255,7 +255,7 @@
                                 </Border.GestureRecognizers>
                                 <Label
                                     Text="Moderate"
-                                    FontFamily="OpenSansSemibold"
+                                    FontFamily="Inter"
                                     FontSize="12"
                                     FontAttributes="Bold"
                                     HorizontalOptions="Center"
@@ -277,7 +277,7 @@
                                 </Border.GestureRecognizers>
                                 <Label
                                     Text="Severe"
-                                    FontFamily="OpenSansSemibold"
+                                    FontFamily="Inter"
                                     FontSize="12"
                                     FontAttributes="Bold"
                                     HorizontalOptions="Center"
@@ -328,13 +328,12 @@
                     IsVisible="{Binding IsCompleted}">
                     <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
                         <Label
-                            Text="READINESS"
-                            Style="{StaticResource EyebrowLabel}"
-                            CharacterSpacing="1.2"
+                            Text="Readiness"
+                            Style="{StaticResource SectionTitle}"
                             HorizontalOptions="Center" />
                         <Label
                             Text="{Binding ReadinessScoreText}"
-                            FontFamily="OpenSansSemibold"
+                            FontFamily="Inter"
                             FontSize="52"
                             FontAttributes="Bold"
                             TextColor="{StaticResource Primary}"

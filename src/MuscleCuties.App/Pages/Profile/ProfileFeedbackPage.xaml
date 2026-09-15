@@ -11,30 +11,21 @@
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="20,52,20,32"
+            Padding="20,40,20,32"
             Spacing="16"
             HorizontalOptions="Fill"
             MaximumWidthRequest="640">
-            <Grid ColumnDefinitions="44,*" ColumnSpacing="8">
-                <Button
-                    Text="‹"
-                    Style="{StaticResource ButtonLink}"
-                    FontSize="28"
-                    Padding="0"
-                    Command="{Binding BackCommand}" />
-                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                    <Label Text="Feedback" Style="{StaticResource SubHeadline}" />
-                    <Label Text="Private beta notes for the handsome, jacked developer"
-                           Style="{StaticResource CaptionLabel}" />
-                </VerticalStackLayout>
-            </Grid>
+            <sharedControls:PageHeader
+                Title="Feedback"
+                Subtitle="Private notes for the developer"
+                BackCommand="{Binding BackCommand}" />
 
             <Border
                 Style="{StaticResource CardPrimary}"
                 BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
                     <VerticalStackLayout Spacing="8">
-                        <sharedControls:IconSectionHeader Text="SEND THE GOOD STUFF" IconGlyph="ChatBubblesQuestion24" />
+                        <sharedControls:IconSectionHeader Text="Send the good stuff" IconGlyph="ChatBubblesQuestion24" />
                         <Label Text="Talk to the handsome, jacked developer" Style="{StaticResource SectionTitle}" />
                         <Label
                             Text="Bug, style issue, tiny annoyance, huge idea: write it here and attach context when useful."
@@ -50,7 +41,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="SORT IT" IconGlyph="ChatBubblesQuestion24" />
+                    <sharedControls:IconSectionHeader Text="Category" IconGlyph="ChatBubblesQuestion24" />
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <VerticalStackLayout Grid.Column="0" Spacing="5">
                             <Label Text="Topic" Style="{StaticResource FormFieldLabel}" />
@@ -100,7 +91,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="REACH YOU BACK" IconGlyph="PersonChat24" />
+                    <sharedControls:IconSectionHeader Text="Contact" IconGlyph="PersonChat24" />
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                         <VerticalStackLayout Spacing="2">
                             <Label Text="Include contact email" Style="{StaticResource CardTitle}" />
@@ -129,7 +120,7 @@
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="*,Auto">
-                        <sharedControls:IconSectionHeader Text="WHAT HAPPENED" IconGlyph="Comment24" />
+                        <sharedControls:IconSectionHeader Text="What happened" IconGlyph="Comment24" />
                         <Label Grid.Column="1" Text="{Binding FeedbackCountText}" Style="{StaticResource CaptionLabel}" />
                     </Grid>
                     <Border Style="{StaticResource InputContainer}" MinimumHeightRequest="146">
@@ -143,7 +134,7 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="WHAT WOULD MAKE IT BETTER" IconGlyph="SparkleCircle24" />
+                    <sharedControls:IconSectionHeader Text="What would make it better" IconGlyph="SparkleCircle24" />
                     <Border Style="{StaticResource InputContainer}" MinimumHeightRequest="146">
                         <Editor
                             Placeholder="Suggest the fix, better wording, missing control, or the version you wish existed."
@@ -157,7 +148,7 @@
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                         <VerticalStackLayout Spacing="4">
-                            <sharedControls:IconSectionHeader Text="ATTACH CONTEXT" IconGlyph="LinkSquare24" />
+                            <sharedControls:IconSectionHeader Text="Attach context" IconGlyph="LinkSquare24" />
                         </VerticalStackLayout>
                         <Button
                             Grid.Column="1"

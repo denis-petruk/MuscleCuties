@@ -18,6 +18,14 @@ public class WorkoutActivitySectionItem : ObservableObject
                 : "Then continue";
 
     public string Tag { get; init; } = string.Empty;
+    public string IconGlyph => Tag switch
+    {
+        "STRENGTH" => "Dumbbell24",
+        "CARDIO" => "PulseSquare24",
+        "RECOVERY" => "LeafThree24",
+        "REST" => "WeatherMoon24",
+        _ => "Sport24"
+    };
     public string Title { get; init; } = string.Empty;
     public string Subtitle { get; init; } = string.Empty;
     public string MetricText { get; init; } = string.Empty;

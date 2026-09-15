@@ -4,6 +4,8 @@
     x:Class="MuscleCuties.App.Controls.Shared.PageLoadingOverlay"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Common;assembly=MuscleCuties.Core"
+    x:DataType="vm:IPageLoadAware"
     InputTransparent="False">
 
     <ContentView.Triggers>

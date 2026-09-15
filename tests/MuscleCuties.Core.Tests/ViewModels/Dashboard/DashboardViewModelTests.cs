@@ -108,11 +108,11 @@ public class DashboardViewModelTests
         Assert.Equal(2000f, vm.TargetCalories);
         Assert.Equal(800f, vm.ConsumedCalories);
         Assert.Equal("Follicular", vm.PhaseLabel);
-        Assert.Equal(CyclePhaseAssets.FollicularAnimation, vm.PhaseIllustrationSource);
+        Assert.Equal(CyclePhaseAssets.Follicular, vm.PhaseIconSource);
         Assert.Contains("Denis", vm.Greetings);
-        Assert.Equal("DAY 10 · FOLLICULAR PHASE", vm.PhaseBadgeText);
-        Assert.Equal("THIS WEEK · FOLLICULAR", vm.DashboardPhaseHeaderText);
-        Assert.Equal("FOLLICULAR · DAY 10 / 28", vm.PhaseStatusText);
+        Assert.Equal("Day 10 · Follicular phase", vm.PhaseBadgeText);
+        Assert.Equal("This week · Follicular", vm.DashboardPhaseHeaderText);
+        Assert.Equal("Follicular · Day 10 / 28", vm.PhaseStatusText);
         Assert.Equal("Build momentum", vm.PhaseCardTitle);
         Assert.Equal(1, vm.CurrentPhaseColumn);
         Assert.Equal("+3%", vm.LoadAdjustmentText);
@@ -278,7 +278,7 @@ public class DashboardViewModelTests
         vm.CurrentCycleDay = 14;
         vm.PredictedCycleLength = 30;
 
-        Assert.Equal("OVULATORY · DAY 14 / 30", vm.PhaseStatusText);
+        Assert.Equal("Ovulatory · Day 14 / 30", vm.PhaseStatusText);
     }
 
     [Fact]
@@ -289,7 +289,7 @@ public class DashboardViewModelTests
         vm.CurrentPhase = CyclePhase.Follicular;
         vm.CurrentCycleDay = 0;
 
-        Assert.Equal("FOLLICULAR · START TRACKING", vm.PhaseStatusText);
+        Assert.Equal("Follicular · Start tracking", vm.PhaseStatusText);
     }
 
     [Fact]
@@ -300,10 +300,10 @@ public class DashboardViewModelTests
         vm.PredictedCycleLength = 28;
 
         vm.CurrentPhase = CyclePhase.Menstrual;
-        Assert.Equal("MENSTRUAL · DAY 5 / 28", vm.PhaseStatusText);
+        Assert.Equal("Menstrual · Day 5 / 28", vm.PhaseStatusText);
 
         vm.CurrentPhase = CyclePhase.Luteal;
-        Assert.Equal("LUTEAL · DAY 5 / 28", vm.PhaseStatusText);
+        Assert.Equal("Luteal · Day 5 / 28", vm.PhaseStatusText);
     }
 
     [Fact]
@@ -327,12 +327,10 @@ public class DashboardViewModelTests
 
         await vm.LoadDataCommand.ExecuteAsync(null);
 
-        // After the load completes, IsPageLoading should be false
         Assert.False(vm.IsPageLoading);
 
-        // During the load, IsPageLoading should have been true then reverted to false
         Assert.Contains(true, loadingStates);
-        Assert.Equal(false, loadingStates.Last());
+        Assert.False(loadingStates.Last());
     }
 
     [Fact]

@@ -1,38 +1,20 @@
+using System.Diagnostics;
 using MuscleCuties.App.Controls.Shared;
 
 namespace MuscleCuties.App.Controls.Workout;
 
-public partial class WorkoutSessionModal : ContentView
+public partial class WorkoutSessionModal : AnimatedModalView
 {
-    public static readonly BindableProperty IsOpenProperty =
-        BindableProperty.Create(nameof(IsOpen), typeof(bool), typeof(WorkoutSessionModal), false,
-            propertyChanged: OnIsOpenChanged);
+    private bool _hasContent;
 
-    public bool IsOpen
+    protected override void PrepareForOpen()
     {
-        get => (bool)GetValue(IsOpenProperty);
-        set => SetValue(IsOpenProperty, value);
-    }
-
-    public WorkoutSessionModal()
-    {
-        InitializeComponent();
-        IsVisible = false;
-    }
-
-    private static void OnIsOpenChanged(BindableObject bindable, object oldValue, object newValue)
-    {
-        if (bindable is not WorkoutSessionModal modal)
+        if (_hasContent)
             return;
 
-        if ((bool)newValue)
-        {
-            modal.IsVisible = true;
-            ModalTransition.PlayShow(modal);
-        }
-        else
-        {
-            ModalTransition.PlayHide(modal, () => modal.IsVisible = false);
-        }
+        var started = Stopwatch.GetTimestamp();
+        InitializeComponent();
+        _hasContent = true;
+        Trace.WriteLine($"[Performance][WorkoutSessionModal] Deferred view initialized in {Stopwatch.GetElapsedTime(started).TotalMilliseconds:F1} ms.");
     }
 }
