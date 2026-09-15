@@ -192,62 +192,6 @@ public partial class NutritionViewModel
         NotifyDisplayProperties();
         NotifyMealTargetProperties();
 
-        await LoadMealIdeasAsync(userId, CurrentPhase);
-    }
-
-    private async Task LoadMealIdeasAsync(int userId, CyclePhase phase)
-    {
-        IsLoadingMealIdeas = true;
-        NotifyMealIdeaProperties();
-
-        try
-        {
-            using var ideaScope = _scopeFactory.CreateScope();
-            var nutritionService = ideaScope.ServiceProvider.GetRequiredService<INutritionService>();
-
-            var mealTypes = new[] { MealType.Breakfast, MealType.Lunch, MealType.Dinner, MealType.Snack };
-            foreach (var mealType in mealTypes)
-            {
-                var suggestions = await DataLoadScheduler.RunAsync(() =>
-                    nutritionService.GetSuggestedMealsAsync(
-                        userId, mealType, BreakfastPreference, phase, DateTime.Today));
-
-                var items = suggestions.Select(MealSuggestionItem.FromSuggestedMeal).ToList();
-
-                switch (mealType)
-                {
-                    case MealType.Breakfast:
-                        BreakfastSuggestions = new ObservableCollection<MealSuggestionItem>(items);
-                        break;
-                    case MealType.Lunch:
-                        LunchSuggestions = new ObservableCollection<MealSuggestionItem>(items);
-                        break;
-                    case MealType.Dinner:
-                        DinnerSuggestions = new ObservableCollection<MealSuggestionItem>(items);
-                        break;
-                    case MealType.Snack:
-                        SnackSuggestions = new ObservableCollection<MealSuggestionItem>(items);
-                        break;
-                }
-            }
-        }
-        catch
-        {
-        }
-        finally
-        {
-            IsLoadingMealIdeas = false;
-            NotifyMealIdeaProperties();
-        }
-    }
-
-    private void NotifyMealIdeaProperties()
-    {
-        OnPropertyChanged(nameof(HasBreakfastSuggestions));
-        OnPropertyChanged(nameof(HasLunchSuggestions));
-        OnPropertyChanged(nameof(HasDinnerSuggestions));
-        OnPropertyChanged(nameof(HasSnackSuggestions));
-        OnPropertyChanged(nameof(HasAnyMealIdeas));
     }
 
     private void NotifyMealTargetProperties()

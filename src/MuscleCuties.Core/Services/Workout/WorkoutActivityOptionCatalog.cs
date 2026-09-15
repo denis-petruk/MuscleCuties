@@ -169,7 +169,7 @@ public static class WorkoutActivityOptionCatalog
             "STRENGTH" => "Dumbbell24",
             "CARDIO" => "PulseSquare24",
             "RECOVERY" => "LeafThree24",
-            _ => "Circle24"
+            _ => "CircleSmall24"
         };
     }
 

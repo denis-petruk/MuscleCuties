@@ -347,7 +347,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
             return;
 
         _selectedWorkoutDayId = workout.WorkoutDayId;
-        IsWorkoutModalVisible = true;
+        CollapseExerciseDetails();
         WorkoutModalErrorText = string.Empty;
         WorkoutModalStatusText = string.Empty;
         SelectedWorkoutTitle = workout.Title;
@@ -358,6 +358,15 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
         IsSelectedWorkoutRestDay = workout.IsRestDay;
         IsSelectedWorkoutCompleted = workout.IsCompleted;
 
+        var hasCachedDetail = _sessionDetailCache.ContainsKey(_selectedWorkoutDayId);
+        IsWorkoutDetailLoading = !hasCachedDetail;
+        if (!hasCachedDetail)
+        {
+            SelectedWorkoutExercises.Clear();
+            SelectedWorkoutActivitySections.Clear();
+        }
+
+        IsWorkoutModalVisible = true;
         await LoadWorkoutSessionDetailAsync();
     }
 
@@ -573,12 +582,6 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
 
     private void CloseWorkoutModal()
     {
-        CollapseExerciseDetails();
-        IsWorkoutDetailLoading = false;
-        WorkoutModalErrorText = string.Empty;
-        WorkoutModalStatusText = string.Empty;
-        IsSelectedWorkoutRestDay = false;
-        IsSelectedWorkoutCompleted = false;
         IsWorkoutModalVisible = false;
     }
 

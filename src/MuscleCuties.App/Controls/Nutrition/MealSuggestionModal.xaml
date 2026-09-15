@@ -1,66 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ContentView
+<sharedControls:AnimatedModalView
     x:Class="MuscleCuties.App.Controls.Nutrition.MealSuggestionModal"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:nutritionModels="clr-namespace:MuscleCuties.Core.Models.UI.Nutrition;assembly=MuscleCuties.Core"
     xmlns:nutritionEnums="clr-namespace:MuscleCuties.Core.Models.Enums.Nutrition;assembly=MuscleCuties.Core"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
     x:DataType="vm:NutritionViewModel"
-    IsVisible="{Binding IsSuggestionModalVisible}">
+    IsOpen="{Binding IsSuggestionModalVisible}">
 
-    <Grid
-        BackgroundColor="{StaticResource ModalScrim}"
-        Padding="20,56,20,36">
-        <Grid.GestureRecognizers>
-            <TapGestureRecognizer Command="{Binding CloseSuggestionModalCommand}" />
-        </Grid.GestureRecognizers>
+    <Grid BackgroundColor="{StaticResource ModalScrim}">
+        <BoxView BackgroundColor="Transparent">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CloseSuggestionModalCommand}" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
         <Border
-            Style="{StaticResource CardPrimary}"
-            Padding="0"
-            Margin="0"
-            MaximumHeightRequest="700"
-            MaximumWidthRequest="560"
-            HorizontalOptions="Fill"
+            Style="{StaticResource ModalSurface}"
+            Margin="12,44,12,20"
+            MaximumHeightRequest="760"
             VerticalOptions="Center">
-
-            <Grid RowDefinitions="Auto, Auto, *">
-                <!-- Row 0: Title + action buttons -->
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
                 <Grid
                     Grid.Row="0"
-                    ColumnDefinitions="*, Auto, Auto"
-                    RowDefinitions="Auto, Auto"
+                    ColumnDefinitions="*,Auto,Auto"
+                    RowDefinitions="Auto,Auto"
                     ColumnSpacing="10"
                     RowSpacing="4"
                     Padding="20,18,20,12">
                     <Label
-                        Grid.Row="0" Grid.Column="0"
+                        Grid.Row="0"
+                        Grid.Column="0"
                         Text="Meal ideas"
-                        Style="{StaticResource SubHeadline}"
-                        FontSize="22" />
+                        Style="{StaticResource ModalTitle}" />
                     <Label
-                        Grid.Row="1" Grid.Column="0"
+                        Grid.Row="1"
+                        Grid.Column="0"
                         Text="{Binding SuggestionTargetText}"
-                        Style="{StaticResource MutedLabel}" />
+                        Style="{StaticResource ModalSubtitle}" />
 
                     <Border
                         Grid.Row="0"
                         Grid.Column="1"
                         Grid.RowSpan="2"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        StrokeShape="RoundRectangle 22"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                        StrokeThickness="0"
+                        Style="{StaticResource ModalIconButton}"
                         VerticalOptions="Start"
+                        IsVisible="{Binding ShowSuggestionResults}"
                         SemanticProperties.Description="Refresh meal suggestions">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding RefreshSuggestionsCommand}" />
                         </Border.GestureRecognizers>
                         <Path
                             Data="M17.65 6.35A7.958 7.958 0 0012 4a8 8 0 00-8 8 8 8 0 008 8 7.985 7.985 0 005.93-2.65l-1.46-1.46A5.98 5.98 0 0112 18a6 6 0 01-6-6 6 6 0 016-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
-                            Fill="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                            Fill="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextPrimaryDark}}"
                             Aspect="Uniform"
                             WidthRequest="18"
                             HeightRequest="18"
@@ -72,88 +67,178 @@
                         Grid.Row="0"
                         Grid.Column="2"
                         Grid.RowSpan="2"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        StrokeShape="RoundRectangle 22"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
-                        StrokeThickness="0"
+                        Style="{StaticResource ModalIconButton}"
                         VerticalOptions="Start"
                         SemanticProperties.Description="Close suggestions">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding CloseSuggestionModalCommand}" />
                         </Border.GestureRecognizers>
-                        <Path
-                            Data="M6 6L18 18M18 6L6 18"
-                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                            StrokeThickness="2.2"
-                            StrokeLineCap="Round"
-                            Aspect="Uniform"
-                            WidthRequest="18"
-                            HeightRequest="18"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
+                        <Path Style="{StaticResource ModalCloseIcon}" />
                     </Border>
                 </Grid>
 
-                <!-- Row 1: Divider -->
                 <BoxView
                     Grid.Row="1"
-                    Margin="20,0,20,0"
-                    HeightRequest="1"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
+                    Style="{StaticResource ModalDivider}" />
+
+                <ScrollView
+                    Grid.Row="2"
+                    IsVisible="{Binding IsMealTypePickerVisible}">
+                    <VerticalStackLayout
+                        Spacing="14"
+                        Padding="20,16,20,20">
+                        <Label
+                            Text="Choose a meal"
+                            Style="{StaticResource SectionTitle}"
+                            FontSize="17" />
+
+                        <Grid
+                            ColumnDefinitions="*,*"
+                            RowDefinitions="Auto,Auto"
+                            ColumnSpacing="10"
+                            RowSpacing="10">
+                            <Border Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsBreakfastGuessed}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectSuggestionMealTypeCommand}"
+                                        CommandParameter="{x:Static nutritionEnums:MealType.Breakfast}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6">
+                                    <Path
+                                        Data="M12 3c-3 0-7 6-7 11a7 7 0 0 0 14 0c0-5-4-11-7-11ZM12 11a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Start" />
+                                    <Label Text="Breakfast" Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Text="{Binding BreakfastCaloriesHint}" Style="{StaticResource CaptionLabel}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border Grid.Column="1" Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsLunchGuessed}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectSuggestionMealTypeCommand}"
+                                        CommandParameter="{x:Static nutritionEnums:MealType.Lunch}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6">
+                                    <Path
+                                        Data="M3 11h18c0 5-4 9-9 9s-9-4-9-9ZM7 11c0-3 2-5 5-5s5 2 5 5M12 3v3"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Start" />
+                                    <Label Text="Lunch" Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Text="{Binding LunchCaloriesHint}" Style="{StaticResource CaptionLabel}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border Grid.Row="1" Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsDinnerGuessed}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectSuggestionMealTypeCommand}"
+                                        CommandParameter="{x:Static nutritionEnums:MealType.Dinner}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6">
+                                    <Path
+                                        Data="M15 5a5 5 0 0 1 0 10c-1.8 0-3.4-1-4.3-2.4L7 16.3M5.7 15a2 2 0 1 0-2.8 2.8 2 2 0 1 0 2.8 2.8L9.4 17"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Start" />
+                                    <Label Text="Dinner" Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Text="{Binding DinnerCaloriesHint}" Style="{StaticResource CaptionLabel}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSnackGuessed}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectSuggestionMealTypeCommand}"
+                                        CommandParameter="{x:Static nutritionEnums:MealType.Snack}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6">
+                                    <Path
+                                        Data="M12 21V8M12 11c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 15c3 0 5-2 5-5-3 0-5 2-5 5ZM12 19c-3 0-5-2-5-5 3 0 5 2 5 5"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Start" />
+                                    <Label Text="Snack" Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Text="{Binding SnackCaloriesHint}" Style="{StaticResource CaptionLabel}" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+                </ScrollView>
 
                 <VerticalStackLayout
                     Grid.Row="2"
-                    IsVisible="{Binding IsMealTypePickerVisible}"
-                    Spacing="12"
-                    Padding="20,12,20,20"
-                    VerticalOptions="Center">
-                    <Label
-                        Text="Pick a meal"
-                        Style="{StaticResource BodyLabel}"
-                        FontAttributes="Bold"
-                        FontSize="15"
-                        HorizontalTextAlignment="Center"
-                        Margin="0,0,0,6" />
-
-                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,*" RowSpacing="10" ColumnSpacing="10">
-                        <Button
-                            Text="Breakfast"
-                            Style="{StaticResource ButtonSecondary}"
-                            Command="{Binding SelectSuggestionMealTypeCommand}"
-                            CommandParameter="{x:Static nutritionEnums:MealType.Breakfast}" />
-                        <Button
-                            Grid.Column="1"
-                            Text="Lunch"
-                            Style="{StaticResource ButtonSecondary}"
-                            Command="{Binding SelectSuggestionMealTypeCommand}"
-                            CommandParameter="{x:Static nutritionEnums:MealType.Lunch}" />
-                        <Button
-                            Grid.Row="1"
-                            Text="Dinner"
-                            Style="{StaticResource ButtonSecondary}"
-                            Command="{Binding SelectSuggestionMealTypeCommand}"
-                            CommandParameter="{x:Static nutritionEnums:MealType.Dinner}" />
-                        <Button
-                            Grid.Row="1"
-                            Grid.Column="1"
-                            Text="Snack"
-                            Style="{StaticResource ButtonSecondary}"
-                            Command="{Binding SelectSuggestionMealTypeCommand}"
-                            CommandParameter="{x:Static nutritionEnums:MealType.Snack}" />
-                    </Grid>
-                </VerticalStackLayout>
-
-                <ActivityIndicator
-                    Grid.Row="2"
-                    IsRunning="{Binding IsLoadingSuggestions}"
                     IsVisible="{Binding IsLoadingSuggestions}"
-                    Color="{StaticResource Primary}"
-                    WidthRequest="36"
-                    HeightRequest="36"
+                    Spacing="10"
                     HorizontalOptions="Center"
                     VerticalOptions="Center"
-                    SemanticProperties.Description="Loading meal suggestions" />
+                    SemanticProperties.Description="Finding meal ideas from USDA foods">
+                    <ActivityIndicator
+                        IsRunning="{Binding IsLoadingSuggestions}"
+                        Color="{StaticResource Primary}"
+                        WidthRequest="32"
+                        HeightRequest="32" />
+                    <Label Text="Finding a good fit" Style="{StaticResource ModalSubtitle}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout
+                    Grid.Row="2"
+                    IsVisible="{Binding HasMealSuggestionError}"
+                    Spacing="12"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    Padding="28,32">
+                    <Path
+                        Data="M3 2v7c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2V2M6 2v20M15 2v8h4M19 2v20"
+                        Style="{StaticResource NutritionLineIcon}"
+                        Stroke="{StaticResource Primary}"
+                        WidthRequest="32"
+                        HeightRequest="32"
+                        HorizontalOptions="Center" />
+                    <Label
+                        Text="{Binding MealSuggestionError}"
+                        Style="{StaticResource ModalSubtitle}"
+                        HorizontalTextAlignment="Center" />
+                    <Button
+                        Text="Try again"
+                        Command="{Binding RefreshSuggestionsCommand}"
+                        Style="{StaticResource ButtonSecondary}"
+                        WidthRequest="152" />
+                </VerticalStackLayout>
 
                 <VerticalStackLayout
                     Grid.Row="2"
@@ -162,22 +247,22 @@
                     HorizontalOptions="Center"
                     VerticalOptions="Center"
                     Padding="24,32">
-                    <Image
-                        Source="{Binding Source='Food24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                        WidthRequest="36"
-                        HeightRequest="36"
-                        Aspect="AspectFit"
-                        Opacity="0.4"
+                    <Path
+                        Data="M12 21V8M12 11c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 15c3 0 5-2 5-5-3 0-5 2-5 5ZM12 19c-3 0-5-2-5-5 3 0 5 2 5 5"
+                        Style="{StaticResource NutritionLineIcon}"
+                        Stroke="{StaticResource Primary}"
+                        WidthRequest="32"
+                        HeightRequest="32"
                         HorizontalOptions="Center" />
                     <Label
-                        Text="No suggestions available"
+                        Text="No close match yet"
                         Style="{StaticResource BodyLabel}"
                         FontAttributes="Bold"
                         HorizontalTextAlignment="Center"
                         HorizontalOptions="Center" />
                     <Label
-                        Text="Add more foods to your database to get meal ideas."
-                        Style="{StaticResource MutedLabel}"
+                        Text="Try another meal or refresh the USDA results."
+                        Style="{StaticResource ModalSubtitle}"
                         HorizontalTextAlignment="Center"
                         HorizontalOptions="Center" />
                 </VerticalStackLayout>
@@ -189,7 +274,7 @@
                     SelectionMode="None"
                     IsVisible="{Binding HasMealSuggestions}"
                     VerticalScrollBarVisibility="Default"
-                    Margin="16,4,16,16"
+                    Margin="20,12,20,8"
                     SizeChanged="OnSuggestionsSizeChanged">
                     <CollectionView.ItemsLayout>
                         <GridItemsLayout
@@ -201,21 +286,23 @@
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="nutritionModels:MealSuggestionItem">
-                            <Border
-                                StrokeShape="RoundRectangle 14"
-                                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                                StrokeThickness="1"
-                                Padding="14"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
-                                <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto" RowSpacing="4">
-                                    <Label
-                                        Grid.Row="0"
-                                        Text="{Binding ConceptName}"
-                                        Style="{StaticResource AccentLabel}"
-                                        FontSize="15"
-                                        FontAttributes="Bold"
-                                        MaxLines="1"
-                                        LineBreakMode="TailTruncation" />
+                            <Border Style="{StaticResource ModalListItem}">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                        <Path
+                                            Data="{Binding IconPathData, Converter={StaticResource StringToGeometryConverter}}"
+                                            Style="{StaticResource NutritionLineIcon}"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            VerticalOptions="Center" />
+                                        <Label
+                                            Grid.Column="1"
+                                            Text="{Binding ConceptName}"
+                                            Style="{StaticResource CardTitle}"
+                                            FontSize="15"
+                                            MaxLines="1"
+                                            LineBreakMode="TailTruncation" />
+                                    </Grid>
                                     <Label
                                         Grid.Row="1"
                                         Text="{Binding ConceptDescription}"
@@ -223,8 +310,15 @@
                                         FontSize="12"
                                         MaxLines="2"
                                         LineBreakMode="TailTruncation" />
+                                    <Label
+                                        Grid.Row="2"
+                                        Text="{Binding ComponentSummary}"
+                                        Style="{StaticResource MutedLabel}"
+                                        FontSize="11"
+                                        MaxLines="1"
+                                        LineBreakMode="TailTruncation" />
 
-                                    <HorizontalStackLayout Grid.Row="2" Spacing="6">
+                                    <HorizontalStackLayout Grid.Row="3" Spacing="6">
                                         <Border
                                             StrokeShape="RoundRectangle 999"
                                             StrokeThickness="0"
@@ -246,38 +340,33 @@
                                     </HorizontalStackLayout>
 
                                     <Label
-                                        Grid.Row="3"
+                                        Grid.Row="4"
                                         Text="{Binding MacrosText}"
                                         Style="{StaticResource CaptionLabel}"
                                         FontSize="11" />
-
-                                    <Border
-                                        Grid.Row="4"
-                                        StrokeShape="RoundRectangle 12"
-                                        StrokeThickness="0"
-                                        BackgroundColor="{StaticResource Primary}"
-                                        HeightRequest="40"
-                                        Padding="18,0"
-                                        SemanticProperties.Description="Use this meal suggestion">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, Path=AcceptSuggestionCommand}"
-                                                CommandParameter="{Binding .}" />
-                                        </Border.GestureRecognizers>
-                                        <Label
-                                            Text="Choose meal"
-                                            TextColor="{StaticResource White}"
-                                            FontSize="13"
-                                            FontAttributes="Bold"
-                                            HorizontalOptions="Center"
-                                            VerticalOptions="Center" />
-                                    </Border>
+                                    <Button
+                                        Grid.Row="5"
+                                        Text="View meal"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, Path=OpenMealDetailCommand}"
+                                        CommandParameter="{Binding .}"
+                                        FontSize="13"
+                                        MinimumHeightRequest="44"
+                                        Margin="0,4,0,0"
+                                        SemanticProperties.Description="View meal details" />
                                 </Grid>
                             </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
+
+                <Grid Grid.Row="3" Padding="20,8,20,16">
+                    <Button
+                        Text="Done"
+                        Command="{Binding CloseSuggestionModalCommand}"
+                        Style="{StaticResource ButtonSecondary}"
+                        MinimumHeightRequest="48" />
+                </Grid>
             </Grid>
         </Border>
     </Grid>
-</ContentView>
+</sharedControls:AnimatedModalView>

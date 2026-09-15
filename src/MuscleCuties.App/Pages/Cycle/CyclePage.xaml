@@ -59,11 +59,13 @@
         </ScrollView>
 
         <toolkit:LazyView
+            x:Name="DatePhaseModal"
             x:TypeArguments="cycleControls:CycleDatePhaseModal"
-            IsVisible="{Binding IsDatePhaseModalVisible}" />
+            InputTransparent="{Binding IsDatePhaseModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView
+            x:Name="WarningPopup"
             x:TypeArguments="cycleControls:CycleWarningPopup"
-            IsVisible="{Binding IsCycleWarningPopupVisible}" />
+            InputTransparent="{Binding IsCycleWarningPopupVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <sharedControls:PageLoadingOverlay />
     </Grid>
 </ContentPage>
