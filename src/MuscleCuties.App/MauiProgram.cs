@@ -3,6 +3,7 @@ using MauiIcons.Fluent;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Handlers;
+using MuscleCuties.App.Pages;
 using MuscleCuties.App.Pages.Auth;
 using MuscleCuties.App.Pages.Cycle;
 using MuscleCuties.App.Pages.Dashboard;
@@ -59,8 +60,8 @@ public static class MauiProgram
             .ConfigureMauiHandlers(ConfigureInputHandlers)
             .ConfigureFonts(fonts =>
             {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                fonts.AddFont("Inter-Variable.ttf", "Inter");
+                fonts.AddFont("Fluent_Icons_Regular.ttf", "FluentIcons");
             });
 
         var services = builder.Services;
@@ -225,17 +226,17 @@ public static class MauiProgram
     {
         services.AddTransient<LoginViewModel>(sp => new LoginViewModel(
             sp.GetRequiredService<IAuthService>(),
-            () => NavigateToAsync("//DashboardPage"),
-            () => NavigateToAsync($"//{nameof(ProfileSetupPage)}"),
+            () => PreloadAndNavigateToDashboardAsync(sp),
+            () => NavigateAuthenticatedAsync(sp, $"//{nameof(ProfileSetupPage)}"),
             () => NavigateToAsync(nameof(RegisterPage)),
             sp.GetRequiredService<IPlatformSignInService>()));
 
         services.AddTransient<RegisterViewModel>(sp => new RegisterViewModel(
             sp.GetRequiredService<IAuthService>(),
-            () => NavigateToAsync($"//{nameof(ProfileSetupPage)}"),
+            () => NavigateAuthenticatedAsync(sp, $"//{nameof(ProfileSetupPage)}"),
             () => NavigateToAsync(".."),
             sp.GetRequiredService<IPlatformSignInService>(),
-            () => NavigateToAsync("//DashboardPage")));
+            () => PreloadAndNavigateToDashboardAsync(sp)));
 
         services.AddSingleton<QuizQuestionCache>();
 
@@ -244,14 +245,14 @@ public static class MauiProgram
             sp.GetRequiredService<IQuizService>(),
             sp.GetRequiredService<IAppPreloadService>(),
             sp.GetRequiredService<QuizQuestionCache>(),
-            () => NavigateToAsync("//DashboardPage")));
+            () => PrepareAndNavigateToDashboardAsync(sp)));
 
         services.AddTransient<ProfileSetupViewModel>(sp => new ProfileSetupViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IUserRepository>(),
             sp.GetRequiredService<IQuizService>(),
             sp.GetRequiredService<QuizQuestionCache>(),
-            () => NavigateToAsync($"//{nameof(QuizPage)}")));
+            () => NavigateAuthenticatedAsync(sp, $"//{nameof(QuizPage)}")));
 
         services.AddSingleton<DashboardViewModel>(sp => new DashboardViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
@@ -347,14 +348,14 @@ public static class MauiProgram
         services.AddTransient<AppStartupPage>();
         services.AddTransient<RegisterPage>();
         services.AddTransient<QuizPage>();
-        services.AddTransient<ProfileSetupPage>();
-        services.AddTransient<DashboardPage>();
+        services.AddTransient(sp => PageLoadExtensions.CreateWithTiming<ProfileSetupPage, ProfileSetupViewModel>(sp, vm => new ProfileSetupPage(vm)));
+        services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<DashboardPage, DashboardViewModel>(sp, vm => new DashboardPage(vm)));
         services.AddTransient<DailyCheckInPage>();
-        services.AddTransient<CyclePage>();
+        services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<CyclePage, CycleViewModel>(sp, vm => new CyclePage(vm)));
         services.AddTransient<CyclePhaseDetailPage>();
-        services.AddTransient<NutritionPage>();
-        services.AddTransient<WorkoutPage>();
-        services.AddTransient<ProfilePage>();
+        services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<NutritionPage, NutritionViewModel>(sp, vm => new NutritionPage(vm)));
+        services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<WorkoutPage, WorkoutViewModel>(sp, vm => new WorkoutPage(vm)));
+        services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<ProfilePage, ProfileViewModel>(sp, vm => new ProfilePage(vm)));
         services.AddTransient<ProfilePersonalInfoPage>();
         services.AddTransient<ProfileNutritionSettingsPage>();
         services.AddTransient<ProfileWorkoutPreferencesPage>();
@@ -380,6 +381,29 @@ public static class MauiProgram
         return MainThread.InvokeOnMainThreadAsync(async () =>
         {
             var shell = Shell.Current ?? throw new InvalidOperationException("Shell is not available.");
+            await shell.GoToAsync(route, false);
+        });
+    }
+
+    private static async Task PreloadAndNavigateToDashboardAsync(IServiceProvider services)
+    {
+        var preloadService = services.GetRequiredService<IAppPreloadService>();
+        await preloadService.PreloadDashboardAsync();
+        await NavigateAuthenticatedAsync(services, "//DashboardPage");
+        _ = preloadService.PreloadRemainingAsync();
+    }
+
+    private static async Task PrepareAndNavigateToDashboardAsync(IServiceProvider services)
+    {
+        await NavigateAuthenticatedAsync(services, "//DashboardPage");
+    }
+
+    private static Task NavigateAuthenticatedAsync(IServiceProvider services, string route)
+    {
+        return MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            var shell = services.GetRequiredService<AppShell>();
+            shell.MarkAuthenticationVerified();
             await shell.GoToAsync(route, false);
         });
     }

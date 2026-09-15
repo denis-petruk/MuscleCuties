@@ -1,19 +1,17 @@
-using System.Runtime.CompilerServices;
 using MuscleCuties.App.Controls.Shared;
 
 namespace MuscleCuties.App.Controls.Nutrition;
 
-public partial class MealSuggestionModal : ContentView
+public partial class MealSuggestionModal : AnimatedModalView
 {
     public MealSuggestionModal()
     {
         InitializeComponent();
     }
 
-    protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    private void OnSuggestionsSizeChanged(object? sender, EventArgs e)
     {
-        base.OnPropertyChanged(propertyName);
-        if (propertyName == nameof(IsVisible) && IsVisible)
-            ModalTransition.PlayShow(this);
+        SuggestionLayout.Span = SuggestionCollection.Width >= 500 ? 2 : 1;
     }
+
 }

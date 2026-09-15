@@ -117,10 +117,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
     public void RefreshThemeColors(bool useDarkTheme)
     {
         if (UseDarkTheme == useDarkTheme)
-        {
-            ApplyThemeColors();
             return;
-        }
 
         UseDarkTheme = useDarkTheme;
     }
@@ -140,14 +137,18 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
 
     private async Task RefreshCycleDataAsync()
     {
-        using var scope = _scopeFactory.CreateScope();
-        var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-        var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
-        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var userId = await RunScopedAsync(services =>
+            services.GetRequiredService<IAuthService>().GetCurrentUserIdAsync());
 
-        var userId = await DataLoadScheduler.RunAsync(authService.GetCurrentUserIdAsync);
-        var prediction = await DataLoadScheduler.RunAsync(() => cycleService.GetPredictionAsync(userId));
-        var user = await DataLoadScheduler.RunAsync(() => userRepository.GetByIdAsync(userId));
+        var predictionTask = RunScopedAsync(services =>
+            services.GetRequiredService<ICycleService>().GetPredictionAsync(userId));
+        var userTask = RunScopedAsync(services =>
+            services.GetRequiredService<IUserRepository>().GetByIdAsync(userId));
+        var phaseLogsTask = RunScopedAsync(services =>
+            services.GetRequiredService<ICycleService>().GetRecentPhaseLogsAsync(userId, 120));
+
+        var prediction = await predictionTask;
+        var user = await userTask;
         var accountCreatedDate = user?.CreatedAt.Date ?? CurrentDate;
 
         HasActiveCycle = prediction.HasActiveCycle;
@@ -156,7 +157,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
         DaysUntilPeriod = prediction.DaysUntilPeriod;
         CurrentPhase = prediction.CurrentPhase;
 
-        var phaseLogs = await DataLoadScheduler.RunAsync(() => cycleService.GetRecentPhaseLogsAsync(userId, 120));
+        var phaseLogs = await phaseLogsTask;
         _phaseLogs.Clear();
         _phaseLogs.AddRange(phaseLogs);
         var latestPhaseLog = phaseLogs.FirstOrDefault();
@@ -167,6 +168,15 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
         OnPropertyChanged(nameof(Today));
         OnPropertyChanged(nameof(PhaseLabel));
         NotifyCycleSummaryProperties();
+    }
+
+    private Task<T> RunScopedAsync<T>(Func<IServiceProvider, Task<T>> operation)
+    {
+        return DataLoadScheduler.RunAsync(async () =>
+        {
+            using var scope = _scopeFactory.CreateScope();
+            return await operation(scope.ServiceProvider);
+        });
     }
 
     private async Task AdvancePhaseAsync()
@@ -233,12 +243,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
     private void CloseDatePhaseModal()
     {
         IsDatePhaseModalVisible = false;
-        HasPhaseJumpWarning = false;
-        PhaseEditStatusText = string.Empty;
-        _selectedCalendarDay = null;
-        _suggestedPhase = null;
-        OnPropertyChanged(nameof(HasSuggestedPhase));
-        SaveDatePhaseCommand.NotifyCanExecuteChanged();
     }
 
     private void SelectPhaseOption(CyclePhaseOptionItem? option)
@@ -675,11 +679,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
     private void CloseCycleWarningPopup()
     {
         IsCycleWarningPopupVisible = false;
-        CycleWarningTitle = string.Empty;
-        CycleWarningText = string.Empty;
-        CycleWarningSuggestedActionText = "Use next phase";
-        _cycleWarningSuggestedPhase = null;
-        OnPropertyChanged(nameof(HasCycleWarningSuggestedPhase));
     }
 
     private async Task UseCycleWarningSuggestedPhaseAsync()

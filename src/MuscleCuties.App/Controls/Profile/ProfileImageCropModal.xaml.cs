@@ -5,6 +5,7 @@ namespace MuscleCuties.App.Controls.Profile;
 
 public partial class ProfileImageCropModal : ContentView
 {
+    private bool _hasContent;
     private TaskCompletionSource<string?>? _tcs;
     private double _panX;
     private double _panY;
@@ -13,11 +14,17 @@ public partial class ProfileImageCropModal : ContentView
 
     public ProfileImageCropModal()
     {
-        InitializeComponent();
+        IsVisible = false;
     }
 
     public Task<string?> ShowAsync(string imagePath)
     {
+        if (!_hasContent)
+        {
+            InitializeComponent();
+            _hasContent = true;
+        }
+
         _tcs = new TaskCompletionSource<string?>();
         CropImage.Source = ImageSource.FromFile(imagePath);
         ResetTransforms();

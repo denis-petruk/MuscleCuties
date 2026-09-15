@@ -192,62 +192,6 @@ public partial class NutritionViewModel
         NotifyDisplayProperties();
         NotifyMealTargetProperties();
 
-        await LoadMealIdeasAsync(userId, CurrentPhase);
-    }
-
-    private async Task LoadMealIdeasAsync(int userId, CyclePhase phase)
-    {
-        IsLoadingMealIdeas = true;
-        NotifyMealIdeaProperties();
-
-        try
-        {
-            using var ideaScope = _scopeFactory.CreateScope();
-            var nutritionService = ideaScope.ServiceProvider.GetRequiredService<INutritionService>();
-
-            var mealTypes = new[] { MealType.Breakfast, MealType.Lunch, MealType.Dinner, MealType.Snack };
-            foreach (var mealType in mealTypes)
-            {
-                var suggestions = await DataLoadScheduler.RunAsync(() =>
-                    nutritionService.GetSuggestedMealsAsync(
-                        userId, mealType, BreakfastPreference, phase, DateTime.Today));
-
-                var items = suggestions.Select(MealSuggestionItem.FromSuggestedMeal).ToList();
-
-                switch (mealType)
-                {
-                    case MealType.Breakfast:
-                        BreakfastSuggestions = new ObservableCollection<MealSuggestionItem>(items);
-                        break;
-                    case MealType.Lunch:
-                        LunchSuggestions = new ObservableCollection<MealSuggestionItem>(items);
-                        break;
-                    case MealType.Dinner:
-                        DinnerSuggestions = new ObservableCollection<MealSuggestionItem>(items);
-                        break;
-                    case MealType.Snack:
-                        SnackSuggestions = new ObservableCollection<MealSuggestionItem>(items);
-                        break;
-                }
-            }
-        }
-        catch
-        {
-        }
-        finally
-        {
-            IsLoadingMealIdeas = false;
-            NotifyMealIdeaProperties();
-        }
-    }
-
-    private void NotifyMealIdeaProperties()
-    {
-        OnPropertyChanged(nameof(HasBreakfastSuggestions));
-        OnPropertyChanged(nameof(HasLunchSuggestions));
-        OnPropertyChanged(nameof(HasDinnerSuggestions));
-        OnPropertyChanged(nameof(HasSnackSuggestions));
-        OnPropertyChanged(nameof(HasAnyMealIdeas));
     }
 
     private void NotifyMealTargetProperties()
@@ -260,9 +204,9 @@ public partial class NutritionViewModel
 
     private void BeginMealEdit(LoggedMeal meal)
     {
-        MealIngredients.Clear();
-        foreach (var entry in meal.Entries.Where(entry => entry.FoodItem is not null))
-            MealIngredients.Add(CreateIngredient(entry.FoodItem!, entry.Grams));
+        MealIngredients = new ObservableCollection<MealIngredientItem>(meal.Entries
+            .Where(entry => entry.FoodItem is not null)
+            .Select(entry => CreateIngredient(entry.FoodItem!, entry.Grams)));
 
         _editingMealId = meal.Id;
         IsEditingMeal = true;
@@ -392,24 +336,12 @@ public partial class NutritionViewModel
         var mealList = meals.ToList();
         var allEntries = meals.SelectMany(meal => meal.Entries).ToList();
 
-        ReplaceMeals(mealList.Select(meal => BuildMealItem(meal, mealList)));
+        Meals = new ObservableCollection<MealItem>(mealList.Select(meal => BuildMealItem(meal, mealList)));
 
         Micronutrients = new ObservableCollection<DailyMicronutrientItem>(
             BuildMicronutrients(mealList, _micronutrientGoals));
 
         return MacroNutrients.SumMealEntries(allEntries);
-    }
-
-
-    private void ReplaceMeals(IEnumerable<MealItem> meals)
-    {
-        Meals.Clear();
-
-        foreach (var meal in meals)
-            Meals.Add(meal);
-
-        OnPropertyChanged(nameof(HasMeals));
-        OnPropertyChanged(nameof(HasNoMeals));
     }
 
     private MealItem BuildMealItem(LoggedMeal meal, IReadOnlyCollection<LoggedMeal> dailyMeals)
@@ -422,7 +354,7 @@ public partial class NutritionViewModel
         {
             LoggedMealId = meal.Id,
             Time = meal.LoggedAt.ToString("h:mm tt", CultureInfo.CurrentCulture),
-            MealType = meal.MealType.ToString().ToUpperInvariant(),
+            MealType = meal.MealType.ToString(),
             Name = BuildMealCardName(entries),
             CaloriesText = $"{macros.Calories:N0} kcal",
             MacrosText = macros.ToMacroText(),

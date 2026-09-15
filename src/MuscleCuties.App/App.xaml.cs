@@ -77,6 +77,9 @@ public partial class App : Application
                     return;
                 }
 
+                var shell = _services.GetRequiredService<AppShell>();
+                shell.MarkAuthenticationVerified();
+
                 if (!user.IsOnboardingComplete)
                 {
                     await NavigateFromStartupAsync($"//{nameof(ProfileSetupPage)}");
@@ -103,8 +106,9 @@ public partial class App : Application
         await Task.Run(database.SeedDeferredReferenceDataAsync);
 
         var preloadService = _services.GetRequiredService<IAppPreloadService>();
-        await preloadService.PreloadAllAsync();
+        await preloadService.PreloadDashboardAsync();
         await NavigateFromStartupAsync("//DashboardPage");
+        _ = preloadService.PreloadRemainingAsync();
 
         _ = ScheduleNotificationsAsync(userId);
     }

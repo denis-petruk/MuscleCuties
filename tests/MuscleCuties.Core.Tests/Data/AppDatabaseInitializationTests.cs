@@ -19,7 +19,7 @@ public class AppDatabaseInitializationTests
 
         await db.InitializeAsync();
 
-        Assert.Equal(15, await db.QuizQuestions.CountAsync());
+        Assert.Equal(16, await db.QuizQuestions.CountAsync());
         Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
         Assert.True(await db.FoodItems.CountAsync() >= 32);
         Assert.True(await db.MealTemplates.AnyAsync(t => t.Name == "Margherita Pizza Beans"));
@@ -40,7 +40,7 @@ public class AppDatabaseInitializationTests
 
         await db.InitializeStartupAsync();
 
-        Assert.Equal(15, await db.QuizQuestions.CountAsync());
+        Assert.Equal(16, await db.QuizQuestions.CountAsync());
         Assert.Empty(await db.MealTemplates.ToListAsync());
         Assert.Empty(await db.FoodItems.ToListAsync());
         Assert.Empty(await db.Exercises.ToListAsync());
@@ -54,7 +54,7 @@ public class AppDatabaseInitializationTests
         await db.InitializeStartupAsync();
         await db.SeedDeferredReferenceDataAsync();
 
-        Assert.Equal(15, await db.QuizQuestions.CountAsync());
+        Assert.Equal(16, await db.QuizQuestions.CountAsync());
         Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
         Assert.Equal(60, await db.FoodItems.CountAsync());
         Assert.True(await db.Exercises.CountAsync() >= 20);
@@ -68,7 +68,7 @@ public class AppDatabaseInitializationTests
         await db.InitializeAsync();
         await db.InitializeAsync();
 
-        Assert.Equal(15, await db.QuizQuestions.CountAsync());
+        Assert.Equal(16, await db.QuizQuestions.CountAsync());
         Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
         Assert.Equal(60, await db.FoodItems.CountAsync());
     }
@@ -90,7 +90,7 @@ public class AppDatabaseInitializationTests
         await db.ResetAndSeedDebugDatabaseAsync();
 
         Assert.Empty(await db.Users.ToListAsync());
-        Assert.Equal(15, await db.QuizQuestions.CountAsync());
+        Assert.Equal(16, await db.QuizQuestions.CountAsync());
         Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
         Assert.Equal(60, await db.FoodItems.CountAsync());
         Assert.True(await db.Exercises.CountAsync() >= 20);
@@ -117,7 +117,7 @@ public class AppDatabaseInitializationTests
 
         Assert.True(await db.QuizQuestions.AnyAsync(q => q.QuestionType == QuizQuestionType.CurrentCyclePhase));
         Assert.False(await db.QuizQuestions.AnyAsync(q => q.QuestionType == QuizQuestionType.CycleTrackingMode));
-        Assert.Equal(15, await db.QuizQuestions.Select(q => q.QuestionType).Distinct().CountAsync());
+        Assert.Equal(16, await db.QuizQuestions.Select(q => q.QuestionType).Distinct().CountAsync());
     }
 
     [Fact]
