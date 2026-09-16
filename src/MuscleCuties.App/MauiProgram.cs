@@ -270,6 +270,7 @@ public static class MauiProgram
 
         services.AddSingleton<CycleViewModel>(sp => new CycleViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
+            new Lazy<IAppPreloadService>(sp.GetRequiredService<IAppPreloadService>),
             phase => NavigateToAsync($"{nameof(CyclePhaseDetailPage)}?phase={phase}")));
 
         services.AddTransient<CyclePhaseDetailViewModel>(sp => new CyclePhaseDetailViewModel(() => NavigateToAsync("..")));
