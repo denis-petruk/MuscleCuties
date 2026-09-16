@@ -38,6 +38,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private ObservableCollection<FoodSearchResultItem> _foodSearchResults = new();
     [ObservableProperty] private bool _hasMoreFoodResults;
     [ObservableProperty] private bool _isAddFoodPanelVisible;
+    [ObservableProperty] private bool _isAddMealFoodBuilderVisible;
+    [ObservableProperty] private bool _isAddMealTypePickerVisible;
     private bool _isApplyingServingDefaults;
     [ObservableProperty] private bool _isBreakdownModalVisible;
     [ObservableProperty] private bool _isBrowsingMoreFoods;
@@ -45,6 +47,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isBusy;
     [ObservableProperty] private bool _isLoadError;
+    [ObservableProperty] private bool _isMergeConfirmationVisible;
+    [ObservableProperty] private string _mergeButtonText = string.Empty;
+    [ObservableProperty] private string _mergeConfirmationText = string.Empty;
     [ObservableProperty] private bool _isCustomFoodPanelVisible;
     [ObservableProperty] private bool _isEditingMeal;
     [ObservableProperty] private bool _isFoodFinderExpanded;
@@ -103,6 +108,10 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         OpenMealBreakdownCommand = new RelayCommand<MealItem>(OpenMealBreakdown);
         EditSelectedBreakdownMealCommand =
             new AsyncRelayCommand(EditSelectedBreakdownMealAsync, () => CanEditSelectedBreakdown);
+        SelectAddMealTypeCommand = new RelayCommand<MealType>(SelectAddMealType);
+        ChangeAddMealTypeCommand = new RelayCommand(ChangeAddMealType);
+        ConfirmMergeMealCommand = new AsyncRelayCommand(ConfirmMergeMealAsync);
+        ConfirmNewMealCommand = new AsyncRelayCommand(ConfirmNewMealAsync);
         OpenSuggestMealCommand = new RelayCommand(OpenSuggestMeal);
         CloseSuggestionModalCommand = new RelayCommand(CloseSuggestionModal);
         RefreshSuggestionsCommand = new RelayCommand(RefreshSuggestions);
@@ -147,6 +156,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public bool ShowBrowseMoreFoods => HasFoodSearchResults && HasMoreFoodResults;
     public bool HasAddFoodMessage => !string.IsNullOrWhiteSpace(AddFoodMessage);
     public bool HasMealIngredients => MealIngredients.Count > 0;
+    public bool ShowLogMealButton => HasMealIngredients && !IsMergeConfirmationVisible;
+    public string ConfirmNewMealButtonText => $"Log as new {SelectedMealType.ToString().ToLower()}";
 
     public bool IsFoodFinderVisible =>
         IsFoodFinderExpanded ||
@@ -162,6 +173,12 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public bool HasMeals => Meals.Count > 0;
     public bool HasNoMeals => Meals.Count == 0;
     public string AddMealPanelTitle => IsEditingMeal ? "Edit meal" : "Build meal";
+    public bool IsAddBreakfastGuessed => SelectedMealType == MealType.Breakfast && IsAddMealTypePickerVisible;
+    public bool IsAddLunchGuessed => SelectedMealType == MealType.Lunch && IsAddMealTypePickerVisible;
+    public bool IsAddDinnerGuessed => SelectedMealType == MealType.Dinner && IsAddMealTypePickerVisible;
+    public bool IsAddSnackGuessed => SelectedMealType == MealType.Snack && IsAddMealTypePickerVisible;
+    public string SelectedMealTypeText => SelectedMealType.ToString();
+    public string SelectedMealTypeCaloriesHint => GetMealTypeCaloriesText(SelectedMealType);
 
     public MealItem? SelectedBreakdownMeal
     {
@@ -248,6 +265,10 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public RelayCommand CloseMicronutrientsModalCommand { get; }
     public RelayCommand<MealItem> OpenMealBreakdownCommand { get; }
     public AsyncRelayCommand EditSelectedBreakdownMealCommand { get; }
+    public RelayCommand<MealType> SelectAddMealTypeCommand { get; }
+    public RelayCommand ChangeAddMealTypeCommand { get; }
+    public AsyncRelayCommand ConfirmMergeMealCommand { get; }
+    public AsyncRelayCommand ConfirmNewMealCommand { get; }
     public RelayCommand OpenSuggestMealCommand { get; }
     public RelayCommand CloseSuggestionModalCommand { get; }
     public RelayCommand RefreshSuggestionsCommand { get; }
@@ -364,31 +385,26 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         if (IsEditingMeal)
             ResetMealDraft();
 
+        SelectedMealType = GuessNextMealType();
+        SelectedMealTime = DateTime.Now.TimeOfDay;
+        AddFoodMessage = string.Empty;
+        FoodGrams = string.Empty;
+        IsFoodFinderExpanded = false;
+        IsAddMealTypePickerVisible = true;
+        IsAddMealFoodBuilderVisible = false;
         IsAddFoodPanelVisible = true;
-        PrepareAddFoodPanel();
     }
 
     private void CloseAddFoodPanel()
     {
         CollapseFoodFinder();
+        ResetMergeState();
         IsAddFoodPanelVisible = false;
+        IsAddMealTypePickerVisible = false;
+        IsAddMealFoodBuilderVisible = false;
 
         if (IsEditingMeal)
             ResetMealDraft();
-    }
-
-    private void PrepareAddFoodPanel()
-    {
-        AddFoodMessage = string.Empty;
-        if (MealIngredients.Count == 0)
-        {
-            SelectedMealTime = DateTime.Now.TimeOfDay;
-            FoodGrams = string.Empty;
-            IsFoodFinderExpanded = false;
-            return;
-        }
-
-        IsFoodFinderExpanded = false;
     }
 
     private void OpenFoodFinder()

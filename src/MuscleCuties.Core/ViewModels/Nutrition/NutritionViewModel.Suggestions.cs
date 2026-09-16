@@ -258,6 +258,8 @@ public partial class NutritionViewModel
 
         SelectedMealType = SuggestionMealType;
         SelectedMealTime = DateTime.Now.TimeOfDay;
+        IsAddMealTypePickerVisible = false;
+        IsAddMealFoodBuilderVisible = true;
         IsAddFoodPanelVisible = true;
         IsFoodFinderExpanded = false;
         SelectedFoodResult = null;
