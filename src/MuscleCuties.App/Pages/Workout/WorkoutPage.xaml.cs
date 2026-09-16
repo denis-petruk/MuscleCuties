@@ -12,7 +12,7 @@ public partial class WorkoutPage : ContentPage
 
     public WorkoutPage(WorkoutViewModel vm)
     {
-        this.InitializeWithTiming(InitializeComponent);
+        InitializeComponent();
         _viewModel = vm;
     }
 

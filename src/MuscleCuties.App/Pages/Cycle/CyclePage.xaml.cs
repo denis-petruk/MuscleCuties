@@ -11,7 +11,7 @@ public partial class CyclePage : ContentPage
 
     public CyclePage(CycleViewModel vm)
     {
-        this.InitializeWithTiming(InitializeComponent);
+        InitializeComponent();
         _viewModel = vm;
     }
 

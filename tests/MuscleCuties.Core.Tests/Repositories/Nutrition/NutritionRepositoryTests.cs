@@ -186,7 +186,7 @@ public class NutritionRepositoryTests : IDisposable
             LoggedAt = loggedAt,
             MealType = MealType.Snack,
             CreatedAt = DateTime.UtcNow,
-            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 150 }]
+            Entries = [new LoggedMealIngredient { FoodItemId = item.Id, Grams = 150 }]
         };
         await repo.AddLoggedMealAsync(meal);
 
@@ -221,7 +221,7 @@ public class NutritionRepositoryTests : IDisposable
             LoggedAt = today.AddHours(9),
             MealType = MealType.Breakfast,
             CreatedAt = DateTime.UtcNow,
-            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 100 }]
+            Entries = [new LoggedMealIngredient { FoodItemId = item.Id, Grams = 100 }]
         });
         await repo.AddLoggedMealAsync(new LoggedMeal
         {
@@ -230,7 +230,7 @@ public class NutritionRepositoryTests : IDisposable
             LoggedAt = today.AddHours(18),
             MealType = MealType.Dinner,
             CreatedAt = DateTime.UtcNow,
-            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 100 }]
+            Entries = [new LoggedMealIngredient { FoodItemId = item.Id, Grams = 100 }]
         });
 
         var results = await repo.GetLoggedMealsByDateAsync(1, today);
@@ -261,7 +261,7 @@ public class NutritionRepositoryTests : IDisposable
             LoggedAt = DateTime.UtcNow.Date.AddHours(8),
             MealType = MealType.Breakfast,
             CreatedAt = DateTime.UtcNow,
-            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 100 }]
+            Entries = [new LoggedMealIngredient { FoodItemId = item.Id, Grams = 100 }]
         };
         await repo.AddLoggedMealAsync(meal);
         await repo.DeleteLoggedMealAsync(meal);

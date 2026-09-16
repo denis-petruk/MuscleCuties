@@ -12,8 +12,7 @@ public interface INutritionService
     Task<NutritionPlan> GetDailyPlanAsync(
         int userId,
         CyclePhase phase,
-        DateTime date,
-        BreakfastPreference breakfastPreference = BreakfastPreference.Savoury);
+        DateTime date);
 
     Task<(float Calories, float Protein, float Carbs, float Fats)> CalculateDailyTargetsAsync(int userId,
         CyclePhase phase);
@@ -26,7 +25,6 @@ public interface INutritionService
     Task<IReadOnlyList<SuggestedMeal>> GetSuggestedMealsAsync(
         int userId,
         MealType mealType,
-        BreakfastPreference breakfastPreference,
         CyclePhase phase,
         DateTime date,
         IReadOnlySet<string>? excludeConceptNames = null);

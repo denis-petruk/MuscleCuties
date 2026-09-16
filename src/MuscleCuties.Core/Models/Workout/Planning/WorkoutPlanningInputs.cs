@@ -13,11 +13,8 @@ public sealed record AdaptiveProfile(
     HashSet<WorkoutActivityType> Selected,
     StrengthTrainingStyle Style,
     Equipment Equipment,
-    List<Injury> Injuries,
     int BaselineSteps,
     CyclePhaseBaselines? Baselines = null);
-
-public sealed record Injury(InjurySite Site, InjuryStatus Status, DateOnly Since);
 
 public sealed record DailyInputs(
     DateOnly Date,

@@ -12,6 +12,5 @@ public class CycleLog
     public DateTime CreatedAt { get; set; }
 
     public User? User { get; set; }
-    public ICollection<SymptomLog> SymptomLogs { get; set; } = new List<SymptomLog>();
     public ICollection<CyclePhaseLog> PhaseLogs { get; set; } = new List<CyclePhaseLog>();
 }

@@ -1,6 +1,5 @@
 using System.Text.Json;
 using MuscleCuties.Core.Models.Workout.Planning;
-using MuscleCuties.Core.Models.Entities.Workout.Planning;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Services.Workout;
@@ -14,9 +13,7 @@ public static class AdaptiveProfileMapper
         PropertyNameCaseInsensitive = true
     };
 
-    public static AdaptiveProfile FromUserProfile(
-        UserProfile profile,
-        IReadOnlyCollection<WorkoutInjuryLog>? injuryLogs = null)
+    public static AdaptiveProfile FromUserProfile(UserProfile profile)
     {
         var selectedActivities = WorkoutActivityPreferences
             .EnsureRequired(WorkoutActivityPreferences.Parse(profile.PreferredWorkoutActivityTypes))
@@ -35,7 +32,6 @@ public static class AdaptiveProfileMapper
             Selected: selectedActivities,
             Style: WorkoutActivityPreferences.ParseStrengthStyle(profile.PreferredWorkoutActivityTypes),
             Equipment: equipment,
-            Injuries: MapInjuries(injuryLogs),
             BaselineSteps: 8000,
             Baselines: baselines);
     }
@@ -70,18 +66,4 @@ public static class AdaptiveProfileMapper
         return JsonSerializer.Serialize(baselines, JsonOptions);
     }
 
-    private static List<Injury> MapInjuries(IReadOnlyCollection<WorkoutInjuryLog>? injuryLogs)
-    {
-        if (injuryLogs is null)
-            return [];
-
-        return injuryLogs
-            .Where(log => Enum.TryParse<InjurySite>(log.Site, true, out _) &&
-                          Enum.TryParse<InjuryStatus>(log.Status, true, out _))
-            .Select(log => new Injury(
-                Enum.Parse<InjurySite>(log.Site, true),
-                Enum.Parse<InjuryStatus>(log.Status, true),
-                log.Since))
-            .ToList();
-    }
 }

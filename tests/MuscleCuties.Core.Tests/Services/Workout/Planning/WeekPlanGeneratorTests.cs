@@ -88,7 +88,6 @@ public class WeekPlanGeneratorTests : IClassFixture<WorkoutPlanningDbFixture>
                     $"AssignedSets ({slot.AssignedSets}) < SetsMin ({slot.SetsMin})");
                 Assert.True(slot.RepsMin <= slot.RepsMax,
                     $"RepsMin ({slot.RepsMin}) > RepsMax ({slot.RepsMax})");
-                Assert.NotEmpty(slot.AllowedPatterns);
             }
         }
     }

@@ -35,7 +35,7 @@ public readonly record struct MacroNutrients(
         return values.Aggregate(Empty, (total, next) => total + next);
     }
 
-    public static MacroNutrients SumMealEntries(IEnumerable<LoggedMealEntry> entries)
+    public static MacroNutrients SumMealEntries(IEnumerable<LoggedMealIngredient> entries)
     {
         return Sum(entries
             .Where(entry => entry.FoodItem is not null)

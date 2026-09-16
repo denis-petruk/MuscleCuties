@@ -199,11 +199,10 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
         existing.LoggedAt = meal.LoggedAt;
         existing.Date = meal.LoggedAt.Date;
         existing.MealType = meal.MealType;
-        existing.MealTemplateId = meal.MealTemplateId;
 
-        _db.LoggedMealEntries.RemoveRange(existing.Entries);
+        _db.LoggedMealIngredients.RemoveRange(existing.Entries);
         foreach (var entry in meal.Entries)
-            existing.Entries.Add(new LoggedMealEntry
+            existing.Entries.Add(new LoggedMealIngredient
             {
                 FoodItemId = entry.FoodItemId,
                 Grams = entry.Grams

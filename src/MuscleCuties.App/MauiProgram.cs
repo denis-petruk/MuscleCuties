@@ -3,7 +3,6 @@ using MauiIcons.Fluent;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Handlers;
-using MuscleCuties.App.Pages;
 using MuscleCuties.App.Pages.Auth;
 using MuscleCuties.App.Pages.Cycle;
 using MuscleCuties.App.Pages.Dashboard;
@@ -173,10 +172,8 @@ public static class MauiProgram
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICycleRepository, CycleRepository>();
         services.AddScoped<INutritionRepository, NutritionRepository>();
-        services.AddScoped<ISymptomRepository, SymptomRepository>();
         services.AddScoped<IWorkoutRepository, WorkoutRepository>();
         services.AddScoped<IQuizRepository, QuizRepository>();
-        services.AddScoped<IFoodSyncRepository, FoodSyncRepository>();
     }
 
     private static void RegisterDomainServices(IServiceCollection services)
@@ -205,14 +202,12 @@ public static class MauiProgram
 
     private static void RegisterWorkoutPlanningServices(IServiceCollection services)
     {
-        services.AddScoped<IWorkoutPlanningConfigRepository, WorkoutPlanningConfigRepository>();
         services.AddSingleton(WorkoutPlanningConfig.CreateDefault());
 
         services.AddSingleton<IReadinessEngine, ReadinessEngine>();
         services.AddSingleton<IGatingEngine, GatingEngine>();
 
         services.AddScoped<IReadinessRepository, ReadinessRepository>();
-        services.AddScoped<IWorkoutInjuryRepository, WorkoutInjuryRepository>();
         services.AddScoped<IHealthReadinessBridge, HealthReadinessBridge>();
         services.AddScoped<IDailyCheckInNotificationService, DailyCheckInNotificationService>();
 
@@ -334,11 +329,6 @@ public static class MauiProgram
             sp.GetRequiredService<IFeedbackEmailService>(),
             () => NavigateToAsync("//ProfilePage")));
 
-        services.AddTransient<InjuryLogViewModel>(sp => new InjuryLogViewModel(
-            sp.GetRequiredService<IAuthService>(),
-            sp.GetRequiredService<IWorkoutInjuryRepository>(),
-            () => NavigateToAsync("..")));
-
         services.AddSingleton<IAppPreloadService, AppPreloadService>();
     }
 
@@ -348,14 +338,14 @@ public static class MauiProgram
         services.AddTransient<AppStartupPage>();
         services.AddTransient<RegisterPage>();
         services.AddTransient<QuizPage>();
-        services.AddTransient(sp => PageLoadExtensions.CreateWithTiming<ProfileSetupPage, ProfileSetupViewModel>(sp, vm => new ProfileSetupPage(vm)));
-        services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<DashboardPage, DashboardViewModel>(sp, vm => new DashboardPage(vm)));
+        services.AddTransient(sp => new ProfileSetupPage(sp.GetRequiredService<ProfileSetupViewModel>()));
+        services.AddSingleton(sp => new DashboardPage(sp.GetRequiredService<DashboardViewModel>()));
         services.AddTransient<DailyCheckInPage>();
-        services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<CyclePage, CycleViewModel>(sp, vm => new CyclePage(vm)));
+        services.AddSingleton(sp => new CyclePage(sp.GetRequiredService<CycleViewModel>()));
         services.AddTransient<CyclePhaseDetailPage>();
-        services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<NutritionPage, NutritionViewModel>(sp, vm => new NutritionPage(vm)));
-        services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<WorkoutPage, WorkoutViewModel>(sp, vm => new WorkoutPage(vm)));
-        services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<ProfilePage, ProfileViewModel>(sp, vm => new ProfilePage(vm)));
+        services.AddSingleton(sp => new NutritionPage(sp.GetRequiredService<NutritionViewModel>()));
+        services.AddSingleton(sp => new WorkoutPage(sp.GetRequiredService<WorkoutViewModel>()));
+        services.AddSingleton(sp => new ProfilePage(sp.GetRequiredService<ProfileViewModel>()));
         services.AddTransient<ProfilePersonalInfoPage>();
         services.AddTransient<ProfileNutritionSettingsPage>();
         services.AddTransient<ProfileWorkoutPreferencesPage>();
@@ -363,7 +353,6 @@ public static class MauiProgram
         services.AddTransient<ProfileUnitsDisplayPage>();
         services.AddTransient<ProfileFeedbackPage>();
         services.AddTransient<ProfilePrivacyPage>();
-        services.AddTransient<InjuryLogPage>();
 
         services.AddSingleton<AppShell>();
     }
