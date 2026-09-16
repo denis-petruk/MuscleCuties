@@ -66,8 +66,7 @@
 
                     <Button
                         Text="Log a meal"
-                        Command="{Binding ToggleAddFoodPanelCommand}"
-                        IsVisible="{Binding IsAddFoodPanelVisible, Converter={StaticResource InvertedBoolConverter}}"
+                        Command="{Binding OpenAddFoodPanelCommand}"
                         MinimumHeightRequest="52"
                         FontAttributes="Bold"
                         Margin="0,4" />
@@ -96,11 +95,6 @@
                                 VerticalOptions="Center" />
                         </HorizontalStackLayout>
                     </Border>
-                    <toolkit:LazyView
-                        x:Name="MealEditor"
-                        x:TypeArguments="nutritionControls:AddMealPanel"
-                        IsVisible="{Binding IsAddFoodPanelVisible}" />
-
                     <sharedControls:IconSectionHeader
                         Text="Meals"
                         IconGlyph="BowlChopsticks24"
@@ -240,6 +234,10 @@
             </CollectionView.Footer>
         </CollectionView>
 
+        <toolkit:LazyView
+            x:Name="MealEditor"
+            x:TypeArguments="nutritionControls:AddMealPanel"
+            InputTransparent="{Binding IsAddFoodPanelVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView
             x:Name="FoodSearch"
             x:TypeArguments="nutritionControls:FoodSearchModal"

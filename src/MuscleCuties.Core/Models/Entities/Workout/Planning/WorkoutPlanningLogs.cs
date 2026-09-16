@@ -18,15 +18,3 @@ public class DailyReadinessLog
     public string Phase { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
-
-public class WorkoutInjuryLog
-{
-    public int Id { get; set; }
-    public int UserId { get; set; }
-    public string Site { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public DateOnly Since { get; set; }
-    public int Pain { get; set; }
-    public DateOnly Date { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-}

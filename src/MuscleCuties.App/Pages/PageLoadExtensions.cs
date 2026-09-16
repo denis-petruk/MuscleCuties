@@ -7,60 +7,30 @@ namespace MuscleCuties.App.Pages;
 
 internal static class PageLoadExtensions
 {
-    private const double InteractionBudgetMilliseconds = 100;
     private static readonly ConditionalWeakTable<Page, FirstLayoutTracker> FirstLayoutTrackers = new();
-
-    public static TPage CreateWithTiming<TPage, TViewModel>(IServiceProvider services, Func<TViewModel, TPage> create)
-        where TPage : Page
-        where TViewModel : class
-    {
-        var started = Stopwatch.GetTimestamp();
-        var viewModel = services.GetRequiredService<TViewModel>();
-        WriteTiming(typeof(TPage).Name, "ViewModel DI", Stopwatch.GetElapsedTime(started).TotalMilliseconds);
-        return create(viewModel);
-    }
-
-    public static void InitializeWithTiming(this Page page, Action initialize)
-    {
-        var stopwatch = Stopwatch.StartNew();
-        initialize();
-        WriteTiming(page.GetType().Name, "XAML initialization", stopwatch.Elapsed.TotalMilliseconds);
-    }
-
-    public static void BindWithTiming(this Page page, object viewModel, long constructorStarted)
-    {
-        var started = Stopwatch.GetTimestamp();
-        page.BindingContext = viewModel;
-        WriteTiming(page.GetType().Name, "binding attachment", Stopwatch.GetElapsedTime(started).TotalMilliseconds);
-        WriteTiming(page.GetType().Name, "constructor", Stopwatch.GetElapsedTime(constructorStarted).TotalMilliseconds);
-    }
 
     public static async ValueTask LoadIfNeededAsync(this LazyView view, bool requested)
     {
         if (!requested || view.HasLazyViewLoaded)
             return;
 
-        var started = Stopwatch.GetTimestamp();
         await view.LoadViewAsync();
-        WriteTiming(
-            view.Content.GetType().Name,
-            "deferred view initialization",
-            Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        Trace.WriteLine($"[LazyView] {view.Content.GetType().Name} initialized.");
     }
 
     public static void BeginPageLoad(this Page page, Func<Task> loadAsync)
     {
         var pageName = page.GetType().Name;
-        _ = GetFirstLayoutTask(page, pageName);
-        Trace.WriteLine($"[Performance][{pageName}] Page entered; data load started independently of view inflation.");
-        _ = RunSafelyAsync(page, pageName, "data load", loadAsync);
+        _ = GetFirstLayoutTask(page);
+        Trace.WriteLine($"[PageLoad][{pageName}] Data load started.");
+        _ = RunSafelyAsync(page, pageName, loadAsync);
     }
 
     public static void BeginDeferredLoad(this Page page, Func<Task> loadAsync)
     {
         var pageName = page.GetType().Name;
-        var firstLayout = GetFirstLayoutTask(page, pageName);
-        Trace.WriteLine($"[Performance][{pageName}] Deferred view load is waiting for first layout.");
+        var firstLayout = GetFirstLayoutTask(page);
+        Trace.WriteLine($"[PageLoad][{pageName}] Deferred load queued.");
         _ = RunDeferredLoadSafelyAsync(page, pageName, firstLayout, loadAsync);
     }
 
@@ -71,44 +41,33 @@ internal static class PageLoadExtensions
         Func<Task> loadAsync)
     {
         await firstLayout.ConfigureAwait(false);
-        await MainThread.InvokeOnMainThreadAsync(
-            () => RunSafelyAsync(page, pageName, "deferred view load", loadAsync));
+        await MainThread.InvokeOnMainThreadAsync(() => RunSafelyAsync(page, pageName, loadAsync));
     }
 
-    private static async Task RunSafelyAsync(
-        Page page,
-        string pageName,
-        string operation,
-        Func<Task> loadAsync)
+    private static async Task RunSafelyAsync(Page page, string pageName, Func<Task> loadAsync)
     {
-        var stopwatch = Stopwatch.StartNew();
-        Trace.WriteLine(
-            $"[Performance][{pageName}] {operation} started; size={page.Width:0}x{page.Height:0}.");
-
         if (page.BindingContext is IPageLoadAware loadAware)
             loadAware.IsLoadError = false;
 
         try
         {
             await loadAsync();
-            WriteTiming(pageName, operation, stopwatch.Elapsed.TotalMilliseconds);
-            Trace.WriteLine($"[Performance][{pageName}] {operation} finished at size={page.Width:0}x{page.Height:0}.");
+            Trace.WriteLine($"[PageLoad][{pageName}] Load completed.");
         }
         catch (Exception exception)
         {
-            Trace.WriteLine(
-                $"[Performance][{pageName}] {operation} failed after {stopwatch.ElapsedMilliseconds} ms: {exception}");
+            Trace.WriteLine($"[PageLoad][{pageName}] Load failed: {exception}");
 
             if (page.BindingContext is IPageLoadAware aware)
                 aware.IsLoadError = true;
         }
     }
 
-    private static Task GetFirstLayoutTask(Page page, string pageName)
+    private static Task GetFirstLayoutTask(Page page)
     {
         if (page.Width > 0 && page.Height > 0)
         {
-            Trace.WriteLine($"[Performance][{pageName}] Page was already arranged at {page.Width:0}x{page.Height:0}.");
+            Trace.WriteLine($"[PageLoad][{page.GetType().Name}] Already arranged.");
             return Task.CompletedTask;
         }
 
@@ -117,7 +76,6 @@ internal static class PageLoadExtensions
             return tracker.Completion.Task;
 
         tracker.IsSubscribed = true;
-        tracker.Started = Stopwatch.GetTimestamp();
         page.SizeChanged += OnFirstLayout;
         CompleteIfArranged();
         return tracker.Completion.Task;
@@ -133,23 +91,9 @@ internal static class PageLoadExtensions
                 return;
 
             page.SizeChanged -= OnFirstLayout;
-            WriteTiming(
-                pageName,
-                "first layout after page entry",
-                Stopwatch.GetElapsedTime(tracker.Started).TotalMilliseconds);
-            Trace.WriteLine($"[Performance][{pageName}] First layout size={page.Width:0}x{page.Height:0}.");
+            Trace.WriteLine($"[PageLoad][{page.GetType().Name}] First layout completed.");
             tracker.Completion.TrySetResult(true);
         }
-    }
-
-    private static void WriteTiming(string component, string operation, double elapsedMilliseconds)
-    {
-        var budgetState = elapsedMilliseconds <= InteractionBudgetMilliseconds
-            ? "within budget"
-            : $"over {InteractionBudgetMilliseconds:0} ms budget";
-
-        Trace.WriteLine(
-            $"[Performance][{component}] {operation} completed in {elapsedMilliseconds:F1} ms ({budgetState}).");
     }
 
     private sealed class FirstLayoutTracker
@@ -158,6 +102,5 @@ internal static class PageLoadExtensions
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public bool IsSubscribed { get; set; }
-        public long Started { get; set; }
     }
 }

@@ -41,14 +41,13 @@ public class NutritionService : INutritionService
     public async Task<NutritionPlan> GetDailyPlanAsync(
         int userId,
         CyclePhase phase,
-        DateTime date,
-        BreakfastPreference breakfastPreference = BreakfastPreference.Savoury)
+        DateTime date)
     {
         var profile = await _userRepository.GetProfileAsync(userId);
         if (profile is null)
-            return _nutritionPlanner.CreateFallbackPlan(phase, breakfastPreference);
+            return _nutritionPlanner.CreateFallbackPlan(phase);
 
-        var plan = _nutritionPlanner.CreateDailyPlan(profile, phase, date, breakfastPreference);
+        var plan = _nutritionPlanner.CreateDailyPlan(profile, phase, date);
         return await ApplyHealthEnergyAdjustmentAsync(userId, profile, phase, date, plan);
     }
 
@@ -157,7 +156,6 @@ public class NutritionService : INutritionService
     public async Task<IReadOnlyList<SuggestedMeal>> GetSuggestedMealsAsync(
         int userId,
         MealType mealType,
-        BreakfastPreference breakfastPreference,
         CyclePhase phase,
         DateTime date,
         IReadOnlySet<string>? excludeConceptNames = null)
@@ -167,7 +165,7 @@ public class NutritionService : INutritionService
 
         var consumed = await GetConsumedTotalsAsync(userId, date);
         return await _suggestedMealService.SuggestAsync(
-            userId, mealType, breakfastPreference, phase, date, consumed.Calories, excludeConceptNames);
+            userId, mealType, phase, date, consumed.Calories, excludeConceptNames);
     }
 
     public async Task LogMealAsync(
@@ -237,7 +235,7 @@ public class NutritionService : INutritionService
             Protein = macros.Protein,
             Carbs = macros.Carbs,
             Fats = macros.Fats,
-            Meals = BuildMealTargets(calories, macros.Protein, macros.Carbs, macros.Fats, plan.BreakfastPreference)
+            Meals = BuildMealTargets(calories, macros.Protein, macros.Carbs, macros.Fats)
         };
     }
 
@@ -269,14 +267,11 @@ public class NutritionService : INutritionService
         float calories,
         float protein,
         float carbs,
-        float fats,
-        BreakfastPreference breakfastPreference = BreakfastPreference.Savoury)
+        float fats)
     {
-        var (breakfastShare, lunchShare, dinnerShare) = breakfastPreference switch
-        {
-            BreakfastPreference.Sweet => (0.20f, 0.32f, 0.28f),
-            _ => (0.25f, 0.35f, 0.27f)
-        };
+        const float breakfastShare = 0.25f;
+        const float lunchShare = 0.35f;
+        const float dinnerShare = 0.27f;
         var snackShare = 1f - breakfastShare - lunchShare - dinnerShare;
 
         return
@@ -371,7 +366,7 @@ public class NutritionService : INutritionService
             MealType = mealType,
             CreatedAt = DateTime.UtcNow,
             Entries = ingredients
-                .Select(ingredient => new LoggedMealEntry
+                .Select(ingredient => new LoggedMealIngredient
                 {
                     FoodItemId = ingredient.FoodItemId,
                     Grams = ingredient.Grams
