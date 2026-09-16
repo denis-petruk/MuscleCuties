@@ -177,7 +177,6 @@ public partial class NutritionViewModel
             SuggestionTargetText = $"{SuggestionMealType} · {GetMealTypeCaloriesText(SuggestionMealType)}";
 
             var mealType = SuggestionMealType;
-            var breakfastPreference = BreakfastPreference;
             var phase = CurrentPhase;
             var date = DateTime.Today;
             var exclude = excludeConceptNames;
@@ -185,7 +184,7 @@ public partial class NutritionViewModel
             {
                 var userId = await authService.GetCurrentUserIdAsync();
                 var meals = await nutritionService.GetSuggestedMealsAsync(
-                    userId, mealType, breakfastPreference, phase, date, exclude);
+                    userId, mealType, phase, date, exclude);
                 var items = meals.Select(MealSuggestionItem.FromSuggestedMeal).ToList();
                 AssignDistinctSuggestionIcons(items);
                 return items;
@@ -259,6 +258,8 @@ public partial class NutritionViewModel
 
         SelectedMealType = SuggestionMealType;
         SelectedMealTime = DateTime.Now.TimeOfDay;
+        IsAddMealTypePickerVisible = false;
+        IsAddMealFoodBuilderVisible = true;
         IsAddFoodPanelVisible = true;
         IsFoodFinderExpanded = false;
         SelectedFoodResult = null;
@@ -285,9 +286,9 @@ public partial class NutritionViewModel
 
     private string GetMealTypeCaloriesText(MealType mealType)
     {
-        var breakfastShare = IsSweetBreakfast ? 0.20f : 0.25f;
-        var lunchShare = IsSweetBreakfast ? 0.32f : 0.35f;
-        var dinnerShare = IsSweetBreakfast ? 0.28f : 0.27f;
+        const float breakfastShare = 0.25f;
+        const float lunchShare = 0.35f;
+        const float dinnerShare = 0.27f;
         var snackShare = 1f - breakfastShare - lunchShare - dinnerShare;
 
         var share = mealType switch

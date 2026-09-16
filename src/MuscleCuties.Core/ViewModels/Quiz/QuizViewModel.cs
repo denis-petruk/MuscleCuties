@@ -15,6 +15,11 @@ namespace MuscleCuties.Core.ViewModels.Quiz;
 
 public partial class QuizViewModel : ObservableObject
 {
+    private const string LoadingState = "Loading";
+    private const string ReadyState = "Ready";
+    private const string EmptyState = "Empty";
+    private const string FailedState = "Failed";
+
     private readonly IAuthService _authService;
     private readonly Func<Task> _navigateToDashboardAsync;
     private readonly IAppPreloadService _preloadService;
@@ -47,7 +52,7 @@ public partial class QuizViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsLoadingVisible))]
     [NotifyPropertyChangedFor(nameof(QuestionsStateTitle))]
     [NotifyPropertyChangedFor(nameof(QuestionsStateMessage))]
-    private QuizLoadState _loadState = QuizLoadState.Loading;
+    private string _loadState = LoadingState;
 
     [ObservableProperty] private List<QuizQuestion> _questions = new();
 
@@ -89,13 +94,13 @@ public partial class QuizViewModel : ObservableObject
             .ToList();
 
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
-    public bool CanRetryQuestionsLoad => LoadState is QuizLoadState.Empty or QuizLoadState.Failed;
-    public bool HasLoadedQuestions => LoadState is QuizLoadState.Ready or QuizLoadState.Empty;
-    public bool HasNoQuestions => LoadState is QuizLoadState.Empty;
-    public bool HasQuestion => LoadState is QuizLoadState.Ready && CurrentQuestion is not null;
-    public bool IsEmptyStateVisible => LoadState is QuizLoadState.Empty or QuizLoadState.Failed;
-    public bool IsLayoutVisible => LoadState is QuizLoadState.Ready;
-    public bool IsLoading => LoadState is QuizLoadState.Loading;
+    public bool CanRetryQuestionsLoad => LoadState is EmptyState or FailedState;
+    public bool HasLoadedQuestions => LoadState is ReadyState or EmptyState;
+    public bool HasNoQuestions => LoadState is EmptyState;
+    public bool HasQuestion => LoadState is ReadyState && CurrentQuestion is not null;
+    public bool IsEmptyStateVisible => LoadState is EmptyState or FailedState;
+    public bool IsLayoutVisible => LoadState is ReadyState;
+    public bool IsLoading => LoadState is LoadingState;
     public bool IsLoadingVisible => IsLoading;
     public bool IsCurrentQuestionMultiAnswer => CurrentQuestion?.QuestionType is QuizQuestionType.DietaryPreference;
     public bool IsCurrentQuestionPhasePair => IsPainQuestion(CurrentQuestion?.QuestionType);
@@ -244,7 +249,7 @@ public partial class QuizViewModel : ObservableObject
     {
         IsBusy = true;
         ErrorMessage = string.Empty;
-        LoadState = QuizLoadState.Loading;
+        LoadState = LoadingState;
     }
 
     private void ApplyQuestions(IEnumerable<QuizQuestion> loadedQuestions)
@@ -263,12 +268,12 @@ public partial class QuizViewModel : ObservableObject
         }
 
         MoveToQuestion(0);
-        LoadState = QuizLoadState.Ready;
+        LoadState = ReadyState;
     }
 
     private void ShowEmptyState(bool noQuestions)
     {
-        LoadState = noQuestions ? QuizLoadState.Empty : QuizLoadState.Failed;
+        LoadState = noQuestions ? EmptyState : FailedState;
         NotifyComputedProperties();
     }
 
@@ -484,7 +489,6 @@ public partial class QuizViewModel : ObservableObject
 
     private async Task SaveAnswersAsync()
     {
-        var totalStopwatch = Stopwatch.StartNew();
         IsBusy = true;
         ErrorMessage = string.Empty;
 
@@ -501,29 +505,19 @@ public partial class QuizViewModel : ObservableObject
                 })
                 .ToList();
 
-            var stageStopwatch = Stopwatch.StartNew();
             await DataLoadScheduler.RunAsync(() => _quizService.SaveAnswersAsync(userId, responses));
-            Trace.WriteLine(
-                $"[Performance][Quiz] Answers and profile saved in {stageStopwatch.ElapsedMilliseconds} ms.");
 
             _preloadService.InvalidateAll();
-            stageStopwatch.Restart();
             await _preloadService.PreloadDashboardAsync();
-            Trace.WriteLine(
-                $"[Performance][Quiz] Dashboard data prepared in {stageStopwatch.ElapsedMilliseconds} ms.");
 
-            stageStopwatch.Restart();
             await _navigateToDashboardAsync();
             _ = _preloadService.PreloadRemainingAsync();
-            Trace.WriteLine(
-                $"[Performance][Quiz] Dashboard navigation completed in {stageStopwatch.ElapsedMilliseconds} ms; " +
-                $"total sync={totalStopwatch.ElapsedMilliseconds} ms.");
         }
         catch (Exception ex)
         {
             IsPreparingDashboard = false;
             ErrorMessage = "We could not save your answers. Please try again.";
-            Trace.WriteLine($"[ERROR][Quiz] SaveAnswersAsync failed: {ex}");
+            Trace.WriteLine($"[Quiz] SaveAnswersAsync failed: {ex}");
         }
         finally
         {

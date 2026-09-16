@@ -15,6 +15,21 @@ namespace MuscleCuties.Core.ViewModels.Nutrition;
 
 public partial class NutritionViewModel
 {
+    private void SelectAddMealType(MealType mealType)
+    {
+        SelectedMealType = mealType;
+        IsAddMealTypePickerVisible = false;
+        IsAddMealFoodBuilderVisible = true;
+        IsFoodFinderExpanded = true;
+        AddFoodMessage = string.Empty;
+    }
+
+    private void ChangeAddMealType()
+    {
+        IsAddMealFoodBuilderVisible = false;
+        IsAddMealTypePickerVisible = true;
+    }
+
     private void AddSelectedFoodAsIngredient()
     {
         if (SelectedFoodResult is null)
@@ -63,6 +78,10 @@ public partial class NutritionViewModel
             IsFoodFinderExpanded = false;
     }
 
+    private List<MealIngredientInput>? _pendingIngredients;
+    private DateTime _pendingLoggedAt;
+    private LoggedMeal? _pendingMergeMeal;
+
     private async Task LogMealAsync()
     {
         if (MealIngredients.Count == 0)
@@ -87,38 +106,31 @@ public partial class NutritionViewModel
             if (IsEditingMeal)
             {
                 await nutritionService.UpdateMealAsync(
-                    userId,
-                    _editingMealId,
-                    ingredients,
-                    SelectedMealType,
-                    loggedAt);
+                    userId, _editingMealId, ingredients, SelectedMealType, loggedAt);
                 AddFoodMessage = $"{SelectedMealType} updated at {loggedAt:h:mm tt}.";
+                await CompleteMealLogAsync();
+                return;
             }
-            else
+
+            var todayMeals = await nutritionService.GetLoggedMealsByDateAsync(userId, DateTime.Today);
+            var recentMeal = todayMeals.FirstOrDefault(m =>
+                m.MealType == SelectedMealType &&
+                Math.Abs((m.LoggedAt - loggedAt).TotalMinutes) <= 60);
+
+            if (recentMeal is not null)
             {
-                await nutritionService.LogMealAsync(
-                    userId,
-                    ingredients,
-                    SelectedMealType,
-                    loggedAt);
-                AddFoodMessage = $"{SelectedMealType} logged at {loggedAt:h:mm tt}.";
+                _pendingIngredients = ingredients;
+                _pendingLoggedAt = loggedAt;
+                _pendingMergeMeal = recentMeal;
+                MergeConfirmationText = $"You already logged {SelectedMealType} at {recentMeal.LoggedAt:h:mm tt}.";
+                MergeButtonText = $"Add to {recentMeal.LoggedAt:h:mm tt} {SelectedMealType}";
+                IsMergeConfirmationVisible = true;
+                return;
             }
 
-            TriggerCelebration();
-            IsAddFoodPanelVisible = false;
-            IsCustomFoodPanelVisible = false;
-            SelectedFoodResult = null;
-            IsFoodFinderExpanded = false;
-            SearchQuery = string.Empty;
-            FoodSearchResults = [];
-            ResetFoodSearchPaging();
-            FoodGrams = string.Empty;
-            MealIngredients.Clear();
-            IsEditingMeal = false;
-            _editingMealId = 0;
-
-            _loadGate.MarkStale();
-            await _loadGate.RunAsync(LoadDataCoreAsync, true);
+            await nutritionService.LogMealAsync(userId, ingredients, SelectedMealType, loggedAt);
+            AddFoodMessage = $"{SelectedMealType} logged at {loggedAt:h:mm tt}.";
+            await CompleteMealLogAsync();
         }
         catch (InvalidOperationException ex)
         {
@@ -136,6 +148,101 @@ public partial class NutritionViewModel
         {
             IsBusy = false;
         }
+    }
+
+    private async Task ConfirmMergeMealAsync()
+    {
+        if (_pendingIngredients is null || _pendingMergeMeal is null)
+            return;
+
+        IsBusy = true;
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
+            var userId = await authService.GetCurrentUserIdAsync();
+
+            var merged = _pendingMergeMeal.Entries
+                .Select(e => new MealIngredientInput(e.FoodItemId, e.Grams))
+                .Concat(_pendingIngredients)
+                .ToList();
+
+            await nutritionService.UpdateMealAsync(
+                userId, _pendingMergeMeal.Id, merged, SelectedMealType, _pendingMergeMeal.LoggedAt);
+
+            AddFoodMessage = $"Added to {SelectedMealType} at {_pendingMergeMeal.LoggedAt:h:mm tt}.";
+            ResetMergeState();
+            await CompleteMealLogAsync();
+        }
+        catch
+        {
+            AddFoodMessage = "Could not merge meals. Please try again.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task ConfirmNewMealAsync()
+    {
+        if (_pendingIngredients is null)
+            return;
+
+        IsBusy = true;
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
+            var userId = await authService.GetCurrentUserIdAsync();
+
+            await nutritionService.LogMealAsync(
+                userId, _pendingIngredients, SelectedMealType, _pendingLoggedAt);
+
+            AddFoodMessage = $"{SelectedMealType} logged at {_pendingLoggedAt:h:mm tt}.";
+            ResetMergeState();
+            await CompleteMealLogAsync();
+        }
+        catch
+        {
+            AddFoodMessage = "Could not log meal. Please try again.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task CompleteMealLogAsync()
+    {
+        TriggerCelebration();
+        IsAddFoodPanelVisible = false;
+        IsAddMealTypePickerVisible = false;
+        IsAddMealFoodBuilderVisible = false;
+        IsCustomFoodPanelVisible = false;
+        IsMergeConfirmationVisible = false;
+        SelectedFoodResult = null;
+        IsFoodFinderExpanded = false;
+        SearchQuery = string.Empty;
+        FoodSearchResults = [];
+        ResetFoodSearchPaging();
+        FoodGrams = string.Empty;
+        MealIngredients.Clear();
+        IsEditingMeal = false;
+        _editingMealId = 0;
+
+        _loadGate.MarkStale();
+        await _loadGate.RunAsync(LoadDataCoreAsync, true);
+    }
+
+    private void ResetMergeState()
+    {
+        _pendingIngredients = null;
+        _pendingLoggedAt = default;
+        _pendingMergeMeal = null;
+        IsMergeConfirmationVisible = false;
     }
 
     private async Task EditMealAsync(MealItem? meal)
@@ -167,33 +274,6 @@ public partial class NutritionViewModel
         }
     }
 
-    private async Task SetBreakfastPreferenceAsync(string? preference)
-    {
-        if (string.IsNullOrWhiteSpace(preference))
-            return;
-
-        BreakfastPreference = Enum.TryParse<BreakfastPreference>(preference, true, out var parsed)
-            ? parsed
-            : BreakfastPreference.Savoury;
-
-        OnPropertyChanged(nameof(IsSavouryBreakfast));
-        OnPropertyChanged(nameof(IsSweetBreakfast));
-
-        using var scope = _scopeFactory.CreateScope();
-        var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-        var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
-
-        var userId = await authService.GetCurrentUserIdAsync();
-        var plan = await nutritionService.GetDailyPlanAsync(userId, CurrentPhase, DateTime.Today, BreakfastPreference);
-        TargetCalories = plan.Calories;
-        TargetProtein = plan.Protein;
-        TargetCarbs = plan.Carbs;
-        TargetFats = plan.Fats;
-        NotifyDisplayProperties();
-        NotifyMealTargetProperties();
-
-    }
-
     private void NotifyMealTargetProperties()
     {
         OnPropertyChanged(nameof(BreakfastTargetText));
@@ -212,6 +292,8 @@ public partial class NutritionViewModel
         IsEditingMeal = true;
         SelectedMealType = meal.MealType;
         SelectedMealTime = meal.LoggedAt.TimeOfDay;
+        IsAddMealTypePickerVisible = false;
+        IsAddMealFoodBuilderVisible = true;
         IsAddFoodPanelVisible = true;
         IsFoodFinderExpanded = false;
         SelectedFoodResult = null;
@@ -226,6 +308,8 @@ public partial class NutritionViewModel
     {
         _editingMealId = 0;
         IsEditingMeal = false;
+        IsAddMealTypePickerVisible = false;
+        IsAddMealFoodBuilderVisible = false;
         SelectedFoodResult = null;
         SearchQuery = string.Empty;
         ServingOptions = [];
@@ -366,7 +450,7 @@ public partial class NutritionViewModel
         };
     }
 
-    private static string BuildMealCardName(IReadOnlyList<LoggedMealEntry> entries)
+    private static string BuildMealCardName(IReadOnlyList<LoggedMealIngredient> entries)
     {
         var names = entries
             .Select(entry => ShortenIngredientName(entry.FoodItem!.Name))
@@ -392,10 +476,10 @@ public partial class NutritionViewModel
         return cleanName.Length <= 24 ? cleanName : $"{cleanName[..21]}...";
     }
 
-
     private void NotifyMealIngredientProperties()
     {
         OnPropertyChanged(nameof(HasMealIngredients));
+        OnPropertyChanged(nameof(ShowLogMealButton));
         NotifyFoodFinderProperties();
         OnPropertyChanged(nameof(MealIngredientsTotalText));
         OnPropertyChanged(nameof(LogMealButtonText));
