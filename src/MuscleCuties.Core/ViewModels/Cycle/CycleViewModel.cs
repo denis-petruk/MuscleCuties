@@ -7,6 +7,7 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.UI.Cycle;
 using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Repositories.Users;
+using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
@@ -20,6 +21,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
     private readonly ViewModelLoadGate _loadGate = new(ViewModelLoadGate.PageFreshnessWindow);
     private readonly Func<CyclePhase, Task> _openPhaseDetailsAsync;
     private readonly List<CyclePhaseLog> _phaseLogs = new();
+    private readonly Lazy<IAppPreloadService> _preloadService;
     private readonly IServiceScopeFactory _scopeFactory;
     [ObservableProperty] private ObservableCollection<CycleDayItem> _calendarDays = new();
     [ObservableProperty] private string _calendarEditHintText = string.Empty;
@@ -55,10 +57,12 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
 
     public CycleViewModel(
         IServiceScopeFactory scopeFactory,
+        Lazy<IAppPreloadService> preloadService,
         Func<CyclePhase, Task>? openPhaseDetailsAsync = null,
         Func<DateTime>? currentDateProvider = null)
     {
         _scopeFactory = scopeFactory;
+        _preloadService = preloadService;
         _openPhaseDetailsAsync = openPhaseDetailsAsync ?? (_ => Task.CompletedTask);
         _currentDateProvider = currentDateProvider ?? (() => DateTime.Today);
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
@@ -76,6 +80,18 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
     }
 
     public void Invalidate() => _loadGate.MarkStale();
+
+    private void RefreshPhaseDependentPages()
+    {
+        var preload = _preloadService.Value;
+        preload.InvalidateDashboard();
+        preload.InvalidateWorkout();
+        preload.InvalidateNutrition();
+        _ = Task.WhenAll(
+            preload.PreloadDashboardAsync(),
+            preload.PreloadWorkoutAsync(),
+            preload.PreloadNutritionAsync());
+    }
 
     public string PhaseLabel => CurrentPhase.ToString();
     public string CurrentMonthLabel => CurrentDate.ToString("MMMM yyyy");
@@ -197,6 +213,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
                 : CyclePhase.Menstrual;
             await cycleService.SetPhaseForDateAsync(userId, nextPhase, CurrentDate, "Manual phase advance");
             await RefreshCycleDataAsync();
+            RefreshPhaseDependentPages();
         }
         catch (CyclePhaseOrderException ex)
         {
@@ -335,6 +352,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
             await cycleService.SetPhaseForDateAsync(userId, phase, date, note);
             CloseDatePhaseModal();
             await RefreshCycleDataAsync();
+            RefreshPhaseDependentPages();
         }
         catch (CyclePhaseOrderException ex)
         {
@@ -698,6 +716,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
             await cycleService.SetPhaseForDateAsync(userId, suggestedPhase, CurrentDate, "Manual phase correction");
             CloseCycleWarningPopup();
             await RefreshCycleDataAsync();
+            RefreshPhaseDependentPages();
         }
         catch (CyclePhaseOrderException ex)
         {

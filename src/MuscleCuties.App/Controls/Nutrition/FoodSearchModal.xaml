@@ -19,7 +19,7 @@
         </Grid.GestureRecognizers>
         <Border
             Style="{StaticResource ModalSurface}"
-            MaximumHeightRequest="680">
+            VerticalOptions="Fill">
 
             <Grid RowDefinitions="Auto, Auto, *, Auto">
                 <Grid
