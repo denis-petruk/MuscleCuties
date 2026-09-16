@@ -22,6 +22,7 @@ public sealed class WorkoutPlanningConfig
             HighTier = 75,
             ModerateTier = 50
         },
+
         Gating = new GatingConfig
         {
             HiitMinSleep = 6.5,
