@@ -55,7 +55,6 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private ObservableCollection<DailyMicronutrientItem> _micronutrients = new();
     [ObservableProperty] private string _phaseFocusCopy = string.Empty;
     [ObservableProperty] private string _phaseFocusTitle = string.Empty;
-    [ObservableProperty] private BreakfastPreference _breakfastPreference = BreakfastPreference.Savoury;
     [ObservableProperty] private string _searchQuery = string.Empty;
     [ObservableProperty] private string _selectedBreakdownCaloriesText = "0 kcal";
     [ObservableProperty] private float _selectedBreakdownCarbsCalories;
@@ -97,7 +96,6 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         CollapseFoodFinderCommand = new RelayCommand(CollapseFoodFinder);
         RemoveIngredientCommand = new RelayCommand<MealIngredientItem>(RemoveIngredient);
         LogMealCommand = new AsyncRelayCommand(LogMealAsync, CanLogMeal);
-        SetBreakfastPreferenceCommand = new AsyncRelayCommand<string>(SetBreakfastPreferenceAsync);
         ToggleCustomFoodPanelCommand = new RelayCommand(ToggleCustomFoodPanel);
         CreateCustomFoodCommand = new AsyncRelayCommand(CreateCustomFoodAsync);
         OpenMicronutrientsModalCommand = new RelayCommand(OpenDailyBreakdown);
@@ -157,13 +155,10 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
 
     public bool IsFoodFinderCollapsed => !IsFoodFinderVisible;
     public bool IsSelectedFoodEditorVisible => SelectedFoodResult is not null;
-    public bool IsSavouryBreakfast => BreakfastPreference == BreakfastPreference.Savoury;
-    public bool IsSweetBreakfast => BreakfastPreference == BreakfastPreference.Sweet;
-
-    public string BreakfastTargetText => $"Breakfast ({(int)(TargetCalories * (IsSweetBreakfast ? 0.20f : 0.25f))} kcal)";
-    public string LunchTargetText => $"Lunch ({(int)(TargetCalories * (IsSweetBreakfast ? 0.32f : 0.35f))} kcal)";
-    public string DinnerTargetText => $"Dinner ({(int)(TargetCalories * (IsSweetBreakfast ? 0.28f : 0.27f))} kcal)";
-    public string SnackTargetText => $"Snack ({(int)(TargetCalories * (IsSweetBreakfast ? 0.20f : 0.13f))} kcal)";
+    public string BreakfastTargetText => $"Breakfast ({(int)(TargetCalories * 0.25f)} kcal)";
+    public string LunchTargetText => $"Lunch ({(int)(TargetCalories * 0.35f)} kcal)";
+    public string DinnerTargetText => $"Dinner ({(int)(TargetCalories * 0.27f)} kcal)";
+    public string SnackTargetText => $"Snack ({(int)(TargetCalories * 0.13f)} kcal)";
     public bool HasMeals => Meals.Count > 0;
     public bool HasNoMeals => Meals.Count == 0;
     public string AddMealPanelTitle => IsEditingMeal ? "Edit meal" : "Build meal";
@@ -247,7 +242,6 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public RelayCommand CollapseFoodFinderCommand { get; }
     public RelayCommand<MealIngredientItem> RemoveIngredientCommand { get; }
     public AsyncRelayCommand LogMealCommand { get; }
-    public AsyncRelayCommand<string> SetBreakfastPreferenceCommand { get; }
     public RelayCommand ToggleCustomFoodPanelCommand { get; }
     public AsyncRelayCommand CreateCustomFoodCommand { get; }
     public RelayCommand OpenMicronutrientsModalCommand { get; }
@@ -302,7 +296,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
 
             var plan = await RunScopedAsync(services =>
                 services.GetRequiredService<INutritionService>()
-                    .GetDailyPlanAsync(userId, phase, DateTime.Today, BreakfastPreference));
+                    .GetDailyPlanAsync(userId, phase, DateTime.Today));
             if (plan is not null)
             {
                 TargetCalories = plan.Calories;

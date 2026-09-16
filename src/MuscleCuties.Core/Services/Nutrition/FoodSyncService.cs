@@ -8,17 +8,13 @@ public partial class FoodSyncService : IFoodSyncService
     private const int DefaultSearchPageSize = 15;
     private static readonly TimeSpan InteractiveSearchTimeout = TimeSpan.FromSeconds(5);
     private readonly IFdcApiClient _fdcApiClient;
-    private readonly IFoodSyncRepository _foodSyncRepository;
-
     private readonly INutritionRepository _nutritionRepository;
 
     public FoodSyncService(
         INutritionRepository nutritionRepository,
-        IFoodSyncRepository foodSyncRepository,
         IFdcApiClient fdcApiClient)
     {
         _nutritionRepository = nutritionRepository;
-        _foodSyncRepository = foodSyncRepository;
         _fdcApiClient = fdcApiClient;
     }
 
@@ -36,8 +32,6 @@ public partial class FoodSyncService : IFoodSyncService
         if (string.IsNullOrWhiteSpace(query))
             return local;
 
-        var log = await StartLogAsync();
-        var errors = new List<string>();
         var remotePageItems = new List<FoodItem>();
 
         try
@@ -58,38 +52,34 @@ public partial class FoodSyncService : IFoodSyncService
                 }
                 catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
                 {
-                    errors.Add("FDC detail refresh timed out. Search-result nutrition was used instead.");
+                    fetchedDetails = [];
                 }
-                catch (HttpRequestException ex)
+                catch (HttpRequestException)
                 {
-                    errors.Add($"FDC detail refresh failed: {ex.Message}");
+                    fetchedDetails = [];
                 }
 
             var details = BuildDetailsFromSearchResults(
                 remoteResults,
                 fetchedDetails);
 
-            await UpsertFoodsAsync(details, log, errors);
+            await UpsertFoodsAsync(details);
 
             remotePageItems = await GetRemotePageItemsAsync(query, details.Select(d => d.FdcId));
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            await CompleteLogAsync(log, "Failed", errors, ex);
             throw;
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            await CompleteLogAsync(log, "Failed", errors, ex);
             return preparedLocal;
         }
-        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            await CompleteLogAsync(log, "Failed", errors, ex);
             return preparedLocal;
         }
 
-        await CompleteLogAsync(log, BuildStatus(log, errors), errors);
         if (remotePageItems.Count > 0)
             return remotePageItems;
 
@@ -111,28 +101,19 @@ public partial class FoodSyncService : IFoodSyncService
 
     public async Task<FoodItem?> FetchDetailAsync(int fdcId, CancellationToken cancellationToken = default)
     {
-        var log = await StartLogAsync();
-        var errors = new List<string>();
-
         try
         {
             var detail = await _fdcApiClient.GetFoodAsync(fdcId, cancellationToken);
             if (detail is null)
             {
-                log.ItemsFailed = 1;
-                errors.Add($"FDC food {fdcId} was not found.");
-                await CompleteLogAsync(log, "Failed", errors);
                 return null;
             }
 
             var item = await UpsertFoodAsync(detail);
-            log.ItemsUpserted = 1;
-            await CompleteLogAsync(log, "Success", errors);
             return item;
         }
         catch (Exception ex) when (ex is InvalidOperationException or HttpRequestException)
         {
-            await CompleteLogAsync(log, "Failed", errors, ex);
             throw;
         }
     }

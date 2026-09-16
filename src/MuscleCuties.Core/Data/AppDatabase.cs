@@ -24,18 +24,12 @@ public partial class AppDatabase : DbContext
 
     public DbSet<CycleLog> CycleLogs => Set<CycleLog>();
     public DbSet<CyclePhaseLog> CyclePhaseLogs => Set<CyclePhaseLog>();
-    public DbSet<SymptomLog> SymptomLogs => Set<SymptomLog>();
 
     public DbSet<FoodItem> FoodItems => Set<FoodItem>();
-    public DbSet<FoodItemVersion> FoodItemVersions => Set<FoodItemVersion>();
-    public DbSet<FoodSyncLog> FoodSyncLogs => Set<FoodSyncLog>();
-    public DbSet<MealTemplate> MealTemplates => Set<MealTemplate>();
-    public DbSet<MealTemplateEntry> MealTemplateEntries => Set<MealTemplateEntry>();
     public DbSet<LoggedMeal> LoggedMeals => Set<LoggedMeal>();
-    public DbSet<LoggedMealEntry> LoggedMealEntries => Set<LoggedMealEntry>();
+    public DbSet<LoggedMealIngredient> LoggedMealIngredients => Set<LoggedMealIngredient>();
 
     public DbSet<DailyReadinessLog> DailyReadinessLogs => Set<DailyReadinessLog>();
-    public DbSet<WorkoutInjuryLog> WorkoutInjuryLogs => Set<WorkoutInjuryLog>();
 
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<WorkoutPlan> WorkoutPlans => Set<WorkoutPlan>();
@@ -52,7 +46,6 @@ public partial class AppDatabase : DbContext
     public DbSet<SlotTemplate> SlotTemplates => Set<SlotTemplate>();
     public DbSet<WeekTemplate> WeekTemplates => Set<WeekTemplate>();
     public DbSet<VolumeBudgetRow> VolumeBudgetRows => Set<VolumeBudgetRow>();
-    public DbSet<WorkoutPlanningConfigEntry> WorkoutPlanningConfigEntries => Set<WorkoutPlanningConfigEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -90,7 +83,6 @@ public partial class AppDatabase : DbContext
             return;
 
         await SeedStarterFoodItemsAsync();
-        await SeedStarterMealTemplatesAsync();
         await SeedWorkoutPlanningDataAsync();
     }
 
@@ -170,15 +162,7 @@ public partial class AppDatabase : DbContext
                 Require(cycleLog.CycleLength >= 0, "Cycle length cannot be negative.");
                 break;
 
-            case SymptomLog symptomLog:
-                Require(symptomLog.Severity is >= 1 and <= 5, "Symptom severity must be between 1 and 5.");
-                break;
-
-            case MealTemplateEntry mealTemplateEntry:
-                Require(mealTemplateEntry.Grams > 0, "Meal template ingredient grams must be greater than zero.");
-                break;
-
-            case LoggedMealEntry loggedMealEntry:
+            case LoggedMealIngredient loggedMealEntry:
                 Require(loggedMealEntry.Grams > 0, "Logged meal ingredient grams must be greater than zero.");
                 break;
 
@@ -323,21 +307,6 @@ public partial class AppDatabase : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<SymptomLog>(entity =>
-        {
-            entity.HasIndex(s => new { s.UserId, s.Date });
-            entity.HasIndex(s => new { s.CycleLogId, s.Date });
-            entity.HasOne<User>()
-                .WithMany()
-                .HasForeignKey(s => s.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(s => s.CycleLog)
-                .WithMany(c => c.SymptomLogs)
-                .HasForeignKey(s => s.CycleLogId)
-                .OnDelete(DeleteBehavior.Cascade);
-            entity.Property(s => s.Notes).HasMaxLength(1000);
-        });
-
         modelBuilder.Entity<CyclePhaseLog>(entity =>
         {
             entity.HasIndex(l => new { l.UserId, l.LoggedAt });
@@ -375,49 +344,6 @@ public partial class AppDatabase : DbContext
             entity.Property(f => f.ServingOptionsJson).HasMaxLength(4000);
         });
 
-        modelBuilder.Entity<FoodItemVersion>(entity =>
-        {
-            entity.HasIndex(v => new { v.FoodItemId, v.VersionedAt });
-            entity.Property(v => v.NutrientJson).IsRequired();
-            entity.Property(v => v.ChangeSource).IsRequired().HasMaxLength(40);
-            entity.HasOne(v => v.FoodItem)
-                .WithMany(f => f.Versions)
-                .HasForeignKey(v => v.FoodItemId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<FoodSyncLog>(entity =>
-        {
-            entity.HasIndex(l => l.StartedAt);
-            entity.Property(l => l.Status).IsRequired().HasMaxLength(40);
-            entity.Property(l => l.ErrorDetails).HasMaxLength(4000);
-        });
-
-        modelBuilder.Entity<MealTemplate>(entity =>
-        {
-            entity.HasIndex(t => new { t.UserId, t.Name });
-            entity.Property(t => t.Name).IsRequired().HasMaxLength(160);
-            entity.Property(t => t.Description).HasMaxLength(1000);
-            entity.Property(t => t.DietaryTags).HasMaxLength(250);
-            entity.Property(t => t.PhaseTags).HasMaxLength(250);
-            entity.HasOne(t => t.User)
-                .WithMany()
-                .HasForeignKey(t => t.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<MealTemplateEntry>(entity =>
-        {
-            entity.HasOne(e => e.MealTemplate)
-                .WithMany(t => t.Entries)
-                .HasForeignKey(e => e.MealTemplateId)
-                .OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(e => e.FoodItem)
-                .WithMany()
-                .HasForeignKey(e => e.FoodItemId)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
         modelBuilder.Entity<LoggedMeal>(entity =>
         {
             entity.HasIndex(m => new { m.UserId, m.Date });
@@ -426,20 +352,17 @@ public partial class AppDatabase : DbContext
                 .WithMany()
                 .HasForeignKey(m => m.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(m => m.MealTemplate)
-                .WithMany()
-                .HasForeignKey(m => m.MealTemplateId)
-                .OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<LoggedMealEntry>(entity =>
+        modelBuilder.Entity<LoggedMealIngredient>(entity =>
         {
+            entity.ToTable("LoggedMealEntries");
             entity.HasOne(e => e.LoggedMeal)
                 .WithMany(m => m.Entries)
                 .HasForeignKey(e => e.LoggedMealId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.FoodItem)
-                .WithMany(f => f.LoggedMealEntries)
+                .WithMany(f => f.LoggedMealIngredients)
                 .HasForeignKey(e => e.FoodItemId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
@@ -536,13 +459,6 @@ public partial class AppDatabase : DbContext
             entity.Property(e => e.Phase).IsRequired().HasMaxLength(20);
         });
 
-        modelBuilder.Entity<WorkoutInjuryLog>(entity =>
-        {
-            entity.ToTable("EngineInjuryLogs");
-            entity.HasIndex(e => new { e.UserId, e.Date });
-            entity.Property(e => e.Site).IsRequired().HasMaxLength(40);
-            entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
-        });
     }
 
     private static void ConfigureWorkoutPlanningReferenceDomain(ModelBuilder modelBuilder)
@@ -569,10 +485,7 @@ public partial class AppDatabase : DbContext
             entity.ToTable("EngineExercises");
             entity.HasIndex(e => e.Name);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(120);
-            entity.Property(e => e.Pattern).HasConversion<int>();
             entity.Property(e => e.Required).HasConversion<int>();
-            entity.Property(e => e.Contraindications).HasConversion<int>();
-            entity.Property(e => e.PreferredFor).HasConversion<int>();
         });
 
         modelBuilder.Entity<ExerciseMuscleContribution>(entity =>
@@ -599,7 +512,6 @@ public partial class AppDatabase : DbContext
         {
             entity.HasIndex(e => new { e.ArchetypeId, e.Order }).IsUnique();
             entity.Property(e => e.Block).HasConversion<int>();
-            entity.Property(e => e.AllowedPatternsJson).IsRequired().HasMaxLength(500);
             entity.HasOne(e => e.Archetype)
                 .WithMany(a => a.SlotTemplates)
                 .HasForeignKey(e => e.ArchetypeId)
@@ -625,14 +537,6 @@ public partial class AppDatabase : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<WorkoutPlanningConfigEntry>(entity =>
-        {
-            entity.ToTable("EngineConfig");
-            entity.HasIndex(e => new { e.Section, e.Key }).IsUnique();
-            entity.Property(e => e.Section).IsRequired().HasMaxLength(30);
-            entity.Property(e => e.Key).IsRequired().HasMaxLength(60);
-            entity.Property(e => e.Value).IsRequired().HasMaxLength(500);
-        });
     }
 
 }

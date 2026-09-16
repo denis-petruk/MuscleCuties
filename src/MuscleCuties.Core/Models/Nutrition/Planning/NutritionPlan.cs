@@ -19,8 +19,7 @@ public sealed record NutritionPlan(
     string PhaseFocus,
     IReadOnlyCollection<string> Notes,
     ProfileNutritionGoals Goals,
-    IReadOnlyCollection<MealNutritionTarget> Meals,
-    BreakfastPreference BreakfastPreference = BreakfastPreference.Savoury);
+    IReadOnlyCollection<MealNutritionTarget> Meals);
 
 public sealed record MealNutritionTarget(
     MealType MealType,

@@ -96,12 +96,22 @@ public partial class NutritionViewModel
             }
             else
             {
-                await nutritionService.LogMealAsync(
-                    userId,
-                    ingredients,
-                    SelectedMealType,
-                    loggedAt);
-                AddFoodMessage = $"{SelectedMealType} logged at {loggedAt:h:mm tt}.";
+                var mergedInto = await TryMergeIntoRecentMealAsync(
+                    nutritionService, userId, ingredients, loggedAt);
+
+                if (mergedInto is not null)
+                {
+                    AddFoodMessage = $"Added to {SelectedMealType} at {mergedInto.Value:h:mm tt}.";
+                }
+                else
+                {
+                    await nutritionService.LogMealAsync(
+                        userId,
+                        ingredients,
+                        SelectedMealType,
+                        loggedAt);
+                    AddFoodMessage = $"{SelectedMealType} logged at {loggedAt:h:mm tt}.";
+                }
             }
 
             TriggerCelebration();
@@ -165,33 +175,6 @@ public partial class NutritionViewModel
         {
             IsBusy = false;
         }
-    }
-
-    private async Task SetBreakfastPreferenceAsync(string? preference)
-    {
-        if (string.IsNullOrWhiteSpace(preference))
-            return;
-
-        BreakfastPreference = Enum.TryParse<BreakfastPreference>(preference, true, out var parsed)
-            ? parsed
-            : BreakfastPreference.Savoury;
-
-        OnPropertyChanged(nameof(IsSavouryBreakfast));
-        OnPropertyChanged(nameof(IsSweetBreakfast));
-
-        using var scope = _scopeFactory.CreateScope();
-        var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-        var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
-
-        var userId = await authService.GetCurrentUserIdAsync();
-        var plan = await nutritionService.GetDailyPlanAsync(userId, CurrentPhase, DateTime.Today, BreakfastPreference);
-        TargetCalories = plan.Calories;
-        TargetProtein = plan.Protein;
-        TargetCarbs = plan.Carbs;
-        TargetFats = plan.Fats;
-        NotifyDisplayProperties();
-        NotifyMealTargetProperties();
-
     }
 
     private void NotifyMealTargetProperties()
@@ -366,7 +349,7 @@ public partial class NutritionViewModel
         };
     }
 
-    private static string BuildMealCardName(IReadOnlyList<LoggedMealEntry> entries)
+    private static string BuildMealCardName(IReadOnlyList<LoggedMealIngredient> entries)
     {
         var names = entries
             .Select(entry => ShortenIngredientName(entry.FoodItem!.Name))
@@ -392,6 +375,34 @@ public partial class NutritionViewModel
         return cleanName.Length <= 24 ? cleanName : $"{cleanName[..21]}...";
     }
 
+
+    private async Task<DateTime?> TryMergeIntoRecentMealAsync(
+        INutritionService nutritionService,
+        int userId,
+        IReadOnlyCollection<MealIngredientInput> newIngredients,
+        DateTime loggedAt)
+    {
+        if (SelectedMealType != MealType.Breakfast)
+            return null;
+
+        var todayMeals = await nutritionService.GetLoggedMealsByDateAsync(userId, DateTime.Today);
+        var recentBreakfast = todayMeals.FirstOrDefault(m =>
+            m.MealType == MealType.Breakfast &&
+            Math.Abs((m.LoggedAt - loggedAt).TotalMinutes) <= 60);
+
+        if (recentBreakfast is null)
+            return null;
+
+        var merged = recentBreakfast.Entries
+            .Select(e => new MealIngredientInput(e.FoodItemId, e.Grams))
+            .Concat(newIngredients)
+            .ToList();
+
+        await nutritionService.UpdateMealAsync(
+            userId, recentBreakfast.Id, merged, MealType.Breakfast, recentBreakfast.LoggedAt);
+
+        return recentBreakfast.LoggedAt;
+    }
 
     private void NotifyMealIngredientProperties()
     {
