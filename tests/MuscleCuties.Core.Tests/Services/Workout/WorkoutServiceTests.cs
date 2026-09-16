@@ -74,7 +74,6 @@ public class WorkoutServiceTests : IClassFixture<DatabaseFixture>
                 contributionLookup,
                 new VolumeBudgetResolver(_fixture.Db)),
             new ExercisePickerService(_fixture.Db, contributionLookup),
-            new WorkoutInjuryRepository(_fixture.Db),
             new ReadinessRepository(_fixture.Db),
             new ReadinessEngine(config),
             new GatingEngine(config));

@@ -86,12 +86,11 @@ public partial class AppDatabase
             {
                 Code = code,
                 Name = planningExercise.Name,
-                Description = BuildPlanningExerciseDescription(planningExercise.Pattern, primaryMuscle),
-                TechniqueNotes = BuildPlanningTechniqueNotes(planningExercise.Pattern),
+                Description = BuildPlanningExerciseDescription(primaryMuscle),
+                TechniqueNotes = "Use a controlled range, keep the target joint aligned, and stop if the movement causes sharp pain.",
                 PrimaryMuscle = primaryMuscle,
                 SecondaryMuscles = string.Join(',', secondaryMuscles),
-                JointAreas = BuildJointAreas(planningExercise.Contraindications),
-                IsInjuryFriendly = planningExercise.Contraindications == InjuryFlag.None
+                JointAreas = string.Empty
             });
             existingCodes.Add(code);
             existingNames.Add(NormalizeExerciseName(planningExercise.Name));
@@ -264,14 +263,8 @@ public partial class AppDatabase
             Description = description,
             PrimaryMuscle = primaryMuscle,
             SecondaryMuscles = secondaryMuscles,
-            JointAreas = jointAreas,
-            IsInjuryFriendly = !HasJointStress(jointAreas)
+            JointAreas = jointAreas
         };
-    }
-
-    private static bool HasJointStress(string jointAreas)
-    {
-        return !string.IsNullOrWhiteSpace(jointAreas);
     }
 
     private static string BuildUniqueExerciseCode(string name, ISet<string> usedCodes)
@@ -332,57 +325,8 @@ public partial class AppDatabase
         _ => MuscleGroup.Core
     };
 
-    private static string BuildPlanningExerciseDescription(MovementPattern pattern, MuscleGroup primaryMuscle)
-    {
-        return pattern switch
-        {
-            MovementPattern.HipThrust => "Hip extension focused on glute strength and control.",
-            MovementPattern.HipHinge => "A hip hinge that trains the posterior chain through a controlled range.",
-            MovementPattern.KneeFlexion => "Direct hamstring work through knee flexion.",
-            MovementPattern.SquatPattern => "A squat pattern for quads, glutes, and bracing strength.",
-            MovementPattern.Lunge => "Single-leg strength work for balance, quads, and glutes.",
-            MovementPattern.HipAbduction => "Hip abduction for lateral glute strength and pelvic control.",
-            MovementPattern.HipAdduction => "Adductor strength for hip stability and lower-body balance.",
-            MovementPattern.VerticalPull => "Vertical pulling for lats, upper back, and arm strength.",
-            MovementPattern.HorizontalPull => "Horizontal pulling for upper-back strength and shoulder control.",
-            MovementPattern.VerticalPush => "Overhead pressing for shoulder and triceps strength.",
-            MovementPattern.HorizontalPush => "Pressing work for chest, shoulders, and triceps.",
-            MovementPattern.LateralRaise => "Focused lateral shoulder work with low systemic fatigue.",
-            MovementPattern.RearDelt => "Rear-shoulder work for balanced pressing and pulling mechanics.",
-            MovementPattern.ElbowFlexion => "Direct biceps work through controlled elbow flexion.",
-            MovementPattern.ElbowExtension => "Direct triceps work through controlled elbow extension.",
-            MovementPattern.AntiExtension => "Core training that resists excessive lower-back extension.",
-            MovementPattern.AntiRotation => "Core training that resists trunk rotation.",
-            MovementPattern.AntiLateralFlexion => "Core training that resists side bending.",
-            MovementPattern.CalfRaise => "Calf strength through a full ankle range of motion.",
-            MovementPattern.Climbing => "Climbing practice for pulling strength, grip, and body tension.",
-            _ => $"Controlled {primaryMuscle.ToString().ToLowerInvariant()} training."
-        };
-    }
-
-    private static string BuildPlanningTechniqueNotes(MovementPattern pattern) => pattern switch
-    {
-        MovementPattern.HipThrust => "Keep the ribs stacked, drive through the feet, and finish with the glutes instead of the lower back.",
-        MovementPattern.HipHinge => "Push the hips back, keep the load close, and stop when the hamstrings limit the range.",
-        MovementPattern.SquatPattern => "Brace before descending, keep the whole foot planted, and let the knees track with the toes.",
-        MovementPattern.Lunge => "Use a stable stance, lower under control, and push through the working foot.",
-        MovementPattern.VerticalPull or MovementPattern.HorizontalPull => "Set the shoulder blades, pull with the elbows, and control the return.",
-        MovementPattern.VerticalPush or MovementPattern.HorizontalPush => "Keep the torso stable, use a controlled lowering phase, and avoid forcing painful range.",
-        MovementPattern.AntiExtension or MovementPattern.AntiRotation or MovementPattern.AntiLateralFlexion => "Brace while breathing normally and stop before the spine loses position.",
-        MovementPattern.Climbing => "Keep the hips close to the wall, use the feet deliberately, and avoid gripping harder than needed.",
-        _ => "Use a controlled range, keep the target joint aligned, and stop if the movement causes sharp pain."
-    };
-
-    private static string BuildJointAreas(InjuryFlag flags)
-    {
-        var areas = new List<string>();
-        if (flags.HasFlag(InjuryFlag.Knee)) areas.Add("Knee");
-        if (flags.HasFlag(InjuryFlag.Ankle) || flags.HasFlag(InjuryFlag.Metatarsal)) areas.Add("Ankle");
-        if (flags.HasFlag(InjuryFlag.Shoulder)) areas.Add("Shoulder");
-        if (flags.HasFlag(InjuryFlag.LowBack)) areas.Add("LowerBack");
-        if (flags.HasFlag(InjuryFlag.Wrist)) areas.Add("Wrist");
-        return string.Join(',', areas);
-    }
+    private static string BuildPlanningExerciseDescription(MuscleGroup primaryMuscle) =>
+        $"Controlled {primaryMuscle.ToString().ToLowerInvariant()} training.";
 
     private static string NormalizeExerciseName(string name)
     {

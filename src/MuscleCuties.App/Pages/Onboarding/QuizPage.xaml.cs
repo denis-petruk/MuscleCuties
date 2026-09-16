@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using MuscleCuties.Core.Models.UI.Quiz;
 using MuscleCuties.Core.ViewModels.Quiz;
 
@@ -10,10 +9,9 @@ public partial class QuizPage : ContentPage
 
     public QuizPage(QuizViewModel viewModel)
     {
-        var started = Stopwatch.GetTimestamp();
-        this.InitializeWithTiming(InitializeComponent);
+        InitializeComponent();
         _viewModel = viewModel;
-        this.BindWithTiming(viewModel, started);
+        BindingContext = viewModel;
     }
 
     protected override void OnNavigatedTo(NavigatedToEventArgs args)

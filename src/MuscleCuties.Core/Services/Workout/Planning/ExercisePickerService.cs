@@ -11,7 +11,6 @@ public interface IExercisePickerService
     Task<PrescribedSession> PickForSessionAsync(
         PlannedSession session,
         EquipmentSet available,
-        InjuryFlag activeInjuries,
         double setMultiplier,
         int rpeCap);
 }
@@ -32,30 +31,17 @@ public class ExercisePickerService : IExercisePickerService
     public async Task<PrescribedSession> PickForSessionAsync(
         PlannedSession session,
         EquipmentSet available,
-        InjuryFlag activeInjuries,
         double setMultiplier,
         int rpeCap)
     {
-        var allPatterns = session.Slots
-            .SelectMany(s => s.AllowedPatterns)
-            .Distinct()
-            .ToArray();
-
         var candidates = await _db.WorkoutExerciseDefinitions.AsNoTracking()
-            .Where(e => allPatterns.Contains(e.Pattern))
             .ToListAsync();
 
         candidates = FilterByEquipment(candidates, available);
-        candidates = FilterByInjuries(candidates, activeInjuries);
-
-        var rehabExercises = FindRehabExercises(candidates, activeInjuries);
 
         var picked = new List<PickedExercise>();
         var usedIds = new HashSet<int>();
         var totalSeconds = 0;
-
-        foreach (var rehab in rehabExercises)
-            usedIds.Add(rehab.Id);
 
         var orderedSlots = session.Slots
             .OrderBy(s => s.Block is BlockType.HighIntensity or BlockType.Hypertrophy ? 0 : s.Block == BlockType.Accessory ? 1 : 2)
@@ -64,7 +50,7 @@ public class ExercisePickerService : IExercisePickerService
         foreach (var slot in orderedSlots)
         {
             var slotCandidates = candidates
-                .Where(e => slot.AllowedPatterns.Contains(e.Pattern))
+                .Where(e => _contributions.Contribution(e.Id, slot.PrimaryMuscleId) > 0)
                 .Where(e => !usedIds.Contains(e.Id))
                 .ToList();
 
@@ -73,7 +59,7 @@ public class ExercisePickerService : IExercisePickerService
                 if (slot.Droppable) continue;
 
                 slotCandidates = candidates
-                    .Where(e => slot.AllowedPatterns.Contains(e.Pattern))
+                    .Where(e => _contributions.Contribution(e.Id, slot.PrimaryMuscleId) > 0)
                     .ToList();
 
                 if (slotCandidates.Count == 0) continue;
@@ -92,7 +78,6 @@ public class ExercisePickerService : IExercisePickerService
             {
                 ExerciseId = best.Id,
                 ExerciseName = best.Name,
-                Pattern = best.Pattern,
                 PrimaryMuscleId = slot.PrimaryMuscleId,
                 Sets = adjustedSets,
                 RepsMin = slot.RepsMin,
@@ -106,28 +91,6 @@ public class ExercisePickerService : IExercisePickerService
             });
 
             totalSeconds += EstimateSlotSeconds(adjustedSets, best.SecondsPerRep, slot.RepsMax, rest, best.SetupSeconds);
-        }
-
-        foreach (var rehab in rehabExercises.Where(r => !picked.Any(p => p.ExerciseId == r.Id)).Take(2))
-        {
-            picked.Add(new PickedExercise
-            {
-                ExerciseId = rehab.Id,
-                ExerciseName = rehab.Name,
-                Pattern = rehab.Pattern,
-                PrimaryMuscleId = 0,
-                Sets = 2,
-                RepsMin = 12,
-                RepsMax = 15,
-                Rpe = 5,
-                RestSeconds = 60,
-                SupersetGroup = 0,
-                Droppable = true,
-                IsBodyweight = rehab.IsBodyweight,
-                SlotTemplateId = 0
-            });
-
-            totalSeconds += EstimateSlotSeconds(2, rehab.SecondsPerRep, 15, 60, rehab.SetupSeconds);
         }
 
         return new PrescribedSession
@@ -166,24 +129,6 @@ public class ExercisePickerService : IExercisePickerService
     {
         return exercises
             .Where(e => e.IsBodyweight || (e.Required & available) == e.Required)
-            .ToList();
-    }
-
-    private static List<WorkoutExerciseDefinition> FilterByInjuries(List<WorkoutExerciseDefinition> exercises, InjuryFlag activeInjuries)
-    {
-        if (activeInjuries == InjuryFlag.None) return exercises;
-        return exercises
-            .Where(e => (e.Contraindications & activeInjuries) == InjuryFlag.None)
-            .ToList();
-    }
-
-    private static List<WorkoutExerciseDefinition> FindRehabExercises(List<WorkoutExerciseDefinition> pool, InjuryFlag activeInjuries)
-    {
-        if (activeInjuries == InjuryFlag.None) return [];
-        return pool
-            .Where(e => (e.PreferredFor & activeInjuries) != InjuryFlag.None)
-            .OrderBy(e => e.FatigueCost)
-            .Take(2)
             .ToList();
     }
 
