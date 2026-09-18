@@ -26,7 +26,6 @@ public partial class ProfileSetupViewModel : ObservableObject
     [ObservableProperty] private DateTime _birthDate = DateTime.Today.AddYears(-25);
     [ObservableProperty] private int _cycleLength = 28;
     [ObservableProperty] private string _errorMessage = string.Empty;
-    [ObservableProperty] private UserGoal _goal = UserGoal.MaintainHealth;
     private bool _hasLoadedProfile;
     [ObservableProperty] private bool _isBusy;
 
@@ -62,7 +61,6 @@ public partial class ProfileSetupViewModel : ObservableObject
         SelectMetricUnitsCommand = new RelayCommand(() => UseMetricSystem = true);
         SelectImperialUnitsCommand = new RelayCommand(() => UseMetricSystem = false);
         ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
-        SelectedGoalOption = GoalOptions.First(option => option.Value == Goal);
         WorkoutActivityOptions = WorkoutActivityOptionCatalog.Build(new HashSet<WorkoutActivityType>());
     }
 
@@ -116,10 +114,7 @@ public partial class ProfileSetupViewModel : ObservableObject
 
         Name = profile.Name;
         BirthDate = profile.DateOfBirth == default ? BirthDate : profile.DateOfBirth;
-        Goal = profile.Goal;
         ProfileImagePath = profile.ProfileImagePath;
-        SelectedGoalOption = GoalOptions.FirstOrDefault(option => option.Value == Goal)
-                             ?? GoalOptions.First(option => option.Value == UserGoal.MaintainHealth);
         var selectedActivities = WorkoutActivityPreferences.Parse(profile.PreferredWorkoutActivityTypes);
         var loadedOptions = WorkoutActivityOptionCatalog.Build(selectedActivities);
         foreach (var option in WorkoutActivityOptions)
@@ -167,7 +162,6 @@ public partial class ProfileSetupViewModel : ObservableObject
             profile ??= new UserProfile
             {
                 UserId = userId,
-                Goal = Goal,
                 WorkoutDaysPerWeek = WorkoutDaysPerWeek,
                 CycleLength = CycleLength,
                 WeightGoalPace = WeightGoalPace.Steady
@@ -180,7 +174,6 @@ public partial class ProfileSetupViewModel : ObservableObject
             profile.ProfileImagePath = ProfileImagePath.Trim();
             if (isNewProfile || _hasLoadedProfile)
             {
-                profile.Goal = Goal;
                 profile.WeightGoalPace = WeightGoalPace.Steady;
                 profile.PreferredWorkoutActivityTypes = WorkoutActivityPreferences.Serialize(
                     selectedActivities,
@@ -266,18 +259,6 @@ public partial class ProfileSetupViewModel : ObservableObject
         OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
     }
 
-    partial void OnGoalChanged(UserGoal value)
-    {
-        var selected = GoalOptions.FirstOrDefault(option => option.Value == value);
-        if (selected is not null && SelectedGoalOption?.Value != value)
-            SelectedGoalOption = selected;
-    }
-
-    partial void OnSelectedGoalOptionChanged(SelectionOption<UserGoal>? value)
-    {
-        if (value is not null && Goal != value.Value)
-            Goal = value.Value;
-    }
 
     partial void OnProfileImagePathChanged(string value)
     {

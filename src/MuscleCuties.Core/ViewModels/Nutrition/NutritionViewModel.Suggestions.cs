@@ -177,6 +177,7 @@ public partial class NutritionViewModel
             SuggestionTargetText = $"{SuggestionMealType} · {GetMealTypeCaloriesText(SuggestionMealType)}";
 
             var mealType = SuggestionMealType;
+            var breakfastPreference = BreakfastPreference;
             var phase = CurrentPhase;
             var date = DateTime.Today;
             var exclude = excludeConceptNames;
@@ -184,7 +185,7 @@ public partial class NutritionViewModel
             {
                 var userId = await authService.GetCurrentUserIdAsync();
                 var meals = await nutritionService.GetSuggestedMealsAsync(
-                    userId, mealType, phase, date, exclude);
+                    userId, mealType, breakfastPreference, phase, date, exclude);
                 var items = meals.Select(MealSuggestionItem.FromSuggestedMeal).ToList();
                 AssignDistinctSuggestionIcons(items);
                 return items;
@@ -242,6 +243,7 @@ public partial class NutritionViewModel
         if (suggestion is null || suggestion.Components.Count == 0)
             return;
 
+        ResetMealDraft();
         MealIngredients = new ObservableCollection<MealIngredientItem>(suggestion.Components
             .Select(component => new MealIngredientItem
             {
@@ -258,15 +260,13 @@ public partial class NutritionViewModel
 
         SelectedMealType = SuggestionMealType;
         SelectedMealTime = DateTime.Now.TimeOfDay;
-        IsAddMealTypePickerVisible = false;
-        IsAddMealFoodBuilderVisible = true;
-        IsAddFoodPanelVisible = true;
+        IsMealEditorVisible = true;
         IsFoodFinderExpanded = false;
         SelectedFoodResult = null;
         SearchQuery = string.Empty;
         FoodSearchResults = [];
         ResetFoodSearchPaging();
-        AddFoodMessage = "Suggestion applied. Adjust or log it.";
+        AddFoodMessage = string.Empty;
         NotifyMealIngredientProperties();
 
         CloseSuggestionModal();
@@ -286,9 +286,9 @@ public partial class NutritionViewModel
 
     private string GetMealTypeCaloriesText(MealType mealType)
     {
-        const float breakfastShare = 0.25f;
-        const float lunchShare = 0.35f;
-        const float dinnerShare = 0.27f;
+        var breakfastShare = IsSweetBreakfast ? 0.20f : 0.25f;
+        var lunchShare = IsSweetBreakfast ? 0.32f : 0.35f;
+        var dinnerShare = IsSweetBreakfast ? 0.28f : 0.27f;
         var snackShare = 1f - breakfastShare - lunchShare - dinnerShare;
 
         var share = mealType switch

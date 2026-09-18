@@ -16,7 +16,7 @@
         <Border.Triggers>
             <DataTrigger TargetType="Border" Binding="{Binding IsCompleted}" Value="True">
                 <Setter Property="Stroke" Value="{Binding ActivityTextColor}" />
-                <Setter Property="StrokeThickness" Value="2" />
+                <Setter Property="StrokeThickness" Value="1.5" />
             </DataTrigger>
         </Border.Triggers>
         <Border.GestureRecognizers>
@@ -25,101 +25,73 @@
                 CommandParameter="{Binding CommandParameter, Source={x:Reference Root}}" />
         </Border.GestureRecognizers>
 
-        <Grid RowDefinitions="Auto, Auto" RowSpacing="12">
-            <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12" RowDefinitions="Auto, Auto" RowSpacing="4">
+        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12" RowDefinitions="Auto, Auto" RowSpacing="6">
 
-                <Border
-                    Grid.Column="0" Grid.RowSpan="2"
-                    WidthRequest="48"
-                    HeightRequest="48"
-                    StrokeShape="RoundRectangle 14"
-                    BackgroundColor="{Binding ActivityBackground}"
-                    StrokeThickness="0"
-                    VerticalOptions="Center">
-                    <Label
-                        Text="{Binding DayLabel}"
-                        TextColor="{Binding ActivityTextColor}"
-                        FontSize="11"
-                        FontAttributes="Bold"
-                        HorizontalOptions="Center"
-                        VerticalOptions="Center" />
-                </Border>
-
+            <Border
+                Grid.Column="0" Grid.RowSpan="2"
+                WidthRequest="44"
+                HeightRequest="44"
+                StrokeShape="RoundRectangle 12"
+                BackgroundColor="{Binding ActivityBackground}"
+                StrokeThickness="0"
+                VerticalOptions="Center">
                 <Label
-                    Grid.Row="0" Grid.Column="1"
-                    Text="{Binding Title}"
-                    Style="{StaticResource CardTitle}"
-                    FontSize="16"
-                    LineBreakMode="TailTruncation"
+                    Text="{Binding DayLabel}"
+                    TextColor="{Binding ActivityTextColor}"
+                    FontSize="11"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Center"
                     VerticalOptions="Center" />
+            </Border>
+
+            <Label
+                Grid.Row="0" Grid.Column="1"
+                Text="{Binding Title}"
+                Style="{StaticResource CardTitle}"
+                FontSize="15"
+                LineBreakMode="TailTruncation"
+                VerticalOptions="End" />
+
+            <Label
+                Grid.Row="1" Grid.Column="1"
+                Style="{StaticResource CaptionLabel}"
+                VerticalOptions="Start">
+                <Label.Text>
+                    <MultiBinding StringFormat="{}{0}  ·  {1}">
+                        <Binding Path="Duration" />
+                        <Binding Path="ExerciseCountText" />
+                    </MultiBinding>
+                </Label.Text>
+            </Label>
+
+            <Border
+                Grid.Column="2" Grid.RowSpan="2"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 999"
+                Padding="10,6"
+                VerticalOptions="Center">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsCompleted}" Value="True">
+                        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsCompleted}" Value="False">
+                        <Setter Property="BackgroundColor" Value="{Binding ActivityBackground}" />
+                    </DataTrigger>
+                </Border.Triggers>
                 <Label
-                    Grid.Row="1" Grid.Column="1"
-                    Text="{Binding DetailsText}"
-                    Style="{StaticResource CaptionLabel}"
-                    LineBreakMode="TailTruncation"
-                    VerticalOptions="Center" />
-
-                <Border
-                    Grid.Column="2" Grid.RowSpan="2"
-                    BackgroundColor="{Binding ActivityBackground}"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 999"
-                    Padding="10,6"
-                    VerticalOptions="Center">
-                    <Label
-                        Text="{Binding Tag}"
-                        TextColor="{Binding ActivityTextColor}"
-                        FontSize="10"
-                        FontAttributes="Bold"
-                        HorizontalTextAlignment="Center" />
-                </Border>
-            </Grid>
-
-            <FlexLayout
-                Grid.Row="1"
-                Direction="Row"
-                Wrap="Wrap"
-                AlignItems="Start">
-                <Border
-                    Style="{StaticResource WorkoutPill}"
-                    Margin="0,0,8,8">
-                    <Label Text="{Binding Duration}" Style="{StaticResource WorkoutPillText}" />
-                </Border>
-                <Border
-                    Style="{StaticResource WorkoutPill}"
-                    Margin="0,0,8,8">
-                    <Label Text="{Binding ExerciseCountText}" Style="{StaticResource WorkoutPillText}" />
-                </Border>
-                <Border
-                    StrokeShape="RoundRectangle 999"
-                    StrokeThickness="0"
-                    Padding="10,6"
-                    Margin="0,0,8,8">
-                    <Border.Triggers>
-                        <DataTrigger TargetType="Border" Binding="{Binding IsCompleted}" Value="True">
-                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                    Text="{Binding SessionProgressText}"
+                    FontSize="11"
+                    FontAttributes="Bold">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsCompleted}" Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource White}" />
                         </DataTrigger>
-                        <DataTrigger TargetType="Border" Binding="{Binding IsCompleted}" Value="False">
-                            <Setter Property="BackgroundColor"
-                                    Value="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}" />
+                        <DataTrigger TargetType="Label" Binding="{Binding IsCompleted}" Value="False">
+                            <Setter Property="TextColor" Value="{Binding ActivityTextColor}" />
                         </DataTrigger>
-                    </Border.Triggers>
-                    <Label
-                        Text="{Binding SessionProgressText}"
-                        FontSize="12"
-                        FontAttributes="Bold">
-                        <Label.Triggers>
-                            <DataTrigger TargetType="Label" Binding="{Binding IsCompleted}" Value="True">
-                                <Setter Property="TextColor" Value="{StaticResource White}" />
-                            </DataTrigger>
-                            <DataTrigger TargetType="Label" Binding="{Binding IsCompleted}" Value="False">
-                                <Setter Property="TextColor"
-                                        Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                            </DataTrigger>
-                        </Label.Triggers>
-                    </Label>
-                </Border>
-            </FlexLayout>
+                    </Label.Triggers>
+                </Label>
+            </Border>
         </Grid>
     </Border>
 </ContentView>

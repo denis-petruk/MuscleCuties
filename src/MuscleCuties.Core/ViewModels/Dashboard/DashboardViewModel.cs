@@ -17,6 +17,7 @@ using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
 using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.ViewModels.Common;
+using MuscleCuties.Core.ViewModels.Profile;
 
 namespace MuscleCuties.Core.ViewModels.Dashboard;
 
@@ -31,6 +32,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
     private readonly Func<Task> _openDailyCheckInAsync;
     private readonly Func<Task> _openNutritionAsync;
     private readonly Func<Task> _openWorkoutAsync;
+    private InjuryLogViewModel? _injuryLogVm;
+    [ObservableProperty] private bool _isInjuryModalVisible;
+    [ObservableProperty] private bool _hasActiveInjuries;
     [ObservableProperty] private float _consumedCalories;
     [ObservableProperty] private float _consumedCarbs;
     [ObservableProperty] private float _consumedFats;
@@ -108,6 +112,27 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
     }
 
     public void Invalidate() => _loadGate.MarkStale();
+
+    public InjuryLogViewModel InjuryLogVm => _injuryLogVm ??= new InjuryLogViewModel(
+        _scopeFactory, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
+
+    [RelayCommand]
+    private async Task OpenInjuryModalAsync()
+    {
+        IsInjuryModalVisible = true;
+        if (!InjuryLogVm.IsBusy)
+            await InjuryLogVm.LoadCommand.ExecuteAsync(null);
+    }
+
+    [RelayCommand]
+    private void CloseInjuryModal() => IsInjuryModalVisible = false;
+
+    private async Task RefreshAfterInjuryChangeAsync()
+    {
+        HasActiveInjuries = InjuryLogVm.HasActiveInjuries;
+        Invalidate();
+        await _loadGate.RunAsync(LoadDataCoreAsync, true);
+    }
 
     public string PhaseLabel => CurrentPhase.ToString();
 
@@ -281,6 +306,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
                 services.GetRequiredService<IUserRepository>().GetProfileAsync(userId));
             var readinessTask = RunScopedAsync(services =>
                 services.GetRequiredService<IReadinessRepository>().GetForAsync(userId, today));
+            var injuriesTask = RunScopedAsync(services =>
+                services.GetRequiredService<IWorkoutInjuryRepository>().GetActiveAsync(userId));
             var predictionTask = RunScopedAsync(services =>
                 services.GetRequiredService<ICycleService>().GetPredictionAsync(userId));
             var consumedTask = RunScopedAsync(services =>
@@ -295,6 +322,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
             var readinessLog = await readinessTask;
             NeedsDailyCheckIn = readinessLog is null;
+            HasActiveInjuries = (await injuriesTask).Count > 0;
 
             var prediction = await predictionTask ??
                              new CyclePrediction
@@ -347,10 +375,15 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
                 profile?.Weight,
                 profile?.WorkoutDaysPerWeek ?? 0,
                 workoutSummary,
-                recordedReadinessScore: readinessLog?.ReadinessScore));
+                recordedReadinessScore: readinessLog?.ReadinessScore,
+                hasActiveInjury: HasActiveInjuries));
 
             NotifyMacroProperties();
             NotifyUserLinkedProperties();
+
+            _calendarUserId = userId;
+            _calendarPrediction = prediction;
+            await BuildCalendarAsync();
         }
         finally
         {

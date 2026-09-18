@@ -15,5 +15,6 @@ public interface IDashboardPlanner
         int workoutDaysPerWeek,
         TodaysWorkoutSummary workoutSummary,
         HealthWeeklySummary? healthSummary = null,
-        int? recordedReadinessScore = null);
+        int? recordedReadinessScore = null,
+        bool hasActiveInjury = false);
 }

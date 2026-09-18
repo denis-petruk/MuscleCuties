@@ -2,10 +2,12 @@
 
 <ContentPage
     x:Class="MuscleCuties.App.Pages.Dashboard.DashboardPage"
+    x:Name="DashboardRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:dashboardControls="clr-namespace:MuscleCuties.App.Controls.Dashboard"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
+    xmlns:injuryControls="clr-namespace:MuscleCuties.App.Controls.Injury"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Dashboard;assembly=MuscleCuties.Core"
     x:DataType="vm:DashboardViewModel"
@@ -22,7 +24,7 @@
                     Padding="20,40,20,32"
                     HorizontalOptions="Fill"
                     MaximumWidthRequest="640"
-                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                     RowSpacing="16">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="2">
                         <Label Text="{Binding Greetings}" Style="{StaticResource SubHeadline}" />
@@ -34,12 +36,16 @@
                         <Border
                             Grid.Column="1"
                             Grid.RowSpan="2"
-                            WidthRequest="44"
-                            HeightRequest="44"
+                            WidthRequest="48"
+                            HeightRequest="48"
                             StrokeShape="RoundRectangle 22"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
                             StrokeThickness="0"
-                            SemanticProperties.Description="Notifications">
+                            SemanticProperties.Description="Open injury log">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding OpenInjuryModalCommand}" />
+                            </Border.GestureRecognizers>
+                            <Grid>
                             <Path
                                 Data="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0"
                                 Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
@@ -51,6 +57,11 @@
                                 HeightRequest="18"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
+                                <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" Margin="0,7,7,0"
+                                    Color="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
+                                    HorizontalOptions="End" VerticalOptions="Start" IsVisible="{Binding HasActiveInjuries}"
+                                    InputTransparent="True" />
+                            </Grid>
                         </Border>
                     </Grid>
 
@@ -103,25 +114,33 @@
                     </Grid>
 
                     <toolkit:LazyView
-                        x:Name="WorkoutCardLazy"
+                        x:Name="CalendarCardLazy"
                         Grid.Row="3"
+                        x:TypeArguments="dashboardControls:DashboardCalendarCard" />
+                    <toolkit:LazyView
+                        x:Name="WorkoutCardLazy"
+                        Grid.Row="4"
                         x:TypeArguments="dashboardControls:DashboardWorkoutCard" />
                     <toolkit:LazyView
                         x:Name="ReadinessLazy"
-                        Grid.Row="4"
+                        Grid.Row="5"
                         x:TypeArguments="dashboardControls:ReadinessRecoveryCard" />
                     <toolkit:LazyView
                         x:Name="NutritionLazy"
-                        Grid.Row="5"
+                        Grid.Row="6"
                         x:TypeArguments="dashboardControls:DashboardNutritionCard" />
                     <toolkit:LazyView
                         x:Name="TargetsLazy"
-                        Grid.Row="6"
+                        Grid.Row="7"
                         x:TypeArguments="dashboardControls:DashboardTargetsCard" />
                 </Grid>
             </ScrollView>
         </RefreshView>
 
         <sharedControls:PageLoadingOverlay />
+        <injuryControls:InjuryLogModal
+            BindingContext="{Binding InjuryLogVm}"
+            IsOpen="{Binding BindingContext.IsInjuryModalVisible, Source={x:Reference DashboardRoot}}"
+            CloseCommand="{Binding BindingContext.CloseInjuryModalCommand, Source={x:Reference DashboardRoot}}" />
     </Grid>
 </ContentPage>

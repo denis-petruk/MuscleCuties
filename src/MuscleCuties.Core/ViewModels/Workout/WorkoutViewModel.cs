@@ -12,17 +12,24 @@ using MuscleCuties.Core.Models.Workout.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
+using MuscleCuties.Core.Models.Workout.Planning;
+using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
 using MuscleCuties.Core.ViewModels.Common;
+using MuscleCuties.Core.ViewModels.Profile;
 
 namespace MuscleCuties.Core.ViewModels.Workout;
 
 public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly Func<string, Task> _navigateAsync;
     private readonly ViewModelLoadGate _loadGate = new(ViewModelLoadGate.PageFreshnessWindow);
     private readonly Dictionary<int, WorkoutSessionDetail> _sessionDetailCache = new();
+    private InjuryLogViewModel? _injuryLogVm;
+
+    [ObservableProperty] private bool _isInjuryModalVisible;
 
     [ObservableProperty] private WorkoutPlan? _activePlan;
     private List<WorkoutItem> _allWorkouts = new();
@@ -72,9 +79,46 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private string _workoutModalStatusText = string.Empty;
     [ObservableProperty] private ObservableCollection<WorkoutItem> _workouts = new();
 
-    public WorkoutViewModel(IServiceScopeFactory scopeFactory)
+    [ObservableProperty] private bool _hasActiveInjuries;
+    [ObservableProperty] private string _injuryBannerSummary = string.Empty;
+    [ObservableProperty] private bool _isInjuryBannerExpanded;
+    [ObservableProperty] private ObservableCollection<string> _blockedExerciseNames = new();
+    [ObservableProperty] private ObservableCollection<string> _rehabExerciseNames = new();
+    [ObservableProperty] private ObservableCollection<string> _blockedCardioNames = new();
+
+    [ObservableProperty] private bool _isSwapPanelVisible;
+    [ObservableProperty] private bool _isSwapLoading;
+    [ObservableProperty] private ObservableCollection<ExerciseSwapOption> _swapCandidates = new();
+    private WorkoutExerciseItem? _swapTarget;
+
+    public bool HasBlockedExercises => BlockedExerciseNames.Count > 0;
+    public bool HasRehabExercises => RehabExerciseNames.Count > 0;
+    public bool HasBlockedCardio => BlockedCardioNames.Count > 0;
+    public InjuryLogViewModel InjuryLogVm => _injuryLogVm ??= new InjuryLogViewModel(
+        _scopeFactory, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
+
+    [RelayCommand]
+    private async Task OpenInjuryModalAsync()
+    {
+        IsInjuryModalVisible = true;
+        if (!InjuryLogVm.IsBusy)
+            await InjuryLogVm.LoadCommand.ExecuteAsync(null);
+    }
+
+    [RelayCommand]
+    private void CloseInjuryModal() => IsInjuryModalVisible = false;
+
+    private async Task RefreshAfterInjuryChangeAsync()
+    {
+        HasActiveInjuries = InjuryLogVm.HasActiveInjuries;
+        Invalidate();
+        await _loadGate.RunAsync(LoadDataCoreAsync, true);
+    }
+
+    public WorkoutViewModel(IServiceScopeFactory scopeFactory, Func<string, Task>? navigateAsync = null)
     {
         _scopeFactory = scopeFactory;
+        _navigateAsync = navigateAsync ?? (_ => Task.CompletedTask);
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
         EmptyWorkoutsActionCommand = new AsyncRelayCommand(HandleEmptyWorkoutsActionAsync, CanUseEmptyWorkoutsAction);
         OpenWorkoutCommand = new AsyncRelayCommand<WorkoutItem>(OpenWorkoutAsync);
@@ -85,6 +129,12 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
         StartFeaturedWorkoutCommand = new AsyncRelayCommand(OpenFeaturedWorkoutAsync);
         CloseWorkoutModalCommand = new RelayCommand(CloseWorkoutModal);
         OpenExerciseDetailCommand = new RelayCommand<WorkoutExerciseItem>(OpenExerciseDetail);
+        ToggleInjuryBannerCommand = new RelayCommand(() => IsInjuryBannerExpanded = !IsInjuryBannerExpanded);
+        NavigateToInjuryLogCommand = new AsyncRelayCommand(() => _navigateAsync("InjuryLogPage"));
+        OpenSwapPanelCommand = new AsyncRelayCommand<WorkoutExerciseItem>(OpenSwapPanelAsync);
+        ConfirmSwapCommand = new AsyncRelayCommand(ConfirmSwapAsync);
+        CloseSwapPanelCommand = new RelayCommand(CloseSwapPanel);
+        SelectSwapCandidateCommand = new RelayCommand<ExerciseSwapOption>(SelectSwapCandidate);
         Filters = new ObservableCollection<FilterChipItem>
         {
             new() { Label = "All", IsSelected = true },
@@ -177,7 +227,15 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
     public AsyncRelayCommand StartFeaturedWorkoutCommand { get; }
     public RelayCommand CloseWorkoutModalCommand { get; }
     public RelayCommand<WorkoutExerciseItem> OpenExerciseDetailCommand { get; }
+    public RelayCommand ToggleInjuryBannerCommand { get; }
+    public AsyncRelayCommand NavigateToInjuryLogCommand { get; }
+    public AsyncRelayCommand<WorkoutExerciseItem> OpenSwapPanelCommand { get; }
+    public AsyncRelayCommand ConfirmSwapCommand { get; }
+    public RelayCommand CloseSwapPanelCommand { get; }
+    public RelayCommand<ExerciseSwapOption> SelectSwapCandidateCommand { get; }
     public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
+    public bool HasSwapCandidates => SwapCandidates.Count > 0;
+    public string SwapTargetName => _swapTarget?.Name ?? string.Empty;
 
     private async Task LoadDataCoreAsync()
     {
@@ -201,6 +259,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
             ApplyFeaturedWorkout();
             ApplyFilter();
             NotifyWorkoutStateProperties();
+
+            await LoadInjuryBannerAsync(scope.ServiceProvider, userId);
         }
         finally
         {
@@ -582,6 +642,12 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
 
     private void CloseWorkoutModal()
     {
+        if (IsSwapPanelVisible)
+        {
+            CloseSwapPanel();
+            return;
+        }
+
         IsWorkoutModalVisible = false;
     }
 
@@ -817,5 +883,141 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
     partial void OnIsBusyChanged(bool value)
     {
         NotifyWorkoutStateProperties();
+    }
+
+    private async Task LoadInjuryBannerAsync(IServiceProvider services, int userId)
+    {
+        var injuryRepo = services.GetRequiredService<IWorkoutInjuryRepository>();
+        var logs = await injuryRepo.GetActiveAsync(userId);
+
+        if (logs.Count == 0)
+        {
+            HasActiveInjuries = false;
+            InjuryBannerSummary = string.Empty;
+            BlockedExerciseNames = new ObservableCollection<string>();
+            RehabExerciseNames = new ObservableCollection<string>();
+            BlockedCardioNames = new ObservableCollection<string>();
+            NotifyInjuryBannerProperties();
+            return;
+        }
+
+        HasActiveInjuries = true;
+
+        var injuries = logs
+            .Where(log => Enum.IsDefined(typeof(InjuryFlag), log.SiteFlag) &&
+                          Enum.TryParse<InjuryStatus>(log.Status, true, out _))
+            .Select(log => new Injury(
+                (InjuryFlag)log.SiteFlag,
+                Enum.Parse<InjuryStatus>(log.Status, true),
+                log.Since))
+            .ToList();
+
+        var flags = WorkoutInjuryRules.ToFlags(injuries);
+        var (blocked, rehab) = await injuryRepo.GetExerciseImpactAsync(flags);
+        var blockedCardio = WorkoutInjuryRules.GetBlockedActivities(injuries)
+            .Select(a => a.ToString())
+            .OrderBy(n => n)
+            .ToList();
+
+        var siteSummaries = injuries
+            .Select(i => $"{DisplayNameFor(i.Site)} ({i.Status})")
+            .ToList();
+        var summaryParts = string.Join(", ", siteSummaries);
+        InjuryBannerSummary = blocked.Count > 0
+            ? $"{summaryParts} -- {blocked.Count} exercises blocked"
+            : summaryParts;
+
+        BlockedExerciseNames = new ObservableCollection<string>(blocked);
+        RehabExerciseNames = new ObservableCollection<string>(rehab);
+        BlockedCardioNames = new ObservableCollection<string>(blockedCardio);
+        NotifyInjuryBannerProperties();
+    }
+
+    private void NotifyInjuryBannerProperties()
+    {
+        OnPropertyChanged(nameof(HasBlockedExercises));
+        OnPropertyChanged(nameof(HasRehabExercises));
+        OnPropertyChanged(nameof(HasBlockedCardio));
+    }
+
+    private static string DisplayNameFor(InjuryFlag flag) => flag switch
+    {
+        InjuryFlag.Metatarsal => "Foot",
+        InjuryFlag.LowBack => "Low back",
+        _ => flag.ToString()
+    };
+
+    private async Task OpenSwapPanelAsync(WorkoutExerciseItem? exercise)
+    {
+        if (exercise is null) return;
+
+        _swapTarget = exercise;
+        IsSwapPanelVisible = true;
+        IsSwapLoading = true;
+        OnPropertyChanged(nameof(SwapTargetName));
+
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var workoutService = scope.ServiceProvider.GetRequiredService<IWorkoutService>();
+
+            var userId = await authService.GetCurrentUserIdAsync();
+            System.Diagnostics.Trace.WriteLine($"[Swap] userId={userId}, dayExerciseId={exercise.WorkoutDayExerciseId}");
+            var candidates = await workoutService.GetSwapCandidatesAsync(userId, exercise.WorkoutDayExerciseId);
+            System.Diagnostics.Trace.WriteLine($"[Swap] Got {candidates.Count} candidates");
+
+            SwapCandidates = new ObservableCollection<ExerciseSwapOption>(candidates);
+            OnPropertyChanged(nameof(HasSwapCandidates));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Trace.WriteLine($"[Swap] ERROR: {ex}");
+        }
+        finally
+        {
+            IsSwapLoading = false;
+        }
+    }
+
+    private async Task ConfirmSwapAsync()
+    {
+        var selected = SwapCandidates.FirstOrDefault(c => c.IsSelected);
+        if (selected is null || _swapTarget is null) return;
+
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var workoutService = scope.ServiceProvider.GetRequiredService<IWorkoutService>();
+
+            var userId = await authService.GetCurrentUserIdAsync();
+            await workoutService.SwapExerciseAsync(userId, _swapTarget.WorkoutDayExerciseId, selected.ExerciseId, true);
+
+            _sessionDetailCache.Remove(_selectedWorkoutDayId);
+            CloseSwapPanel();
+            await LoadWorkoutSessionDetailAsync();
+        }
+        catch
+        {
+            CloseSwapPanel();
+            WorkoutModalErrorText = "Could not swap this exercise. Please try again.";
+        }
+    }
+
+    private void SelectSwapCandidate(ExerciseSwapOption? option)
+    {
+        if (option is null) return;
+        foreach (var c in SwapCandidates)
+            c.IsSelected = c == option;
+    }
+
+    private void CloseSwapPanel()
+    {
+        IsSwapPanelVisible = false;
+        _swapTarget = null;
+        SwapCandidates = new ObservableCollection<ExerciseSwapOption>();
+        OnPropertyChanged(nameof(HasSwapCandidates));
+        OnPropertyChanged(nameof(SwapTargetName));
     }
 }

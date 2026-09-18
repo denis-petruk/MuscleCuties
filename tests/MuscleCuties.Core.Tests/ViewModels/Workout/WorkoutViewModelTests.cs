@@ -6,6 +6,7 @@ using MuscleCuties.Core.Models.UI.Workout;
 using MuscleCuties.Core.Models.Workout.Logging;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
+using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
 using MuscleCuties.Core.ViewModels.Workout;
@@ -18,6 +19,7 @@ public class WorkoutViewModelTests
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
     private readonly ICycleService _cycleService = Substitute.For<ICycleService>();
     private readonly IWorkoutService _workoutService = Substitute.For<IWorkoutService>();
+    private readonly IWorkoutInjuryRepository _injuryRepo = Substitute.For<IWorkoutInjuryRepository>();
 
     private IServiceScopeFactory BuildScopeFactory()
     {
@@ -25,6 +27,7 @@ public class WorkoutViewModelTests
         serviceProvider.GetService(typeof(IAuthService)).Returns(_authService);
         serviceProvider.GetService(typeof(ICycleService)).Returns(_cycleService);
         serviceProvider.GetService(typeof(IWorkoutService)).Returns(_workoutService);
+        serviceProvider.GetService(typeof(IWorkoutInjuryRepository)).Returns(_injuryRepo);
 
         var scope = Substitute.For<IServiceScope>();
         scope.ServiceProvider.Returns(serviceProvider);
@@ -37,6 +40,8 @@ public class WorkoutViewModelTests
 
     private WorkoutViewModel CreateViewModel()
     {
+        _injuryRepo.GetActiveAsync(Arg.Any<int>())
+            .Returns(new List<Models.Entities.Workout.Planning.WorkoutInjuryLog>());
         return new WorkoutViewModel(BuildScopeFactory());
     }
 
@@ -45,6 +50,21 @@ public class WorkoutViewModelTests
         _cycleService.GetCurrentPhaseAsync(1).Returns(CyclePhase.Follicular);
         _workoutService.GetPlanSummaryAsync(1, CyclePhase.Follicular)
             .Returns(new WorkoutPlanSummary(null, [], []));
+    }
+
+    [Fact]
+    public async Task InjuryModal_OpensLoadsAndCloses()
+    {
+        var vm = CreateViewModel();
+        _authService.GetCurrentUserIdAsync().Returns(1);
+        _injuryRepo.GetAllAsync(1).Returns(Array.Empty<Models.Entities.Workout.Planning.WorkoutInjuryLog>());
+
+        await vm.OpenInjuryModalCommand.ExecuteAsync(null);
+
+        Assert.True(vm.IsInjuryModalVisible);
+        Assert.True(vm.InjuryLogVm.HasNoInjuries);
+        vm.CloseInjuryModalCommand.Execute(null);
+        Assert.False(vm.IsInjuryModalVisible);
     }
 
     [Fact]

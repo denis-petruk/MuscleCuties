@@ -403,7 +403,9 @@
                 <RoundRectangle CornerRadius="999" />
             </Setter.Value>
         </Setter>
-        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="Padding" Value="14,8" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
     </Style>
 
     <Style x:Key="WorkoutPillText" TargetType="Label">
@@ -412,6 +414,11 @@
                                         Dark={StaticResource TextPrimaryDark}}" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
     </Style>
 
     <Style x:Key="WorkoutExerciseCard" TargetType="Border">
@@ -429,6 +436,7 @@
         </Setter>
         <Setter Property="Padding" Value="14" />
     </Style>
+
 
     <Style x:Key="WorkoutInfoTile" TargetType="Border">
         <Setter Property="BackgroundColor"

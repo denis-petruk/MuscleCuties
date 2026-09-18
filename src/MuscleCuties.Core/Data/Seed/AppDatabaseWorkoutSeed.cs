@@ -56,19 +56,33 @@ public partial class AppDatabase
             return;
 
         var existing = await Exercises.ToListAsync();
-        var existingNames = existing
-            .Select(exercise => NormalizeExerciseName(exercise.Name))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var existingByName = existing
+            .GroupBy(e => NormalizeExerciseName(e.Name), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
         var existingCodes = existing
             .Select(exercise => exercise.Code)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var additions = new List<Exercise>();
+        var updated = false;
 
         foreach (var planningExercise in planningExercises)
         {
             var code = $"ENGINE_{planningExercise.Id}";
-            if (existingCodes.Contains(code) || existingNames.Contains(NormalizeExerciseName(planningExercise.Name)))
+            if (existingCodes.Contains(code))
                 continue;
+
+            var normalizedName = NormalizeExerciseName(planningExercise.Name);
+            if (existingByName.TryGetValue(normalizedName, out var match))
+            {
+                // Name collision: update existing exercise's code to ENGINE_ so swap works
+                if (!match.Code.StartsWith("ENGINE_", StringComparison.Ordinal))
+                {
+                    match.Code = code;
+                    updated = true;
+                }
+                existingCodes.Add(code);
+                continue;
+            }
 
             var primaryMuscleId = planningExercise.MuscleContributions
                 .OrderByDescending(contribution => contribution.Fraction)
@@ -93,14 +107,14 @@ public partial class AppDatabase
                 JointAreas = string.Empty
             });
             existingCodes.Add(code);
-            existingNames.Add(NormalizeExerciseName(planningExercise.Name));
+            existingByName[normalizedName] = additions[^1];
         }
 
-        if (additions.Count == 0)
-            return;
+        if (additions.Count > 0)
+            await Exercises.AddRangeAsync(additions);
 
-        await Exercises.AddRangeAsync(additions);
-        await SaveChangesAsync();
+        if (additions.Count > 0 || updated)
+            await SaveChangesAsync();
     }
 
     private static List<Exercise> BuildStarterExercises()

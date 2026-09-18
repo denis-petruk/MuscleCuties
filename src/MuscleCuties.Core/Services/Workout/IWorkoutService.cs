@@ -23,4 +23,8 @@ public interface IWorkoutService
         int workoutDayId,
         IReadOnlyCollection<WorkoutExerciseLogInput> exerciseLogs,
         DateTime date);
+
+    Task<IReadOnlyList<ExerciseSwapOption>> GetSwapCandidatesAsync(int userId, int workoutDayExerciseId);
+
+    Task SwapExerciseAsync(int userId, int workoutDayExerciseId, int newExerciseId, bool savePreference);
 }
