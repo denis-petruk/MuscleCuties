@@ -77,6 +77,13 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware
             },
             new()
             {
+                IconGlyph = "HeartPulse24",
+                Title = "Injury Log",
+                Subtitle = "Track injuries and see how they affect your plan",
+                Route = "InjuryLogPage"
+            },
+            new()
+            {
                 IconGlyph = "ChatBubblesQuestion24",
                 Title = "Feedback",
                 Subtitle = "Send private beta feedback to the handsome, jacked developer",

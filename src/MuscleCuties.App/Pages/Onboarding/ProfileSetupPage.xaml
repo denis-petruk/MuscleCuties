@@ -184,18 +184,7 @@
                             </Grid>
                         </VerticalStackLayout>
 
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="Primary fitness goal" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Picker
-                                    AutomationId="ProfileSetupGoalPicker"
-                                    Title="Choose goal"
-                                    ItemsSource="{Binding GoalOptions}"
-                                    ItemDisplayBinding="{Binding Label}"
-                                    SelectedItem="{Binding SelectedGoalOption}"
-                                    SemanticProperties.Description="Primary fitness goal" />
-                            </Border>
-                        </VerticalStackLayout>
+
                     </VerticalStackLayout>
                 </Border>
             </VerticalStackLayout>
@@ -203,7 +192,7 @@
             <!-- TODO(health-sync): Re-enable Apple Health and Whoop during the native-provider pass. -->
 
             <VerticalStackLayout Spacing="12">
-                <sharedControls:IconSectionHeader Text="Activities you enjoy" IconGlyph="Dumbbell24" />
+                <Label Text="Choose your activity" Style="{StaticResource SectionTitle}" />
                 <workoutControls:WorkoutActivityPreferencePicker
                     ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
                     ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />

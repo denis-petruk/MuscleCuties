@@ -13,16 +13,5 @@ public class LoggedMeal
     public DateTime CreatedAt { get; set; }
 
     public User? User { get; set; }
-    public ICollection<LoggedMealIngredient> Entries { get; set; } = [];
-}
-
-public class LoggedMealIngredient
-{
-    public int Id { get; set; }
-    public int LoggedMealId { get; set; }
-    public int FoodItemId { get; set; }
-    public float Grams { get; set; }
-
-    public LoggedMeal? LoggedMeal { get; set; }
-    public FoodItem? FoodItem { get; set; }
+    public ICollection<LoggedMealEntry> Entries { get; set; } = new List<LoggedMealEntry>();
 }

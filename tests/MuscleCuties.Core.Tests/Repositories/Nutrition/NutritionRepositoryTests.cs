@@ -1,3 +1,6 @@
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Repositories.Nutrition;
@@ -11,6 +14,31 @@ public class NutritionRepositoryTests : IDisposable
     public void Dispose()
     {
         _fixture.Dispose();
+    }
+
+    [Fact]
+    public async Task LoggedMeals_CanBeReadWithoutLegacyTemplateColumn()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        await using var db = new AppDatabase(new DbContextOptionsBuilder<AppDatabase>()
+            .UseSqlite(connection)
+            .Options);
+
+        await db.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE "LoggedMeals" (
+                "Id" INTEGER PRIMARY KEY,
+                "UserId" INTEGER NOT NULL,
+                "Date" TEXT NOT NULL,
+                "LoggedAt" TEXT NOT NULL,
+                "MealType" INTEGER NOT NULL,
+                "CreatedAt" TEXT NOT NULL
+            )
+            """);
+
+        var meals = await db.LoggedMeals.AsNoTracking().ToListAsync();
+
+        Assert.Empty(meals);
     }
 
     [Fact]
