@@ -11,6 +11,9 @@ public partial class NutritionViewModel
     {
         OnPropertyChanged(nameof(IsFoodFinderVisible));
         OnPropertyChanged(nameof(IsFoodFinderCollapsed));
+        OnPropertyChanged(nameof(IsIngredientSearchVisible));
+        OnPropertyChanged(nameof(MealEditorTitle));
+        OnPropertyChanged(nameof(IngredientActionText));
     }
 
     private void NotifyDisplayProperties()
@@ -64,9 +67,6 @@ public partial class NutritionViewModel
 
     partial void OnFoodSearchResultsChanged(ObservableCollection<FoodSearchResultItem> value)
     {
-        if (value.Count == 0)
-            IsFoodSearchModalVisible = false;
-
         OnPropertyChanged(nameof(HasFoodSearchResults));
         OnPropertyChanged(nameof(ShowBrowseMoreFoods));
         BrowseMoreFoodsCommand.NotifyCanExecuteChanged();

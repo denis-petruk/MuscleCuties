@@ -10,6 +10,9 @@ public partial class WorkoutExerciseCard : ContentView
     public static readonly BindableProperty LogExerciseCommandProperty =
         BindableProperty.Create(nameof(LogExerciseCommand), typeof(ICommand), typeof(WorkoutExerciseCard));
 
+    public static readonly BindableProperty SwapExerciseCommandProperty =
+        BindableProperty.Create(nameof(SwapExerciseCommand), typeof(ICommand), typeof(WorkoutExerciseCard));
+
     public static readonly BindableProperty CommandParameterProperty =
         BindableProperty.Create(nameof(CommandParameter), typeof(object), typeof(WorkoutExerciseCard));
 
@@ -28,6 +31,12 @@ public partial class WorkoutExerciseCard : ContentView
     {
         get => (ICommand?)GetValue(LogExerciseCommandProperty);
         set => SetValue(LogExerciseCommandProperty, value);
+    }
+
+    public ICommand? SwapExerciseCommand
+    {
+        get => (ICommand?)GetValue(SwapExerciseCommandProperty);
+        set => SetValue(SwapExerciseCommandProperty, value);
     }
 
     public object? CommandParameter

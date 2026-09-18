@@ -59,7 +59,8 @@
                     <Border
                         Grid.Column="1"
                         Style="{StaticResource WorkoutPill}"
-                        MinimumHeightRequest="44"
+                        HeightRequest="36"
+                        MinimumWidthRequest="56"
                         VerticalOptions="Center"
                         SemanticProperties.Description="{Binding DetailsButtonText}">
                         <Border.GestureRecognizers>
@@ -279,15 +280,50 @@
                 </Grid>
 
                 <!-- Log actions -->
-                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="8">
+                    <Border
+                        Grid.Column="0"
+                        StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                        StrokeShape="RoundRectangle 8"
+                        BackgroundColor="Transparent"
+                        Padding="10,8"
+                        MinimumHeightRequest="44"
+                        VerticalOptions="Center"
+                        IsVisible="{Binding UsesStrengthMetrics}"
+                        SemanticProperties.Description="Swap exercise">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding SwapExerciseCommand, Source={x:Reference Root}}"
+                                CommandParameter="{Binding CommandParameter, Source={x:Reference Root}}" />
+                        </Border.GestureRecognizers>
+                        <HorizontalStackLayout Spacing="4">
+                            <Path
+                                Data="M7.5 3.5L10 1M10 1L7.5 1M10 1H6a4 4 0 0 0-4 4m10.5 8.5L10 16m0 0l2.5 0M10 16h4a4 4 0 0 0 4-4"
+                                Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                StrokeThickness="1.5"
+                                StrokeLineCap="Round"
+                                StrokeLineJoin="Round"
+                                Aspect="Uniform"
+                                WidthRequest="14"
+                                HeightRequest="14"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="Swap"
+                                FontSize="12"
+                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </Border>
                     <Label
+                        Grid.Column="1"
                         Text="{Binding LogStatusText}"
                         Style="{StaticResource CaptionLabel}"
                         FontSize="11"
                         FontAttributes="Bold"
                         VerticalOptions="Center" />
                     <Button
-                        Grid.Column="1"
+                        Grid.Column="2"
                         Text="{Binding LogButtonText}"
                         Command="{Binding LogExerciseCommand, Source={x:Reference Root}}"
                         CommandParameter="{Binding CommandParameter, Source={x:Reference Root}}"

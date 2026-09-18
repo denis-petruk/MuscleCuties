@@ -28,8 +28,18 @@ public partial class WorkoutPage : ContentPage
 
     protected override void OnNavigatedFrom(NavigatedFromEventArgs args)
     {
+        _viewModel.CloseInjuryModalCommand.Execute(null);
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         base.OnNavigatedFrom(args);
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (!_viewModel.IsInjuryModalVisible)
+            return base.OnBackButtonPressed();
+
+        _viewModel.CloseInjuryModalCommand.Execute(null);
+        return true;
     }
 
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

@@ -9,6 +9,7 @@ public partial class AppDatabase
 {
     internal async Task SeedWorkoutPlanningReferenceDataAsync()
     {
+        await SeedWorkoutPlanningConfigAsync();
         await SeedWorkoutMuscleGroupsAsync();
         await SeedGoalTierWeightsAsync();
         await SeedVolumeBudgetRowsAsync();
@@ -17,6 +18,86 @@ public partial class AppDatabase
         await SeedSessionArchetypesAsync();
         await SeedSlotTemplatesAsync();
         await SeedWeekTemplatesAsync();
+    }
+
+    private async Task SeedWorkoutPlanningConfigAsync()
+    {
+        if (await WorkoutPlanningConfigEntries.AnyAsync())
+            return;
+
+        WorkoutPlanningConfigEntries.AddRange(
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 1, Section = "readiness", Key = "sleepLastNight",
+                Value = "[[7.5,30],[6.5,22],[5.5,12],[0,0]]"
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 2, Section = "readiness", Key = "sleep3dAvg",
+                Value = "[[7,15],[6,8],[0,0]]"
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 3, Section = "readiness", Key = "stepsDeltaPct",
+                Value = """{"normal":15,"spike":5,"drop":10,"spikeThreshold":40,"dropThreshold":-40}"""
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 4, Section = "readiness", Key = "energyMultiplier",
+                Value = "5"
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 5, Section = "readiness", Key = "pain",
+                Value = "[15,10,3,0]"
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 6, Section = "readiness", Key = "phasePrior",
+                Value = """{"Menstrual":-10,"Luteal":-5,"Follicular":0,"Ovulatory":0,"Unknown":0}"""
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 7, Section = "readiness", Key = "highTier",
+                Value = "75"
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 8, Section = "readiness", Key = "moderateTier",
+                Value = "50"
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 9, Section = "gating", Key = "hiitMinSleep",
+                Value = "6.5"
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 10, Section = "gating", Key = "hiitMaxPain",
+                Value = "1"
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 11, Section = "gating", Key = "hiitMenstrualMinEnergy",
+                Value = "5"
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 12, Section = "gating", Key = "lowReadinessSetMultiplier",
+                Value = "0.7"
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 13, Section = "gating", Key = "lowReadinessRpeCap",
+                Value = "7"
+            },
+            new WorkoutPlanningConfigEntry
+            {
+                Id = 14, Section = "gating", Key = "consecutiveLowDaysToRest",
+                Value = "2"
+            });
+
+        await SaveChangesAsync();
     }
 
     private async Task SeedWorkoutMuscleGroupsAsync()
@@ -156,10 +237,51 @@ public partial class AppDatabase
     private async Task SeedWorkoutExerciseDefinitionsAsync()
     {
         if (await WorkoutExerciseDefinitions.AnyAsync())
+        {
+            await UpdateRehabPreferencesAsync();
             return;
+        }
 
         var exercises = BuildWorkoutExerciseDefinitions();
         WorkoutExerciseDefinitions.AddRange(exercises);
+        await SaveChangesAsync();
+    }
+
+    private async Task UpdateRehabPreferencesAsync()
+    {
+        var needsUpdate = await WorkoutExerciseDefinitions
+            .Where(e => e.PreferredFor != InjuryFlag.None)
+            .AnyAsync();
+        if (needsUpdate)
+            return;
+
+        var updates = new Dictionary<int, InjuryFlag>
+        {
+            [102] = InjuryFlag.Ankle | InjuryFlag.Metatarsal | InjuryFlag.Neck,
+            [104] = InjuryFlag.Knee | InjuryFlag.LowBack | InjuryFlag.Neck,
+            [115] = InjuryFlag.Knee | InjuryFlag.Ankle | InjuryFlag.Metatarsal | InjuryFlag.Wrist | InjuryFlag.Hip,
+            [116] = InjuryFlag.Knee | InjuryFlag.Ankle | InjuryFlag.Metatarsal | InjuryFlag.Wrist | InjuryFlag.Hip,
+            [131] = InjuryFlag.Knee | InjuryFlag.Ankle | InjuryFlag.Metatarsal,
+            [137] = InjuryFlag.Ankle | InjuryFlag.Metatarsal,
+            [147] = InjuryFlag.Shoulder | InjuryFlag.Wrist | InjuryFlag.Hip,
+            [158] = InjuryFlag.Shoulder | InjuryFlag.Wrist,
+            [161] = InjuryFlag.Shoulder,
+            [162] = InjuryFlag.Shoulder,
+            [171] = InjuryFlag.LowBack | InjuryFlag.Hip,
+            [175] = InjuryFlag.LowBack | InjuryFlag.Hip | InjuryFlag.Neck,
+            [176] = InjuryFlag.LowBack | InjuryFlag.Neck,
+        };
+
+        var exercises = await WorkoutExerciseDefinitions
+            .Where(e => updates.Keys.Contains(e.Id))
+            .ToListAsync();
+
+        foreach (var exercise in exercises)
+        {
+            if (updates.TryGetValue(exercise.Id, out var preferred))
+                exercise.PreferredFor = preferred;
+        }
+
         await SaveChangesAsync();
     }
 
@@ -178,156 +300,180 @@ public partial class AppDatabase
         return
         [
             // Glute / hip extension
-            Ex(101, "Barbell Hip Thrust", bb | htb,
+            Ex(101, "Barbell Hip Thrust", MovementPattern.HipThrust, bb | htb,
                 ll: 1, ftg: 3, skl: 2, setup: 180, spr: 4, hi: true),
-            Ex(102, "Machine Hip Thrust", mc,
-                ll: 1, ftg: 3, skl: 1, setup: 60, spr: 4, hi: true),
-            Ex(103, "B-Stance Hip Thrust", bb | htb,
+            Ex(102, "Machine Hip Thrust", MovementPattern.HipThrust, mc,
+                ll: 1, ftg: 3, skl: 1, setup: 60, spr: 4, hi: true,
+                preferred: InjuryFlag.Ankle | InjuryFlag.Metatarsal | InjuryFlag.Neck),
+            Ex(103, "B-Stance Hip Thrust", MovementPattern.HipThrust, bb | htb,
                 ll: 1, ftg: 2, skl: 2, setup: 150, spr: 4, uni: true),
-            Ex(104, "Single-Leg Glute Bridge", EquipmentSet.None,
-                ll: 1, ftg: 1, skl: 1, setup: 30, spr: 4, uni: true, bw: true),
-            Ex(105, "Cable Pull-Through", cb,
-                ll: 2, ftg: 2, skl: 1, setup: 60, spr: 4),
-            Ex(106, "45 Degree Back Extension", be45,
-                ll: 2, ftg: 2, skl: 2, setup: 45, spr: 4),
-            Ex(107, "Kneeling Cable Kickback", cb,
-                ll: 1, ftg: 1, skl: 1, setup: 60, spr: 4, uni: true),
+            Ex(104, "Single-Leg Glute Bridge", MovementPattern.HipThrust, EquipmentSet.None,
+                ll: 1, ftg: 1, skl: 1, setup: 30, spr: 4, uni: true, bw: true,
+                preferred: InjuryFlag.Knee | InjuryFlag.LowBack | InjuryFlag.Neck),
+            Ex(105, "Cable Pull-Through", MovementPattern.HipHinge, cb,
+                ll: 2, ftg: 2, skl: 1, setup: 60, spr: 4, contra: InjuryFlag.LowBack),
+            Ex(106, "45 Degree Back Extension", MovementPattern.HipHinge, be45,
+                ll: 2, ftg: 2, skl: 2, setup: 45, spr: 4, contra: InjuryFlag.LowBack),
+            Ex(107, "Kneeling Cable Kickback", MovementPattern.HipThrust, cb,
+                ll: 1, ftg: 1, skl: 1, setup: 60, spr: 4, uni: true, contra: InjuryFlag.Knee),
 
             // Hinge / hamstring
-            Ex(111, "Romanian Deadlift", bb,
-                ll: 2, ftg: 4, skl: 2, setup: 180, spr: 5, hi: true, valsalva: 2),
-            Ex(112, "Deficit RDL", bb,
-                ll: 2, ftg: 4, skl: 3, setup: 180, spr: 5, hi: true, valsalva: 2),
-            Ex(113, "Dumbbell RDL", db,
-                ll: 2, ftg: 3, skl: 2, setup: 60, spr: 4),
-            Ex(114, "Single-Leg RDL", db,
-                ll: 2, ftg: 2, skl: 3, setup: 60, spr: 4, uni: true),
-            Ex(115, "Seated Leg Curl", mc,
-                ll: 2, ftg: 2, skl: 1, setup: 45, spr: 4),
-            Ex(116, "Lying Leg Curl", mc,
-                ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4, supine: 2),
-            Ex(117, "Nordic Curl", EquipmentSet.None,
-                ll: 2, ftg: 4, skl: 3, setup: 60, spr: 5, bw: true),
-            Ex(118, "Good Morning", bb,
-                ll: 2, ftg: 4, skl: 3, setup: 180, spr: 5, valsalva: 2),
+            Ex(111, "Romanian Deadlift", MovementPattern.HipHinge, bb,
+                ll: 2, ftg: 4, skl: 2, setup: 180, spr: 5, hi: true, contra: InjuryFlag.LowBack, valsalva: 2),
+            Ex(112, "Deficit RDL", MovementPattern.HipHinge, bb,
+                ll: 2, ftg: 4, skl: 3, setup: 180, spr: 5, hi: true, contra: InjuryFlag.LowBack, valsalva: 2),
+            Ex(113, "Dumbbell RDL", MovementPattern.HipHinge, db,
+                ll: 2, ftg: 3, skl: 2, setup: 60, spr: 4, contra: InjuryFlag.LowBack),
+            Ex(114, "Single-Leg RDL", MovementPattern.HipHinge, db,
+                ll: 2, ftg: 2, skl: 3, setup: 60, spr: 4, uni: true, contra: InjuryFlag.Ankle),
+            Ex(115, "Seated Leg Curl", MovementPattern.KneeFlexion, mc,
+                ll: 2, ftg: 2, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Knee | InjuryFlag.Ankle | InjuryFlag.Metatarsal | InjuryFlag.Wrist | InjuryFlag.Hip),
+            Ex(116, "Lying Leg Curl", MovementPattern.KneeFlexion, mc,
+                ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4, supine: 2,
+                preferred: InjuryFlag.Knee | InjuryFlag.Ankle | InjuryFlag.Metatarsal | InjuryFlag.Wrist | InjuryFlag.Hip),
+            Ex(117, "Nordic Curl", MovementPattern.KneeFlexion, EquipmentSet.None,
+                ll: 2, ftg: 4, skl: 3, setup: 60, spr: 5, bw: true, contra: InjuryFlag.Knee),
+            Ex(118, "Good Morning", MovementPattern.HipHinge, bb,
+                ll: 2, ftg: 4, skl: 3, setup: 180, spr: 5, contra: InjuryFlag.LowBack, valsalva: 2),
 
             // Squat / lunge
-            Ex(121, "Back Squat", bb,
-                ll: 2, ftg: 5, skl: 3, setup: 180, spr: 5, hi: true, valsalva: 2),
-            Ex(122, "Hack Squat", mc,
-                ll: 2, ftg: 4, skl: 1, setup: 60, spr: 5, hi: true),
-            Ex(123, "Leg Press", mc,
-                ll: 1, ftg: 3, skl: 1, setup: 60, spr: 4, hi: true),
-            Ex(124, "Goblet Squat", db,
-                ll: 2, ftg: 2, skl: 1, setup: 45, spr: 4),
-            Ex(125, "Bulgarian Split Squat", db,
-                ll: 2, ftg: 3, skl: 2, setup: 60, spr: 4, uni: true),
-            Ex(126, "Walking Lunge", db,
-                ll: 1, ftg: 3, skl: 2, setup: 60, spr: 4, uni: true),
-            Ex(127, "Step-Up", db,
-                ll: 1, ftg: 2, skl: 2, setup: 60, spr: 4, uni: true),
-            Ex(128, "Reverse Lunge", db,
-                ll: 1, ftg: 2, skl: 1, setup: 60, spr: 4, uni: true),
+            Ex(121, "Back Squat", MovementPattern.SquatPattern, bb,
+                ll: 2, ftg: 5, skl: 3, setup: 180, spr: 5, hi: true,
+                contra: InjuryFlag.Knee | InjuryFlag.LowBack, valsalva: 2),
+            Ex(122, "Hack Squat", MovementPattern.SquatPattern, mc,
+                ll: 2, ftg: 4, skl: 1, setup: 60, spr: 5, hi: true, contra: InjuryFlag.Knee),
+            Ex(123, "Leg Press", MovementPattern.SquatPattern, mc,
+                ll: 1, ftg: 3, skl: 1, setup: 60, spr: 4, hi: true, contra: InjuryFlag.Knee),
+            Ex(124, "Goblet Squat", MovementPattern.SquatPattern, db,
+                ll: 2, ftg: 2, skl: 1, setup: 45, spr: 4, contra: InjuryFlag.Knee),
+            Ex(125, "Bulgarian Split Squat", MovementPattern.Lunge, db,
+                ll: 2, ftg: 3, skl: 2, setup: 60, spr: 4, uni: true,
+                contra: InjuryFlag.Knee | InjuryFlag.Ankle),
+            Ex(126, "Walking Lunge", MovementPattern.Lunge, db,
+                ll: 1, ftg: 3, skl: 2, setup: 60, spr: 4, uni: true,
+                contra: InjuryFlag.Knee | InjuryFlag.Metatarsal),
+            Ex(127, "Step-Up", MovementPattern.Lunge, db,
+                ll: 1, ftg: 2, skl: 2, setup: 60, spr: 4, uni: true, contra: InjuryFlag.Knee),
+            Ex(128, "Reverse Lunge", MovementPattern.Lunge, db,
+                ll: 1, ftg: 2, skl: 1, setup: 60, spr: 4, uni: true, contra: InjuryFlag.Knee),
 
             // Abductors and adductors
-            Ex(131, "Seated Hip Abduction Lean", mc,
+            Ex(131, "Seated Hip Abduction Lean", MovementPattern.HipAbduction, mc,
+                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Knee | InjuryFlag.Ankle | InjuryFlag.Metatarsal),
+            Ex(132, "Seated Hip Abduction Upright", MovementPattern.HipAbduction, mc,
                 ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
-            Ex(132, "Seated Hip Abduction Upright", mc,
-                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
-            Ex(133, "Standing Cable Abduction", cb,
+            Ex(133, "Standing Cable Abduction", MovementPattern.HipAbduction, cb,
                 ll: 1, ftg: 1, skl: 1, setup: 60, spr: 4, uni: true),
-            Ex(134, "Banded Lateral Walk", bd,
+            Ex(134, "Banded Lateral Walk", MovementPattern.HipAbduction, bd,
                 ll: 0, ftg: 1, skl: 1, setup: 20, spr: 3),
-            Ex(135, "Side-Lying Abduction", EquipmentSet.None,
+            Ex(135, "Side-Lying Abduction", MovementPattern.HipAbduction, EquipmentSet.None,
                 ll: 1, ftg: 1, skl: 1, setup: 20, spr: 4, uni: true, bw: true),
-            Ex(136, "Copenhagen Plank", EquipmentSet.None,
-                ll: 1, ftg: 2, skl: 3, setup: 20, spr: 4, uni: true, bw: true),
-            Ex(137, "Seated Adduction Machine", mc,
-                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
+            Ex(136, "Copenhagen Plank", MovementPattern.HipAdduction, EquipmentSet.None,
+                ll: 1, ftg: 2, skl: 3, setup: 20, spr: 4, uni: true, bw: true, contra: InjuryFlag.Hip),
+            Ex(137, "Seated Adduction Machine", MovementPattern.HipAdduction, mc,
+                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Ankle | InjuryFlag.Metatarsal),
 
             // Back
-            Ex(141, "Pull-Up", pu,
-                ll: 2, ftg: 3, skl: 2, setup: 30, spr: 4, hi: true, bw: true),
-            Ex(142, "Lat Pulldown", mc | cb,
+            Ex(141, "Pull-Up", MovementPattern.VerticalPull, pu,
+                ll: 2, ftg: 3, skl: 2, setup: 30, spr: 4, hi: true, bw: true,
+                contra: InjuryFlag.Shoulder),
+            Ex(142, "Lat Pulldown", MovementPattern.VerticalPull, mc | cb,
                 ll: 2, ftg: 2, skl: 1, setup: 45, spr: 4, hi: true),
-            Ex(143, "Chest-Supported Row", mc | db,
+            Ex(143, "Chest-Supported Row", MovementPattern.HorizontalPull, mc | db,
                 ll: 1, ftg: 2, skl: 1, setup: 60, spr: 4, hi: true),
-            Ex(144, "Seated Cable Row", cb,
-                ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4, hi: true),
-            Ex(145, "Single-Arm DB Row", db,
-                ll: 1, ftg: 2, skl: 1, setup: 60, spr: 4, uni: true),
-            Ex(146, "Straight-Arm Pulldown", cb,
-                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 4),
-            Ex(147, "Face Pull", cb,
-                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
+            Ex(144, "Seated Cable Row", MovementPattern.HorizontalPull, cb,
+                ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4, hi: true, contra: InjuryFlag.LowBack),
+            Ex(145, "Single-Arm DB Row", MovementPattern.HorizontalPull, db,
+                ll: 1, ftg: 2, skl: 1, setup: 60, spr: 4, uni: true, contra: InjuryFlag.LowBack),
+            Ex(146, "Straight-Arm Pulldown", MovementPattern.VerticalPull, cb,
+                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 4, contra: InjuryFlag.Shoulder),
+            Ex(147, "Face Pull", MovementPattern.RearDelt, cb,
+                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Shoulder | InjuryFlag.Wrist | InjuryFlag.Hip),
 
             // Push / delts / arms
-            Ex(151, "DB Shoulder Press", db,
-                ll: 1, ftg: 3, skl: 2, setup: 60, spr: 4, hi: true),
-            Ex(152, "Machine Shoulder Press", mc,
-                ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4, hi: true),
-            Ex(153, "Incline DB Press", db,
-                ll: 2, ftg: 3, skl: 2, setup: 60, spr: 4, hi: true),
-            Ex(154, "Machine Chest Press", mc,
-                ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4, hi: true),
-            Ex(155, "Push-Up", EquipmentSet.None,
-                ll: 1, ftg: 2, skl: 1, setup: 15, spr: 4, bw: true),
-            Ex(156, "Cable Lateral Raise", cb,
-                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 4, uni: true),
-            Ex(157, "DB Lateral Raise", db,
-                ll: 1, ftg: 1, skl: 1, setup: 30, spr: 4),
-            Ex(158, "Reverse Pec Deck", mc,
-                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
-            Ex(161, "Incline DB Curl", db,
-                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 4),
-            Ex(162, "Cable Curl", cb,
-                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
-            Ex(163, "Overhead Cable Extension", cb,
-                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 4),
-            Ex(164, "Rope Pushdown", cb,
+            Ex(151, "DB Shoulder Press", MovementPattern.VerticalPush, db,
+                ll: 1, ftg: 3, skl: 2, setup: 60, spr: 4, hi: true, contra: InjuryFlag.Shoulder),
+            Ex(152, "Machine Shoulder Press", MovementPattern.VerticalPush, mc,
+                ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4, hi: true, contra: InjuryFlag.Shoulder),
+            Ex(153, "Incline DB Press", MovementPattern.HorizontalPush, db,
+                ll: 2, ftg: 3, skl: 2, setup: 60, spr: 4, hi: true, contra: InjuryFlag.Shoulder),
+            Ex(154, "Machine Chest Press", MovementPattern.HorizontalPush, mc,
+                ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4, hi: true, contra: InjuryFlag.Shoulder),
+            Ex(155, "Push-Up", MovementPattern.HorizontalPush, EquipmentSet.None,
+                ll: 1, ftg: 2, skl: 1, setup: 15, spr: 4, bw: true,
+                contra: InjuryFlag.Wrist | InjuryFlag.Shoulder),
+            Ex(156, "Cable Lateral Raise", MovementPattern.LateralRaise, cb,
+                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 4, uni: true, contra: InjuryFlag.Shoulder),
+            Ex(157, "DB Lateral Raise", MovementPattern.LateralRaise, db,
+                ll: 1, ftg: 1, skl: 1, setup: 30, spr: 4, contra: InjuryFlag.Shoulder),
+            Ex(158, "Reverse Pec Deck", MovementPattern.RearDelt, mc,
+                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Shoulder | InjuryFlag.Wrist),
+            Ex(161, "Incline DB Curl", MovementPattern.ElbowFlexion, db,
+                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Shoulder),
+            Ex(162, "Cable Curl", MovementPattern.ElbowFlexion, cb,
+                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Shoulder),
+            Ex(163, "Overhead Cable Extension", MovementPattern.ElbowExtension, cb,
+                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 4, contra: InjuryFlag.Shoulder),
+            Ex(164, "Rope Pushdown", MovementPattern.ElbowExtension, cb,
                 ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
 
             // Core
-            Ex(171, "Dead Bug", EquipmentSet.None,
-                ll: 0, ftg: 1, skl: 1, setup: 15, spr: 4, bw: true),
-            Ex(172, "Ab Wheel Rollout", EquipmentSet.None,
-                ll: 2, ftg: 2, skl: 3, setup: 20, spr: 5, bw: true),
-            Ex(173, "Hollow Hold", EquipmentSet.None,
-                ll: 0, ftg: 1, skl: 2, setup: 15, spr: 0, bw: true,
+            Ex(171, "Dead Bug", MovementPattern.AntiExtension, EquipmentSet.None,
+                ll: 0, ftg: 1, skl: 1, setup: 15, spr: 4, bw: true,
+                preferred: InjuryFlag.LowBack | InjuryFlag.Hip),
+            Ex(172, "Ab Wheel Rollout", MovementPattern.AntiExtension, EquipmentSet.None,
+                ll: 2, ftg: 2, skl: 3, setup: 20, spr: 5, bw: true,
+                contra: InjuryFlag.LowBack | InjuryFlag.Shoulder),
+            Ex(173, "Hollow Hold", MovementPattern.AntiExtension, EquipmentSet.None,
+                ll: 0, ftg: 1, skl: 2, setup: 15, spr: 0, bw: true, contra: InjuryFlag.Neck,
                 supine: 1),
-            Ex(174, "Cable Crunch", cb,
-                ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4),
-            Ex(175, "Pallof Press", cb,
-                ll: 0, ftg: 1, skl: 1, setup: 45, spr: 4, uni: true),
-            Ex(176, "Bird Dog", EquipmentSet.None,
-                ll: 0, ftg: 1, skl: 1, setup: 15, spr: 4, uni: true, bw: true),
-            Ex(177, "Side Plank", EquipmentSet.None,
-                ll: 0, ftg: 1, skl: 1, setup: 15, spr: 0, uni: true, bw: true),
-            Ex(178, "Suitcase Carry", db,
+            Ex(174, "Cable Crunch", MovementPattern.AntiExtension, cb,
+                ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4, contra: InjuryFlag.Neck),
+            Ex(175, "Pallof Press", MovementPattern.AntiRotation, cb,
+                ll: 0, ftg: 1, skl: 1, setup: 45, spr: 4, uni: true,
+                preferred: InjuryFlag.LowBack | InjuryFlag.Hip | InjuryFlag.Neck),
+            Ex(176, "Bird Dog", MovementPattern.AntiRotation, EquipmentSet.None,
+                ll: 0, ftg: 1, skl: 1, setup: 15, spr: 4, uni: true, bw: true,
+                preferred: InjuryFlag.LowBack | InjuryFlag.Neck),
+            Ex(177, "Side Plank", MovementPattern.AntiLateralFlexion, EquipmentSet.None,
+                ll: 0, ftg: 1, skl: 1, setup: 15, spr: 0, uni: true, bw: true,
+                contra: InjuryFlag.Shoulder),
+            Ex(178, "Suitcase Carry", MovementPattern.AntiLateralFlexion, db,
                 ll: 0, ftg: 2, skl: 1, setup: 45, spr: 0, uni: true),
 
             // Calves
-            Ex(181, "Standing Calf Raise", mc,
-                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 3),
-            Ex(182, "Seated Calf Raise", mc,
-                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 3),
+            Ex(181, "Standing Calf Raise", MovementPattern.CalfRaise, mc,
+                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 3,
+                contra: InjuryFlag.Metatarsal | InjuryFlag.Ankle),
+            Ex(182, "Seated Calf Raise", MovementPattern.CalfRaise, mc,
+                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 3, contra: InjuryFlag.Metatarsal),
 
             // Climbing
-            Ex(191, "Rock Climbing", cw,
-                ll: 1, ftg: 4, skl: 2, setup: 0, spr: 0),
+            Ex(191, "Rock Climbing", MovementPattern.Climbing, cw,
+                ll: 1, ftg: 4, skl: 2, setup: 0, spr: 0,
+                contra: InjuryFlag.Shoulder | InjuryFlag.Wrist),
         ];
     }
 
     private static WorkoutExerciseDefinition Ex(
-        int id, string name, EquipmentSet required,
+        int id, string name, MovementPattern pattern, EquipmentSet required,
         byte ll, byte ftg, byte skl, int setup, byte spr,
         bool hi = false, bool uni = false, bool bw = false,
+        InjuryFlag contra = InjuryFlag.None, InjuryFlag preferred = InjuryFlag.None,
         byte supine = 0, byte valsalva = 0, int? subGroup = null)
     {
         return new WorkoutExerciseDefinition
         {
             Id = id,
             Name = name,
+            Pattern = pattern,
             Required = required,
             LongLengthLoaded = ll,
             FatigueCost = ftg,
@@ -337,6 +483,8 @@ public partial class AppDatabase
             EligibleForHiBlock = hi,
             UnilateralDoublesTime = uni,
             IsBodyweight = bw,
+            Contraindications = contra,
+            PreferredFor = preferred,
             SupineOrProne = supine,
             ValsalvaDemand = valsalva,
             SubstituteGroupId = subGroup
@@ -463,7 +611,7 @@ public partial class AppDatabase
         int id = 1;
 
         SlotTemplate Slot(int archetypeId, byte order, BlockType block,
-            int primaryMuscleId,
+            MovementPattern[] patterns, int primaryMuscleId,
             byte setsMin, byte setsMax, byte repsMin, byte repsMax,
             byte rir, bool droppable = false, byte ssGroup = 0)
         {
@@ -482,60 +630,61 @@ public partial class AppDatabase
                 Droppable = droppable,
                 SupersetGroup = ssGroup
             };
+            s.SetAllowedPatterns(patterns);
             return s;
         }
 
         // Archetype P - Posterior / Thrust
-        slots.Add(Slot(1, 1, BlockType.HighIntensity, 1, 2, 3, 5, 7, 1));
-        slots.Add(Slot(1, 2, BlockType.Hypertrophy, 2, 3, 4, 8, 10, 2));
-        slots.Add(Slot(1, 3, BlockType.Hypertrophy, 1, 3, 4, 10, 12, 2));
-        slots.Add(Slot(1, 4, BlockType.Accessory, 2, 2, 3, 10, 15, 1, true, 1));
-        slots.Add(Slot(1, 5, BlockType.Accessory, 3, 2, 3, 15, 20, 1, false, 1));
-        slots.Add(Slot(1, 6, BlockType.Core, 12, 2, 3, 8, 15, 2, true, 2));
+        slots.Add(Slot(1, 1, BlockType.HighIntensity, [MovementPattern.HipThrust], 1, 2, 3, 5, 7, 1));
+        slots.Add(Slot(1, 2, BlockType.Hypertrophy, [MovementPattern.HipHinge], 2, 3, 4, 8, 10, 2));
+        slots.Add(Slot(1, 3, BlockType.Hypertrophy, [MovementPattern.HipThrust, MovementPattern.HipHinge], 1, 3, 4, 10, 12, 2));
+        slots.Add(Slot(1, 4, BlockType.Accessory, [MovementPattern.KneeFlexion], 2, 2, 3, 10, 15, 1, true, 1));
+        slots.Add(Slot(1, 5, BlockType.Accessory, [MovementPattern.HipAbduction], 3, 2, 3, 15, 20, 1, false, 1));
+        slots.Add(Slot(1, 6, BlockType.Core, [MovementPattern.AntiExtension], 12, 2, 3, 8, 15, 2, true, 2));
 
         // Archetype S - Squat / Abduction
-        slots.Add(Slot(2, 1, BlockType.HighIntensity, 5, 2, 3, 5, 7, 1));
-        slots.Add(Slot(2, 2, BlockType.Hypertrophy, 1, 3, 4, 8, 12, 2));
-        slots.Add(Slot(2, 3, BlockType.Hypertrophy, 1, 3, 4, 10, 15, 2));
-        slots.Add(Slot(2, 4, BlockType.Accessory, 3, 3, 3, 15, 20, 1, false, 1));
-        slots.Add(Slot(2, 5, BlockType.Accessory, 4, 2, 2, 12, 20, 2, true, 1));
-        slots.Add(Slot(2, 6, BlockType.Core, 12, 2, 3, 8, 12, 2, true, 2));
+        slots.Add(Slot(2, 1, BlockType.HighIntensity, [MovementPattern.SquatPattern], 5, 2, 3, 5, 7, 1));
+        slots.Add(Slot(2, 2, BlockType.Hypertrophy, [MovementPattern.Lunge, MovementPattern.SquatPattern], 1, 3, 4, 8, 12, 2));
+        slots.Add(Slot(2, 3, BlockType.Hypertrophy, [MovementPattern.HipHinge], 1, 3, 4, 10, 15, 2));
+        slots.Add(Slot(2, 4, BlockType.Accessory, [MovementPattern.HipAbduction], 3, 3, 3, 15, 20, 1, false, 1));
+        slots.Add(Slot(2, 5, BlockType.Accessory, [MovementPattern.HipAdduction, MovementPattern.CalfRaise], 4, 2, 2, 12, 20, 2, true, 1));
+        slots.Add(Slot(2, 6, BlockType.Core, [MovementPattern.AntiRotation], 12, 2, 3, 8, 12, 2, true, 2));
 
         // Archetype U - Upper (pull emphasis)
-        slots.Add(Slot(3, 1, BlockType.HighIntensity, 6, 2, 3, 5, 7, 1));
-        slots.Add(Slot(3, 2, BlockType.Hypertrophy, 7, 3, 4, 8, 12, 2));
-        slots.Add(Slot(3, 3, BlockType.Hypertrophy, 8, 3, 3, 8, 12, 2, true));
-        slots.Add(Slot(3, 4, BlockType.Accessory, 8, 3, 3, 12, 20, 1, false, 1));
-        slots.Add(Slot(3, 5, BlockType.Accessory, 10, 2, 3, 10, 15, 1, true, 1));
-        slots.Add(Slot(3, 6, BlockType.Core, 12, 2, 2, 8, 15, 2, true, 2));
+        slots.Add(Slot(3, 1, BlockType.HighIntensity, [MovementPattern.VerticalPull], 6, 2, 3, 5, 7, 1));
+        slots.Add(Slot(3, 2, BlockType.Hypertrophy, [MovementPattern.HorizontalPull], 7, 3, 4, 8, 12, 2));
+        slots.Add(Slot(3, 3, BlockType.Hypertrophy, [MovementPattern.VerticalPush, MovementPattern.HorizontalPush], 8, 3, 3, 8, 12, 2, true));
+        slots.Add(Slot(3, 4, BlockType.Accessory, [MovementPattern.LateralRaise], 8, 3, 3, 12, 20, 1, false, 1));
+        slots.Add(Slot(3, 5, BlockType.Accessory, [MovementPattern.ElbowFlexion], 10, 2, 3, 10, 15, 1, true, 1));
+        slots.Add(Slot(3, 6, BlockType.Core, [MovementPattern.AntiRotation, MovementPattern.AntiExtension], 12, 2, 2, 8, 15, 2, true, 2));
 
         // Archetype U2 - Upper (push emphasis)
-        slots.Add(Slot(4, 1, BlockType.HighIntensity, 8, 2, 3, 5, 7, 1));
-        slots.Add(Slot(4, 2, BlockType.Hypertrophy, 7, 3, 4, 8, 12, 2));
-        slots.Add(Slot(4, 3, BlockType.Hypertrophy, 6, 3, 3, 10, 12, 2));
-        slots.Add(Slot(4, 4, BlockType.Accessory, 8, 3, 3, 12, 20, 1, false, 1));
-        slots.Add(Slot(4, 5, BlockType.Accessory, 11, 2, 3, 10, 15, 1, true, 1));
-        slots.Add(Slot(4, 6, BlockType.Core, 12, 2, 2, 8, 15, 2, true, 2));
+        slots.Add(Slot(4, 1, BlockType.HighIntensity, [MovementPattern.VerticalPush, MovementPattern.HorizontalPush], 8, 2, 3, 5, 7, 1));
+        slots.Add(Slot(4, 2, BlockType.Hypertrophy, [MovementPattern.HorizontalPull], 7, 3, 4, 8, 12, 2));
+        slots.Add(Slot(4, 3, BlockType.Hypertrophy, [MovementPattern.VerticalPull], 6, 3, 3, 10, 12, 2));
+        slots.Add(Slot(4, 4, BlockType.Accessory, [MovementPattern.LateralRaise, MovementPattern.RearDelt], 8, 3, 3, 12, 20, 1, false, 1));
+        slots.Add(Slot(4, 5, BlockType.Accessory, [MovementPattern.ElbowExtension], 11, 2, 3, 10, 15, 1, true, 1));
+        slots.Add(Slot(4, 6, BlockType.Core, [MovementPattern.AntiExtension], 12, 2, 2, 8, 15, 2, true, 2));
 
         // Archetype F - Full-body glute-biased
-        slots.Add(Slot(5, 1, BlockType.HighIntensity, 1, 2, 3, 5, 7, 1));
-        slots.Add(Slot(5, 2, BlockType.Hypertrophy, 2, 3, 4, 8, 10, 2));
-        slots.Add(Slot(5, 3, BlockType.Hypertrophy, 6, 3, 4, 8, 12, 2));
-        slots.Add(Slot(5, 4, BlockType.Hypertrophy, 1, 3, 3, 10, 12, 2));
-        slots.Add(Slot(5, 5, BlockType.Accessory, 3, 2, 3, 15, 20, 1, false, 1));
-        slots.Add(Slot(5, 6, BlockType.Accessory, 8, 2, 3, 10, 15, 1, true, 1));
-        slots.Add(Slot(5, 7, BlockType.Core, 12, 2, 3, 8, 15, 2, true, 2));
-        slots.Add(Slot(5, 8, BlockType.Accessory, 9, 2, 2, 10, 15, 2, true, 3));
-        slots.Add(Slot(5, 9, BlockType.Accessory, 13, 2, 2, 12, 20, 2, true, 3));
+        slots.Add(Slot(5, 1, BlockType.HighIntensity, [MovementPattern.HipThrust], 1, 2, 3, 5, 7, 1));
+        slots.Add(Slot(5, 2, BlockType.Hypertrophy, [MovementPattern.HipHinge], 2, 3, 4, 8, 10, 2));
+        slots.Add(Slot(5, 3, BlockType.Hypertrophy, [MovementPattern.VerticalPull, MovementPattern.HorizontalPull], 6, 3, 4, 8, 12, 2));
+        slots.Add(Slot(5, 4, BlockType.Hypertrophy, [MovementPattern.SquatPattern, MovementPattern.Lunge], 1, 3, 3, 10, 12, 2));
+        slots.Add(Slot(5, 5, BlockType.Accessory, [MovementPattern.HipAbduction], 3, 2, 3, 15, 20, 1, false, 1));
+        slots.Add(Slot(5, 6, BlockType.Accessory, [MovementPattern.VerticalPush, MovementPattern.LateralRaise], 8, 2, 3, 10, 15, 1, true, 1));
+        slots.Add(Slot(5, 7, BlockType.Core, [MovementPattern.AntiExtension, MovementPattern.AntiRotation], 12, 2, 3, 8, 15, 2, true, 2));
+        slots.Add(Slot(5, 8, BlockType.Accessory, [MovementPattern.HorizontalPush], 9, 2, 2, 10, 15, 2, true, 3));
+        slots.Add(Slot(5, 9, BlockType.Accessory, [MovementPattern.CalfRaise], 13, 2, 2, 12, 20, 2, true, 3));
 
         // Archetype G - Glute / Abductor short
-        slots.Add(Slot(6, 1, BlockType.Hypertrophy, 1, 3, 4, 10, 12, 2));
-        slots.Add(Slot(6, 2, BlockType.Hypertrophy, 1, 3, 3, 10, 15, 2, false, 1));
-        slots.Add(Slot(6, 3, BlockType.Accessory, 3, 3, 3, 15, 20, 1, false, 1));
-        slots.Add(Slot(6, 4, BlockType.Accessory, 3, 2, 2, 20, 25, 1, true, 2));
+        slots.Add(Slot(6, 1, BlockType.Hypertrophy, [MovementPattern.HipThrust], 1, 3, 4, 10, 12, 2));
+        slots.Add(Slot(6, 2, BlockType.Hypertrophy, [MovementPattern.HipHinge], 1, 3, 3, 10, 15, 2, false, 1));
+        slots.Add(Slot(6, 3, BlockType.Accessory, [MovementPattern.HipAbduction], 3, 3, 3, 15, 20, 1, false, 1));
+        slots.Add(Slot(6, 4, BlockType.Accessory, [MovementPattern.HipAbduction], 3, 2, 2, 20, 25, 1, true, 2));
 
         // Archetype C - Climbing
-        slots.Add(Slot(7, 1, BlockType.Hypertrophy, 6, 1, 1, 0, 0, 0));
+        slots.Add(Slot(7, 1, BlockType.Hypertrophy, [MovementPattern.Climbing], 6, 1, 1, 0, 0, 0));
 
         SlotTemplates.AddRange(slots);
         await SaveChangesAsync();
