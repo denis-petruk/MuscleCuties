@@ -273,6 +273,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
     public void RefreshThemeColors(bool useDarkTheme)
     {
+        if (UseDarkTheme == useDarkTheme)
+            return;
+
         UseDarkTheme = useDarkTheme;
         RefreshPhaseCardColors();
         OnPropertyChanged(nameof(CurrentPhase));
