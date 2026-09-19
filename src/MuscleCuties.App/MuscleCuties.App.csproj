@@ -8,6 +8,7 @@
         <RootNamespace>MuscleCuties.App</RootNamespace>
         <UseMaui>true</UseMaui>
         <SingleProject>true</SingleProject>
+        <MauiXamlInflator>SourceGen</MauiXamlInflator>
 
         <MauiVersion>10.0.20</MauiVersion>
 
@@ -38,6 +39,48 @@
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
         <BuildIpa>false</BuildIpa>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <DebugSymbols>false</DebugSymbols>
+        <DebugType>none</DebugType>
+    </PropertyGroup>
+
+    <!-- iOS Release: full AOT is required by the App Store; MtouchLink=Full shrinks the binary -->
+    <!-- further than SdkOnly but requires Release + physical device verification for trimming correctness. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+        <MtouchLink>Full</MtouchLink>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+        <EnableLLVM>true</EnableLLVM>
+        <RunAOTCompilation>true</RunAOTCompilation>
+    </PropertyGroup>
+
+    <!-- Android Release: SdkOnly linking replaced with Full to match trimming coverage; -->
+    <!-- PublishReadyToRun enables R2R pre-JIT for faster startup on first launch; -->
+    <!-- AndroidEnableProfiledAot targets only hot paths identified from a run profile. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+        <AndroidLinkMode>Full</AndroidLinkMode>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+        <RunAOTCompilation>true</RunAOTCompilation>
+        <PublishReadyToRun>true</PublishReadyToRun>
+        <AndroidEnableProfiledAot>true</AndroidEnableProfiledAot>
+    </PropertyGroup>
+
+    <!-- macCatalyst Release: PublishTrimmed with partial mode keeps EF Core reflection intact. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
+        <MtouchLink>Full</MtouchLink>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+        <EnableLLVM>true</EnableLLVM>
+        <RunAOTCompilation>true</RunAOTCompilation>
+    </PropertyGroup>
+
+    <!-- Windows Release: PublishReadyToRun enables R2R crossgen for faster cold-start; -->
+    <!-- no PublishTrimmed here because WindowsPackageType=None and NGEN/R2R are sufficient. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+        <PublishReadyToRun>true</PublishReadyToRun>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and ('$(RuntimeIdentifier)' == 'iossimulator-arm64' or '$(RuntimeIdentifier)' == 'iossimulator-x64')">
