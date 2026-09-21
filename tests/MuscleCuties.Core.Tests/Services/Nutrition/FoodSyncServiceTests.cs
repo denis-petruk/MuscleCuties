@@ -9,13 +9,15 @@ public class FoodSyncServiceTests : IDisposable
 {
     private readonly FakeFdcApiClient _fdcApiClient = new();
     private readonly DatabaseFixture _fixture = new();
+    private readonly FoodSyncRepository _foodSyncRepository;
     private readonly NutritionRepository _nutritionRepository;
     private readonly FoodSyncService _service;
 
     public FoodSyncServiceTests()
     {
         _nutritionRepository = new NutritionRepository(_fixture.Db);
-        _service = new FoodSyncService(_nutritionRepository, _fdcApiClient);
+        _foodSyncRepository = new FoodSyncRepository(_fixture.Db);
+        _service = new FoodSyncService(_nutritionRepository, _foodSyncRepository, _fdcApiClient);
     }
 
     public void Dispose()
@@ -24,12 +26,13 @@ public class FoodSyncServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task SearchAsync_WhenQueryIsBlank_DoesNotCallRemote()
+    public async Task SearchAsync_WhenQueryIsBlank_DoesNotCallRemoteOrLog()
     {
         var results = await _service.SearchAsync(" ");
 
         Assert.Empty(results);
         Assert.Equal(0, _fdcApiClient.SearchCallCount);
+        Assert.Empty(await _fixture.Db.FoodSyncLogs.ToListAsync());
     }
 
     [Fact]
@@ -52,6 +55,10 @@ public class FoodSyncServiceTests : IDisposable
         Assert.Equal(1, _fdcApiClient.LastSearchPageNumber);
         Assert.Equal(0, _fdcApiClient.BatchCallCount);
 
+        var log = await _fixture.Db.FoodSyncLogs.OrderByDescending(entry => entry.StartedAt).FirstOrDefaultAsync();
+        Assert.NotNull(log);
+        Assert.Equal("Success", log.Status);
+        Assert.Equal(0, log.ItemsUpserted);
     }
 
     [Fact]
@@ -82,7 +89,7 @@ public class FoodSyncServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task SearchAsync_WhenLocalIsSparse_UpsertsRemoteDetails()
+    public async Task SearchAsync_WhenLocalIsSparse_UpsertsRemoteDetailsAndLogsSuccess()
     {
         _fdcApiClient.SearchResults.Add(new FdcFoodSearchResult
         {
@@ -102,6 +109,12 @@ public class FoodSyncServiceTests : IDisposable
         Assert.Equal(1, _fdcApiClient.SearchCallCount);
         Assert.Equal(1, _fdcApiClient.BatchCallCount);
 
+        var log = await _fixture.Db.FoodSyncLogs.OrderByDescending(entry => entry.StartedAt).FirstOrDefaultAsync();
+        Assert.NotNull(log);
+        Assert.Equal("Success", log.Status);
+        Assert.Equal(1, log.ItemsUpserted);
+        Assert.Equal(0, log.ItemsFailed);
+        Assert.NotNull(log.CompletedAt);
     }
 
     [Fact]
@@ -263,7 +276,7 @@ public class FoodSyncServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task FetchDetailAsync_WhenExistingFoodChanges_UpdatesStoredFood()
+    public async Task FetchDetailAsync_WhenExistingFoodChanges_WritesVersionBeforeUpdating()
     {
         await _nutritionRepository.AddAsync(new FoodItem
         {
@@ -283,9 +296,10 @@ public class FoodSyncServiceTests : IDisposable
         Assert.Equal(389f, result.Calories);
         Assert.Equal(16.9f, result.Protein);
 
-        var stored = await _nutritionRepository.GetFoodItemByFdcIdAsync(173904);
-        Assert.NotNull(stored);
-        Assert.Equal(389f, stored.Calories);
+        var version = await _fixture.Db.FoodItemVersions.SingleAsync();
+        Assert.Equal(result.Id, version.FoodItemId);
+        Assert.Equal("FDC", version.ChangeSource);
+        Assert.Contains("\"Calories\":100", version.NutrientJson);
     }
 
     private static FdcFoodDetail BuildDetail(int fdcId, string name, params (int Id, float Amount)[] nutrients)

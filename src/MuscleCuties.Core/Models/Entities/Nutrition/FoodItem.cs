@@ -41,5 +41,6 @@ public class FoodItem
     public bool IsBranded =>
         string.Equals(DataType, "Branded", StringComparison.OrdinalIgnoreCase);
 
-    public ICollection<LoggedMealIngredient> LoggedMealIngredients { get; set; } = new List<LoggedMealIngredient>();
+    public ICollection<LoggedMealEntry> LoggedMealEntries { get; set; } = new List<LoggedMealEntry>();
+    public ICollection<FoodItemVersion> Versions { get; set; } = new List<FoodItemVersion>();
 }

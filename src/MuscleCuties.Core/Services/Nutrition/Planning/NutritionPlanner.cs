@@ -25,10 +25,11 @@ public class NutritionPlanner : INutritionPlanner
     public NutritionPlan CreateDailyPlan(
         UserProfile profile,
         CyclePhase phase,
-        DateTime date)
+        DateTime date,
+        BreakfastPreference breakfastPreference = BreakfastPreference.Savoury)
     {
         if (!HasUsableMetrics(profile))
-            return CreateFallbackPlan(phase);
+            return CreateFallbackPlan(phase, breakfastPreference);
 
         var age = CalculateAge(profile.DateOfBirth, date);
         var bmr = _calorieCalculator.CalculateBmr(profile.Weight, profile.Height, age);
@@ -83,10 +84,13 @@ public class NutritionPlanner : INutritionPlanner
             GetPhaseFocus(phase),
             BuildNotes(profile),
             goals,
-            BuildMealTargets(calories, macros.Protein, macros.Carbs, macros.Fats));
+            BuildMealTargets(calories, macros.Protein, macros.Carbs, macros.Fats, breakfastPreference),
+            breakfastPreference);
     }
 
-    public NutritionPlan CreateFallbackPlan(CyclePhase phase)
+    public NutritionPlan CreateFallbackPlan(
+        CyclePhase phase,
+        BreakfastPreference breakfastPreference = BreakfastPreference.Savoury)
     {
         return new NutritionPlan(
             DefaultCalories,
@@ -104,7 +108,8 @@ public class NutritionPlanner : INutritionPlanner
             GetPhaseFocus(phase),
             ["Complete profile setup to personalize targets."],
             ProfileNutritionGoals.FromCalculated(DefaultCalories, DefaultProtein, DefaultCarbs, DefaultFats, 28f, 2.3f),
-            BuildMealTargets(DefaultCalories, DefaultProtein, DefaultCarbs, DefaultFats));
+            BuildMealTargets(DefaultCalories, DefaultProtein, DefaultCarbs, DefaultFats, breakfastPreference),
+            breakfastPreference);
     }
 
     private static bool HasUsableMetrics(UserProfile profile)
@@ -267,11 +272,14 @@ public class NutritionPlanner : INutritionPlanner
         float calories,
         float protein,
         float carbs,
-        float fats)
+        float fats,
+        BreakfastPreference breakfastPreference)
     {
-        const float breakfastShare = 0.25f;
-        const float lunchShare = 0.35f;
-        const float dinnerShare = 0.27f;
+        var (breakfastShare, lunchShare, dinnerShare) = breakfastPreference switch
+        {
+            BreakfastPreference.Sweet => (0.20f, 0.32f, 0.28f),
+            _ => (0.25f, 0.35f, 0.27f)
+        };
         var snackShare = 1f - breakfastShare - lunchShare - dinnerShare;
 
         return

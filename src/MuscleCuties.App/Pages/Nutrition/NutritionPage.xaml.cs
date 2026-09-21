@@ -12,7 +12,7 @@ public partial class NutritionPage : ContentPage
 
     public NutritionPage(NutritionViewModel vm)
     {
-        InitializeComponent();
+        this.InitializeWithTiming(InitializeComponent);
         _viewModel = vm;
     }
 
@@ -46,8 +46,7 @@ public partial class NutritionPage : ContentPage
 
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is not (nameof(NutritionViewModel.IsAddFoodPanelVisible) or
-            nameof(NutritionViewModel.IsFoodSearchModalVisible) or
+        if (e.PropertyName is not (nameof(NutritionViewModel.IsMealEditorVisible) or
             nameof(NutritionViewModel.IsBreakdownModalVisible) or
             nameof(NutritionViewModel.IsSuggestionModalVisible) or
             nameof(NutritionViewModel.IsMealDetailVisible) or
@@ -77,10 +76,21 @@ public partial class NutritionPage : ContentPage
 
     private async Task LoadRequestedViewsAsync()
     {
-        await MealEditor.LoadIfNeededAsync(_viewModel.IsAddFoodPanelVisible);
-        await FoodSearch.LoadIfNeededAsync(_viewModel.IsFoodSearchModalVisible);
+        await MealEditor.LoadIfNeededAsync(_viewModel.IsMealEditorVisible);
         await Breakdown.LoadIfNeededAsync(_viewModel.IsBreakdownModalVisible);
         await Suggestions.LoadIfNeededAsync(_viewModel.IsSuggestionModalVisible);
         await MealDetail.LoadIfNeededAsync(_viewModel.IsMealDetailVisible);
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (!_viewModel.IsMealEditorVisible)
+            return base.OnBackButtonPressed();
+
+        if (_viewModel.IsFoodFinderVisible)
+            _viewModel.MealEditorBackCommand.Execute(null);
+        else
+            _viewModel.ToggleMealEditorCommand.Execute(null);
+        return true;
     }
 }

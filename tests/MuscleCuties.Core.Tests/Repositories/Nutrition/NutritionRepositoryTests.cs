@@ -1,3 +1,6 @@
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Repositories.Nutrition;
@@ -11,6 +14,31 @@ public class NutritionRepositoryTests : IDisposable
     public void Dispose()
     {
         _fixture.Dispose();
+    }
+
+    [Fact]
+    public async Task LoggedMeals_CanBeReadWithoutLegacyTemplateColumn()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        await using var db = new AppDatabase(new DbContextOptionsBuilder<AppDatabase>()
+            .UseSqlite(connection)
+            .Options);
+
+        await db.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE "LoggedMeals" (
+                "Id" INTEGER PRIMARY KEY,
+                "UserId" INTEGER NOT NULL,
+                "Date" TEXT NOT NULL,
+                "LoggedAt" TEXT NOT NULL,
+                "MealType" INTEGER NOT NULL,
+                "CreatedAt" TEXT NOT NULL
+            )
+            """);
+
+        var meals = await db.LoggedMeals.AsNoTracking().ToListAsync();
+
+        Assert.Empty(meals);
     }
 
     [Fact]
@@ -186,7 +214,7 @@ public class NutritionRepositoryTests : IDisposable
             LoggedAt = loggedAt,
             MealType = MealType.Snack,
             CreatedAt = DateTime.UtcNow,
-            Entries = [new LoggedMealIngredient { FoodItemId = item.Id, Grams = 150 }]
+            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 150 }]
         };
         await repo.AddLoggedMealAsync(meal);
 
@@ -221,7 +249,7 @@ public class NutritionRepositoryTests : IDisposable
             LoggedAt = today.AddHours(9),
             MealType = MealType.Breakfast,
             CreatedAt = DateTime.UtcNow,
-            Entries = [new LoggedMealIngredient { FoodItemId = item.Id, Grams = 100 }]
+            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 100 }]
         });
         await repo.AddLoggedMealAsync(new LoggedMeal
         {
@@ -230,7 +258,7 @@ public class NutritionRepositoryTests : IDisposable
             LoggedAt = today.AddHours(18),
             MealType = MealType.Dinner,
             CreatedAt = DateTime.UtcNow,
-            Entries = [new LoggedMealIngredient { FoodItemId = item.Id, Grams = 100 }]
+            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 100 }]
         });
 
         var results = await repo.GetLoggedMealsByDateAsync(1, today);
@@ -261,7 +289,7 @@ public class NutritionRepositoryTests : IDisposable
             LoggedAt = DateTime.UtcNow.Date.AddHours(8),
             MealType = MealType.Breakfast,
             CreatedAt = DateTime.UtcNow,
-            Entries = [new LoggedMealIngredient { FoodItemId = item.Id, Grams = 100 }]
+            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 100 }]
         };
         await repo.AddLoggedMealAsync(meal);
         await repo.DeleteLoggedMealAsync(meal);

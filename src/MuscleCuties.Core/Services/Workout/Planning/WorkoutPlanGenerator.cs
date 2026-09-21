@@ -29,6 +29,7 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
 
     private readonly AppDatabase _database;
     private readonly IReadinessRepository _dailyRepository;
+    private readonly IWorkoutInjuryRepository _injuryRepository;
     private readonly IExercisePickerService _exercisePicker;
     private readonly IGatingEngine _gating;
     private readonly IReadinessEngine _readiness;
@@ -38,6 +39,7 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
         AppDatabase database,
         IWeekPlanGenerator weekGenerator,
         IExercisePickerService exercisePicker,
+        IWorkoutInjuryRepository injuryRepository,
         IReadinessRepository dailyRepository,
         IReadinessEngine readiness,
         IGatingEngine gating)
@@ -45,6 +47,7 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
         _database = database;
         _weekGenerator = weekGenerator;
         _exercisePicker = exercisePicker;
+        _injuryRepository = injuryRepository;
         _dailyRepository = dailyRepository;
         _readiness = readiness;
         _gating = gating;
@@ -83,7 +86,8 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
         await _database.SeedWorkoutPlanningDataAsync().ConfigureAwait(false);
         var exerciseLibrary = await _database.Exercises.AsNoTracking().ToListAsync().ConfigureAwait(false);
 
-        var adaptiveProfile = AdaptiveProfileMapper.FromUserProfile(profile);
+        var injuries = await _injuryRepository.GetActiveAsync(profile.UserId).ConfigureAwait(false);
+        var adaptiveProfile = AdaptiveProfileMapper.FromUserProfile(profile, injuries);
         var week = await _weekGenerator.GenerateWeekAsync(new WeekGenerationInput
         {
             DaysPerWeek = adaptiveProfile.DaysPerWeek,
@@ -104,6 +108,8 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
             .GetConsecutiveLowDaysAsync(profile.UserId, today)
             .ConfigureAwait(false);
         var equipment = ExercisePickerService.MapEquipment(adaptiveProfile.Equipment);
+        var injuryFlags = WorkoutInjuryRules.ToFlags(adaptiveProfile.Injuries);
+        var blockedActivities = WorkoutInjuryRules.GetBlockedActivities(adaptiveProfile.Injuries);
         var exerciseLookup = BuildExerciseLookup(exerciseLibrary);
 
         var plan = new WorkoutPlan
@@ -143,6 +149,9 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
                         consecutiveLowDays).Activity;
                 }
 
+                if (blockedActivities.Contains(activity))
+                    activity = WorkoutActivityType.Yoga;
+
                 var day = activity == WorkoutActivityType.Yoga
                     ? BuildRecoveryDay(session, adaptiveProfile, exerciseLookup)
                     : BuildConditioningDay(session, activity, phase, exerciseLookup);
@@ -162,7 +171,9 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
                 session,
                 strengthGating,
                 equipment,
-                exerciseLookup).ConfigureAwait(false);
+                injuryFlags,
+                exerciseLookup,
+                profile.UserId).ConfigureAwait(false);
             plan.WorkoutDays.Add(strengthDay);
         }
 
@@ -184,7 +195,9 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
         PlannedSession session,
         GatingResult gating,
         EquipmentSet equipment,
-        IReadOnlyDictionary<string, Exercise> exerciseLookup)
+        InjuryFlag injuries,
+        IReadOnlyDictionary<string, Exercise> exerciseLookup,
+        int userId = 0)
     {
         if (gating.SetMultiplier <= 0)
         {
@@ -199,8 +212,10 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
         var prescribed = await _exercisePicker.PickForSessionAsync(
             session,
             equipment,
+            injuries,
             gating.SetMultiplier,
-            gating.RpeCap);
+            gating.RpeCap,
+            userId);
         var day = new WorkoutDay
         {
             DayOfWeek = ToDayIndex(session.Day),

@@ -20,6 +20,169 @@ public class NutritionViewModelTests
     private readonly ICycleService _cycleService = Substitute.For<ICycleService>();
     private readonly INutritionService _nutritionService = Substitute.For<INutritionService>();
 
+    [Fact]
+    public void ManualMeal_OpensSharedEditorWithSelectedMealType()
+    {
+        var vm = CreateViewModel();
+        vm.OpenMealEntryCommand.Execute(null);
+        vm.SelectEntryMealTypeCommand.Execute(MealType.Dinner);
+        vm.StartManualMealCommand.Execute(null);
+
+        Assert.True(vm.IsMealEditorVisible);
+        Assert.False(vm.IsMealEntryModalVisible);
+        Assert.True(vm.IsFoodFinderCollapsed);
+        Assert.Equal(MealType.Dinner, vm.SelectedMealType);
+        Assert.False(vm.LogMealCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void AddIngredient_ReturnsToSummaryWithLiveTotals()
+    {
+        var vm = CreateViewModel();
+        vm.OpenMealEditorCommand.Execute(null);
+        vm.OpenFoodFinderCommand.Execute(null);
+        vm.SelectFoodResultCommand.Execute(new FoodSearchResultItem
+        {
+            FoodItemId = 10, Name = "Oats", Calories = 200, Protein = 10, Carbs = 30, Fats = 4
+        });
+        vm.FoodGrams = "50";
+
+        vm.AddIngredientCommand.Execute(null);
+
+        Assert.True(vm.IsMealEditorVisible);
+        Assert.True(vm.IsFoodFinderCollapsed);
+        Assert.Null(vm.SelectedFoodResult);
+        Assert.Single(vm.MealIngredients);
+        Assert.Equal("100 kcal", vm.MealDraftCaloriesText);
+        Assert.Equal("5.0 g", vm.MealDraftProteinText);
+        Assert.Equal("15.0 g", vm.MealDraftCarbsText);
+        Assert.Equal("2.0 g", vm.MealDraftFatsText);
+    }
+
+    [Fact]
+    public void EditIngredient_ReplacesPortionInsteadOfAddingItAgain()
+    {
+        var vm = CreateViewModel();
+        var ingredient = new MealIngredientItem { FoodItemId = 10, Name = "Oats", Grams = 100, Calories = 200 };
+        vm.MealIngredients.Add(ingredient);
+        vm.EditIngredientCommand.Execute(ingredient);
+        Assert.Equal("Update ingredient", vm.IngredientActionText);
+        Assert.Equal("100", vm.FoodGrams);
+
+        vm.FoodGrams = "50";
+        vm.AddIngredientCommand.Execute(null);
+
+        Assert.Equal(50, Assert.Single(vm.MealIngredients).Grams);
+        Assert.Equal("100 kcal", vm.MealDraftCaloriesText);
+        Assert.True(vm.IsFoodFinderCollapsed);
+    }
+
+    [Fact]
+    public void CancelPortionEdit_PreservesIngredient()
+    {
+        var vm = CreateViewModel();
+        var ingredient = new MealIngredientItem { FoodItemId = 10, Name = "Oats", Grams = 100, Calories = 200 };
+        vm.MealIngredients.Add(ingredient);
+        vm.EditIngredientCommand.Execute(ingredient);
+        vm.FoodGrams = "50";
+
+        vm.MealEditorBackCommand.Execute(null);
+
+        Assert.Same(ingredient, Assert.Single(vm.MealIngredients));
+        Assert.Equal(100, ingredient.Grams);
+        Assert.True(vm.IsFoodFinderCollapsed);
+    }
+
+    [Fact]
+    public void AcceptSuggestion_OpensSameEditorAndRecalculatesChangedPortion()
+    {
+        var vm = CreateViewModel();
+        vm.IsEditingMeal = true;
+        vm.SuggestionMealType = MealType.Lunch;
+        vm.IsSuggestionModalVisible = true;
+        vm.IsMealDetailVisible = true;
+        vm.AcceptSuggestionCommand.Execute(new MealSuggestionItem
+        {
+            Components = [new MealSuggestionComponentItem { FoodItemId = 2, Name = "Rice", Grams = 150, Calories = 100 }]
+        });
+
+        Assert.True(vm.IsMealEditorVisible);
+        Assert.False(vm.IsSuggestionModalVisible);
+        Assert.False(vm.IsMealDetailVisible);
+        Assert.False(vm.IsEditingMeal);
+        Assert.Equal(MealType.Lunch, vm.SelectedMealType);
+        Assert.Equal("150 kcal", vm.MealDraftCaloriesText);
+        vm.EditIngredientCommand.Execute(vm.MealIngredients.Single());
+        vm.FoodGrams = "200";
+        vm.AddIngredientCommand.Execute(null);
+        Assert.Equal("200 kcal", vm.MealDraftCaloriesText);
+    }
+
+    [Fact]
+    public async Task SearchFailure_CanRetryWithoutLosingDraft()
+    {
+        _nutritionService.SearchFoodItemsAsync("oats").Returns(Task.FromException<List<FoodItem>>(new HttpRequestException()));
+        var vm = CreateViewModel();
+        vm.MealIngredients.Add(new MealIngredientItem { FoodItemId = 1, Name = "Milk", Grams = 100, Calories = 60 });
+        vm.SearchQuery = "oats";
+        await vm.SearchFoodCommand.ExecuteAsync(null);
+
+        Assert.False(vm.IsSearchingFood);
+        Assert.False(vm.IsBusy);
+        Assert.True(vm.HasAddFoodMessage);
+        Assert.Single(vm.MealIngredients);
+
+        _nutritionService.SearchFoodItemsAsync("oats").Returns([new FoodItem { Id = 2, Name = "Oats", Calories = 200 }]);
+        await vm.SearchFoodCommand.ExecuteAsync(null);
+        Assert.Single(vm.FoodSearchResults);
+        Assert.True(vm.IsIngredientSearchVisible);
+        Assert.False(vm.HasAddFoodMessage);
+    }
+
+    [Fact]
+    public async Task EmptySearch_StaysInEditorWithUsefulMessage()
+    {
+        _nutritionService.SearchFoodItemsAsync("qqqq").Returns([]);
+        var vm = CreateViewModel();
+        vm.OpenMealEditorCommand.Execute(null);
+        vm.SearchQuery = "qqqq";
+
+        await vm.SearchFoodCommand.ExecuteAsync(null);
+
+        Assert.Empty(vm.FoodSearchResults);
+        Assert.True(vm.IsMealEditorVisible);
+        Assert.True(vm.IsIngredientSearchVisible);
+        Assert.Contains("No foods found", vm.AddFoodMessage);
+        Assert.False(vm.IsSearchingFood);
+    }
+
+    [Fact]
+    public async Task ClosingEditor_DiscardsLateSearchResults()
+    {
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var result = new TaskCompletionSource<List<FoodItem>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _nutritionService.SearchFoodItemsAsync("oats").Returns(_ =>
+        {
+            started.SetResult();
+            return result.Task;
+        });
+        var vm = CreateViewModel();
+        vm.OpenMealEditorCommand.Execute(null);
+        vm.SearchQuery = "oats";
+        var search = vm.SearchFoodCommand.ExecuteAsync(null);
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(vm.IsSearchingFood);
+        Assert.False(vm.IsBusy);
+
+        vm.ToggleMealEditorCommand.Execute(null);
+        result.SetResult([new FoodItem { Id = 2, Name = "Oats", Calories = 200 }]);
+        await search;
+
+        Assert.False(vm.IsMealEditorVisible);
+        Assert.False(vm.IsSearchingFood);
+        Assert.Empty(vm.FoodSearchResults);
+    }
+
     private IServiceScopeFactory BuildScopeFactory()
     {
         var serviceProvider = Substitute.For<IServiceProvider>();
@@ -73,7 +236,7 @@ public class NutritionViewModelTests
                 MealType = MealType.Breakfast,
                 Entries =
                 [
-                    new LoggedMealIngredient
+                    new LoggedMealEntry
                     {
                         Grams = 100f,
                         FoodItem = new FoodItem
@@ -269,7 +432,7 @@ public class NutritionViewModelTests
 
         var selectedTime = new TimeSpan(12, 30, 0);
         var vm = CreateViewModel();
-        vm.IsAddFoodPanelVisible = true;
+        vm.IsMealEditorVisible = true;
         vm.SelectedFoodResult = new FoodSearchResultItem
         { FoodItemId = 10, Name = "Olive oil", Calories = 884f, Fats = 100f };
         vm.FoodGrams = "10";
@@ -287,7 +450,7 @@ public class NutritionViewModelTests
                 items.Single().Grams == 10f),
             MealType.Snack,
             Arg.Is<DateTime>(d => d.Date == DateTime.Today && d.TimeOfDay == selectedTime));
-        Assert.False(vm.IsAddFoodPanelVisible);
+        Assert.False(vm.IsMealEditorVisible);
         Assert.Empty(vm.MealIngredients);
         Assert.True(vm.HasMeals);
         Assert.False(vm.HasNoMeals);
@@ -484,7 +647,7 @@ public class NutritionViewModelTests
                     MealType = MealType.Snack,
                     Entries =
                     [
-                        new LoggedMealIngredient
+                        new LoggedMealEntry
                         {
                             Grams = 10,
                             FoodItem = new FoodItem
@@ -528,7 +691,7 @@ public class NutritionViewModelTests
                     MealType = MealType.Breakfast,
                     Entries =
                     [
-                        new LoggedMealIngredient
+                        new LoggedMealEntry
                         {
                             Grams = 100f,
                             FoodItem = new FoodItem

@@ -5,10 +5,11 @@
     x:Name="WorkoutRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Workout;assembly=MuscleCuties.Core"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:workoutControls="clr-namespace:MuscleCuties.App.Controls.Workout"
+    xmlns:injuryControls="clr-namespace:MuscleCuties.App.Controls.Injury"
     xmlns:workoutModels="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core"
     x:DataType="vm:WorkoutViewModel"
     Shell.NavBarIsVisible="False">
@@ -36,21 +37,92 @@
 
                         <Border
                             Grid.Column="1" Grid.RowSpan="2"
-                            WidthRequest="44"
-                            HeightRequest="44"
+                            WidthRequest="48"
+                            HeightRequest="48"
                             StrokeShape="RoundRectangle 22"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
                             StrokeThickness="0"
                             VerticalOptions="Center"
-                            SemanticProperties.Description="Training">
-                            <Image
-                                Source="{AppThemeBinding Light=tab_train.png, Dark=tab_train_dark.png}"
-                                WidthRequest="21"
-                                HeightRequest="21"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
+                            SemanticProperties.Description="Open injury log"
+                            SemanticProperties.Hint="{Binding InjuryBannerSummary}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding OpenInjuryModalCommand}" />
+                            </Border.GestureRecognizers>
+                            <Grid>
+                                <mi:MauiIcon Icon="{mi:Fluent HeartPulse24}" IconSize="24"
+                                    IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="24" HeightRequest="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                                <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" Margin="0,7,7,0"
+                                    Color="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
+                                    HorizontalOptions="End" VerticalOptions="Start" IsVisible="{Binding HasActiveInjuries}"
+                                    InputTransparent="True" />
+                            </Grid>
                         </Border>
                     </Grid>
+
+                    <!-- Injury banner -->
+                    <Border StrokeShape="RoundRectangle 12" Padding="14,12" StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource WarningSurfaceLight}, Dark={StaticResource WarningSurfaceDark}}"
+                            IsVisible="{Binding HasActiveInjuries}">
+                        <VerticalStackLayout Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <Label Text="{Binding InjuryBannerSummary}" FontSize="13" LineBreakMode="TailTruncation"
+                                       VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Details" FontSize="12"
+                                       TextColor="{StaticResource Primary}" VerticalOptions="Center">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ToggleInjuryBannerCommand}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+                            </Grid>
+
+                            <VerticalStackLayout Spacing="10" IsVisible="{Binding IsInjuryBannerExpanded}">
+                                <!-- Blocked exercises -->
+                                <VerticalStackLayout Spacing="4" IsVisible="{Binding HasBlockedExercises}">
+                                    <Label Text="Blocked exercises" FontSize="12" FontAttributes="Bold" Style="{StaticResource MutedLabel}" />
+                                    <VerticalStackLayout Spacing="2" BindableLayout.ItemsSource="{Binding BlockedExerciseNames}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Label Text="{Binding .}" FontSize="12" Style="{StaticResource MutedLabel}" Margin="8,0,0,0" />
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+
+                                <!-- Rehab recommendations -->
+                                <VerticalStackLayout Spacing="4" IsVisible="{Binding HasRehabExercises}">
+                                    <Label Text="Rehab recommendations" FontSize="12" FontAttributes="Bold"
+                                           TextColor="{StaticResource Primary}" />
+                                    <VerticalStackLayout Spacing="2" BindableLayout.ItemsSource="{Binding RehabExerciseNames}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Label Text="{Binding .}" FontSize="12" Style="{StaticResource AccentLabel}" Margin="8,0,0,0" />
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+
+                                <!-- Blocked cardio -->
+                                <VerticalStackLayout Spacing="4" IsVisible="{Binding HasBlockedCardio}">
+                                    <Label Text="Blocked activities" FontSize="12" FontAttributes="Bold" Style="{StaticResource MutedLabel}" />
+                                    <VerticalStackLayout Spacing="2" BindableLayout.ItemsSource="{Binding BlockedCardioNames}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Label Text="{Binding .}" FontSize="12" Style="{StaticResource MutedLabel}" Margin="8,0,0,0" />
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+
+                                <!-- Manage link -->
+                                <Label Text="Manage injuries" FontSize="13" TextColor="{StaticResource Primary}" HorizontalOptions="End">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding NavigateToInjuryLogCommand}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
 
                     <workoutControls:FeaturedWorkoutCard
                         BadgeText="{Binding FeaturedWorkoutBadgeText}"
@@ -172,14 +244,11 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <workoutControls:WorkoutSessionModal
-            x:Name="WorkoutModal"
-            IsOpen="{Binding IsWorkoutModalVisible}" />
-        <toolkit:LazyView
-            x:Name="SaluteOverlay"
-            x:TypeArguments="sharedControls:PhaseSaluteOverlay"
-            InputTransparent="True" />
         <sharedControls:PageLoadingOverlay />
+        <injuryControls:InjuryLogModal
+            BindingContext="{Binding InjuryLogVm}"
+            IsOpen="{Binding BindingContext.IsInjuryModalVisible, Source={x:Reference WorkoutRoot}}"
+            CloseCommand="{Binding BindingContext.CloseInjuryModalCommand, Source={x:Reference WorkoutRoot}}" />
     </Grid>
 
 </ContentPage>

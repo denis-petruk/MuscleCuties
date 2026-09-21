@@ -2,20 +2,15 @@ namespace MuscleCuties.App.Controls.Shared;
 
 public class AnimatedModalView : ContentView
 {
-    public static readonly BindableProperty IsOpenProperty = BindableProperty.Create(
-        nameof(IsOpen),
-        typeof(bool),
-        typeof(AnimatedModalView),
-        false,
-        propertyChanged: OnIsOpenChanged);
-
-    private int _transitionVersion;
-
     public AnimatedModalView()
     {
         IsVisible = false;
         InputTransparent = true;
     }
+
+    public static readonly BindableProperty IsOpenProperty =
+        BindableProperty.Create(nameof(IsOpen), typeof(bool), typeof(AnimatedModalView), false,
+            propertyChanged: OnIsOpenChanged);
 
     public bool IsOpen
     {
@@ -32,34 +27,22 @@ public class AnimatedModalView : ContentView
         if (bindable is not AnimatedModalView modal)
             return;
 
-        if ((bool)newValue)
-            modal.Open();
-        else
-            modal.Close();
-    }
-
-    private void Open()
-    {
-        _transitionVersion++;
-        PrepareForOpen();
-        IsVisible = true;
-        InputTransparent = false;
-        ModalTransition.PlayShow(this);
-    }
-
-    private void Close()
-    {
-        var transitionVersion = ++_transitionVersion;
-        if (!IsVisible)
-            return;
-
-        InputTransparent = true;
-        ModalTransition.PlayHide(this, () =>
+        var open = (bool)newValue;
+        if (open)
         {
-            if (transitionVersion != _transitionVersion || IsOpen)
-                return;
-
-            IsVisible = false;
-        });
+            modal.PrepareForOpen();
+            modal.IsVisible = true;
+            modal.InputTransparent = false;
+            ModalTransition.PlayShow(modal);
+        }
+        else
+        {
+            modal.InputTransparent = true;
+            ModalTransition.PlayHide(modal, () =>
+            {
+                if (!modal.IsOpen)
+                    modal.IsVisible = false;
+            });
+        }
     }
 }

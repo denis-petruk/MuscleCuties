@@ -66,11 +66,11 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
                 (f.Ingredients != null && EF.Functions.Like(f.Ingredients, tokenPattern)));
         }
 
-        return await foodItems
+        return await ReadAsync(() => foodItems
             .OrderBy(f => f.Name)
             .ThenBy(f => f.BrandOwner)
             .ThenBy(f => f.BrandName)
-            .ToListAsync();
+            .ToListAsync());
     }
 
     public async Task<List<FoodItem>> GetFoodItemsByIdsAsync(IEnumerable<int> foodItemIds)
@@ -79,17 +79,17 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
         if (ids.Count == 0)
             return [];
 
-        return await _db.FoodItems
+        return await ReadAsync(() => _db.FoodItems
             .AsNoTracking()
             .Where(food => ids.Contains(food.Id))
-            .ToListAsync();
+            .ToListAsync());
     }
 
     public async Task<FoodItem?> GetFoodItemByFdcIdAsync(int fdcId)
     {
-        return await _db.FoodItems
+        return await ReadAsync(() => _db.FoodItems
             .AsNoTracking()
-            .FirstOrDefaultAsync(f => f.FdcId == fdcId);
+            .FirstOrDefaultAsync(f => f.FdcId == fdcId));
     }
 
     public async Task<List<FoodItem>> GetFoodItemsByFdcIdsAsync(IEnumerable<int> fdcIds)
@@ -98,10 +98,10 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
         if (ids.Count == 0)
             return [];
 
-        return await _db.FoodItems
+        return await ReadAsync(() => _db.FoodItems
             .AsNoTracking()
             .Where(food => food.FdcId.HasValue && ids.Contains(food.FdcId.Value))
-            .ToListAsync();
+            .ToListAsync());
     }
 
     public async Task SaveFoodItemsAsync(
@@ -127,20 +127,20 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
 
     public async Task<FoodItem?> GetFoodItemAsync(int foodItemId)
     {
-        return await _db.FoodItems
+        return await ReadAsync(() => _db.FoodItems
             .AsNoTracking()
-            .FirstOrDefaultAsync(f => f.Id == foodItemId);
+            .FirstOrDefaultAsync(f => f.Id == foodItemId));
     }
 
     public async Task<List<LoggedMeal>> GetLoggedMealsByDateAsync(int userId, DateTime date)
     {
-        return await _db.LoggedMeals
+        return await ReadAsync(() => _db.LoggedMeals
             .AsNoTracking()
             .Where(m => m.UserId == userId && m.LoggedAt >= date.Date && m.LoggedAt < date.Date.AddDays(1))
             .Include(m => m.Entries)
             .ThenInclude(e => e.FoodItem)
             .OrderBy(m => m.LoggedAt)
-            .ToListAsync();
+            .ToListAsync());
     }
 
     public async Task<List<LoggedMeal>> GetLoggedMealsByDateRangeAsync(
@@ -151,21 +151,21 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
         var rangeStart = startDate.Date;
         var rangeEnd = endDate.Date.AddDays(1);
 
-        return await _db.LoggedMeals
+        return await ReadAsync(() => _db.LoggedMeals
             .AsNoTracking()
             .Where(m => m.UserId == userId && m.LoggedAt >= rangeStart && m.LoggedAt < rangeEnd)
             .OrderByDescending(m => m.LoggedAt)
-            .ToListAsync();
+            .ToListAsync());
     }
 
     public async Task<LoggedMeal?> GetLoggedMealAsync(int userId, int loggedMealId)
     {
-        return await _db.LoggedMeals
+        return await ReadAsync(() => _db.LoggedMeals
             .AsNoTracking()
             .Where(m => m.UserId == userId && m.Id == loggedMealId)
             .Include(m => m.Entries)
             .ThenInclude(e => e.FoodItem)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync());
     }
 
     public async Task AddLoggedMealAsync(LoggedMeal meal)
@@ -199,10 +199,9 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
         existing.LoggedAt = meal.LoggedAt;
         existing.Date = meal.LoggedAt.Date;
         existing.MealType = meal.MealType;
-
-        _db.LoggedMealIngredients.RemoveRange(existing.Entries);
+        _db.LoggedMealEntries.RemoveRange(existing.Entries);
         foreach (var entry in meal.Entries)
-            existing.Entries.Add(new LoggedMealIngredient
+            existing.Entries.Add(new LoggedMealEntry
             {
                 FoodItemId = entry.FoodItemId,
                 Grams = entry.Grams

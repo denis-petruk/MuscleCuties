@@ -3,7 +3,6 @@ using MuscleCuties.Core.Models.Entities.Cycle;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Repositories.Users;
-using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
@@ -16,7 +15,6 @@ public class CycleViewModelTests
 {
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
     private readonly ICycleService _cycleService = Substitute.For<ICycleService>();
-    private readonly IAppPreloadService _preloadService = Substitute.For<IAppPreloadService>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
 
     private IServiceScopeFactory BuildScopeFactory()
@@ -39,7 +37,6 @@ public class CycleViewModelTests
     {
         return new CycleViewModel(
             BuildScopeFactory(),
-            new Lazy<IAppPreloadService>(() => _preloadService),
             currentDateProvider: () => currentDate ?? DateTime.Today);
     }
 
