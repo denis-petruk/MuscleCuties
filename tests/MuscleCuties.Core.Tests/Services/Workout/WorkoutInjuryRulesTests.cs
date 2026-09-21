@@ -7,9 +7,9 @@ namespace MuscleCuties.Core.Tests.Services.Workout;
 public class WorkoutInjuryRulesTests
 {
     [Theory]
-    [InlineData(InjurySite.Ankle)]
-    [InlineData(InjurySite.Metatarsal)]
-    public void AcuteFootOrAnkleInjuryBlocksImpactActivities(InjurySite site)
+    [InlineData(InjuryFlag.Ankle)]
+    [InlineData(InjuryFlag.Metatarsal)]
+    public void AcuteFootOrAnkleInjuryBlocksImpactActivities(InjuryFlag site)
     {
         var blocked = WorkoutInjuryRules.GetBlockedActivities(
             [new Injury(site, InjuryStatus.Acute, DateOnly.FromDateTime(DateTime.Today))]);
@@ -23,7 +23,7 @@ public class WorkoutInjuryRulesTests
     public void RecoveringAnkleOnlyBlocksHiit()
     {
         var blocked = WorkoutInjuryRules.GetBlockedActivities(
-            [new Injury(InjurySite.Ankle, InjuryStatus.Recovering, DateOnly.FromDateTime(DateTime.Today))]);
+            [new Injury(InjuryFlag.Ankle, InjuryStatus.Recovering, DateOnly.FromDateTime(DateTime.Today))]);
 
         Assert.Contains(WorkoutActivityType.Hiit, blocked);
         Assert.DoesNotContain(WorkoutActivityType.Running, blocked);
@@ -34,7 +34,7 @@ public class WorkoutInjuryRulesTests
     public void AcuteShoulderBlocksSwimmingAndClimbing()
     {
         var blocked = WorkoutInjuryRules.GetBlockedActivities(
-            [new Injury(InjurySite.Shoulder, InjuryStatus.Acute, DateOnly.FromDateTime(DateTime.Today))]);
+            [new Injury(InjuryFlag.Shoulder, InjuryStatus.Acute, DateOnly.FromDateTime(DateTime.Today))]);
 
         Assert.Contains(WorkoutActivityType.Swimming, blocked);
         Assert.Contains(WorkoutActivityType.RockClimbing, blocked);
@@ -44,8 +44,26 @@ public class WorkoutInjuryRulesTests
     public void ClearedInjuryDoesNotBlockActivities()
     {
         var blocked = WorkoutInjuryRules.GetBlockedActivities(
-            [new Injury(InjurySite.Knee, InjuryStatus.Cleared, DateOnly.FromDateTime(DateTime.Today))]);
+            [new Injury(InjuryFlag.Knee, InjuryStatus.Cleared, DateOnly.FromDateTime(DateTime.Today))]);
 
         Assert.Empty(blocked);
+    }
+
+    [Fact]
+    public void HipInjuryBlocksRunning()
+    {
+        var blocked = WorkoutInjuryRules.GetBlockedActivities(
+            [new Injury(InjuryFlag.Hip, InjuryStatus.Acute, DateOnly.FromDateTime(DateTime.Today))]);
+
+        Assert.Contains(WorkoutActivityType.Running, blocked);
+    }
+
+    [Fact]
+    public void AcuteNeckBlocksSwimming()
+    {
+        var blocked = WorkoutInjuryRules.GetBlockedActivities(
+            [new Injury(InjuryFlag.Neck, InjuryStatus.Acute, DateOnly.FromDateTime(DateTime.Today))]);
+
+        Assert.Contains(WorkoutActivityType.Swimming, blocked);
     }
 }

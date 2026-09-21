@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
@@ -15,11 +16,10 @@ namespace MuscleCuties.Core.ViewModels.Quiz;
 
 public partial class QuizViewModel : ObservableObject
 {
-    private readonly IAuthService _authService;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly Func<Task> _navigateToDashboardAsync;
     private readonly IAppPreloadService _preloadService;
     private readonly QuizQuestionCache _quizQuestionCache;
-    private readonly IQuizService _quizService;
     private readonly List<(int QuestionId, int AnswerId)> _selectedAnswers = new();
 
     [ObservableProperty] private ObservableCollection<SelectableQuizAnswer> _currentAnswers = new();
@@ -52,14 +52,12 @@ public partial class QuizViewModel : ObservableObject
     [ObservableProperty] private List<QuizQuestion> _questions = new();
 
     public QuizViewModel(
-        IAuthService authService,
-        IQuizService quizService,
+        IServiceScopeFactory scopeFactory,
         IAppPreloadService preloadService,
         QuizQuestionCache quizQuestionCache,
         Func<Task> navigateToDashboardAsync)
     {
-        _authService = authService;
-        _quizService = quizService;
+        _scopeFactory = scopeFactory;
         _preloadService = preloadService;
         _quizQuestionCache = quizQuestionCache;
         _navigateToDashboardAsync = navigateToDashboardAsync;
@@ -163,7 +161,12 @@ public partial class QuizViewModel : ObservableObject
         try
         {
             var loadedQuestions = await _quizQuestionCache.GetOrLoadAsync(
-                () => DataLoadScheduler.RunAsync(_quizService.GetOnboardingQuestionsAsync));
+                () => DataLoadScheduler.RunAsync(async () =>
+                {
+                    using var scope = _scopeFactory.CreateScope();
+                    return await scope.ServiceProvider.GetRequiredService<IQuizService>()
+                        .GetOnboardingQuestionsAsync();
+                }));
             ApplyQuestions(loadedQuestions);
         }
         catch
@@ -492,7 +495,6 @@ public partial class QuizViewModel : ObservableObject
         {
             IsPreparingDashboard = true;
 
-            var userId = await DataLoadScheduler.RunAsync(_authService.GetCurrentUserIdAsync);
             var responses = _selectedAnswers
                 .Select(selection => new UserQuizResponse
                 {
@@ -502,13 +504,26 @@ public partial class QuizViewModel : ObservableObject
                 .ToList();
 
             var stageStopwatch = Stopwatch.StartNew();
-            await DataLoadScheduler.RunAsync(() => _quizService.SaveAnswersAsync(userId, responses));
+            await DataLoadScheduler.RunAsync(async () =>
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var userId = await scope.ServiceProvider.GetRequiredService<IAuthService>().GetCurrentUserIdAsync();
+                await scope.ServiceProvider.GetRequiredService<IQuizService>().SaveAnswersAsync(userId, responses);
+            });
             Trace.WriteLine(
                 $"[Performance][Quiz] Answers and profile saved in {stageStopwatch.ElapsedMilliseconds} ms.");
 
             _preloadService.InvalidateAll();
             stageStopwatch.Restart();
-            await _preloadService.PreloadDashboardAsync();
+            try
+            {
+                await _preloadService.PreloadDashboardAsync();
+            }
+            catch (Exception preloadEx)
+            {
+                Trace.WriteLine(
+                    $"[WARN][Quiz] Dashboard preload failed (non-fatal, will retry on page load): {preloadEx}");
+            }
             Trace.WriteLine(
                 $"[Performance][Quiz] Dashboard data prepared in {stageStopwatch.ElapsedMilliseconds} ms.");
 
@@ -522,7 +537,11 @@ public partial class QuizViewModel : ObservableObject
         catch (Exception ex)
         {
             IsPreparingDashboard = false;
+#if DEBUG
+            ErrorMessage = $"Save failed: {ex.GetType().Name}: {ex.Message}";
+#else
             ErrorMessage = "We could not save your answers. Please try again.";
+#endif
             Trace.WriteLine($"[ERROR][Quiz] SaveAnswersAsync failed: {ex}");
         }
         finally

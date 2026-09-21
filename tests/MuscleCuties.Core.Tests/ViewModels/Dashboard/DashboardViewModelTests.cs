@@ -31,6 +31,7 @@ public class DashboardViewModelTests
     private readonly IProgressSummaryService _progressSummaryService = Substitute.For<IProgressSummaryService>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IWorkoutService _workoutService = Substitute.For<IWorkoutService>();
+    private readonly IWorkoutInjuryRepository _injuryRepository = Substitute.For<IWorkoutInjuryRepository>();
 
     private IServiceScopeFactory BuildScopeFactory()
     {
@@ -43,6 +44,8 @@ public class DashboardViewModelTests
         serviceProvider.GetService(typeof(IProgressSummaryService)).Returns(_progressSummaryService);
         serviceProvider.GetService(typeof(IDashboardPlanner)).Returns(_dashboardPlanner);
         serviceProvider.GetService(typeof(IReadinessRepository)).Returns(_readinessRepository);
+        serviceProvider.GetService(typeof(IWorkoutInjuryRepository)).Returns(_injuryRepository);
+        _injuryRepository.GetActiveAsync(Arg.Any<int>()).Returns(Array.Empty<WorkoutInjuryLog>());
 
         var scope = Substitute.For<IServiceScope>();
         scope.ServiceProvider.Returns(serviceProvider);
@@ -92,6 +95,78 @@ public class DashboardViewModelTests
             .Returns(new ProgressSummary(3, 2, 4));
         _workoutService.GetTodaysSummaryAsync(1, phase, Arg.Any<DateTime>())
             .Returns(TodaysWorkoutSummary.RestDay);
+    }
+
+    [Fact]
+    public async Task LoadData_FailedWorker_DrainsOtherWorkersAndAllowsRetry()
+    {
+        ConfigureDefaultUserData();
+        var vm = CreateViewModel();
+        var progressStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var progressResult = new TaskCompletionSource<ProgressSummary>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _userRepository.GetProfileAsync(1)
+            .Returns(Task.FromException<UserProfile?>(new InvalidOperationException("profile failed")));
+        _progressSummaryService.GetSummaryAsync(1, Arg.Any<DateTime>()).Returns(_ =>
+        {
+            progressStarted.TrySetResult();
+            return progressResult.Task;
+        });
+
+        var load = vm.LoadDataCommand.ExecuteAsync(null);
+        try
+        {
+            await progressStarted.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.False(load.IsCompleted);
+            Assert.True(vm.IsBusy);
+        }
+        finally
+        {
+            progressResult.TrySetException(new InvalidOperationException("progress failed"));
+            await load.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+
+        Assert.True(vm.IsLoadError);
+        Assert.False(vm.IsBusy);
+        Assert.False(vm.IsPageLoading);
+
+        ConfigureDefaultUserData();
+        await vm.LoadDataCommand.ExecuteAsync(null);
+        Assert.False(vm.IsLoadError);
+        Assert.Equal("Denis", vm.DisplayName);
+    }
+
+    [Fact]
+    public async Task LoadData_ActiveInjurySetsBadgeAndCapsReadiness()
+    {
+        ConfigureDefaultUserData();
+        var vm = CreateViewModel();
+        _injuryRepository.GetActiveAsync(1).Returns(new[]
+        {
+            new WorkoutInjuryLog { UserId = 1, Status = "Acute", SiteFlag = 2 }
+        });
+        _readinessRepository.GetForAsync(1, Arg.Any<DateOnly>())
+            .Returns(new DailyReadinessLog { ReadinessScore = 96 });
+
+        await vm.LoadDataCommand.ExecuteAsync(null);
+
+        Assert.True(vm.HasActiveInjuries);
+        Assert.Equal(85, vm.ReadinessScore);
+        Assert.Equal("Limited by injury", vm.ReadinessLabel);
+    }
+
+    [Fact]
+    public async Task InjuryModal_OpensLoadsAndClosesWithoutNavigation()
+    {
+        var vm = CreateViewModel();
+        _authService.GetCurrentUserIdAsync().Returns(1);
+        _injuryRepository.GetAllAsync(1).Returns(Array.Empty<WorkoutInjuryLog>());
+
+        await vm.OpenInjuryModalCommand.ExecuteAsync(null);
+
+        Assert.True(vm.IsInjuryModalVisible);
+        Assert.True(vm.InjuryLogVm.HasNoInjuries);
+        vm.CloseInjuryModalCommand.Execute(null);
+        Assert.False(vm.IsInjuryModalVisible);
     }
 
     [Fact]

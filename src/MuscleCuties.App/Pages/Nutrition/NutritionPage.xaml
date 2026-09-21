@@ -42,7 +42,7 @@
                             VerticalOptions="Center"
                             SemanticProperties.Description="Add meal">
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleAddFoodPanelCommand}" />
+                                <TapGestureRecognizer Command="{Binding OpenMealEntryCommand}" />
                             </Border.GestureRecognizers>
                             <Path
                                 Data="M12 5v14M5 12h14"
@@ -66,40 +66,10 @@
 
                     <Button
                         Text="Log a meal"
-                        Command="{Binding ToggleAddFoodPanelCommand}"
-                        IsVisible="{Binding IsAddFoodPanelVisible, Converter={StaticResource InvertedBoolConverter}}"
+                        Command="{Binding OpenMealEntryCommand}"
                         MinimumHeightRequest="52"
                         FontAttributes="Bold"
                         Margin="0,4" />
-
-                    <Border
-                        Padding="12,8"
-                        MinimumHeightRequest="44"
-                        BackgroundColor="Transparent"
-                        StrokeThickness="0"
-                        HorizontalOptions="Center"
-                        SemanticProperties.Description="Suggest a meal">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding OpenSuggestMealCommand}" />
-                        </Border.GestureRecognizers>
-                        <HorizontalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
-                            <Path
-                                Data="M9 18h6M10 22h4M8.5 14.5A6 6 0 1 1 15.5 14.5C14.5 15.3 14 16 14 18h-4c0-2-.5-2.7-1.5-3.5Z"
-                                Style="{StaticResource NutritionLineIcon}"
-                                Stroke="{StaticResource Primary}"
-                                WidthRequest="20"
-                                HeightRequest="20" />
-                            <Label
-                                Text="Suggest a meal"
-                                Style="{StaticResource AccentLabel}"
-                                FontSize="14"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </Border>
-                    <toolkit:LazyView
-                        x:Name="MealEditor"
-                        x:TypeArguments="nutritionControls:AddMealPanel"
-                        IsVisible="{Binding IsAddFoodPanelVisible}" />
 
                     <sharedControls:IconSectionHeader
                         Text="Meals"
@@ -132,8 +102,8 @@
                                 VerticalOptions="Center" />
                             <Button
                                 Grid.Column="2"
-                                Text="Log Meal"
-                                Command="{Binding OpenAddFoodPanelCommand}"
+                                Text="Log meal"
+                                Command="{Binding OpenMealEntryCommand}"
                                 WidthRequest="124"
                                 MinimumHeightRequest="48"
                                 VerticalOptions="Center" />
@@ -241,10 +211,6 @@
         </CollectionView>
 
         <toolkit:LazyView
-            x:Name="FoodSearch"
-            x:TypeArguments="nutritionControls:FoodSearchModal"
-            InputTransparent="{Binding IsFoodSearchModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
-        <toolkit:LazyView
             x:Name="Breakdown"
             x:TypeArguments="nutritionControls:NutritionBreakdownModal"
             InputTransparent="{Binding IsBreakdownModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
@@ -257,9 +223,15 @@
             x:TypeArguments="nutritionControls:MealDetailModal"
             InputTransparent="{Binding IsMealDetailVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView
+            x:Name="MealEditor"
+            x:TypeArguments="nutritionControls:MealEditorModal"
+            InputTransparent="{Binding IsMealEditorVisible, Converter={StaticResource InvertedBoolConverter}}" />
+        <toolkit:LazyView
             x:Name="SaluteOverlay"
             x:TypeArguments="sharedControls:PhaseSaluteOverlay"
             InputTransparent="True" />
+        <nutritionControls:MealEntryModal
+            IsOpen="{Binding IsMealEntryModalVisible}" />
         <sharedControls:PageLoadingOverlay />
     </Grid>
 </ContentPage>

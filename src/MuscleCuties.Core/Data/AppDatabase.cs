@@ -10,6 +10,9 @@ namespace MuscleCuties.Core.Data;
 
 public partial class AppDatabase : DbContext
 {
+    private static readonly SemaphoreSlim InitializationGate = new(1, 1);
+    private static readonly SemaphoreSlim SeedGate = new(1, 1);
+
     public AppDatabase(DbContextOptions<AppDatabase> options) : base(options)
     {
     }
@@ -53,6 +56,7 @@ public partial class AppDatabase : DbContext
     public DbSet<WeekTemplate> WeekTemplates => Set<WeekTemplate>();
     public DbSet<VolumeBudgetRow> VolumeBudgetRows => Set<VolumeBudgetRow>();
     public DbSet<WorkoutPlanningConfigEntry> WorkoutPlanningConfigEntries => Set<WorkoutPlanningConfigEntry>();
+    public DbSet<UserExercisePreference> UserExercisePreferences => Set<UserExercisePreference>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -68,14 +72,271 @@ public partial class AppDatabase : DbContext
 
     public async Task InitializeAsync()
     {
-        await Database.EnsureCreatedAsync();
-        await SeedReferenceDataAsync();
+        await InitializeStartupAsync();
+        await SeedDeferredReferenceDataAsync();
     }
 
     public async Task InitializeStartupAsync()
     {
-        await Database.EnsureCreatedAsync();
-        await SeedQuizQuestionsAsync();
+        // Multiple scopes can initialize the same local database. Serialize the
+        // schema checks and upgrades so they cannot race to add the same column.
+        await InitializationGate.WaitAsync();
+        try
+        {
+            // EnsureCreated only creates a new database; existing databases need
+            // explicit upgrades before any EF query or reference-data backfill.
+            await Database.EnsureCreatedAsync();
+            await EnsureMissingTablesAsync();
+            await EnsureMissingColumnsAsync();
+            await MigrateInjuryLogSchemaAsync();
+            await BackfillEngineCodesAsync();
+            await SeedQuizQuestionsAsync();
+        }
+        finally
+        {
+            InitializationGate.Release();
+        }
+    }
+
+    private async Task EnsureMissingTablesAsync()
+    {
+        var conn = Database.GetDbConnection();
+        var wasOpen = conn.State == System.Data.ConnectionState.Open;
+        if (!wasOpen)
+            await conn.OpenAsync();
+        try
+        {
+            // Collect existing table names
+            var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            await using (var list = conn.CreateCommand())
+            {
+                list.CommandText = "SELECT name FROM sqlite_master WHERE type='table'";
+                await using var reader = await list.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                    existing.Add(reader.GetString(0));
+            }
+
+            if (Model.GetRelationalModel().Tables.All(table => existing.Contains(table.Name)))
+                return;
+
+            // Older installs can predate entire domains, including EngineConfig
+            // and the workout-planning tables. Use EF's current definitions so
+            // new tables include the correct foreign keys and indexes. Existing
+            // tables stay intact; column changes are handled explicitly below.
+            var createSql = Database.GenerateCreateScript()
+                .Replace("CREATE TABLE \"", "CREATE TABLE IF NOT EXISTS \"", StringComparison.Ordinal)
+                .Replace("CREATE UNIQUE INDEX \"", "CREATE UNIQUE INDEX IF NOT EXISTS \"", StringComparison.Ordinal)
+                .Replace("CREATE INDEX \"", "CREATE INDEX IF NOT EXISTS \"", StringComparison.Ordinal);
+
+            await using var tx = await conn.BeginTransactionAsync();
+            await using var cmd = conn.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = createSql;
+            await cmd.ExecuteNonQueryAsync();
+            await tx.CommitAsync();
+        }
+        finally
+        {
+            if (!wasOpen)
+                await conn.CloseAsync();
+        }
+    }
+
+    private async Task EnsureMissingColumnsAsync()
+    {
+        var conn = Database.GetDbConnection();
+        var wasOpen = conn.State == System.Data.ConnectionState.Open;
+        if (!wasOpen)
+            await conn.OpenAsync();
+        try
+        {
+            // Names and DDL are fixed upgrade definitions, never user input.
+            var migrations = new (string Table, string Column, string AlterSql)[]
+            {
+                ("Exercises", "IsInjuryFriendly", """
+                    ALTER TABLE "Exercises" ADD COLUMN "IsInjuryFriendly" INTEGER NOT NULL DEFAULT 0;
+                    """),
+                // Older app models mapped this optional relationship. Retain it
+                // for compatibility without changing the current LoggedMeal model.
+                ("LoggedMeals", "MealTemplateId", """
+                    ALTER TABLE "LoggedMeals" ADD COLUMN "MealTemplateId" INTEGER NULL
+                        REFERENCES "MealTemplates" ("Id") ON DELETE SET NULL;
+                    """),
+                ("UserProfiles", "SessionDurationMinutes", """
+                    ALTER TABLE "UserProfiles" ADD COLUMN "SessionDurationMinutes" INTEGER NOT NULL DEFAULT 60;
+                    """),
+                ("UserProfiles", "EquipmentLevel", """
+                    ALTER TABLE "UserProfiles" ADD COLUMN "EquipmentLevel" TEXT NOT NULL DEFAULT 'FullGym';
+                    """),
+                ("UserProfiles", "PhaseBaselinesJson", """
+                    ALTER TABLE "UserProfiles" ADD COLUMN "PhaseBaselinesJson" TEXT NOT NULL DEFAULT '';
+                    """)
+            };
+
+            await using var tx = await conn.BeginTransactionAsync();
+            foreach (var (table, column, sql) in migrations)
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.Transaction = tx;
+                cmd.CommandText = $"PRAGMA table_info(\"{table}\")";
+                var exists = false;
+                await using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        if (string.Equals(reader.GetString(1), column, StringComparison.OrdinalIgnoreCase))
+                            exists = true;
+                    }
+                }
+
+                if (exists)
+                    continue;
+
+                cmd.CommandText = sql;
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await tx.CommitAsync();
+        }
+        finally
+        {
+            if (!wasOpen)
+                await conn.CloseAsync();
+        }
+    }
+
+    private async Task MigrateInjuryLogSchemaAsync()
+    {
+        var conn = Database.GetDbConnection();
+        var wasOpen = conn.State == System.Data.ConnectionState.Open;
+        if (!wasOpen)
+            await conn.OpenAsync();
+        try
+        {
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = "PRAGMA table_info('EngineInjuryLogs')";
+            var hasSiteColumn = false;
+            var hasSiteFlagColumn = false;
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var name = reader.GetString(1);
+                    if (name == "Site") hasSiteColumn = true;
+                    if (name == "SiteFlag") hasSiteFlagColumn = true;
+                }
+            }
+
+            if (hasSiteColumn && !hasSiteFlagColumn)
+            {
+                await using var tx = await conn.BeginTransactionAsync();
+                try
+                {
+                    await using var recreate = conn.CreateCommand();
+                    recreate.Transaction = tx as System.Data.Common.DbTransaction;
+                    recreate.CommandText = """
+                        CREATE TABLE "EngineInjuryLogs_new" (
+                            "Id" INTEGER NOT NULL CONSTRAINT "PK_EngineInjuryLogs" PRIMARY KEY AUTOINCREMENT,
+                            "UserId" INTEGER NOT NULL,
+                            "SiteFlag" INTEGER NOT NULL,
+                            "Status" TEXT NOT NULL,
+                            "Since" TEXT NOT NULL,
+                            "Pain" INTEGER NOT NULL,
+                            "Date" TEXT NOT NULL,
+                            "CreatedAt" TEXT NOT NULL
+                        )
+                        """;
+                    await recreate.ExecuteNonQueryAsync();
+
+                    await using var copy = conn.CreateCommand();
+                    copy.Transaction = tx as System.Data.Common.DbTransaction;
+                    copy.CommandText = """
+                        INSERT INTO "EngineInjuryLogs_new"
+                            ("Id", "UserId", "SiteFlag", "Status", "Since", "Pain", "Date", "CreatedAt")
+                        SELECT "Id", "UserId",
+                            CASE lower(trim("Site"))
+                                WHEN 'metatarsal' THEN 1
+                                WHEN 'knee' THEN 2
+                                WHEN 'ankle' THEN 4
+                                WHEN 'shoulder' THEN 8
+                                WHEN 'lowback' THEN 16
+                                WHEN 'wrist' THEN 32
+                                WHEN 'hip' THEN 64
+                                WHEN 'neck' THEN 128
+                                ELSE 0
+                            END,
+                            "Status", "Since", "Pain", "Date", "CreatedAt"
+                        FROM "EngineInjuryLogs"
+                        """;
+                    await copy.ExecuteNonQueryAsync();
+
+                    await using var drop = conn.CreateCommand();
+                    drop.Transaction = tx as System.Data.Common.DbTransaction;
+                    drop.CommandText = "DROP TABLE \"EngineInjuryLogs\"";
+                    await drop.ExecuteNonQueryAsync();
+
+                    await using var rename = conn.CreateCommand();
+                    rename.Transaction = tx as System.Data.Common.DbTransaction;
+                    rename.CommandText = "ALTER TABLE \"EngineInjuryLogs_new\" RENAME TO \"EngineInjuryLogs\"";
+                    await rename.ExecuteNonQueryAsync();
+
+                    await using var idx = conn.CreateCommand();
+                    idx.Transaction = tx as System.Data.Common.DbTransaction;
+                    idx.CommandText = """
+                        CREATE INDEX "IX_EngineInjuryLogs_UserId_Date"
+                        ON "EngineInjuryLogs" ("UserId", "Date")
+                        """;
+                    await idx.ExecuteNonQueryAsync();
+
+                    await tx.CommitAsync();
+                }
+                catch
+                {
+                    await tx.RollbackAsync();
+                    throw;
+                }
+            }
+        }
+        finally
+        {
+            if (!wasOpen)
+                await conn.CloseAsync();
+        }
+    }
+
+    private async Task BackfillEngineCodesAsync()
+    {
+        if (!await WorkoutExerciseDefinitions.AnyAsync())
+            return;
+
+        var planningExercises = await WorkoutExerciseDefinitions
+            .AsNoTracking()
+            .Select(e => new { e.Id, e.Name })
+            .ToListAsync();
+
+        var catalogExercises = await Exercises.ToListAsync();
+        var catalogByName = catalogExercises
+            .GroupBy(e => string.Concat(e.Name.Where(char.IsLetterOrDigit)).ToUpperInvariant())
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        var changed = false;
+        foreach (var pe in planningExercises)
+        {
+            var engineCode = $"ENGINE_{pe.Id}";
+            if (catalogExercises.Any(e => e.Code == engineCode))
+                continue;
+
+            var normalized = string.Concat(pe.Name.Where(char.IsLetterOrDigit)).ToUpperInvariant();
+            if (catalogByName.TryGetValue(normalized, out var match)
+                && !match.Code.StartsWith("ENGINE_", StringComparison.Ordinal))
+            {
+                match.Code = engineCode;
+                changed = true;
+            }
+        }
+
+        if (changed)
+            await SaveChangesAsync();
     }
 
     public async Task SeedReferenceDataAsync()
@@ -86,15 +347,36 @@ public partial class AppDatabase : DbContext
 
     public async Task SeedDeferredReferenceDataAsync()
     {
-        if (await WorkoutMuscleGroups.AnyAsync())
-            return;
+        await SeedGate.WaitAsync();
+        try
+        {
+            if (await WorkoutMuscleGroups.AnyAsync())
+                return;
 
-        await SeedStarterFoodItemsAsync();
-        await SeedStarterMealTemplatesAsync();
-        await SeedWorkoutPlanningDataAsync();
+            await SeedStarterFoodItemsAsync();
+            await SeedStarterMealTemplatesAsync();
+            await SeedWorkoutPlanningDataAsync_Unguarded();
+        }
+        finally
+        {
+            SeedGate.Release();
+        }
     }
 
     public async Task SeedWorkoutPlanningDataAsync()
+    {
+        await SeedGate.WaitAsync();
+        try
+        {
+            await SeedWorkoutPlanningDataAsync_Unguarded();
+        }
+        finally
+        {
+            SeedGate.Release();
+        }
+    }
+
+    private async Task SeedWorkoutPlanningDataAsync_Unguarded()
     {
         await SeedWorkoutPlanningReferenceDataAsync();
         await SeedStarterExercisesAsync();
@@ -426,10 +708,6 @@ public partial class AppDatabase : DbContext
                 .WithMany()
                 .HasForeignKey(m => m.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(m => m.MealTemplate)
-                .WithMany()
-                .HasForeignKey(m => m.MealTemplateId)
-                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<LoggedMealEntry>(entity =>
@@ -540,8 +818,14 @@ public partial class AppDatabase : DbContext
         {
             entity.ToTable("EngineInjuryLogs");
             entity.HasIndex(e => new { e.UserId, e.Date });
-            entity.Property(e => e.Site).IsRequired().HasMaxLength(40);
+            entity.Property(e => e.SiteFlag).IsRequired();
             entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<UserExercisePreference>(entity =>
+        {
+            entity.ToTable("EngineExercisePreferences");
+            entity.HasIndex(e => new { e.UserId, e.OriginalExerciseId }).IsUnique();
         });
     }
 

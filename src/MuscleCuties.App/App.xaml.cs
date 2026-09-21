@@ -7,6 +7,7 @@ using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Notifications;
 using MuscleCuties.Core.Services.Workout.Planning;
+using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.App;
 
@@ -15,6 +16,7 @@ public partial class App : Application
     private readonly IServiceProvider _services;
     private int _referenceSeedStarted;
     private int _startupStarted;
+    private Task? _startupTask;
 
     public App(IServiceProvider services)
     {
@@ -51,7 +53,7 @@ public partial class App : Application
         if (Interlocked.Exchange(ref _startupStarted, 1) != 0)
             return;
 
-        _ = InitializeAndRouteAsync();
+        _startupTask = InitializeAndRouteAsync();
     }
 
     private async Task InitializeAndRouteAsync()
@@ -60,18 +62,18 @@ public partial class App : Application
         {
             using var scope = _services.CreateScope();
             var database = scope.ServiceProvider.GetRequiredService<AppDatabase>();
-            await Task.Run(database.InitializeStartupAsync);
+            await DataLoadScheduler.RunAsync(database.InitializeStartupAsync);
 
             var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var isLoggedIn = await Task.Run(authService.IsLoggedInAsync);
+            var isLoggedIn = await DataLoadScheduler.RunAsync(authService.IsLoggedInAsync);
             if (isLoggedIn)
             {
-                var userId = await Task.Run(authService.GetCurrentUserIdAsync);
+                var userId = await DataLoadScheduler.RunAsync(authService.GetCurrentUserIdAsync);
                 var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-                var user = await Task.Run(() => userRepository.GetByIdAsync(userId));
+                var user = await DataLoadScheduler.RunAsync(() => userRepository.GetByIdAsync(userId));
                 if (user is null)
                 {
-                    await Task.Run(authService.LogoutAsync);
+                    await DataLoadScheduler.RunAsync(authService.LogoutAsync);
                     await NavigateFromStartupAsync("//LoginPage");
                     StartReferenceDataSeed();
                     return;
@@ -87,7 +89,7 @@ public partial class App : Application
                     return;
                 }
 
-                await SeedAndPreloadAsync(database, userId);
+                await SeedAndPreloadAsync(userId);
                 return;
             }
 
@@ -101,10 +103,9 @@ public partial class App : Application
         }
     }
 
-    private async Task SeedAndPreloadAsync(AppDatabase database, int userId)
+    private async Task SeedAndPreloadAsync(int userId)
     {
-        await Task.Run(database.SeedDeferredReferenceDataAsync);
-
+        // Preload owns the preparation barrier, including login/onboarding paths.
         var preloadService = _services.GetRequiredService<IAppPreloadService>();
         await preloadService.PreloadDashboardAsync();
         await NavigateFromStartupAsync("//DashboardPage");
@@ -126,6 +127,8 @@ public partial class App : Application
     {
         try
         {
+            // Notifications own a separate context and await their queries in
+            // order. Do not hold the database gate while requesting permission.
             using var scope = _services.CreateScope();
             var cycleNotifications = scope.ServiceProvider.GetRequiredService<ICyclePhaseNotificationService>();
             var checkInNotifications = scope.ServiceProvider.GetRequiredService<IDailyCheckInNotificationService>();
@@ -145,6 +148,9 @@ public partial class App : Application
 
     private async Task HandleDayChangeAsync()
     {
+        if (_startupTask is not { IsCompleted: true })
+            return;
+
         try
         {
             var preloadService = _services.GetRequiredService<IAppPreloadService>();
@@ -164,18 +170,23 @@ public partial class App : Application
         if (Interlocked.Exchange(ref _referenceSeedStarted, 1) != 0)
             return;
 
-        _ = Task.Run(async () =>
+        _ = SeedReferenceDataSafelyAsync();
+    }
+
+    private async Task SeedReferenceDataSafelyAsync()
+    {
+        try
         {
-            try
+            await DataLoadScheduler.RunAsync(async () =>
             {
                 using var scope = _services.CreateScope();
                 var database = scope.ServiceProvider.GetRequiredService<AppDatabase>();
                 await database.SeedDeferredReferenceDataAsync();
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"[Startup] StartReferenceDataSeed failed: {ex.Message}");
-            }
-        });
+            });
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Startup] StartReferenceDataSeed failed: {ex}");
+        }
     }
 }

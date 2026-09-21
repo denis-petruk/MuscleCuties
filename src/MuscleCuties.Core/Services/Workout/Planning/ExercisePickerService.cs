@@ -13,7 +13,8 @@ public interface IExercisePickerService
         EquipmentSet available,
         InjuryFlag activeInjuries,
         double setMultiplier,
-        int rpeCap);
+        int rpeCap,
+        int userId = 0);
 }
 
 public class ExercisePickerService : IExercisePickerService
@@ -34,7 +35,8 @@ public class ExercisePickerService : IExercisePickerService
         EquipmentSet available,
         InjuryFlag activeInjuries,
         double setMultiplier,
-        int rpeCap)
+        int rpeCap,
+        int userId = 0)
     {
         var allPatterns = session.Slots
             .SelectMany(s => s.AllowedPatterns)
@@ -47,6 +49,14 @@ public class ExercisePickerService : IExercisePickerService
 
         candidates = FilterByEquipment(candidates, available);
         candidates = FilterByInjuries(candidates, activeInjuries);
+
+        var preferences = userId > 0
+            ? await _db.UserExercisePreferences.AsNoTracking()
+                .Where(p => p.UserId == userId)
+                .ToDictionaryAsync(p => p.OriginalExerciseId, p => p.PreferredExerciseId)
+            : new Dictionary<int, int>();
+
+        var candidateById = candidates.ToDictionary(c => c.Id);
 
         var rehabExercises = FindRehabExercises(candidates, activeInjuries);
 
@@ -82,6 +92,14 @@ public class ExercisePickerService : IExercisePickerService
             var best = slotCandidates
                 .OrderByDescending(e => ScoreExercise(e, slot))
                 .First();
+
+            if (preferences.TryGetValue(best.Id, out var preferredId)
+                && preferredId != best.Id
+                && !usedIds.Contains(preferredId)
+                && candidateById.ContainsKey(preferredId))
+            {
+                best = candidateById[preferredId];
+            }
 
             usedIds.Add(best.Id);
 

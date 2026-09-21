@@ -67,6 +67,7 @@ public class WorkoutServiceTests : IClassFixture<DatabaseFixture>
     {
         var config = WorkoutPlanningConfig.CreateDefault();
         var contributionLookup = new ContributionLookup(_fixture.Db);
+        var injuryRepository = new WorkoutInjuryRepository(_fixture.Db);
         var generator = new WorkoutPlanGenerator(
             _fixture.Db,
             new WeekPlanGenerator(
@@ -74,14 +75,17 @@ public class WorkoutServiceTests : IClassFixture<DatabaseFixture>
                 contributionLookup,
                 new VolumeBudgetResolver(_fixture.Db)),
             new ExercisePickerService(_fixture.Db, contributionLookup),
-            new WorkoutInjuryRepository(_fixture.Db),
+            injuryRepository,
             new ReadinessRepository(_fixture.Db),
             new ReadinessEngine(config),
             new GatingEngine(config));
 
         return new WorkoutService(
+            _fixture.Db,
+            contributionLookup,
             new WorkoutRepository(_fixture.Db),
             new UserRepository(_fixture.Db),
+            injuryRepository,
             generator,
             new WorkoutPlanner());
     }

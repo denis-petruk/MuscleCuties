@@ -23,7 +23,7 @@ public class WorkoutInjuryLog
 {
     public int Id { get; set; }
     public int UserId { get; set; }
-    public string Site { get; set; } = string.Empty;
+    public int SiteFlag { get; set; }
     public string Status { get; set; } = string.Empty;
     public DateOnly Since { get; set; }
     public int Pain { get; set; }

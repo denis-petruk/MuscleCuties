@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Repositories.Nutrition;
 
@@ -13,13 +14,6 @@ public class FoodSyncRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task GetLatestSyncLogAsync_NoLogs_ReturnsNull()
-    {
-        var repo = new FoodSyncRepository(_fixture.Db);
-        Assert.Null(await repo.GetLatestSyncLogAsync());
-    }
-
-    [Fact]
     public async Task AddSyncLogAsync_ValidLog_PersistedWithId()
     {
         var repo = new FoodSyncRepository(_fixture.Db);
@@ -32,22 +26,25 @@ public class FoodSyncRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task GetLatestSyncLogAsync_MultipleLogs_ReturnsMostRecent()
+    public async Task UpdateSyncLogAsync_UpdatesPersistedStatus()
     {
         var repo = new FoodSyncRepository(_fixture.Db);
-        await repo.AddSyncLogAsync(new FoodSyncLog
-        { StartedAt = DateTime.UtcNow.AddDays(-7), Status = "Success", ItemsUpserted = 10, ItemsFailed = 0 });
-        await repo.AddSyncLogAsync(new FoodSyncLog
-        { StartedAt = DateTime.UtcNow, Status = "Success", ItemsUpserted = 5, ItemsFailed = 0 });
+        var log = new FoodSyncLog
+        { StartedAt = DateTime.UtcNow, Status = "Running", ItemsUpserted = 0, ItemsFailed = 0 };
+        await repo.AddSyncLogAsync(log);
 
-        var result = await repo.GetLatestSyncLogAsync();
+        log.Status = "Success";
+        log.ItemsUpserted = 5;
+        await repo.UpdateSyncLogAsync(log);
 
+        var result = await _fixture.Db.FoodSyncLogs.AsNoTracking().SingleAsync();
         Assert.NotNull(result);
+        Assert.Equal("Success", result.Status);
         Assert.Equal(5, result.ItemsUpserted);
     }
 
     [Fact]
-    public async Task AddFoodItemVersionAsync_ValidVersion_PersistedWithId()
+    public async Task AddFoodItemVersionsAsync_ValidVersion_PersistedWithId()
     {
         var repo = new FoodSyncRepository(_fixture.Db);
         var item = new FoodItem
@@ -70,7 +67,7 @@ public class FoodSyncRepositoryTests : IDisposable
             VersionedAt = DateTime.UtcNow,
             ChangeSource = "FDC"
         };
-        await repo.AddFoodItemVersionAsync(version);
+        await repo.AddFoodItemVersionsAsync([version]);
 
         Assert.True(version.Id > 0);
     }

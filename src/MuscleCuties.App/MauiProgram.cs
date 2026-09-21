@@ -147,11 +147,13 @@ public static class MauiProgram
     private static void RegisterPlatformServices(IServiceCollection services)
     {
         services.AddSingleton<IDbPathProvider, MauiDbPathProvider>();
+        // One context per operation scope. Singleton view models must inject
+        // IServiceScopeFactory and resolve database services inside that scope.
         services.AddDbContext<AppDatabase>((sp, opts) =>
         {
             var path = sp.GetRequiredService<IDbPathProvider>().GetDatabasePath();
             opts.UseSqlite($"Filename={path}");
-        });
+        }, contextLifetime: ServiceLifetime.Scoped);
 
         services.AddSingleton<ITokenStorage, SecureStorageService>();
         services.AddSingleton<ILocalNotificationService, LocalNotificationService>();
@@ -173,7 +175,6 @@ public static class MauiProgram
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICycleRepository, CycleRepository>();
         services.AddScoped<INutritionRepository, NutritionRepository>();
-        services.AddScoped<ISymptomRepository, SymptomRepository>();
         services.AddScoped<IWorkoutRepository, WorkoutRepository>();
         services.AddScoped<IQuizRepository, QuizRepository>();
         services.AddScoped<IFoodSyncRepository, FoodSyncRepository>();
@@ -205,7 +206,6 @@ public static class MauiProgram
 
     private static void RegisterWorkoutPlanningServices(IServiceCollection services)
     {
-        services.AddScoped<IWorkoutPlanningConfigRepository, WorkoutPlanningConfigRepository>();
         services.AddSingleton(WorkoutPlanningConfig.CreateDefault());
 
         services.AddSingleton<IReadinessEngine, ReadinessEngine>();
@@ -241,8 +241,7 @@ public static class MauiProgram
         services.AddSingleton<QuizQuestionCache>();
 
         services.AddTransient<QuizViewModel>(sp => new QuizViewModel(
-            sp.GetRequiredService<IAuthService>(),
-            sp.GetRequiredService<IQuizService>(),
+            sp.GetRequiredService<IServiceScopeFactory>(),
             sp.GetRequiredService<IAppPreloadService>(),
             sp.GetRequiredService<QuizQuestionCache>(),
             () => PrepareAndNavigateToDashboardAsync(sp)));
@@ -283,7 +282,12 @@ public static class MauiProgram
             sp.GetRequiredService<IServiceScopeFactory>()));
 
         services.AddSingleton<WorkoutViewModel>(sp => new WorkoutViewModel(
-            sp.GetRequiredService<IServiceScopeFactory>()));
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            route => NavigateToAsync(route)));
+
+        services.AddTransient<WorkoutSessionViewModel>(sp => new WorkoutSessionViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            route => NavigateToAsync(route)));
 
         services.AddSingleton<ProfileViewModel>(sp => new ProfileViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
@@ -335,8 +339,7 @@ public static class MauiProgram
             () => NavigateToAsync("//ProfilePage")));
 
         services.AddTransient<InjuryLogViewModel>(sp => new InjuryLogViewModel(
-            sp.GetRequiredService<IAuthService>(),
-            sp.GetRequiredService<IWorkoutInjuryRepository>(),
+            sp.GetRequiredService<IServiceScopeFactory>(),
             () => NavigateToAsync("..")));
 
         services.AddSingleton<IAppPreloadService, AppPreloadService>();
@@ -344,6 +347,7 @@ public static class MauiProgram
 
     private static void RegisterPages(IServiceCollection services)
     {
+        services.AddTransient<WorkoutSessionPage>();
         services.AddTransient<LoginPage>();
         services.AddTransient<AppStartupPage>();
         services.AddTransient<RegisterPage>();

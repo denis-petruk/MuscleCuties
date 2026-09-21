@@ -172,7 +172,8 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
                 strengthGating,
                 equipment,
                 injuryFlags,
-                exerciseLookup).ConfigureAwait(false);
+                exerciseLookup,
+                profile.UserId).ConfigureAwait(false);
             plan.WorkoutDays.Add(strengthDay);
         }
 
@@ -195,7 +196,8 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
         GatingResult gating,
         EquipmentSet equipment,
         InjuryFlag injuries,
-        IReadOnlyDictionary<string, Exercise> exerciseLookup)
+        IReadOnlyDictionary<string, Exercise> exerciseLookup,
+        int userId = 0)
     {
         if (gating.SetMultiplier <= 0)
         {
@@ -212,7 +214,8 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
             equipment,
             injuries,
             gating.SetMultiplier,
-            gating.RpeCap);
+            gating.RpeCap,
+            userId);
         var day = new WorkoutDay
         {
             DayOfWeek = ToDayIndex(session.Day),

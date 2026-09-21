@@ -9,19 +9,7 @@ public static class WorkoutInjuryRules
     {
         var flags = InjuryFlag.None;
         foreach (var injury in injuries.Where(injury => injury.Status != InjuryStatus.Cleared))
-        {
-            flags |= injury.Site switch
-            {
-                InjurySite.Metatarsal => InjuryFlag.Metatarsal,
-                InjurySite.Knee => InjuryFlag.Knee,
-                InjurySite.Ankle => InjuryFlag.Ankle,
-                InjurySite.Shoulder => InjuryFlag.Shoulder,
-                InjurySite.LowBack => InjuryFlag.LowBack,
-                InjurySite.Wrist => InjuryFlag.Wrist,
-                _ => InjuryFlag.None
-            };
-        }
-
+            flags |= injury.Site;
         return flags;
     }
 
@@ -30,7 +18,7 @@ public static class WorkoutInjuryRules
         var blocked = new HashSet<WorkoutActivityType>();
         foreach (var injury in injuries.Where(injury => injury.Status != InjuryStatus.Cleared))
         {
-            if (injury.Site is InjurySite.Metatarsal or InjurySite.Ankle)
+            if (injury.Site is InjuryFlag.Metatarsal or InjuryFlag.Ankle)
             {
                 blocked.Add(WorkoutActivityType.Hiit);
                 if (injury.Status == InjuryStatus.Acute)
@@ -40,16 +28,26 @@ public static class WorkoutInjuryRules
                 }
             }
 
-            if (injury.Site == InjurySite.Knee)
+            if (injury.Site == InjuryFlag.Knee)
             {
                 blocked.Add(WorkoutActivityType.Hiit);
                 blocked.Add(WorkoutActivityType.Running);
             }
 
-            if (injury.Site == InjurySite.Shoulder && injury.Status == InjuryStatus.Acute)
+            if (injury.Site == InjuryFlag.Shoulder && injury.Status == InjuryStatus.Acute)
             {
                 blocked.Add(WorkoutActivityType.Swimming);
                 blocked.Add(WorkoutActivityType.RockClimbing);
+            }
+
+            if (injury.Site == InjuryFlag.Hip)
+            {
+                blocked.Add(WorkoutActivityType.Running);
+            }
+
+            if (injury.Site == InjuryFlag.Neck && injury.Status == InjuryStatus.Acute)
+            {
+                blocked.Add(WorkoutActivityType.Swimming);
             }
         }
 
