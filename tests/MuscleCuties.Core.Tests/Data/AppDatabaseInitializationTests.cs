@@ -20,12 +20,51 @@ public class AppDatabaseInitializationTests
         await db.InitializeAsync();
 
         Assert.Equal(16, await db.QuizQuestions.CountAsync());
+        Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
         Assert.True(await db.FoodItems.CountAsync() >= 32);
+        Assert.True(await db.MealTemplates.AnyAsync(t => t.Name == "Margherita Pizza Beans"));
+        Assert.True(await db.MealTemplates.AnyAsync(t => t.Name == "Vegan Pizza Beans"));
+        Assert.True(await db.MealTemplates.AnyAsync(t => t.Name == "Pepperoni Pizza Beans"));
+        Assert.True(await db.MealTemplates.AnyAsync(t => t.Name == "Gluten-Free Pizza Beans"));
         Assert.True(await db.FoodItems.AnyAsync(f => f.Name == "Carrot, raw"));
         Assert.True(await db.FoodItems.AnyAsync(f => f.Name == "Olive oil"));
         Assert.True(await db.FoodItems.AllAsync(f => f.DataType == "Starter"));
         Assert.True(await db.Exercises.CountAsync() >= 20);
         Assert.True(await db.Exercises.AllAsync(e => e.Code != string.Empty));
+    }
+
+    [Fact]
+    public async Task InitializeStartupAsync_MigratesInjurySitesWithoutErasingLogs()
+    {
+        await using var db = await CreateDatabaseAsync();
+        await db.Database.EnsureCreatedAsync();
+        await db.Database.ExecuteSqlRawAsync("DROP TABLE \"EngineInjuryLogs\"");
+        await db.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE "EngineInjuryLogs" (
+                "Id" INTEGER PRIMARY KEY AUTOINCREMENT,
+                "UserId" INTEGER NOT NULL,
+                "Site" TEXT NOT NULL,
+                "Status" TEXT NOT NULL,
+                "Since" TEXT NOT NULL,
+                "Pain" INTEGER NOT NULL,
+                "Date" TEXT NOT NULL,
+                "CreatedAt" TEXT NOT NULL
+            )
+            """);
+        await db.Database.ExecuteSqlRawAsync("""
+            INSERT INTO "EngineInjuryLogs"
+                ("Id", "UserId", "Site", "Status", "Since", "Pain", "Date", "CreatedAt")
+            VALUES (42, 1, 'Knee', 'Recovering', '2026-09-01', 2, '2026-09-02', '2026-09-02 08:00:00')
+            """);
+
+        await db.InitializeStartupAsync();
+        await db.InitializeStartupAsync();
+
+        var log = await db.WorkoutInjuryLogs.AsNoTracking().SingleAsync();
+        Assert.Equal(42, log.Id);
+        Assert.Equal(2, log.SiteFlag);
+        Assert.Equal("Recovering", log.Status);
+        Assert.Equal(2, log.Pain);
     }
 
     [Fact]
@@ -36,6 +75,7 @@ public class AppDatabaseInitializationTests
         await db.InitializeStartupAsync();
 
         Assert.Equal(16, await db.QuizQuestions.CountAsync());
+        Assert.Empty(await db.MealTemplates.ToListAsync());
         Assert.Empty(await db.FoodItems.ToListAsync());
         Assert.Empty(await db.Exercises.ToListAsync());
     }
@@ -49,6 +89,7 @@ public class AppDatabaseInitializationTests
         await db.SeedDeferredReferenceDataAsync();
 
         Assert.Equal(16, await db.QuizQuestions.CountAsync());
+        Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
         Assert.Equal(60, await db.FoodItems.CountAsync());
         Assert.True(await db.Exercises.CountAsync() >= 20);
     }
@@ -62,6 +103,7 @@ public class AppDatabaseInitializationTests
         await db.InitializeAsync();
 
         Assert.Equal(16, await db.QuizQuestions.CountAsync());
+        Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
         Assert.Equal(60, await db.FoodItems.CountAsync());
     }
 
@@ -83,6 +125,7 @@ public class AppDatabaseInitializationTests
 
         Assert.Empty(await db.Users.ToListAsync());
         Assert.Equal(16, await db.QuizQuestions.CountAsync());
+        Assert.Equal(17, await db.MealTemplates.CountAsync(t => t.IsSystem));
         Assert.Equal(60, await db.FoodItems.CountAsync());
         Assert.True(await db.Exercises.CountAsync() >= 20);
     }

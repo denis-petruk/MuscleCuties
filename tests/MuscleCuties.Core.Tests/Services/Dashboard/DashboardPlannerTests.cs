@@ -53,4 +53,36 @@ public class DashboardPlannerTests
         Assert.Equal(58, summary.ReadinessScore);
         Assert.Equal("Keep it moderate", summary.ReadinessLabel);
     }
+
+    [Fact]
+    public void BuildSupportSummary_ActiveInjuryCapsHighScoresAndExplainsWhy()
+    {
+        var summary = _planner.BuildSupportSummary(
+            new CyclePrediction(), CyclePhase.Follicular, 0.9f, 70f, 4,
+            TodaysWorkoutSummary.RestDay, recordedReadinessScore: 96, hasActiveInjury: true);
+
+        Assert.Equal(85, summary.ReadinessScore);
+        Assert.Equal(85, summary.RecoveryScore);
+        Assert.Equal("Limited by injury", summary.ReadinessLabel);
+        Assert.Equal("Recovery limited", summary.RecoveryLabel);
+    }
+
+    [Theory]
+    [InlineData(54)]
+    [InlineData(70)]
+    [InlineData(85)]
+    public void BuildSupportSummary_ActiveInjuryDoesNotRaiseLowerScores(int readiness)
+    {
+        var withoutInjury = _planner.BuildSupportSummary(
+            new CyclePrediction(), CyclePhase.Menstrual, 0f, 70f, 4,
+            TodaysWorkoutSummary.RestDay, recordedReadinessScore: readiness);
+        var withInjury = _planner.BuildSupportSummary(
+            new CyclePrediction(), CyclePhase.Menstrual, 0f, 70f, 4,
+            TodaysWorkoutSummary.RestDay, recordedReadinessScore: readiness, hasActiveInjury: true);
+
+        Assert.Equal(withoutInjury.ReadinessScore, withInjury.ReadinessScore);
+        Assert.Equal(withoutInjury.RecoveryScore, withInjury.RecoveryScore);
+        Assert.Equal(withoutInjury.ReadinessLabel, withInjury.ReadinessLabel);
+        Assert.Equal(withoutInjury.RecoveryLabel, withInjury.RecoveryLabel);
+    }
 }

@@ -1,30 +1,43 @@
 using System.Collections.ObjectModel;
+using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Entities.Workout;
+using MuscleCuties.Core.Models.Entities.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.UI.Workout;
 using MuscleCuties.Core.Models.Workout.Logging;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Repositories.Workout;
+using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.Services.Workout.Planning;
 
 namespace MuscleCuties.Core.Services.Workout;
 
 public class WorkoutService : IWorkoutService
 {
+    private readonly AppDatabase _db;
+    private readonly IContributionLookup _contributions;
     private readonly IUserRepository _userRepository;
+    private readonly IWorkoutInjuryRepository _injuryRepository;
     private readonly IWorkoutPlanGenerator _workoutPlanGenerator;
     private readonly IWorkoutPlanner _workoutPlanner;
     private readonly IWorkoutRepository _workoutRepository;
 
     public WorkoutService(
+        AppDatabase db,
+        IContributionLookup contributions,
         IWorkoutRepository workoutRepository,
         IUserRepository userRepository,
+        IWorkoutInjuryRepository injuryRepository,
         IWorkoutPlanGenerator workoutPlanGenerator,
         IWorkoutPlanner workoutPlanner)
     {
+        _db = db;
+        _contributions = contributions;
         _workoutRepository = workoutRepository;
         _userRepository = userRepository;
+        _injuryRepository = injuryRepository;
         _workoutPlanGenerator = workoutPlanGenerator;
         _workoutPlanner = workoutPlanner;
     }
@@ -1039,6 +1052,168 @@ public class WorkoutService : IWorkoutService
     private static DateTime GetWeekStart(DateTime date)
     {
         return date.Date.AddDays(-(int)date.Date.DayOfWeek);
+    }
+
+    public async Task<IReadOnlyList<ExerciseSwapOption>> GetSwapCandidatesAsync(int userId, int workoutDayExerciseId)
+    {
+        var dayExercise = await _db.WorkoutDayExercises
+            .Include(e => e.Exercise)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == workoutDayExerciseId);
+
+        if (dayExercise?.Exercise is null)
+            return [];
+
+        var currentPlanningId = ExtractPlanningId(dayExercise.Exercise.Code);
+        if (currentPlanningId is null)
+            return [];
+
+        await _contributions.LoadAsync();
+
+        var currentContributions = _contributions.GetContributions(currentPlanningId.Value);
+        if (currentContributions.Count == 0)
+            return [];
+
+        var primaryMuscleId = currentContributions
+            .OrderByDescending(c => c.Fraction)
+            .First()
+            .MuscleGroupId;
+
+        var profile = await _userRepository.GetProfileAsync(userId);
+        var equipment = profile is not null
+            ? ExercisePickerService.MapEquipment(
+                Enum.TryParse<Equipment>(profile.EquipmentLevel, true, out var eq) ? eq : Equipment.FullGym)
+            : ExercisePickerService.MapEquipment(Equipment.FullGym);
+
+        var injuryLogs = await _injuryRepository.GetActiveAsync(userId);
+        var injuries = AdaptiveProfileMapper.FromUserProfile(
+            profile ?? new Models.Entities.Users.UserProfile(), injuryLogs);
+        var injuryFlags = WorkoutInjuryRules.ToFlags(injuries.Injuries);
+
+        var allExercises = await _db.WorkoutExerciseDefinitions.AsNoTracking().ToListAsync();
+
+        var muscleGroups = await _db.WorkoutMuscleGroups.AsNoTracking()
+            .ToDictionaryAsync(mg => mg.Id, mg => mg.Name);
+
+        var candidates = allExercises
+            .Where(e => e.Id != currentPlanningId.Value)
+            .Where(e => e.IsBodyweight || (e.Required & equipment) == e.Required)
+            .Where(e => injuryFlags == InjuryFlag.None || (e.Contraindications & injuryFlags) == InjuryFlag.None)
+            .Select(e =>
+            {
+                var contribs = _contributions.GetContributions(e.Id);
+                var matchScore = ComputeMuscleMatchScore(currentContributions, contribs, primaryMuscleId);
+                return (Exercise: e, MatchScore: matchScore, Contribs: contribs);
+            })
+            .Where(x => x.MatchScore > 0)
+            .OrderByDescending(x => x.MatchScore)
+            .Take(8)
+            .Select(x => new ExerciseSwapOption
+            {
+                ExerciseId = x.Exercise.Id,
+                Name = x.Exercise.Name,
+                MuscleMatch = $"{(int)(x.MatchScore * 100)}% muscle match",
+                Equipment = x.Exercise.IsBodyweight
+                    ? "Bodyweight"
+                    : x.Exercise.Required.ToFriendlyName(),
+                PrimaryMuscles = string.Join(", ", x.Contribs
+                    .Where(c => c.Fraction >= 0.3)
+                    .OrderByDescending(c => c.Fraction)
+                    .Take(3)
+                    .Select(c => muscleGroups.GetValueOrDefault(c.MuscleGroupId, "")))
+            })
+            .ToList();
+
+        return candidates;
+    }
+
+    public async Task SwapExerciseAsync(int userId, int workoutDayExerciseId, int newExerciseId, bool savePreference)
+    {
+        var dayExercise = await _db.WorkoutDayExercises
+            .Include(e => e.Exercise)
+            .FirstOrDefaultAsync(e => e.Id == workoutDayExerciseId);
+
+        if (dayExercise is null)
+            throw new InvalidOperationException("Workout exercise was not found.");
+
+        var originalPlanningId = dayExercise.Exercise is not null
+            ? ExtractPlanningId(dayExercise.Exercise.Code)
+            : null;
+
+        var catalogExercise = await _db.Exercises
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Code == $"ENGINE_{newExerciseId}");
+
+        if (catalogExercise is null)
+            throw new InvalidOperationException($"Catalog exercise for planning ID {newExerciseId} was not found.");
+
+        dayExercise.ExerciseId = catalogExercise.Id;
+        await _db.SaveChangesAsync();
+
+        if (savePreference && originalPlanningId is not null)
+        {
+            var existing = await _db.UserExercisePreferences
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.OriginalExerciseId == originalPlanningId.Value);
+
+            if (existing is not null)
+            {
+                existing.PreferredExerciseId = newExerciseId;
+                existing.CreatedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                _db.UserExercisePreferences.Add(new UserExercisePreference
+                {
+                    UserId = userId,
+                    OriginalExerciseId = originalPlanningId.Value,
+                    PreferredExerciseId = newExerciseId,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            await _db.SaveChangesAsync();
+        }
+    }
+
+    private static int? ExtractPlanningId(string? exerciseCode)
+    {
+        if (exerciseCode is not null
+            && exerciseCode.StartsWith("ENGINE_", StringComparison.Ordinal)
+            && int.TryParse(exerciseCode.AsSpan(7), out var id))
+            return id;
+        return null;
+    }
+
+    private static double ComputeMuscleMatchScore(
+        IReadOnlyList<ExerciseMuscleContribution> original,
+        IReadOnlyList<ExerciseMuscleContribution> candidate,
+        int primaryMuscleId)
+    {
+        if (candidate.Count == 0)
+            return 0;
+
+        var candidatePrimary = candidate
+            .FirstOrDefault(c => c.MuscleGroupId == primaryMuscleId);
+
+        if (candidatePrimary is null || candidatePrimary.Fraction < 0.2)
+            return 0;
+
+        var originalMap = original.ToDictionary(c => c.MuscleGroupId, c => c.Fraction);
+        var candidateMap = candidate.ToDictionary(c => c.MuscleGroupId, c => c.Fraction);
+
+        var allMuscles = originalMap.Keys.Union(candidateMap.Keys).ToList();
+        if (allMuscles.Count == 0)
+            return 0;
+
+        double totalDifference = 0;
+        foreach (var muscleId in allMuscles)
+        {
+            var origFraction = originalMap.GetValueOrDefault(muscleId, 0);
+            var candFraction = candidateMap.GetValueOrDefault(muscleId, 0);
+            totalDifference += Math.Abs(origFraction - candFraction);
+        }
+
+        return Math.Max(0, 1.0 - totalDifference / 2.0);
     }
 
     private sealed record ExerciseMetricProfile(

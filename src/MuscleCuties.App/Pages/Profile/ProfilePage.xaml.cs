@@ -10,7 +10,7 @@ public partial class ProfilePage : ContentPage
 
     public ProfilePage(ProfileViewModel vm)
     {
-        InitializeComponent();
+        this.InitializeWithTiming(InitializeComponent);
         _viewModel = vm;
     }
 

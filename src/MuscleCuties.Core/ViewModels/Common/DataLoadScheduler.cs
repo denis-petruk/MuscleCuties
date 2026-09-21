@@ -1,28 +1,35 @@
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+
 namespace MuscleCuties.Core.ViewModels.Common;
 
-internal static class DataLoadScheduler
+public static class DataLoadScheduler
 {
-    private static readonly SemaphoreSlim DatabaseGate = new(4, 4);
+    // SQLite async APIs can execute synchronously. Keep that work off the UI
+    // thread, but never overlap scheduled operations on the local database.
+    private static readonly SemaphoreSlim DatabaseGate = new(1, 1);
 
-    public static async Task RunAsync(Func<Task> loadAsync)
+    public static Task RunAsync(Func<Task> loadAsync, [CallerMemberName] string operation = "")
     {
-        await DatabaseGate.WaitAsync().ConfigureAwait(false);
-        try
+        return RunAsync(async () =>
         {
-            await Task.Run(loadAsync).ConfigureAwait(false);
-        }
-        finally
-        {
-            DatabaseGate.Release();
-        }
+            await loadAsync().ConfigureAwait(false);
+            return true;
+        }, operation);
     }
 
-    public static async Task<T> RunAsync<T>(Func<Task<T>> loadAsync)
+    public static async Task<T> RunAsync<T>(Func<Task<T>> loadAsync, [CallerMemberName] string operation = "")
     {
         await DatabaseGate.WaitAsync().ConfigureAwait(false);
         try
         {
             return await Task.Run(loadAsync).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            Trace.WriteLine($"[DataLoad] {operation} failed: {exception}");
+            // The caller owns UI state and must see the original failure.
+            throw;
         }
         finally
         {
