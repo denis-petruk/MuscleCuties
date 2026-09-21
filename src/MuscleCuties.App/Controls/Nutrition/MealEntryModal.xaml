@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sharedControls:AnimatedModalView
+    x:Class="MuscleCuties.App.Controls.Nutrition.MealEntryModal"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Nutrition;assembly=MuscleCuties.Core"
+    xmlns:nutritionEnums="clr-namespace:MuscleCuties.Core.Models.Enums.Nutrition;assembly=MuscleCuties.Core"
+    x:DataType="vm:NutritionViewModel"
+    BackgroundColor="{StaticResource ModalScrim}"
+    Padding="12,44,12,20">
+
+    <Grid>
+        <Grid.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding CloseMealEntryCommand}" />
+        </Grid.GestureRecognizers>
+        <Border
+            Style="{StaticResource ModalSurface}"
+            MaximumHeightRequest="520"
+            VerticalOptions="Center">
+
+            <Grid RowDefinitions="Auto, *">
+                <!-- Header -->
+                <Grid
+                    Padding="20,18,20,14"
+                    ColumnDefinitions="*,Auto"
+                    ColumnSpacing="12">
+                    <Label
+                        Text="What are you logging?"
+                        Style="{StaticResource ModalTitle}" />
+                    <Border
+                        Grid.Column="1"
+                        Style="{StaticResource ModalIconButton}"
+                        VerticalOptions="Start"
+                        SemanticProperties.Description="Close">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding CloseMealEntryCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path Style="{StaticResource ModalCloseIcon}" />
+                    </Border>
+                </Grid>
+
+                <!-- Content -->
+                <ScrollView Grid.Row="1">
+                    <VerticalStackLayout Spacing="14" Padding="20,4,20,20">
+
+                        <Label
+                            Text="Choose a meal type"
+                            Style="{StaticResource SectionTitle}"
+                            FontSize="17" />
+
+                        <!-- Meal type picker: 2x2 grid -->
+                        <Grid
+                            ColumnDefinitions="*,*"
+                            RowDefinitions="Auto,Auto"
+                            ColumnSpacing="10"
+                            RowSpacing="10">
+
+                            <!-- Breakfast -->
+                            <Border Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsEntryBreakfastSelected}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectEntryMealTypeCommand}"
+                                        CommandParameter="{x:Static nutritionEnums:MealType.Breakfast}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6">
+                                    <Path
+                                        Data="M12 3c-3 0-7 6-7 11a7 7 0 0 0 14 0c0-5-4-11-7-11ZM12 11a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Start" />
+                                    <Label Text="Breakfast" Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Text="{Binding BreakfastCaloriesHint}" Style="{StaticResource CaptionLabel}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <!-- Lunch -->
+                            <Border Grid.Column="1" Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsEntryLunchSelected}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectEntryMealTypeCommand}"
+                                        CommandParameter="{x:Static nutritionEnums:MealType.Lunch}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6">
+                                    <Path
+                                        Data="M3 11h18c0 5-4 9-9 9s-9-4-9-9ZM7 11c0-3 2-5 5-5s5 2 5 5M12 3v3"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Start" />
+                                    <Label Text="Lunch" Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Text="{Binding LunchCaloriesHint}" Style="{StaticResource CaptionLabel}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <!-- Dinner -->
+                            <Border Grid.Row="1" Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsEntryDinnerSelected}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectEntryMealTypeCommand}"
+                                        CommandParameter="{x:Static nutritionEnums:MealType.Dinner}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6">
+                                    <Path
+                                        Data="M15 5a5 5 0 0 1 0 10c-1.8 0-3.4-1-4.3-2.4L7 16.3M5.7 15a2 2 0 1 0-2.8 2.8 2 2 0 1 0 2.8 2.8L9.4 17"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Start" />
+                                    <Label Text="Dinner" Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Text="{Binding DinnerCaloriesHint}" Style="{StaticResource CaptionLabel}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <!-- Snack -->
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsEntrySnackSelected}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectEntryMealTypeCommand}"
+                                        CommandParameter="{x:Static nutritionEnums:MealType.Snack}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6">
+                                    <Path
+                                        Data="M12 21V8M12 11c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 15c3 0 5-2 5-5-3 0-5 2-5 5ZM12 19c-3 0-5-2-5-5 3 0 5 2 5 5"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Start" />
+                                    <Label Text="Snack" Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Text="{Binding SnackCaloriesHint}" Style="{StaticResource CaptionLabel}" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </Grid>
+
+                        <!-- Action buttons -->
+                        <Button
+                            Text="Build my own meal"
+                            Command="{Binding StartManualMealCommand}"
+                            IsEnabled="{Binding HasEntryMealTypeSelected}"
+                            MinimumHeightRequest="50"
+                            FontAttributes="Bold"
+                            Margin="0,6,0,0" />
+
+                        <Border
+                            Padding="12,12"
+                            MinimumHeightRequest="48"
+                            StrokeShape="RoundRectangle 14"
+                            StrokeThickness="1.5"
+                            Stroke="{StaticResource Primary}"
+                            BackgroundColor="Transparent"
+                            HorizontalOptions="Fill"
+                            SemanticProperties.Description="Get a meal suggestion">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding StartSuggestedMealCommand}" />
+                            </Border.GestureRecognizers>
+                            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
+                                <Path
+                                    Data="M9 18h6M10 22h4M8.5 14.5A6 6 0 1 1 15.5 14.5C14.5 15.3 14 16 14 18h-4c0-2-.5-2.7-1.5-3.5Z"
+                                    Style="{StaticResource NutritionLineIcon}"
+                                    Stroke="{StaticResource Primary}"
+                                    WidthRequest="18"
+                                    HeightRequest="18" />
+                                <Label
+                                    Text="Get a suggestion"
+                                    TextColor="{StaticResource Primary}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                        </Border>
+
+                    </VerticalStackLayout>
+                </ScrollView>
+            </Grid>
+        </Border>
+    </Grid>
+</sharedControls:AnimatedModalView>

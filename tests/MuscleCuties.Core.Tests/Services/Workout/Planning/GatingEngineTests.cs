@@ -24,7 +24,7 @@ public class GatingEngineTests
         new(
             1, goal, exp, 4, 60,
             selected ?? [WorkoutActivityType.HighVolumeStrength, WorkoutActivityType.Hiit, WorkoutActivityType.Running],
-            style, Equipment.FullGym, 8000);
+            style, Equipment.FullGym, [], 8000);
 
     private static DailyInputs MakeInputs(
         double sleep = 7.5, int energy = 3, int pain = 0) =>

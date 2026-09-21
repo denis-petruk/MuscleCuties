@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MuscleCuties.Core.ViewModels.Dashboard;
 
 namespace MuscleCuties.App.Pages.Dashboard;
@@ -10,9 +11,10 @@ public partial class DashboardPage : ContentPage
 
     public DashboardPage(DashboardViewModel vm)
     {
-        InitializeComponent();
+        var started = Stopwatch.GetTimestamp();
+        this.InitializeWithTiming(InitializeComponent);
         _viewModel = vm;
-        BindingContext = vm;
+        this.BindWithTiming(vm, started);
     }
 
     protected override void OnAppearing()

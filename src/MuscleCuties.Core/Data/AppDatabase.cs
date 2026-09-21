@@ -10,6 +10,7 @@ namespace MuscleCuties.Core.Data;
 
 public partial class AppDatabase : DbContext
 {
+    private static readonly SemaphoreSlim InitializationGate = new(1, 1);
     private static readonly SemaphoreSlim SeedGate = new(1, 1);
 
     public AppDatabase(DbContextOptions<AppDatabase> options) : base(options)
@@ -71,18 +72,30 @@ public partial class AppDatabase : DbContext
 
     public async Task InitializeAsync()
     {
-        await Database.EnsureCreatedAsync();
-        await SeedReferenceDataAsync();
+        await InitializeStartupAsync();
+        await SeedDeferredReferenceDataAsync();
     }
 
     public async Task InitializeStartupAsync()
     {
-        await Database.EnsureCreatedAsync();
-        await EnsureMissingTablesAsync();
-        await MigrateInjuryLogSchemaAsync();
-        await MigrateExercisePreferencesAsync();
-        await BackfillEngineCodesAsync();
-        await SeedQuizQuestionsAsync();
+        // Multiple scopes can initialize the same local database. Serialize the
+        // schema checks and upgrades so they cannot race to add the same column.
+        await InitializationGate.WaitAsync();
+        try
+        {
+            // EnsureCreated only creates a new database; existing databases need
+            // explicit upgrades before any EF query or reference-data backfill.
+            await Database.EnsureCreatedAsync();
+            await EnsureMissingTablesAsync();
+            await EnsureMissingColumnsAsync();
+            await MigrateInjuryLogSchemaAsync();
+            await BackfillEngineCodesAsync();
+            await SeedQuizQuestionsAsync();
+        }
+        finally
+        {
+            InitializationGate.Release();
+        }
     }
 
     private async Task EnsureMissingTablesAsync()
@@ -94,7 +107,7 @@ public partial class AppDatabase : DbContext
         try
         {
             // Collect existing table names
-            var existing = new HashSet<string>(StringComparer.Ordinal);
+            var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             await using (var list = conn.CreateCommand())
             {
                 list.CommandText = "SELECT name FROM sqlite_master WHERE type='table'";
@@ -103,129 +116,87 @@ public partial class AppDatabase : DbContext
                     existing.Add(reader.GetString(0));
             }
 
-            // Tables that EnsureCreatedAsync may not have created on older databases
-            var migrations = new (string Table, string CreateSql)[]
-            {
-                ("FoodSyncLogs", """
-                    CREATE TABLE "FoodSyncLogs" (
-                        "Id" INTEGER NOT NULL CONSTRAINT "PK_FoodSyncLogs" PRIMARY KEY AUTOINCREMENT,
-                        "StartedAt" TEXT NOT NULL,
-                        "CompletedAt" TEXT,
-                        "ItemsUpserted" INTEGER NOT NULL DEFAULT 0,
-                        "ItemsFailed" INTEGER NOT NULL DEFAULT 0,
-                        "Status" TEXT NOT NULL,
-                        "ErrorDetails" TEXT
-                    );
-                    CREATE INDEX "IX_FoodSyncLogs_StartedAt" ON "FoodSyncLogs" ("StartedAt");
-                    """),
-
-                ("FoodItemVersions", """
-                    CREATE TABLE "FoodItemVersions" (
-                        "Id" INTEGER NOT NULL CONSTRAINT "PK_FoodItemVersions" PRIMARY KEY AUTOINCREMENT,
-                        "FoodItemId" INTEGER NOT NULL,
-                        "NutrientJson" TEXT NOT NULL,
-                        "VersionedAt" TEXT NOT NULL,
-                        "ChangeSource" TEXT NOT NULL,
-                        CONSTRAINT "FK_FoodItemVersions_FoodItems_FoodItemId"
-                            FOREIGN KEY ("FoodItemId") REFERENCES "FoodItems" ("Id") ON DELETE CASCADE
-                    );
-                    CREATE INDEX "IX_FoodItemVersions_FoodItemId_VersionedAt"
-                        ON "FoodItemVersions" ("FoodItemId", "VersionedAt");
-                    """),
-
-                ("LoggedMealEntries", """
-                    CREATE TABLE "LoggedMealEntries" (
-                        "Id" INTEGER NOT NULL CONSTRAINT "PK_LoggedMealEntries" PRIMARY KEY AUTOINCREMENT,
-                        "LoggedMealId" INTEGER NOT NULL,
-                        "FoodItemId" INTEGER NOT NULL,
-                        "Grams" REAL NOT NULL,
-                        CONSTRAINT "FK_LoggedMealEntries_LoggedMeals_LoggedMealId"
-                            FOREIGN KEY ("LoggedMealId") REFERENCES "LoggedMeals" ("Id") ON DELETE CASCADE,
-                        CONSTRAINT "FK_LoggedMealEntries_FoodItems_FoodItemId"
-                            FOREIGN KEY ("FoodItemId") REFERENCES "FoodItems" ("Id") ON DELETE RESTRICT
-                    );
-                    """),
-
-                ("MealTemplates", """
-                    CREATE TABLE "MealTemplates" (
-                        "Id" INTEGER NOT NULL CONSTRAINT "PK_MealTemplates" PRIMARY KEY AUTOINCREMENT,
-                        "UserId" INTEGER,
-                        "Name" TEXT NOT NULL,
-                        "Description" TEXT,
-                        "MealType" INTEGER NOT NULL,
-                        "DietaryTags" TEXT NOT NULL DEFAULT '',
-                        "PhaseTags" TEXT NOT NULL DEFAULT '',
-                        "SortOrder" INTEGER NOT NULL DEFAULT 0,
-                        "IsSystem" INTEGER NOT NULL DEFAULT 0,
-                        "CreatedAt" TEXT NOT NULL,
-                        CONSTRAINT "FK_MealTemplates_Users_UserId"
-                            FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE
-                    );
-                    CREATE INDEX "IX_MealTemplates_UserId_Name" ON "MealTemplates" ("UserId", "Name");
-                    """),
-
-                ("MealTemplateEntries", """
-                    CREATE TABLE "MealTemplateEntries" (
-                        "Id" INTEGER NOT NULL CONSTRAINT "PK_MealTemplateEntries" PRIMARY KEY AUTOINCREMENT,
-                        "MealTemplateId" INTEGER NOT NULL,
-                        "FoodItemId" INTEGER NOT NULL,
-                        "Grams" REAL NOT NULL,
-                        CONSTRAINT "FK_MealTemplateEntries_MealTemplates_MealTemplateId"
-                            FOREIGN KEY ("MealTemplateId") REFERENCES "MealTemplates" ("Id") ON DELETE CASCADE,
-                        CONSTRAINT "FK_MealTemplateEntries_FoodItems_FoodItemId"
-                            FOREIGN KEY ("FoodItemId") REFERENCES "FoodItems" ("Id") ON DELETE RESTRICT
-                    );
-                    """),
-
-                ("SymptomLogs", """
-                    CREATE TABLE "SymptomLogs" (
-                        "Id" INTEGER NOT NULL CONSTRAINT "PK_SymptomLogs" PRIMARY KEY AUTOINCREMENT,
-                        "UserId" INTEGER NOT NULL,
-                        "CycleLogId" INTEGER NOT NULL,
-                        "Date" TEXT NOT NULL,
-                        "SymptomType" INTEGER NOT NULL,
-                        "Severity" INTEGER NOT NULL,
-                        "Notes" TEXT,
-                        "CreatedAt" TEXT NOT NULL,
-                        CONSTRAINT "FK_SymptomLogs_CycleLogs_CycleLogId"
-                            FOREIGN KEY ("CycleLogId") REFERENCES "CycleLogs" ("Id") ON DELETE CASCADE
-                    );
-                    CREATE INDEX "IX_SymptomLogs_UserId_Date" ON "SymptomLogs" ("UserId", "Date");
-                    CREATE INDEX "IX_SymptomLogs_CycleLogId_Date" ON "SymptomLogs" ("CycleLogId", "Date");
-                    """),
-
-                ("EngineConfig", """
-                    CREATE TABLE "EngineConfig" (
-                        "Id" INTEGER NOT NULL CONSTRAINT "PK_EngineConfig" PRIMARY KEY AUTOINCREMENT,
-                        "Section" TEXT NOT NULL,
-                        "Key" TEXT NOT NULL,
-                        "Value" TEXT NOT NULL
-                    );
-                    CREATE UNIQUE INDEX "IX_EngineConfig_Section_Key" ON "EngineConfig" ("Section", "Key");
-                    """),
-            };
-
-            var missing = migrations.Where(m => !existing.Contains(m.Table)).ToArray();
-            if (missing.Length == 0)
+            if (Model.GetRelationalModel().Tables.All(table => existing.Contains(table.Name)))
                 return;
 
+            // Older installs can predate entire domains, including EngineConfig
+            // and the workout-planning tables. Use EF's current definitions so
+            // new tables include the correct foreign keys and indexes. Existing
+            // tables stay intact; column changes are handled explicitly below.
+            var createSql = Database.GenerateCreateScript()
+                .Replace("CREATE TABLE \"", "CREATE TABLE IF NOT EXISTS \"", StringComparison.Ordinal)
+                .Replace("CREATE UNIQUE INDEX \"", "CREATE UNIQUE INDEX IF NOT EXISTS \"", StringComparison.Ordinal)
+                .Replace("CREATE INDEX \"", "CREATE INDEX IF NOT EXISTS \"", StringComparison.Ordinal);
+
             await using var tx = await conn.BeginTransactionAsync();
-            try
+            await using var cmd = conn.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = createSql;
+            await cmd.ExecuteNonQueryAsync();
+            await tx.CommitAsync();
+        }
+        finally
+        {
+            if (!wasOpen)
+                await conn.CloseAsync();
+        }
+    }
+
+    private async Task EnsureMissingColumnsAsync()
+    {
+        var conn = Database.GetDbConnection();
+        var wasOpen = conn.State == System.Data.ConnectionState.Open;
+        if (!wasOpen)
+            await conn.OpenAsync();
+        try
+        {
+            // Names and DDL are fixed upgrade definitions, never user input.
+            var migrations = new (string Table, string Column, string AlterSql)[]
             {
-                foreach (var (table, sql) in missing)
+                ("Exercises", "IsInjuryFriendly", """
+                    ALTER TABLE "Exercises" ADD COLUMN "IsInjuryFriendly" INTEGER NOT NULL DEFAULT 0;
+                    """),
+                // Older app models mapped this optional relationship. Retain it
+                // for compatibility without changing the current LoggedMeal model.
+                ("LoggedMeals", "MealTemplateId", """
+                    ALTER TABLE "LoggedMeals" ADD COLUMN "MealTemplateId" INTEGER NULL
+                        REFERENCES "MealTemplates" ("Id") ON DELETE SET NULL;
+                    """),
+                ("UserProfiles", "SessionDurationMinutes", """
+                    ALTER TABLE "UserProfiles" ADD COLUMN "SessionDurationMinutes" INTEGER NOT NULL DEFAULT 60;
+                    """),
+                ("UserProfiles", "EquipmentLevel", """
+                    ALTER TABLE "UserProfiles" ADD COLUMN "EquipmentLevel" TEXT NOT NULL DEFAULT 'FullGym';
+                    """),
+                ("UserProfiles", "PhaseBaselinesJson", """
+                    ALTER TABLE "UserProfiles" ADD COLUMN "PhaseBaselinesJson" TEXT NOT NULL DEFAULT '';
+                    """)
+            };
+
+            await using var tx = await conn.BeginTransactionAsync();
+            foreach (var (table, column, sql) in migrations)
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.Transaction = tx;
+                cmd.CommandText = $"PRAGMA table_info(\"{table}\")";
+                var exists = false;
+                await using (var reader = await cmd.ExecuteReaderAsync())
                 {
-                    await using var cmd = conn.CreateCommand();
-                    cmd.Transaction = tx as System.Data.Common.DbTransaction;
-                    cmd.CommandText = sql;
-                    await cmd.ExecuteNonQueryAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        if (string.Equals(reader.GetString(1), column, StringComparison.OrdinalIgnoreCase))
+                            exists = true;
+                    }
                 }
-                await tx.CommitAsync();
+
+                if (exists)
+                    continue;
+
+                cmd.CommandText = sql;
+                await cmd.ExecuteNonQueryAsync();
             }
-            catch
-            {
-                await tx.RollbackAsync();
-                throw;
-            }
+
+            await tx.CommitAsync();
         }
         finally
         {
@@ -314,59 +285,6 @@ public partial class AppDatabase : DbContext
                     idx.CommandText = """
                         CREATE INDEX "IX_EngineInjuryLogs_UserId_Date"
                         ON "EngineInjuryLogs" ("UserId", "Date")
-                        """;
-                    await idx.ExecuteNonQueryAsync();
-
-                    await tx.CommitAsync();
-                }
-                catch
-                {
-                    await tx.RollbackAsync();
-                    throw;
-                }
-            }
-        }
-        finally
-        {
-            if (!wasOpen)
-                await conn.CloseAsync();
-        }
-    }
-
-    private async Task MigrateExercisePreferencesAsync()
-    {
-        var conn = Database.GetDbConnection();
-        var wasOpen = conn.State == System.Data.ConnectionState.Open;
-        if (!wasOpen)
-            await conn.OpenAsync();
-        try
-        {
-            await using var check = conn.CreateCommand();
-            check.CommandText = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='EngineExercisePreferences'";
-            var exists = Convert.ToInt64(await check.ExecuteScalarAsync()) > 0;
-            if (!exists)
-            {
-                await using var tx = await conn.BeginTransactionAsync();
-                try
-                {
-                    await using var create = conn.CreateCommand();
-                    create.Transaction = tx as System.Data.Common.DbTransaction;
-                    create.CommandText = """
-                        CREATE TABLE "EngineExercisePreferences" (
-                            "Id" INTEGER NOT NULL CONSTRAINT "PK_EngineExercisePreferences" PRIMARY KEY AUTOINCREMENT,
-                            "UserId" INTEGER NOT NULL,
-                            "OriginalExerciseId" INTEGER NOT NULL,
-                            "PreferredExerciseId" INTEGER NOT NULL,
-                            "CreatedAt" TEXT NOT NULL
-                        )
-                        """;
-                    await create.ExecuteNonQueryAsync();
-
-                    await using var idx = conn.CreateCommand();
-                    idx.Transaction = tx as System.Data.Common.DbTransaction;
-                    idx.CommandText = """
-                        CREATE UNIQUE INDEX "IX_EngineExercisePreferences_UserId_OriginalExerciseId"
-                        ON "EngineExercisePreferences" ("UserId", "OriginalExerciseId")
                         """;
                     await idx.ExecuteNonQueryAsync();
 

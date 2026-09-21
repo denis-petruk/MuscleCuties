@@ -83,7 +83,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
-        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
+        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         ToggleMealEditorCommand = new RelayCommand(ToggleMealEditor);
         OpenMealEditorCommand = new RelayCommand(OpenMealEditor);
@@ -283,7 +283,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
 
     private Task RefreshAsync()
     {
-        return _loadGate.RunAsync(LoadDataCoreAsync, true);
+        return _loadGate.RunAsync(LoadDataCoreAsync, this, true);
     }
 
     private async Task LoadDataCoreAsync()
@@ -297,6 +297,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
             var phaseTask = RunScopedAsync(services =>
                 services.GetRequiredService<ICycleService>().GetCurrentPhaseAsync(userId));
             var mealsTask = LoadMealsAsync(userId);
+
+            await Task.WhenAll(phaseTask, mealsTask);
 
             var phase = await phaseTask;
             CurrentPhase = phase;

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Dashboard.DashboardCalendarCard"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:dashboardControls="clr-namespace:MuscleCuties.App.Controls.Dashboard"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Dashboard;assembly=MuscleCuties.Core"
+    x:DataType="vm:DashboardViewModel">
+
+    <Border Style="{StaticResource CardPrimary}">
+        <VerticalStackLayout Spacing="10">
+
+            <!-- Header: Month/Year + Chevrons -->
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <Border
+                    WidthRequest="32"
+                    HeightRequest="32"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                    StrokeThickness="0"
+                    SemanticProperties.Description="Previous month">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding PreviousMonthCommand}" />
+                    </Border.GestureRecognizers>
+                    <Path
+                        Data="M15 18l-6-6 6-6"
+                        Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                        StrokeThickness="2"
+                        StrokeLineCap="Round"
+                        StrokeLineJoin="Round"
+                        Aspect="Uniform"
+                        WidthRequest="12"
+                        HeightRequest="12"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+
+                <Label
+                    Grid.Column="1"
+                    Text="{Binding CalendarMonthLabel}"
+                    Style="{StaticResource SectionTitle}"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+
+                <Border
+                    Grid.Column="2"
+                    WidthRequest="32"
+                    HeightRequest="32"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                    StrokeThickness="0"
+                    SemanticProperties.Description="Next month">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NextMonthCommand}" />
+                    </Border.GestureRecognizers>
+                    <Path
+                        Data="M9 18l6-6-6-6"
+                        Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                        StrokeThickness="2"
+                        StrokeLineCap="Round"
+                        StrokeLineJoin="Round"
+                        Aspect="Uniform"
+                        WidthRequest="12"
+                        HeightRequest="12"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+            </Grid>
+
+            <!-- Day-of-week headers -->
+            <Grid ColumnDefinitions="*,*,*,*,*,*,*">
+                <Label Text="M" Style="{StaticResource CaptionLabel}" HorizontalOptions="Center" />
+                <Label Grid.Column="1" Text="T" Style="{StaticResource CaptionLabel}" HorizontalOptions="Center" />
+                <Label Grid.Column="2" Text="W" Style="{StaticResource CaptionLabel}" HorizontalOptions="Center" />
+                <Label Grid.Column="3" Text="T" Style="{StaticResource CaptionLabel}" HorizontalOptions="Center" />
+                <Label Grid.Column="4" Text="F" Style="{StaticResource CaptionLabel}" HorizontalOptions="Center" />
+                <Label Grid.Column="5" Text="S" Style="{StaticResource CaptionLabel}" HorizontalOptions="Center" />
+                <Label Grid.Column="6" Text="S" Style="{StaticResource CaptionLabel}" HorizontalOptions="Center" />
+            </Grid>
+
+            <!-- Calendar day cells -->
+            <dashboardControls:DashboardMonthGrid
+                ItemsSource="{Binding CalendarDays}" />
+
+            <!-- Legend -->
+            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="6" HorizontalOptions="Center">
+                <BoxView WidthRequest="6" HeightRequest="6" CornerRadius="3" Color="#4CAF50" VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="Workout" Style="{StaticResource CaptionLabel}" FontSize="10" VerticalOptions="Center" />
+                <BoxView Grid.Column="2" WidthRequest="6" HeightRequest="6" CornerRadius="3" Color="#42A5F5" VerticalOptions="Center" />
+                <Label Grid.Column="3" Text="Meal" Style="{StaticResource CaptionLabel}" FontSize="10" VerticalOptions="Center" />
+                <BoxView Grid.Column="4" WidthRequest="6" HeightRequest="6" CornerRadius="3"
+                    Color="{AppThemeBinding Light=#33E8507B, Dark=#4DE8507B}" VerticalOptions="Center" />
+                <Label Grid.Column="5" Text="Today" Style="{StaticResource CaptionLabel}" FontSize="10" VerticalOptions="Center" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

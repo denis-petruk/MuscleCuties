@@ -5,12 +5,14 @@ namespace MuscleCuties.App.Resources.Converters;
 
 public class StringToGeometryConverter : IValueConverter
 {
-    private static readonly PathGeometryConverter PathConverter = new();
-
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is string pathData && !string.IsNullOrEmpty(pathData))
-            return PathConverter.ConvertFromInvariantString(pathData);
+        if (value is string pathData && !string.IsNullOrWhiteSpace(pathData))
+        {
+            var converter = new PathGeometryConverter();
+            return converter.ConvertFromInvariantString(pathData);
+        }
+
         return null;
     }
 

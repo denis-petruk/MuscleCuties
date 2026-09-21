@@ -4,21 +4,145 @@
     x:Class="MuscleCuties.App.Controls.Dashboard.DashboardWorkoutCard"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:workoutControls="clr-namespace:MuscleCuties.App.Controls.Workout"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Dashboard;assembly=MuscleCuties.Core"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core"
     x:DataType="vm:DashboardViewModel">
 
-    <workoutControls:FeaturedWorkoutCard
-        BadgeText="{Binding WorkoutBadgeText}"
-        WorkoutTitle="{Binding WorkoutTitle}"
-        Subtitle="{Binding WorkoutSubtitle}"
-        DurationText="{Binding WorkoutDurationText}"
-        ExercisesCount="{Binding WorkoutExercisesCount}"
-        Intensity="{Binding WorkoutIntensity}"
-        ActionText="{Binding WorkoutActionText}"
-        AccentColor="{Binding WorkoutActivityBackground}"
-        AccentTextColor="{Binding WorkoutActivityTextColor}"
-        ActivitySections="{Binding WorkoutActivitySections}"
-        HasMultipleActivities="{Binding HasMultipleActivities}"
-        StartCommand="{Binding OpenWorkoutCommand}" />
+    <Border Style="{StaticResource CardPrimary}">
+        <VerticalStackLayout Spacing="12">
+
+            <!-- Header: badge + activity pills -->
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                    <BoxView
+                        WidthRequest="6"
+                        HeightRequest="6"
+                        CornerRadius="3"
+                        BackgroundColor="{StaticResource Primary}"
+                        VerticalOptions="Center" />
+                    <Label
+                        Text="{Binding WorkoutBadgeText}"
+                        TextColor="{StaticResource Primary}"
+                        FontSize="11"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center"
+                                       BindableLayout.ItemsSource="{Binding WorkoutActivitySections}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="workoutModels:WorkoutActivitySection">
+                            <Border
+                                StrokeShape="RoundRectangle 999"
+                                StrokeThickness="0"
+                                Padding="10,5"
+                                BackgroundColor="{Binding Background}">
+                                <Label
+                                    Text="{Binding Title}"
+                                    TextColor="{Binding TextColor}"
+                                    FontSize="11"
+                                    FontAttributes="Bold" />
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
+            </Grid>
+
+            <!-- Title + subtitle -->
+            <Label
+                Text="{Binding WorkoutTitle}"
+                Style="{StaticResource SectionTitle}"
+                FontSize="20"
+                LineBreakMode="WordWrap" />
+
+            <Label
+                Text="{Binding WorkoutSubtitle}"
+                Style="{StaticResource MutedLabel}"
+                FontSize="13"
+                LineBreakMode="WordWrap"
+                Margin="0,-6,0,0" />
+
+            <!-- Metrics row -->
+            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="0" Margin="0,4,0,0">
+                <HorizontalStackLayout Grid.Column="0" Spacing="4">
+                    <Path
+                        Data="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"
+                        Fill="{StaticResource Primary}"
+                        Aspect="Uniform"
+                        WidthRequest="14"
+                        HeightRequest="14"
+                        VerticalOptions="Center" />
+                    <Label
+                        Text="{Binding WorkoutDurationText}"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                        VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <Label Grid.Column="1" Text="  ·  "
+                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                    FontSize="13" VerticalOptions="Center" />
+
+                <HorizontalStackLayout Grid.Column="2" Spacing="4">
+                    <Path
+                        Data="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2.71 7 4.14 8.43 5.57 7l8.57 8.57L7 22.71l1.43 1.43 6.86-6.86 1.43 1.43L18.14 20l1.43-1.43L18.14 17l2.43-2.14z"
+                        Fill="{StaticResource Primary}"
+                        Aspect="Uniform"
+                        WidthRequest="14"
+                        HeightRequest="14"
+                        VerticalOptions="Center" />
+                    <Label
+                        Text="{Binding WorkoutExercisesCount, StringFormat='{0} exercises'}"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                        VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <Label Grid.Column="3" Text="  ·  "
+                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                    FontSize="13" VerticalOptions="Center" />
+
+                <Label Grid.Column="4"
+                    Text="{Binding WorkoutIntensity}"
+                    FontSize="13"
+                    FontAttributes="Bold"
+                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                    VerticalOptions="Center" />
+            </Grid>
+
+            <!-- CTA button -->
+            <Border
+                BackgroundColor="{StaticResource Primary}"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 14"
+                HeightRequest="50"
+                Margin="0,2,0,0"
+                SemanticProperties.Description="Start workout">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding OpenWorkoutCommand}" />
+                </Border.GestureRecognizers>
+                <HorizontalStackLayout
+                    Spacing="8"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center">
+                    <Path
+                        Data="M8 5v14l11-7z"
+                        Fill="{StaticResource White}"
+                        Aspect="Uniform"
+                        WidthRequest="15"
+                        HeightRequest="15"
+                        VerticalOptions="Center" />
+                    <Label
+                        Text="Start workout"
+                        TextColor="{StaticResource White}"
+                        FontSize="15"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </Border>
 </ContentView>

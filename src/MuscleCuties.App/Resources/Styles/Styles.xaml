@@ -421,22 +421,6 @@
         <Setter Property="HorizontalTextAlignment" Value="Center" />
     </Style>
 
-    <Style x:Key="WorkoutExerciseCard" TargetType="Border">
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource CardSurface},
-                                        Dark={StaticResource CardSurfaceDark}}" />
-        <Setter Property="Stroke"
-                Value="{AppThemeBinding Light={StaticResource InputStroke},
-                                        Dark={StaticResource InputStrokeDark}}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
-            </Setter.Value>
-        </Setter>
-        <Setter Property="Padding" Value="14" />
-    </Style>
-
 
     <Style x:Key="WorkoutInfoTile" TargetType="Border">
         <Setter Property="BackgroundColor"
