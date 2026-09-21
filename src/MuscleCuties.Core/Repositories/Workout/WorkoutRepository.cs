@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Entities.Workout;
@@ -9,60 +11,123 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
 {
     public async Task<WorkoutPlan?> GetPlanWithDaysAsync(int planId)
     {
-        return await _db.WorkoutPlans
-            .AsNoTracking()
-            .Include(p => p.WorkoutDays)
-            .ThenInclude(d => d.WorkoutDayExercises)
-            .ThenInclude(we => we.Exercise)
-            .FirstOrDefaultAsync(p => p.Id == planId);
+        return await ReadAsync(async () =>
+        {
+            var plan = await _db.WorkoutPlans
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == planId);
+            if (plan is not null)
+            {
+                plan.WorkoutDays = await GetWorkoutDaysByPlanAsync(planId);
+                foreach (var day in plan.WorkoutDays)
+                    day.WorkoutPlan = plan;
+            }
+            return plan;
+        });
     }
 
     public async Task<WorkoutDay?> GetWorkoutDayWithExercisesAsync(int workoutDayId)
     {
-        return await _db.WorkoutDays
-            .AsNoTracking()
-            .Include(d => d.WorkoutDayExercises)
-            .ThenInclude(we => we.Exercise)
-            .FirstOrDefaultAsync(d => d.Id == workoutDayId);
+        return await ReadAsync(async () =>
+        {
+            var day = await _db.WorkoutDays
+                .AsNoTracking()
+                .Include(d => d.WorkoutDayExercises)
+                .FirstOrDefaultAsync(d => d.Id == workoutDayId);
+            if (day is not null)
+                await PopulateExercisesAsync([day]);
+            return day;
+        });
     }
 
     public async Task<List<WorkoutDay>> GetWorkoutDaysByPlanAsync(int planId)
     {
-        return await _db.WorkoutDays
-            .AsNoTracking()
-            .Where(d => d.WorkoutPlanId == planId)
-            .Include(d => d.WorkoutDayExercises)
-            .ThenInclude(we => we.Exercise)
-            .OrderBy(d => d.DayOfWeek)
-            .ThenBy(d => d.Id)
-            .ToListAsync();
+        return await ReadAsync(async () =>
+        {
+            var days = await _db.WorkoutDays
+                .AsNoTracking()
+                .Where(d => d.WorkoutPlanId == planId)
+                .Include(d => d.WorkoutDayExercises)
+                .OrderBy(d => d.DayOfWeek)
+                .ThenBy(d => d.Id)
+                .ToListAsync();
+            await PopulateExercisesAsync(days);
+            return days;
+        });
     }
 
     public async Task<List<Exercise>> GetExercisesByDayAsync(int workoutDayId)
     {
-        return await _db.WorkoutDayExercises
-            .AsNoTracking()
-            .Where(we => we.WorkoutDayId == workoutDayId)
-            .Include(we => we.Exercise)
-            .Select(we => we.Exercise!)
-            .ToListAsync();
+        return await ReadAsync(() => ReadExercisesAsync(exercises =>
+            from entry in _db.WorkoutDayExercises
+            join exercise in exercises on entry.ExerciseId equals exercise.Id
+            where entry.WorkoutDayId == workoutDayId
+            orderby entry.Id
+            select exercise));
     }
 
     public async Task<List<Exercise>> GetAllExercisesAsync()
     {
-        return await _db.Exercises
-            .AsNoTracking()
-            .OrderBy(e => e.Name)
-            .ToListAsync();
+        return await ReadAsync(() => ReadExercisesAsync(exercises => exercises.OrderBy(e => e.Name)));
+    }
+
+    private async Task PopulateExercisesAsync(IEnumerable<WorkoutDay> days)
+    {
+        var entries = days.SelectMany(day => day.WorkoutDayExercises).ToList();
+        var ids = entries.Select(entry => entry.ExerciseId).Distinct().ToList();
+        if (ids.Count == 0)
+            return;
+
+        var exercises = (await ReadExercisesAsync(query => query.Where(e => ids.Contains(e.Id))))
+            .ToDictionary(e => e.Id);
+        foreach (var entry in entries)
+        {
+            entry.Exercise = exercises.GetValueOrDefault(entry.ExerciseId);
+            entry.Exercise?.WorkoutExercises.Add(entry);
+        }
+    }
+
+    private async Task<List<Exercise>> ReadExercisesAsync(
+        Func<IQueryable<Exercise>, IQueryable<Exercise>> buildQuery)
+    {
+        try
+        {
+            return await buildQuery(ExerciseReadQuery(includeInjuryFriendly: true)).ToListAsync();
+        }
+        catch (SqliteException exception) when (
+            exception.SqliteErrorCode == 1 &&
+            exception.Message.Contains("no such column:", StringComparison.OrdinalIgnoreCase) &&
+            exception.Message.Contains("IsInjuryFriendly", StringComparison.OrdinalIgnoreCase))
+        {
+            Trace.TraceWarning(
+                $"[WorkoutRepository] Exercises.IsInjuryFriendly is missing; reading legacy exercise details " +
+                $"with injury suitability defaulted to false until startup migration completes: {exception}");
+            return await buildQuery(ExerciseReadQuery(includeInjuryFriendly: false)).ToListAsync();
+        }
+    }
+
+    private IQueryable<Exercise> ExerciseReadQuery(bool includeInjuryFriendly)
+    {
+        // EF can optimize away LINQ coalescing for properties marked required. Normalize legacy
+        // NULLs before materialization, and omit the missing column entirely on the fallback path.
+        // Only fixed SQL expressions are composed here; caller filters remain parameterized LINQ.
+        var injuryFriendly = includeInjuryFriendly ? "COALESCE(e.IsInjuryFriendly, 0)" : "0";
+        return _db.Exercises.FromSqlRaw($"""
+            SELECT e.Id, COALESCE(e.Code, '') AS Code, COALESCE(e.Name, 'Exercise') AS Name,
+                   COALESCE(e.Description, '') AS Description, e.ImageUrl, e.VideoUrl,
+                   e.TechniqueNotes, e.PrimaryMuscle, e.SecondaryMuscles,
+                   COALESCE(e.JointAreas, '') AS JointAreas, {injuryFriendly} AS IsInjuryFriendly
+            FROM Exercises AS e
+            """).AsNoTracking();
     }
 
     public async Task<WorkoutPlan?> GetActivePlanAsync(int userId)
     {
-        return await _db.WorkoutPlans
+        return await ReadAsync(() => _db.WorkoutPlans
             .AsNoTracking()
             .Where(p => p.UserId == userId && p.IsActive)
             .Include(p => p.WorkoutDays)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync());
     }
 
     public async Task<WorkoutPlan> ReplaceActivePlanAsync(WorkoutPlan plan)
@@ -112,7 +177,7 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
         var dayStart = date.Date;
         var dayEnd = dayStart.AddDays(1);
 
-        return await _db.WorkoutLogs
+        return await ReadAsync(() => _db.WorkoutLogs
             .AsNoTracking()
             .Include(l => l.ExerciseLogs)
             .Where(l => l.UserId == userId &&
@@ -120,7 +185,7 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
                         l.Date >= dayStart &&
                         l.Date < dayEnd)
             .OrderByDescending(l => l.CreatedAt)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync());
     }
 
     public async Task MergeWorkoutLogAsync(WorkoutLog log)
@@ -226,10 +291,10 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
         var dayStart = date.Date;
         var dayEnd = dayStart.AddDays(1);
 
-        return await _db.WorkoutLogs
+        return await ReadAsync(() => _db.WorkoutLogs
             .AsNoTracking()
             .Where(l => l.UserId == userId && l.Date >= dayStart && l.Date < dayEnd)
-            .ToListAsync();
+            .ToListAsync());
     }
 
     public async Task<List<WorkoutLog>> GetWorkoutLogsByDateRangeAsync(
@@ -240,13 +305,13 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
         var rangeStart = startDate.Date;
         var rangeEnd = endDate.Date.AddDays(1);
 
-        return await _db.WorkoutLogs
+        return await ReadAsync(() => _db.WorkoutLogs
             .AsNoTracking()
             .Include(l => l.WorkoutDay)
             .Where(l => l.UserId == userId && l.Date >= rangeStart && l.Date < rangeEnd)
             .OrderByDescending(l => l.Date)
             .ThenByDescending(l => l.CreatedAt)
-            .ToListAsync();
+            .ToListAsync());
     }
 
     public async Task<List<WorkoutExerciseLog>> GetExerciseLogsByExerciseIdsAsync(
@@ -256,7 +321,7 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
         if (exerciseIds.Count == 0)
             return [];
 
-        return await _db.WorkoutExerciseLogs
+        return await ReadAsync(() => _db.WorkoutExerciseLogs
             .AsNoTracking()
             .Include(l => l.WorkoutLog)
             .Where(l => l.WorkoutLog != null &&
@@ -264,6 +329,6 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
                         exerciseIds.Contains(l.ExerciseId))
             .OrderByDescending(l => l.WorkoutLog!.Date)
             .ThenByDescending(l => l.CreatedAt)
-            .ToListAsync();
+            .ToListAsync());
     }
 }

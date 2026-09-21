@@ -15,12 +15,21 @@ public class DashboardPlanner : IDashboardPlanner
         int workoutDaysPerWeek,
         TodaysWorkoutSummary workoutSummary,
         HealthWeeklySummary? healthSummary = null,
-        int? recordedReadinessScore = null)
+        int? recordedReadinessScore = null,
+        bool hasActiveInjury = false)
     {
         var readinessScore = recordedReadinessScore is not null
             ? Math.Clamp(recordedReadinessScore.Value, 0, 100)
             : CalculateReadinessScore(phase, caloriesProgress, workoutDaysPerWeek, healthSummary);
         var recoveryScore = CalculateRecoveryScore(phase, caloriesProgress, workoutSummary, healthSummary);
+        var readinessCapped = hasActiveInjury && readinessScore > 85;
+        var recoveryCapped = hasActiveInjury && recoveryScore > 85;
+
+        if (hasActiveInjury)
+        {
+            readinessScore = Math.Min(readinessScore, 85);
+            recoveryScore = Math.Min(recoveryScore, 85);
+        }
 
         return new DashboardSupportSummary(
             BuildCycleInsightText(prediction),
@@ -28,9 +37,9 @@ public class DashboardPlanner : IDashboardPlanner
             "target",
             BuildSleepGoal(workoutDaysPerWeek, healthSummary),
             readinessScore,
-            BuildReadinessLabel(readinessScore),
+            readinessCapped ? "Limited by injury" : BuildReadinessLabel(readinessScore),
             recoveryScore,
-            BuildRecoveryLabel(recoveryScore));
+            recoveryCapped ? "Recovery limited" : BuildRecoveryLabel(recoveryScore));
     }
 
     private static int CalculateReadinessScore(

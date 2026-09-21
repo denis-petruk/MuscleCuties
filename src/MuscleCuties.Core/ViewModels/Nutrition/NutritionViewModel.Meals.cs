@@ -15,6 +15,31 @@ namespace MuscleCuties.Core.ViewModels.Nutrition;
 
 public partial class NutritionViewModel
 {
+    private MealIngredientItem? _editingIngredient;
+
+    private void EditIngredient(MealIngredientItem? ingredient)
+    {
+        if (ingredient is null || !MealIngredients.Contains(ingredient) || IsBusy)
+            return;
+
+        _editingIngredient = ingredient;
+        IsCustomFoodPanelVisible = false;
+        IsFoodFinderExpanded = false;
+        SelectedFoodResult = new FoodSearchResultItem
+        {
+            FoodItemId = ingredient.FoodItemId,
+            Name = ingredient.Name,
+            Calories = ingredient.Calories,
+            Protein = ingredient.Protein,
+            Carbs = ingredient.Carbs,
+            Fats = ingredient.Fats,
+            SourceSummary = ingredient.SourceSummary
+        };
+        SelectedServingOption = ServingOptions.First(option => option.Label == "g");
+        FoodGrams = FormatAmountInput(ingredient.Grams);
+        AddFoodMessage = string.Empty;
+    }
+
     private void AddSelectedFoodAsIngredient()
     {
         if (SelectedFoodResult is null)
@@ -41,8 +66,15 @@ public partial class NutritionViewModel
             return;
         }
 
-        AddOrUpdateIngredient(CreateIngredient(SelectedFoodResult, amount, SelectedServingOption));
-        AddFoodMessage = $"{SelectedFoodResult.Name} added to this meal.";
+        var ingredient = CreateIngredient(SelectedFoodResult, amount, SelectedServingOption);
+        var index = _editingIngredient is null ? -1 : MealIngredients.IndexOf(_editingIngredient);
+        if (index >= 0)
+            MealIngredients[index] = ingredient;
+        else
+            AddOrUpdateIngredient(ingredient);
+
+        _editingIngredient = null;
+        AddFoodMessage = string.Empty;
         SelectedFoodResult = null;
         SearchQuery = string.Empty;
         ServingOptions = [];
@@ -105,7 +137,7 @@ public partial class NutritionViewModel
             }
 
             TriggerCelebration();
-            IsAddFoodPanelVisible = false;
+            IsMealEditorVisible = false;
             IsCustomFoodPanelVisible = false;
             SelectedFoodResult = null;
             IsFoodFinderExpanded = false;
@@ -118,7 +150,7 @@ public partial class NutritionViewModel
             _editingMealId = 0;
 
             _loadGate.MarkStale();
-            await _loadGate.RunAsync(LoadDataCoreAsync, true);
+            await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
         }
         catch (InvalidOperationException ex)
         {
@@ -212,18 +244,20 @@ public partial class NutritionViewModel
         IsEditingMeal = true;
         SelectedMealType = meal.MealType;
         SelectedMealTime = meal.LoggedAt.TimeOfDay;
-        IsAddFoodPanelVisible = true;
+        IsMealEditorVisible = true;
         IsFoodFinderExpanded = false;
         SelectedFoodResult = null;
         SearchQuery = string.Empty;
         FoodSearchResults = [];
         ResetFoodSearchPaging();
-        AddFoodMessage = "Edit the ingredients, time, or meal type.";
+        AddFoodMessage = string.Empty;
         NotifyMealIngredientProperties();
     }
 
     private void ResetMealDraft()
     {
+        InvalidateFoodSearch();
+        _editingIngredient = null;
         _editingMealId = 0;
         IsEditingMeal = false;
         SelectedFoodResult = null;
@@ -398,6 +432,10 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(HasMealIngredients));
         NotifyFoodFinderProperties();
         OnPropertyChanged(nameof(MealIngredientsTotalText));
+        OnPropertyChanged(nameof(MealDraftCaloriesText));
+        OnPropertyChanged(nameof(MealDraftProteinText));
+        OnPropertyChanged(nameof(MealDraftCarbsText));
+        OnPropertyChanged(nameof(MealDraftFatsText));
         OnPropertyChanged(nameof(LogMealButtonText));
         LogMealCommand.NotifyCanExecuteChanged();
     }

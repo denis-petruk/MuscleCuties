@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentView
+    x:Class="MuscleCuties.App.Controls.Injury.InjuryLogContent"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
+    xmlns:ui="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core"
+    x:DataType="vm:InjuryLogViewModel">
+    <ContentView.Resources>
+        <Style x:Key="ChoiceButton" TargetType="Button" BasedOn="{StaticResource ButtonSecondary}">
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="MinimumHeightRequest" Value="48" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Margin" Value="0,0,8,8" />
+        </Style>
+        <DataTemplate x:Key="InjuryRow" x:DataType="ui:InjuryLogItem">
+            <SwipeView Margin="16,0,16,12">
+                <SwipeView.RightItems>
+                    <SwipeItems>
+                        <SwipeItem Text="Delete" BackgroundColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=DeleteInjuryCommand}"
+                            CommandParameter="{Binding Id}" />
+                    </SwipeItems>
+                </SwipeView.RightItems>
+                <Border Style="{StaticResource ModalListItem}" Padding="16">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=EditInjuryCommand}"
+                            CommandParameter="{Binding .}" />
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="{Binding SiteName}" Style="{StaticResource CardTitle}" />
+                            <Label Style="{StaticResource MutedLabel}" FontSize="13">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding StatusName}" />
+                                        <Span Text=" · Pain: " />
+                                        <Span Text="{Binding PainLabel}" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Label Text="{Binding SinceText, StringFormat='Since {0}'}" Style="{StaticResource CaptionLabel}" />
+                        </VerticalStackLayout>
+                        <Button Grid.Column="1" Text="Edit" Style="{StaticResource ButtonLink}"
+                            MinimumHeightRequest="48" MinimumWidthRequest="48" VerticalOptions="Center"
+                            SemanticProperties.Description="{Binding SiteName, StringFormat='Edit {0} injury'}"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=EditInjuryCommand}"
+                            CommandParameter="{Binding .}" />
+                    </Grid>
+                </Border>
+            </SwipeView>
+        </DataTemplate>
+    </ContentView.Resources>
+
+    <CollectionView ItemsSource="{Binding ActiveInjuries}" SelectionMode="None"
+        ItemTemplate="{StaticResource InjuryRow}">
+        <CollectionView.Header>
+            <VerticalStackLayout Padding="16,8,16,16" Spacing="16">
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                    SemanticProperties.Description="Updating your injury log" />
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding HasError}">
+                    <Label Text="{Binding ErrorText}" Style="{StaticResource ErrorLabel}" />
+                    <Button Text="Try again" Style="{StaticResource ButtonSecondary}"
+                        Command="{Binding LoadCommand}" IsVisible="{Binding IsLoadError}" />
+                    <Button Text="Refresh plan" Style="{StaticResource ButtonSecondary}"
+                        Command="{Binding RetryPlanRefreshCommand}" IsVisible="{Binding IsPlanRefreshError}" />
+                </VerticalStackLayout>
+
+                <!-- Add and edit form -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowAddForm}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
+                    <Label Text="{Binding FormTitle}" Style="{StaticResource SectionTitle}" />
+                    <Label Text="Body area" Style="{StaticResource CaptionLabel}" />
+                    <FlexLayout Wrap="Wrap" Direction="Row" BindableLayout.ItemsSource="{Binding AvailableSites}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="ui:InjuryFlagOption">
+                                <Button Text="{Binding Label}" Style="{StaticResource ChoiceButton}"
+                                    FlexLayout.Basis="50%"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=SelectSiteCommand}"
+                                    CommandParameter="{Binding .}">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}" />
+                                            <Setter Property="TextColor" Value="White" />
+                                            <Setter Property="SemanticProperties.Hint" Value="Selected" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+
+                    <Label Text="Status" Style="{StaticResource CaptionLabel}" />
+                    <FlexLayout Wrap="Wrap" Direction="Row" BindableLayout.ItemsSource="{Binding AvailableStatuses}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="ui:InjuryStatusOption">
+                                <Button Text="{Binding Label}" Style="{StaticResource ChoiceButton}"
+                                    FlexLayout.Grow="1" MinimumWidthRequest="108"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=SelectStatusCommand}"
+                                    CommandParameter="{Binding .}">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}" />
+                                            <Setter Property="TextColor" Value="White" />
+                                            <Setter Property="SemanticProperties.Hint" Value="Selected" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+
+                    <Label Text="Started on" Style="{StaticResource CaptionLabel}" />
+                    <DatePicker Date="{Binding SinceDateValue}" MaximumDate="{Binding Today}"
+                        Format="MMM d, yyyy" MinimumHeightRequest="48"
+                        SemanticProperties.Description="Injury start date" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Label Text="Pain level" Style="{StaticResource CaptionLabel}" />
+                        <Label Grid.Column="1" Text="{Binding PainLabelText}" Style="{StaticResource AccentLabel}" />
+                    </Grid>
+                    <Slider Minimum="0" Maximum="5" Value="{Binding NewPainLevel}" MinimumHeightRequest="48"
+                        MinimumTrackColor="{StaticResource Primary}" ThumbColor="{StaticResource Primary}"
+                        SemanticProperties.Description="Pain level, from zero to five" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button Text="Cancel" Command="{Binding CancelEditCommand}" Style="{StaticResource ButtonSecondary}" />
+                        <Button Grid.Column="1" Text="Save injury" Command="{Binding SaveInjuryCommand}" />
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- Empty state -->
+                <VerticalStackLayout Spacing="16" IsVisible="{Binding HasNoInjuries}">
+                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 16" Padding="24">
+                        <VerticalStackLayout Spacing="12">
+                            <Image Source="injury_free.png" WidthRequest="72" HeightRequest="72"
+                                HorizontalOptions="Center" SemanticProperties.Description="A heart with a check mark" />
+                            <Label Text="No injuries logged" Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
+                            <Label Text="Your plan has no injury restrictions. Add a note whenever something needs extra care."
+                                Style="{StaticResource MutedLabel}" HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" MinimumHeightRequest="48">
+                            <Label Text="How injury tracking works" Style="{StaticResource CardTitle}" VerticalOptions="Center" />
+                            <Border Grid.Column="1" Style="{StaticResource ModalIconButton}" WidthRequest="48" HeightRequest="48"
+                                SemanticProperties.Description="Toggle injury tracking explanation">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleEducationCommand}" />
+                                </Border.GestureRecognizers>
+                                <Path Data="M5 9L12 16L19 9" Style="{StaticResource ModalCloseIcon}">
+                                    <Path.Triggers>
+                                        <DataTrigger TargetType="Path" Binding="{Binding IsEducationExpanded}" Value="True">
+                                            <Setter Property="Rotation" Value="180" />
+                                        </DataTrigger>
+                                    </Path.Triggers>
+                                </Path>
+                            </Border>
+                        </Grid>
+                        <VerticalStackLayout IsVisible="{Binding IsEducationExpanded}" Spacing="12">
+                            <Label Text="Log the area, pain level, and when it started." Style="{StaticResource MutedLabel}" />
+                            <Label Text="Your plan filters movements and activities linked to that area." Style="{StaticResource MutedLabel}" />
+                            <Label Text="Active injuries limit readiness and recovery scores to 85." Style="{StaticResource MutedLabel}" />
+                            <Label Text="Mark an injury cleared when appropriate. It stays in your history." Style="{StaticResource MutedLabel}" />
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+                <Label Text="Active injuries" Style="{StaticResource SectionTitle}" IsVisible="{Binding HasActiveInjuries}" />
+            </VerticalStackLayout>
+        </CollectionView.Header>
+        <CollectionView.Footer>
+            <VerticalStackLayout Padding="0,0,0,24" Spacing="8" IsVisible="{Binding HasClearedInjuries}">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="16,8">
+                    <Label Text="History" Style="{StaticResource SectionTitle}" VerticalOptions="Center" />
+                    <Button Grid.Column="1" Text="Show" Style="{StaticResource ButtonLink}" Command="{Binding ToggleHistoryCommand}"
+                        MinimumWidthRequest="48" MinimumHeightRequest="48" SemanticProperties.Description="Toggle cleared injury history">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsHistoryExpanded}" Value="True">
+                                <Setter Property="Text" Value="Hide" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                </Grid>
+                <VerticalStackLayout IsVisible="{Binding IsHistoryExpanded}"
+                    BindableLayout.ItemsSource="{Binding ClearedInjuries}" BindableLayout.ItemTemplate="{StaticResource InjuryRow}" />
+            </VerticalStackLayout>
+        </CollectionView.Footer>
+    </CollectionView>
+</ContentView>

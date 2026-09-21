@@ -2,9 +2,9 @@ using MuscleCuties.App.Controls.Shared;
 
 namespace MuscleCuties.App.Controls.Nutrition;
 
-public partial class FoodSearchModal : AnimatedModalView
+public partial class MealDetailModal : AnimatedModalView
 {
-    public FoodSearchModal()
+    public MealDetailModal()
     {
         InitializeComponent();
     }

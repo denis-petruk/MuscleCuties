@@ -34,6 +34,40 @@ public class AppDatabaseInitializationTests
     }
 
     [Fact]
+    public async Task InitializeStartupAsync_MigratesInjurySitesWithoutErasingLogs()
+    {
+        await using var db = await CreateDatabaseAsync();
+        await db.Database.EnsureCreatedAsync();
+        await db.Database.ExecuteSqlRawAsync("DROP TABLE \"EngineInjuryLogs\"");
+        await db.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE "EngineInjuryLogs" (
+                "Id" INTEGER PRIMARY KEY AUTOINCREMENT,
+                "UserId" INTEGER NOT NULL,
+                "Site" TEXT NOT NULL,
+                "Status" TEXT NOT NULL,
+                "Since" TEXT NOT NULL,
+                "Pain" INTEGER NOT NULL,
+                "Date" TEXT NOT NULL,
+                "CreatedAt" TEXT NOT NULL
+            )
+            """);
+        await db.Database.ExecuteSqlRawAsync("""
+            INSERT INTO "EngineInjuryLogs"
+                ("Id", "UserId", "Site", "Status", "Since", "Pain", "Date", "CreatedAt")
+            VALUES (42, 1, 'Knee', 'Recovering', '2026-09-01', 2, '2026-09-02', '2026-09-02 08:00:00')
+            """);
+
+        await db.InitializeStartupAsync();
+        await db.InitializeStartupAsync();
+
+        var log = await db.WorkoutInjuryLogs.AsNoTracking().SingleAsync();
+        Assert.Equal(42, log.Id);
+        Assert.Equal(2, log.SiteFlag);
+        Assert.Equal("Recovering", log.Status);
+        Assert.Equal(2, log.Pain);
+    }
+
+    [Fact]
     public async Task InitializeStartupAsync_SeedsQuizWithoutHeavyReferenceData()
     {
         await using var db = await CreateDatabaseAsync();

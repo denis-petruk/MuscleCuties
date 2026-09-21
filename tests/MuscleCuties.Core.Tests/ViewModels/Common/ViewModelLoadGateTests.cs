@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.Tests.ViewModels.Common;
@@ -156,5 +157,55 @@ public class ViewModelLoadGateTests
         gate.MarkStale();
 
         Assert.False(gate.HasLoaded);
+    }
+
+    [Fact]
+    public async Task RunAsync_PageFailure_IsRetryableAndClearsErrorOnSuccess()
+    {
+        var gate = CreateGate();
+        var page = new TestPage();
+        var attempts = 0;
+        Task LoadAsync()
+        {
+            Assert.False(page.IsLoadError);
+            if (++attempts < 3)
+                throw new InvalidOperationException("query failed");
+            return Task.CompletedTask;
+        }
+
+        await gate.RunAsync(LoadAsync, page);
+        Assert.True(page.IsLoadError);
+        Assert.False(gate.HasLoaded);
+        await gate.RunAsync(LoadAsync, page);
+        Assert.True(page.IsLoadError);
+        Assert.False(gate.HasLoaded);
+        await gate.RunAsync(LoadAsync, page);
+        Assert.False(page.IsLoadError);
+        Assert.True(gate.HasLoaded);
+        Assert.Equal(3, attempts);
+    }
+
+    [Fact]
+    public async Task RunAsync_FailedRefresh_InvalidatesFreshness()
+    {
+        var gate = CreateGate();
+        await gate.RunAsync(() => Task.CompletedTask);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => gate.RunAsync(
+            () => Task.FromException(new InvalidOperationException()), force: true));
+
+        var retried = false;
+        await gate.RunAsync(() =>
+        {
+            retried = true;
+            return Task.CompletedTask;
+        });
+        Assert.True(retried);
+    }
+
+    private sealed class TestPage : IPageLoadAware
+    {
+        public bool IsPageLoading => false;
+        public bool IsLoadError { get; set; }
+        public AsyncRelayCommand LoadDataCommand { get; } = new(() => Task.CompletedTask);
     }
 }

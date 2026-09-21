@@ -5,6 +5,7 @@ using MuscleCuties.App.Pages.Cycle;
 using MuscleCuties.App.Pages.Dashboard;
 using MuscleCuties.App.Pages.Onboarding;
 using MuscleCuties.App.Pages.Profile;
+using MuscleCuties.App.Pages.Workout;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 
@@ -43,6 +44,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(ProfileFeedbackPage), typeof(ProfileFeedbackPage));
         Routing.RegisterRoute(nameof(ProfilePrivacyPage), typeof(ProfilePrivacyPage));
         Routing.RegisterRoute(nameof(InjuryLogPage), typeof(InjuryLogPage));
+        Routing.RegisterRoute(nameof(WorkoutSessionPage), typeof(WorkoutSessionPage));
     }
 
     protected override void OnNavigating(ShellNavigatingEventArgs args)

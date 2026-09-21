@@ -17,7 +17,7 @@ public sealed record AdaptiveProfile(
     int BaselineSteps,
     CyclePhaseBaselines? Baselines = null);
 
-public sealed record Injury(InjurySite Site, InjuryStatus Status, DateOnly Since);
+public sealed record Injury(InjuryFlag Site, InjuryStatus Status, DateOnly Since);
 
 public sealed record DailyInputs(
     DateOnly Date,

@@ -61,7 +61,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
         _scopeFactory = scopeFactory;
         _openPhaseDetailsAsync = openPhaseDetailsAsync ?? (_ => Task.CompletedTask);
         _currentDateProvider = currentDateProvider ?? (() => DateTime.Today);
-        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
+        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         AdvancePhaseCommand = new AsyncRelayCommand(AdvancePhaseAsync, CanAdvancePhase);
         OpenCalendarDayCommand = new RelayCommand<CycleDayItem>(OpenCalendarDay);
         CloseDatePhaseModalCommand = new RelayCommand(CloseDatePhaseModal);
@@ -146,6 +146,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
             services.GetRequiredService<IUserRepository>().GetByIdAsync(userId));
         var phaseLogsTask = RunScopedAsync(services =>
             services.GetRequiredService<ICycleService>().GetRecentPhaseLogsAsync(userId, 120));
+
+        await Task.WhenAll(predictionTask, userTask, phaseLogsTask);
 
         var prediction = await predictionTask;
         var user = await userTask;

@@ -54,8 +54,10 @@ public class WorkoutInjuryRepository : BaseRepository<WorkoutInjuryLog>, IWorkou
             var existing = await _db.Set<WorkoutInjuryLog>().FindAsync(log.Id);
             if (existing is not null)
             {
+                existing.SiteFlag = log.SiteFlag;
                 existing.Status = log.Status;
                 existing.Pain = log.Pain;
+                existing.Since = log.Since;
                 existing.Date = log.Date;
             }
         }

@@ -32,7 +32,7 @@ public class FoodSyncServiceTests : IDisposable
 
         Assert.Empty(results);
         Assert.Equal(0, _fdcApiClient.SearchCallCount);
-        Assert.Null(await _foodSyncRepository.GetLatestSyncLogAsync());
+        Assert.Empty(await _fixture.Db.FoodSyncLogs.ToListAsync());
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class FoodSyncServiceTests : IDisposable
         Assert.Equal(1, _fdcApiClient.LastSearchPageNumber);
         Assert.Equal(0, _fdcApiClient.BatchCallCount);
 
-        var log = await _foodSyncRepository.GetLatestSyncLogAsync();
+        var log = await _fixture.Db.FoodSyncLogs.OrderByDescending(entry => entry.StartedAt).FirstOrDefaultAsync();
         Assert.NotNull(log);
         Assert.Equal("Success", log.Status);
         Assert.Equal(0, log.ItemsUpserted);
@@ -109,7 +109,7 @@ public class FoodSyncServiceTests : IDisposable
         Assert.Equal(1, _fdcApiClient.SearchCallCount);
         Assert.Equal(1, _fdcApiClient.BatchCallCount);
 
-        var log = await _foodSyncRepository.GetLatestSyncLogAsync();
+        var log = await _fixture.Db.FoodSyncLogs.OrderByDescending(entry => entry.StartedAt).FirstOrDefaultAsync();
         Assert.NotNull(log);
         Assert.Equal("Success", log.Status);
         Assert.Equal(1, log.ItemsUpserted);

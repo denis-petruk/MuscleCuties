@@ -243,6 +243,7 @@ public partial class NutritionViewModel
         if (suggestion is null || suggestion.Components.Count == 0)
             return;
 
+        ResetMealDraft();
         MealIngredients = new ObservableCollection<MealIngredientItem>(suggestion.Components
             .Select(component => new MealIngredientItem
             {
@@ -259,13 +260,13 @@ public partial class NutritionViewModel
 
         SelectedMealType = SuggestionMealType;
         SelectedMealTime = DateTime.Now.TimeOfDay;
-        IsAddFoodPanelVisible = true;
+        IsMealEditorVisible = true;
         IsFoodFinderExpanded = false;
         SelectedFoodResult = null;
         SearchQuery = string.Empty;
         FoodSearchResults = [];
         ResetFoodSearchPaging();
-        AddFoodMessage = "Suggestion applied. Adjust or log it.";
+        AddFoodMessage = string.Empty;
         NotifyMealIngredientProperties();
 
         CloseSuggestionModal();

@@ -237,10 +237,51 @@ public partial class AppDatabase
     private async Task SeedWorkoutExerciseDefinitionsAsync()
     {
         if (await WorkoutExerciseDefinitions.AnyAsync())
+        {
+            await UpdateRehabPreferencesAsync();
             return;
+        }
 
         var exercises = BuildWorkoutExerciseDefinitions();
         WorkoutExerciseDefinitions.AddRange(exercises);
+        await SaveChangesAsync();
+    }
+
+    private async Task UpdateRehabPreferencesAsync()
+    {
+        var needsUpdate = await WorkoutExerciseDefinitions
+            .Where(e => e.PreferredFor != InjuryFlag.None)
+            .AnyAsync();
+        if (needsUpdate)
+            return;
+
+        var updates = new Dictionary<int, InjuryFlag>
+        {
+            [102] = InjuryFlag.Ankle | InjuryFlag.Metatarsal | InjuryFlag.Neck,
+            [104] = InjuryFlag.Knee | InjuryFlag.LowBack | InjuryFlag.Neck,
+            [115] = InjuryFlag.Knee | InjuryFlag.Ankle | InjuryFlag.Metatarsal | InjuryFlag.Wrist | InjuryFlag.Hip,
+            [116] = InjuryFlag.Knee | InjuryFlag.Ankle | InjuryFlag.Metatarsal | InjuryFlag.Wrist | InjuryFlag.Hip,
+            [131] = InjuryFlag.Knee | InjuryFlag.Ankle | InjuryFlag.Metatarsal,
+            [137] = InjuryFlag.Ankle | InjuryFlag.Metatarsal,
+            [147] = InjuryFlag.Shoulder | InjuryFlag.Wrist | InjuryFlag.Hip,
+            [158] = InjuryFlag.Shoulder | InjuryFlag.Wrist,
+            [161] = InjuryFlag.Shoulder,
+            [162] = InjuryFlag.Shoulder,
+            [171] = InjuryFlag.LowBack | InjuryFlag.Hip,
+            [175] = InjuryFlag.LowBack | InjuryFlag.Hip | InjuryFlag.Neck,
+            [176] = InjuryFlag.LowBack | InjuryFlag.Neck,
+        };
+
+        var exercises = await WorkoutExerciseDefinitions
+            .Where(e => updates.Keys.Contains(e.Id))
+            .ToListAsync();
+
+        foreach (var exercise in exercises)
+        {
+            if (updates.TryGetValue(exercise.Id, out var preferred))
+                exercise.PreferredFor = preferred;
+        }
+
         await SaveChangesAsync();
     }
 
@@ -262,11 +303,13 @@ public partial class AppDatabase
             Ex(101, "Barbell Hip Thrust", MovementPattern.HipThrust, bb | htb,
                 ll: 1, ftg: 3, skl: 2, setup: 180, spr: 4, hi: true),
             Ex(102, "Machine Hip Thrust", MovementPattern.HipThrust, mc,
-                ll: 1, ftg: 3, skl: 1, setup: 60, spr: 4, hi: true),
+                ll: 1, ftg: 3, skl: 1, setup: 60, spr: 4, hi: true,
+                preferred: InjuryFlag.Ankle | InjuryFlag.Metatarsal | InjuryFlag.Neck),
             Ex(103, "B-Stance Hip Thrust", MovementPattern.HipThrust, bb | htb,
                 ll: 1, ftg: 2, skl: 2, setup: 150, spr: 4, uni: true),
             Ex(104, "Single-Leg Glute Bridge", MovementPattern.HipThrust, EquipmentSet.None,
-                ll: 1, ftg: 1, skl: 1, setup: 30, spr: 4, uni: true, bw: true),
+                ll: 1, ftg: 1, skl: 1, setup: 30, spr: 4, uni: true, bw: true,
+                preferred: InjuryFlag.Knee | InjuryFlag.LowBack | InjuryFlag.Neck),
             Ex(105, "Cable Pull-Through", MovementPattern.HipHinge, cb,
                 ll: 2, ftg: 2, skl: 1, setup: 60, spr: 4, contra: InjuryFlag.LowBack),
             Ex(106, "45 Degree Back Extension", MovementPattern.HipHinge, be45,
@@ -284,9 +327,11 @@ public partial class AppDatabase
             Ex(114, "Single-Leg RDL", MovementPattern.HipHinge, db,
                 ll: 2, ftg: 2, skl: 3, setup: 60, spr: 4, uni: true, contra: InjuryFlag.Ankle),
             Ex(115, "Seated Leg Curl", MovementPattern.KneeFlexion, mc,
-                ll: 2, ftg: 2, skl: 1, setup: 45, spr: 4),
+                ll: 2, ftg: 2, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Knee | InjuryFlag.Ankle | InjuryFlag.Metatarsal | InjuryFlag.Wrist | InjuryFlag.Hip),
             Ex(116, "Lying Leg Curl", MovementPattern.KneeFlexion, mc,
-                ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4, supine: 2),
+                ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4, supine: 2,
+                preferred: InjuryFlag.Knee | InjuryFlag.Ankle | InjuryFlag.Metatarsal | InjuryFlag.Wrist | InjuryFlag.Hip),
             Ex(117, "Nordic Curl", MovementPattern.KneeFlexion, EquipmentSet.None,
                 ll: 2, ftg: 4, skl: 3, setup: 60, spr: 5, bw: true, contra: InjuryFlag.Knee),
             Ex(118, "Good Morning", MovementPattern.HipHinge, bb,
@@ -315,7 +360,8 @@ public partial class AppDatabase
 
             // Abductors and adductors
             Ex(131, "Seated Hip Abduction Lean", MovementPattern.HipAbduction, mc,
-                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
+                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Knee | InjuryFlag.Ankle | InjuryFlag.Metatarsal),
             Ex(132, "Seated Hip Abduction Upright", MovementPattern.HipAbduction, mc,
                 ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
             Ex(133, "Standing Cable Abduction", MovementPattern.HipAbduction, cb,
@@ -327,7 +373,8 @@ public partial class AppDatabase
             Ex(136, "Copenhagen Plank", MovementPattern.HipAdduction, EquipmentSet.None,
                 ll: 1, ftg: 2, skl: 3, setup: 20, spr: 4, uni: true, bw: true, contra: InjuryFlag.Hip),
             Ex(137, "Seated Adduction Machine", MovementPattern.HipAdduction, mc,
-                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
+                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Ankle | InjuryFlag.Metatarsal),
 
             // Back
             Ex(141, "Pull-Up", MovementPattern.VerticalPull, pu,
@@ -344,7 +391,8 @@ public partial class AppDatabase
             Ex(146, "Straight-Arm Pulldown", MovementPattern.VerticalPull, cb,
                 ll: 2, ftg: 1, skl: 1, setup: 45, spr: 4, contra: InjuryFlag.Shoulder),
             Ex(147, "Face Pull", MovementPattern.RearDelt, cb,
-                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
+                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Shoulder | InjuryFlag.Wrist | InjuryFlag.Hip),
 
             // Push / delts / arms
             Ex(151, "DB Shoulder Press", MovementPattern.VerticalPush, db,
@@ -363,11 +411,14 @@ public partial class AppDatabase
             Ex(157, "DB Lateral Raise", MovementPattern.LateralRaise, db,
                 ll: 1, ftg: 1, skl: 1, setup: 30, spr: 4, contra: InjuryFlag.Shoulder),
             Ex(158, "Reverse Pec Deck", MovementPattern.RearDelt, mc,
-                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
+                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Shoulder | InjuryFlag.Wrist),
             Ex(161, "Incline DB Curl", MovementPattern.ElbowFlexion, db,
-                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 4),
+                ll: 2, ftg: 1, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Shoulder),
             Ex(162, "Cable Curl", MovementPattern.ElbowFlexion, cb,
-                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4),
+                ll: 1, ftg: 1, skl: 1, setup: 45, spr: 4,
+                preferred: InjuryFlag.Shoulder),
             Ex(163, "Overhead Cable Extension", MovementPattern.ElbowExtension, cb,
                 ll: 2, ftg: 1, skl: 1, setup: 45, spr: 4, contra: InjuryFlag.Shoulder),
             Ex(164, "Rope Pushdown", MovementPattern.ElbowExtension, cb,
@@ -375,7 +426,8 @@ public partial class AppDatabase
 
             // Core
             Ex(171, "Dead Bug", MovementPattern.AntiExtension, EquipmentSet.None,
-                ll: 0, ftg: 1, skl: 1, setup: 15, spr: 4, bw: true),
+                ll: 0, ftg: 1, skl: 1, setup: 15, spr: 4, bw: true,
+                preferred: InjuryFlag.LowBack | InjuryFlag.Hip),
             Ex(172, "Ab Wheel Rollout", MovementPattern.AntiExtension, EquipmentSet.None,
                 ll: 2, ftg: 2, skl: 3, setup: 20, spr: 5, bw: true,
                 contra: InjuryFlag.LowBack | InjuryFlag.Shoulder),
@@ -385,9 +437,11 @@ public partial class AppDatabase
             Ex(174, "Cable Crunch", MovementPattern.AntiExtension, cb,
                 ll: 1, ftg: 2, skl: 1, setup: 45, spr: 4, contra: InjuryFlag.Neck),
             Ex(175, "Pallof Press", MovementPattern.AntiRotation, cb,
-                ll: 0, ftg: 1, skl: 1, setup: 45, spr: 4, uni: true),
+                ll: 0, ftg: 1, skl: 1, setup: 45, spr: 4, uni: true,
+                preferred: InjuryFlag.LowBack | InjuryFlag.Hip | InjuryFlag.Neck),
             Ex(176, "Bird Dog", MovementPattern.AntiRotation, EquipmentSet.None,
-                ll: 0, ftg: 1, skl: 1, setup: 15, spr: 4, uni: true, bw: true),
+                ll: 0, ftg: 1, skl: 1, setup: 15, spr: 4, uni: true, bw: true,
+                preferred: InjuryFlag.LowBack | InjuryFlag.Neck),
             Ex(177, "Side Plank", MovementPattern.AntiLateralFlexion, EquipmentSet.None,
                 ll: 0, ftg: 1, skl: 1, setup: 15, spr: 0, uni: true, bw: true,
                 contra: InjuryFlag.Shoulder),

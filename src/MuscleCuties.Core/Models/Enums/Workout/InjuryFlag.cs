@@ -13,3 +13,10 @@ public enum InjuryFlag
     Hip = 64,
     Neck = 128
 }
+
+public enum InjuryStatus
+{
+    Acute,
+    Recovering,
+    Cleared
+}

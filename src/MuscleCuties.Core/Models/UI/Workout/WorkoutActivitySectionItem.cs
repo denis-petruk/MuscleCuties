@@ -1,11 +1,14 @@
+using System.Collections;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Maui.Graphics;
 
 namespace MuscleCuties.Core.Models.UI.Workout;
 
-public class WorkoutActivitySectionItem : ObservableObject
+public class WorkoutActivitySectionItem : ObservableObject, IEnumerable<WorkoutExerciseItem>
 {
+    public IEnumerator<WorkoutExerciseItem> GetEnumerator() => Exercises.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     public int OrderIndex { get; init; }
     public int TotalActivities { get; init; }
 

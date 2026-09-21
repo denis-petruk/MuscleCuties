@@ -4,12 +4,9 @@
     x:Class="MuscleCuties.App.Controls.Workout.FeaturedWorkoutCard"
     x:Name="Root"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:controls="clr-namespace:MuscleCuties.App.Controls.Workout">
-    <Border
-        Style="{StaticResource CardPrimary}"
-        BindingContext="{x:Reference Root}"
-        x:DataType="controls:FeaturedWorkoutCard">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <Border Style="{StaticResource CardPrimary}">
         <VerticalStackLayout Spacing="12">
 
             <!-- Header: badge + activity pills -->
@@ -19,11 +16,11 @@
                         WidthRequest="6"
                         HeightRequest="6"
                         CornerRadius="3"
-                        BackgroundColor="{Binding AccentTextColor}"
+                        BackgroundColor="{Binding AccentTextColor, Source={x:Reference Root}}"
                         VerticalOptions="Center" />
                     <Label
-                        Text="{Binding BadgeText}"
-                        TextColor="{Binding AccentTextColor}"
+                        Text="{Binding BadgeText, Source={x:Reference Root}}"
+                        TextColor="{Binding AccentTextColor, Source={x:Reference Root}}"
                         FontSize="11"
                         FontAttributes="Bold"
                         VerticalOptions="Center" />
@@ -34,11 +31,11 @@
                         StrokeShape="RoundRectangle 999"
                         StrokeThickness="0"
                         Padding="10,5"
-                        BackgroundColor="{Binding AccentColor}"
-                        IsVisible="{Binding HasSingleActivity}">
+                        BackgroundColor="{Binding AccentColor, Source={x:Reference Root}}"
+                        IsVisible="{Binding HasSingleActivity, Source={x:Reference Root}}">
                         <Label
-                            Text="{Binding PrimaryActivityTitle}"
-                            TextColor="{Binding AccentTextColor}"
+                            Text="{Binding PrimaryActivityTitle, Source={x:Reference Root}}"
+                            TextColor="{Binding AccentTextColor, Source={x:Reference Root}}"
                             FontSize="11"
                             FontAttributes="Bold" />
                     </Border>
@@ -47,11 +44,11 @@
                         StrokeShape="RoundRectangle 999"
                         StrokeThickness="0"
                         Padding="10,5"
-                        BackgroundColor="{Binding PrimaryActivityBackground}"
-                        IsVisible="{Binding HasMultipleActivities}">
+                        BackgroundColor="{Binding PrimaryActivityBackground, Source={x:Reference Root}}"
+                        IsVisible="{Binding HasMultipleActivities, Source={x:Reference Root}}">
                         <Label
-                            Text="{Binding PrimaryActivityTitle}"
-                            TextColor="{Binding PrimaryActivityTextColor}"
+                            Text="{Binding PrimaryActivityTitle, Source={x:Reference Root}}"
+                            TextColor="{Binding PrimaryActivityTextColor, Source={x:Reference Root}}"
                             FontSize="11"
                             FontAttributes="Bold" />
                     </Border>
@@ -60,11 +57,11 @@
                         StrokeShape="RoundRectangle 999"
                         StrokeThickness="0"
                         Padding="10,5"
-                        BackgroundColor="{Binding SecondaryActivityBackground}"
-                        IsVisible="{Binding HasMultipleActivities}">
+                        BackgroundColor="{Binding SecondaryActivityBackground, Source={x:Reference Root}}"
+                        IsVisible="{Binding HasMultipleActivities, Source={x:Reference Root}}">
                         <Label
-                            Text="{Binding SecondaryActivityTitle}"
-                            TextColor="{Binding SecondaryActivityTextColor}"
+                            Text="{Binding SecondaryActivityTitle, Source={x:Reference Root}}"
+                            TextColor="{Binding SecondaryActivityTextColor, Source={x:Reference Root}}"
                             FontSize="11"
                             FontAttributes="Bold" />
                     </Border>
@@ -73,13 +70,13 @@
 
             <!-- Title + subtitle -->
             <Label
-                Text="{Binding WorkoutTitle}"
+                Text="{Binding WorkoutTitle, Source={x:Reference Root}}"
                 Style="{StaticResource SectionTitle}"
                 FontSize="20"
                 LineBreakMode="WordWrap" />
 
             <Label
-                Text="{Binding Subtitle}"
+                Text="{Binding Subtitle, Source={x:Reference Root}}"
                 Style="{StaticResource MutedLabel}"
                 FontSize="13"
                 LineBreakMode="WordWrap"
@@ -90,13 +87,13 @@
                 <HorizontalStackLayout Grid.Column="0" Spacing="4">
                     <Path
                         Data="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"
-                        Fill="{Binding AccentTextColor}"
+                        Fill="{Binding AccentTextColor, Source={x:Reference Root}}"
                         Aspect="Uniform"
                         WidthRequest="14"
                         HeightRequest="14"
                         VerticalOptions="Center" />
                     <Label
-                        Text="{Binding DurationText}"
+                        Text="{Binding DurationText, Source={x:Reference Root}}"
                         FontSize="13"
                         FontAttributes="Bold"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
@@ -110,13 +107,13 @@
                 <HorizontalStackLayout Grid.Column="2" Spacing="4">
                     <Path
                         Data="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2.71 7 4.14 8.43 5.57 7l8.57 8.57L7 22.71l1.43 1.43 6.86-6.86 1.43 1.43L18.14 20l1.43-1.43L18.14 17l2.43-2.14z"
-                        Fill="{Binding AccentTextColor}"
+                        Fill="{Binding AccentTextColor, Source={x:Reference Root}}"
                         Aspect="Uniform"
                         WidthRequest="14"
                         HeightRequest="14"
                         VerticalOptions="Center" />
                     <Label
-                        Text="{Binding ExercisesCount, StringFormat='{0} exercises'}"
+                        Text="{Binding ExercisesCount, Source={x:Reference Root}, StringFormat='{0} exercises'}"
                         FontSize="13"
                         FontAttributes="Bold"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
@@ -128,26 +125,43 @@
                     FontSize="13" VerticalOptions="Center" />
 
                 <Label Grid.Column="4"
-                    Text="{Binding Intensity}"
+                    Text="{Binding Intensity, Source={x:Reference Root}}"
                     FontSize="13"
                     FontAttributes="Bold"
                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                     VerticalOptions="Center" />
             </Grid>
 
-            <Button
-                Text="{Binding ActionText}"
-                Command="{Binding StartCommand}"
-                ImageSource="{Binding ActionIcon}"
-                ContentLayout="Left,8"
-                BackgroundColor="{Binding AccentTextColor}"
-                TextColor="{StaticResource White}"
-                FontSize="15"
-                FontAttributes="Bold"
-                CornerRadius="14"
-                MinimumHeightRequest="50"
+            <!-- CTA button -->
+            <Border
+                BackgroundColor="{Binding AccentTextColor, Source={x:Reference Root}}"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 14"
+                HeightRequest="50"
                 Margin="0,2,0,0"
-                SemanticProperties.Description="{Binding ActionText}" />
+                SemanticProperties.Description="{Binding ActionText, Source={x:Reference Root}}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding StartCommand, Source={x:Reference Root}}" />
+                </Border.GestureRecognizers>
+                <HorizontalStackLayout
+                    Spacing="8"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center">
+                    <Path
+                        Data="M8 5v14l11-7z"
+                        Fill="{StaticResource White}"
+                        Aspect="Uniform"
+                        WidthRequest="15"
+                        HeightRequest="15"
+                        VerticalOptions="Center" />
+                    <Label
+                        Text="{Binding ActionText, Source={x:Reference Root}}"
+                        TextColor="{StaticResource White}"
+                        FontSize="15"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Border>
 
         </VerticalStackLayout>
     </Border>

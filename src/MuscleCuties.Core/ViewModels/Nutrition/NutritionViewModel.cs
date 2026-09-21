@@ -37,7 +37,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private string _foodGrams = "100";
     [ObservableProperty] private ObservableCollection<FoodSearchResultItem> _foodSearchResults = new();
     [ObservableProperty] private bool _hasMoreFoodResults;
-    [ObservableProperty] private bool _isAddFoodPanelVisible;
+    [ObservableProperty] private bool _isMealEditorVisible;
     private bool _isApplyingServingDefaults;
     [ObservableProperty] private bool _isBreakdownModalVisible;
     [ObservableProperty] private bool _isBrowsingMoreFoods;
@@ -48,7 +48,6 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private bool _isCustomFoodPanelVisible;
     [ObservableProperty] private bool _isEditingMeal;
     [ObservableProperty] private bool _isFoodFinderExpanded;
-    [ObservableProperty] private bool _isFoodSearchModalVisible;
     [ObservableProperty] private ObservableCollection<MealIngredientItem> _mealIngredients = new();
     [ObservableProperty] private ObservableCollection<MealItem> _meals = new();
     private ProfileNutritionGoals _micronutrientGoals = ProfileNutritionGoals.Empty;
@@ -84,22 +83,23 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
-        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
+        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
-        ToggleAddFoodPanelCommand = new RelayCommand(ToggleAddFoodPanel);
-        OpenAddFoodPanelCommand = new RelayCommand(OpenAddFoodPanel);
+        ToggleMealEditorCommand = new RelayCommand(ToggleMealEditor);
+        OpenMealEditorCommand = new RelayCommand(OpenMealEditor);
         SelectFoodResultCommand = new RelayCommand<FoodSearchResultItem>(SelectFoodResult);
-        DismissFoodSearchResultsCommand = new RelayCommand(DismissFoodSearchResults);
         SearchFoodCommand = new AsyncRelayCommand(SearchFoodAsync, CanSearchFood);
         BrowseMoreFoodsCommand = new AsyncRelayCommand(BrowseMoreFoodsAsync, CanBrowseMoreFoodResults);
         AddIngredientCommand = new RelayCommand(AddSelectedFoodAsIngredient, CanAddIngredient);
         OpenFoodFinderCommand = new RelayCommand(OpenFoodFinder);
         CollapseFoodFinderCommand = new RelayCommand(CollapseFoodFinder);
         RemoveIngredientCommand = new RelayCommand<MealIngredientItem>(RemoveIngredient);
+        EditIngredientCommand = new RelayCommand<MealIngredientItem>(EditIngredient);
+        MealEditorBackCommand = new RelayCommand(GoBackInMealEditor);
         LogMealCommand = new AsyncRelayCommand(LogMealAsync, CanLogMeal);
         SetBreakfastPreferenceCommand = new AsyncRelayCommand<string>(SetBreakfastPreferenceAsync);
         ToggleCustomFoodPanelCommand = new RelayCommand(ToggleCustomFoodPanel);
-        CreateCustomFoodCommand = new AsyncRelayCommand(CreateCustomFoodAsync);
+        CreateCustomFoodCommand = new AsyncRelayCommand(CreateCustomFoodAsync, () => !IsBusy);
         OpenMicronutrientsModalCommand = new RelayCommand(OpenDailyBreakdown);
         CloseMicronutrientsModalCommand = new RelayCommand(CloseBreakdownModal);
         OpenMealBreakdownCommand = new RelayCommand<MealItem>(OpenMealBreakdown);
@@ -112,6 +112,11 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         SelectSuggestionMealTypeCommand = new RelayCommand<MealType>(SelectSuggestionMealType);
         OpenMealDetailCommand = new RelayCommand<MealSuggestionItem>(OpenMealDetail);
         CloseMealDetailCommand = new RelayCommand(CloseMealDetail);
+        OpenMealEntryCommand = new RelayCommand(OpenMealEntry);
+        CloseMealEntryCommand = new RelayCommand(CloseMealEntry);
+        SelectEntryMealTypeCommand = new RelayCommand<MealType>(SelectEntryMealType);
+        StartManualMealCommand = new RelayCommand(StartManualMeal);
+        StartSuggestedMealCommand = new RelayCommand(StartSuggestedMeal);
         MealIngredients.CollectionChanged += OnMealIngredientsCollectionChanged;
     }
 
@@ -156,7 +161,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         IsCustomFoodPanelVisible;
 
     public bool IsFoodFinderCollapsed => !IsFoodFinderVisible;
+    public bool IsIngredientSearchVisible => IsFoodFinderExpanded && SelectedFoodResult is null && !IsCustomFoodPanelVisible;
     public bool IsSelectedFoodEditorVisible => SelectedFoodResult is not null;
+    public string IngredientActionText => _editingIngredient is null ? "Add ingredient" : "Update ingredient";
     public bool IsSavouryBreakfast => BreakfastPreference == BreakfastPreference.Savoury;
     public bool IsSweetBreakfast => BreakfastPreference == BreakfastPreference.Sweet;
 
@@ -166,7 +173,14 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public string SnackTargetText => $"Snack ({(int)(TargetCalories * (IsSweetBreakfast ? 0.20f : 0.13f))} kcal)";
     public bool HasMeals => Meals.Count > 0;
     public bool HasNoMeals => Meals.Count == 0;
-    public string AddMealPanelTitle => IsEditingMeal ? "Edit meal" : "Build meal";
+    public string MealEditorTitle => IsCustomFoodPanelVisible ? "Custom food"
+        : IsSelectedFoodEditorVisible ? "Portion"
+        : IsIngredientSearchVisible ? "Add food"
+        : IsEditingMeal ? "Edit meal" : "Log meal";
+    public string MealDraftCaloriesText => $"{MealIngredients.Sum(i => i.CaloriesForAmount):N0} kcal";
+    public string MealDraftProteinText => $"{MealIngredients.Sum(i => i.ProteinForAmount):N1} g";
+    public string MealDraftCarbsText => $"{MealIngredients.Sum(i => i.CarbsForAmount):N1} g";
+    public string MealDraftFatsText => $"{MealIngredients.Sum(i => i.FatsForAmount):N1} g";
 
     public MealItem? SelectedBreakdownMeal
     {
@@ -202,9 +216,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         }
     }
 
-    public string LogMealButtonText => HasMealIngredients
-        ? IsEditingMeal ? "Save meal" : "Add meal"
-        : "Add ingredients first";
+    public string LogMealButtonText => IsEditingMeal ? "Save meal" : "Log meal";
 
     public string SelectedFoodText => SelectedFoodResult?.Name ?? "No food selected";
     public string SelectedFoodSourceText => SelectedFoodResult?.SourceSummary ?? string.Empty;
@@ -236,16 +248,17 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand RefreshCommand { get; }
-    public RelayCommand ToggleAddFoodPanelCommand { get; }
-    public RelayCommand OpenAddFoodPanelCommand { get; }
+    public RelayCommand ToggleMealEditorCommand { get; }
+    public RelayCommand OpenMealEditorCommand { get; }
     public RelayCommand<FoodSearchResultItem> SelectFoodResultCommand { get; }
-    public RelayCommand DismissFoodSearchResultsCommand { get; }
     public AsyncRelayCommand SearchFoodCommand { get; }
     public AsyncRelayCommand BrowseMoreFoodsCommand { get; }
     public RelayCommand AddIngredientCommand { get; }
     public RelayCommand OpenFoodFinderCommand { get; }
     public RelayCommand CollapseFoodFinderCommand { get; }
     public RelayCommand<MealIngredientItem> RemoveIngredientCommand { get; }
+    public RelayCommand<MealIngredientItem> EditIngredientCommand { get; }
+    public RelayCommand MealEditorBackCommand { get; }
     public AsyncRelayCommand LogMealCommand { get; }
     public AsyncRelayCommand<string> SetBreakfastPreferenceCommand { get; }
     public RelayCommand ToggleCustomFoodPanelCommand { get; }
@@ -261,11 +274,16 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public RelayCommand<MealType> SelectSuggestionMealTypeCommand { get; }
     public RelayCommand<MealSuggestionItem> OpenMealDetailCommand { get; }
     public RelayCommand CloseMealDetailCommand { get; }
+    public RelayCommand OpenMealEntryCommand { get; }
+    public RelayCommand CloseMealEntryCommand { get; }
+    public RelayCommand<MealType> SelectEntryMealTypeCommand { get; }
+    public RelayCommand StartManualMealCommand { get; }
+    public RelayCommand StartSuggestedMealCommand { get; }
     public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
 
     private Task RefreshAsync()
     {
-        return _loadGate.RunAsync(LoadDataCoreAsync, true);
+        return _loadGate.RunAsync(LoadDataCoreAsync, this, true);
     }
 
     private async Task LoadDataCoreAsync()
@@ -279,6 +297,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
             var phaseTask = RunScopedAsync(services =>
                 services.GetRequiredService<ICycleService>().GetCurrentPhaseAsync(userId));
             var mealsTask = LoadMealsAsync(userId);
+
+            await Task.WhenAll(phaseTask, mealsTask);
 
             var phase = await phaseTask;
             CurrentPhase = phase;
@@ -354,36 +374,39 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         });
     }
 
-    private void ToggleAddFoodPanel()
+    private void ToggleMealEditor()
     {
-        if (IsAddFoodPanelVisible)
+        if (IsMealEditorVisible)
         {
-            CloseAddFoodPanel();
+            CloseMealEditor();
             return;
         }
 
-        OpenAddFoodPanel();
+        OpenMealEditor();
     }
 
-    private void OpenAddFoodPanel()
+    private void OpenMealEditor()
     {
         if (IsEditingMeal)
             ResetMealDraft();
 
-        IsAddFoodPanelVisible = true;
-        PrepareAddFoodPanel();
+        IsMealEditorVisible = true;
+        PrepareMealEditor();
     }
 
-    private void CloseAddFoodPanel()
+    private void CloseMealEditor()
     {
+        if (IsBusy)
+            return;
+
         CollapseFoodFinder();
-        IsAddFoodPanelVisible = false;
+        IsMealEditorVisible = false;
 
         if (IsEditingMeal)
             ResetMealDraft();
     }
 
-    private void PrepareAddFoodPanel()
+    private void PrepareMealEditor()
     {
         AddFoodMessage = string.Empty;
         if (MealIngredients.Count == 0)
@@ -399,12 +422,17 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
 
     private void OpenFoodFinder()
     {
+        _editingIngredient = null;
+        SelectedFoodResult = null;
+        IsCustomFoodPanelVisible = false;
         IsFoodFinderExpanded = true;
         AddFoodMessage = string.Empty;
     }
 
     private void CollapseFoodFinder()
     {
+        InvalidateFoodSearch();
+        _editingIngredient = null;
         SelectedFoodResult = null;
         SearchQuery = string.Empty;
         FoodSearchResults = [];
@@ -412,6 +440,23 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         IsCustomFoodPanelVisible = false;
         IsFoodFinderExpanded = false;
         AddFoodMessage = string.Empty;
+    }
+
+    private void GoBackInMealEditor()
+    {
+        if (IsBusy)
+            return;
+
+        if ((SelectedFoodResult is not null && _editingIngredient is null) || IsCustomFoodPanelVisible)
+        {
+            SelectedFoodResult = null;
+            IsCustomFoodPanelVisible = false;
+            IsFoodFinderExpanded = true;
+            AddFoodMessage = string.Empty;
+            return;
+        }
+
+        CollapseFoodFinder();
     }
 
     private void TriggerCelebration()
@@ -432,7 +477,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
 
     partial void OnIsEditingMealChanged(bool value)
     {
-        OnPropertyChanged(nameof(AddMealPanelTitle));
+        OnPropertyChanged(nameof(MealEditorTitle));
         OnPropertyChanged(nameof(LogMealButtonText));
     }
 }

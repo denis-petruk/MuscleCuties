@@ -76,10 +76,10 @@ public static class AdaptiveProfileMapper
             return [];
 
         return injuryLogs
-            .Where(log => Enum.TryParse<InjurySite>(log.Site, true, out _) &&
+            .Where(log => Enum.IsDefined(typeof(InjuryFlag), log.SiteFlag) &&
                           Enum.TryParse<InjuryStatus>(log.Status, true, out _))
             .Select(log => new Injury(
-                Enum.Parse<InjurySite>(log.Site, true),
+                (InjuryFlag)log.SiteFlag,
                 Enum.Parse<InjuryStatus>(log.Status, true),
                 log.Since))
             .ToList();

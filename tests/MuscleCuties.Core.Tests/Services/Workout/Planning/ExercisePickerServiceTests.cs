@@ -308,7 +308,7 @@ public class ExercisePickerServiceTests : IClassFixture<WorkoutPlanningDbFixture
     {
         var injuries = new List<Injury>
         {
-            new(InjurySite.Knee, InjuryStatus.Cleared, new DateOnly(2025, 1, 1))
+            new(InjuryFlag.Knee, InjuryStatus.Cleared, new DateOnly(2025, 1, 1))
         };
 
         var result = WorkoutInjuryRules.ToFlags(injuries);
@@ -320,7 +320,7 @@ public class ExercisePickerServiceTests : IClassFixture<WorkoutPlanningDbFixture
     {
         var injuries = new List<Injury>
         {
-            new(InjurySite.Knee, InjuryStatus.Acute, new DateOnly(2025, 6, 1))
+            new(InjuryFlag.Knee, InjuryStatus.Acute, new DateOnly(2025, 6, 1))
         };
 
         var result = WorkoutInjuryRules.ToFlags(injuries);
@@ -332,9 +332,9 @@ public class ExercisePickerServiceTests : IClassFixture<WorkoutPlanningDbFixture
     {
         var injuries = new List<Injury>
         {
-            new(InjurySite.Shoulder, InjuryStatus.Acute, new DateOnly(2025, 6, 1)),
-            new(InjurySite.LowBack, InjuryStatus.Recovering, new DateOnly(2025, 5, 1)),
-            new(InjurySite.Ankle, InjuryStatus.Cleared, new DateOnly(2024, 1, 1))
+            new(InjuryFlag.Shoulder, InjuryStatus.Acute, new DateOnly(2025, 6, 1)),
+            new(InjuryFlag.LowBack, InjuryStatus.Recovering, new DateOnly(2025, 5, 1)),
+            new(InjuryFlag.Ankle, InjuryStatus.Cleared, new DateOnly(2024, 1, 1))
         };
 
         var result = WorkoutInjuryRules.ToFlags(injuries);

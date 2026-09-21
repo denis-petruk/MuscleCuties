@@ -47,6 +47,8 @@ public partial class DashboardPage : ContentPage
     {
         await PhaseCardLazy.LoadIfNeededAsync(true);
         await Task.Yield();
+        await CalendarCardLazy.LoadIfNeededAsync(true);
+        await Task.Yield();
         await WorkoutCardLazy.LoadIfNeededAsync(true);
         await Task.Yield();
         await ReadinessLazy.LoadIfNeededAsync(true);
@@ -58,8 +60,18 @@ public partial class DashboardPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        _viewModel.CloseInjuryModalCommand.Execute(null);
         DetachThemeHandler();
         base.OnDisappearing();
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (!_viewModel.IsInjuryModalVisible)
+            return base.OnBackButtonPressed();
+
+        _viewModel.CloseInjuryModalCommand.Execute(null);
+        return true;
     }
 
     private void AttachThemeHandler()
