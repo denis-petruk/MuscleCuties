@@ -10,63 +10,63 @@
     x:DataType="vm:NutritionViewModel"
     IsOpen="{Binding IsMealDetailVisible}">
 
-    <Grid
-        BackgroundColor="{StaticResource ModalScrim}"
-        Padding="12,44,12,20">
-        <Grid.GestureRecognizers>
-            <TapGestureRecognizer Command="{Binding CloseMealDetailCommand}" />
-        </Grid.GestureRecognizers>
+    <Grid BackgroundColor="{StaticResource ModalScrim}">
+        <BoxView BackgroundColor="Transparent">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CloseMealDetailCommand}" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
         <Border
             Style="{StaticResource ModalSurface}"
-            Margin="0"
-            VerticalOptions="Fill">
+            Margin="12,44,12,20"
+            MaximumHeightRequest="780"
+            VerticalOptions="Center">
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
 
-            <Grid RowDefinitions="Auto, Auto, *, Auto">
+                <!-- Header -->
                 <Grid
-                    Grid.Row="0"
-                    ColumnDefinitions="*, Auto"
-                    Padding="20,18,20,12">
-                    <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="4">
+                    Padding="20,18,20,12"
+                    ColumnDefinitions="Auto,*,Auto"
+                    ColumnSpacing="12">
+                    <Border
+                        WidthRequest="42"
+                        HeightRequest="42"
+                        StrokeShape="RoundRectangle 12"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
+                        StrokeThickness="0"
+                        VerticalOptions="Center">
+                        <Path
+                            Data="{Binding SelectedMealDetail.IconPathData, Converter={StaticResource StringToGeometryConverter}}"
+                            Stroke="{StaticResource Primary}"
+                            StrokeThickness="1.5"
+                            StrokeLineCap="Round"
+                            StrokeLineJoin="Round"
+                            Aspect="Uniform"
+                            WidthRequest="20"
+                            HeightRequest="20"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                         <Label
                             Text="{Binding SelectedMealDetail.ConceptName}"
-                            Style="{StaticResource ModalTitle}" />
+                            Style="{StaticResource ModalTitle}"
+                            MaxLines="1"
+                            LineBreakMode="TailTruncation" />
                         <Label
-                            Grid.Row="1"
                             Text="{Binding SelectedMealDetail.ConceptDescription}"
                             Style="{StaticResource ModalSubtitle}"
                             MaxLines="2"
                             LineBreakMode="TailTruncation" />
-                        <HorizontalStackLayout Grid.Row="2" Spacing="10" Margin="0,4,0,0">
-                            <Border
-                                StrokeShape="RoundRectangle 999"
-                                StrokeThickness="0"
-                                Padding="10,4"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
-                                <Label
-                                    Text="{Binding SelectedMealDetail.StyleLabel}"
-                                    Style="{StaticResource CaptionLabel}"
-                                    TextColor="{StaticResource Primary}"
-                                    FontAttributes="Bold"
-                                    FontSize="11" />
-                            </Border>
-                            <Label
-                                Text="{Binding DetailCaloriesText}"
-                                Style="{StaticResource AccentLabel}"
-                                FontSize="13"
-                                FontAttributes="Bold"
-                                VerticalOptions="Center" />
-                            <Label
-                                Text="{Binding DetailMacrosText}"
-                                Style="{StaticResource CaptionLabel}"
-                                FontSize="12"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </Grid>
+                    </VerticalStackLayout>
+
                     <Border
-                        Grid.Column="1"
+                        Grid.Column="2"
                         Style="{StaticResource ModalIconButton}"
                         VerticalOptions="Start"
-                        SemanticProperties.Description="Close detail view">
+                        SemanticProperties.Description="Close meal detail">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding CloseMealDetailCommand}" />
                         </Border.GestureRecognizers>
@@ -74,238 +74,216 @@
                     </Border>
                 </Grid>
 
-                <BoxView
-                    Grid.Row="1"
-                    Style="{StaticResource ModalDivider}" />
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
 
-                <ScrollView
-                    Grid.Row="2"
-                    VerticalScrollBarVisibility="Default">
-                    <VerticalStackLayout
-                        Padding="20,16,20,20"
-                        Spacing="20">
+                <!-- Scrollable content -->
+                <ScrollView Grid.Row="2">
+                    <VerticalStackLayout Spacing="16" Padding="20,16,20,20">
 
+                        <!-- Macro summary card -->
                         <Border
-                            Style="{StaticResource ModalAccentPanel}">
-                            <VerticalStackLayout Spacing="8">
-                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                            Style="{StaticResource CardPrimary}"
+                            Padding="14"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}">
+                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                                <HorizontalStackLayout Spacing="6">
                                     <Image
-                                        Source="{Binding Source='Target24', Converter={StaticResource StringToFluentIconImageSourceConverter}, ConverterParameter=Accent}"
-                                        WidthRequest="17"
-                                        HeightRequest="17"
+                                        Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                                        Aspect="AspectFit"
+                                        WidthRequest="16"
+                                        HeightRequest="16"
                                         VerticalOptions="Center" />
                                     <Label
-                                        Grid.Column="1"
-                                        Text="{Binding DailyProgressText}"
-                                        Style="{StaticResource AccentLabel}"
-                                        FontSize="13"
-                                        FontAttributes="Bold" />
+                                        Text="{Binding DetailCaloriesText}"
+                                        FontSize="18"
+                                        FontAttributes="Bold"
+                                        TextColor="{StaticResource Primary}"
+                                        VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+                                <Label
+                                    Grid.Row="1"
+                                    Text="{Binding DetailMacrosText}"
+                                    Style="{StaticResource CaptionLabel}"
+                                    FontSize="13" />
+
+                                <HorizontalStackLayout Grid.Row="2" Spacing="8">
+                                    <Border
+                                        StrokeShape="RoundRectangle 999"
+                                        StrokeThickness="0"
+                                        Padding="8,3"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+                                        <Label
+                                            Text="{Binding SelectedMealDetail.StyleLabel}"
+                                            Style="{StaticResource CaptionLabel}"
+                                            TextColor="{StaticResource Primary}"
+                                            FontAttributes="Bold"
+                                            FontSize="10" />
+                                    </Border>
                                     <Label
-                                        Grid.Column="2"
-                                        Text="{Binding MealFillPercentText}"
+                                        Text="{Binding SelectedMealDetail.StyleDescription}"
                                         Style="{StaticResource CaptionLabel}"
                                         FontSize="11"
-                                        TextColor="{StaticResource Primary}" />
-                                </Grid>
-                                <ProgressBar
-                                    Progress="{Binding ConsumedCaloriesFillPercent}"
-                                    ProgressColor="{StaticResource Primary}"
-                                    HeightRequest="6" />
-                                <Label
-                                    Text="{Binding DailyMacroRemainingText}"
-                                    Style="{StaticResource CaptionLabel}"
-                                    FontSize="11" />
-                            </VerticalStackLayout>
+                                        VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+                            </Grid>
                         </Border>
 
-                        <VerticalStackLayout
-                            Spacing="16"
-                            BindableLayout.ItemsSource="{Binding SelectedMealDetail.ComponentGroups}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate x:DataType="nutritionModels:MealSuggestionComponentGroup">
-                                    <VerticalStackLayout Spacing="8">
-                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                                            <Image
-                                                Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                                WidthRequest="18"
-                                                HeightRequest="18"
-                                                Aspect="AspectFit"
-                                                VerticalOptions="Center" />
-                                            <Label
-                                                Grid.Column="1"
-                                                Text="{Binding Label}"
-                                                Style="{StaticResource AccentLabel}"
-                                                FontSize="14"
-                                                FontAttributes="Bold"
-                                                VerticalOptions="Center" />
-                                            <Label
-                                                Grid.Column="2"
-                                                Text="{Binding TotalText}"
-                                                Style="{StaticResource CaptionLabel}"
-                                                FontSize="11"
-                                                VerticalOptions="Center" />
-                                        </Grid>
+                        <!-- Daily fit -->
+                        <VerticalStackLayout Spacing="4">
+                            <Label
+                                Text="{Binding MealFillPercentText}"
+                                Style="{StaticResource CaptionLabel}"
+                                FontAttributes="Bold"
+                                FontSize="12" />
+                            <Label
+                                Text="{Binding DailyProgressText}"
+                                Style="{StaticResource CaptionLabel}"
+                                FontSize="11" />
+                            <Label
+                                Text="{Binding DailyMacroRemainingText}"
+                                Style="{StaticResource CaptionLabel}"
+                                FontSize="11" />
+                        </VerticalStackLayout>
 
-                                        <VerticalStackLayout
-                                            Spacing="0"
-                                            BindableLayout.ItemsSource="{Binding Items}">
-                                            <BindableLayout.ItemTemplate>
-                                                <DataTemplate x:DataType="nutritionModels:MealSuggestionComponentItem">
-                                                    <Border
-                                                        Style="{StaticResource ModalListItem}"
-                                                        Padding="12,10"
-                                                        Margin="0,0,0,6">
-                                                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto, Auto" ColumnSpacing="12" RowSpacing="2">
+                        <!-- Ingredients by group -->
+                        <VerticalStackLayout Spacing="10">
+                            <Label
+                                Text="Ingredients"
+                                Style="{StaticResource SectionTitle}"
+                                FontSize="15" />
+
+                            <VerticalStackLayout
+                                BindableLayout.ItemsSource="{Binding SelectedMealDetail.ComponentGroups}"
+                                Spacing="8">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="nutritionModels:MealSuggestionComponentGroup">
+                                        <VerticalStackLayout Spacing="4">
+                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                                <Image
+                                                    Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}, ConverterParameter=Accent}"
+                                                    WidthRequest="16"
+                                                    HeightRequest="16"
+                                                    Aspect="AspectFit"
+                                                    VerticalOptions="Center" />
+                                                <Label
+                                                    Grid.Column="1"
+                                                    Text="{Binding Label}"
+                                                    Style="{StaticResource CardTitle}"
+                                                    FontSize="13"
+                                                    VerticalOptions="Center" />
+                                                <Label
+                                                    Grid.Column="2"
+                                                    Text="{Binding TotalText}"
+                                                    Style="{StaticResource CaptionLabel}"
+                                                    FontSize="11"
+                                                    VerticalOptions="Center" />
+                                            </Grid>
+
+                                            <VerticalStackLayout
+                                                BindableLayout.ItemsSource="{Binding Items}"
+                                                Spacing="2"
+                                                Padding="24,0,0,0">
+                                                <BindableLayout.ItemTemplate>
+                                                    <DataTemplate x:DataType="nutritionModels:MealSuggestionComponentItem">
+                                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="0,2">
                                                             <Label
                                                                 Text="{Binding Name}"
                                                                 Style="{StaticResource BodyLabel}"
-                                                                FontSize="14"
-                                                                MaxLines="1"
-                                                                LineBreakMode="TailTruncation" />
+                                                                FontSize="13"
+                                                                VerticalOptions="Center" />
                                                             <Label
-                                                                Grid.Row="1"
+                                                                Grid.Column="1"
                                                                 Text="{Binding DetailText}"
                                                                 Style="{StaticResource CaptionLabel}"
-                                                                FontSize="11" />
-                                                            <Border
-                                                                Grid.Column="1"
-                                                                Grid.RowSpan="2"
-                                                                StrokeShape="RoundRectangle 8"
-                                                                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                                                                StrokeThickness="1"
-                                                                Padding="8,4"
-                                                                VerticalOptions="Center"
-                                                                BackgroundColor="Transparent">
-                                                                <Label
-                                                                    Text="{Binding PortionText}"
-                                                                    Style="{StaticResource AccentLabel}"
-                                                                    FontSize="13"
-                                                                    FontAttributes="Bold"
-                                                                    HorizontalTextAlignment="Center"
-                                                                    MinimumWidthRequest="48" />
-                                                            </Border>
+                                                                FontSize="11"
+                                                                VerticalOptions="Center" />
                                                         </Grid>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </BindableLayout.ItemTemplate>
+                                                    </DataTemplate>
+                                                </BindableLayout.ItemTemplate>
+                                            </VerticalStackLayout>
                                         </VerticalStackLayout>
-                                    </VerticalStackLayout>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout
-                            Spacing="8"
-                            IsVisible="{Binding DetailHasSpiceBlends}">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                                <Image
-                                    Source="{Binding Source='Fire24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                    WidthRequest="18"
-                                    HeightRequest="18"
-                                    Aspect="AspectFit"
-                                    VerticalOptions="Center" />
-                                <Label
-                                    Grid.Column="1"
-                                    Text="Recommended spices"
-                                    Style="{StaticResource AccentLabel}"
-                                    FontSize="14"
-                                    FontAttributes="Bold"
-                                    VerticalOptions="Center" />
-                            </Grid>
-
-                            <VerticalStackLayout
-                                Spacing="0"
-                                BindableLayout.ItemsSource="{Binding SelectedMealDetail.SpiceBlends}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate x:DataType="nutritionModels:SpiceBlendDetail">
-                                        <Border
-                                            Style="{StaticResource ModalAccentPanel}"
-                                            Padding="14,10"
-                                            Margin="0,0,0,6">
-                                            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto, Auto" ColumnSpacing="10" RowSpacing="2">
-                                                <Border
-                                                    Grid.RowSpan="2"
-                                                    WidthRequest="8"
-                                                    HeightRequest="8"
-                                                    StrokeShape="RoundRectangle 4"
-                                                    StrokeThickness="0"
-                                                    BackgroundColor="{StaticResource Primary}"
-                                                    VerticalOptions="Center"
-                                                    IsVisible="{Binding IsRecommended}" />
-                                                <Label
-                                                    Grid.Column="1"
-                                                    Text="{Binding Name}"
-                                                    Style="{StaticResource BodyLabel}"
-                                                    FontSize="13"
-                                                    FontAttributes="Bold" />
-                                                <Label
-                                                    Grid.Row="1"
-                                                    Grid.Column="1"
-                                                    Text="{Binding Description}"
-                                                    Style="{StaticResource CaptionLabel}"
-                                                    FontSize="12" />
-                                            </Grid>
-                                        </Border>
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
                         </VerticalStackLayout>
 
-                        <VerticalStackLayout Spacing="8">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                                <Image
-                                    Source="{Binding Source='DocumentText24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                    WidthRequest="18"
-                                    HeightRequest="18"
-                                    Aspect="AspectFit"
-                                    VerticalOptions="Center" />
-                                <Label
-                                    Grid.Column="1"
-                                    Text="How to make it"
-                                    Style="{StaticResource AccentLabel}"
-                                    FontSize="14"
-                                    FontAttributes="Bold"
-                                    VerticalOptions="Center" />
-                            </Grid>
-
-                            <Border
-                                Style="{StaticResource ModalAccentPanel}"
-                                Padding="16,14">
-                                <VerticalStackLayout Spacing="4">
-                                    <Label
-                                        Text="{Binding SelectedMealDetail.StyleDescription}"
-                                        Style="{StaticResource CaptionLabel}"
-                                        TextColor="{StaticResource Primary}"
-                                        FontAttributes="Bold"
-                                        FontSize="11"
-                                        Margin="0,0,0,4" />
-                                    <Label
-                                        Text="{Binding DetailDirectionsText}"
-                                        Style="{StaticResource BodyLabel}"
-                                        FontSize="13"
-                                        LineHeight="1.5" />
-                                </VerticalStackLayout>
-                            </Border>
+                        <!-- Spice blends -->
+                        <VerticalStackLayout
+                            Spacing="6"
+                            IsVisible="{Binding DetailHasSpiceBlends}">
+                            <Label
+                                Text="Seasoning"
+                                Style="{StaticResource SectionTitle}"
+                                FontSize="15" />
+                            <VerticalStackLayout
+                                BindableLayout.ItemsSource="{Binding SelectedMealDetail.SpiceBlends}"
+                                Spacing="4">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="nutritionModels:SpiceBlendDetail">
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="0,2">
+                                            <Border
+                                                StrokeShape="RoundRectangle 999"
+                                                StrokeThickness="0"
+                                                Padding="6,2"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                                VerticalOptions="Center"
+                                                IsVisible="{Binding IsRecommended}">
+                                                <Label
+                                                    Text="Rec."
+                                                    TextColor="{StaticResource Primary}"
+                                                    FontSize="9"
+                                                    FontAttributes="Bold" />
+                                            </Border>
+                                            <VerticalStackLayout Grid.Column="1" Spacing="1">
+                                                <Label
+                                                    Text="{Binding Name}"
+                                                    Style="{StaticResource CardTitle}"
+                                                    FontSize="13" />
+                                                <Label
+                                                    Text="{Binding Description}"
+                                                    Style="{StaticResource CaptionLabel}"
+                                                    FontSize="11"
+                                                    MaxLines="2"
+                                                    LineBreakMode="TailTruncation" />
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
                         </VerticalStackLayout>
+
+                        <!-- Directions -->
+                        <VerticalStackLayout Spacing="6">
+                            <Label
+                                Text="How to prepare"
+                                Style="{StaticResource SectionTitle}"
+                                FontSize="15" />
+                            <Label
+                                Text="{Binding DetailDirectionsText}"
+                                Style="{StaticResource BodyLabel}"
+                                FontSize="13"
+                                LineHeight="1.5" />
+                        </VerticalStackLayout>
+
                     </VerticalStackLayout>
                 </ScrollView>
 
-                <Border Grid.Row="3" Style="{StaticResource ModalFooter}">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                        <Button
-                            Text="Back to ideas"
-                            Command="{Binding CloseMealDetailCommand}"
-                            Style="{StaticResource ButtonSecondary}"
-                            MinimumHeightRequest="48"
-                            SemanticProperties.Description="Return to meal ideas" />
+                <!-- Action buttons -->
+                <Grid Grid.Row="3" Padding="20,8,20,16" ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Button
+                        Text="Back"
+                        Command="{Binding CloseMealDetailCommand}"
+                        Style="{StaticResource ButtonSecondary}"
+                        MinimumHeightRequest="48" />
                     <Button
                         Grid.Column="1"
                         Text="Use this meal"
                         Command="{Binding AcceptSuggestionCommand}"
                         CommandParameter="{Binding SelectedMealDetail}"
-                        SemanticProperties.Description="Use this meal suggestion" />
-                    </Grid>
-                </Border>
+                        MinimumHeightRequest="48"
+                        FontAttributes="Bold" />
+                </Grid>
+
             </Grid>
         </Border>
     </Grid>

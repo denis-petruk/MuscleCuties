@@ -128,6 +128,53 @@
     <Color x:Key="FatsLight">#6F8E4E</Color>
     <Color x:Key="FatsDark">#9DB878</Color>
 
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}" />
+    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}" />
     <SolidColorBrush x:Key="ShadowBrush" Color="{StaticResource ShadowColor}" />
+
+    <SolidColorBrush x:Key="CyclePhaseMenstrualLightBrush" Color="{StaticResource CyclePhaseMenstrualLight}" />
+    <SolidColorBrush x:Key="CyclePhaseMenstrualDarkBrush" Color="{StaticResource CyclePhaseMenstrualDark}" />
+    <SolidColorBrush x:Key="CyclePhaseFollicularLightBrush" Color="{StaticResource CyclePhaseFollicularLight}" />
+    <SolidColorBrush x:Key="CyclePhaseFollicularDarkBrush" Color="{StaticResource CyclePhaseFollicularDark}" />
+    <SolidColorBrush x:Key="CyclePhaseOvulatoryLightBrush" Color="{StaticResource CyclePhaseOvulatoryLight}" />
+    <SolidColorBrush x:Key="CyclePhaseOvulatoryDarkBrush" Color="{StaticResource CyclePhaseOvulatoryDark}" />
+    <SolidColorBrush x:Key="CyclePhaseLutealLightBrush" Color="{StaticResource CyclePhaseLutealLight}" />
+    <SolidColorBrush x:Key="CyclePhaseLutealDarkBrush" Color="{StaticResource CyclePhaseLutealDark}" />
+    <SolidColorBrush x:Key="CyclePhaseDefaultLightBrush" Color="{StaticResource CyclePhaseDefaultLight}" />
+    <SolidColorBrush x:Key="CyclePhaseDefaultDarkBrush" Color="{StaticResource CyclePhaseDefaultDark}" />
+
+    <SolidColorBrush x:Key="CyclePhaseMenstrualTextLightBrush" Color="{StaticResource CyclePhaseMenstrualTextLight}" />
+    <SolidColorBrush x:Key="CyclePhaseMenstrualTextDarkBrush" Color="{StaticResource CyclePhaseMenstrualTextDark}" />
+    <SolidColorBrush x:Key="CyclePhaseFollicularTextLightBrush" Color="{StaticResource CyclePhaseFollicularTextLight}" />
+    <SolidColorBrush x:Key="CyclePhaseFollicularTextDarkBrush" Color="{StaticResource CyclePhaseFollicularTextDark}" />
+    <SolidColorBrush x:Key="CyclePhaseOvulatoryTextLightBrush" Color="{StaticResource CyclePhaseOvulatoryTextLight}" />
+    <SolidColorBrush x:Key="CyclePhaseOvulatoryTextDarkBrush" Color="{StaticResource CyclePhaseOvulatoryTextDark}" />
+    <SolidColorBrush x:Key="CyclePhaseLutealTextLightBrush" Color="{StaticResource CyclePhaseLutealTextLight}" />
+    <SolidColorBrush x:Key="CyclePhaseLutealTextDarkBrush" Color="{StaticResource CyclePhaseLutealTextDark}" />
+
+    <SolidColorBrush x:Key="ReadinessHighLightBrush" Color="{StaticResource ReadinessHighLight}" />
+    <SolidColorBrush x:Key="ReadinessHighDarkBrush" Color="{StaticResource ReadinessHighDark}" />
+    <SolidColorBrush x:Key="ReadinessMediumLightBrush" Color="{StaticResource ReadinessMediumLight}" />
+    <SolidColorBrush x:Key="ReadinessMediumDarkBrush" Color="{StaticResource ReadinessMediumDark}" />
+    <SolidColorBrush x:Key="ReadinessLowLightBrush" Color="{StaticResource ReadinessLowLight}" />
+    <SolidColorBrush x:Key="ReadinessLowDarkBrush" Color="{StaticResource ReadinessLowDark}" />
+
+    <SolidColorBrush x:Key="RecoveryHighLightBrush" Color="{StaticResource RecoveryHighLight}" />
+    <SolidColorBrush x:Key="RecoveryHighDarkBrush" Color="{StaticResource RecoveryHighDark}" />
+    <SolidColorBrush x:Key="RecoveryMediumLightBrush" Color="{StaticResource RecoveryMediumLight}" />
+    <SolidColorBrush x:Key="RecoveryMediumDarkBrush" Color="{StaticResource RecoveryMediumDark}" />
+    <SolidColorBrush x:Key="RecoveryLowLightBrush" Color="{StaticResource RecoveryLowLight}" />
+    <SolidColorBrush x:Key="RecoveryLowDarkBrush" Color="{StaticResource RecoveryLowDark}" />
+
+    <SolidColorBrush x:Key="WaterLightBrush" Color="{StaticResource WaterLight}" />
+    <SolidColorBrush x:Key="WaterDarkBrush" Color="{StaticResource WaterDark}" />
+    <SolidColorBrush x:Key="SleepLightBrush" Color="{StaticResource SleepLight}" />
+    <SolidColorBrush x:Key="SleepDarkBrush" Color="{StaticResource SleepDark}" />
+    <SolidColorBrush x:Key="ProteinLightBrush" Color="{StaticResource ProteinLight}" />
+    <SolidColorBrush x:Key="ProteinDarkBrush" Color="{StaticResource ProteinDark}" />
+    <SolidColorBrush x:Key="CarbsLightBrush" Color="{StaticResource CarbsLight}" />
+    <SolidColorBrush x:Key="CarbsDarkBrush" Color="{StaticResource CarbsDark}" />
+    <SolidColorBrush x:Key="FatsLightBrush" Color="{StaticResource FatsLight}" />
+    <SolidColorBrush x:Key="FatsDarkBrush" Color="{StaticResource FatsDark}" />
 
 </ResourceDictionary>

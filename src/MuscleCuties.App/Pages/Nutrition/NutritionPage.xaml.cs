@@ -12,7 +12,7 @@ public partial class NutritionPage : ContentPage
 
     public NutritionPage(NutritionViewModel vm)
     {
-        InitializeComponent();
+        this.InitializeWithTiming(InitializeComponent);
         _viewModel = vm;
     }
 

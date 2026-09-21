@@ -150,7 +150,7 @@ public partial class NutritionViewModel
             _editingMealId = 0;
 
             _loadGate.MarkStale();
-            await _loadGate.RunAsync(LoadDataCoreAsync, true);
+            await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
         }
         catch (InvalidOperationException ex)
         {

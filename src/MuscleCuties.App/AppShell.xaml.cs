@@ -5,6 +5,7 @@ using MuscleCuties.App.Pages.Cycle;
 using MuscleCuties.App.Pages.Dashboard;
 using MuscleCuties.App.Pages.Onboarding;
 using MuscleCuties.App.Pages.Profile;
+using MuscleCuties.App.Pages.Workout;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 
@@ -12,8 +13,11 @@ namespace MuscleCuties.App;
 
 public partial class AppShell : Shell
 {
+    private const double NavigationBudgetMilliseconds = 100;
+
     private readonly IServiceProvider _services;
     private readonly ILogger<AppShell> _logger;
+    private readonly Stopwatch _navigationStopwatch = new();
     private bool _isRedirectingFromGuard;
     private bool _isResettingProfileRoute;
     private bool _isThemeHandlerAttached;
@@ -39,6 +43,8 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(ProfileUnitsDisplayPage), typeof(ProfileUnitsDisplayPage));
         Routing.RegisterRoute(nameof(ProfileFeedbackPage), typeof(ProfileFeedbackPage));
         Routing.RegisterRoute(nameof(ProfilePrivacyPage), typeof(ProfilePrivacyPage));
+        Routing.RegisterRoute(nameof(InjuryLogPage), typeof(InjuryLogPage));
+        Routing.RegisterRoute(nameof(WorkoutSessionPage), typeof(WorkoutSessionPage));
     }
 
     protected override void OnNavigating(ShellNavigatingEventArgs args)
@@ -46,6 +52,7 @@ public partial class AppShell : Shell
         base.OnNavigating(args);
 
         var targetRoute = args.Target?.Location.OriginalString;
+        _navigationStopwatch.Restart();
         _logger.LogInformation("Navigation started. Target={TargetRoute}, Source={Source}.", targetRoute, args.Source);
 
         if (IsAuthResetRoute(targetRoute))
@@ -63,10 +70,25 @@ public partial class AppShell : Shell
     protected override void OnNavigated(ShellNavigatedEventArgs args)
     {
         base.OnNavigated(args);
-        _logger.LogInformation(
-            "Navigation completed. Current={CurrentRoute}, Source={Source}.",
-            args.Current?.Location.OriginalString,
-            args.Source);
+        _navigationStopwatch.Stop();
+        var elapsedMilliseconds = _navigationStopwatch.Elapsed.TotalMilliseconds;
+        if (elapsedMilliseconds > NavigationBudgetMilliseconds)
+        {
+            _logger.LogWarning(
+                "Navigation exceeded the {BudgetMilliseconds} ms budget: {ElapsedMilliseconds:F1} ms. Current={CurrentRoute}, Source={Source}.",
+                NavigationBudgetMilliseconds,
+                elapsedMilliseconds,
+                args.Current?.Location.OriginalString,
+                args.Source);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "Navigation presented in {ElapsedMilliseconds:F1} ms. Current={CurrentRoute}, Source={Source}.",
+                elapsedMilliseconds,
+                args.Current?.Location.OriginalString,
+                args.Source);
+        }
 
         if (_isResettingProfileRoute ||
             !IsTabSwitch(args.Source) ||

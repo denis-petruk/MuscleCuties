@@ -98,6 +98,44 @@ public class DashboardViewModelTests
     }
 
     [Fact]
+    public async Task LoadData_FailedWorker_DrainsOtherWorkersAndAllowsRetry()
+    {
+        ConfigureDefaultUserData();
+        var vm = CreateViewModel();
+        var progressStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var progressResult = new TaskCompletionSource<ProgressSummary>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _userRepository.GetProfileAsync(1)
+            .Returns(Task.FromException<UserProfile?>(new InvalidOperationException("profile failed")));
+        _progressSummaryService.GetSummaryAsync(1, Arg.Any<DateTime>()).Returns(_ =>
+        {
+            progressStarted.TrySetResult();
+            return progressResult.Task;
+        });
+
+        var load = vm.LoadDataCommand.ExecuteAsync(null);
+        try
+        {
+            await progressStarted.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.False(load.IsCompleted);
+            Assert.True(vm.IsBusy);
+        }
+        finally
+        {
+            progressResult.TrySetException(new InvalidOperationException("progress failed"));
+            await load.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+
+        Assert.True(vm.IsLoadError);
+        Assert.False(vm.IsBusy);
+        Assert.False(vm.IsPageLoading);
+
+        ConfigureDefaultUserData();
+        await vm.LoadDataCommand.ExecuteAsync(null);
+        Assert.False(vm.IsLoadError);
+        Assert.Equal("Denis", vm.DisplayName);
+    }
+
+    [Fact]
     public async Task LoadData_ActiveInjurySetsBadgeAndCapsReadiness()
     {
         ConfigureDefaultUserData();

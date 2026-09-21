@@ -128,7 +128,7 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
             LoggedAt = DateTime.UtcNow.Date.AddHours(8),
             MealType = MealType.Breakfast,
             CreatedAt = DateTime.UtcNow,
-            Entries = [new LoggedMealIngredient { FoodItemId = item.Id, Grams = 100f }]
+            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 100f }]
         });
 
         var result = await CreateService().GetConsumedTotalsAsync(user.Id, DateTime.UtcNow);
@@ -159,7 +159,7 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
             LoggedAt = DateTime.UtcNow.Date.AddHours(8),
             MealType = MealType.Breakfast,
             CreatedAt = DateTime.UtcNow,
-            Entries = [new LoggedMealIngredient { FoodItemId = item.Id, Grams = 100f }]
+            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 100f }]
         });
 
         var result = await CreateService().GetConsumedTotalsAsync(user.Id, DateTime.UtcNow);
@@ -192,7 +192,7 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
             LoggedAt = DateTime.UtcNow.Date.AddHours(10),
             MealType = MealType.Snack,
             CreatedAt = DateTime.UtcNow,
-            Entries = [new LoggedMealIngredient { FoodItemId = item.Id, Grams = 150f }]
+            Entries = [new LoggedMealEntry { FoodItemId = item.Id, Grams = 150f }]
         });
 
         var totals = await CreateService().GetConsumedTotalsAsync(user.Id, DateTime.UtcNow);
@@ -350,7 +350,7 @@ public class NutritionServiceTests : IClassFixture<DatabaseFixture>
             LoggedAt = loggedAt,
             Entries =
             [
-                new LoggedMealIngredient
+                new LoggedMealEntry
                 {
                     FoodItem = food,
                     Grams = grams

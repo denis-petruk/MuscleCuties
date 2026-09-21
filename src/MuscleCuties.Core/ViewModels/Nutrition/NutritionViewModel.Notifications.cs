@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.UI.Nutrition;
 
 namespace MuscleCuties.Core.ViewModels.Nutrition;
@@ -157,30 +156,5 @@ public partial class NutritionViewModel
     partial void OnAddFoodMessageChanged(string value)
     {
         OnPropertyChanged(nameof(HasAddFoodMessage));
-    }
-
-    partial void OnSelectedMealTypeChanged(MealType value)
-    {
-        OnPropertyChanged(nameof(SelectedMealTypeText));
-        OnPropertyChanged(nameof(SelectedMealTypeCaloriesHint));
-        OnPropertyChanged(nameof(ConfirmNewMealButtonText));
-        OnPropertyChanged(nameof(IsAddBreakfastGuessed));
-        OnPropertyChanged(nameof(IsAddLunchGuessed));
-        OnPropertyChanged(nameof(IsAddDinnerGuessed));
-        OnPropertyChanged(nameof(IsAddSnackGuessed));
-        NotifyMealTargetProperties();
-    }
-
-    partial void OnIsMergeConfirmationVisibleChanged(bool value)
-    {
-        OnPropertyChanged(nameof(ShowLogMealButton));
-    }
-
-    partial void OnIsAddMealTypePickerVisibleChanged(bool value)
-    {
-        OnPropertyChanged(nameof(IsAddBreakfastGuessed));
-        OnPropertyChanged(nameof(IsAddLunchGuessed));
-        OnPropertyChanged(nameof(IsAddDinnerGuessed));
-        OnPropertyChanged(nameof(IsAddSnackGuessed));
     }
 }

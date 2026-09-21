@@ -10,7 +10,10 @@ public interface INutritionPlanner
     NutritionPlan CreateDailyPlan(
         UserProfile profile,
         CyclePhase phase,
-        DateTime date);
+        DateTime date,
+        BreakfastPreference breakfastPreference = BreakfastPreference.Savoury);
 
-    NutritionPlan CreateFallbackPlan(CyclePhase phase);
+    NutritionPlan CreateFallbackPlan(
+        CyclePhase phase,
+        BreakfastPreference breakfastPreference = BreakfastPreference.Savoury);
 }

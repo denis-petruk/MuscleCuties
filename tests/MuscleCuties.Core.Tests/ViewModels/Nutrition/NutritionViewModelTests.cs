@@ -236,7 +236,7 @@ public class NutritionViewModelTests
                 MealType = MealType.Breakfast,
                 Entries =
                 [
-                    new LoggedMealIngredient
+                    new LoggedMealEntry
                     {
                         Grams = 100f,
                         FoodItem = new FoodItem
@@ -647,7 +647,7 @@ public class NutritionViewModelTests
                     MealType = MealType.Snack,
                     Entries =
                     [
-                        new LoggedMealIngredient
+                        new LoggedMealEntry
                         {
                             Grams = 10,
                             FoodItem = new FoodItem
@@ -691,7 +691,7 @@ public class NutritionViewModelTests
                     MealType = MealType.Breakfast,
                     Entries =
                     [
-                        new LoggedMealIngredient
+                        new LoggedMealEntry
                         {
                             Grams = 100f,
                             FoodItem = new FoodItem

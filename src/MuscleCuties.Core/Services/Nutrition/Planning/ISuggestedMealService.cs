@@ -9,6 +9,7 @@ public interface ISuggestedMealService
     Task<IReadOnlyList<SuggestedMeal>> SuggestAsync(
         int userId,
         MealType mealType,
+        BreakfastPreference breakfastPreference,
         CyclePhase phase,
         DateTime date,
         float consumedCalories,

@@ -3,7 +3,6 @@ using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.UI.Workout;
-using MuscleCuties.Core.Models.Workout.Logging;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Repositories.Workout.Planning;
@@ -45,11 +44,70 @@ public class WorkoutViewModelTests
         return new WorkoutViewModel(BuildScopeFactory());
     }
 
-    private void StubReloadAfterSave()
+    [Fact]
+    public async Task LoadData_AwaitsPhaseBeforeQueryingInjuriesInTheSameScope()
     {
-        _cycleService.GetCurrentPhaseAsync(1).Returns(CyclePhase.Follicular);
+        var vm = CreateViewModel();
+        var phaseStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var phaseResult = new TaskCompletionSource<CyclePhase>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var overlapped = false;
+        _authService.GetCurrentUserIdAsync().Returns(1);
+        _cycleService.GetCurrentPhaseAsync(1).Returns(_ =>
+        {
+            phaseStarted.TrySetResult();
+            return phaseResult.Task;
+        });
+        _injuryRepo.GetActiveAsync(1).Returns(_ =>
+        {
+            overlapped = !phaseResult.Task.IsCompleted;
+            return Array.Empty<Models.Entities.Workout.Planning.WorkoutInjuryLog>();
+        });
         _workoutService.GetPlanSummaryAsync(1, CyclePhase.Follicular)
             .Returns(new WorkoutPlanSummary(null, [], []));
+
+        var load = vm.LoadDataCommand.ExecuteAsync(null);
+        try
+        {
+            await phaseStarted.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+        finally
+        {
+            phaseResult.TrySetResult(CyclePhase.Follicular);
+            await load.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+
+        Assert.False(overlapped);
+        Assert.False(vm.IsLoadError);
+        await _injuryRepo.Received(1).GetActiveAsync(1);
+    }
+
+    [Fact]
+    public async Task LoadData_FailureAndRepeatedRetry_EndsInEmptyStateAfterRecovery()
+    {
+        var vm = CreateViewModel();
+        _authService.GetCurrentUserIdAsync().Returns(1);
+        _cycleService.GetCurrentPhaseAsync(1).Returns(CyclePhase.Follicular);
+        _workoutService.GetPlanSummaryAsync(1, CyclePhase.Follicular)
+            .Returns(Task.FromException<WorkoutPlanSummary>(new InvalidOperationException("query failed")));
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            await vm.LoadDataCommand.ExecuteAsync(null);
+            Assert.True(vm.IsLoadError);
+            Assert.False(vm.IsBusy);
+            Assert.False(vm.IsPageLoading);
+            Assert.False(vm.HasNoWorkouts);
+        }
+
+        _workoutService.GetPlanSummaryAsync(1, CyclePhase.Follicular)
+            .Returns(new WorkoutPlanSummary(null, [], []));
+        await vm.LoadDataCommand.ExecuteAsync(null);
+
+        Assert.False(vm.IsLoadError);
+        Assert.False(vm.IsBusy);
+        Assert.False(vm.IsPageLoading);
+        Assert.True(vm.HasNoWorkouts);
+        await _workoutService.Received(3).GetPlanSummaryAsync(1, CyclePhase.Follicular);
     }
 
     [Fact]
@@ -190,234 +248,35 @@ public class WorkoutViewModelTests
     }
 
     [Fact]
-    public async Task OpenWorkoutCommand_LoadsWorkoutModal()
+    public async Task OpenWorkoutCommand_NavigatesToGuidedSession()
     {
-        _authService.GetCurrentUserIdAsync().Returns(1);
-        _workoutService.GetWorkoutSessionDetailAsync(1, 42)
-            .Returns(new WorkoutSessionDetail(
-                42,
-                "Lower body strength",
-                "Strength",
-                "1 exercise",
-                [
-                    new WorkoutExerciseItem
-                    {
-                        WorkoutDayExerciseId = 7,
-                        ExerciseId = 8,
-                        Name = "Goblet Squat",
-                        TargetText = "3 sets x 10 reps",
-                        PreviousText = "No previous log",
-                        RecommendationText = "Pick a steady starting weight.",
-                        LoggedSetsText = "3",
-                        LoggedRepsText = "10"
-                    }
-                ]));
-
-        var vm = CreateViewModel();
-        await vm.OpenWorkoutCommand.ExecuteAsync(new WorkoutItem
+        var routes = new List<string>();
+        var vm = new WorkoutViewModel(BuildScopeFactory(), route =>
         {
-            WorkoutDayId = 42,
-            Tag = "STRENGTH",
-            Title = "Lower body strength",
-            Duration = "24 min",
-            ExerciseCountText = "1 exercise"
+            routes.Add(route);
+            return Task.CompletedTask;
         });
 
-        Assert.True(vm.IsWorkoutModalVisible);
-        Assert.False(vm.IsWorkoutDetailLoading);
-        Assert.Equal("Lower body strength", vm.SelectedWorkoutTitle);
-        Assert.Single(vm.SelectedWorkoutExercises);
-        Assert.True(vm.HasSelectedWorkoutExercises);
-        Assert.True(vm.ShowWorkoutFooterAction);
-        Assert.Equal("Submit workout", vm.WorkoutLogButtonText);
+        await vm.OpenWorkoutCommand.ExecuteAsync(new WorkoutItem { WorkoutDayId = 42 });
+
+        Assert.Equal(["WorkoutSessionPage?workoutDayId=42"], routes);
     }
 
-    [Fact]
-    public async Task SaveWorkoutSessionCommand_SendsExerciseWeightsToService()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task OpenWorkoutCommand_InvalidDay_DoesNotNavigate(int dayId)
     {
-        _authService.GetCurrentUserIdAsync().Returns(1);
-        StubReloadAfterSave();
-        _workoutService.GetWorkoutSessionDetailAsync(1, 42)
-            .Returns(new WorkoutSessionDetail(
-                42,
-                "Lower body strength",
-                "Strength",
-                "1 exercise",
-                [
-                    new WorkoutExerciseItem
-                    {
-                        WorkoutDayExerciseId = 7,
-                        ExerciseId = 8,
-                        Name = "Goblet Squat",
-                        TargetText = "3 sets x 10 reps",
-                        PreviousText = "No previous log",
-                        RecommendationText = "Pick a steady starting weight.",
-                        LoggedSetsText = "3",
-                        LoggedRepsText = "10",
-                        LoggedWeightText = "25"
-                    }
-                ]));
-
-        var vm = CreateViewModel();
-        await vm.OpenWorkoutCommand.ExecuteAsync(new WorkoutItem
+        var routes = new List<string>();
+        var vm = new WorkoutViewModel(BuildScopeFactory(), route =>
         {
-            WorkoutDayId = 42,
-            Tag = "STRENGTH",
-            Title = "Lower body strength",
-            Duration = "24 min",
-            ExerciseCountText = "1 exercise"
+            routes.Add(route);
+            return Task.CompletedTask;
         });
 
-        await vm.SaveWorkoutSessionCommand.ExecuteAsync(null);
+        await vm.OpenWorkoutCommand.ExecuteAsync(new WorkoutItem { WorkoutDayId = dayId });
+        await vm.OpenWorkoutCommand.ExecuteAsync(null);
 
-        await _workoutService.Received(1).LogWorkoutSessionAsync(
-            1,
-            42,
-            Arg.Is<IReadOnlyCollection<WorkoutExerciseLogInput>>(logs =>
-                logs.Count == 1 &&
-                logs.Single().WorkoutDayExerciseId == 7 &&
-                logs.Single().ExerciseId == 8 &&
-                logs.Single().CompletedSets == 3 &&
-                logs.Single().CompletedReps == 10 &&
-                logs.Single().WeightKg == 25f),
-            DateTime.Today);
-        Assert.False(vm.IsWorkoutModalVisible);
-    }
-
-    [Fact]
-    public async Task SaveWorkoutSessionCommand_WithMissingStrengthWeight_DoesNotSave()
-    {
-        _authService.GetCurrentUserIdAsync().Returns(1);
-        _workoutService.GetWorkoutSessionDetailAsync(1, 42)
-            .Returns(new WorkoutSessionDetail(
-                42,
-                "Lower body strength",
-                "Strength",
-                "1 exercise",
-                [
-                    new WorkoutExerciseItem
-                    {
-                        WorkoutDayExerciseId = 7,
-                        ExerciseId = 8,
-                        Name = "Goblet Squat",
-                        TargetText = "3 sets x 10 reps",
-                        PreviousText = "No previous log",
-                        RecommendationText = "Pick a steady starting weight.",
-                        LoggedSetsText = "3",
-                        LoggedRepsText = "10",
-                        LoggedWeightText = string.Empty
-                    }
-                ]));
-
-        var vm = CreateViewModel();
-        await vm.OpenWorkoutCommand.ExecuteAsync(new WorkoutItem
-        {
-            WorkoutDayId = 42,
-            Tag = "STRENGTH",
-            Title = "Lower body strength",
-            Duration = "24 min",
-            ExerciseCountText = "1 exercise"
-        });
-
-        await vm.SaveWorkoutSessionCommand.ExecuteAsync(null);
-
-        Assert.True(vm.HasWorkoutModalError);
-        Assert.Contains("Add kg", vm.WorkoutModalErrorText);
-        await _workoutService.DidNotReceive().LogWorkoutSessionAsync(
-            Arg.Any<int>(),
-            Arg.Any<int>(),
-            Arg.Any<IReadOnlyCollection<WorkoutExerciseLogInput>>(),
-            Arg.Any<DateTime>());
-    }
-
-    [Fact]
-    public async Task SaveWorkoutSessionCommand_SendsCardioMetricsWithoutStrengthMetrics()
-    {
-        _authService.GetCurrentUserIdAsync().Returns(1);
-        StubReloadAfterSave();
-        _workoutService.GetWorkoutSessionDetailAsync(1, 42)
-            .Returns(new WorkoutSessionDetail(
-                42,
-                "Smooth Ride",
-                "Cardio",
-                "1 exercise with 30 min",
-                [
-                    new WorkoutExerciseItem
-                    {
-                        WorkoutDayExerciseId = 7,
-                        ExerciseId = 8,
-                        Name = "Zone 2 Ride",
-                        UsesEnduranceMetrics = true,
-                        TargetText = "30 min steady",
-                        PreviousText = "No previous log",
-                        RecommendationText = "Log pace and heart rate so your cardio trend gets smarter.",
-                        LoggedDurationMinutesText = "30",
-                        LoggedDistanceKmText = "6.2",
-                        LoggedPaceText = "4:50",
-                        LoggedHeartRateText = "142"
-                    }
-                ]));
-
-        var vm = CreateViewModel();
-        await vm.OpenWorkoutCommand.ExecuteAsync(new WorkoutItem
-        {
-            WorkoutDayId = 42,
-            Tag = "CARDIO",
-            Title = "Smooth Ride",
-            Duration = "30 min",
-            ExerciseCountText = "1 exercise"
-        });
-
-        await vm.SaveWorkoutSessionCommand.ExecuteAsync(null);
-
-        await _workoutService.Received(1).LogWorkoutSessionAsync(
-            1,
-            42,
-            Arg.Is<IReadOnlyCollection<WorkoutExerciseLogInput>>(logs =>
-                logs.Count == 1 &&
-                logs.Single().WorkoutDayExerciseId == 7 &&
-                logs.Single().CompletedSets == 0 &&
-                logs.Single().CompletedReps == 0 &&
-                logs.Single().WeightKg == null &&
-                logs.Single().CompletedDurationSeconds == 1800 &&
-                logs.Single().DistanceKm == 6.2f &&
-                logs.Single().AverageHeartRateBpm == 142 &&
-                logs.Single().PaceSecondsPerKm == 290),
-            DateTime.Today);
-    }
-
-    [Fact]
-    public async Task SaveWorkoutSessionCommand_RestDay_LogsWithoutExercises()
-    {
-        _authService.GetCurrentUserIdAsync().Returns(1);
-        StubReloadAfterSave();
-        _workoutService.GetWorkoutSessionDetailAsync(1, 42)
-            .Returns(new WorkoutSessionDetail(
-                42,
-                "Living happy life",
-                "Pure rest day",
-                "No exercises today.",
-                [],
-                true));
-
-        var vm = CreateViewModel();
-        await vm.OpenWorkoutCommand.ExecuteAsync(new WorkoutItem
-        {
-            WorkoutDayId = 42,
-            Tag = "REST",
-            Title = "Living happy life",
-            Duration = "Rest day",
-            ExerciseCountText = "No exercises",
-            IsRestDay = true
-        });
-
-        await vm.SaveWorkoutSessionCommand.ExecuteAsync(null);
-
-        Assert.False(vm.IsWorkoutModalVisible);
-        await _workoutService.Received(1).LogWorkoutSessionAsync(
-            1,
-            42,
-            Arg.Is<IReadOnlyCollection<WorkoutExerciseLogInput>>(logs => logs.Count == 0),
-            DateTime.Today);
+        Assert.Empty(routes);
     }
 }
