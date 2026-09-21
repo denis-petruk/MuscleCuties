@@ -9,6 +9,9 @@ public partial class NutritionViewModel
 {
     private void ToggleCustomFoodPanel()
     {
+        InvalidateFoodSearch();
+        _editingIngredient = null;
+        SelectedFoodResult = null;
         IsFoodFinderExpanded = true;
         IsCustomFoodPanelVisible = !IsCustomFoodPanelVisible;
         AddFoodMessage = string.Empty;
@@ -53,6 +56,10 @@ public partial class NutritionViewModel
         catch (ArgumentException ex)
         {
             AddFoodMessage = ex.Message;
+        }
+        catch (Exception)
+        {
+            AddFoodMessage = "Couldn't save this food. Your entries are still here; try again.";
         }
         finally
         {

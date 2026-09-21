@@ -23,6 +23,7 @@ public class WorkoutExerciseDefinition
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public MovementPattern Pattern { get; set; }
     public EquipmentSet Required { get; set; }
     public byte LongLengthLoaded { get; set; }
     public byte FatigueCost { get; set; }
@@ -32,6 +33,8 @@ public class WorkoutExerciseDefinition
     public bool EligibleForHiBlock { get; set; }
     public bool UnilateralDoublesTime { get; set; }
     public bool IsBodyweight { get; set; }
+    public InjuryFlag Contraindications { get; set; }
+    public InjuryFlag PreferredFor { get; set; }
     public byte SupineOrProne { get; set; }
     public byte ValsalvaDemand { get; set; }
     public int? SubstituteGroupId { get; set; }
@@ -67,6 +70,7 @@ public class SlotTemplate
     public int ArchetypeId { get; set; }
     public byte Order { get; set; }
     public BlockType Block { get; set; }
+    public string AllowedPatternsJson { get; set; } = string.Empty;
     public int PrimaryMuscleId { get; set; }
     public byte SetsMin { get; set; }
     public byte SetsMax { get; set; }
@@ -79,6 +83,28 @@ public class SlotTemplate
     public SessionArchetype? Archetype { get; set; }
     public WorkoutMuscleGroup? PrimaryMuscle { get; set; }
 
+    private MovementPattern[]? _allowedPatterns;
+
+    public MovementPattern[] GetAllowedPatterns()
+    {
+        if (_allowedPatterns is not null)
+            return _allowedPatterns;
+
+        if (string.IsNullOrEmpty(AllowedPatternsJson))
+            return _allowedPatterns = [];
+
+        _allowedPatterns = AllowedPatternsJson
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => Enum.Parse<MovementPattern>(s.Trim()))
+            .ToArray();
+        return _allowedPatterns;
+    }
+
+    public void SetAllowedPatterns(params MovementPattern[] patterns)
+    {
+        AllowedPatternsJson = string.Join(",", patterns);
+        _allowedPatterns = patterns;
+    }
 }
 
 public class WeekTemplate

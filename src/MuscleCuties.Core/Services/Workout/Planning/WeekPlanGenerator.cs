@@ -23,6 +23,8 @@ public class WeekPlanGenerator : IWeekPlanGenerator
     private readonly IContributionLookup _contributions;
     private readonly IVolumeBudgetResolver _budgetResolver;
 
+    private Dictionary<MovementPattern, HashSet<int>> _patternMuscleMap = new();
+
     public WeekPlanGenerator(
         AppDatabase db,
         IContributionLookup contributions,
@@ -328,7 +330,20 @@ public class WeekPlanGenerator : IWeekPlanGenerator
 
             var slots = archetype.SlotTemplates
                 .OrderBy(s => s.Order)
-                .Select(s => new PlannedSlot
+                .Select(s =>
+                {
+                    var patterns = s.GetAllowedPatterns();
+
+                    if (variant == 1 && s.Order == 1)
+                        patterns = [MovementPattern.HipThrust];
+                    else if (variant == 1 && s.Order == 4)
+                        patterns = [MovementPattern.Lunge];
+                    else if (variant == 2 && s.Order == 1)
+                        patterns = [MovementPattern.SquatPattern];
+                    else if (variant == 2 && s.Order == 4)
+                        patterns = [MovementPattern.HipThrust];
+
+                    return new PlannedSlot
                     {
                         SlotTemplateId = s.Id,
                         PrimaryMuscleId = s.PrimaryMuscleId,
@@ -338,10 +353,12 @@ public class WeekPlanGenerator : IWeekPlanGenerator
                         RepsMin = s.RepsMin,
                         RepsMax = s.RepsMax,
                         TargetRir = s.TargetRir,
+                        AllowedPatterns = patterns,
                         Droppable = s.Droppable,
                         SupersetGroup = s.SupersetGroup,
                         Block = s.Block
-                    })
+                    };
+                })
                 .ToList();
 
             sessions.Add(new PlannedSession
@@ -370,7 +387,7 @@ public class WeekPlanGenerator : IWeekPlanGenerator
             if (targetSets <= 0) continue;
 
             var servingSlots = allSlots
-                .Where(s => s.PrimaryMuscleId == muscleId)
+                .Where(s => s.PrimaryMuscleId == muscleId || HasIndirectContribution(s, muscleId))
                 .ToList();
 
             if (servingSlots.Count == 0) continue;
@@ -415,6 +432,17 @@ public class WeekPlanGenerator : IWeekPlanGenerator
         }
     }
 
+    private bool HasIndirectContribution(PlannedSlot slot, int muscleId)
+    {
+        if (slot.PrimaryMuscleId == muscleId) return false;
+        foreach (var pattern in slot.AllowedPatterns)
+        {
+            if (_patternMuscleMap.TryGetValue(pattern, out var muscles) && muscles.Contains(muscleId))
+                return true;
+        }
+        return false;
+    }
+
     private double ComputeAllocatedSets(List<PlannedSlot> allSlots, int muscleId)
     {
         double total = 0;
@@ -422,8 +450,15 @@ public class WeekPlanGenerator : IWeekPlanGenerator
         {
             if (slot.PrimaryMuscleId == muscleId)
                 total += slot.AssignedSets;
+            else if (HasSecondaryContribution(slot, muscleId))
+                total += slot.AssignedSets * 0.5;
         }
         return total;
+    }
+
+    private bool HasSecondaryContribution(PlannedSlot slot, int muscleId)
+    {
+        return HasIndirectContribution(slot, muscleId);
     }
 
     // Validation
@@ -495,10 +530,29 @@ public class WeekPlanGenerator : IWeekPlanGenerator
     private async Task<Dictionary<int, HashSet<int>>> ComputeArchetypeExposuresAsync(
         Dictionary<int, SessionArchetype> archetypes)
     {
-        var exerciseIds = await _db.WorkoutExerciseDefinitions
-            .AsNoTracking()
-            .Select(exercise => exercise.Id)
+        var exercises = await _db.WorkoutExerciseDefinitions.AsNoTracking()
+            .Select(e => new { e.Id, e.Pattern })
             .ToListAsync();
+
+        var exercisesByPattern = exercises
+            .GroupBy(e => e.Pattern)
+            .ToDictionary(g => g.Key, g => g.Select(e => e.Id).ToList());
+
+        _patternMuscleMap = new Dictionary<MovementPattern, HashSet<int>>();
+        foreach (var (pattern, exIds) in exercisesByPattern)
+        {
+            var muscles = new HashSet<int>();
+            foreach (var exId in exIds)
+            {
+                foreach (var c in _contributions.GetContributions(exId))
+                {
+                    if (c.Fraction >= 0.5)
+                        muscles.Add(c.MuscleGroupId);
+                }
+            }
+            _patternMuscleMap[pattern] = muscles;
+        }
+
         var result = new Dictionary<int, HashSet<int>>();
 
         foreach (var (archetypeId, archetype) in archetypes)
@@ -509,14 +563,10 @@ public class WeekPlanGenerator : IWeekPlanGenerator
             {
                 exposedMuscles.Add(slot.PrimaryMuscleId);
 
-                foreach (var exerciseId in exerciseIds.Where(
-                             id => _contributions.Contribution(id, slot.PrimaryMuscleId) > 0))
+                foreach (var pattern in slot.GetAllowedPatterns())
                 {
-                    foreach (var contribution in _contributions.GetContributions(exerciseId)
-                                 .Where(contribution => contribution.Fraction >= 0.5))
-                    {
-                        exposedMuscles.Add(contribution.MuscleGroupId);
-                    }
+                    if (_patternMuscleMap.TryGetValue(pattern, out var muscles))
+                        exposedMuscles.UnionWith(muscles);
                 }
             }
 

@@ -49,7 +49,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware
         _preloadService = preloadService;
         _navigateToLoginAsync = navigateToLoginAsync;
         _navigateToPreferenceAsync = navigateToPreferenceAsync ?? (_ => Task.CompletedTask);
-        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
+        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         LogoutCommand = new AsyncRelayCommand(LogoutAsync);
         OpenPreferenceCommand = new AsyncRelayCommand<PreferenceItem>(OpenPreferenceAsync);
         Preferences = new ObservableCollection<PreferenceItem>
@@ -74,6 +74,13 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware
                 Title = "Activity Preferences",
                 Subtitle = "Strength base, optional cardio, climbing, yoga, and recovery choices",
                 Route = "ProfileWorkoutPreferencesPage"
+            },
+            new()
+            {
+                IconGlyph = "HeartPulse24",
+                Title = "Injury Log",
+                Subtitle = "Track injuries and see how they affect your plan",
+                Route = "InjuryLogPage"
             },
             new()
             {

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
@@ -15,16 +16,10 @@ namespace MuscleCuties.Core.ViewModels.Quiz;
 
 public partial class QuizViewModel : ObservableObject
 {
-    private const string LoadingState = "Loading";
-    private const string ReadyState = "Ready";
-    private const string EmptyState = "Empty";
-    private const string FailedState = "Failed";
-
-    private readonly IAuthService _authService;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly Func<Task> _navigateToDashboardAsync;
     private readonly IAppPreloadService _preloadService;
     private readonly QuizQuestionCache _quizQuestionCache;
-    private readonly IQuizService _quizService;
     private readonly List<(int QuestionId, int AnswerId)> _selectedAnswers = new();
 
     [ObservableProperty] private ObservableCollection<SelectableQuizAnswer> _currentAnswers = new();
@@ -52,19 +47,17 @@ public partial class QuizViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsLoadingVisible))]
     [NotifyPropertyChangedFor(nameof(QuestionsStateTitle))]
     [NotifyPropertyChangedFor(nameof(QuestionsStateMessage))]
-    private string _loadState = LoadingState;
+    private QuizLoadState _loadState = QuizLoadState.Loading;
 
     [ObservableProperty] private List<QuizQuestion> _questions = new();
 
     public QuizViewModel(
-        IAuthService authService,
-        IQuizService quizService,
+        IServiceScopeFactory scopeFactory,
         IAppPreloadService preloadService,
         QuizQuestionCache quizQuestionCache,
         Func<Task> navigateToDashboardAsync)
     {
-        _authService = authService;
-        _quizService = quizService;
+        _scopeFactory = scopeFactory;
         _preloadService = preloadService;
         _quizQuestionCache = quizQuestionCache;
         _navigateToDashboardAsync = navigateToDashboardAsync;
@@ -94,13 +87,13 @@ public partial class QuizViewModel : ObservableObject
             .ToList();
 
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
-    public bool CanRetryQuestionsLoad => LoadState is EmptyState or FailedState;
-    public bool HasLoadedQuestions => LoadState is ReadyState or EmptyState;
-    public bool HasNoQuestions => LoadState is EmptyState;
-    public bool HasQuestion => LoadState is ReadyState && CurrentQuestion is not null;
-    public bool IsEmptyStateVisible => LoadState is EmptyState or FailedState;
-    public bool IsLayoutVisible => LoadState is ReadyState;
-    public bool IsLoading => LoadState is LoadingState;
+    public bool CanRetryQuestionsLoad => LoadState is QuizLoadState.Empty or QuizLoadState.Failed;
+    public bool HasLoadedQuestions => LoadState is QuizLoadState.Ready or QuizLoadState.Empty;
+    public bool HasNoQuestions => LoadState is QuizLoadState.Empty;
+    public bool HasQuestion => LoadState is QuizLoadState.Ready && CurrentQuestion is not null;
+    public bool IsEmptyStateVisible => LoadState is QuizLoadState.Empty or QuizLoadState.Failed;
+    public bool IsLayoutVisible => LoadState is QuizLoadState.Ready;
+    public bool IsLoading => LoadState is QuizLoadState.Loading;
     public bool IsLoadingVisible => IsLoading;
     public bool IsCurrentQuestionMultiAnswer => CurrentQuestion?.QuestionType is QuizQuestionType.DietaryPreference;
     public bool IsCurrentQuestionPhasePair => IsPainQuestion(CurrentQuestion?.QuestionType);
@@ -168,7 +161,12 @@ public partial class QuizViewModel : ObservableObject
         try
         {
             var loadedQuestions = await _quizQuestionCache.GetOrLoadAsync(
-                () => DataLoadScheduler.RunAsync(_quizService.GetOnboardingQuestionsAsync));
+                () => DataLoadScheduler.RunAsync(async () =>
+                {
+                    using var scope = _scopeFactory.CreateScope();
+                    return await scope.ServiceProvider.GetRequiredService<IQuizService>()
+                        .GetOnboardingQuestionsAsync();
+                }));
             ApplyQuestions(loadedQuestions);
         }
         catch
@@ -249,7 +247,7 @@ public partial class QuizViewModel : ObservableObject
     {
         IsBusy = true;
         ErrorMessage = string.Empty;
-        LoadState = LoadingState;
+        LoadState = QuizLoadState.Loading;
     }
 
     private void ApplyQuestions(IEnumerable<QuizQuestion> loadedQuestions)
@@ -268,12 +266,12 @@ public partial class QuizViewModel : ObservableObject
         }
 
         MoveToQuestion(0);
-        LoadState = ReadyState;
+        LoadState = QuizLoadState.Ready;
     }
 
     private void ShowEmptyState(bool noQuestions)
     {
-        LoadState = noQuestions ? EmptyState : FailedState;
+        LoadState = noQuestions ? QuizLoadState.Empty : QuizLoadState.Failed;
         NotifyComputedProperties();
     }
 
@@ -489,6 +487,7 @@ public partial class QuizViewModel : ObservableObject
 
     private async Task SaveAnswersAsync()
     {
+        var totalStopwatch = Stopwatch.StartNew();
         IsBusy = true;
         ErrorMessage = string.Empty;
 
@@ -496,7 +495,6 @@ public partial class QuizViewModel : ObservableObject
         {
             IsPreparingDashboard = true;
 
-            var userId = await DataLoadScheduler.RunAsync(_authService.GetCurrentUserIdAsync);
             var responses = _selectedAnswers
                 .Select(selection => new UserQuizResponse
                 {
@@ -505,19 +503,46 @@ public partial class QuizViewModel : ObservableObject
                 })
                 .ToList();
 
-            await DataLoadScheduler.RunAsync(() => _quizService.SaveAnswersAsync(userId, responses));
+            var stageStopwatch = Stopwatch.StartNew();
+            await DataLoadScheduler.RunAsync(async () =>
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var userId = await scope.ServiceProvider.GetRequiredService<IAuthService>().GetCurrentUserIdAsync();
+                await scope.ServiceProvider.GetRequiredService<IQuizService>().SaveAnswersAsync(userId, responses);
+            });
+            Trace.WriteLine(
+                $"[Performance][Quiz] Answers and profile saved in {stageStopwatch.ElapsedMilliseconds} ms.");
 
             _preloadService.InvalidateAll();
-            await _preloadService.PreloadDashboardAsync();
+            stageStopwatch.Restart();
+            try
+            {
+                await _preloadService.PreloadDashboardAsync();
+            }
+            catch (Exception preloadEx)
+            {
+                Trace.WriteLine(
+                    $"[WARN][Quiz] Dashboard preload failed (non-fatal, will retry on page load): {preloadEx}");
+            }
+            Trace.WriteLine(
+                $"[Performance][Quiz] Dashboard data prepared in {stageStopwatch.ElapsedMilliseconds} ms.");
 
+            stageStopwatch.Restart();
             await _navigateToDashboardAsync();
             _ = _preloadService.PreloadRemainingAsync();
+            Trace.WriteLine(
+                $"[Performance][Quiz] Dashboard navigation completed in {stageStopwatch.ElapsedMilliseconds} ms; " +
+                $"total sync={totalStopwatch.ElapsedMilliseconds} ms.");
         }
         catch (Exception ex)
         {
             IsPreparingDashboard = false;
+#if DEBUG
+            ErrorMessage = $"Save failed: {ex.GetType().Name}: {ex.Message}";
+#else
             ErrorMessage = "We could not save your answers. Please try again.";
-            Trace.WriteLine($"[Quiz] SaveAnswersAsync failed: {ex}");
+#endif
+            Trace.WriteLine($"[ERROR][Quiz] SaveAnswersAsync failed: {ex}");
         }
         finally
         {

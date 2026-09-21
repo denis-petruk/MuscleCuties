@@ -38,6 +38,7 @@ public sealed class SuggestedMealService : ISuggestedMealService
     public async Task<IReadOnlyList<SuggestedMeal>> SuggestAsync(
         int userId,
         MealType mealType,
+        BreakfastPreference breakfastPreference,
         CyclePhase phase,
         DateTime date,
         float consumedCalories,
@@ -45,8 +46,8 @@ public sealed class SuggestedMealService : ISuggestedMealService
     {
         var profile = await _userRepository.GetProfileAsync(userId);
         var plan = profile is not null
-            ? _nutritionPlanner.CreateDailyPlan(profile, phase, date)
-            : _nutritionPlanner.CreateFallbackPlan(phase);
+            ? _nutritionPlanner.CreateDailyPlan(profile, phase, date, breakfastPreference)
+            : _nutritionPlanner.CreateFallbackPlan(phase, breakfastPreference);
 
         var mealTarget = plan.Meals.FirstOrDefault(m => m.MealType == mealType);
         if (mealTarget is null)
@@ -64,7 +65,9 @@ public sealed class SuggestedMealService : ISuggestedMealService
             Fats = MathF.Min(mealTarget.Fats, remainingBudget / 9f)
         };
 
-        var conceptSource = SavouryMealCatalog.GetConcepts(mealType);
+        var conceptSource = mealType is MealType.Breakfast && breakfastPreference is BreakfastPreference.Sweet
+            ? SweetBreakfastCatalog.GetConcepts()
+            : SavouryMealCatalog.GetConcepts(mealType);
         var dietaryTags = ParseDietaryTags(profile?.DietaryTags);
         var goal = profile?.Goal ?? UserGoal.MaintainHealth;
         var concepts = Shuffle(conceptSource)
