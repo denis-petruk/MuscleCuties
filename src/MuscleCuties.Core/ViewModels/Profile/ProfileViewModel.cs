@@ -49,7 +49,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware
         _preloadService = preloadService;
         _navigateToLoginAsync = navigateToLoginAsync;
         _navigateToPreferenceAsync = navigateToPreferenceAsync ?? (_ => Task.CompletedTask);
-        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
+        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         LogoutCommand = new AsyncRelayCommand(LogoutAsync);
         OpenPreferenceCommand = new AsyncRelayCommand<PreferenceItem>(OpenPreferenceAsync);
         Preferences = new ObservableCollection<PreferenceItem>

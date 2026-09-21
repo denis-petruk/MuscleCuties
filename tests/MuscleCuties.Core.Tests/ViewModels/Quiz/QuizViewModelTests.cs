@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
@@ -19,9 +20,16 @@ public class QuizViewModelTests
 
     private QuizViewModel CreateViewModel()
     {
+        var services = Substitute.For<IServiceProvider>();
+        services.GetService(typeof(IAuthService)).Returns(_authService);
+        services.GetService(typeof(IQuizService)).Returns(_quizService);
+        var scope = Substitute.For<IServiceScope>();
+        scope.ServiceProvider.Returns(services);
+        var scopeFactory = Substitute.For<IServiceScopeFactory>();
+        scopeFactory.CreateScope().Returns(scope);
+
         return new QuizViewModel(
-            _authService,
-            _quizService,
+            scopeFactory,
             _preloadService,
             new QuizQuestionCache(),
             () =>

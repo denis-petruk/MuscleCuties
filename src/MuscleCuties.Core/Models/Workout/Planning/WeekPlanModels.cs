@@ -8,7 +8,6 @@ public record WeekGenerationInput
 {
     public int DaysPerWeek { get; init; }
     public TrainingExperienceLevel Experience { get; init; }
-    public bool? isInjuried { get; init; }
     public UserGoal Goal { get; init; }
     public int? SessionMinutesTarget { get; init; }
     public DayOfWeek[]? AvailableDays { get; init; }
@@ -46,6 +45,7 @@ public record PlannedSlot
     public byte RepsMin { get; init; }
     public byte RepsMax { get; init; }
     public byte TargetRir { get; init; }
+    public required MovementPattern[] AllowedPatterns { get; init; }
     public bool Droppable { get; init; }
     public byte SupersetGroup { get; init; }
     public BlockType Block { get; init; }
@@ -55,6 +55,7 @@ public record PickedExercise
 {
     public int ExerciseId { get; init; }
     public string ExerciseName { get; init; } = string.Empty;
+    public MovementPattern Pattern { get; init; }
     public int PrimaryMuscleId { get; init; }
     public int Sets { get; init; }
     public byte RepsMin { get; init; }

@@ -1062,32 +1062,17 @@ public class WorkoutService : IWorkoutService
             .FirstOrDefaultAsync(e => e.Id == workoutDayExerciseId);
 
         if (dayExercise?.Exercise is null)
-        {
-            System.Diagnostics.Trace.WriteLine($"[Swap] EXIT: dayExercise or Exercise is null for id={workoutDayExerciseId}");
             return [];
-        }
-
-        System.Diagnostics.Trace.WriteLine($"[Swap] Exercise code='{dayExercise.Exercise.Code}', name='{dayExercise.Exercise.Name}'");
 
         var currentPlanningId = ExtractPlanningId(dayExercise.Exercise.Code);
         if (currentPlanningId is null)
-        {
-            System.Diagnostics.Trace.WriteLine($"[Swap] EXIT: ExtractPlanningId returned null for code='{dayExercise.Exercise.Code}'");
             return [];
-        }
-
-        System.Diagnostics.Trace.WriteLine($"[Swap] planningId={currentPlanningId.Value}");
 
         await _contributions.LoadAsync();
 
         var currentContributions = _contributions.GetContributions(currentPlanningId.Value);
         if (currentContributions.Count == 0)
-        {
-            System.Diagnostics.Trace.WriteLine($"[Swap] EXIT: No contributions for planningId={currentPlanningId.Value}");
             return [];
-        }
-
-        System.Diagnostics.Trace.WriteLine($"[Swap] {currentContributions.Count} contributions for current exercise");
 
         var primaryMuscleId = currentContributions
             .OrderByDescending(c => c.Fraction)
@@ -1106,17 +1091,9 @@ public class WorkoutService : IWorkoutService
         var injuryFlags = WorkoutInjuryRules.ToFlags(injuries.Injuries);
 
         var allExercises = await _db.WorkoutExerciseDefinitions.AsNoTracking().ToListAsync();
-        System.Diagnostics.Trace.WriteLine($"[Swap] {allExercises.Count} total exercise definitions, equipment={equipment}, injuryFlags={injuryFlags}");
 
-        var afterSelf = allExercises.Where(e => e.Id != currentPlanningId.Value).Count();
-        var afterEquip = allExercises
-            .Where(e => e.Id != currentPlanningId.Value)
-            .Where(e => e.IsBodyweight || (e.Required & equipment) == e.Required).Count();
-        var afterInjury = allExercises
-            .Where(e => e.Id != currentPlanningId.Value)
-            .Where(e => e.IsBodyweight || (e.Required & equipment) == e.Required)
-            .Where(e => injuryFlags == InjuryFlag.None || (e.Contraindications & injuryFlags) == InjuryFlag.None).Count();
-        System.Diagnostics.Trace.WriteLine($"[Swap] Filter: afterSelf={afterSelf}, afterEquip={afterEquip}, afterInjury={afterInjury}");
+        var muscleGroups = await _db.WorkoutMuscleGroups.AsNoTracking()
+            .ToDictionaryAsync(mg => mg.Id, mg => mg.Name);
 
         var candidates = allExercises
             .Where(e => e.Id != currentPlanningId.Value)
@@ -1126,7 +1103,7 @@ public class WorkoutService : IWorkoutService
             {
                 var contribs = _contributions.GetContributions(e.Id);
                 var matchScore = ComputeMuscleMatchScore(currentContributions, contribs, primaryMuscleId);
-                return (Exercise: e, MatchScore: matchScore);
+                return (Exercise: e, MatchScore: matchScore, Contribs: contribs);
             })
             .Where(x => x.MatchScore > 0)
             .OrderByDescending(x => x.MatchScore)
@@ -1138,11 +1115,15 @@ public class WorkoutService : IWorkoutService
                 MuscleMatch = $"{(int)(x.MatchScore * 100)}% muscle match",
                 Equipment = x.Exercise.IsBodyweight
                     ? "Bodyweight"
-                    : x.Exercise.Required.ToString()
+                    : x.Exercise.Required.ToFriendlyName(),
+                PrimaryMuscles = string.Join(", ", x.Contribs
+                    .Where(c => c.Fraction >= 0.3)
+                    .OrderByDescending(c => c.Fraction)
+                    .Take(3)
+                    .Select(c => muscleGroups.GetValueOrDefault(c.MuscleGroupId, "")))
             })
             .ToList();
 
-        System.Diagnostics.Trace.WriteLine($"[Swap] Final candidates: {candidates.Count}");
         return candidates;
     }
 

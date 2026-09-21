@@ -25,10 +25,10 @@
                 CommandParameter="{Binding CommandParameter, Source={x:Reference Root}}" />
         </Border.GestureRecognizers>
 
-        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12" RowDefinitions="Auto, Auto" RowSpacing="6">
+        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12">
 
             <Border
-                Grid.Column="0" Grid.RowSpan="2"
+                Grid.Column="0"
                 WidthRequest="44"
                 HeightRequest="44"
                 StrokeShape="RoundRectangle 12"
@@ -45,27 +45,15 @@
             </Border>
 
             <Label
-                Grid.Row="0" Grid.Column="1"
+                Grid.Column="1"
                 Text="{Binding Title}"
                 Style="{StaticResource CardTitle}"
                 FontSize="15"
                 LineBreakMode="TailTruncation"
-                VerticalOptions="End" />
-
-            <Label
-                Grid.Row="1" Grid.Column="1"
-                Style="{StaticResource CaptionLabel}"
-                VerticalOptions="Start">
-                <Label.Text>
-                    <MultiBinding StringFormat="{}{0}  ·  {1}">
-                        <Binding Path="Duration" />
-                        <Binding Path="ExerciseCountText" />
-                    </MultiBinding>
-                </Label.Text>
-            </Label>
+                VerticalOptions="Center" />
 
             <Border
-                Grid.Column="2" Grid.RowSpan="2"
+                Grid.Column="2"
                 StrokeThickness="0"
                 StrokeShape="RoundRectangle 999"
                 Padding="10,6"

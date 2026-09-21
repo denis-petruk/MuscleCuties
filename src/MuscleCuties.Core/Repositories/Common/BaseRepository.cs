@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
 
@@ -12,23 +14,39 @@ public abstract class BaseRepository<T> : IRepository<T> where T : class
         _db = db;
     }
 
+    protected async Task<TResult> ReadAsync<TResult>(
+        Func<Task<TResult>> query,
+        [CallerMemberName] string operation = "")
+    {
+        try
+        {
+            return await query();
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // Failed reads must not look like an empty database (which can trigger plan replacement).
+            Trace.TraceError($"[{GetType().Name}.{operation}] Database read failed: {exception}");
+            throw;
+        }
+    }
+
     public async Task<T?> GetByIdAsync(int id)
     {
-        return await _db.Set<T>().FindAsync(id);
+        return await ReadAsync(() => _db.Set<T>().FindAsync(id).AsTask());
     }
 
     public async Task<T?> GetByIdNoTrackingAsync(int id)
     {
-        return await _db.Set<T>()
+        return await ReadAsync(() => _db.Set<T>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id);
+            .FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id));
     }
 
     public async Task<List<T>> GetAllAsync()
     {
-        return await _db.Set<T>()
+        return await ReadAsync(() => _db.Set<T>()
             .AsNoTracking()
-            .ToListAsync();
+            .ToListAsync());
     }
 
     public async Task AddAsync(T entity)

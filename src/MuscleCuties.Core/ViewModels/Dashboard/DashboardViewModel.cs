@@ -103,7 +103,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
         _openNutritionAsync = openNutritionAsync;
         _openDailyCheckInAsync = openDailyCheckInAsync;
 
-        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync));
+        LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         OpenCycleCommand = new AsyncRelayCommand(_openCycleAsync);
         OpenWorkoutCommand = new AsyncRelayCommand(_openWorkoutAsync);
@@ -131,7 +131,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
     {
         HasActiveInjuries = InjuryLogVm.HasActiveInjuries;
         Invalidate();
-        await _loadGate.RunAsync(LoadDataCoreAsync, true);
+        await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
     }
 
     public string PhaseLabel => CurrentPhase.ToString();
@@ -273,9 +273,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
     public void RefreshThemeColors(bool useDarkTheme)
     {
-        if (UseDarkTheme == useDarkTheme)
-            return;
-
         UseDarkTheme = useDarkTheme;
         RefreshPhaseCardColors();
         OnPropertyChanged(nameof(CurrentPhase));
@@ -288,7 +285,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
         IsRefreshing = true;
         try
         {
-            await _loadGate.RunAsync(LoadDataCoreAsync, true);
+            await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
         }
         finally
         {
@@ -320,6 +317,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
                 services.GetRequiredService<IProgressSummaryService>()
                     .GetSummaryAsync(userId, DateTime.Today));
 
+            // Observe every worker before leaving this load, even if one fails.
+            await Task.WhenAll(profileTask, readinessTask, injuriesTask, predictionTask, consumedTask, progressTask);
+
             var profile = await profileTask;
             DisplayName = GetFirstName(profile?.Name);
 
@@ -349,6 +349,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
             var workoutTask = RunScopedAsync(services =>
                 services.GetRequiredService<IWorkoutService>()
                     .GetTodaysSummaryAsync(userId, CurrentPhase, DateTime.Today));
+
+            await Task.WhenAll(targetsTask, workoutTask);
 
             var (calories, protein, carbs, fats) = await targetsTask;
             TargetCalories = calories;
@@ -398,6 +400,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
     {
         return DataLoadScheduler.RunAsync(async () =>
         {
+            // Resolve scoped repositories inside the worker, never from the
+            // singleton view model's root provider or a sibling worker's scope.
             using var scope = _scopeFactory.CreateScope();
             return await operation(scope.ServiceProvider);
         });

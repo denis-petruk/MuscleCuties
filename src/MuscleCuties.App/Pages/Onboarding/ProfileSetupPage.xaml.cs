@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MuscleCuties.App.Services.Profile;
 using MuscleCuties.Core.ViewModels.Profile;
 
@@ -7,8 +8,10 @@ public partial class ProfileSetupPage : ContentPage
 {
     public ProfileSetupPage(ProfileSetupViewModel vm)
     {
-        InitializeComponent();
-        BindingContext = vm;
+        var started = Stopwatch.GetTimestamp();
+        Trace.WriteLine("[Performance][ProfileSetupPage] Constructor entered.");
+        this.InitializeWithTiming(InitializeComponent);
+        this.BindWithTiming(vm, started);
     }
 
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
