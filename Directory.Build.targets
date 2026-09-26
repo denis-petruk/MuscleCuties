@@ -1,0 +1,7 @@
+<Project>
+    <Target Name="RemoveTraceFromReleaseConstants" BeforeTargets="CoreCompile" Condition="'$(Configuration)' == 'Release'">
+        <PropertyGroup>
+            <DefineConstants>$([System.String]::Copy('$(DefineConstants)').Replace('TRACE;', '').Replace(';TRACE', '').Replace('TRACE', ''))</DefineConstants>
+        </PropertyGroup>
+    </Target>
+</Project>
