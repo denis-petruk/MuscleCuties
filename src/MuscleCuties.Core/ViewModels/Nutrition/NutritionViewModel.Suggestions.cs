@@ -13,13 +13,16 @@ public partial class NutritionViewModel
 {
     [ObservableProperty] private bool _isSuggestionModalVisible;
     [ObservableProperty] private bool _isLoadingSuggestions;
+    [ObservableProperty] private bool _isDayPlanMode;
     [ObservableProperty] private bool _isMealTypePickerVisible;
     [ObservableProperty] private bool _isMealDetailVisible;
     [ObservableProperty] private MealSuggestionItem? _selectedMealDetail;
     [ObservableProperty] private MealType _suggestionMealType = MealType.Lunch;
     [ObservableProperty] private ObservableCollection<MealSuggestionItem> _mealSuggestions = new();
+    [ObservableProperty] private ObservableCollection<DayMealPlanItem> _dayPlanMeals = new();
     [ObservableProperty] private string _mealSuggestionError = string.Empty;
     [ObservableProperty] private string _suggestionTargetText = string.Empty;
+    [ObservableProperty] private string _dayPlanSummaryText = string.Empty;
 
     private readonly HashSet<string> _shownConceptNames = new();
     private int _suggestionLoadVersion;
@@ -40,13 +43,24 @@ public partial class NutritionViewModel
     ];
 
     public bool HasMealSuggestions => MealSuggestions.Count > 0;
+    public bool HasDayPlanMeals => DayPlanMeals.Count > 0;
     public bool HasMealSuggestionError => !string.IsNullOrWhiteSpace(MealSuggestionError);
     public bool HasNoMealSuggestions =>
+        !IsDayPlanMode &&
         !IsLoadingSuggestions &&
         !IsMealTypePickerVisible &&
         !HasMealSuggestionError &&
         MealSuggestions.Count == 0;
+    public bool HasNoDayPlanMeals =>
+        IsDayPlanMode &&
+        !IsLoadingSuggestions &&
+        !HasMealSuggestionError &&
+        DayPlanMeals.Count == 0;
+    public bool ShowDayPlanMeals =>
+        IsDayPlanMode && HasDayPlanMeals && !IsLoadingSuggestions && !HasMealSuggestionError;
     public bool ShowSuggestionResults => !IsMealTypePickerVisible;
+    public string SuggestionPageTitle => IsDayPlanMode ? "Today's meal plan" : "Meal ideas";
+    public string LoadingSuggestionText => IsDayPlanMode ? "Building today's meal plan" : "Finding a good fit";
 
     public string SuggestionMealTypeCaloriesText => GetMealTypeCaloriesText(SuggestionMealType);
 
@@ -107,12 +121,14 @@ public partial class NutritionViewModel
     private void OpenSuggestMeal()
     {
         _suggestionLoadVersion++;
+        IsDayPlanMode = false;
         SuggestionMealType = GuessNextMealType();
         IsMealTypePickerVisible = true;
         IsLoadingSuggestions = false;
         IsMealDetailVisible = false;
         SelectedMealDetail = null;
         MealSuggestions.Clear();
+        DayPlanMeals.Clear();
         _shownConceptNames.Clear();
         MealSuggestionError = string.Empty;
         SuggestionTargetText = "Built around today's targets";
@@ -122,6 +138,7 @@ public partial class NutritionViewModel
 
     private void SelectSuggestionMealType(MealType mealType)
     {
+        IsDayPlanMode = false;
         SuggestionMealType = mealType;
         IsMealTypePickerVisible = false;
         NotifySuggestionProperties();
@@ -130,6 +147,12 @@ public partial class NutritionViewModel
 
     private void RefreshSuggestions()
     {
+        if (IsDayPlanMode)
+        {
+            _ = LoadDayPlanAsync();
+            return;
+        }
+
         foreach (var item in MealSuggestions)
             _shownConceptNames.Add(item.ConceptName);
 
@@ -140,6 +163,7 @@ public partial class NutritionViewModel
     {
         _suggestionLoadVersion++;
         IsSuggestionModalVisible = false;
+        IsDayPlanMode = false;
         IsMealDetailVisible = false;
         _shownConceptNames.Clear();
         NotifySuggestionProperties();
@@ -170,6 +194,7 @@ public partial class NutritionViewModel
 
         try
         {
+            await _referenceDataPreparation.EnsureNutritionReadyAsync();
             using var scope = _scopeFactory.CreateScope();
             var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
             var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
@@ -272,6 +297,153 @@ public partial class NutritionViewModel
         CloseSuggestionModal();
     }
 
+    private void BackToMealTypePicker()
+    {
+        _suggestionLoadVersion++;
+        IsDayPlanMode = false;
+        IsMealTypePickerVisible = true;
+        IsLoadingSuggestions = false;
+        MealSuggestionError = string.Empty;
+        DayPlanMeals.Clear();
+        NotifySuggestionProperties();
+    }
+
+    private void RefreshDayMeal(DayMealPlanItem? item)
+    {
+        if (item is null || !item.CanRefresh)
+            return;
+
+        _ = RefreshDayMealAsync(item);
+    }
+
+    private async Task RefreshDayMealAsync(DayMealPlanItem item)
+    {
+        var version = _suggestionLoadVersion;
+        var index = DayPlanMeals.IndexOf(item);
+        if (index < 0)
+            return;
+
+        DayPlanMeals[index] = item with { IsRefreshing = true, ErrorMessage = string.Empty };
+        try
+        {
+            await _referenceDataPreparation.EnsureNutritionReadyAsync();
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
+            var userId = await authService.GetCurrentUserIdAsync();
+            var excludeNames = DayPlanMeals
+                .Where(meal => meal.MealType != item.MealType)
+                .Select(meal => meal.Suggestion?.ConceptName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Append(item.Suggestion?.ConceptName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(name => name!)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var suggestions = await nutritionService.GetSuggestedMealsForTargetAsync(
+                userId,
+                item.Target,
+                BreakfastPreference,
+                CurrentPhase,
+                DateTime.Today,
+                excludeNames);
+
+            if (version != _suggestionLoadVersion || !IsSuggestionModalVisible || !IsDayPlanMode)
+                return;
+
+            var refreshed = DayPlanMeals.FirstOrDefault(meal => meal.MealType == item.MealType);
+            if (refreshed is null)
+                return;
+
+            var currentIndex = DayPlanMeals.IndexOf(refreshed);
+            DayPlanMeals[currentIndex] = refreshed with
+            {
+                IsRefreshing = false,
+                Suggestion = suggestions.FirstOrDefault() is { } suggestion
+                    ? MealSuggestionItem.FromSuggestedMeal(suggestion)
+                    : null,
+                ErrorMessage = suggestions.Count == 0 ? "Try refreshing again." : string.Empty
+            };
+        }
+        catch
+        {
+            if (version != _suggestionLoadVersion)
+                return;
+
+            var refreshed = DayPlanMeals.FirstOrDefault(meal => meal.MealType == item.MealType);
+            if (refreshed is not null)
+            {
+                var currentIndex = DayPlanMeals.IndexOf(refreshed);
+                DayPlanMeals[currentIndex] = refreshed with
+                {
+                    IsRefreshing = false,
+                    ErrorMessage = "Could not refresh this meal. Try again."
+                };
+            }
+        }
+    }
+
+    private void UsePlannedMeal(DayMealPlanItem? item)
+    {
+        if (item?.Suggestion is null)
+            return;
+
+        SuggestionMealType = item.MealType;
+        AcceptSuggestion(item.Suggestion);
+    }
+
+    private async Task LoadDayPlanAsync()
+    {
+        var loadVersion = ++_suggestionLoadVersion;
+        IsLoadingSuggestions = true;
+        DayPlanMeals.Clear();
+        MealSuggestionError = string.Empty;
+        DayPlanSummaryText = "Preparing meals around today's remaining targets";
+        NotifySuggestionProperties();
+
+        try
+        {
+            await _referenceDataPreparation.EnsureNutritionReadyAsync();
+            using var scope = _scopeFactory.CreateScope();
+            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+            var nutritionService = scope.ServiceProvider.GetRequiredService<INutritionService>();
+            var mealPlan = await DataLoadScheduler.RunAsync(async () =>
+            {
+                var userId = await authService.GetCurrentUserIdAsync();
+                return await nutritionService.GetSuggestedMealPlanAsync(
+                    userId,
+                    BreakfastPreference,
+                    CurrentPhase,
+                    DateTime.Today);
+            });
+
+            if (loadVersion != _suggestionLoadVersion || !IsSuggestionModalVisible || !IsDayPlanMode)
+                return;
+
+            DayPlanSummaryText = $"{mealPlan.RemainingCalories:N0} kcal remaining · {mealPlan.DailyTargetCalories:N0} kcal daily target";
+            DayPlanMeals = new ObservableCollection<DayMealPlanItem>(mealPlan.Meals.Select(entry =>
+                new DayMealPlanItem(
+                    entry.MealType,
+                    entry.Target,
+                    mealPlan.DailyTargetCalories,
+                    entry.IsAlreadyLogged,
+                    false,
+                    entry.Suggestion is null ? null : MealSuggestionItem.FromSuggestedMeal(entry.Suggestion))));
+        }
+        catch
+        {
+            if (loadVersion == _suggestionLoadVersion)
+                MealSuggestionError = "Today's meal plan could not load. Refresh to try again.";
+        }
+        finally
+        {
+            if (loadVersion == _suggestionLoadVersion)
+            {
+                IsLoadingSuggestions = false;
+                NotifySuggestionProperties();
+            }
+        }
+    }
+
     private MealType GuessNextMealType()
     {
         var hour = DateTime.Now.Hour;
@@ -287,8 +459,8 @@ public partial class NutritionViewModel
     private string GetMealTypeCaloriesText(MealType mealType)
     {
         var breakfastShare = IsSweetBreakfast ? 0.20f : 0.25f;
-        var lunchShare = IsSweetBreakfast ? 0.32f : 0.35f;
-        var dinnerShare = IsSweetBreakfast ? 0.28f : 0.27f;
+        var lunchShare = IsSweetBreakfast ? 0.32f : 0.33f;
+        var dinnerShare = IsSweetBreakfast ? 0.28f : 0.25f;
         var snackShare = 1f - breakfastShare - lunchShare - dinnerShare;
 
         var share = mealType switch
@@ -306,13 +478,19 @@ public partial class NutritionViewModel
     private void NotifySuggestionProperties()
     {
         OnPropertyChanged(nameof(HasMealSuggestions));
+        OnPropertyChanged(nameof(HasDayPlanMeals));
         OnPropertyChanged(nameof(HasMealSuggestionError));
         OnPropertyChanged(nameof(HasNoMealSuggestions));
+        OnPropertyChanged(nameof(HasNoDayPlanMeals));
+        OnPropertyChanged(nameof(ShowDayPlanMeals));
         OnPropertyChanged(nameof(ShowSuggestionResults));
+        OnPropertyChanged(nameof(SuggestionPageTitle));
+        OnPropertyChanged(nameof(LoadingSuggestionText));
         OnPropertyChanged(nameof(IsBreakfastGuessed));
         OnPropertyChanged(nameof(IsLunchGuessed));
         OnPropertyChanged(nameof(IsDinnerGuessed));
         OnPropertyChanged(nameof(IsSnackGuessed));
+        OnPropertyChanged(nameof(DayPlanSummaryText));
         OnPropertyChanged(nameof(SuggestionMealTypeCaloriesText));
         OnPropertyChanged(nameof(BreakfastCaloriesHint));
         OnPropertyChanged(nameof(LunchCaloriesHint));

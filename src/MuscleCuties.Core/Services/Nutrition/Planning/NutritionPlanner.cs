@@ -275,11 +275,26 @@ public class NutritionPlanner : INutritionPlanner
         float fats,
         BreakfastPreference breakfastPreference)
     {
+        const float minMainShare = 0.75f;
+        const float maxMainShare = 0.85f;
+
         var (breakfastShare, lunchShare, dinnerShare) = breakfastPreference switch
         {
             BreakfastPreference.Sweet => (0.20f, 0.32f, 0.28f),
-            _ => (0.25f, 0.35f, 0.27f)
+            _ => (0.25f, 0.33f, 0.25f)
         };
+
+        var rawMainShare = breakfastShare + lunchShare + dinnerShare;
+        var clampedMainShare = Math.Clamp(rawMainShare, minMainShare, maxMainShare);
+
+        if (MathF.Abs(rawMainShare - clampedMainShare) > 0.001f && rawMainShare > 0f)
+        {
+            var scale = clampedMainShare / rawMainShare;
+            breakfastShare *= scale;
+            lunchShare *= scale;
+            dinnerShare *= scale;
+        }
+
         var snackShare = 1f - breakfastShare - lunchShare - dinnerShare;
 
         return

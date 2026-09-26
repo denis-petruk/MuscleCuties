@@ -31,6 +31,12 @@ public sealed class Ingredient
     private static readonly string[] EggFreeLabelTerms =
         ["egg-free", "egg free"];
 
+    private static readonly string[] PlantYogurtTerms =
+        ["soy", "soya", "coconut", "almond", "oat", "cashew", "plant-based", "plant based"];
+
+    private static readonly string[] OtherAnimalDairyTerms =
+        ["cheese", "milk", "cream", "butter", "whey", "casein"];
+
     public FoodItem Food { get; }
     public float Grams { get; }
 
@@ -102,15 +108,24 @@ public sealed class Ingredient
         if (ContainsAny(name, VeganLabelTerms))
             return true;
 
+        if (IsPlantYogurt(name))
+            return !ContainsAny(name, MeatTerms) &&
+                   !ContainsAny(name, EggTerms) &&
+                   !ContainsAny(name, OtherAnimalDairyTerms) &&
+                   !ContainsAny(name, ["honey"]);
+
         return !ContainsAny(name, MeatTerms) &&
                !ContainsAny(name, DairyTerms) &&
-               !ContainsAny(name, EggTerms) ||
+               !ContainsAny(name, EggTerms) &&
+               !ContainsAny(name, ["honey"]) ||
                ContainsAny(name, LactoseFreeLabelTerms) &&
                !ContainsAny(name, MeatTerms) &&
-               !ContainsAny(name, EggTerms) ||
+               !ContainsAny(name, EggTerms) &&
+               !ContainsAny(name, ["honey"]) ||
                ContainsAny(name, EggFreeLabelTerms) &&
                !ContainsAny(name, MeatTerms) &&
-               !ContainsAny(name, DairyTerms);
+               !ContainsAny(name, DairyTerms) &&
+               !ContainsAny(name, ["honey"]);
     }
 
     private static bool CheckGlutenFree(string name)
@@ -123,6 +138,9 @@ public sealed class Ingredient
 
     private static bool CheckLactoseFree(string name)
     {
+        if (IsPlantYogurt(name))
+            return true;
+
         if (ContainsAny(name, LactoseFreeLabelTerms) || ContainsAny(name, VeganLabelTerms))
             return true;
 
@@ -131,7 +149,11 @@ public sealed class Ingredient
 
     private float Scale(float per100g) => per100g * Grams / 100f;
 
-    private static bool ContainsAny(string value, string[] terms)
+    private static bool IsPlantYogurt(string name)
+        => name.Contains("yogurt", StringComparison.OrdinalIgnoreCase) &&
+           ContainsAny(name, PlantYogurtTerms);
+
+    private static bool ContainsAny(string value, params string[] terms)
     {
         foreach (var term in terms)
         {

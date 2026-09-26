@@ -1,6 +1,4 @@
 using Foundation;
-using Microsoft.Maui;
-using UIKit;
 
 namespace MuscleCuties.App;
 

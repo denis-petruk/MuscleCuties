@@ -9,23 +9,6 @@ namespace MuscleCuties.Core.Repositories.Workout;
 
 public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db), IWorkoutRepository
 {
-    public async Task<WorkoutPlan?> GetPlanWithDaysAsync(int planId)
-    {
-        return await ReadAsync(async () =>
-        {
-            var plan = await _db.WorkoutPlans
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Id == planId);
-            if (plan is not null)
-            {
-                plan.WorkoutDays = await GetWorkoutDaysByPlanAsync(planId);
-                foreach (var day in plan.WorkoutDays)
-                    day.WorkoutPlan = plan;
-            }
-            return plan;
-        });
-    }
-
     public async Task<WorkoutDay?> GetWorkoutDayWithExercisesAsync(int workoutDayId)
     {
         return await ReadAsync(async () =>
@@ -54,21 +37,6 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
             await PopulateExercisesAsync(days);
             return days;
         });
-    }
-
-    public async Task<List<Exercise>> GetExercisesByDayAsync(int workoutDayId)
-    {
-        return await ReadAsync(() => ReadExercisesAsync(exercises =>
-            from entry in _db.WorkoutDayExercises
-            join exercise in exercises on entry.ExerciseId equals exercise.Id
-            where entry.WorkoutDayId == workoutDayId
-            orderby entry.Id
-            select exercise));
-    }
-
-    public async Task<List<Exercise>> GetAllExercisesAsync()
-    {
-        return await ReadAsync(() => ReadExercisesAsync(exercises => exercises.OrderBy(e => e.Name)));
     }
 
     private async Task PopulateExercisesAsync(IEnumerable<WorkoutDay> days)
@@ -112,6 +80,7 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
         // NULLs before materialization, and omit the missing column entirely on the fallback path.
         // Only fixed SQL expressions are composed here; caller filters remain parameterized LINQ.
         var injuryFriendly = includeInjuryFriendly ? "COALESCE(e.IsInjuryFriendly, 0)" : "0";
+#pragma warning disable EF1002 // injuryFriendly is a fixed SQL fragment, not user input
         return _db.Exercises.FromSqlRaw($"""
             SELECT e.Id, COALESCE(e.Code, '') AS Code, COALESCE(e.Name, 'Exercise') AS Name,
                    COALESCE(e.Description, '') AS Description, e.ImageUrl, e.VideoUrl,
@@ -119,6 +88,7 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
                    COALESCE(e.JointAreas, '') AS JointAreas, {injuryFriendly} AS IsInjuryFriendly
             FROM Exercises AS e
             """).AsNoTracking();
+#pragma warning restore EF1002
     }
 
     public async Task<WorkoutPlan?> GetActivePlanAsync(int userId)
@@ -144,12 +114,6 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
         await _db.SaveChangesAsync();
 
         return plan;
-    }
-
-    public async Task AddWorkoutLogAsync(WorkoutLog log)
-    {
-        await _db.WorkoutLogs.AddAsync(log);
-        await _db.SaveChangesAsync();
     }
 
     public async Task ReplaceWorkoutLogAsync(WorkoutLog log)

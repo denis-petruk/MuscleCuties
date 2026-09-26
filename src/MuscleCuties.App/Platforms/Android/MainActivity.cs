@@ -1,6 +1,7 @@
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
+using Android.Views;
 
 namespace MuscleCuties.App;
 
@@ -16,4 +17,9 @@ namespace MuscleCuties.App;
                            ConfigChanges.Density)]
 public class MainActivity : MauiAppCompatActivity
 {
+    protected override void OnCreate(Bundle? savedInstanceState)
+    {
+        base.OnCreate(savedInstanceState);
+        Window?.SetFlags(WindowManagerFlags.Secure, WindowManagerFlags.Secure);
+    }
 }

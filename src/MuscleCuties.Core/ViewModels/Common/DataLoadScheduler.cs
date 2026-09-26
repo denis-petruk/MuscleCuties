@@ -1,14 +1,11 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using MuscleCuties.Core.Data;
 
 namespace MuscleCuties.Core.ViewModels.Common;
 
 public static class DataLoadScheduler
 {
-    // SQLite async APIs can execute synchronously. Keep that work off the UI
-    // thread, but never overlap scheduled operations on the local database.
-    private static readonly SemaphoreSlim DatabaseGate = new(1, 1);
-
     public static Task RunAsync(Func<Task> loadAsync, [CallerMemberName] string operation = "")
     {
         return RunAsync(async () =>
@@ -20,20 +17,15 @@ public static class DataLoadScheduler
 
     public static async Task<T> RunAsync<T>(Func<Task<T>> loadAsync, [CallerMemberName] string operation = "")
     {
-        await DatabaseGate.WaitAsync().ConfigureAwait(false);
         try
         {
-            return await Task.Run(loadAsync).ConfigureAwait(false);
+            return await DatabaseOperationGate.RunAsync(loadAsync).ConfigureAwait(false);
         }
         catch (Exception exception)
         {
             Trace.WriteLine($"[DataLoad] {operation} failed: {exception}");
             // The caller owns UI state and must see the original failure.
             throw;
-        }
-        finally
-        {
-            DatabaseGate.Release();
         }
     }
 }

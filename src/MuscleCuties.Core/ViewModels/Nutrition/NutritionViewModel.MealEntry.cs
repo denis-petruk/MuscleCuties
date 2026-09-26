@@ -44,6 +44,7 @@ public partial class NutritionViewModel
     private void StartSuggestedMeal()
     {
         SuggestionMealType = EntryMealType;
+        IsDayPlanMode = false;
         IsMealEntryModalVisible = false;
         IsMealTypePickerVisible = false;
         IsLoadingSuggestions = false;
@@ -56,6 +57,24 @@ public partial class NutritionViewModel
         IsSuggestionModalVisible = true;
         NotifySuggestionProperties();
         _ = LoadSuggestionsAsync();
+    }
+
+    private void StartDayPlan()
+    {
+        IsMealEntryModalVisible = false;
+        IsDayPlanMode = true;
+        IsMealTypePickerVisible = false;
+        IsLoadingSuggestions = false;
+        IsMealDetailVisible = false;
+        SelectedMealDetail = null;
+        MealSuggestions.Clear();
+        DayPlanMeals.Clear();
+        _shownConceptNames.Clear();
+        MealSuggestionError = string.Empty;
+        DayPlanSummaryText = "Preparing meals around today's remaining targets";
+        IsSuggestionModalVisible = true;
+        NotifySuggestionProperties();
+        _ = LoadDayPlanAsync();
     }
 
     private void NotifyEntryProperties()

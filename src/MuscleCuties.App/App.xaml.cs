@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using MuscleCuties.App.Pages.Onboarding;
+using MuscleCuties.App.Services.Security;
 using MuscleCuties.App.Services.Notifications;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Repositories.Users;
@@ -14,7 +15,6 @@ namespace MuscleCuties.App;
 public partial class App : Application
 {
     private readonly IServiceProvider _services;
-    private int _referenceSeedStarted;
     private int _startupStarted;
     private Task? _startupTask;
 
@@ -61,8 +61,12 @@ public partial class App : Application
         try
         {
             using var scope = _services.CreateScope();
+            var databaseKeyProvider = scope.ServiceProvider.GetRequiredService<IAppDatabaseKeyProvider>();
+            await databaseKeyProvider.InitializeAsync();
+
             var database = scope.ServiceProvider.GetRequiredService<AppDatabase>();
             await DataLoadScheduler.RunAsync(database.InitializeStartupAsync);
+            DatabaseBackupProtection.ExcludeFromBackup(scope.ServiceProvider.GetRequiredService<IDbPathProvider>().GetDatabasePath());
 
             var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
             var isLoggedIn = await DataLoadScheduler.RunAsync(authService.IsLoggedInAsync);
@@ -75,7 +79,6 @@ public partial class App : Application
                 {
                     await DataLoadScheduler.RunAsync(authService.LogoutAsync);
                     await NavigateFromStartupAsync("//LoginPage");
-                    StartReferenceDataSeed();
                     return;
                 }
 
@@ -85,7 +88,6 @@ public partial class App : Application
                 if (!user.IsOnboardingComplete)
                 {
                     await NavigateFromStartupAsync($"//{nameof(ProfileSetupPage)}");
-                    StartReferenceDataSeed();
                     return;
                 }
 
@@ -94,7 +96,6 @@ public partial class App : Application
             }
 
             await NavigateFromStartupAsync("//LoginPage");
-            StartReferenceDataSeed();
         }
         catch (Exception ex)
         {
@@ -109,8 +110,13 @@ public partial class App : Application
         var preloadService = _services.GetRequiredService<IAppPreloadService>();
         await preloadService.PreloadDashboardAsync();
         await NavigateFromStartupAsync("//DashboardPage");
-        _ = preloadService.PreloadRemainingAsync();
 
+        // Yield to let iOS finish the native VC layout cycle after the Shell
+        // structural transition (ShellContent → TabBar) before starting any
+        // background ViewModel mutations that could fire PropertyChanged bindings.
+        await Task.Yield();
+
+        _ = preloadService.PreloadRemainingAsync();
         _ = ScheduleNotificationsAsync(userId);
     }
 
@@ -165,28 +171,4 @@ public partial class App : Application
         }
     }
 
-    private void StartReferenceDataSeed()
-    {
-        if (Interlocked.Exchange(ref _referenceSeedStarted, 1) != 0)
-            return;
-
-        _ = SeedReferenceDataSafelyAsync();
-    }
-
-    private async Task SeedReferenceDataSafelyAsync()
-    {
-        try
-        {
-            await DataLoadScheduler.RunAsync(async () =>
-            {
-                using var scope = _services.CreateScope();
-                var database = scope.ServiceProvider.GetRequiredService<AppDatabase>();
-                await database.SeedDeferredReferenceDataAsync();
-            });
-        }
-        catch (Exception ex)
-        {
-            Trace.WriteLine($"[Startup] StartReferenceDataSeed failed: {ex}");
-        }
-    }
 }

@@ -125,13 +125,6 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
         await _db.SaveChangesAsync();
     }
 
-    public async Task<FoodItem?> GetFoodItemAsync(int foodItemId)
-    {
-        return await ReadAsync(() => _db.FoodItems
-            .AsNoTracking()
-            .FirstOrDefaultAsync(f => f.Id == foodItemId));
-    }
-
     public async Task<List<LoggedMeal>> GetLoggedMealsByDateAsync(int userId, DateTime date)
     {
         return await ReadAsync(() => _db.LoggedMeals
@@ -207,12 +200,6 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
                 Grams = entry.Grams
             });
 
-        await _db.SaveChangesAsync();
-    }
-
-    public async Task DeleteLoggedMealAsync(LoggedMeal meal)
-    {
-        _db.LoggedMeals.Remove(meal);
         await _db.SaveChangesAsync();
     }
 

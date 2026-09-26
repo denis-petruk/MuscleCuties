@@ -10,13 +10,16 @@ using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Nutrition;
+using MuscleCuties.Core.Services;
 using MuscleCuties.Core.ViewModels.Common;
+using UiMealItem = MuscleCuties.Core.Models.UI.Nutrition.MealItem;
 
 namespace MuscleCuties.Core.ViewModels.Nutrition;
 
 public partial class NutritionViewModel : ObservableObject, IPageLoadAware
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IReferenceDataPreparationService _referenceDataPreparation;
     private readonly ViewModelLoadGate _loadGate = new(ViewModelLoadGate.PageFreshnessWindow);
     [ObservableProperty] private string _addFoodMessage = string.Empty;
     [ObservableProperty] private string _celebrationIconSource = CyclePhaseAssets.FollicularAnimation;
@@ -49,7 +52,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private bool _isEditingMeal;
     [ObservableProperty] private bool _isFoodFinderExpanded;
     [ObservableProperty] private ObservableCollection<MealIngredientItem> _mealIngredients = new();
-    [ObservableProperty] private ObservableCollection<MealItem> _meals = new();
+    [ObservableProperty] private ObservableCollection<UiMealItem> _meals = new();
     private ProfileNutritionGoals _micronutrientGoals = ProfileNutritionGoals.Empty;
     [ObservableProperty] private ObservableCollection<DailyMicronutrientItem> _micronutrients = new();
     [ObservableProperty] private string _phaseFocusCopy = string.Empty;
@@ -62,7 +65,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private string _selectedBreakdownFiberText = "0.0g fiber";
     [ObservableProperty] private ObservableCollection<MacroBreakdownItem> _selectedBreakdownMacroItems = new();
     [ObservableProperty] private string _selectedBreakdownMacrosText = "P 0.0g · C 0.0g · F 0.0g";
-    private MealItem? _selectedBreakdownMeal;
+    private UiMealItem? _selectedBreakdownMeal;
     [ObservableProperty] private ObservableCollection<DailyMicronutrientItem> _selectedBreakdownMicronutrients = new();
     [ObservableProperty] private string _selectedBreakdownNutrientSummaryText = "No micronutrients tracked yet";
     [ObservableProperty] private float _selectedBreakdownProteinCalories;
@@ -80,9 +83,11 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private float _targetProtein;
 
     public NutritionViewModel(
-        IServiceScopeFactory scopeFactory)
+        IServiceScopeFactory scopeFactory,
+        IReferenceDataPreparationService referenceDataPreparation)
     {
         _scopeFactory = scopeFactory;
+        _referenceDataPreparation = referenceDataPreparation;
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         ToggleMealEditorCommand = new RelayCommand(ToggleMealEditor);
@@ -102,7 +107,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         CreateCustomFoodCommand = new AsyncRelayCommand(CreateCustomFoodAsync, () => !IsBusy);
         OpenMicronutrientsModalCommand = new RelayCommand(OpenDailyBreakdown);
         CloseMicronutrientsModalCommand = new RelayCommand(CloseBreakdownModal);
-        OpenMealBreakdownCommand = new RelayCommand<MealItem>(OpenMealBreakdown);
+        OpenMealBreakdownCommand = new RelayCommand<UiMealItem>(OpenMealBreakdown);
         EditSelectedBreakdownMealCommand =
             new AsyncRelayCommand(EditSelectedBreakdownMealAsync, () => CanEditSelectedBreakdown);
         OpenSuggestMealCommand = new RelayCommand(OpenSuggestMeal);
@@ -110,6 +115,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         RefreshSuggestionsCommand = new RelayCommand(RefreshSuggestions);
         AcceptSuggestionCommand = new RelayCommand<MealSuggestionItem>(AcceptSuggestion);
         SelectSuggestionMealTypeCommand = new RelayCommand<MealType>(SelectSuggestionMealType);
+        BackToMealTypePickerCommand = new RelayCommand(BackToMealTypePicker);
+        RefreshDayMealCommand = new RelayCommand<DayMealPlanItem>(RefreshDayMeal);
+        UsePlannedMealCommand = new RelayCommand<DayMealPlanItem>(UsePlannedMeal);
         OpenMealDetailCommand = new RelayCommand<MealSuggestionItem>(OpenMealDetail);
         CloseMealDetailCommand = new RelayCommand(CloseMealDetail);
         OpenMealEntryCommand = new RelayCommand(OpenMealEntry);
@@ -117,6 +125,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
         SelectEntryMealTypeCommand = new RelayCommand<MealType>(SelectEntryMealType);
         StartManualMealCommand = new RelayCommand(StartManualMeal);
         StartSuggestedMealCommand = new RelayCommand(StartSuggestedMeal);
+        StartDayPlanCommand = new RelayCommand(StartDayPlan);
         MealIngredients.CollectionChanged += OnMealIngredientsCollectionChanged;
     }
 
@@ -168,9 +177,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public bool IsSweetBreakfast => BreakfastPreference == BreakfastPreference.Sweet;
 
     public string BreakfastTargetText => $"Breakfast ({(int)(TargetCalories * (IsSweetBreakfast ? 0.20f : 0.25f))} kcal)";
-    public string LunchTargetText => $"Lunch ({(int)(TargetCalories * (IsSweetBreakfast ? 0.32f : 0.35f))} kcal)";
-    public string DinnerTargetText => $"Dinner ({(int)(TargetCalories * (IsSweetBreakfast ? 0.28f : 0.27f))} kcal)";
-    public string SnackTargetText => $"Snack ({(int)(TargetCalories * (IsSweetBreakfast ? 0.20f : 0.13f))} kcal)";
+    public string LunchTargetText => $"Lunch ({(int)(TargetCalories * (IsSweetBreakfast ? 0.32f : 0.33f))} kcal)";
+    public string DinnerTargetText => $"Dinner ({(int)(TargetCalories * (IsSweetBreakfast ? 0.28f : 0.25f))} kcal)";
+    public string SnackTargetText => $"Snack ({(int)(TargetCalories * (IsSweetBreakfast ? 0.20f : 0.17f))} kcal)";
     public bool HasMeals => Meals.Count > 0;
     public bool HasNoMeals => Meals.Count == 0;
     public string MealEditorTitle => IsCustomFoodPanelVisible ? "Custom food"
@@ -182,7 +191,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public string MealDraftCarbsText => $"{MealIngredients.Sum(i => i.CarbsForAmount):N1} g";
     public string MealDraftFatsText => $"{MealIngredients.Sum(i => i.FatsForAmount):N1} g";
 
-    public MealItem? SelectedBreakdownMeal
+    public UiMealItem? SelectedBreakdownMeal
     {
         get => _selectedBreakdownMeal;
         set
@@ -265,13 +274,16 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public AsyncRelayCommand CreateCustomFoodCommand { get; }
     public RelayCommand OpenMicronutrientsModalCommand { get; }
     public RelayCommand CloseMicronutrientsModalCommand { get; }
-    public RelayCommand<MealItem> OpenMealBreakdownCommand { get; }
+    public RelayCommand<UiMealItem> OpenMealBreakdownCommand { get; }
     public AsyncRelayCommand EditSelectedBreakdownMealCommand { get; }
     public RelayCommand OpenSuggestMealCommand { get; }
     public RelayCommand CloseSuggestionModalCommand { get; }
     public RelayCommand RefreshSuggestionsCommand { get; }
     public RelayCommand<MealSuggestionItem> AcceptSuggestionCommand { get; }
     public RelayCommand<MealType> SelectSuggestionMealTypeCommand { get; }
+    public RelayCommand BackToMealTypePickerCommand { get; }
+    public RelayCommand<DayMealPlanItem> RefreshDayMealCommand { get; }
+    public RelayCommand<DayMealPlanItem> UsePlannedMealCommand { get; }
     public RelayCommand<MealSuggestionItem> OpenMealDetailCommand { get; }
     public RelayCommand CloseMealDetailCommand { get; }
     public RelayCommand OpenMealEntryCommand { get; }
@@ -279,6 +291,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     public RelayCommand<MealType> SelectEntryMealTypeCommand { get; }
     public RelayCommand StartManualMealCommand { get; }
     public RelayCommand StartSuggestedMealCommand { get; }
+    public RelayCommand StartDayPlanCommand { get; }
     public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
 
     private Task RefreshAsync()

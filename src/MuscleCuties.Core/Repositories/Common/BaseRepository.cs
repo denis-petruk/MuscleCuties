@@ -35,13 +35,6 @@ public abstract class BaseRepository<T> : IRepository<T> where T : class
         return await ReadAsync(() => _db.Set<T>().FindAsync(id).AsTask());
     }
 
-    public async Task<T?> GetByIdNoTrackingAsync(int id)
-    {
-        return await ReadAsync(() => _db.Set<T>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id));
-    }
-
     public async Task<List<T>> GetAllAsync()
     {
         return await ReadAsync(() => _db.Set<T>()

@@ -1,22 +1,37 @@
 using MuscleCuties.App.Controls.Shared;
+using MuscleCuties.App.Services.Navigation;
 using MuscleCuties.Core.ViewModels.Workout;
 
 namespace MuscleCuties.App.Pages.Workout;
 
-[QueryProperty(nameof(WorkoutDayId), "workoutDayId")]
 public partial class WorkoutSessionPage : ContentPage
 {
+    private readonly INavigationContextService _navigationContext;
     private readonly WorkoutSessionViewModel _viewModel;
+    private int _workoutDayId;
+    private int? _loadedWorkoutDayId;
 
-    public WorkoutSessionPage(WorkoutSessionViewModel vm)
+    public WorkoutSessionPage(
+        WorkoutSessionViewModel vm,
+        INavigationContextService navigationContext)
     {
         this.InitializeWithTiming(InitializeComponent);
+        _navigationContext = navigationContext;
         BindingContext = _viewModel = vm;
     }
 
-    public string WorkoutDayId
+    protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
-        set => _ = _viewModel.LoadSession(int.TryParse(value, out var id) ? id : 0);
+        base.OnNavigatedTo(args);
+
+        if (_navigationContext.TryTake<int>("workoutDayId", out var workoutDayId))
+            _workoutDayId = workoutDayId;
+
+        if (_loadedWorkoutDayId == _workoutDayId)
+            return;
+
+        _loadedWorkoutDayId = _workoutDayId;
+        this.BeginPageLoad(() => _viewModel.LoadSession(_workoutDayId));
     }
 
     protected override void OnNavigatingFrom(NavigatingFromEventArgs args)

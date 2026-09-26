@@ -50,12 +50,14 @@
                             </Border.GestureRecognizers>
                             <Grid>
                                 <mi:MauiIcon Icon="{mi:Fluent HeartPulse24}" IconSize="24"
-                                    IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="24" HeightRequest="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                                             IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                             WidthRequest="24" HeightRequest="24" HorizontalOptions="Center"
+                                             VerticalOptions="Center" />
                                 <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" Margin="0,7,7,0"
-                                    Color="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
-                                    HorizontalOptions="End" VerticalOptions="Start" IsVisible="{Binding HasActiveInjuries}"
-                                    InputTransparent="True" />
+                                         Color="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
+                                         HorizontalOptions="End" VerticalOptions="Start"
+                                         IsVisible="{Binding HasActiveInjuries}"
+                                         InputTransparent="True" />
                             </Grid>
                         </Border>
                     </Grid>
@@ -66,7 +68,8 @@
                             IsVisible="{Binding HasActiveInjuries}">
                         <VerticalStackLayout Spacing="8">
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                <Label Text="{Binding InjuryBannerSummary}" FontSize="13" LineBreakMode="TailTruncation"
+                                <Label Text="{Binding InjuryBannerSummary}" FontSize="13"
+                                       LineBreakMode="TailTruncation"
                                        VerticalOptions="Center" />
                                 <Label Grid.Column="1" Text="Details" FontSize="12"
                                        TextColor="{StaticResource Primary}" VerticalOptions="Center">
@@ -79,11 +82,14 @@
                             <VerticalStackLayout Spacing="10" IsVisible="{Binding IsInjuryBannerExpanded}">
                                 <!-- Blocked exercises -->
                                 <VerticalStackLayout Spacing="4" IsVisible="{Binding HasBlockedExercises}">
-                                    <Label Text="Blocked exercises" FontSize="12" FontAttributes="Bold" Style="{StaticResource MutedLabel}" />
-                                    <VerticalStackLayout Spacing="2" BindableLayout.ItemsSource="{Binding BlockedExerciseNames}">
+                                    <Label Text="Blocked exercises" FontSize="12" FontAttributes="Bold"
+                                           Style="{StaticResource MutedLabel}" />
+                                    <VerticalStackLayout Spacing="2"
+                                                         BindableLayout.ItemsSource="{Binding BlockedExerciseNames}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="x:String">
-                                                <Label Text="{Binding .}" FontSize="12" Style="{StaticResource MutedLabel}" Margin="8,0,0,0" />
+                                                <Label Text="{Binding .}" FontSize="12"
+                                                       Style="{StaticResource MutedLabel}" Margin="8,0,0,0" />
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
                                     </VerticalStackLayout>
@@ -93,10 +99,12 @@
                                 <VerticalStackLayout Spacing="4" IsVisible="{Binding HasRehabExercises}">
                                     <Label Text="Rehab recommendations" FontSize="12" FontAttributes="Bold"
                                            TextColor="{StaticResource Primary}" />
-                                    <VerticalStackLayout Spacing="2" BindableLayout.ItemsSource="{Binding RehabExerciseNames}">
+                                    <VerticalStackLayout Spacing="2"
+                                                         BindableLayout.ItemsSource="{Binding RehabExerciseNames}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="x:String">
-                                                <Label Text="{Binding .}" FontSize="12" Style="{StaticResource AccentLabel}" Margin="8,0,0,0" />
+                                                <Label Text="{Binding .}" FontSize="12"
+                                                       Style="{StaticResource AccentLabel}" Margin="8,0,0,0" />
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
                                     </VerticalStackLayout>
@@ -104,18 +112,22 @@
 
                                 <!-- Blocked cardio -->
                                 <VerticalStackLayout Spacing="4" IsVisible="{Binding HasBlockedCardio}">
-                                    <Label Text="Blocked activities" FontSize="12" FontAttributes="Bold" Style="{StaticResource MutedLabel}" />
-                                    <VerticalStackLayout Spacing="2" BindableLayout.ItemsSource="{Binding BlockedCardioNames}">
+                                    <Label Text="Blocked activities" FontSize="12" FontAttributes="Bold"
+                                           Style="{StaticResource MutedLabel}" />
+                                    <VerticalStackLayout Spacing="2"
+                                                         BindableLayout.ItemsSource="{Binding BlockedCardioNames}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="x:String">
-                                                <Label Text="{Binding .}" FontSize="12" Style="{StaticResource MutedLabel}" Margin="8,0,0,0" />
+                                                <Label Text="{Binding .}" FontSize="12"
+                                                       Style="{StaticResource MutedLabel}" Margin="8,0,0,0" />
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
                                     </VerticalStackLayout>
                                 </VerticalStackLayout>
 
                                 <!-- Manage link -->
-                                <Label Text="Manage injuries" FontSize="13" TextColor="{StaticResource Primary}" HorizontalOptions="End">
+                                <Label Text="Manage injuries" FontSize="13" TextColor="{StaticResource Primary}"
+                                       HorizontalOptions="End">
                                     <Label.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding NavigateToInjuryLogCommand}" />
                                     </Label.GestureRecognizers>
@@ -160,10 +172,12 @@
                                         Padding="8,9"
                                         MinimumHeightRequest="44">
                                         <Border.Triggers>
-                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
+                                                         Value="True">
                                                 <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
                                             </DataTrigger>
-                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
+                                                         Value="False">
                                                 <Setter Property="BackgroundColor"
                                                         Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}" />
                                             </DataTrigger>
@@ -180,10 +194,12 @@
                                             HorizontalTextAlignment="Center"
                                             VerticalOptions="Center">
                                             <Label.Triggers>
-                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}"
+                                                             Value="True">
                                                     <Setter Property="TextColor" Value="{StaticResource White}" />
                                                 </DataTrigger>
-                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="False">
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}"
+                                                             Value="False">
                                                     <Setter Property="TextColor"
                                                             Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                                                 </DataTrigger>

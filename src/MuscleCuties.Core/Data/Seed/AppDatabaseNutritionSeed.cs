@@ -9,11 +9,24 @@ public partial class AppDatabase
     private async Task SeedStarterFoodItemsAsync()
     {
         var now = DateTime.UtcNow;
-        var existingFoods = await FoodItems.ToListAsync();
+        var starterFoods = BuildStarterFoodItems(now);
+        var starterNames = starterFoods
+            .Select(food => food.Name.ToUpperInvariant())
+            .ToArray();
+        var starterFdcIds = starterFoods
+            .Where(food => food.FdcId.HasValue)
+            .Select(food => food.FdcId!.Value)
+            .ToArray();
+        // The local FDC catalog can grow large. Only starter candidates and
+        // potential FDC-ID collisions are needed for the repair pass.
+        var existingFoods = await FoodItems
+            .Where(food => starterNames.Contains(food.Name.ToUpper()) ||
+                           (food.FdcId.HasValue && starterFdcIds.Contains(food.FdcId.Value)))
+            .ToListAsync();
         var foods = new List<FoodItem>();
         var repairedExistingFood = false;
 
-        foreach (var starterFood in BuildStarterFoodItems(now))
+        foreach (var starterFood in starterFoods)
         {
             var existing = FindExistingStarterFood(existingFoods, starterFood);
             if (existing is null)
@@ -45,8 +58,16 @@ public partial class AppDatabase
             return;
 
         var now = DateTime.UtcNow;
-        var foodItems = await FoodItems.ToListAsync();
-        var templates = BuildStarterMealTemplates()
+        var starterTemplates = BuildStarterMealTemplates();
+        var ingredientNames = starterTemplates
+            .SelectMany(template => template.Entries)
+            .Select(entry => entry.FoodName.ToUpperInvariant())
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        var foodItems = await FoodItems
+            .Where(food => ingredientNames.Contains(food.Name.ToUpper()))
+            .ToListAsync();
+        var templates = starterTemplates
             .Select((template, index) => CreateMealTemplate(template, index + 1, foodItems, now))
             .ToList();
 

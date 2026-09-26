@@ -13,8 +13,6 @@ public interface INutritionRepository : IRepository<FoodItem>
     Task<List<LoggedMeal>> GetLoggedMealsByDateAsync(int userId, DateTime date);
     Task<List<LoggedMeal>> GetLoggedMealsByDateRangeAsync(int userId, DateTime startDate, DateTime endDate);
     Task<LoggedMeal?> GetLoggedMealAsync(int userId, int loggedMealId);
-    Task<FoodItem?> GetFoodItemAsync(int foodItemId);
     Task AddLoggedMealAsync(LoggedMeal meal);
     Task UpdateLoggedMealAsync(LoggedMeal meal);
-    Task DeleteLoggedMealAsync(LoggedMeal meal);
 }

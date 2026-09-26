@@ -5,14 +5,10 @@ namespace MuscleCuties.Core.Repositories.Workout;
 
 public interface IWorkoutRepository : IRepository<WorkoutPlan>
 {
-    Task<WorkoutPlan?> GetPlanWithDaysAsync(int planId);
     Task<WorkoutDay?> GetWorkoutDayWithExercisesAsync(int workoutDayId);
     Task<List<WorkoutDay>> GetWorkoutDaysByPlanAsync(int planId);
-    Task<List<Exercise>> GetExercisesByDayAsync(int workoutDayId);
-    Task<List<Exercise>> GetAllExercisesAsync();
     Task<WorkoutPlan?> GetActivePlanAsync(int userId);
     Task<WorkoutPlan> ReplaceActivePlanAsync(WorkoutPlan plan);
-    Task AddWorkoutLogAsync(WorkoutLog log);
     Task ReplaceWorkoutLogAsync(WorkoutLog log);
     Task<WorkoutLog?> GetWorkoutLogForDayAsync(int userId, int workoutDayId, DateTime date);
     Task MergeWorkoutLogAsync(WorkoutLog log);
