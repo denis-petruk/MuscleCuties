@@ -6,6 +6,7 @@ using MuscleCuties.Core.Models.Nutrition.Planning;
 using MuscleCuties.Core.Models.UI.Nutrition;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Nutrition.Planning;
+using UiMealItem = MuscleCuties.Core.Models.UI.Nutrition.MealItem;
 
 namespace MuscleCuties.Core.ViewModels.Nutrition;
 
@@ -76,7 +77,7 @@ public partial class NutritionViewModel
             null);
     }
 
-    private void OpenMealBreakdown(MealItem? meal)
+    private void OpenMealBreakdown(UiMealItem? meal)
     {
         if (meal is null)
             return;
@@ -92,7 +93,7 @@ public partial class NutritionViewModel
         string title,
         MacroNutrients macros,
         IEnumerable<DailyMicronutrientItem> micronutrients,
-        MealItem? meal)
+        UiMealItem? meal)
     {
         var nutrients = micronutrients.ToList();
 

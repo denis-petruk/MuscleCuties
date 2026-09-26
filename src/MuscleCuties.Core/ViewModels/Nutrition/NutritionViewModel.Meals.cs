@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.ViewModels.Common;
+using UiMealItem = MuscleCuties.Core.Models.UI.Nutrition.MealItem;
 
 namespace MuscleCuties.Core.ViewModels.Nutrition;
 
@@ -170,7 +171,7 @@ public partial class NutritionViewModel
         }
     }
 
-    private async Task EditMealAsync(MealItem? meal)
+    private async Task EditMealAsync(UiMealItem? meal)
     {
         if (meal is null)
             return;
@@ -370,7 +371,7 @@ public partial class NutritionViewModel
         var mealList = meals.ToList();
         var allEntries = meals.SelectMany(meal => meal.Entries).ToList();
 
-        Meals = new ObservableCollection<MealItem>(mealList.Select(meal => BuildMealItem(meal, mealList)));
+        Meals = new ObservableCollection<UiMealItem>(mealList.Select(meal => BuildMealItem(meal, mealList)));
 
         Micronutrients = new ObservableCollection<DailyMicronutrientItem>(
             BuildMicronutrients(mealList, _micronutrientGoals));
@@ -378,13 +379,13 @@ public partial class NutritionViewModel
         return MacroNutrients.SumMealEntries(allEntries);
     }
 
-    private MealItem BuildMealItem(LoggedMeal meal, IReadOnlyCollection<LoggedMeal> dailyMeals)
+    private UiMealItem BuildMealItem(LoggedMeal meal, IReadOnlyCollection<LoggedMeal> dailyMeals)
     {
         var entries = meal.Entries.Where(e => e.FoodItem is not null).ToList();
         var macros = MacroNutrients.SumMealEntries(entries);
         var micronutrients = BuildMicronutrients([meal], dailyMeals, _micronutrientGoals).ToList();
 
-        return new MealItem
+        return new UiMealItem
         {
             LoggedMealId = meal.Id,
             Time = meal.LoggedAt.ToString("h:mm tt", CultureInfo.CurrentCulture),

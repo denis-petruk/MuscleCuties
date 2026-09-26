@@ -1,25 +1,30 @@
 using MauiIcons.Core;
+using MuscleCuties.App.Services.Navigation;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.ViewModels.Cycle;
 
 namespace MuscleCuties.App.Pages.Cycle;
 
-[QueryProperty(nameof(Phase), "phase")]
 public partial class CyclePhaseDetailPage : ContentPage
 {
-    public CyclePhaseDetailPage(CyclePhaseDetailViewModel vm)
+    private readonly INavigationContextService _navigationContext;
+    private readonly CyclePhaseDetailViewModel _viewModel;
+
+    public CyclePhaseDetailPage(
+        CyclePhaseDetailViewModel vm,
+        INavigationContextService navigationContext)
     {
         InitializeComponent();
         _ = new MauiIcon();
-        BindingContext = vm;
+        _navigationContext = navigationContext;
+        BindingContext = _viewModel = vm;
     }
 
-    public string Phase
+    protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
-        set
-        {
-            if (Enum.TryParse<CyclePhase>(value, true, out var phase))
-                ((CyclePhaseDetailViewModel)BindingContext).Load(phase);
-        }
+        base.OnNavigatedTo(args);
+
+        if (_navigationContext.TryTake<CyclePhase>("phase", out var phase))
+            _viewModel.Load(phase);
     }
 }

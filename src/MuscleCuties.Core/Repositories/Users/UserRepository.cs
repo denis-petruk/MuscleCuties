@@ -54,12 +54,4 @@ public class UserRepository(AppDatabase db) : BaseRepository<User>(db), IUserRep
         await _db.SaveChangesAsync();
     }
 
-    public async Task<UserProfileSnapshot?> GetLatestSnapshotAsync(int userId)
-    {
-        return await _db.UserProfileSnapshots
-            .AsNoTracking()
-            .Where(s => s.UserId == userId)
-            .OrderByDescending(s => s.CreatedAt)
-            .FirstOrDefaultAsync();
-    }
 }

@@ -1,3 +1,4 @@
+using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Repositories.Nutrition;
 
@@ -31,10 +32,18 @@ public partial class FoodSyncService : IFoodSyncService
         pageSize = Math.Clamp(pageSize, 1, 50);
         pageNumber = Math.Max(1, pageNumber);
 
+        if (string.IsNullOrWhiteSpace(query))
+            return [];
+
         var local = await _nutritionRepository.SearchFoodItemsAsync(query);
         var preparedLocal = FoodSearchResultFilter.PrepareFoodItems(query, local);
-        if (string.IsNullOrWhiteSpace(query))
-            return local;
+        var localPage = preparedLocal
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        if (localPage.Count == pageSize)
+            return localPage;
 
         var log = await StartLogAsync();
         var errors = new List<string>();
@@ -81,19 +90,19 @@ public partial class FoodSyncService : IFoodSyncService
         catch (HttpRequestException ex)
         {
             await CompleteLogAsync(log, "Failed", errors, ex);
-            return preparedLocal;
+            return localPage;
         }
         catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
             await CompleteLogAsync(log, "Failed", errors, ex);
-            return preparedLocal;
+            return localPage;
         }
 
         await CompleteLogAsync(log, BuildStatus(log, errors), errors);
         if (remotePageItems.Count > 0)
             return remotePageItems;
 
-        return pageNumber == 1 ? preparedLocal : [];
+        return localPage;
     }
 
     public Task<IReadOnlyList<FdcFoodSearchResult>> SearchRemoteAsync(
@@ -102,21 +111,30 @@ public partial class FoodSyncService : IFoodSyncService
         int pageNumber = 1,
         CancellationToken cancellationToken = default)
     {
-        return _fdcApiClient.SearchFoodsAsync(
-            query,
-            Math.Clamp(pageSize, 1, 50),
-            Math.Max(1, pageNumber),
-            cancellationToken);
+        return DatabaseOperationGate.AwaitExternalAsync(() =>
+            _fdcApiClient.SearchFoodsAsync(
+                query,
+                Math.Clamp(pageSize, 1, 50),
+                Math.Max(1, pageNumber),
+                cancellationToken));
     }
 
     public async Task<FoodItem?> FetchDetailAsync(int fdcId, CancellationToken cancellationToken = default)
     {
+        if (fdcId <= 0)
+            return null;
+
+        var cached = await _nutritionRepository.GetFoodItemByFdcIdAsync(fdcId);
+        if (IsUsableCachedFdcFood(cached))
+            return cached;
+
         var log = await StartLogAsync();
         var errors = new List<string>();
 
         try
         {
-            var detail = await _fdcApiClient.GetFoodAsync(fdcId, cancellationToken);
+            var detail = await DatabaseOperationGate.AwaitExternalAsync(
+                () => _fdcApiClient.GetFoodAsync(fdcId, cancellationToken));
             if (detail is null)
             {
                 log.ItemsFailed = 1;
@@ -137,4 +155,8 @@ public partial class FoodSyncService : IFoodSyncService
         }
     }
 
+    private static bool IsUsableCachedFdcFood(FoodItem? food)
+    {
+        return food is { LastSyncedAt: not null, Calories: > 0f };
+    }
 }

@@ -22,6 +22,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly Func<string, Task> _navigateAsync;
+    private readonly Func<int, Task> _openWorkoutSessionAsync;
     private readonly ViewModelLoadGate _loadGate = new(ViewModelLoadGate.PageFreshnessWindow);
     private InjuryLogViewModel? _injuryLogVm;
 
@@ -90,10 +91,14 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
         await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
     }
 
-    public WorkoutViewModel(IServiceScopeFactory scopeFactory, Func<string, Task>? navigateAsync = null)
+    public WorkoutViewModel(
+        IServiceScopeFactory scopeFactory,
+        Func<string, Task>? navigateAsync = null,
+        Func<int, Task>? openWorkoutSessionAsync = null)
     {
         _scopeFactory = scopeFactory;
         _navigateAsync = navigateAsync ?? (_ => Task.CompletedTask);
+        _openWorkoutSessionAsync = openWorkoutSessionAsync ?? (_ => Task.CompletedTask);
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         EmptyWorkoutsActionCommand = new AsyncRelayCommand(HandleEmptyWorkoutsActionAsync, CanUseEmptyWorkoutsAction);
         OpenWorkoutCommand = new AsyncRelayCommand<WorkoutItem>(OpenWorkoutAsync);
@@ -348,7 +353,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
         if (workout is null || workout.WorkoutDayId <= 0)
             return;
 
-        await _navigateAsync($"WorkoutSessionPage?workoutDayId={workout.WorkoutDayId}");
+        await _openWorkoutSessionAsync(workout.WorkoutDayId);
     }
 
     private static string ExtractExerciseCount(string exerciseCountText)
