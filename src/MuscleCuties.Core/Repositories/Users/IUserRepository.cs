@@ -11,5 +11,4 @@ public interface IUserRepository : IRepository<User>
     Task AddProfileAsync(UserProfile profile);
     Task UpdateProfileAsync(UserProfile profile);
     Task AddSnapshotAsync(UserProfileSnapshot snapshot);
-    Task<UserProfileSnapshot?> GetLatestSnapshotAsync(int userId);
 }

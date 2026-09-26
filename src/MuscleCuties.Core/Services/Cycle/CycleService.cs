@@ -44,11 +44,6 @@ public class CycleService : ICycleService
         return prediction;
     }
 
-    public async Task<CycleLog?> GetCurrentCycleAsync(int userId)
-    {
-        return await _cycleRepository.GetLatestCycleAsync(userId);
-    }
-
     public async Task<IReadOnlyList<CycleLog>> GetCycleHistoryAsync(int userId)
     {
         return await _cycleRepository.GetCycleHistoryAsync(userId);
@@ -64,29 +59,9 @@ public class CycleService : ICycleService
         return await _cycleRepository.GetRecentPhaseLogsAsync(userId, count);
     }
 
-    public async Task LogPhaseShiftAsync(int userId, CyclePhase phase, DateTime loggedAt, string? note)
-    {
-        await SavePhaseLogAsync(userId, phase, loggedAt, note, false);
-    }
-
     public async Task SetPhaseForDateAsync(int userId, CyclePhase phase, DateTime loggedAt, string? note)
     {
         await SavePhaseLogAsync(userId, phase, loggedAt, note, true);
-    }
-
-    public async Task StartNewCycleAsync(int userId)
-    {
-        await AlignCycleToPeriodStartAsync(userId, DateTime.UtcNow.Date);
-    }
-
-    public async Task EndCurrentCycleAsync(int userId)
-    {
-        var cycle = await _cycleRepository.GetLatestCycleAsync(userId);
-        if (cycle == null) return;
-
-        cycle.EndDate = DateTime.UtcNow;
-        cycle.CycleLength = Math.Max(1, (int)(cycle.EndDate.Value.Date - cycle.StartDate.Date).TotalDays);
-        await _cycleRepository.UpdateAsync(cycle);
     }
 
     private async Task SavePhaseLogAsync(
@@ -201,18 +176,6 @@ public class CycleService : ICycleService
     private static bool FollowsCycleOrder(CyclePhase from, CyclePhase to)
     {
         return to == from || to == CyclePhaseRules.GetNextPhase(from);
-    }
-
-    private static CyclePhase GetPreviousPhase(CyclePhase phase)
-    {
-        return phase switch
-        {
-            CyclePhase.Menstrual => CyclePhase.Luteal,
-            CyclePhase.Follicular => CyclePhase.Menstrual,
-            CyclePhase.Ovulatory => CyclePhase.Follicular,
-            CyclePhase.Luteal => CyclePhase.Ovulatory,
-            _ => CyclePhase.Menstrual
-        };
     }
 
     private async Task SwitchToManualTrackingAsync(int userId, CyclePhase phase)

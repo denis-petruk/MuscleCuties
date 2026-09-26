@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using MuscleCuties.Core.Models.UI.Nutrition;
+using UiMealItem = MuscleCuties.Core.Models.UI.Nutrition.MealItem;
 
 namespace MuscleCuties.Core.ViewModels.Nutrition;
 
@@ -93,7 +94,7 @@ public partial class NutritionViewModel
         BrowseMoreFoodsCommand.NotifyCanExecuteChanged();
     }
 
-    partial void OnMealsChanged(ObservableCollection<MealItem> value)
+    partial void OnMealsChanged(ObservableCollection<UiMealItem> value)
     {
         OnPropertyChanged(nameof(HasMeals));
         OnPropertyChanged(nameof(HasNoMeals));

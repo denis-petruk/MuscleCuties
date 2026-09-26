@@ -134,10 +134,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
         await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
     }
 
-    public string PhaseLabel => CurrentPhase.ToString();
-
-    public string TodayLabel => DateTime.Today.ToString("dddd, MMM d");
-
     public string DashboardPhaseHeaderText => $"This week · {CurrentPhase}";
 
     public string PhaseStatusText => CurrentCycleDay > 0
@@ -161,24 +157,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
                 : $"{greeting}, {DisplayName}";
         }
     }
-
-    public string PhaseBadgeText => CurrentPhase switch
-    {
-        CyclePhase.Menstrual => FormatPhaseBadge("Menstrual phase"),
-        CyclePhase.Follicular => FormatPhaseBadge("Follicular phase"),
-        CyclePhase.Ovulatory => FormatPhaseBadge("Ovulatory phase"),
-        CyclePhase.Luteal => FormatPhaseBadge("Luteal phase"),
-        _ => "Unknown phase"
-    };
-
-    public string PhaseTitle => CurrentPhase switch
-    {
-        CyclePhase.Menstrual => "Menstrual",
-        CyclePhase.Follicular => "Follicular",
-        CyclePhase.Ovulatory => "Ovulatory",
-        CyclePhase.Luteal => "Luteal",
-        _ => "Unknown"
-    };
 
     public string PhaseCardTitle => CurrentPhase switch
     {
@@ -222,23 +200,12 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
         _ => "0%"
     };
 
-    public string WorkoutActivityTypesText =>
-        WorkoutActivitySections.Count > 0
-            ? string.Join(" + ", WorkoutActivitySections.Select(s => s.Title.Replace(" activity", "")))
-            : "Rest";
-
     public string WorkoutBadgeText => IsTodaysWorkoutCompleted
         ? "Workout completed"
         : $"Today · {SessionProgressText}";
 
     public bool IsTodaysWorkoutCompleted =>
         string.Equals(SessionProgressText, "Completed", StringComparison.OrdinalIgnoreCase);
-
-    public string WorkoutActionText => IsTodaysWorkoutCompleted
-        ? "Edit workout"
-        : string.Equals(SessionProgressText, "REST", StringComparison.OrdinalIgnoreCase)
-            ? "Log rest day"
-            : "Start workout";
 
     public string WorkoutStreakText => WorkoutStreakDays == 1
         ? "1 day session streak"
@@ -409,11 +376,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
     private void NotifyPhaseProperties()
     {
-        OnPropertyChanged(nameof(PhaseLabel));
         OnPropertyChanged(nameof(DashboardPhaseHeaderText));
         OnPropertyChanged(nameof(PhaseStatusText));
-        OnPropertyChanged(nameof(PhaseBadgeText));
-        OnPropertyChanged(nameof(PhaseTitle));
         OnPropertyChanged(nameof(PhaseCardTitle));
         OnPropertyChanged(nameof(PhaseShortAdvice));
         OnPropertyChanged(nameof(PhaseIconSource));
@@ -442,7 +406,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
     private void NotifyUserLinkedProperties()
     {
         OnPropertyChanged(nameof(Greetings));
-        OnPropertyChanged(nameof(PhaseBadgeText));
         OnPropertyChanged(nameof(PhaseShortAdvice));
     }
 
@@ -464,8 +427,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
         OnPropertyChanged(nameof(WorkoutBadgeText));
         OnPropertyChanged(nameof(IsTodaysWorkoutCompleted));
-        OnPropertyChanged(nameof(WorkoutActionText));
-        OnPropertyChanged(nameof(WorkoutActivityTypesText));
     }
 
     private void ApplySupportSummary(DashboardSupportSummary supportSummary)
@@ -478,11 +439,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
         ReadinessLabel = supportSummary.ReadinessLabel;
         RecoveryScore = supportSummary.RecoveryScore;
         RecoveryLabel = supportSummary.RecoveryLabel;
-    }
-
-    private string FormatPhaseBadge(string phaseName)
-    {
-        return CurrentCycleDay > 0 ? $"Day {CurrentCycleDay} · {phaseName}" : phaseName;
     }
 
     private int CalculateDaysLeftInCurrentPhase()
@@ -632,7 +588,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
     partial void OnCurrentCycleDayChanged(int value)
     {
-        OnPropertyChanged(nameof(PhaseBadgeText));
         OnPropertyChanged(nameof(PhaseStatusText));
         OnPropertyChanged(nameof(PhaseTimeLeftValue));
     }
@@ -657,7 +612,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
     {
         OnPropertyChanged(nameof(WorkoutBadgeText));
         OnPropertyChanged(nameof(IsTodaysWorkoutCompleted));
-        OnPropertyChanged(nameof(WorkoutActionText));
     }
 
     partial void OnWorkoutStreakDaysChanged(int value)

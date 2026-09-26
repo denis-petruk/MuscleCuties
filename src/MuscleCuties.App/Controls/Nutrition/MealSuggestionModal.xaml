@@ -2,6 +2,7 @@
 
 <sharedControls:AnimatedModalView
     x:Class="MuscleCuties.App.Controls.Nutrition.MealSuggestionModal"
+    x:Name="SuggestionRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:nutritionModels="clr-namespace:MuscleCuties.Core.Models.UI.Nutrition;assembly=MuscleCuties.Core"
@@ -34,13 +35,20 @@
                     <Label
                         Grid.Row="0"
                         Grid.Column="0"
-                        Text="Meal ideas"
+                        Text="{Binding SuggestionPageTitle}"
                         Style="{StaticResource ModalTitle}" />
                     <Label
                         Grid.Row="1"
                         Grid.Column="0"
                         Text="{Binding SuggestionTargetText}"
-                        Style="{StaticResource ModalSubtitle}" />
+                        Style="{StaticResource ModalSubtitle}"
+                        IsVisible="{Binding IsDayPlanMode, Converter={StaticResource InvertedBoolConverter}}" />
+                    <Label
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Text="{Binding DayPlanSummaryText}"
+                        Style="{StaticResource ModalSubtitle}"
+                        IsVisible="{Binding IsDayPlanMode}" />
 
                     <Border
                         Grid.Row="0"
@@ -197,6 +205,29 @@
                                 </VerticalStackLayout>
                             </Border>
                         </Grid>
+
+                        <Border
+                            Style="{StaticResource ModalListItem}"
+                            Padding="14"
+                            MinimumHeightRequest="68"
+                            SemanticProperties.Description="Build a meal plan for today">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding StartDayPlanCommand}" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Path
+                                    Data="M4 4h16v16H4zM8 8h3v3H8zM13 8h3M13 11h3M8 14h8M8 17h8"
+                                    Style="{StaticResource NutritionLineIcon}"
+                                    Stroke="{StaticResource Primary}"
+                                    WidthRequest="22"
+                                    HeightRequest="22"
+                                    VerticalOptions="Center" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="Plan my day" Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Text="Prepare all four meals around today's remaining calories" Style="{StaticResource CaptionLabel}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
                     </VerticalStackLayout>
                 </ScrollView>
 
@@ -212,7 +243,7 @@
                         Color="{StaticResource Primary}"
                         WidthRequest="32"
                         HeightRequest="32" />
-                    <Label Text="Finding a good fit" Style="{StaticResource ModalSubtitle}" />
+                    <Label Text="{Binding LoadingSuggestionText}" Style="{StaticResource ModalSubtitle}" />
                 </VerticalStackLayout>
 
                 <VerticalStackLayout
@@ -359,12 +390,137 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
+                <VerticalStackLayout
+                    Grid.Row="2"
+                    IsVisible="{Binding HasNoDayPlanMeals}"
+                    Spacing="10"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    Padding="24,32">
+                    <Label
+                        Text="No meals left to plan"
+                        Style="{StaticResource BodyLabel}"
+                        FontAttributes="Bold"
+                        HorizontalTextAlignment="Center" />
+                    <Label
+                        Text="Your logged meals have used today's planned calories."
+                        Style="{StaticResource ModalSubtitle}"
+                        HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+
+                <CollectionView
+                    Grid.Row="2"
+                    ItemsSource="{Binding DayPlanMeals}"
+                    SelectionMode="None"
+                    IsVisible="{Binding ShowDayPlanMeals}"
+                    VerticalScrollBarVisibility="Default"
+                    Margin="20,12,20,8">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="nutritionModels:DayMealPlanItem">
+                            <Border Style="{StaticResource ModalListItem}" Padding="12">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="5">
+                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                        <Path
+                                            Data="{Binding MealTypeIconPathData, Converter={StaticResource StringToGeometryConverter}}"
+                                            Style="{StaticResource NutritionLineIcon}"
+                                            Stroke="{StaticResource Primary}"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            VerticalOptions="Center" />
+                                        <Label
+                                            Grid.Column="1"
+                                            Text="{Binding MealTypeLabel}"
+                                            Style="{StaticResource CardTitle}"
+                                            FontSize="14"
+                                            VerticalOptions="Center" />
+                                        <Label
+                                            Grid.Column="2"
+                                            Text="{Binding TargetSummaryText}"
+                                            Style="{StaticResource CaptionLabel}"
+                                            FontAttributes="Bold"
+                                            HorizontalTextAlignment="End"
+                                            VerticalOptions="Center" />
+                                    </Grid>
+                                    <Label
+                                        Grid.Row="1"
+                                        Text="{Binding MealTitle}"
+                                        Style="{StaticResource CardTitle}"
+                                        FontSize="15"
+                                        Grid.ColumnSpan="2"
+                                        MaxLines="1"
+                                        LineBreakMode="TailTruncation" />
+                                    <Label
+                                        Grid.Row="2"
+                                        Text="{Binding MealSummaryText}"
+                                        Style="{StaticResource CaptionLabel}"
+                                        Grid.ColumnSpan="2"
+                                        MaxLines="2"
+                                        LineBreakMode="TailTruncation" />
+                                    <Label
+                                        Grid.Row="3"
+                                        Text="{Binding MacrosText}"
+                                        Style="{StaticResource MutedLabel}"
+                                        FontSize="11"
+                                        Grid.Column="0"
+                                        IsVisible="{Binding HasSuggestion}" />
+                                    <HorizontalStackLayout
+                                        Grid.Row="3"
+                                        Grid.Column="1"
+                                        Spacing="8"
+                                        VerticalOptions="End"
+                                        HorizontalOptions="End">
+                                        <Button
+                                            Text="Use meal"
+                                            Command="{Binding BindingContext.UsePlannedMealCommand, Source={x:Reference SuggestionRoot}}"
+                                            CommandParameter="{Binding .}"
+                                            IsVisible="{Binding HasSuggestion}"
+                                            MinimumHeightRequest="42"
+                                            FontSize="13" />
+                                        <Border
+                                            Style="{StaticResource ModalIconButton}"
+                                            IsEnabled="{Binding CanRefresh}"
+                                            IsVisible="{Binding CanRefresh}"
+                                            SemanticProperties.Description="Find another meal">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding BindingContext.RefreshDayMealCommand, Source={x:Reference SuggestionRoot}}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                            <Path
+                                                Data="M17.65 6.35A7.958 7.958 0 0012 4a8 8 0 00-8 8 8 8 0 008 8 7.985 7.985 0 005.93-2.65l-1.46-1.46A5.98 5.98 0 0112 18a6 6 0 01-6-6 6 6 0 016-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                                                Fill="{StaticResource Primary}"
+                                                Aspect="Uniform"
+                                                WidthRequest="17"
+                                                HeightRequest="17"
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="Center" />
+                                        </Border>
+                                    </HorizontalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
                 <Grid Grid.Row="3" Padding="20,8,20,16">
-                    <Button
-                        Text="Done"
-                        Command="{Binding CloseSuggestionModalCommand}"
-                        Style="{StaticResource ButtonSecondary}"
-                        MinimumHeightRequest="48" />
+                    <HorizontalStackLayout Spacing="10">
+                        <Button
+                            Text="Choose one meal"
+                            Command="{Binding BackToMealTypePickerCommand}"
+                            Style="{StaticResource ButtonSecondary}"
+                            IsVisible="{Binding IsDayPlanMode}"
+                            MinimumHeightRequest="48"
+                            HorizontalOptions="FillAndExpand" />
+                        <Button
+                            Text="Done"
+                            Command="{Binding CloseSuggestionModalCommand}"
+                            Style="{StaticResource ButtonSecondary}"
+                            MinimumHeightRequest="48"
+                            HorizontalOptions="FillAndExpand" />
+                    </HorizontalStackLayout>
                 </Grid>
             </Grid>
         </Border>

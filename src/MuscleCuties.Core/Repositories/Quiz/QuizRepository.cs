@@ -47,29 +47,10 @@ public class QuizRepository(AppDatabase db) : BaseRepository<QuizQuestion>(db), 
         return questions;
     }
 
-    public async Task<bool> AreQuestionsSeededAsync()
-    {
-        return await _db.QuizQuestions.AnyAsync();
-    }
-
-    public async Task<string?> GetAnswerTextAsync(int answerId)
-    {
-        return await _db.QuizAnswers
-            .AsNoTracking()
-            .Where(a => a.Id == answerId)
-            .Select(a => a.Text)
-            .FirstOrDefaultAsync();
-    }
-
     public async Task AddResponsesAsync(List<UserQuizResponse> responses)
     {
         await _db.UserQuizResponses.AddRangeAsync(responses);
         await _db.SaveChangesAsync();
     }
 
-    public async Task AddRangeQuestionsAsync(List<QuizQuestion> questions)
-    {
-        await _db.QuizQuestions.AddRangeAsync(questions);
-        await _db.SaveChangesAsync();
-    }
 }

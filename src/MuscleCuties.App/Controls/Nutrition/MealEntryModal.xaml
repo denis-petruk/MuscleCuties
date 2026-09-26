@@ -79,7 +79,6 @@
                                         HeightRequest="22"
                                         HorizontalOptions="Start" />
                                     <Label Text="Breakfast" Style="{StaticResource CardTitle}" FontSize="15" />
-                                    <Label Text="{Binding BreakfastCaloriesHint}" Style="{StaticResource CaptionLabel}" />
                                 </VerticalStackLayout>
                             </Border>
 
@@ -105,7 +104,6 @@
                                         HeightRequest="22"
                                         HorizontalOptions="Start" />
                                     <Label Text="Lunch" Style="{StaticResource CardTitle}" FontSize="15" />
-                                    <Label Text="{Binding LunchCaloriesHint}" Style="{StaticResource CaptionLabel}" />
                                 </VerticalStackLayout>
                             </Border>
 
@@ -131,7 +129,6 @@
                                         HeightRequest="22"
                                         HorizontalOptions="Start" />
                                     <Label Text="Dinner" Style="{StaticResource CardTitle}" FontSize="15" />
-                                    <Label Text="{Binding DinnerCaloriesHint}" Style="{StaticResource CaptionLabel}" />
                                 </VerticalStackLayout>
                             </Border>
 
@@ -157,7 +154,6 @@
                                         HeightRequest="22"
                                         HorizontalOptions="Start" />
                                     <Label Text="Snack" Style="{StaticResource CardTitle}" FontSize="15" />
-                                    <Label Text="{Binding SnackCaloriesHint}" Style="{StaticResource CaptionLabel}" />
                                 </VerticalStackLayout>
                             </Border>
                         </Grid>
@@ -198,6 +194,13 @@
                                     VerticalOptions="Center" />
                             </HorizontalStackLayout>
                         </Border>
+
+                        <Button
+                            Text="Plan my day"
+                            Command="{Binding StartDayPlanCommand}"
+                            Style="{StaticResource ButtonSecondary}"
+                            MinimumHeightRequest="48"
+                            Margin="0,0,0,2" />
 
                     </VerticalStackLayout>
                 </ScrollView>
