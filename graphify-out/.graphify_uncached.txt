@@ -1,2 +1,0 @@
-src/MuscleCuties.Core/obj/Release/net10.0/MuscleCuties.Core.csproj.FileListAbsolute.txt
-src/MuscleCuties.Core/obj/Debug/net10.0/MuscleCuties.Core.csproj.FileListAbsolute.txt
