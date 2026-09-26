@@ -25,7 +25,10 @@
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
         <EnableAppleSignInEntitlements>false</EnableAppleSignInEntitlements>
         <EnableAppleHealthEntitlements>false</EnableAppleHealthEntitlements>
-        <MauiXamlInflator>SourceGen</MauiXamlInflator>
+        <!-- MauiXamlInflator SourceGen disabled: causes SIGSEGV in CA::Layer::layout_is_active
+             during Shell structural navigation (ShellContent → TabBar) on iOS. Re-enable when
+             dotnet/maui resolves SourceGen compatibility with Shell TabBar transitions. -->
+        <!--<MauiXamlInflator>SourceGen</MauiXamlInflator>-->
     </PropertyGroup>
 
     <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(CodesignProvision)' != '' and '$(EnableAppleSignInEntitlements)' == 'true'">
@@ -93,6 +96,7 @@
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0"/>
+        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlcipher" Version="2.1.11"/>
     </ItemGroup>
 
     <ItemGroup>

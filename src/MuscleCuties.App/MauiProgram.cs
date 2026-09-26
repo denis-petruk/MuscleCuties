@@ -1,7 +1,9 @@
 using CommunityToolkit.Maui;
 using MauiIcons.Fluent;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MuscleCuties.App.Infrastructure.Network;
 using Microsoft.Maui.Handlers;
 using MuscleCuties.App.Pages;
 using MuscleCuties.App.Pages.Auth;
@@ -14,7 +16,9 @@ using MuscleCuties.App.Pages.Startup;
 using MuscleCuties.App.Pages.Workout;
 using MuscleCuties.App.Services;
 using MuscleCuties.App.Services.Auth;
+using MuscleCuties.App.Services.Navigation;
 using MuscleCuties.App.Services.Notifications;
+using MuscleCuties.App.Services.Security;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Repositories.Cycle;
 using MuscleCuties.Core.Repositories.Nutrition;
@@ -51,6 +55,8 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
+        SQLitePCL.Batteries_V2.Init();
+
         var builder = MauiApp.CreateBuilder();
 
         builder
@@ -147,13 +153,12 @@ public static class MauiProgram
     private static void RegisterPlatformServices(IServiceCollection services)
     {
         services.AddSingleton<IDbPathProvider, MauiDbPathProvider>();
-        // One context per operation scope. Singleton view models must inject
+        services.AddSingleton<INavigationContextService, NavigationContextService>();
+        services.AddSingleton<IAppDatabaseKeyProvider, AppDatabaseKeyProvider>();
+        // One pooled context per operation scope. Singleton view models must inject
         // IServiceScopeFactory and resolve database services inside that scope.
-        services.AddDbContext<AppDatabase>((sp, opts) =>
-        {
-            var path = sp.GetRequiredService<IDbPathProvider>().GetDatabasePath();
-            opts.UseSqlite($"Filename={path}");
-        }, contextLifetime: ServiceLifetime.Scoped);
+        services.AddPooledDbContextFactory<AppDatabase>(ConfigureDatabaseOptions);
+        services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<AppDatabase>>().CreateDbContext());
 
         services.AddSingleton<ITokenStorage, SecureStorageService>();
         services.AddSingleton<ILocalNotificationService, LocalNotificationService>();
@@ -170,6 +175,22 @@ public static class MauiProgram
         services.AddScoped<IFeedbackEmailService, FeedbackEmailService>();
     }
 
+    private static void ConfigureDatabaseOptions(IServiceProvider sp, DbContextOptionsBuilder opts)
+    {
+        var path = sp.GetRequiredService<IDbPathProvider>().GetDatabasePath();
+        var password = sp.GetRequiredService<IAppDatabaseKeyProvider>().GetDatabasePassword();
+        var connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = path,
+            Mode = SqliteOpenMode.ReadWriteCreate,
+            Cache = SqliteCacheMode.Private,
+            Pooling = false,
+            Password = password
+        }.ToString();
+
+        opts.UseSqlite(connectionString);
+    }
+
     private static void RegisterRepositories(IServiceCollection services)
     {
         services.AddScoped<IUserRepository, UserRepository>();
@@ -182,13 +203,19 @@ public static class MauiProgram
 
     private static void RegisterDomainServices(IServiceCollection services)
     {
-        services.AddHttpClient<IFdcApiClient, FdcApiClient>(client =>
+        services.AddSingleton<IFdcApiKeyProvider, SecureStorageFdcApiKeyProvider>();
+        services.AddTransient<FdcAirGapHandler>();
+        services.AddHttpClient<IFdcApiClient, Infrastructure.Network.FdcApiClient>(client =>
         {
-            client.BaseAddress = FdcApiClient.BaseUri;
+            client.BaseAddress = Infrastructure.Network.FdcApiClient.BaseUri;
             client.Timeout = TimeSpan.FromSeconds(8);
-        });
+        })
+        .ConfigurePrimaryHttpMessageHandler(CreateFdcHttpHandler)
+        .AddHttpMessageHandler<FdcAirGapHandler>();
         services.AddScoped<IFoodSyncService, FoodSyncService>();
         services.AddScoped<ICalorieCalculator, CalorieCalculator>();
+        services.AddScoped<ICalorieDistributionService, CalorieDistributionService>();
+        services.AddScoped<IFallbackMealProvider, FallbackMealProvider>();
         services.AddScoped<INutritionPlanner, NutritionPlanner>();
         services.AddScoped<ICyclePhaseCalculator, CyclePhaseCalculator>();
         services.AddScoped<ICyclePredictionPlanner, CyclePredictionPlanner>();
@@ -198,6 +225,7 @@ public static class MauiProgram
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICycleService, CycleService>();
         services.AddScoped<ISuggestedMealService, SuggestedMealService>();
+        services.AddScoped<IFoodLookupService, FoodLookupService>();
         services.AddScoped<INutritionService, NutritionService>();
         services.AddScoped<IQuizService, QuizService>();
         services.AddScoped<IWorkoutService, WorkoutService>();
@@ -274,16 +302,18 @@ public static class MauiProgram
 
         services.AddSingleton<CycleViewModel>(sp => new CycleViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
-            phase => NavigateToAsync($"{nameof(CyclePhaseDetailPage)}?phase={phase}")));
+            phase => NavigateWithContextAsync(sp, nameof(CyclePhaseDetailPage), "phase", phase)));
 
         services.AddTransient<CyclePhaseDetailViewModel>(sp => new CyclePhaseDetailViewModel(() => NavigateToAsync("..")));
 
         services.AddSingleton<NutritionViewModel>(sp => new NutritionViewModel(
-            sp.GetRequiredService<IServiceScopeFactory>()));
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            sp.GetRequiredService<IReferenceDataPreparationService>()));
 
         services.AddSingleton<WorkoutViewModel>(sp => new WorkoutViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
-            route => NavigateToAsync(route)));
+            route => NavigateToAsync(route),
+            workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId)));
 
         services.AddTransient<WorkoutSessionViewModel>(sp => new WorkoutSessionViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
@@ -342,6 +372,7 @@ public static class MauiProgram
             sp.GetRequiredService<IServiceScopeFactory>(),
             () => NavigateToAsync("..")));
 
+        services.AddSingleton<IReferenceDataPreparationService, ReferenceDataPreparationService>();
         services.AddSingleton<IAppPreloadService, AppPreloadService>();
     }
 
@@ -357,7 +388,9 @@ public static class MauiProgram
         services.AddTransient<DailyCheckInPage>();
         services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<CyclePage, CycleViewModel>(sp, vm => new CyclePage(vm)));
         services.AddTransient<CyclePhaseDetailPage>();
-        services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<NutritionPage, NutritionViewModel>(sp, vm => new NutritionPage(vm)));
+        services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<NutritionPage, NutritionViewModel>(
+            sp,
+            vm => new NutritionPage(vm)));
         services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<WorkoutPage, WorkoutViewModel>(sp, vm => new WorkoutPage(vm)));
         services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<ProfilePage, ProfileViewModel>(sp, vm => new ProfilePage(vm)));
         services.AddTransient<ProfilePersonalInfoPage>();
@@ -380,13 +413,36 @@ public static class MauiProgram
 #endif
     }
 
+    private static HttpMessageHandler CreateFdcHttpHandler()
+    {
+        return new SocketsHttpHandler
+        {
+            SslOptions =
+            {
+                EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls13,
+                RemoteCertificateValidationCallback = FdcCertificatePinningPolicy.Validate
+            },
+            UseCookies = false
+        };
+    }
+
     private static Task NavigateToAsync(string route)
     {
         return MainThread.InvokeOnMainThreadAsync(async () =>
         {
             var shell = Shell.Current ?? throw new InvalidOperationException("Shell is not available.");
-            await shell.GoToAsync(route, false);
+            await shell.GoToAsync(RemoveQueryString(route), false);
         });
+    }
+
+    private static Task NavigateWithContextAsync<T>(
+        IServiceProvider services,
+        string route,
+        string key,
+        T value)
+    {
+        services.GetRequiredService<INavigationContextService>().Set(key, value);
+        return NavigateToAsync(route);
     }
 
     private static async Task PreloadAndNavigateToDashboardAsync(IServiceProvider services)
@@ -408,7 +464,13 @@ public static class MauiProgram
         {
             var shell = services.GetRequiredService<AppShell>();
             shell.MarkAuthenticationVerified();
-            await shell.GoToAsync(route, false);
+            await shell.GoToAsync(RemoveQueryString(route), false);
         });
+    }
+
+    private static string RemoveQueryString(string route)
+    {
+        var queryIndex = route.IndexOf('?', StringComparison.Ordinal);
+        return queryIndex < 0 ? route : route[..queryIndex];
     }
 }

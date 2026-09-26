@@ -30,6 +30,18 @@ public interface INutritionService
         CyclePhase phase,
         DateTime date,
         IReadOnlySet<string>? excludeConceptNames = null);
+    Task<DailyMealSuggestionPlan> GetSuggestedMealPlanAsync(
+        int userId,
+        BreakfastPreference breakfastPreference,
+        CyclePhase phase,
+        DateTime date);
+    Task<IReadOnlyList<SuggestedMeal>> GetSuggestedMealsForTargetAsync(
+        int userId,
+        MealNutritionTarget target,
+        BreakfastPreference breakfastPreference,
+        CyclePhase phase,
+        DateTime date,
+        IReadOnlySet<string>? excludeConceptNames = null);
     Task LogMealAsync(
         int userId,
         IReadOnlyCollection<MealIngredientInput> ingredients,

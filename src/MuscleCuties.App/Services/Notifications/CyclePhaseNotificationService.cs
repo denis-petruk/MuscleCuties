@@ -31,11 +31,11 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
         var prediction = await _cycleService.GetPredictionAsync(userId);
         var currentPhase = prediction.CurrentPhase;
         var lastPhaseKey = BuildLastPhaseKey(userId);
-        var previousPhaseValue = Preferences.Default.Get(lastPhaseKey, string.Empty);
+        var previousPhaseValue = await GetSecureMarkerAsync(lastPhaseKey) ?? string.Empty;
 
         if (!Enum.TryParse<CyclePhase>(previousPhaseValue, out var previousPhase))
         {
-            Preferences.Default.Set(lastPhaseKey, currentPhase.ToString());
+            await SetSecureMarkerAsync(lastPhaseKey, currentPhase.ToString());
             await ScheduleNextPhaseChangeReminderAsync(userId, prediction);
             return;
         }
@@ -49,9 +49,9 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
         var today = DateTime.Today;
         var dateKey = BuildLastNotificationDateKey(userId);
         var todayValue = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        if (Preferences.Default.Get(dateKey, string.Empty) == todayValue)
+        if (await GetSecureMarkerAsync(dateKey) == todayValue)
         {
-            Preferences.Default.Set(lastPhaseKey, currentPhase.ToString());
+            await SetSecureMarkerAsync(lastPhaseKey, currentPhase.ToString());
             await ScheduleNextPhaseChangeReminderAsync(userId, prediction);
             return;
         }
@@ -68,8 +68,8 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
         if (!notificationHandled)
             return;
 
-        Preferences.Default.Set(lastPhaseKey, currentPhase.ToString());
-        Preferences.Default.Set(dateKey, todayValue);
+        await SetSecureMarkerAsync(lastPhaseKey, currentPhase.ToString());
+        await SetSecureMarkerAsync(dateKey, todayValue);
 
         await ScheduleNextPhaseChangeReminderAsync(userId, prediction);
     }
@@ -138,6 +138,32 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
     private static string BuildLastNotificationDateKey(int userId)
     {
         return $"cycle.phase.notificationDate.{userId}";
+    }
+
+    private static async Task<string?> GetSecureMarkerAsync(string key)
+    {
+        try
+        {
+            return await SecureStorage.Default.GetAsync(key);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static async Task SetSecureMarkerAsync(string key, string value)
+    {
+        try
+        {
+            await SecureStorage.Default.SetAsync(key, value);
+        }
+        catch
+        {
+            // Notification markers are privacy-sensitive and optional. If secure
+            // storage is unavailable, skip persistence instead of falling back
+            // to unencrypted Preferences.
+        }
     }
 
     private static int BuildTodayNotificationId(int userId)

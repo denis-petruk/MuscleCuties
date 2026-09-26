@@ -73,6 +73,7 @@ public partial class NutritionViewModel
 
     private async Task LoadFoodSearchPageAsync(string query, int pageNumber, bool replaceResults, int version)
     {
+        await _referenceDataPreparation.EnsureNutritionReadyAsync();
         var items = await RunScopedAsync(async services =>
         {
             var foods = await services.GetRequiredService<INutritionService>()

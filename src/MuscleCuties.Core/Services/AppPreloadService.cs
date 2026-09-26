@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
-using MuscleCuties.Core.Data;
 using MuscleCuties.Core.ViewModels.Common;
 using MuscleCuties.Core.ViewModels.Cycle;
 using MuscleCuties.Core.ViewModels.Dashboard;
@@ -17,9 +15,7 @@ public sealed class AppPreloadService : IAppPreloadService
     private readonly WorkoutViewModel _workout;
     private readonly NutritionViewModel _nutrition;
     private readonly ProfileViewModel _profile;
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly object _preparationLock = new();
-    private Task? _databasePreparation;
+    private readonly IReferenceDataPreparationService _referenceDataPreparation;
 
     public DateTime LastLoadedDate { get; private set; } = DateTime.MinValue;
 
@@ -29,14 +25,14 @@ public sealed class AppPreloadService : IAppPreloadService
         WorkoutViewModel workout,
         NutritionViewModel nutrition,
         ProfileViewModel profile,
-        IServiceScopeFactory scopeFactory)
+        IReferenceDataPreparationService referenceDataPreparation)
     {
         _dashboard = dashboard;
         _cycle = cycle;
         _workout = workout;
         _nutrition = nutrition;
         _profile = profile;
-        _scopeFactory = scopeFactory;
+        _referenceDataPreparation = referenceDataPreparation;
     }
 
     public async Task PreloadAllAsync()
@@ -45,21 +41,13 @@ public sealed class AppPreloadService : IAppPreloadService
         await PreloadRemainingAsync();
     }
 
-    public Task PreloadDashboardAsync() => ExecuteAsync(_dashboard);
-
-    public Task PreloadCycleAsync() => ExecuteAsync(_cycle);
-
-    public Task PreloadNutritionAsync() => ExecuteAsync(_nutrition);
-
-    public Task PreloadProfileAsync() => ExecuteAsync(_profile);
-
-    public Task PreloadWorkoutAsync() => ExecuteAsync(_workout);
+    public Task PreloadDashboardAsync() => ExecuteAsync(_dashboard, requiresWorkoutReferenceData: true);
 
     public async Task PreloadRemainingAsync()
     {
         var results = await Task.WhenAll(
             ExecuteAsync(_cycle),
-            ExecuteAsync(_workout),
+            ExecuteAsync(_workout, requiresWorkoutReferenceData: true),
             ExecuteAsync(_nutrition),
             ExecuteAsync(_profile));
 
@@ -67,6 +55,11 @@ public sealed class AppPreloadService : IAppPreloadService
             LastLoadedDate = DateTime.Today;
         else
             LastLoadedDate = DateTime.MinValue;
+
+        // Food and template data is only needed when the user searches or asks
+        // for a suggestion. Start it after the page loads; those actions await
+        // the same preparation task if the user reaches them first.
+        _ = PrepareNutritionInBackgroundAsync();
     }
 
     public async Task RefreshAllAsync()
@@ -86,35 +79,26 @@ public sealed class AppPreloadService : IAppPreloadService
     }
 
     public void InvalidateDashboard() => _dashboard.Invalidate();
-    public void InvalidateNutrition() => _nutrition.Invalidate();
     public void InvalidateWorkout() => _workout.Invalidate();
 
-    private Task EnsureDatabaseReadyAsync()
-    {
-        lock (_preparationLock)
-        {
-            // Share preparation across startup/login/onboarding preloads. A
-            // failed attempt is retryable; no page queries run before it succeeds.
-            if (_databasePreparation is null || _databasePreparation.IsFaulted || _databasePreparation.IsCanceled)
-            {
-                _databasePreparation = DataLoadScheduler.RunAsync(async () =>
-                {
-                    using var scope = _scopeFactory.CreateScope();
-                    var database = scope.ServiceProvider.GetRequiredService<AppDatabase>();
-                    await database.InitializeStartupAsync();
-                    await database.SeedDeferredReferenceDataAsync();
-                });
-            }
-
-            return _databasePreparation;
-        }
-    }
-
-    private async Task<bool> ExecuteAsync(IPageLoadAware page)
+    private async Task PrepareNutritionInBackgroundAsync()
     {
         try
         {
-            await EnsureDatabaseReadyAsync();
+            await _referenceDataPreparation.EnsureNutritionReadyAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Preload] Nutrition preparation failed: {ex}");
+        }
+    }
+
+    private async Task<bool> ExecuteAsync(IPageLoadAware page, bool requiresWorkoutReferenceData = false)
+    {
+        try
+        {
+            if (requiresWorkoutReferenceData)
+                await _referenceDataPreparation.EnsureWorkoutReadyAsync();
             await page.LoadDataCommand.ExecuteAsync(null);
             return !page.IsLoadError;
         }

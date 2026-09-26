@@ -1,3 +1,4 @@
+using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 
 namespace MuscleCuties.Core.Services.Nutrition;
@@ -30,7 +31,8 @@ public partial class FoodSyncService
     {
         var details = new List<FdcFoodDetail>();
         foreach (var batch in fdcIds.Distinct().Chunk(DetailBatchSize))
-            details.AddRange(await _fdcApiClient.GetFoodsAsync(batch, cancellationToken));
+            details.AddRange(await DatabaseOperationGate.AwaitExternalAsync(
+                () => _fdcApiClient.GetFoodsAsync(batch, cancellationToken)));
 
         return details;
     }

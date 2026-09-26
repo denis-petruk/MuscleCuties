@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Models.Entities.Nutrition;
+using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Enums.Users;
@@ -22,17 +23,20 @@ public sealed class SuggestedMealService : ISuggestedMealService
     private readonly INutritionRepository _nutritionRepository;
     private readonly IFoodSyncService _foodSyncService;
     private readonly IUserRepository _userRepository;
+    private readonly IFallbackMealProvider _fallbackMealProvider;
 
     public SuggestedMealService(
         INutritionPlanner nutritionPlanner,
         INutritionRepository nutritionRepository,
         IFoodSyncService foodSyncService,
-        IUserRepository userRepository)
+        IUserRepository userRepository,
+        IFallbackMealProvider fallbackMealProvider)
     {
         _nutritionPlanner = nutritionPlanner;
         _nutritionRepository = nutritionRepository;
         _foodSyncService = foodSyncService;
         _userRepository = userRepository;
+        _fallbackMealProvider = fallbackMealProvider;
     }
 
     public async Task<IReadOnlyList<SuggestedMeal>> SuggestAsync(
@@ -42,14 +46,15 @@ public sealed class SuggestedMealService : ISuggestedMealService
         CyclePhase phase,
         DateTime date,
         float consumedCalories,
-        IReadOnlySet<string>? excludeConceptNames = null)
+        IReadOnlySet<string>? excludeConceptNames = null,
+        MealNutritionTarget? targetOverride = null)
     {
         var profile = await _userRepository.GetProfileAsync(userId);
         var plan = profile is not null
             ? _nutritionPlanner.CreateDailyPlan(profile, phase, date, breakfastPreference)
             : _nutritionPlanner.CreateFallbackPlan(phase, breakfastPreference);
 
-        var mealTarget = plan.Meals.FirstOrDefault(m => m.MealType == mealType);
+        var mealTarget = targetOverride ?? plan.Meals.FirstOrDefault(m => m.MealType == mealType);
         if (mealTarget is null)
             return [];
 
@@ -82,12 +87,26 @@ public sealed class SuggestedMealService : ISuggestedMealService
             dietaryTags);
         AddSuggestions(results, concepts, apiFoods, clampedTarget, phase, dietaryTags, daysSinceUsed, goal);
 
+        IReadOnlyList<FoodItem> localFoods = [];
         if (results.Count < MaxSuggestions)
         {
-            var localFoods = PreFilterByDietary(await _nutritionRepository.GetAllAsync(), dietaryTags);
+            localFoods = PreFilterByDietary(await _nutritionRepository.GetAllAsync(), dietaryTags);
             var combinedFoods = apiFoods
                 .Concat(localFoods)
-                .DistinctBy(food => food.Id)
+                .DistinctBy(GetFoodIdentityKey)
+                .ToList();
+            AddSuggestions(results, concepts, combinedFoods, clampedTarget, phase, dietaryTags, daysSinceUsed, goal);
+        }
+
+        if (results.Count < MaxSuggestions)
+        {
+            var fallbackFoods = PreFilterByDietary(
+                await LoadFallbackFoodsAsync(mealType, breakfastPreference, dietaryTags),
+                dietaryTags);
+            var combinedFoods = apiFoods
+                .Concat(localFoods)
+                .Concat(fallbackFoods)
+                .DistinctBy(GetFoodIdentityKey)
                 .ToList();
             AddSuggestions(results, concepts, combinedFoods, clampedTarget, phase, dietaryTags, daysSinceUsed, goal);
         }
@@ -96,6 +115,46 @@ public sealed class SuggestedMealService : ISuggestedMealService
             .OrderByDescending(s => s.Score)
             .Take(MaxSuggestions)
             .ToList();
+    }
+
+    public async Task<IReadOnlyDictionary<MealType, IReadOnlyList<SuggestedMeal>>> SuggestPlanAsync(
+        int userId,
+        IReadOnlyList<MealNutritionTarget> targets,
+        BreakfastPreference breakfastPreference,
+        CyclePhase phase,
+        DateTime date,
+        UserProfile? profile,
+        IReadOnlySet<string>? excludeConceptNames = null)
+    {
+        if (targets.Count == 0)
+            return new Dictionary<MealType, IReadOnlyList<SuggestedMeal>>();
+
+        var dietaryTags = ParseDietaryTags(profile?.DietaryTags);
+        var goal = profile?.Goal ?? UserGoal.MaintainHealth;
+        var conceptsByType = targets.ToDictionary(
+            target => target.MealType,
+            target => Shuffle(GetConcepts(target.MealType, breakfastPreference))
+                .Where(concept => excludeConceptNames is null || !excludeConceptNames.Contains(concept.Name))
+                .Where(concept => !concept.IncompatibleDietaryTags.Overlaps(dietaryTags))
+                .ToList());
+        var allConcepts = conceptsByType.Values.SelectMany(concepts => concepts).ToList();
+        var daysSinceUsed = await BuildUsageMapAsync(userId, date);
+        var results = targets.ToDictionary(target => target.MealType, _ => new List<SuggestedMeal>());
+
+        var apiFoods = PreFilterByDietary(await LoadApiFoodsAsync(allConcepts, dietaryTags), dietaryTags);
+        AddPlanSuggestions(results, targets, conceptsByType, apiFoods, phase, dietaryTags, daysSinceUsed, goal);
+
+        IReadOnlyList<FoodItem> localFoods = [];
+        if (results.Values.Any(meals => meals.Count < MaxSuggestions))
+        {
+            localFoods = PreFilterByDietary(await _nutritionRepository.GetAllAsync(), dietaryTags);
+            var combinedFoods = apiFoods.Concat(localFoods).DistinctBy(GetFoodIdentityKey).ToList();
+            AddPlanSuggestions(results, targets, conceptsByType, combinedFoods, phase, dietaryTags, daysSinceUsed, goal);
+        }
+
+        return results.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyList<SuggestedMeal>)pair.Value.OrderByDescending(meal => meal.Score).Take(MaxSuggestions).ToList());
     }
 
     private async Task<IReadOnlyList<FoodItem>> LoadApiFoodsAsync(
@@ -125,11 +184,89 @@ public sealed class SuggestedMealService : ISuggestedMealService
             .ToList();
     }
 
+    private async Task<IReadOnlyList<FoodItem>> LoadFallbackFoodsAsync(
+        MealType mealType,
+        BreakfastPreference breakfastPreference,
+        IReadOnlySet<DietaryTag> dietaryTags)
+    {
+        var queries = _fallbackMealProvider
+            .GetMealsForType(mealType, breakfastPreference, dietaryTags)
+            .SelectMany(meal => meal.IngredientNames)
+            .Where(term => IsSearchTermCompatible(term, dietaryTags))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(IsProteinAnchorSearchTerm)
+            .ThenBy(IsCarbSearchTerm)
+            .Take(6)
+            .ToList();
+
+        if (queries.Count == 0)
+            return [];
+
+        var foods = new List<FoodItem>();
+        using var timeout = new CancellationTokenSource(ApiSuggestionTimeout);
+        foreach (var query in queries)
+        {
+            try
+            {
+                foods.AddRange(await _foodSyncService.SearchAsync(
+                    query,
+                    ApiSearchPageSize,
+                    cancellationToken: timeout.Token));
+            }
+            catch (Exception exception) when (exception is InvalidOperationException or HttpRequestException or TaskCanceledException)
+            {
+                break;
+            }
+        }
+
+        return foods
+            .Where(food => food.FdcId.HasValue)
+            .DistinctBy(food => food.FdcId)
+            .ToList();
+    }
+
+    private static void AddPlanSuggestions(
+        IDictionary<MealType, List<SuggestedMeal>> results,
+        IReadOnlyList<MealNutritionTarget> targets,
+        IReadOnlyDictionary<MealType, List<MealConcept>> conceptsByType,
+        IReadOnlyList<FoodItem> foods,
+        CyclePhase phase,
+        IReadOnlySet<DietaryTag> dietaryTags,
+        IReadOnlyDictionary<int, int> daysSinceUsed,
+        UserGoal goal)
+    {
+        foreach (var target in targets)
+        {
+            var meals = results[target.MealType];
+            if (meals.Count >= MaxSuggestions)
+                continue;
+
+            AddSuggestions(
+                meals,
+                conceptsByType[target.MealType],
+                foods,
+                target,
+                phase,
+                dietaryTags,
+                daysSinceUsed,
+                goal);
+        }
+    }
+
+    private static IReadOnlyList<MealConcept> GetConcepts(
+        MealType mealType,
+        BreakfastPreference breakfastPreference)
+    {
+        return mealType is MealType.Breakfast && breakfastPreference is BreakfastPreference.Sweet
+            ? SweetBreakfastCatalog.GetConcepts()
+            : SavouryMealCatalog.GetConcepts(mealType);
+    }
+
     private static IReadOnlyList<string> BuildApiSearchQueries(
         IReadOnlyList<MealConcept> concepts,
         IReadOnlySet<DietaryTag> dietaryTags)
     {
-        var queries = new List<string>(4);
+        var queries = new List<string>(8);
         var slotOrder = new[]
         {
             MealConceptSlotType.ProteinBase,
@@ -140,24 +277,70 @@ public sealed class SuggestedMealService : ISuggestedMealService
 
         foreach (var slotType in slotOrder)
         {
-            var query = concepts
+            var terms = concepts
                 .SelectMany(concept => concept.Slots)
                 .Where(slot => slot.SlotType == slotType)
                 .SelectMany(slot => slot.IngredientEntries)
                 .SelectMany(entry => entry.PreferredFoodTerms)
-                .FirstOrDefault(term => IsSearchTermCompatible(term, dietaryTags));
+                .Where(term => IsSearchTermCompatible(term, dietaryTags))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(2);
 
-            if (!string.IsNullOrWhiteSpace(query) && !queries.Contains(query, StringComparer.OrdinalIgnoreCase))
-                queries.Add(query);
+            foreach (var term in terms)
+            {
+                if (queries.Count >= 6)
+                    break;
+
+                if (!queries.Contains(term, StringComparer.OrdinalIgnoreCase))
+                    queries.Add(term);
+            }
         }
+
+        if (HasRestrictiveDietarySetting(dietaryTags))
+            AddDecoyIngredientQueries(queries, dietaryTags);
 
         return queries;
     }
 
+    private static bool HasRestrictiveDietarySetting(IReadOnlySet<DietaryTag> dietaryTags)
+    {
+        return dietaryTags.Any(tag => tag is
+            DietaryTag.Vegan or
+            DietaryTag.Vegetarian or
+            DietaryTag.GlutenFree or
+            DietaryTag.LactoseFree);
+    }
+
+    private static void AddDecoyIngredientQueries(
+        ICollection<string> queries,
+        IReadOnlySet<DietaryTag> dietaryTags)
+    {
+        var decoys = new[]
+        {
+            "tofu",
+            "tempeh",
+            "edamame",
+            "pea protein",
+            "brown rice",
+            "spinach",
+            "sweet potato"
+        };
+
+        foreach (var decoy in decoys.Where(term => IsSearchTermCompatible(term, dietaryTags)))
+        {
+            if (queries.Count >= 6)
+                break;
+
+            if (!queries.Contains(decoy, StringComparer.OrdinalIgnoreCase))
+                queries.Add(decoy);
+        }
+    }
+
     private static bool IsSearchTermCompatible(string term, IReadOnlySet<DietaryTag> dietaryTags)
     {
-        if (dietaryTags.Contains(DietaryTag.Vegan) && ContainsAny(
-                term, "beef", "chicken", "egg", "fish", "ham", "honey", "salmon", "tuna", "turkey", "yogurt"))
+        if (dietaryTags.Contains(DietaryTag.Vegan) &&
+            (ContainsAny(term, "beef", "chicken", "egg", "fish", "ham", "honey", "salmon", "tuna", "turkey") ||
+             (term.Contains("yogurt", StringComparison.OrdinalIgnoreCase) && !IsPlantYogurtTerm(term))))
             return false;
 
         if (dietaryTags.Contains(DietaryTag.Vegetarian) && ContainsAny(
@@ -176,6 +359,10 @@ public sealed class SuggestedMealService : ISuggestedMealService
     {
         return terms.Any(term => value.Contains(term, StringComparison.OrdinalIgnoreCase));
     }
+
+    private static bool IsPlantYogurtTerm(string term)
+        => term.Contains("yogurt", StringComparison.OrdinalIgnoreCase) &&
+           ContainsAny(term, "soy", "soya", "coconut", "almond", "oat", "cashew", "plant-based", "plant based");
 
     private static void AddSuggestions(
         ICollection<SuggestedMeal> results,
@@ -270,7 +457,7 @@ public sealed class SuggestedMealService : ISuggestedMealService
 
         foreach (var entry in entries)
         {
-            var match = FindBestMatch(compatibleFoods, entry.PreferredFoodTerms, usedIds);
+            var match = FindBestMatch(compatibleFoods, entry.PreferredFoodTerms, slotType, usedIds);
 
             if (match is null && entry.Required)
                 match = FindByClassifier(compatibleFoods, slotType, usedIds);
@@ -292,13 +479,15 @@ public sealed class SuggestedMealService : ISuggestedMealService
     private static FoodItem? FindBestMatch(
         IReadOnlyList<FoodItem> compatibleFoods,
         IReadOnlyList<string> preferredTerms,
+        MealConceptSlotType slotType,
         IReadOnlySet<int> excludeIds)
     {
         foreach (var term in preferredTerms)
         {
             var candidates = compatibleFoods
                 .Where(f => !excludeIds.Contains(f.Id) &&
-                            f.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
+                            f.Name.Contains(term, StringComparison.OrdinalIgnoreCase) &&
+                            IsFoodCompatibleWithSlot(f, slotType))
                 .ToList();
 
             if (candidates.Count > 0)
@@ -313,23 +502,43 @@ public sealed class SuggestedMealService : ISuggestedMealService
         MealConceptSlotType slotType,
         IReadOnlySet<int> excludeIds)
     {
-        var targetType = SlotToComponentType(slotType);
-
         return compatibleFoods.FirstOrDefault(f =>
             !excludeIds.Contains(f.Id) &&
-            FoodComponentClassifier.Classify(f) == targetType);
+            IsFoodCompatibleWithSlot(f, slotType));
     }
 
-    private static ComponentType SlotToComponentType(MealConceptSlotType slotType)
+    private static bool IsFoodCompatibleWithSlot(FoodItem food, MealConceptSlotType slotType)
     {
+        var componentType = FoodComponentClassifier.Classify(food);
         return slotType switch
         {
-            MealConceptSlotType.CarbBase => ComponentType.Carb,
-            MealConceptSlotType.ProteinBase => ComponentType.Protein,
-            MealConceptSlotType.VitaminBase => ComponentType.Vegetable,
-            MealConceptSlotType.Sauce => ComponentType.Sauce,
-            _ => ComponentType.Mixed
+            MealConceptSlotType.ProteinBase => FoodComponentClassifier.IsProteinAnchor(food),
+            MealConceptSlotType.CarbBase => FoodComponentClassifier.IsCarbohydrateBase(food),
+            MealConceptSlotType.VitaminBase => componentType == ComponentType.Vegetable,
+            MealConceptSlotType.Sauce => componentType is ComponentType.Sauce or ComponentType.Mixed,
+            _ => true
         };
+    }
+
+    private static string GetFoodIdentityKey(FoodItem food)
+    {
+        if (food.FdcId.HasValue)
+            return $"fdc:{food.FdcId.Value}";
+
+        if (food.Id > 0)
+            return $"id:{food.Id}";
+
+        return $"name:{food.Name}";
+    }
+
+    private static bool IsProteinAnchorSearchTerm(string term)
+    {
+        return ContainsAny(term, "tofu", "tempeh", "edamame", "protein", "seitan", "egg", "chicken", "turkey", "fish", "salmon", "tuna", "yogurt", "lentil", "chickpea", "bean");
+    }
+
+    private static bool IsCarbSearchTerm(string term)
+    {
+        return ContainsAny(term, "banana", "bread", "corn", "oat", "pasta", "quinoa", "rice", "sweet potato", "tortilla");
     }
 
     private static List<SuggestedMeal> BuildConceptSuggestions(

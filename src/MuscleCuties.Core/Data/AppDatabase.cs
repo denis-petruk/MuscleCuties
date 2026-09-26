@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Models.Entities.Cycle;
 using MuscleCuties.Core.Models.Entities.Nutrition;
@@ -85,7 +87,28 @@ public partial class AppDatabase : DbContext
         {
             // EnsureCreated only creates a new database; existing databases need
             // explicit upgrades before any EF query or reference-data backfill.
-            await Database.EnsureCreatedAsync();
+            try
+            {
+                await ConfigureJournalModeAsync();
+                await Database.EnsureCreatedAsync();
+            }
+            catch (SqliteException ex) when (ex.SqliteErrorCode == 26)
+            {
+                // Database file is unreadable (corrupt or was not created with
+                // the current encryption key). Delete it and create a fresh one.
+                Trace.WriteLine($"[Database] Replacing unreadable database: {ex.Message}");
+                var dbPath = Database.GetDbConnection().DataSource;
+                await Database.CloseConnectionAsync();
+                foreach (var suffix in new[] { "", "-wal", "-shm" })
+                {
+                    try { File.Delete(dbPath + suffix); }
+                    catch { /* best-effort cleanup */ }
+                }
+
+                await ConfigureJournalModeAsync();
+                await Database.EnsureCreatedAsync();
+            }
+
             await EnsureMissingTablesAsync();
             await EnsureMissingColumnsAsync();
             await MigrateInjuryLogSchemaAsync();
@@ -95,6 +118,32 @@ public partial class AppDatabase : DbContext
         finally
         {
             InitializationGate.Release();
+        }
+    }
+
+    private async Task ConfigureJournalModeAsync()
+    {
+        var conn = Database.GetDbConnection();
+        var wasOpen = conn.State == System.Data.ConnectionState.Open;
+        if (!wasOpen)
+            await conn.OpenAsync();
+
+        try
+        {
+            await using (var journal = conn.CreateCommand())
+            {
+                journal.CommandText = "PRAGMA journal_mode=DELETE";
+                await journal.ExecuteScalarAsync();
+            }
+
+            await using var synchronous = conn.CreateCommand();
+            synchronous.CommandText = "PRAGMA synchronous=FULL";
+            await synchronous.ExecuteNonQueryAsync();
+        }
+        finally
+        {
+            if (!wasOpen)
+                await conn.CloseAsync();
         }
     }
 
@@ -170,30 +219,136 @@ public partial class AppDatabase : DbContext
                     """),
                 ("UserProfiles", "PhaseBaselinesJson", """
                     ALTER TABLE "UserProfiles" ADD COLUMN "PhaseBaselinesJson" TEXT NOT NULL DEFAULT '';
+                    """),
+                ("FoodItems", "Fiber", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "Fiber" REAL NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "Iron", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "Iron" REAL NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "VitaminB12", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "VitaminB12" REAL NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "VitaminC", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "VitaminC" REAL NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "VitaminD", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "VitaminD" REAL NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "VitaminA", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "VitaminA" REAL NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "VitaminB6", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "VitaminB6" REAL NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "Folate", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "Folate" REAL NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "Calcium", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "Calcium" REAL NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "Magnesium", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "Magnesium" REAL NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "Zinc", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "Zinc" REAL NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "Potassium", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "Potassium" REAL NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "IsCustom", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "IsCustom" INTEGER NOT NULL DEFAULT 0;
+                    """),
+                ("FoodItems", "FdcId", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "FdcId" INTEGER NULL;
+                    """),
+                ("FoodItems", "DataType", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "DataType" TEXT NULL;
+                    """),
+                ("FoodItems", "BrandOwner", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "BrandOwner" TEXT NULL;
+                    """),
+                ("FoodItems", "BrandName", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "BrandName" TEXT NULL;
+                    """),
+                ("FoodItems", "GtinUpc", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "GtinUpc" TEXT NULL;
+                    """),
+                ("FoodItems", "Ingredients", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "Ingredients" TEXT NULL;
+                    """),
+                ("FoodItems", "ServingSize", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "ServingSize" REAL NULL;
+                    """),
+                ("FoodItems", "ServingSizeUnit", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "ServingSizeUnit" TEXT NULL;
+                    """),
+                ("FoodItems", "ServingOptionsJson", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "ServingOptionsJson" TEXT NULL;
+                    """),
+                ("FoodItems", "LastSyncedAt", """
+                    ALTER TABLE "FoodItems" ADD COLUMN "LastSyncedAt" TEXT NULL;
                     """)
             };
 
             await using var tx = await conn.BeginTransactionAsync();
+            var columnsByTable = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var table in migrations.Select(migration => migration.Table).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                await using var schema = conn.CreateCommand();
+                schema.Transaction = tx;
+                schema.CommandText = $"PRAGMA table_info(\"{table}\")";
+                await using var reader = await schema.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                    columns.Add(reader.GetString(1));
+
+                columnsByTable.Add(table, columns);
+            }
+
             foreach (var (table, column, sql) in migrations)
             {
-                await using var cmd = conn.CreateCommand();
-                cmd.Transaction = tx;
-                cmd.CommandText = $"PRAGMA table_info(\"{table}\")";
-                var exists = false;
-                await using (var reader = await cmd.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        if (string.Equals(reader.GetString(1), column, StringComparison.OrdinalIgnoreCase))
-                            exists = true;
-                    }
-                }
-
-                if (exists)
+                if (columnsByTable[table].Contains(column))
                     continue;
 
+                await using var cmd = conn.CreateCommand();
+                cmd.Transaction = tx;
                 cmd.CommandText = sql;
                 await cmd.ExecuteNonQueryAsync();
+                columnsByTable[table].Add(column);
+            }
+
+            await using (var existingFdcIndex = conn.CreateCommand())
+            {
+                existingFdcIndex.Transaction = tx;
+                existingFdcIndex.CommandText = """
+                    SELECT 1 FROM sqlite_master
+                    WHERE type = 'index' AND name = 'IX_FoodItems_FdcId'
+                    LIMIT 1;
+                    """;
+                if (await existingFdcIndex.ExecuteScalarAsync() is null)
+                {
+                    await using var duplicateFdcIds = conn.CreateCommand();
+                    duplicateFdcIds.Transaction = tx;
+                    duplicateFdcIds.CommandText = """
+                        SELECT "FdcId"
+                        FROM "FoodItems"
+                        WHERE "FdcId" IS NOT NULL
+                        GROUP BY "FdcId"
+                        HAVING COUNT(*) > 1
+                        LIMIT 1;
+                        """;
+                    if (await duplicateFdcIds.ExecuteScalarAsync() is null)
+                    {
+                        await using var fdcIndex = conn.CreateCommand();
+                        fdcIndex.Transaction = tx;
+                        fdcIndex.CommandText = """
+                            CREATE UNIQUE INDEX IF NOT EXISTS "IX_FoodItems_FdcId"
+                            ON "FoodItems" ("FdcId");
+                            """;
+                        await fdcIndex.ExecuteNonQueryAsync();
+                    }
+                }
             }
 
             await tx.CommitAsync();
@@ -347,15 +502,31 @@ public partial class AppDatabase : DbContext
 
     public async Task SeedDeferredReferenceDataAsync()
     {
+        await SeedWorkoutReferenceDataAsync();
+        await SeedNutritionReferenceDataAsync();
+    }
+
+    public async Task SeedNutritionReferenceDataAsync()
+    {
         await SeedGate.WaitAsync();
         try
         {
-            if (await WorkoutMuscleGroups.AnyAsync())
-                return;
-
             await SeedStarterFoodItemsAsync();
             await SeedStarterMealTemplatesAsync();
-            await SeedWorkoutPlanningDataAsync_Unguarded();
+        }
+        finally
+        {
+            SeedGate.Release();
+        }
+    }
+
+    public async Task SeedWorkoutReferenceDataAsync()
+    {
+        await SeedGate.WaitAsync();
+        try
+        {
+            if (!await WorkoutMuscleGroups.AnyAsync())
+                await SeedWorkoutPlanningDataAsync_Unguarded();
         }
         finally
         {
@@ -388,6 +559,7 @@ public partial class AppDatabase : DbContext
 #if DEBUG
         ChangeTracker.Clear();
         await Database.EnsureDeletedAsync();
+        await ConfigureJournalModeAsync();
         await Database.EnsureCreatedAsync();
         await SeedReferenceDataAsync();
         ChangeTracker.Clear();
