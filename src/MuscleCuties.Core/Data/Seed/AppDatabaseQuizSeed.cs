@@ -20,7 +20,14 @@ public partial class AppDatabase
             .ToHashSet();
         var existingQuestions = await QuizQuestions
             .Where(question => seedQuestionTypes.Contains(question.QuestionType))
+            .Include(question => question.Answers)
             .ToListAsync();
+
+        // A warm launch must not rewrite every quiz row. Under SQLite's FULL
+        // durability setting those otherwise harmless updates force several
+        // encrypted commits before the first page can load.
+        if (IsQuizSeedCurrent(seedQuestions, existingQuestions))
+            return;
 
         if (existingQuestions.Count > 0)
         {
@@ -45,6 +52,38 @@ public partial class AppDatabase
         }
 
         await RefreshExistingQuizAnswersAsync(seedQuestions);
+    }
+
+    private static bool IsQuizSeedCurrent(
+        IReadOnlyCollection<QuizQuestion> seedQuestions,
+        IReadOnlyCollection<QuizQuestion> existingQuestions)
+    {
+        if (existingQuestions.Count != seedQuestions.Count)
+            return false;
+
+        foreach (var seed in seedQuestions)
+        {
+            var current = existingQuestions.FirstOrDefault(question => question.QuestionType == seed.QuestionType);
+            if (current is null || current.Question != seed.Question || current.OrderIndex != seed.OrderIndex)
+                return false;
+
+            foreach (var seedAnswer in seed.Answers)
+            {
+                if (!current.Answers.Any(answer => answer.MappedValue == seedAnswer.MappedValue &&
+                                                   answer.Text == seedAnswer.Text &&
+                                                   answer.OrderIndex == seedAnswer.OrderIndex))
+                    return false;
+            }
+
+            // Old answers remain stored for historical responses but must be
+            // outside the active answer order, as the normal seed path does.
+            if (current.Answers.Any(answer =>
+                    seed.Answers.All(seedAnswer => seedAnswer.MappedValue != answer.MappedValue) &&
+                    answer.OrderIndex < ObsoleteQuizAnswerOrderIndex))
+                return false;
+        }
+
+        return true;
     }
 
     private async Task RefreshExistingQuizAnswersAsync(IReadOnlyCollection<QuizQuestion> seedQuestions)

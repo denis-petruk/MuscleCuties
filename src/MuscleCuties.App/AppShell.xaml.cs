@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using MuscleCuties.App.Pages.Auth;
 using MuscleCuties.App.Pages.Cycle;
 using MuscleCuties.App.Pages.Dashboard;
+using MuscleCuties.App.Pages.Nutrition;
 using MuscleCuties.App.Pages.Onboarding;
 using MuscleCuties.App.Pages.Profile;
 using MuscleCuties.App.Pages.Workout;
@@ -177,7 +178,7 @@ public partial class AppShell : Shell
         {
             using var scope = _services.CreateScope();
             var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var userId = await Task.Run(authService.GetCurrentUserIdAsync);
+            var userId = await authService.GetCurrentUserIdAsync();
             if (userId <= 0)
             {
                 args.Cancel();
@@ -186,10 +187,10 @@ public partial class AppShell : Shell
             else
             {
                 var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-                var user = await Task.Run(() => userRepository.GetByIdAsync(userId));
+                var user = await userRepository.GetByIdAsync(userId);
                 if (user is null)
                 {
-                    await Task.Run(authService.LogoutAsync);
+                    await authService.LogoutAsync();
                     args.Cancel();
                     redirectRoute = "//LoginPage";
                 }

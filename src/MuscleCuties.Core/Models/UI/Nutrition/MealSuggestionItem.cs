@@ -113,7 +113,7 @@ public class MealSuggestionItem
         {
             "Berry Oat Bowl" => "BowlSalad24",
             "Yogurt Parfait" => "FoodCake24",
-            "PB Banana Oats" => "BowlChopsticks24",
+            "Banana Protein Oats" => "BowlChopsticks24",
             "Shakshuka" => "FoodEgg24",
             "Avocado Toast" => "FoodToast24",
             "Breakfast Taco" => "FoodPizza24",
@@ -302,4 +302,58 @@ public class MealSuggestionComponentItem
     public string PortionText => $"{Grams:N0}g";
     public string CaloriesText => $"{MacroNutrients.FromPer100g(Calories, Protein, Carbs, Fats, Grams).Calories:N0} kcal";
     public string DetailText => $"{Grams:N0}g · {MacroNutrients.FromPer100g(Calories, Protein, Carbs, Fats, Grams).ToNutritionText()}";
+}
+
+public sealed record DayMealPlanItem(
+    MealType MealType,
+    MealNutritionTarget Target,
+    float DailyCaloriesTarget,
+    bool IsAlreadyLogged,
+    bool IsRefreshing,
+    MealSuggestionItem? Suggestion,
+    string ErrorMessage = "")
+{
+    public string MealTypeLabel => MealType switch
+    {
+        MealType.Breakfast => "Breakfast",
+        MealType.Lunch => "Lunch",
+        MealType.Dinner => "Dinner",
+        MealType.Snack => "Snack",
+        _ => MealType.ToString()
+    };
+
+    public string MealTypeIconPathData => MealType switch
+    {
+        MealType.Breakfast => "M17 18a5 5 0 0 0 0-10H5a5 5 0 0 0 0 10zM2 21h20M12 3v2",
+        MealType.Lunch => "M12 2a8.5 8.5 0 0 1 8.5 8.5c0 3.7-2.4 6.8-5.7 8H9.2c-3.3-1.2-5.7-4.3-5.7-8A8.5 8.5 0 0 1 12 2zM12 2v4M4.93 10h14.14",
+        MealType.Dinner => "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
+        MealType.Snack => "M12 2a10 10 0 0 0-6.88 2.77A4 4 0 0 1 8 8a4 4 0 0 1-3.54 3.97A10 10 0 1 0 12 2z",
+        _ => "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"
+    };
+
+    public string TargetSummaryText =>
+        $"{Target.Calories:N0} kcal · {TargetSharePercent}% of daily target";
+
+    public int TargetSharePercent => !float.IsFinite(DailyCaloriesTarget) || DailyCaloriesTarget <= 0f || !float.IsFinite(Target.Calories)
+        ? 0
+        : Math.Clamp((int)MathF.Round(Target.Calories / DailyCaloriesTarget * 100f), 0, 100);
+
+    public string MealTitle => Suggestion?.ConceptName ??
+        (IsAlreadyLogged ? "Already logged" : Target.Calories < 50f ? "Daily target reached" : "No suitable meal found");
+
+    public string MealSummaryText => IsAlreadyLogged
+        ? "This meal is already logged today."
+        : IsRefreshing
+            ? "Finding another meal idea"
+            : Target.Calories < 50f
+                ? "No calories remain for another planned meal today."
+                : Suggestion?.ComponentSummary ??
+                  (string.IsNullOrWhiteSpace(ErrorMessage)
+                      ? "No meal matched the available foods. Refresh to retry."
+                      : ErrorMessage);
+
+    public string MacrosText => Suggestion?.MacrosText ?? string.Empty;
+    public bool HasSuggestion => Suggestion is not null;
+    public bool CanUseSuggestion => !IsAlreadyLogged && Suggestion is not null;
+    public bool CanRefresh => !IsAlreadyLogged && !IsRefreshing && Target.Calories >= 50f;
 }

@@ -45,6 +45,16 @@ public class NutritionService : INutritionService
         BreakfastPreference breakfastPreference = BreakfastPreference.Savoury)
     {
         var profile = await _userRepository.GetProfileAsync(userId);
+        return await CreateDailyPlanAsync(userId, profile, phase, date, breakfastPreference);
+    }
+
+    private async Task<NutritionPlan> CreateDailyPlanAsync(
+        int userId,
+        UserProfile? profile,
+        CyclePhase phase,
+        DateTime date,
+        BreakfastPreference breakfastPreference)
+    {
         if (profile is null)
             return _nutritionPlanner.CreateFallbackPlan(phase, breakfastPreference);
 
@@ -170,6 +180,98 @@ public class NutritionService : INutritionService
             userId, mealType, breakfastPreference, phase, date, consumed.Calories, excludeConceptNames);
     }
 
+    public async Task<DailyMealSuggestionPlan> GetSuggestedMealPlanAsync(
+        int userId,
+        BreakfastPreference breakfastPreference,
+        CyclePhase phase,
+        DateTime date)
+    {
+        var profile = await _userRepository.GetProfileAsync(userId);
+        var plan = await CreateDailyPlanAsync(userId, profile, phase, date, breakfastPreference);
+        var loggedMeals = await _nutritionRepository.GetLoggedMealsByDateAsync(userId, date);
+        var consumed = MacroNutrients.SumMealEntries(loggedMeals.SelectMany(meal => meal.Entries));
+        var dailyTargetCalories = SafeNonNegative(plan.Calories);
+        var remainingCalories = SafeNonNegative(dailyTargetCalories - SafeNonNegative(consumed.Calories));
+        var loggedTypes = loggedMeals.Select(meal => meal.MealType).ToHashSet();
+        var remainingTargets = plan.Meals
+            .Where(target => !loggedTypes.Contains(target.MealType))
+            .Sum(target => SafeNonNegative(target.Calories));
+        var targetScale = remainingTargets > 0f
+            ? Math.Clamp(remainingCalories / remainingTargets, 0f, 1f)
+            : 0f;
+        if (!float.IsFinite(targetScale))
+            targetScale = 0f;
+        var adjustedTargets = plan.Meals
+            .Where(target => !loggedTypes.Contains(target.MealType))
+            .Select(target => ScaleMealTarget(target, targetScale))
+            .Where(target => target.Calories >= 50f && remainingCalories >= 50f)
+            .ToList();
+        var suggestionsByType = _suggestedMealService is null || adjustedTargets.Count == 0
+            ? new Dictionary<MealType, IReadOnlyList<SuggestedMeal>>()
+            : await _suggestedMealService.SuggestPlanAsync(
+                userId,
+                adjustedTargets,
+                breakfastPreference,
+                phase,
+                date,
+                profile);
+        var meals = new List<DailyMealSuggestion>(plan.Meals.Count);
+
+        foreach (var target in plan.Meals)
+        {
+            var isAlreadyLogged = loggedTypes.Contains(target.MealType);
+            var adjustedTarget = ScaleMealTarget(target, isAlreadyLogged ? 1f : targetScale);
+            var suggestion = !isAlreadyLogged && suggestionsByType.TryGetValue(target.MealType, out var suggestions)
+                ? suggestions.FirstOrDefault()
+                : null;
+
+            meals.Add(new DailyMealSuggestion(
+                target.MealType,
+                adjustedTarget,
+                isAlreadyLogged,
+                suggestion));
+        }
+
+        return new DailyMealSuggestionPlan(dailyTargetCalories, remainingCalories, meals);
+    }
+
+    public async Task<IReadOnlyList<SuggestedMeal>> GetSuggestedMealsForTargetAsync(
+        int userId,
+        MealNutritionTarget target,
+        BreakfastPreference breakfastPreference,
+        CyclePhase phase,
+        DateTime date,
+        IReadOnlySet<string>? excludeConceptNames = null)
+    {
+        if (_suggestedMealService is null || target.Calories < 50f)
+            return [];
+
+        return await _suggestedMealService.SuggestAsync(
+            userId,
+            target.MealType,
+            breakfastPreference,
+            phase,
+            date,
+            consumedCalories: 0f,
+            excludeConceptNames: excludeConceptNames,
+            targetOverride: target);
+    }
+
+    private static MealNutritionTarget ScaleMealTarget(MealNutritionTarget target, float scale)
+    {
+        scale = float.IsFinite(scale) ? Math.Clamp(scale, 0f, 1f) : 0f;
+        return target with
+        {
+            Calories = SafeNonNegative(target.Calories * scale),
+            Protein = SafeNonNegative(target.Protein * scale),
+            Carbs = SafeNonNegative(target.Carbs * scale),
+            Fats = SafeNonNegative(target.Fats * scale)
+        };
+    }
+
+    private static float SafeNonNegative(float value)
+        => float.IsFinite(value) ? MathF.Max(0f, value) : 0f;
+
     public async Task LogMealAsync(
         int userId,
         IReadOnlyCollection<MealIngredientInput> ingredients,
@@ -272,11 +374,26 @@ public class NutritionService : INutritionService
         float fats,
         BreakfastPreference breakfastPreference = BreakfastPreference.Savoury)
     {
+        const float minMainShare = 0.75f;
+        const float maxMainShare = 0.85f;
+
         var (breakfastShare, lunchShare, dinnerShare) = breakfastPreference switch
         {
             BreakfastPreference.Sweet => (0.20f, 0.32f, 0.28f),
-            _ => (0.25f, 0.35f, 0.27f)
+            _ => (0.25f, 0.33f, 0.25f)
         };
+
+        var rawMainShare = breakfastShare + lunchShare + dinnerShare;
+        var clampedMainShare = Math.Clamp(rawMainShare, minMainShare, maxMainShare);
+
+        if (MathF.Abs(rawMainShare - clampedMainShare) > 0.001f && rawMainShare > 0f)
+        {
+            var scale = clampedMainShare / rawMainShare;
+            breakfastShare *= scale;
+            lunchShare *= scale;
+            dinnerShare *= scale;
+        }
+
         var snackShare = 1f - breakfastShare - lunchShare - dinnerShare;
 
         return

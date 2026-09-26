@@ -11,6 +11,9 @@ public static class PortionSolver
     private const float KcalTolerancePct = 0.15f;
     private const float ProteinDeficitToleranceG = 8f;
     private const float RelaxedKcalTolerancePct = 0.25f;
+    private const float MinCarbGrams = 30f;
+    private const float MaxCarbGrams = 180f;
+    private const float RelaxedMaxCarbGrams = 220f;
 
     public static PortionSolution? Solve(
         MealNutritionTarget target,
@@ -23,7 +26,7 @@ public static class PortionSolver
         MealStyle style = MealStyle.Plated,
         bool relaxed = false)
     {
-        if (protein.Protein <= 0f || carb.Carbs <= 0f)
+        if (!FoodComponentClassifier.IsProteinAnchor(protein) || carb.Carbs <= 0f)
             return null;
 
         var vegMultiplier = (isRestDay ? 1.5f : 1f) * (goal == UserGoal.FatLoss ? 1.3f : 1f);
@@ -31,13 +34,20 @@ public static class PortionSolver
         var vegMacros = MacroNutrients.FromFood(veg, vegGrams);
 
         var remainingCarbG = MathF.Max(target.Carbs - vegMacros.Carbs, 0f);
+        var maxCarbGrams = relaxed ? RelaxedMaxCarbGrams : MaxCarbGrams;
         var carbGrams = carb.Carbs > 0f
-            ? Clamp(remainingCarbG / carb.Carbs * 100f, 30f, 250f)
+            ? Clamp(remainingCarbG / carb.Carbs * 100f, MinCarbGrams, maxCarbGrams)
             : 100f;
         var carbMacros = MacroNutrients.FromFood(carb, carbGrams);
 
         var remainingProteinG = MathF.Max(target.Protein - vegMacros.Protein - carbMacros.Protein, 0f);
-        var proteinGrams = Clamp(remainingProteinG / protein.Protein * 100f, 50f, 300f);
+        var minimumAnchorProtein = target.Calories >= 300f ? 12f : 8f;
+        var proteinGrams = Clamp(
+            MathF.Max(
+                remainingProteinG / protein.Protein * 100f,
+                minimumAnchorProtein / protein.Protein * 100f),
+            50f,
+            300f);
 
         float sauceGrams = 0f;
         if (sauce is not null && sauce.Fats > 0f)
@@ -49,6 +59,9 @@ public static class PortionSolver
         }
 
         var proteinIngredient = new Ingredient(protein, SnapToServing(protein, proteinGrams));
+        if (proteinIngredient.Protein < minimumAnchorProtein)
+            return null;
+
         var carbIngredient = new Ingredient(carb, SnapToServing(carb, carbGrams));
         var vegIngredient = new Ingredient(veg, SnapToServing(veg, vegGrams));
 

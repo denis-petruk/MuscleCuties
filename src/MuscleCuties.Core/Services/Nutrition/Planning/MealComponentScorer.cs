@@ -64,7 +64,8 @@ public static class MealComponentScorer
         UserGoal goal,
         MealStyle style = MealStyle.Plated)
     {
-        if (!PassesDietaryFilter(protein, dietaryTags) ||
+        if (!FoodComponentClassifier.IsProteinAnchor(protein) ||
+            !PassesDietaryFilter(protein, dietaryTags) ||
             !PassesDietaryFilter(carb, dietaryTags) ||
             !PassesDietaryFilter(veg, dietaryTags) ||
             (sauce is not null && !PassesDietaryFilter(sauce, dietaryTags)))

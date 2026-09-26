@@ -15,7 +15,7 @@ internal static class SweetBreakfastCatalog
     [
         new MealConcept(
             "Berry Oat Bowl",
-            "Rolled oats with fresh berries, a drizzle of honey, and peanut butter for protein.",
+            "Rolled oats with berries and a serving of yogurt for protein.",
             [MealType.Breakfast],
             [
                 new MealConceptSlot(MealConceptSlotType.CarbBase,
@@ -27,7 +27,7 @@ internal static class SweetBreakfastCatalog
                 new MealConceptSlot(MealConceptSlotType.Sauce,
                     [new SlotIngredientEntry(["honey", "maple syrup"], 1f, true)], true),
                 new MealConceptSlot(MealConceptSlotType.ProteinBase,
-                    [new SlotIngredientEntry(["peanut butter"], 1f, true)], true)
+                    [new SlotIngredientEntry(["greek yogurt", "soy yogurt", "silken tofu", "pea protein"], 1f, true)], true)
             ],
             [
                 new SpiceBlendOption("Cinnamon + vanilla", "Warm, classic oatmeal spice."),
@@ -38,11 +38,11 @@ internal static class SweetBreakfastCatalog
 
         new MealConcept(
             "Yogurt Parfait",
-            "Greek yogurt layered with berries, oats or chia seeds, and a touch of honey.",
+            "Protein-rich yogurt layered with berries, oats or chia seeds, and a touch of sweetness.",
             [MealType.Breakfast],
             [
                 new MealConceptSlot(MealConceptSlotType.ProteinBase,
-                    [new SlotIngredientEntry(["greek yogurt"], 1f, true)], true),
+                    [new SlotIngredientEntry(["greek yogurt", "soy yogurt", "silken tofu"], 1f, true)], true),
                 new MealConceptSlot(MealConceptSlotType.VitaminBase, [
                     new SlotIngredientEntry(["blueberries"], 0.5f, true),
                     new SlotIngredientEntry(["strawberries", "raspberries"], 0.5f, false)
@@ -60,8 +60,8 @@ internal static class SweetBreakfastCatalog
             new HashSet<DietaryTag>()),
 
         new MealConcept(
-            "PB Banana Oats",
-            "Oats with banana, peanut butter, and a dark chocolate finish.",
+            "Banana Protein Oats",
+            "Oats with banana and a serving of yogurt or plant protein.",
             [MealType.Breakfast],
             [
                 new MealConceptSlot(MealConceptSlotType.CarbBase,
@@ -69,7 +69,7 @@ internal static class SweetBreakfastCatalog
                 new MealConceptSlot(MealConceptSlotType.VitaminBase,
                     [new SlotIngredientEntry(["banana"], 1f, true)], true),
                 new MealConceptSlot(MealConceptSlotType.ProteinBase,
-                    [new SlotIngredientEntry(["peanut butter"], 1f, true)], true),
+                    [new SlotIngredientEntry(["greek yogurt", "soy yogurt", "silken tofu", "pea protein"], 1f, true)], true),
                 new MealConceptSlot(MealConceptSlotType.Sauce, [
                     new SlotIngredientEntry(["dark chocolate"], 0.5f, false),
                     new SlotIngredientEntry(["honey"], 0.5f, false)
