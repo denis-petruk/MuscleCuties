@@ -103,18 +103,14 @@ public class CycleService : ICycleService
 
     private async Task EnsurePhaseOrderAsync(int userId, CyclePhase phase, DateTime loggedDate)
     {
-        var orderedLogs = (await _cycleRepository.GetRecentPhaseLogsAsync(userId, 1000))
-            .Where(log => log.LoggedAt.Date != loggedDate.Date)
-            .OrderBy(log => log.LoggedAt)
-            .ThenBy(log => log.CreatedAt)
-            .ToList();
+        var previousLog = await _cycleRepository.GetLatestPhaseLogBeforeDateAsync(userId, loggedDate);
+        var nextLog = await _cycleRepository.GetNextPhaseLogAfterDateAsync(userId, loggedDate);
         var cycleLength = await GetCycleLengthForOrderAsync(userId);
         var previousDayPhase = await ResolvePhaseForOrderAsync(
             userId,
             loggedDate.AddDays(-1),
-            orderedLogs,
+            previousLog,
             cycleLength);
-        var nextLog = orderedLogs.FirstOrDefault(log => log.LoggedAt.Date > loggedDate.Date);
 
         if (previousDayPhase is not null && !FollowsCycleOrder(previousDayPhase.Value, phase))
         {
@@ -154,13 +150,12 @@ public class CycleService : ICycleService
     private async Task<CyclePhase?> ResolvePhaseForOrderAsync(
         int userId,
         DateTime date,
-        IReadOnlyList<CyclePhaseLog> orderedLogs,
+        CyclePhaseLog? previousLog,
         int cycleLength)
     {
-        var latestPhaseLog = orderedLogs.LastOrDefault(log => log.LoggedAt.Date <= date.Date);
-        if (latestPhaseLog is not null)
+        if (previousLog is not null)
             return CyclePhaseRules.ProjectPhaseFromLog(
-                new CyclePhaseLogProjection(latestPhaseLog.Phase, latestPhaseLog.LoggedAt),
+                new CyclePhaseLogProjection(previousLog.Phase, previousLog.LoggedAt),
                 date,
                 cycleLength);
 

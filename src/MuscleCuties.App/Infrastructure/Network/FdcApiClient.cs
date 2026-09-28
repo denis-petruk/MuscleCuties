@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Networking;
 using MuscleCuties.Core.Services.Nutrition;
@@ -15,7 +17,6 @@ public sealed class FdcApiClient : IFdcApiClient
     private const int MaxQueryLength = 80;
     private static readonly TimeSpan DefaultRateLimitDelay = TimeSpan.FromMilliseconds(750);
     private static readonly TimeSpan MaxRateLimitDelay = TimeSpan.FromSeconds(2);
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly HashSet<string> SensitiveQueryTerms = new(StringComparer.OrdinalIgnoreCase)
     {
         "amenorrhea",
@@ -109,6 +110,7 @@ public sealed class FdcApiClient : IFdcApiClient
 
         var payload = await SendAndReadAsync<FdcFoodSearchResponse>(
             () => new HttpRequestMessage(HttpMethod.Get, path),
+            FdcJsonContext.Default.FdcFoodSearchResponse,
             cancellationToken).ConfigureAwait(false);
 
         return payload?.Foods ?? [];
@@ -122,6 +124,7 @@ public sealed class FdcApiClient : IFdcApiClient
         var path = "food/{fdcId}?format=abridged".Replace("{fdcId}", fdcId.ToString());
         return await SendAndReadAsync<FdcFoodDetail>(
             () => new HttpRequestMessage(HttpMethod.Get, path),
+            FdcJsonContext.Default.FdcFoodDetail,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -140,8 +143,9 @@ public sealed class FdcApiClient : IFdcApiClient
         var payload = await SendAndReadAsync<List<FdcFoodDetail>>(
             () => new HttpRequestMessage(HttpMethod.Post, path)
             {
-                Content = JsonContent.Create(new FdcFoodsRequest { FdcIds = ids }, options: JsonOptions)
+                Content = JsonContent.Create(new FdcFoodsRequest { FdcIds = ids }, FdcJsonContext.Default.FdcFoodsRequest)
             },
+            FdcJsonContext.Default.ListFdcFoodDetail,
             cancellationToken).ConfigureAwait(false);
 
         return payload ?? [];
@@ -204,6 +208,7 @@ public sealed class FdcApiClient : IFdcApiClient
 
     private async Task<T?> SendAndReadAsync<T>(
         Func<HttpRequestMessage> createRequest,
+        JsonTypeInfo<T> jsonTypeInfo,
         CancellationToken cancellationToken)
     {
         try
@@ -219,7 +224,7 @@ public sealed class FdcApiClient : IFdcApiClient
             }
 
             return await response.Content
-                .ReadFromJsonAsync<T>(JsonOptions, cancellationToken)
+                .ReadFromJsonAsync(jsonTypeInfo, cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -325,6 +330,15 @@ public sealed class FdcApiClient : IFdcApiClient
 
     private void LogFailure(Exception exception, string message)
     {
-        _logger?.LogInformation(exception, message);
+        _logger?.LogInformation("{Message} Failure type: {ExceptionType}.", message, exception.GetType().Name);
     }
+}
+
+[JsonSourceGenerationOptions(JsonSerializerDefaults.Web)]
+[JsonSerializable(typeof(FdcFoodSearchResponse))]
+[JsonSerializable(typeof(FdcFoodDetail))]
+[JsonSerializable(typeof(List<FdcFoodDetail>))]
+[JsonSerializable(typeof(FdcFoodsRequest))]
+internal partial class FdcJsonContext : JsonSerializerContext
+{
 }

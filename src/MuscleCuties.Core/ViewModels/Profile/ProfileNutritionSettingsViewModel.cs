@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -143,6 +144,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     private async Task SaveAsync()
     {
         IsBusy = true;

@@ -1,0 +1,713 @@
+{
+  "schemaVersion": 1,
+  "researchedOn": "2026-09-27",
+  "purpose": "Source-verified, local-only research inputs for vegan breakfast burger suggestions",
+  "nutritionPolicy": "Published values are estimates for the stated scope. Null means the publisher did not provide a usable value. Never treat patty-only macros as a complete burger or infer missing macros.",
+  "recipes": [
+    {
+      "id": "my-plantiful-cooking-tvp-patty",
+      "title": "TVP Vegan Breakfast Sausage Patties",
+      "sourceUrl": "https://www.myplantifulcooking.com/vegan-breakfast-sausage-patties/",
+      "form": "formed_patty",
+      "primaryPattyBase": "TVP",
+      "yieldPatties": 8,
+      "methodSummary": "Hydrate TVP, saute onion and garlic, pulse with binders and seasonings, form patties, and bake at 350 F for 20 minutes.",
+      "nutrition": {
+        "scope": "one_of_eight_patties",
+        "kcal": 90,
+        "proteinG": 11,
+        "carbohydrateG": 10,
+        "fatG": 1,
+        "fiberG": 3,
+        "kind": "patty",
+        "servingCount": 1,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Publisher suggests four larger patties for sandwiches; published nutrition is for one of eight small patties. Cooking oil appears in method but not ingredient card. Contains wheat gluten.",
+      "ingredientStructure": {
+        "patty": [
+          "1 cup TVP granules",
+          "1 cup vegetable broth or water",
+          "1/2 medium yellow onion",
+          "3 garlic cloves",
+          "1/2 cup oat flour",
+          "1/4 cup vital wheat gluten",
+          "2 tbsp nutritional yeast",
+          "2 tbsp soy sauce",
+          "1 tsp Italian seasoning",
+          "1 tsp paprika",
+          "optional 1 tsp liquid smoke",
+          "salt and pepper to taste"
+        ],
+        "sandwichAssembly": []
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "none"
+    },
+    {
+      "id": "cozy-peach-maple-tvp-patty",
+      "title": "Vegan Maple Breakfast Sausage Patties",
+      "sourceUrl": "https://cozypeachkitchen.com/vegan-breakfast-sausage/",
+      "form": "formed_patty",
+      "primaryPattyBase": "TVP",
+      "yieldPatties": 8,
+      "methodSummary": "Hydrate TVP, prepare flax binder, grind oats, combine ingredients, chill, form patties, and pan-fry 3 to 4 minutes per side.",
+      "nutrition": {
+        "scope": "one_of_eight_patties",
+        "kcal": 107,
+        "proteinG": 8,
+        "carbohydrateG": 12,
+        "fatG": 3,
+        "fiberG": 4,
+        "kind": "patty",
+        "servingCount": 1,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Publisher offers the patties for vegan breakfast sandwiches. Extra pan oil is variable.",
+      "ingredientStructure": {
+        "patty": [
+          "1 cup TVP",
+          "1 cup vegetable broth",
+          "2 tbsp ground flaxseed",
+          "6 tbsp water",
+          "1/2 cup rolled oats",
+          "2 tbsp nutritional yeast",
+          "2 tbsp chickpea flour",
+          "1 tbsp coconut oil plus more as needed for pan",
+          "optional 1 tbsp maple syrup",
+          "1 tbsp soy sauce",
+          "1 tsp ground sage",
+          "1 tsp fennel seed",
+          "1 tsp garlic powder",
+          "1 tsp onion powder",
+          "1/2 tsp salt",
+          "1/2 tsp pepper",
+          "optional 1/2 tsp red pepper flakes"
+        ],
+        "sandwichAssembly": []
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "none"
+    },
+    {
+      "id": "idtlc-tvp-patty",
+      "title": "Easy Vegan Breakfast Sausage Patties (TVP)",
+      "sourceUrl": "https://itdoesnttastelikechicken.com/easy-vegan-breakfast-sausage-patties-tvp-patties/",
+      "form": "formed_patty",
+      "primaryPattyBase": "TVP",
+      "yieldPatties": 12,
+      "methodSummary": "Hydrate TVP with broth, seed binder, soy sauce, and syrup; mix in dry ingredients, form 12 small patties, and pan-fry.",
+      "nutrition": {
+        "scope": "one_of_twelve_patties_excludes_frying_oil",
+        "kcal": 86,
+        "proteinG": 5,
+        "carbohydrateG": 9,
+        "fatG": 3,
+        "fiberG": 3,
+        "kind": "patty",
+        "servingCount": 1,
+        "servingMassG": null,
+        "excludesCookingOil": true
+      },
+      "notes": "Publisher explicitly excludes frying oil from nutrition.",
+      "ingredientStructure": {
+        "patty": [
+          "1 cup dry TVP granules",
+          "1 cup warm vegetable broth",
+          "2 tbsp ground chia or ground flax",
+          "2 tbsp soy sauce",
+          "1 tbsp maple syrup",
+          "1/2 cup quick oats",
+          "1/4 cup all-purpose flour",
+          "2 tsp smoked paprika",
+          "1 tsp fennel seeds",
+          "1/2 tsp onion powder",
+          "1/2 tsp garlic powder",
+          "1/4 tsp black pepper",
+          "2 to 4 tbsp light oil for cooking"
+        ],
+        "sandwichAssembly": []
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "none"
+    },
+    {
+      "id": "nora-cooks-tvp-patty",
+      "title": "Vegan Breakfast Sausage",
+      "sourceUrl": "https://www.noracooks.com/vegan-breakfast-sausage/",
+      "form": "formed_patty",
+      "primaryPattyBase": "TVP",
+      "yieldPatties": 8,
+      "methodSummary": "Hydrate TVP, mix remaining ingredients, form patties, and pan-fry 3 to 4 minutes per side.",
+      "nutrition": {
+        "scope": "one_of_eight_patties",
+        "kcal": 121,
+        "proteinG": 7,
+        "carbohydrateG": 12,
+        "fatG": 5,
+        "fiberG": 3,
+        "kind": "patty",
+        "servingCount": 1,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Additional frying oil is unquantified. Default flour and panko options contain wheat.",
+      "ingredientStructure": {
+        "patty": [
+          "1 cup TVP",
+          "1 cup warm vegetable broth",
+          "1/2 tsp fennel seeds",
+          "1 tsp onion powder",
+          "1 tsp garlic powder",
+          "1 tsp smoked paprika",
+          "1/4 tsp ground sage",
+          "2 tbsp soy sauce",
+          "optional 1 tbsp kitchen bouquet",
+          "2 tbsp neutral oil plus more for frying",
+          "1 tbsp maple syrup",
+          "1/2 tsp liquid smoke",
+          "2 tbsp ground flaxseeds",
+          "2 tbsp all-purpose flour",
+          "3/4 cup panko breadcrumbs or quick oats"
+        ],
+        "sandwichAssembly": []
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "none"
+    },
+    {
+      "id": "simple-vegan-blog-tvp-patty",
+      "title": "Vegan Breakfast Sausage",
+      "sourceUrl": "https://simpleveganblog.com/vegan-breakfast-sausage/",
+      "form": "formed_patty",
+      "primaryPattyBase": "TVP",
+      "yieldPatties": 12,
+      "methodSummary": "Hydrate TVP, mix dry ingredients, combine with liquids and flax binder, form patties, and pan-fry.",
+      "nutrition": {
+        "scope": "one_of_twelve_patties",
+        "kcal": 105,
+        "proteinG": 6.2,
+        "carbohydrateG": 16,
+        "fatG": 1.6,
+        "fiberG": 3.3,
+        "kind": "patty",
+        "servingCount": 1,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Skillet oil is unquantified. Publisher defines flax egg quantities in a linked recipe.",
+      "ingredientStructure": {
+        "patty": [
+          "1 cup TVP",
+          "1 cup hot vegetable stock or water",
+          "1 1/4 cups brown rice flour",
+          "1/4 cup nutritional yeast",
+          "2 tsp dried sage",
+          "2 tsp dried thyme",
+          "2 tsp garlic powder",
+          "1/2 tsp paprika",
+          "1/8 tsp black pepper",
+          "optional 1/8 tsp cayenne",
+          "2 tbsp tamari or soy sauce",
+          "1 tbsp maple syrup",
+          "2 flax eggs",
+          "optional unquantified skillet oil"
+        ],
+        "sandwichAssembly": []
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "none"
+    },
+    {
+      "id": "wee-little-vegans-tvp-patty",
+      "title": "TVP Breakfast Sausages",
+      "sourceUrl": "https://weelittlevegans.com/tvp-breakfast-sausages/",
+      "form": "formed_patty",
+      "primaryPattyBase": "TVP",
+      "yieldPatties": 12,
+      "methodSummary": "Hydrate TVP and flax binder separately, combine ingredients, form patties, then bake or pan-fry.",
+      "nutrition": {
+        "scope": "not_published",
+        "kcal": null,
+        "proteinG": null,
+        "carbohydrateG": null,
+        "fatG": null,
+        "fiberG": null,
+        "kind": "unpublished",
+        "servingCount": null,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Publisher does not provide numeric macros.",
+      "ingredientStructure": {
+        "patty": [
+          "3/4 cup plus 2 tbsp boiling water",
+          "1 tsp Better Than Bouillon No Beef paste",
+          "1 cup TVP",
+          "2 tbsp ground flaxseed",
+          "4 tbsp water for flax binder",
+          "1/4 cup chickpea flour",
+          "2 tbsp nutritional yeast",
+          "2 tbsp maple syrup",
+          "1 tsp ground sage",
+          "1 tsp garlic powder",
+          "1 tsp onion powder",
+          "1/2 tsp salt",
+          "unquantified oil for cooking"
+        ],
+        "sandwichAssembly": []
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "none"
+    },
+    {
+      "id": "liv-vegan-strong-tvp-patty",
+      "title": "Best Vegan Breakfast Sausage",
+      "sourceUrl": "https://www.livveganstrong.com/vegan-breakfast-sausage/",
+      "form": "formed_patty",
+      "primaryPattyBase": "TVP",
+      "yieldPatties": null,
+      "methodSummary": "Hydrate TVP and flax binder, saute vegetables, combine ingredients, shape patties, and pan-fry.",
+      "nutrition": {
+        "scope": "not_published",
+        "kcal": null,
+        "proteinG": null,
+        "carbohydrateG": null,
+        "fatG": null,
+        "fiberG": null,
+        "kind": "unpublished",
+        "servingCount": null,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Recipe card says eight servings but shaping instructions say about eight to nine patties; yield left null. Contains wheat gluten.",
+      "ingredientStructure": {
+        "patty": [
+          "1 cup TVP",
+          "1 cup water for TVP",
+          "1 tbsp ground flaxseed",
+          "2 tbsp water for flax binder",
+          "1/4 cup minced shallot",
+          "1/3 cup minced mushrooms",
+          "2 garlic cloves",
+          "1/2 cup vital wheat gluten",
+          "1/2 cup oats ground into flour",
+          "3 tbsp nutritional yeast",
+          "1/4 cup low-sodium soy sauce",
+          "1 tbsp vegan Worcestershire sauce",
+          "2 tbsp maple syrup",
+          "1 tbsp Dijon mustard",
+          "2 tsp onion powder",
+          "1 tsp rubbed sage",
+          "1/2 tsp dried thyme",
+          "1/2 tsp black pepper",
+          "1/2 tsp red chili flakes",
+          "unquantified oil for cooking"
+        ],
+        "sandwichAssembly": []
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "none"
+    },
+    {
+      "id": "chef-ani-tvp-patty",
+      "title": "Vegan Breakfast Sausage Patties",
+      "sourceUrl": "https://chefani.com/vegan-breakfast-sausage-patties/",
+      "form": "formed_patty",
+      "primaryPattyBase": "TVP",
+      "yieldPatties": null,
+      "methodSummary": "Cook aromatics and seasonings, add TVP and oats, rest, form patties, and bake on both sides.",
+      "nutrition": {
+        "scope": "not_published",
+        "kcal": null,
+        "proteinG": null,
+        "carbohydrateG": null,
+        "fatG": null,
+        "fiberG": null,
+        "kind": "unpublished",
+        "servingCount": null,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Publisher yield ranges from 18 to 20 patties. Optional walnuts and glaze materially change nutrition.",
+      "ingredientStructure": {
+        "patty": [
+          "1 cup diced onion",
+          "optional 1 tbsp olive oil",
+          "4 large garlic cloves",
+          "1/4 tsp red pepper flakes",
+          "1 tsp fennel seed",
+          "2 tbsp Bragg liquid aminos",
+          "2 tbsp nutritional yeast",
+          "2 tsp rubbed sage",
+          "1 tbsp Better Than Bouillon",
+          "1 tbsp molasses",
+          "3/4 tsp salt",
+          "1 1/2 cups TVP",
+          "2 1/2 cups quick oats",
+          "optional 1/3 cup chopped walnuts",
+          "4 cups water",
+          "optional glaze: 1 tbsp vegan margarine, 2 tsp Bragg liquid aminos, 1 to 3 tsp maple syrup"
+        ],
+        "sandwichAssembly": []
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "none"
+    },
+    {
+      "id": "essy-cooks-tofu-egg-patty",
+      "title": "Tofu Egg Patties",
+      "sourceUrl": "https://essycooks.com/tofu-egg-patties-for-vegan-breakfast-sandwiches/",
+      "form": "sliced_tofu_patty",
+      "primaryPattyBase": "extra-firm tofu",
+      "yieldPatties": 6,
+      "methodSummary": "Slice tofu into six patties, marinate for 5 to 10 minutes, then cook with marinade until liquid is absorbed.",
+      "nutrition": {
+        "scope": "one_50_g_tofu_patty",
+        "kcal": 60,
+        "proteinG": 8,
+        "carbohydrateG": 3,
+        "fatG": 1.5,
+        "fiberG": 1.5,
+        "kind": "patty",
+        "servingCount": 1,
+        "servingMassG": 50,
+        "excludesCookingOil": null
+      },
+      "notes": "Publisher does not specify the tofu block mass. Miso may be replaced with soy sauce or tamari.",
+      "ingredientStructure": {
+        "patty": [
+          "1 block extra-firm tofu",
+          "3/4 cup vegetable broth",
+          "2 tbsp nutritional yeast",
+          "1 tsp white miso paste",
+          "1 tsp garlic powder",
+          "1/2 tsp onion powder",
+          "1/2 tsp paprika",
+          "black salt and pepper to taste",
+          "dash of turmeric"
+        ],
+        "sandwichAssembly": []
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "none"
+    },
+    {
+      "id": "my-pure-plants-tofu-patty",
+      "title": "Vegan Breakfast Sausage (Tofu)",
+      "sourceUrl": "https://mypureplants.com/vegan-breakfast-sausage/",
+      "form": "formed_patty",
+      "primaryPattyBase": "firm tofu",
+      "yieldPatties": 9,
+      "methodSummary": "Freeze tofu for at least 24 hours, thaw and squeeze, crumble, combine with sauteed aromatics and binders, form small patties, and pan-fry.",
+      "nutrition": {
+        "scope": "one_of_nine_small_patties",
+        "kcal": 100,
+        "proteinG": 3,
+        "carbohydrateG": 9,
+        "fatG": 6,
+        "fiberG": 1,
+        "kind": "patty",
+        "servingCount": 1,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Oil allocation in publisher method appears internally inconsistent. Do not infer a corrected amount.",
+      "ingredientStructure": {
+        "patty": [
+          "4 oz firm tofu after draining and squeezing",
+          "1/2 cup breadcrumbs",
+          "1/4 cup dairy-free milk",
+          "4 tbsp cornstarch",
+          "1/2 onion",
+          "2 garlic cloves",
+          "3 tbsp olive oil",
+          "1/2 tsp sweet smoked paprika",
+          "1 tsp dried sage",
+          "1 tsp dried thyme",
+          "1/2 tsp fennel",
+          "1/2 tsp salt",
+          "1 tbsp nutritional yeast"
+        ],
+        "sandwichAssembly": []
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "none"
+    },
+    {
+      "id": "sarahs-vegan-kitchen-tofu-egg-patty",
+      "title": "Eggy Tofu Patties",
+      "sourceUrl": "https://sarahsvegankitchen.com/recipes/tofu-egg-patties/",
+      "form": "sliced_tofu_patty",
+      "primaryPattyBase": "firm or extra-firm tofu",
+      "yieldPatties": null,
+      "methodSummary": "Slice tofu, dredge in chickpea flour and seasonings, pan-fry both sides, and finish with black salt.",
+      "nutrition": {
+        "scope": "not_published",
+        "kcal": null,
+        "proteinG": null,
+        "carbohydrateG": null,
+        "fatG": null,
+        "fiberG": null,
+        "kind": "unpublished",
+        "servingCount": null,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Author commonly slices one block into ten patties, but no formal recipe-card yield is supplied.",
+      "ingredientStructure": {
+        "patty": [
+          "14 oz firm or extra-firm tofu",
+          "1/4 cup chickpea flour",
+          "2 tbsp nutritional yeast",
+          "1 tsp onion powder",
+          "1 tsp garlic powder",
+          "1/4 tsp sea salt",
+          "1/2 tsp kala namak plus extra to finish",
+          "optional 1/8 tsp turmeric",
+          "2 tbsp vegan butter or olive oil",
+          "black pepper to taste",
+          "optional smoked paprika, chives, or scallions"
+        ],
+        "sandwichAssembly": []
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "none"
+    },
+    {
+      "id": "zardyplants-tofu-sausage-patty",
+      "title": "Easy Vegan Breakfast Sausage Patties",
+      "sourceUrl": "https://zardyplants.com/recipes/easy-vegan-breakfast-sausage-patties-recipe/",
+      "form": "formed_patty",
+      "primaryPattyBase": "super-firm tofu",
+      "yieldPatties": null,
+      "methodSummary": "Mix liquids and dry ingredients with crumbled tofu and flax binder; form patties; pan-fry, air-fry, or bake.",
+      "nutrition": {
+        "scope": "not_published",
+        "kcal": null,
+        "proteinG": null,
+        "carbohydrateG": null,
+        "fatG": null,
+        "fiberG": null,
+        "kind": "unpublished",
+        "servingCount": null,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Publisher gives an eight-to-twelve patty yield; introductory 16 g protein claim has no stable per-patty serving basis, so macros remain null.",
+      "ingredientStructure": {
+        "patty": [
+          "1 block super-firm tofu",
+          "1/3 cup reduced-sodium soy sauce",
+          "2 tbsp neutral oil",
+          "1 to 2 tbsp maple syrup",
+          "2 to 3 tbsp oat flour",
+          "2 tbsp ground flaxseed",
+          "4 tbsp water",
+          "1 to 2 tbsp nutritional yeast",
+          "1 tsp ground fennel",
+          "1 tsp garlic powder",
+          "1 tsp onion powder",
+          "1/2 tsp smoked paprika",
+          "1/2 tsp black pepper",
+          "1/2 tsp ground cumin",
+          "1/4 tsp cayenne",
+          "1/2 tsp ground sage",
+          "optional 1/2 tsp salt"
+        ],
+        "sandwichAssembly": []
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "none"
+    },
+    {
+      "id": "plant-based-rds-tofu-sandwich",
+      "title": "Tofu Breakfast Sandwich",
+      "sourceUrl": "https://plantbasedrds.com/blog/recipe/tofu-breakfast-sandwich-plant-based-dietitians/",
+      "form": "complete_sandwich_with_sliced_tofu_patty",
+      "primaryPattyBase": "extra-firm tofu",
+      "yieldPatties": null,
+      "methodSummary": "Coat tofu slices with dry seasonings, pan-fry, and assemble with muffins, tomato, avocado, and vegan cheese.",
+      "nutrition": {
+        "scope": "one_complete_sandwich",
+        "kcal": 395,
+        "proteinG": 23,
+        "carbohydrateG": 39,
+        "fatG": 19.4,
+        "fiberG": 7,
+        "kind": "complete_sandwich",
+        "servingCount": 1,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Source gives four complete sandwiches from 350 g tofu but does not specify the number of tofu slices. Complete-sandwich nutrition must not be reused as tofu-patty nutrition.",
+      "ingredientStructure": {
+        "patty": [
+          "350 g extra-firm tofu",
+          "2 tbsp nutritional yeast",
+          "1/8 tsp salt",
+          "1/4 tsp pepper",
+          "1 tsp garlic powder",
+          "1 tsp cornstarch",
+          "3/4 tbsp olive oil"
+        ],
+        "sandwichAssembly": [
+          "4 whole-wheat English muffins",
+          "1 tomato",
+          "1/2 avocado",
+          "4 vegan cheese slices"
+        ]
+      },
+      "yieldSandwiches": 4,
+      "assemblyBasis": "complete_recipe"
+    },
+    {
+      "id": "abbeys-kitchen-tofu-sandwich",
+      "title": "Vegan Breakfast Sandwich with Tofu",
+      "sourceUrl": "https://www.abbeyskitchen.com/vegan-tofu-breakfast-sandwich/",
+      "form": "complete_sandwich_with_sliced_tofu_patty",
+      "primaryPattyBase": "extra-firm tofu",
+      "yieldPatties": 8,
+      "methodSummary": "Season and pan-fry tofu, then assemble four sandwiches with bread, vegetables, avocado, vegan cheese, and mayonnaise.",
+      "nutrition": {
+        "scope": "one_complete_sandwich",
+        "kcal": 527,
+        "proteinG": 28,
+        "carbohydrateG": 63,
+        "fatG": 21,
+        "fiberG": 15,
+        "kind": "complete_sandwich",
+        "servingCount": 1,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Four sandwiches use two tofu slices each. Mayonnaise quantity is variable, so the published macro estimate is especially uncertain.",
+      "ingredientStructure": {
+        "patty": [
+          "8 half-inch extra-firm tofu slices",
+          "2 tbsp nutritional yeast",
+          "1/2 tsp onion powder",
+          "1/2 tsp garlic powder",
+          "1/8 tsp turmeric",
+          "salt and pepper",
+          "2 tbsp extra-virgin olive oil"
+        ],
+        "sandwichAssembly": [
+          "8 whole-grain bread slices",
+          "8 thin tomato slices",
+          "4 vegan cheese slices",
+          "vegan mayonnaise to taste",
+          "1 cup microgreens, sprouts, or lettuce",
+          "8 red onion rings",
+          "1 avocado"
+        ]
+      },
+      "yieldSandwiches": 4,
+      "assemblyBasis": "complete_recipe"
+    },
+    {
+      "id": "whitney-rd-tofu-sandwich",
+      "title": "Vegan Tofu Egg Sandwich",
+      "sourceUrl": "https://www.whitneyerd.com/2019/06/vegan-tofu-egg-sandwich.html",
+      "form": "complete_sandwich_with_sliced_tofu_patty",
+      "primaryPattyBase": "extra-firm tofu",
+      "yieldPatties": 6,
+      "methodSummary": "Press and slice tofu into six rectangles, coat with marinade, bake or pan-fry, and assemble a sandwich.",
+      "nutrition": {
+        "scope": "not_published",
+        "kcal": null,
+        "proteinG": null,
+        "carbohydrateG": null,
+        "fatG": null,
+        "fiberG": null,
+        "kind": "unpublished",
+        "servingCount": null,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "One suggested sandwich uses some of a six-slice tofu batch; muffin and topping amounts are unspecified.",
+      "ingredientStructure": {
+        "patty": [
+          "1 block extra-firm tofu",
+          "1 tbsp olive oil",
+          "3 tbsp soy sauce",
+          "1/2 tsp garlic powder",
+          "1/2 tsp onion powder",
+          "1/4 tsp turmeric",
+          "pinch of salt"
+        ],
+        "sandwichAssembly": [
+          "English muffin for serving",
+          "avocado for serving",
+          "tomato for serving",
+          "spinach for serving"
+        ]
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "per_sandwich_ingredients"
+    },
+    {
+      "id": "notably-vegan-tofu-sandwich",
+      "title": "Easy Vegan Breakfast Sandwich with Tofu Egg Patties",
+      "sourceUrl": "https://notablyvegan.com/easy-vegan-breakfast-sandwich-with-tofu-egg-patties/",
+      "form": "complete_sandwich_with_sliced_tofu_patty",
+      "primaryPattyBase": "firm or extra-firm tofu",
+      "yieldPatties": 4,
+      "methodSummary": "Cut tofu into four patties, season both sides, pan-fry, and assemble sandwiches.",
+      "nutrition": {
+        "scope": "not_published",
+        "kcal": null,
+        "proteinG": null,
+        "carbohydrateG": null,
+        "fatG": null,
+        "fiberG": null,
+        "kind": "unpublished",
+        "servingCount": null,
+        "servingMassG": null,
+        "excludesCookingOil": null
+      },
+      "notes": "Sandwich ingredients are described for one serving, while the tofu block makes four patties; some topping quantities are unspecified.",
+      "ingredientStructure": {
+        "patty": [
+          "1 block firm or extra-firm tofu",
+          "1/2 tsp black salt",
+          "1/2 tsp garlic powder",
+          "1/4 tsp turmeric",
+          "1/4 tsp black pepper",
+          "drizzle of avocado oil for frying"
+        ],
+        "sandwichAssembly": [
+          "1 gluten-free English muffin per sandwich",
+          "tomato slice per sandwich",
+          "optional vegan cheese slice per sandwich",
+          "spinach per sandwich",
+          "mashed avocado per sandwich",
+          "everything-bagel seasoning per sandwich"
+        ]
+      },
+      "yieldSandwiches": null,
+      "assemblyBasis": "per_sandwich_ingredients"
+    }
+  ],
+  "selfCheck": {
+    "originalPublisherSourcesFetched": true,
+    "recipeCount": 16,
+    "primaryBlackBeanRecipesIncluded": 0,
+    "publishedMacrosInvented": false,
+    "pattyAndCompleteSandwichMacrosDistinguished": true
+  },
+  "implementationHandoff": {
+    "receiver": "MuscleCuties C# implementation agent",
+    "catalogFile": "src/MuscleCuties.Core/Services/Nutrition/Planning/SavouryMealCatalog.cs",
+    "suggestionServiceFile": "src/MuscleCuties.Core/Services/Nutrition/Planning/SuggestedMealService.cs",
+    "currentState": "The suggestion service has uncommitted vegan Breakfast Burger filtering; preserve and review it. The catalog still describes a meat patty and Greek-yogurt sauce.",
+    "runtimeRule": "Bundle or translate research data into local Core logic. Never fetch recipe pages or transmit user health state at runtime.",
+    "macroRule": "FoodItem nutrients are per 100 g. Calculate a suggested complete burger from selected local FoodItem masses, including bun and toppings. Never assign patty-only publisher macros to the complete burger.",
+    "missingDataRule": "Keep unpublished macros null. Do not infer tofu-block weight, oil absorption, or unspecified topping amounts.",
+    "availabilityRule": "Local seed contains firm tofu but no TVP. A TVP suggestion requires a verified local food entry and measured recipe component masses; dry TVP per-100g nutrition cannot stand in for a cooked composite patty. Otherwise use the local tofu baseline.",
+    "privacyRule": "All personalization and nutrition calculation remain on device; no health, cycle, body-weight, or injury data leaves device.",
+    "dataContract": "This JSON is a parseable research artifact. Ingredient quantities remain source-faithful text and cannot directly drive deterministic nutrient arithmetic. Normalize ingredient names, quantities, units, and mass before runtime use."
+  }
+}

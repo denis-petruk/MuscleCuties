@@ -156,14 +156,14 @@ public sealed class FallbackMealProvider : IFallbackMealProvider
     private static readonly IReadOnlyList<FallbackMealItem> SavouryBreakfasts =
     [
         Meal("Scrambled Eggs with Toast",
-            "Two eggs, whole-grain toast, and a side of greens.",
+            "Two eggs, whole-grain toast, greens, and hot sauce.",
             MealType.Breakfast, 420f, 28f, 35f, 18f,
-            "eggs", "whole-grain bread", "spinach", "olive oil"),
+            "eggs", "whole-grain bread", "spinach", "olive oil", "hot sauce"),
 
         Meal("Tofu Scramble with Vegetables",
-            "Seasoned tofu scramble with peppers, onions, and avocado.",
+            "Seasoned tofu scramble with peppers, onions, avocado, and salsa.",
             MealType.Breakfast, 390f, 22f, 30f, 20f,
-            "tofu", "bell pepper", "onion", "avocado", "turmeric"),
+            "tofu", "bell pepper", "onion", "avocado", "turmeric", "salsa"),
 
         Meal("Chia Pudding with Fruit",
             "Chia pudding with soy yogurt, mango, and almonds.",
@@ -202,9 +202,9 @@ public sealed class FallbackMealProvider : IFallbackMealProvider
             "chicken breast", "mixed greens", "cherry tomatoes", "olive oil", "balsamic vinegar"),
 
         Meal("Lentil and Vegetable Soup",
-            "Hearty lentil soup with tofu, carrots, celery, and spices.",
+            "Hearty lentil soup with tofu, carrots, celery, spices, and vinegar.",
             MealType.Lunch, 460f, 30f, 42f, 16f,
-            "lentils", "tofu", "carrots", "celery", "onion", "cumin"),
+            "lentils", "tofu", "carrots", "celery", "onion", "cumin", "apple cider vinegar"),
 
         Meal("Salmon Rice Bowl",
             "Grilled salmon over brown rice with steamed broccoli.",
@@ -212,9 +212,9 @@ public sealed class FallbackMealProvider : IFallbackMealProvider
             "salmon fillet", "brown rice", "broccoli", "soy sauce", "sesame seeds"),
 
         Meal("Chickpea Buddha Bowl",
-            "Roasted chickpeas with tofu, vegetables, and tahini.",
+            "Roasted chickpeas with tofu, vegetables, tahini, and vinegar drizzle.",
             MealType.Lunch, 500f, 28f, 48f, 20f,
-            "chickpeas", "tofu", "kale", "sweet potato", "tahini"),
+            "chickpeas", "tofu", "kale", "sweet potato", "tahini", "apple cider vinegar"),
 
         Meal("Black Bean Burrito Bowl",
             "Black beans with tempeh, peppers, salsa, and avocado.",
@@ -225,9 +225,9 @@ public sealed class FallbackMealProvider : IFallbackMealProvider
     private static readonly IReadOnlyList<FallbackMealItem> Dinners =
     [
         Meal("Baked Chicken with Sweet Potato",
-            "Herb-baked chicken breast with roasted sweet potato and green beans.",
+            "Herb-baked chicken breast with roasted sweet potato, green beans, and mustard.",
             MealType.Dinner, 480f, 40f, 40f, 14f,
-            "chicken breast", "sweet potato", "green beans", "olive oil", "herbs"),
+            "chicken breast", "sweet potato", "green beans", "olive oil", "herbs", "mustard"),
 
         Meal("Beef Stir-Fry with Rice",
             "Lean beef strips with mixed vegetables over jasmine rice.",
@@ -235,9 +235,9 @@ public sealed class FallbackMealProvider : IFallbackMealProvider
             "lean beef", "bell pepper", "broccoli", "jasmine rice", "soy sauce"),
 
         Meal("Grilled Fish Tacos",
-            "White fish tacos with cabbage slaw and lime crema.",
+            "White fish tacos with cabbage slaw, lime crema, and hot sauce.",
             MealType.Dinner, 460f, 32f, 40f, 16f,
-            "white fish", "corn tortillas", "cabbage", "lime", "avocado"),
+            "white fish", "corn tortillas", "cabbage", "lime", "avocado", "hot sauce"),
 
         Meal("Tofu Stir-Fry with Rice",
             "Crispy tofu with mixed vegetables and a modest scoop of jasmine rice.",
@@ -245,9 +245,9 @@ public sealed class FallbackMealProvider : IFallbackMealProvider
             "tofu", "bell pepper", "broccoli", "jasmine rice", "soy sauce", "sesame oil"),
 
         Meal("Stuffed Bell Peppers",
-            "Bell peppers stuffed with tofu, black beans, quinoa, and spices.",
+            "Bell peppers stuffed with tofu, black beans, quinoa, spices, and salsa.",
             MealType.Dinner, 440f, 26f, 42f, 16f,
-            "bell pepper", "tofu", "quinoa", "black beans", "cumin", "tomato sauce")
+            "bell pepper", "tofu", "quinoa", "black beans", "cumin", "tomato sauce", "salsa")
     ];
 
     private static readonly IReadOnlyList<FallbackMealItem> Snacks =
@@ -263,9 +263,9 @@ public sealed class FallbackMealProvider : IFallbackMealProvider
             "almonds", "pumpkin seeds", "dried cranberries"),
 
         Meal("Hummus with Vegetables",
-            "Hummus with carrot sticks and cucumber slices.",
+            "Hummus with carrot sticks, cucumber slices, and hot sauce.",
             MealType.Snack, 190f, 8f, 22f, 8f,
-            "hummus", "carrots", "cucumber"),
+            "hummus", "carrots", "cucumber", "hot sauce"),
 
         Meal("Rice Cakes with Avocado",
             "Brown rice cakes topped with mashed avocado and salt.",

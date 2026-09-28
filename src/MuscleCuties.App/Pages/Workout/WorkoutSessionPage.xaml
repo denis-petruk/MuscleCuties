@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Workout;assembly=MuscleCuties.Core"
              xmlns:models="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core"
+             xmlns:workoutControls="clr-namespace:MuscleCuties.App.Controls.Workout"
              x:Class="MuscleCuties.App.Pages.Workout.WorkoutSessionPage"
              x:Name="Root" x:DataType="vm:WorkoutSessionViewModel"
              Title="Workout session" Shell.NavBarIsVisible="False" Shell.TabBarIsVisible="False"
@@ -35,10 +37,10 @@
                        VerticalOptions="Center" HorizontalTextAlignment="End" />
             </Grid>
             <Border Grid.Row="1" Style="{StaticResource SessionAccent}" IsVisible="{Binding HasError}">
-                <VerticalStackLayout Spacing="8">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
                     <Label Text="{Binding ErrorText}" Style="{StaticResource BodyLabel}" />
-                    <Button Text="Try again" Command="{Binding RetryLoadCommand}" IsVisible="{Binding IsDayOverview}" />
-                </VerticalStackLayout>
+                    <Button Grid.Row="1" Text="Try again" Command="{Binding RetryLoadCommand}" IsVisible="{Binding IsDayOverview}" />
+                </Grid>
             </Border>
             <Border Grid.Row="2" Style="{StaticResource SessionAccent}" IsVisible="{Binding HasCelebration}">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
@@ -59,7 +61,7 @@
                                     <DataTemplate x:DataType="models:WorkoutActivitySectionItem">
                                         <Border Style="{StaticResource SessionCard}">
                                             <Border.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding BindingContext.SelectActivityCommand, Source={x:Reference Root}}" CommandParameter="{Binding .}" />
+                                                <TapGestureRecognizer Command="{Binding SelectActivityCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutSessionViewModel}}, x:DataType=vm:WorkoutSessionViewModel}" CommandParameter="{Binding .}" />
                                             </Border.GestureRecognizers>
                                             <Grid ColumnDefinitions="5,*,Auto,16" ColumnSpacing="12" MinimumHeightRequest="48">
                                                 <BoxView Color="{Binding ActivityBackground}" CornerRadius="2" HeightRequest="-1" VerticalOptions="Fill" />
@@ -82,23 +84,21 @@
                 <!-- Activity intro -->
                 <Grid RowDefinitions="*,Auto" RowSpacing="16" IsVisible="{Binding IsActivityIntro}">
                     <ScrollView>
-                        <VerticalStackLayout Spacing="20" Padding="0,16,0,8">
-                            <VerticalStackLayout Spacing="8">
-                                <Label Text="{Binding SelectedActivity.Title}" Style="{StaticResource SectionTitle}" FontSize="22" HorizontalTextAlignment="Center" />
-                                <Label Text="{Binding SelectedActivity.MetricText}" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
-                                <Label Text="{Binding ActivityIntroIntensity, StringFormat='Intensity: {0}'}" Style="{StaticResource BodyLabel}" HorizontalTextAlignment="Center" />
-                            </VerticalStackLayout>
-                            <VerticalStackLayout Spacing="14" BindableLayout.ItemsSource="{Binding ExercisePreviewNames}">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="20" Padding="0,16,0,8">
+                            <Label Text="{Binding SelectedActivity.Title}" Style="{StaticResource SectionTitle}" FontSize="22" HorizontalTextAlignment="Center" />
+                            <Label Grid.Row="1" Text="{Binding SelectedActivity.MetricText}" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                            <Label Grid.Row="2" Text="{Binding ActivityIntroIntensity, StringFormat='Intensity: {0}'}" Style="{StaticResource BodyLabel}" HorizontalTextAlignment="Center" />
+                            <VerticalStackLayout Grid.Row="3" Spacing="14" BindableLayout.ItemsSource="{Binding ExercisePreviewNames}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="x:String">
                                         <Label Text="{Binding .}" Style="{StaticResource BodyLabel}" />
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
-                            <Border Style="{StaticResource SessionAccent}">
+                            <Border Grid.Row="4" Style="{StaticResource SessionAccent}">
                                 <Label Text="{Binding CyclePhaseNote}" Style="{StaticResource BodyLabel}" />
                             </Border>
-                        </VerticalStackLayout>
+                        </Grid>
                     </ScrollView>
                     <Border Grid.Row="1" BackgroundColor="{StaticResource Primary}" StrokeThickness="0" StrokeShape="RoundRectangle 14" MinimumHeightRequest="52">
                         <Button Text="Start" Command="{Binding StartActivityCommand}" IsEnabled="{Binding SelectedActivity.HasExercises}" CornerRadius="14" MinimumHeightRequest="52" />
@@ -124,7 +124,7 @@
                                         <!-- Small dots sit inside full-size touch targets. -->
                                         <Grid WidthRequest="48" HeightRequest="48" SemanticProperties.Description="{Binding AccessibilityText}">
                                             <Grid.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding BindingContext.JumpToExerciseCommand, Source={x:Reference Root}}" CommandParameter="{Binding Index}" />
+                                                <TapGestureRecognizer Command="{Binding JumpToExerciseCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutSessionViewModel}}, x:DataType=vm:WorkoutSessionViewModel}" CommandParameter="{Binding Index}" />
                                             </Grid.GestureRecognizers>
                                             <Border WidthRequest="10" HeightRequest="10" StrokeShape="RoundRectangle 5"
                                                     StrokeThickness="0" HorizontalOptions="Center" VerticalOptions="Center"
@@ -277,93 +277,37 @@
                             </VerticalStackLayout>
                             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
                                 <Border Style="{StaticResource SessionAccent}">
-                                    <VerticalStackLayout Spacing="4">
+                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
                                         <Label Text="{Binding SummaryTotalVolume}" Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
-                                        <Label Text="Volume" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
-                                    </VerticalStackLayout>
+                                        <Label Grid.Row="1" Text="Volume" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                    </Grid>
                                 </Border>
                                 <Border Grid.Column="1" Style="{StaticResource SessionAccent}">
-                                    <VerticalStackLayout Spacing="4">
+                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
                                         <Label Text="{Binding SummaryPrCount}" Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
-                                        <Label Text="Weight PRs" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
-                                    </VerticalStackLayout>
+                                        <Label Grid.Row="1" Text="Weight PRs" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                    </Grid>
                                 </Border>
                                 <Border Grid.Column="2" Style="{StaticResource SessionAccent}">
-                                    <VerticalStackLayout Spacing="4">
+                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
                                         <Label Text="{Binding SummaryDuration}" Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
-                                        <Label Text="Time" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
-                                    </VerticalStackLayout>
+                                        <Label Grid.Row="1" Text="Time" Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                    </Grid>
                                 </Border>
                             </Grid>
                         </VerticalStackLayout>
                     </ScrollView>
-                    <VerticalStackLayout Grid.Row="1" Spacing="8">
+                    <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="8">
                         <Button Text="Continue" Command="{Binding FinishActivityCommand}" MinimumHeightRequest="52" />
-                        <Button Text="Finish session" Command="{Binding FinishSessionCommand}" Style="{StaticResource QuietButton}" />
-                    </VerticalStackLayout>
-                </Grid>
-            </Grid>
-        </Grid>
-        <!-- Bottom sheet blocks interaction with the exercise beneath it. -->
-        <Grid IsVisible="{Binding IsSwapPanelVisible}" BackgroundColor="#80000000">
-            <Grid BackgroundColor="Transparent">
-                <Grid.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding CloseSwapPanelCommand}" />
-                </Grid.GestureRecognizers>
-            </Grid>
-            <Border Style="{StaticResource SessionCard}" StrokeShape="RoundRectangle 22,22,0,0"
-                    VerticalOptions="End" Padding="20,18,20,24" MaximumHeightRequest="520">
-                <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="14" IsEnabled="{Binding CanInteract}">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <VerticalStackLayout Spacing="4">
-                            <Label Text="Swap exercise" Style="{StaticResource SectionTitle}" />
-                            <Label Text="{Binding SwapTargetName, StringFormat='Replace {0} with:'}" Style="{StaticResource CaptionLabel}" />
-                        </VerticalStackLayout>
-                        <Button Grid.Column="1" Text="Close" Command="{Binding CloseSwapPanelCommand}" IsVisible="{Binding CanDismissSwap}" Style="{StaticResource QuietButton}" />
+                        <Button Grid.Row="1" Text="Finish session" Command="{Binding FinishSessionCommand}" Style="{StaticResource QuietButton}" />
                     </Grid>
-                    <ActivityIndicator Grid.Row="1" IsVisible="{Binding IsSwapLoading}" IsRunning="{Binding IsSwapLoading}" Color="{StaticResource Primary}" />
-                    <VerticalStackLayout Grid.Row="2" Spacing="8">
-                        <Label Text="{Binding SwapErrorText}" Style="{StaticResource BodyLabel}" IsVisible="{Binding HasSwapError}" />
-                        <Label Text="No alternatives are available for this exercise. You can keep it or skip it."
-                               Style="{StaticResource BodyLabel}" IsVisible="{Binding ShowNoSwapCandidates}" />
-                    </VerticalStackLayout>
-                    <CollectionView Grid.Row="3" ItemsSource="{Binding SwapCandidates}" IsVisible="{Binding HasSwapCandidates}"
-                                    HeightRequest="240" SelectionMode="None">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="models:ExerciseSwapOption">
-                                <Border Style="{StaticResource SessionCard}" Margin="0,0,0,8" StrokeThickness="1"
-                                        Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                            <Setter Property="Stroke" Value="{StaticResource Primary}" />
-                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding BindingContext.SelectSwapCandidateCommand, Source={x:Reference Root}}" CommandParameter="{Binding .}" />
-                                    </Border.GestureRecognizers>
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                        <VerticalStackLayout Spacing="4">
-                                            <Label Text="{Binding Name}" Style="{StaticResource BodyLabel}" FontAttributes="Bold" />
-                                            <Label Text="{Binding MuscleMatch}" Style="{StaticResource CaptionLabel}" />
-                                            <Label Text="{Binding PrimaryMuscles}" Style="{StaticResource CaptionLabel}"
-                                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                            <Label Text="{Binding Equipment}" Style="{StaticResource CaptionLabel}"
-                                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                        </VerticalStackLayout>
-                                        <Label Grid.Column="1" Text="Selected" IsVisible="{Binding IsSelected}" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                    <VerticalStackLayout Grid.Row="4" Spacing="4">
-                        <Button Text="{Binding SwapConfirmText}" Command="{Binding ConfirmSwapCommand}" IsVisible="{Binding HasSwapCandidates}" MinimumHeightRequest="52" />
-                        <Button Text="Leave session" Command="{Binding FinishSessionCommand}" IsVisible="{Binding SwapNeedsReload}" Style="{StaticResource QuietButton}" />
-                    </VerticalStackLayout>
                 </Grid>
-            </Border>
+            </Grid>
         </Grid>
+        <toolkit:LazyView
+            x:Name="SwapPanelLazy"
+            x:TypeArguments="workoutControls:WorkoutSwapPanel"
+            InputTransparent="{Binding IsSwapPanelVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <Grid IsVisible="{Binding IsBusy}" BackgroundColor="#40000000">
             <ActivityIndicator IsRunning="{Binding IsBusy}" Color="{StaticResource Primary}" WidthRequest="48" HeightRequest="48"
                                HorizontalOptions="Center" VerticalOptions="Center" SemanticProperties.Description="Saving or loading your workout" />

@@ -83,6 +83,9 @@ public class WorkoutInjuryRepository : BaseRepository<WorkoutInjuryLog>, IWorkou
 
         var exercises = await _db.WorkoutExerciseDefinitions
             .AsNoTracking()
+            .Where(exercise =>
+                (exercise.Contraindications & activeInjuries) != InjuryFlag.None ||
+                (exercise.PreferredFor & activeInjuries) != InjuryFlag.None)
             .Select(exercise => new
             {
                 exercise.Name,

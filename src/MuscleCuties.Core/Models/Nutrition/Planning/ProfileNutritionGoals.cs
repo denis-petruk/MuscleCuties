@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace MuscleCuties.Core.Models.Nutrition.Planning;
@@ -71,6 +72,7 @@ public sealed record ProfileNutritionGoals(
         null,
         null);
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     public static ProfileNutritionGoals FromJson(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
@@ -152,6 +154,7 @@ public sealed record ProfileNutritionGoals(
             UseValue(Potassium, fallback.Potassium));
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     public string ToJson()
     {
         return JsonSerializer.Serialize(this);

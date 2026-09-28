@@ -82,32 +82,36 @@
                     <Grid
                         Grid.Column="1"
                         RowDefinitions="Auto, Auto, Auto, Auto, Auto"
+                        ColumnDefinitions="Auto, *"
                         RowSpacing="10"
                         VerticalOptions="Center">
-                        <HorizontalStackLayout Grid.Row="0" Spacing="7">
-                            <Image
-                                Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
-                                WidthRequest="20"
-                                HeightRequest="20"
-                                Aspect="AspectFit"
-                                VerticalOptions="Center" />
-                            <Label
-                                Text="{Binding SelectedBreakdownCaloriesText}"
-                                Style="{StaticResource AccentLabel}"
-                                FontSize="20"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
+                        <Image
+                            Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                            WidthRequest="20"
+                            HeightRequest="20"
+                            Aspect="AspectFit"
+                            VerticalOptions="Center"
+                            Margin="0,0,7,0" />
+                        <Label
+                            Grid.Column="1"
+                            Text="{Binding SelectedBreakdownCaloriesText}"
+                            Style="{StaticResource AccentLabel}"
+                            FontSize="20"
+                            VerticalOptions="Center" />
                         <Label
                             Grid.Row="1"
+                            Grid.ColumnSpan="2"
                             Text="{Binding SelectedBreakdownMacrosText}"
                             Style="{StaticResource CaptionLabel}" />
                         <Label
                             Grid.Row="2"
+                            Grid.ColumnSpan="2"
                             Text="{Binding SelectedBreakdownFiberText}"
                             Style="{StaticResource CaptionLabel}" />
 
                         <Border
                             Grid.Row="3"
+                            Grid.ColumnSpan="2"
                             StrokeShape="RoundRectangle 16"
                             StrokeThickness="0"
                             BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
@@ -119,7 +123,7 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding EditSelectedBreakdownMealCommand}" />
                             </Border.GestureRecognizers>
-                            <HorizontalStackLayout Spacing="6">
+                            <Grid ColumnDefinitions="Auto, Auto" ColumnSpacing="6">
                                 <Image
                                     Source="{Binding Source='EditSettings24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                                     WidthRequest="14"
@@ -127,15 +131,17 @@
                                     Aspect="AspectFit"
                                     VerticalOptions="Center" />
                                 <Label
+                                    Grid.Column="1"
                                     Text="Edit meal"
                                     Style="{StaticResource CaptionLabel}"
                                     FontAttributes="Bold"
                                     VerticalOptions="Center" />
-                            </HorizontalStackLayout>
+                            </Grid>
                         </Border>
 
                         <VerticalStackLayout
                             Grid.Row="4"
+                            Grid.ColumnSpan="2"
                             Spacing="7"
                             BindableLayout.ItemsSource="{Binding SelectedBreakdownMacroItems}">
                             <BindableLayout.ItemTemplate>
@@ -202,13 +208,11 @@
                                 Margin="0,0,0,8">
 
                                 <Grid
-                                    RowDefinitions="Auto, 10, Auto"
+                                    RowDefinitions="Auto, Auto, 10, Auto"
                                     ColumnDefinitions="34, *, Auto"
                                     ColumnSpacing="10">
                                     <Border
-                                        Grid.Row="0"
-                                        Grid.Column="0"
-                                        Grid.RowSpan="3"
+                                        Grid.RowSpan="4"
                                         WidthRequest="34"
                                         HeightRequest="34"
                                         StrokeShape="RoundRectangle 17"
@@ -225,26 +229,22 @@
                                             VerticalOptions="Center" />
                                     </Border>
 
-                                    <Grid
-                                        Grid.Row="0"
+                                    <Label
                                         Grid.Column="1"
-                                        RowDefinitions="Auto, Auto"
-                                        RowSpacing="2">
-                                        <Label
-                                            Grid.Row="0"
-                                            Text="{Binding Group}"
-                                            Style="{StaticResource EyebrowLabel}"
-                                            FontSize="9"
-                                            CharacterSpacing="1.1" />
-                                        <Label
-                                            Grid.Row="1"
-                                            Text="{Binding Name}"
-                                            Style="{StaticResource CardTitle}"
-                                            FontSize="15" />
-                                    </Grid>
+                                        Text="{Binding Group}"
+                                        Style="{StaticResource EyebrowLabel}"
+                                        FontSize="9"
+                                        CharacterSpacing="1.1"
+                                        Margin="0,0,0,2" />
+                                    <Label
+                                        Grid.Row="1"
+                                        Grid.Column="1"
+                                        Text="{Binding Name}"
+                                        Style="{StaticResource CardTitle}"
+                                        FontSize="15" />
 
                                     <HorizontalStackLayout
-                                        Grid.Row="0"
+                                        Grid.RowSpan="2"
                                         Grid.Column="2"
                                         Spacing="3"
                                         VerticalOptions="Center">
@@ -259,7 +259,7 @@
                                     </HorizontalStackLayout>
 
                                     <ProgressBar
-                                        Grid.Row="2"
+                                        Grid.Row="3"
                                         Grid.Column="1"
                                         Progress="{Binding Progress}"
                                         ProgressColor="{StaticResource Primary}"
@@ -279,7 +279,7 @@
                                     </ProgressBar>
 
                                     <Label
-                                        Grid.Row="2"
+                                        Grid.Row="3"
                                         Grid.Column="2"
                                         Text="{Binding ProgressText}"
                                         Style="{StaticResource CaptionLabel}"

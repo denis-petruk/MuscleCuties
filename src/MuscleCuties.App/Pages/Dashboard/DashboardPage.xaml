@@ -138,9 +138,9 @@
         </RefreshView>
 
         <sharedControls:PageLoadingOverlay />
-        <injuryControls:InjuryLogModal
-            BindingContext="{Binding InjuryLogVm}"
-            IsOpen="{Binding BindingContext.IsInjuryModalVisible, Source={x:Reference DashboardRoot}}"
-            CloseCommand="{Binding BindingContext.CloseInjuryModalCommand, Source={x:Reference DashboardRoot}}" />
+        <toolkit:LazyView
+            x:Name="InjuryModalLazy"
+            x:TypeArguments="injuryControls:InjuryLogModal"
+            InputTransparent="{Binding IsInjuryModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
     </Grid>
 </ContentPage>

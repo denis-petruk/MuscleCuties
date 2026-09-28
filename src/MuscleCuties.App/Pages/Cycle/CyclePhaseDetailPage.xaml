@@ -31,7 +31,7 @@
                 Padding="22,20">
                 <VerticalStackLayout Spacing="10">
 
-                    <HorizontalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
                         <Image
                             Source="{Binding PhaseIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                             WidthRequest="14"
@@ -39,11 +39,11 @@
                             Aspect="AspectFit"
                             VerticalOptions="Center" />
                         <Label
+                            Grid.Column="1"
                             Text="{Binding PhaseWindow}"
                             Style="{StaticResource FormFieldLabel}"
-                            TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                            />
-                    </HorizontalStackLayout>
+                            TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}" />
+                    </Grid>
 
                     <Label
                         Text="{Binding Headline}"
@@ -87,16 +87,16 @@
                                 <Border
                                     BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                     StrokeThickness="0" StrokeShape="RoundRectangle 20" Padding="10,7" Margin="0,0,6,6">
-                                    <HorizontalStackLayout Spacing="6">
+                                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
                                         <Image
                                             Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                                             WidthRequest="14"
                                             HeightRequest="14"
                                             Aspect="AspectFit"
                                             VerticalOptions="Center" />
-                                        <Label Text="{Binding Title}" Style="{StaticResource CardTitle}"
+                                        <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource CardTitle}"
                                                FontSize="12.5" VerticalOptions="Center" />
-                                    </HorizontalStackLayout>
+                                    </Grid>
                                 </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
@@ -107,60 +107,39 @@
                 <VerticalStackLayout Spacing="12">
                     <Label Text="At a glance" Style="{StaticResource SectionTitle}" />
 
-                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
-                        <Grid ColumnDefinitions="24,70,*,60" ColumnSpacing="8">
-                            <Image
-                                Source="{Binding TrainingIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                Aspect="AspectFit"
-                                VerticalOptions="Center" />
-                            <Label Grid.Column="1" Text="Training" Style="{StaticResource FormFieldLabel}"
-                                   VerticalOptions="Center" />
-                            <ProgressBar Grid.Column="2" Progress="{Binding TrainingSignal}"
-                                         ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                                         VerticalOptions="Center" />
-                            <Label Grid.Column="3" Text="{Binding TrainingSignalText}"
-                                   Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End"
-                                   VerticalOptions="Center" />
-                        </Grid>
+                    <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="24,70,*,60" RowSpacing="10" ColumnSpacing="8">
+                        <Image
+                            Source="{Binding TrainingIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                            WidthRequest="18" HeightRequest="18" Aspect="AspectFit" VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="Training" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
+                        <ProgressBar Grid.Column="2" Progress="{Binding TrainingSignal}"
+                                     ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                     VerticalOptions="Center" />
+                        <Label Grid.Column="3" Text="{Binding TrainingSignalText}"
+                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" />
 
-                        <Grid Grid.Row="1" ColumnDefinitions="24,70,*,60" ColumnSpacing="8">
-                            <Image
-                                Source="{Binding NutritionIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                Aspect="AspectFit"
-                                VerticalOptions="Center" />
-                            <Label Grid.Column="1" Text="Nutrition" Style="{StaticResource FormFieldLabel}"
-                                   VerticalOptions="Center" />
-                            <ProgressBar Grid.Column="2" Progress="{Binding NutritionSignal}"
-                                         ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                                         VerticalOptions="Center" />
-                            <Label Grid.Column="3" Text="{Binding NutritionSignalText}"
-                                   Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End"
-                                   VerticalOptions="Center" />
-                        </Grid>
+                        <Image Grid.Row="1"
+                            Source="{Binding NutritionIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                            WidthRequest="18" HeightRequest="18" Aspect="AspectFit" VerticalOptions="Center" />
+                        <Label Grid.Row="1" Grid.Column="1" Text="Nutrition" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
+                        <ProgressBar Grid.Row="1" Grid.Column="2" Progress="{Binding NutritionSignal}"
+                                     ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                     VerticalOptions="Center" />
+                        <Label Grid.Row="1" Grid.Column="3" Text="{Binding NutritionSignalText}"
+                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" />
 
-                        <Grid Grid.Row="2" ColumnDefinitions="24,70,*,60" ColumnSpacing="8">
-                            <Image
-                                Source="{Binding RecoveryIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                Aspect="AspectFit"
-                                VerticalOptions="Center" />
-                            <Label Grid.Column="1" Text="Recovery" Style="{StaticResource FormFieldLabel}"
-                                   VerticalOptions="Center" />
-                            <ProgressBar Grid.Column="2" Progress="{Binding RecoverySignal}"
-                                         ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                                         VerticalOptions="Center" />
-                            <Label Grid.Column="3" Text="{Binding RecoverySignalText}"
-                                   Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End"
-                                   VerticalOptions="Center" />
-                        </Grid>
+                        <Image Grid.Row="2"
+                            Source="{Binding RecoveryIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                            WidthRequest="18" HeightRequest="18" Aspect="AspectFit" VerticalOptions="Center" />
+                        <Label Grid.Row="2" Grid.Column="1" Text="Recovery" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
+                        <ProgressBar Grid.Row="2" Grid.Column="2" Progress="{Binding RecoverySignal}"
+                                     ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                     VerticalOptions="Center" />
+                        <Label Grid.Row="2" Grid.Column="3" Text="{Binding RecoverySignalText}"
+                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" VerticalOptions="Center" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
@@ -257,16 +236,16 @@
                                 <Border
                                     BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                     StrokeThickness="0" StrokeShape="RoundRectangle 20" Padding="10,7" Margin="0,0,6,6">
-                                    <HorizontalStackLayout Spacing="6">
+                                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
                                         <Image
                                             Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                                             WidthRequest="14"
                                             HeightRequest="14"
                                             Aspect="AspectFit"
                                             VerticalOptions="Center" />
-                                        <Label Text="{Binding Title}" Style="{StaticResource CardTitle}"
+                                        <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource CardTitle}"
                                                FontSize="12.5" VerticalOptions="Center" />
-                                    </HorizontalStackLayout>
+                                    </Grid>
                                 </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>

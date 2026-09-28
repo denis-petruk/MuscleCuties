@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Core.Models.Entities.Workout.Planning;
@@ -50,6 +51,7 @@ public static class AdaptiveProfileMapper
             : Equipment.FullGym;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     internal static CyclePhaseBaselines? ParseBaselines(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
@@ -65,6 +67,7 @@ public static class AdaptiveProfileMapper
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     internal static string SerializeBaselines(CyclePhaseBaselines baselines)
     {
         return JsonSerializer.Serialize(baselines, JsonOptions);

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using MuscleCuties.Core.Services.Auth;
 
@@ -55,6 +56,7 @@ public sealed class HealthSyncService : IHealthSyncService
         await WriteStateAsync(userId, state with { PromptDismissed = true });
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     public async Task<HealthSyncResult> SyncAsync(
         int userId,
         HealthDataSource source,
@@ -113,6 +115,7 @@ public sealed class HealthSyncService : IHealthSyncService
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     public async Task<HealthWeeklySummary?> GetCachedWeeklySummaryAsync(int userId)
     {
         var json = await _tokenStorage.GetAsync(SummaryKey(userId));
@@ -130,6 +133,7 @@ public sealed class HealthSyncService : IHealthSyncService
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     private async Task<StoredHealthSyncState> ReadStateAsync(int userId)
     {
         var json = await _tokenStorage.GetAsync(StateKey(userId));
@@ -149,6 +153,7 @@ public sealed class HealthSyncService : IHealthSyncService
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     private Task WriteStateAsync(int userId, StoredHealthSyncState state)
     {
         return _tokenStorage.SetAsync(StateKey(userId), JsonSerializer.Serialize(state, JsonOptions));

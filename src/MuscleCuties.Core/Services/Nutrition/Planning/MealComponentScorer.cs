@@ -18,7 +18,7 @@ public static class MealComponentScorer
         ["olive", "feta", "hummus", "couscous", "chickpea", "lentil"];
 
     private static readonly string[] BowlTerms =
-        ["rice", "quinoa", "noodle", "couscous", "grain"];
+        ["rice", "quinoa", "noodle", "couscous", "grain", "oat", "bean", "lentil"];
 
     private static readonly string[] StirFryTerms =
         ["tofu", "soy", "sesame", "ginger", "teriyaki", "stir"];
@@ -29,9 +29,33 @@ public static class MealComponentScorer
     private static readonly string[] PlatedProteinTerms =
         ["chicken", "salmon", "tuna", "turkey", "beef", "shrimp", "cod", "pork"];
 
+    private static readonly string[] HandheldTerms =
+        ["bun", "hamburger", "bread", "toast", "baguette", "dinner roll", "bagel", "muffin"];
+
+    private static readonly string[] CookingSauceTerms =
+        ["crushed tomato", "tomato sauce", "broth", "stew", "curry paste", "coconut milk"];
+
+    private static readonly string[] WrappedTerms =
+        ["tortilla", "wrap", "pita", "flatbread", "lavash", "naan"];
+
     public static MealStyle DetermineStyle(
         FoodItem protein, FoodItem carb, FoodItem veg, FoodItem? sauce)
     {
+        // Vessel-based detection takes priority: the carb base defines
+        // whether the meal is held in hand or wrapped, regardless of
+        // what the filling ingredients are named.
+        // Check wrapped first — "pita bread" should be Wrapped, not Handheld.
+        if (ContainsAny(carb.Name, WrappedTerms))
+            return MealStyle.Wrapped;
+        if (ContainsAny(carb.Name, HandheldTerms))
+        {
+            // Bread paired with a cooking sauce (e.g. Shakshuka) is a
+            // Complex dish, not a handheld sandwich/burger.
+            if (sauce is not null && ContainsAny(sauce.Name, CookingSauceTerms))
+                return MealStyle.Complex;
+            return MealStyle.Handheld;
+        }
+
         var names = sauce is not null
             ? new[] { protein.Name, carb.Name, veg.Name, sauce.Name }
             : new[] { protein.Name, carb.Name, veg.Name };
@@ -103,6 +127,14 @@ public static class MealComponentScorer
                 if (sauce is not null) bonus += 3f;
                 if (names.Any(n => ContainsAny(n, StirFryTerms) || ContainsAny(n, CurryTerms)))
                     bonus += 2f;
+                break;
+            case MealStyle.Handheld:
+                if (ContainsAny(carb.Name, HandheldTerms)) bonus += 3f;
+                if (ContainsAny(protein.Name, PlatedProteinTerms)) bonus += 2f;
+                break;
+            case MealStyle.Wrapped:
+                if (ContainsAny(carb.Name, WrappedTerms)) bonus += 3f;
+                if (names.Any(n => ContainsAny(n, LatinTerms))) bonus += 2f;
                 break;
             case MealStyle.Plated:
                 if (ContainsAny(protein.Name, PlatedProteinTerms)) bonus += 2f;

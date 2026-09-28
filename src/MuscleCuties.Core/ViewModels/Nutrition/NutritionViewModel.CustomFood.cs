@@ -53,9 +53,9 @@ public partial class NutritionViewModel
             ClearCustomFoodForm();
             AddFoodMessage = $"{item.Name} saved. Add it to this meal when ready.";
         }
-        catch (ArgumentException ex)
+        catch (ArgumentException)
         {
-            AddFoodMessage = ex.Message;
+            AddFoodMessage = "Check the food values and try again.";
         }
         catch (Exception)
         {

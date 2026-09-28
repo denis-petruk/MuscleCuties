@@ -234,57 +234,57 @@
                 MaximumWidthRequest="640"
                 HorizontalOptions="Fill"
                 IsVisible="{Binding IsCurrentQuestionPhasePair}">
-                <VerticalStackLayout Spacing="24">
-                    <VerticalStackLayout Spacing="12">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                            <Label Text="Discomfort" Style="{StaticResource CardTitle}" />
-                            <Label
-                                Grid.Column="1"
-                                Text="{Binding PainSliderLabel}"
-                                Style="{StaticResource AccentLabel}" />
-                        </Grid>
-                        <Slider
-                            Minimum="1"
-                            Maximum="5"
-                            Value="{Binding PainSliderValue, Mode=TwoWay}"
-                            MinimumTrackColor="{StaticResource Primary}"
-                            MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                            ThumbColor="{StaticResource Primary}"
-                            SemanticProperties.Description="Usual phase discomfort"
-                            SemanticProperties.Hint="Severe on the left, none on the right" />
-                        <Grid ColumnDefinitions="*,*">
-                            <Label Text="Severe" Style="{StaticResource MutedLabel}" />
-                            <Label Grid.Column="1" Text="None" Style="{StaticResource MutedLabel}" HorizontalTextAlignment="End" />
-                        </Grid>
-                    </VerticalStackLayout>
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="12">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Label Text="Discomfort" Style="{StaticResource CardTitle}" />
+                        <Label
+                            Grid.Column="1"
+                            Text="{Binding PainSliderLabel}"
+                            Style="{StaticResource AccentLabel}" />
+                    </Grid>
+                    <Slider
+                        Grid.Row="1"
+                        Minimum="1"
+                        Maximum="5"
+                        Value="{Binding PainSliderValue, Mode=TwoWay}"
+                        MinimumTrackColor="{StaticResource Primary}"
+                        MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                        ThumbColor="{StaticResource Primary}"
+                        SemanticProperties.Description="Usual phase discomfort"
+                        SemanticProperties.Hint="Severe on the left, none on the right" />
+                    <Grid Grid.Row="2" ColumnDefinitions="*,*">
+                        <Label Text="Severe" Style="{StaticResource MutedLabel}" />
+                        <Label Grid.Column="1" Text="None" Style="{StaticResource MutedLabel}" HorizontalTextAlignment="End" />
+                    </Grid>
 
                     <BoxView
+                        Grid.Row="3"
                         HeightRequest="1"
+                        Margin="0,12,0,0"
                         Color="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
 
-                    <VerticalStackLayout Spacing="12">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                            <Label Text="Training energy" Style="{StaticResource CardTitle}" />
-                            <Label
-                                Grid.Column="1"
-                                Text="{Binding EnergySliderLabel}"
-                                Style="{StaticResource AccentLabel}" />
-                        </Grid>
-                        <Slider
-                            Minimum="1"
-                            Maximum="5"
-                            Value="{Binding EnergySliderValue, Mode=TwoWay}"
-                            MinimumTrackColor="{StaticResource Primary}"
-                            MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                            ThumbColor="{StaticResource Primary}"
-                            SemanticProperties.Description="Usual phase training energy"
-                            SemanticProperties.Hint="Very low on the left, peak energy on the right" />
-                        <Grid ColumnDefinitions="*,*">
-                            <Label Text="Very low" Style="{StaticResource MutedLabel}" />
-                            <Label Grid.Column="1" Text="Peak" Style="{StaticResource MutedLabel}" HorizontalTextAlignment="End" />
-                        </Grid>
-                    </VerticalStackLayout>
-                </VerticalStackLayout>
+                    <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Label Text="Training energy" Style="{StaticResource CardTitle}" />
+                        <Label
+                            Grid.Column="1"
+                            Text="{Binding EnergySliderLabel}"
+                            Style="{StaticResource AccentLabel}" />
+                    </Grid>
+                    <Slider
+                        Grid.Row="5"
+                        Minimum="1"
+                        Maximum="5"
+                        Value="{Binding EnergySliderValue, Mode=TwoWay}"
+                        MinimumTrackColor="{StaticResource Primary}"
+                        MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                        ThumbColor="{StaticResource Primary}"
+                        SemanticProperties.Description="Usual phase training energy"
+                        SemanticProperties.Hint="Very low on the left, peak energy on the right" />
+                    <Grid Grid.Row="6" ColumnDefinitions="*,*">
+                        <Label Text="Very low" Style="{StaticResource MutedLabel}" />
+                        <Label Grid.Column="1" Text="Peak" Style="{StaticResource MutedLabel}" HorizontalTextAlignment="End" />
+                    </Grid>
+                </Grid>
             </ScrollView>
 
             <Grid

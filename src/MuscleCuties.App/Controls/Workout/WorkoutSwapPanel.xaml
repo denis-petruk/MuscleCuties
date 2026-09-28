@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Workout;assembly=MuscleCuties.Core"
+             xmlns:models="clr-namespace:MuscleCuties.Core.Models.UI.Workout;assembly=MuscleCuties.Core"
+             x:Class="MuscleCuties.App.Controls.Workout.WorkoutSwapPanel"
+             x:Name="SwapRoot"
+             x:DataType="vm:WorkoutSessionViewModel">
+    <Grid BackgroundColor="#80000000">
+        <Grid BackgroundColor="Transparent">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CloseSwapPanelCommand}" />
+            </Grid.GestureRecognizers>
+        </Grid>
+        <Border StrokeThickness="0" StrokeShape="RoundRectangle 22,22,0,0"
+                BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                VerticalOptions="End" Padding="20,18,20,24" MaximumHeightRequest="520">
+            <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="14" IsEnabled="{Binding CanInteract}">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Swap exercise" Style="{StaticResource SectionTitle}" />
+                        <Label Text="{Binding SwapTargetName, StringFormat='Replace {0} with:'}" Style="{StaticResource CaptionLabel}" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="1" Text="Close" Command="{Binding CloseSwapPanelCommand}" IsVisible="{Binding CanDismissSwap}"
+                            BackgroundColor="Transparent"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                            MinimumHeightRequest="48" Padding="12,8" FontSize="14" />
+                </Grid>
+                <ActivityIndicator Grid.Row="1" IsVisible="{Binding IsSwapLoading}" IsRunning="{Binding IsSwapLoading}" Color="{StaticResource Primary}" />
+                <VerticalStackLayout Grid.Row="2" Spacing="8">
+                    <Label Text="{Binding SwapErrorText}" Style="{StaticResource BodyLabel}" IsVisible="{Binding HasSwapError}" />
+                    <Label Text="No alternatives are available for this exercise. You can keep it or skip it."
+                           Style="{StaticResource BodyLabel}" IsVisible="{Binding ShowNoSwapCandidates}" />
+                </VerticalStackLayout>
+                <CollectionView Grid.Row="3" ItemsSource="{Binding SwapCandidates}" IsVisible="{Binding HasSwapCandidates}"
+                                HeightRequest="240" SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:ExerciseSwapOption">
+                            <Border StrokeThickness="1" StrokeShape="RoundRectangle 14" Padding="12,14"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                                    Margin="0,0,0,8"
+                                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectSwapCandidateCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutSessionViewModel}}, x:DataType=vm:WorkoutSessionViewModel}" CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="{Binding Name}" Style="{StaticResource BodyLabel}" FontAttributes="Bold" />
+                                        <Label Text="{Binding MuscleMatch}" Style="{StaticResource CaptionLabel}" />
+                                        <Label Text="{Binding PrimaryMuscles}" Style="{StaticResource CaptionLabel}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                        <Label Text="{Binding Equipment}" Style="{StaticResource CaptionLabel}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                    </VerticalStackLayout>
+                                    <Label Grid.Column="1" Text="Selected" IsVisible="{Binding IsSelected}" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+                <VerticalStackLayout Grid.Row="4" Spacing="4">
+                    <Button Text="{Binding SwapConfirmText}" Command="{Binding ConfirmSwapCommand}" IsVisible="{Binding HasSwapCandidates}" MinimumHeightRequest="52" />
+                    <Button Text="Leave session" Command="{Binding FinishSessionCommand}" IsVisible="{Binding SwapNeedsReload}"
+                            BackgroundColor="Transparent"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                            MinimumHeightRequest="48" Padding="12,8" FontSize="14" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentView>

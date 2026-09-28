@@ -383,12 +383,30 @@ public sealed class SuggestedMealService : ISuggestedMealService
             if (results.Count >= MaxSuggestions || existingConcepts.Contains(concept.Name))
                 break;
 
-            var slotFoods = BuildSlotFoods(concept.Slots, compatibleFoods);
+            var isVeganBreakfastBurger = dietaryTags.Contains(DietaryTag.Vegan) &&
+                (concept.Name.Equals("Breakfast Burger", StringComparison.OrdinalIgnoreCase) ||
+                 concept.Name.Equals("Vegan Breakfast Burger", StringComparison.OrdinalIgnoreCase));
+            var conceptFoods = isVeganBreakfastBurger
+                ? compatibleFoods.Where(food =>
+                    !food.Name.Contains("black bean", StringComparison.OrdinalIgnoreCase) &&
+                    (!FoodComponentClassifier.IsProteinAnchor(food) ||
+                     ContainsAny(food.Name, "TVP", "textured vegetable protein", "tofu"))).ToList()
+                : compatibleFoods;
+            var conceptSlots = isVeganBreakfastBurger
+                ? concept.Slots.Select(slot => slot.SlotType == MealConceptSlotType.ProteinBase
+                    ? slot with
+                    {
+                        IngredientEntries = [new SlotIngredientEntry(
+                            ["TVP", "textured vegetable protein", "tofu"], 1f, true)]
+                    }
+                    : slot).ToList()
+                : concept.Slots;
+            var slotFoods = BuildSlotFoods(conceptSlots, conceptFoods);
             if (slotFoods is null)
                 continue;
 
             foreach (var suggestion in BuildConceptSuggestions(
-                         concept, slotFoods, target, phase, dietaryTags, daysSinceUsed, goal))
+                         concept, slotFoods, conceptFoods, target, phase, dietaryTags, daysSinceUsed, goal))
             {
                 results.Add(suggestion);
                 existingConcepts.Add(suggestion.ConceptName);
@@ -460,7 +478,7 @@ public sealed class SuggestedMealService : ISuggestedMealService
             var match = FindBestMatch(compatibleFoods, entry.PreferredFoodTerms, slotType, usedIds);
 
             if (match is null && entry.Required)
-                match = FindByClassifier(compatibleFoods, slotType, usedIds);
+                match = FindByClassifier(compatibleFoods, slotType, usedIds, entry.PreferredFoodTerms);
 
             if (match is not null)
             {
@@ -500,11 +518,15 @@ public sealed class SuggestedMealService : ISuggestedMealService
     private static FoodItem? FindByClassifier(
         IReadOnlyList<FoodItem> compatibleFoods,
         MealConceptSlotType slotType,
-        IReadOnlySet<int> excludeIds)
+        IReadOnlySet<int> excludeIds,
+        IReadOnlyList<string>? preferredTerms = null)
     {
         return compatibleFoods.FirstOrDefault(f =>
             !excludeIds.Contains(f.Id) &&
-            IsFoodCompatibleWithSlot(f, slotType));
+            IsFoodCompatibleWithSlot(f, slotType) &&
+            (slotType != MealConceptSlotType.CarbBase ||
+             preferredTerms is null ||
+             FoodComponentClassifier.IsCarbSemanticMatch(f, preferredTerms)));
     }
 
     private static bool IsFoodCompatibleWithSlot(FoodItem food, MealConceptSlotType slotType)
@@ -541,9 +563,12 @@ public sealed class SuggestedMealService : ISuggestedMealService
         return ContainsAny(term, "banana", "bread", "corn", "oat", "pasta", "quinoa", "rice", "sweet potato", "tortilla");
     }
 
+    private const float DefaultCondimentGrams = 10f;
+
     private static List<SuggestedMeal> BuildConceptSuggestions(
         MealConcept concept,
         SlotFoodMap slotFoods,
+        IReadOnlyList<FoodItem> compatibleFoods,
         MealNutritionTarget target,
         CyclePhase phase,
         IReadOnlySet<DietaryTag> dietaryTags,
@@ -557,8 +582,9 @@ public sealed class SuggestedMealService : ISuggestedMealService
         var primaryVitamin = slotFoods.Vitamin[0].Food;
         var primarySauce = slotFoods.Sauce?.Count > 0 ? slotFoods.Sauce[0].Food : null;
 
-        var style = MealComponentScorer.DetermineStyle(
-            primaryProtein, primaryCarb, primaryVitamin, primarySauce);
+        var style = concept.PreferredStyle
+            ?? MealComponentScorer.DetermineStyle(
+                primaryProtein, primaryCarb, primaryVitamin, primarySauce);
 
         var score = MealComponentScorer.ScoreCombo(
             primaryProtein, primaryCarb, primaryVitamin, primarySauce,
@@ -576,6 +602,8 @@ public sealed class SuggestedMealService : ISuggestedMealService
         if (solution is null)
             return results;
 
+        solution = EnsureZeroCalorieCondiment(solution, compatibleFoods);
+
         results.Add(new SuggestedMeal(
             concept.Name,
             concept.Description,
@@ -589,6 +617,79 @@ public sealed class SuggestedMealService : ISuggestedMealService
             concept.SpiceBlends));
 
         return results;
+    }
+
+    private static PortionSolution EnsureZeroCalorieCondiment(
+        PortionSolution solution,
+        IReadOnlyList<FoodItem> compatibleFoods)
+    {
+        var existingIds = CollectUsedFoodIds(solution);
+
+        if (solution.SauceComponent is not null &&
+            solution.SauceComponent.Ingredients.Any(i =>
+                FoodComponentClassifier.IsZeroCalorieCondiment(i.Food)))
+            return solution;
+
+        var condiment = FindZeroCalorieCondiment(compatibleFoods, existingIds);
+        if (condiment is null)
+            return solution;
+
+        var condimentIngredient = new Ingredient(condiment, DefaultCondimentGrams);
+
+        if (solution.SauceComponent is not null)
+        {
+            var ingredients = solution.SauceComponent.Ingredients
+                .Append(condimentIngredient).ToList();
+            var updatedSauce = new MealComponent(MealConceptSlotType.Sauce, ingredients);
+            return solution with
+            {
+                SauceComponent = updatedSauce,
+                Total = MacroNutrients.Sum([
+                    solution.CarbComponent.Macros,
+                    solution.ProteinComponent.Macros,
+                    solution.VitaminComponent.Macros,
+                    updatedSauce.Macros
+                ])
+            };
+        }
+
+        var newSauce = new MealComponent(MealConceptSlotType.Sauce, [condimentIngredient]);
+        return solution with
+        {
+            SauceComponent = newSauce,
+            Total = MacroNutrients.Sum([
+                solution.CarbComponent.Macros,
+                solution.ProteinComponent.Macros,
+                solution.VitaminComponent.Macros,
+                newSauce.Macros
+            ])
+        };
+    }
+
+    private static FoodItem? FindZeroCalorieCondiment(
+        IReadOnlyList<FoodItem> foods,
+        IReadOnlySet<int> excludeIds)
+    {
+        return foods.FirstOrDefault(food =>
+            !excludeIds.Contains(food.Id) &&
+            FoodComponentClassifier.IsZeroCalorieCondiment(food));
+    }
+
+    private static HashSet<int> CollectUsedFoodIds(PortionSolution solution)
+    {
+        var ids = new HashSet<int>();
+        AddComponentFoodIds(ids, solution.CarbComponent);
+        AddComponentFoodIds(ids, solution.ProteinComponent);
+        AddComponentFoodIds(ids, solution.VitaminComponent);
+        if (solution.SauceComponent is not null)
+            AddComponentFoodIds(ids, solution.SauceComponent);
+        return ids;
+    }
+
+    private static void AddComponentFoodIds(HashSet<int> ids, MealComponent component)
+    {
+        foreach (var ingredient in component.Ingredients)
+            ids.Add(ingredient.Food.Id);
     }
 
     private static PortionSolution? SolveMultiIngredient(

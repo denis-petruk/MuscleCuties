@@ -356,22 +356,24 @@
         </ScrollView>
 
         <!-- Actions -->
-        <VerticalStackLayout
+        <Grid
             x:Name="ActionArea"
             Grid.Row="1"
+            RowDefinitions="Auto,Auto,Auto"
             Padding="20,12,20,36"
-            Spacing="0"
             IsVisible="{Binding IsCompleted, Converter={StaticResource InvertedBoolConverter}}"
             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
             <BoxView HeightRequest="1" Margin="0,0,0,12" />
             <Button
+                Grid.Row="1"
                 Text="Submit"
                 Command="{Binding SubmitCommand}" />
             <Button
+                Grid.Row="2"
                 Text="Skip for now"
                 Style="{StaticResource ButtonLink}"
                 Command="{Binding SkipCommand}" />
-        </VerticalStackLayout>
+        </Grid>
 
     </Grid>
 

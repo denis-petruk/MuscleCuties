@@ -6,7 +6,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Common;assembly=MuscleCuties.Core"
     x:DataType="vm:IPageLoadAware"
-    InputTransparent="False">
+    InputTransparent="{Binding IsPageLoading}">
 
     <ContentView.Triggers>
         <MultiTrigger TargetType="ContentView">
@@ -18,15 +18,13 @@
         </MultiTrigger>
     </ContentView.Triggers>
 
-    <Grid
-        BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
-        Padding="24">
+    <Grid Padding="24">
 
         <!-- Loading state -->
         <VerticalStackLayout
             IsVisible="{Binding IsPageLoading}"
             HorizontalOptions="Center"
-            VerticalOptions="Center"
+            VerticalOptions="Start"
             Spacing="10">
             <ActivityIndicator
                 Color="{StaticResource Primary}"
@@ -39,26 +37,29 @@
         </VerticalStackLayout>
 
         <!-- Error state -->
-        <VerticalStackLayout
+        <Grid
             IsVisible="{Binding IsLoadError}"
-            HorizontalOptions="Center"
-            VerticalOptions="Center"
-            Spacing="16">
-            <Label
-                Text="Something went wrong"
-                Style="{StaticResource SectionTitle}"
-                HorizontalTextAlignment="Center" />
-            <Label
-                Text="We could not load your data. Please try again."
-                Style="{StaticResource MutedLabel}"
-                HorizontalTextAlignment="Center" />
-            <Button
-                Text="Retry"
-                Command="{Binding LoadDataCommand}"
-                Style="{StaticResource ButtonLink}"
+            BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+            <VerticalStackLayout
                 HorizontalOptions="Center"
-                SemanticProperties.Description="Retry loading data" />
-        </VerticalStackLayout>
+                VerticalOptions="Center"
+                Spacing="16">
+                <Label
+                    Text="Something went wrong"
+                    Style="{StaticResource SectionTitle}"
+                    HorizontalTextAlignment="Center" />
+                <Label
+                    Text="We could not load your data. Please try again."
+                    Style="{StaticResource MutedLabel}"
+                    HorizontalTextAlignment="Center" />
+                <Button
+                    Text="Retry"
+                    Command="{Binding LoadDataCommand}"
+                    Style="{StaticResource ButtonLink}"
+                    HorizontalOptions="Center"
+                    SemanticProperties.Description="Retry loading data" />
+            </VerticalStackLayout>
+        </Grid>
 
     </Grid>
 </ContentView>

@@ -12,7 +12,7 @@ public class AuthService : IAuthService
     private readonly ITokenStorage _tokenStorage;
 
     private readonly IUserRepository _userRepository;
-    private int? _cachedUserId;
+    private CurrentUserState? _cachedSession;
 
     public AuthService(IUserRepository userRepository, ITokenStorage tokenStorage)
     {
@@ -31,7 +31,7 @@ public class AuthService : IAuthService
         if (user.PasswordHash != HashPassword(password)) return null;
 
         await _tokenStorage.SetAsync(UserIdKey, user.Id.ToString());
-        _cachedUserId = user.Id;
+        _cachedSession = new CurrentUserState(user.Id, user.IsOnboardingComplete);
         return user;
     }
 
@@ -53,9 +53,17 @@ public class AuthService : IAuthService
 
         await _userRepository.AddAsync(user);
         await _tokenStorage.SetAsync(UserIdKey, user.Id.ToString());
-        _cachedUserId = user.Id;
+        _cachedSession = new CurrentUserState(user.Id, user.IsOnboardingComplete);
 
         return user;
+    }
+
+    public Task<bool> EmailExistsAsync(string email)
+    {
+        var normalizedEmail = NormalizeEmail(email);
+        return string.IsNullOrWhiteSpace(normalizedEmail)
+            ? Task.FromResult(false)
+            : _userRepository.EmailExistsAsync(normalizedEmail);
     }
 
     public async Task<User?> SignInWithAppleAsync(AppleSignInResult appleAccount)
@@ -88,7 +96,7 @@ public class AuthService : IAuthService
             await _userRepository.UpdateAsync(user);
         }
 
-        await SetCurrentUserAsync(user.Id);
+        await SetCurrentUserAsync(user);
         return user;
     }
 
@@ -122,55 +130,56 @@ public class AuthService : IAuthService
             await _userRepository.AddAsync(user);
         }
 
-        await SetCurrentUserAsync(user.Id);
+        await SetCurrentUserAsync(user);
         return user;
     }
 
     public Task LogoutAsync()
     {
-        _cachedUserId = null;
+        _cachedSession = null;
         _tokenStorage.Remove(UserIdKey);
         return Task.CompletedTask;
     }
 
     public async Task<bool> IsLoggedInAsync()
     {
-        var userId = await ResolveCurrentUserIdAsync();
-        return userId > 0;
+        return await ResolveCurrentSessionAsync() is not null;
     }
 
     public async Task<int> GetCurrentUserIdAsync()
     {
-        return await ResolveCurrentUserIdAsync();
+        return (await ResolveCurrentSessionAsync())?.UserId ?? 0;
     }
 
-    private async Task<int> ResolveCurrentUserIdAsync()
+    public Task<CurrentUserState?> GetCurrentUserStateAsync() => ResolveCurrentSessionAsync();
+
+    private async Task<CurrentUserState?> ResolveCurrentSessionAsync()
     {
-        if (_cachedUserId is int cachedUserId) return cachedUserId;
+        if (_cachedSession is { } cachedSession) return cachedSession;
 
         await _resolveUserLock.WaitAsync();
         try
         {
-            if (_cachedUserId is int resolvedUserId) return resolvedUserId;
+            if (_cachedSession is { } resolvedSession) return resolvedSession;
 
             var id = await _tokenStorage.GetAsync(UserIdKey);
-            if (string.IsNullOrWhiteSpace(id)) return 0;
+            if (string.IsNullOrWhiteSpace(id)) return null;
 
             if (!int.TryParse(id, out var userId) || userId <= 0)
             {
                 _tokenStorage.Remove(UserIdKey);
-                return 0;
+                return null;
             }
 
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user is not null)
+            var isOnboardingComplete = await _userRepository.GetOnboardingCompletionAsync(userId);
+            if (isOnboardingComplete is { } completed)
             {
-                _cachedUserId = userId;
-                return userId;
+                _cachedSession = new CurrentUserState(userId, completed);
+                return _cachedSession;
             }
 
             _tokenStorage.Remove(UserIdKey);
-            return 0;
+            return null;
         }
         finally
         {
@@ -196,10 +205,10 @@ public class AuthService : IAuthService
             : provider.Trim().ToLowerInvariant();
     }
 
-    private async Task SetCurrentUserAsync(int userId)
+    private async Task SetCurrentUserAsync(User user)
     {
-        await _tokenStorage.SetAsync(UserIdKey, userId.ToString());
-        _cachedUserId = userId;
+        await _tokenStorage.SetAsync(UserIdKey, user.Id.ToString());
+        _cachedSession = new CurrentUserState(user.Id, user.IsOnboardingComplete);
     }
 
     private static string BuildAppleEmail(string appleUserId, string? email)

@@ -27,7 +27,7 @@
                         SemanticProperties.Description="{Binding Name, StringFormat='View {0} phase guide'}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer
-                                Command="{Binding BindingContext.OpenPhaseDetailsCommand, Source={x:Reference Root}}"
+                                Command="{Binding OpenPhaseDetailsCommand, Source={RelativeSource AncestorType={x:Type vm:CycleViewModel}}, x:DataType=vm:CycleViewModel}"
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid

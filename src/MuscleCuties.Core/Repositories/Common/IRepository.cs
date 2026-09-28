@@ -1,6 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace MuscleCuties.Core.Repositories.Common;
 
-public interface IRepository<T> where T : class
+public interface IRepository<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T> where T : class
 {
     Task<T?> GetByIdAsync(int id);
     Task<List<T>> GetAllAsync();

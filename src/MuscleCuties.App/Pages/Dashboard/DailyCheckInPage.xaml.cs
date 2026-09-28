@@ -12,17 +12,23 @@ public partial class DailyCheckInPage : ContentPage
 
     public DailyCheckInPage(DailyCheckInViewModel vm)
     {
-        InitializeComponent();
+        this.InitializeWithTiming(InitializeComponent);
         _viewModel = vm;
         BindingContext = vm;
-
-        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         this.BeginPageLoad(LoadPageAsync);
+    }
+
+    protected override void OnNavigatedFrom(NavigatedFromEventArgs args)
+    {
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        base.OnNavigatedFrom(args);
     }
 
     private async Task LoadPageAsync()

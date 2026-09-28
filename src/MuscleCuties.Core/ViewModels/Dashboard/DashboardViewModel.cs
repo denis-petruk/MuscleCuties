@@ -28,6 +28,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ViewModelLoadGate _loadGate = new(ViewModelLoadGate.PageFreshnessWindow);
+    // Suppresses per-field partial On*Changed notifications during a bulk load so that
+    // computed properties are only invalidated once at the end via the Notify* helpers.
+    private bool _isBulkLoading;
     private readonly Func<Task> _openCycleAsync;
     private readonly Func<Task> _openDailyCheckInAsync;
     private readonly Func<Task> _openNutritionAsync;
@@ -288,12 +291,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
             await Task.WhenAll(profileTask, readinessTask, injuriesTask, predictionTask, consumedTask, progressTask);
 
             var profile = await profileTask;
-            DisplayName = GetFirstName(profile?.Name);
-
             var readinessLog = await readinessTask;
-            NeedsDailyCheckIn = readinessLog is null;
-            HasActiveInjuries = (await injuriesTask).Count > 0;
-
             var prediction = await predictionTask ??
                              new CyclePrediction
                              {
@@ -301,14 +299,21 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
                                  PredictedCycleLength = profile?.CycleLength > 0 ? profile.CycleLength : 28,
                                  PredictionSource = "default"
                              };
+
+            _isBulkLoading = true;
+            DisplayName = GetFirstName(profile?.Name);
+            NeedsDailyCheckIn = readinessLog is null;
+            HasActiveInjuries = (await injuriesTask).Count > 0;
             HasActiveCycle = prediction.HasActiveCycle;
             UsePhaseCardColor = ShouldUsePhaseCardColor(prediction);
             CurrentPhase = prediction.CurrentPhase;
             CurrentCycleDay = prediction.CurrentDay;
             PredictedCycleLength = prediction.PredictedCycleLength;
             DaysUntilPeriod = prediction.DaysUntilPeriod;
+            _isBulkLoading = false;
             RefreshPhaseCardColors();
             NotifyPhaseProperties();
+            NotifyUserLinkedProperties();
 
             var targetsTask = RunScopedAsync(services =>
                 services.GetRequiredService<INutritionService>()
@@ -319,6 +324,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
             await Task.WhenAll(targetsTask, workoutTask);
 
+            _isBulkLoading = true;
             var (calories, protein, carbs, fats) = await targetsTask;
             TargetCalories = calories;
             TargetProtein = protein;
@@ -334,6 +340,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
             var progress = await progressTask;
             WorkoutStreakDays = progress.WorkoutStreakDays;
             NutritionStreakDays = progress.NutritionStreakDays;
+            _isBulkLoading = false;
 
             var workoutSummary = await workoutTask;
             ApplyWorkoutSummary(workoutSummary);
@@ -555,12 +562,14 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
     partial void OnCurrentPhaseChanged(CyclePhase value)
     {
+        if (_isBulkLoading) return;
         RefreshPhaseCardColors();
         NotifyPhaseProperties();
     }
 
     partial void OnUsePhaseCardColorChanged(bool value)
     {
+        if (_isBulkLoading) return;
         RefreshPhaseCardColors();
     }
 
@@ -571,56 +580,66 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
     partial void OnConsumedCaloriesChanged(float value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(CaloriesProgress));
         OnPropertyChanged(nameof(CaloriesConsumed));
     }
 
     partial void OnTargetCaloriesChanged(float value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(CaloriesProgress));
         OnPropertyChanged(nameof(CaloriesGoal));
     }
 
     partial void OnDisplayNameChanged(string value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(Greetings));
     }
 
     partial void OnCurrentCycleDayChanged(int value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(PhaseStatusText));
         OnPropertyChanged(nameof(PhaseTimeLeftValue));
     }
 
     partial void OnPredictedCycleLengthChanged(int value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(PhaseStatusText));
         OnPropertyChanged(nameof(PhaseTimeLeftValue));
     }
 
     partial void OnDaysUntilPeriodChanged(int value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(NextPeriodValue));
     }
 
     partial void OnCycleInsightTextChanged(string value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(PhaseShortAdvice));
     }
 
     partial void OnSessionProgressTextChanged(string value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(WorkoutBadgeText));
         OnPropertyChanged(nameof(IsTodaysWorkoutCompleted));
     }
 
     partial void OnWorkoutStreakDaysChanged(int value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(WorkoutStreakText));
     }
 
     partial void OnNutritionStreakDaysChanged(int value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(NutritionStreakText));
     }
 

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Services.Auth;
+using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Auth;
 
@@ -15,6 +16,7 @@ public partial class LoginViewModel : ObservableObject
 
     [ObservableProperty] private string _email = string.Empty;
     [ObservableProperty] private string _errorMessage = string.Empty;
+    [ObservableProperty] private string _infoMessage = string.Empty;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _password = string.Empty;
 
@@ -41,13 +43,26 @@ public partial class LoginViewModel : ObservableObject
     public AsyncRelayCommand GoToRegisterCommand { get; }
     public string PlatformLoginButtonText => _platformSignInService?.LoginButtonText ?? "Continue with device account";
 
+    public void PrepareForExistingAccount(string email)
+    {
+        Email = email;
+        Password = string.Empty;
+        ErrorMessage = string.Empty;
+        InfoMessage = "You're already with us. Enter your password to log in.";
+    }
+
+    partial void OnEmailChanged(string value)
+    {
+        InfoMessage = string.Empty;
+    }
+
     private async Task LoginAsync()
     {
         IsBusy = true;
         ErrorMessage = string.Empty;
         try
         {
-            var user = await _authService.LoginAsync(Email, Password);
+            var user = await DataLoadScheduler.RunAsync(() => _authService.LoginAsync(Email, Password));
             if (user is null)
             {
                 ErrorMessage = "Invalid email or password";
@@ -55,6 +70,10 @@ public partial class LoginViewModel : ObservableObject
             }
 
             await NavigateAfterSignInAsync(user);
+        }
+        catch (Exception)
+        {
+            ErrorMessage = "We couldn't sign you in securely. Please try again.";
         }
         finally
         {
@@ -94,27 +113,18 @@ public partial class LoginViewModel : ObservableObject
         catch (OperationCanceledException)
         {
         }
-        catch (PlatformNotSupportedException ex)
+        catch (PlatformNotSupportedException)
         {
-            ErrorMessage = ex.Message;
+            ErrorMessage = "This sign in option is unavailable on this device.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            ErrorMessage = BuildPlatformSignInErrorMessage(providerName, ex);
+            ErrorMessage = $"{providerName} sign in could not finish. Please try again.";
         }
         finally
         {
             IsBusy = false;
         }
-    }
-
-    private static string BuildPlatformSignInErrorMessage(string providerName, Exception ex)
-    {
-        if (ex is InvalidOperationException &&
-            !string.IsNullOrWhiteSpace(ex.Message))
-            return ex.Message;
-
-        return $"{providerName} sign in could not finish. Please try again.";
     }
 
     private Task NavigateAfterSignInAsync(User user)

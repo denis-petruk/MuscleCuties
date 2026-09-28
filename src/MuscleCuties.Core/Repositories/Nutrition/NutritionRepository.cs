@@ -41,8 +41,7 @@ public class NutritionRepository(AppDatabase db) : BaseRepository<FoodItem>(db),
             return [];
 
         var foodItems = _db.FoodItems
-            .AsNoTracking()
-            .AsQueryable();
+            .AsNoTracking();
 
         foreach (var token in tokens)
         {

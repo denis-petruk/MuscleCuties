@@ -45,13 +45,14 @@ public sealed class AppPreloadService : IAppPreloadService
 
     public async Task PreloadRemainingAsync()
     {
-        var results = await Task.WhenAll(
-            ExecuteAsync(_cycle),
-            ExecuteAsync(_workout, requiresWorkoutReferenceData: true),
-            ExecuteAsync(_nutrition),
-            ExecuteAsync(_profile));
+        // The database is single-writer and its load gate serializes queries.
+        // Submitting all hidden tabs at once queues them ahead of an active tab.
+        var cycleLoaded = await ExecuteAsync(_cycle);
+        var workoutLoaded = await ExecuteAsync(_workout, requiresWorkoutReferenceData: true);
+        var nutritionLoaded = await ExecuteAsync(_nutrition);
+        var profileLoaded = await ExecuteAsync(_profile);
 
-        if (results.All(succeeded => succeeded) && !_dashboard.IsLoadError)
+        if (cycleLoaded && workoutLoaded && nutritionLoaded && profileLoaded && !_dashboard.IsLoadError)
             LastLoadedDate = DateTime.Today;
         else
             LastLoadedDate = DateTime.MinValue;
@@ -89,7 +90,7 @@ public sealed class AppPreloadService : IAppPreloadService
         }
         catch (Exception ex)
         {
-            Trace.WriteLine($"[Preload] Nutrition preparation failed: {ex}");
+            Trace.WriteLine($"[Preload] Nutrition preparation failed ({ex.GetType().Name}).");
         }
     }
 
@@ -104,7 +105,7 @@ public sealed class AppPreloadService : IAppPreloadService
         }
         catch (Exception ex)
         {
-            Trace.WriteLine($"[Preload] {page.GetType().Name} failed: {ex}");
+            Trace.WriteLine($"[Preload] {page.GetType().Name} failed ({ex.GetType().Name}).");
             page.IsLoadError = true;
             return false;
         }

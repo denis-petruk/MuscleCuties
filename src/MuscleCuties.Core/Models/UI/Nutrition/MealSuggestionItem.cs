@@ -58,6 +58,8 @@ public class MealSuggestionItem
     {
         MealStyle.Bowl => "Bowl",
         MealStyle.Complex => "Complex dish",
+        MealStyle.Handheld => "Handheld",
+        MealStyle.Wrapped => "Wrap",
         _ => "Plated"
     };
 
@@ -65,6 +67,8 @@ public class MealSuggestionItem
     {
         MealStyle.Bowl => "Mixed together in a bowl",
         MealStyle.Complex => "Cooked as one dish",
+        MealStyle.Handheld => "Stacked and eaten by hand",
+        MealStyle.Wrapped => "Rolled or folded in a wrap",
         _ => "Served separately on a plate"
     };
 
@@ -82,6 +86,8 @@ public class MealSuggestionItem
             {
                 MealStyle.Bowl => BuildBowlDirections(carb, protein, veg, sauce, spice),
                 MealStyle.Complex => BuildComplexDirections(carb, protein, veg, sauce, spice),
+                MealStyle.Handheld => BuildHandheldDirections(carb, protein, veg, sauce, spice),
+                MealStyle.Wrapped => BuildWrappedDirections(carb, protein, veg, sauce, spice),
                 _ => BuildPlatedDirections(carb, protein, veg, sauce, spice)
             };
 
@@ -249,6 +255,36 @@ public class MealSuggestionItem
         if (sauce is not null)
             steps.Add($"Stir in {sauce} and let it coat evenly.");
         steps.Add($"Serve over {carb}.");
+        return steps;
+    }
+
+    private static List<string> BuildHandheldDirections(
+        string carb, string protein, string veg, string? sauce, string? spice)
+    {
+        var steps = new List<string>();
+        if (spice is not null)
+            steps.Add($"Season {protein} with {spice}.");
+        steps.Add($"Cook {protein} until done.");
+        steps.Add($"Toast or warm {carb}.");
+        steps.Add($"Layer {protein} and {veg} on {carb}.");
+        if (sauce is not null)
+            steps.Add($"Spread or drizzle {sauce} on top.");
+        steps.Add("Press together and serve.");
+        return steps;
+    }
+
+    private static List<string> BuildWrappedDirections(
+        string carb, string protein, string veg, string? sauce, string? spice)
+    {
+        var steps = new List<string>();
+        if (spice is not null)
+            steps.Add($"Season {protein} with {spice}.");
+        steps.Add($"Cook {protein} until done.");
+        steps.Add($"Warm {carb} briefly in a dry pan.");
+        if (sauce is not null)
+            steps.Add($"Spread {sauce} down the centre of {carb}.");
+        steps.Add($"Add {protein} and {veg}.");
+        steps.Add("Fold or roll tightly and serve.");
         return steps;
     }
 }

@@ -8,21 +8,41 @@ namespace MuscleCuties.App.Resources.Converters;
 
 public sealed class StringToFluentIconImageSourceConverter : IValueConverter
 {
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        var icon = ResolveIcon(value);
+    // Cache key: (glyphName, parameterString, isDark)
+    // Cleared on theme change by the static Application.RequestedThemeChanged handler below.
+    private static readonly Dictionary<(string, string, bool), ImageSource> _cache = new();
 
-        var color = ResolveColor(parameter);
-        return icon.ToImageSource(color, 24d);
+    static StringToFluentIconImageSourceConverter()
+    {
+        if (Application.Current is not null)
+            Application.Current.RequestedThemeChanged += (_, _) => _cache.Clear();
     }
 
-    private static FluentIcons ResolveIcon(object? value)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is string glyphName && Enum.TryParse<FluentIcons>(glyphName, out var parsedIcon))
+        var glyphName = value as string ?? string.Empty;
+        var paramKey = parameter as string ?? string.Empty;
+        var isDark = (Application.Current?.RequestedTheme ?? AppTheme.Unspecified) == AppTheme.Dark;
+        var cacheKey = (glyphName, paramKey, isDark);
+
+        if (_cache.TryGetValue(cacheKey, out var cached))
+            return cached;
+
+        var icon = ResolveIcon(glyphName);
+        var color = ResolveColor(paramKey, isDark);
+        var source = icon.ToImageSource(color, 24d);
+
+        _cache[cacheKey] = source;
+        return source;
+    }
+
+    private static FluentIcons ResolveIcon(string glyphName)
+    {
+        if (!string.IsNullOrEmpty(glyphName) && Enum.TryParse<FluentIcons>(glyphName, out var parsedIcon))
             return parsedIcon;
 
-        if (value is string missingGlyph && !string.IsNullOrWhiteSpace(missingGlyph))
-            Trace.WriteLine($"[Icons] Unknown Fluent icon '{missingGlyph}'.");
+        if (!string.IsNullOrWhiteSpace(glyphName))
+            Trace.WriteLine("[Icons] Unknown Fluent icon.");
 
         return FluentIcons.QuestionCircle24;
     }
@@ -32,11 +52,9 @@ public sealed class StringToFluentIconImageSourceConverter : IValueConverter
         throw new NotSupportedException();
     }
 
-    private static Color ResolveColor(object? parameter)
+    private static Color ResolveColor(string? key, bool isDark)
     {
-        var key = parameter as string;
-        var theme = Application.Current?.RequestedTheme ?? AppTheme.Unspecified;
-        var resourceKey = theme == AppTheme.Dark ? "TextPrimaryDark" : "TextPrimary";
+        var resourceKey = isDark ? "TextPrimaryDark" : "TextPrimary";
 
         if (string.Equals(key, "White", StringComparison.OrdinalIgnoreCase))
             return Colors.White;

@@ -477,7 +477,8 @@ internal static class SavouryMealCatalog
                 Spice("Cardamom + honey drizzle", "Aromatic and floral."),
                 Spice("Nutmeg + ginger", "Spiced warmth.")
             ],
-            NoDietaryRestrictions)
+            NoDietaryRestrictions,
+            MealStyle.Bowl)
     ];
 
     private static MealConcept Concept(
@@ -486,9 +487,10 @@ internal static class SavouryMealCatalog
         IReadOnlyList<MealType> mealTypes,
         IReadOnlyList<MealConceptSlot> slots,
         IReadOnlyList<SpiceBlendOption> spiceBlends,
-        IReadOnlySet<DietaryTag> incompatibleDietaryTags)
+        IReadOnlySet<DietaryTag> incompatibleDietaryTags,
+        MealStyle? preferredStyle = null)
     {
-        return new MealConcept(name, description, mealTypes, slots, spiceBlends, incompatibleDietaryTags);
+        return new MealConcept(name, description, mealTypes, slots, spiceBlends, incompatibleDietaryTags, preferredStyle);
     }
 
     private static MealConceptSlot Slot(

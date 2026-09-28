@@ -349,6 +349,11 @@ public partial class AppDatabase
                 calcium: 10f, potassium: 115f),
             Food(now, "Greek yogurt, plain 2%", 73f, 10f, 4.5f, 1.5f, vitaminB12: 0.75f,
                 calcium: 115f, magnesium: 11f, zinc: 0.52f, potassium: 141f),
+            Food(now, "Apple cider vinegar", 21f, 0f, 0.9f, 0f,
+                calcium: 7f, magnesium: 5f, potassium: 73f),
+            Food(now, "White vinegar, distilled", 18f, 0f, 0.04f, 0f),
+            Food(now, "Salsa, no sugar added", 29f, 1.5f, 5.5f, 0.2f, 1.8f, 0.4f, vitaminC: 12f, vitaminA: 20f,
+                calcium: 18f, magnesium: 10f, potassium: 280f),
 
             // Sweet breakfast items
             Food(now, "Honey", 304f, 0.3f, 82.4f, fats: 0f, potassium: 52f,

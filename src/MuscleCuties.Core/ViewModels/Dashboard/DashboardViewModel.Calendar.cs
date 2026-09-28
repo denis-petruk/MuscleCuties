@@ -95,7 +95,7 @@ public partial class DashboardViewModel
         catch (Exception exception)
         {
             // Calendar is non-critical — show empty dots on failure
-            Trace.WriteLine($"[Dashboard] Calendar data load failed: {exception}");
+            Trace.WriteLine($"[Dashboard] Calendar data load failed ({exception.GetType().Name}).");
         }
 
         var today = DateTime.Today;

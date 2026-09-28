@@ -29,6 +29,10 @@
              during Shell structural navigation (ShellContent → TabBar) on iOS. Re-enable when
              dotnet/maui resolves SourceGen compatibility with Shell TabBar transitions. -->
         <!--<MauiXamlInflator>SourceGen</MauiXamlInflator>-->
+
+        <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+        <MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
+        <MauiStrictXamlCompilation>true</MauiStrictXamlCompilation>
     </PropertyGroup>
 
     <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(CodesignProvision)' != '' and '$(EnableAppleSignInEntitlements)' == 'true'">
@@ -39,25 +43,62 @@
         <CodesignEntitlements>Platforms/iOS/HealthEntitlements.plist</CodesignEntitlements>
     </PropertyGroup>
 
+    <!-- Windows Release: R2R eliminates JIT startup cost for the managed host. Partial trimming
+         removes dead code without breaking EF Core reflection. Verify in Release on the target
+         Windows version before shipping. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+        <PublishReadyToRun>true</PublishReadyToRun>
+    </PropertyGroup>
+
+    <!-- Android Release: R2R pre-jits managed code at publish time, reducing JIT warm-up on
+         the first run. Partial trimming retains EF Core reflection roots. The linker removes
+         debug scaffolding and unused SDK code; full link-mode is unsafe with EF Core + SQLite.
+         Verify on a physical Android device in Release before shipping. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+        <PublishReadyToRun>true</PublishReadyToRun>
+    </PropertyGroup>
+
+    <!-- macOS Catalyst Release: AOT speeds cold launch; partial trimming avoids EF Core
+         reflection breakage. Verify on a physical Mac in Release before shipping. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
+        <RunAOTCompilation>true</RunAOTCompilation>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+    </PropertyGroup>
+
+    <!-- iOS Release: AOT compile assemblies, with an interpreter available for dynamic
+         reflection stubs created by framework code. Keep partial trimming for EF Core. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+        <RunAOTCompilation>true</RunAOTCompilation>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+        <MtouchInterpreter>-all</MtouchInterpreter>
+        <AotCompileMaxDegreeOfParallelism>2</AotCompileMaxDegreeOfParallelism>
+    </PropertyGroup>
+
     <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
         <BuildIpa>false</BuildIpa>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and ('$(RuntimeIdentifier)' == 'iossimulator-arm64' or '$(RuntimeIdentifier)' == 'iossimulator-x64')">
         <CodesignKey>-</CodesignKey>
-        <CodesignEntitlements></CodesignEntitlements>
+        <CodesignEntitlements>Platforms/iOS/Entitlements.plist</CodesignEntitlements>
     </PropertyGroup>
 
     <ItemGroup>
         <MauiIcon
-                Include="Resources\AppIcon\appicon.png"
-                Color="#FFF8FB"
-                Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios'"/>
+            Include="Resources\AppIcon\appicon.png"
+            Color="#FFF8FB"
+            Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios'"/>
         <MauiSplashScreen
-                Include="Resources\Splash\splash.png"
-                Color="#FFF8FB"
-                BaseSize="320,180"
-                Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'maccatalyst'"/>
+            Include="Resources\Splash\splash.png"
+            Color="#FFF8FB"
+            BaseSize="320,180"
+            Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'maccatalyst'"/>
         <MauiImage Include="Resources\Images\*"/>
         <MauiImage Update="Resources\Images\musclecuties_logo_light.png" Resize="True" BaseSize="360,200"/>
         <MauiImage Update="Resources\Images\musclecuties_logo_dark.png" Resize="True" BaseSize="360,200"/>

@@ -59,6 +59,28 @@ public class CycleRepository(AppDatabase db) : BaseRepository<CycleLog>(db), ICy
             .FirstOrDefaultAsync();
     }
 
+    public async Task<CyclePhaseLog?> GetLatestPhaseLogBeforeDateAsync(int userId, DateTime date)
+    {
+        var cutoff = date.Date;
+        return await _db.CyclePhaseLogs
+            .AsNoTracking()
+            .Where(log => log.UserId == userId && log.LoggedAt < cutoff)
+            .OrderByDescending(log => log.LoggedAt)
+            .ThenByDescending(log => log.CreatedAt)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<CyclePhaseLog?> GetNextPhaseLogAfterDateAsync(int userId, DateTime date)
+    {
+        var cutoff = date.Date.AddDays(1);
+        return await _db.CyclePhaseLogs
+            .AsNoTracking()
+            .Where(log => log.UserId == userId && log.LoggedAt >= cutoff)
+            .OrderBy(log => log.LoggedAt)
+            .ThenBy(log => log.CreatedAt)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<List<CyclePhaseLog>> GetRecentPhaseLogsAsync(int userId, int count)
     {
         return await _db.CyclePhaseLogs

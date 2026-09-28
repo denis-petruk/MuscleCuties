@@ -21,19 +21,16 @@
                 Subtitle="Choose what your weekly plan can use"
                 BackCommand="{Binding BackCommand}" />
 
-            <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="Activities" IconGlyph="Dumbbell24" />
-                    <workoutControls:WorkoutActivityPreferencePicker
-                        ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
-                        ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
-            </VerticalStackLayout>
+            <sharedControls:IconSectionHeader Text="Activities" IconGlyph="Dumbbell24" />
+            <workoutControls:WorkoutActivityPreferencePicker
+                ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
+                ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
 
-            <VerticalStackLayout Spacing="12" IsVisible="{Binding IsStrengthStyleVisible}">
-                    <sharedControls:IconSectionHeader Text="Strength style" IconGlyph="Flash24" />
-                    <workoutControls:StrengthTrainingStylePicker
-                        ItemsSource="{Binding StrengthTrainingStyleOptions}"
-                        SelectStyleCommand="{Binding SelectStrengthTrainingStyleCommand}" />
-            </VerticalStackLayout>
+            <sharedControls:IconSectionHeader Text="Strength style" IconGlyph="Flash24" IsVisible="{Binding IsStrengthStyleVisible}" />
+            <workoutControls:StrengthTrainingStylePicker
+                ItemsSource="{Binding StrengthTrainingStyleOptions}"
+                SelectStyleCommand="{Binding SelectStrengthTrainingStyleCommand}"
+                IsVisible="{Binding IsStrengthStyleVisible}" />
 
             <Label
                 Text="{Binding StatusMessage}"

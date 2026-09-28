@@ -19,14 +19,14 @@
                 <SwipeView.RightItems>
                     <SwipeItems>
                         <SwipeItem Text="Delete" BackgroundColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
-                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=DeleteInjuryCommand}"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=DeleteInjuryCommand, x:DataType=vm:InjuryLogViewModel}"
                             CommandParameter="{Binding Id}" />
                     </SwipeItems>
                 </SwipeView.RightItems>
                 <Border Style="{StaticResource ModalListItem}" Padding="16">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer
-                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=EditInjuryCommand}"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=EditInjuryCommand, x:DataType=vm:InjuryLogViewModel}"
                             CommandParameter="{Binding .}" />
                     </Border.GestureRecognizers>
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
@@ -46,7 +46,7 @@
                         <Button Grid.Column="1" Text="Edit" Style="{StaticResource ButtonLink}"
                             MinimumHeightRequest="48" MinimumWidthRequest="48" VerticalOptions="Center"
                             SemanticProperties.Description="{Binding SiteName, StringFormat='Edit {0} injury'}"
-                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=EditInjuryCommand}"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=EditInjuryCommand, x:DataType=vm:InjuryLogViewModel}"
                             CommandParameter="{Binding .}" />
                     </Grid>
                 </Border>
@@ -78,7 +78,7 @@
                             <DataTemplate x:DataType="ui:InjuryFlagOption">
                                 <Button Text="{Binding Label}" Style="{StaticResource ChoiceButton}"
                                     FlexLayout.Basis="50%"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=SelectSiteCommand}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=SelectSiteCommand, x:DataType=vm:InjuryLogViewModel}"
                                     CommandParameter="{Binding .}">
                                     <Button.Triggers>
                                         <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="True">
@@ -98,7 +98,7 @@
                             <DataTemplate x:DataType="ui:InjuryStatusOption">
                                 <Button Text="{Binding Label}" Style="{StaticResource ChoiceButton}"
                                     FlexLayout.Grow="1" MinimumWidthRequest="108"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=SelectStatusCommand}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=SelectStatusCommand, x:DataType=vm:InjuryLogViewModel}"
                                     CommandParameter="{Binding .}">
                                     <Button.Triggers>
                                         <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="True">

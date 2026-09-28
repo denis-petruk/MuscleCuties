@@ -21,6 +21,20 @@ public class UserRepository(AppDatabase db) : BaseRepository<User>(db), IUserRep
             .FirstOrDefaultAsync(u => u.Email == email);
     }
 
+    public Task<bool> EmailExistsAsync(string email)
+    {
+        return _db.Users.AsNoTracking().AnyAsync(user => user.Email == email);
+    }
+
+    public async Task<bool?> GetOnboardingCompletionAsync(int userId)
+    {
+        return await _db.Users
+            .AsNoTracking()
+            .Where(user => user.Id == userId)
+            .Select(user => (bool?)user.IsOnboardingComplete)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<User?> GetByAppleUserIdAsync(string appleUserId)
     {
         return await _db.Users
