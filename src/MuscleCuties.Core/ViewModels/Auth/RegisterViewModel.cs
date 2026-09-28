@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Services.Auth;
+using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Auth;
 
@@ -9,6 +10,7 @@ public partial class RegisterViewModel : ObservableObject
     private readonly IAuthService _authService;
     private readonly Func<Task> _navigateBackAsync;
     private readonly Func<Task>? _navigateToDashboardAsync;
+    private readonly Func<string, Task>? _navigateToExistingLoginAsync;
     private readonly Func<Task> _navigateToProfileSetupAsync;
     private readonly IPlatformSignInService? _platformSignInService;
     [ObservableProperty] private string _confirmPassword = string.Empty;
@@ -23,12 +25,14 @@ public partial class RegisterViewModel : ObservableObject
         Func<Task> navigateToProfileSetupAsync,
         Func<Task> navigateBackAsync,
         IPlatformSignInService? platformSignInService = null,
-        Func<Task>? navigateToDashboardAsync = null)
+        Func<Task>? navigateToDashboardAsync = null,
+        Func<string, Task>? navigateToExistingLoginAsync = null)
     {
         _authService = authService;
         _platformSignInService = platformSignInService;
         _navigateToProfileSetupAsync = navigateToProfileSetupAsync;
         _navigateToDashboardAsync = navigateToDashboardAsync;
+        _navigateToExistingLoginAsync = navigateToExistingLoginAsync;
         _navigateBackAsync = navigateBackAsync;
         RegisterCommand = new AsyncRelayCommand(RegisterAsync);
         SignInWithPlatformCommand = new AsyncRelayCommand(SignInWithPlatformAsync);
@@ -56,6 +60,12 @@ public partial class RegisterViewModel : ObservableObject
                 return;
             }
 
+            if (await DataLoadScheduler.RunAsync(() => _authService.EmailExistsAsync(email)))
+            {
+                await RedirectExistingAccountAsync(email);
+                return;
+            }
+
             if (!AuthInputValidator.IsStrongPassword(Password))
             {
                 ErrorMessage = AuthInputValidator.PasswordRequirementsMessage;
@@ -68,19 +78,37 @@ public partial class RegisterViewModel : ObservableObject
                 return;
             }
 
-            var user = await _authService.RegisterAsync(email, Password);
+            var user = await DataLoadScheduler.RunAsync(() => _authService.RegisterAsync(email, Password));
             if (user is null)
             {
-                ErrorMessage = "Registration failed";
+                await RedirectExistingAccountAsync(email);
                 return;
             }
 
             await _navigateToProfileSetupAsync();
         }
+        catch (Exception)
+        {
+            ErrorMessage = "We couldn't finish creating your account securely. Please try again.";
+        }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    private async Task RedirectExistingAccountAsync(string email)
+    {
+        Password = string.Empty;
+        ConfirmPassword = string.Empty;
+
+        if (_navigateToExistingLoginAsync is null)
+        {
+            ErrorMessage = "You already have an account. Log in with your password.";
+            return;
+        }
+
+        await _navigateToExistingLoginAsync(email.Trim().ToLowerInvariant());
     }
 
     private async Task SignInWithPlatformAsync()
@@ -121,26 +149,17 @@ public partial class RegisterViewModel : ObservableObject
         catch (OperationCanceledException)
         {
         }
-        catch (PlatformNotSupportedException ex)
+        catch (PlatformNotSupportedException)
         {
-            ErrorMessage = ex.Message;
+            ErrorMessage = "This sign in option is unavailable on this device.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            ErrorMessage = BuildPlatformSignInErrorMessage(providerName, ex);
+            ErrorMessage = $"{providerName} sign in could not finish. Please try again.";
         }
         finally
         {
             IsBusy = false;
         }
-    }
-
-    private static string BuildPlatformSignInErrorMessage(string providerName, Exception ex)
-    {
-        if (ex is InvalidOperationException &&
-            !string.IsNullOrWhiteSpace(ex.Message))
-            return ex.Message;
-
-        return $"{providerName} sign in could not finish. Please try again.";
     }
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MauiIcons.Core;
 using MuscleCuties.App.Services.Navigation;
 using MuscleCuties.Core.Models.Enums.Cycle;
@@ -14,10 +15,12 @@ public partial class CyclePhaseDetailPage : ContentPage
         CyclePhaseDetailViewModel vm,
         INavigationContextService navigationContext)
     {
-        InitializeComponent();
+        var started = Stopwatch.GetTimestamp();
+        this.InitializeWithTiming(InitializeComponent);
         _ = new MauiIcon();
         _navigationContext = navigationContext;
-        BindingContext = _viewModel = vm;
+        this.BindWithTiming(vm, started);
+        _viewModel = vm;
     }
 
     protected override void OnNavigatedTo(NavigatedToEventArgs args)

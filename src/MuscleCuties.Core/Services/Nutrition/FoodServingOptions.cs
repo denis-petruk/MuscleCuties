@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using MuscleCuties.Core.Models.Entities.Nutrition;
@@ -40,6 +41,8 @@ public static partial class FoodServingOptions
         new() { Label = "tsp", Unit = "tsp", Grams = 5f, Source = "Standard" }
     ];
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026",
+        Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     public static string? CreateOptionsJson(FdcFoodDetail detail)
     {
         var options = BuildFdcOptions(detail);
@@ -68,6 +71,8 @@ public static partial class FoodServingOptions
         return options;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026",
+        Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     public static IReadOnlyList<FoodServingOption> ReadOptions(string? servingOptionsJson)
     {
         if (string.IsNullOrWhiteSpace(servingOptionsJson))

@@ -1,3 +1,8 @@
 namespace MuscleCuties.Core.Models.UI.Common;
 
-public sealed record SelectionOption<T>(T Value, string Label, string IconGlyph = "");
+public interface ILabeledOption
+{
+    string Label { get; }
+}
+
+public sealed record SelectionOption<T>(T Value, string Label, string IconGlyph = "") : ILabeledOption;

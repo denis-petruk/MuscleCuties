@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MuscleCuties.App.Controls.Profile;
 using MuscleCuties.App.Services.Profile;
 using MuscleCuties.Core.ViewModels.Profile;
@@ -10,15 +11,18 @@ public partial class ProfilePage : ContentPage
 
     public ProfilePage(ProfileViewModel vm)
     {
+        var started = Stopwatch.GetTimestamp();
         this.InitializeWithTiming(InitializeComponent);
         _viewModel = vm;
+        // Bind before the page is presented so PageLoadingOverlay (which
+        // binds to IPageLoadAware on BindingContext) is active from the
+        // first render, gating the page behind the async load.
+        this.BindWithTiming(vm, started);
     }
 
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
-        if (BindingContext is null)
-            BindingContext = _viewModel;
         this.BeginPageLoad(() => _viewModel.LoadDataCommand.ExecuteAsync(null));
     }
 

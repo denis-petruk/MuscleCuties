@@ -28,9 +28,20 @@
                 BackgroundColor="Transparent"
                 SemanticProperties.Description="MuscleCuties logo" />
             <ActivityIndicator
+                x:Name="StartupActivityIndicator"
                 IsRunning="True"
                 HorizontalOptions="Center"
                 SemanticProperties.Description="Loading app" />
+            <Label
+                x:Name="StartupErrorLabel"
+                IsVisible="False"
+                HorizontalTextAlignment="Center"
+                Text="Unable to open your data securely. Please try again." />
+            <Button
+                x:Name="RetryButton"
+                IsVisible="False"
+                Text="Try again"
+                Clicked="OnRetryClicked" />
         </VerticalStackLayout>
     </Grid>
 </ContentPage>

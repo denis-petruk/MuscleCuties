@@ -14,6 +14,7 @@ public partial class AppDatabase : DbContext
 {
     private static readonly SemaphoreSlim InitializationGate = new(1, 1);
     private static readonly SemaphoreSlim SeedGate = new(1, 1);
+    private static readonly SemaphoreSlim WriteGate = new(1, 1);
 
     public AppDatabase(DbContextOptions<AppDatabase> options) : base(options)
     {
@@ -96,9 +97,10 @@ public partial class AppDatabase : DbContext
             {
                 // Database file is unreadable (corrupt or was not created with
                 // the current encryption key). Delete it and create a fresh one.
-                Trace.WriteLine($"[Database] Replacing unreadable database: {ex.Message}");
+                Trace.WriteLine("[Database] Replacing unreadable database.");
                 var dbPath = Database.GetDbConnection().DataSource;
                 await Database.CloseConnectionAsync();
+                SqliteConnection.ClearAllPools();
                 foreach (var suffix in new[] { "", "-wal", "-shm" })
                 {
                     try { File.Delete(dbPath + suffix); }
@@ -351,6 +353,18 @@ public partial class AppDatabase : DbContext
                 }
             }
 
+            // Existing installations do not get indexes added to the EF model
+            // by EnsureCreatedAsync; keep exercise picking indexed after upgrade.
+            await using (var exercisePatternIndex = conn.CreateCommand())
+            {
+                exercisePatternIndex.Transaction = tx;
+                exercisePatternIndex.CommandText = """
+                    CREATE INDEX IF NOT EXISTS "IX_EngineExercises_Pattern"
+                    ON "EngineExercises" ("Pattern");
+                    """;
+                await exercisePatternIndex.ExecuteNonQueryAsync();
+            }
+
             await tx.CommitAsync();
         }
         finally
@@ -558,6 +572,7 @@ public partial class AppDatabase : DbContext
     {
 #if DEBUG
         ChangeTracker.Clear();
+        SqliteConnection.ClearAllPools();
         await Database.EnsureDeletedAsync();
         await ConfigureJournalModeAsync();
         await Database.EnsureCreatedAsync();
@@ -582,16 +597,24 @@ public partial class AppDatabase : DbContext
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        ValidatePendingChanges();
-        return base.SaveChangesAsync(cancellationToken);
+        return SaveChangesAsync(true, cancellationToken);
     }
 
-    public override Task<int> SaveChangesAsync(
+    public override async Task<int> SaveChangesAsync(
         bool acceptAllChangesOnSuccess,
         CancellationToken cancellationToken = default)
     {
-        ValidatePendingChanges();
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        await WriteGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ValidatePendingChanges();
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            WriteGate.Release();
+        }
     }
 
     private void ValidatePendingChanges()
@@ -1024,6 +1047,7 @@ public partial class AppDatabase : DbContext
         {
             entity.ToTable("EngineExercises");
             entity.HasIndex(e => e.Name);
+            entity.HasIndex(e => e.Pattern);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(120);
             entity.Property(e => e.Pattern).HasConversion<int>();
             entity.Property(e => e.Required).HasConversion<int>();

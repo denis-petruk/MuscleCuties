@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MuscleCuties.App.Services.Navigation;
 
@@ -12,6 +13,8 @@ public sealed class NavigationContextService : INavigationContextService
         _values[key] = value;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026",
+        Justification = "Enum types and value types used with TryTake are concretely referenced at call sites.")]
     public bool TryTake<T>(string key, out T? value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);

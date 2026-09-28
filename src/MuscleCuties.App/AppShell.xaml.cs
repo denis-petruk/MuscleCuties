@@ -7,8 +7,8 @@ using MuscleCuties.App.Pages.Nutrition;
 using MuscleCuties.App.Pages.Onboarding;
 using MuscleCuties.App.Pages.Profile;
 using MuscleCuties.App.Pages.Workout;
-using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
+using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.App;
 
@@ -31,7 +31,6 @@ public partial class AppShell : Shell
         _services = services;
         _logger = logger;
         InitializeComponent();
-        AttachThemeHandler();
         ApplyTabIcons(ResolveTheme(Application.Current?.RequestedTheme ?? AppTheme.Unspecified));
 
         Routing.RegisterRoute(nameof(DailyCheckInPage), typeof(DailyCheckInPage));
@@ -48,13 +47,23 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(WorkoutSessionPage), typeof(WorkoutSessionPage));
     }
 
+    protected override void OnHandlerChanged()
+    {
+        base.OnHandlerChanged();
+
+        if (Handler is null)
+            DetachThemeHandler();
+        else
+            AttachThemeHandler();
+    }
+
     protected override void OnNavigating(ShellNavigatingEventArgs args)
     {
         base.OnNavigating(args);
 
         var targetRoute = args.Target?.Location.OriginalString;
         _navigationStopwatch.Restart();
-        _logger.LogInformation("Navigation started. Target={TargetRoute}, Source={Source}.", targetRoute, args.Source);
+        _logger.LogInformation("Navigation started. Source={Source}.", args.Source);
 
         if (IsAuthResetRoute(targetRoute))
             _authVerified = false;
@@ -76,18 +85,16 @@ public partial class AppShell : Shell
         if (elapsedMilliseconds > NavigationBudgetMilliseconds)
         {
             _logger.LogWarning(
-                "Navigation exceeded the {BudgetMilliseconds} ms budget: {ElapsedMilliseconds:F1} ms. Current={CurrentRoute}, Source={Source}.",
+                "Navigation exceeded the {BudgetMilliseconds} ms budget: {ElapsedMilliseconds:F1} ms. Source={Source}.",
                 NavigationBudgetMilliseconds,
                 elapsedMilliseconds,
-                args.Current?.Location.OriginalString,
                 args.Source);
         }
         else
         {
             _logger.LogInformation(
-                "Navigation presented in {ElapsedMilliseconds:F1} ms. Current={CurrentRoute}, Source={Source}.",
+                "Navigation presented in {ElapsedMilliseconds:F1} ms. Source={Source}.",
                 elapsedMilliseconds,
-                args.Current?.Location.OriginalString,
                 args.Source);
         }
 
@@ -121,6 +128,17 @@ public partial class AppShell : Shell
 
         Application.Current.RequestedThemeChanged += OnRequestedThemeChanged;
         _isThemeHandlerAttached = true;
+    }
+
+    private void DetachThemeHandler()
+    {
+        if (!_isThemeHandlerAttached)
+            return;
+
+        if (Application.Current is not null)
+            Application.Current.RequestedThemeChanged -= OnRequestedThemeChanged;
+
+        _isThemeHandlerAttached = false;
     }
 
     private void OnRequestedThemeChanged(object? sender, AppThemeChangedEventArgs e)
@@ -176,38 +194,31 @@ public partial class AppShell : Shell
         string? redirectRoute = null;
         try
         {
-            using var scope = _services.CreateScope();
-            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var userId = await authService.GetCurrentUserIdAsync();
-            if (userId <= 0)
+            var currentUser = await DataLoadScheduler.RunAsync(async () =>
+            {
+                using var scope = _services.CreateScope();
+                var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+                return await authService.GetCurrentUserStateAsync();
+            });
+            if (currentUser is null)
             {
                 args.Cancel();
                 redirectRoute = "//LoginPage";
             }
+            else if (!currentUser.IsOnboardingComplete && !AllowsOnboardingRoute(targetRoute))
+            {
+                args.Cancel();
+                redirectRoute = $"//{nameof(ProfileSetupPage)}";
+            }
             else
             {
-                var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-                var user = await userRepository.GetByIdAsync(userId);
-                if (user is null)
-                {
-                    await authService.LogoutAsync();
-                    args.Cancel();
-                    redirectRoute = "//LoginPage";
-                }
-                else if (!user.IsOnboardingComplete && !AllowsOnboardingRoute(targetRoute))
-                {
-                    args.Cancel();
-                    redirectRoute = $"//{nameof(ProfileSetupPage)}";
-                }
-                else
-                {
-                    _authVerified = true;
-                }
+                _authVerified = true;
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Navigation preparation failed for route {Route}.", targetRoute);
+            args.Cancel();
+            _logger.LogError("Navigation preparation failed ({ExceptionType}).", ex.GetType().Name);
         }
         finally
         {
@@ -224,7 +235,7 @@ public partial class AppShell : Shell
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Navigation guard redirect failed for route {Route}.", redirectRoute);
+            _logger.LogError("Navigation guard redirect failed ({ExceptionType}).", ex.GetType().Name);
         }
         finally
         {

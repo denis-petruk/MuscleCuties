@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CommunityToolkit.Maui;
 using MauiIcons.Fluent;
 using Microsoft.Data.Sqlite;
@@ -184,7 +185,7 @@ public static class MauiProgram
             DataSource = path,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Private,
-            Pooling = false,
+            Pooling = true,
             Password = password
         }.ToString();
 
@@ -254,7 +255,7 @@ public static class MauiProgram
     {
         services.AddTransient<LoginViewModel>(sp => new LoginViewModel(
             sp.GetRequiredService<IAuthService>(),
-            () => PreloadAndNavigateToDashboardAsync(sp),
+            () => NavigateThenPreloadDashboardAsync(sp),
             () => NavigateAuthenticatedAsync(sp, $"//{nameof(ProfileSetupPage)}"),
             () => NavigateToAsync(nameof(RegisterPage)),
             sp.GetRequiredService<IPlatformSignInService>()));
@@ -264,7 +265,8 @@ public static class MauiProgram
             () => NavigateAuthenticatedAsync(sp, $"//{nameof(ProfileSetupPage)}"),
             () => NavigateToAsync(".."),
             sp.GetRequiredService<IPlatformSignInService>(),
-            () => PreloadAndNavigateToDashboardAsync(sp)));
+            () => NavigateThenPreloadDashboardAsync(sp),
+            email => NavigateToExistingLoginAsync(sp, email)));
 
         services.AddSingleton<QuizQuestionCache>();
 
@@ -272,7 +274,7 @@ public static class MauiProgram
             sp.GetRequiredService<IServiceScopeFactory>(),
             sp.GetRequiredService<IAppPreloadService>(),
             sp.GetRequiredService<QuizQuestionCache>(),
-            () => PrepareAndNavigateToDashboardAsync(sp)));
+            () => NavigateThenPreloadDashboardAsync(sp)));
 
         services.AddTransient<ProfileSetupViewModel>(sp => new ProfileSetupViewModel(
             sp.GetRequiredService<IAuthService>(),
@@ -445,17 +447,36 @@ public static class MauiProgram
         return NavigateToAsync(route);
     }
 
-    private static async Task PreloadAndNavigateToDashboardAsync(IServiceProvider services)
+    private static async Task NavigateThenPreloadDashboardAsync(IServiceProvider services)
     {
-        var preloadService = services.GetRequiredService<IAppPreloadService>();
-        await preloadService.PreloadDashboardAsync();
         await NavigateAuthenticatedAsync(services, "//DashboardPage");
-        _ = preloadService.PreloadRemainingAsync();
+
+        if (Shell.Current?.CurrentPage is DashboardPage dashboardPage)
+            _ = PreloadAfterDashboardLoadAsync(
+                dashboardPage,
+                services.GetRequiredService<IAppPreloadService>());
     }
 
-    private static async Task PrepareAndNavigateToDashboardAsync(IServiceProvider services)
+    private static Task NavigateToExistingLoginAsync(IServiceProvider services, string email)
     {
-        await NavigateAuthenticatedAsync(services, "//DashboardPage");
+        services.GetRequiredService<INavigationContextService>()
+            .Set(LoginPage.ExistingEmailContextKey, email);
+        return NavigateToAsync("..");
+    }
+
+    private static async Task PreloadAfterDashboardLoadAsync(
+        DashboardPage dashboardPage,
+        IAppPreloadService preloadService)
+    {
+        try
+        {
+            await dashboardPage.InitialLoadCompleted;
+            await preloadService.PreloadRemainingAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Preload] Hidden-tab preparation failed ({ex.GetType().Name}).");
+        }
     }
 
     private static Task NavigateAuthenticatedAsync(IServiceProvider services, string route)

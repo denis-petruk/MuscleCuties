@@ -121,7 +121,7 @@
                         SemanticProperties.Description="{Binding Name, StringFormat='Meal: {0}. Tap to view breakdown.'}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer
-                                Command="{Binding BindingContext.OpenMealBreakdownCommand, Source={x:Reference NutritionRoot}}"
+                                Command="{Binding OpenMealBreakdownCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}"
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
@@ -131,7 +131,8 @@
                                 StrokeShape="RoundRectangle 12"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
                                 StrokeThickness="0">
-                                <Grid RowDefinitions="Auto,Auto" RowSpacing="1" HorizontalOptions="Center" VerticalOptions="Center">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="1" HorizontalOptions="Center"
+                                      VerticalOptions="Center">
                                     <Path
                                         Data="{Binding MealTypeIconData, Converter={StaticResource StringToGeometryConverter}}"
                                         Stroke="{StaticResource Primary}"
@@ -152,7 +153,8 @@
                                 </Grid>
                             </Border>
 
-                            <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="2" VerticalOptions="Center">
+                            <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
+                                  VerticalOptions="Center">
                                 <Label
                                     Text="{Binding MealType}"
                                     TextColor="{StaticResource Primary}"
@@ -175,25 +177,27 @@
 
                             <Grid
                                 Grid.Column="2"
+                                ColumnDefinitions="Auto,Auto"
                                 RowDefinitions="Auto,Auto"
+                                ColumnSpacing="4"
                                 RowSpacing="2"
                                 VerticalOptions="Center"
                                 HorizontalOptions="End">
-                                <HorizontalStackLayout Spacing="4" HorizontalOptions="End">
-                                    <Image
-                                        Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
-                                        Aspect="AspectFit"
-                                        WidthRequest="13"
-                                        HeightRequest="13"
-                                        VerticalOptions="Center" />
-                                    <Label
-                                        Text="{Binding CaloriesText}"
-                                        Style="{StaticResource CaptionLabel}"
-                                        HorizontalTextAlignment="End"
-                                        VerticalOptions="Center" />
-                                </HorizontalStackLayout>
+                                <Image
+                                    Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                                    Aspect="AspectFit"
+                                    WidthRequest="13"
+                                    HeightRequest="13"
+                                    VerticalOptions="Center" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding CaloriesText}"
+                                    Style="{StaticResource CaptionLabel}"
+                                    HorizontalTextAlignment="End"
+                                    VerticalOptions="Center" />
                                 <Image
                                     Grid.Row="1"
+                                    Grid.ColumnSpan="2"
                                     Source="{Binding Source='ChevronRight24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                                     WidthRequest="16"
                                     HeightRequest="16"

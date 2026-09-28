@@ -2,6 +2,11 @@
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <RootNamespace>MuscleCuties.Core</RootNamespace>
+        <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+        <!-- EF Core with SQLite requires reflection at runtime and cannot be made fully
+             trim-compatible without EF Core's own model compilation feature. Suppress the
+             known IL2026 noise from DbContext so genuine new warnings remain visible. -->
+        <NoWarn>$(NoWarn);IL2026</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

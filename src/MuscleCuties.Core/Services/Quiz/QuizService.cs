@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
@@ -16,9 +17,9 @@ namespace MuscleCuties.Core.Services.Quiz;
 
 public class QuizService : IQuizService
 {
+    private readonly ICycleService _cycleService;
     private readonly IQuizRepository _quizRepository;
     private readonly IUserRepository _userRepository;
-    private readonly ICycleService _cycleService;
 
     public QuizService(
         IUserRepository userRepository,
@@ -35,6 +36,8 @@ public class QuizService : IQuizService
         return await _quizRepository.GetQuestionsWithAnswersAsync();
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026",
+        Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     public async Task SaveAnswersAsync(int userId, List<UserQuizResponse> responses)
     {
         if (responses.Count == 0)
@@ -247,11 +250,13 @@ public class QuizService : IQuizService
         return AdaptiveProfileMapper.SerializeBaselines(baselines);
     }
 
-    private static bool IsBaselineQuestion(QuizQuestionType type) =>
-        type is QuizQuestionType.MenstrualPain or QuizQuestionType.MenstrualEnergy
+    private static bool IsBaselineQuestion(QuizQuestionType type)
+    {
+        return type is QuizQuestionType.MenstrualPain or QuizQuestionType.MenstrualEnergy
             or QuizQuestionType.FollicularPain or QuizQuestionType.FollicularEnergy
             or QuizQuestionType.OvulatoryPain or QuizQuestionType.OvulatoryEnergy
             or QuizQuestionType.LutealPain or QuizQuestionType.LutealEnergy;
+    }
 
     private static TEnum MapEnum<TEnum>(int value, TEnum fallback)
         where TEnum : struct, Enum

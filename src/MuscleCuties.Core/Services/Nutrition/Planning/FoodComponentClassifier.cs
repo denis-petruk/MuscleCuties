@@ -8,6 +8,10 @@ public static class FoodComponentClassifier
     private const float MinimumProteinAnchorGrams = 8f;
     private const float MinimumProteinEnergyShare = 0.20f;
     private const float CarbDominanceRatio = 1.5f;
+    private const float ZeroCalorieCondimentThreshold = 40f;
+
+    private static readonly string[] CondimentTerms =
+        ["vinegar", "mustard", "ketchup", "salsa", "sriracha", "soy sauce", "hot sauce", "fish sauce"];
 
     public static ComponentType Classify(FoodItem food)
     {
@@ -17,6 +21,9 @@ public static class FoodComponentClassifier
         var f = food.Fats;
 
         if (IsSauce(cal, p, c, f))
+            return ComponentType.Sauce;
+
+        if (IsCondimentByName(food.Name))
             return ComponentType.Sauce;
 
         if (food.Name.Contains("sauce", StringComparison.OrdinalIgnoreCase))
@@ -58,6 +65,64 @@ public static class FoodComponentClassifier
     public static bool IsCarbohydrateBase(FoodItem food)
         => IsCarb(food.Protein, food.Carbs) ||
            (IsProteinAnchor(food) && food.Carbs >= 15f);
+
+    /// <summary>
+    /// Checks whether a food item belongs to the same semantic carb family
+    /// as the slot's preferred ingredient terms. Prevents cross-family fallback
+    /// (e.g. oats landing in a Burger concept that requires bun/bread).
+    /// </summary>
+    public static bool IsCarbSemanticMatch(FoodItem food, IReadOnlyList<string> preferredTerms)
+    {
+        var family = FindCarbFamily(preferredTerms);
+        if (family is null)
+            return true;
+
+        return family.Any(term =>
+            food.Name.Contains(term, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static readonly string[][] CarbFamilies =
+    [
+        ["bread", "bun", "hamburger bun", "whole wheat bread", "toast"],
+        ["tortilla", "flour tortilla", "wrap"],
+        ["rice", "brown rice", "quinoa"],
+        ["oats", "rolled oats", "gluten-free rolled oats", "chia seeds"],
+        ["potato", "white potato", "sweet potato"],
+        ["beans", "black beans", "pinto beans", "cannellini beans", "chickpeas", "lentils"],
+        ["hummus"],
+        ["blueberries", "strawberries", "raspberries"]
+    ];
+
+    private static string[]? FindCarbFamily(IReadOnlyList<string> preferredTerms)
+    {
+        foreach (var family in CarbFamilies)
+        {
+            if (preferredTerms.Any(term =>
+                    family.Any(f => f.Equals(term, StringComparison.OrdinalIgnoreCase))))
+                return family;
+        }
+
+        return null;
+    }
+
+    public static bool IsZeroCalorieCondiment(FoodItem food)
+    {
+        return food.Calories <= ZeroCalorieCondimentThreshold &&
+               food.Carbs < 10f &&
+               (IsCondimentByName(food.Name) ||
+                food.Name.Contains("sauce", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsCondimentByName(string name)
+    {
+        foreach (var term in CondimentTerms)
+        {
+            if (name.Contains(term, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
 
     private static bool IsSauce(float cal, float protein, float carbs, float fats)
     {

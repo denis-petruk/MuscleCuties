@@ -21,6 +21,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IReferenceDataPreparationService _referenceDataPreparation;
     private readonly ViewModelLoadGate _loadGate = new(ViewModelLoadGate.PageFreshnessWindow);
+    // Suppresses per-field On*Changed storms during batch macro/target assignment.
+    private bool _isBulkLoading;
     [ObservableProperty] private string _addFoodMessage = string.Empty;
     [ObservableProperty] private string _celebrationIconSource = CyclePhaseAssets.FollicularAnimation;
     [ObservableProperty] private int _celebrationToken;
@@ -333,6 +335,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
                 _ => string.Empty
             };
 
+            _isBulkLoading = true;
             var plan = await RunScopedAsync(services =>
                 services.GetRequiredService<INutritionService>()
                     .GetDailyPlanAsync(userId, phase, DateTime.Today, BreakfastPreference));
@@ -368,6 +371,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware
             ConsumedProtein = consumed.Protein;
             ConsumedCarbs = consumed.Carbs;
             ConsumedFats = consumed.Fats;
+            _isBulkLoading = false;
             NotifyDisplayProperties();
             IsBusy = false;
 

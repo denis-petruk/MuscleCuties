@@ -29,6 +29,12 @@
                 Style="{StaticResource MutedLabel}"
                 Margin="0,0,0,32" />
 
+            <Label
+                Text="{Binding InfoMessage}"
+                Style="{StaticResource AccentLabel}"
+                IsVisible="{Binding InfoMessage, Converter={StaticResource StringToBoolConverter}}"
+                Margin="0,0,0,16" />
+
             <VerticalStackLayout Spacing="18">
                 <VerticalStackLayout Spacing="6">
                     <Label Text="Email" Style="{StaticResource FormFieldLabel}" />
@@ -47,6 +53,7 @@
                     <Label Text="Password" Style="{StaticResource FormFieldLabel}" />
                     <Border Style="{StaticResource InputContainer}">
                         <Entry
+                            x:Name="LoginPassword"
                             AutomationId="LoginPassword"
                             Placeholder="Password"
                             Text="{Binding Password}"
@@ -89,18 +96,19 @@
                     SemanticProperties.Description="Signing in" />
             </VerticalStackLayout>
 
-            <HorizontalStackLayout
+            <Grid
+                ColumnDefinitions="Auto,Auto"
+                ColumnSpacing="4"
                 HorizontalOptions="Center"
-                Spacing="4"
                 Margin="0,24,0,0"
                 MinimumHeightRequest="44"
                 SemanticProperties.Description="Create an account">
-                <HorizontalStackLayout.GestureRecognizers>
+                <Grid.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding GoToRegisterCommand}" />
-                </HorizontalStackLayout.GestureRecognizers>
+                </Grid.GestureRecognizers>
                 <Label Text="New to MuscleCuties?" Style="{StaticResource MutedLabel}" VerticalOptions="Center" />
-                <Label Text="Create account" Style="{StaticResource AccentLabel}" VerticalOptions="Center" />
-            </HorizontalStackLayout>
+                <Label Grid.Column="1" Text="Create account" Style="{StaticResource AccentLabel}" VerticalOptions="Center" />
+            </Grid>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

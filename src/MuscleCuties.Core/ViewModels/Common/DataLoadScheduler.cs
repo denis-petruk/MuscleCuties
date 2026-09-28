@@ -23,7 +23,7 @@ public static class DataLoadScheduler
         }
         catch (Exception exception)
         {
-            Trace.WriteLine($"[DataLoad] {operation} failed: {exception}");
+            Trace.WriteLine($"[DataLoad] {operation} failed ({exception.GetType().Name}).");
             // The caller owns UI state and must see the original failure.
             throw;
         }

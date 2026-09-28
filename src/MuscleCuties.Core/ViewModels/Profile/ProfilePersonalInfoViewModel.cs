@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -99,6 +100,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     private async Task SaveAsync()
     {
         if (!TryValidate(out var height, out var weight, out var workoutDays, out var cycleLength))

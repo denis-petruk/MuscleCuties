@@ -153,11 +153,11 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             else
                 await ReloadInjuriesAsync();
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             IsLoadError = true;
             ErrorText = "Couldn't load your injury log. Try again.";
-            Trace.WriteLine($"[InjuryLog] Load failed: {exception}");
+            Trace.WriteLine("[InjuryLog] Load failed.");
         }
         finally
         {
@@ -242,10 +242,10 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             CancelEdit();
             await RefreshAfterChangeAsync();
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             ErrorText = "Couldn't save this injury. Your changes are still here; try again.";
-            Trace.WriteLine($"[InjuryLog] Save failed: {exception}");
+            Trace.WriteLine("[InjuryLog] Save failed.");
         }
         finally
         {
@@ -268,10 +268,10 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
                 CancelEdit();
             await RefreshAfterChangeAsync();
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             ErrorText = "Couldn't delete this injury. Try again.";
-            Trace.WriteLine($"[InjuryLog] Delete failed: {exception}");
+            Trace.WriteLine("[InjuryLog] Delete failed.");
         }
         finally
         {
@@ -362,11 +362,11 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
                 await workoutService.RegenerateActivePlanAsync(userId, phase);
             });
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             IsPlanRefreshError = true;
             ErrorText = "Your injury log was saved, but the plan couldn't refresh. Try again before training.";
-            Trace.WriteLine($"[InjuryLog] Plan refresh failed: {exception}");
+            Trace.WriteLine("[InjuryLog] Plan refresh failed.");
         }
 
         try
@@ -377,11 +377,11 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             preloadService.InvalidateDashboard();
             await _injuriesChangedAsync();
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             IsPlanRefreshError = true;
             ErrorText = "Your injury log was saved, but the page couldn't refresh. Try again.";
-            Trace.WriteLine($"[InjuryLog] Page refresh failed: {exception}");
+            Trace.WriteLine("[InjuryLog] Page refresh failed.");
         }
     }
 

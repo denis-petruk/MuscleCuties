@@ -46,7 +46,7 @@ internal sealed class ViewModelLoadGate
         }
         catch (Exception exception)
         {
-            Trace.WriteLine($"[PageLoad] {page.GetType().Name} failed: {exception}");
+            Trace.WriteLine($"[PageLoad] {page.GetType().Name} failed ({exception.GetType().Name}).");
         }
     }
 

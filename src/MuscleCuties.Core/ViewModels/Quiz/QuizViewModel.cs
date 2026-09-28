@@ -515,21 +515,7 @@ public partial class QuizViewModel : ObservableObject
 
             _preloadService.InvalidateAll();
             stageStopwatch.Restart();
-            try
-            {
-                await _preloadService.PreloadDashboardAsync();
-            }
-            catch (Exception preloadEx)
-            {
-                Trace.WriteLine(
-                    $"[WARN][Quiz] Dashboard preload failed (non-fatal, will retry on page load): {preloadEx}");
-            }
-            Trace.WriteLine(
-                $"[Performance][Quiz] Dashboard data prepared in {stageStopwatch.ElapsedMilliseconds} ms.");
-
-            stageStopwatch.Restart();
             await _navigateToDashboardAsync();
-            _ = _preloadService.PreloadRemainingAsync();
             Trace.WriteLine(
                 $"[Performance][Quiz] Dashboard navigation completed in {stageStopwatch.ElapsedMilliseconds} ms; " +
                 $"total sync={totalStopwatch.ElapsedMilliseconds} ms.");
@@ -537,12 +523,8 @@ public partial class QuizViewModel : ObservableObject
         catch (Exception ex)
         {
             IsPreparingDashboard = false;
-#if DEBUG
-            ErrorMessage = $"Save failed: {ex.GetType().Name}: {ex.Message}";
-#else
             ErrorMessage = "We could not save your answers. Please try again.";
-#endif
-            Trace.WriteLine($"[ERROR][Quiz] SaveAnswersAsync failed: {ex}");
+            Trace.WriteLine($"[ERROR][Quiz] SaveAnswersAsync failed ({ex.GetType().Name}).");
         }
         finally
         {

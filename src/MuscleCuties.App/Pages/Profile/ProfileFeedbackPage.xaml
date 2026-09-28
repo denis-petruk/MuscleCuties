@@ -5,6 +5,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
+    xmlns:commonModels="clr-namespace:MuscleCuties.Core.Models.UI.Common;assembly=MuscleCuties.Core"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
     x:DataType="vm:ProfileFeedbackViewModel"
     Shell.NavBarIsVisible="False">
@@ -49,7 +50,7 @@
                                 <Picker
                                     Title="Topic"
                                     ItemsSource="{Binding TopicOptions}"
-                                    ItemDisplayBinding="{Binding Label}"
+                                    ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
                                     SelectedItem="{Binding SelectedTopicOption}" />
                             </Border>
                         </VerticalStackLayout>
@@ -60,7 +61,7 @@
                                 <Picker
                                     Title="Priority"
                                     ItemsSource="{Binding PriorityOptions}"
-                                    ItemDisplayBinding="{Binding Label}"
+                                    ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
                                     SelectedItem="{Binding SelectedPriorityOption}" />
                             </Border>
                         </VerticalStackLayout>
@@ -147,9 +148,7 @@
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                        <VerticalStackLayout Spacing="4">
-                            <sharedControls:IconSectionHeader Text="Attach context" IconGlyph="LinkSquare24" />
-                        </VerticalStackLayout>
+                        <sharedControls:IconSectionHeader Text="Attach context" IconGlyph="LinkSquare24" VerticalOptions="Center" />
                         <Button
                             Grid.Column="1"
                             Text="Attach"
