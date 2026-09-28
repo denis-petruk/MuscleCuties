@@ -11,8 +11,13 @@ public partial class CyclePage : ContentPage
 
     public CyclePage(CycleViewModel vm)
     {
+        var started = Stopwatch.GetTimestamp();
         this.InitializeWithTiming(InitializeComponent);
         _viewModel = vm;
+        // Bind before the page is presented so PageLoadingOverlay (which
+        // binds to IPageLoadAware on BindingContext) is active from the
+        // first render, gating the page behind the async load.
+        this.BindWithTiming(vm, started);
     }
 
     protected override void OnAppearing()
@@ -24,8 +29,6 @@ public partial class CyclePage : ContentPage
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
-        if (BindingContext is null)
-            BindingContext = _viewModel;
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         this.BeginPageLoad(async () =>
@@ -58,7 +61,7 @@ public partial class CyclePage : ContentPage
         }
         catch (Exception exception)
         {
-            Trace.WriteLine($"[CyclePage] Could not present modal: {exception}");
+            Trace.WriteLine($"[CyclePage] Could not present modal ({exception.GetType().Name}).");
             _viewModel.IsLoadError = true;
         }
     }

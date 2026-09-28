@@ -107,8 +107,12 @@ public class PhaseVisualView : ContentView
 
     private void StopAnimation()
     {
-        if (_timer is { IsRunning: true })
-            _timer.Stop();
+        if (_timer is null)
+            return;
+
+        _timer.Stop();
+        _timer.Tick -= OnAnimationTick;
+        _timer = null;
     }
 
     private void OnAnimationTick(object? sender, EventArgs e)

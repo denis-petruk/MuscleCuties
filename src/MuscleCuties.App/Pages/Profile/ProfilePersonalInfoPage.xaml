@@ -5,6 +5,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
+    xmlns:commonModels="clr-namespace:MuscleCuties.Core.Models.UI.Common;assembly=MuscleCuties.Core"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
     x:DataType="vm:ProfilePersonalInfoViewModel"
     Shell.NavBarIsVisible="False">
@@ -82,7 +83,7 @@
                             <Picker
                                 Title="Logging method"
                                 ItemsSource="{Binding CycleLoggingModeOptions}"
-                                ItemDisplayBinding="{Binding Label}"
+                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
                                 SelectedItem="{Binding SelectedCycleLoggingModeOption}" />
                         </Border>
                     </VerticalStackLayout>

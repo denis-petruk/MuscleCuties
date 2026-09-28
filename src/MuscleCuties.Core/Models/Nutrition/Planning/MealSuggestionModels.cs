@@ -71,7 +71,8 @@ public sealed record MealConcept(
     IReadOnlyList<MealType> MealTypes,
     IReadOnlyList<MealConceptSlot> Slots,
     IReadOnlyList<SpiceBlendOption> SpiceBlends,
-    IReadOnlySet<DietaryTag> IncompatibleDietaryTags);
+    IReadOnlySet<DietaryTag> IncompatibleDietaryTags,
+    MealStyle? PreferredStyle = null);
 
 public sealed record MealConceptSlot(
     MealConceptSlotType SlotType,

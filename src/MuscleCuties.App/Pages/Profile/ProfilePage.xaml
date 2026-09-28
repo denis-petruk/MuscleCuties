@@ -69,22 +69,21 @@
                             Padding="8,10"
                             MinimumHeightRequest="76"
                             SemanticProperties.Description="{Binding WorkoutStreakDays, StringFormat='Workout session streak: {0} days'}">
-                            <Grid RowDefinitions="Auto,Auto" RowSpacing="4" HorizontalOptions="Center">
-                                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="1" HorizontalOptions="Center">
-                                    <Image
-                                        Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
-                                        Aspect="AspectFit"
-                                        WidthRequest="24"
-                                        HeightRequest="24" />
-                                    <Label
-                                        Grid.Column="1"
-                                        Text="{Binding WorkoutStreakDays}"
-                                        Style="{StaticResource SubHeadline}"
-                                        FontSize="22"
-                                        VerticalOptions="Center" />
-                                </Grid>
+                            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="1" RowSpacing="4" HorizontalOptions="Center">
+                                <Image
+                                    Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
+                                    Aspect="AspectFit"
+                                    WidthRequest="24"
+                                    HeightRequest="24" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding WorkoutStreakDays}"
+                                    Style="{StaticResource SubHeadline}"
+                                    FontSize="22"
+                                    VerticalOptions="Center" />
                                 <Label
                                     Grid.Row="1"
+                                    Grid.ColumnSpan="2"
                                     Text="Session streak"
                                     Style="{StaticResource CaptionLabel}"
                                     FontSize="9"
@@ -101,22 +100,21 @@
                             Padding="8,10"
                             MinimumHeightRequest="76"
                             SemanticProperties.Description="{Binding NutritionStreakDays, StringFormat='Nutrition log streak: {0} days'}">
-                            <Grid RowDefinitions="Auto,Auto" RowSpacing="4" HorizontalOptions="Center">
-                                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="1" HorizontalOptions="Center">
-                                    <Image
-                                        Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
-                                        Aspect="AspectFit"
-                                        WidthRequest="24"
-                                        HeightRequest="24" />
-                                    <Label
-                                        Grid.Column="1"
-                                        Text="{Binding NutritionStreakDays}"
-                                        Style="{StaticResource SubHeadline}"
-                                        FontSize="22"
-                                        VerticalOptions="Center" />
-                                </Grid>
+                            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="1" RowSpacing="4" HorizontalOptions="Center">
+                                <Image
+                                    Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                                    Aspect="AspectFit"
+                                    WidthRequest="24"
+                                    HeightRequest="24" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding NutritionStreakDays}"
+                                    Style="{StaticResource SubHeadline}"
+                                    FontSize="22"
+                                    VerticalOptions="Center" />
                                 <Label
                                     Grid.Row="1"
+                                    Grid.ColumnSpan="2"
                                     Text="Log streak"
                                     Style="{StaticResource CaptionLabel}"
                                     FontSize="9"
@@ -133,22 +131,21 @@
                             Padding="8,10"
                             MinimumHeightRequest="76"
                             SemanticProperties.Description="{Binding CyclesTracked, StringFormat='Cycles logged: {0}'}">
-                            <Grid RowDefinitions="Auto,Auto" RowSpacing="4" HorizontalOptions="Center">
-                                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="1" HorizontalOptions="Center">
-                                    <Image
-                                        Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
-                                        Aspect="AspectFit"
-                                        WidthRequest="26"
-                                        HeightRequest="26" />
-                                    <Label
-                                        Grid.Column="1"
-                                        Text="{Binding CyclesTracked}"
-                                        Style="{StaticResource SubHeadline}"
-                                        FontSize="22"
-                                        VerticalOptions="Center" />
-                                </Grid>
+                            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="1" RowSpacing="4" HorizontalOptions="Center">
+                                <Image
+                                    Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
+                                    Aspect="AspectFit"
+                                    WidthRequest="26"
+                                    HeightRequest="26" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding CyclesTracked}"
+                                    Style="{StaticResource SubHeadline}"
+                                    FontSize="22"
+                                    VerticalOptions="Center" />
                                 <Label
                                     Grid.Row="1"
+                                    Grid.ColumnSpan="2"
                                     Text="Cycles logged"
                                     Style="{StaticResource CaptionLabel}"
                                     FontSize="9"
@@ -166,7 +163,7 @@
                     <Border Style="{StaticResource CardPrimary}" Margin="20,0" Padding="12,14">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer
-                                Command="{Binding BindingContext.OpenPreferenceCommand, Source={x:Reference Root}}"
+                                Command="{Binding OpenPreferenceCommand, Source={RelativeSource AncestorType={x:Type vm:ProfileViewModel}}, x:DataType=vm:ProfileViewModel}"
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="10">

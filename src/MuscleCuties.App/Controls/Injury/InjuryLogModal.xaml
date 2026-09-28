@@ -11,7 +11,7 @@
     <Grid Padding="16,32,16,24">
         <BoxView BackgroundColor="{StaticResource ModalScrim}" Margin="-16,-32,-16,-24">
             <BoxView.GestureRecognizers>
-                <TapGestureRecognizer Command="{Binding CloseCommand, Source={x:Reference Root}}" />
+                <TapGestureRecognizer Command="{Binding CloseCommand, Source={x:Reference Root}, x:DataType=injuryControls:InjuryLogModal}" />
             </BoxView.GestureRecognizers>
         </BoxView>
         <Border Style="{StaticResource ModalSurface}" MaximumHeightRequest="700" VerticalOptions="Fill">
@@ -24,7 +24,7 @@
                     <Border Grid.Column="2" Style="{StaticResource ModalIconButton}"
                         WidthRequest="48" HeightRequest="48" SemanticProperties.Description="Close injury log">
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding CloseCommand, Source={x:Reference Root}}" />
+                            <TapGestureRecognizer Command="{Binding CloseCommand, Source={x:Reference Root}, x:DataType=injuryControls:InjuryLogModal}" />
                         </Border.GestureRecognizers>
                         <Path Style="{StaticResource ModalCloseIcon}" />
                     </Border>

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -128,6 +129,7 @@ public partial class ProfileSetupViewModel : ObservableObject
         OnPropertyChanged(nameof(UseImperialSystem));
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     private async Task ContinueAsync()
     {
         IsBusy = true;

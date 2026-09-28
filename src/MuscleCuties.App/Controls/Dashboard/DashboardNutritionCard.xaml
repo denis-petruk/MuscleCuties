@@ -26,24 +26,22 @@
             </Grid>
 
             <!-- Row 1: calorie icon + consumed value (left) + goal (right) -->
-            <Grid Grid.Row="1" ColumnDefinitions="*, Auto">
-                <Grid ColumnDefinitions="Auto, Auto" ColumnSpacing="5" VerticalOptions="Center">
-                    <Image
-                        Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
-                        Aspect="AspectFit"
-                        WidthRequest="18"
-                        HeightRequest="18"
-                        VerticalOptions="Center" />
-                    <Label
-                        Grid.Column="1"
-                        Text="{Binding CaloriesConsumed}"
-                        TextColor="{StaticResource Primary}"
-                        FontSize="16"
-                        FontAttributes="Bold"
-                        VerticalOptions="Center" />
-                </Grid>
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="5">
+                <Image
+                    Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                    Aspect="AspectFit"
+                    WidthRequest="18"
+                    HeightRequest="18"
+                    VerticalOptions="Center" />
                 <Label
                     Grid.Column="1"
+                    Text="{Binding CaloriesConsumed}"
+                    TextColor="{StaticResource Primary}"
+                    FontSize="16"
+                    FontAttributes="Bold"
+                    VerticalOptions="Center" />
+                <Label
+                    Grid.Column="3"
                     Text="{Binding CaloriesGoal}"
                     Style="{StaticResource CaptionLabel}"
                     VerticalOptions="Center" />

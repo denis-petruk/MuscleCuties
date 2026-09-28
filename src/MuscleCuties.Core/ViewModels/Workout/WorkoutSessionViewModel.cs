@@ -11,6 +11,7 @@ using MuscleCuties.Core.Models.Workout.Logging;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Workout;
+using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Workout;
 
@@ -137,32 +138,38 @@ public partial class WorkoutSessionViewModel : ObservableObject
             if (workoutDayId <= 0)
                 throw new InvalidOperationException("This workout could not be found. Go back and choose a workout.");
 
-            await RunScopedAsync(async (services, userId) =>
+            var (detail, phaseNote) = await DataLoadScheduler.RunAsync(async () =>
             {
+                using var scope = _scopeFactory.CreateScope();
+                var services = scope.ServiceProvider;
+                var userId = await services.GetRequiredService<IAuthService>().GetCurrentUserIdAsync();
                 var detail = await services.GetRequiredService<IWorkoutService>()
                     .GetWorkoutSessionDetailAsync(userId, workoutDayId);
-                if (version != _loadVersion) return;
-                DayTitle = detail.Title;
-                ActivityCards = new(GetActivities(detail));
-                foreach (var item in ActivityCards.SelectMany(activity => activity.Exercises).Where(item => item.IsLogged))
-                    _savedLogs[item.WorkoutDayExerciseId] = BuildLogInput(item);
-                RefreshActivityCards();
                 // Missing cycle guidance must not prevent an otherwise usable workout.
+                string phaseNote;
                 try
                 {
                     var phase = await services.GetRequiredService<ICycleService>().GetCurrentPhaseAsync(userId);
-                    if (version == _loadVersion) CyclePhaseNote = BuildPhaseNote(phase);
+                    phaseNote = BuildPhaseNote(phase);
                 }
                 catch
                 {
-                    if (version == _loadVersion) CyclePhaseNote = "Cycle guidance is unavailable. Follow your energy and comfort today.";
+                    phaseNote = "Cycle guidance is unavailable. Follow your energy and comfort today.";
                 }
+                return (detail, phaseNote);
             });
+            if (version != _loadVersion) return;
+            DayTitle = detail.Title;
+            ActivityCards = new(GetActivities(detail));
+            foreach (var item in ActivityCards.SelectMany(activity => activity.Exercises).Where(item => item.IsLogged))
+                _savedLogs[item.WorkoutDayExerciseId] = BuildLogInput(item);
+            RefreshActivityCards();
+            CyclePhaseNote = phaseNote;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             if (version == _loadVersion)
-                ErrorText = ex is InvalidOperationException ? ex.Message : "Could not load this workout. Try again.";
+                ErrorText = "Could not load this workout. Try again.";
         }
         finally
         {
@@ -239,10 +246,10 @@ public partial class WorkoutSessionViewModel : ObservableObject
                 _ => $"{exercise.Name} logged"
             };
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             if (version == _loadVersion)
-                ErrorText = ex is InvalidOperationException ? ex.Message : "Could not save this exercise. Your entries are still here. Try again.";
+                ErrorText = "Could not save this exercise. Your entries are still here. Try again.";
         }
         finally { if (version == _loadVersion) IsBusy = false; }
     }

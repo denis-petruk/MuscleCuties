@@ -19,16 +19,15 @@
                 RowSpacing="16"
                 HorizontalOptions="Fill"
                 MaximumWidthRequest="640">
-                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                    <Grid RowDefinitions="Auto, Auto" RowSpacing="4" VerticalOptions="Center">
-                        <Label
-                            Text="{Binding CurrentMonthLabel}"
-                            Style="{StaticResource SubHeadline}" />
-                        <Label Grid.Row="1" Text="Your cycle" Style="{StaticResource MutedLabel}" />
-                    </Grid>
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="4">
+                    <Label
+                        Text="{Binding CurrentMonthLabel}"
+                        Style="{StaticResource SubHeadline}" />
+                    <Label Grid.Row="1" Text="Your cycle" Style="{StaticResource MutedLabel}" />
 
                     <Border
                         Grid.Column="1"
+                        Grid.RowSpan="2"
                         WidthRequest="44"
                         HeightRequest="44"
                         StrokeShape="RoundRectangle 22"

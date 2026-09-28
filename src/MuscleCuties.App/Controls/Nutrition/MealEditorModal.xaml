@@ -40,37 +40,33 @@
                 <CollectionView Grid.Row="2" ItemsSource="{Binding MealIngredients}"
                                 IsVisible="{Binding IsFoodFinderCollapsed}" SelectionMode="None" Margin="20,0">
                     <CollectionView.Header>
-                        <VerticalStackLayout Spacing="16" Padding="0,20,0,12">
-                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="4">
-                                <Label Text="Meal" Style="{StaticResource FormFieldLabel}" />
-                                <Label Grid.Column="1" Text="Time" Style="{StaticResource FormFieldLabel}" />
-                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                    <Picker Title="Meal type" ItemsSource="{Binding MealTypes}" SelectedItem="{Binding SelectedMealType}" />
-                                </Border>
-                                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource InputContainer}">
-                                    <TimePicker Time="{Binding SelectedMealTime}" Format="h:mm tt" SemanticProperties.Description="Meal time" />
-                                </Border>
-                            </Grid>
-                            <HorizontalStackLayout Spacing="8">
-                                <Image Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}" WidthRequest="24" HeightRequest="24" VerticalOptions="Center" />
-                                <Label Text="{Binding MealDraftCaloriesText}" Style="{StaticResource SubHeadline}" />
-                            </HorizontalStackLayout>
-                            <FlexLayout Wrap="Wrap" JustifyContent="SpaceBetween">
-                                <VerticalStackLayout Spacing="4" Margin="0,0,12,8">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*,*,*" ColumnSpacing="12" RowSpacing="4" Padding="0,20,0,12">
+                            <Label Text="Meal" Style="{StaticResource FormFieldLabel}" Grid.ColumnSpan="2" />
+                            <Label Grid.Column="2" Grid.ColumnSpan="2" Text="Time" Style="{StaticResource FormFieldLabel}" />
+                            <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource InputContainer}">
+                                <Picker Title="Meal type" ItemsSource="{Binding MealTypes}" SelectedItem="{Binding SelectedMealType}" />
+                            </Border>
+                            <Border Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Style="{StaticResource InputContainer}">
+                                <TimePicker Time="{Binding SelectedMealTime}" Format="h:mm tt" SemanticProperties.Description="Meal time" />
+                            </Border>
+                            <Image Grid.Row="2" Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}" WidthRequest="24" HeightRequest="24" VerticalOptions="Center" Margin="0,12,0,0" />
+                            <Label Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding MealDraftCaloriesText}" Style="{StaticResource SubHeadline}" Margin="0,12,0,0" />
+                            <Grid Grid.Row="3" Grid.ColumnSpan="4" ColumnDefinitions="*,*,*" ColumnSpacing="12" Margin="0,12,0,8">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
                                     <Label Text="Protein" Style="{StaticResource CaptionLabel}" />
-                                    <Label Text="{Binding MealDraftProteinText}" Style="{StaticResource CardTitle}" TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource ProteinDark}}" />
-                                </VerticalStackLayout>
-                                <VerticalStackLayout Spacing="4" Margin="0,0,12,8">
+                                    <Label Grid.Row="1" Text="{Binding MealDraftProteinText}" Style="{StaticResource CardTitle}" TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource ProteinDark}}" />
+                                </Grid>
+                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="4">
                                     <Label Text="Carbs" Style="{StaticResource CaptionLabel}" />
-                                    <Label Text="{Binding MealDraftCarbsText}" Style="{StaticResource CardTitle}" TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource CarbsDark}}" />
-                                </VerticalStackLayout>
-                                <VerticalStackLayout Spacing="4" Margin="0,0,0,8">
+                                    <Label Grid.Row="1" Text="{Binding MealDraftCarbsText}" Style="{StaticResource CardTitle}" TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource CarbsDark}}" />
+                                </Grid>
+                                <Grid Grid.Column="2" RowDefinitions="Auto,Auto" RowSpacing="4">
                                     <Label Text="Fat" Style="{StaticResource CaptionLabel}" />
-                                    <Label Text="{Binding MealDraftFatsText}" Style="{StaticResource CardTitle}" TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource FatsDark}}" />
-                                </VerticalStackLayout>
-                            </FlexLayout>
-                            <Button Text="Add food" Command="{Binding OpenFoodFinderCommand}" Style="{StaticResource ButtonSecondary}" MinimumHeightRequest="48" />
-                        </VerticalStackLayout>
+                                    <Label Grid.Row="1" Text="{Binding MealDraftFatsText}" Style="{StaticResource CardTitle}" TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource FatsDark}}" />
+                                </Grid>
+                            </Grid>
+                            <Button Grid.Row="4" Grid.ColumnSpan="4" Text="Add food" Command="{Binding OpenFoodFinderCommand}" Style="{StaticResource ButtonSecondary}" MinimumHeightRequest="48" />
+                        </Grid>
                     </CollectionView.Header>
                     <CollectionView.EmptyView>
                         <Label Text="No ingredients yet" Style="{StaticResource MutedLabel}" Margin="0,16" HorizontalTextAlignment="Center" />
@@ -81,12 +77,12 @@
                                 <Label Text="{Binding Name}" Style="{StaticResource CardTitle}" FontSize="16" />
                                 <Label Grid.Row="1" Text="{Binding AmountSummary}" Style="{StaticResource CaptionLabel}" />
                                 <Button Grid.Column="1" Grid.RowSpan="2" Text="Edit" Style="{StaticResource ButtonLink}" MinimumWidthRequest="48" MinimumHeightRequest="48"
-                                        Command="{Binding BindingContext.EditIngredientCommand, Source={x:Reference Root}}" CommandParameter="{Binding .}"
+                                        Command="{Binding EditIngredientCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}" CommandParameter="{Binding .}"
                                         SemanticProperties.Description="{Binding Name, StringFormat='Edit {0} portion'}" />
                                 <Border Grid.Column="2" Grid.RowSpan="2" Style="{StaticResource ModalIconButton}" VerticalOptions="Center"
                                         SemanticProperties.Description="{Binding Name, StringFormat='Remove {0}'}">
                                     <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding BindingContext.RemoveIngredientCommand, Source={x:Reference Root}}" CommandParameter="{Binding .}" />
+                                        <TapGestureRecognizer Command="{Binding RemoveIngredientCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}" CommandParameter="{Binding .}" />
                                     </Border.GestureRecognizers>
                                     <Path Style="{StaticResource ModalCloseIcon}" WidthRequest="14" HeightRequest="14" />
                                 </Border>
@@ -110,7 +106,7 @@
                                 <Grid Padding="0,12" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="4" ColumnSpacing="8"
                                       SemanticProperties.Description="{Binding Name, StringFormat='Choose {0}'}">
                                     <Grid.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding BindingContext.SelectFoodResultCommand, Source={x:Reference Root}}" CommandParameter="{Binding .}" />
+                                        <TapGestureRecognizer Command="{Binding SelectFoodResultCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}" CommandParameter="{Binding .}" />
                                     </Grid.GestureRecognizers>
                                     <Label Text="{Binding Name}" Style="{StaticResource CardTitle}" FontSize="16" />
                                     <Label Grid.Row="1" Text="{Binding SourceSummary}" Style="{StaticResource CaptionLabel}" MaxLines="2" LineBreakMode="TailTruncation" />

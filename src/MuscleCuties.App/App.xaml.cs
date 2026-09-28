@@ -1,9 +1,11 @@
 using System.Diagnostics;
+using Microsoft.Data.Sqlite;
+using MuscleCuties.App.Pages.Dashboard;
 using MuscleCuties.App.Pages.Onboarding;
+using MuscleCuties.App.Pages.Startup;
 using MuscleCuties.App.Services.Security;
 using MuscleCuties.App.Services.Notifications;
 using MuscleCuties.Core.Data;
-using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Notifications;
@@ -17,6 +19,8 @@ public partial class App : Application
     private readonly IServiceProvider _services;
     private int _startupStarted;
     private Task? _startupTask;
+    private AppStartupPage? _startupPage;
+    private bool _startupFailed;
 
     public App(IServiceProvider services)
     {
@@ -40,6 +44,7 @@ public partial class App : Application
         var window = new Window(_services.GetRequiredService<AppShell>());
         window.Created += OnWindowCreated;
         window.Resumed += OnWindowResumed;
+        window.Stopped += OnWindowStopped;
         return window;
     }
 
@@ -48,12 +53,35 @@ public partial class App : Application
         BeginStartup();
     }
 
-    internal void BeginStartup()
+    internal void BeginStartup(AppStartupPage? startupPage = null)
     {
+        if (startupPage is not null)
+        {
+            _startupPage = startupPage;
+            if (_startupFailed)
+                startupPage.ShowStartupError();
+        }
+
         if (Interlocked.Exchange(ref _startupStarted, 1) != 0)
             return;
 
         _startupTask = InitializeAndRouteAsync();
+    }
+
+    internal async Task RetryStartupAsync()
+    {
+        if (_startupTask is { } previousStartup)
+            await previousStartup;
+
+        _startupFailed = false;
+        Interlocked.Exchange(ref _startupStarted, 0);
+        BeginStartup();
+    }
+
+    internal void DetachStartupPage(AppStartupPage startupPage)
+    {
+        if (ReferenceEquals(_startupPage, startupPage))
+            _startupPage = null;
     }
 
     private async Task InitializeAndRouteAsync()
@@ -69,29 +97,19 @@ public partial class App : Application
             DatabaseBackupProtection.ExcludeFromBackup(scope.ServiceProvider.GetRequiredService<IDbPathProvider>().GetDatabasePath());
 
             var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var isLoggedIn = await DataLoadScheduler.RunAsync(authService.IsLoggedInAsync);
-            if (isLoggedIn)
+            var currentUser = await DataLoadScheduler.RunAsync(authService.GetCurrentUserStateAsync);
+            if (currentUser is not null)
             {
-                var userId = await DataLoadScheduler.RunAsync(authService.GetCurrentUserIdAsync);
-                var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-                var user = await DataLoadScheduler.RunAsync(() => userRepository.GetByIdAsync(userId));
-                if (user is null)
-                {
-                    await DataLoadScheduler.RunAsync(authService.LogoutAsync);
-                    await NavigateFromStartupAsync("//LoginPage");
-                    return;
-                }
-
                 var shell = _services.GetRequiredService<AppShell>();
                 shell.MarkAuthenticationVerified();
 
-                if (!user.IsOnboardingComplete)
+                if (!currentUser.IsOnboardingComplete)
                 {
                     await NavigateFromStartupAsync($"//{nameof(ProfileSetupPage)}");
                     return;
                 }
 
-                await SeedAndPreloadAsync(userId);
+                await NavigateToDashboardAsync(currentUser.UserId);
                 return;
             }
 
@@ -99,23 +117,31 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            Trace.WriteLine($"[Startup] InitializeAndRouteAsync failed: {ex}");
-            await NavigateFromStartupAsync("//LoginPage");
+            Trace.WriteLine($"[Startup] InitializeAndRouteAsync failed ({ex.GetType().Name}).");
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                _startupFailed = true;
+                _startupPage?.ShowStartupError();
+            });
         }
     }
 
-    private async Task SeedAndPreloadAsync(int userId)
+    private async Task NavigateToDashboardAsync(int userId)
     {
-        // Preload owns the preparation barrier, including login/onboarding paths.
-        var preloadService = _services.GetRequiredService<IAppPreloadService>();
-        await preloadService.PreloadDashboardAsync();
         await NavigateFromStartupAsync("//DashboardPage");
 
-        // Yield to let iOS finish the native VC layout cycle after the Shell
-        // structural transition (ShellContent → TabBar) before starting any
-        // background ViewModel mutations that could fire PropertyChanged bindings.
-        await Task.Yield();
+        // Hidden-tab preloads share the same SQLite gate as the visible page.
+        // Let the Dashboard finish its first data load before competing for it.
+        var dashboardPage = Shell.Current?.CurrentPage as DashboardPage;
+        if (dashboardPage is null)
+        {
+            Trace.WriteLine("[Startup] Dashboard page was unavailable for preload coordination.");
+            return;
+        }
 
+        await dashboardPage.InitialLoadCompleted;
+
+        var preloadService = _services.GetRequiredService<IAppPreloadService>();
         _ = preloadService.PreloadRemainingAsync();
         _ = ScheduleNotificationsAsync(userId);
     }
@@ -133,23 +159,26 @@ public partial class App : Application
     {
         try
         {
-            // Notifications own a separate context and await their queries in
-            // order. Do not hold the database gate while requesting permission.
             using var scope = _services.CreateScope();
             var cycleNotifications = scope.ServiceProvider.GetRequiredService<ICyclePhaseNotificationService>();
             var checkInNotifications = scope.ServiceProvider.GetRequiredService<IDailyCheckInNotificationService>();
-            await cycleNotifications.NotifyIfPhaseChangedAsync(userId);
-            await checkInNotifications.ScheduleCheckInReminderAsync(userId);
+            await DataLoadScheduler.RunAsync(() => cycleNotifications.NotifyIfPhaseChangedAsync(userId));
+            await DataLoadScheduler.RunAsync(() => checkInNotifications.ScheduleCheckInReminderAsync(userId));
         }
         catch (Exception ex)
         {
-            Trace.WriteLine($"[Startup] ScheduleNotificationsAsync failed: {ex.Message}");
+            Trace.WriteLine($"[Startup] ScheduleNotificationsAsync failed ({ex.GetType().Name}).");
         }
     }
 
     private void OnWindowResumed(object? sender, EventArgs e)
     {
         _ = HandleDayChangeAsync();
+    }
+
+    private void OnWindowStopped(object? sender, EventArgs e)
+    {
+        _ = Task.Run(SqliteConnection.ClearAllPools);
     }
 
     private async Task HandleDayChangeAsync()
@@ -167,7 +196,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            Trace.WriteLine($"[Startup] HandleDayChangeAsync failed: {ex.Message}");
+            Trace.WriteLine($"[Startup] HandleDayChangeAsync failed ({ex.GetType().Name}).");
         }
     }
 

@@ -69,9 +69,9 @@ public partial class FoodSyncService : IFoodSyncService
                 {
                     errors.Add("FDC detail refresh timed out. Search-result nutrition was used instead.");
                 }
-                catch (HttpRequestException ex)
+                catch (HttpRequestException)
                 {
-                    errors.Add($"FDC detail refresh failed: {ex.Message}");
+                    errors.Add("FDC detail refresh failed.");
                 }
 
             var details = BuildDetailsFromSearchResults(
@@ -138,7 +138,7 @@ public partial class FoodSyncService : IFoodSyncService
             if (detail is null)
             {
                 log.ItemsFailed = 1;
-                errors.Add($"FDC food {fdcId} was not found.");
+                errors.Add("FDC food was not found.");
                 await CompleteLogAsync(log, "Failed", errors);
                 return null;
             }

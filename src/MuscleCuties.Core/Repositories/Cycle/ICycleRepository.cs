@@ -9,6 +9,8 @@ public interface ICycleRepository : IRepository<CycleLog>
     Task<List<CycleLog>> GetCycleHistoryAsync(int userId);
     Task<CyclePhaseLog?> GetLatestPhaseLogAsync(int userId);
     Task<CyclePhaseLog?> GetLatestPhaseLogOnOrBeforeAsync(int userId, DateTime date);
+    Task<CyclePhaseLog?> GetLatestPhaseLogBeforeDateAsync(int userId, DateTime date);
+    Task<CyclePhaseLog?> GetNextPhaseLogAfterDateAsync(int userId, DateTime date);
     Task<CyclePhaseLog?> GetPhaseLogForDateAsync(int userId, DateTime loggedAt);
     Task<List<CyclePhaseLog>> GetRecentPhaseLogsAsync(int userId, int count);
     Task AddPhaseLogAsync(CyclePhaseLog log);

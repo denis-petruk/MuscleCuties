@@ -31,30 +31,35 @@ public partial class NutritionViewModel
 
     partial void OnConsumedCaloriesChanged(float value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(CaloriesProgress));
         OnPropertyChanged(nameof(CaloriesConsumed));
     }
 
     partial void OnTargetCaloriesChanged(float value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(CaloriesProgress));
         OnPropertyChanged(nameof(CaloriesGoal));
     }
 
     partial void OnConsumedProteinChanged(float value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(ProteinText));
         OnPropertyChanged(nameof(ProteinProgress));
     }
 
     partial void OnConsumedCarbsChanged(float value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(CarbsText));
         OnPropertyChanged(nameof(CarbsProgress));
     }
 
     partial void OnConsumedFatsChanged(float value)
     {
+        if (_isBulkLoading) return;
         OnPropertyChanged(nameof(FatsText));
         OnPropertyChanged(nameof(FatsProgress));
     }

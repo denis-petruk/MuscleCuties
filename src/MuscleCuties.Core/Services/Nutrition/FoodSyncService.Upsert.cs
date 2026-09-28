@@ -39,10 +39,10 @@ public partial class FoodSyncService
 
                 log.ItemsUpserted++;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 log.ItemsFailed++;
-                errors.Add($"FDC food {detail.FdcId}: {ex.Message}");
+                errors.Add("FDC food could not be saved.");
             }
 
         await _foodSyncRepository.AddFoodItemVersionsAsync(versions);

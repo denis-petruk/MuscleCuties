@@ -1,11 +1,12 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
 
 namespace MuscleCuties.Core.Repositories.Common;
 
-public abstract class BaseRepository<T> : IRepository<T> where T : class
+public abstract class BaseRepository<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T> : IRepository<T> where T : class
 {
     protected readonly AppDatabase _db;
 
@@ -25,7 +26,7 @@ public abstract class BaseRepository<T> : IRepository<T> where T : class
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             // Failed reads must not look like an empty database (which can trigger plan replacement).
-            Trace.TraceError($"[{GetType().Name}.{operation}] Database read failed: {exception}");
+            Trace.TraceError($"[{GetType().Name}.{operation}] Database read failed ({exception.GetType().Name}).");
             throw;
         }
     }
@@ -61,7 +62,7 @@ public abstract class BaseRepository<T> : IRepository<T> where T : class
         await _db.SaveChangesAsync();
     }
 
-    protected void DetachTrackedLocal<TEntity>(TEntity entity) where TEntity : class
+    protected void DetachTrackedLocal<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TEntity>(TEntity entity) where TEntity : class
     {
         var entry = _db.Entry(entity);
         var primaryKey = entry.Metadata.FindPrimaryKey();

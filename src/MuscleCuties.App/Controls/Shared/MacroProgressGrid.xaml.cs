@@ -7,21 +7,24 @@ namespace MuscleCuties.App.Controls.Shared;
 public class MacroProgressGrid : ContentView
 {
     public static readonly BindableProperty ProteinTextProperty =
-        BindableProperty.Create(nameof(ProteinText), typeof(string), typeof(MacroProgressGrid), string.Empty);
+        BindableProperty.Create(nameof(ProteinText), typeof(string), typeof(MacroProgressGrid), string.Empty,
+            propertyChanged: (b, _, value) => ((MacroProgressGrid)b).UpdateValueText(0, (string?)value));
 
     public static readonly BindableProperty ProteinProgressProperty =
         BindableProperty.Create(nameof(ProteinProgress), typeof(double), typeof(MacroProgressGrid), 0d,
             propertyChanged: (b, _, _) => ((MacroProgressGrid)b).UpdateBarScale(0));
 
     public static readonly BindableProperty CarbsTextProperty =
-        BindableProperty.Create(nameof(CarbsText), typeof(string), typeof(MacroProgressGrid), string.Empty);
+        BindableProperty.Create(nameof(CarbsText), typeof(string), typeof(MacroProgressGrid), string.Empty,
+            propertyChanged: (b, _, value) => ((MacroProgressGrid)b).UpdateValueText(1, (string?)value));
 
     public static readonly BindableProperty CarbsProgressProperty =
         BindableProperty.Create(nameof(CarbsProgress), typeof(double), typeof(MacroProgressGrid), 0d,
             propertyChanged: (b, _, _) => ((MacroProgressGrid)b).UpdateBarScale(1));
 
     public static readonly BindableProperty FatsTextProperty =
-        BindableProperty.Create(nameof(FatsText), typeof(string), typeof(MacroProgressGrid), string.Empty);
+        BindableProperty.Create(nameof(FatsText), typeof(string), typeof(MacroProgressGrid), string.Empty,
+            propertyChanged: (b, _, value) => ((MacroProgressGrid)b).UpdateValueText(2, (string?)value));
 
     public static readonly BindableProperty FatsProgressProperty =
         BindableProperty.Create(nameof(FatsProgress), typeof(double), typeof(MacroProgressGrid), 0d,
@@ -129,14 +132,27 @@ public class MacroProgressGrid : ContentView
             grid.Add(barContainer);
         }
 
-        _valueLabels[0].SetBinding(Label.TextProperty, new Binding(nameof(ProteinText), source: this));
-        _valueLabels[1].SetBinding(Label.TextProperty, new Binding(nameof(CarbsText), source: this));
-        _valueLabels[2].SetBinding(Label.TextProperty, new Binding(nameof(FatsText), source: this));
+        UpdateValueText(0, ProteinText);
+        UpdateValueText(1, CarbsText);
+        UpdateValueText(2, FatsText);
 
         Content = grid;
+    }
 
-        if (Application.Current is not null)
+    protected override void OnParentSet()
+    {
+        base.OnParentSet();
+
+        if (Parent is null)
+        {
+            if (Application.Current is not null)
+                Application.Current.RequestedThemeChanged -= OnThemeChanged;
+        }
+        else if (Application.Current is not null)
+        {
+            Application.Current.RequestedThemeChanged -= OnThemeChanged;
             Application.Current.RequestedThemeChanged += OnThemeChanged;
+        }
     }
 
     public string ProteinText
@@ -173,6 +189,12 @@ public class MacroProgressGrid : ContentView
     {
         get => (double)GetValue(FatsProgressProperty);
         set => SetValue(FatsProgressProperty, value);
+    }
+
+    private void UpdateValueText(int index, string? text)
+    {
+        if (_valueLabels[index] is { } label)
+            label.Text = text;
     }
 
     private void UpdateBarScale(int index)

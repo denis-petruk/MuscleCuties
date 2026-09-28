@@ -12,13 +12,40 @@ public partial class AppStartupPage : ContentPage
         ApplyTheme();
     }
 
+    internal void ShowStartupError()
+    {
+        StartupActivityIndicator.IsVisible = false;
+        StartupActivityIndicator.IsRunning = false;
+        StartupErrorLabel.IsVisible = true;
+        RetryButton.IsVisible = true;
+    }
+
+    private async void OnRetryClicked(object? sender, EventArgs e)
+    {
+        StartupErrorLabel.IsVisible = false;
+        RetryButton.IsVisible = false;
+        StartupActivityIndicator.IsVisible = true;
+        StartupActivityIndicator.IsRunning = true;
+        if (Application.Current is App app)
+        {
+            try
+            {
+                await app.RetryStartupAsync();
+            }
+            catch
+            {
+                ShowStartupError();
+            }
+        }
+    }
+
     protected override void OnAppearing()
     {
         base.OnAppearing();
         ApplyTheme();
 
         if (Application.Current is App app)
-            app.BeginStartup();
+            app.BeginStartup(this);
 
         if (!_isThemeHandlerAttached && Application.Current is not null)
         {
@@ -29,6 +56,9 @@ public partial class AppStartupPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        if (Application.Current is App app)
+            app.DetachStartupPage(this);
+
         if (_isThemeHandlerAttached && Application.Current is not null)
         {
             Application.Current.RequestedThemeChanged -= OnRequestedThemeChanged;

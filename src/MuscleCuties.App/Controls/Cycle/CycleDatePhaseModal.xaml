@@ -25,53 +25,55 @@
             VerticalOptions="Center">
 
             <Grid RowDefinitions="Auto, *, Auto">
+                <!-- Header: flattened from 3-deep Grid nesting into single Grid -->
                 <Grid
                     Grid.Row="0"
-                    RowDefinitions="Auto, Auto"
-                    RowSpacing="12"
+                    RowDefinitions="Auto, Auto, Auto"
+                    ColumnDefinitions="*, Auto"
+                    ColumnSpacing="12"
+                    RowSpacing="6"
                     Padding="20,18,20,12">
 
-                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                        <Grid RowDefinitions="Auto, Auto" RowSpacing="6">
-                            <Label
-                                Text="{Binding SelectedCalendarDateText}"
-                                Style="{StaticResource SubHeadline}"
-                                FontSize="24" />
+                    <Label
+                        Text="{Binding SelectedCalendarDateText}"
+                        Style="{StaticResource SubHeadline}"
+                        FontSize="24" />
 
-                            <Label
-                                Grid.Row="1"
-                                Text="{Binding SelectedCalendarPhaseText}"
-                                Style="{StaticResource MutedLabel}" />
-                        </Grid>
+                    <Label
+                        Grid.Row="1"
+                        Text="{Binding SelectedCalendarPhaseText}"
+                        Style="{StaticResource MutedLabel}" />
 
-                        <Border
-                            Grid.Column="1"
-                            WidthRequest="44"
-                            HeightRequest="44"
-                            StrokeShape="RoundRectangle 22"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
-                            StrokeThickness="0"
-                            VerticalOptions="Start"
-                            SemanticProperties.Description="Close cycle date editor">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding CloseDatePhaseModalCommand}" />
-                            </Border.GestureRecognizers>
-                            <Path
-                                Data="M6 6L18 18M18 6L6 18"
-                                Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                StrokeThickness="2.2"
-                                StrokeLineCap="Round"
-                                Aspect="Uniform"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
-                        </Border>
-                    </Grid>
+                    <Border
+                        Grid.Column="1"
+                        Grid.RowSpan="2"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        StrokeShape="RoundRectangle 22"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
+                        StrokeThickness="0"
+                        VerticalOptions="Start"
+                        SemanticProperties.Description="Close cycle date editor">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding CloseDatePhaseModalCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path
+                            Data="M6 6L18 18M18 6L6 18"
+                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                            StrokeThickness="2.2"
+                            StrokeLineCap="Round"
+                            Aspect="Uniform"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
 
                     <BoxView
-                        Grid.Row="1"
+                        Grid.Row="2"
+                        Grid.ColumnSpan="2"
                         HeightRequest="1"
+                        Margin="0,6,0,0"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                         Opacity="0.7" />
                 </Grid>
@@ -93,7 +95,7 @@
                                     SemanticProperties.Description="{Binding Name, StringFormat='Select {0} phase'}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
-                                            Command="{Binding BindingContext.SelectPhaseOptionCommand, Source={x:Reference Root}}"
+                                            Command="{Binding SelectPhaseOptionCommand, Source={RelativeSource AncestorType={x:Type vm:CycleViewModel}}, x:DataType=vm:CycleViewModel}"
                                             CommandParameter="{Binding .}" />
                                     </Border.GestureRecognizers>
                                     <Border.Triggers>
@@ -105,29 +107,31 @@
                                         </DataTrigger>
                                     </Border.Triggers>
 
-                                    <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12">
+                                    <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12" RowSpacing="3">
                                         <sharedControls:PhaseVisualView
+                                            Grid.RowSpan="2"
                                             Source="{Binding IconSource}"
                                             WidthRequest="34"
                                             HeightRequest="34"
                                             VerticalOptions="Center" />
 
-                                        <Grid Grid.Column="1" RowDefinitions="Auto, Auto" RowSpacing="3">
-                                            <Label
-                                                Text="{Binding Name}"
-                                                TextColor="{Binding TextColor}"
-                                                FontSize="15"
-                                                FontAttributes="Bold" />
-                                            <Label
-                                                Grid.Row="1"
-                                                Text="{Binding Description}"
-                                                TextColor="{Binding TextColor}"
-                                                FontSize="12"
-                                                Opacity="0.75" />
-                                        </Grid>
+                                        <Label
+                                            Grid.Column="1"
+                                            Text="{Binding Name}"
+                                            TextColor="{Binding TextColor}"
+                                            FontSize="15"
+                                            FontAttributes="Bold" />
+                                        <Label
+                                            Grid.Row="1"
+                                            Grid.Column="1"
+                                            Text="{Binding Description}"
+                                            TextColor="{Binding TextColor}"
+                                            FontSize="12"
+                                            Opacity="0.75" />
 
                                         <Border
                                             Grid.Column="2"
+                                            Grid.RowSpan="2"
                                             WidthRequest="26"
                                             HeightRequest="26"
                                             StrokeShape="RoundRectangle 13"
@@ -177,30 +181,32 @@
                         StrokeThickness="1"
                         StrokeShape="RoundRectangle 18"
                         Padding="16,14">
-                        <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="10">
+                        <Grid RowDefinitions="Auto, Auto, Auto" ColumnDefinitions="*, *" RowSpacing="10" ColumnSpacing="10">
                             <Label
+                                Grid.ColumnSpan="2"
                                 Text="{Binding PhaseJumpWarningTitle}"
                                 Style="{StaticResource CardTitle}" />
                             <Label
                                 Grid.Row="1"
+                                Grid.ColumnSpan="2"
                                 Text="{Binding PhaseJumpWarningText}"
                                 Style="{StaticResource MutedLabel}" />
-                            <Grid Grid.Row="2" ColumnDefinitions="*, *" ColumnSpacing="10">
-                                <Button
-                                    Text="Use next phase"
-                                    Command="{Binding UseSuggestedPhaseCommand}"
-                                    IsVisible="{Binding HasSuggestedPhase}"
-                                    HeightRequest="48"
-                                    FontSize="13" />
-                                <Button
-                                    Grid.Column="1"
-                                    Text="Forgot to log shift"
-                                    Command="{Binding ReviewEarlierPhaseRecordsCommand}"
-                                    HeightRequest="48"
-                                    FontSize="13"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                            </Grid>
+                            <Button
+                                Grid.Row="2"
+                                Text="Use next phase"
+                                Command="{Binding UseSuggestedPhaseCommand}"
+                                IsVisible="{Binding HasSuggestedPhase}"
+                                HeightRequest="48"
+                                FontSize="13" />
+                            <Button
+                                Grid.Row="2"
+                                Grid.Column="1"
+                                Text="Forgot to log shift"
+                                Command="{Binding ReviewEarlierPhaseRecordsCommand}"
+                                HeightRequest="48"
+                                FontSize="13"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                                TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                         </Grid>
                     </Border>
 

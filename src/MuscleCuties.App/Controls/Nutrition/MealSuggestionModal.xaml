@@ -107,7 +107,8 @@
                             RowSpacing="10">
                             <Border Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92">
                                 <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsBreakfastGuessed}" Value="True">
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsBreakfastGuessed}"
+                                                 Value="True">
                                         <Setter Property="Stroke" Value="{StaticResource Primary}" />
                                         <Setter Property="StrokeThickness" Value="2" />
                                     </DataTrigger>
@@ -130,7 +131,8 @@
                                 </VerticalStackLayout>
                             </Border>
 
-                            <Border Grid.Column="1" Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92">
+                            <Border Grid.Column="1" Style="{StaticResource ModalListItem}" Padding="12"
+                                    MinimumHeightRequest="92">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsLunchGuessed}" Value="True">
                                         <Setter Property="Stroke" Value="{StaticResource Primary}" />
@@ -155,7 +157,8 @@
                                 </VerticalStackLayout>
                             </Border>
 
-                            <Border Grid.Row="1" Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92">
+                            <Border Grid.Row="1" Style="{StaticResource ModalListItem}" Padding="12"
+                                    MinimumHeightRequest="92">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsDinnerGuessed}" Value="True">
                                         <Setter Property="Stroke" Value="{StaticResource Primary}" />
@@ -180,7 +183,8 @@
                                 </VerticalStackLayout>
                             </Border>
 
-                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92">
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource ModalListItem}" Padding="12"
+                                    MinimumHeightRequest="92">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsSnackGuessed}" Value="True">
                                         <Setter Property="Stroke" Value="{StaticResource Primary}" />
@@ -214,18 +218,18 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding StartDayPlanCommand}" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="12" RowSpacing="2">
                                 <Path
+                                    Grid.RowSpan="2"
                                     Data="M4 4h16v16H4zM8 8h3v3H8zM13 8h3M13 11h3M8 14h8M8 17h8"
                                     Style="{StaticResource NutritionLineIcon}"
                                     Stroke="{StaticResource Primary}"
                                     WidthRequest="22"
                                     HeightRequest="22"
                                     VerticalOptions="Center" />
-                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                    <Label Text="Plan my day" Style="{StaticResource CardTitle}" FontSize="15" />
-                                    <Label Text="Prepare all four meals around today's remaining calories" Style="{StaticResource CaptionLabel}" />
-                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="Plan my day" Style="{StaticResource CardTitle}" FontSize="15" />
+                                <Label Grid.Row="1" Grid.Column="1" Text="Prepare all four meals around today's remaining calories"
+                                       Style="{StaticResource CaptionLabel}" />
                             </Grid>
                         </Border>
                     </VerticalStackLayout>
@@ -318,24 +322,23 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="nutritionModels:MealSuggestionItem">
                             <Border Style="{StaticResource ModalListItem}">
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
-                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                                        <Path
-                                            Data="{Binding IconPathData, Converter={StaticResource StringToGeometryConverter}}"
-                                            Style="{StaticResource NutritionLineIcon}"
-                                            WidthRequest="18"
-                                            HeightRequest="18"
-                                            VerticalOptions="Center" />
-                                        <Label
-                                            Grid.Column="1"
-                                            Text="{Binding ConceptName}"
-                                            Style="{StaticResource CardTitle}"
-                                            FontSize="15"
-                                            MaxLines="1"
-                                            LineBreakMode="TailTruncation" />
-                                    </Grid>
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="8" RowSpacing="4">
+                                    <Path
+                                        Data="{Binding IconPathData, Converter={StaticResource StringToGeometryConverter}}"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        WidthRequest="18"
+                                        HeightRequest="18"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Grid.Column="1"
+                                        Text="{Binding ConceptName}"
+                                        Style="{StaticResource CardTitle}"
+                                        FontSize="15"
+                                        MaxLines="1"
+                                        LineBreakMode="TailTruncation" />
                                     <Label
                                         Grid.Row="1"
+                                        Grid.ColumnSpan="2"
                                         Text="{Binding ConceptDescription}"
                                         Style="{StaticResource CaptionLabel}"
                                         FontSize="12"
@@ -343,13 +346,14 @@
                                         LineBreakMode="TailTruncation" />
                                     <Label
                                         Grid.Row="2"
+                                        Grid.ColumnSpan="2"
                                         Text="{Binding ComponentSummary}"
                                         Style="{StaticResource MutedLabel}"
                                         FontSize="11"
                                         MaxLines="1"
                                         LineBreakMode="TailTruncation" />
 
-                                    <HorizontalStackLayout Grid.Row="3" Spacing="6">
+                                    <Grid Grid.Row="3" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
                                         <Border
                                             StrokeShape="RoundRectangle 999"
                                             StrokeThickness="0"
@@ -363,22 +367,25 @@
                                                 FontSize="10" />
                                         </Border>
                                         <Label
+                                            Grid.Column="1"
                                             Text="{Binding CaloriesText}"
                                             Style="{StaticResource CaptionLabel}"
                                             FontAttributes="Bold"
                                             FontSize="11"
                                             VerticalOptions="Center" />
-                                    </HorizontalStackLayout>
+                                    </Grid>
 
                                     <Label
                                         Grid.Row="4"
+                                        Grid.ColumnSpan="2"
                                         Text="{Binding MacrosText}"
                                         Style="{StaticResource CaptionLabel}"
                                         FontSize="11" />
                                     <Button
                                         Grid.Row="5"
+                                        Grid.ColumnSpan="2"
                                         Text="View meal"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, Path=OpenMealDetailCommand}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, Path=OpenMealDetailCommand, x:DataType=vm:NutritionViewModel}"
                                         CommandParameter="{Binding .}"
                                         FontSize="13"
                                         MinimumHeightRequest="44"
@@ -421,72 +428,72 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="nutritionModels:DayMealPlanItem">
                             <Border Style="{StaticResource ModalListItem}" Padding="12">
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="5">
-                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                                        <Path
-                                            Data="{Binding MealTypeIconPathData, Converter={StaticResource StringToGeometryConverter}}"
-                                            Style="{StaticResource NutritionLineIcon}"
-                                            Stroke="{StaticResource Primary}"
-                                            WidthRequest="18"
-                                            HeightRequest="18"
-                                            VerticalOptions="Center" />
-                                        <Label
-                                            Grid.Column="1"
-                                            Text="{Binding MealTypeLabel}"
-                                            Style="{StaticResource CardTitle}"
-                                            FontSize="14"
-                                            VerticalOptions="Center" />
-                                        <Label
-                                            Grid.Column="2"
-                                            Text="{Binding TargetSummaryText}"
-                                            Style="{StaticResource CaptionLabel}"
-                                            FontAttributes="Bold"
-                                            HorizontalTextAlignment="End"
-                                            VerticalOptions="Center" />
-                                    </Grid>
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" RowSpacing="5">
+                                    <Path
+                                        Data="{Binding MealTypeIconPathData, Converter={StaticResource StringToGeometryConverter}}"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="18"
+                                        HeightRequest="18"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Grid.Column="1"
+                                        Text="{Binding MealTypeLabel}"
+                                        Style="{StaticResource CardTitle}"
+                                        FontSize="14"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Grid.Column="2"
+                                        Text="{Binding TargetSummaryText}"
+                                        Style="{StaticResource CaptionLabel}"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="End"
+                                        VerticalOptions="Center" />
                                     <Label
                                         Grid.Row="1"
+                                        Grid.ColumnSpan="3"
                                         Text="{Binding MealTitle}"
                                         Style="{StaticResource CardTitle}"
                                         FontSize="15"
-                                        Grid.ColumnSpan="2"
                                         MaxLines="1"
                                         LineBreakMode="TailTruncation" />
                                     <Label
                                         Grid.Row="2"
+                                        Grid.ColumnSpan="3"
                                         Text="{Binding MealSummaryText}"
                                         Style="{StaticResource CaptionLabel}"
-                                        Grid.ColumnSpan="2"
                                         MaxLines="2"
                                         LineBreakMode="TailTruncation" />
                                     <Label
                                         Grid.Row="3"
+                                        Grid.ColumnSpan="2"
                                         Text="{Binding MacrosText}"
                                         Style="{StaticResource MutedLabel}"
                                         FontSize="11"
-                                        Grid.Column="0"
                                         IsVisible="{Binding HasSuggestion}" />
-                                    <HorizontalStackLayout
+                                    <Grid
                                         Grid.Row="3"
-                                        Grid.Column="1"
-                                        Spacing="8"
+                                        Grid.Column="2"
+                                        ColumnDefinitions="Auto,Auto"
+                                        ColumnSpacing="8"
                                         VerticalOptions="End"
                                         HorizontalOptions="End">
                                         <Button
                                             Text="Use meal"
-                                            Command="{Binding BindingContext.UsePlannedMealCommand, Source={x:Reference SuggestionRoot}}"
+                                            Command="{Binding UsePlannedMealCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}"
                                             CommandParameter="{Binding .}"
                                             IsVisible="{Binding HasSuggestion}"
                                             MinimumHeightRequest="42"
                                             FontSize="13" />
                                         <Border
+                                            Grid.Column="1"
                                             Style="{StaticResource ModalIconButton}"
                                             IsEnabled="{Binding CanRefresh}"
                                             IsVisible="{Binding CanRefresh}"
                                             SemanticProperties.Description="Find another meal">
                                             <Border.GestureRecognizers>
                                                 <TapGestureRecognizer
-                                                    Command="{Binding BindingContext.RefreshDayMealCommand, Source={x:Reference SuggestionRoot}}"
+                                                    Command="{Binding RefreshDayMealCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}"
                                                     CommandParameter="{Binding .}" />
                                             </Border.GestureRecognizers>
                                             <Path
@@ -498,29 +505,26 @@
                                                 HorizontalOptions="Center"
                                                 VerticalOptions="Center" />
                                         </Border>
-                                    </HorizontalStackLayout>
+                                    </Grid>
                                 </Grid>
                             </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
-                <Grid Grid.Row="3" Padding="20,8,20,16">
-                    <HorizontalStackLayout Spacing="10">
-                        <Button
-                            Text="Choose one meal"
-                            Command="{Binding BackToMealTypePickerCommand}"
-                            Style="{StaticResource ButtonSecondary}"
-                            IsVisible="{Binding IsDayPlanMode}"
-                            MinimumHeightRequest="48"
-                            HorizontalOptions="FillAndExpand" />
-                        <Button
-                            Text="Done"
-                            Command="{Binding CloseSuggestionModalCommand}"
-                            Style="{StaticResource ButtonSecondary}"
-                            MinimumHeightRequest="48"
-                            HorizontalOptions="FillAndExpand" />
-                    </HorizontalStackLayout>
+                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="10" Padding="20,8,20,16">
+                    <Button
+                        Text="Choose one meal"
+                        Command="{Binding BackToMealTypePickerCommand}"
+                        Style="{StaticResource ButtonSecondary}"
+                        IsVisible="{Binding IsDayPlanMode}"
+                        MinimumHeightRequest="48" />
+                    <Button
+                        Grid.Column="1"
+                        Text="Done"
+                        Command="{Binding CloseSuggestionModalCommand}"
+                        Style="{StaticResource ButtonSecondary}"
+                        MinimumHeightRequest="48" />
                 </Grid>
             </Grid>
         </Border>

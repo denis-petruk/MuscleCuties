@@ -51,9 +51,21 @@ internal static class PageLoadExtensions
     public static void BeginPageLoad(this Page page, Func<Task> loadAsync)
     {
         var pageName = page.GetType().Name;
-        _ = GetFirstLayoutTask(page, pageName);
-        Trace.WriteLine($"[Performance][{pageName}] Page entered; data load started independently of view inflation.");
-        _ = RunSafelyAsync(page, pageName, "data load", loadAsync);
+        var firstLayout = GetFirstLayoutTask(page, pageName);
+        Trace.WriteLine($"[Performance][{pageName}] Page entered; data load queued after first layout.");
+        _ = RunAfterFirstLayoutSafelyAsync(page, pageName, firstLayout, loadAsync);
+    }
+
+    private static async Task RunAfterFirstLayoutSafelyAsync(
+        Page page,
+        string pageName,
+        Task firstLayout,
+        Func<Task> loadAsync)
+    {
+        await firstLayout.ConfigureAwait(false);
+        await Task.Delay(16).ConfigureAwait(false);
+        await MainThread.InvokeOnMainThreadAsync(
+            () => RunSafelyAsync(page, pageName, "data load", loadAsync));
     }
 
     public static void BeginDeferredLoad(this Page page, Func<Task> loadAsync)
@@ -71,6 +83,9 @@ internal static class PageLoadExtensions
         Func<Task> loadAsync)
     {
         await firstLayout.ConfigureAwait(false);
+        // SizeChanged can run before the compositor presents the first frame.
+        // Give it one frame before inflating deferred XAML on the UI thread.
+        await Task.Delay(16).ConfigureAwait(false);
         await MainThread.InvokeOnMainThreadAsync(
             () => RunSafelyAsync(page, pageName, "deferred view load", loadAsync));
     }
@@ -97,7 +112,7 @@ internal static class PageLoadExtensions
         catch (Exception exception)
         {
             Trace.WriteLine(
-                $"[Performance][{pageName}] {operation} failed after {stopwatch.ElapsedMilliseconds} ms: {exception}");
+                $"[Performance][{pageName}] {operation} failed after {stopwatch.ElapsedMilliseconds} ms ({exception.GetType().Name}).");
 
             if (page.BindingContext is IPageLoadAware aware)
                 aware.IsLoadError = true;

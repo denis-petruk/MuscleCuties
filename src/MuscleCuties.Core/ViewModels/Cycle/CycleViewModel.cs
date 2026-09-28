@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
@@ -181,6 +182,15 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
         });
     }
 
+    private Task RunScopedAsync(Func<IServiceProvider, Task> operation)
+    {
+        return DataLoadScheduler.RunAsync(async () =>
+        {
+            using var scope = _scopeFactory.CreateScope();
+            await operation(scope.ServiceProvider);
+        });
+    }
+
     private async Task AdvancePhaseAsync()
     {
         if (IsBusy)
@@ -189,15 +199,16 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
         IsBusy = true;
         try
         {
-            using var scope = _scopeFactory.CreateScope();
-            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
-
-            var userId = await authService.GetCurrentUserIdAsync();
             var nextPhase = HasActiveCycle
                 ? CyclePhaseRules.GetNextPhase(CurrentPhase)
                 : CyclePhase.Menstrual;
-            await cycleService.SetPhaseForDateAsync(userId, nextPhase, CurrentDate, "Manual phase advance");
+            var date = CurrentDate;
+            await RunScopedAsync(async services =>
+            {
+                var userId = await services.GetRequiredService<IAuthService>().GetCurrentUserIdAsync();
+                await services.GetRequiredService<ICycleService>()
+                    .SetPhaseForDateAsync(userId, nextPhase, date, "Manual phase advance");
+            });
             await RefreshCycleDataAsync();
         }
         catch (CyclePhaseOrderException ex)
@@ -207,6 +218,11 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
         catch (InvalidOperationException ex)
         {
             ShowCycleWarningPopup("Could not change phase yet", FormatCycleOrderWarningMessage(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Cycle] Phase advance failed ({ex.GetType().Name}).");
+            ShowCycleWarningPopup("Could not save phase", "Please try again.");
         }
         finally
         {
@@ -329,12 +345,12 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
         IsBusy = true;
         try
         {
-            using var scope = _scopeFactory.CreateScope();
-            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
-
-            var userId = await authService.GetCurrentUserIdAsync();
-            await cycleService.SetPhaseForDateAsync(userId, phase, date, note);
+            await RunScopedAsync(async services =>
+            {
+                var userId = await services.GetRequiredService<IAuthService>().GetCurrentUserIdAsync();
+                await services.GetRequiredService<ICycleService>()
+                    .SetPhaseForDateAsync(userId, phase, date, note);
+            });
             CloseDatePhaseModal();
             await RefreshCycleDataAsync();
         }
@@ -347,6 +363,11 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
             PhaseJumpWarningTitle = "Let’s keep the cycle in order";
             PhaseJumpWarningText = ex.Message;
             HasPhaseJumpWarning = true;
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Cycle] Phase date save failed ({ex.GetType().Name}).");
+            PhaseEditStatusText = "Could not save this phase. Please try again.";
         }
         finally
         {
@@ -691,13 +712,14 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
         IsBusy = true;
         try
         {
-            using var scope = _scopeFactory.CreateScope();
-            var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
-
-            var userId = await authService.GetCurrentUserIdAsync();
             var suggestedPhase = _cycleWarningSuggestedPhase.Value;
-            await cycleService.SetPhaseForDateAsync(userId, suggestedPhase, CurrentDate, "Manual phase correction");
+            var date = CurrentDate;
+            await RunScopedAsync(async services =>
+            {
+                var userId = await services.GetRequiredService<IAuthService>().GetCurrentUserIdAsync();
+                await services.GetRequiredService<ICycleService>()
+                    .SetPhaseForDateAsync(userId, suggestedPhase, date, "Manual phase correction");
+            });
             CloseCycleWarningPopup();
             await RefreshCycleDataAsync();
         }
@@ -711,6 +733,11 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
             CycleWarningSuggestedActionText = "Use next phase";
             OnPropertyChanged(nameof(HasCycleWarningSuggestedPhase));
             ShowCycleWarningPopup("Could not save that yet", FormatCycleOrderWarningMessage(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Cycle] Suggested phase save failed ({ex.GetType().Name}).");
+            ShowCycleWarningPopup("Could not save phase", "Please try again.");
         }
         finally
         {

@@ -153,13 +153,13 @@ public partial class NutritionViewModel
             _loadGate.MarkStale();
             await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            AddFoodMessage = ex.Message;
+            AddFoodMessage = "Check the meal selections and try again.";
         }
-        catch (ArgumentException ex)
+        catch (ArgumentException)
         {
-            AddFoodMessage = ex.Message;
+            AddFoodMessage = "Check the meal amounts and try again.";
         }
         catch
         {

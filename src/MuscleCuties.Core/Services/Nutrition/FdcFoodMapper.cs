@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 
@@ -105,6 +106,8 @@ public static class FdcFoodMapper
                    StringComparison.Ordinal);
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026",
+        Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     public static string CreateNutrientSnapshot(FoodItem item)
     {
         return JsonSerializer.Serialize(new

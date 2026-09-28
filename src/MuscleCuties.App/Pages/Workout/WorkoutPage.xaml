@@ -5,6 +5,7 @@
     x:Name="WorkoutRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Workout;assembly=MuscleCuties.Core"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
@@ -165,48 +166,48 @@
                         BindableLayout.ItemsSource="{Binding Filters}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="workoutModels:FilterChipItem">
-                                <Grid FlexLayout.Basis="25%" Padding="4,0">
-                                    <Border
-                                        StrokeShape="RoundRectangle 999"
-                                        StrokeThickness="0"
-                                        Padding="8,9"
-                                        MinimumHeightRequest="44">
-                                        <Border.Triggers>
-                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
+                                <Border
+                                    FlexLayout.Basis="25%"
+                                    StrokeShape="RoundRectangle 999"
+                                    StrokeThickness="0"
+                                    Padding="8,9"
+                                    Margin="4,0"
+                                    MinimumHeightRequest="44">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
+                                                     Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
+                                                     Value="False">
+                                            <Setter Property="BackgroundColor"
+                                                    Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding SelectFilterCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+                                    <Label
+                                        Text="{Binding Label}"
+                                        FontSize="12"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        VerticalOptions="Center">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsSelected}"
                                                          Value="True">
-                                                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                                <Setter Property="TextColor" Value="{StaticResource White}" />
                                             </DataTrigger>
-                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsSelected}"
                                                          Value="False">
-                                                <Setter Property="BackgroundColor"
-                                                        Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}" />
+                                                <Setter Property="TextColor"
+                                                        Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                                             </DataTrigger>
-                                        </Border.Triggers>
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer
-                                                Command="{Binding Source={x:Reference WorkoutRoot}, Path=BindingContext.SelectFilterCommand}"
-                                                CommandParameter="{Binding .}" />
-                                        </Border.GestureRecognizers>
-                                        <Label
-                                            Text="{Binding Label}"
-                                            FontSize="12"
-                                            FontAttributes="Bold"
-                                            HorizontalTextAlignment="Center"
-                                            VerticalOptions="Center">
-                                            <Label.Triggers>
-                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}"
-                                                             Value="True">
-                                                    <Setter Property="TextColor" Value="{StaticResource White}" />
-                                                </DataTrigger>
-                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}"
-                                                             Value="False">
-                                                    <Setter Property="TextColor"
-                                                            Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                                </DataTrigger>
-                                            </Label.Triggers>
-                                        </Label>
-                                    </Border>
-                                </Grid>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </FlexLayout>
@@ -254,17 +255,17 @@
                     <workoutControls:WorkoutActivityCard
                         Margin="20,0,20,12"
                         MaximumWidthRequest="640"
-                        OpenCommand="{Binding Source={x:Reference WorkoutRoot}, Path=BindingContext.OpenWorkoutCommand}"
+                        OpenCommand="{Binding OpenWorkoutCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
                         CommandParameter="{Binding .}" />
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
         <sharedControls:PageLoadingOverlay />
-        <injuryControls:InjuryLogModal
-            BindingContext="{Binding InjuryLogVm}"
-            IsOpen="{Binding BindingContext.IsInjuryModalVisible, Source={x:Reference WorkoutRoot}}"
-            CloseCommand="{Binding BindingContext.CloseInjuryModalCommand, Source={x:Reference WorkoutRoot}}" />
+        <toolkit:LazyView
+            x:Name="InjuryModalLazy"
+            x:TypeArguments="injuryControls:InjuryLogModal"
+            InputTransparent="{Binding IsInjuryModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
     </Grid>
 
 </ContentPage>

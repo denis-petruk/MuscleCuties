@@ -68,8 +68,8 @@ public class WorkoutRepository(AppDatabase db) : BaseRepository<WorkoutPlan>(db)
             exception.Message.Contains("IsInjuryFriendly", StringComparison.OrdinalIgnoreCase))
         {
             Trace.TraceWarning(
-                $"[WorkoutRepository] Exercises.IsInjuryFriendly is missing; reading legacy exercise details " +
-                $"with injury suitability defaulted to false until startup migration completes: {exception}");
+                "[WorkoutRepository] Exercises.IsInjuryFriendly is missing; reading legacy exercise details " +
+                "with injury suitability defaulted to false until startup migration completes.");
             return await buildQuery(ExerciseReadQuery(includeInjuryFriendly: false)).ToListAsync();
         }
     }

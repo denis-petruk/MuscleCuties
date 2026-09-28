@@ -206,7 +206,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
 
             ApplyFeaturedWorkout();
             ApplyFilter();
-            NotifyWorkoutStateProperties();
+            // NotifyWorkoutStateProperties() is called by OnWorkoutsChanged (via ApplyFilter)
+            // and by OnActivePlanChanged. No explicit call needed here.
 
         }
         finally
@@ -237,8 +238,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
                     w.Tag,
                     selected.Label.ToUpperInvariant(),
                     StringComparison.OrdinalIgnoreCase)));
-
-        NotifyWorkoutStateProperties();
+        // NotifyWorkoutStateProperties() is already called by OnWorkoutsChanged; do not call again.
     }
 
     private void ApplyFeaturedWorkout()

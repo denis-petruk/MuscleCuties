@@ -26,7 +26,7 @@ public partial class FoodSyncService
     {
         var allErrors = exception is null
             ? errors.ToList()
-            : errors.Concat([exception.Message]).ToList();
+            : errors.Concat([$"Food sync failed ({exception.GetType().Name})."]).ToList();
 
         log.CompletedAt = DateTime.UtcNow;
         log.Status = status;

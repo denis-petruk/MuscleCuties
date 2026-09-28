@@ -1,4 +1,5 @@
-using MuscleCuties.App.Controls.Shared;
+using System.ComponentModel;
+using System.Diagnostics;
 using MuscleCuties.App.Services.Navigation;
 using MuscleCuties.Core.ViewModels.Workout;
 
@@ -24,6 +25,9 @@ public partial class WorkoutSessionPage : ContentPage
     {
         base.OnNavigatedTo(args);
 
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+
         if (_navigationContext.TryTake<int>("workoutDayId", out var workoutDayId))
             _workoutDayId = workoutDayId;
 
@@ -36,9 +40,27 @@ public partial class WorkoutSessionPage : ContentPage
 
     protected override void OnNavigatingFrom(NavigatingFromEventArgs args)
     {
-        // The Train page is cached; make its next appearance reflect session logs.
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         Handler?.MauiContext?.Services.GetService<WorkoutViewModel>()?.Invalidate();
         base.OnNavigatingFrom(args);
+    }
+
+    private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(WorkoutSessionViewModel.IsSwapPanelVisible))
+            return;
+
+        try
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await SwapPanelLazy.LoadIfNeededAsync(_viewModel.IsSwapPanelVisible);
+            });
+        }
+        catch (Exception exception)
+        {
+            Trace.WriteLine($"[WorkoutSessionPage] Could not present swap panel ({exception.GetType().Name}).");
+        }
     }
 
     protected override bool OnBackButtonPressed()
