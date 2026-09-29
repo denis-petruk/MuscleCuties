@@ -7,7 +7,6 @@ using MuscleCuties.Core.Models.Entities.Cycle;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.UI.Cycle;
 using Microsoft.Extensions.DependencyInjection;
-using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
@@ -143,16 +142,15 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware
 
         var predictionTask = RunScopedAsync(services =>
             services.GetRequiredService<ICycleService>().GetPredictionAsync(userId));
-        var userTask = RunScopedAsync(services =>
-            services.GetRequiredService<IUserRepository>().GetByIdAsync(userId));
+        var accountCreatedDateTask = RunScopedAsync(services =>
+            services.GetRequiredService<ICycleAccountService>().GetAccountCreatedDateAsync(userId));
         var phaseLogsTask = RunScopedAsync(services =>
             services.GetRequiredService<ICycleService>().GetRecentPhaseLogsAsync(userId, 120));
 
-        await Task.WhenAll(predictionTask, userTask, phaseLogsTask);
+        await Task.WhenAll(predictionTask, accountCreatedDateTask, phaseLogsTask);
 
         var prediction = await predictionTask;
-        var user = await userTask;
-        var accountCreatedDate = user?.CreatedAt.Date ?? CurrentDate;
+        var accountCreatedDate = await accountCreatedDateTask ?? CurrentDate;
 
         HasActiveCycle = prediction.HasActiveCycle;
         CurrentDay = prediction.CurrentDay;

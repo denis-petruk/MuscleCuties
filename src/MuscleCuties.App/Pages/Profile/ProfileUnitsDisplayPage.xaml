@@ -20,86 +20,96 @@
                 Subtitle="Choose the measuring system used across the app"
                 BackCommand="{Binding BackCommand}" />
 
+            <!-- Measurement system selector -->
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="14">
-                    <sharedControls:IconSectionHeader Text="Default system" IconGlyph="ChatSettings24" />
-                    <VerticalStackLayout Spacing="10">
-                        <VerticalStackLayout Spacing="3">
-                            <Label Text="{Binding UnitSystemText}" Style="{StaticResource CardTitle}" />
-                            <Label Text="Metric uses kg, g, cm, and km. Imperial uses lb, oz, in, and mi."
-                                   Style="{StaticResource CaptionLabel}" />
-                        </VerticalStackLayout>
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                            <Border
-                                Padding="12,10"
-                                MinimumHeightRequest="52"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                                StrokeThickness="1"
-                                StrokeShape="RoundRectangle 16"
-                                SemanticProperties.Description="Select Imperial units">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding SelectImperialUnitsCommand}" />
-                                </Border.GestureRecognizers>
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="True">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <Label
-                                    Text="Imperial"
-                                    Style="{StaticResource BodyLabel}"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding UseImperialSystem}"
-                                                     Value="True">
-                                            <Setter Property="TextColor" Value="{StaticResource White}" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </Border>
-
-                            <Border
-                                Grid.Column="1"
-                                Padding="12,10"
-                                MinimumHeightRequest="52"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                                StrokeThickness="1"
-                                StrokeShape="RoundRectangle 16"
-                                SemanticProperties.Description="Select Metric units">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding SelectMetricUnitsCommand}" />
-                                </Border.GestureRecognizers>
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="True">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <Label
-                                    Text="Metric"
-                                    Style="{StaticResource BodyLabel}"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding UseMetricSystem}"
-                                                     Value="True">
-                                            <Setter Property="TextColor" Value="{StaticResource White}" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </Border>
-                        </Grid>
+                    <sharedControls:IconSectionHeader Text="Measurement system" IconGlyph="ChatSettings24" />
+                    <VerticalStackLayout Spacing="3">
+                        <Label Text="{Binding UnitSystemText}" Style="{StaticResource CardTitle}" FontSize="17" />
+                        <Label
+                            Text="Metric uses kg, g, cm, and km. Imperial uses lb, oz, in, and mi."
+                            Style="{StaticResource CaptionLabel}"
+                            FontSize="14" />
                     </VerticalStackLayout>
-                </VerticalStackLayout>
-            </Border>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Border
+                            Padding="12,10"
+                            MinimumHeightRequest="52"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 16"
+                            SemanticProperties.Description="Select Imperial units">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SelectImperialUnitsCommand}" />
+                            </Border.GestureRecognizers>
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                    <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Label
+                                Text="Imperial"
+                                Style="{StaticResource BodyLabel}"
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding UseImperialSystem}"
+                                                 Value="True">
+                                        <Setter Property="TextColor" Value="{StaticResource White}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
 
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="Unit defaults" IconGlyph="TargetEdit24" />
+                        <Border
+                            Grid.Column="1"
+                            Padding="12,10"
+                            MinimumHeightRequest="52"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 16"
+                            SemanticProperties.Description="Select Metric units">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SelectMetricUnitsCommand}" />
+                            </Border.GestureRecognizers>
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                    <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Label
+                                Text="Metric"
+                                Style="{StaticResource BodyLabel}"
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding UseMetricSystem}"
+                                                 Value="True">
+                                        <Setter Property="TextColor" Value="{StaticResource White}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                    </Grid>
+
+                    <!-- Unit overrides (consolidated into same card) -->
+                    <BoxView />
+                    <VerticalStackLayout Spacing="4">
+                        <Label
+                            Text="Per-category overrides"
+                            Style="{StaticResource FormFieldLabel}"
+                            FontSize="14" />
+                        <Label
+                            Text="Leave blank to use the system default above."
+                            Style="{StaticResource CaptionLabel}"
+                            FontSize="14" />
+                    </VerticalStackLayout>
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                         <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
                             <Label Text="Body weight" Style="{StaticResource FormFieldLabel}" />
@@ -142,6 +152,7 @@
             <Label
                 Text="{Binding StatusMessage}"
                 Style="{StaticResource CaptionLabel}"
+                FontSize="14"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
 
             <Button Text="Save units" Command="{Binding SaveCommand}" />

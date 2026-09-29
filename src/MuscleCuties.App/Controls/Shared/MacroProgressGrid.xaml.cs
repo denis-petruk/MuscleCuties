@@ -81,7 +81,8 @@ public class MacroProgressGrid : ContentView
             var nameLabel = new Label
             {
                 Text = MacroLabels[i],
-                Style = (Style)Application.Current!.Resources["CaptionLabel"]
+                Style = (Style)Application.Current!.Resources["MutedLabel"],
+                FontSize = 14
             };
 
             var header = new HorizontalStackLayout
@@ -95,9 +96,9 @@ public class MacroProgressGrid : ContentView
 
             var valueLabel = new Label
             {
-                FontSize = 13,
+                FontSize = 15,
                 FontAttributes = FontAttributes.Bold,
-                TextColor = macroColor
+                TextColor = AppThemeResources.GetColor("TextPrimary", "TextPrimaryDark")
             };
             _valueLabels[i] = valueLabel;
             Grid.SetRow(valueLabel, 1);
@@ -205,7 +206,7 @@ public class MacroProgressGrid : ContentView
             1 => CarbsProgress,
             _ => FatsProgress
         };
-        _fillBars[index].ScaleX = Math.Clamp(progress, 0, 1);
+        _fillBars[index].ScaleX = double.IsFinite(progress) ? Math.Clamp(progress, 0, 1) : 0;
     }
 
     private void OnThemeChanged(object? sender, AppThemeChangedEventArgs e)
@@ -214,7 +215,7 @@ public class MacroProgressGrid : ContentView
         {
             var macroColor = AppThemeResources.GetColor(e.RequestedTheme, LightKeys[i], DarkKeys[i]);
             _icons[i].Stroke = macroColor;
-            _valueLabels[i].TextColor = macroColor;
+            _valueLabels[i].TextColor = AppThemeResources.GetColor(e.RequestedTheme, "TextPrimary", "TextPrimaryDark");
             _fillBars[i].Color = macroColor;
         }
 

@@ -21,8 +21,9 @@
                 Subtitle="Account, body metrics, and cycle logging"
                 BackCommand="{Binding BackCommand}" />
 
+            <!-- Account section -->
             <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
+                <VerticalStackLayout Spacing="14">
                     <sharedControls:IconSectionHeader Text="Account" IconGlyph="PersonPill24" />
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Display name" Style="{StaticResource FormFieldLabel}" />
@@ -51,9 +52,18 @@
                 </VerticalStackLayout>
             </Border>
 
+            <!-- Body metrics section (private/local) -->
             <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="Body metrics" IconGlyph="Target24" />
+                <VerticalStackLayout Spacing="14">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <sharedControls:IconSectionHeader Text="Body metrics" IconGlyph="Target24" />
+                        <Label
+                            Grid.Column="1"
+                            Text="Local only"
+                            Style="{StaticResource CaptionLabel}"
+                            FontSize="14"
+                            VerticalOptions="Center" />
+                    </Grid>
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <VerticalStackLayout Grid.Column="0" Spacing="5">
                             <Label Text="Height" Style="{StaticResource FormFieldLabel}" />
@@ -74,9 +84,18 @@
 
             <!-- TODO(health-sync): Re-enable Apple Health and Whoop during the native-provider pass. -->
 
+            <!-- Cycle logging section (private/local) -->
             <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="Cycle logging" IconGlyph="HeartCircle24" />
+                <VerticalStackLayout Spacing="14">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <sharedControls:IconSectionHeader Text="Cycle logging" IconGlyph="HeartCircle24" />
+                        <Label
+                            Grid.Column="1"
+                            Text="Local only"
+                            Style="{StaticResource CaptionLabel}"
+                            FontSize="14"
+                            VerticalOptions="Center" />
+                    </Grid>
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Logging method" Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">
@@ -93,6 +112,7 @@
             <Label
                 Text="{Binding StatusMessage}"
                 Style="{StaticResource CaptionLabel}"
+                FontSize="14"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
 
             <Button Text="Save personal info" Command="{Binding SaveCommand}" />

@@ -86,12 +86,12 @@
             <!-- Legend -->
             <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="6" HorizontalOptions="Center">
                 <BoxView WidthRequest="6" HeightRequest="6" CornerRadius="3" Color="#4CAF50" VerticalOptions="Center" />
-                <Label Grid.Column="1" Text="Workout" Style="{StaticResource CaptionLabel}" FontSize="10" VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="Workout" Style="{StaticResource CaptionLabel}" FontSize="12" VerticalOptions="Center" />
                 <BoxView Grid.Column="2" WidthRequest="6" HeightRequest="6" CornerRadius="3" Color="#42A5F5" VerticalOptions="Center" />
-                <Label Grid.Column="3" Text="Meal" Style="{StaticResource CaptionLabel}" FontSize="10" VerticalOptions="Center" />
+                <Label Grid.Column="3" Text="Meal" Style="{StaticResource CaptionLabel}" FontSize="12" VerticalOptions="Center" />
                 <BoxView Grid.Column="4" WidthRequest="6" HeightRequest="6" CornerRadius="3"
                     Color="{AppThemeBinding Light=#33E8507B, Dark=#4DE8507B}" VerticalOptions="Center" />
-                <Label Grid.Column="5" Text="Today" Style="{StaticResource CaptionLabel}" FontSize="10" VerticalOptions="Center" />
+                <Label Grid.Column="5" Text="Today" Style="{StaticResource CaptionLabel}" FontSize="12" VerticalOptions="Center" />
             </Grid>
 
         </VerticalStackLayout>

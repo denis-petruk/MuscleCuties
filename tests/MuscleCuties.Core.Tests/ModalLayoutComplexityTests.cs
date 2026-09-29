@@ -1,12 +1,11 @@
 using System.Xml.Linq;
-using Xunit;
 
 namespace MuscleCuties.Core.Tests;
 
 /// <summary>
 /// Static analysis guard for modal XAML layout complexity.
-/// Deep nesting and high element counts correlate with > 110 ms inflation on mid-range devices.
-/// Thresholds are set just above the post-flattening baselines to catch regressions.
+/// Tracks layout depth and element count against the current modal baselines.
+/// These structural limits are a regression signal, not a runtime timing measurement.
 /// </summary>
 public class ModalLayoutComplexityTests
 {
@@ -14,8 +13,7 @@ public class ModalLayoutComplexityTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..",
             "src", "MuscleCuties.App", "Controls"));
 
-    /// <summary>Max nesting depth of layout containers (Grid, StackLayout, etc.) before performance degrades.
-    /// Baseline: 9 accounts for modal chrome (Grid>Border>Grid>ScrollView) + nested BindableLayout templates.</summary>
+    /// <summary>Max nesting depth of layout containers, including modal chrome and templates.</summary>
     private const int MaxNestingDepth = 9;
 
     /// <summary>Max total visual-tree elements in a single modal XAML file.

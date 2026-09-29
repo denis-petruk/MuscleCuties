@@ -8,9 +8,9 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.UI.Common;
 using MuscleCuties.Core.Models.UI.Profile;
-using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
+using MuscleCuties.Core.Services.Profile;
 
 namespace MuscleCuties.Core.ViewModels.Profile;
 
@@ -19,7 +19,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
     private readonly IAuthService _authService;
     private readonly IAppPreloadService _preloadService;
     private readonly Func<Task> _navigateBackAsync;
-    private readonly IUserRepository _userRepository;
+    private readonly IProfileAccountService _profileAccountService;
     [ObservableProperty] private DateTime _birthDate = DateTime.Today.AddYears(-25);
     [ObservableProperty] private string _cycleLength = "28";
     [ObservableProperty] private CycleTrackingMode _cycleTrackingMode = CycleTrackingMode.ManualPhaseLogging;
@@ -38,12 +38,12 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
 
     public ProfilePersonalInfoViewModel(
         IAuthService authService,
-        IUserRepository userRepository,
+        IProfileAccountService profileAccountService,
         IAppPreloadService preloadService,
         Func<Task> navigateBackAsync)
     {
         _authService = authService;
-        _userRepository = userRepository;
+        _profileAccountService = profileAccountService;
         _preloadService = preloadService;
         _navigateBackAsync = navigateBackAsync;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
@@ -70,8 +70,8 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         try
         {
             var userId = await _authService.GetCurrentUserIdAsync();
-            var user = await _userRepository.GetByIdAsync(userId);
-            var profile = await _userRepository.GetProfileAsync(userId);
+            var user = await _profileAccountService.GetUserAsync(userId);
+            var profile = await _profileAccountService.GetProfileAsync(userId);
 
             Email = user?.Email ?? string.Empty;
 
@@ -110,8 +110,8 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         try
         {
             var userId = await _authService.GetCurrentUserIdAsync();
-            var user = await _userRepository.GetByIdAsync(userId);
-            var profile = await _userRepository.GetProfileAsync(userId);
+            var user = await _profileAccountService.GetUserAsync(userId);
+            var profile = await _profileAccountService.GetProfileAsync(userId);
             var isNewProfile = profile is null;
             var email = Email.Trim().ToLowerInvariant();
 
@@ -119,7 +119,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             {
                 user.Email = email;
                 user.UpdatedAt = DateTime.UtcNow;
-                await _userRepository.UpdateAsync(user);
+                await _profileAccountService.SaveUserAsync(userId, user);
             }
 
             profile ??= new UserProfile { UserId = userId };
@@ -135,12 +135,9 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             profile.CycleLength = cycleLength;
             profile.UpdatedAt = DateTime.UtcNow;
 
-            if (isNewProfile)
-                await _userRepository.AddProfileAsync(profile);
-            else
-                await _userRepository.UpdateProfileAsync(profile);
+            await _profileAccountService.SaveProfileAsync(userId, profile, isNewProfile);
 
-            await _userRepository.AddSnapshotAsync(new UserProfileSnapshot
+            await _profileAccountService.AddSnapshotAsync(userId, new UserProfileSnapshot
             {
                 UserId = userId,
                 SnapshotReason = "PersonalInfoUpdate",

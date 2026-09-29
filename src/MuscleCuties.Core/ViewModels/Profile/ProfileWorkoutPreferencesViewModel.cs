@@ -1,16 +1,14 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.UI.Workout;
-using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Workout;
+using MuscleCuties.Core.Services.Profile;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MuscleCuties.Core.ViewModels.Profile;
 
@@ -20,7 +18,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
     private readonly IAuthService _authService;
     private readonly ICycleService _cycleService;
     private readonly Func<Task> _navigateBackAsync;
-    private readonly IUserRepository _userRepository;
+    private readonly Func<Task> _navigateAfterSaveAsync;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly IWorkoutService _workoutService;
     [ObservableProperty] private bool _isBusy;
 
@@ -36,18 +35,20 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
 
     public ProfileWorkoutPreferencesViewModel(
         IAuthService authService,
-        IUserRepository userRepository,
+        IServiceScopeFactory scopeFactory,
         ICycleService cycleService,
         IWorkoutService workoutService,
         IAppPreloadService preloadService,
-        Func<Task> navigateBackAsync)
+        Func<Task> navigateBackAsync,
+        Func<Task> navigateAfterSaveAsync)
     {
         _authService = authService;
-        _userRepository = userRepository;
+        _scopeFactory = scopeFactory;
         _cycleService = cycleService;
         _workoutService = workoutService;
         _preloadService = preloadService;
         _navigateBackAsync = navigateBackAsync;
+        _navigateAfterSaveAsync = navigateAfterSaveAsync;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         BackCommand = new AsyncRelayCommand(_navigateBackAsync);
@@ -77,7 +78,9 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
         try
         {
             var userId = await _authService.GetCurrentUserIdAsync();
-            var profile = await _userRepository.GetProfileAsync(userId);
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var profile = await scope.ServiceProvider.GetRequiredService<IProfileSettingsService>()
+                .GetProfileAsync(userId);
             var selectedTypes = WorkoutActivityPreferences.Parse(profile?.PreferredWorkoutActivityTypes);
             SelectedStrengthTrainingStyle =
                 WorkoutActivityPreferences.ParseStrengthStyle(profile?.PreferredWorkoutActivityTypes);
@@ -92,11 +95,12 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
         }
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     private async Task SaveAsync()
     {
         IsBusy = true;
         StatusMessage = string.Empty;
+        var settingsSaved = false;
+        var planUpdated = false;
         try
         {
             var selectedTypes = WorkoutActivityOptions
@@ -111,38 +115,35 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
             }
 
             selectedTypes = WorkoutActivityPreferences.EnsureRequired(selectedTypes).ToList();
-
             var userId = await _authService.GetCurrentUserIdAsync();
-            var profile = await _userRepository.GetProfileAsync(userId);
-            if (profile is null)
+            var serialized = WorkoutActivityPreferences.Serialize(
+                selectedTypes,
+                SelectedStrengthTrainingStyle);
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var saved = await scope.ServiceProvider.GetRequiredService<IProfileSettingsService>()
+                .SaveWorkoutPreferencesAsync(userId, serialized);
+            if (!saved)
             {
                 StatusMessage = "Complete personal info before workout preferences.";
                 return;
             }
 
-            profile.PreferredWorkoutActivityTypes = WorkoutActivityPreferences.Serialize(
-                selectedTypes,
-                SelectedStrengthTrainingStyle);
-            profile.UpdatedAt = DateTime.UtcNow;
-
-            await _userRepository.UpdateProfileAsync(profile);
-            await _userRepository.AddSnapshotAsync(new UserProfileSnapshot
-            {
-                UserId = userId,
-                SnapshotReason = "WorkoutPreferencesUpdate",
-                ProfileJson = JsonSerializer.Serialize(new
-                {
-                    profile.PreferredWorkoutActivityTypes
-                }),
-                CreatedAt = DateTime.UtcNow
-            });
-
+            settingsSaved = true;
             var phase = await _cycleService.GetCurrentPhaseAsync(userId);
             await _workoutService.RegenerateActivePlanAsync(userId, phase);
+            planUpdated = true;
             _preloadService.InvalidateWorkout();
             _preloadService.InvalidateDashboard();
             StatusMessage = "Workout preferences saved.";
-            await _navigateBackAsync();
+            await _navigateAfterSaveAsync();
+        }
+        catch (Exception)
+        {
+            StatusMessage = !settingsSaved
+                ? "Workout preferences could not be saved. Please try again."
+                : !planUpdated
+                    ? "Preferences saved, but the plan could not finish updating. Please try again."
+                    : "Plan updated, but Workout could not open. Use the Train tab to continue.";
         }
         finally
         {

@@ -21,22 +21,32 @@
                 HeightRequest="72"
                 HorizontalOptions="Center"
                 Aspect="AspectFit"
-                SemanticProperties.Description="MuscleCuties" />
+                SemanticProperties.Description="MuscleCuties logo" />
 
-            <Label Text="Create your account" Style="{StaticResource Headline}" Margin="0,20,0,8" />
-            <Label Text="One profile, shaped around you." Style="{StaticResource MutedLabel}" Margin="0,0,0,28" />
+            <Label
+                Text="Create your account"
+                Style="{StaticResource Headline}"
+                Margin="0,20,0,8"
+                SemanticProperties.HeadingLevel="Level1" />
+            <Label
+                Text="One profile, shaped around you."
+                Style="{StaticResource MutedLabel}"
+                Margin="0,0,0,28" />
 
             <VerticalStackLayout Spacing="18">
                 <VerticalStackLayout Spacing="6">
                     <Label Text="Email" Style="{StaticResource FormFieldLabel}" />
                     <Border Style="{StaticResource InputContainer}">
                         <Entry
+                            x:Name="RegisterEmail"
                             AutomationId="RegisterEmail"
                             Placeholder="name@example.com"
                             Text="{Binding Email}"
                             Keyboard="Email"
                             ReturnType="Next"
-                            SemanticProperties.Description="Email address" />
+                            Completed="OnEmailCompleted"
+                            SemanticProperties.Description="Email address"
+                            SemanticProperties.Hint="Enter your email, then press next to set your password" />
                     </Border>
                 </VerticalStackLayout>
 
@@ -44,38 +54,57 @@
                     <Label Text="Password" Style="{StaticResource FormFieldLabel}" />
                     <Border Style="{StaticResource InputContainer}">
                         <Entry
+                            x:Name="RegisterPassword"
                             AutomationId="RegisterPassword"
                             Placeholder="At least 8 characters"
                             Text="{Binding Password}"
                             IsPassword="True"
                             ReturnType="Next"
-                            SemanticProperties.Description="Create password" />
+                            Completed="OnPasswordCompleted"
+                            SemanticProperties.Description="Create password"
+                            SemanticProperties.Hint="At least 8 characters. Press next to confirm your password." />
                     </Border>
+                    <Label
+                        Text="Use 8 or more characters with a mix of letters and numbers."
+                        Style="{StaticResource CaptionLabel}"
+                        FontSize="13" />
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Spacing="6">
                     <Label Text="Confirm password" Style="{StaticResource FormFieldLabel}" />
                     <Border Style="{StaticResource InputContainer}">
                         <Entry
+                            x:Name="RegisterConfirmPassword"
                             AutomationId="RegisterConfirmPassword"
                             Placeholder="Repeat password"
                             Text="{Binding ConfirmPassword}"
                             IsPassword="True"
                             ReturnType="Done"
                             ReturnCommand="{Binding RegisterCommand}"
-                            SemanticProperties.Description="Confirm password" />
+                            SemanticProperties.Description="Confirm password"
+                            SemanticProperties.Hint="Re-enter your password, then press done to create your account" />
                     </Border>
                 </VerticalStackLayout>
 
                 <Label
                     Text="{Binding ErrorMessage}"
                     Style="{StaticResource ErrorLabel}"
-                    IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+                    IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+                    SemanticProperties.Description="{Binding ErrorMessage}"
+                    SemanticProperties.HeadingLevel="Level3" />
 
                 <Button
                     Text="Create account"
                     Command="{Binding RegisterCommand}"
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    MinimumHeightRequest="52"
+                    SemanticProperties.Description="Create your account" />
+
+                <ActivityIndicator
+                    IsRunning="{Binding IsBusy}"
+                    IsVisible="{Binding IsBusy}"
+                    HorizontalOptions="Center"
+                    SemanticProperties.Description="Creating account, please wait" />
 
                 <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="12" Margin="0,2">
                     <BoxView VerticalOptions="Center" />
@@ -90,13 +119,9 @@
                     BackgroundColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
                     TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
                     BorderColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                    BorderWidth="1" />
-
-                <ActivityIndicator
-                    IsRunning="{Binding IsBusy}"
-                    IsVisible="{Binding IsBusy}"
-                    HorizontalOptions="Center"
-                    SemanticProperties.Description="Creating account" />
+                    BorderWidth="1"
+                    MinimumHeightRequest="52"
+                    SemanticProperties.Description="{Binding PlatformRegisterButtonText}" />
             </VerticalStackLayout>
 
             <HorizontalStackLayout
@@ -104,7 +129,9 @@
                 Spacing="4"
                 Margin="0,24,0,0"
                 MinimumHeightRequest="44"
-                SemanticProperties.Description="Return to login">
+                MinimumWidthRequest="44"
+                SemanticProperties.Description="Return to login"
+                SemanticProperties.Hint="Double tap to go back to the login page">
                 <HorizontalStackLayout.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding GoBackCommand}" />
                 </HorizontalStackLayout.GestureRecognizers>

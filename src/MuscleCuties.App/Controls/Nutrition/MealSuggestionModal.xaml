@@ -333,25 +333,22 @@
                                         Grid.Column="1"
                                         Text="{Binding ConceptName}"
                                         Style="{StaticResource CardTitle}"
-                                        FontSize="15"
-                                        MaxLines="1"
-                                        LineBreakMode="TailTruncation" />
+                                        FontSize="16"
+                                        LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="1"
                                         Grid.ColumnSpan="2"
                                         Text="{Binding ConceptDescription}"
-                                        Style="{StaticResource CaptionLabel}"
-                                        FontSize="12"
-                                        MaxLines="2"
-                                        LineBreakMode="TailTruncation" />
+                                        Style="{StaticResource MutedLabel}"
+                                        FontSize="14"
+                                        LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="2"
                                         Grid.ColumnSpan="2"
                                         Text="{Binding ComponentSummary}"
                                         Style="{StaticResource MutedLabel}"
-                                        FontSize="11"
-                                        MaxLines="1"
-                                        LineBreakMode="TailTruncation" />
+                                        FontSize="14"
+                                        LineBreakMode="WordWrap" />
 
                                     <Grid Grid.Row="3" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
                                         <Border
@@ -362,16 +359,16 @@
                                             <Label
                                                 Text="{Binding StyleLabel}"
                                                 Style="{StaticResource CaptionLabel}"
-                                                TextColor="{StaticResource Primary}"
+                                                TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                                                 FontAttributes="Bold"
-                                                FontSize="10" />
+                                                FontSize="13" />
                                         </Border>
                                         <Label
                                             Grid.Column="1"
                                             Text="{Binding CaloriesText}"
-                                            Style="{StaticResource CaptionLabel}"
+                                            Style="{StaticResource MutedLabel}"
                                             FontAttributes="Bold"
-                                            FontSize="11"
+                                            FontSize="14"
                                             VerticalOptions="Center" />
                                     </Grid>
 
@@ -379,15 +376,15 @@
                                         Grid.Row="4"
                                         Grid.ColumnSpan="2"
                                         Text="{Binding MacrosText}"
-                                        Style="{StaticResource CaptionLabel}"
-                                        FontSize="11" />
+                                        Style="{StaticResource MutedLabel}"
+                                        FontSize="14" LineBreakMode="WordWrap" />
                                     <Button
                                         Grid.Row="5"
                                         Grid.ColumnSpan="2"
                                         Text="View meal"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, Path=OpenMealDetailCommand, x:DataType=vm:NutritionViewModel}"
                                         CommandParameter="{Binding .}"
-                                        FontSize="13"
+                                        FontSize="15"
                                         MinimumHeightRequest="44"
                                         Margin="0,4,0,0"
                                         SemanticProperties.Description="View meal details" />
@@ -454,22 +451,21 @@
                                         Grid.ColumnSpan="3"
                                         Text="{Binding MealTitle}"
                                         Style="{StaticResource CardTitle}"
-                                        FontSize="15"
-                                        MaxLines="1"
-                                        LineBreakMode="TailTruncation" />
+                                        FontSize="16"
+                                        LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="2"
                                         Grid.ColumnSpan="3"
                                         Text="{Binding MealSummaryText}"
-                                        Style="{StaticResource CaptionLabel}"
-                                        MaxLines="2"
-                                        LineBreakMode="TailTruncation" />
+                                        Style="{StaticResource MutedLabel}"
+                                        FontSize="14"
+                                        LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="3"
                                         Grid.ColumnSpan="2"
                                         Text="{Binding MacrosText}"
                                         Style="{StaticResource MutedLabel}"
-                                        FontSize="11"
+                                        FontSize="14"
                                         IsVisible="{Binding HasSuggestion}" />
                                     <Grid
                                         Grid.Row="3"
@@ -483,8 +479,8 @@
                                             Command="{Binding UsePlannedMealCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}"
                                             CommandParameter="{Binding .}"
                                             IsVisible="{Binding HasSuggestion}"
-                                            MinimumHeightRequest="42"
-                                            FontSize="13" />
+                                            MinimumHeightRequest="48"
+                                            FontSize="15" />
                                         <Border
                                             Grid.Column="1"
                                             Style="{StaticResource ModalIconButton}"

@@ -1,6 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Entities.Users;
@@ -9,11 +7,12 @@ using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Nutrition.Planning;
 using MuscleCuties.Core.Models.UI.Common;
 using MuscleCuties.Core.Models.UI.Profile;
-using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Nutrition.Planning;
+using MuscleCuties.Core.Services.Profile;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MuscleCuties.Core.ViewModels.Profile;
 
@@ -26,8 +25,9 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
     private readonly IAuthService _authService;
     private readonly ICycleService _cycleService;
     private readonly Func<Task> _navigateBackAsync;
+    private readonly Func<Task> _navigateAfterSaveAsync;
     private readonly INutritionPlanner _nutritionPlanner;
-    private readonly IUserRepository _userRepository;
+    private readonly IServiceScopeFactory _scopeFactory;
     [ObservableProperty] private bool _areAdvancedSettingsVisible;
     [ObservableProperty] private string _calciumGoal = string.Empty;
     [ObservableProperty] private string _caloriesGoal = string.Empty;
@@ -64,18 +64,20 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
 
     public ProfileNutritionSettingsViewModel(
         IAuthService authService,
-        IUserRepository userRepository,
+        IServiceScopeFactory scopeFactory,
         ICycleService cycleService,
         INutritionPlanner nutritionPlanner,
         IAppPreloadService preloadService,
-        Func<Task> navigateBackAsync)
+        Func<Task> navigateBackAsync,
+        Func<Task> navigateAfterSaveAsync)
     {
         _authService = authService;
-        _userRepository = userRepository;
+        _scopeFactory = scopeFactory;
         _cycleService = cycleService;
         _nutritionPlanner = nutritionPlanner;
         _preloadService = preloadService;
         _navigateBackAsync = navigateBackAsync;
+        _navigateAfterSaveAsync = navigateAfterSaveAsync;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         BackCommand = new AsyncRelayCommand(_navigateBackAsync);
@@ -107,7 +109,9 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
         try
         {
             var userId = await _authService.GetCurrentUserIdAsync();
-            var profile = await _userRepository.GetProfileAsync(userId);
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var profile = await scope.ServiceProvider.GetRequiredService<IProfileSettingsService>()
+                .GetProfileAsync(userId);
             if (profile is null)
                 return;
 
@@ -144,50 +148,48 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
         }
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
     private async Task SaveAsync()
     {
         IsBusy = true;
+        StatusMessage = string.Empty;
+        var settingsSaved = false;
         try
         {
             var userId = await _authService.GetCurrentUserIdAsync();
-            var profile = await _userRepository.GetProfileAsync(userId);
-            if (profile is null)
+            string? goalsJson = null;
+            bool? hasCustomGoals = null;
+            if (AreAdvancedSettingsVisible || _hasSavedCustomGoals)
+            {
+                var goals = BuildGoals();
+                goalsJson = goals.HasAnyValue ? goals.ToJson() : string.Empty;
+                hasCustomGoals = goals.HasAnyValue;
+            }
+
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var saved = await scope.ServiceProvider.GetRequiredService<IProfileSettingsService>()
+                .SaveNutritionAsync(userId, new NutritionSettingsUpdate(
+                    Goal,
+                    IsGoalPaceVisible ? WeightGoalPace : WeightGoalPace.Steady,
+                    BuildDietaryTags(),
+                    goalsJson));
+            if (!saved)
             {
                 StatusMessage = "Complete personal info before nutrition settings.";
                 return;
             }
 
-            profile.Goal = Goal;
-            profile.WeightGoalPace = IsGoalPaceVisible ? WeightGoalPace : WeightGoalPace.Steady;
-            profile.DietaryTags = BuildDietaryTags();
-            if (AreAdvancedSettingsVisible || _hasSavedCustomGoals)
-            {
-                var goals = BuildGoals();
-                profile.NutritionGoalsJson = goals.HasAnyValue ? goals.ToJson() : string.Empty;
-                _hasSavedCustomGoals = goals.HasAnyValue;
-            }
-
-            profile.UpdatedAt = DateTime.UtcNow;
-
-            await _userRepository.UpdateProfileAsync(profile);
-            await _userRepository.AddSnapshotAsync(new UserProfileSnapshot
-            {
-                UserId = userId,
-                SnapshotReason = "NutritionSettingsUpdate",
-                ProfileJson = JsonSerializer.Serialize(new
-                {
-                    Goal = profile.Goal.ToString(),
-                    WeightGoalPace = profile.WeightGoalPace.ToString(),
-                    profile.DietaryTags,
-                    NutritionGoals = ProfileNutritionGoals.FromJson(profile.NutritionGoalsJson)
-                }),
-                CreatedAt = DateTime.UtcNow
-            });
-
+            settingsSaved = true;
+            if (hasCustomGoals is { } hasGoals)
+                _hasSavedCustomGoals = hasGoals;
             _preloadService.InvalidateAll();
             StatusMessage = "Nutrition settings saved.";
-            await _navigateBackAsync();
+            await _navigateAfterSaveAsync();
+        }
+        catch (Exception)
+        {
+            StatusMessage = settingsSaved
+                ? "Settings saved, but Nutrition could not open. Use the Nutrition tab to continue."
+                : "Nutrition settings could not be saved. Please try again.";
         }
         finally
         {

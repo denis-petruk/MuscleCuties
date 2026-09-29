@@ -11,6 +11,7 @@
     Shell.NavBarIsVisible="False">
 
     <Grid>
+        <!-- Dashboard prep overlay -->
         <Grid
             Padding="24"
             IsVisible="{Binding IsPreparingDashboard}"
@@ -33,12 +34,13 @@
                     HorizontalOptions="Center"
                     SemanticProperties.Description="Syncing your data" />
                 <Label
-                    Text="Syncing your data"
+                    Text="Syncing your data..."
                     Style="{StaticResource MutedLabel}"
                     HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </Grid>
 
+        <!-- Loading state -->
         <Grid
             Padding="24"
             IsVisible="{Binding IsLoadingVisible}">
@@ -51,61 +53,79 @@
                     IsRunning="{Binding IsLoadingVisible}"
                     SemanticProperties.Description="Loading questions" />
                 <Label
-                    Text="Getting questions ready"
+                    Text="Getting questions ready..."
                     Style="{StaticResource MutedLabel}"
                     HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </Grid>
 
+        <!-- Empty / error state -->
         <Grid
             Padding="28"
             IsVisible="{Binding IsEmptyStateVisible}">
             <VerticalStackLayout
                 Spacing="12"
                 HorizontalOptions="Center"
-                VerticalOptions="Center">
+                VerticalOptions="Center"
+                MaximumWidthRequest="400">
                 <Label
                     Text="{Binding QuestionsStateTitle}"
                     Style="{StaticResource SectionTitle}"
-                    HorizontalTextAlignment="Center" />
+                    HorizontalTextAlignment="Center"
+                    SemanticProperties.HeadingLevel="Level1" />
                 <Label
                     Text="{Binding QuestionsStateMessage}"
                     Style="{StaticResource MutedLabel}"
-                    HorizontalTextAlignment="Center" />
+                    HorizontalTextAlignment="Center"
+                    SemanticProperties.Description="{Binding QuestionsStateMessage}" />
                 <Button
                     Text="Try again"
                     Command="{Binding RetryLoadQuestionsCommand}"
                     IsVisible="{Binding CanRetryQuestionsLoad}"
                     Margin="0,8,0,0"
-                    HorizontalOptions="Center" />
+                    HorizontalOptions="Center"
+                    MinimumHeightRequest="52"
+                    MinimumWidthRequest="120"
+                    SemanticProperties.Description="Retry loading questions"
+                    SemanticProperties.Hint="Double tap to reload the quiz questions" />
             </VerticalStackLayout>
         </Grid>
 
+        <!-- Main quiz layout -->
         <Grid
             RowDefinitions="Auto,*,Auto"
             IsVisible="{Binding IsLayoutVisible}">
 
             <VerticalStackLayout
                 Grid.Row="0"
-                Padding="24,40,24,20"
-                Spacing="20"
+                Padding="24,32,24,16"
+                Spacing="16"
                 MaximumWidthRequest="640"
                 HorizontalOptions="Fill">
 
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                    <ProgressBar
-                        Grid.Column="0"
-                        Progress="{Binding ProgressValue}"
-                        ProgressColor="{StaticResource Primary}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                        HeightRequest="5"
-                        VerticalOptions="Center" />
+                <!-- Step indicator + progress bar -->
+                <VerticalStackLayout Spacing="8">
                     <Label
-                        Grid.Column="1"
-                        Text="{Binding ProgressText}"
-                        Style="{StaticResource AccentLabel}"
-                        VerticalOptions="Center" />
-                </Grid>
+                        Text="Step 2 of 2"
+                        Style="{StaticResource EyebrowLabel}"
+                        SemanticProperties.Description="Step 2 of 2: Personalized questions" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <ProgressBar
+                            Grid.Column="0"
+                            Progress="{Binding ProgressValue}"
+                            ProgressColor="{StaticResource Primary}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                            HeightRequest="6"
+                            VerticalOptions="Center"
+                            SemanticProperties.Description="{Binding ProgressText, StringFormat='Quiz progress: {0}'}" />
+                        <Label
+                            Grid.Column="1"
+                            Text="{Binding ProgressText}"
+                            Style="{StaticResource AccentLabel}"
+                            VerticalOptions="Center"
+                            SemanticProperties.Description="{Binding ProgressText, StringFormat='Question {0}'}" />
+                    </Grid>
+                </VerticalStackLayout>
 
                 <Grid ColumnDefinitions="40,*" ColumnSpacing="12">
                     <Border
@@ -127,10 +147,12 @@
                         Grid.Column="1"
                         Text="{Binding CurrentQuestionText}"
                         Style="{StaticResource SubHeadline}"
-                        VerticalOptions="Center" />
+                        VerticalOptions="Center"
+                        SemanticProperties.HeadingLevel="Level1" />
                 </Grid>
             </VerticalStackLayout>
 
+            <!-- Standard answer list -->
             <ScrollView
                 Grid.Row="1"
                 Padding="24,0"
@@ -150,7 +172,8 @@
                                 StrokeThickness="1"
                                 MinimumHeightRequest="64"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
-                                SemanticProperties.Description="{Binding Answer.Text}">
+                                SemanticProperties.Description="{Binding Answer.Text}"
+                                SemanticProperties.Hint="Double tap to select this answer">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnAnswerTapped" />
                                 </Border.GestureRecognizers>
@@ -228,6 +251,7 @@
                 </VerticalStackLayout>
             </ScrollView>
 
+            <!-- Phase pair sliders -->
             <ScrollView
                 Grid.Row="1"
                 Padding="24,4,24,20"
@@ -236,7 +260,10 @@
                 IsVisible="{Binding IsCurrentQuestionPhasePair}">
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="12">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                        <Label Text="Discomfort" Style="{StaticResource CardTitle}" />
+                        <Label
+                            Text="Discomfort"
+                            Style="{StaticResource CardTitle}"
+                            SemanticProperties.HeadingLevel="Level2" />
                         <Label
                             Grid.Column="1"
                             Text="{Binding PainSliderLabel}"
@@ -250,11 +277,12 @@
                         MinimumTrackColor="{StaticResource Primary}"
                         MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                         ThumbColor="{StaticResource Primary}"
-                        SemanticProperties.Description="Usual phase discomfort"
-                        SemanticProperties.Hint="Severe on the left, none on the right" />
-                    <Grid Grid.Row="2" ColumnDefinitions="*,*">
-                        <Label Text="Severe" Style="{StaticResource MutedLabel}" />
-                        <Label Grid.Column="1" Text="None" Style="{StaticResource MutedLabel}" HorizontalTextAlignment="End" />
+                        MinimumHeightRequest="44"
+                        SemanticProperties.Description="{Binding PainSliderLabel, StringFormat='Discomfort level: {0}'}"
+                        SemanticProperties.Hint="1 is severe, 5 is none. Drag to set your usual discomfort." />
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto">
+                        <Label Text="Severe" Style="{StaticResource CaptionLabel}" FontSize="13" />
+                        <Label Grid.Column="2" Text="None" Style="{StaticResource CaptionLabel}" FontSize="13" HorizontalTextAlignment="End" />
                     </Grid>
 
                     <BoxView
@@ -264,7 +292,10 @@
                         Color="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
 
                     <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                        <Label Text="Training energy" Style="{StaticResource CardTitle}" />
+                        <Label
+                            Text="Training energy"
+                            Style="{StaticResource CardTitle}"
+                            SemanticProperties.HeadingLevel="Level2" />
                         <Label
                             Grid.Column="1"
                             Text="{Binding EnergySliderLabel}"
@@ -278,21 +309,23 @@
                         MinimumTrackColor="{StaticResource Primary}"
                         MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                         ThumbColor="{StaticResource Primary}"
-                        SemanticProperties.Description="Usual phase training energy"
-                        SemanticProperties.Hint="Very low on the left, peak energy on the right" />
-                    <Grid Grid.Row="6" ColumnDefinitions="*,*">
-                        <Label Text="Very low" Style="{StaticResource MutedLabel}" />
-                        <Label Grid.Column="1" Text="Peak" Style="{StaticResource MutedLabel}" HorizontalTextAlignment="End" />
+                        MinimumHeightRequest="44"
+                        SemanticProperties.Description="{Binding EnergySliderLabel, StringFormat='Training energy level: {0}'}"
+                        SemanticProperties.Hint="1 is very low, 5 is peak. Drag to set your usual energy." />
+                    <Grid Grid.Row="6" ColumnDefinitions="Auto,*,Auto">
+                        <Label Text="Very low" Style="{StaticResource CaptionLabel}" FontSize="13" />
+                        <Label Grid.Column="2" Text="Peak" Style="{StaticResource CaptionLabel}" FontSize="13" HorizontalTextAlignment="End" />
                     </Grid>
                 </Grid>
             </ScrollView>
 
+            <!-- Bottom navigation bar -->
             <Grid
                 Grid.Row="2"
                 Padding="24,16,24,32"
                 MaximumWidthRequest="640"
                 HorizontalOptions="Fill"
-                RowDefinitions="Auto,Auto"
+                RowDefinitions="Auto,Auto,Auto"
                 ColumnDefinitions="Auto,*"
                 ColumnSpacing="12">
 
@@ -302,10 +335,21 @@
                     Text="{Binding ErrorMessage}"
                     Style="{StaticResource ErrorLabel}"
                     IsVisible="{Binding HasError}"
-                    Margin="0,0,0,10" />
+                    Margin="0,0,0,10"
+                    SemanticProperties.Description="{Binding ErrorMessage}"
+                    SemanticProperties.HeadingLevel="Level3" />
+
+                <ActivityIndicator
+                    Grid.Row="1"
+                    Grid.ColumnSpan="2"
+                    IsRunning="{Binding IsBusy}"
+                    IsVisible="{Binding IsBusy}"
+                    HorizontalOptions="Center"
+                    Margin="0,0,0,10"
+                    SemanticProperties.Description="Processing, please wait" />
 
                 <Border
-                    Grid.Row="1"
+                    Grid.Row="2"
                     Grid.Column="0"
                     BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                     Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
@@ -314,7 +358,11 @@
                     IsVisible="{Binding IsFirstQuestion, Converter={StaticResource InvertedBoolConverter}}"
                     WidthRequest="56"
                     HeightRequest="56"
-                    Padding="0">
+                    MinimumWidthRequest="44"
+                    MinimumHeightRequest="44"
+                    Padding="0"
+                    SemanticProperties.Description="Go to previous question"
+                    SemanticProperties.Hint="Double tap to go back">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnBackTapped" />
                     </Border.GestureRecognizers>
@@ -332,12 +380,14 @@
                 </Border>
 
                 <Button
-                    Grid.Row="1"
+                    Grid.Row="2"
                     Grid.Column="1"
                     Text="{Binding NextButtonText}"
                     Clicked="OnNextClicked"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                    MinimumHeightRequest="56" />
+                    MinimumHeightRequest="56"
+                    SemanticProperties.Description="{Binding NextButtonText}"
+                    SemanticProperties.Hint="Double tap to advance to the next question or finish the quiz" />
             </Grid>
         </Grid>
     </Grid>

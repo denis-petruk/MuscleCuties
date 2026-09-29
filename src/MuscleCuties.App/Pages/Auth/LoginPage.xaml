@@ -21,9 +21,13 @@
                 HeightRequest="82"
                 HorizontalOptions="Center"
                 Aspect="AspectFit"
-                SemanticProperties.Description="MuscleCuties" />
+                SemanticProperties.Description="MuscleCuties logo" />
 
-            <Label Text="Welcome back" Style="{StaticResource Headline}" Margin="0,24,0,8" />
+            <Label
+                Text="Welcome back"
+                Style="{StaticResource Headline}"
+                Margin="0,24,0,8"
+                SemanticProperties.HeadingLevel="Level1" />
             <Label
                 Text="Your plan is ready when you are."
                 Style="{StaticResource MutedLabel}"
@@ -33,19 +37,23 @@
                 Text="{Binding InfoMessage}"
                 Style="{StaticResource AccentLabel}"
                 IsVisible="{Binding InfoMessage, Converter={StaticResource StringToBoolConverter}}"
-                Margin="0,0,0,16" />
+                Margin="0,0,0,16"
+                SemanticProperties.Description="{Binding InfoMessage}" />
 
             <VerticalStackLayout Spacing="18">
                 <VerticalStackLayout Spacing="6">
                     <Label Text="Email" Style="{StaticResource FormFieldLabel}" />
                     <Border Style="{StaticResource InputContainer}">
                         <Entry
+                            x:Name="LoginEmail"
                             AutomationId="LoginEmail"
                             Placeholder="name@example.com"
                             Text="{Binding Email}"
                             Keyboard="Email"
                             ReturnType="Next"
-                            SemanticProperties.Description="Email address" />
+                            Completed="OnEmailCompleted"
+                            SemanticProperties.Description="Email address"
+                            SemanticProperties.Hint="Enter your email, then press next to go to password" />
                     </Border>
                 </VerticalStackLayout>
 
@@ -60,19 +68,30 @@
                             IsPassword="True"
                             ReturnType="Done"
                             ReturnCommand="{Binding LoginCommand}"
-                            SemanticProperties.Description="Password" />
+                            SemanticProperties.Description="Password"
+                            SemanticProperties.Hint="Enter your password, then press done to log in" />
                     </Border>
                 </VerticalStackLayout>
 
                 <Label
                     Text="{Binding ErrorMessage}"
                     Style="{StaticResource ErrorLabel}"
-                    IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+                    IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+                    SemanticProperties.Description="{Binding ErrorMessage}"
+                    SemanticProperties.HeadingLevel="Level3" />
 
                 <Button
                     Text="Log in"
                     Command="{Binding LoginCommand}"
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    MinimumHeightRequest="52"
+                    SemanticProperties.Description="Log in to your account" />
+
+                <ActivityIndicator
+                    IsRunning="{Binding IsBusy}"
+                    IsVisible="{Binding IsBusy}"
+                    HorizontalOptions="Center"
+                    SemanticProperties.Description="Signing in, please wait" />
 
                 <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="12" Margin="0,2">
                     <BoxView VerticalOptions="Center" />
@@ -87,13 +106,9 @@
                     BackgroundColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
                     TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
                     BorderColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                    BorderWidth="1" />
-
-                <ActivityIndicator
-                    IsRunning="{Binding IsBusy}"
-                    IsVisible="{Binding IsBusy}"
-                    HorizontalOptions="Center"
-                    SemanticProperties.Description="Signing in" />
+                    BorderWidth="1"
+                    MinimumHeightRequest="52"
+                    SemanticProperties.Description="{Binding PlatformLoginButtonText}" />
             </VerticalStackLayout>
 
             <Grid
@@ -102,7 +117,9 @@
                 HorizontalOptions="Center"
                 Margin="0,24,0,0"
                 MinimumHeightRequest="44"
-                SemanticProperties.Description="Create an account">
+                MinimumWidthRequest="44"
+                SemanticProperties.Description="Create an account"
+                SemanticProperties.Hint="Double tap to go to the registration page">
                 <Grid.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding GoToRegisterCommand}" />
                 </Grid.GestureRecognizers>

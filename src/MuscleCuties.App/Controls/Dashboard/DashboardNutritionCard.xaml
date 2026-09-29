@@ -16,17 +16,18 @@
         <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="14">
             <!-- Row 0: section header -->
             <Grid ColumnDefinitions="*, Auto">
-                <Label Text="Today's nutrition" Style="{StaticResource SectionTitle}" VerticalOptions="Center" />
+                <Label Text="Today's nutrition" Style="{StaticResource SectionTitle}" FontSize="17" VerticalOptions="Center" />
                 <Label
                     Grid.Column="1"
                     Text="View all"
                     Style="{StaticResource CaptionLabel}"
+                    FontSize="14"
                     TextColor="{StaticResource Primary}"
                     VerticalOptions="Center" />
             </Grid>
 
             <!-- Row 1: calorie icon + consumed value (left) + goal (right) -->
-            <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="5">
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="6">
                 <Image
                     Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
                     Aspect="AspectFit"
@@ -44,6 +45,7 @@
                     Grid.Column="3"
                     Text="{Binding CaloriesGoal}"
                     Style="{StaticResource CaptionLabel}"
+                    FontSize="14"
                     VerticalOptions="Center" />
             </Grid>
 
