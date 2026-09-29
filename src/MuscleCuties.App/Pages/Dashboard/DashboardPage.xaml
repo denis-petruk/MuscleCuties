@@ -25,7 +25,7 @@
                     HorizontalOptions="Fill"
                     MaximumWidthRequest="640"
                     RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
-                    RowSpacing="14">
+                    RowSpacing="16">
 
                     <!-- Row 0: Greeting header -->
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="2"
@@ -72,69 +72,41 @@
                         </Border>
                     </Grid>
 
-                    <!-- Row 1: Workout card (primary action, first in viewport) -->
-                    <toolkit:LazyView
-                        x:Name="WorkoutCardLazy"
-                        Grid.Row="1"
-                        x:TypeArguments="dashboardControls:DashboardWorkoutCard" />
-
-                    <!-- Row 2: Streak pills -->
-                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="8">
-                        <Border
-                            Style="{StaticResource WorkoutPill}"
-                            Padding="10,8"
-                            MinimumHeightRequest="44"
-                            SemanticProperties.Description="{Binding WorkoutStreakText, StringFormat='Workout streak: {0}'}">
-                            <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="4" HorizontalOptions="Center">
-                                <Image
-                                    Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
-                                    Aspect="AspectFit"
-                                    WidthRequest="20"
-                                    HeightRequest="20"
-                                    VerticalOptions="Center" />
-                                <Label
-                                    Grid.Column="1"
-                                    Text="{Binding WorkoutStreakText}"
-                                    Style="{StaticResource WorkoutPillText}"
-                                    FontSize="14"
-                                    VerticalOptions="Center" />
-                            </Grid>
-                        </Border>
-
-                        <Border
-                            Grid.Column="1"
-                            Style="{StaticResource WorkoutPill}"
-                            Padding="10,8"
-                            MinimumHeightRequest="44"
-                            SemanticProperties.Description="{Binding NutritionStreakText, StringFormat='Nutrition streak: {0}'}">
-                            <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="4" HorizontalOptions="Center">
-                                <Image
-                                    Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
-                                    Aspect="AspectFit"
-                                    WidthRequest="20"
-                                    HeightRequest="20"
-                                    VerticalOptions="Center" />
-                                <Label
-                                    Grid.Column="1"
-                                    Text="{Binding NutritionStreakText}"
-                                    Style="{StaticResource WorkoutPillText}"
-                                    FontSize="14"
-                                    VerticalOptions="Center" />
-                            </Grid>
-                        </Border>
-                    </Grid>
-
-                    <!-- Row 3: Readiness and recovery -->
+                    <!-- Row 1: Readiness informs the workout decision -->
                     <toolkit:LazyView
                         x:Name="ReadinessLazy"
-                        Grid.Row="3"
+                        Grid.Row="1"
                         x:TypeArguments="dashboardControls:ReadinessRecoveryCard" />
 
-                    <!-- Row 4: Nutrition -->
+                    <!-- Row 2: Primary action -->
+                    <toolkit:LazyView
+                        x:Name="WorkoutCardLazy"
+                        Grid.Row="2"
+                        x:TypeArguments="dashboardControls:DashboardWorkoutCard" />
+
+                    <!-- Row 3: Nutrition -->
                     <toolkit:LazyView
                         x:Name="NutritionLazy"
-                        Grid.Row="4"
+                        Grid.Row="3"
                         x:TypeArguments="dashboardControls:DashboardNutritionCard" />
+
+                    <!-- Row 4: Streaks are supporting context, not separate cards -->
+                    <Grid Grid.Row="4" ColumnDefinitions="*,*" ColumnSpacing="16" Padding="4,0">
+                        <Label
+                            Text="{Binding WorkoutStreakText}"
+                            Style="{StaticResource MutedLabel}"
+                            FontSize="13"
+                            LineBreakMode="WordWrap"
+                            SemanticProperties.Description="{Binding WorkoutStreakText, StringFormat='Workout streak: {0}'}" />
+                        <Label
+                            Grid.Column="1"
+                            Text="{Binding NutritionStreakText}"
+                            Style="{StaticResource MutedLabel}"
+                            FontSize="13"
+                            LineBreakMode="WordWrap"
+                            HorizontalTextAlignment="End"
+                            SemanticProperties.Description="{Binding NutritionStreakText, StringFormat='Nutrition streak: {0}'}" />
+                    </Grid>
 
                     <!-- Row 5: Cycle phase -->
                     <toolkit:LazyView

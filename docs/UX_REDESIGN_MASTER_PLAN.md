@@ -1,6 +1,6 @@
 # MuscleCuties: profile fixes and app-wide design plan
 
-The profile, navigation, and injury fixes below are implemented. The user subsequently authorized the app-wide redesign and asked us to continue without an approval pause. All ten workstreams have implementation changes in the working tree. Device acceptance remains open where an authenticated session is required.
+The profile, navigation, and injury fixes below are implemented. The user subsequently authorized the app-wide redesign and asked us to continue without an approval pause. All ten workstreams are present on the current branch, with follow-up changes in the working tree. Device acceptance remains open where an authenticated session is required.
 
 ## Feedback and immediate changes
 
@@ -25,9 +25,9 @@ The profile, navigation, and injury fixes below are implemented. The user subseq
 - The injury ViewModel uses a service facade, and repository updates and deletes check ownership. Cleared records remain in history and are excluded from active queries. The new form has no selected status; Edit preserves its saved status.
 - Nutrition and Workout reload on navigation; the relevant preload caches are invalidated after Save.
 - Cycle, fitness, weight and injury logic stays local. The former DEBUG iOS simulator unencrypted token fallback became a process-only session; legacy fallback values are deleted. Health provider sync remains disabled.
-- A bounded ReAct audit inspected privacy, service boundaries, async database use and dead-code candidates. XAML bindings were searched before removing any bound member. Other repository-direct ViewModels predate this work and warrant a separate facade migration.
+- A bounded ReAct audit inspected privacy, service boundaries, async database use and dead-code candidates. XAML bindings were searched before removing any bound member. The latest ViewModel scan found no direct `AppDatabase` or `IRepository` use.
 - The app-wide scan was source-based, without simulator screenshots. It found 10–13 pt secondary text in shared headers, workout/nutrition cards and meal dialogs; a dense workout injury banner; a long nutrition settings form; and long/truncated cycle guidance. Validate these on device before changing them.
-- Latest integrated checks: 121 Core tests passed in the single test project; all 76 XAML/SVG files parsed; iOS simulator and Android builds succeeded with zero warnings or errors; `git diff --check` passed. The iOS simulator build was installed on an iPhone 17 Pro Max (iOS 26.3). A startup XAML parse crash reported by the user was reproduced and fixed; the corrected build reaches Log in. Authenticated privacy, settings and injury screens still need device review after local sign-in.
+- Latest integrated checks: 123 Core tests passed in the single test project; all 76 XAML/SVG files parsed; iOS simulator and Android builds succeeded with zero warnings or errors; `git diff --check` passed. The current iOS simulator build was installed on an iPhone 17 Pro Max (iOS 26.3) and reaches Log in. The reported workout-opening crash was traced to unsupported `SemanticProperties.LiveSetting` XAML and its path was opened without a crash in a signed-in session after the fix. The latest dashboard, picker, slider, and injury accessibility changes still need authenticated device review. The [implementation report](APP_UX_IMPLEMENTATION_REPORT.md) records exact tested routes and remaining checks.
 
 ## App-wide gate and common instructions
 

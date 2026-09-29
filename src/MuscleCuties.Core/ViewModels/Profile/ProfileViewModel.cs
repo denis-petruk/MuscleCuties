@@ -86,7 +86,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware
             {
                 IconGlyph = "ChatBubblesQuestion24",
                 Title = "Feedback",
-                Subtitle = "Send private beta feedback to the handsome, jacked developer",
+                Subtitle = "Send a note or report an issue",
                 Route = "ProfileFeedbackPage"
             },
             new()
@@ -100,7 +100,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware
             {
                 IconGlyph = "ShieldLock24",
                 Title = "Privacy",
-                Subtitle = "Private beta, no medical advice, no sharing beyond the handsome, jacked developer",
+                Subtitle = "See what stays on your device and what you choose to share",
                 Route = "ProfilePrivacyPage"
             }
         };
