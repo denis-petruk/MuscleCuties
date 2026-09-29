@@ -10,29 +10,21 @@
     x:DataType="controls:WorkoutActivityPreferencePicker">
 
     <VerticalStackLayout
-        Spacing="24"
+        Spacing="22"
         BindableLayout.ItemsSource="{Binding ActivityGroups, Source={x:Reference PreferencePickerRoot}}">
         <BindableLayout.ItemTemplate>
             <DataTemplate x:DataType="workoutModels:WorkoutActivityGroupSection">
-                <VerticalStackLayout Spacing="12">
+                <VerticalStackLayout Spacing="10">
                     <VerticalStackLayout Spacing="2" Margin="2,4,2,0">
-                        <Grid
-                            ColumnDefinitions="24,*"
-                            ColumnSpacing="8">
-                            <Image
-                                Source="{Binding GroupIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                WidthRequest="20"
-                                HeightRequest="20"
-                                Aspect="AspectFit"
-                                VerticalOptions="Center" />
-                            <Label Grid.Column="1" Text="{Binding GroupTitle}" Style="{StaticResource FormFieldLabel}"
-                                   FontSize="16" />
-                        </Grid>
+                        <Label
+                            Text="{Binding GroupTitle}"
+                            Style="{StaticResource FormFieldLabel}"
+                            FontSize="16"
+                            SemanticProperties.HeadingLevel="Level3" />
                         <Label
                             Text="{Binding GroupDescription}"
                             FontSize="14"
                             TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                            Margin="32,0,0,0"
                             SemanticProperties.Description="{Binding GroupDescription}" />
                     </VerticalStackLayout>
 
@@ -72,40 +64,8 @@
                                             CommandParameter="{Binding .}" />
                                     </Border.GestureRecognizers>
 
-                                    <Grid ColumnDefinitions="40,*,24" ColumnSpacing="12">
-                                        <Border
-                                            Grid.Column="0"
-                                            WidthRequest="40"
-                                            HeightRequest="40"
-                                            StrokeThickness="1"
-                                            StrokeShape="RoundRectangle 12"
-                                            VerticalOptions="Center">
-                                            <Border.Triggers>
-                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
-                                                             Value="True">
-                                                    <Setter Property="BackgroundColor"
-                                                            Value="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource InputSurfaceDark}}" />
-                                                    <Setter Property="Stroke"
-                                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                                </DataTrigger>
-                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
-                                                             Value="False">
-                                                    <Setter Property="BackgroundColor"
-                                                            Value="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource InputSurfaceDark}}" />
-                                                    <Setter Property="Stroke"
-                                                            Value="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
-                                                </DataTrigger>
-                                            </Border.Triggers>
-                                            <Image
-                                                Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                                WidthRequest="20"
-                                                HeightRequest="20"
-                                                Aspect="AspectFit"
-                                                HorizontalOptions="Center"
-                                                VerticalOptions="Center" />
-                                        </Border>
-
-                                        <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
+                                    <Grid ColumnDefinitions="*,24" ColumnSpacing="16">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="3" VerticalOptions="Center">
                                             <Label
                                                 Text="{Binding Title}"
                                                 Style="{StaticResource BodyLabel}"
@@ -128,7 +88,7 @@
                                         </VerticalStackLayout>
 
                                         <Border
-                                            Grid.Column="2"
+                                            Grid.Column="1"
                                             WidthRequest="24" HeightRequest="24"
                                             StrokeShape="Ellipse"
                                             StrokeThickness="1.5"

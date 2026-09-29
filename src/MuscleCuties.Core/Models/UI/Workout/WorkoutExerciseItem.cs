@@ -1,10 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Maui.Graphics;
+using System.Globalization;
 
 namespace MuscleCuties.Core.Models.UI.Workout;
 
 public partial class WorkoutExerciseItem : ObservableObject
 {
+    private string _loggedEffortText = string.Empty;
     [ObservableProperty] private bool _isExpanded;
     [ObservableProperty] private bool _isLogged;
 
@@ -63,7 +65,46 @@ public partial class WorkoutExerciseItem : ObservableObject
     public string LoggedHeartRateText { get; set; } = string.Empty;
     public string LoggedPowerWattsText { get; set; } = string.Empty;
     public string LoggedCadenceRpmText { get; set; } = string.Empty;
-    public string LoggedEffortText { get; set; } = string.Empty;
+    public string LoggedEffortText
+    {
+        get => _loggedEffortText;
+        set
+        {
+            if (!SetProperty(ref _loggedEffortText, value ?? string.Empty))
+                return;
+
+            OnPropertyChanged(nameof(EffortSliderValue));
+            OnPropertyChanged(nameof(EffortDisplayText));
+        }
+    }
+
+    public double EffortSliderValue
+    {
+        get => TryGetEffort(out var effort) ? effort : 5d;
+        set => SetEffort(value, allowNeutralIfUnset: false);
+    }
+
+    public string EffortDisplayText => TryGetEffort(out var effort) ? $"{effort} / 10" : "Move to choose";
+
+    public void CommitEffortSliderValue(double value) => SetEffort(value, allowNeutralIfUnset: true);
+
+    private void SetEffort(double value, bool allowNeutralIfUnset)
+    {
+        if (!double.IsFinite(value))
+            return;
+
+        var effort = (int)Math.Clamp(Math.Round(value, MidpointRounding.AwayFromZero), 1d, 10d);
+        // An untouched centered thumb is a neutral starting position, not a recorded rating.
+        if (!allowNeutralIfUnset && !TryGetEffort(out _) && effort == 5)
+            return;
+
+        LoggedEffortText = effort.ToString(CultureInfo.InvariantCulture);
+        OnPropertyChanged(nameof(EffortSliderValue));
+    }
+
+    private bool TryGetEffort(out int effort) =>
+        int.TryParse(LoggedEffortText, NumberStyles.None, CultureInfo.InvariantCulture, out effort) &&
+        effort is >= 1 and <= 10;
 
     public string DetailsButtonText => IsExpanded ? "Hide" : "Info";
     public string LogButtonText => IsLogged ? "Update" : "Log";

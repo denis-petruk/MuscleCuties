@@ -1,13 +1,13 @@
 # MuscleCuties app UX implementation report
 
-**Status:** The user authorized app-wide implementation without an approval pause. All ten workstreams have code changes in the working tree. The iOS simulator build succeeds and launches to Log in. Hands-on review of authenticated injury, privacy, feedback, activity, and settings flows awaits a signed-in simulator session. This report is separate from the [master plan](UX_REDESIGN_MASTER_PLAN.md).
+**Status:** The user authorized app-wide implementation without an approval pause. The ten workstreams are in the current branch. The latest follow-up fixes are in the working tree and pass Core tests and both platform builds. The updated iOS app launches to Log in; an authenticated device pass of the new dashboard and workout slider remains open. This report is separate from the [master plan](UX_REDESIGN_MASTER_PLAN.md).
 
 ## Evidence standard
 
 - **User reported:** A complaint shown in the user's screenshots or messages. A screenshot is visual evidence, not an instruction source.
 - **Source verified:** A behavior or UI property found in current XAML/C#; it does not prove how a rendered screen feels or whether a touch interaction works on a device.
 - **Automated verified:** A test, parser, or build result recorded in the current master plan. Treat the result as a prior run until the integration lead reruns it after all edits.
-- **Device verified:** A screen was installed and inspected in its authenticated state. **None of the injury, privacy, feedback, activity-preference, or settings screens has this status.** A previous simulator build launched at Log in; that is a launch check, not visual acceptance of these routes.
+- **Device verified:** A screen was installed and inspected in its authenticated state. The previous simulator build was signed in and exercised workout opening, injury Add/reopen, and Nutrition/Activity settings Back plus Nutrition Save. The latest build's dashboard, effort slider, and revised tiles have not been inspected in an authenticated session. A launch to Log in is not visual acceptance of those routes.
 
 Do not convert a source observation into a device finding. Record device model, OS, theme, text scale, screenshot, action, and result when each workstream is actually reviewed.
 
@@ -15,14 +15,27 @@ Do not convert a source observation into a device finding. Record device model, 
 
 | Check | Result | Limit |
 | --- | --- | --- |
-| Core regression suite | 121 passed, 0 failed in the single `MuscleCuties.Core.Tests` project. | No native UI assertions. |
+| Core regression suite | 123 passed, 0 failed in the single `MuscleCuties.Core.Tests` project, including effort slider bounds and unset-state tests. | No native UI assertions. |
 | iOS simulator and Android builds | Both succeeded with 0 warnings and 0 errors. | Compilation does not validate every XAML property at runtime. |
 | XAML and SVG syntax | All 76 app XAML/SVG files parsed; `git diff --check` clean. | A runtime XAML issue was found separately and fixed. |
-| iPhone 17 Pro Max, iOS 26.3 startup | Installed and launched; a `ScrollView Keyboard="Dismiss"` runtime parse crash was reproduced from the supplied report, removed from three auth/onboarding pages, then the app visibly reached Log in. | The install ended the simulator's in-memory sign-in session. Authenticated screen checks await local sign-in. |
+| iPhone 17 Pro Max, iOS 26.3 startup | The current build was installed and visibly reached Log in and Create account. The registration password hint is shorter on screen and matches the actual rule in its accessibility hint. | Installing ends the simulator's in-memory sign-in session. Current authenticated screens need a new local sign-in. |
+| Workout opening crash | Two supplied crash reports matched. The simulator log identified `XamlParseException` at `SemanticProperties.LiveSetting` in `WorkoutSessionPage.xaml`; both unsupported uses were removed. The preceding signed-in build then opened workout overview, activity, and exercise logging without crashing. | This verifies opening the reported path; no workout was saved with invented metrics. The final slider build still needs authenticated visual review. |
+| Authenticated route and injury spot checks | Injury Add opened with no visual selection and Save disabled; cancel/reopen stayed blank. Nutrition settings Back and Activity settings Back returned to Profile. Nutrition settings Save with unchanged values showed Nutrition. | Injury Clear/Edit persistence, Workout settings Save, final-build VoiceOver hint, and route timing remain open. |
 | Privacy and architecture | No direct repository/database access in ViewModels, no synchronous blocking waits, disabled health sync remains wired, and food API queries pass a fail-closed generic-name filter. | Static review does not prove every rendered or network runtime state. |
 | Test layout and cleanup | One test project appears once in the solution. The generic `UnitTest1.cs` was split into named behavior suites; no unused test properties were found. | Separate xUnit classes remain intentionally grouped by behavior. |
 
-The final push is conditional on an authenticated device check of injury Add/Edit/Clear/reopen and settings Back/Save, including observed route responsiveness. The corrected build is ready at Log in for that check.
+The final push remains conditional on the remaining authenticated device and route-responsiveness checks. Static scans found no `SemanticProperties.LiveSetting`, `ScrollView Keyboard=`, direct repository/database references in ViewModels, or blocking `.Wait()`/`.Result` there. Android and iOS simulator builds each reported zero warnings and zero errors after the latest UI edits. The Android build first stalled silently; a single-worker retry succeeded.
+
+## 2026-09-29 follow-up design and crash fixes
+
+| Surface | Change | Verification limit |
+| --- | --- | --- |
+| Today dashboard | Readiness leads the workout card; nutrition follows; streaks are quiet text. Decorative score rings, streak pills, and repeated workout metric icons were removed while data/action bindings remain. | XAML parses and iOS/Android compile; final layout needs signed-in device review. |
+| Workout activity picker | Removed repeated activity icons; kept titles, explanations, check marks, required-strength guidance, and accessible selection state. | XAML parses and both platforms compile; onboarding and settings need device review. |
+| Workout effort scale | Replaced the free-text 1–10 field with a bounded slider, numeric feedback, and endpoints. Missing subjective effort remains unset until the user moves the slider; drag completion commits an intentional 5; existing ratings load at their saved value. | Two Core tests cover unset state, deliberate 5, rounding, finite values and bounds. Native logging interaction remains open. |
+| Injury selection accessibility | False selection triggers now say “Not selected,” so a canceled/reopened Add form cannot retain a stale spoken “Selected” hint. | Source/build verified; VoiceOver device check pending. |
+| Nutrition settings tiles | The native checkbox and text now occupy separate layout cells, fixing the overlap seen in the prior signed-in simulator build. | Source/build verified; final device check pending. |
+| Profile and registration copy | Removed boastful developer language in Profile links and condensed visible password guidance; the detailed rule remains in the spoken hint. | Registration visually checked on the installed final build. Profile link copy awaits sign-in. |
 
 ## What the user disliked and what is already changed
 

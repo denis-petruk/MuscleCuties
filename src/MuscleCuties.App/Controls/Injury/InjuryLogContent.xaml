@@ -88,6 +88,7 @@
                                             <Setter Property="SemanticProperties.Hint" Value="Selected" />
                                         </DataTrigger>
                                         <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="False">
+                                            <Setter Property="SemanticProperties.Hint" Value="Not selected" />
                                             <Setter Property="BackgroundColor"
                                                     Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
                                             <Setter Property="TextColor"
@@ -114,6 +115,7 @@
                                             <Setter Property="SemanticProperties.Hint" Value="Selected" />
                                         </DataTrigger>
                                         <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="False">
+                                            <Setter Property="SemanticProperties.Hint" Value="Not selected" />
                                             <Setter Property="BackgroundColor"
                                                     Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
                                             <Setter Property="TextColor"

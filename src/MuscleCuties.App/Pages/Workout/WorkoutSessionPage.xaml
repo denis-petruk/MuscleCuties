@@ -45,8 +45,7 @@
             <Border Grid.Row="1" Style="{StaticResource SessionAccent}" IsVisible="{Binding HasError}"
                     SemanticProperties.Description="Error message">
                 <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
-                    <Label Text="{Binding ErrorText}" Style="{StaticResource BodyLabel}"
-                           SemanticProperties.LiveSetting="Assertive" />
+                    <Label Text="{Binding ErrorText}" Style="{StaticResource BodyLabel}" />
                     <Button Grid.Row="1" Text="Try again" Command="{Binding RetryLoadCommand}"
                             IsVisible="{Binding IsDayOverview}" MinimumHeightRequest="48"
                             SemanticProperties.Hint="Retry loading the workout" />
@@ -57,8 +56,7 @@
             <Border Grid.Row="2" Style="{StaticResource SessionAccent}" IsVisible="{Binding HasCelebration}"
                     SemanticProperties.Description="Celebration">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <Label Text="{Binding CelebrationText}" Style="{StaticResource BodyLabel}" VerticalOptions="Center"
-                           SemanticProperties.LiveSetting="Polite" />
+                    <Label Text="{Binding CelebrationText}" Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
                     <Button Grid.Column="1" Text="OK" Command="{Binding DismissCelebrationCommand}"
                             Style="{StaticResource QuietButton}"
                             SemanticProperties.Hint="Dismiss celebration" />
@@ -306,12 +304,22 @@
 
                     <VerticalStackLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4"
                                          IsVisible="{Binding UsesEffortMetric}">
-                        <Label Text="{Binding EffortLabel}" Style="{StaticResource CaptionLabel}" />
-                        <Border Style="{StaticResource WorkoutMetricInput}">
-                            <Entry SemanticProperties.Description="Effort from 1 to 10" Text="{Binding LoggedEffortText, Mode=TwoWay}"
-                                   Keyboard="Numeric" FontSize="15" Placeholder="5"
-                                   ReturnType="Done" />
-                        </Border>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Label Text="{Binding EffortLabel}" Style="{StaticResource CaptionLabel}" />
+                            <Label Grid.Column="1" Text="{Binding EffortDisplayText}" Style="{StaticResource BodyLabel}"
+                                   FontAttributes="Bold" />
+                        </Grid>
+                        <Slider Minimum="1" Maximum="10" Value="{Binding EffortSliderValue, Mode=TwoWay}"
+                                DragCompleted="OnEffortDragCompleted"
+                                MinimumTrackColor="{StaticResource Primary}"
+                                MaximumTrackColor="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                                ThumbColor="{StaticResource Primary}"
+                                SemanticProperties.Description="Effort rating from 1 to 10"
+                                SemanticProperties.Hint="Adjust to choose a whole number" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="1 · Light" Style="{StaticResource CaptionLabel}" />
+                            <Label Grid.Column="1" Text="10 · Very hard" Style="{StaticResource CaptionLabel}" />
+                        </Grid>
                     </VerticalStackLayout>
                 </Grid>
 

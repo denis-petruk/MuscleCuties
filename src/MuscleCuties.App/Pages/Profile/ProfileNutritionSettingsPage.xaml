@@ -70,18 +70,16 @@
                             BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 12">
-                            <Grid MinimumHeightRequest="44">
+                            <HorizontalStackLayout MinimumHeightRequest="44" Spacing="4" VerticalOptions="Center">
                                 <CheckBox IsChecked="{Binding IsVegetarian}" Color="{StaticResource Primary}"
-                                          HorizontalOptions="Fill" VerticalOptions="Fill"
+                                          WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
                                           SemanticProperties.Description="Vegetarian" />
                                 <Label
                                     Text="Vegetarian"
                                     Style="{StaticResource BodyLabel}"
                                     FontSize="16"
-                                    Margin="44,0,0,0"
-                                    InputTransparent="True"
                                     VerticalOptions="Center" />
-                            </Grid>
+                            </HorizontalStackLayout>
                         </Border>
 
                         <!-- Vegan -->
@@ -92,18 +90,16 @@
                             BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 12">
-                            <Grid MinimumHeightRequest="44">
+                            <HorizontalStackLayout MinimumHeightRequest="44" Spacing="4" VerticalOptions="Center">
                                 <CheckBox IsChecked="{Binding IsVegan}" Color="{StaticResource Primary}"
-                                          HorizontalOptions="Fill" VerticalOptions="Fill"
+                                          WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
                                           SemanticProperties.Description="Vegan" />
                                 <Label
                                     Text="Vegan"
                                     Style="{StaticResource BodyLabel}"
                                     FontSize="16"
-                                    Margin="44,0,0,0"
-                                    InputTransparent="True"
                                     VerticalOptions="Center" />
-                            </Grid>
+                            </HorizontalStackLayout>
                         </Border>
 
                         <!-- Gluten-free -->
@@ -114,18 +110,16 @@
                             BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 12">
-                            <Grid MinimumHeightRequest="44">
+                            <HorizontalStackLayout MinimumHeightRequest="44" Spacing="4" VerticalOptions="Center">
                                 <CheckBox IsChecked="{Binding IsGlutenFree}" Color="{StaticResource Primary}"
-                                          HorizontalOptions="Fill" VerticalOptions="Fill"
+                                          WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
                                           SemanticProperties.Description="Gluten-free" />
                                 <Label
                                     Text="Gluten-free"
                                     Style="{StaticResource BodyLabel}"
                                     FontSize="16"
-                                    Margin="44,0,0,0"
-                                    InputTransparent="True"
                                     VerticalOptions="Center" />
-                            </Grid>
+                            </HorizontalStackLayout>
                         </Border>
 
                         <!-- Lactose-free -->
@@ -136,18 +130,16 @@
                             BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 12">
-                            <Grid MinimumHeightRequest="44">
+                            <HorizontalStackLayout MinimumHeightRequest="44" Spacing="4" VerticalOptions="Center">
                                 <CheckBox IsChecked="{Binding IsLactoseFree}" Color="{StaticResource Primary}"
-                                          HorizontalOptions="Fill" VerticalOptions="Fill"
+                                          WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
                                           SemanticProperties.Description="Lactose-free" />
                                 <Label
                                     Text="Lactose-free"
                                     Style="{StaticResource BodyLabel}"
                                     FontSize="16"
-                                    Margin="44,0,0,0"
-                                    InputTransparent="True"
                                     VerticalOptions="Center" />
-                            </Grid>
+                            </HorizontalStackLayout>
                         </Border>
                     </Grid>
                 </VerticalStackLayout>

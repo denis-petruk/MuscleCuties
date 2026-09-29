@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using MuscleCuties.App.Services.Navigation;
+using MuscleCuties.Core.Models.UI.Workout;
 using MuscleCuties.Core.ViewModels.Workout;
 
 namespace MuscleCuties.App.Pages.Workout;
@@ -61,6 +62,12 @@ public partial class WorkoutSessionPage : ContentPage
         {
             Trace.WriteLine($"[WorkoutSessionPage] Could not present swap panel ({exception.GetType().Name}).");
         }
+    }
+
+    private void OnEffortDragCompleted(object? sender, EventArgs e)
+    {
+        if (sender is Slider { BindingContext: WorkoutExerciseItem exercise } slider)
+            exercise.CommitEffortSliderValue(slider.Value);
     }
 
     protected override bool OnBackButtonPressed()
