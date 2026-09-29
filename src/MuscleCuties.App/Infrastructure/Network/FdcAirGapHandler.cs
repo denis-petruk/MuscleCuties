@@ -48,10 +48,12 @@ public sealed class FdcAirGapHandler : DelegatingHandler
         {
             var normalized = FdcApiClient.NormalizeGenericIngredientQuery(searchTerm);
             if (string.IsNullOrWhiteSpace(normalized))
-                query.Remove("query");
-            else
-                query["query"] = normalized;
+                throw new InvalidOperationException("The external food query is not a recognized generic food name.");
+
+            query["query"] = normalized;
         }
+        else if (builder.Path.EndsWith("/foods/search", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("The external food search requires a recognized generic food name.");
 
         var apiKey = await _apiKeyProvider.GetApiKeyAsync(cancellationToken).ConfigureAwait(false);
         if (!string.IsNullOrWhiteSpace(apiKey))

@@ -69,13 +69,13 @@
                         </Grid>
                     </CollectionView.Header>
                     <CollectionView.EmptyView>
-                        <Label Text="No ingredients yet" Style="{StaticResource MutedLabel}" Margin="0,16" HorizontalTextAlignment="Center" />
+                        <Label Text="Add a food to build this meal." Style="{StaticResource MutedLabel}" Margin="0,16" HorizontalTextAlignment="Center" />
                     </CollectionView.EmptyView>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:MealIngredientItem">
-                            <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto,Auto" Padding="0,12,0,0" ColumnSpacing="4" RowSpacing="4">
-                                <Label Text="{Binding Name}" Style="{StaticResource CardTitle}" FontSize="16" />
-                                <Label Grid.Row="1" Text="{Binding AmountSummary}" Style="{StaticResource CaptionLabel}" />
+                            <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto,Auto" Padding="0,12,0,0" ColumnSpacing="8" RowSpacing="4">
+                                <Label Text="{Binding Name}" Style="{StaticResource CardTitle}" FontSize="16" LineBreakMode="WordWrap" />
+                                <Label Grid.Row="1" Text="{Binding AmountSummary}" Style="{StaticResource MutedLabel}" FontSize="14" LineBreakMode="WordWrap" />
                                 <Button Grid.Column="1" Grid.RowSpan="2" Text="Edit" Style="{StaticResource ButtonLink}" MinimumWidthRequest="48" MinimumHeightRequest="48"
                                         Command="{Binding EditIngredientCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}" CommandParameter="{Binding .}"
                                         SemanticProperties.Description="{Binding Name, StringFormat='Edit {0} portion'}" />
@@ -92,15 +92,21 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
-                <Grid Grid.Row="2" RowDefinitions="Auto,*" Margin="20,16,20,0" RowSpacing="12" IsVisible="{Binding IsIngredientSearchVisible}">
+                <Grid Grid.Row="2" RowDefinitions="Auto,Auto,*" Margin="20,16,20,0" RowSpacing="8" IsVisible="{Binding IsIngredientSearchVisible}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                         <Border Style="{StaticResource InputContainer}">
-                            <Entry x:Name="SearchEntry" Text="{Binding SearchQuery}" Placeholder="Food or brand" ReturnType="Search"
+                            <Entry x:Name="SearchEntry" Text="{Binding SearchQuery}" Placeholder="Food name" ReturnType="Search"
                                    ReturnCommand="{Binding SearchFoodCommand}" Completed="OnSearchSubmitted" SemanticProperties.Description="Search foods" />
                         </Border>
                         <Button Grid.Column="1" Text="Search" Command="{Binding SearchFoodCommand}" Clicked="OnSearchSubmitted" MinimumHeightRequest="48" />
                     </Grid>
-                    <CollectionView Grid.Row="1" ItemsSource="{Binding FoodSearchResults}" SelectionMode="None">
+                    <Label Grid.Row="1" Text="Generic food names may check the catalog. Other searches stay local."
+                           Style="{StaticResource MutedLabel}" FontSize="14" LineBreakMode="WordWrap" />
+                    <CollectionView Grid.Row="2" ItemsSource="{Binding FoodSearchResults}" SelectionMode="None">
+                        <CollectionView.EmptyView>
+                            <Label Text="No match yet. Try another name or create a custom food."
+                                   Style="{StaticResource MutedLabel}" HorizontalTextAlignment="Center" Margin="0,16" />
+                        </CollectionView.EmptyView>
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="models:FoodSearchResultItem">
                                 <Grid Padding="0,12" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="4" ColumnSpacing="8"
@@ -108,9 +114,9 @@
                                     <Grid.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding SelectFoodResultCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}" CommandParameter="{Binding .}" />
                                     </Grid.GestureRecognizers>
-                                    <Label Text="{Binding Name}" Style="{StaticResource CardTitle}" FontSize="16" />
-                                    <Label Grid.Row="1" Text="{Binding SourceSummary}" Style="{StaticResource CaptionLabel}" MaxLines="2" LineBreakMode="TailTruncation" />
-                                    <Label Grid.Row="2" Text="{Binding NutritionSummary}" Style="{StaticResource CaptionLabel}" />
+                                    <Label Text="{Binding Name}" Style="{StaticResource CardTitle}" FontSize="16" LineBreakMode="WordWrap" />
+                                    <Label Grid.Row="1" Text="{Binding SourceSummary}" Style="{StaticResource MutedLabel}" FontSize="14" LineBreakMode="WordWrap" />
+                                    <Label Grid.Row="2" Text="{Binding NutritionSummary}" Style="{StaticResource MutedLabel}" FontSize="14" LineBreakMode="WordWrap" />
                                     <Path Grid.Column="1" Grid.RowSpan="3" Data="M8 4l8 8-8 8" Style="{StaticResource NutritionLineIcon}" WidthRequest="16" HeightRequest="16" Margin="12" VerticalOptions="Center" />
                                     <BoxView Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource ModalDivider}" Margin="0,8,0,0" />
                                 </Grid>
@@ -121,14 +127,15 @@
                                     IsVisible="{Binding ShowBrowseMoreFoods}" MinimumHeightRequest="48" />
                         </CollectionView.Footer>
                     </CollectionView>
-                    <ActivityIndicator Grid.Row="1" IsVisible="{Binding IsSearchingFood}" IsRunning="{Binding IsSearchingFood}" Color="{StaticResource Primary}"
+                    <ActivityIndicator Grid.Row="2" IsVisible="{Binding IsSearchingFood}" IsRunning="{Binding IsSearchingFood}" Color="{StaticResource Primary}"
                                        HorizontalOptions="Center" VerticalOptions="Center" SemanticProperties.Description="Searching foods" />
                 </Grid>
 
                 <ScrollView Grid.Row="2" IsVisible="{Binding IsSelectedFoodEditorVisible}">
                     <VerticalStackLayout Padding="20,24" Spacing="16">
-                        <Label Text="{Binding SelectedFoodText}" Style="{StaticResource CardTitle}" />
-                        <Label Text="{Binding SelectedFoodSourceText}" Style="{StaticResource CaptionLabel}" IsVisible="{Binding HasSelectedFoodSource}" />
+                        <Label Text="{Binding SelectedFoodText}" Style="{StaticResource CardTitle}" LineBreakMode="WordWrap" />
+                        <Label Text="{Binding SelectedFoodSourceText}" Style="{StaticResource MutedLabel}" FontSize="14"
+                               LineBreakMode="WordWrap" IsVisible="{Binding HasSelectedFoodSource}" />
                         <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="4">
                             <Label Text="Amount" Style="{StaticResource FormFieldLabel}" />
                             <Label Grid.Column="1" Text="Unit" Style="{StaticResource FormFieldLabel}" />

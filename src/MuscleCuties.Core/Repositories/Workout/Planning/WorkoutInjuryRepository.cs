@@ -11,7 +11,7 @@ public interface IWorkoutInjuryRepository
     Task<IReadOnlyList<WorkoutInjuryLog>> GetActiveAsync(int userId);
     Task<IReadOnlyList<WorkoutInjuryLog>> GetAllAsync(int userId);
     Task SaveAsync(WorkoutInjuryLog log);
-    Task DeleteAsync(int id);
+    Task DeleteAsync(int userId, int id);
     Task<(IReadOnlyList<string> Blocked, IReadOnlyList<string> Recommended)> GetExerciseImpactAsync(
         InjuryFlag activeInjuries);
 }
@@ -26,7 +26,7 @@ public class WorkoutInjuryRepository : BaseRepository<WorkoutInjuryLog>, IWorkou
     {
         return await _db.Set<WorkoutInjuryLog>()
             .AsNoTracking()
-            .Where(log => log.UserId == userId && log.Status != "Cleared")
+            .Where(log => log.UserId == userId && log.Status.ToLower() != "cleared")
             .OrderByDescending(log => log.Date)
             .ToListAsync();
     }
@@ -51,23 +51,24 @@ public class WorkoutInjuryRepository : BaseRepository<WorkoutInjuryLog>, IWorkou
         }
         else
         {
-            var existing = await _db.Set<WorkoutInjuryLog>().FindAsync(log.Id);
-            if (existing is not null)
-            {
-                existing.SiteFlag = log.SiteFlag;
-                existing.Status = log.Status;
-                existing.Pain = log.Pain;
-                existing.Since = log.Since;
-                existing.Date = log.Date;
-            }
+            var existing = await _db.Set<WorkoutInjuryLog>()
+                .FirstOrDefaultAsync(item => item.Id == log.Id && item.UserId == log.UserId)
+                ?? throw new InvalidOperationException("Injury log does not belong to this user.");
+
+            existing.SiteFlag = log.SiteFlag;
+            existing.Status = log.Status;
+            existing.Pain = log.Pain;
+            existing.Since = log.Since;
+            existing.Date = log.Date;
         }
 
         await _db.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(int id)
+    public async Task DeleteAsync(int userId, int id)
     {
-        var log = await _db.Set<WorkoutInjuryLog>().FindAsync(id);
+        var log = await _db.Set<WorkoutInjuryLog>()
+            .FirstOrDefaultAsync(item => item.Id == id && item.UserId == userId);
         if (log is null)
             return;
 

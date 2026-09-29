@@ -6,16 +6,16 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.UI.Cycle;
 using MuscleCuties.Core.Models.UI.Workout;
 using Microsoft.Extensions.DependencyInjection;
-using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
+using MuscleCuties.Core.Services.Dashboard;
 using MuscleCuties.Core.Services.Dashboard.Planning;
 using MuscleCuties.Core.Services.Nutrition;
+using MuscleCuties.Core.Services.Profile;
 using MuscleCuties.Core.Services.Progress;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
-using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.ViewModels.Common;
 using MuscleCuties.Core.ViewModels.Profile;
 
@@ -122,13 +122,18 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
     [RelayCommand]
     private async Task OpenInjuryModalAsync()
     {
+        InjuryLogVm.ResetForm();
         IsInjuryModalVisible = true;
         if (!InjuryLogVm.IsBusy)
             await InjuryLogVm.LoadCommand.ExecuteAsync(null);
     }
 
     [RelayCommand]
-    private void CloseInjuryModal() => IsInjuryModalVisible = false;
+    private void CloseInjuryModal()
+    {
+        _injuryLogVm?.ResetForm();
+        IsInjuryModalVisible = false;
+    }
 
     private async Task RefreshAfterInjuryChangeAsync()
     {
@@ -273,11 +278,11 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
 
             var today = DateOnly.FromDateTime(DateTime.Today);
             var profileTask = RunScopedAsync(services =>
-                services.GetRequiredService<IUserRepository>().GetProfileAsync(userId));
+                services.GetRequiredService<IProfileSettingsService>().GetProfileAsync(userId));
             var readinessTask = RunScopedAsync(services =>
-                services.GetRequiredService<IReadinessRepository>().GetForAsync(userId, today));
+                services.GetRequiredService<IDailyCheckInDataService>().GetCheckInAsync(userId, today));
             var injuriesTask = RunScopedAsync(services =>
-                services.GetRequiredService<IWorkoutInjuryRepository>().GetActiveAsync(userId));
+                services.GetRequiredService<IWorkoutInjuryService>().GetActiveAsync(userId));
             var predictionTask = RunScopedAsync(services =>
                 services.GetRequiredService<ICycleService>().GetPredictionAsync(userId));
             var consumedTask = RunScopedAsync(services =>
@@ -374,7 +379,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware
     {
         return DataLoadScheduler.RunAsync(async () =>
         {
-            // Resolve scoped repositories inside the worker, never from the
+            // Resolve scoped services inside the worker, never from the
             // singleton view model's root provider or a sibling worker's scope.
             using var scope = _scopeFactory.CreateScope();
             return await operation(scope.ServiceProvider);

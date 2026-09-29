@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -14,71 +13,8 @@ public sealed class FdcApiClient : IFdcApiClient
 {
     private const int MaxRateLimitRetries = 1;
     private const int MaxServerErrorRetries = 1;
-    private const int MaxQueryLength = 80;
     private static readonly TimeSpan DefaultRateLimitDelay = TimeSpan.FromMilliseconds(750);
     private static readonly TimeSpan MaxRateLimitDelay = TimeSpan.FromSeconds(2);
-    private static readonly HashSet<string> SensitiveQueryTerms = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "amenorrhea",
-        "bleeding",
-        "bmi",
-        "bodyweight",
-        "cramp",
-        "cramps",
-        "cycle",
-        "fertility",
-        "follicular",
-        "health",
-        "hip",
-        "hrv",
-        "i",
-        "im",
-        "inch",
-        "inches",
-        "injured",
-        "injury",
-        "kg",
-        "kilogram",
-        "kilograms",
-        "knee",
-        "lb",
-        "lbs",
-        "luteal",
-        "me",
-        "medical",
-        "medication",
-        "meds",
-        "menstrual",
-        "menstruation",
-        "mine",
-        "my",
-        "myself",
-        "ovulation",
-        "ovulatory",
-        "pain",
-        "period",
-        "phase",
-        "pms",
-        "pound",
-        "pounds",
-        "pregnancy",
-        "pregnant",
-        "readiness",
-        "recovery",
-        "rehab",
-        "sleep",
-        "sore",
-        "sprain",
-        "strain",
-        "symptom",
-        "symptoms",
-        "weigh",
-        "weighing",
-        "weighs",
-        "weight",
-        "workout"
-    };
-
     public static readonly Uri BaseUri = new("https://api.nal.usda.gov/fdc/v1/");
 
     private readonly HttpClient _httpClient;
@@ -151,37 +87,8 @@ public sealed class FdcApiClient : IFdcApiClient
         return payload ?? [];
     }
 
-    internal static string NormalizeGenericIngredientQuery(string query)
-    {
-        if (string.IsNullOrWhiteSpace(query))
-            return string.Empty;
-
-        var normalized = new StringBuilder(query.Length);
-        foreach (var character in query.Trim())
-        {
-            if (char.IsLetterOrDigit(character) ||
-                character is ' ' or '-' or '\'' or ',' or '%' or '&')
-            {
-                normalized.Append(character);
-            }
-            else
-            {
-                normalized.Append(' ');
-            }
-        }
-
-        var safeTerms = normalized
-            .ToString()
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(term => !term.Any(char.IsDigit))
-            .Where(term => !SensitiveQueryTerms.Contains(term))
-            .Take(8);
-
-        var safeQuery = string.Join(' ', safeTerms).Trim();
-        return safeQuery.Length <= MaxQueryLength
-            ? safeQuery
-            : safeQuery[..MaxQueryLength].Trim();
-    }
+    internal static string NormalizeGenericIngredientQuery(string query) =>
+        GenericFoodQueryPolicy.NormalizeOrEmpty(query);
 
     private static string BuildSearchPath(string safeQuery, int pageSize, int pageNumber)
     {

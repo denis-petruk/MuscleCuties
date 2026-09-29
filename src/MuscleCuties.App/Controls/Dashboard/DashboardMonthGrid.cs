@@ -117,7 +117,7 @@ public sealed class DashboardMonthGrid : Grid
         var label = new Label
         {
             Text = day.Day.ToString(),
-            FontSize = 12,
+            FontSize = 13,
             HorizontalOptions = LayoutOptions.Center,
             HorizontalTextAlignment = TextAlignment.Center,
             VerticalOptions = LayoutOptions.Center

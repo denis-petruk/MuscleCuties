@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Profile;
 using MuscleCuties.Core.Models.UI.Common;
 using MuscleCuties.Core.Models.UI.Profile;
-using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Profile;
 
@@ -14,7 +13,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
     private readonly IAuthService _authService;
     private readonly IFeedbackEmailService _feedbackEmailService;
     private readonly Func<Task> _navigateBackAsync;
-    private readonly IUserRepository _userRepository;
+    private readonly IProfileAccountService _profileAccountService;
     [ObservableProperty] private string _adjustmentText = string.Empty;
     private FeedbackAttachment? _attachment;
     [ObservableProperty] private string _attachmentName = string.Empty;
@@ -31,12 +30,12 @@ public partial class ProfileFeedbackViewModel : ObservableObject
 
     public ProfileFeedbackViewModel(
         IAuthService authService,
-        IUserRepository userRepository,
+        IProfileAccountService profileAccountService,
         IFeedbackEmailService feedbackEmailService,
         Func<Task> navigateBackAsync)
     {
         _authService = authService;
-        _userRepository = userRepository;
+        _profileAccountService = profileAccountService;
         _feedbackEmailService = feedbackEmailService;
         _navigateBackAsync = navigateBackAsync;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
@@ -52,8 +51,6 @@ public partial class ProfileFeedbackViewModel : ObservableObject
 
     public IReadOnlyList<SelectionOption<FeedbackPriority>> PriorityOptions { get; } =
         ProfileSelectionOptions.FeedbackPriorities;
-
-    public string FeedbackCountText => $"{FeedbackText.Length + AdjustmentText.Length} characters";
 
     public bool IsReadyToSend =>
         !IsBusy && (!string.IsNullOrWhiteSpace(FeedbackText) || !string.IsNullOrWhiteSpace(AdjustmentText));
@@ -125,7 +122,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         try
         {
             var userId = await _authService.GetCurrentUserIdAsync();
-            var user = await _userRepository.GetByIdAsync(userId);
+            var user = await _profileAccountService.GetUserAsync(userId);
             ContactEmail = user?.Email ?? string.Empty;
         }
         finally
@@ -138,7 +135,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(FeedbackText) && string.IsNullOrWhiteSpace(AdjustmentText))
         {
-            StatusMessage = "Give the handsome, jacked developer at least one clue first.";
+            StatusMessage = "Describe an issue or idea before opening the email draft.";
             return;
         }
 
@@ -146,8 +143,8 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         try
         {
             var userId = await _authService.GetCurrentUserIdAsync();
-            var user = await _userRepository.GetByIdAsync(userId);
-            var profile = await _userRepository.GetProfileAsync(userId);
+            var user = await _profileAccountService.GetUserAsync(userId);
+            var profile = await _profileAccountService.GetProfileAsync(userId);
             var email = IncludeContactEmail
                 ? string.IsNullOrWhiteSpace(ContactEmail) ? user?.Email ?? "Not provided" : ContactEmail.Trim()
                 : "Tester chose not to include contact email";
@@ -167,7 +164,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
                 $"{FeedbackText.Trim()}\n\n" +
                 "Requested adjustments:\n" +
                 $"{AdjustmentText.Trim()}\n\n" +
-                "Private beta feedback for the handsome, jacked developer only.";
+                "MuscleCuties beta feedback.";
 
             IReadOnlyList<FeedbackAttachment> attachments = _attachment is null
                 ? Array.Empty<FeedbackAttachment>()
@@ -189,13 +186,11 @@ public partial class ProfileFeedbackViewModel : ObservableObject
 
     partial void OnFeedbackTextChanged(string value)
     {
-        OnPropertyChanged(nameof(FeedbackCountText));
         OnPropertyChanged(nameof(IsReadyToSend));
     }
 
     partial void OnAdjustmentTextChanged(string value)
     {
-        OnPropertyChanged(nameof(FeedbackCountText));
         OnPropertyChanged(nameof(IsReadyToSend));
     }
 

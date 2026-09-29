@@ -76,7 +76,8 @@
                     Text="Pinch to zoom, drag to reposition"
                     Style="{StaticResource CaptionLabel}"
                     HorizontalTextAlignment="Center"
-                    Margin="20,10,20,0" />
+                    Margin="20,10,20,0"
+                    SemanticProperties.Description="Pinch to zoom, drag to reposition your photo" />
 
                 <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="12" Padding="20,16,20,20">
                     <Button

@@ -56,39 +56,41 @@
 
                         <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="3" VerticalOptions="Center">
                             <Label Text="{Binding UserName}" Style="{StaticResource SectionTitle}" FontSize="20" />
-                            <Label Grid.Row="1" Text="{Binding MemberSince}" Style="{StaticResource CaptionLabel}" />
+                            <Label Grid.Row="1" Text="{Binding MemberSince}" Style="{StaticResource CaptionLabel}" FontSize="14" />
                         </Grid>
                     </Grid>
 
+                    <!-- Activity summary tiles -->
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
                         <Border
                             BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                             StrokeShape="RoundRectangle 12"
                             Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
                             StrokeThickness="1"
-                            Padding="8,10"
-                            MinimumHeightRequest="76"
+                            Padding="8,12"
+                            MinimumHeightRequest="80"
                             SemanticProperties.Description="{Binding WorkoutStreakDays, StringFormat='Workout session streak: {0} days'}">
-                            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="1" RowSpacing="4" HorizontalOptions="Center">
-                                <Image
-                                    Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
-                                    Aspect="AspectFit"
-                                    WidthRequest="24"
-                                    HeightRequest="24" />
+                            <VerticalStackLayout Spacing="4" VerticalOptions="Center" HorizontalOptions="Center">
+                                <HorizontalStackLayout Spacing="2" HorizontalOptions="Center">
+                                    <Image
+                                        Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
+                                        Aspect="AspectFit"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Text="{Binding WorkoutStreakDays}"
+                                        Style="{StaticResource SubHeadline}"
+                                        FontSize="22"
+                                        VerticalOptions="Center" />
+                                </HorizontalStackLayout>
                                 <Label
-                                    Grid.Column="1"
-                                    Text="{Binding WorkoutStreakDays}"
-                                    Style="{StaticResource SubHeadline}"
-                                    FontSize="22"
-                                    VerticalOptions="Center" />
-                                <Label
-                                    Grid.Row="1"
-                                    Grid.ColumnSpan="2"
                                     Text="Session streak"
                                     Style="{StaticResource CaptionLabel}"
-                                    FontSize="9"
+                                    FontSize="14"
+                                    FontAttributes="Bold"
                                     HorizontalTextAlignment="Center" />
-                            </Grid>
+                            </VerticalStackLayout>
                         </Border>
 
                         <Border
@@ -97,29 +99,30 @@
                             StrokeShape="RoundRectangle 12"
                             Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
                             StrokeThickness="1"
-                            Padding="8,10"
-                            MinimumHeightRequest="76"
+                            Padding="8,12"
+                            MinimumHeightRequest="80"
                             SemanticProperties.Description="{Binding NutritionStreakDays, StringFormat='Nutrition log streak: {0} days'}">
-                            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="1" RowSpacing="4" HorizontalOptions="Center">
-                                <Image
-                                    Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
-                                    Aspect="AspectFit"
-                                    WidthRequest="24"
-                                    HeightRequest="24" />
+                            <VerticalStackLayout Spacing="4" VerticalOptions="Center" HorizontalOptions="Center">
+                                <HorizontalStackLayout Spacing="2" HorizontalOptions="Center">
+                                    <Image
+                                        Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                                        Aspect="AspectFit"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Text="{Binding NutritionStreakDays}"
+                                        Style="{StaticResource SubHeadline}"
+                                        FontSize="22"
+                                        VerticalOptions="Center" />
+                                </HorizontalStackLayout>
                                 <Label
-                                    Grid.Column="1"
-                                    Text="{Binding NutritionStreakDays}"
-                                    Style="{StaticResource SubHeadline}"
-                                    FontSize="22"
-                                    VerticalOptions="Center" />
-                                <Label
-                                    Grid.Row="1"
-                                    Grid.ColumnSpan="2"
                                     Text="Log streak"
                                     Style="{StaticResource CaptionLabel}"
-                                    FontSize="9"
+                                    FontSize="14"
+                                    FontAttributes="Bold"
                                     HorizontalTextAlignment="Center" />
-                            </Grid>
+                            </VerticalStackLayout>
                         </Border>
 
                         <Border
@@ -128,29 +131,30 @@
                             StrokeShape="RoundRectangle 12"
                             Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
                             StrokeThickness="1"
-                            Padding="8,10"
-                            MinimumHeightRequest="76"
+                            Padding="8,12"
+                            MinimumHeightRequest="80"
                             SemanticProperties.Description="{Binding CyclesTracked, StringFormat='Cycles logged: {0}'}">
-                            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="1" RowSpacing="4" HorizontalOptions="Center">
-                                <Image
-                                    Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
-                                    Aspect="AspectFit"
-                                    WidthRequest="26"
-                                    HeightRequest="26" />
+                            <VerticalStackLayout Spacing="4" VerticalOptions="Center" HorizontalOptions="Center">
+                                <HorizontalStackLayout Spacing="2" HorizontalOptions="Center">
+                                    <Image
+                                        Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
+                                        Aspect="AspectFit"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Text="{Binding CyclesTracked}"
+                                        Style="{StaticResource SubHeadline}"
+                                        FontSize="22"
+                                        VerticalOptions="Center" />
+                                </HorizontalStackLayout>
                                 <Label
-                                    Grid.Column="1"
-                                    Text="{Binding CyclesTracked}"
-                                    Style="{StaticResource SubHeadline}"
-                                    FontSize="22"
-                                    VerticalOptions="Center" />
-                                <Label
-                                    Grid.Row="1"
-                                    Grid.ColumnSpan="2"
                                     Text="Cycles logged"
                                     Style="{StaticResource CaptionLabel}"
-                                    FontSize="9"
+                                    FontSize="14"
+                                    FontAttributes="Bold"
                                     HorizontalTextAlignment="Center" />
-                            </Grid>
+                            </VerticalStackLayout>
                         </Border>
                     </Grid>
 
@@ -160,26 +164,31 @@
 
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="profileModels:PreferenceItem">
-                    <Border Style="{StaticResource CardPrimary}" Margin="20,0" Padding="12,14">
+                    <Border Style="{StaticResource CardPrimary}" Margin="20,0" Padding="14,16"
+                            MinimumHeightRequest="60">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer
                                 Command="{Binding OpenPreferenceCommand, Source={RelativeSource AncestorType={x:Type vm:ProfileViewModel}}, x:DataType=vm:ProfileViewModel}"
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
-                        <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="10">
+                        <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="12">
                             <Image
                                 Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                                 WidthRequest="20"
                                 HeightRequest="20"
                                 Aspect="AspectFit"
                                 VerticalOptions="Center" />
-                            <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="3">
+                            <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="4">
                                 <Label
                                     Text="{Binding Title}"
-                                    FontSize="15"
+                                    FontSize="16"
                                     FontAttributes="Bold"
                                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                                <Label Grid.Row="1" Text="{Binding Subtitle}" Style="{StaticResource CaptionLabel}" />
+                                <Label
+                                    Grid.Row="1"
+                                    Text="{Binding Subtitle}"
+                                    Style="{StaticResource CaptionLabel}"
+                                    FontSize="14" />
                             </Grid>
                             <Image
                                 Grid.Column="2"
@@ -194,13 +203,18 @@
             </CollectionView.ItemTemplate>
 
             <CollectionView.Footer>
-                <Grid Padding="20,8,20,32">
+                <VerticalStackLayout Padding="20,12,20,32" Spacing="12">
+                    <Label
+                        Text="All health and fitness data is stored locally on this device."
+                        Style="{StaticResource CaptionLabel}"
+                        FontSize="14"
+                        HorizontalTextAlignment="Center" />
                     <Button
                         Text="Log out"
                         Clicked="OnLogoutClicked"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
                         TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}" />
-                </Grid>
+                </VerticalStackLayout>
             </CollectionView.Footer>
         </CollectionView>
 

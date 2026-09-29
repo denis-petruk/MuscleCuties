@@ -11,7 +11,7 @@
         BackgroundColor="{Binding PhaseCardBackgroundColor}"
         StrokeThickness="0"
         StrokeShape="RoundRectangle 16"
-        Padding="20"
+        Padding="16"
         SemanticProperties.Description="{Binding PhaseCardTitle, StringFormat='Current cycle phase: {0}. Tap to view cycle details.'}">
         <Border.GestureRecognizers>
             <TapGestureRecognizer Command="{Binding OpenCycleCommand}" />
@@ -29,6 +29,7 @@
                     Grid.Column="1"
                     Text="{Binding PhaseStatusText}"
                     Style="{StaticResource FormFieldLabel}"
+                    FontSize="14"
                     TextColor="{Binding PhaseCardTextColor}"
                     VerticalOptions="Center" />
             </Grid>
@@ -45,7 +46,7 @@
                 Grid.Row="2"
                 Text="{Binding PhaseShortAdvice}"
                 TextColor="{Binding PhaseCardTextColor}"
-                FontSize="15"
+                FontSize="16"
                 LineBreakMode="WordWrap"
                 Margin="0,-6,0,0" />
 
@@ -59,25 +60,25 @@
                     Text="Menstrual"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{AppThemeBinding Light={StaticResource CyclePhaseMenstrualTextLight}, Dark={StaticResource CyclePhaseMenstrualTextDark}}"
-                    FontSize="9" />
+                    FontSize="13" />
                 <Label
                     Grid.Column="1"
                     Text="Follicular"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{AppThemeBinding Light={StaticResource CyclePhaseFollicularTextLight}, Dark={StaticResource CyclePhaseFollicularTextDark}}"
-                    FontSize="9" />
+                    FontSize="13" />
                 <Label
                     Grid.Column="2"
                     Text="Ovulatory"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{AppThemeBinding Light={StaticResource CyclePhaseOvulatoryTextLight}, Dark={StaticResource CyclePhaseOvulatoryTextDark}}"
-                    FontSize="9" />
+                    FontSize="13" />
                 <Label
                     Grid.Column="3"
                     Text="Luteal"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{AppThemeBinding Light={StaticResource CyclePhaseLutealTextLight}, Dark={StaticResource CyclePhaseLutealTextDark}}"
-                    FontSize="9"
+                    FontSize="13"
                     HorizontalTextAlignment="End" />
 
                 <BoxView
@@ -122,7 +123,6 @@
                     Grid.ColumnSpan="5"
                     HeightRequest="1"
                     BackgroundColor="{Binding PhaseCardDividerColor}"
-                    Opacity="0.55"
                     VerticalOptions="Start" />
 
                 <Label
@@ -138,7 +138,7 @@
                     Text="{Binding PhaseTimeLeftLabel}"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{Binding PhaseCardTextColor}"
-                    FontSize="9" />
+                    FontSize="14" />
 
                 <BoxView
                     Grid.Row="0"
@@ -147,7 +147,6 @@
                     WidthRequest="1"
                     HeightRequest="38"
                     BackgroundColor="{Binding PhaseCardDividerColor}"
-                    Opacity="0.65"
                     VerticalOptions="End" />
 
                 <Label
@@ -164,7 +163,7 @@
                     Text="Next period"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{Binding PhaseCardTextColor}"
-                    FontSize="9"
+                    FontSize="14"
                     Margin="12,0,0,0" />
 
                 <BoxView
@@ -174,7 +173,6 @@
                     WidthRequest="1"
                     HeightRequest="38"
                     BackgroundColor="{Binding PhaseCardDividerColor}"
-                    Opacity="0.65"
                     VerticalOptions="End" />
 
                 <Label
@@ -191,7 +189,7 @@
                     Text="Load"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{Binding PhaseCardTextColor}"
-                    FontSize="9"
+                    FontSize="14"
                     Margin="12,0,0,0" />
             </Grid>
         </Grid>

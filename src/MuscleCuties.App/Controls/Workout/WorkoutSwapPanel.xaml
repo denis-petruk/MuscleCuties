@@ -6,7 +6,7 @@
              x:Class="MuscleCuties.App.Controls.Workout.WorkoutSwapPanel"
              x:Name="SwapRoot"
              x:DataType="vm:WorkoutSessionViewModel">
-    <Grid BackgroundColor="#80000000">
+    <Grid BackgroundColor="{StaticResource ModalScrim}">
         <Grid BackgroundColor="Transparent">
             <Grid.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding CloseSwapPanelCommand}" />
@@ -28,7 +28,7 @@
                 </Grid>
                 <ActivityIndicator Grid.Row="1" IsVisible="{Binding IsSwapLoading}" IsRunning="{Binding IsSwapLoading}" Color="{StaticResource Primary}" />
                 <VerticalStackLayout Grid.Row="2" Spacing="8">
-                    <Label Text="{Binding SwapErrorText}" Style="{StaticResource BodyLabel}" IsVisible="{Binding HasSwapError}" />
+                    <Label Text="{Binding SwapErrorText}" Style="{StaticResource ErrorLabel}" IsVisible="{Binding HasSwapError}" />
                     <Label Text="No alternatives are available for this exercise. You can keep it or skip it."
                            Style="{StaticResource BodyLabel}" IsVisible="{Binding ShowNoSwapCandidates}" />
                 </VerticalStackLayout>
@@ -39,11 +39,17 @@
                             <Border StrokeThickness="1" StrokeShape="RoundRectangle 14" Padding="12,14"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                                     Margin="0,0,0,8"
-                                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                                    SemanticProperties.Description="{Binding Name}">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                        <Setter Property="SemanticProperties.Hint" Value="Selected swap option, double-tap to confirm" />
+                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
                                         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                        <Setter Property="SemanticProperties.Hint" Value="Not selected, double-tap to select" />
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
@@ -58,7 +64,7 @@
                                         <Label Text="{Binding Equipment}" Style="{StaticResource CaptionLabel}"
                                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                                     </VerticalStackLayout>
-                                    <Label Grid.Column="1" Text="Selected" IsVisible="{Binding IsSelected}" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                                    <Label Grid.Column="1" Text="Selected" IsVisible="{Binding IsSelected}" Style="{StaticResource AccentLabel}" VerticalOptions="Center" />
                                 </Grid>
                             </Border>
                         </DataTemplate>

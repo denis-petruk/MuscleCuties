@@ -2,138 +2,80 @@ using MuscleCuties.Core.Services.Auth;
 
 namespace MuscleCuties.App.Services;
 
-public class SecureStorageService : ITokenStorage
+public sealed class SecureStorageService : ITokenStorage
 {
-    private const string FallbackPrefix = "secure_storage_fallback_";
-    private const string FallbackKeysKey = "secure_storage_fallback_keys";
+    private const string LegacyFallbackPrefix = "secure_storage_fallback_";
+    private const string LegacyFallbackKeysKey = "secure_storage_fallback_keys";
+    private static readonly Lazy<Task> LegacyCleanup = new(() => Task.Run(PurgeLegacyFallbackKeys));
+    private static readonly Dictionary<string, string> SimulatorSession = new(StringComparer.Ordinal);
+    private static readonly object SimulatorSessionGate = new();
 
     public void Remove(string key)
     {
-#if DEBUG && IOS
-        if (UseDebugFallback())
+        if (UseSimulatorSession())
         {
-            Preferences.Default.Remove(BuildFallbackKey(key));
-            UntrackFallbackKey(key);
-            return;
+            lock (SimulatorSessionGate)
+                SimulatorSession.Remove(key);
         }
-#endif
-
-        try
+        else
         {
             SecureStorage.Default.Remove(key);
         }
-        catch when (UseDebugFallback())
-        {
-        }
 
-        Preferences.Default.Remove(BuildFallbackKey(key));
-        UntrackFallbackKey(key);
+        Preferences.Default.Remove(LegacyFallbackPrefix + key);
     }
 
     public void RemoveAll()
     {
-#if DEBUG && IOS
-        if (UseDebugFallback())
+        if (UseSimulatorSession())
         {
-            foreach (var key in GetFallbackKeys())
-                Preferences.Default.Remove(BuildFallbackKey(key));
-
-            Preferences.Default.Remove(FallbackKeysKey);
-            return;
+            lock (SimulatorSessionGate)
+                SimulatorSession.Clear();
         }
-#endif
-
-        try
+        else
         {
             SecureStorage.Default.RemoveAll();
         }
-        catch when (UseDebugFallback())
-        {
-        }
 
-        foreach (var key in GetFallbackKeys())
-            Preferences.Default.Remove(BuildFallbackKey(key));
-
-        Preferences.Default.Remove(FallbackKeysKey);
+        PurgeLegacyFallbackKeys();
     }
 
     public async Task<string?> GetAsync(string key)
     {
-#if DEBUG && IOS
-        if (UseDebugFallback())
+        await LegacyCleanup.Value;
+        if (UseSimulatorSession())
         {
-            var fallbackValue = Preferences.Default.Get(BuildFallbackKey(key), string.Empty);
-            return string.IsNullOrWhiteSpace(fallbackValue) ? null : fallbackValue;
+            lock (SimulatorSessionGate)
+                return SimulatorSession.GetValueOrDefault(key);
         }
-#endif
 
-        try
-        {
-            return await SecureStorage.Default.GetAsync(key);
-        }
-        catch when (UseDebugFallback())
-        {
-            var fallbackValue = Preferences.Default.Get(BuildFallbackKey(key), string.Empty);
-            return string.IsNullOrWhiteSpace(fallbackValue) ? null : fallbackValue;
-        }
+        return await SecureStorage.Default.GetAsync(key);
     }
 
     public async Task SetAsync(string key, string value)
     {
-#if DEBUG && IOS
-        if (UseDebugFallback())
+        await LegacyCleanup.Value;
+        if (UseSimulatorSession())
         {
-            Preferences.Default.Set(BuildFallbackKey(key), value);
-            TrackFallbackKey(key);
-            return;
-        }
-#endif
-
-        try
-        {
-            await SecureStorage.Default.SetAsync(key, value);
-        }
-        catch when (UseDebugFallback())
-        {
-            Preferences.Default.Set(BuildFallbackKey(key), value);
-            TrackFallbackKey(key);
-        }
-    }
-
-    private static string BuildFallbackKey(string key)
-    {
-        return $"{FallbackPrefix}{key}";
-    }
-
-    private static void TrackFallbackKey(string key)
-    {
-        var keys = GetFallbackKeys().ToHashSet(StringComparer.Ordinal);
-        if (!keys.Add(key))
-            return;
-
-        Preferences.Default.Set(FallbackKeysKey, string.Join("|", keys));
-    }
-
-    private static void UntrackFallbackKey(string key)
-    {
-        var keys = GetFallbackKeys().Where(storedKey => storedKey != key).ToArray();
-        if (keys.Length == 0)
-        {
-            Preferences.Default.Remove(FallbackKeysKey);
+            lock (SimulatorSessionGate)
+                SimulatorSession[key] = value;
             return;
         }
 
-        Preferences.Default.Set(FallbackKeysKey, string.Join("|", keys));
+        await SecureStorage.Default.SetAsync(key, value);
     }
 
-    private static IReadOnlyList<string> GetFallbackKeys()
+    private static void PurgeLegacyFallbackKeys()
     {
-        return Preferences.Default
-            .Get(FallbackKeysKey, string.Empty)
+        var keys = Preferences.Default.Get(LegacyFallbackKeysKey, string.Empty)
             .Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var key in keys)
+            Preferences.Default.Remove(LegacyFallbackPrefix + key);
+
+        Preferences.Default.Remove(LegacyFallbackKeysKey);
     }
 
-    private static bool UseDebugFallback()
+    private static bool UseSimulatorSession()
     {
 #if DEBUG && IOS
         return DeviceInfo.Current.DeviceType == DeviceType.Virtual;

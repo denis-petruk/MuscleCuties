@@ -122,6 +122,9 @@
         <MauiImage Update="Resources\Images\tab_nutrition_dark.svg" Resize="True" BaseSize="24,24"/>
         <MauiImage Update="Resources\Images\tab_you.svg" Resize="True" BaseSize="24,24"/>
         <MauiImage Update="Resources\Images\tab_you_dark.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\nav_back.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\feedback_note.svg" Resize="True" BaseSize="64,64"/>
+        <MauiImage Update="Resources\Images\privacy_device.svg" Resize="True" BaseSize="64,64"/>
         <MauiFont Include="Resources\Fonts\*.ttf"/>
         <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)"/>
     </ItemGroup>

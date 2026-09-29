@@ -6,9 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Graphics;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.UI.Dashboard;
-using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Repositories.Workout;
 using MuscleCuties.Core.Services.Cycle.Planning;
+using MuscleCuties.Core.Services.Dashboard;
 
 namespace MuscleCuties.Core.ViewModels.Dashboard;
 
@@ -63,34 +62,22 @@ public partial class DashboardViewModel
         try
         {
             var logsTask = RunScopedAsync(services =>
-                services.GetRequiredService<IWorkoutRepository>()
-                    .GetWorkoutLogsByDateRangeAsync(userId, rangeStart, rangeEnd));
+                services.GetRequiredService<IDashboardCalendarDataService>()
+                    .GetWorkoutDatesAsync(userId, rangeStart, rangeEnd));
 
             var mealsTask = RunScopedAsync(services =>
-                services.GetRequiredService<INutritionRepository>()
-                    .GetLoggedMealsByDateRangeAsync(userId, rangeStart, rangeEnd));
+                services.GetRequiredService<IDashboardCalendarDataService>()
+                    .GetMealDatesAsync(userId, rangeStart, rangeEnd));
 
-            var planTask = RunScopedAsync(async services =>
-            {
-                var repo = services.GetRequiredService<IWorkoutRepository>();
-                var plan = await repo.GetActivePlanAsync(userId);
-                if (plan is null) return new List<Models.Entities.Workout.WorkoutDay>();
-                return await repo.GetWorkoutDaysByPlanAsync(plan.Id);
-            });
+            var planTask = RunScopedAsync(services =>
+                services.GetRequiredService<IDashboardCalendarDataService>()
+                    .GetPlannedWorkoutWeekdaysAsync(userId));
 
             await Task.WhenAll(logsTask, mealsTask, planTask);
 
-            var logs = await logsTask;
-            foreach (var log in logs)
-                workoutDates.Add(log.Date.Date);
-
-            var meals = await mealsTask;
-            foreach (var meal in meals)
-                mealDates.Add(meal.Date.Date);
-
-            var planDays = await planTask;
-            foreach (var day in planDays)
-                plannedWorkoutDaysOfWeek.Add(day.DayOfWeek);
+            workoutDates.UnionWith(await logsTask);
+            mealDates.UnionWith(await mealsTask);
+            plannedWorkoutDaysOfWeek.UnionWith(await planTask);
         }
         catch (Exception exception)
         {

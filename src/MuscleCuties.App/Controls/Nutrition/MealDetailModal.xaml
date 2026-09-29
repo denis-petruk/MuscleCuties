@@ -56,15 +56,13 @@
                         Grid.Column="1"
                         Text="{Binding SelectedMealDetail.ConceptName}"
                         Style="{StaticResource ModalTitle}"
-                        MaxLines="1"
-                        LineBreakMode="TailTruncation" />
+                        LineBreakMode="WordWrap" />
                     <Label
                         Grid.Row="1"
                         Grid.Column="1"
                         Text="{Binding SelectedMealDetail.ConceptDescription}"
                         Style="{StaticResource ModalSubtitle}"
-                        MaxLines="2"
-                        LineBreakMode="TailTruncation" />
+                        LineBreakMode="WordWrap" />
 
                     <Border
                         Grid.Column="2"
@@ -108,8 +106,8 @@
                                     Grid.Row="1"
                                     Grid.ColumnSpan="2"
                                     Text="{Binding DetailMacrosText}"
-                                    Style="{StaticResource CaptionLabel}"
-                                    FontSize="13" />
+                                    Style="{StaticResource MutedLabel}"
+                                    FontSize="14" LineBreakMode="WordWrap" />
 
                                 <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
                                     <Border
@@ -120,15 +118,16 @@
                                         <Label
                                             Text="{Binding SelectedMealDetail.StyleLabel}"
                                             Style="{StaticResource CaptionLabel}"
-                                            TextColor="{StaticResource Primary}"
+                                            TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                                             FontAttributes="Bold"
-                                            FontSize="10" />
+                                            FontSize="13" />
                                     </Border>
                                     <Label
                                         Grid.Column="1"
                                         Text="{Binding SelectedMealDetail.StyleDescription}"
-                                        Style="{StaticResource CaptionLabel}"
-                                        FontSize="11"
+                                        Style="{StaticResource MutedLabel}"
+                                        FontSize="14"
+                                        LineBreakMode="WordWrap"
                                         VerticalOptions="Center" />
                                 </Grid>
                             </Grid>
@@ -138,19 +137,19 @@
                         <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
                             <Label
                                 Text="{Binding MealFillPercentText}"
-                                Style="{StaticResource CaptionLabel}"
+                                Style="{StaticResource MutedLabel}"
                                 FontAttributes="Bold"
-                                FontSize="12" />
+                                FontSize="14" />
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding DailyProgressText}"
-                                Style="{StaticResource CaptionLabel}"
-                                FontSize="11" />
+                                Style="{StaticResource MutedLabel}"
+                                FontSize="14" />
                             <Label
                                 Grid.Row="2"
                                 Text="{Binding DailyMacroRemainingText}"
-                                Style="{StaticResource CaptionLabel}"
-                                FontSize="11" />
+                                Style="{StaticResource MutedLabel}"
+                                FontSize="14" />
                         </Grid>
 
                         <!-- Ingredients by group -->
@@ -158,7 +157,7 @@
                             <Label
                                 Text="Ingredients"
                                 Style="{StaticResource SectionTitle}"
-                                FontSize="15" />
+                                FontSize="17" />
 
                             <VerticalStackLayout
                                 BindableLayout.ItemsSource="{Binding SelectedMealDetail.ComponentGroups}"
@@ -176,13 +175,13 @@
                                                 Grid.Column="1"
                                                 Text="{Binding Label}"
                                                 Style="{StaticResource CardTitle}"
-                                                FontSize="13"
+                                                FontSize="15"
                                                 VerticalOptions="Center" />
                                             <Label
                                                 Grid.Column="2"
                                                 Text="{Binding TotalText}"
-                                                Style="{StaticResource CaptionLabel}"
-                                                FontSize="11"
+                                                Style="{StaticResource MutedLabel}"
+                                                FontSize="14"
                                                 VerticalOptions="Center" />
 
                                             <VerticalStackLayout
@@ -193,17 +192,18 @@
                                                 Padding="24,0,0,0">
                                                 <BindableLayout.ItemTemplate>
                                                     <DataTemplate x:DataType="nutritionModels:MealSuggestionComponentItem">
-                                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="0,2">
+                                                        <Grid RowDefinitions="Auto,Auto" RowSpacing="2" Padding="0,2">
                                                             <Label
                                                                 Text="{Binding Name}"
                                                                 Style="{StaticResource BodyLabel}"
-                                                                FontSize="13"
+                                                                FontSize="15"
+                                                                LineBreakMode="WordWrap"
                                                                 VerticalOptions="Center" />
                                                             <Label
-                                                                Grid.Column="1"
+                                                                Grid.Row="1"
                                                                 Text="{Binding DetailText}"
-                                                                Style="{StaticResource CaptionLabel}"
-                                                                FontSize="11"
+                                                                Style="{StaticResource MutedLabel}"
+                                                                FontSize="14"
                                                                 VerticalOptions="Center" />
                                                         </Grid>
                                                     </DataTemplate>
@@ -222,7 +222,7 @@
                             <Label
                                 Text="Seasoning"
                                 Style="{StaticResource SectionTitle}"
-                                FontSize="15" />
+                                FontSize="17" />
                             <VerticalStackLayout
                                 BindableLayout.ItemsSource="{Binding SelectedMealDetail.SpiceBlends}"
                                 Spacing="4">
@@ -239,23 +239,22 @@
                                                 IsVisible="{Binding IsRecommended}">
                                                 <Label
                                                     Text="Rec."
-                                                    TextColor="{StaticResource Primary}"
-                                                    FontSize="9"
+                                                    TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                                                    FontSize="13"
                                                     FontAttributes="Bold" />
                                             </Border>
                                             <Label
                                                 Grid.Column="1"
                                                 Text="{Binding Name}"
                                                 Style="{StaticResource CardTitle}"
-                                                FontSize="13" />
+                                                FontSize="15" LineBreakMode="WordWrap" />
                                             <Label
                                                 Grid.Row="1"
                                                 Grid.Column="1"
                                                 Text="{Binding Description}"
-                                                Style="{StaticResource CaptionLabel}"
-                                                FontSize="11"
-                                                MaxLines="2"
-                                                LineBreakMode="TailTruncation" />
+                                                Style="{StaticResource MutedLabel}"
+                                                FontSize="14"
+                                                LineBreakMode="WordWrap" />
                                         </Grid>
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
@@ -267,11 +266,11 @@
                             <Label
                                 Text="How to prepare"
                                 Style="{StaticResource SectionTitle}"
-                                FontSize="15" />
+                                FontSize="17" />
                             <Label
                                 Text="{Binding DetailDirectionsText}"
                                 Style="{StaticResource BodyLabel}"
-                                FontSize="13"
+                                FontSize="15"
                                 LineHeight="1.5" />
                         </VerticalStackLayout>
 

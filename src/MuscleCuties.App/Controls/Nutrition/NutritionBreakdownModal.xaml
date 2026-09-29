@@ -19,7 +19,6 @@
         </Grid.GestureRecognizers>
         <Border
             Style="{StaticResource ModalSurface}"
-            MinimumHeightRequest="560"
             MaximumHeightRequest="720"
             HorizontalOptions="Fill"
             VerticalOptions="Fill">
@@ -61,7 +60,7 @@
 
                 <Grid
                     Grid.Row="2"
-                    ColumnDefinitions="120, *"
+                    ColumnDefinitions="104, *"
                     ColumnSpacing="16"
                     Padding="20,0,20,16">
 
@@ -76,6 +75,8 @@
                         TrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                         InnerColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                         InnerStrokeColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                        WidthRequest="104" HeightRequest="104"
+                        SemanticProperties.Description="Macro distribution. Numeric values are listed beside the chart."
                         HorizontalOptions="Center"
                         VerticalOptions="Center" />
 
@@ -146,7 +147,7 @@
                             BindableLayout.ItemsSource="{Binding SelectedBreakdownMacroItems}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="nutritionModels:MacroBreakdownItem">
-                                    <Grid ColumnDefinitions="22, 58, *, Auto" ColumnSpacing="8">
+                                    <Grid ColumnDefinitions="22, Auto, *, Auto" ColumnSpacing="8">
                                         <Path
                                             Data="{Binding IconPathData, Converter={StaticResource StringToGeometryConverter}}"
                                             Style="{StaticResource NutritionLineIcon}"
@@ -169,8 +170,8 @@
                                         <Label
                                             Grid.Column="3"
                                             Text="{Binding AmountText}"
-                                            Style="{StaticResource CaptionLabel}"
-                                            WidthRequest="52"
+                                            Style="{StaticResource MutedLabel}"
+                                            FontSize="14"
                                             HorizontalTextAlignment="End" />
                                     </Grid>
                                 </DataTemplate>
@@ -233,7 +234,7 @@
                                         Grid.Column="1"
                                         Text="{Binding Group}"
                                         Style="{StaticResource EyebrowLabel}"
-                                        FontSize="9"
+                                        FontSize="12"
                                         CharacterSpacing="1.1"
                                         Margin="0,0,0,2" />
                                     <Label
@@ -241,7 +242,8 @@
                                         Grid.Column="1"
                                         Text="{Binding Name}"
                                         Style="{StaticResource CardTitle}"
-                                        FontSize="15" />
+                                        FontSize="15"
+                                        LineBreakMode="WordWrap" />
 
                                     <HorizontalStackLayout
                                         Grid.RowSpan="2"
@@ -251,7 +253,7 @@
                                         <Label
                                             Text="{Binding AmountText}"
                                             Style="{StaticResource AccentLabel}"
-                                            FontSize="13" />
+                                            FontSize="14" />
                                         <Label
                                             Text="{Binding GoalText}"
                                             Style="{StaticResource CaptionLabel}"
@@ -283,7 +285,7 @@
                                         Grid.Column="2"
                                         Text="{Binding ProgressText}"
                                         Style="{StaticResource CaptionLabel}"
-                                        WidthRequest="44"
+                                        MinimumWidthRequest="56"
                                         HorizontalTextAlignment="End"
                                         VerticalOptions="Center" />
                                 </Grid>

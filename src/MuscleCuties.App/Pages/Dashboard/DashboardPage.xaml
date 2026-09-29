@@ -21,17 +21,24 @@
             RefreshColor="{StaticResource Primary}">
             <ScrollView>
                 <Grid
-                    Padding="20,40,20,32"
+                    Padding="16,40,16,32"
                     HorizontalOptions="Fill"
                     MaximumWidthRequest="640"
                     RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
-                    RowSpacing="16">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="2">
-                        <Label Text="{Binding Greetings}" Style="{StaticResource SubHeadline}" />
+                    RowSpacing="14">
+
+                    <!-- Row 0: Greeting header -->
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="2"
+                          SemanticProperties.Description="{Binding Greetings}">
+                        <Label
+                            Text="{Binding Greetings}"
+                            Style="{StaticResource SubHeadline}"
+                            FontSize="24" />
                         <Label
                             Grid.Row="1"
                             Text="{Binding DashboardPhaseHeaderText}"
-                            Style="{StaticResource MutedLabel}" />
+                            Style="{StaticResource MutedLabel}"
+                            FontSize="14" />
 
                         <Border
                             Grid.Column="1"
@@ -46,17 +53,17 @@
                                 <TapGestureRecognizer Command="{Binding OpenInjuryModalCommand}" />
                             </Border.GestureRecognizers>
                             <Grid>
-                            <Path
-                                Data="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0"
-                                Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                StrokeThickness="1.75"
-                                StrokeLineCap="Round"
-                                StrokeLineJoin="Round"
-                                Aspect="Uniform"
-                                WidthRequest="18"
-                                HeightRequest="18"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center" />
+                                <Path
+                                    Data="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0"
+                                    Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    StrokeThickness="1.75"
+                                    StrokeLineCap="Round"
+                                    StrokeLineJoin="Round"
+                                    Aspect="Uniform"
+                                    WidthRequest="18"
+                                    HeightRequest="18"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
                                 <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" Margin="0,7,7,0"
                                     Color="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
                                     HorizontalOptions="End" VerticalOptions="Start" IsVisible="{Binding HasActiveInjuries}"
@@ -65,18 +72,20 @@
                         </Border>
                     </Grid>
 
+                    <!-- Row 1: Workout card (primary action, first in viewport) -->
                     <toolkit:LazyView
-                        x:Name="PhaseCardLazy"
+                        x:Name="WorkoutCardLazy"
                         Grid.Row="1"
-                        x:TypeArguments="dashboardControls:DashboardPhaseCard" />
+                        x:TypeArguments="dashboardControls:DashboardWorkoutCard" />
 
+                    <!-- Row 2: Streak pills -->
                     <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="8">
                         <Border
                             Style="{StaticResource WorkoutPill}"
                             Padding="10,8"
                             MinimumHeightRequest="44"
                             SemanticProperties.Description="{Binding WorkoutStreakText, StringFormat='Workout streak: {0}'}">
-                            <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="2" HorizontalOptions="Center">
+                            <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="4" HorizontalOptions="Center">
                                 <Image
                                     Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
                                     Aspect="AspectFit"
@@ -87,6 +96,7 @@
                                     Grid.Column="1"
                                     Text="{Binding WorkoutStreakText}"
                                     Style="{StaticResource WorkoutPillText}"
+                                    FontSize="14"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
@@ -97,7 +107,7 @@
                             Padding="10,8"
                             MinimumHeightRequest="44"
                             SemanticProperties.Description="{Binding NutritionStreakText, StringFormat='Nutrition streak: {0}'}">
-                            <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="2" HorizontalOptions="Center">
+                            <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="4" HorizontalOptions="Center">
                                 <Image
                                     Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
                                     Aspect="AspectFit"
@@ -108,31 +118,41 @@
                                     Grid.Column="1"
                                     Text="{Binding NutritionStreakText}"
                                     Style="{StaticResource WorkoutPillText}"
+                                    FontSize="14"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
                     </Grid>
 
-                    <toolkit:LazyView
-                        x:Name="CalendarCardLazy"
-                        Grid.Row="3"
-                        x:TypeArguments="dashboardControls:DashboardCalendarCard" />
-                    <toolkit:LazyView
-                        x:Name="WorkoutCardLazy"
-                        Grid.Row="4"
-                        x:TypeArguments="dashboardControls:DashboardWorkoutCard" />
+                    <!-- Row 3: Readiness and recovery -->
                     <toolkit:LazyView
                         x:Name="ReadinessLazy"
-                        Grid.Row="5"
+                        Grid.Row="3"
                         x:TypeArguments="dashboardControls:ReadinessRecoveryCard" />
+
+                    <!-- Row 4: Nutrition -->
                     <toolkit:LazyView
                         x:Name="NutritionLazy"
-                        Grid.Row="6"
+                        Grid.Row="4"
                         x:TypeArguments="dashboardControls:DashboardNutritionCard" />
+
+                    <!-- Row 5: Cycle phase -->
+                    <toolkit:LazyView
+                        x:Name="PhaseCardLazy"
+                        Grid.Row="5"
+                        x:TypeArguments="dashboardControls:DashboardPhaseCard" />
+
+                    <!-- Row 6: Daily targets -->
                     <toolkit:LazyView
                         x:Name="TargetsLazy"
-                        Grid.Row="7"
+                        Grid.Row="6"
                         x:TypeArguments="dashboardControls:DashboardTargetsCard" />
+
+                    <!-- Row 7: Calendar -->
+                    <toolkit:LazyView
+                        x:Name="CalendarCardLazy"
+                        Grid.Row="7"
+                        x:TypeArguments="dashboardControls:DashboardCalendarCard" />
                 </Grid>
             </ScrollView>
         </RefreshView>

@@ -31,4 +31,9 @@ public partial class LoginPage : ContentPage
         _viewModel.PrepareForExistingAccount(email);
         Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(75), () => LoginPassword.Focus());
     }
+
+    private void OnEmailCompleted(object? sender, EventArgs e)
+    {
+        LoginPassword.Focus();
+    }
 }

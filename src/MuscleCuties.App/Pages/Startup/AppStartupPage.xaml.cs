@@ -16,6 +16,7 @@ public partial class AppStartupPage : ContentPage
     {
         StartupActivityIndicator.IsVisible = false;
         StartupActivityIndicator.IsRunning = false;
+        StartupStatusLabel.IsVisible = false;
         StartupErrorLabel.IsVisible = true;
         RetryButton.IsVisible = true;
     }
@@ -24,6 +25,7 @@ public partial class AppStartupPage : ContentPage
     {
         StartupErrorLabel.IsVisible = false;
         RetryButton.IsVisible = false;
+        StartupStatusLabel.IsVisible = true;
         StartupActivityIndicator.IsVisible = true;
         StartupActivityIndicator.IsRunning = true;
         if (Application.Current is App app)

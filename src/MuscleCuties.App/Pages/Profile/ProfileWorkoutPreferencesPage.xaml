@@ -18,10 +18,23 @@
             MaximumWidthRequest="640">
             <sharedControls:PageHeader
                 Title="Activity preferences"
-                Subtitle="Choose what your weekly plan can use"
                 BackCommand="{Binding BackCommand}" />
 
-            <sharedControls:IconSectionHeader Text="Activities" IconGlyph="Dumbbell24" />
+            <Border
+                StrokeShape="RoundRectangle 10"
+                StrokeThickness="1"
+                Stroke="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}"
+                Padding="14,10"
+                SemanticProperties.Description="At least one strength activity is required for your plan.">
+                <Label
+                    Text="At least one strength activity is required for your plan."
+                    FontFamily="Inter"
+                    FontSize="14"
+                    FontAttributes="Bold"
+                    TextColor="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource SecondaryDarkText}}" />
+            </Border>
+
             <workoutControls:WorkoutActivityPreferencePicker
                 ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
                 ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />

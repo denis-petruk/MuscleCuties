@@ -40,8 +40,9 @@
                 StrokeThickness="0"
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
                 Padding="10,7"
-                MinimumHeightRequest="36"
-                VerticalOptions="Center">
+                MinimumHeightRequest="44"
+                VerticalOptions="Center"
+                SemanticProperties.Description="View micronutrient targets">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding OpenMicronutrientsModalCommand}" />
                 </Border.GestureRecognizers>
@@ -71,21 +72,13 @@
                 WidthRequest="22"
                 HeightRequest="22"
                 VerticalOptions="Center" />
-            <Label
-                Grid.Row="2"
-                Grid.Column="1"
-                Text="{Binding CaloriesConsumed}"
-                Style="{StaticResource AccentLabel}"
-                FontSize="26"
-                FontAttributes="Bold"
-                VerticalOptions="Center"
-                Margin="5,0,0,0" />
-            <Label
-                Grid.Row="2"
-                Grid.Column="2"
-                Text="{Binding CaloriesGoal}"
-                Style="{StaticResource CaptionLabel}"
-                VerticalOptions="Center" />
+            <VerticalStackLayout Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                 Spacing="0" Margin="5,0,0,0" VerticalOptions="Center">
+                <Label Text="{Binding CaloriesConsumed}" Style="{StaticResource AccentLabel}"
+                       FontSize="26" FontAttributes="Bold" />
+                <Label Text="{Binding CaloriesGoal}" Style="{StaticResource MutedLabel}"
+                       FontSize="14" />
+            </VerticalStackLayout>
 
             <!-- Row 4: Progress bar -->
             <ProgressBar
