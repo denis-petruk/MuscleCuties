@@ -11,7 +11,8 @@ public partial class MealSuggestionModal : AnimatedModalView
 
     private void OnSuggestionsSizeChanged(object? sender, EventArgs e)
     {
-        SuggestionLayout.Span = SuggestionCollection.Width >= 500 ? 2 : 1;
+        // Keep each suggestion readable when names and nutrition details wrap.
+        SuggestionLayout.Span = SuggestionCollection.Width >= 760 ? 2 : 1;
     }
 
 }

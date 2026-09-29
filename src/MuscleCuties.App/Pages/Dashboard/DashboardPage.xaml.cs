@@ -61,17 +61,18 @@ public partial class DashboardPage : ContentPage
 
     private async Task LoadDeferredCardsCoreAsync()
     {
-        await PhaseCardLazy.LoadIfNeededAsync(true);
-        await Task.Delay(33);
-        await CalendarCardLazy.LoadIfNeededAsync(true);
-        await Task.Delay(33);
+        // Load in visual priority order: primary action first
         await WorkoutCardLazy.LoadIfNeededAsync(true);
         await Task.Delay(33);
         await ReadinessLazy.LoadIfNeededAsync(true);
         await Task.Delay(33);
         await NutritionLazy.LoadIfNeededAsync(true);
         await Task.Delay(33);
+        await PhaseCardLazy.LoadIfNeededAsync(true);
+        await Task.Delay(33);
         await TargetsLazy.LoadIfNeededAsync(true);
+        await Task.Delay(33);
+        await CalendarCardLazy.LoadIfNeededAsync(true);
     }
 
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

@@ -6,11 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.Entities.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.UI.Workout;
-using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Workout;
+using MuscleCuties.Core.Services.Workout.Planning;
 using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Profile;
@@ -22,7 +22,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     private bool _hasLoaded;
 
     [ObservableProperty] private InjuryFlag _selectedSiteFlag;
-    [ObservableProperty] private InjuryStatus _selectedStatus = InjuryStatus.Acute;
+    [ObservableProperty] private InjuryStatus? _selectedStatus;
     [ObservableProperty] private int _newPainLevel;
     [ObservableProperty] private DateTime _sinceDateValue = DateTime.Today;
 
@@ -48,10 +48,12 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     public string PainLabelText => PainLabelFor(NewPainLevel);
     public bool HasClearedInjuries => ClearedInjuries.Count > 0;
     public bool HasActiveInjuries => ActiveInjuries.Count > 0;
+    public bool HasNoActiveInjuries => _hasLoaded && !IsBusy && !IsLoadError &&
+                                       ActiveInjuries.Count == 0 && ClearedInjuries.Count > 0;
     public bool HasNoInjuries => _hasLoaded && !IsBusy && !IsLoadError &&
                                  ActiveInjuries.Count == 0 && ClearedInjuries.Count == 0;
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
-    public bool CanSaveInjury => !IsBusy && SelectedSiteFlag != InjuryFlag.None &&
+    public bool CanSaveInjury => !IsBusy && SelectedSiteFlag != InjuryFlag.None && SelectedStatus is not null &&
                                  SinceDateValue.Date <= DateTime.Today;
     public DateTime Today => DateTime.Today;
 
@@ -62,6 +64,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     public RelayCommand ToggleAddFormCommand { get; }
     public AsyncRelayCommand SaveInjuryCommand { get; }
     public AsyncRelayCommand<int> DeleteInjuryCommand { get; }
+    public AsyncRelayCommand<InjuryLogItem> MarkClearedCommand { get; }
     public AsyncRelayCommand NavigateBackCommand { get; }
     public RelayCommand<InjuryLogItem> EditInjuryCommand { get; }
     public RelayCommand CancelEditCommand { get; }
@@ -93,15 +96,16 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         AvailableStatuses = new List<InjuryStatusOption>
         {
-            new() { Status = InjuryStatus.Acute, Label = "Acute", IsSelected = true },
+            new() { Status = InjuryStatus.Acute, Label = "Acute" },
             new() { Status = InjuryStatus.Recovering, Label = "Recovering" },
             new() { Status = InjuryStatus.Cleared, Label = "Cleared" },
         };
 
         LoadCommand = new AsyncRelayCommand(LoadAsync, () => !IsBusy);
-        ToggleAddFormCommand = new RelayCommand(ToggleAddForm, () => !IsBusy);
+        ToggleAddFormCommand = new RelayCommand(BeginAdd, () => !IsBusy);
         SaveInjuryCommand = new AsyncRelayCommand(SaveInjuryAsync, () => CanSaveInjury);
         DeleteInjuryCommand = new AsyncRelayCommand<int>(DeleteInjuryAsync, _ => !IsBusy);
+        MarkClearedCommand = new AsyncRelayCommand<InjuryLogItem>(MarkClearedAsync, item => !IsBusy && item?.IsActive == true);
         NavigateBackCommand = new AsyncRelayCommand(navigateBackAsync);
         EditInjuryCommand = new RelayCommand<InjuryLogItem>(EditInjury, _ => !IsBusy);
         CancelEditCommand = new RelayCommand(CancelEdit);
@@ -116,15 +120,18 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     {
         OnPropertyChanged(nameof(IsPageLoading));
         OnPropertyChanged(nameof(HasNoInjuries));
+        OnPropertyChanged(nameof(HasNoActiveInjuries));
         RefreshSaveState();
         LoadCommand.NotifyCanExecuteChanged();
         ToggleAddFormCommand.NotifyCanExecuteChanged();
         DeleteInjuryCommand.NotifyCanExecuteChanged();
+        MarkClearedCommand.NotifyCanExecuteChanged();
         EditInjuryCommand.NotifyCanExecuteChanged();
         RetryPlanRefreshCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedSiteFlagChanged(InjuryFlag value) => RefreshSaveState();
+    partial void OnSelectedStatusChanged(InjuryStatus? value) => RefreshSaveState();
     partial void OnSinceDateValueChanged(DateTime value) => RefreshSaveState();
 
     private void RefreshSaveState()
@@ -143,6 +150,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
     private async Task LoadAsync()
     {
+        CancelEdit();
         IsBusy = true;
         IsLoadError = false;
         ErrorText = string.Empty;
@@ -171,9 +179,9 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         {
             using var scope = _scopeFactory.CreateScope();
             var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var injuryRepo = scope.ServiceProvider.GetRequiredService<IWorkoutInjuryRepository>();
+            var injuryService = scope.ServiceProvider.GetRequiredService<IWorkoutInjuryService>();
             var userId = await authService.GetCurrentUserIdAsync();
-            return await injuryRepo.GetAllAsync(userId);
+            return await injuryService.GetAllAsync(userId);
         });
 
         var active = new List<InjuryLogItem>();
@@ -182,7 +190,10 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         foreach (var log in allLogs)
         {
             var siteFlag = (InjuryFlag)log.SiteFlag;
-            var status = Enum.Parse<InjuryStatus>(log.Status);
+            var status = Enum.TryParse<InjuryStatus>(log.Status, true, out var parsedStatus) &&
+                         Enum.IsDefined(parsedStatus)
+                ? parsedStatus
+                : InjuryStatus.Acute;
             var isActive = status != InjuryStatus.Cleared;
 
             var item = new InjuryLogItem
@@ -191,7 +202,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
                 SiteFlag = siteFlag,
                 SiteName = DisplayNameFor(siteFlag),
                 Status = status,
-                StatusName = log.Status,
+                StatusName = status.ToString(),
                 Pain = log.Pain,
                 PainLabel = PainLabelFor(log.Pain),
                 Since = log.Since,
@@ -212,11 +223,13 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         _hasLoaded = true;
         IsLoadError = false;
         OnPropertyChanged(nameof(HasNoInjuries));
+        OnPropertyChanged(nameof(HasNoActiveInjuries));
     }
 
     private async Task SaveInjuryAsync()
     {
-        if (!CanSaveInjury)
+        var status = SelectedStatus;
+        if (!CanSaveInjury || status is null)
             return;
 
         IsBusy = true;
@@ -227,7 +240,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             {
                 Id = EditingInjuryId ?? 0,
                 SiteFlag = (int)SelectedSiteFlag,
-                Status = SelectedStatus.ToString(),
+                Status = status.Value.ToString(),
                 Pain = NewPainLevel,
                 Since = DateOnly.FromDateTime(SinceDateValue),
                 Date = DateOnly.FromDateTime(DateTime.UtcNow),
@@ -237,7 +250,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             {
                 using var scope = _scopeFactory.CreateScope();
                 log.UserId = await scope.ServiceProvider.GetRequiredService<IAuthService>().GetCurrentUserIdAsync();
-                await scope.ServiceProvider.GetRequiredService<IWorkoutInjuryRepository>().SaveAsync(log);
+                await scope.ServiceProvider.GetRequiredService<IWorkoutInjuryService>().SaveAsync(log);
             });
             CancelEdit();
             await RefreshAfterChangeAsync();
@@ -262,7 +275,8 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             await DataLoadScheduler.RunAsync(async () =>
             {
                 using var scope = _scopeFactory.CreateScope();
-                await scope.ServiceProvider.GetRequiredService<IWorkoutInjuryRepository>().DeleteAsync(id);
+                var userId = await scope.ServiceProvider.GetRequiredService<IAuthService>().GetCurrentUserIdAsync();
+                await scope.ServiceProvider.GetRequiredService<IWorkoutInjuryService>().DeleteAsync(userId, id);
             });
             if (EditingInjuryId == id)
                 CancelEdit();
@@ -279,12 +293,49 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         }
     }
 
-    private void ToggleAddForm()
+    private async Task MarkClearedAsync(InjuryLogItem? item)
     {
-        if (ShowAddForm)
-            CancelEdit();
-        else
-            ShowAddForm = true;
+        if (item is not { IsActive: true } || IsBusy)
+            return;
+
+        IsBusy = true;
+        ErrorText = string.Empty;
+        try
+        {
+            await DataLoadScheduler.RunAsync(async () =>
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var userId = await scope.ServiceProvider.GetRequiredService<IAuthService>().GetCurrentUserIdAsync();
+                await scope.ServiceProvider.GetRequiredService<IWorkoutInjuryService>().SaveAsync(new WorkoutInjuryLog
+                {
+                    Id = item.Id,
+                    UserId = userId,
+                    SiteFlag = (int)item.SiteFlag,
+                    Status = InjuryStatus.Cleared.ToString(),
+                    Pain = item.Pain,
+                    Since = item.Since,
+                    Date = DateOnly.FromDateTime(DateTime.UtcNow),
+                });
+            });
+            if (EditingInjuryId == item.Id)
+                CancelEdit();
+            await RefreshAfterChangeAsync();
+        }
+        catch (Exception)
+        {
+            ErrorText = "Couldn't clear this injury. Try again.";
+            Trace.WriteLine("[InjuryLog] Clear failed.");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private void BeginAdd()
+    {
+        CancelEdit();
+        ShowAddForm = true;
     }
 
     private void EditInjury(InjuryLogItem? item)
@@ -306,6 +357,12 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         ShowAddForm = true;
     }
 
+    /// <summary>
+    /// Resets the add/edit form to a blank state. Called when the hosting
+    /// modal or page opens so that stale edit state never carries over.
+    /// </summary>
+    public void ResetForm() => CancelEdit();
+
     private void CancelEdit()
     {
         EditingInjuryId = null;
@@ -314,9 +371,9 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         foreach (var site in AvailableSites)
             site.IsSelected = false;
 
-        SelectedStatus = InjuryStatus.Acute;
+        SelectedStatus = null;
         foreach (var status in AvailableStatuses)
-            status.IsSelected = status.Status == InjuryStatus.Acute;
+            status.IsSelected = false;
 
         NewPainLevel = 0;
         SinceDateValue = DateTime.Today;

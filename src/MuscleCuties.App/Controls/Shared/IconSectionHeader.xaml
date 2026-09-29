@@ -7,18 +7,17 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     x:DataType="sharedControls:IconSectionHeader">
-    <Grid ColumnDefinitions="24,*" ColumnSpacing="8">
+    <Grid ColumnDefinitions="24,*" ColumnSpacing="10" MinimumHeightRequest="32">
         <Image
             Source="{Binding IconGlyph, Source={x:Reference Root}, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-            WidthRequest="18"
-            HeightRequest="18"
+            WidthRequest="20"
+            HeightRequest="20"
             Aspect="AspectFit"
             VerticalOptions="Center" />
         <Label
             Grid.Column="1"
             Text="{Binding Text, Source={x:Reference Root}}"
             Style="{StaticResource SectionTitle}"
-            FontSize="16"
             VerticalOptions="Center" />
     </Grid>
 </ContentView>

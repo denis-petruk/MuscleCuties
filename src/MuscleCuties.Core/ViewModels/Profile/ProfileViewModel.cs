@@ -5,11 +5,11 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.UI.Profile;
 using Microsoft.Extensions.DependencyInjection;
-using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Progress;
+using MuscleCuties.Core.Services.Profile;
 using MuscleCuties.Core.ViewModels.Common;
 
 namespace MuscleCuties.Core.ViewModels.Profile;
@@ -130,13 +130,13 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware
         {
             using var scope = _scopeFactory.CreateScope();
             var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-            var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+            var profileAccountService = scope.ServiceProvider.GetRequiredService<IProfileAccountService>();
             var cycleService = scope.ServiceProvider.GetRequiredService<ICycleService>();
             var progressSummaryService = scope.ServiceProvider.GetRequiredService<IProgressSummaryService>();
 
             var userId = await DataLoadScheduler.RunAsync(authService.GetCurrentUserIdAsync);
-            var user = await DataLoadScheduler.RunAsync(() => userRepository.GetByIdAsync(userId));
-            var profile = await DataLoadScheduler.RunAsync(() => userRepository.GetProfileAsync(userId));
+            var user = await DataLoadScheduler.RunAsync(() => profileAccountService.GetUserAsync(userId));
+            var profile = await DataLoadScheduler.RunAsync(() => profileAccountService.GetProfileAsync(userId));
 
             if (user is not null)
             {
@@ -201,17 +201,14 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware
     {
         using var scope = _scopeFactory.CreateScope();
         var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var profileAccountService = scope.ServiceProvider.GetRequiredService<IProfileAccountService>();
 
         var userId = await authService.GetCurrentUserIdAsync();
-        var profile = await userRepository.GetProfileAsync(userId);
-        if (profile is null)
+        var savedImagePath = await profileAccountService.UpdateProfileImageAsync(userId, imagePath);
+        if (savedImagePath is null)
             return;
 
-        profile.ProfileImagePath = string.IsNullOrWhiteSpace(imagePath) ? string.Empty : imagePath.Trim();
-        profile.UpdatedAt = DateTime.UtcNow;
-        await userRepository.UpdateProfileAsync(profile);
-        ProfileImagePath = profile.ProfileImagePath;
+        ProfileImagePath = savedImagePath;
     }
 
     partial void OnNameChanged(string value)

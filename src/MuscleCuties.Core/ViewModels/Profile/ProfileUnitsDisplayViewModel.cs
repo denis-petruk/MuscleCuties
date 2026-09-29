@@ -3,7 +3,7 @@ using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Entities.Users;
-using MuscleCuties.Core.Repositories.Users;
+using MuscleCuties.Core.Services.Profile;
 using MuscleCuties.Core.Services.Auth;
 
 namespace MuscleCuties.Core.ViewModels.Profile;
@@ -12,7 +12,7 @@ public partial class ProfileUnitsDisplayViewModel : ObservableObject
 {
     private readonly IAuthService _authService;
     private readonly Func<Task> _navigateBackAsync;
-    private readonly IUserRepository _userRepository;
+    private readonly IProfileAccountService _profileAccountService;
     [ObservableProperty] private string _bodyWeightUnit = "kg";
     [ObservableProperty] private string _distanceUnit = "km";
     [ObservableProperty] private string _energyUnit = "kcal";
@@ -25,11 +25,11 @@ public partial class ProfileUnitsDisplayViewModel : ObservableObject
 
     public ProfileUnitsDisplayViewModel(
         IAuthService authService,
-        IUserRepository userRepository,
+        IProfileAccountService profileAccountService,
         Func<Task> navigateBackAsync)
     {
         _authService = authService;
-        _userRepository = userRepository;
+        _profileAccountService = profileAccountService;
         _navigateBackAsync = navigateBackAsync;
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
@@ -54,7 +54,7 @@ public partial class ProfileUnitsDisplayViewModel : ObservableObject
         try
         {
             var userId = await _authService.GetCurrentUserIdAsync();
-            var profile = await _userRepository.GetProfileAsync(userId);
+            var profile = await _profileAccountService.GetProfileAsync(userId);
             if (profile is null)
                 return;
 
@@ -80,7 +80,7 @@ public partial class ProfileUnitsDisplayViewModel : ObservableObject
         try
         {
             var userId = await _authService.GetCurrentUserIdAsync();
-            var profile = await _userRepository.GetProfileAsync(userId);
+            var profile = await _profileAccountService.GetProfileAsync(userId);
             if (profile is null)
             {
                 StatusMessage = "Complete personal info before units.";
@@ -95,8 +95,8 @@ public partial class ProfileUnitsDisplayViewModel : ObservableObject
             profile.EnergyUnit = NormalizeUnit(EnergyUnit, "kcal");
             profile.UpdatedAt = DateTime.UtcNow;
 
-            await _userRepository.UpdateProfileAsync(profile);
-            await _userRepository.AddSnapshotAsync(new UserProfileSnapshot
+            await _profileAccountService.SaveProfileAsync(userId, profile, isNewProfile: false);
+            await _profileAccountService.AddSnapshotAsync(userId, new UserProfileSnapshot
             {
                 UserId = userId,
                 SnapshotReason = "UnitsDisplayUpdate",

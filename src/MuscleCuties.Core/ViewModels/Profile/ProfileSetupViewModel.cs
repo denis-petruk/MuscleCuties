@@ -9,8 +9,8 @@ using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.UI.Common;
 using MuscleCuties.Core.Models.UI.Profile;
 using MuscleCuties.Core.Models.UI.Workout;
-using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Services.Auth;
+using MuscleCuties.Core.Services.Profile;
 using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.ViewModels.Common;
@@ -23,7 +23,7 @@ public partial class ProfileSetupViewModel : ObservableObject
     private readonly Func<Task> _navigateToQuizAsync;
     private readonly IQuizService _quizService;
     private readonly QuizQuestionCache _quizQuestionCache;
-    private readonly IUserRepository _userRepository;
+    private readonly IProfileAccountService _profileAccountService;
     [ObservableProperty] private DateTime _birthDate = DateTime.Today.AddYears(-25);
     [ObservableProperty] private int _cycleLength = 28;
     [ObservableProperty] private string _errorMessage = string.Empty;
@@ -47,13 +47,13 @@ public partial class ProfileSetupViewModel : ObservableObject
 
     public ProfileSetupViewModel(
         IAuthService authService,
-        IUserRepository userRepository,
+        IProfileAccountService profileAccountService,
         IQuizService quizService,
         QuizQuestionCache quizQuestionCache,
         Func<Task> navigateToQuizAsync)
     {
         _authService = authService;
-        _userRepository = userRepository;
+        _profileAccountService = profileAccountService;
         _quizService = quizService;
         _quizQuestionCache = quizQuestionCache;
         _navigateToQuizAsync = navigateToQuizAsync;
@@ -108,7 +108,7 @@ public partial class ProfileSetupViewModel : ObservableObject
         var profile = await DataLoadScheduler.RunAsync(async () =>
         {
             var userId = await _authService.GetCurrentUserIdAsync();
-            return await _userRepository.GetProfileAsync(userId);
+            return await _profileAccountService.GetProfileAsync(userId);
         });
         if (profile is null)
             return;
@@ -158,7 +158,7 @@ public partial class ProfileSetupViewModel : ObservableObject
                 ? SelectedWeightKg
                 : SelectedWeightLbs * 0.453592f;
 
-            var profile = await DataLoadScheduler.RunAsync(() => _userRepository.GetProfileAsync(userId));
+            var profile = await DataLoadScheduler.RunAsync(() => _profileAccountService.GetProfileAsync(userId));
             var isNewProfile = profile is null;
 
             profile ??= new UserProfile
@@ -192,12 +192,10 @@ public partial class ProfileSetupViewModel : ObservableObject
                     : 28;
             profile.UpdatedAt = DateTime.UtcNow;
 
-            if (isNewProfile)
-                await DataLoadScheduler.RunAsync(() => _userRepository.AddProfileAsync(profile));
-            else
-                await DataLoadScheduler.RunAsync(() => _userRepository.UpdateProfileAsync(profile));
+            await DataLoadScheduler.RunAsync(() =>
+                _profileAccountService.SaveProfileAsync(userId, profile, isNewProfile));
 
-            await DataLoadScheduler.RunAsync(() => _userRepository.AddSnapshotAsync(new UserProfileSnapshot
+            await DataLoadScheduler.RunAsync(() => _profileAccountService.AddSnapshotAsync(userId, new UserProfileSnapshot
             {
                 UserId = userId,
                 SnapshotReason = isNewProfile ? "InitialProfileSetup" : "ProfileSetup",
@@ -220,11 +218,11 @@ public partial class ProfileSetupViewModel : ObservableObject
                 CreatedAt = DateTime.UtcNow
             }));
 
-            var user = await DataLoadScheduler.RunAsync(() => _userRepository.GetByIdAsync(userId));
+            var user = await DataLoadScheduler.RunAsync(() => _profileAccountService.GetUserAsync(userId));
             if (user is not null)
             {
                 user.UpdatedAt = DateTime.UtcNow;
-                await DataLoadScheduler.RunAsync(() => _userRepository.UpdateAsync(user));
+                await DataLoadScheduler.RunAsync(() => _profileAccountService.SaveUserAsync(userId, user));
             }
 
             await _quizQuestionCache.GetOrLoadAsync(() =>

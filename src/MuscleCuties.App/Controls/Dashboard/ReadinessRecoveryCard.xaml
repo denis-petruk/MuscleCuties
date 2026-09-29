@@ -7,7 +7,9 @@
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Dashboard;assembly=MuscleCuties.Core"
     x:DataType="vm:DashboardViewModel">
 
-    <Border Style="{StaticResource CardPrimary}">
+    <Border
+        Style="{StaticResource CardPrimary}"
+        SemanticProperties.Description="Readiness and recovery scores. Tap to check in.">
         <Border.GestureRecognizers>
             <TapGestureRecognizer Command="{Binding OpenDailyCheckInCommand}" />
         </Border.GestureRecognizers>
@@ -16,12 +18,13 @@
             <Grid ColumnDefinitions="*, Auto">
                 <Label
                     Text="Readiness and recovery"
-                    Style="{StaticResource SectionTitle}" />
+                    Style="{StaticResource SectionTitle}"
+                    FontSize="17" />
                 <Label
                     Grid.Column="1"
                     Text="Tap to check in"
                     Style="{StaticResource CaptionLabel}"
-                    FontAttributes="Italic"
+                    FontSize="14"
                     VerticalOptions="Center"
                     IsVisible="{Binding NeedsDailyCheckIn}" />
             </Grid>
@@ -29,7 +32,7 @@
             <!-- Row 1: score columns -->
             <Grid Grid.Row="1" ColumnDefinitions="*, *" ColumnSpacing="16">
 
-                <!-- Readiness column: circle + title + subtitle in a 3-row Grid -->
+                <!-- Readiness column -->
                 <Grid
                     Grid.Column="0"
                     RowDefinitions="88, Auto, Auto"
@@ -52,7 +55,6 @@
                             BackgroundColor="Transparent"
                             WidthRequest="88"
                             HeightRequest="88" />
-                        <!-- Score value + label centered inside circle -->
                         <Grid VerticalOptions="Center" HorizontalOptions="Center" RowDefinitions="Auto,Auto" RowSpacing="0">
                             <Label
                                 Text="{Binding ReadinessScore}"
@@ -63,7 +65,7 @@
                             <Label
                                 Grid.Row="1"
                                 Text="Ready"
-                                FontSize="10"
+                                FontSize="14"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                 HorizontalOptions="Center" />
                         </Grid>
@@ -72,7 +74,7 @@
                     <Label
                         Grid.Row="1"
                         Text="Readiness"
-                        FontSize="13"
+                        FontSize="16"
                         FontAttributes="Bold"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                         HorizontalOptions="Center" />
@@ -81,12 +83,13 @@
                         Grid.Row="2"
                         Text="{Binding ReadinessLabel}"
                         Style="{StaticResource CaptionLabel}"
+                        FontSize="14"
                         HorizontalOptions="Center"
                         HorizontalTextAlignment="Center"
-                        Margin="0,-8,0,0" />
+                        Margin="0,-6,0,0" />
                 </Grid>
 
-                <!-- Recovery column: circle + title + subtitle in a 3-row Grid -->
+                <!-- Recovery column -->
                 <Grid
                     Grid.Column="1"
                     RowDefinitions="88, Auto, Auto"
@@ -109,7 +112,6 @@
                             BackgroundColor="Transparent"
                             WidthRequest="88"
                             HeightRequest="88" />
-                        <!-- Score value + label centered inside circle -->
                         <Grid VerticalOptions="Center" HorizontalOptions="Center" RowDefinitions="Auto,Auto" RowSpacing="0">
                             <Label
                                 Text="{Binding RecoveryScore}"
@@ -120,7 +122,7 @@
                             <Label
                                 Grid.Row="1"
                                 Text="Recovery"
-                                FontSize="10"
+                                FontSize="14"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                 HorizontalOptions="Center" />
                         </Grid>
@@ -129,7 +131,7 @@
                     <Label
                         Grid.Row="1"
                         Text="Recovery"
-                        FontSize="13"
+                        FontSize="16"
                         FontAttributes="Bold"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                         HorizontalOptions="Center" />
@@ -138,9 +140,10 @@
                         Grid.Row="2"
                         Text="{Binding RecoveryLabel}"
                         Style="{StaticResource CaptionLabel}"
+                        FontSize="14"
                         HorizontalOptions="Center"
                         HorizontalTextAlignment="Center"
-                        Margin="0,-8,0,0" />
+                        Margin="0,-6,0,0" />
                 </Grid>
             </Grid>
         </Grid>

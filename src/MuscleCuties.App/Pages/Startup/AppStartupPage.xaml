@@ -16,7 +16,8 @@
         <VerticalStackLayout
             Spacing="18"
             HorizontalOptions="Center"
-            VerticalOptions="Center">
+            VerticalOptions="Center"
+            MaximumWidthRequest="400">
             <Image
                 x:Name="StartupLogo"
                 Source="{AppThemeBinding Light=musclecuties_logo_light_transparent.png, Dark=musclecuties_logo_dark_transparent.png}"
@@ -31,17 +32,30 @@
                 x:Name="StartupActivityIndicator"
                 IsRunning="True"
                 HorizontalOptions="Center"
-                SemanticProperties.Description="Loading app" />
+                SemanticProperties.Description="Loading application" />
+            <Label
+                x:Name="StartupStatusLabel"
+                Text="Getting things ready..."
+                Style="{StaticResource MutedLabel}"
+                HorizontalTextAlignment="Center"
+                SemanticProperties.Description="Loading status" />
             <Label
                 x:Name="StartupErrorLabel"
                 IsVisible="False"
+                Style="{StaticResource ErrorLabel}"
                 HorizontalTextAlignment="Center"
-                Text="Unable to open your data securely. Please try again." />
+                Text="Unable to open your data securely. Please try again."
+                SemanticProperties.Description="Error: Unable to open your data securely"
+                SemanticProperties.HeadingLevel="Level2" />
             <Button
                 x:Name="RetryButton"
                 IsVisible="False"
                 Text="Try again"
-                Clicked="OnRetryClicked" />
+                Clicked="OnRetryClicked"
+                MinimumHeightRequest="52"
+                MinimumWidthRequest="44"
+                SemanticProperties.Description="Retry loading the app"
+                SemanticProperties.Hint="Double tap to retry loading the app" />
         </VerticalStackLayout>
     </Grid>
 </ContentPage>

@@ -54,23 +54,22 @@
                                 Grid.Row="1"
                                 Grid.Column="1"
                                 Text="{Binding Description}"
-                                TextColor="{Binding TextColor}"
-                                FontSize="12"
-                                Opacity="0.75" />
+                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                FontSize="13"
+                                LineBreakMode="WordWrap" />
 
                             <Path
                                 Grid.Column="2"
                                 Grid.RowSpan="2"
                                 Data="M9 18l6-6-6-6"
-                                Stroke="{Binding TextColor}"
+                                Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                 StrokeThickness="2"
                                 StrokeLineCap="Round"
                                 StrokeLineJoin="Round"
                                 Aspect="Uniform"
                                 WidthRequest="14"
                                 HeightRequest="14"
-                                VerticalOptions="Center"
-                                Opacity="0.6" />
+                                VerticalOptions="Center" />
                         </Grid>
                     </Border>
                 </DataTemplate>

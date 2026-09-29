@@ -11,4 +11,14 @@ public partial class RegisterPage : ContentPage
         this.InitializeWithTiming(InitializeComponent);
         this.BindWithTiming(vm, started);
     }
+
+    private void OnEmailCompleted(object? sender, EventArgs e)
+    {
+        RegisterPassword.Focus();
+    }
+
+    private void OnPasswordCompleted(object? sender, EventArgs e)
+    {
+        RegisterConfirmPassword.Focus();
+    }
 }

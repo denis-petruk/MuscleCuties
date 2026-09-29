@@ -11,186 +11,94 @@
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <VerticalStackLayout
-            Padding="20,40,20,32"
-            Spacing="16"
-            HorizontalOptions="Fill"
-            MaximumWidthRequest="640">
-            <sharedControls:PageHeader
-                Title="Feedback"
-                Subtitle="Private notes for the developer"
-                BackCommand="{Binding BackCommand}" />
+        <VerticalStackLayout Padding="20,40,20,32" Spacing="16" MaximumWidthRequest="640">
+            <sharedControls:PageHeader Title="Feedback" BackCommand="{Binding BackCommand}" />
 
-            <Border
-                Style="{StaticResource CardPrimary}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
-                    <VerticalStackLayout Spacing="8">
-                        <sharedControls:IconSectionHeader Text="Send the good stuff" IconGlyph="ChatBubblesQuestion24" />
-                        <Label Text="Talk to the handsome, jacked developer" Style="{StaticResource SectionTitle}" />
-                        <Label
-                            Text="Bug, style issue, tiny annoyance, huge idea: write it here and attach context when useful."
-                            Style="{StaticResource BodyLabel}" />
-                    </VerticalStackLayout>
-                    <sharedControls:ThemeAwareBrandLogoImage
-                        Grid.Column="1"
-                        WidthRequest="82"
-                        HeightRequest="48"
-                        VerticalOptions="Center" />
-                </Grid>
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,56" ColumnSpacing="12">
+                        <Label Text="Describe the issue or idea" Style="{StaticResource SectionTitle}"
+                               VerticalOptions="Center" />
+                        <Image Grid.Column="1" Source="feedback_note.png" WidthRequest="56" HeightRequest="56"
+                               Aspect="AspectFit" SemanticProperties.Description="Feedback note" />
+                    </Grid>
+                    <Border Style="{StaticResource InputContainer}" MinimumHeightRequest="150">
+                        <Editor Placeholder="What happened, or what would you add?"
+                                Text="{Binding FeedbackText}" AutoSize="TextChanges"
+                                SemanticProperties.Description="Your feedback" />
+                    </Border>
+                    <Label Text="Suggested fix (optional)" Style="{StaticResource FormFieldLabel}" />
+                    <Border Style="{StaticResource InputContainer}" MinimumHeightRequest="88">
+                        <Editor Placeholder="What would work better?"
+                                Text="{Binding AdjustmentText}" AutoSize="TextChanges"
+                                SemanticProperties.Description="Suggested change" />
+                    </Border>
+                </VerticalStackLayout>
             </Border>
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="Category" IconGlyph="ChatBubblesQuestion24" />
+                    <sharedControls:IconSectionHeader Text="Details" IconGlyph="Target24" />
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <VerticalStackLayout Grid.Column="0" Spacing="5">
+                        <VerticalStackLayout Spacing="5">
                             <Label Text="Topic" Style="{StaticResource FormFieldLabel}" />
                             <Border Style="{StaticResource InputContainer}">
-                                <Picker
-                                    Title="Topic"
-                                    ItemsSource="{Binding TopicOptions}"
-                                    ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
-                                    SelectedItem="{Binding SelectedTopicOption}" />
+                                <Picker Title="Topic" ItemsSource="{Binding TopicOptions}"
+                                        ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
+                                        SelectedItem="{Binding SelectedTopicOption}" />
                             </Border>
                         </VerticalStackLayout>
-
                         <VerticalStackLayout Grid.Column="1" Spacing="5">
                             <Label Text="Priority" Style="{StaticResource FormFieldLabel}" />
                             <Border Style="{StaticResource InputContainer}">
-                                <Picker
-                                    Title="Priority"
-                                    ItemsSource="{Binding PriorityOptions}"
-                                    ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
-                                    SelectedItem="{Binding SelectedPriorityOption}" />
+                                <Picker Title="Priority" ItemsSource="{Binding PriorityOptions}"
+                                        ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
+                                        SelectedItem="{Binding SelectedPriorityOption}" />
                             </Border>
                         </VerticalStackLayout>
                     </Grid>
-
                     <VerticalStackLayout Spacing="5">
-                        <Grid ColumnDefinitions="18,*" ColumnSpacing="6">
-                            <Image
-                                Source="{Binding Source='Target24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                WidthRequest="15"
-                                HeightRequest="15"
-                                Aspect="AspectFit"
-                                VerticalOptions="Center" />
-                            <Label
-                                Grid.Column="1"
-                                Text="Screen or feature"
-                                Style="{StaticResource FormFieldLabel}"
-                                VerticalOptions="Center" />
-                        </Grid>
+                        <Label Text="Screen (optional)" Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">
-                            <Entry
-                                Placeholder="Example: Nutrition page"
-                                Text="{Binding ScreenName}" />
+                            <Entry Placeholder="e.g. Nutrition" Text="{Binding ScreenName}" />
                         </Border>
                     </VerticalStackLayout>
-                </VerticalStackLayout>
-            </Border>
-
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="Contact" IconGlyph="PersonChat24" />
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                        <VerticalStackLayout Spacing="2">
-                            <Label Text="Include contact email" Style="{StaticResource CardTitle}" />
-                            <Label Text="Turn it off for anonymous-ish feedback text."
-                                   Style="{StaticResource CaptionLabel}" />
-                        </VerticalStackLayout>
-                        <Switch
-                            Grid.Column="1"
-                            IsToggled="{Binding IncludeContactEmail}"
-                            OnColor="{StaticResource Primary}"
-                            ThumbColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
-                            VerticalOptions="Center"
-                            SemanticProperties.Description="Include contact email in feedback" />
+                    <BoxView HeightRequest="1"
+                             Color="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" MinimumHeightRequest="48">
+                        <Label Text="Include reply email" Style="{StaticResource CardTitle}" VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding IncludeContactEmail}"
+                                OnColor="{StaticResource Primary}"
+                                ThumbColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
+                                VerticalOptions="Center"
+                                SemanticProperties.Description="Include contact email for a reply" />
                     </Grid>
-                    <VerticalStackLayout
-                        Spacing="5"
-                        IsVisible="{Binding IncludeContactEmail}">
-                        <Label Text="Reply email" Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
-                            <Entry Placeholder="Contact email" Text="{Binding ContactEmail}" Keyboard="Email" />
-                        </Border>
-                    </VerticalStackLayout>
-                </VerticalStackLayout>
-            </Border>
-
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <sharedControls:IconSectionHeader Text="What happened" IconGlyph="Comment24" />
-                        <Label Grid.Column="1" Text="{Binding FeedbackCountText}" Style="{StaticResource CaptionLabel}" />
-                    </Grid>
-                    <Border Style="{StaticResource InputContainer}" MinimumHeightRequest="146">
-                        <Editor
-                            Placeholder="Tell me what you noticed. What felt off, broken, slow, ugly, confusing?"
-                            Text="{Binding FeedbackText}"
-                            AutoSize="TextChanges" />
+                    <Border Style="{StaticResource InputContainer}" IsVisible="{Binding IncludeContactEmail}">
+                        <Entry Placeholder="Reply email" Text="{Binding ContactEmail}" Keyboard="Email"
+                               SemanticProperties.Description="Reply email" />
                     </Border>
-                </VerticalStackLayout>
-            </Border>
-
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="What would make it better" IconGlyph="SparkleCircle24" />
-                    <Border Style="{StaticResource InputContainer}" MinimumHeightRequest="146">
-                        <Editor
-                            Placeholder="Suggest the fix, better wording, missing control, or the version you wish existed."
-                            Text="{Binding AdjustmentText}"
-                            AutoSize="TextChanges" />
-                    </Border>
-                </VerticalStackLayout>
-            </Border>
-
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                        <sharedControls:IconSectionHeader Text="Attach context" IconGlyph="LinkSquare24" VerticalOptions="Center" />
-                        <Button
-                            Grid.Column="1"
-                            Text="Attach"
-                            Padding="14,8"
-                            Clicked="OnAttachFileClicked" />
+                    <BoxView HeightRequest="1"
+                             Color="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" MinimumHeightRequest="48">
+                        <sharedControls:IconSectionHeader Text="Attachment" IconGlyph="LinkSquare24" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="Add file" Style="{StaticResource ButtonSecondary}"
+                                Clicked="OnAttachFileClicked" MinimumHeightRequest="44" />
                     </Grid>
-
-                    <Border
-                        IsVisible="{Binding HasAttachment}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 14"
-                        Padding="12">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                            <VerticalStackLayout Spacing="2">
-                                <Label Text="{Binding AttachmentName}" Style="{StaticResource CardTitle}" FontSize="14" />
-                                <Label Text="Ready to include with the email." Style="{StaticResource CaptionLabel}" />
-                            </VerticalStackLayout>
-                            <Button
-                                Grid.Column="1"
-                                Text="Remove"
-                                Style="{StaticResource ButtonLink}"
+                    <Grid IsVisible="{Binding HasAttachment}" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <Label Text="{Binding AttachmentName}" Style="{StaticResource MutedLabel}"
+                               LineBreakMode="MiddleTruncation" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="Remove" Style="{StaticResource ButtonLink}"
                                 Command="{Binding RemoveAttachmentCommand}" />
-                        </Grid>
-                    </Border>
-
-                    <Label
-                        Text="{Binding AttachmentStatus}"
-                        Style="{StaticResource CaptionLabel}"
-                        IsVisible="{Binding AttachmentStatus, Converter={StaticResource StringToBoolConverter}}" />
+                    </Grid>
+                    <Label Text="{Binding AttachmentStatus}" Style="{StaticResource CaptionLabel}"
+                           IsVisible="{Binding AttachmentStatus, Converter={StaticResource StringToBoolConverter}}" />
                 </VerticalStackLayout>
             </Border>
 
-            <Label
-                Text="{Binding StatusMessage}"
-                Style="{StaticResource CaptionLabel}"
-                IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
-
-            <Button
-                Text="Send feedback"
-                Command="{Binding SendFeedbackCommand}"
-                IsEnabled="{Binding IsReadyToSend}" />
+            <Label Text="{Binding StatusMessage}" Style="{StaticResource CaptionLabel}"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+            <Button Text="Open email draft" Command="{Binding SendFeedbackCommand}"
+                    IsEnabled="{Binding IsReadyToSend}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

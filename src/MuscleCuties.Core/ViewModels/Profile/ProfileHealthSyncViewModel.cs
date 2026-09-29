@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Repositories.Users;
+using MuscleCuties.Core.Services.Profile;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Dashboard.Planning;
@@ -18,7 +18,7 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
     private readonly IHealthSyncService _healthSyncService;
     private readonly Func<Task> _navigateBackAsync;
     private readonly INutritionService _nutritionService;
-    private readonly IUserRepository _userRepository;
+    private readonly IProfileAccountService _profileAccountService;
     private readonly IWorkoutService _workoutService;
 
     [ObservableProperty] private bool _isBusy;
@@ -27,13 +27,13 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
     [ObservableProperty]
     private string _readinessExplanationText = "Estimated from cycle, nutrition logs, and today's plan.";
 
-    [ObservableProperty] private int _readinessScore = 72;
+    [ObservableProperty] private int _readinessScore;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private string _statusText = "Not connected";
 
     public ProfileHealthSyncViewModel(
         IAuthService authService,
-        IUserRepository userRepository,
+        IProfileAccountService profileAccountService,
         ICycleService cycleService,
         INutritionService nutritionService,
         IWorkoutService workoutService,
@@ -42,7 +42,7 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
         Func<Task> navigateBackAsync)
     {
         _authService = authService;
-        _userRepository = userRepository;
+        _profileAccountService = profileAccountService;
         _cycleService = cycleService;
         _nutritionService = nutritionService;
         _workoutService = workoutService;
@@ -76,7 +76,7 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
     {
         var status = await _healthSyncService.GetStatusAsync(userId);
         var healthSummary = await _healthSyncService.GetCachedWeeklySummaryAsync(userId);
-        var profile = await _userRepository.GetProfileAsync(userId);
+        var profile = await _profileAccountService.GetProfileAsync(userId);
         var prediction = await _cycleService.GetPredictionAsync(userId);
         var phase = prediction.CurrentPhase;
         var targets = await _nutritionService.CalculateDailyTargetsAsync(userId, phase);

@@ -82,13 +82,13 @@
                         Text="{Binding CycleWarningSuggestedActionText}"
                         Command="{Binding UseCycleWarningSuggestedPhaseCommand}"
                         HeightRequest="52"
-                        FontSize="13" />
+                        FontSize="14" />
                     <Button
                         Grid.Column="1"
                         Text="Forgot to log shift"
                         Command="{Binding ReviewEarlierPhaseRecordsCommand}"
                         HeightRequest="52"
-                        FontSize="13"
+                        FontSize="14"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                 </Grid>

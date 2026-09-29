@@ -7,22 +7,28 @@
     xmlns:cycleControls="clr-namespace:MuscleCuties.App.Controls.Cycle"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Cycle;assembly=MuscleCuties.Core"
-    x:DataType="vm:CycleViewModel">
+    x:DataType="vm:CycleViewModel"
+    SemanticProperties.Description="Cycle calendar card showing current phase and monthly overview">
 
     <Border Style="{StaticResource CardPrimary}">
-        <Grid RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="14">
+        <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto" RowSpacing="14">
+
+            <!-- Row 0: Day summary + period countdown -->
             <Grid ColumnDefinitions="*, Auto">
                 <Label
                     Text="{Binding CycleDaySummary}"
                     Style="{StaticResource SectionTitle}"
-                    VerticalOptions="Center" />
+                    VerticalOptions="Center"
+                    SemanticProperties.HeadingLevel="Level2" />
                 <Label
                     Grid.Column="1"
                     Text="{Binding PeriodCountdownText}"
                     Style="{StaticResource CaptionLabel}"
-                    VerticalOptions="Center" />
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="{Binding PeriodCountdownText}" />
             </Grid>
 
+            <!-- Row 1: Phase label + action button -->
             <Grid Grid.Row="1" ColumnDefinitions="*, Auto" ColumnSpacing="12">
                 <Grid RowDefinitions="Auto, Auto" RowSpacing="2" VerticalOptions="Center">
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="7">
@@ -35,36 +41,92 @@
                             Grid.Column="1"
                             Text="{Binding PhaseLabel}"
                             Style="{StaticResource AccentLabel}"
-                            VerticalOptions="Center" />
+                            VerticalOptions="Center"
+                            SemanticProperties.Description="{Binding PhaseLabel, StringFormat='Current phase: {0}'}" />
                     </Grid>
                     <Label
                         Grid.Row="1"
                         Text="{Binding LastPhaseLogText}"
                         Style="{StaticResource MutedLabel}"
-                        FontSize="12" />
+                        FontSize="14" />
                 </Grid>
                 <Button
                     Grid.Column="1"
                     Text="{Binding PhaseLogActionText}"
                     Command="{Binding AdvancePhaseCommand}"
                     HeightRequest="44"
+                    MinimumHeightRequest="44"
                     WidthRequest="128"
                     FontSize="14"
                     VerticalOptions="Center"
                     SemanticProperties.Description="{Binding PhaseLogActionText}" />
             </Grid>
 
+            <!-- Row 2: Prediction summary badge -->
             <Label
                 Grid.Row="2"
+                Text="{Binding PredictionSummary}"
+                Style="{StaticResource CaptionLabel}"
+                FontSize="13"
+                FontAttributes="Italic"
+                IsVisible="{Binding HasActiveCycle}"
+                SemanticProperties.Description="{Binding PredictionSummary}" />
+
+            <!-- Row 3: Calendar edit hint -->
+            <Label
+                Grid.Row="3"
                 Text="{Binding CalendarEditHintText}"
                 Style="{StaticResource MutedLabel}"
-                FontSize="12"
+                FontSize="14"
                 IsVisible="{Binding HasCalendarEditHint}" />
 
+            <!-- Row 4: Month grid -->
             <cycleControls:CycleMonthGrid
-                Grid.Row="3"
+                Grid.Row="4"
                 ItemsSource="{Binding CalendarDays}"
                 DaySelectedCommand="{Binding OpenCalendarDayCommand}" />
+
+            <!-- Row 5: Legend for logged vs predicted -->
+            <Grid
+                Grid.Row="5"
+                ColumnDefinitions="Auto, Auto, 16, Auto, Auto"
+                ColumnSpacing="6"
+                IsVisible="{Binding HasActiveCycle}"
+                SemanticProperties.Description="Calendar legend: solid color means logged, asterisk means estimated">
+
+                <Border
+                    WidthRequest="14"
+                    HeightRequest="14"
+                    StrokeShape="RoundRectangle 4"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseDefaultLight}, Dark={StaticResource CyclePhaseDefaultDark}}"
+                    StrokeThickness="0"
+                    VerticalOptions="Center" />
+                <Label
+                    Grid.Column="1"
+                    Text="Logged"
+                    Style="{StaticResource CaptionLabel}"
+                    FontSize="12"
+                    VerticalOptions="Center" />
+
+                <Border
+                    Grid.Column="3"
+                    WidthRequest="14"
+                    HeightRequest="14"
+                    StrokeShape="RoundRectangle 4"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseDefaultLight}, Dark={StaticResource CyclePhaseDefaultDark}}"
+                    Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                    StrokeThickness="1"
+                    Opacity="0.72"
+                    VerticalOptions="Center" />
+                <Label
+                    Grid.Column="4"
+                    Text="Estimated*"
+                    Style="{StaticResource CaptionLabel}"
+                    FontSize="12"
+                    FontAttributes="Italic"
+                    VerticalOptions="Center" />
+            </Grid>
+
         </Grid>
     </Border>
 </ContentView>

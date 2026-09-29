@@ -6,6 +6,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:commonModels="clr-namespace:MuscleCuties.Core.Models.UI.Common;assembly=MuscleCuties.Core"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
     x:DataType="vm:ProfileNutritionSettingsViewModel"
     Shell.NavBarIsVisible="False">
@@ -18,12 +19,15 @@
             MaximumWidthRequest="640">
             <sharedControls:PageHeader
                 Title="Nutrition settings"
-                Subtitle="Preferences and targets"
+                Subtitle="Goal, dietary preferences, and nutrient targets"
                 BackCommand="{Binding BackCommand}" />
 
+            <!-- Section 1: Goal and dietary preferences (consolidated) -->
             <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="Goal" IconGlyph="Target24" />
+                <VerticalStackLayout Spacing="14">
+                    <sharedControls:IconSectionHeader Text="Goal and preferences" IconGlyph="Target24" />
+
+                    <!-- Nutrition goal picker -->
                     <VerticalStackLayout Spacing="5">
                         <Label Text="Nutrition goal" Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">
@@ -35,6 +39,7 @@
                         </Border>
                     </VerticalStackLayout>
 
+                    <!-- Goal pace (conditionally visible) -->
                     <VerticalStackLayout
                         Spacing="5"
                         IsVisible="{Binding IsGoalPaceVisible}">
@@ -47,203 +52,285 @@
                                 SelectedItem="{Binding SelectedWeightGoalPaceOption}" />
                         </Border>
                     </VerticalStackLayout>
-                </VerticalStackLayout>
-            </Border>
 
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="Dietary preferences" IconGlyph="LeafThree24" />
+                    <!-- Divider between goal and dietary prefs -->
+                    <BoxView />
+
+                    <!-- Dietary preferences (improved tap targets) -->
+                    <Label
+                        Text="Dietary preferences"
+                        Style="{StaticResource FormFieldLabel}"
+                        FontSize="14" />
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
-                        <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="8">
-                            <Image
-                                Source="{Binding Source='LeafThree24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                WidthRequest="16"
-                                HeightRequest="16"
-                                Aspect="AspectFit"
-                                VerticalOptions="Center" />
-                            <CheckBox IsChecked="{Binding IsVegetarian}" Color="{StaticResource Primary}" />
-                            <Label Text="Vegetarian" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                        <HorizontalStackLayout Grid.Row="0" Grid.Column="1" Spacing="8">
-                            <Image
-                                Source="{Binding Source='LeafOne24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                WidthRequest="16"
-                                HeightRequest="16"
-                                Aspect="AspectFit"
-                                VerticalOptions="Center" />
-                            <CheckBox IsChecked="{Binding IsVegan}" Color="{StaticResource Primary}" />
-                            <Label Text="Vegan" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                        <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="8">
-                            <Image
-                                Source="{Binding Source='FoodGrains24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                WidthRequest="16"
-                                HeightRequest="16"
-                                Aspect="AspectFit"
-                                VerticalOptions="Center" />
-                            <CheckBox IsChecked="{Binding IsGlutenFree}" Color="{StaticResource Primary}" />
-                            <Label Text="Gluten-free" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                        <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="8">
-                            <Image
-                                Source="{Binding Source='Food24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                WidthRequest="16"
-                                HeightRequest="16"
-                                Aspect="AspectFit"
-                                VerticalOptions="Center" />
-                            <CheckBox IsChecked="{Binding IsLactoseFree}" Color="{StaticResource Primary}" />
-                            <Label Text="Lactose-free" Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
-                        </HorizontalStackLayout>
+                        <!-- Vegetarian -->
+                        <Border
+                            Grid.Row="0" Grid.Column="0"
+                            Padding="10,8"
+                            MinimumHeightRequest="44"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12">
+                            <Grid MinimumHeightRequest="44">
+                                <CheckBox IsChecked="{Binding IsVegetarian}" Color="{StaticResource Primary}"
+                                          HorizontalOptions="Fill" VerticalOptions="Fill"
+                                          SemanticProperties.Description="Vegetarian" />
+                                <Label
+                                    Text="Vegetarian"
+                                    Style="{StaticResource BodyLabel}"
+                                    FontSize="16"
+                                    Margin="44,0,0,0"
+                                    InputTransparent="True"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Vegan -->
+                        <Border
+                            Grid.Row="0" Grid.Column="1"
+                            Padding="10,8"
+                            MinimumHeightRequest="44"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12">
+                            <Grid MinimumHeightRequest="44">
+                                <CheckBox IsChecked="{Binding IsVegan}" Color="{StaticResource Primary}"
+                                          HorizontalOptions="Fill" VerticalOptions="Fill"
+                                          SemanticProperties.Description="Vegan" />
+                                <Label
+                                    Text="Vegan"
+                                    Style="{StaticResource BodyLabel}"
+                                    FontSize="16"
+                                    Margin="44,0,0,0"
+                                    InputTransparent="True"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Gluten-free -->
+                        <Border
+                            Grid.Row="1" Grid.Column="0"
+                            Padding="10,8"
+                            MinimumHeightRequest="44"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12">
+                            <Grid MinimumHeightRequest="44">
+                                <CheckBox IsChecked="{Binding IsGlutenFree}" Color="{StaticResource Primary}"
+                                          HorizontalOptions="Fill" VerticalOptions="Fill"
+                                          SemanticProperties.Description="Gluten-free" />
+                                <Label
+                                    Text="Gluten-free"
+                                    Style="{StaticResource BodyLabel}"
+                                    FontSize="16"
+                                    Margin="44,0,0,0"
+                                    InputTransparent="True"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Lactose-free -->
+                        <Border
+                            Grid.Row="1" Grid.Column="1"
+                            Padding="10,8"
+                            MinimumHeightRequest="44"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12">
+                            <Grid MinimumHeightRequest="44">
+                                <CheckBox IsChecked="{Binding IsLactoseFree}" Color="{StaticResource Primary}"
+                                          HorizontalOptions="Fill" VerticalOptions="Fill"
+                                          SemanticProperties.Description="Lactose-free" />
+                                <Label
+                                    Text="Lactose-free"
+                                    Style="{StaticResource BodyLabel}"
+                                    FontSize="16"
+                                    Margin="44,0,0,0"
+                                    InputTransparent="True"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
                     </Grid>
                 </VerticalStackLayout>
             </Border>
 
-            <Button
-                Text="{Binding AdvancedSettingsButtonText}"
-                Style="{StaticResource ButtonLink}"
-                Command="{Binding ToggleAdvancedSettingsCommand}" />
+            <!-- Section 2: Advanced nutrient targets (progressive disclosure) -->
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="4">
+                    <toolkit:Expander IsExpanded="{Binding AreAdvancedSettingsVisible}">
+                        <toolkit:Expander.Header>
+                            <Grid ColumnDefinitions="*,Auto" Padding="0,4" MinimumHeightRequest="44">
+                                <sharedControls:IconSectionHeader Text="Macro targets" IconGlyph="Beaker24" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding AdvancedSettingsButtonText}"
+                                    Style="{StaticResource AccentLabel}"
+                                    FontSize="14"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="Toggle macro target fields" />
+                            </Grid>
+                        </toolkit:Expander.Header>
+                        <VerticalStackLayout Spacing="12" Padding="0,10,0,0">
+                            <Label
+                                Text="Override calculated targets with your own values."
+                                Style="{StaticResource CaptionLabel}"
+                                FontSize="14" />
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                                <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
+                                    <Label Text="Daily calories" Style="{StaticResource FormFieldLabel}" />
+                                    <Border Style="{StaticResource InputContainer}">
+                                        <Entry Placeholder="kcal" Text="{Binding CaloriesGoal}" Keyboard="Numeric" />
+                                    </Border>
+                                </VerticalStackLayout>
 
-            <Border
-                Style="{StaticResource CardPrimary}"
-                IsVisible="{Binding AreAdvancedSettingsVisible}">
-                <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="Macro targets" IconGlyph="Beaker24" />
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
-                        <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
-                            <Label Text="Daily calories" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="kcal" Text="{Binding CaloriesGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
+                                    <Label Text="Protein" Style="{StaticResource FormFieldLabel}" />
+                                    <Border Style="{StaticResource InputContainer}">
+                                        <Entry Placeholder="g" Text="{Binding ProteinGoal}" Keyboard="Numeric" />
+                                    </Border>
+                                </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
-                            <Label Text="Protein" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="g" Text="{Binding ProteinGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
+                                    <Label Text="Carbs" Style="{StaticResource FormFieldLabel}" />
+                                    <Border Style="{StaticResource InputContainer}">
+                                        <Entry Placeholder="g" Text="{Binding CarbsGoal}" Keyboard="Numeric" />
+                                    </Border>
+                                </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
-                            <Label Text="Carbs" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="g" Text="{Binding CarbsGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
+                                    <Label Text="Fats" Style="{StaticResource FormFieldLabel}" />
+                                    <Border Style="{StaticResource InputContainer}">
+                                        <Entry Placeholder="g" Text="{Binding FatsGoal}" Keyboard="Numeric" />
+                                    </Border>
+                                </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
-                            <Label Text="Fats" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="g" Text="{Binding FatsGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Row="2" Grid.Column="0" Spacing="5">
+                                    <Label Text="Fiber" Style="{StaticResource FormFieldLabel}" />
+                                    <Border Style="{StaticResource InputContainer}">
+                                        <Entry Placeholder="g" Text="{Binding FiberGoal}" Keyboard="Numeric" />
+                                    </Border>
+                                </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="2" Grid.Column="0" Spacing="5">
-                            <Label Text="Fiber" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="g" Text="{Binding FiberGoal}" Keyboard="Numeric" />
-                            </Border>
+                                <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="5">
+                                    <Label Text="Water" Style="{StaticResource FormFieldLabel}" />
+                                    <Border Style="{StaticResource InputContainer}">
+                                        <Entry Placeholder="L" Text="{Binding WaterGoal}" Keyboard="Numeric" />
+                                    </Border>
+                                </VerticalStackLayout>
+                            </Grid>
                         </VerticalStackLayout>
-
-                        <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="5">
-                            <Label Text="Water" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="L" Text="{Binding WaterGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
-                    </Grid>
+                    </toolkit:Expander>
                 </VerticalStackLayout>
             </Border>
 
+            <!-- Section 3: Micronutrient targets (nested expander, deeper disclosure) -->
             <Border
                 Style="{StaticResource CardPrimary}"
                 IsVisible="{Binding AreAdvancedSettingsVisible}">
-                <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="Micronutrient targets" IconGlyph="PersonPill24" />
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10"
-                          RowSpacing="10">
-                        <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
-                            <Label Text="Iron" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="mg" Text="{Binding IronGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                <VerticalStackLayout Spacing="4">
+                    <toolkit:Expander IsExpanded="False">
+                        <toolkit:Expander.Header>
+                            <Grid ColumnDefinitions="*,Auto" Padding="0,4" MinimumHeightRequest="44">
+                                <sharedControls:IconSectionHeader Text="Micronutrient targets" IconGlyph="PersonPill24" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="Tap to expand"
+                                    Style="{StaticResource CaptionLabel}"
+                                    FontSize="14"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="Expand micronutrient targets section" />
+                            </Grid>
+                        </toolkit:Expander.Header>
+                        <Grid
+                            ColumnDefinitions="*,*"
+                            RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                            ColumnSpacing="10"
+                            RowSpacing="10"
+                            Padding="0,10,0,0">
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
+                                <Label Text="Iron" Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="mg" Text="{Binding IronGoal}" Keyboard="Numeric" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
-                            <Label Text="Vitamin B12" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="mcg" Text="{Binding VitaminB12Goal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
+                                <Label Text="Vitamin B12" Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="mcg" Text="{Binding VitaminB12Goal}" Keyboard="Numeric" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
-                            <Label Text="Vitamin C" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="mg" Text="{Binding VitaminCGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="5">
+                                <Label Text="Vitamin C" Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="mg" Text="{Binding VitaminCGoal}" Keyboard="Numeric" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
-                            <Label Text="Vitamin D" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="mcg" Text="{Binding VitaminDGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
+                                <Label Text="Vitamin D" Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="mcg" Text="{Binding VitaminDGoal}" Keyboard="Numeric" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="2" Grid.Column="0" Spacing="5">
-                            <Label Text="Vitamin A" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="mcg" Text="{Binding VitaminAGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="2" Grid.Column="0" Spacing="5">
+                                <Label Text="Vitamin A" Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="mcg" Text="{Binding VitaminAGoal}" Keyboard="Numeric" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="5">
-                            <Label Text="Vitamin B6" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="mg" Text="{Binding VitaminB6Goal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="5">
+                                <Label Text="Vitamin B6" Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="mg" Text="{Binding VitaminB6Goal}" Keyboard="Numeric" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="3" Grid.Column="0" Spacing="5">
-                            <Label Text="Folate" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="mcg" Text="{Binding FolateGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="3" Grid.Column="0" Spacing="5">
+                                <Label Text="Folate" Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="mcg" Text="{Binding FolateGoal}" Keyboard="Numeric" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="3" Grid.Column="1" Spacing="5">
-                            <Label Text="Calcium" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="mg" Text="{Binding CalciumGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="3" Grid.Column="1" Spacing="5">
+                                <Label Text="Calcium" Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="mg" Text="{Binding CalciumGoal}" Keyboard="Numeric" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="4" Grid.Column="0" Spacing="5">
-                            <Label Text="Magnesium" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="mg" Text="{Binding MagnesiumGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="4" Grid.Column="0" Spacing="5">
+                                <Label Text="Magnesium" Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="mg" Text="{Binding MagnesiumGoal}" Keyboard="Numeric" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="4" Grid.Column="1" Spacing="5">
-                            <Label Text="Zinc" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="mg" Text="{Binding ZincGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="4" Grid.Column="1" Spacing="5">
+                                <Label Text="Zinc" Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="mg" Text="{Binding ZincGoal}" Keyboard="Numeric" />
+                                </Border>
+                            </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Spacing="5">
-                            <Label Text="Potassium" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="mg" Text="{Binding PotassiumGoal}" Keyboard="Numeric" />
-                            </Border>
-                        </VerticalStackLayout>
-                    </Grid>
+                            <VerticalStackLayout Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Spacing="5">
+                                <Label Text="Potassium" Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="mg" Text="{Binding PotassiumGoal}" Keyboard="Numeric" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </toolkit:Expander>
                 </VerticalStackLayout>
             </Border>
 
             <Label
                 Text="{Binding StatusMessage}"
                 Style="{StaticResource CaptionLabel}"
+                FontSize="14"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
 
             <Button Text="Save nutrition settings" Command="{Binding SaveCommand}" />

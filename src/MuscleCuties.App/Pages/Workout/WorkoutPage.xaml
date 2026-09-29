@@ -63,33 +63,38 @@
                         </Border>
                     </Grid>
 
-                    <!-- Injury banner -->
-                    <Border StrokeShape="RoundRectangle 12" Padding="14,12" StrokeThickness="0"
+                    <Border StrokeShape="RoundRectangle 12" Padding="12,10" StrokeThickness="0"
                             BackgroundColor="{AppThemeBinding Light={StaticResource WarningSurfaceLight}, Dark={StaticResource WarningSurfaceDark}}"
-                            IsVisible="{Binding HasActiveInjuries}">
-                        <VerticalStackLayout Spacing="8">
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                <Label Text="{Binding InjuryBannerSummary}" FontSize="13"
-                                       LineBreakMode="TailTruncation"
+                            IsVisible="{Binding HasActiveInjuries}"
+                            SemanticProperties.Description="Injury adjustments active"
+                            SemanticProperties.Hint="{Binding InjuryBannerSummary}">
+                        <VerticalStackLayout Spacing="6">
+                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                <Label Text="{Binding InjuryBannerSummary}" Style="{StaticResource BodyLabel}"
+                                       FontSize="14" MaxLines="1" LineBreakMode="TailTruncation"
                                        VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Details" FontSize="12"
-                                       TextColor="{StaticResource Primary}" VerticalOptions="Center">
-                                    <Label.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding ToggleInjuryBannerCommand}" />
-                                    </Label.GestureRecognizers>
-                                </Label>
+                                <Button Grid.Column="1" Text="Details" Style="{StaticResource ButtonLink}"
+                                        Command="{Binding ToggleInjuryBannerCommand}"
+                                        VerticalOptions="Center" HorizontalOptions="End" Padding="4,0"
+                                        MinimumHeightRequest="36"
+                                        SemanticProperties.Hint="Show or hide injury adjustments" />
+                                <Button Grid.Column="2" Text="Log" Style="{StaticResource ButtonLink}"
+                                        Command="{Binding NavigateToInjuryLogCommand}"
+                                        VerticalOptions="Center" HorizontalOptions="End" Padding="4,0"
+                                        MinimumHeightRequest="36"
+                                        SemanticProperties.Hint="Open injury log" />
                             </Grid>
 
-                            <VerticalStackLayout Spacing="10" IsVisible="{Binding IsInjuryBannerExpanded}">
+                            <VerticalStackLayout Spacing="6" IsVisible="{Binding IsInjuryBannerExpanded}">
                                 <!-- Blocked exercises -->
-                                <VerticalStackLayout Spacing="4" IsVisible="{Binding HasBlockedExercises}">
-                                    <Label Text="Blocked exercises" FontSize="12" FontAttributes="Bold"
+                                <VerticalStackLayout Spacing="2" IsVisible="{Binding HasBlockedExercises}">
+                                    <Label Text="Blocked exercises" FontSize="14" FontAttributes="Bold"
                                            Style="{StaticResource MutedLabel}" />
-                                    <VerticalStackLayout Spacing="2"
+                                    <VerticalStackLayout Spacing="1"
                                                          BindableLayout.ItemsSource="{Binding BlockedExerciseNames}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="x:String">
-                                                <Label Text="{Binding .}" FontSize="12"
+                                                <Label Text="{Binding .}" FontSize="14"
                                                        Style="{StaticResource MutedLabel}" Margin="8,0,0,0" />
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
@@ -97,14 +102,14 @@
                                 </VerticalStackLayout>
 
                                 <!-- Rehab recommendations -->
-                                <VerticalStackLayout Spacing="4" IsVisible="{Binding HasRehabExercises}">
-                                    <Label Text="Rehab recommendations" FontSize="12" FontAttributes="Bold"
-                                           TextColor="{StaticResource Primary}" />
-                                    <VerticalStackLayout Spacing="2"
+                                <VerticalStackLayout Spacing="2" IsVisible="{Binding HasRehabExercises}">
+                                    <Label Text="Rehab recommendations" FontSize="14" FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
+                                    <VerticalStackLayout Spacing="1"
                                                          BindableLayout.ItemsSource="{Binding RehabExerciseNames}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="x:String">
-                                                <Label Text="{Binding .}" FontSize="12"
+                                                <Label Text="{Binding .}" FontSize="14"
                                                        Style="{StaticResource AccentLabel}" Margin="8,0,0,0" />
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
@@ -112,27 +117,19 @@
                                 </VerticalStackLayout>
 
                                 <!-- Blocked cardio -->
-                                <VerticalStackLayout Spacing="4" IsVisible="{Binding HasBlockedCardio}">
-                                    <Label Text="Blocked activities" FontSize="12" FontAttributes="Bold"
+                                <VerticalStackLayout Spacing="2" IsVisible="{Binding HasBlockedCardio}">
+                                    <Label Text="Blocked activities" FontSize="14" FontAttributes="Bold"
                                            Style="{StaticResource MutedLabel}" />
-                                    <VerticalStackLayout Spacing="2"
+                                    <VerticalStackLayout Spacing="1"
                                                          BindableLayout.ItemsSource="{Binding BlockedCardioNames}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="x:String">
-                                                <Label Text="{Binding .}" FontSize="12"
+                                                <Label Text="{Binding .}" FontSize="14"
                                                        Style="{StaticResource MutedLabel}" Margin="8,0,0,0" />
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
                                     </VerticalStackLayout>
                                 </VerticalStackLayout>
-
-                                <!-- Manage link -->
-                                <Label Text="Manage injuries" FontSize="13" TextColor="{StaticResource Primary}"
-                                       HorizontalOptions="End">
-                                    <Label.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding NavigateToInjuryLogCommand}" />
-                                    </Label.GestureRecognizers>
-                                </Label>
                             </VerticalStackLayout>
                         </VerticalStackLayout>
                     </Border>
@@ -156,7 +153,7 @@
                         <Label
                             Text="{Binding PlanSummaryText}"
                             Style="{StaticResource MutedLabel}"
-                            FontSize="13" />
+                            FontSize="14" />
                     </VerticalStackLayout>
 
                     <FlexLayout
@@ -170,16 +167,20 @@
                                     FlexLayout.Basis="25%"
                                     StrokeShape="RoundRectangle 999"
                                     StrokeThickness="0"
-                                    Padding="8,9"
-                                    Margin="4,0"
-                                    MinimumHeightRequest="44">
+                                    Padding="6,9"
+                                    Margin="2,0"
+                                    MinimumHeightRequest="44"
+                                    SemanticProperties.Description="{Binding Label}">
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
                                                      Value="True">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                            <Setter Property="SemanticProperties.Hint" Value="Selected filter" />
+                                            <Setter Property="BackgroundColor"
+                                                    Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource ActionSurfaceDark}}" />
                                         </DataTrigger>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
                                                      Value="False">
+                                            <Setter Property="SemanticProperties.Hint" Value="Not selected" />
                                             <Setter Property="BackgroundColor"
                                                     Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}" />
                                         </DataTrigger>
@@ -191,14 +192,15 @@
                                     </Border.GestureRecognizers>
                                     <Label
                                         Text="{Binding Label}"
-                                        FontSize="12"
+                                        FontSize="14"
                                         FontAttributes="Bold"
                                         HorizontalTextAlignment="Center"
                                         VerticalOptions="Center">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding IsSelected}"
                                                          Value="True">
-                                                <Setter Property="TextColor" Value="{StaticResource White}" />
+                                                <Setter Property="TextColor"
+                                                        Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource TextPrimary}}" />
                                             </DataTrigger>
                                             <DataTrigger TargetType="Label" Binding="{Binding IsSelected}"
                                                          Value="False">
@@ -227,27 +229,20 @@
                     MaximumWidthRequest="640"
                     IsVisible="{Binding HasNoWorkouts}"
                     VerticalOptions="Start">
-                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="14" RowDefinitions="Auto, Auto" RowSpacing="4">
+                    <VerticalStackLayout Spacing="8">
                         <Label
-                            Grid.Row="0" Grid.Column="0"
                             Text="{Binding EmptyWorkoutsTitle}"
                             Style="{StaticResource CardTitle}"
-                            FontSize="15"
-                            VerticalOptions="Center" />
+                            FontSize="17" />
                         <Label
-                            Grid.Row="1" Grid.Column="0"
                             Text="{Binding EmptyWorkoutsSubtitle}"
-                            Style="{StaticResource CaptionLabel}"
-                            VerticalOptions="Center" />
+                            Style="{StaticResource MutedLabel}" />
 
                         <Button
-                            Grid.Column="1" Grid.RowSpan="2"
                             Text="{Binding EmptyWorkoutsButtonText}"
                             Command="{Binding EmptyWorkoutsActionCommand}"
-                            WidthRequest="118"
-                            MinimumHeightRequest="48"
-                            VerticalOptions="Center" />
-                    </Grid>
+                            MinimumHeightRequest="48" />
+                    </VerticalStackLayout>
                 </Border>
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>

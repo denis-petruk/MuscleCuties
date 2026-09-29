@@ -135,16 +135,16 @@ public class MacroPieChart : GraphicsView, IDrawable
     {
         var values = new[]
         {
-            (Value: Math.Max(0f, ProteinValue), Color: ProteinColor),
-            (Value: Math.Max(0f, CarbsValue), Color: CarbsColor),
-            (Value: Math.Max(0f, FatsValue), Color: FatsColor)
+            (Value: NonNegativeFinite(ProteinValue), Color: ProteinColor),
+            (Value: NonNegativeFinite(CarbsValue), Color: CarbsColor),
+            (Value: NonNegativeFinite(FatsValue), Color: FatsColor)
         };
 
         var size = Math.Min(dirtyRect.Width, dirtyRect.Height);
         var diameter = Math.Max(0f, size - 4f);
         var x = dirtyRect.Center.X - diameter / 2f;
         var y = dirtyRect.Center.Y - diameter / 2f;
-        var total = values.Sum(item => item.Value);
+        var total = values.Sum(item => (double)item.Value);
 
         canvas.Antialias = true;
         canvas.FillColor = TrackColor;
@@ -159,7 +159,7 @@ public class MacroPieChart : GraphicsView, IDrawable
 
             foreach (var segment in values.Where(item => item.Value > 0f))
             {
-                var sweep = segment.Value / total * FullCircleDegrees;
+                var sweep = (float)(segment.Value / total * FullCircleDegrees);
                 canvas.FillColor = segment.Color;
 
                 if (sweep >= FullSliceThresholdDegrees)
@@ -208,6 +208,9 @@ public class MacroPieChart : GraphicsView, IDrawable
             centerX + radius * (float)Math.Cos(radians),
             centerY + radius * (float)Math.Sin(radians));
     }
+
+    private static float NonNegativeFinite(float value) =>
+        float.IsFinite(value) && value > 0f ? value : 0f;
 
     private static void Redraw(BindableObject bindable, object oldValue, object newValue)
     {

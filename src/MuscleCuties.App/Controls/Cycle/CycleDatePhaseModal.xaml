@@ -125,9 +125,9 @@
                                             Grid.Row="1"
                                             Grid.Column="1"
                                             Text="{Binding Description}"
-                                            TextColor="{Binding TextColor}"
-                                            FontSize="12"
-                                            Opacity="0.75" />
+                                            TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                            FontSize="13"
+                                            LineBreakMode="WordWrap" />
 
                                         <Border
                                             Grid.Column="2"
@@ -150,7 +150,7 @@
                                             <Label
                                                 Text="&#x2713;"
                                                 TextColor="{StaticResource White}"
-                                                FontSize="13"
+                                                FontSize="14"
                                                 FontAttributes="Bold"
                                                 HorizontalOptions="Center"
                                                 VerticalOptions="Center"
@@ -197,14 +197,14 @@
                                 Command="{Binding UseSuggestedPhaseCommand}"
                                 IsVisible="{Binding HasSuggestedPhase}"
                                 HeightRequest="48"
-                                FontSize="13" />
+                                FontSize="14" />
                             <Button
                                 Grid.Row="2"
                                 Grid.Column="1"
                                 Text="Forgot to log shift"
                                 Command="{Binding ReviewEarlierPhaseRecordsCommand}"
                                 HeightRequest="48"
-                                FontSize="13"
+                                FontSize="14"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                                 TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                         </Grid>

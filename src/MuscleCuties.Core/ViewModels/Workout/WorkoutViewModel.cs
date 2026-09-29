@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Models.Workout.Planning;
-using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
 using MuscleCuties.Core.ViewModels.Common;
@@ -76,13 +75,18 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
     [RelayCommand]
     private async Task OpenInjuryModalAsync()
     {
+        InjuryLogVm.ResetForm();
         IsInjuryModalVisible = true;
         if (!InjuryLogVm.IsBusy)
             await InjuryLogVm.LoadCommand.ExecuteAsync(null);
     }
 
     [RelayCommand]
-    private void CloseInjuryModal() => IsInjuryModalVisible = false;
+    private void CloseInjuryModal()
+    {
+        _injuryLogVm?.ResetForm();
+        IsInjuryModalVisible = false;
+    }
 
     private async Task RefreshAfterInjuryChangeAsync()
     {
@@ -444,8 +448,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
 
     private async Task LoadInjuryBannerAsync(IServiceProvider services, int userId)
     {
-        var injuryRepo = services.GetRequiredService<IWorkoutInjuryRepository>();
-        var logs = await DataLoadScheduler.RunAsync(() => injuryRepo.GetActiveAsync(userId));
+        var injuryService = services.GetRequiredService<IWorkoutInjuryService>();
+        var logs = await DataLoadScheduler.RunAsync(() => injuryService.GetActiveAsync(userId));
 
         if (logs.Count == 0)
         {
@@ -470,7 +474,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware
             .ToList();
 
         var flags = WorkoutInjuryRules.ToFlags(injuries);
-        var (blocked, rehab) = await DataLoadScheduler.RunAsync(() => injuryRepo.GetExerciseImpactAsync(flags));
+        var (blocked, rehab) = await DataLoadScheduler.RunAsync(() => injuryService.GetExerciseImpactAsync(flags));
         var blockedCardio = WorkoutInjuryRules.GetBlockedActivities(injuries)
             .Select(a => a.ToString())
             .OrderBy(n => n)

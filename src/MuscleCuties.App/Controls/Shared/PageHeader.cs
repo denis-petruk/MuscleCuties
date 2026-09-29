@@ -37,42 +37,57 @@ public class PageHeader : ContentView
 
     private void Rebuild()
     {
-        var back = new Label
+        var back = new ImageButton
         {
-            Text = "\u2190",
-            FontSize = 22,
-            VerticalOptions = LayoutOptions.Center
-        };
-        back.GestureRecognizers.Add(new TapGestureRecognizer
-        {
+            Source = ImageSource.FromFile("nav_back.png"),
+            BackgroundColor = Colors.Transparent,
+            WidthRequest = 44,
+            HeightRequest = 44,
+            MinimumWidthRequest = 44,
+            MinimumHeightRequest = 44,
+            Padding = 10,
+            Aspect = Aspect.AspectFit,
+            VerticalOptions = LayoutOptions.Start,
             Command = new Command(() => BackCommand?.Execute(null))
-        });
+        };
+        SemanticProperties.SetDescription(back, "Back");
 
         var title = new Label
         {
             Text = Title,
-            FontSize = 22,
+            FontSize = 24,
             FontAttributes = FontAttributes.Bold,
-            VerticalOptions = LayoutOptions.Center
+            VerticalOptions = LayoutOptions.Center,
+            LineBreakMode = LineBreakMode.WordWrap
         };
+        title.SetDynamicResource(StyleProperty, "SubHeadline");
 
-        var header = new HorizontalStackLayout { Spacing = 12 };
+        var header = new Grid { ColumnSpacing = 8, RowSpacing = 2 };
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+        header.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        Grid.SetRow(back, 0);
+        Grid.SetColumn(back, 0);
         header.Children.Add(back);
+        Grid.SetRow(title, 0);
+        Grid.SetColumn(title, 1);
         header.Children.Add(title);
-
-        var layout = new VerticalStackLayout { Spacing = 4 };
-        layout.Children.Add(header);
 
         if (!string.IsNullOrWhiteSpace(Subtitle))
         {
-            layout.Children.Add(new Label
+            var subtitle = new Label
             {
                 Text = Subtitle,
-                FontSize = 13,
-                Opacity = 0.6
-            });
+                FontSize = 14,
+                LineBreakMode = LineBreakMode.WordWrap
+            };
+            subtitle.SetDynamicResource(StyleProperty, "MutedLabel");
+            header.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Grid.SetRow(subtitle, 1);
+            Grid.SetColumn(subtitle, 1);
+            header.Children.Add(subtitle);
         }
 
-        Content = layout;
+        Content = header;
     }
 }
