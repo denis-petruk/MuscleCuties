@@ -56,18 +56,14 @@
                         <Entry
                             x:Name="RegisterPassword"
                             AutomationId="RegisterPassword"
-                            Placeholder="At least 8 characters"
+                            Placeholder="8+ · upper/lower · number · symbol"
                             Text="{Binding Password}"
                             IsPassword="True"
                             ReturnType="Next"
                             Completed="OnPasswordCompleted"
                             SemanticProperties.Description="Create password"
-                            SemanticProperties.Hint="At least 8 characters. Press next to confirm your password." />
+                            SemanticProperties.Hint="Use at least 8 characters with uppercase and lowercase letters, a number, and a symbol. Do not use spaces. Press next to confirm your password." />
                     </Border>
-                    <Label
-                        Text="Use 8 or more characters with a mix of letters and numbers."
-                        Style="{StaticResource CaptionLabel}"
-                        FontSize="13" />
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Spacing="6">
