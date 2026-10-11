@@ -6,48 +6,60 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:sharedControls="clr-namespace:MuscleCuties.App.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.Core.ViewModels.Profile;assembly=MuscleCuties.Core"
-    x:DataType="vm:ProfileHealthSyncViewModel"
+    x:DataType="{x:Type vm:ProfileHealthSyncViewModel}"
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <VerticalStackLayout
+        <Grid
             Padding="20,40,20,32"
-            Spacing="16"
+            RowSpacing="16"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="640">
+            MaximumWidthRequest="640"
+            RowDefinitions="Auto,Auto,Auto,Auto">
             <sharedControls:PageHeader
-                Title="Health sync"
+                Grid.Row="0"
+                Title="Health data"
                 Subtitle="Steps, sleep, readiness, and recovery"
                 BackCommand="{Binding BackCommand}" />
 
             <Border
+                Grid.Row="1"
                 Style="{StaticResource CardPrimary}"
+                StrokeThickness="1"
+                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
                 BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}">
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
                     <sharedControls:ThemeAwareBrandLogoImage
                         WidthRequest="78"
                         HeightRequest="44"
                         VerticalOptions="Center" />
-                    <VerticalStackLayout Grid.Column="1" Spacing="7">
+                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="7">
                         <Label Text="Make planning less blind" Style="{StaticResource SectionTitle}" />
                         <Label
-                            Text="Health sync is paused while native providers are being isolated. No Apple Health, Health Connect, or Whoop data is read in this build."
+                            Grid.Row="1"
+                            Text="Health import is unavailable in this release. Daily check-ins and your other records still support local readiness estimates."
                             Style="{StaticResource BodyLabel}" />
-                    </VerticalStackLayout>
+                    </Grid>
                 </Grid>
             </Border>
 
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
-                    <sharedControls:IconSectionHeader Text="Current status" IconGlyph="HeartPulse32" />
-                    <Label Text="{Binding StatusText}" Style="{StaticResource CardTitle}" />
-                    <Label Text="{Binding LastSyncedText}" Style="{StaticResource CaptionLabel}" />
+            <Border
+                Grid.Row="2"
+                Style="{StaticResource CardPrimary}"
+                StrokeThickness="1"
+                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="12">
+                    <sharedControls:IconSectionHeader Grid.Row="0" Text="Current status" IconGlyph="HeartPulse32" />
+                    <Label Grid.Row="1" Text="{Binding StatusText}" Style="{StaticResource CardTitle}" />
+                    <Button Grid.Row="2" Text="{Binding ConnectionBadgeText}" Command="{Binding ConnectCommand}"
+                            IsVisible="{Binding IsAppleHealthAvailable}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                            SemanticProperties.Description="Connect or refresh Apple Health" />
+                    <Label Grid.Row="3" Text="{Binding LastSyncedText}" Style="{StaticResource CaptionLabel}" />
 
                     <Border
-                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 16"
-                        Padding="14,12">
+                        Grid.Row="4"
+                        Style="{StaticResource ReadinessStatusTile}">
                         <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="10">
                             <Image
                                 Source="{Binding Source='BatteryCharge24', Converter={StaticResource StringToFluentIconImageSourceConverter}}"
@@ -55,10 +67,10 @@
                                 HeightRequest="22"
                                 Aspect="AspectFit"
                                 VerticalOptions="Center" />
-                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2" VerticalOptions="Center">
                                 <Label Text="Today's readiness" Style="{StaticResource FormFieldLabel}" />
-                                <Label Text="{Binding ReadinessExplanationText}" Style="{StaticResource CaptionLabel}" />
-                            </VerticalStackLayout>
+                                <Label Grid.Row="1" Text="{Binding ReadinessExplanationText}" Style="{StaticResource CaptionLabel}" />
+                            </Grid>
                             <Label
                                 Grid.Column="2"
                                 Text="{Binding ReadinessScoreText}"
@@ -69,23 +81,18 @@
                         </Grid>
                     </Border>
 
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <VerticalStackLayout Spacing="3">
-                            <Label Text="Calories" Style="{StaticResource FormFieldLabel}" />
-                        </VerticalStackLayout>
-                        <VerticalStackLayout Grid.Column="1" Spacing="3">
-                            <Label Text="Today's plan" Style="{StaticResource FormFieldLabel}" />
-                        </VerticalStackLayout>
+                    <Grid Grid.Row="5" ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Label Text="Calories" Style="{StaticResource FormFieldLabel}" />
+                        <Label Grid.Column="1" Text="Today's plan" Style="{StaticResource FormFieldLabel}" />
                     </Grid>
-                </VerticalStackLayout>
+                </Grid>
             </Border>
 
-            <!-- TODO(health-sync): Restore provider connection controls after native-provider diagnostics are complete. -->
-
             <Label
+                Grid.Row="3"
                 Text="{Binding StatusMessage}"
                 Style="{StaticResource CaptionLabel}"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
-        </VerticalStackLayout>
+        </Grid>
     </ScrollView>
 </ContentPage>
