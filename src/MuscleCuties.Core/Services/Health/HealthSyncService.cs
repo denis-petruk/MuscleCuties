@@ -1,10 +1,11 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using MuscleCuties.Core.Services.Auth;
 
 namespace MuscleCuties.Core.Services.Health;
 
-public sealed class HealthSyncService : IHealthSyncService
+public sealed class HealthSyncService : IHealthSyncService, IDisposable
 {
     private static readonly TimeSpan SyncTimeout = TimeSpan.FromSeconds(45);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -27,6 +28,8 @@ public sealed class HealthSyncService : IHealthSyncService
 
     public string DeviceHealthDisplayName =>
         DeviceHealthProvider?.DisplayName ?? DeviceHealthSource.ToDisplayName();
+
+    public bool IsAvailable => DeviceHealthProvider is not null;
 
     public async Task<HealthSyncStatus> GetStatusAsync(int userId)
     {
@@ -79,13 +82,24 @@ public sealed class HealthSyncService : IHealthSyncService
 
             if (!await provider.IsAvailableAsync(syncToken))
             {
+                _tokenStorage.Remove(SummaryKey(userId));
                 await WriteStateAsync(userId, new StoredHealthSyncState(source, false, false, null));
                 return new HealthSyncResult(source, false, null, BuildUnavailableMessage(provider));
+            }
+
+            if (provider is IHealthAuthorizationProvider authorization &&
+                !await authorization.RequestReadAuthorizationAsync(syncToken))
+            {
+                _tokenStorage.Remove(SummaryKey(userId));
+                await WriteStateAsync(userId, new StoredHealthSyncState(source, false, false, null));
+                return new HealthSyncResult(source, false, null,
+                    $"{provider.DisplayName} could not open the permission request. Try again in Settings.");
             }
 
             var summary = await provider.ReadWeeklySummaryAsync(DateTime.Today, syncToken);
             if (summary is null)
             {
+                _tokenStorage.Remove(SummaryKey(userId));
                 await WriteStateAsync(userId, new StoredHealthSyncState(source, false, false, null));
                 return new HealthSyncResult(source, false, null, BuildEmptyDataMessage(provider));
             }
@@ -103,8 +117,9 @@ public sealed class HealthSyncService : IHealthSyncService
             return new HealthSyncResult(source, false, null,
                 $"{provider.DisplayName} took too long to respond. Try again when it is ready.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Trace.WriteLine($"[{nameof(HealthSyncService)}] Provider sync failed ({ex.GetType().Name}).");
             return new HealthSyncResult(source, false, null,
                 $"{provider.DisplayName} could not sync right now. Check permissions and try again.");
         }
@@ -124,7 +139,10 @@ public sealed class HealthSyncService : IHealthSyncService
 
         try
         {
-            return JsonSerializer.Deserialize<HealthWeeklySummary>(json, JsonOptions);
+            var summary = JsonSerializer.Deserialize<HealthWeeklySummary>(json, JsonOptions);
+            return summary is not null && summary.SyncedAt >= DateTime.UtcNow.AddHours(-36)
+                ? summary
+                : null;
         }
         catch (JsonException)
         {
@@ -192,8 +210,9 @@ public sealed class HealthSyncService : IHealthSyncService
                 if (await provider.IsAvailableAsync())
                     return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Trace.WriteLine($"[{nameof(HealthSyncService)}] Provider availability check failed ({ex.GetType().Name}).");
             }
 
         return false;
@@ -212,6 +231,11 @@ public sealed class HealthSyncService : IHealthSyncService
     private static string SummaryKey(int userId)
     {
         return $"health_sync_weekly_summary_{userId}";
+    }
+
+    public void Dispose()
+    {
+        _syncGate.Dispose();
     }
 
     private sealed record StoredHealthSyncState(

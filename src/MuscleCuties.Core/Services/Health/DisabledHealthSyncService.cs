@@ -2,10 +2,12 @@ namespace MuscleCuties.Core.Services.Health;
 
 public sealed class DisabledHealthSyncService : IHealthSyncService
 {
+    // TODO(DEFERRED-NATIVE-HEALTH): This is an intentional V1 boundary. Enable a native adapter only after explicit owner authorization, permission design and device review.
     public HealthDataSource DeviceHealthSource =>
         OperatingSystem.IsAndroid() ? HealthDataSource.HealthConnect : HealthDataSource.AppleHealth;
 
     public string DeviceHealthDisplayName => DeviceHealthSource.ToDisplayName();
+    public bool IsAvailable => false;
 
     public Task<HealthSyncStatus> GetStatusAsync(int userId)
     {
@@ -14,7 +16,7 @@ public sealed class DisabledHealthSyncService : IHealthSyncService
             false,
             true,
             null,
-            "Health sync is paused for diagnostics."));
+            "Health import is unavailable in this release."));
     }
 
     public Task<bool> ShouldShowPromptAsync(int userId)
@@ -36,7 +38,7 @@ public sealed class DisabledHealthSyncService : IHealthSyncService
             source,
             false,
             null,
-            "Health sync is paused for diagnostics."));
+            "Health import is unavailable in this release."));
     }
 
     public Task<HealthWeeklySummary?> GetCachedWeeklySummaryAsync(int userId)

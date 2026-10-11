@@ -4,6 +4,7 @@ public interface IHealthSyncService
 {
     HealthDataSource DeviceHealthSource { get; }
     string DeviceHealthDisplayName { get; }
+    bool IsAvailable { get; }
     Task<HealthSyncStatus> GetStatusAsync(int userId);
     Task<bool> ShouldShowPromptAsync(int userId);
     Task DismissPromptAsync(int userId);
