@@ -4,8 +4,9 @@ using MauiIcons.Fluent;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using MuscleCuties.App.Infrastructure.Network;
 using Microsoft.Maui.Handlers;
+using SkiaSharp.Views.Maui.Controls.Hosting;
+using MuscleCuties.App.Infrastructure.Network;
 using MuscleCuties.App.Pages;
 using MuscleCuties.App.Pages.Auth;
 using MuscleCuties.App.Pages.Cycle;
@@ -19,30 +20,32 @@ using MuscleCuties.App.Services;
 using MuscleCuties.App.Services.Auth;
 using MuscleCuties.App.Services.Navigation;
 using MuscleCuties.App.Services.Notifications;
+using MuscleCuties.App.Services.Profile;
 using MuscleCuties.App.Services.Security;
 using MuscleCuties.Core.Data;
+using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Core.Repositories.Cycle;
 using MuscleCuties.Core.Repositories.Nutrition;
 using MuscleCuties.Core.Repositories.Quiz;
 using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Repositories.Workout;
+using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
 using MuscleCuties.Core.Services.Dashboard;
 using MuscleCuties.Core.Services.Dashboard.Planning;
+using MuscleCuties.Core.Services.ExerciseMedia;
 using MuscleCuties.Core.Services.Health;
+using MuscleCuties.Core.Services.Notifications;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Nutrition.Planning;
 using MuscleCuties.Core.Services.Profile;
 using MuscleCuties.Core.Services.Progress;
 using MuscleCuties.Core.Services.Quiz;
-using MuscleCuties.Core.Services.Notifications;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
-using MuscleCuties.Core.Models.Workout.Planning;
-using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.ViewModels.Auth;
 using MuscleCuties.Core.ViewModels.Cycle;
 using MuscleCuties.Core.ViewModels.Dashboard;
@@ -64,6 +67,7 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
+            .UseSkiaSharp()
             .UseFluentMauiIcons()
             .ConfigureMauiHandlers(ConfigureInputHandlers)
             .ConfigureFonts(fonts =>
@@ -104,11 +108,11 @@ public static class MauiProgram
             handler.PlatformView.BorderStyle = UIKit.UITextBorderStyle.None;
             handler.PlatformView.BackgroundColor = UIKit.UIColor.Clear;
 
-            var textContentType = handler.VirtualView.AutomationId switch
+            var textContentType = GetAuthFieldKind(handler.VirtualView.AutomationId) switch
             {
-                "LoginEmail" or "RegisterEmail" => UIKit.UITextContentType.Username,
-                "LoginPassword" => UIKit.UITextContentType.Password,
-                "RegisterPassword" or "RegisterConfirmPassword" => UIKit.UITextContentType.NewPassword,
+                AuthFieldKind.Email => UIKit.UITextContentType.Username,
+                AuthFieldKind.CurrentPassword => UIKit.UITextContentType.Password,
+                AuthFieldKind.NewPassword => UIKit.UITextContentType.NewPassword,
                 _ => null
             };
 
@@ -127,6 +131,23 @@ public static class MauiProgram
 #endif
     }
 
+    private enum AuthFieldKind
+    {
+        None,
+        Email,
+        CurrentPassword,
+        NewPassword
+    }
+
+    private static AuthFieldKind GetAuthFieldKind(string? automationId) =>
+        automationId switch
+        {
+            "LoginEmail" or "RegisterEmail" => AuthFieldKind.Email,
+            "LoginPassword" or "ProfileCurrentPassword" => AuthFieldKind.CurrentPassword,
+            "RegisterPassword" or "RegisterConfirmPassword" or "ProfileNewPassword" or "ProfileConfirmPassword" => AuthFieldKind.NewPassword,
+            _ => AuthFieldKind.None
+        };
+
 #if ANDROID
     private static void ClearAndroidInputChrome(Android.Views.View view)
     {
@@ -137,11 +158,11 @@ public static class MauiProgram
 
     private static void ConfigureAndroidAutofill(Android.Widget.EditText editText, string? automationId)
     {
-        var hint = automationId switch
+        var hint = GetAuthFieldKind(automationId) switch
         {
-            "LoginEmail" or "RegisterEmail" => Android.Views.View.AutofillHintEmailAddress,
-            "LoginPassword" => Android.Views.View.AutofillHintPassword,
-            "RegisterPassword" or "RegisterConfirmPassword" => "newPassword",
+            AuthFieldKind.Email => Android.Views.View.AutofillHintEmailAddress,
+            AuthFieldKind.CurrentPassword => Android.Views.View.AutofillHintPassword,
+            AuthFieldKind.NewPassword => "newPassword",
             _ => null
         };
 
@@ -164,19 +185,20 @@ public static class MauiProgram
 
         services.AddSingleton<ITokenStorage, SecureStorageService>();
         services.AddSingleton<ILocalNotificationService, LocalNotificationService>();
-#if ANDROID
-        services.AddSingleton<IPlatformSignInService, GoogleSignInService>();
-#else
+#if IOS || MACCATALYST
         services.AddSingleton<AppleSignInService>();
         services.AddSingleton<IAppleSignInService>(sp => sp.GetRequiredService<AppleSignInService>());
         services.AddSingleton<IPlatformSignInService>(sp => sp.GetRequiredService<AppleSignInService>());
 #endif
 
+        // Native health import requires a separate product and privacy approval.
+        // Keep the platform adapter dormant in this release.
         services.AddSingleton<IHealthSyncService, DisabledHealthSyncService>();
         services.AddScoped<ICyclePhaseNotificationService, CyclePhaseNotificationService>();
         services.AddScoped<IFeedbackEmailService, FeedbackEmailService>();
     }
 
+    // Configures SQLCipher encryption using the hardware-backed key from IAppDatabaseKeyProvider with private cache pooling.
     private static void ConfigureDatabaseOptions(IServiceProvider sp, DbContextOptionsBuilder opts)
     {
         var path = sp.GetRequiredService<IDbPathProvider>().GetDatabasePath();
@@ -196,6 +218,7 @@ public static class MauiProgram
     private static void RegisterRepositories(IServiceCollection services)
     {
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPhotoVaultRepository, PhotoVaultRepository>();
         services.AddScoped<ICycleRepository, CycleRepository>();
         services.AddScoped<INutritionRepository, NutritionRepository>();
         services.AddScoped<IWorkoutRepository, WorkoutRepository>();
@@ -215,6 +238,19 @@ public static class MauiProgram
         .ConfigurePrimaryHttpMessageHandler(CreateFdcHttpHandler)
         .AddHttpMessageHandler<FdcAirGapHandler>();
         services.AddScoped<IFoodSyncService, FoodSyncService>();
+        services.AddHttpClient<IWgerApiClient, Infrastructure.Network.WgerApiClient>(client =>
+        {
+            client.BaseAddress = Infrastructure.Network.WgerApiClient.BaseUri;
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
+        services.AddHttpClient<IExerciseDbClient, Infrastructure.Network.ExerciseDbClient>(client =>
+        {
+            client.BaseAddress = Infrastructure.Network.ExerciseDbClient.BaseUri;
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
+        services.AddSingleton<IExerciseMediaStore>(_ =>
+            new ExerciseMediaStore(Path.Combine(FileSystem.AppDataDirectory, "exercises")));
+        services.AddScoped<IExerciseMediaSyncService, ExerciseMediaSyncService>();
         services.AddScoped<ICalorieCalculator, CalorieCalculator>();
         services.AddScoped<ICalorieDistributionService, CalorieDistributionService>();
         services.AddScoped<IFallbackMealProvider, FallbackMealProvider>();
@@ -224,7 +260,24 @@ public static class MauiProgram
         services.AddScoped<IDashboardPlanner, DashboardPlanner>();
         services.AddScoped<IWorkoutPlanner, WorkoutPlanner>();
         services.AddScoped<IWorkoutPlanGenerator, WorkoutPlanGenerator>();
+        services.AddScoped<IWorkoutScheduleService, WorkoutScheduleService>();
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
+#if DEBUG
+        services.AddSingleton<IEmailReceiptVerifier, Services.Auth.DevelopmentEmailReceiptVerifier>();
+#else
+        services.AddSingleton<IEmailReceiptVerifier>(_ => new SignedEmailReceiptVerifier(
+            Services.Auth.EmailChallengeBuildConfiguration.ReceiptPublicKeys,
+            Services.Auth.EmailChallengeBuildConfiguration.ReceiptIssuer,
+            Services.Auth.EmailChallengeBuildConfiguration.ReceiptAudience));
+#endif
+        services.AddHttpClient<IEmailChallengeService, Services.Auth.EmailChallengeService>()
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                AllowAutoRedirect = false
+            });
+        services.AddScoped<IOnboardingCommitService, OnboardingCommitService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddSingleton<IPendingRegistrationService, PendingRegistrationService>();
         services.AddScoped<ICycleService, CycleService>();
         services.AddScoped<ICycleAccountService, CycleAccountService>();
         services.AddScoped<IDashboardCalendarDataService, DashboardCalendarDataService>();
@@ -235,7 +288,14 @@ public static class MauiProgram
         services.AddScoped<IWorkoutService, WorkoutService>();
         services.AddScoped<IProfileSettingsService, ProfileSettingsService>();
         services.AddScoped<IProfileAccountService, ProfileAccountService>();
+        services.AddScoped<IPhotoVaultService, PhotoVaultService>();
+        services.AddSingleton<IAppAccountPurgeService, AppAccountPurgeService>();
         services.AddScoped<IProgressSummaryService, ProgressSummaryService>();
+        services.AddSingleton<INutritionChangeNotifier>(_ => new NutritionChangeNotifier(MainThread.BeginInvokeOnMainThread));
+        services.AddScoped<NutritionTrackingService>();
+        services.AddSingleton<INutritionTrackingService, ScopedNutritionTrackingService>();
+        services.AddScoped<IWorkoutArchiveService, WorkoutArchiveService>();
+        services.AddScoped<IPasswordRecoveryService, PasswordRecoveryService>();
     }
 
     private static void RegisterWorkoutPlanningServices(IServiceCollection services)
@@ -247,8 +307,10 @@ public static class MauiProgram
 
         services.AddScoped<IReadinessRepository, ReadinessRepository>();
         services.AddScoped<IDailyCheckInDataService, DailyCheckInDataService>();
+        services.AddScoped<IReadinessService>(sp => (DailyCheckInDataService)sp.GetRequiredService<IDailyCheckInDataService>());
         services.AddScoped<IWorkoutInjuryRepository, WorkoutInjuryRepository>();
         services.AddScoped<IWorkoutInjuryService, WorkoutInjuryService>();
+        services.AddScoped<IReadinessSyncOrchestrator, ReadinessSyncOrchestrator>();
         services.AddScoped<IHealthReadinessBridge, HealthReadinessBridge>();
         services.AddScoped<IDailyCheckInNotificationService, DailyCheckInNotificationService>();
 
@@ -265,15 +327,30 @@ public static class MauiProgram
             () => NavigateThenPreloadDashboardAsync(sp),
             () => NavigateAuthenticatedAsync(sp, $"//{nameof(ProfileSetupPage)}"),
             () => NavigateToAsync(nameof(RegisterPage)),
-            sp.GetRequiredService<IPlatformSignInService>()));
+            sp.GetService<IPlatformSignInService>(),
+            () => NavigateToAsync(nameof(PasswordRecoveryPage))));
+
+        services.AddTransient<PasswordRecoveryViewModel>(sp => new PasswordRecoveryViewModel(
+            sp.GetRequiredService<IPasswordRecoveryService>(),
+            () => NavigateToAsync(".."),
+            email => NavigateToExistingLoginAsync(sp, email)));
+
+        services.AddTransient<OtpVerificationViewModel>(sp => new OtpVerificationViewModel(
+            sp.GetRequiredService<IPendingRegistrationService>(),
+            sp.GetRequiredService<IEmailChallengeService>(),
+            () => NavigateAuthenticatedAsync(sp, $"//{nameof(ProfileSetupPage)}"),
+            () => NavigateToAsync("..")));
 
         services.AddTransient<RegisterViewModel>(sp => new RegisterViewModel(
             sp.GetRequiredService<IAuthService>(),
             () => NavigateAuthenticatedAsync(sp, $"//{nameof(ProfileSetupPage)}"),
             () => NavigateToAsync(".."),
-            sp.GetRequiredService<IPlatformSignInService>(),
+            sp.GetService<IPlatformSignInService>(),
             () => NavigateThenPreloadDashboardAsync(sp),
-            email => NavigateToExistingLoginAsync(sp, email)));
+            email => NavigateToExistingLoginAsync(sp, email),
+            sp.GetRequiredService<IPendingRegistrationService>(),
+            () => NavigateToAsync(nameof(OtpVerificationPage)),
+            sp.GetRequiredService<IEmailChallengeService>()));
 
         services.AddSingleton<QuizQuestionCache>();
 
@@ -281,21 +358,28 @@ public static class MauiProgram
             sp.GetRequiredService<IServiceScopeFactory>(),
             sp.GetRequiredService<IAppPreloadService>(),
             sp.GetRequiredService<QuizQuestionCache>(),
-            () => NavigateThenPreloadDashboardAsync(sp)));
+            () => NavigateThenPreloadDashboardAsync(sp),
+            sp.GetRequiredService<IPendingRegistrationService>(),
+            () => NavigateToAsync("//LoginPage")));
 
         services.AddTransient<ProfileSetupViewModel>(sp => new ProfileSetupViewModel(
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<IProfileAccountService>(),
             sp.GetRequiredService<IQuizService>(),
             sp.GetRequiredService<QuizQuestionCache>(),
-            () => NavigateAuthenticatedAsync(sp, $"//{nameof(QuizPage)}")));
+            sp.GetRequiredService<IHealthSyncService>(),
+            () => NavigateAuthenticatedAsync(sp, $"//{nameof(QuizPage)}"),
+            sp.GetRequiredService<IPendingRegistrationService>()));
 
         services.AddSingleton<DashboardViewModel>(sp => new DashboardViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
             () => NavigateToAsync("//CyclePage"),
             () => NavigateToAsync("//WorkoutPage"),
+            workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId),
             () => NavigateToAsync("//NutritionPage"),
-            () => NavigateToAsync(nameof(DailyCheckInPage))));
+            () => NavigateToAsync(nameof(DailyCheckInPage)),
+            sp.GetService<INutritionChangeNotifier>(),
+            () => NavigateToAsync(nameof(PhotoJourneyVaultPage))));
 
         services.AddTransient<DailyCheckInViewModel>(sp => new DailyCheckInViewModel(
             sp.GetRequiredService<IAuthService>(),
@@ -309,13 +393,17 @@ public static class MauiProgram
 
         services.AddSingleton<CycleViewModel>(sp => new CycleViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
-            phase => NavigateWithContextAsync(sp, nameof(CyclePhaseDetailPage), "phase", phase)));
+            phase => NavigateWithContextAsync(sp, nameof(CyclePhaseDetailPage), "phase", phase),
+            () => DateTime.Today,
+            () => NavigateToAsync(nameof(ProfilePersonalInfoPage))));
 
         services.AddTransient<CyclePhaseDetailViewModel>(sp => new CyclePhaseDetailViewModel(() => NavigateToAsync("..")));
 
         services.AddSingleton<NutritionViewModel>(sp => new NutritionViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
-            sp.GetRequiredService<IReferenceDataPreparationService>()));
+            sp.GetRequiredService<IReferenceDataPreparationService>(),
+            route => NavigateToAsync(route),
+            sp.GetService<INutritionChangeNotifier>()));
 
         services.AddSingleton<WorkoutViewModel>(sp => new WorkoutViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
@@ -326,11 +414,26 @@ public static class MauiProgram
             sp.GetRequiredService<IServiceScopeFactory>(),
             route => NavigateToAsync(route)));
 
+        services.AddTransient<FoodLogViewModel>(sp => new FoodLogViewModel(
+            sp.GetRequiredService<INutritionTrackingService>(),
+            () => NavigateToAsync(".."),
+            sp.GetRequiredService<IFoodLookupService>(),
+            sp.GetService<INutritionChangeNotifier>()));
+
+        services.AddTransient<WorkoutHistoryViewModel>(sp => new WorkoutHistoryViewModel(
+            sp.GetRequiredService<IWorkoutArchiveService>(),
+            () => NavigateToAsync("..")));
+
         services.AddSingleton<ProfileViewModel>(sp => new ProfileViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
             new Lazy<IAppPreloadService>(sp.GetRequiredService<IAppPreloadService>),
             () => NavigateToAsync("//LoginPage"),
-            NavigateToAsync));
+            NavigateToAsync,
+            sp.GetRequiredService<IAppAccountPurgeService>()));
+
+        services.AddTransient<PhotoJourneyVaultViewModel>(sp => new PhotoJourneyVaultViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            () => NavigateToAsync("..")));
 
         services.AddTransient<ProfilePersonalInfoViewModel>(sp => new ProfilePersonalInfoViewModel(
             sp.GetRequiredService<IAuthService>(),
@@ -358,12 +461,8 @@ public static class MauiProgram
 
         services.AddTransient<ProfileHealthSyncViewModel>(sp => new ProfileHealthSyncViewModel(
             sp.GetRequiredService<IAuthService>(),
-            sp.GetRequiredService<IProfileAccountService>(),
-            sp.GetRequiredService<ICycleService>(),
-            sp.GetRequiredService<INutritionService>(),
-            sp.GetRequiredService<IWorkoutService>(),
-            sp.GetRequiredService<IDashboardPlanner>(),
-            sp.GetRequiredService<IHealthSyncService>(),
+            sp.GetRequiredService<IReadinessSyncOrchestrator>(),
+            sp.GetRequiredService<IAppPreloadService>(),
             () => NavigateToAsync("..")));
 
         services.AddTransient<ProfileUnitsDisplayViewModel>(sp => new ProfileUnitsDisplayViewModel(
@@ -391,6 +490,7 @@ public static class MauiProgram
         services.AddTransient<LoginPage>();
         services.AddTransient<AppStartupPage>();
         services.AddTransient<RegisterPage>();
+        services.AddTransient<OtpVerificationPage>();
         services.AddTransient<QuizPage>();
         services.AddTransient(sp => PageLoadExtensions.CreateWithTiming<ProfileSetupPage, ProfileSetupViewModel>(sp, vm => new ProfileSetupPage(vm)));
         services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<DashboardPage, DashboardViewModel>(sp, vm => new DashboardPage(vm)));
@@ -410,6 +510,10 @@ public static class MauiProgram
         services.AddTransient<ProfileFeedbackPage>();
         services.AddTransient<ProfilePrivacyPage>();
         services.AddTransient<InjuryLogPage>();
+        services.AddTransient<FoodLogPage>();
+        services.AddTransient<WorkoutHistoryPage>();
+        services.AddTransient<PhotoJourneyVaultPage>();
+        services.AddTransient<PasswordRecoveryPage>();
 
         services.AddSingleton<AppShell>();
     }
@@ -422,10 +526,12 @@ public static class MauiProgram
 #endif
     }
 
+    // Enforces TLS 1.3 and SPKI certificate pinning for USDA FoodData Central requests with cookies disabled.
     private static HttpMessageHandler CreateFdcHttpHandler()
     {
         return new SocketsHttpHandler
         {
+            AllowAutoRedirect = false,
             SslOptions =
             {
                 EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls13,
