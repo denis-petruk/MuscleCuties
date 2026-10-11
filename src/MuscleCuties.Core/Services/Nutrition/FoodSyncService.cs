@@ -58,25 +58,9 @@ public partial class FoodSyncService : IFoodSyncService
                 query,
                 await SearchRemoteAsync(query, pageSize, pageNumber, timeout.Token));
 
-            var detailIds = SelectDetailRefreshIds(remoteResults);
-            IReadOnlyList<FdcFoodDetail> fetchedDetails = [];
-            if (detailIds.Count > 0)
-                try
-                {
-                    fetchedDetails = await GetRemoteDetailsAsync(detailIds, timeout.Token);
-                }
-                catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
-                {
-                    errors.Add("FDC detail refresh timed out. Search-result nutrition was used instead.");
-                }
-                catch (HttpRequestException)
-                {
-                    errors.Add("FDC detail refresh failed.");
-                }
-
-            var details = BuildDetailsFromSearchResults(
-                remoteResults,
-                fetchedDetails);
+            // The remote boundary permits only generic food-name searches. FDC IDs
+            // are not sent back to the service, even when search nutrients are sparse.
+            var details = BuildDetailsFromSearchResults(remoteResults, []);
 
             await UpsertFoodsAsync(details, log, errors);
 
@@ -119,40 +103,29 @@ public partial class FoodSyncService : IFoodSyncService
                 cancellationToken));
     }
 
+    public async Task<IReadOnlyList<FoodItem>> SearchRemoteFoodsAsync(
+        string query, int maxResults = 20, CancellationToken cancellationToken = default)
+    {
+        var safeQuery = GenericFoodQueryPolicy.NormalizeOrEmpty(query);
+        if (safeQuery.Length == 0)
+            return [];
+
+        var clampedLimit = Math.Clamp(maxResults, 1, 50);
+        var results = await SearchRemoteAsync(safeQuery, clampedLimit, 1, cancellationToken);
+        return FoodSearchResultFilter.PrepareFoodItems(safeQuery,
+                FoodSearchResultFilter.PrepareRemoteResults(safeQuery, results)
+                    .Select(result => FdcFoodMapper.ApplyToFoodItem(CreateDetailFromSearchResult(result))))
+            .Take(clampedLimit)
+            .ToList();
+    }
+
     public async Task<FoodItem?> FetchDetailAsync(int fdcId, CancellationToken cancellationToken = default)
     {
         if (fdcId <= 0)
             return null;
 
         var cached = await _nutritionRepository.GetFoodItemByFdcIdAsync(fdcId);
-        if (IsUsableCachedFdcFood(cached))
-            return cached;
-
-        var log = await StartLogAsync();
-        var errors = new List<string>();
-
-        try
-        {
-            var detail = await DatabaseOperationGate.AwaitExternalAsync(
-                () => _fdcApiClient.GetFoodAsync(fdcId, cancellationToken));
-            if (detail is null)
-            {
-                log.ItemsFailed = 1;
-                errors.Add("FDC food was not found.");
-                await CompleteLogAsync(log, "Failed", errors);
-                return null;
-            }
-
-            var item = await UpsertFoodAsync(detail);
-            log.ItemsUpserted = 1;
-            await CompleteLogAsync(log, "Success", errors);
-            return item;
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or HttpRequestException)
-        {
-            await CompleteLogAsync(log, "Failed", errors, ex);
-            throw;
-        }
+        return IsUsableCachedFdcFood(cached) ? cached : null;
     }
 
     private static bool IsUsableCachedFdcFood(FoodItem? food)
