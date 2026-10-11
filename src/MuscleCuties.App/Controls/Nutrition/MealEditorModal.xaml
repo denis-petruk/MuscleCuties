@@ -38,6 +38,7 @@
                 <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" Margin="20,0" />
 
                 <CollectionView Grid.Row="2" ItemsSource="{Binding MealIngredients}"
+                                ItemSizingStrategy="MeasureFirstItem"
                                 IsVisible="{Binding IsFoodFinderCollapsed}" SelectionMode="None" Margin="20,0">
                     <CollectionView.Header>
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*,*,*" ColumnSpacing="12" RowSpacing="4" Padding="0,20,0,12">
@@ -51,19 +52,15 @@
                             </Border>
                             <Image Grid.Row="2" Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}" WidthRequest="24" HeightRequest="24" VerticalOptions="Center" Margin="0,12,0,0" />
                             <Label Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding MealDraftCaloriesText}" Style="{StaticResource SubHeadline}" Margin="0,12,0,0" />
-                            <Grid Grid.Row="3" Grid.ColumnSpan="4" ColumnDefinitions="*,*,*" ColumnSpacing="12" Margin="0,12,0,8">
-                                <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
-                                    <Label Text="Protein" Style="{StaticResource CaptionLabel}" />
-                                    <Label Grid.Row="1" Text="{Binding MealDraftProteinText}" Style="{StaticResource CardTitle}" TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource ProteinDark}}" />
-                                </Grid>
-                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="4">
-                                    <Label Text="Carbs" Style="{StaticResource CaptionLabel}" />
-                                    <Label Grid.Row="1" Text="{Binding MealDraftCarbsText}" Style="{StaticResource CardTitle}" TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource CarbsDark}}" />
-                                </Grid>
-                                <Grid Grid.Column="2" RowDefinitions="Auto,Auto" RowSpacing="4">
-                                    <Label Text="Fat" Style="{StaticResource CaptionLabel}" />
-                                    <Label Grid.Row="1" Text="{Binding MealDraftFatsText}" Style="{StaticResource CardTitle}" TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource FatsDark}}" />
-                                </Grid>
+                            <Grid Grid.Row="3" Grid.ColumnSpan="4" ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="4" Margin="0,12,0,8">
+                                <Label Grid.Row="0" Grid.Column="0" Text="Protein" Style="{StaticResource CaptionLabel}" />
+                                <Label Grid.Row="1" Grid.Column="0" Text="{Binding MealDraftProteinText}" Style="{StaticResource CardTitle}" TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource ProteinDark}}" />
+
+                                <Label Grid.Row="0" Grid.Column="1" Text="Carbs" Style="{StaticResource CaptionLabel}" />
+                                <Label Grid.Row="1" Grid.Column="1" Text="{Binding MealDraftCarbsText}" Style="{StaticResource CardTitle}" TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource CarbsDark}}" />
+
+                                <Label Grid.Row="0" Grid.Column="2" Text="Fat" Style="{StaticResource CaptionLabel}" />
+                                <Label Grid.Row="1" Grid.Column="2" Text="{Binding MealDraftFatsText}" Style="{StaticResource CardTitle}" TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource FatsDark}}" />
                             </Grid>
                             <Button Grid.Row="4" Grid.ColumnSpan="4" Text="Add food" Command="{Binding OpenFoodFinderCommand}" Style="{StaticResource ButtonSecondary}" MinimumHeightRequest="48" />
                         </Grid>
@@ -102,7 +99,9 @@
                     </Grid>
                     <Label Grid.Row="1" Text="Generic food names may check the catalog. Other searches stay local."
                            Style="{StaticResource MutedLabel}" FontSize="14" LineBreakMode="WordWrap" />
-                    <CollectionView Grid.Row="2" ItemsSource="{Binding FoodSearchResults}" SelectionMode="None">
+                    <CollectionView Grid.Row="2" ItemsSource="{Binding FoodSearchResults}"
+                                    ItemSizingStrategy="MeasureFirstItem"
+                                    SelectionMode="None">
                         <CollectionView.EmptyView>
                             <Label Text="No match yet. Try another name or create a custom food."
                                    Style="{StaticResource MutedLabel}" HorizontalTextAlignment="Center" Margin="0,16" />
@@ -124,6 +123,7 @@
                         </CollectionView.ItemTemplate>
                         <CollectionView.Footer>
                             <Button Text="{Binding BrowseMoreFoodsButtonText}" Command="{Binding BrowseMoreFoodsCommand}" Style="{StaticResource ButtonLink}"
+                                    x:DataType="vm:NutritionViewModel"
                                     IsVisible="{Binding ShowBrowseMoreFoods}" MinimumHeightRequest="48" />
                         </CollectionView.Footer>
                     </CollectionView>

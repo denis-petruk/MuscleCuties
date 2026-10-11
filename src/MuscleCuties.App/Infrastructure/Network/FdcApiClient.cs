@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -9,7 +10,7 @@ using MuscleCuties.Core.Services.Nutrition;
 
 namespace MuscleCuties.App.Infrastructure.Network;
 
-public sealed class FdcApiClient : IFdcApiClient
+public sealed partial class FdcApiClient : IFdcApiClient
 {
     private const int MaxRateLimitRetries = 1;
     private const int MaxServerErrorRetries = 1;
@@ -52,39 +53,18 @@ public sealed class FdcApiClient : IFdcApiClient
         return payload?.Foods ?? [];
     }
 
-    public async Task<FdcFoodDetail?> GetFoodAsync(int fdcId, CancellationToken cancellationToken = default)
+    public Task<FdcFoodDetail?> GetFoodAsync(int fdcId, CancellationToken cancellationToken = default)
     {
-        if (fdcId <= 0 || !CanSendRequest())
-            return null;
-
-        var path = "food/{fdcId}?format=abridged".Replace("{fdcId}", fdcId.ToString());
-        return await SendAndReadAsync<FdcFoodDetail>(
-            () => new HttpRequestMessage(HttpMethod.Get, path),
-            FdcJsonContext.Default.FdcFoodDetail,
-            cancellationToken).ConfigureAwait(false);
+        // Retain the interface for local callers; ID-based requests are outside
+        // the app's generic-query-only network policy.
+        return Task.FromResult<FdcFoodDetail?>(null);
     }
 
-    public async Task<IReadOnlyList<FdcFoodDetail>> GetFoodsAsync(
+    public Task<IReadOnlyList<FdcFoodDetail>> GetFoodsAsync(
         IEnumerable<int> fdcIds,
         CancellationToken cancellationToken = default)
     {
-        if (!CanSendRequest())
-            return [];
-
-        var ids = fdcIds.Where(id => id > 0).Distinct().ToList();
-        if (ids.Count == 0)
-            return [];
-
-        const string path = "foods";
-        var payload = await SendAndReadAsync<List<FdcFoodDetail>>(
-            () => new HttpRequestMessage(HttpMethod.Post, path)
-            {
-                Content = JsonContent.Create(new FdcFoodsRequest { FdcIds = ids }, FdcJsonContext.Default.FdcFoodsRequest)
-            },
-            FdcJsonContext.Default.ListFdcFoodDetail,
-            cancellationToken).ConfigureAwait(false);
-
-        return payload ?? [];
+        return Task.FromResult<IReadOnlyList<FdcFoodDetail>>([]);
     }
 
     internal static string NormalizeGenericIngredientQuery(string query) =>
@@ -96,8 +76,8 @@ public sealed class FdcApiClient : IFdcApiClient
         {
             ["query"] = safeQuery,
             ["dataType"] = "Foundation,SR Legacy,Survey (FNDDS),Branded",
-            ["pageSize"] = pageSize.ToString(),
-            ["pageNumber"] = pageNumber.ToString(),
+            ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
+            ["pageNumber"] = pageNumber.ToString(CultureInfo.InvariantCulture),
             ["sortBy"] = "score",
             ["sortOrder"] = "desc"
         };
@@ -126,7 +106,8 @@ public sealed class FdcApiClient : IFdcApiClient
 
             if (!response.IsSuccessStatusCode)
             {
-                LogFailure("FoodData Central returned {StatusCode}.", response.StatusCode);
+                if (_logger is not null)
+                    LogNonSuccessStatus(_logger, response.StatusCode);
                 return default;
             }
 
@@ -136,17 +117,20 @@ public sealed class FdcApiClient : IFdcApiClient
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            LogFailure("FoodData Central request timed out.");
+            if (_logger is not null)
+                LogRequestTimedOut(_logger);
             return default;
         }
         catch (HttpRequestException ex)
         {
-            LogFailure(ex, "FoodData Central request failed.");
+            if (_logger is not null && _logger.IsEnabled(LogLevel.Information))
+                LogRequestFailed(_logger, ex.GetType().Name, ex);
             return default;
         }
         catch (JsonException ex)
         {
-            LogFailure(ex, "FoodData Central returned an unreadable payload.");
+            if (_logger is not null && _logger.IsEnabled(LogLevel.Information))
+                LogUnreadablePayload(_logger, ex.GetType().Name, ex);
             return default;
         }
     }
@@ -191,7 +175,8 @@ public sealed class FdcApiClient : IFdcApiClient
     {
         if (!HasInternetAccess())
         {
-            LogFailure("FoodData Central request skipped because the device is offline.");
+            if (_logger is not null)
+                LogOfflineSkipped(_logger);
             return false;
         }
 
@@ -230,15 +215,20 @@ public sealed class FdcApiClient : IFdcApiClient
         return delay > MaxRateLimitDelay ? MaxRateLimitDelay : delay;
     }
 
-    private void LogFailure(string message, params object?[] args)
-    {
-        _logger?.LogInformation(message, args);
-    }
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "FoodData Central request skipped because the device is offline.")]
+    private static partial void LogOfflineSkipped(ILogger logger);
 
-    private void LogFailure(Exception exception, string message)
-    {
-        _logger?.LogInformation("{Message} Failure type: {ExceptionType}.", message, exception.GetType().Name);
-    }
+    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "FoodData Central returned {StatusCode}.")]
+    private static partial void LogNonSuccessStatus(ILogger logger, HttpStatusCode statusCode);
+
+    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "FoodData Central request timed out.")]
+    private static partial void LogRequestTimedOut(ILogger logger);
+
+    [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "FoodData Central request failed. Failure type: {ExceptionType}.")]
+    private static partial void LogRequestFailed(ILogger logger, string exceptionType, Exception ex);
+
+    [LoggerMessage(EventId = 5, Level = LogLevel.Information, Message = "FoodData Central returned an unreadable payload. Failure type: {ExceptionType}.")]
+    private static partial void LogUnreadablePayload(ILogger logger, string exceptionType, Exception ex);
 }
 
 [JsonSourceGenerationOptions(JsonSerializerDefaults.Web)]
@@ -246,6 +236,6 @@ public sealed class FdcApiClient : IFdcApiClient
 [JsonSerializable(typeof(FdcFoodDetail))]
 [JsonSerializable(typeof(List<FdcFoodDetail>))]
 [JsonSerializable(typeof(FdcFoodsRequest))]
-internal partial class FdcJsonContext : JsonSerializerContext
+internal sealed partial class FdcJsonContext : JsonSerializerContext
 {
 }
