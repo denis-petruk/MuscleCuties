@@ -267,6 +267,27 @@
         </Setter>
     </Style>
 
+    <Style x:Key="CircleIconButton" TargetType="Border">
+        <Setter Property="WidthRequest" Value="44" />
+        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="22" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource Gray200},
+                                        Dark={StaticResource Gray900}}" />
+        <Setter Property="Stroke"
+                Value="{AppThemeBinding Light={StaticResource Gray300},
+                                        Dark={StaticResource Gray800}}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
     <Style x:Key="ModalCloseIcon" TargetType="Path">
         <Setter Property="Data" Value="M6 6L18 18M18 6L6 18" />
         <Setter Property="Stroke"

@@ -20,6 +20,8 @@ public interface INutritionService
 
     Task<MacroNutrients> GetConsumedTotalsAsync(int userId, DateTime date);
     Task<List<FoodItem>> SearchFoodItemsAsync(string query, int pageSize = 15, int pageNumber = 1);
+    Task<List<FoodItem>> SearchFoodsAsync(string query, int pageSize = 15, int pageNumber = 1) =>
+        SearchFoodItemsAsync(query, pageSize, pageNumber);
     Task<FoodItem> CreateCustomFoodAsync(CustomFoodInput input);
     Task<List<LoggedMeal>> GetLoggedMealsByDateAsync(int userId, DateTime date);
     Task<LoggedMeal?> GetLoggedMealAsync(int userId, int loggedMealId);
@@ -46,7 +48,9 @@ public interface INutritionService
         int userId,
         IReadOnlyCollection<MealIngredientInput> ingredients,
         MealType mealType,
-        DateTime loggedAt);
+        DateTime loggedAt,
+        string? acceptedSuggestionName = null,
+        CyclePhase? acceptedSuggestionPhase = null);
 
     Task UpdateMealAsync(
         int userId,
@@ -55,4 +59,5 @@ public interface INutritionService
         MealType mealType,
         DateTime loggedAt);
 
+    Task DeleteMealAsync(int userId, int loggedMealId);
 }

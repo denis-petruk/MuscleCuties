@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 
 namespace MuscleCuties.Core.Services.Nutrition;
@@ -39,8 +40,9 @@ public partial class FoodSyncService
 
                 log.ItemsUpserted++;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Trace.WriteLine($"[{nameof(FoodSyncService)}] FDC food {detail.FdcId} mapping failed ({ex.GetType().Name}).");
                 log.ItemsFailed++;
                 errors.Add("FDC food could not be saved.");
             }
@@ -49,26 +51,10 @@ public partial class FoodSyncService
         await _nutritionRepository.SaveFoodItemsAsync(newItems, updatedItems);
     }
 
-    private async Task<FoodItem> UpsertFoodAsync(FdcFoodDetail detail)
-    {
-        var versions = new List<FoodItemVersion>();
-        var existing = await _nutritionRepository.GetFoodItemByFdcIdAsync(detail.FdcId);
-        var item = BuildFoodItem(detail, existing, versions);
-
-        await _foodSyncRepository.AddFoodItemVersionsAsync(versions);
-
-        if (existing is null)
-            await _nutritionRepository.AddAsync(item);
-        else
-            await _nutritionRepository.UpdateAsync(item);
-
-        return item;
-    }
-
     private static FoodItem BuildFoodItem(
         FdcFoodDetail detail,
         FoodItem? existing,
-        ICollection<FoodItemVersion> versions)
+        List<FoodItemVersion> versions)
     {
         var now = DateTime.UtcNow;
 
