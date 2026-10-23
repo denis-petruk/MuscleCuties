@@ -51,6 +51,7 @@ public partial class NutritionViewModel
 
     private void StartSuggestedMeal()
     {
+        _suggestionMealTime = EntryMealTime;
         SuggestionMealType = EntryMealType;
         IsDayPlanMode = false;
         IsMealEntryModalVisible = false;
@@ -69,6 +70,7 @@ public partial class NutritionViewModel
 
     private void StartDayPlan()
     {
+        _suggestionMealTime = null;
         IsMealEntryModalVisible = false;
         IsDayPlanMode = true;
         IsMealTypePickerVisible = false;
