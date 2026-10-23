@@ -65,3 +65,5 @@ The current Lambda archive is `artifacts/deploy/MuscleCuties.Server-net10-linux-
 **UI audit continuation (2026-10-23):** Train now opens a full-height activity-choice sheet; tapping its bordered activity card opens the matching activity intro. This flow was visually verified on iPhone 17 Pro Max. Today streak icons and Units & Display selection styling were aligned with existing Activity Preferences treatment. The iOS simulator build passed with zero warnings/errors and 257 Core tests passed. Exercise logging/completion acceptance remains open. Changes are pushed to the private GitLab `test-flight-beta` branch.
 
 Exercise UI review continued in Simulator: Tips and technique expands, and the swap panel opens with its availability message. The completion/save path remains unverified.
+
+The activity-picker Close action leaves Train visible; manual Finish session also returns to Train. Automatic return after completion remains an open acceptance check.
