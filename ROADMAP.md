@@ -4,7 +4,7 @@ The active roadmap is maintained at [docs/v1/ROADMAP.md](docs/v1/ROADMAP.md).
 
 ## Quick Summary
 
-- **Audit continuation:** Finish the session-modal and completion flow, meal chooser and optional-micronutrient save, shared profile typography, and vault persistence checks. Today streak icons and Units picker styling are implemented. Keep steps gated until the current-day source and step-goal estimate rule are verified; keep unapproved numerical readiness and clinical suggestions disabled. See the audit.
+- **Audit continuation:** Session completion now has a reliable Train refresh on return; verify the full exercise log and automatic return with a controlled synthetic account. Then finish meal chooser and optional-micronutrient save, shared profile typography, and vault persistence checks. Today streak icons and Units picker styling are implemented. Keep steps gated until the current-day source and step-goal estimate rule are verified; keep unapproved numerical readiness and clinical suggestions disabled. See the audit.
 
 - **Workout planning v0.2:** Core rules now have a live check-in capture path for optional sleep-quality, soreness, and stress values, timezone association, server timestamping, and PostgreSQL revision storage. Score display, suggestions, and training prescriptions remain gated pending verified section-level policy approval; the repository privacy page is a publication draft without workout sign-off, and the legacy plan generator remains active. Next, persist and connect plan previews/revisions, correct generator fallback and phase behavior, then wire reviewed policies through the API and MAUI. Full task breakdown: `docs/v1/WORKOUT_PLANNING_V02_HANDOFF.md`.
 

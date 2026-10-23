@@ -14,6 +14,7 @@ public partial class WorkoutSessionPage : ContentPage
     private static readonly TimeSpan CompletionDisplayTime = TimeSpan.FromMilliseconds(1200);
     private readonly INavigationContextService _navigationContext;
     private readonly WorkoutSessionViewModel _viewModel;
+    private readonly WorkoutViewModel _workoutViewModel;
     private int? _loadedWorkoutDayId;
     private int _workoutDayId;
     private string? _activityTag;
@@ -21,10 +22,12 @@ public partial class WorkoutSessionPage : ContentPage
 
     public WorkoutSessionPage(
         WorkoutSessionViewModel vm,
-        INavigationContextService navigationContext)
+        INavigationContextService navigationContext,
+        WorkoutViewModel workoutViewModel)
     {
         this.InitializeWithTiming(InitializeComponent);
         _navigationContext = navigationContext;
+        _workoutViewModel = workoutViewModel;
         BindingContext = _viewModel = vm;
     }
 
@@ -52,7 +55,7 @@ public partial class WorkoutSessionPage : ContentPage
     {
         ++_completionRevision;
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
-        Handler?.MauiContext?.Services.GetService<WorkoutViewModel>()?.Invalidate();
+        _workoutViewModel.Invalidate();
         base.OnNavigatingFrom(args);
     }
 
