@@ -2,7 +2,7 @@
 
 **Effective Date:** 2026-10-23
 
-**UI audit update (2026-10-23):** Train now presents the activity-choice sheet before the exercise flow and passes the selected activity through navigation. The iOS simulator build passed with zero warnings/errors and 257 Core tests passed. The updated app launched on iPhone 17 Pro Max; direct interaction with the activity picker remains to be verified. Changes are pushed to the private GitLab `test-flight-beta` branch.
+**UI audit update (2026-10-23):** Train presents a full-height activity-choice sheet and passes the selected activity through navigation into its intro. This was visually verified on iPhone 17 Pro Max. The iOS simulator build passed with zero warnings/errors and 257 Core tests passed. Exercise logging/completion acceptance remains open. Changes are pushed to the private GitLab `test-flight-beta` branch.
 
 Audit handoff (2026-10-23): session, meal entry/custom food, You menu, Feedback/Privacy, and photo vault changes are present in source. Final simulator session/meal flows and an actual photo save/reopen are unverified. New custom-food company/micronutrient fields are local only and the backend is not deployed. The qualified-review register v0.2 documents no section-level approval for readiness scores or automated guidance.
 
