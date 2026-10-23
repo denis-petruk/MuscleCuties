@@ -34,6 +34,11 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_EnergySectionTitle"] = "ENERGY";
         English["Dashboard_CheckIn_EnergyVeryHighLabel"] = "Very high";
         English["Dashboard_CheckIn_EnergyVeryLowLabel"] = "Very low";
+        English["Dashboard_CheckIn_PlanningTitle"] = "Workout planning";
+        English["Dashboard_CheckIn_PlanningSleepQuality"] = "Sleep quality";
+        English["Dashboard_CheckIn_PlanningSoreness"] = "Muscle soreness";
+        English["Dashboard_CheckIn_PlanningStress"] = "Stress";
+        English["Dashboard_CheckIn_PlanningSelectRating"] = "Choose a rating";
         English["Dashboard_CheckIn_PageTitle"] = "Daily check-in";
         English["Dashboard_CheckIn_PainMild"] = "Mild";
         English["Dashboard_CheckIn_PainMildA11y"] = "Pain: Mild";

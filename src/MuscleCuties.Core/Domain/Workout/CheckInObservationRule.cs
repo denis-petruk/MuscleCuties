@@ -21,6 +21,8 @@ public static class CheckInObservationRule
     private const int MaximumSoreness = 3;
     private const decimal MinimumPreviousDayLoad = 0m;
     private const decimal MaximumPreviousDayLoad = 100_000m;
+    private const int MinimumPlanningScaleValue = 1;
+    private const int MaximumPlanningScaleValue = 5;
 
     public static bool IsSupportedRange(Guid userId, DateOnly from, DateOnly through) =>
         userId != Guid.Empty &&
@@ -56,6 +58,28 @@ public static class CheckInObservationRule
         IsWithin(sleepQuality, MinimumSleepQuality, MaximumSleepQuality) &&
         IsWithin(soreness, MinimumSoreness, MaximumSoreness) &&
         IsWithin(previousDayLoad, MinimumPreviousDayLoad, MaximumPreviousDayLoad);
+
+    public static bool ArePlanningInputsValid(int? sleepQuality, int? soreness, int? stress, string? timeZoneId) =>
+        IsWithin(sleepQuality, MinimumPlanningScaleValue, MaximumPlanningScaleValue) &&
+        IsWithin(soreness, MinimumPlanningScaleValue, MaximumPlanningScaleValue) &&
+        IsWithin(stress, MinimumPlanningScaleValue, MaximumPlanningScaleValue) &&
+        ((sleepQuality is null && soreness is null && stress is null && timeZoneId is null) ||
+         (timeZoneId is not null && IsValidTimeZoneId(timeZoneId)));
+
+    private static bool IsValidTimeZoneId(string timeZoneId)
+    {
+        if (string.IsNullOrWhiteSpace(timeZoneId))
+            return false;
+        try
+        {
+            _ = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            return true;
+        }
+        catch (Exception exception) when (exception is TimeZoneNotFoundException or InvalidTimeZoneException)
+        {
+            return false;
+        }
+    }
 
     private static bool IsWithin(decimal? value, decimal minimum, decimal maximum) =>
         value is null || value >= minimum && value <= maximum;

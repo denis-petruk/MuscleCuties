@@ -337,11 +337,23 @@ public sealed class SymptomLogConfiguration : IEntityTypeConfiguration<SymptomLo
 
 public sealed class DailyReadinessLogConfiguration : IEntityTypeConfiguration<DailyReadinessLogRecord>
 {
+    private const int MinimumPlanningScaleValue = 1;
+    private const int MaximumPlanningScaleValue = 5;
+    private const long InitialPlanningRevision = 0;
+    private static readonly string PlanningScaleConstraint = $"(planning_sleep_quality IS NULL OR planning_sleep_quality BETWEEN {MinimumPlanningScaleValue} AND {MaximumPlanningScaleValue}) AND (planning_soreness IS NULL OR planning_soreness BETWEEN {MinimumPlanningScaleValue} AND {MaximumPlanningScaleValue}) AND (planning_stress IS NULL OR planning_stress BETWEEN {MinimumPlanningScaleValue} AND {MaximumPlanningScaleValue})";
+    private static readonly string PlanningRevisionConstraint = $"planning_revision >= {InitialPlanningRevision}";
+
     public void Configure(EntityTypeBuilder<DailyReadinessLogRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "daily_readiness_logs");
         builder.HasIndex(x => new { x.UserId, x.Date }).IsDescending(false, true).HasDatabaseName("ix_daily_readiness_logs_owner_date_desc");
         builder.Property(x => x.ReadinessTier).HasConversion<string>();
+        builder.Property(x => x.PlanningRevision).HasDefaultValue(InitialPlanningRevision);
+        builder.ToTable("daily_readiness_logs", "app", table =>
+        {
+            table.HasCheckConstraint("ck_daily_readiness_logs_planning_scales", PlanningScaleConstraint);
+            table.HasCheckConstraint("ck_daily_readiness_logs_planning_revision", PlanningRevisionConstraint);
+        });
     }
 }
 

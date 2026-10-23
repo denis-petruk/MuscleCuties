@@ -10,7 +10,11 @@ public sealed record SubmitDailyCheckInRequest(
     int EnergyLevel,
     int PainLevel,
     bool HasBloating,
-    double? BodyWeightKg);
+    double? BodyWeightKg,
+    int? PlanningSleepQuality = null,
+    int? PlanningSoreness = null,
+    int? PlanningStress = null,
+    string? PlanningTimeZoneId = null);
 
 public sealed record SubmitDailyCheckInResponse(
     int ReadinessScore,

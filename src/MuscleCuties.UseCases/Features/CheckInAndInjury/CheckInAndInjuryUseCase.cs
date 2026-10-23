@@ -25,6 +25,9 @@ public sealed class CheckInAndInjuryUseCase(ICheckInAndInjuryStore store)
                 request.Sleep3dAvg, request.StepsYesterday, request.Steps7dAvg, request.Energy, request.Pain,
                 request.WeightKg, request.SleepQuality, request.Soreness, request.PreviousDayLoad))
             throw new ArgumentOutOfRangeException(nameof(request), "Check-in fields must be within supported clinical bounds.");
+        if (!CheckInObservationRule.ArePlanningInputsValid(request.PlanningSleepQuality, request.PlanningSoreness,
+                request.PlanningStress, request.PlanningTimeZoneId))
+            throw new ArgumentOutOfRangeException(nameof(request), "Workout planning check-in fields are invalid.");
 
         return store.SaveCheckInAsync(request, cancellationToken);
     }

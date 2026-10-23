@@ -209,6 +209,38 @@
                     </Grid>
                 </Border>
 
+                <!-- Workout planning check-in (separate from the legacy readiness inputs) -->
+                <Border Style="{StaticResource CheckInSection}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningTitle}"
+                               Style="{StaticResource CheckInSectionTitle}" />
+                        <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}"
+                               Style="{StaticResource CaptionLabel}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Picker Title="{loc:LocalizedText Dashboard_CheckIn_PlanningSelectRating}"
+                                    ItemsSource="{Binding PlanningScaleOptions}"
+                                    SelectedItem="{Binding PlanningSleepQuality, Mode=TwoWay}"
+                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}" />
+                        </Border>
+                        <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSoreness}"
+                               Style="{StaticResource CaptionLabel}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Picker Title="{loc:LocalizedText Dashboard_CheckIn_PlanningSelectRating}"
+                                    ItemsSource="{Binding PlanningScaleOptions}"
+                                    SelectedItem="{Binding PlanningSoreness, Mode=TwoWay}"
+                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningSoreness}" />
+                        </Border>
+                        <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningStress}"
+                               Style="{StaticResource CaptionLabel}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Picker Title="{loc:LocalizedText Dashboard_CheckIn_PlanningSelectRating}"
+                                    ItemsSource="{Binding PlanningScaleOptions}"
+                                    SelectedItem="{Binding PlanningStress, Mode=TwoWay}"
+                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningStress}" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+
                 <!-- Bloating -->
                 <Border Style="{StaticResource CheckInSection}">
                     <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center"

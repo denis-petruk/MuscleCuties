@@ -8,6 +8,11 @@ namespace MuscleCuties.UI.ViewModels.Dashboard;
 
 public partial class DailyCheckInViewModel : ObservableObject
 {
+    private const int MinimumPlanningScaleValue = 1;
+    private const int MaximumPlanningScaleValue = 5;
+    private readonly IReadOnlyList<int> _planningScaleOptions =
+        Enumerable.Range(MinimumPlanningScaleValue, MaximumPlanningScaleValue - MinimumPlanningScaleValue + 1).ToArray();
+
     private readonly IDailyCheckInUseCase _checkIn;
     private readonly Action _invalidateDashboard;
     private readonly Func<Task> _onCompletedAsync;
@@ -18,6 +23,9 @@ public partial class DailyCheckInViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isCompleted;
     [ObservableProperty] private int _painLevel;
+    [ObservableProperty] private int? _planningSleepQuality;
+    [ObservableProperty] private int? _planningSoreness;
+    [ObservableProperty] private int? _planningStress;
     [ObservableProperty] private string _readinessScoreText = string.Empty;
     [ObservableProperty] private string _readinessTierText = string.Empty;
     [ObservableProperty] private string _sessionSummaryText = string.Empty;
@@ -38,6 +46,7 @@ public partial class DailyCheckInViewModel : ObservableObject
 
     public string SleepDisplay => $"{SleepHours:F1}h";
     public string EnergyDisplay => $"{EnergyLevel} / 5";
+    public IReadOnlyList<int> PlanningScaleOptions => _planningScaleOptions;
 
     public string PainDisplay => PainLevel switch
     {
@@ -87,7 +96,8 @@ public partial class DailyCheckInViewModel : ObservableObject
         {
             var result = await _checkIn.SubmitAsync(new SubmitDailyCheckInRequest(
                 DateOnly.FromDateTime(DateTime.Today), SleepHours, EnergyLevel,
-                PainLevel, HasBloating, BodyWeight));
+                PainLevel, HasBloating, BodyWeight, PlanningSleepQuality, PlanningSoreness, PlanningStress,
+                TimeZoneInfo.Local.Id));
             ReadinessScoreText = result.ReadinessScore.ToString(CultureInfo.InvariantCulture);
             ReadinessTierText = result.ReadinessTier;
             SessionSummaryText = result.SessionSummary;
