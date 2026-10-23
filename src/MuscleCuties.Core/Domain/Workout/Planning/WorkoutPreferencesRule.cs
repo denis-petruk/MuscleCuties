@@ -11,14 +11,13 @@ public static class WorkoutPreferencesRule
         activityTypes is not null && activityTypes.Any(value => value is
             (int)WorkoutActivityType.StrengthHighIntensity or
             (int)WorkoutActivityType.HighVolumeStrength or
-            (int)WorkoutActivityType.RockClimbing);
+            (int)WorkoutActivityType.GeneralStrength);
 
     public static bool IsValid(IReadOnlyList<int>? activityTypes, int strengthStyle, int daysPerWeek) =>
         activityTypes is { Count: > 0 } &&
         activityTypes.All(value => Enum.IsDefined(typeof(WorkoutActivityType), value)) &&
         Enum.IsDefined(typeof(StrengthTrainingStyle), strengthStyle) &&
-        daysPerWeek is >= MinimumDaysPerWeek and <= MaximumDaysPerWeek &&
-        HasStrengthActivity(activityTypes);
+        daysPerWeek is >= MinimumDaysPerWeek and <= MaximumDaysPerWeek;
 
     public static bool IsValidEquipmentLevel(string? equipmentLevel) =>
         equipmentLevel is null ||

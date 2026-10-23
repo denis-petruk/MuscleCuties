@@ -14,9 +14,6 @@ public sealed class ProfileWorkoutPreferencesUseCase(IProfileWorkoutPreferencesS
         WorkoutPreferencesDto preferences, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(preferences);
-        if (!WorkoutPreferencesRule.HasStrengthActivity(preferences.ActivityTypes))
-            return new WorkoutPreferencesResult(WorkoutPreferencesError.StrengthActivityRequired);
-
         if (!WorkoutPreferencesRule.IsValid(preferences.ActivityTypes, preferences.StrengthStyle, preferences.DaysPerWeek))
             return new WorkoutPreferencesResult(WorkoutPreferencesError.InvalidPreferences);
 

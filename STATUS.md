@@ -2,6 +2,8 @@
 
 The active delivery status is maintained at [docs/v1/STATUS.md](docs/v1/STATUS.md).
 
+- **Workout planning policy response (2026-10-23):** MC-WORKOUT-POLICY 0.1.0 approval is reported by the product owner; reviewer details and approval date are unavailable. The eight named options and added general strength, walking, rowing, elliptical, mobility, gentle recovery, rest, and other preferences now retain distinct identities. New generation is blocked because the supplied policy text still omits numerical prescriptions and HIIT/progression conditions. Registration no longer creates an unconfirmed plan; profile edits save without replacement; existing plans remain readable. Structured Core proposals remain unwired. The check-in score keeps its separate approval gate. Core tests passed 290/290, registration unit tests 34/34, and iOS simulator build passed with zero warnings/errors. See `docs/v1/WORKOUT_PLANNING_V02_HANDOFF.md`.
+
 - **Onboarding audit recheck (2026-10-23):** Account-confirmation spacing and Profile setup placement/card styling were confirmed in source. Shared activity and strength-style pickers now have English/Russian selected-state accessibility hints. Current iOS simulator build passed with zero warnings/errors; Core tests passed 265/265. Controlled fresh-registration and VoiceOver checks remain open.
 
 ## Quick Summary (2026-10-23)

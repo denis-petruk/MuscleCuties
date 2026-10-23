@@ -19,6 +19,8 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
     private const string ConnectionVariable = "MC_REGISTRATION_WRITE_TEST_POSTGRES";
     private const string LocalHost = "127.0.0.1";
     private const string SyntheticDatabasePrefix = "mc_";
+    private const int SyntheticStrengthSets = 3;
+    private const int SyntheticStrengthRepetitions = 10;
 
     [Xunit.Fact]
     public async Task GroupedMealsAndCustomFoodsRoundTripAgainstPostgreSql()
@@ -177,10 +179,41 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             var workoutStore = new PostgresWorkoutPlanAndSessionStore(database, planner);
             var archiveStore = new PostgresWorkoutArchiveStore(database);
 
-            var overview = await workoutStore.LoadOverviewAsync(
+            var emptyOverview = await workoutStore.LoadOverviewAsync(
                 userId,
                 new WorkoutOverviewRequest(today),
                 CancellationToken.None);
+            Xunit.Assert.False(await database.WorkoutPlans.AsNoTracking()
+                .AnyAsync(plan => plan.UserId == userId));
+            Xunit.Assert.DoesNotContain(emptyOverview.Workouts, workout => workout.WorkoutDayId > 0);
+
+            var exerciseId = await database.Exercises.AsNoTracking()
+                .OrderBy(exercise => exercise.Id)
+                .Select(exercise => exercise.Id)
+                .FirstAsync();
+            var existingPlanId = Guid.CreateVersion7();
+            var existingDayId = Guid.CreateVersion7();
+            database.WorkoutPlans.Add(new WorkoutPlanRecord
+            {
+                Id = existingPlanId, UserId = userId, Name = "Synthetic existing plan",
+                IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = nowUtc
+            });
+            database.WorkoutDays.Add(new WorkoutDayRecord
+            {
+                Id = existingDayId, UserId = userId, WorkoutPlanId = existingPlanId,
+                DayOfWeek = (int)today.DayOfWeek, WeekIndex = 0, Date = today,
+                WorkoutType = "Strength", Name = "Synthetic strength"
+            });
+            database.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
+            {
+                Id = Guid.CreateVersion7(), UserId = userId, WorkoutDayId = existingDayId,
+                ExerciseId = exerciseId, Sets = SyntheticStrengthSets,
+                Reps = SyntheticStrengthRepetitions
+            });
+            await database.SaveChangesAsync();
+
+            var overview = await workoutStore.LoadOverviewAsync(
+                userId, new WorkoutOverviewRequest(today), CancellationToken.None);
 
             Xunit.Assert.False(string.IsNullOrWhiteSpace(overview.PlanName));
             var activeWorkout = overview.Workouts.First(w => !w.IsRestDay && w.WorkoutDayId > 0);
