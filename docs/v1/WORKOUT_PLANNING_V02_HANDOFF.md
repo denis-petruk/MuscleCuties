@@ -114,5 +114,6 @@ triggers progression.
 The owner's private GitLab project is
 `git@gitlab.com:denis-petruk/musclecuties-testflight-beta.git`; the destination
 branch is `test-flight-beta`. GitHub remains the separate `origin` remote.
-At the time of this handoff, the GitLab push still requires account SSH-key
-registration or an existing GitLab token; the local branch contains the work.
+The owner's existing Mac SSH public key was registered for authentication-only
+GitLab access with a one-year expiration. The branch was pushed and its remote
+head verified on 2026-10-23.
