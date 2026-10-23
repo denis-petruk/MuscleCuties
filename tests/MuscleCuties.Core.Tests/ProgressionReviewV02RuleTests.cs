@@ -11,6 +11,7 @@ public sealed class ProgressionReviewV02RuleTests
     private const string ApprovalReference = "synthetic-approval";
     private const int ExerciseId = 101;
     private const int RequiredQualifyingSessions = 2;
+    private const int PreviousSessionDaysAgo = 1;
     private static readonly DateTimeOffset NowUtc = DateTimeOffset.Parse(
         SampleUtcTimestamp, CultureInfo.InvariantCulture);
 
@@ -109,5 +110,5 @@ public sealed class ProgressionReviewV02RuleTests
         new(Guid.NewGuid(), ExerciseId, ExerciseVersion, NowUtc, true, true, false, false);
 
     private static ProgressionSessionEvidence[] QualifyingHistory() =>
-        [Evidence(), Evidence() with { CompletedAtUtc = NowUtc.AddDays(-1) }];
+        [Evidence(), Evidence() with { CompletedAtUtc = NowUtc.AddDays(-PreviousSessionDaysAgo) }];
 }
