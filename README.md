@@ -26,4 +26,4 @@ The PostgreSQL integration suite requires a disposable local database configured
 
 ## Current status
 
-This is an active beta codebase. The expanded iOS candidate still needs signed-device and live-backend acceptance before TestFlight or App Store submission. See [submission readiness](docs/SUBMISSION_READINESS.md) for the current release gates.
+This is an active beta codebase. The expanded iOS candidate still needs signed-device and live-backend acceptance before TestFlight or App Store submission. See the [architecture overview](docs/ARCHITECTURE.md) for how the app and backend are organized.

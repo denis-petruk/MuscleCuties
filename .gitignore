@@ -41,6 +41,14 @@ AGENTS.md
 PRODUCT.md
 DESIGN.md
 
+# Local planning and release-operation notes.
+ROADMAP.md
+STATUS.md
+docs/EMAIL_DELIVERABILITY.md
+docs/OPERATOR_ACTION_MANUAL.md
+docs/SUBMISSION_READINESS.md
+docs/v1/
+
 # Rider/ReSharper
 .idea/
 .run/
