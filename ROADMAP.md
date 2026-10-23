@@ -51,4 +51,4 @@ Verify the simplified Step 1 layout on an iPhone: measurements and activity type
 
 **UI audit next:** Train’s activity-choice sheet and direct activity entry are verified in the iOS simulator. Continue with the remaining session logging/completion and outstanding page acceptance checks in [the workflow audit](docs/v1/UI_WORKFLOW_AUDIT.md). Changes are pushed to the private GitLab `test-flight-beta` branch.
 
-**GitHub sync (2026-10-23):** [Draft PR #10](https://github.com/denis-petruk/MuscleCuties/pull/10) brings the current beta app to `main` and removes tracked tool-specific instruction files. Complete disposable PostgreSQL verification, live-backend checks, and signed-device acceptance before marking the PR ready for review or merging.
+**GitHub sync (2026-10-23):** [Draft PR #10](https://github.com/denis-petruk/MuscleCuties/pull/10) brings the latest committed beta app to `main` and removes `AGENTS.md` while retaining the other instruction files. Complete disposable PostgreSQL verification, live-backend checks, and signed-device acceptance before marking the PR ready for review or merging.
