@@ -26,6 +26,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
     private readonly Func<string, Task> _navigateAsync;
     private readonly Func<int, Task> _openWorkoutSessionAsync;
+    public event Func<int, Task>? SessionActivitiesRequested;
     private readonly IWorkoutOverviewUseCase _overview;
     private readonly IProfileWorkoutPreferencesUseCase _preferences;
     private readonly IProfileRefreshNotifier _refreshNotifier;
@@ -539,7 +540,10 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         if (workout is null || workout.WorkoutDayId <= 0)
             return;
 
-        await _openWorkoutSessionAsync(workout.WorkoutDayId);
+        if (SessionActivitiesRequested is { } handler)
+            await handler(workout.WorkoutDayId);
+        else
+            await _openWorkoutSessionAsync(workout.WorkoutDayId);
     }
 
     private static bool IsVisibleWorkoutItem(WorkoutItem workout)

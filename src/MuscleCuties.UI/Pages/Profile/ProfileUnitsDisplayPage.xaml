@@ -10,6 +10,22 @@
     x:DataType="vm:ProfileUnitsDisplayViewModel"
     Shell.NavBarIsVisible="False">
 
+    <ContentPage.Resources>
+        <x:Double x:Key="UnitsChoiceStrokeThickness">1</x:Double>
+        <x:Double x:Key="UnitsChoiceSelectedStrokeThickness">1.5</x:Double>
+        <RoundRectangle x:Key="UnitsChoiceCardShape" CornerRadius="14" />
+        <Style x:Key="UnitsChoiceSurface" TargetType="Border">
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="MinimumHeightRequest" Value="52" />
+            <Setter Property="StrokeShape" Value="{StaticResource UnitsChoiceCardShape}" />
+            <Setter Property="StrokeThickness" Value="{StaticResource UnitsChoiceStrokeThickness}" />
+            <Setter Property="BackgroundColor"
+                    Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
+            <Setter Property="Stroke"
+                    Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
+        </Style>
+    </ContentPage.Resources>
+
     <ScrollView>
         <Grid
             Padding="20,40,20,32"
@@ -42,20 +58,18 @@
                     </Grid>
                     <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="8">
                         <Border
-                            Padding="12,10"
-                            MinimumHeightRequest="52"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                            StrokeThickness="1"
-                            StrokeShape="RoundRectangle 16"
+                            Style="{StaticResource UnitsChoiceSurface}"
                             SemanticProperties.Description="{loc:LocalizedText Profile_Units_SelectImperialUnits}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding SelectImperialUnitsCommand}" />
                             </Border.GestureRecognizers>
                             <Border.Triggers>
                                 <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="True">
-                                    <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                    <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                    <Setter Property="BackgroundColor"
+                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
+                                    <Setter Property="Stroke"
+                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                    <Setter Property="StrokeThickness" Value="{StaticResource UnitsChoiceSelectedStrokeThickness}" />
                                 </DataTrigger>
                             </Border.Triggers>
                             <Label
@@ -67,7 +81,8 @@
                                 <Label.Triggers>
                                     <DataTrigger TargetType="Label" Binding="{Binding UseImperialSystem}"
                                                  Value="True">
-                                        <Setter Property="TextColor" Value="{StaticResource White}" />
+                                        <Setter Property="TextColor"
+                                                Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     </DataTrigger>
                                 </Label.Triggers>
                             </Label>
@@ -75,20 +90,18 @@
 
                         <Border
                             Grid.Column="1"
-                            Padding="12,10"
-                            MinimumHeightRequest="52"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                            StrokeThickness="1"
-                            StrokeShape="RoundRectangle 16"
+                            Style="{StaticResource UnitsChoiceSurface}"
                             SemanticProperties.Description="{loc:LocalizedText Profile_Units_SelectMetricUnits}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding SelectMetricUnitsCommand}" />
                             </Border.GestureRecognizers>
                             <Border.Triggers>
                                 <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="True">
-                                    <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                    <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                    <Setter Property="BackgroundColor"
+                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
+                                    <Setter Property="Stroke"
+                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                    <Setter Property="StrokeThickness" Value="{StaticResource UnitsChoiceSelectedStrokeThickness}" />
                                 </DataTrigger>
                             </Border.Triggers>
                             <Label
@@ -100,7 +113,8 @@
                                 <Label.Triggers>
                                     <DataTrigger TargetType="Label" Binding="{Binding UseMetricSystem}"
                                                  Value="True">
-                                        <Setter Property="TextColor" Value="{StaticResource White}" />
+                                        <Setter Property="TextColor"
+                                                Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     </DataTrigger>
                                 </Label.Triggers>
                             </Label>

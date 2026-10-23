@@ -381,6 +381,53 @@
             x:Name="InjuryModalLazy"
             x:TypeArguments="injuryControls:InjuryLogModal"
             InputTransparent="{Binding IsInjuryModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
+
+        <Grid x:Name="SessionActivitiesOverlay" IsVisible="False" ZIndex="10"
+              BackgroundColor="{StaticResource ModalScrim}"
+              BindingContext="{x:Null}">
+            <Border Style="{StaticResource AppBottomSheetSurface}" VerticalOptions="Fill"
+                    Margin="0" Padding="20,20,20,24">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Label Text="Session activities" Style="{StaticResource ModalTitle}"
+                               SemanticProperties.HeadingLevel="Level1" />
+                        <Button Grid.Column="1" Text="Close" Clicked="OnCloseSessionActivitiesClicked"
+                                MinimumHeightRequest="48" MinimumWidthRequest="48"
+                                BackgroundColor="Transparent" />
+                    </Grid>
+                    <Grid Grid.Row="1">
+                        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                                           HorizontalOptions="Center" VerticalOptions="Center" />
+                        <ScrollView IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
+                            <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding ActivityCards}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="workoutModels:WorkoutActivitySectionItem">
+                                        <Border Style="{StaticResource CardPrimary}" Padding="14"
+                                                SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnSessionActivitySelected" />
+                                            </Border.GestureRecognizers>
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                <VerticalStackLayout Spacing="4">
+                                                    <Label Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
+                                                           Style="{StaticResource CardTitle}" FontSize="16" />
+                                                    <Label Text="{Binding SummaryText, Converter={StaticResource LocalizedStringConverter}}"
+                                                           Style="{StaticResource MutedLabel}" />
+                                                </VerticalStackLayout>
+                                                <Label Grid.Column="1" Text="{Binding MetricText}"
+                                                       Style="{StaticResource MutedLabel}" VerticalOptions="Center" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </Grid>
+                    <Label Grid.Row="2" Text="Choose an activity to continue to its exercise screen."
+                           Style="{StaticResource MutedLabel}" />
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 
 </ContentPage>

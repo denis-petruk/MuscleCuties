@@ -670,7 +670,9 @@ public static class MauiProgram
             sp,
             vm => new NutritionPage(vm)));
         services.AddSingleton(sp =>
-            PageLoadExtensions.CreateWithTiming<WorkoutPage, WorkoutViewModel>(sp, vm => new WorkoutPage(vm)));
+            PageLoadExtensions.CreateWithTiming<WorkoutPage, WorkoutViewModel>(sp,
+                vm => new WorkoutPage(vm, sp.GetRequiredService<WorkoutSessionViewModel>(),
+                    sp.GetRequiredService<INavigationContextService>())));
         services.AddSingleton(sp =>
             PageLoadExtensions.CreateWithTiming<ProfilePage, ProfileViewModel>(sp, vm => new ProfilePage(vm)));
         services.AddTransient<ProfilePersonalInfoPage>();
