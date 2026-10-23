@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Profile.ProfileUnitsDisplayPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
+    x:DataType="vm:ProfileUnitsDisplayViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <x:Double x:Key="UnitsChoiceStrokeThickness">1</x:Double>
+        <x:Double x:Key="UnitsChoiceSelectedStrokeThickness">1.5</x:Double>
+        <RoundRectangle x:Key="UnitsChoiceCardShape" CornerRadius="14" />
+        <Style x:Key="UnitsChoiceSurface" TargetType="Border">
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="MinimumHeightRequest" Value="52" />
+            <Setter Property="StrokeShape" Value="{StaticResource UnitsChoiceCardShape}" />
+            <Setter Property="StrokeThickness" Value="{StaticResource UnitsChoiceStrokeThickness}" />
+            <Setter Property="BackgroundColor"
+                    Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
+            <Setter Property="Stroke"
+                    Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <Grid
+            Padding="20,40,20,32"
+            RowSpacing="16"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="640"
+            RowDefinitions="Auto,Auto,Auto,Auto">
+            <sharedControls:PageHeader
+                Grid.Row="0"
+                Title="{loc:LocalizedText Profile_Units_UnitsAndDisplay}"
+                Subtitle="Choose the measuring system used across the app"
+                BackCommand="{Binding BackCommand}" />
+
+            <!-- Measurement system selector -->
+            <Border Grid.Row="1" Style="{StaticResource CardPrimary}"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="14">
+                    <sharedControls:IconSectionHeader Grid.Row="0" Text="{loc:LocalizedText Profile_Units_MeasurementSystem}"
+                                                      IconGlyph="ChatSettings24" />
+                    <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="3">
+                        <Label Grid.Row="0"
+                               Text="{Binding UnitSystemText, Converter={StaticResource LocalizedStringConverter}}"
+                               Style="{StaticResource CardTitle}" FontSize="17" />
+                        <Label
+                            Grid.Row="1"
+                            Text="{loc:LocalizedText Profile_Units_MetricUsesKgGCmAnd}"
+                            Style="{StaticResource CaptionLabel}"
+                            FontSize="14" />
+                    </Grid>
+                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Border
+                            Style="{StaticResource UnitsChoiceSurface}"
+                            SemanticProperties.Description="{loc:LocalizedText Profile_Units_SelectImperialUnits}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SelectImperialUnitsCommand}" />
+                            </Border.GestureRecognizers>
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="True">
+                                    <Setter Property="BackgroundColor"
+                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
+                                    <Setter Property="Stroke"
+                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                    <Setter Property="StrokeThickness" Value="{StaticResource UnitsChoiceSelectedStrokeThickness}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Label
+                                Text="{loc:LocalizedText Common_Unit_Imperial}"
+                                Style="{StaticResource BodyLabel}"
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding UseImperialSystem}"
+                                                 Value="True">
+                                        <Setter Property="TextColor"
+                                                Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Style="{StaticResource UnitsChoiceSurface}"
+                            SemanticProperties.Description="{loc:LocalizedText Profile_Units_SelectMetricUnits}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SelectMetricUnitsCommand}" />
+                            </Border.GestureRecognizers>
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="True">
+                                    <Setter Property="BackgroundColor"
+                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
+                                    <Setter Property="Stroke"
+                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                    <Setter Property="StrokeThickness" Value="{StaticResource UnitsChoiceSelectedStrokeThickness}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Label
+                                Text="{loc:LocalizedText Common_Unit_Metric}"
+                                Style="{StaticResource BodyLabel}"
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding UseMetricSystem}"
+                                                 Value="True">
+                                        <Setter Property="TextColor"
+                                                Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                    </Grid>
+
+                    <!-- Unit overrides (consolidated into same card) -->
+                    <BoxView Grid.Row="3" />
+                    <Grid Grid.Row="4" RowDefinitions="Auto,Auto" RowSpacing="4">
+                        <Label
+                            Grid.Row="0"
+                            Text="{loc:LocalizedText Profile_Units_PerCategoryOverrides}"
+                            Style="{StaticResource FormFieldLabel}"
+                            FontSize="14" />
+                        <Label
+                            Grid.Row="1"
+                            Text="{loc:LocalizedText Profile_Units_LeaveBlankToUseTheSystem}"
+                            Style="{StaticResource CaptionLabel}"
+                            FontSize="14" />
+                    </Grid>
+                    <Grid Grid.Row="5" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10"
+                          RowSpacing="10">
+                        <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="5">
+                            <Label Text="{loc:LocalizedText Profile_Units_BodyWeight}" Style="{StaticResource FormFieldLabel}" />
+                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="{loc:LocalizedText Profile_Units_KgOrLb}" Text="{Binding BodyWeightUnit}" />
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                            <Label Text="{loc:LocalizedText Profile_Units_FoodMass}" Style="{StaticResource FormFieldLabel}" />
+                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="{loc:LocalizedText Profile_Units_GOrOz}" Text="{Binding FoodMassUnit}" />
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Row="1" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="5">
+                            <Label Text="{loc:LocalizedText Common_Height}" Style="{StaticResource FormFieldLabel}" />
+                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="{loc:LocalizedText Profile_Units_CmOrIn}" Text="{Binding HeightUnit}" />
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                            <Label Text="{loc:LocalizedText Profile_Units_Distance}" Style="{StaticResource FormFieldLabel}" />
+                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="{loc:LocalizedText Profile_Units_KmOrMi}" Text="{Binding DistanceUnit}" />
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" RowDefinitions="Auto,Auto"
+                              RowSpacing="5">
+                            <Label Text="{loc:LocalizedText Profile_Units_Energy}" Style="{StaticResource FormFieldLabel}" />
+                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="{loc:LocalizedText Common_Unit_Kcal}" Text="{Binding EnergyUnit}" />
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Label
+                Grid.Row="2"
+                Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+                Style="{StaticResource CaptionLabel}"
+                FontSize="14"
+                IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Button Grid.Row="3" Text="{loc:LocalizedText Profile_Units_SaveUnits}" Command="{Binding SaveCommand}" />
+        </Grid>
+    </ScrollView>
+</ContentPage>

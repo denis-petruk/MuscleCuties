@@ -32,5 +32,7 @@ public enum MealStyle
 {
     Plated,
     Bowl,
-    Complex
+    Complex,
+    Handheld,
+    Wrapped
 }

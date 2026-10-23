@@ -1,0 +1,85 @@
+using MuscleCuties.UseCases.Features.Workout.Injury;
+
+namespace MuscleCuties.Core.Tests;
+
+public class InjuryLogRegressionTests
+{
+    [Fact]
+    public async Task New_Injury_Requires_An_Explicit_Site_Choice()
+    {
+        var store = new RecordingWorkoutInjuryStore();
+        var useCase = new WorkoutInjuryUseCase(store);
+
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.SaveInjuryAsync(
+            new SaveWorkoutInjuryInput(
+                0,
+                WorkoutInjurySite.None,
+                WorkoutInjuryStatus.Recovering,
+                3,
+                DateOnly.FromDateTime(DateTime.Today))));
+
+        await useCase.SaveInjuryAsync(new SaveWorkoutInjuryInput(
+            0,
+            WorkoutInjurySite.Ankle,
+            WorkoutInjuryStatus.Recovering,
+            3,
+            DateOnly.FromDateTime(DateTime.Today)));
+
+        Assert.Single(store.SavedInputs);
+        Assert.Equal(WorkoutInjurySite.Ankle, store.SavedInputs[0].Site);
+        Assert.Equal(WorkoutInjuryStatus.Recovering, store.SavedInputs[0].Status);
+    }
+
+    [Fact]
+    public async Task SaveInjury_Clamps_Pain_And_Future_Since_Date()
+    {
+        var store = new RecordingWorkoutInjuryStore();
+        var useCase = new WorkoutInjuryUseCase(store);
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        await useCase.SaveInjuryAsync(new SaveWorkoutInjuryInput(
+            42,
+            WorkoutInjurySite.Knee,
+            WorkoutInjuryStatus.Acute,
+            99,
+            today.AddDays(5)));
+
+        var saved = Assert.Single(store.SavedInputs);
+        Assert.Equal(42, saved.Id);
+        Assert.Equal(5, saved.Pain);
+        Assert.Equal(today, saved.Since);
+    }
+
+    [Fact]
+    public async Task Clear_And_Delete_Reject_NonPositive_Injury_Ids()
+    {
+        var store = new RecordingWorkoutInjuryStore();
+        var useCase = new WorkoutInjuryUseCase(store);
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => useCase.ClearInjuryAsync(0));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => useCase.DeleteInjuryAsync(-1));
+    }
+
+    private sealed class RecordingWorkoutInjuryStore : IWorkoutInjuryStore
+    {
+        public List<SaveWorkoutInjuryInput> SavedInputs { get; } = [];
+
+        public Task<WorkoutInjuryImpactDto> GetImpactAsync(CancellationToken ct = default) =>
+            Task.FromResult(new WorkoutInjuryImpactDto(false, "None", [], [], []));
+
+        public Task<IReadOnlyList<WorkoutInjuryLogDto>> GetAllInjuriesAsync(CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<WorkoutInjuryLogDto>>([]);
+
+        public Task SaveInjuryAsync(SaveWorkoutInjuryInput input, CancellationToken ct = default)
+        {
+            SavedInputs.Add(input);
+            return Task.CompletedTask;
+        }
+
+        public Task ClearInjuryAsync(int injuryId, CancellationToken ct = default) => Task.CompletedTask;
+
+        public Task DeleteInjuryAsync(int injuryId, CancellationToken ct = default) => Task.CompletedTask;
+
+        public Task RefreshPlanAfterInjuryChangeAsync(CancellationToken ct = default) => Task.CompletedTask;
+    }
+}
