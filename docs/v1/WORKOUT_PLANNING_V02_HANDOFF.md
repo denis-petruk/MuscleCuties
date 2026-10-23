@@ -111,6 +111,8 @@ triggers progression.
 - `services/MuscleCuties.Server/Workout/` and `src/MuscleCuties.UI/`
 - `tests/MuscleCuties.Core.Tests/`
 
-The other in-progress Codex chat is creating the owner's private GitLab project.
-Coordinate the destination branch with that chat; do not push this work to the
-GitHub `origin` remote by assumption.
+The owner's private GitLab project is
+`git@gitlab.com:denis-petruk/musclecuties-testflight-beta.git`; the destination
+branch is `test-flight-beta`. GitHub remains the separate `origin` remote.
+At the time of this handoff, the GitLab push still requires account SSH-key
+registration or an existing GitLab token; the local branch contains the work.
