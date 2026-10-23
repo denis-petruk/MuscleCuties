@@ -382,6 +382,10 @@ public static partial class UiTextCatalog
         English["Onboarding_Activity_RunningDescription"] = "Run steadily or mix in faster intervals.";
         English["Onboarding_Activity_SwimmingDescription"] = "Swim for full-body movement and endurance.";
         English["Onboarding_Activity_YogaDescription"] = "Move, stretch, and breathe at your own pace.";
+        English["Workout_ActivityPreference_SelectedHint"] = "Selected activity. Double tap to deselect.";
+        English["Workout_ActivityPreference_UnselectedHint"] = "Not selected. Double tap to select.";
+        English["Workout_StrengthStyle_SelectedHint"] = "Selected training style.";
+        English["Workout_StrengthStyle_UnselectedHint"] = "Not selected. Double tap to select.";
         English["Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo"] = "Please acknowledge the wellness notice to continue.";
         English["Onboarding_ProfileSetup_ProfilePhoto"] = "Profile photo";
         English["Onboarding_ProfileSetup_ProfilePhotoOptionalDoubleTapTo"] = "Profile photo, optional. Double tap to change.";

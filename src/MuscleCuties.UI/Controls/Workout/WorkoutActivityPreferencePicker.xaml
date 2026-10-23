@@ -5,6 +5,7 @@
     x:Name="PreferencePickerRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:controls="clr-namespace:MuscleCuties.UI.Controls.Workout"
     xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     x:DataType="controls:WorkoutActivityPreferencePicker">
@@ -49,7 +50,7 @@
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
                                             <Setter Property="SemanticProperties.Hint"
-                                                    Value="Selected activity, double-tap to deselect" />
+                                                    Value="{loc:LocalizedText Workout_ActivityPreference_SelectedHint}" />
                                             <Setter Property="BackgroundColor"
                                                     Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
                                             <Setter Property="Stroke"
@@ -58,7 +59,7 @@
                                         </DataTrigger>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
                                             <Setter Property="SemanticProperties.Hint"
-                                                    Value="Not selected, double-tap to select" />
+                                                    Value="{loc:LocalizedText Workout_ActivityPreference_UnselectedHint}" />
                                             <Setter Property="BackgroundColor"
                                                     Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
                                             <Setter Property="Stroke"

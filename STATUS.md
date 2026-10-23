@@ -2,7 +2,7 @@
 
 The active delivery status is maintained at [docs/v1/STATUS.md](docs/v1/STATUS.md).
 
-- **Onboarding audit recheck (2026-10-23):** Account-confirmation spacing and Profile setup placement/card styling were confirmed in source. Current iOS simulator build passed with zero warnings/errors; Core tests passed 265/265. Controlled fresh-registration checks remain open.
+- **Onboarding audit recheck (2026-10-23):** Account-confirmation spacing and Profile setup placement/card styling were confirmed in source. Shared activity and strength-style pickers now have English/Russian selected-state accessibility hints. Current iOS simulator build passed with zero warnings/errors; Core tests passed 265/265. Controlled fresh-registration and VoiceOver checks remain open.
 
 ## Quick Summary (2026-10-23)
 

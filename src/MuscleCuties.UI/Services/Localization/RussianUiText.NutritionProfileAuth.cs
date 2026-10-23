@@ -382,6 +382,10 @@ internal static partial class RussianUiText
         Values["Onboarding_Activity_RunningDescription"] = "Бегите ровным темпом или добавляйте быстрые интервалы.";
         Values["Onboarding_Activity_SwimmingDescription"] = "Плавание развивает выносливость и задействует всё тело.";
         Values["Onboarding_Activity_YogaDescription"] = "Двигайтесь, растягивайтесь и дышите в своём темпе.";
+        Values["Workout_ActivityPreference_SelectedHint"] = "Занятие выбрано. Двойное нажатие отменит выбор.";
+        Values["Workout_ActivityPreference_UnselectedHint"] = "Занятие не выбрано. Двойное нажатие выберет его.";
+        Values["Workout_StrengthStyle_SelectedHint"] = "Стиль силовой тренировки выбран.";
+        Values["Workout_StrengthStyle_UnselectedHint"] = "Не выбрано. Двойное нажатие выберет этот стиль.";
         Values["Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo"] = "Пожалуйста, подтвердите уведомление о благополучии, чтобы продолжить.";
         Values["Onboarding_ProfileSetup_ProfilePhoto"] = "Фотография профиля";
         Values["Onboarding_ProfileSetup_ProfilePhotoOptionalDoubleTapTo"] = "Фото профиля, необязательно. Двойной тап для смены.";
