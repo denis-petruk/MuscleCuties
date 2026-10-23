@@ -4,7 +4,7 @@ The active roadmap is maintained at [docs/v1/ROADMAP.md](docs/v1/ROADMAP.md).
 
 ## Quick Summary
 
-- **Audit continuation:** Finish the session-modal and completion flow, meal chooser and optional-micronutrient save, Units picker, shared profile typography, Today streak icons/steps, and vault persistence checks. Keep unapproved numerical readiness and clinical suggestions disabled; see the audit.
+- **Audit continuation:** Finish the session-modal and completion flow, meal chooser and optional-micronutrient save, shared profile typography, and vault persistence checks. Today streak icons and Units picker styling are implemented. Keep steps gated until the current-day source and step-goal estimate rule are verified; keep unapproved numerical readiness and clinical suggestions disabled. See the audit.
 
 - **Workout planning v0.2:** The Core foundation now covers duration, check-in validation, capacity, eligibility, revision acceptance, Today precedence, and progression review; live flows still use the legacy generator. Next, implement server-owned versioned TrainingPolicy/review records, correct generator fallback and phase behavior, persist proposals and accepted revisions transactionally in PostgreSQL, then connect DTO/API/MAUI flows and default-off release flags. Preserve completed work and require documented section-level approval before recommendations or numerical prescriptions. Full task breakdown: `docs/v1/WORKOUT_PLANNING_V02_HANDOFF.md`.
 
@@ -48,3 +48,5 @@ Verify the direct registration Privacy Policy link and the shorter in-app Privac
 Verify the quiz Go back action on-device: Step 1 should reload staged details, and returning to the quiz should restart questions after a clear confirmation when answers were entered.
 
 Verify the simplified Step 1 layout on an iPhone: measurements and activity types should read as distinct sections, and the top-right logo should be absent.
+
+**UI audit next:** Verify the Train activity-choice sheet and direct activity entry in the iOS simulator, then complete remaining acceptance checks in [the workflow audit](docs/v1/UI_WORKFLOW_AUDIT.md). The GitLab project is ready; pushing branch `test-flight-beta` awaits a GitLab credential in Keychain or an installed SSH key.
