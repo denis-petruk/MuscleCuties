@@ -40,6 +40,7 @@ public partial class NutritionViewModel
     [ObservableProperty] private ObservableCollection<MealSuggestionItem> _mealSuggestions = new();
     [ObservableProperty] private MealSuggestionItem? _selectedMealDetail;
     private int _suggestionLoadVersion;
+    private TimeSpan? _suggestionMealTime;
     [ObservableProperty] private MealType _suggestionMealType = MealType.Lunch;
     [ObservableProperty] private string _suggestionTargetText = string.Empty;
 
@@ -128,6 +129,7 @@ public partial class NutritionViewModel
     private void OpenSuggestMeal()
     {
         _suggestionLoadVersion++;
+        _suggestionMealTime = null;
         IsDayPlanMode = false;
         SuggestionMealType = GuessNextMealType();
         IsMealTypePickerVisible = true;
@@ -169,6 +171,7 @@ public partial class NutritionViewModel
     private void CloseSuggestionModal()
     {
         _suggestionLoadVersion++;
+        _suggestionMealTime = null;
         IsSuggestionModalVisible = false;
         IsDayPlanMode = false;
         IsMealDetailVisible = false;
@@ -280,7 +283,8 @@ public partial class NutritionViewModel
             }));
 
         SelectedMealType = SuggestionMealType;
-        SelectedMealTime = DateTime.Now.TimeOfDay;
+        SelectedMealTime = _suggestionMealTime ?? DateTime.Now.TimeOfDay;
+        IsMealChoiceLocked = _suggestionMealTime.HasValue;
         IsMealEditorVisible = true;
         IsFoodFinderExpanded = false;
         SelectedFoodResult = null;
