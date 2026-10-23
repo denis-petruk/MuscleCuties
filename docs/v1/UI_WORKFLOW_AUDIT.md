@@ -24,6 +24,7 @@ Started 2026-10-22. Review the current simulator page with the owner, ask one fo
 
 - The countdown now has 16 points of top spacing after the action row, up from 8 points. Only account confirmation uses the new spacing; password recovery retains its existing layout and the button appearance is unchanged.
 - Acceptance check: open account confirmation during a resend cooldown on the updated simulator build, confirm that the countdown has a clear gap below both action buttons, and confirm that the buttons remain readable and tappable. Do not retain the mailbox address or code.
+- 2026-10-23 source recheck: `OtpVerificationPage.xaml` places the countdown beneath the Resend code / Change email row with `AuthOtpCountdownTopSpacing` (16 points). `PasswordRecoveryPage.xaml` still uses `AuthCodeCountdownTopSpacing` (8 points). The iOS simulator build passed with zero warnings/errors, and Core tests passed 265/265. The available simulator is signed in, so an active-cooldown visual and tap check remains open; no account or code was entered for this recheck.
 
 ## Step 1 change details
 
@@ -34,6 +35,7 @@ Started 2026-10-22. Review the current simulator page with the owner, ask one fo
 - Implemented the listed activity subtitles in the shared picker, with English and Russian text. The picker no longer displays group badges; the onboarding prompt invites users to choose activities. Continue still requires one strength activity and shows a specific error if that rule is not met.
 - Acceptance check: on a fresh registration, confirm the photo row is directly below Personal details and above Display name; switch Imperial/Metric and open each height/weight picker to verify the activity-card styling and absence of a right-hand tick; read all activity subtitles and group headings on Step 1 and Activity Preferences; try to clear the last strength activity and confirm the rule is explained. Do not record personal values.
 - The available simulator remains signed in on Today, so this new Step 1 build has not yet been visually reviewed. A fresh registration is needed for the acceptance check.
+- 2026-10-23 source recheck: `ProfileSetupPage.xaml` places the complete photo row inside Personal details immediately before Display name. The Imperial/Metric and height/weight controls use the activity-card selection surfaces without a right-hand checkmark. Fresh-registration interactions and the shared Activity Preferences picker still need controlled simulator verification.
 
 ## Today change details
 
