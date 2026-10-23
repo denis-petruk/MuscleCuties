@@ -1,6 +1,6 @@
-using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Models.Workout.Planning;
 

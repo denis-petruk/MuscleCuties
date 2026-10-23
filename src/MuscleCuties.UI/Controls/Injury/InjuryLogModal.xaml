@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sharedControls:AnimatedModalView
+    x:Class="MuscleCuties.UI.Controls.Injury.InjuryLogModal"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:injuryControls="clr-namespace:MuscleCuties.UI.Controls.Injury"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
+    x:DataType="vm:InjuryLogViewModel">
+    <Grid>
+        <BoxView BackgroundColor="{StaticResource ModalScrim}">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer
+                    Command="{Binding CloseCommand, Source={x:Reference Root}, x:DataType=injuryControls:InjuryLogModal}" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+        <Border x:Name="SheetSurface" Style="{StaticResource AppBottomSheetSurface}">
+            <Grid RowDefinitions="Auto,Auto,*">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Padding="20,16,16,12">
+                    <Label Text="{loc:LocalizedText Injury_LogTitle}" Style="{StaticResource ModalTitle}"
+                           VerticalOptions="Center" />
+                    <Button Grid.Column="1" Text="{loc:LocalizedText Common_Add}"
+                            Command="{Binding ToggleAddFormCommand}"
+                            Style="{StaticResource ButtonLink}" MinimumWidthRequest="48" MinimumHeightRequest="48"
+                            SemanticProperties.Description="{loc:LocalizedText Injury_AddAnInjury}" />
+                    <Border Grid.Column="2" Style="{StaticResource ModalIconButton}"
+                            WidthRequest="48" HeightRequest="48"
+                            SemanticProperties.Description="{loc:LocalizedText Injury_Modal_CloseInjuryLog}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding CloseCommand, Source={x:Reference Root}, x:DataType=injuryControls:InjuryLogModal}" />
+                        </Border.GestureRecognizers>
+                        <Path Style="{StaticResource ModalCloseIcon}" />
+                    </Border>
+                </Grid>
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+                <injuryControls:InjuryLogContent Grid.Row="2" />
+            </Grid>
+        </Border>
+    </Grid>
+</sharedControls:AnimatedModalView>

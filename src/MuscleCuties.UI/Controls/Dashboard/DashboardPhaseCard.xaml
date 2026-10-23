@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Dashboard.DashboardPhaseCard"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
+    x:DataType="vm:DashboardViewModel">
+
+    <ContentView.Resources>
+        <Thickness x:Key="DashboardPhaseProgressionBelowSpacing">0,18,0,0</Thickness>
+    </ContentView.Resources>
+
+    <Border
+        Style="{StaticResource CardPrimary}"
+        SemanticProperties.Description="{Binding PhaseCardTitle, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_Phase_SemanticCurrentPhase}">
+        <Border.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding OpenCycleCommand}" />
+        </Border.GestureRecognizers>
+
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
+            <Grid ColumnDefinitions="36,*,Auto" ColumnSpacing="10">
+                <Border WidthRequest="36" HeightRequest="36"
+                        BackgroundColor="{Binding PhaseCardBackgroundColor}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                    <Image
+                        Source="{Binding PhaseIconSource}"
+                        Aspect="AspectFit"
+                        WidthRequest="18"
+                        HeightRequest="18"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+                <Label
+                    Grid.Column="1"
+                    Text="{Binding PhaseStatusText, Converter={StaticResource LocalizedStringConverter}}"
+                    Style="{StaticResource FormFieldLabel}"
+                    FontSize="14"
+                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                    VerticalOptions="Center" />
+                <Path Grid.Column="2"
+                      Data="M9 18l6-6-6-6"
+                      Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                      StrokeThickness="1.8" StrokeLineCap="Round" StrokeLineJoin="Round"
+                      Aspect="Uniform" WidthRequest="16" HeightRequest="16"
+                      VerticalOptions="Center" />
+            </Grid>
+
+            <Label
+                Grid.Row="1"
+                Text="{Binding PhaseCardTitle, Converter={StaticResource LocalizedStringConverter}}"
+                Style="{StaticResource SectionTitle}"
+                TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                FontSize="20"
+                LineBreakMode="WordWrap" />
+
+            <Label
+                Grid.Row="2"
+                Text="{Binding PhaseShortAdvice, Converter={StaticResource LocalizedStringConverter}}"
+                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                FontSize="14"
+                LineBreakMode="WordWrap"
+                Margin="0,-4,0,0" />
+
+            <Label Grid.Row="3" Text="{Binding HormonalSummary, Converter={StaticResource LocalizedStringConverter}}"
+                   Style="{StaticResource MutedLabel}" FontSize="13"
+                   LineBreakMode="WordWrap" />
+
+            <Grid
+                Grid.Row="4"
+                RowDefinitions="Auto, 6"
+                ColumnDefinitions="*, *, *, *"
+                ColumnSpacing="4"
+                RowSpacing="6">
+                <Label
+                    Text="{loc:LocalizedText Dashboard_Phase_Menstrual}"
+                    Style="{StaticResource CaptionLabel}"
+                    TextColor="{AppThemeBinding Light={StaticResource CyclePhaseMenstrualTextLight}, Dark={StaticResource CyclePhaseMenstrualTextDark}}"
+                    FontSize="12" />
+                <Label
+                    Grid.Column="1"
+                    Text="{loc:LocalizedText Dashboard_Phase_Follicular}"
+                    Style="{StaticResource CaptionLabel}"
+                    TextColor="{AppThemeBinding Light={StaticResource CyclePhaseFollicularTextLight}, Dark={StaticResource CyclePhaseFollicularTextDark}}"
+                    FontSize="12" />
+                <Label
+                    Grid.Column="2"
+                    Text="{loc:LocalizedText Dashboard_Phase_Ovulatory}"
+                    Style="{StaticResource CaptionLabel}"
+                    TextColor="{AppThemeBinding Light={StaticResource CyclePhaseOvulatoryTextLight}, Dark={StaticResource CyclePhaseOvulatoryTextDark}}"
+                    FontSize="12" />
+                <Label
+                    Grid.Column="3"
+                    Text="{loc:LocalizedText Dashboard_Phase_Luteal}"
+                    Style="{StaticResource CaptionLabel}"
+                    TextColor="{AppThemeBinding Light={StaticResource CyclePhaseLutealTextLight}, Dark={StaticResource CyclePhaseLutealTextDark}}"
+                    FontSize="12"
+                    HorizontalTextAlignment="End" />
+
+                <BoxView
+                    Grid.Row="1"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseMenstrualTextLight}, Dark={StaticResource CyclePhaseMenstrualTextDark}}"
+                    CornerRadius="4"
+                    HeightRequest="6" />
+                <BoxView
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseFollicularTextLight}, Dark={StaticResource CyclePhaseFollicularTextDark}}"
+                    CornerRadius="4"
+                    HeightRequest="6" />
+                <BoxView
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseOvulatoryTextLight}, Dark={StaticResource CyclePhaseOvulatoryTextDark}}"
+                    CornerRadius="4"
+                    HeightRequest="6" />
+                <BoxView
+                    Grid.Row="1"
+                    Grid.Column="3"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseLutealTextLight}, Dark={StaticResource CyclePhaseLutealTextDark}}"
+                    CornerRadius="4"
+                    HeightRequest="6" />
+                <Border
+                    Grid.Row="1"
+                    Grid.Column="{Binding CurrentPhaseColumn}"
+                    IsVisible="{Binding HasKnownPhase}"
+                    WidthRequest="14"
+                    HeightRequest="14"
+                    StrokeShape="RoundRectangle 7"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                    Stroke="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                    StrokeThickness="2"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+            </Grid>
+
+            <Grid Grid.Row="5" ColumnDefinitions="*, Auto, *, Auto, *" RowDefinitions="Auto, Auto" RowSpacing="2"
+                  Padding="{StaticResource DashboardPhaseProgressionBelowSpacing}">
+                <BoxView
+                    Grid.RowSpan="2"
+                    Grid.ColumnSpan="5"
+                    HeightRequest="1"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                    VerticalOptions="Start" />
+
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Text="{Binding PhaseTimeLeftValue, Converter={StaticResource LocalizedStringConverter}}"
+                    Style="{StaticResource SectionTitle}"
+                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                    FontSize="16" />
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Text="{Binding PhaseTimeLeftLabel, Converter={StaticResource LocalizedStringConverter}}"
+                    Style="{StaticResource CaptionLabel}"
+                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                    FontSize="13" />
+
+                <BoxView
+                    Grid.Row="0"
+                    Grid.RowSpan="2"
+                    Grid.Column="1"
+                    WidthRequest="1"
+                    HeightRequest="38"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                    VerticalOptions="End" />
+
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Text="{Binding NextPeriodValue, Converter={StaticResource LocalizedStringConverter}}"
+                    Style="{StaticResource SectionTitle}"
+                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                    FontSize="16"
+                    Margin="12,0,0,0" />
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Text="{loc:LocalizedText Dashboard_Phase_NextPeriod}"
+                    Style="{StaticResource CaptionLabel}"
+                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                    FontSize="13"
+                    Margin="12,0,0,0" />
+
+                <BoxView
+                    Grid.Row="0"
+                    Grid.RowSpan="2"
+                    Grid.Column="3"
+                    WidthRequest="1"
+                    HeightRequest="38"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                    VerticalOptions="End" />
+
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="4"
+                    Text="{Binding LoadAdjustmentText, Converter={StaticResource LocalizedStringConverter}}"
+                    Style="{StaticResource SectionTitle}"
+                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                    FontSize="16"
+                    Margin="12,0,0,0" />
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="4"
+                    Text="{loc:LocalizedText Dashboard_Phase_Load}"
+                    Style="{StaticResource CaptionLabel}"
+                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                    FontSize="13"
+                    Margin="12,0,0,0" />
+            </Grid>
+        </Grid>
+    </Border>
+</ContentView>

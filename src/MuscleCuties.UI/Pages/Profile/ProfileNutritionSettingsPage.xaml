@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Profile.ProfileNutritionSettingsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:commonModels="clr-namespace:MuscleCuties.UI.Models.UI.Common"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
+    x:DataType="vm:ProfileNutritionSettingsViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="20,40,20,32"
+            Spacing="16"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="640">
+            <sharedControls:PageHeader
+                Title="{loc:LocalizedText Profile_NutritionSettings_NutritionSettings}"
+                Subtitle="Goal, dietary preferences, and nutrient targets"
+                BackCommand="{Binding BackCommand}" />
+
+            <!-- Section 1: Goal and dietary preferences (consolidated) -->
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="14">
+                    <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_NutritionSettings_GoalAndPreferences}" IconGlyph="Target24" />
+
+                    <!-- Nutrition goal picker -->
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="5">
+                        <Label Text="{loc:LocalizedText Profile_NutritionSettings_NutritionGoal}" Style="{StaticResource FormFieldLabel}" />
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Picker
+                                Title="{loc:LocalizedText Profile_NutritionSettings_ChooseGoal}"
+                                ItemsSource="{Binding GoalOptions}"
+                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
+                                SelectedItem="{Binding SelectedGoalOption}" />
+                        </Border>
+                    </Grid>
+
+                    <!-- Goal pace (conditionally visible) -->
+                    <Grid
+                        RowDefinitions="Auto,Auto"
+                        RowSpacing="5"
+                        IsVisible="{Binding IsGoalPaceVisible}">
+                        <Label Text="{loc:LocalizedText Profile_NutritionSettings_GoalPace}" Style="{StaticResource FormFieldLabel}" />
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Picker
+                                Title="{loc:LocalizedText Profile_NutritionSettings_ChoosePace}"
+                                ItemsSource="{Binding WeightGoalPaceOptions}"
+                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
+                                SelectedItem="{Binding SelectedWeightGoalPaceOption}" />
+                        </Border>
+                    </Grid>
+
+                    <!-- Divider between goal and dietary prefs -->
+                    <BoxView />
+
+                    <!-- Dietary preferences (improved tap targets) -->
+                    <Label
+                        Text="{loc:LocalizedText Profile_NutritionSettings_DietaryPreferences}"
+                        Style="{StaticResource FormFieldLabel}"
+                        FontSize="14" />
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                        <!-- Vegetarian -->
+                        <Border
+                            Grid.Row="0" Grid.Column="0"
+                            Padding="10,8"
+                            MinimumHeightRequest="44"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4" MinimumHeightRequest="44">
+                                <CheckBox IsChecked="{Binding IsVegetarian}" Color="{StaticResource Primary}"
+                                          WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
+                                          SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_Vegetarian}" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{loc:LocalizedText Profile_NutritionSettings_Vegetarian}"
+                                    Style="{StaticResource BodyLabel}"
+                                    FontSize="16"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Vegan -->
+                        <Border
+                            Grid.Row="0" Grid.Column="1"
+                            Padding="10,8"
+                            MinimumHeightRequest="44"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4" MinimumHeightRequest="44">
+                                <CheckBox IsChecked="{Binding IsVegan}" Color="{StaticResource Primary}"
+                                          WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
+                                          SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_Vegan}" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{loc:LocalizedText Profile_NutritionSettings_Vegan}"
+                                    Style="{StaticResource BodyLabel}"
+                                    FontSize="16"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Gluten-free -->
+                        <Border
+                            Grid.Row="1" Grid.Column="0"
+                            Padding="10,8"
+                            MinimumHeightRequest="44"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4" MinimumHeightRequest="44">
+                                <CheckBox IsChecked="{Binding IsGlutenFree}" Color="{StaticResource Primary}"
+                                          WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
+                                          SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_GlutenFree}" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{loc:LocalizedText Profile_NutritionSettings_GlutenFree}"
+                                    Style="{StaticResource BodyLabel}"
+                                    FontSize="16"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Lactose-free -->
+                        <Border
+                            Grid.Row="1" Grid.Column="1"
+                            Padding="10,8"
+                            MinimumHeightRequest="44"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4" MinimumHeightRequest="44">
+                                <CheckBox IsChecked="{Binding IsLactoseFree}" Color="{StaticResource Primary}"
+                                          WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
+                                          SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_LactoseFree}" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{loc:LocalizedText Profile_NutritionSettings_LactoseFree}"
+                                    Style="{StaticResource BodyLabel}"
+                                    FontSize="16"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Section 2: Advanced nutrient targets (progressive disclosure) -->
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="4">
+                    <toolkit:Expander IsExpanded="{Binding AreAdvancedSettingsVisible}">
+                        <toolkit:Expander.Header>
+                            <Grid ColumnDefinitions="*,Auto" Padding="0,4" MinimumHeightRequest="44">
+                                <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_NutritionSettings_MacroTargets}"
+                                                                  IconGlyph="Beaker24" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding AdvancedSettingsButtonText, Converter={StaticResource LocalizedStringConverter}}"
+                                    Style="{StaticResource AccentLabel}"
+                                    FontSize="14"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_ToggleMacroTargetFields}" />
+                            </Grid>
+                        </toolkit:Expander.Header>
+                        <VerticalStackLayout Spacing="12" Padding="0,10,0,0">
+                            <Label
+                                Text="{loc:LocalizedText Profile_NutritionSettings_OverrideCalculatedTargetsWithYourOwn}"
+                                Style="{StaticResource CaptionLabel}"
+                                FontSize="14" />
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10"
+                                  RowSpacing="10">
+                                <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                    <Label Text="{loc:LocalizedText Profile_NutritionSettings_DailyCalories}"
+                                           Style="{StaticResource FormFieldLabel}" />
+                                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                        <Entry Placeholder="{loc:LocalizedText Common_Unit_Kcal}"
+                                               Text="{Binding CaloriesGoal}" Keyboard="Numeric" />
+                                    </Border>
+                                </Grid>
+
+                                <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                    <Label Text="{loc:LocalizedText Nutrition_Macro_Protein}"
+                                           Style="{StaticResource FormFieldLabel}" />
+                                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                        <Entry Placeholder="{loc:LocalizedText Common_Unit_G}"
+                                               Text="{Binding ProteinGoal}" Keyboard="Numeric" />
+                                    </Border>
+                                </Grid>
+
+                                <Grid Grid.Row="1" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                    <Label Text="{loc:LocalizedText Nutrition_Macro_Carbs}"
+                                           Style="{StaticResource FormFieldLabel}" />
+                                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                        <Entry Placeholder="{loc:LocalizedText Common_Unit_G}" Text="{Binding CarbsGoal}"
+                                               Keyboard="Numeric" />
+                                    </Border>
+                                </Grid>
+
+                                <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                    <Label Text="{loc:LocalizedText Profile_NutritionSettings_Fats}"
+                                           Style="{StaticResource FormFieldLabel}" />
+                                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                        <Entry Placeholder="{loc:LocalizedText Common_Unit_G}" Text="{Binding FatsGoal}"
+                                               Keyboard="Numeric" />
+                                    </Border>
+                                </Grid>
+
+                                <Grid Grid.Row="2" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                    <Label Text="{loc:LocalizedText Profile_NutritionSettings_Fiber}"
+                                           Style="{StaticResource FormFieldLabel}" />
+                                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                        <Entry Placeholder="{loc:LocalizedText Common_Unit_G}" Text="{Binding FiberGoal}"
+                                               Keyboard="Numeric" />
+                                    </Border>
+                                </Grid>
+
+                                <Grid Grid.Row="2" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                    <Label Text="{loc:LocalizedText Profile_NutritionSettings_Water}"
+                                           Style="{StaticResource FormFieldLabel}" />
+                                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                        <Entry Placeholder="{loc:LocalizedText Common_Unit_L}" Text="{Binding WaterGoal}"
+                                               Keyboard="Numeric" />
+                                    </Border>
+                                </Grid>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </toolkit:Expander>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Section 3: Micronutrient targets (nested expander, deeper disclosure) -->
+            <Border
+                Style="{StaticResource CardPrimary}"
+                IsVisible="{Binding AreAdvancedSettingsVisible}">
+                <VerticalStackLayout Spacing="4">
+                    <toolkit:Expander IsExpanded="False">
+                        <toolkit:Expander.Header>
+                            <Grid ColumnDefinitions="*,Auto" Padding="0,4" MinimumHeightRequest="44">
+                                <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_NutritionSettings_MicronutrientTargets}"
+                                                                  IconGlyph="PersonPill24" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{loc:LocalizedText Profile_NutritionSettings_TapToExpand}"
+                                    Style="{StaticResource CaptionLabel}"
+                                    FontSize="14"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_ExpandMicronutrientTargetsSection}" />
+                            </Grid>
+                        </toolkit:Expander.Header>
+                        <Grid
+                            ColumnDefinitions="*,*"
+                            RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                            ColumnSpacing="10"
+                            RowSpacing="10"
+                            Padding="0,10,0,0">
+                            <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                <Label Text="{loc:LocalizedText Profile_NutritionSettings_Iron}" Style="{StaticResource FormFieldLabel}" />
+                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding IronGoal}"
+                                           Keyboard="Numeric" />
+                                </Border>
+                            </Grid>
+
+                            <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                <Label Text="{loc:LocalizedText Profile_NutritionSettings_VitaminBTwelve}" Style="{StaticResource FormFieldLabel}" />
+                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Mcg}"
+                                           Text="{Binding VitaminB12Goal}" Keyboard="Numeric" />
+                                </Border>
+                            </Grid>
+
+                            <Grid Grid.Row="1" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                <Label Text="{loc:LocalizedText Profile_NutritionSettings_VitaminC}" Style="{StaticResource FormFieldLabel}" />
+                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding VitaminCGoal}"
+                                           Keyboard="Numeric" />
+                                </Border>
+                            </Grid>
+
+                            <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                <Label Text="{loc:LocalizedText Profile_NutritionSettings_VitaminD}" Style="{StaticResource FormFieldLabel}" />
+                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Mcg}" Text="{Binding VitaminDGoal}"
+                                           Keyboard="Numeric" />
+                                </Border>
+                            </Grid>
+
+                            <Grid Grid.Row="2" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                <Label Text="{loc:LocalizedText Profile_NutritionSettings_VitaminA}" Style="{StaticResource FormFieldLabel}" />
+                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Mcg}" Text="{Binding VitaminAGoal}"
+                                           Keyboard="Numeric" />
+                                </Border>
+                            </Grid>
+
+                            <Grid Grid.Row="2" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                <Label Text="{loc:LocalizedText Profile_NutritionSettings_VitaminBSix}" Style="{StaticResource FormFieldLabel}" />
+                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding VitaminB6Goal}"
+                                           Keyboard="Numeric" />
+                                </Border>
+                            </Grid>
+
+                            <Grid Grid.Row="3" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                <Label Text="{loc:LocalizedText Profile_NutritionSettings_Folate}" Style="{StaticResource FormFieldLabel}" />
+                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Mcg}" Text="{Binding FolateGoal}"
+                                           Keyboard="Numeric" />
+                                </Border>
+                            </Grid>
+
+                            <Grid Grid.Row="3" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                <Label Text="{loc:LocalizedText Profile_NutritionSettings_Calcium}" Style="{StaticResource FormFieldLabel}" />
+                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding CalciumGoal}"
+                                           Keyboard="Numeric" />
+                                </Border>
+                            </Grid>
+
+                            <Grid Grid.Row="4" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                <Label Text="{loc:LocalizedText Profile_NutritionSettings_Magnesium}" Style="{StaticResource FormFieldLabel}" />
+                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding MagnesiumGoal}"
+                                           Keyboard="Numeric" />
+                                </Border>
+                            </Grid>
+
+                            <Grid Grid.Row="4" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                                <Label Text="{loc:LocalizedText Profile_NutritionSettings_Zinc}" Style="{StaticResource FormFieldLabel}" />
+                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding ZincGoal}"
+                                           Keyboard="Numeric" />
+                                </Border>
+                            </Grid>
+
+                            <Grid Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" RowDefinitions="Auto,Auto"
+                                  RowSpacing="5">
+                                <Label Text="{loc:LocalizedText Profile_NutritionSettings_Potassium}" Style="{StaticResource FormFieldLabel}" />
+                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding PotassiumGoal}"
+                                           Keyboard="Numeric" />
+                                </Border>
+                            </Grid>
+                        </Grid>
+                    </toolkit:Expander>
+                </VerticalStackLayout>
+            </Border>
+
+            <Label
+                Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+                Style="{StaticResource CaptionLabel}"
+                FontSize="14"
+                IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Button Text="{loc:LocalizedText Profile_NutritionSettings_SaveNutritionSettings}" Command="{Binding SaveCommand}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

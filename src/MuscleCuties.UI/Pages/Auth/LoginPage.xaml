@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Auth.LoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Auth"
+    x:DataType="vm:LoginViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <Grid
+            Padding="24,44,24,32"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="520"
+            RowSpacing="0"
+            RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+
+            <sharedControls:ThemeAwareBrandLogoImage
+                Grid.Row="0"
+                WidthRequest="148"
+                HeightRequest="82"
+                HorizontalOptions="Center"
+                Aspect="AspectFit"
+                SemanticProperties.Description="{loc:LocalizedText Common_MuscleCutiesLogo}" />
+
+            <Label
+                Grid.Row="1"
+                Text="{loc:LocalizedText Auth_Login_WelcomeBack}"
+                Style="{StaticResource Headline}"
+                Margin="0,24,0,8"
+                SemanticProperties.HeadingLevel="Level1" />
+            <Label
+                Grid.Row="2"
+                Text="{loc:LocalizedText Auth_Login_YourPlanIsReadyWhenYou}"
+                Style="{StaticResource MutedLabel}"
+                Margin="0,0,0,32" />
+
+            <Label
+                Grid.Row="3"
+                Text="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}"
+                Style="{StaticResource AccentLabel}"
+                IsVisible="{Binding InfoMessage, Converter={StaticResource StringToBoolConverter}}"
+                Margin="0,0,0,16"
+                SemanticProperties.Description="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}" />
+
+            <Grid
+                Grid.Row="4"
+                RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                RowSpacing="18">
+                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="6">
+                    <Label Text="{loc:LocalizedText Auth_EmailOrUsername}" Style="{StaticResource FormFieldLabel}" />
+                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                        <Entry
+                            x:Name="LoginEmail"
+                            AutomationId="LoginEmail"
+                            Placeholder="{loc:LocalizedText Auth_EmailOrUsernamePlaceholder}"
+                            Text="{Binding Email}"
+                            Keyboard="Email"
+                            ReturnType="Next"
+                            Completed="OnEmailCompleted"
+                            SemanticProperties.Description="{loc:LocalizedText Auth_Login_EmailAddressOrUsername}"
+                            SemanticProperties.Hint="{loc:LocalizedText Auth_Login_EnterYourEmailOrUsernameThen}" />
+                    </Border>
+                </Grid>
+
+                <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
+                    <Label Text="{loc:LocalizedText Auth_Password}" Style="{StaticResource FormFieldLabel}" />
+                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                        <Entry
+                            x:Name="LoginPassword"
+                            AutomationId="LoginPassword"
+                            Placeholder="{loc:LocalizedText Auth_Password}"
+                            Text="{Binding Password}"
+                            IsPassword="True"
+                            ReturnType="Done"
+                            ReturnCommand="{Binding LoginCommand}"
+                            SemanticProperties.Description="{loc:LocalizedText Auth_Password}"
+                            SemanticProperties.Hint="{loc:LocalizedText Auth_Login_EnterYourPasswordThenPressDone}" />
+                    </Border>
+                    <Label
+                        Grid.Row="2"
+                        Text="{loc:LocalizedText Auth_Login_ForgotPasswordLink}"
+                        Style="{StaticResource AccentLabel}"
+                        HorizontalOptions="End"
+                        Margin="0,4,0,0"
+                        SemanticProperties.Description="{loc:LocalizedText Auth_Login_ForgotPasswordDescription}"
+                        SemanticProperties.Hint="{loc:LocalizedText Auth_Login_DoubleTapToOpenPasswordRecovery}">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GoToRecoveryCommand}" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                </Grid>
+
+                <Label
+                    Grid.Row="2"
+                    Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
+                    Style="{StaticResource ErrorLabel}"
+                    IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+                    SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
+                    SemanticProperties.HeadingLevel="Level3" />
+
+                <Button
+                    Grid.Row="3"
+                    Text="{loc:LocalizedText Auth_LogIn}"
+                    Command="{Binding LoginCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    MinimumHeightRequest="52"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Login_LogInToYourAccount}" />
+
+                <ActivityIndicator
+                    Grid.Row="4"
+                    IsRunning="{Binding IsBusy}"
+                    IsVisible="{Binding IsBusy}"
+                    HorizontalOptions="Center"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Login_SigningInPleaseWait}" />
+
+                <Button
+                    Grid.Row="5"
+                    Style="{StaticResource PlatformAuthButton}"
+                    Text="{loc:LocalizedText Auth_SignInWithApple}"
+                    Command="{Binding SignInWithAppleCommand}"
+                    IsVisible="{Binding IsAppleSignInAvailable}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
+            </Grid>
+
+            <Grid
+                Grid.Row="5"
+                ColumnDefinitions="Auto,Auto"
+                ColumnSpacing="4"
+                HorizontalOptions="Center"
+                Margin="0,24,0,0"
+                MinimumHeightRequest="44"
+                MinimumWidthRequest="44"
+                SemanticProperties.Description="{loc:LocalizedText Auth_Login_CreateAnAccount}"
+                SemanticProperties.Hint="{loc:LocalizedText Auth_Login_DoubleTapToGoToThe}">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding GoToRegisterCommand}" />
+                </Grid.GestureRecognizers>
+                <Label Text="{loc:LocalizedText Auth_Login_NewToMusclecuties}" Style="{StaticResource MutedLabel}"
+                       VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="{loc:LocalizedText Auth_CreateAccount}" Style="{StaticResource AccentLabel}"
+                       VerticalOptions="Center" />
+            </Grid>
+        </Grid>
+    </ScrollView>
+</ContentPage>

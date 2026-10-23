@@ -1,0 +1,21 @@
+using Microsoft.Maui.Graphics;
+using MuscleCuties.Core.Models.Enums.Cycle;
+
+namespace MuscleCuties.UI.Models.UI.Cycle;
+
+public class PhaseSummarySheetModel
+{
+    public CyclePhase Phase { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Window { get; set; } = string.Empty;
+    public string Tagline { get; set; } = string.Empty;
+    public string HormonalSummary { get; set; } = string.Empty;
+    public string TrainingFocus { get; set; } = string.Empty;
+    public string NutritionFocus { get; set; } = string.Empty;
+    public string RecoveryFocus { get; set; } = string.Empty;
+    public string QuickRule { get; set; } = string.Empty;
+    public string IconSource { get; set; } = string.Empty;
+    public Color BackgroundColor { get; set; } = Colors.Transparent;
+    public Color TextColor { get; set; } = Colors.Black;
+    public Color AccentColor { get; set; } = Colors.Transparent;
+}

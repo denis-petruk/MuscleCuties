@@ -1,5 +1,3 @@
-using MuscleCuties.Core.Models.Entities.Nutrition;
-
 namespace MuscleCuties.Core.Models.Nutrition;
 
 public readonly record struct MacroNutrients(
@@ -25,21 +23,9 @@ public readonly record struct MacroNutrients(
             fats * ratio);
     }
 
-    public static MacroNutrients FromFood(FoodItem food, float grams)
-    {
-        return FromPer100g(food.Calories, food.Protein, food.Carbs, food.Fats, grams);
-    }
-
     public static MacroNutrients Sum(IEnumerable<MacroNutrients> values)
     {
         return values.Aggregate(Empty, (total, next) => total + next);
-    }
-
-    public static MacroNutrients SumMealEntries(IEnumerable<LoggedMealEntry> entries)
-    {
-        return Sum(entries
-            .Where(entry => entry.FoodItem is not null)
-            .Select(entry => FromFood(entry.FoodItem!, entry.Grams)));
     }
 
     public static MacroNutrients operator +(MacroNutrients left, MacroNutrients right)

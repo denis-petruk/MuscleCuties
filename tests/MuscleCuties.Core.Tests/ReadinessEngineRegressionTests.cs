@@ -1,7 +1,7 @@
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Workout.Planning;
-using MuscleCuties.Core.Services.Workout.Planning;
+using MuscleCuties.Core.Domain.Workout;
 
 namespace MuscleCuties.Core.Tests;
 

@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sharedControls:AnimatedModalView
+    x:Class="MuscleCuties.UI.Controls.Cycle.CycleQuickLogBottomSheet"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:cycleModels="clr-namespace:MuscleCuties.UI.Models.UI.Cycle"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Cycle"
+    x:DataType="vm:CycleViewModel"
+    IsOpen="{Binding IsQuickLogSheetVisible}">
+
+    <Grid BackgroundColor="{StaticResource ModalScrim}">
+        <BoxView BackgroundColor="Transparent">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CloseQuickLogSheetCommand}" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <Border
+            x:Name="SheetSurface"
+            Style="{StaticResource AppBottomSheetSurface}"
+            Padding="0">
+            <Grid RowDefinitions="Auto, *, Auto">
+
+                <!-- Header (Flattened Grid) -->
+                <Grid RowDefinitions="Auto, Auto, Auto">
+                    <BoxView
+                        Grid.Row="0"
+                        WidthRequest="40"
+                        HeightRequest="4"
+                        CornerRadius="2"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                        HorizontalOptions="Center"
+                        Margin="0,10,0,10" />
+
+                    <Grid
+                        Grid.Row="1"
+                        ColumnDefinitions="*, Auto"
+                        Padding="20,0,20,12"
+                        VerticalOptions="Center">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="2">
+                            <Label
+                                Grid.Row="0"
+                                Text="{loc:LocalizedText Cycle_QuickLog_HeaderTitle}"
+                                Style="{StaticResource ModalTitle}"
+                                FontSize="20" />
+                            <Label
+                                Grid.Row="1"
+                                Text="{Binding QuickLogDateText, Converter={StaticResource LocalizedStringConverter}}"
+                                Style="{StaticResource MutedLabel}"
+                                FontSize="13" />
+                        </Grid>
+
+                        <Border
+                            Grid.Column="1"
+                            WidthRequest="36"
+                            HeightRequest="36"
+                            StrokeShape="RoundRectangle 18"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                            StrokeThickness="0"
+                            VerticalOptions="Center"
+                            SemanticProperties.Description="{loc:LocalizedText Cycle_QuickLog_CloseAccessibility}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding CloseQuickLogSheetCommand}" />
+                            </Border.GestureRecognizers>
+                            <Path
+                                Data="M6 6L18 18M18 6L6 18"
+                                Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                StrokeThickness="2"
+                                StrokeLineCap="Round"
+                                Aspect="Uniform"
+                                WidthRequest="14"
+                                HeightRequest="14"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                        </Border>
+                    </Grid>
+
+                    <BoxView
+                        Grid.Row="2"
+                        HeightRequest="1"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                        Opacity="0.7" />
+                </Grid>
+
+                <!-- Scrollable Form Body -->
+                <ScrollView Grid.Row="1">
+                    <VerticalStackLayout Padding="20,16,20,16" Spacing="20">
+
+                        <!-- SECTION 1: Period Status (Flattened Grid) -->
+                        <Label
+                            Text="{loc:LocalizedText Cycle_QuickLog_LoadingSavedEntry}"
+                            Style="{StaticResource CaptionLabel}"
+                            IsVisible="{Binding IsQuickLogLoading}" />
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                            <Label
+                                Grid.Row="0"
+                                Text="{loc:LocalizedText Cycle_QuickLog_PeriodStatusSectionTitle}"
+                                FontSize="11"
+                                FontAttributes="Bold"
+                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+
+                            <Grid Grid.Row="1" ColumnDefinitions="*, *" ColumnSpacing="12">
+                                <!-- Period Started Toggle -->
+                                <Border
+                                    StrokeShape="RoundRectangle 14"
+                                    StrokeThickness="1"
+                                    HeightRequest="48"
+                                    Padding="12,0"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                                    SemanticProperties.Description="{loc:LocalizedText Cycle_QuickLog_TogglePeriodStartedAccessibility}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding TogglePeriodStartedCommand}" />
+                                    </Border.GestureRecognizers>
+                                    <Border.Triggers>
+                                        <DataTrigger
+                                            TargetType="Border"
+                                            Binding="{Binding IsPeriodStarted}"
+                                            Value="True">
+                                            <Setter Property="BackgroundColor"
+                                                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <HorizontalStackLayout Spacing="8" HorizontalOptions="Center"
+                                                           VerticalOptions="Center">
+                                        <Path
+                                            Data="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"
+                                            Stroke="{StaticResource Primary}"
+                                            Fill="{StaticResource Primary}"
+                                            StrokeThickness="1"
+                                            Aspect="Uniform"
+                                            WidthRequest="14"
+                                            HeightRequest="14"
+                                            VerticalOptions="Center" />
+                                        <Label
+                                            Text="{loc:LocalizedText Cycle_QuickLog_PeriodStarted}"
+                                            FontSize="13"
+                                            FontAttributes="Bold"
+                                            VerticalOptions="Center">
+                                            <Label.Triggers>
+                                                <DataTrigger
+                                                    TargetType="Label"
+                                                    Binding="{Binding IsPeriodStarted}"
+                                                    Value="True">
+                                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </HorizontalStackLayout>
+                                </Border>
+
+                                <!-- Period Ended Toggle -->
+                                <Border
+                                    Grid.Column="1"
+                                    StrokeShape="RoundRectangle 14"
+                                    StrokeThickness="1"
+                                    HeightRequest="48"
+                                    Padding="12,0"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                                    SemanticProperties.Description="{loc:LocalizedText Cycle_QuickLog_TogglePeriodEndedAccessibility}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding TogglePeriodEndedCommand}" />
+                                    </Border.GestureRecognizers>
+                                    <Border.Triggers>
+                                        <DataTrigger
+                                            TargetType="Border"
+                                            Binding="{Binding IsPeriodEnded}"
+                                            Value="True">
+                                            <Setter Property="BackgroundColor"
+                                                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <HorizontalStackLayout Spacing="8" HorizontalOptions="Center"
+                                                           VerticalOptions="Center">
+                                        <Path
+                                            Data="M5 13l4 4L19 7"
+                                            Stroke="{StaticResource Primary}"
+                                            StrokeThickness="2"
+                                            StrokeLineCap="Round"
+                                            StrokeLineJoin="Round"
+                                            Aspect="Uniform"
+                                            WidthRequest="14"
+                                            HeightRequest="14"
+                                            VerticalOptions="Center" />
+                                        <Label
+                                            Text="{loc:LocalizedText Cycle_QuickLog_PeriodEnded}"
+                                            FontSize="13"
+                                            FontAttributes="Bold"
+                                            VerticalOptions="Center">
+                                            <Label.Triggers>
+                                                <DataTrigger
+                                                    TargetType="Label"
+                                                    Binding="{Binding IsPeriodEnded}"
+                                                    Value="True">
+                                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </HorizontalStackLayout>
+                                </Border>
+                            </Grid>
+                        </Grid>
+
+                        <!-- SECTION 2: Flow Intensity (Flattened Grid) -->
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                            <Label
+                                Grid.Row="0"
+                                Text="{loc:LocalizedText Cycle_QuickLog_FlowIntensitySectionTitle}"
+                                FontSize="11"
+                                FontAttributes="Bold"
+                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+
+                            <Grid Grid.Row="1" ColumnDefinitions="*, *, *, *" ColumnSpacing="8"
+                                  BindableLayout.ItemsSource="{Binding FlowOptions}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="cycleModels:FlowOptionItem">
+                                        <Border
+                                            StrokeShape="RoundRectangle 12"
+                                            StrokeThickness="1"
+                                            HeightRequest="52"
+                                            Padding="4"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                                            Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                                            SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_QuickLog_FlowIntensityFormat}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding SelectFlowCommand, Source={RelativeSource AncestorType={x:Type vm:CycleViewModel}}, x:DataType=vm:CycleViewModel}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                            <Border.Triggers>
+                                                <DataTrigger
+                                                    TargetType="Border"
+                                                    Binding="{Binding IsSelected}"
+                                                    Value="True">
+                                                    <Setter Property="BackgroundColor"
+                                                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                            <Grid RowDefinitions="Auto,Auto" RowSpacing="2" HorizontalOptions="Center"
+                                                  VerticalOptions="Center">
+                                                <Label
+                                                    Grid.Row="0"
+                                                    Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
+                                                    FontSize="12"
+                                                    FontAttributes="Bold"
+                                                    HorizontalOptions="Center">
+                                                    <Label.Triggers>
+                                                        <DataTrigger
+                                                            TargetType="Label"
+                                                            Binding="{Binding IsSelected}"
+                                                            Value="True">
+                                                            <Setter Property="TextColor"
+                                                                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                                        </DataTrigger>
+                                                    </Label.Triggers>
+                                                </Label>
+                                                <Path
+                                                    Grid.Row="1"
+                                                    Data="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"
+                                                    Fill="{StaticResource Primary}"
+                                                    Aspect="Uniform"
+                                                    WidthRequest="8"
+                                                    HeightRequest="8"
+                                                    HorizontalOptions="Center"
+                                                    IsVisible="{Binding IsSelected}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </Grid>
+                        </Grid>
+
+                        <!-- SECTION 3: Symptoms (Flattened Grid) -->
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                            <Label
+                                Grid.Row="0"
+                                Text="{loc:LocalizedText Cycle_QuickLog_SymptomsSectionTitle}"
+                                FontSize="11"
+                                FontAttributes="Bold"
+                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+
+                            <FlexLayout
+                                Grid.Row="1"
+                                Wrap="Wrap"
+                                Direction="Row"
+                                JustifyContent="SpaceBetween"
+                                BindableLayout.ItemsSource="{Binding SymptomOptions}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="cycleModels:SymptomOptionItem">
+                                        <Border
+                                            FlexLayout.Basis="48%"
+                                            Margin="0,0,0,10"
+                                            StrokeShape="RoundRectangle 14"
+                                            StrokeThickness="1"
+                                            HeightRequest="50"
+                                            Padding="12,0"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                                            Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                                            SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_QuickLog_SymptomFormat}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding ToggleSymptomCommand, Source={RelativeSource AncestorType={x:Type vm:CycleViewModel}}, x:DataType=vm:CycleViewModel}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                            <Border.Triggers>
+                                                <DataTrigger
+                                                    TargetType="Border"
+                                                    Binding="{Binding IsSelected}"
+                                                    Value="True">
+                                                    <Setter Property="BackgroundColor"
+                                                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                                    <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10"
+                                                  VerticalOptions="Center">
+                                                <Path
+                                                    Data="{Binding IconData, Converter={StaticResource StringToGeometryConverter}}"
+                                                    Stroke="{StaticResource Primary}"
+                                                    StrokeThickness="1.8"
+                                                    Aspect="Uniform"
+                                                    WidthRequest="16"
+                                                    HeightRequest="16"
+                                                    VerticalOptions="Center" />
+                                                <Label
+                                                    Grid.Column="1"
+                                                    Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
+                                                    FontSize="13"
+                                                    FontAttributes="Bold"
+                                                    VerticalOptions="Center">
+                                                    <Label.Triggers>
+                                                        <DataTrigger
+                                                            TargetType="Label"
+                                                            Binding="{Binding IsSelected}"
+                                                            Value="True">
+                                                            <Setter Property="TextColor"
+                                                                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                                        </DataTrigger>
+                                                    </Label.Triggers>
+                                                </Label>
+                                                <Path
+                                                    Grid.Column="2"
+                                                    Data="M5 13l4 4L19 7"
+                                                    Stroke="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}"
+                                                    StrokeThickness="2"
+                                                    StrokeLineCap="Round"
+                                                    StrokeLineJoin="Round"
+                                                    Aspect="Uniform"
+                                                    WidthRequest="14"
+                                                    HeightRequest="14"
+                                                    IsVisible="{Binding IsSelected}"
+                                                    VerticalOptions="Center" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </FlexLayout>
+                        </Grid>
+
+                        <!-- Validation Error / Status message -->
+                        <Label
+                            Text="{Binding QuickLogStatusText, Converter={StaticResource LocalizedStringConverter}}"
+                            Style="{StaticResource ErrorLabel}"
+                            IsVisible="{Binding QuickLogStatusText, Converter={StaticResource StringToBoolConverter}}" />
+
+                    </VerticalStackLayout>
+                </ScrollView>
+
+                <!-- Footer Save Action -->
+                <Grid
+                    Grid.Row="2"
+                    Padding="20,12,20,24">
+                    <Button
+                        Text="{loc:LocalizedText Cycle_QuickLog_SaveButton}"
+                        Command="{Binding SaveQuickLogCommand}"
+                        HeightRequest="52"
+                        FontSize="15"
+                        FontAttributes="Bold" />
+                </Grid>
+
+            </Grid>
+        </Border>
+    </Grid>
+</sharedControls:AnimatedModalView>

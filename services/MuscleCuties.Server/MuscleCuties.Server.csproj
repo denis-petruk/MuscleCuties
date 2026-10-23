@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>MuscleCuties.Server</RootNamespace>
+    <AssemblyName>MuscleCuties.Server</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AssetTargetFallback>net8.0;net8.0-macos14.0;net8.0-windows10.0.19041;$(AssetTargetFallback)</AssetTargetFallback>
+    <NoWarn>$(NoWarn);NU1202;NU1701</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/MuscleCuties.Infrastructure.PostgreSql/MuscleCuties.Infrastructure.PostgreSql.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Amazon.Lambda.AspNetCoreServer.Hosting" Version="2.2.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.3" />
+  </ItemGroup>
+</Project>

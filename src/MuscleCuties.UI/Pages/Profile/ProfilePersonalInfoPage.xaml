@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Profile.ProfilePersonalInfoPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:commonModels="clr-namespace:MuscleCuties.UI.Models.UI.Common"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
+    x:DataType="vm:ProfilePersonalInfoViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <Grid
+            Padding="20,40,20,32"
+            RowSpacing="16"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="640"
+            RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+            <sharedControls:PageHeader
+                Grid.Row="0"
+                Title="{loc:LocalizedText Profile_PersonalInfo_PersonalInfo}"
+                Subtitle="Account, body metrics, and cycle logging"
+                BackCommand="{Binding BackCommand}" />
+
+            <Border Grid.Row="1" Style="{StaticResource CardPrimary}"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="14">
+                    <sharedControls:IconSectionHeader Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_Account}"
+                                                      IconGlyph="PersonPill24" />
+                    <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                        <Label Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_DisplayName}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Entry Placeholder="{loc:LocalizedText Profile_PersonalInfo_Name}" Text="{Binding Name}" MaxLength="50" />
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="5">
+                        <Label Grid.Row="0" Text="{loc:LocalizedText Auth_Email}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Entry Placeholder="{loc:LocalizedText Auth_EmailAddress}" Text="{Binding Email}"
+                                   Keyboard="Email" />
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="5">
+                        <Label Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_Birthday}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Grid RowDefinitions="Auto" RowSpacing="8">
+                                <DatePicker
+                                    Date="{Binding BirthDate}"
+                                    DateSelected="OnBirthDateSelected"
+                                    MinimumDate="{Binding MinBirthDate}"
+                                    MaximumDate="{Binding MaxBirthDate}"
+                                    Format="MMMM dd, yyyy" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="2" Style="{StaticResource CardPrimary}"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="14">
+                    <sharedControls:IconSectionHeader Grid.Row="0" Text="{loc:LocalizedText Auth_Password}"
+                                                      IconGlyph="ShieldLock24" />
+
+                    <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                        <Label Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_CurrentPassword}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Entry
+                                AutomationId="ProfileCurrentPassword"
+                                Placeholder="{loc:LocalizedText Profile_PersonalInfo_EnterCurrentPassword}"
+                                Text="{Binding CurrentPassword}"
+                                IsPassword="True"
+                                ReturnType="Next"
+                                SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_CurrentPassword}" />
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="5">
+                        <Label Grid.Row="0" Text="{loc:LocalizedText Auth_NewPassword}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Entry
+                                AutomationId="ProfileNewPassword"
+                                Placeholder="{loc:LocalizedText Profile_PersonalInfo_CreateNewPassword}"
+                                Text="{Binding NewPassword}"
+                                IsPassword="True"
+                                ReturnType="Next"
+                                SemanticProperties.Description="{loc:LocalizedText Auth_NewPassword}"
+                                SemanticProperties.Hint="{loc:LocalizedText Profile_PersonalInfo_UseAtLeastEightCharactersWith}" />
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="5">
+                        <Label Grid.Row="0" Text="{loc:LocalizedText Auth_ConfirmPassword}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Entry
+                                AutomationId="ProfileConfirmPassword"
+                                Placeholder="{loc:LocalizedText Profile_PersonalInfo_RepeatNewPassword}"
+                                Text="{Binding ConfirmNewPassword}"
+                                IsPassword="True"
+                                ReturnType="Done"
+                                ReturnCommand="{Binding ChangePasswordCommand}"
+                                SemanticProperties.Description="{loc:LocalizedText Auth_ConfirmNewPassword}"
+                                SemanticProperties.Hint="{loc:LocalizedText Profile_PersonalInfo_ReEnterYourNewPasswordThen}" />
+                        </Border>
+                    </Grid>
+
+                    <Label
+                        Grid.Row="4"
+                        Text="{Binding PasswordStatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+                        Style="{StaticResource CaptionLabel}"
+                        FontSize="14"
+                        IsVisible="{Binding PasswordStatusMessage, Converter={StaticResource StringToBoolConverter}}"
+                        SemanticProperties.Description="{Binding PasswordStatusMessage, Converter={StaticResource LocalizedStringConverter}}" />
+
+                    <Button
+                        Grid.Row="5"
+                        Text="{loc:LocalizedText Profile_PersonalInfo_ChangePassword}"
+                        Style="{StaticResource ButtonSecondary}"
+                        Command="{Binding ChangePasswordCommand}"
+                        SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_ChangePassword}" />
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="3" Style="{StaticResource CardPrimary}"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="14">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_PersonalInfo_BodyMetrics}" IconGlyph="Target24" />
+                        <Label
+                            Grid.Column="1"
+                            Text="{loc:LocalizedText Profile_PersonalInfo_LocalOnly}"
+                            Style="{StaticResource CaptionLabel}"
+                            FontSize="14"
+                            VerticalOptions="Center" />
+                    </Grid>
+                    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Grid Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="5">
+                            <Label Grid.Row="0" Text="{loc:LocalizedText Common_Height}"
+                                   Style="{StaticResource FormFieldLabel}" />
+                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="{loc:LocalizedText Common_Unit_Cm}" Text="{Binding HeightCm}"
+                                       Keyboard="Numeric" />
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                            <Label Grid.Row="0" Text="{loc:LocalizedText Common_Weight}"
+                                   Style="{StaticResource FormFieldLabel}" />
+                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                <Entry Placeholder="{loc:LocalizedText Common_Unit_Kg}" Text="{Binding WeightKg}"
+                                       Keyboard="Numeric" />
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="4" Style="{StaticResource CardPrimary}"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="14">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_PersonalInfo_CycleLogging}"
+                                                          IconGlyph="HeartCircle24" />
+                        <Label
+                            Grid.Column="1"
+                            Text="{loc:LocalizedText Profile_PersonalInfo_LocalOnly}"
+                            Style="{StaticResource CaptionLabel}"
+                            FontSize="14"
+                            VerticalOptions="Center" />
+                    </Grid>
+                    <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                        <Label Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_LoggingMethod}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Picker
+                                Title="{loc:LocalizedText Profile_PersonalInfo_LoggingMethod}"
+                                ItemsSource="{Binding CycleLoggingModeOptions}"
+                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
+                                SelectedItem="{Binding SelectedCycleLoggingModeOption}" />
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="5" Style="{StaticResource CardPrimary}"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="14">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_PersonalInfo_ReproductiveContext}"
+                                                          IconGlyph="ShieldLock24" />
+                        <Label
+                            Grid.Column="1"
+                            Text="{loc:LocalizedText Profile_PersonalInfo_LocalOnly}"
+                            Style="{StaticResource CaptionLabel}"
+                            FontSize="14"
+                            VerticalOptions="Center" />
+                    </Grid>
+
+                    <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                        <Label Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_CurrentlyPregnantOrBreastfeeding}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Picker
+                                Title="{loc:LocalizedText Profile_PersonalInfo_PregnancyOrBreastfeeding}"
+                                ItemsSource="{Binding PregnancyOptions}"
+                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
+                                SelectedItem="{Binding SelectedPregnancyOption}" />
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="5">
+                        <Label Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_HormonalContraceptionOrCyclePattern}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Picker
+                                Title="{loc:LocalizedText Profile_PersonalInfo_ContraceptionOrCyclePattern}"
+                                ItemsSource="{Binding ContraceptionOptions}"
+                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
+                                SelectedItem="{Binding SelectedContraceptionOption}" />
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Label
+                Grid.Row="6"
+                Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+                Style="{StaticResource CaptionLabel}"
+                FontSize="14"
+                IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
+                SemanticProperties.Description="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}" />
+
+            <Button
+                Grid.Row="7"
+                Text="{loc:LocalizedText Profile_PersonalInfo_SavePersonalInfo}"
+                Command="{Binding SaveCommand}"
+                SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_SavePersonalInfo}" />
+        </Grid>
+    </ScrollView>
+</ContentPage>

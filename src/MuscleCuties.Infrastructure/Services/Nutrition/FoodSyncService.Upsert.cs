@@ -1,0 +1,73 @@
+using System.Diagnostics;
+using MuscleCuties.Core.Models.Entities.Nutrition;
+
+namespace MuscleCuties.Core.Services.Nutrition;
+
+public partial class FoodSyncService
+{
+    private async Task UpsertFoodsAsync(
+        IEnumerable<FdcFoodDetail> details,
+        FoodSyncLog log,
+        List<string> errors)
+    {
+        var detailList = details
+            .Where(detail => detail.FdcId > 0)
+            .GroupBy(detail => detail.FdcId)
+            .Select(group => group.First())
+            .ToList();
+
+        if (detailList.Count == 0)
+            return;
+
+        var existingByFdcId = (await _nutritionRepository.GetFoodItemsByFdcIdsAsync(detailList.Select(d => d.FdcId)))
+            .Where(food => food.FdcId.HasValue)
+            .ToDictionary(food => food.FdcId!.Value);
+
+        var newItems = new List<FoodItem>();
+        var updatedItems = new List<FoodItem>();
+        var versions = new List<FoodItemVersion>();
+
+        foreach (var detail in detailList)
+            try
+            {
+                existingByFdcId.TryGetValue(detail.FdcId, out var existing);
+                var item = BuildFoodItem(detail, existing, versions);
+
+                if (existing is null)
+                    newItems.Add(item);
+                else
+                    updatedItems.Add(item);
+
+                log.ItemsUpserted++;
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(
+                    $"[{nameof(FoodSyncService)}] FDC food {detail.FdcId} mapping failed ({ex.GetType().Name}).");
+                log.ItemsFailed++;
+                errors.Add("FDC food could not be saved.");
+            }
+
+        await _foodSyncRepository.AddFoodItemVersionsAsync(versions);
+        await _nutritionRepository.SaveFoodItemsAsync(newItems, updatedItems);
+    }
+
+    private static FoodItem BuildFoodItem(
+        FdcFoodDetail detail,
+        FoodItem? existing,
+        List<FoodItemVersion> versions)
+    {
+        var now = DateTime.UtcNow;
+
+        if (existing is not null && FdcFoodMapper.HasNutrientChanges(existing, detail))
+            versions.Add(new FoodItemVersion
+            {
+                FoodItemId = existing.Id,
+                NutrientJson = FdcFoodMapper.CreateNutrientSnapshot(existing),
+                VersionedAt = now,
+                ChangeSource = "FDC"
+            });
+
+        return FdcFoodMapper.ApplyToFoodItem(detail, existing, now);
+    }
+}

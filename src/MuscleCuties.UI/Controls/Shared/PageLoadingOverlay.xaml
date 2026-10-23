@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Shared.PageLoadingOverlay"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Common"
+    x:DataType="vm:IPageLoadAware"
+    InputTransparent="False">
+
+    <ContentView.Triggers>
+        <MultiTrigger TargetType="ContentView">
+            <MultiTrigger.Conditions>
+                <BindingCondition Binding="{Binding IsPageLoading}" Value="False" />
+                <BindingCondition Binding="{Binding IsLoadError}" Value="False" />
+            </MultiTrigger.Conditions>
+            <Setter Property="IsVisible" Value="False" />
+        </MultiTrigger>
+    </ContentView.Triggers>
+
+    <Grid Padding="24">
+
+        <!-- Loading state -->
+        <VerticalStackLayout
+            IsVisible="{Binding IsPageLoading}"
+            HorizontalOptions="Center"
+            VerticalOptions="Start"
+            Spacing="10">
+            <ActivityIndicator
+                Color="{StaticResource Primary}"
+                IsRunning="{Binding IsPageLoading}"
+                SemanticProperties.Description="{loc:LocalizedText Dashboard_Shared_LoadingPageDataA11y}" />
+            <Label
+                Text="{loc:LocalizedText Dashboard_Shared_LoadingYourData}"
+                Style="{StaticResource MutedLabel}"
+                HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <!-- Error state -->
+        <Grid
+            IsVisible="{Binding IsLoadError}"
+            BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+            <VerticalStackLayout
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Spacing="16">
+                <Label
+                    Text="{loc:LocalizedText Dashboard_Shared_SomethingWentWrong}"
+                    Style="{StaticResource SectionTitle}"
+                    HorizontalTextAlignment="Center" />
+                <Label
+                    Text="{loc:LocalizedText Dashboard_Shared_CouldNotLoadData}"
+                    Style="{StaticResource MutedLabel}"
+                    HorizontalTextAlignment="Center" />
+                <Button
+                    Text="{loc:LocalizedText Dashboard_Shared_Retry}"
+                    Command="{Binding LoadDataCommand}"
+                    Style="{StaticResource ButtonLink}"
+                    HorizontalOptions="Center"
+                    SemanticProperties.Description="{loc:LocalizedText Dashboard_Shared_RetryLoadingDataA11y}" />
+            </VerticalStackLayout>
+        </Grid>
+
+    </Grid>
+</ContentView>

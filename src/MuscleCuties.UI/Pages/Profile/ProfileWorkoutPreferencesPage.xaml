@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Profile.ProfileWorkoutPreferencesPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:profileControls="clr-namespace:MuscleCuties.UI.Controls.Profile"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
+    x:DataType="vm:ProfileWorkoutPreferencesViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <x:Double x:Key="PlanUpdateMessageSpacing">12</x:Double>
+    </ContentPage.Resources>
+
+    <Grid>
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="20,40,20,32"
+            Spacing="16"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="640">
+            <sharedControls:PageHeader
+                Title="{loc:LocalizedText Profile_WorkoutPrefs_ActivityPreferences}"
+                BackCommand="{Binding BackCommand}" />
+
+            <Border
+                StrokeShape="RoundRectangle 10"
+                StrokeThickness="1"
+                Stroke="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}"
+                Padding="14,10"
+                SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs}">
+                <Label
+                    Text="{loc:LocalizedText Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs}"
+                    FontFamily="Inter"
+                    FontSize="14"
+                    FontAttributes="Bold"
+                    TextColor="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource SecondaryDarkText}}" />
+            </Border>
+
+            <VerticalStackLayout Spacing="8">
+                <Label
+                    Text="{loc:LocalizedText Profile_WorkoutPrefs_WorkoutsPerWeek}"
+                    Style="{StaticResource SectionTitle}"
+                    SemanticProperties.HeadingLevel="Level2" />
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                    <Label Text="{Binding MinimumDaysPerWeek}" VerticalOptions="Center"
+                           Style="{StaticResource MutedLabel}" />
+                    <Slider x:Name="WorkoutFrequencySlider" Grid.Column="1"
+                            Minimum="{Binding MinimumDaysPerWeek}"
+                            Maximum="{Binding MaximumDaysPerWeek}"
+                            Value="{Binding SliderDaysPerWeek, Mode=TwoWay}"
+                            ThumbColor="{StaticResource Primary}"
+                            MinimumTrackColor="{StaticResource Primary}"
+                            MaximumTrackColor="{StaticResource Gray500}"
+                            SemanticProperties.Description="{Binding DaysPerWeek, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_DaysPerWeekFormat}" />
+                    <Label Grid.Column="2" Text="{Binding MaximumDaysPerWeek}"
+                           VerticalOptions="Center" Style="{StaticResource MutedLabel}" />
+                </Grid>
+                <Label Text="{Binding DaysPerWeek, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_DaysPerWeekFormat}"
+                       HorizontalTextAlignment="Center" Style="{StaticResource SectionTitle}" />
+            </VerticalStackLayout>
+
+            <toolkit:LazyView
+                x:Name="PreferenceChoicesLazy"
+                x:TypeArguments="profileControls:ProfileWorkoutPreferencesChoices" />
+
+            <Label
+                Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+                Style="{StaticResource AccentLabel}"
+                IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Button
+                Text="{loc:LocalizedText Profile_WorkoutPrefs_SaveWorkoutPreferences}"
+                Command="{Binding SaveCommand}"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+
+            <ActivityIndicator
+                IsRunning="{Binding IsBusy}"
+                IsVisible="{Binding IsBusy}"
+                HorizontalOptions="Center"
+                SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_SavingPreferences}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+        <Grid
+            IsVisible="{Binding IsUpdatingPlan}"
+            BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center"
+                                 Spacing="{StaticResource PlanUpdateMessageSpacing}">
+                <ActivityIndicator
+                    IsRunning="{Binding IsUpdatingPlan}"
+                    Color="{StaticResource Primary}"
+                    SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_UpdatingPlan}" />
+                <Label
+                    Text="{loc:LocalizedText Profile_WorkoutPrefs_UpdatingPlan}"
+                    Style="{StaticResource MutedLabel}"
+                    HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

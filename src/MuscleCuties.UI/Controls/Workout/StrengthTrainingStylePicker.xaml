@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Workout.StrengthTrainingStylePicker"
+    x:Name="StrengthStyleRoot"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MuscleCuties.UI.Controls.Workout"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
+    x:DataType="controls:StrengthTrainingStylePicker">
+
+    <VerticalStackLayout
+        Spacing="10"
+        BindableLayout.ItemsSource="{Binding ItemsSource, Source={x:Reference StrengthStyleRoot}}">
+        <BindableLayout.ItemTemplate>
+            <DataTemplate x:DataType="workoutModels:StrengthTrainingStyleOptionItem">
+                <Border
+                    StrokeShape="RoundRectangle 14"
+                    StrokeThickness="1"
+                    Padding="16,14"
+                    MinimumHeightRequest="76"
+                    HorizontalOptions="Fill"
+                    SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                            <Setter Property="SemanticProperties.Hint" Value="Selected training style" />
+                            <Setter Property="BackgroundColor"
+                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
+                            <Setter Property="Stroke"
+                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                            <Setter Property="StrokeThickness" Value="1.5" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                            <Setter Property="SemanticProperties.Hint" Value="Not selected, double-tap to select" />
+                            <Setter Property="BackgroundColor"
+                                    Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
+                            <Setter Property="Stroke"
+                                    Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer
+                            Command="{Binding Source={x:Reference StrengthStyleRoot}, Path=SelectStyleCommand, x:DataType=controls:StrengthTrainingStylePicker}"
+                            CommandParameter="{Binding .}" />
+                    </Border.GestureRecognizers>
+
+                    <Grid ColumnDefinitions="*,24" ColumnSpacing="12">
+                        <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                            <Label
+                                Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
+                                Style="{StaticResource BodyLabel}"
+                                FontAttributes="Bold"
+                                LineBreakMode="WordWrap" />
+
+                            <Label
+                                Text="{Binding Subtitle, Converter={StaticResource LocalizedStringConverter}}"
+                                Style="{StaticResource MutedLabel}"
+                                FontSize="14"
+                                TextColor="{AppThemeBinding Light={StaticResource DeepMauve}, Dark={StaticResource ActivityDescriptionDark}}"
+                                LineBreakMode="WordWrap">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="TextColor"
+                                                Value="{AppThemeBinding Light={StaticResource ActivitySelectedSubtitleLight}, Dark={StaticResource ActivityDescriptionDark}}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </VerticalStackLayout>
+
+                        <Border
+                            Grid.Column="1"
+                            WidthRequest="24"
+                            HeightRequest="24"
+                            StrokeShape="Ellipse"
+                            VerticalOptions="Center">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BackgroundColor"
+                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                    <Setter Property="Stroke"
+                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                    <Setter Property="BackgroundColor" Value="Transparent" />
+                                    <Setter Property="Stroke"
+                                            Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray500}}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <BoxView
+                                WidthRequest="9"
+                                HeightRequest="9"
+                                CornerRadius="5"
+                                Color="{StaticResource White}"
+                                IsVisible="{Binding IsSelected}"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                        </Border>
+                    </Grid>
+                </Border>
+            </DataTemplate>
+        </BindableLayout.ItemTemplate>
+    </VerticalStackLayout>
+</ContentView>

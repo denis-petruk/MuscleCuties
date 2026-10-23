@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>MuscleCuties.Infrastructure.PostgreSql</RootNamespace>
+        <AssemblyName>MuscleCuties.Infrastructure.PostgreSql</AssemblyName>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AssetTargetFallback>net8.0;net8.0-macos14.0;net8.0-windows10.0.19041;$(AssetTargetFallback)</AssetTargetFallback>
+        <NoWarn>$(NoWarn);NU1202;NU1701</NoWarn>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../MuscleCuties.Core/MuscleCuties.Core.csproj" />
+        <ProjectReference Include="../MuscleCuties.UseCases/MuscleCuties.UseCases.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <InternalsVisibleTo Include="MuscleCuties.PostgreSql.Tests" />
+        <InternalsVisibleTo Include="MuscleCuties.Registration.Integration.Tests" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="SkiaSharp" Version="3.119.1" />
+        <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
+    </ItemGroup>
+</Project>

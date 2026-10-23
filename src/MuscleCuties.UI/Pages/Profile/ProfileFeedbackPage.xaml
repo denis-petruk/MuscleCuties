@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Profile.ProfileFeedbackPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:commonModels="clr-namespace:MuscleCuties.UI.Models.UI.Common"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
+    x:DataType="vm:ProfileFeedbackViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <Grid Padding="20,40,20,32" RowSpacing="16" MaximumWidthRequest="640"
+              RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+            <sharedControls:PageHeader Grid.Row="0" Title="{loc:LocalizedText Profile_Feedback_Feedback}"
+                                       BackCommand="{Binding BackCommand}" />
+
+            <Border Grid.Row="2" Style="{StaticResource CardPrimary}" Padding="18"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,56" ColumnSpacing="12">
+                        <Label Text="{loc:LocalizedText Profile_Feedback_YourMessage}" Style="{StaticResource SectionTitle}"
+                               VerticalOptions="Center" />
+                        <Border Grid.Column="1" WidthRequest="56" HeightRequest="56"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
+                                StrokeThickness="0" StrokeShape="RoundRectangle 14">
+                            <Image Source="feedback_note.png" WidthRequest="42" HeightRequest="42"
+                                   HorizontalOptions="Center" VerticalOptions="Center"
+                                   Aspect="AspectFit" />
+                        </Border>
+                    </Grid>
+                    <Border Grid.Row="1" Style="{StaticResource InputContainer}" MinimumHeightRequest="110">
+                        <Editor Placeholder="{loc:LocalizedText Profile_Feedback_WhatHappenedOrWhatShouldChange}"
+                                Text="{Binding FeedbackText}" AutoSize="TextChanges"
+                                SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_YourFeedback}" />
+                    </Border>
+                    <Label Grid.Row="2" Text="{loc:LocalizedText Profile_Feedback_SuggestedFixOptional}" Style="{StaticResource FormFieldLabel}" />
+                    <Border Grid.Row="3" Style="{StaticResource InputContainer}" MinimumHeightRequest="72">
+                        <Editor Placeholder="{loc:LocalizedText Profile_Feedback_WhatWouldWorkBetter}"
+                                Text="{Binding AdjustmentText}" AutoSize="TextChanges"
+                                SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_SuggestedChange}" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="1" Style="{StaticResource CardPrimary}" Padding="18"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
+                    <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Feedback_Details}"
+                           Style="{StaticResource FormFieldLabel}" FontSize="16" />
+                    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="5">
+                            <Label Text="{loc:LocalizedText Profile_Feedback_Topic}" Style="{StaticResource FormFieldLabel}" />
+                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                <Picker Title="{loc:LocalizedText Profile_Feedback_Topic}" ItemsSource="{Binding TopicOptions}"
+                                        ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
+                                        SelectedItem="{Binding SelectedTopicOption}" />
+                            </Border>
+                        </Grid>
+                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                            <Label Text="{loc:LocalizedText Profile_Feedback_Priority}" Style="{StaticResource FormFieldLabel}" />
+                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                <Picker Title="{loc:LocalizedText Profile_Feedback_Priority}" ItemsSource="{Binding PriorityOptions}"
+                                        ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
+                                        SelectedItem="{Binding SelectedPriorityOption}" />
+                            </Border>
+                        </Grid>
+                    </Grid>
+                    <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="5">
+                        <Label Text="{loc:LocalizedText Profile_Feedback_ScreenOptional}" Style="{StaticResource FormFieldLabel}" />
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Entry Placeholder="{loc:LocalizedText Profile_Feedback_EGNutrition}" Text="{Binding ScreenName}" />
+                        </Border>
+                    </Grid>
+                    <BoxView Grid.Row="3" HeightRequest="1"
+                             Color="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+                    <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="12" MinimumHeightRequest="48">
+                        <Label Text="{loc:LocalizedText Profile_Feedback_IncludeReplyEmail}" Style="{StaticResource CardTitle}"
+                               VerticalOptions="Center" />
+                        <Switch Grid.Column="1" IsToggled="{Binding IncludeContactEmail}"
+                                OnColor="{StaticResource Primary}"
+                                ThumbColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
+                                VerticalOptions="Center"
+                                SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_IncludeContactEmailForAReply}" />
+                    </Grid>
+                    <Border Grid.Row="5" Style="{StaticResource InputContainer}"
+                            IsVisible="{Binding IncludeContactEmail}">
+                        <Entry Placeholder="{loc:LocalizedText Profile_Feedback_ReplyEmail}" Text="{Binding ContactEmail}"
+                               Keyboard="Email"
+                               SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_ReplyEmail}" />
+                    </Border>
+                    <BoxView Grid.Row="6" HeightRequest="1"
+                             Color="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+                    <Grid Grid.Row="7" ColumnDefinitions="*,Auto" ColumnSpacing="12" MinimumHeightRequest="48">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Feedback_Attachment}"
+                                                          IconGlyph="LinkSquare24" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="{loc:LocalizedText Profile_Feedback_AddFile}"
+                                Style="{StaticResource ButtonSecondary}"
+                                Clicked="OnAttachFileClicked" MinimumHeightRequest="44" />
+                    </Grid>
+                    <Grid Grid.Row="8" IsVisible="{Binding HasAttachment}" ColumnDefinitions="*,Auto"
+                          ColumnSpacing="10">
+                        <Label Text="{Binding AttachmentName}" Style="{StaticResource MutedLabel}"
+                               LineBreakMode="MiddleTruncation" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="{loc:LocalizedText Profile_Feedback_Remove}"
+                                Style="{StaticResource ButtonLink}"
+                                Command="{Binding RemoveAttachmentCommand}" />
+                    </Grid>
+                    <Label Grid.Row="9"
+                           Text="{Binding AttachmentStatus, Converter={StaticResource LocalizedStringConverter}}"
+                           Style="{StaticResource CaptionLabel}"
+                           IsVisible="{Binding AttachmentStatus, Converter={StaticResource StringToBoolConverter}}" />
+                </Grid>
+            </Border>
+
+            <Label Grid.Row="3" Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+                   Style="{StaticResource CaptionLabel}"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+            <Button Grid.Row="4" Text="{loc:LocalizedText Profile_Feedback_OpenEmailDraft}" Command="{Binding SendFeedbackCommand}"
+                    IsEnabled="{Binding IsReadyToSend}" />
+        </Grid>
+    </ScrollView>
+</ContentPage>

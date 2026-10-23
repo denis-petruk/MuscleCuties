@@ -1,4 +1,4 @@
-using System.Globalization;
+using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.Entities.Cycle;
 using MuscleCuties.Core.Models.Entities.Nutrition;
 using MuscleCuties.Core.Models.Entities.Users;
@@ -11,7 +11,6 @@ using MuscleCuties.Core.Models.Nutrition.Planning;
 using MuscleCuties.Core.Models.UI.Workout;
 using MuscleCuties.Core.Models.Workout.Logging;
 using MuscleCuties.Core.Models.Workout.Planning;
-using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
@@ -20,7 +19,9 @@ using MuscleCuties.Core.Services.Health;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Profile;
 using MuscleCuties.Core.Services.Workout;
-using MuscleCuties.Core.ViewModels.Profile;
+using MuscleCuties.Infrastructure.Profile.HealthSync;
+using MuscleCuties.UseCases.Features.Profile.HealthSync;
+using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 
 namespace MuscleCuties.Core.Tests;
 
@@ -78,7 +79,7 @@ public sealed class ReadinessSyncOrchestratorTests
     }
 
     [Fact]
-    public async Task ProfileHealthSyncViewModel_Delegates_To_Orchestrator_And_Formats_Invariant()
+    public async Task ProfileHealthSyncUseCase_Delegates_To_Orchestrator_And_Maps_Summary()
     {
         var provider = new TestProvider
         {
@@ -90,22 +91,19 @@ public sealed class ReadinessSyncOrchestratorTests
         await healthSync.SyncAsync(42, HealthDataSource.AppleHealth);
 
         var orchestrator = CreateOrchestrator(healthSync);
-        var authService = new StubAuth(42);
-        var preloadService = new StubPreload();
+        var services = new ServiceCollection();
+        services.AddSingleton<ICurrentProfileUserIdProvider>(new StubCurrentProfileUserIdProvider(42));
+        services.AddSingleton<IReadinessSyncOrchestrator>(orchestrator);
+        using var providerScope = services.BuildServiceProvider();
 
-        var vm = new ProfileHealthSyncViewModel(
-            authService,
-            orchestrator,
-            preloadService,
-            () => Task.CompletedTask);
+        var store = new LocalProfileHealthSyncStore(providerScope.GetRequiredService<IServiceScopeFactory>());
+        var useCase = new ProfileHealthSyncUseCase(store);
 
-        Assert.Equal("Unavailable", vm.ReadinessScoreText);
+        var loaded = await useCase.LoadAsync();
 
-        await vm.LoadDataCommand.ExecuteAsync(null);
-
-        Assert.Equal("Connected", vm.ConnectionBadgeText);
-        Assert.True(vm.ReadinessScore > 0);
-        Assert.Equal(vm.ReadinessScore.ToString(CultureInfo.InvariantCulture), vm.ReadinessScoreText);
+        Assert.Equal("Refresh steps", loaded.ConnectionBadgeText);
+        Assert.True(loaded.ReadinessScore > 0);
+        Assert.False(string.IsNullOrWhiteSpace(loaded.ReadinessExplanationText));
     }
 
     [Fact]
@@ -129,8 +127,55 @@ public sealed class ReadinessSyncOrchestratorTests
         Assert.NotNull(enriched);
         Assert.Equal(9000, log.Steps7dAvg);
         Assert.Equal(8500, log.StepsYesterday);
-        Assert.Equal(7.1, log.Sleep3dAvg);
-        Assert.Equal(7.5, log.SleepHours);
+        Assert.Equal(0, log.Sleep3dAvg);
+        Assert.Equal(0, log.SleepHours);
+    }
+
+    [Fact]
+    public async Task AppleHealthSummary_Strips_NonStep_Metrics_Before_Caching()
+    {
+        var provider = new TestProvider
+        {
+            Summary = new HealthWeeklySummary(
+                HealthDataSource.AppleHealth,
+                DateTime.Today.AddDays(-7),
+                DateTime.Today,
+                8400,
+                7.6,
+                76,
+                58,
+                0,
+                DateTime.UtcNow,
+                9100,
+                7.8,
+                420,
+                7.7)
+        };
+        var healthSync = new HealthSyncService([provider], new MemoryTokenStorage());
+        var result = await healthSync.SyncAsync(55, HealthDataSource.AppleHealth);
+        var status = await healthSync.GetStatusAsync(55);
+
+        Assert.True(result.IsConnected);
+        Assert.Contains("8,400 avg steps", status.SummaryText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("sleep", status.SummaryText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("RHR", status.SummaryText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("active", status.SummaryText, StringComparison.OrdinalIgnoreCase);
+        Assert.NotNull(result.Summary);
+        Assert.False(result.Summary.HasSleepData);
+        Assert.Equal(0, result.Summary.RestingHeartRate);
+        Assert.Null(result.Summary.AverageActiveEnergyKcal);
+
+        var services = new ServiceCollection();
+        services.AddSingleton<ICurrentProfileUserIdProvider>(new StubCurrentProfileUserIdProvider(55));
+        services.AddSingleton<IHealthSyncService>(healthSync);
+        using var providerScope = services.BuildServiceProvider();
+
+        var store = new LocalProfileHealthSyncStore(providerScope.GetRequiredService<IServiceScopeFactory>());
+        var loaded = await store.LoadAsync(CancellationToken.None);
+
+        Assert.Equal("Refresh steps", loaded.ConnectionBadgeText);
+        Assert.True(loaded.ReadinessScore > 0);
+        Assert.Contains("Synced steps", loaded.ReadinessExplanationText, StringComparison.OrdinalIgnoreCase);
     }
 
     private static ReadinessSyncOrchestrator CreateOrchestrator(IHealthSyncService healthSync)
@@ -144,33 +189,10 @@ public sealed class ReadinessSyncOrchestratorTests
             new DashboardPlanner());
     }
 
-    private sealed class StubAuth(int userId) : IAuthService
+    private sealed class StubCurrentProfileUserIdProvider(int userId) : ICurrentProfileUserIdProvider
     {
-        public Task<User?> LoginAsync(string emailOrUsername, string password) => throw new NotImplementedException();
-        public Task<User?> RegisterAsync(string email, string password) => throw new NotImplementedException();
-        public Task<bool> EmailExistsAsync(string email) => Task.FromResult(false);
-        public Task<bool> UsernameExistsAsync(string username) => Task.FromResult(false);
-        public Task<User?> SignInWithAppleAsync(AppleSignInResult appleAccount) => throw new NotImplementedException();
-        public Task<AppleSignInOutcome> HandleAppleSignInAsync(AppleSignInResult appleAccount) => throw new NotImplementedException();
-        public Task<User?> SignInWithExternalProviderAsync(PlatformSignInResult account) => throw new NotImplementedException();
-        public Task<PasswordOperationResult> ChangePasswordAsync(int userId, string currentPassword, string newPassword) => throw new NotImplementedException();
-        public Task LogoutAsync() => Task.CompletedTask;
-        public Task<bool> IsLoggedInAsync() => Task.FromResult(true);
-        public Task<int> GetCurrentUserIdAsync() => Task.FromResult(userId);
-        public Task<CurrentUserState?> GetCurrentUserStateAsync() => throw new NotImplementedException();
-        public Task SetCurrentUserAsync(User user) => Task.CompletedTask;
-    }
-
-    private sealed class StubPreload : IAppPreloadService
-    {
-        public Task PreloadAllAsync() => Task.CompletedTask;
-        public Task PreloadDashboardAsync() => Task.CompletedTask;
-        public Task PreloadRemainingAsync() => Task.CompletedTask;
-        public Task RefreshAllAsync() => Task.CompletedTask;
-        public void InvalidateAll() { }
-        public void InvalidateDashboard() { }
-        public void InvalidateWorkout() { }
-        public DateTime LastLoadedDate => DateTime.UtcNow;
+        public Task<int> GetCurrentUserIdAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(userId);
     }
 
     private sealed class StubProfileAccount : IProfileAccountService

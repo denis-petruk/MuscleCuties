@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Cycle.CycleHeroCard"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:cycleControls="clr-namespace:MuscleCuties.UI.Controls.Cycle"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Cycle"
+    x:DataType="vm:CycleViewModel"
+    SemanticProperties.Description="{loc:LocalizedText Cycle_Hero_CardAccessibility}">
+
+    <Border Style="{StaticResource CardPrimary}" Padding="20">
+        <Grid RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="14">
+
+            <!-- Top Row: Section header + energy status pill -->
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                    <Path
+                        Data="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"
+                        Stroke="{StaticResource Primary}"
+                        StrokeThickness="1.5"
+                        Aspect="Uniform"
+                        WidthRequest="14"
+                        HeightRequest="14"
+                        VerticalOptions="Center" />
+                    <Label
+                        Text="{loc:LocalizedText Cycle_Hero_HeaderTitle}"
+                        Style="{StaticResource CaptionLabel}"
+                        FontAttributes="Bold"
+                        TextColor="{StaticResource Primary}"
+                        VerticalOptions="Center"
+                        SemanticProperties.HeadingLevel="Level2" />
+                </HorizontalStackLayout>
+
+                <Border
+                    Grid.Column="1"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
+                    StrokeShape="RoundRectangle 12"
+                    StrokeThickness="0"
+                    Padding="10,4"
+                    VerticalOptions="Center">
+                    <Label
+                        Text="{Binding PhaseEnergyBadgeText, Converter={StaticResource LocalizedStringConverter}}"
+                        FontSize="12"
+                        FontAttributes="Bold"
+                        TextColor="{StaticResource Primary}"
+                        VerticalOptions="Center" />
+                </Border>
+            </Grid>
+
+            <!-- Middle Row: Left phase title & hormonal snapshot + Right vector artwork -->
+            <Grid Grid.Row="1" ColumnDefinitions="*, 80" ColumnSpacing="14" RowSpacing="6">
+                <VerticalStackLayout Spacing="6" VerticalOptions="Center">
+                    <Label
+                        Text="{Binding PhaseLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_Hero_PhaseFormat}"
+                        Style="{StaticResource SectionTitle}"
+                        FontSize="22"
+                        FontAttributes="Bold" />
+                    <Label
+                        Text="{Binding CycleDaySummary, Converter={StaticResource LocalizedStringConverter}}"
+                        Style="{StaticResource CaptionLabel}"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        TextColor="{StaticResource Primary}" />
+                    <Label
+                        Text="{Binding PhaseHormonalSnapshot, Converter={StaticResource LocalizedStringConverter}}"
+                        Style="{StaticResource MutedLabel}"
+                        FontSize="13"
+                        LineBreakMode="WordWrap"
+                        Margin="0,2,0,0" />
+                </VerticalStackLayout>
+
+                <!-- Vector artwork container -->
+                <Border
+                    Grid.Column="1"
+                    WidthRequest="80"
+                    HeightRequest="80"
+                    StrokeShape="RoundRectangle 24"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
+                    StrokeThickness="0"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center">
+                    <Grid HorizontalOptions="Center" VerticalOptions="Center">
+                        <!-- Vector Artwork Path -->
+                        <Path
+                            Data="{Binding PhaseVectorArtworkData, Converter={StaticResource StringToGeometryConverter}}"
+                            Stroke="{StaticResource Primary}"
+                            Fill="{AppThemeBinding Light={StaticResource PrimaryLightOverlay}, Dark={StaticResource LightInkOverlay}}"
+                            StrokeThickness="2"
+                            StrokeLineCap="Round"
+                            StrokeLineJoin="Round"
+                            Aspect="Uniform"
+                            WidthRequest="40"
+                            HeightRequest="40"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Bottom Row: Quick-log action button -->
+            <Border
+                Grid.Row="2"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                StrokeShape="RoundRectangle 12"
+                StrokeThickness="0"
+                Padding="12,10">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding OpenQuickLogCommand}" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10" VerticalOptions="Center">
+                    <Border
+                        WidthRequest="28"
+                        HeightRequest="28"
+                        StrokeShape="RoundRectangle 14"
+                        BackgroundColor="{StaticResource Primary}"
+                        StrokeThickness="0"
+                        VerticalOptions="Center">
+                        <Path
+                            Data="M12 5v14M5 12h14"
+                            Stroke="{StaticResource White}"
+                            StrokeThickness="2"
+                            StrokeLineCap="Round"
+                            Aspect="Uniform"
+                            WidthRequest="14"
+                            HeightRequest="14"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+                    <Label
+                        Grid.Column="1"
+                        Text="{loc:LocalizedText Cycle_Hero_LogActionAccessibility}"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center" />
+                    <Path
+                        Grid.Column="2"
+                        Data="M9 18l6-6-6-6"
+                        Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                        StrokeThickness="2"
+                        StrokeLineCap="Round"
+                        StrokeLineJoin="Round"
+                        Aspect="Uniform"
+                        WidthRequest="12"
+                        HeightRequest="12"
+                        VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
+            <cycleControls:CycleDailyTipsCard Grid.Row="3" />
+        </Grid>
+    </Border>
+</ContentView>

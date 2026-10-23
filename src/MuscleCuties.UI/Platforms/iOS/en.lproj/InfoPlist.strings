@@ -1,0 +1,2 @@
+"NSPhotoLibraryUsageDescription" = "MuscleCuties opens your photo library when you choose a profile or progress photo.";
+"NSHealthShareUsageDescription" = "MuscleCuties reads your step count from Apple Health when you connect it for activity context. Steps may be included in a check-in you save to your account. No other Health data is read or written.";

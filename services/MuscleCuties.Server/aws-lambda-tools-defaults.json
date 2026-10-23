@@ -1,0 +1,13 @@
+{
+  "Information": [
+    "AWS Lambda (.NET 10) packaging profile for MuscleCuties.Server behind API Gateway HTTP API v2 and Amazon RDS Proxy."
+  ],
+  "configuration": "Release",
+  "framework": "net10.0",
+  "function-runtime": "dotnet10",
+  "function-memory-size": 1024,
+  "function-timeout": 29,
+  "function-handler": "MuscleCuties.Server",
+  "function-architecture": "arm64",
+  "environment-variables": "\"ASPNETCORE_ENVIRONMENT\"=\"Production\";\"Lambda__DatabasePool__MaxPoolSize\"=\"5\";\"Lambda__DatabasePool__MinPoolSize\"=\"0\";\"Lambda__DatabasePool__RequireSslMode\"=\"true\";\"Lambda__DatabasePool__RunMigrationsOnColdStart\"=\"false\""
+}

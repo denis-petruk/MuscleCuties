@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Profile.ProfilePrivacyPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:MuscleCuties.UI.Pages.Profile"
+    x:DataType="local:ProfilePrivacyPage"
+    Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <Thickness x:Key="PrivacyPagePadding">24,40,24,32</Thickness>
+        <Thickness x:Key="PrivacyBackPadding">10</Thickness>
+        <x:Double x:Key="PrivacySectionSpacing">28</x:Double>
+        <x:Double x:Key="PrivacyTextSpacing">8</x:Double>
+        <x:Double x:Key="PrivacyItemSpacing">12</x:Double>
+        <x:Double x:Key="PrivacyTouchTarget">44</x:Double>
+        <x:Double x:Key="PrivacyPageMaximumWidth">640</x:Double>
+        <x:Double x:Key="PrivacyBodyFontSize">14</x:Double>
+        <x:Double x:Key="PrivacyHeadingFontSize">18</x:Double>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <Grid Padding="{StaticResource PrivacyPagePadding}"
+              RowSpacing="{StaticResource PrivacySectionSpacing}"
+              MaximumWidthRequest="{StaticResource PrivacyPageMaximumWidth}"
+              RowDefinitions="Auto,Auto,Auto,Auto">
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource PrivacyTextSpacing}">
+                <ImageButton x:Name="BackButton"
+                             Source="nav_back.png"
+                             BackgroundColor="Transparent"
+                             WidthRequest="{StaticResource PrivacyTouchTarget}"
+                             HeightRequest="{StaticResource PrivacyTouchTarget}"
+                             MinimumWidthRequest="{StaticResource PrivacyTouchTarget}"
+                             MinimumHeightRequest="{StaticResource PrivacyTouchTarget}"
+                             Padding="{StaticResource PrivacyBackPadding}"
+                             Clicked="OnBackClicked"
+                             SemanticProperties.Description="Back to Profile" />
+                <Label x:Name="PageTitle" Grid.Column="1" Text="Privacy"
+                       Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
+            </Grid>
+
+            <Grid Grid.Row="1" RowDefinitions="Auto,Auto"
+                  RowSpacing="{StaticResource PrivacyTextSpacing}">
+                <Label x:Name="SummaryTitle" Text="Your data, at a glance"
+                       Style="{StaticResource SectionTitle}" FontSize="{StaticResource PrivacyHeadingFontSize}" />
+                <Label x:Name="SummaryBody" Grid.Row="1"
+                       Text="Your account and health records are stored in MuscleCuties services."
+                       Style="{StaticResource BodyLabel}" FontSize="{StaticResource PrivacyBodyFontSize}" />
+            </Grid>
+
+            <Grid Grid.Row="2" RowDefinitions="Auto,Auto,Auto,Auto"
+                  RowSpacing="{StaticResource PrivacyItemSpacing}">
+                <Label x:Name="ServicesTitle" Text="Other services"
+                       Style="{StaticResource SectionTitle}" FontSize="{StaticResource PrivacyHeadingFontSize}" />
+                <Label x:Name="EmailBody" Grid.Row="1"
+                       Text="Verification emails use our email provider."
+                       Style="{StaticResource BodyLabel}" FontSize="{StaticResource PrivacyBodyFontSize}" />
+                <Label x:Name="FoodBody" Grid.Row="2"
+                       Text="Food search may send generic names to USDA, never your logs."
+                       Style="{StaticResource BodyLabel}" FontSize="{StaticResource PrivacyBodyFontSize}" />
+                <Label x:Name="HealthBody" Grid.Row="3"
+                       Text="Apple Health steps are read only with your permission."
+                       Style="{StaticResource BodyLabel}" FontSize="{StaticResource PrivacyBodyFontSize}" />
+            </Grid>
+
+            <Grid Grid.Row="3" RowDefinitions="Auto,Auto,Auto"
+                  RowSpacing="{StaticResource PrivacyTextSpacing}">
+                <Label x:Name="ChoiceTitle" Text="Your choices"
+                       Style="{StaticResource SectionTitle}" FontSize="{StaticResource PrivacyHeadingFontSize}" />
+                <Label x:Name="ChoiceBody" Grid.Row="1"
+                       Text="You can delete your account and local data from Profile."
+                       Style="{StaticResource BodyLabel}" FontSize="{StaticResource PrivacyBodyFontSize}" />
+                <Button x:Name="PolicyButton" Grid.Row="2"
+                        Text="Read privacy policy"
+                        Style="{StaticResource ButtonSecondary}"
+                        Clicked="OnPrivacyPolicyClicked"
+                        HorizontalOptions="Start"
+                        MinimumHeightRequest="{StaticResource PrivacyTouchTarget}"
+                        SemanticProperties.Description="Open the full privacy policy" />
+            </Grid>
+        </Grid>
+    </ScrollView>
+</ContentPage>

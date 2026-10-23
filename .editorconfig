@@ -15,6 +15,8 @@ dotnet_sort_system_directives_first = true
 csharp_new_line_before_open_brace = all
 csharp_preserve_single_line_statements = true
 csharp_preserve_single_line_blocks = true
+resharper_unused_auto_property_accessor_global_highlighting = none
+resharper_unused_auto_property_accessor_local_highlighting = none
 
 [*.{json,md}]
 indent_style = space

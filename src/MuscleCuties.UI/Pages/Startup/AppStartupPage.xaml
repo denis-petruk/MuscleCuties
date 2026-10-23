@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Startup.AppStartupPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:local="clr-namespace:MuscleCuties.UI.Pages.Startup"
+    x:DataType="local:AppStartupPage"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
+    Shell.NavBarIsVisible="False">
+
+    <Grid
+        x:Name="StartupRoot"
+        Padding="28"
+        BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+        <VerticalStackLayout
+            Spacing="18"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            MaximumWidthRequest="400">
+            <Image
+                x:Name="StartupLogo"
+                Source="{AppThemeBinding Light=musclecuties_logo_light_transparent.png, Dark=musclecuties_logo_dark_transparent.png}"
+                Aspect="AspectFit"
+                WidthRequest="220"
+                HeightRequest="124"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                BackgroundColor="Transparent"
+                SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_LogoA11y}" />
+            <ActivityIndicator
+                x:Name="StartupActivityIndicator"
+                IsRunning="True"
+                HorizontalOptions="Center"
+                SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_LoadingApplicationA11y}" />
+            <Label
+                x:Name="StartupStatusLabel"
+                Text="{loc:LocalizedText Dashboard_Startup_GettingReady}"
+                Style="{StaticResource MutedLabel}"
+                HorizontalTextAlignment="Center"
+                SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_LoadingStatusA11y}" />
+            <Label
+                x:Name="StartupErrorLabel"
+                IsVisible="False"
+                Text="{loc:LocalizedText Dashboard_Startup_UnlockFailedTitle}"
+                Style="{StaticResource SectionTitle}"
+                HorizontalTextAlignment="Center"
+                SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_UnlockFailedA11y}"
+                SemanticProperties.HeadingLevel="Level2" />
+            <Label
+                x:Name="StartupRecoveryLabel"
+                IsVisible="False"
+                Text="{loc:LocalizedText Dashboard_Startup_UnlockFailedMessage}"
+                Style="{StaticResource MutedLabel}"
+                HorizontalTextAlignment="Center" />
+            <Button
+                x:Name="RetryButton"
+                IsVisible="False"
+                Text="{loc:LocalizedText Dashboard_Shared_Retry}"
+                Clicked="OnRetryClicked"
+                MinimumHeightRequest="52"
+                MinimumWidthRequest="44"
+                SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_RetryUnlockA11y}"
+                SemanticProperties.Hint="{loc:LocalizedText Dashboard_Startup_RetryUnlockHint}" />
+            <Button
+                x:Name="ResetButton"
+                IsVisible="False"
+                Text="Reset Local Database"
+                Clicked="OnResetClicked"
+                BackgroundColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
+                TextColor="White"
+                MinimumHeightRequest="52"
+                MinimumWidthRequest="44" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

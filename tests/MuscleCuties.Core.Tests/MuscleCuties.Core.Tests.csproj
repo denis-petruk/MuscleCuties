@@ -1,14 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsTestProject>true</IsTestProject>
     <IsPackable>false</IsPackable>
+    <AssetTargetFallback>net8.0;$(AssetTargetFallback)</AssetTargetFallback>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
@@ -20,6 +21,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MuscleCuties.Core\MuscleCuties.Core.csproj" />
+    <ProjectReference Include="..\..\src\MuscleCuties.UseCases\MuscleCuties.UseCases.csproj" />
+    <ProjectReference Include="..\..\src\MuscleCuties.Infrastructure\MuscleCuties.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Profile.ProfileWorkoutPreferencesChoices"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:commonModels="clr-namespace:MuscleCuties.UI.Models.UI.Common"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
+    xmlns:workoutControls="clr-namespace:MuscleCuties.UI.Controls.Workout"
+    x:DataType="vm:ProfileWorkoutPreferencesViewModel">
+
+    <VerticalStackLayout Spacing="16">
+        <VerticalStackLayout Spacing="5">
+            <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableEquipment}"
+                   Style="{StaticResource FormFieldLabel}" />
+            <Border Style="{StaticResource InputContainer}">
+                <Picker
+                    Title="{loc:LocalizedText Profile_WorkoutPrefs_ChooseEquipment}"
+                    ItemsSource="{Binding EquipmentOptions}"
+                    ItemDisplayBinding="{Binding Label, Converter={StaticResource LocalizedStringConverter}, x:DataType=commonModels:ILabeledOption}"
+                    SelectedItem="{Binding SelectedEquipmentOption, Mode=TwoWay}" />
+            </Border>
+        </VerticalStackLayout>
+
+        <workoutControls:WorkoutActivityPreferencePicker
+            ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
+            ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
+
+        <sharedControls:IconSectionHeader
+            Text="{loc:LocalizedText Profile_WorkoutPrefs_StrengthStyle}"
+            IconGlyph="Flash24"
+            IsVisible="{Binding IsStrengthStyleVisible}" />
+        <workoutControls:StrengthTrainingStylePicker
+            ItemsSource="{Binding StrengthTrainingStyleOptions}"
+            SelectStyleCommand="{Binding SelectStrengthTrainingStyleCommand}"
+            IsVisible="{Binding IsStrengthStyleVisible}" />
+    </VerticalStackLayout>
+</ContentView>

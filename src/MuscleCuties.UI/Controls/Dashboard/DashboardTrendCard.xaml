@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Dashboard.DashboardTrendCard"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:dashboard="clr-namespace:MuscleCuties.UI.Controls.Dashboard"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
+    x:DataType="vm:DashboardViewModel">
+
+    <ContentView.Resources>
+        <x:Double x:Key="DashboardTrendNavigationSize">44</x:Double>
+        <x:Double x:Key="DashboardTrendIconSize">18</x:Double>
+        <x:Double x:Key="DashboardTrendSectionSpacing">12</x:Double>
+        <x:Double x:Key="DashboardTrendDetailSpacing">8</x:Double>
+        <x:Double x:Key="DashboardTrendProgressHeight">8</x:Double>
+        <x:Double x:Key="DashboardTrendGraphHeight">96</x:Double>
+        <RoundRectangle x:Key="DashboardTrendNavigationShape" CornerRadius="12" />
+    </ContentView.Resources>
+
+    <Border Style="{StaticResource CardPrimary}"
+            StrokeThickness="1"
+            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+        <VerticalStackLayout Spacing="{StaticResource DashboardTrendSectionSpacing}">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource DashboardTrendDetailSpacing}">
+                <Border
+                    WidthRequest="{StaticResource DashboardTrendNavigationSize}"
+                    HeightRequest="{StaticResource DashboardTrendNavigationSize}"
+                    StrokeThickness="1"
+                    StrokeShape="{StaticResource DashboardTrendNavigationShape}"
+                    Stroke="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                    SemanticProperties.Description="{loc:LocalizedText Dashboard_Trend_PreviousView}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding PreviousTrendCommand}" />
+                    </Border.GestureRecognizers>
+                    <Path Data="M15 4L7 12L15 20" Stroke="{StaticResource Primary}"
+                          StrokeThickness="2" StrokeLineCap="Round" StrokeLineJoin="Round"
+                          WidthRequest="{StaticResource DashboardTrendIconSize}"
+                          HeightRequest="{StaticResource DashboardTrendIconSize}"
+                          Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Label Text="{loc:LocalizedText Dashboard_Trend_ProgressTitle}"
+                           Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding TrendPositionText}" Style="{StaticResource CaptionLabel}"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+
+                <Border Grid.Column="2"
+                        WidthRequest="{StaticResource DashboardTrendNavigationSize}"
+                        HeightRequest="{StaticResource DashboardTrendNavigationSize}"
+                        StrokeThickness="1"
+                        StrokeShape="{StaticResource DashboardTrendNavigationShape}"
+                        Stroke="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                        SemanticProperties.Description="{loc:LocalizedText Dashboard_Trend_NextView}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NextTrendCommand}" />
+                    </Border.GestureRecognizers>
+                    <Path Data="M9 4L17 12L9 20" Stroke="{StaticResource Primary}"
+                          StrokeThickness="2" StrokeLineCap="Round" StrokeLineJoin="Round"
+                          WidthRequest="{StaticResource DashboardTrendIconSize}"
+                          HeightRequest="{StaticResource DashboardTrendIconSize}"
+                          Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+            </Grid>
+
+            <VerticalStackLayout Spacing="{StaticResource DashboardTrendSectionSpacing}"
+                                 IsVisible="{Binding IsNutritionTrendVisible}">
+                <Label Text="{loc:LocalizedText Dashboard_Trend_WeeklyNutritionTitle}"
+                       Style="{StaticResource CardTitle}" />
+                <Label Text="{loc:LocalizedText Dashboard_Trend_WeeklyNutritionEmpty}"
+                       Style="{StaticResource MutedLabel}"
+                       IsVisible="{Binding HasWeeklyNutrition, Converter={StaticResource InvertedBoolConverter}}" />
+                <VerticalStackLayout Spacing="{StaticResource DashboardTrendSectionSpacing}"
+                                     IsVisible="{Binding HasWeeklyNutrition}">
+                    <Label Text="{Binding WeeklyCaloriesText, Converter={StaticResource LocalizedStringConverter}}"
+                           Style="{StaticResource SectionTitle}" />
+                    <Label Text="{loc:LocalizedText Dashboard_Trend_MacroShareDescription}"
+                           Style="{StaticResource CaptionLabel}" />
+                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="{StaticResource DashboardTrendDetailSpacing}">
+                        <Label Text="{loc:LocalizedText Dashboard_Trend_Protein}" Style="{StaticResource MutedLabel}" />
+                        <Label Grid.Column="1" Text="{Binding WeeklyProteinText}" Style="{StaticResource BodyLabel}" />
+                        <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Progress="{Binding WeeklyProteinShare}"
+                                     HeightRequest="{StaticResource DashboardTrendProgressHeight}"
+                                     ProgressColor="{StaticResource Primary}" />
+                    </Grid>
+                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="{StaticResource DashboardTrendDetailSpacing}">
+                        <Label Text="{loc:LocalizedText Dashboard_Trend_Carbs}" Style="{StaticResource MutedLabel}" />
+                        <Label Grid.Column="1" Text="{Binding WeeklyCarbsText}" Style="{StaticResource BodyLabel}" />
+                        <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Progress="{Binding WeeklyCarbsShare}"
+                                     HeightRequest="{StaticResource DashboardTrendProgressHeight}"
+                                     ProgressColor="{StaticResource TextAccent}" />
+                    </Grid>
+                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="{StaticResource DashboardTrendDetailSpacing}">
+                        <Label Text="{loc:LocalizedText Dashboard_Trend_Fat}" Style="{StaticResource MutedLabel}" />
+                        <Label Grid.Column="1" Text="{Binding WeeklyFatText}" Style="{StaticResource BodyLabel}" />
+                        <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Progress="{Binding WeeklyFatShare}"
+                                     HeightRequest="{StaticResource DashboardTrendProgressHeight}"
+                                     ProgressColor="{StaticResource DeepMauve}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="{StaticResource DashboardTrendSectionSpacing}"
+                                 IsVisible="{Binding IsWeightTrendVisible}">
+                <Label Text="{loc:LocalizedText Dashboard_Trend_WeeklyWeightTitle}"
+                       Style="{StaticResource CardTitle}" />
+                <Label Text="{loc:LocalizedText Dashboard_Trend_WeeklyWeightEmpty}"
+                       Style="{StaticResource MutedLabel}"
+                       IsVisible="{Binding HasWeeklyWeights, Converter={StaticResource InvertedBoolConverter}}" />
+                <VerticalStackLayout Spacing="{StaticResource DashboardTrendDetailSpacing}"
+                                     IsVisible="{Binding HasWeeklyWeights}">
+                    <Label Text="{Binding WeeklyWeightSummary, Converter={StaticResource LocalizedStringConverter}}"
+                           Style="{StaticResource MutedLabel}" />
+                    <dashboard:DashboardSparkline Points="{Binding WeeklyWeightPoints}" IsWeight="True"
+                                                  HeightRequest="{StaticResource DashboardTrendGraphHeight}"
+                                                  SemanticProperties.Description="{Binding WeeklyWeightValuesText}" />
+                    <Label Text="{Binding WeeklyWeightValuesText}" Style="{StaticResource CaptionLabel}"
+                           LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="{StaticResource DashboardTrendSectionSpacing}"
+                                 IsVisible="{Binding IsWorkoutTrendVisible}">
+                <Label Text="{loc:LocalizedText Dashboard_Trend_WorkoutHighlightsTitle}"
+                       Style="{StaticResource CardTitle}" />
+                <Label Text="{loc:LocalizedText Dashboard_Trend_WorkoutHighlightsDescription}"
+                       Style="{StaticResource CaptionLabel}" />
+                <Label Text="{loc:LocalizedText Dashboard_Trend_WorkoutHighlightsEmpty}"
+                       Style="{StaticResource MutedLabel}"
+                       IsVisible="{Binding HasWorkoutProgress, Converter={StaticResource InvertedBoolConverter}}" />
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                      RowSpacing="{StaticResource DashboardTrendDetailSpacing}"
+                      IsVisible="{Binding HasWorkoutProgress}">
+                    <Label Text="{loc:LocalizedText Dashboard_Trend_HeaviestLift}" Style="{StaticResource MutedLabel}" />
+                    <Label Grid.Column="1" Text="{Binding HeaviestLiftText}" Style="{StaticResource BodyLabel}" />
+                    <Label Grid.Row="1" Text="{loc:LocalizedText Dashboard_Trend_HighestVolume}" Style="{StaticResource MutedLabel}" />
+                    <Label Grid.Row="1" Grid.Column="1" Text="{Binding HighestVolumeText}" Style="{StaticResource BodyLabel}" />
+                    <Label Grid.Row="2" Text="{loc:LocalizedText Dashboard_Trend_LongestSession}" Style="{StaticResource MutedLabel}" />
+                    <Label Grid.Row="2" Grid.Column="1" Text="{Binding LongestSessionText}" Style="{StaticResource BodyLabel}" />
+                    <Label Grid.Row="3" Text="{loc:LocalizedText Dashboard_Trend_LongestDistance}" Style="{StaticResource MutedLabel}" />
+                    <Label Grid.Row="3" Grid.Column="1" Text="{Binding LongestDistanceText}" Style="{StaticResource BodyLabel}" />
+                    <Label Grid.Row="4" Text="{loc:LocalizedText Dashboard_Trend_FastestPace}" Style="{StaticResource MutedLabel}" />
+                    <Label Grid.Row="4" Grid.Column="1" Text="{Binding FastestPaceText}" Style="{StaticResource BodyLabel}" />
+                </Grid>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

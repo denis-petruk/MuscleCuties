@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Auth.RegisterPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Auth"
+    x:DataType="vm:RegisterViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <x:Double x:Key="PrivacyConsentSpacing">8</x:Double>
+        <x:Double x:Key="PrivacyConsentTouchTargetSize">44</x:Double>
+        <Thickness x:Key="PrivacyPolicyAlignmentInset">8,0,0,0</Thickness>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <Grid
+            Padding="24,36,24,32"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="520"
+            RowSpacing="0"
+            RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+
+            <sharedControls:ThemeAwareBrandLogoImage
+                Grid.Row="0"
+                WidthRequest="132"
+                HeightRequest="72"
+                HorizontalOptions="Center"
+                Aspect="AspectFit"
+                SemanticProperties.Description="{loc:LocalizedText Common_MuscleCutiesLogo}" />
+
+            <Label
+                Grid.Row="1"
+                Text="{loc:LocalizedText Auth_Register_CreateYourAccount}"
+                Style="{StaticResource Headline}"
+                Margin="0,20,0,8"
+                SemanticProperties.HeadingLevel="Level1" />
+            <Label
+                Grid.Row="2"
+                Text="{loc:LocalizedText Auth_Register_OneProfileShapedAroundYou}"
+                Style="{StaticResource MutedLabel}"
+                Margin="0,0,0,28" />
+
+            <Grid
+                Grid.Row="3"
+                RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                RowSpacing="18">
+                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="6">
+                    <Label Text="{loc:LocalizedText Auth_Email}" Style="{StaticResource FormFieldLabel}" />
+                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                        <Entry
+                            x:Name="RegisterEmail"
+                            AutomationId="RegisterEmail"
+                            Placeholder="{loc:LocalizedText Auth_Register_NameExampleCom}"
+                            Text="{Binding Email}"
+                            Keyboard="Email"
+                            ReturnType="Next"
+                            Completed="OnEmailCompleted"
+                            SemanticProperties.Description="{loc:LocalizedText Auth_EmailAddress}"
+                            SemanticProperties.Hint="{loc:LocalizedText Auth_Register_EnterYourEmailThenPressNext}" />
+                    </Border>
+                </Grid>
+
+                <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="6">
+                    <Label Text="{loc:LocalizedText Auth_Register_UsernameLabel}" Style="{StaticResource FormFieldLabel}" />
+                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                        <Entry
+                            x:Name="RegisterUsername"
+                            AutomationId="RegisterUsername"
+                            Placeholder="{loc:LocalizedText Auth_Register_UsernamePlaceholder}"
+                            Text="{Binding Username}"
+                            ReturnType="Next"
+                            Completed="OnUsernameCompleted"
+                            SemanticProperties.Description="{loc:LocalizedText Auth_Register_UsernameLabel}"
+                            SemanticProperties.Hint="{loc:LocalizedText Auth_Register_EnterYourUniqueUsernameThenPress}" />
+                    </Border>
+                </Grid>
+
+                <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="6">
+                    <Label Text="{loc:LocalizedText Auth_Password}" Style="{StaticResource FormFieldLabel}" />
+                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                        <Entry
+                            x:Name="RegisterPassword"
+                            AutomationId="RegisterPassword"
+                            Placeholder="{loc:LocalizedText Auth_Register_CreatePassword}"
+                            Text="{Binding Password}"
+                            IsPassword="True"
+                            ReturnType="Next"
+                            Completed="OnPasswordCompleted"
+                            SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreatePassword}"
+                            SemanticProperties.Hint="{loc:LocalizedText Auth_Register_UseAtLeastEightCharactersWith}" />
+                    </Border>
+                </Grid>
+
+                <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="6">
+                    <Label Text="{loc:LocalizedText Auth_ConfirmPassword}" Style="{StaticResource FormFieldLabel}" />
+                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                        <Entry
+                            x:Name="RegisterConfirmPassword"
+                            AutomationId="RegisterConfirmPassword"
+                            Placeholder="{loc:LocalizedText Auth_Register_RepeatPassword}"
+                            Text="{Binding ConfirmPassword}"
+                            IsPassword="True"
+                            ReturnType="Done"
+                            ReturnCommand="{Binding RegisterCommand}"
+                            SemanticProperties.Description="{loc:LocalizedText Auth_ConfirmPassword}"
+                            SemanticProperties.Hint="{loc:LocalizedText Auth_Register_ReEnterYourPasswordThenPress}" />
+                    </Border>
+                </Grid>
+
+                <Label
+                    Grid.Row="4"
+                    Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
+                    Style="{StaticResource ErrorLabel}"
+                    IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+                    SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
+                    SemanticProperties.HeadingLevel="Level3" />
+
+                <Grid Grid.Row="5"
+                      ColumnDefinitions="Auto,*"
+                      RowDefinitions="Auto,Auto"
+                      ColumnSpacing="{StaticResource PrivacyConsentSpacing}"
+                      RowSpacing="{StaticResource PrivacyConsentSpacing}">
+                    <CheckBox x:Name="PrivacyConsentCheckBox"
+                              Grid.Row="0"
+                              Grid.Column="0"
+                              AutomationId="PrivacyConsentCheckBox"
+                              IsChecked="{Binding HasAcceptedPrivacyNotice}"
+                              Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource ActionSurfaceDark}}"
+                              HorizontalOptions="Start"
+                              VerticalOptions="Start"
+                              MinimumWidthRequest="{StaticResource PrivacyConsentTouchTargetSize}"
+                              MinimumHeightRequest="{StaticResource PrivacyConsentTouchTargetSize}"
+                              SemanticProperties.Description="{loc:LocalizedText Auth_Register_PrivacyConsent}" />
+                    <Label Grid.Row="0"
+                           Grid.Column="1"
+                           Text="{loc:LocalizedText Auth_Register_PrivacyConsent}"
+                           Style="{StaticResource CaptionLabel}"
+                           VerticalOptions="Center" />
+                    <Button
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Text="{loc:LocalizedText Profile_Privacy_Policy}"
+                        Style="{StaticResource ButtonLink}"
+                        Padding="{StaticResource PrivacyPolicyAlignmentInset}"
+                        HorizontalOptions="Start"
+                        MinimumHeightRequest="{StaticResource PrivacyConsentTouchTargetSize}"
+                        Command="{Binding GoToPrivacyPolicyCommand}"
+                        SemanticProperties.Description="{loc:LocalizedText Profile_Privacy_Policy}" />
+                </Grid>
+
+                <Button
+                    Grid.Row="6"
+                    Text="{loc:LocalizedText Auth_CreateAccount}"
+                    Command="{Binding RegisterCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    MinimumHeightRequest="52"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreateYourAccount}" />
+
+                <ActivityIndicator
+                    Grid.Row="7"
+                    HorizontalOptions="Center"
+                    IsRunning="{Binding IsBusy}"
+                    IsVisible="{Binding IsBusy}"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreatingAccountPleaseWait}" />
+
+                <Button
+                    Grid.Row="8"
+                    Style="{StaticResource PlatformAuthButton}"
+                    Text="{loc:LocalizedText Auth_SignInWithApple}"
+                    Command="{Binding SignInWithAppleCommand}"
+                    IsVisible="{Binding IsAppleSignInAvailable}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
+            </Grid>
+
+            <Grid
+                Grid.Row="4"
+                ColumnDefinitions="Auto,Auto"
+                ColumnSpacing="4"
+                HorizontalOptions="Center"
+                Margin="0,24,0,0"
+                MinimumHeightRequest="44"
+                MinimumWidthRequest="44"
+                SemanticProperties.Description="{loc:LocalizedText Auth_Register_ReturnToLogin}"
+                SemanticProperties.Hint="{loc:LocalizedText Auth_Register_DoubleTapToGoBackTo}">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding GoBackCommand}" />
+                </Grid.GestureRecognizers>
+                <Label Text="{loc:LocalizedText Auth_Register_AlreadyHaveAnAccount}" Style="{StaticResource MutedLabel}"
+                       VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="{loc:LocalizedText Auth_LogIn}" Style="{StaticResource AccentLabel}"
+                       VerticalOptions="Center" />
+            </Grid>
+        </Grid>
+    </ScrollView>
+</ContentPage>

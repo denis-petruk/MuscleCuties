@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Profile.ProfilePage"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
+    xmlns:profileControls="clr-namespace:MuscleCuties.UI.Controls.Profile"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
+    x:DataType="vm:ProfileViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <Grid
+        BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+        <ScrollView MaximumWidthRequest="640">
+            <VerticalStackLayout Spacing="0" Padding="0,0,0,36">
+
+                <!-- Header / Profile Info -->
+                <Grid Padding="20,40,20,12" RowDefinitions="Auto,Auto,Auto" RowSpacing="16">
+                    <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Page_You}" Style="{StaticResource SubHeadline}" />
+
+                    <!-- Avatar + Name + Membership Tenure -->
+                    <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="16" VerticalOptions="Center">
+                        <!-- Avatar with Active Phase Color Halo -->
+                        <Border
+                            WidthRequest="72"
+                            HeightRequest="72"
+                            StrokeShape="RoundRectangle 36"
+                            StrokeThickness="3"
+                            Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
+                            BackgroundColor="Transparent"
+                            Padding="2"
+                            SemanticProperties.Description="{loc:LocalizedText Profile_Page_CyclePhaseIndicatorAndProfilePhoto}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnProfileImageTapped" />
+                            </Border.GestureRecognizers>
+                            <Border
+                                WidthRequest="64"
+                                HeightRequest="64"
+                                StrokeShape="RoundRectangle 32"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                                StrokeThickness="1">
+                                <Grid>
+                                    <Image
+                                        Source="{Binding ProfileImageSource}"
+                                        IsVisible="{Binding HasProfileImage}"
+                                        Aspect="AspectFill"
+                                        WidthRequest="64"
+                                        HeightRequest="64" />
+                                    <Image
+                                        IsVisible="{Binding HasNoProfileImage}"
+                                        Source="{AppThemeBinding Light=musclecuties_logo_light_transparent.png, Dark=musclecuties_logo_dark_transparent.png}"
+                                        Aspect="AspectFill"
+                                        WidthRequest="64"
+                                        HeightRequest="64" />
+                                </Grid>
+                            </Border>
+                        </Border>
+
+                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="3" VerticalOptions="Center">
+                            <Label Text="{Binding UserName}" Style="{StaticResource SectionTitle}" FontSize="20" />
+                            <Label Grid.Row="1"
+                                   Text="{Binding MemberSince, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource CaptionLabel}" FontSize="13" />
+                            <Border
+                                Grid.Row="2"
+                                HorizontalOptions="Start"
+                                Background="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 8"
+                                Padding="8,2"
+                                Margin="0,2,0,0">
+                                <Label
+                                    Text="{Binding CurrentPhaseLabel, Converter={StaticResource LocalizedStringConverter}}"
+                                    FontSize="11"
+                                    FontAttributes="Bold"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                            </Border>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Streak Stats -->
+                    <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                        <Border
+                            BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                            StrokeShape="RoundRectangle 12"
+                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                            StrokeThickness="1"
+                            Padding="8,12"
+                            MinimumHeightRequest="76"
+                            SemanticProperties.Description="{Binding WorkoutStreakDays, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_Page_WorkoutSessionStreakValueDays}">
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="3" VerticalOptions="Center"
+                                  HorizontalOptions="Center">
+                                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="3" HorizontalOptions="Center">
+                                    <Image
+                                        Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
+                                        Aspect="AspectFit"
+                                        WidthRequest="20"
+                                        HeightRequest="20"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Grid.Column="1"
+                                        Text="{Binding WorkoutStreakDays, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource SubHeadline}"
+                                        FontSize="20"
+                                        VerticalOptions="Center" />
+                                </Grid>
+                                <Label
+                                    Grid.Row="1"
+                                    Text="{loc:LocalizedText Profile_Page_SessionStreak}"
+                                    Style="{StaticResource CaptionLabel}"
+                                    FontSize="12"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                            StrokeShape="RoundRectangle 12"
+                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                            StrokeThickness="1"
+                            Padding="8,12"
+                            MinimumHeightRequest="76"
+                            SemanticProperties.Description="{Binding NutritionStreakDays, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_Page_NutritionLogStreakValueDays}">
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="3" VerticalOptions="Center"
+                                  HorizontalOptions="Center">
+                                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="3" HorizontalOptions="Center">
+                                    <Image
+                                        Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                                        Aspect="AspectFit"
+                                        WidthRequest="20"
+                                        HeightRequest="20"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Grid.Column="1"
+                                        Text="{Binding NutritionStreakDays, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource SubHeadline}"
+                                        FontSize="20"
+                                        VerticalOptions="Center" />
+                                </Grid>
+                                <Label
+                                    Grid.Row="1"
+                                    Text="{loc:LocalizedText Profile_Page_LogStreak}"
+                                    Style="{StaticResource CaptionLabel}"
+                                    FontSize="12"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <Border
+                            Grid.Column="2"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                            StrokeShape="RoundRectangle 12"
+                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                            StrokeThickness="1"
+                            Padding="8,12"
+                            MinimumHeightRequest="76"
+                            SemanticProperties.Description="{Binding CyclesTracked, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_Page_CyclesLoggedValue}">
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="3" VerticalOptions="Center"
+                                  HorizontalOptions="Center">
+                                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="3" HorizontalOptions="Center">
+                                    <Image
+                                        Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
+                                        Aspect="AspectFit"
+                                        WidthRequest="20"
+                                        HeightRequest="20"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Grid.Column="1"
+                                        Text="{Binding CyclesTracked, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource SubHeadline}"
+                                        FontSize="20"
+                                        VerticalOptions="Center" />
+                                </Grid>
+                                <Label
+                                    Grid.Row="1"
+                                    Text="{loc:LocalizedText Profile_Page_CyclesLogged}"
+                                    Style="{StaticResource CaptionLabel}"
+                                    FontSize="12"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+
+                <toolkit:LazyView
+                    x:Name="DetailsLazy"
+                    x:TypeArguments="profileControls:ProfileDetailsContent" />
+
+                <!-- Actions: Log Out & Delete Account and Local Data -->
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12" Padding="20,8,20,16">
+                    <Label
+                        Grid.Row="0"
+                        Text="{loc:LocalizedText Profile_Page_AllHealthAndFitnessDataIs}"
+                        Style="{StaticResource CaptionLabel}"
+                        FontSize="13"
+                        HorizontalTextAlignment="Center" />
+
+                    <!-- Clean Log Out Action -->
+                    <Button
+                        Grid.Row="1"
+                        Text="{loc:LocalizedText Profile_Page_LogOut}"
+                        Clicked="OnLogoutClicked"
+                        Style="{StaticResource ButtonSecondary}"
+                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                        MinimumHeightRequest="48"
+                        HeightRequest="48" />
+
+                    <!-- In-App Delete Account & Data Action -->
+                    <Button
+                        Grid.Row="2"
+                        Text="{loc:LocalizedText Profile_Page_DeleteAccountAndLocalData}"
+                        Clicked="OnDeleteAccountClicked"
+                        BackgroundColor="{AppThemeBinding Light=#FFF0F0, Dark=#381E24}"
+                        BorderColor="{AppThemeBinding Light=#F5C2C7, Dark=#732832}"
+                        BorderWidth="1"
+                        TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
+                        FontAttributes="Bold"
+                        FontSize="15"
+                        CornerRadius="14"
+                        MinimumHeightRequest="48"
+                        HeightRequest="48" />
+                    <Label
+                        Grid.Row="3"
+                        Text="{Binding AccountActionError, Converter={StaticResource LocalizedStringConverter}}"
+                        IsVisible="{Binding HasAccountActionError}"
+                        TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
+                        Style="{StaticResource CaptionLabel}"
+                        SemanticProperties.Description="{loc:LocalizedText Profile_Page_AccountDeletionStatus}" />
+                </Grid>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <sharedControls:PageLoadingOverlay />
+        <toolkit:LazyView
+            x:Name="CropModalLazy"
+            x:TypeArguments="profileControls:ProfileImageCropModal"
+            InputTransparent="True" />
+    </Grid>
+</ContentPage>

@@ -5,33 +5,39 @@ public sealed class WorkoutPlanningConfig
     public ReadinessConfig Readiness { get; set; } = new();
     public GatingConfig Gating { get; set; } = new();
 
-    public static WorkoutPlanningConfig CreateDefault() => new()
+    public static WorkoutPlanningConfig CreateDefault()
     {
-        Readiness = new ReadinessConfig
+        return new WorkoutPlanningConfig
         {
-            SleepLastNight = [[7.5, 30], [6.5, 22], [5.5, 12], [0, 0]],
-            Sleep3dAvg = [[7, 15], [6, 8], [0, 0]],
-            StepsDeltaPct = new StepsDeltaConfig(),
-            EnergyMultiplier = 5,
-            Pain = [15, 10, 3, 0],
-            PhasePrior = new Dictionary<string, int>
+            Readiness = new ReadinessConfig
             {
-                ["Menstrual"] = -10, ["Luteal"] = -5,
-                ["Follicular"] = 0, ["Ovulatory"] = 0, ["Unknown"] = 0
+                SleepLastNight = [[7.5, 30], [6.5, 22], [5.5, 12], [0, 0]],
+                Sleep3dAvg = [[7, 15], [6, 8], [0, 0]],
+                StepsDeltaPct = new StepsDeltaConfig(),
+                EnergyMultiplier = 5,
+                Pain = [15, 10, 3, 0],
+                PhasePrior = new Dictionary<string, int>
+                {
+                    ["Menstrual"] = -10,
+                    ["Luteal"] = -5,
+                    ["Follicular"] = 0,
+                    ["Ovulatory"] = 0,
+                    ["Unknown"] = 0
+                },
+                HighTier = 75,
+                ModerateTier = 50
             },
-            HighTier = 75,
-            ModerateTier = 50
-        },
-        Gating = new GatingConfig
-        {
-            HiitMinSleep = 6.5,
-            HiitMaxPain = 1,
-            HiitMenstrualMinEnergy = 5,
-            LowReadinessSetMultiplier = 0.7,
-            LowReadinessRpeCap = 7,
-            ConsecutiveLowDaysToRest = 2
-        }
-    };
+            Gating = new GatingConfig
+            {
+                HiitMinSleep = 6.5,
+                HiitMaxPain = 1,
+                HiitMenstrualMinEnergy = 5,
+                LowReadinessSetMultiplier = 0.7,
+                LowReadinessRpeCap = 7,
+                ConsecutiveLowDaysToRest = 2
+            }
+        };
+    }
 }
 
 public sealed class ReadinessConfig
