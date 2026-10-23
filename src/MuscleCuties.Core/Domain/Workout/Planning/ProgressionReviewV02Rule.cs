@@ -45,6 +45,8 @@ public sealed record ProgressionReviewDecision(
 public static class ProgressionReviewV02Rule
 {
     private const int NoQualifyingSessions = 0;
+    private const int MinimumExerciseId = 1;
+    private const int MinimumRequiredQualifyingSessions = 1;
 
     public static ProgressionReviewDecision Evaluate(ProgressionReviewContext? context)
     {
@@ -90,8 +92,9 @@ public static class ProgressionReviewV02Rule
     {
         var policy = context.Policy;
         var approval = context.Approval;
-        return context.ExerciseId > 0 && !string.IsNullOrWhiteSpace(context.ExerciseVersion) &&
-               policy is { RequiredConsecutiveQualifyingSessions: > 0 } &&
+        return context.ExerciseId >= MinimumExerciseId && !string.IsNullOrWhiteSpace(context.ExerciseVersion) &&
+               policy is not null &&
+               policy.RequiredConsecutiveQualifyingSessions >= MinimumRequiredQualifyingSessions &&
                !string.IsNullOrWhiteSpace(policy.Version) &&
                approval is not null &&
                approval.RulesetVersion == TodayCheckInScoreRule.RulesetVersion &&
