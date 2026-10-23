@@ -138,6 +138,7 @@ public sealed class PostgresProfileDataStore(
                 item => item.UserId == request.UserId, token).ConfigureAwait(false);
             if (profile is null) return Missing();
             if (profile.ConcurrencyVersion != request.ExpectedVersion) return Conflict(profile.ConcurrencyVersion);
+
             var answerExists = await dbContext.QuizAnswers.AsNoTracking().AnyAsync(
                 answer => answer.Id == request.AnswerId && answer.QuestionId == request.QuestionId, token).ConfigureAwait(false);
             if (!answerExists) return new ServerProfileWriteResult(ServerProfileWriteStatus.InvalidCatalogReference, profile.ConcurrencyVersion);
@@ -189,6 +190,18 @@ public sealed class PostgresProfileDataStore(
                 item => item.UserId == request.UserId, token).ConfigureAwait(false);
             if (profile is null) return Missing();
             if (profile.ConcurrencyVersion != request.ExpectedVersion) return Conflict(profile.ConcurrencyVersion);
+
+            if (!WorkoutTrainingPolicyV010.CanGeneratePlans)
+            {
+                var savedAt = timeProvider.GetUtcNow().UtcDateTime;
+                AddSnapshot(request.UserId, WorkoutPreferencesReason, profile, savedAt);
+                profile.PreferredWorkoutActivityTypes = serialized;
+                profile.WorkoutDaysPerWeek = request.DaysPerWeek;
+                if (request.EquipmentLevel is not null)
+                    profile.EquipmentLevel = request.EquipmentLevel;
+                profile.UpdatedAt = savedAt;
+                return await SaveVersionedAsync(transaction, profile, token).ConfigureAwait(false);
+            }
 
             if (!Enum.TryParse<UserGoal>(profile.Goal, true, out var goal) || !Enum.IsDefined(goal) ||
                 !Enum.TryParse<TrainingExperienceLevel>(profile.TrainingExperienceLevel, true, out var experience) ||

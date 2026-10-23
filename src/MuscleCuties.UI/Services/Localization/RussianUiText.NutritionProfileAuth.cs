@@ -373,7 +373,7 @@ internal static partial class RussianUiText
         Values["Onboarding_ProfileSetup_Optional"] = "(необязательно)";
         Values["Onboarding_ProfileSetup_PersonalDetails"] = "Личные данные";
         Values["Onboarding_ProfileSetup_PickAtLeastOneStrengthActivity"] = "Выберите занятия, которые хотите включить в свой план.";
-        Values["Onboarding_ProfileSetup_StrengthActivityRequired"] = "Чтобы продолжить, выберите хотя бы одно силовое занятие.";
+        Values["Onboarding_ProfileSetup_StrengthActivityRequired"] = "Чтобы продолжить, выберите хотя бы одно занятие.";
         Values["Onboarding_Activity_HighVolumeStrengthDescription"] = "Развивайте силу, выполняя немного больше подходов.";
         Values["Onboarding_Activity_StrengthHighIntensityDescription"] = "Развивайте силу с более тяжёлыми весами и меньшим числом повторений.";
         Values["Onboarding_Activity_RockClimbingDescription"] = "Скалолазание развивает хват, мышцы корпуса и верхней части тела.";

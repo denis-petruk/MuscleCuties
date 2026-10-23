@@ -12,22 +12,22 @@ public static class WorkoutActivityOptionCatalog
         new(
             WorkoutActivityType.HighVolumeStrength,
             "High volume strength",
-            "Build strength with a few more sets.",
+            "High volume strength. Personalized generation needs a reviewed volume prescription.",
             ActivityGroup.Strength,
             true,
             "Dumbbell24"),
         new(
             WorkoutActivityType.StrengthHighIntensity,
             "Strength high intensity",
-            "Build strength with heavier lifts and fewer reps.",
+            "High intensity strength. Load and effort need a reviewed prescription.",
             ActivityGroup.Strength,
             false,
             "Flash24"),
         new(
             WorkoutActivityType.RockClimbing,
             "Rock climbing",
-            "Climb for grip, core, and upper-body strength.",
-            ActivityGroup.Strength,
+            "Plan or log climbing time; demand depends on the selected session.",
+            ActivityGroup.Climbing,
             false,
             "Sport24"),
         new(
@@ -61,10 +61,26 @@ public static class WorkoutActivityOptionCatalog
         new(
             WorkoutActivityType.Yoga,
             "Yoga",
-            "Move, stretch, and breathe at your own pace.",
-            ActivityGroup.Recovery,
+            "Choose gentle or demanding yoga content when planning a session.",
+            ActivityGroup.Yoga,
             false,
-            "LeafThree24")
+            "LeafThree24"),
+        new(WorkoutActivityType.GeneralStrength, "General strength training",
+            "Strength sessions with a reviewed prescription.", ActivityGroup.Strength, false, "Dumbbell24"),
+        new(WorkoutActivityType.Walking, "Walking",
+            "Plan or log walking time.", ActivityGroup.Cardio, false, "Run24"),
+        new(WorkoutActivityType.Rowing, "Rowing",
+            "Plan or log rowing time.", ActivityGroup.Cardio, false, "PulseSquare24"),
+        new(WorkoutActivityType.Elliptical, "Elliptical",
+            "Plan or log elliptical time.", ActivityGroup.Cardio, false, "PulseSquare24"),
+        new(WorkoutActivityType.Mobility, "Mobility",
+            "Plan or log mobility work.", ActivityGroup.Recovery, false, "LeafThree24"),
+        new(WorkoutActivityType.GentleRecovery, "Gentle recovery activities",
+            "Plan or log gentle recovery time.", ActivityGroup.Recovery, false, "LeafThree24"),
+        new(WorkoutActivityType.RestDay, "Rest day",
+            "Keep a day free of planned exercise.", ActivityGroup.Rest, false, "WeatherMoon24"),
+        new(WorkoutActivityType.Other, "Other activity",
+            "Record another activity without assigning it a prescription.", ActivityGroup.Other, false, "CircleSmall24")
     ];
 
     public static ObservableCollection<WorkoutActivityOptionItem> Build(
@@ -100,13 +116,8 @@ public static class WorkoutActivityOptionCatalog
         IEnumerable<WorkoutActivityOptionItem> options,
         WorkoutActivityOptionItem item)
     {
-        if (item.IsSelected && WorkoutActivityPreferences.IsStrengthActivity(item.ActivityType))
-        {
-            var selectedStrengthCount = options.Count(option =>
-                option.IsSelected && WorkoutActivityPreferences.IsStrengthActivity(option.ActivityType));
-            if (selectedStrengthCount <= 1)
-                return "Keep one strength style selected so your plan has a strong base.";
-        }
+        if (item.IsSelected && options.Count(option => option.IsSelected) == 1)
+            return "Choose at least one activity.";
 
         item.IsSelected = !item.IsSelected;
         return string.Empty;
@@ -137,6 +148,10 @@ public static class WorkoutActivityOptionCatalog
             ActivityGroup.Strength => "Strength",
             ActivityGroup.Cardio => "Cardio",
             ActivityGroup.Recovery => "Recovery",
+            ActivityGroup.Climbing => "Climbing",
+            ActivityGroup.Yoga => "Yoga",
+            ActivityGroup.Rest => "Rest",
+            ActivityGroup.Other => "Other",
             _ => string.Empty
         };
     }
@@ -148,6 +163,10 @@ public static class WorkoutActivityOptionCatalog
             ActivityGroup.Strength => "STRENGTH",
             ActivityGroup.Cardio => "CARDIO",
             ActivityGroup.Recovery => "RECOVERY",
+            ActivityGroup.Climbing => "CLIMBING",
+            ActivityGroup.Yoga => "YOGA",
+            ActivityGroup.Rest => "REST",
+            ActivityGroup.Other => "OTHER",
             _ => string.Empty
         };
     }
@@ -159,6 +178,9 @@ public static class WorkoutActivityOptionCatalog
             "STRENGTH" => "Trophy24",
             "CARDIO" => "PulseSquare24",
             "RECOVERY" => "WeatherMoon24",
+            "CLIMBING" => "Sport24",
+            "YOGA" => "LeafThree24",
+            "REST" => "WeatherMoon24",
             _ => "CircleSmall24"
         };
     }
@@ -175,6 +197,10 @@ public static class WorkoutActivityOptionCatalog
     {
         Strength,
         Cardio,
-        Recovery
+        Recovery,
+        Climbing,
+        Yoga,
+        Rest,
+        Other
     }
 }

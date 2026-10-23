@@ -51,8 +51,9 @@ public sealed class CompleteAccountRegistrationUseCase(
             return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.InvalidProfile);
         if (request.QuizResponses is null || request.QuizResponses.Any(selection => selection is null))
             return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.InvalidQuiz);
-        if (request.InitialWorkoutPlanDays?.Any(day =>
-                day is null || day.Exercises is null || day.Exercises.Any(exercise => exercise is null)) == true)
+        // Plan activation requires a separate, reviewed proposal and user confirmation.
+        if (request.InitialWorkoutPlanDays is not null ||
+            !string.IsNullOrWhiteSpace(request.InitialWorkoutPlanName))
             return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.InvalidWorkoutPlan);
 
         var profileValidation = profile is null
@@ -86,26 +87,6 @@ public sealed class CompleteAccountRegistrationUseCase(
             return new CompleteAccountRegistrationResult(
                 CompleteAccountRegistrationStatus.InvalidQuiz,
                 ErrorMessage: quizValidation.ErrorMessage);
-
-        if (request.InitialWorkoutPlanDays is { } suppliedPlanDays)
-        {
-            var planValidation = InitialWorkoutPlanRule.Validate(suppliedPlanDays.Select(day =>
-                new InitialWorkoutPlanDayObservation(
-                    day.WeekIndex,
-                    day.DayOfWeek,
-                    day.Exercises.Select(exercise => new InitialWorkoutPlanExerciseObservation(
-                        exercise.ExerciseId, exercise.Sets, exercise.Reps)).ToArray(),
-                    Enum.IsDefined(day.WorkoutType),
-                    !string.IsNullOrWhiteSpace(day.Name))).ToArray());
-            if (!planValidation.IsValid || string.IsNullOrWhiteSpace(request.InitialWorkoutPlanName))
-                return new CompleteAccountRegistrationResult(
-                    CompleteAccountRegistrationStatus.InvalidWorkoutPlan,
-                    ErrorMessage: planValidation.ErrorMessage);
-        }
-        else if (!string.IsNullOrWhiteSpace(request.InitialWorkoutPlanName))
-        {
-            return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.InvalidWorkoutPlan);
-        }
 
         cancellationToken.ThrowIfCancellationRequested();
         var passwordHash = passwordHasher.HashPassword(request.Password);

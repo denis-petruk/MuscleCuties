@@ -739,6 +739,10 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        // Existing accepted plans stay readable; opening a screen never creates a new prescription.
+        if (!WorkoutTrainingPolicyV010.CanGeneratePlans)
+            return activePlan;
+
         var profile = await dbContext.UserProfiles.AsNoTracking()
             .SingleOrDefaultAsync(p => p.UserId == userId, cancellationToken)
             .ConfigureAwait(false);

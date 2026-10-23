@@ -42,7 +42,7 @@ public sealed class RegistrationPersistenceTests
     [Xunit.Theory]
     [Xunit.InlineData(SixtyMinuteAnswerValue, FullGymAnswerValue)]
     [Xunit.InlineData(ThirtyMinuteAnswerValue, BodyweightAnswerValue)]
-    public async Task NewAccountPersistsServerGeneratedInitialPlan(int sessionAnswer, int equipmentAnswer)
+    public async Task NewAccountCompletesWithoutGeneratingAnUnconfirmedPlan(int sessionAnswer, int equipmentAnswer)
     {
         var connectionString = Environment.GetEnvironmentVariable(ConnectionVariable);
         Xunit.Assert.False(string.IsNullOrWhiteSpace(connectionString),
@@ -116,18 +116,9 @@ public sealed class RegistrationPersistenceTests
             Xunit.Assert.NotNull(userId);
             await SyntheticTenantSession.SetAsync(database, userId.Value);
 
-            var plan = await database.WorkoutPlans.AsNoTracking().SingleAsync(item => item.UserId == userId);
-            var days = await database.WorkoutDays.AsNoTracking()
-                .Where(item => item.UserId == userId && item.WorkoutPlanId == plan.Id)
-                .ToArrayAsync();
-            Xunit.Assert.NotEmpty(days);
-            Xunit.Assert.All(days, day =>
-            {
-                Xunit.Assert.InRange(day.WeekIndex, InitialWorkoutPlanRule.MinimumWeekIndex,
-                    InitialWorkoutPlanRule.MaximumWeekIndex);
-                Xunit.Assert.Equal(RegistrationWorkoutType.Strength.ToString(), day.WorkoutType);
-            });
-            Xunit.Assert.True(await database.WorkoutDayExercises.AsNoTracking()
+            Xunit.Assert.False(await database.WorkoutPlans.AsNoTracking()
+                .AnyAsync(item => item.UserId == userId));
+            Xunit.Assert.False(await database.WorkoutDays.AsNoTracking()
                 .AnyAsync(item => item.UserId == userId));
         }
         finally

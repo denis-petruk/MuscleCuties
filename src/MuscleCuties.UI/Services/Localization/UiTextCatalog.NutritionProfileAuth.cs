@@ -373,7 +373,7 @@ public static partial class UiTextCatalog
         English["Onboarding_ProfileSetup_Optional"] = "(optional)";
         English["Onboarding_ProfileSetup_PersonalDetails"] = "Personal details";
         English["Onboarding_ProfileSetup_PickAtLeastOneStrengthActivity"] = "Choose the activities you'd like in your plan.";
-        English["Onboarding_ProfileSetup_StrengthActivityRequired"] = "Choose at least one strength activity to continue.";
+        English["Onboarding_ProfileSetup_StrengthActivityRequired"] = "Choose at least one activity to continue.";
         English["Onboarding_Activity_HighVolumeStrengthDescription"] = "Build strength with a few more sets.";
         English["Onboarding_Activity_StrengthHighIntensityDescription"] = "Build strength with heavier lifts and fewer reps.";
         English["Onboarding_Activity_RockClimbingDescription"] = "Climb for grip, core, and upper-body strength.";

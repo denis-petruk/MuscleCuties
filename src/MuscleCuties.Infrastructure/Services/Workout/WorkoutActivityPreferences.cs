@@ -48,19 +48,14 @@ public static class WorkoutActivityPreferences
     public static IReadOnlySet<WorkoutActivityType> EnsureRequired(
         IEnumerable<WorkoutActivityType> activityTypes)
     {
-        var selected = activityTypes.ToHashSet();
-
-        if (!selected.Any(IsStrengthActivity))
-            selected.Add(WorkoutActivityType.HighVolumeStrength);
-
-        return selected;
+        return activityTypes.ToHashSet();
     }
 
     public static bool IsStrengthActivity(WorkoutActivityType activityType)
     {
         return activityType is WorkoutActivityType.StrengthHighIntensity or
             WorkoutActivityType.HighVolumeStrength or
-            WorkoutActivityType.RockClimbing;
+            WorkoutActivityType.GeneralStrength;
     }
 
     public static bool IsCardioActivity(WorkoutActivityType activityType)
@@ -68,12 +63,16 @@ public static class WorkoutActivityPreferences
         return activityType is WorkoutActivityType.Hiit or
             WorkoutActivityType.Cycling or
             WorkoutActivityType.Running or
-            WorkoutActivityType.Swimming;
+            WorkoutActivityType.Swimming or
+            WorkoutActivityType.Walking or
+            WorkoutActivityType.Rowing or
+            WorkoutActivityType.Elliptical;
     }
 
     public static bool IsRecoveryActivity(WorkoutActivityType activityType)
     {
-        return activityType is WorkoutActivityType.Yoga;
+        return activityType is WorkoutActivityType.Yoga or WorkoutActivityType.Mobility or
+            WorkoutActivityType.GentleRecovery;
     }
 
     public static StrengthTrainingStyle ParseStrengthStyle(string? value)
@@ -105,7 +104,7 @@ public static class WorkoutActivityPreferences
         var normalized = value.Replace(" ", string.Empty).Replace("-", string.Empty);
         return normalized switch
         {
-            "Strength" => WorkoutActivityType.HighVolumeStrength,
+            "Strength" => WorkoutActivityType.GeneralStrength,
             "StrengthHighIntensity" => WorkoutActivityType.StrengthHighIntensity,
             "HighVolumeStrength" => WorkoutActivityType.HighVolumeStrength,
             "CardioIntervals" => WorkoutActivityType.Hiit,
@@ -115,10 +114,10 @@ public static class WorkoutActivityPreferences
             "YinYoga" => WorkoutActivityType.Yoga,
             "RestorativeYoga" => WorkoutActivityType.Yoga,
             "Pilates" => WorkoutActivityType.Yoga,
-            "Mobility" => WorkoutActivityType.Yoga,
-            "Walking" => WorkoutActivityType.Yoga,
-            "Dance" => WorkoutActivityType.Hiit,
-            "ActiveRecovery" => WorkoutActivityType.Yoga,
+            "Mobility" => WorkoutActivityType.Mobility,
+            "Walking" => WorkoutActivityType.Walking,
+            "Dance" => WorkoutActivityType.Other,
+            "ActiveRecovery" => WorkoutActivityType.GentleRecovery,
             _ => null
         };
     }

@@ -19,6 +19,8 @@ public sealed class GenerateWorkoutPlanUseCase(IWorkoutPlanningReferenceDataSour
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
+        if (!WorkoutTrainingPolicyV010.CanGeneratePlans)
+            throw new InvalidOperationException(WorkoutTrainingPolicyV010.GenerationUnavailableMessage);
 
         var daysPerWeek = WeekPlanRule.ClampDaysPerWeek(
             request.DaysPerWeek <= 0 ? DefaultDaysPerWeek : request.DaysPerWeek);
