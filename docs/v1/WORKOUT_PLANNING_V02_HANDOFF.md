@@ -6,12 +6,13 @@ attached to the Codex chat and is not part of this repository.
 
 ## Product and release constraints
 
-- The owner confirms the approval documents for **MC-PLANNING-0.2** are
-  available on the product privacy-policy page and explicitly directs the team
-  to proceed on that basis. Do not ask the owner to provide them again. The
-  documents are not copied into this repository, so encode their exact reviewed
-  policy values and scope in trusted server configuration before enabling each
-  numerical recommendation. Do not invent reviewer identity or policy values.
+- The owner says to continue applying the plan and identifies the privacy-policy
+  page as the place for approval documents. The repository's current
+  `services/static/privacy.html` is labeled a publication draft and contains no
+  workout-policy sign-off. The supplied **MC-REVIEW-0.2** also says no
+  section-level formula approval is documented. Keep score display and
+  recommendations disabled until the exact reviewed policy values and scope
+  can be verified; do not invent reviewer identity or policy values.
 - Implement C#/.NET 10 with Core domain rules, UseCases DTOs, PostgreSQL
   persistence, server endpoints, and MAUI iOS views. The repository's AGENTS.md
   prohibits SQLite in the client, despite the source document's proposed SQLite
