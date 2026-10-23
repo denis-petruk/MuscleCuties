@@ -259,8 +259,7 @@ public partial class ProfileSetupViewModel : ObservableObject
                 .Select(option => (int)option.ActivityType)
                 .ToArray();
 
-            if (!WorkoutActivityOptions.Any(option =>
-                    option.IsSelected && ProfileWorkoutActivityOptions.IsStrengthActivity(option.ActivityType)))
+            if (selectedActivities.Length == 0)
             {
                 ErrorMessage = UiTextCatalog.Get("Onboarding_ProfileSetup_StrengthActivityRequired");
                 return;

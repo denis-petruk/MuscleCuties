@@ -128,34 +128,8 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         if (profileProjection is null)
             return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.InvalidQuiz);
 
-        var registrationRequest = request;
-        if (request.InitialWorkoutPlanDays is null)
-        {
-            try
-            {
-                registrationRequest = await GenerateInitialPlanAsync(request, profileProjection,
-                    now.UtcDateTime, cancellationToken).ConfigureAwait(false);
-            }
-            catch (InvalidOperationException)
-            {
-                return new CompleteAccountRegistrationResult(
-                    CompleteAccountRegistrationStatus.InvalidWorkoutPlan,
-                    ErrorMessage: "The initial workout plan is temporarily unavailable.");
-            }
-        }
-
-        var initialPlanDays = registrationRequest.InitialWorkoutPlanDays;
-        if (initialPlanDays is null || string.IsNullOrWhiteSpace(registrationRequest.InitialWorkoutPlanName))
-            return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.InvalidWorkoutPlan);
-
-        var exerciseIds = initialPlanDays.SelectMany(day => day.Exercises)
-            .Select(exercise => exercise.ExerciseId).Distinct().ToArray();
-        var knownExerciseIds = await dbContext.Exercises.AsNoTracking()
-            .Where(exercise => exerciseIds.Contains(exercise.Id))
-            .Select(exercise => exercise.Id)
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-        if (knownExerciseIds.Count != exerciseIds.Length)
+        if (request.InitialWorkoutPlanDays is not null ||
+            !string.IsNullOrWhiteSpace(request.InitialWorkoutPlanName))
             return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.InvalidWorkoutPlan);
 
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -245,44 +219,6 @@ public sealed class PostgresCompleteAccountRegistrationStore(
                     AnsweredAt = now.UtcDateTime,
                     UserProfileSnapshotId = snapshot.Id
                 });
-            }
-
-            var planId = Guid.CreateVersion7();
-            dbContext.WorkoutPlans.Add(new WorkoutPlanRecord
-            {
-                Id = planId,
-                UserId = userId,
-                Name = registrationRequest.InitialWorkoutPlanName.Trim(),
-                IsActive = true,
-                CyclePhaseTarget = profile.CurrentCyclePhase,
-                CreatedAt = now.UtcDateTime
-            });
-
-            foreach (var day in initialPlanDays)
-            {
-                var dayId = Guid.CreateVersion7();
-                dbContext.WorkoutDays.Add(new WorkoutDayRecord
-                {
-                    Id = dayId,
-                    UserId = userId,
-                    WorkoutPlanId = planId,
-                    DayOfWeek = day.DayOfWeek,
-                    WorkoutType = day.WorkoutType.ToString(),
-                    Name = day.Name.Trim(),
-                    WeekIndex = day.WeekIndex
-                });
-                foreach (var exercise in day.Exercises)
-                {
-                    dbContext.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
-                    {
-                        Id = Guid.CreateVersion7(),
-                        UserId = userId,
-                        WorkoutDayId = dayId,
-                        ExerciseId = exercise.ExerciseId,
-                        Sets = exercise.Sets,
-                        Reps = exercise.Reps
-                    });
-                }
             }
 
             if (profile.CurrentCyclePhase is not null)

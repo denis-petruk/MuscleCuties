@@ -1,18 +1,20 @@
 # Workout planning v0.2 — implementation handoff
 
-Source: owner-provided **MC-PLANNING-0.2**, dated 2026-10-23. This file is the
-repository handoff for another engineer. The original product document was
-attached to the Codex chat and is not part of this repository.
+Source: owner-provided **MC-PLANNING-0.2**, dated 2026-10-23, and subsequent
+owner responses on **MC-WORKOUT-POLICY 0.1.0**. The original product document
+was attached to the Codex chat and is not part of this repository.
 
 ## Product and release constraints
 
-- The owner says to continue applying the plan and identifies the privacy-policy
-  page as the place for approval documents. The repository's current
-  `services/static/privacy.html` is labeled a publication draft and contains no
-  workout-policy sign-off. The supplied **MC-REVIEW-0.2** also says no
-  section-level formula approval is documented. Keep score display and
-  recommendations disabled until the exact reviewed policy values and scope
-  can be verified; do not invent reviewer identity or policy values.
+- Training policy ID: **MC-WORKOUT-POLICY**. Version: **0.1.0**. Approval status:
+  **Approved — reported by product owner**. Reviewer details: **not yet
+  supplied**. Approval date: **not yet supplied**. The owner says this approves
+  the specified training policy, but the conversation and repository still lack
+  its exact numerical prescriptions and HIIT/progression conditions. These
+  missing values block new generation; approval alone does not supply them.
+- The score policy has a separate approval gate. The owner has not validated
+  its numerical formula, approved clinical symptom triage, injury rehab or
+  excluded populations, or approved future numerical prescription changes.
 - Implement C#/.NET 10 with Core domain rules, UseCases DTOs, PostgreSQL
   persistence, server endpoints, and MAUI iOS views. The repository's AGENTS.md
   prohibits SQLite in the client, despite the source document's proposed SQLite
@@ -21,6 +23,36 @@ attached to the Codex chat and is not part of this repository.
   never mutates them until explicit acceptance and a successful revision compare.
 
 ## Implemented foundation in this batch
+
+### Structured proposal foundation added 2026-10-23
+
+`StructuredWorkoutPlanV02` now models a week as seven plan days, each with zero or
+more independently categorized sessions and explicit blocks. Straight sets,
+round-based supersets/circuits, timed catalog activities, work/recovery intervals,
+distance sets, and ordered movement/pose blocks have separate representations. Swimming distance remains without
+a duration until a pace is supplied. `StructuredWorkoutDurationV02Rule` returns
+planned session totals separately from completed actual time, counts distinct
+outside activity toward occupied daily time, and exposes timing assumptions.
+
+`StructuredWorkoutProposalV02Rule` deterministically selects only a template
+covered by a matching policy version and training-prescription review record.
+It rejects missing/unapproved policy, unknown timing, unavailable exercises,
+explicit restrictions, capacity failures, and outside demand overlap with
+structured reasons. It places sessions into separate available windows when
+provided, without counting the hours between them, and generates no extra hard
+sessions just because all seven days are available. The Core suite passed
+287/287 and the iOS simulator build passed with zero warnings/errors after
+this foundation was added. These types are not connected to the active API, PostgreSQL plan store,
+or MAUI screens. Owner-reported approval is recorded in
+`WorkoutTrainingPolicyV010`; its numerical rules remain incomplete. New legacy
+generation is blocked in server and local flows. Plan reads keep existing
+plans. Registration no longer creates an unconfirmed initial plan, and workout
+preference edits save without replacing a plan while generation is blocked.
+
+The onboarding discomfort slider was checked in source: left is **Severe** and
+right is **None**; `QuizViewModel` saves the semantic discomfort value using
+`6 - visualStep` and applies the inverse when loading. This mapping was left
+unchanged, so no stored scale is silently reinterpreted.
 
 | Rule | Current behavior |
 | --- | --- |
@@ -33,8 +65,8 @@ attached to the Codex chat and is not part of this repository.
 | `ProgressionReviewV02Rule` | Requires a matching approved policy and consecutive complete same-exercise history; current limitations, pain, substitutions, and incomplete work prevent eligibility. It returns review/confirmation state and never changes a prescription. |
 
 The planning score, capacity, eligibility, revision, Today, and progression
-rules remain unwired to live plans. Check-in capture is now wired through MAUI,
-the authenticated API, and PostgreSQL; the legacy generator remains active.
+rules remain unwired to live plans. Check-in capture is wired through MAUI,
+the authenticated API, and PostgreSQL; legacy generation is now blocked.
 Core suite: 265 passed. Server build: zero warnings/errors. iOS simulator build:
 zero warnings/errors on 2026-10-23.
 
@@ -48,12 +80,29 @@ the v0.2 prototype score yet. Migration:
 
 ## Remaining implementation, in dependency order
 
+The owner's v0.1.0 coverage response requires separate, user-facing high
+volume strength, strength high intensity, rock climbing, HIIT, cycling,
+running, swimming, and yoga. General strength, walking, rowing, elliptical,
+mobility, gentle recovery, rest days, and other activity must retain their own
+identity. Preference selection and string persistence now retain these names;
+the structured Core session model separates purpose, modality, and style.
+Session cards, editing, completed-session logging, access and ability checks,
+and live duration/overlap checks for every option remain to be wired.
+
+The supplied response does **not** define strength volume/effort/load/rest,
+cardio and swimming duration or progression, HIIT opt-in/eligibility/frequency
+and work/recovery limits, yoga catalog demand, or progression adjustment
+limits. None may be inferred from the activity name. Current user-facing
+descriptions avoid promising heavier lifts, more sets, or universal yoga
+recovery. Obtain the reviewed rule payload before enabling generation.
+
 1. **Versioned programming policy and review record.** Define server-owned
    `TrainingPolicy` and trusted `ReviewApproval` storage with exact ruleset,
    policy version, section IDs, reviewer evidence, exclusions, and effective
    dates. Sets, reps, effort, rest, volume, loading increments, and progression
-   eligibility must come from that policy. Missing or unapproved values return
-   `NeedsProgrammingReview`; no hidden fallback. Never accept a client-provided
+   eligibility must come from that policy. The owner reports policy approval,
+   while exact values, reviewer details, and approval date remain missing.
+   Missing values return `NeedsProgrammingReview`; no hidden fallback. Never accept a client-provided
    approval object as authority.
 2. **Generator correction.** Refactor `GenerateWorkoutPlanUseCase` and
    `FourWeekPlanRule` to validate inputs and catalog completeness; use actual
