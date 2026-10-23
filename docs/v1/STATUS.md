@@ -4,6 +4,8 @@
 
 **UI audit update (2026-10-23):** Train presents a full-height activity-choice sheet and passes the selected activity through navigation into its intro. This was visually verified on iPhone 17 Pro Max. The iOS simulator build passed with zero warnings/errors and 257 Core tests passed. Exercise logging/completion acceptance remains open. Changes are pushed to the private GitLab `test-flight-beta` branch.
 
+The session screen’s Tips and technique disclosure and swap panel were also visually opened in Simulator. Completion/save behavior is still unverified.
+
 Audit handoff (2026-10-23): session, meal entry/custom food, You menu, Feedback/Privacy, and photo vault changes are present in source. Final simulator session/meal flows and an actual photo save/reopen are unverified. New custom-food company/micronutrient fields are local only and the backend is not deployed. The qualified-review register v0.2 documents no section-level approval for readiness scores or automated guidance.
 
 Today streaks now use the muscle/fire/cycle icons from You, and Units & Display selection cards match Profile setup styling. Dashboard API contracts currently contain no current-day step count or step-goal value; check-in step fields represent yesterday and a seven-day average, so no Today step figure or estimate was added. Review the updated pages in the simulator after the iOS build issue is resolved.
