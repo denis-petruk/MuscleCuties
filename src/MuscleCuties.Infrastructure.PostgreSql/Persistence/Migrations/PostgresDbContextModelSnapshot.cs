@@ -317,6 +317,32 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("phase");
 
+                    b.Property<DateTime?>("PlanningRecordedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("planning_recorded_at_utc");
+
+                    b.Property<long>("PlanningRevision")
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValue(0L)
+                        .HasColumnType("bigint")
+                        .HasColumnName("planning_revision");
+
+                    b.Property<int?>("PlanningSleepQuality")
+                        .HasColumnType("integer")
+                        .HasColumnName("planning_sleep_quality");
+
+                    b.Property<int?>("PlanningSoreness")
+                        .HasColumnType("integer")
+                        .HasColumnName("planning_soreness");
+
+                    b.Property<int?>("PlanningStress")
+                        .HasColumnType("integer")
+                        .HasColumnName("planning_stress");
+
+                    b.Property<string>("PlanningTimeZoneId")
+                        .HasColumnType("text")
+                        .HasColumnName("planning_time_zone_id");
+
                     b.Property<decimal?>("PreviousDayLoad")
                         .HasColumnType("numeric")
                         .HasColumnName("previous_day_load");
@@ -374,7 +400,11 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .IsDescending(false, true)
                         .HasDatabaseName("ix_daily_readiness_logs_owner_date_desc");
 
-                    b.ToTable("daily_readiness_logs", "app");
+                    b.ToTable("daily_readiness_logs", "app", t =>
+                        {
+                            t.HasCheckConstraint("ck_daily_readiness_logs_planning_revision", "planning_revision >= 0");
+                            t.HasCheckConstraint("ck_daily_readiness_logs_planning_scales", "(planning_sleep_quality IS NULL OR planning_sleep_quality BETWEEN 1 AND 5) AND (planning_soreness IS NULL OR planning_soreness BETWEEN 1 AND 5) AND (planning_stress IS NULL OR planning_stress BETWEEN 1 AND 5)");
+                        });
                 });
 
             modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.EmailChallengeRecord", b =>

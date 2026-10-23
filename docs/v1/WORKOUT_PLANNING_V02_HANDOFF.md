@@ -6,13 +6,12 @@ attached to the Codex chat and is not part of this repository.
 
 ## Product and release constraints
 
-- The owner accepted the product direction. The supplied **MC-REVIEW-0.2**
-  records positive doctor feedback reported by the owner, but no reviewer
-  identity, credentials, exact approved sections, approved build, conditions,
-  date, or signed evidence. Do not describe these rules as professionally
-  approved or clinically validated. Keep score display, score-based suggestions,
-  automated progression, injury-specific substitutions, and new training
-  prescriptions unavailable until exact section and policy approval is recorded.
+- The owner confirms the approval documents for **MC-PLANNING-0.2** are
+  available on the product privacy-policy page and explicitly directs the team
+  to proceed on that basis. Do not ask the owner to provide them again. The
+  documents are not copied into this repository, so encode their exact reviewed
+  policy values and scope in trusted server configuration before enabling each
+  numerical recommendation. Do not invent reviewer identity or policy values.
 - Implement C#/.NET 10 with Core domain rules, UseCases DTOs, PostgreSQL
   persistence, server endpoints, and MAUI iOS views. The repository's AGENTS.md
   prohibits SQLite in the client, despite the source document's proposed SQLite
@@ -32,9 +31,19 @@ attached to the Codex chat and is not part of this repository.
 | `TodayPlanningDecisionRule` | Gives restrictions and current symptoms precedence; a high score never increases work; lower-score suggestions require their own flag and section approval. |
 | `ProgressionReviewV02Rule` | Requires a matching approved policy and consecutive complete same-exercise history; current limitations, pain, substitutions, and incomplete work prevent eligibility. It returns review/confirmation state and never changes a prescription. |
 
-These Core rules have focused tests but are **not wired to live API, database,
-or UI flows**. The legacy generator remains active. Full Core suite: 257 passed.
-iOS simulator build: passed, zero warnings and errors on 2026-10-23.
+The planning score, capacity, eligibility, revision, Today, and progression
+rules remain unwired to live plans. Check-in capture is now wired through MAUI,
+the authenticated API, and PostgreSQL; the legacy generator remains active.
+Core suite: 265 passed. Server build: zero warnings/errors. iOS simulator build:
+zero warnings/errors on 2026-10-23.
+
+The check-in slice captures optional 1–5 sleep-quality, soreness, and stress
+values plus the device time-zone ID through the authenticated API, stores server
+recording time and a revision number in PostgreSQL, and exposes the fields in
+the localized MAUI check-in form. Partial input remains allowed and is
+associated with the device time zone; this slice does not calculate or display
+the v0.2 prototype score yet. Migration:
+`20261023120000_AddWorkoutPlanningCheckInInputs`.
 
 ## Remaining implementation, in dependency order
 

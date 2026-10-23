@@ -247,6 +247,12 @@ public sealed class DailyReadinessLogRecord : ITenantRecord
     public decimal? WeightKg { get; set; }
     public int? SleepQuality { get; set; }
     public int? Soreness { get; set; }
+    public int? PlanningSleepQuality { get; set; }
+    public int? PlanningSoreness { get; set; }
+    public int? PlanningStress { get; set; }
+    public string? PlanningTimeZoneId { get; set; }
+    public DateTime? PlanningRecordedAtUtc { get; set; }
+    public long PlanningRevision { get; set; }
     public decimal? PreviousDayLoad { get; set; }
     public int ReadinessScore { get; set; }
     public ReadinessTier ReadinessTier { get; set; }

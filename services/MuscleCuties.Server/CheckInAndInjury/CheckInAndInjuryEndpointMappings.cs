@@ -56,7 +56,11 @@ public static class CheckInAndInjuryEndpointMappings
                         body.PreviousDayLoad,
                         body.Phase,
                         body.Sleep3dAvg,
-                        body.Steps7dAvg),
+                        body.Steps7dAvg,
+                        body.PlanningSleepQuality,
+                        body.PlanningSoreness,
+                        body.PlanningStress,
+                        body.PlanningTimeZoneId),
                     cancellationToken).ConfigureAwait(false);
                 return Results.Ok(record);
             }
@@ -173,7 +177,11 @@ public static class CheckInAndInjuryEndpointMappings
         decimal? PreviousDayLoad = null,
         string? Phase = null,
         decimal? Sleep3dAvg = null,
-        int? Steps7dAvg = null);
+        int? Steps7dAvg = null,
+        int? PlanningSleepQuality = null,
+        int? PlanningSoreness = null,
+        int? PlanningStress = null,
+        string? PlanningTimeZoneId = null);
 
     public sealed record SaveInjuryObservationBody(
         Guid? Id,

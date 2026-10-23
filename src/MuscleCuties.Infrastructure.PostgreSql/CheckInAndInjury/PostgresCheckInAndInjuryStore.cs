@@ -138,6 +138,12 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             row.WeightKg = request.WeightKg;
             row.SleepQuality = request.SleepQuality;
             row.Soreness = request.Soreness;
+            row.PlanningSleepQuality = request.PlanningSleepQuality;
+            row.PlanningSoreness = request.PlanningSoreness;
+            row.PlanningStress = request.PlanningStress;
+            row.PlanningTimeZoneId = request.PlanningTimeZoneId;
+            row.PlanningRecordedAtUtc = timeProvider.GetUtcNow().UtcDateTime;
+            row.PlanningRevision = checked(row.PlanningRevision + 1);
             row.PreviousDayLoad = request.PreviousDayLoad;
             row.ReadinessScore = readiness.Score;
             row.ReadinessTier = readiness.Tier;
@@ -300,7 +306,13 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             row.PreviousDayLoad,
             row.ReadinessScore,
             row.ReadinessTier.ToString(),
-            row.Phase);
+            row.Phase,
+            row.PlanningSleepQuality,
+            row.PlanningSoreness,
+            row.PlanningStress,
+            row.PlanningTimeZoneId,
+            row.PlanningRecordedAtUtc is { } recorded ? new DateTimeOffset(DateTime.SpecifyKind(recorded, DateTimeKind.Utc)) : null,
+            row.PlanningRevision);
 
     private static InjuryObservationRecord MapInjury(WorkoutInjuryLogRecord row) =>
         new(
