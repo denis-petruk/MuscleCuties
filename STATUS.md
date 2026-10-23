@@ -2,6 +2,8 @@
 
 The active delivery status is maintained at [docs/v1/STATUS.md](docs/v1/STATUS.md).
 
+- **Onboarding audit recheck (2026-10-23):** Account-confirmation spacing and Profile setup placement/card styling were confirmed in source. Current iOS simulator build passed with zero warnings/errors; Core tests passed 265/265. Controlled fresh-registration checks remain open.
+
 ## Quick Summary (2026-10-23)
 
 - **Audit handoff:** Session, meal entry/custom food, You menu, Feedback/Privacy, and photo vault have further source changes. Final simulator flows, a real photo save/reopen, and new server-field rollout remain unverified; see the audit for exact state.
