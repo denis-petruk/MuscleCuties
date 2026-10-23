@@ -2,7 +2,7 @@
 
 All migration phases (`PG01`–`PG10`) and baseline safety/beta packages (`B01`–`B03`) are **accepted as code foundations** across `MuscleCuties.Core`, `MuscleCuties.UseCases`, `MuscleCuties.Infrastructure`, `MuscleCuties.Infrastructure.PostgreSql`, `MuscleCuties.Server`, and `MuscleCuties.UI`. Live service verification and expanded-candidate acceptance remain open.
 
-**UI audit next:** Run the Train activity-choice flow in the iOS simulator, resume pending checks in [UI_WORKFLOW_AUDIT.md](UI_WORKFLOW_AUDIT.md), and push the completed branch to the private GitLab project after GitLab authentication is available.
+**UI audit next:** Train’s activity-choice sheet is verified in the iOS simulator. Continue session logging/completion and remaining page acceptance checks in [UI_WORKFLOW_AUDIT.md](UI_WORKFLOW_AUDIT.md); the current branch is pushed to the private GitLab project.
 
 Audit handoff: verify the new session and meal flows on iOS; complete Units picker styling, shared profile typography, Today streak icons and step display using a verified data source; and test photo save/reopen before calling the vault fixed. Update the audit after each accepted page. Keep numerical readiness and unapproved clinical guidance gated.
 

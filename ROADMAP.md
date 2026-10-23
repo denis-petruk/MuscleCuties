@@ -49,4 +49,4 @@ Verify the quiz Go back action on-device: Step 1 should reload staged details, a
 
 Verify the simplified Step 1 layout on an iPhone: measurements and activity types should read as distinct sections, and the top-right logo should be absent.
 
-**UI audit next:** Verify the Train activity-choice sheet and direct activity entry in the iOS simulator, then complete remaining acceptance checks in [the workflow audit](docs/v1/UI_WORKFLOW_AUDIT.md). The GitLab project is ready; pushing branch `test-flight-beta` awaits a GitLab credential in Keychain or an installed SSH key.
+**UI audit next:** Train’s activity-choice sheet and direct activity entry are verified in the iOS simulator. Continue with the remaining session logging/completion and outstanding page acceptance checks in [the workflow audit](docs/v1/UI_WORKFLOW_AUDIT.md). Changes are pushed to the private GitLab `test-flight-beta` branch.

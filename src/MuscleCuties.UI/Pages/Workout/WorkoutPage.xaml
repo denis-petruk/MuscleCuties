@@ -17,6 +17,16 @@
     Shell.NavBarIsVisible="False">
 
     <ContentPage.Resources>
+        <x:Double x:Key="SessionPickerCardStrokeThickness">1</x:Double>
+        <Thickness x:Key="SessionPickerCardPadding">14</Thickness>
+        <RoundRectangle x:Key="SessionPickerCardShape" CornerRadius="14" />
+        <Style x:Key="SessionActivityPickerCard" TargetType="Border" BasedOn="{StaticResource CardPrimary}">
+            <Setter Property="Padding" Value="{StaticResource SessionPickerCardPadding}" />
+            <Setter Property="StrokeShape" Value="{StaticResource SessionPickerCardShape}" />
+            <Setter Property="StrokeThickness" Value="{StaticResource SessionPickerCardStrokeThickness}" />
+            <Setter Property="Stroke"
+                    Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
+        </Style>
         <Style x:Key="WorkoutWeekButton" TargetType="Button">
             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
             <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
@@ -394,7 +404,8 @@
                         <Button Grid.Column="1" Text="{loc:LocalizedText Common_Close}"
                                 Clicked="OnCloseSessionActivitiesClicked"
                                 MinimumHeightRequest="48" MinimumWidthRequest="48"
-                                BackgroundColor="Transparent" />
+                                BackgroundColor="Transparent"
+                                TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                     </Grid>
                     <Grid Grid.Row="1">
                         <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
@@ -403,12 +414,13 @@
                             <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding ActivityCards}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="workoutModels:WorkoutActivitySectionItem">
-                                        <Border Style="{StaticResource CardPrimary}" Padding="14"
-                                                SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
+                                        <Border Style="{StaticResource SessionActivityPickerCard}"
+                                                SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
+                                                SemanticProperties.Hint="{loc:LocalizedText Workout_Session_BeginActivityAccessibility}">
                                             <Border.GestureRecognizers>
                                                 <TapGestureRecognizer Tapped="OnSessionActivitySelected" />
                                             </Border.GestureRecognizers>
-                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
                                                 <VerticalStackLayout Spacing="4">
                                                     <Label Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                                            Style="{StaticResource CardTitle}" FontSize="16" />
@@ -417,6 +429,10 @@
                                                 </VerticalStackLayout>
                                                 <Label Grid.Column="1" Text="{Binding MetricText}"
                                                        Style="{StaticResource MutedLabel}" VerticalOptions="Center" />
+                                                <Path Grid.Column="2" Data="M1 1 L6 6 L1 11"
+                                                      Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                                      StrokeThickness="1.5" Aspect="Uniform" WidthRequest="6"
+                                                      HeightRequest="12" VerticalOptions="Center" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
