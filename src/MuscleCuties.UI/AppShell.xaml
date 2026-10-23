@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Shell
+    x:Class="MuscleCuties.UI.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:MuscleCuties.UI"
+    xmlns:auth="clr-namespace:MuscleCuties.UI.Pages.Auth"
+    x:DataType="local:AppShell"
+    xmlns:dashboard="clr-namespace:MuscleCuties.UI.Pages.Dashboard"
+    xmlns:cycle="clr-namespace:MuscleCuties.UI.Pages.Cycle"
+    xmlns:workout="clr-namespace:MuscleCuties.UI.Pages.Workout"
+    xmlns:nutrition="clr-namespace:MuscleCuties.UI.Pages.Nutrition"
+    xmlns:profile="clr-namespace:MuscleCuties.UI.Pages.Profile"
+    xmlns:startup="clr-namespace:MuscleCuties.UI.Pages.Startup"
+    xmlns:onboarding="clr-namespace:MuscleCuties.UI.Pages.Onboarding"
+    FlyoutBehavior="Disabled">
+
+    <ShellContent
+        Route="AppStartupPage"
+        ContentTemplate="{DataTemplate startup:AppStartupPage}"
+        Shell.NavBarIsVisible="False" />
+
+    <ShellContent
+        Route="LoginPage"
+        ContentTemplate="{DataTemplate auth:LoginPage}"
+        Shell.NavBarIsVisible="False" />
+
+    <ShellContent
+        Route="OtpVerificationPage"
+        ContentTemplate="{DataTemplate auth:OtpVerificationPage}"
+        Shell.NavBarIsVisible="False" />
+
+    <ShellContent
+        Route="ProfileSetupPage"
+        ContentTemplate="{DataTemplate onboarding:ProfileSetupPage}"
+        Shell.NavBarIsVisible="False" />
+
+    <ShellContent
+        Route="QuizPage"
+        ContentTemplate="{DataTemplate onboarding:QuizPage}"
+        Shell.NavBarIsVisible="False" />
+
+    <TabBar x:Name="MainTab" Route="MainTab">
+        <Tab
+            x:Name="TodayTab"
+            Title="Today"
+            Icon="tab_today.png">
+            <ShellContent
+                x:Name="DashboardContent"
+                Route="DashboardPage"
+                ContentTemplate="{DataTemplate dashboard:DashboardPage}"
+                Shell.NavBarIsVisible="False" />
+        </Tab>
+        <Tab
+            x:Name="CycleTab"
+            Title="Cycle"
+            Icon="tab_cycle.png">
+            <ShellContent
+                x:Name="CycleContent"
+                Route="CyclePage"
+                ContentTemplate="{DataTemplate cycle:CyclePage}"
+                Shell.NavBarIsVisible="False" />
+        </Tab>
+        <Tab
+            x:Name="TrainTab"
+            Title="Train"
+            Icon="tab_train.png">
+            <ShellContent
+                x:Name="WorkoutContent"
+                Route="WorkoutPage"
+                ContentTemplate="{DataTemplate workout:WorkoutPage}"
+                Shell.NavBarIsVisible="False" />
+        </Tab>
+        <Tab
+            x:Name="NutritionTab"
+            Title="Nutrition"
+            Icon="tab_nutrition.png">
+            <ShellContent
+                x:Name="NutritionContent"
+                Route="NutritionPage"
+                ContentTemplate="{DataTemplate nutrition:NutritionPage}"
+                Shell.NavBarIsVisible="False" />
+        </Tab>
+        <Tab
+            x:Name="YouTab"
+            Route="YouTab"
+            Title="You"
+            Icon="tab_you.png">
+            <ShellContent
+                x:Name="ProfileContent"
+                Route="ProfilePage"
+                ContentTemplate="{DataTemplate profile:ProfilePage}"
+                Shell.NavBarIsVisible="False" />
+        </Tab>
+    </TabBar>
+
+</Shell>

@@ -1,6 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace MuscleCuties.Core.Models.Enums.Workout;
 
 [Flags]
+[SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix",
+    Justification = "Represents bitwise injury flags.")]
 public enum InjuryFlag
 {
     None = 0,

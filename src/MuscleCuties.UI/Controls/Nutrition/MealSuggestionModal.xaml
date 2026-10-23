@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sharedControls:AnimatedModalView
+    x:Class="MuscleCuties.UI.Controls.Nutrition.MealSuggestionModal"
+    x:Name="SuggestionRoot"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:nutritionModels="clr-namespace:MuscleCuties.UI.Models.UI.Nutrition"
+    xmlns:nutritionEnums="clr-namespace:MuscleCuties.Core.Models.Enums.Nutrition;assembly=MuscleCuties.Core"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Nutrition"
+    x:DataType="vm:NutritionViewModel"
+    IsOpen="{Binding IsSuggestionModalVisible}">
+
+    <Grid BackgroundColor="{StaticResource ModalScrim}">
+        <BoxView BackgroundColor="Transparent">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CloseSuggestionModalCommand}" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <Border
+            x:Name="SheetSurface"
+            Style="{StaticResource AppBottomSheetSurface}">
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
+                <Grid
+                    Grid.Row="0"
+                    ColumnDefinitions="*,Auto,Auto"
+                    RowDefinitions="Auto,Auto"
+                    ColumnSpacing="10"
+                    RowSpacing="4"
+                    Padding="20,18,20,12">
+                    <Label
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        Text="{Binding SuggestionPageTitle, Converter={StaticResource LocalizedStringConverter}}"
+                        Style="{StaticResource ModalTitle}" />
+                    <Label
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Text="{Binding SuggestionTargetText, Converter={StaticResource LocalizedStringConverter}}"
+                        Style="{StaticResource ModalSubtitle}"
+                        IsVisible="{Binding IsDayPlanMode, Converter={StaticResource InvertedBoolConverter}}" />
+                    <Label
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Text="{Binding DayPlanSummaryText, Converter={StaticResource LocalizedStringConverter}}"
+                        Style="{StaticResource ModalSubtitle}"
+                        IsVisible="{Binding IsDayPlanMode}" />
+
+                    <Border
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Grid.RowSpan="2"
+                        Style="{StaticResource ModalIconButton}"
+                        VerticalOptions="Start"
+                        IsVisible="{Binding ShowSuggestionResults}"
+                        SemanticProperties.Description="{loc:LocalizedText Nutrition_MealSuggestion_RefreshMealSuggestions}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding RefreshSuggestionsCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path
+                            Data="M17.65 6.35A7.958 7.958 0 0012 4a8 8 0 00-8 8 8 8 0 008 8 7.985 7.985 0 005.93-2.65l-1.46-1.46A5.98 5.98 0 0112 18a6 6 0 01-6-6 6 6 0 016-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                            Fill="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextPrimaryDark}}"
+                            Aspect="Uniform"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+
+                    <Border
+                        Grid.Row="0"
+                        Grid.Column="2"
+                        Grid.RowSpan="2"
+                        Style="{StaticResource ModalIconButton}"
+                        VerticalOptions="Start"
+                        SemanticProperties.Description="{loc:LocalizedText Nutrition_MealSuggestion_CloseSuggestions}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding CloseSuggestionModalCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path Style="{StaticResource ModalCloseIcon}" />
+                    </Border>
+                </Grid>
+
+                <BoxView
+                    Grid.Row="1"
+                    Style="{StaticResource ModalDivider}" />
+
+                <ScrollView
+                    Grid.Row="2"
+                    IsVisible="{Binding IsMealTypePickerVisible}">
+                    <VerticalStackLayout
+                        Spacing="14"
+                        Padding="20,16,20,20">
+                        <Label
+                            Text="{loc:LocalizedText Nutrition_MealSuggestion_ChooseAMeal}"
+                            Style="{StaticResource SectionTitle}"
+                            FontSize="17" />
+
+                        <Grid
+                            ColumnDefinitions="*,*"
+                            RowDefinitions="Auto,Auto"
+                            ColumnSpacing="10"
+                            RowSpacing="10">
+                            <Border Style="{StaticResource ModalListItem}" Padding="12" MinimumHeightRequest="92"
+                                    SemanticProperties.Description="{Binding BreakfastCaloriesHint, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_MealSuggestion_BreakfastValue}"
+                                    SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealSuggestion_SelectToViewBreakfastIdeas}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsBreakfastGuessed}"
+                                                 Value="True">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                        <Setter Property="SemanticProperties.Hint"
+                                                Value="Suggested meal for current time. Select to view breakfast ideas." />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectSuggestionMealTypeCommand}"
+                                        CommandParameter="{x:Static nutritionEnums:MealType.Breakfast}" />
+                                </Border.GestureRecognizers>
+                                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="5">
+                                    <Path
+                                        Grid.Row="0"
+                                        Data="M12 3c-3 0-7 6-7 11a7 7 0 0 0 14 0c0-5-4-11-7-11ZM12 11a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Start" />
+                                    <Label Grid.Row="1" Text="{loc:LocalizedText Nutrition_MealType_Breakfast}"
+                                           Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Grid.Row="2"
+                                           Text="{Binding BreakfastCaloriesHint, Converter={StaticResource LocalizedStringConverter}}"
+                                           Style="{StaticResource CaptionLabel}" FontSize="13" FontAttributes="Bold"
+                                           LineBreakMode="TailTruncation" />
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Column="1" Style="{StaticResource ModalListItem}" Padding="12"
+                                    MinimumHeightRequest="92"
+                                    SemanticProperties.Description="{Binding LunchCaloriesHint, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_MealSuggestion_LunchValue}"
+                                    SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealSuggestion_SelectToViewLunchIdeas}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsLunchGuessed}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                        <Setter Property="SemanticProperties.Hint"
+                                                Value="Suggested meal for current time. Select to view lunch ideas." />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectSuggestionMealTypeCommand}"
+                                        CommandParameter="{x:Static nutritionEnums:MealType.Lunch}" />
+                                </Border.GestureRecognizers>
+                                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="5">
+                                    <Path
+                                        Grid.Row="0"
+                                        Data="M3 11h18c0 5-4 9-9 9s-9-4-9-9ZM7 11c0-3 2-5 5-5s5 2 5 5M12 3v3"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Start" />
+                                    <Label Grid.Row="1" Text="{loc:LocalizedText Nutrition_MealType_Lunch}"
+                                           Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Grid.Row="2"
+                                           Text="{Binding LunchCaloriesHint, Converter={StaticResource LocalizedStringConverter}}"
+                                           Style="{StaticResource CaptionLabel}" FontSize="13" FontAttributes="Bold"
+                                           LineBreakMode="TailTruncation" />
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Row="1" Style="{StaticResource ModalListItem}" Padding="12"
+                                    MinimumHeightRequest="92"
+                                    SemanticProperties.Description="{Binding DinnerCaloriesHint, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_MealSuggestion_DinnerValue}"
+                                    SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealSuggestion_SelectToViewDinnerIdeas}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsDinnerGuessed}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                        <Setter Property="SemanticProperties.Hint"
+                                                Value="Suggested meal for current time. Select to view dinner ideas." />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectSuggestionMealTypeCommand}"
+                                        CommandParameter="{x:Static nutritionEnums:MealType.Dinner}" />
+                                </Border.GestureRecognizers>
+                                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="5">
+                                    <Path
+                                        Grid.Row="0"
+                                        Data="M15 5a5 5 0 0 1 0 10c-1.8 0-3.4-1-4.3-2.4L7 16.3M5.7 15a2 2 0 1 0-2.8 2.8 2 2 0 1 0 2.8 2.8L9.4 17"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Start" />
+                                    <Label Grid.Row="1" Text="{loc:LocalizedText Nutrition_MealType_Dinner}"
+                                           Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Grid.Row="2"
+                                           Text="{Binding DinnerCaloriesHint, Converter={StaticResource LocalizedStringConverter}}"
+                                           Style="{StaticResource CaptionLabel}" FontSize="13" FontAttributes="Bold"
+                                           LineBreakMode="TailTruncation" />
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource ModalListItem}" Padding="12"
+                                    MinimumHeightRequest="92"
+                                    SemanticProperties.Description="{Binding SnackCaloriesHint, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_MealSuggestion_SnackValue}"
+                                    SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealSuggestion_SelectToViewSnackIdeas}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSnackGuessed}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                        <Setter Property="SemanticProperties.Hint"
+                                                Value="Suggested meal for current time. Select to view snack ideas." />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectSuggestionMealTypeCommand}"
+                                        CommandParameter="{x:Static nutritionEnums:MealType.Snack}" />
+                                </Border.GestureRecognizers>
+                                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="5">
+                                    <Path
+                                        Grid.Row="0"
+                                        Data="M12 21V8M12 11c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 15c3 0 5-2 5-5-3 0-5 2-5 5ZM12 19c-3 0-5-2-5-5 3 0 5 2 5 5"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Start" />
+                                    <Label Grid.Row="1" Text="{loc:LocalizedText Nutrition_MealType_Snack}"
+                                           Style="{StaticResource CardTitle}" FontSize="15" />
+                                    <Label Grid.Row="2"
+                                           Text="{Binding SnackCaloriesHint, Converter={StaticResource LocalizedStringConverter}}"
+                                           Style="{StaticResource CaptionLabel}" FontSize="13" FontAttributes="Bold"
+                                           LineBreakMode="TailTruncation" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <Border
+                            Style="{StaticResource ModalListItem}"
+                            Padding="14"
+                            MinimumHeightRequest="68"
+                            SemanticProperties.Description="{loc:LocalizedText Nutrition_PlanMyDay}"
+                            SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealSuggestion_AutomaticallyPlansAllMealsAroundToday}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding StartDayPlanCommand}" />
+                            </Border.GestureRecognizers>
+                            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="12"
+                                  RowSpacing="2">
+                                <Path
+                                    Grid.RowSpan="2"
+                                    Data="M4 4h16v16H4zM8 8h3v3H8zM13 8h3M13 11h3M8 14h8M8 17h8"
+                                    Style="{StaticResource NutritionLineIcon}"
+                                    Stroke="{StaticResource Primary}"
+                                    WidthRequest="22"
+                                    HeightRequest="22"
+                                    VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="{loc:LocalizedText Nutrition_PlanMyDay}"
+                                       Style="{StaticResource CardTitle}" FontSize="15" />
+                                <Label Grid.Row="1" Grid.Column="1" Text="{loc:LocalizedText Nutrition_MealSuggestion_PlanAllMealsAroundTodayS}"
+                                       Style="{StaticResource CaptionLabel}" />
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+                </ScrollView>
+
+                <Grid
+                    Grid.Row="2"
+                    RowDefinitions="Auto,Auto"
+                    RowSpacing="10"
+                    IsVisible="{Binding IsLoadingSuggestions}"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealSuggestion_FindingMealIdeasFromUsdaFoods}">
+                    <ActivityIndicator
+                        Grid.Row="0"
+                        IsRunning="{Binding IsLoadingSuggestions}"
+                        Color="{StaticResource Primary}"
+                        WidthRequest="32"
+                        HeightRequest="32" />
+                    <Label Grid.Row="1"
+                           Text="{Binding LoadingSuggestionText, Converter={StaticResource LocalizedStringConverter}}"
+                           Style="{StaticResource ModalSubtitle}" />
+                </Grid>
+
+                <ScrollView
+                    Grid.Row="2"
+                    IsVisible="{Binding HasMealSuggestionError}">
+                    <Grid RowDefinitions="Auto,Auto,Auto"
+                          RowSpacing="12"
+                          Padding="28,32">
+                        <Path
+                            Grid.Row="0"
+                            Data="M3 2v7c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2V2M6 2v20M15 2v8h4M19 2v20"
+                            Style="{StaticResource NutritionLineIcon}"
+                            Stroke="{StaticResource Primary}"
+                            WidthRequest="32"
+                            HeightRequest="32"
+                            HorizontalOptions="Center" />
+                        <Label
+                            Grid.Row="1"
+                            Text="{Binding MealSuggestionError, Converter={StaticResource LocalizedStringConverter}}"
+                            Style="{StaticResource ModalSubtitle}"
+                            HorizontalTextAlignment="Center" />
+                        <Button
+                            Grid.Row="2"
+                            Text="{loc:LocalizedText Common_TryAgain}"
+                            Command="{Binding RefreshSuggestionsCommand}"
+                            Style="{StaticResource ButtonSecondary}"
+                            HorizontalOptions="Center"
+                            WidthRequest="152" />
+                    </Grid>
+                </ScrollView>
+
+                <ScrollView
+                    Grid.Row="2"
+                    IsVisible="{Binding HasNoMealSuggestions}">
+                    <Grid RowDefinitions="Auto,Auto,Auto"
+                          RowSpacing="10"
+                          Padding="24,32">
+                        <Path
+                            Grid.Row="0"
+                            Data="M12 21V8M12 11c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 15c3 0 5-2 5-5-3 0-5 2-5 5ZM12 19c-3 0-5-2-5-5 3 0 5 2 5 5"
+                            Style="{StaticResource NutritionLineIcon}"
+                            Stroke="{StaticResource Primary}"
+                            WidthRequest="32"
+                            HeightRequest="32"
+                            HorizontalOptions="Center" />
+                        <Label
+                            Grid.Row="1"
+                            Text="{loc:LocalizedText Nutrition_MealSuggestion_NoCloseMatchYet}"
+                            Style="{StaticResource BodyLabel}"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="Center"
+                            HorizontalOptions="Center" />
+                        <Label
+                            Grid.Row="2"
+                            Text="{loc:LocalizedText Nutrition_MealSuggestion_TryAnotherMealOrRefreshThe}"
+                            Style="{StaticResource ModalSubtitle}"
+                            HorizontalTextAlignment="Center"
+                            HorizontalOptions="Center" />
+                    </Grid>
+                </ScrollView>
+
+                <CollectionView
+                    x:Name="SuggestionCollection"
+                    Grid.Row="2"
+                    ItemsSource="{Binding MealSuggestions}"
+                    ItemSizingStrategy="MeasureAllItems"
+                    SelectionMode="None"
+                    IsVisible="{Binding HasMealSuggestions}"
+                    VerticalScrollBarVisibility="Default"
+                    Margin="20,12,20,8"
+                    SizeChanged="OnSuggestionsSizeChanged">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout
+                            x:Name="SuggestionLayout"
+                            Orientation="Vertical"
+                            Span="2"
+                            HorizontalItemSpacing="10"
+                            VerticalItemSpacing="10" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="nutritionModels:MealSuggestionItem">
+                            <Border Style="{StaticResource ModalListItem}">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*"
+                                      ColumnSpacing="8" RowSpacing="4">
+                                    <Path
+                                        Data="{Binding IconPathData, Converter={StaticResource StringToGeometryConverter}}"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        WidthRequest="18"
+                                        HeightRequest="18"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Grid.Column="1"
+                                        Text="{Binding ConceptName, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource CardTitle}"
+                                        FontSize="16"
+                                        LineBreakMode="WordWrap" />
+                                    <Label
+                                        Grid.Row="1"
+                                        Grid.ColumnSpan="2"
+                                        Text="{Binding ConceptDescription, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource MutedLabel}"
+                                        FontSize="14"
+                                        LineBreakMode="WordWrap" />
+                                    <Label
+                                        Grid.Row="2"
+                                        Grid.ColumnSpan="2"
+                                        Text="{Binding ComponentSummary, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource MutedLabel}"
+                                        FontSize="14"
+                                        LineBreakMode="WordWrap" />
+
+                                    <Grid Grid.Row="3" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto"
+                                          ColumnSpacing="6">
+                                        <Border
+                                            StrokeShape="RoundRectangle 999"
+                                            StrokeThickness="0"
+                                            Padding="8,3"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
+                                            <Label
+                                                Text="{Binding StyleLabel, Converter={StaticResource LocalizedStringConverter}}"
+                                                Style="{StaticResource CaptionLabel}"
+                                                TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                                                FontAttributes="Bold"
+                                                FontSize="13" />
+                                        </Border>
+                                        <Label
+                                            Grid.Column="1"
+                                            Text="{Binding CaloriesText, Converter={StaticResource LocalizedStringConverter}}"
+                                            Style="{StaticResource MutedLabel}"
+                                            FontAttributes="Bold"
+                                            FontSize="14"
+                                            VerticalOptions="Center" />
+                                    </Grid>
+
+                                    <Label
+                                        Grid.Row="4"
+                                        Grid.ColumnSpan="2"
+                                        Text="{Binding MacrosText, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource MutedLabel}"
+                                        FontSize="14" LineBreakMode="WordWrap" />
+                                    <Button
+                                        Grid.Row="5"
+                                        Grid.ColumnSpan="2"
+                                        Text="{loc:LocalizedText Nutrition_MealSuggestion_ViewMeal}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, Path=OpenMealDetailCommand, x:DataType=vm:NutritionViewModel}"
+                                        CommandParameter="{Binding .}"
+                                        FontSize="15"
+                                        MinimumHeightRequest="44"
+                                        Margin="0,4,0,0"
+                                        SemanticProperties.Description="{loc:LocalizedText Nutrition_MealSuggestion_ViewMealDetails}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <ScrollView
+                    Grid.Row="2"
+                    IsVisible="{Binding HasNoDayPlanMeals}">
+                    <Grid RowDefinitions="Auto,Auto"
+                          RowSpacing="10"
+                          Padding="24,32">
+                        <Label
+                            Grid.Row="0"
+                            Text="{loc:LocalizedText Nutrition_MealSuggestion_NoMealsLeftToPlan}"
+                            Style="{StaticResource BodyLabel}"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="Center" />
+                        <Label
+                            Grid.Row="1"
+                            Text="{loc:LocalizedText Nutrition_MealSuggestion_YourLoggedMealsHaveUsedToday}"
+                            Style="{StaticResource ModalSubtitle}"
+                            HorizontalTextAlignment="Center" />
+                    </Grid>
+                </ScrollView>
+
+                <CollectionView
+                    Grid.Row="2"
+                    ItemsSource="{Binding DayPlanMeals}"
+                    ItemSizingStrategy="MeasureAllItems"
+                    SelectionMode="None"
+                    IsVisible="{Binding ShowDayPlanMeals}"
+                    VerticalScrollBarVisibility="Default"
+                    Margin="20,12,20,8">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="nutritionModels:DayMealPlanItem">
+                            <Border Style="{StaticResource ModalListItem}" Padding="12">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto"
+                                      ColumnSpacing="8" RowSpacing="5">
+                                    <Path
+                                        Data="{Binding MealTypeIconPathData, Converter={StaticResource StringToGeometryConverter}}"
+                                        Style="{StaticResource NutritionLineIcon}"
+                                        Stroke="{StaticResource Primary}"
+                                        WidthRequest="18"
+                                        HeightRequest="18"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Grid.Column="1"
+                                        Text="{Binding MealTypeLabel, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource CardTitle}"
+                                        FontSize="14"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Grid.Column="2"
+                                        Text="{Binding TargetSummaryText, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource CaptionLabel}"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="End"
+                                        VerticalOptions="Center" />
+                                    <Label
+                                        Grid.Row="1"
+                                        Grid.ColumnSpan="3"
+                                        Text="{Binding MealTitle, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource CardTitle}"
+                                        FontSize="16"
+                                        LineBreakMode="WordWrap" />
+                                    <Label
+                                        Grid.Row="2"
+                                        Grid.ColumnSpan="3"
+                                        Text="{Binding MealSummaryText, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource MutedLabel}"
+                                        FontSize="14"
+                                        LineBreakMode="WordWrap" />
+                                    <Label
+                                        Grid.Row="3"
+                                        Grid.ColumnSpan="2"
+                                        Text="{Binding MacrosText, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource MutedLabel}"
+                                        FontSize="14"
+                                        IsVisible="{Binding HasSuggestion}" />
+                                    <Grid
+                                        Grid.Row="3"
+                                        Grid.Column="2"
+                                        ColumnDefinitions="Auto,Auto"
+                                        ColumnSpacing="8"
+                                        VerticalOptions="End"
+                                        HorizontalOptions="End">
+                                        <Button
+                                            Text="{loc:LocalizedText Nutrition_MealSuggestion_UseMeal}"
+                                            Command="{Binding UsePlannedMealCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}"
+                                            CommandParameter="{Binding .}"
+                                            IsVisible="{Binding HasSuggestion}"
+                                            MinimumHeightRequest="48"
+                                            FontSize="15"
+                                            SemanticProperties.Description="{Binding MealTitle, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_MealSuggestion_UseValue}"
+                                            SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealSuggestion_LogsThisSuggestedMealForToday}" />
+                                        <Border
+                                            Grid.Column="1"
+                                            Style="{StaticResource ModalIconButton}"
+                                            IsEnabled="{Binding CanRefresh}"
+                                            IsVisible="{Binding CanRefresh}"
+                                            SemanticProperties.Description="{Binding MealTypeLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_MealSuggestion_FindAnotherValueIdea}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding RefreshDayMealCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                            <Path
+                                                Data="M17.65 6.35A7.958 7.958 0 0012 4a8 8 0 00-8 8 8 8 0 008 8 7.985 7.985 0 005.93-2.65l-1.46-1.46A5.98 5.98 0 0112 18a6 6 0 01-6-6 6 6 0 016-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                                                Fill="{StaticResource Primary}"
+                                                Aspect="Uniform"
+                                                WidthRequest="17"
+                                                HeightRequest="17"
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="Center" />
+                                        </Border>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Grid Grid.Row="3" Padding="20,8,20,16" ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button
+                            Grid.Column="0"
+                            Text="{loc:LocalizedText Nutrition_MealSuggestion_ChooseMeal}"
+                            Command="{Binding BackToMealTypePickerCommand}"
+                            Style="{StaticResource ButtonSecondary}"
+                            IsVisible="{Binding IsMealTypePickerVisible, Converter={StaticResource InvertedBoolConverter}}"
+                            MinimumHeightRequest="48"
+                            SemanticProperties.Description="{loc:LocalizedText Nutrition_MealSuggestion_ChooseADifferentMeal}" />
+                        <Button
+                            Grid.Column="1"
+                            Text="{loc:LocalizedText Common_Done}"
+                            Command="{Binding CloseSuggestionModalCommand}"
+                            Style="{StaticResource ButtonSecondary}"
+                            IsVisible="{Binding IsMealTypePickerVisible, Converter={StaticResource InvertedBoolConverter}}"
+                            MinimumHeightRequest="48"
+                            SemanticProperties.Description="{loc:LocalizedText Nutrition_MealSuggestion_CloseMealSuggestions}" />
+
+                    <Button
+                        Grid.ColumnSpan="2"
+                        Text="{loc:LocalizedText Common_Done}"
+                        Command="{Binding CloseSuggestionModalCommand}"
+                        Style="{StaticResource ButtonSecondary}"
+                        IsVisible="{Binding IsMealTypePickerVisible}"
+                        MinimumHeightRequest="48"
+                        SemanticProperties.Description="{loc:LocalizedText Nutrition_MealSuggestion_CloseMealSuggestions}" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</sharedControls:AnimatedModalView>

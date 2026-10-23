@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: musclecuties_dev
+      POSTGRES_USER: musclecuties_dev
+      POSTGRES_PASSWORD: ${MUSCLECUTIES_DEV_PG_PASSWORD:?Set MUSCLECUTIES_DEV_PG_PASSWORD}
+    ports:
+      - "127.0.0.1:54329:5432"
+    volumes:
+      - musclecuties-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U musclecuties_dev -d musclecuties_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  musclecuties-postgres-data:
