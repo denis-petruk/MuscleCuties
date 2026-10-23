@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Auth.OtpVerificationPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Auth"
+    x:DataType="vm:OtpVerificationViewModel"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <Grid
+            Padding="24,36,24,32"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="520"
+            RowSpacing="0"
+            RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+
+            <sharedControls:ThemeAwareBrandLogoImage
+                Grid.Row="0"
+                WidthRequest="132"
+                HeightRequest="72"
+                HorizontalOptions="Center"
+                Aspect="AspectFit"
+                SemanticProperties.Description="{loc:LocalizedText Common_MuscleCutiesLogo}" />
+
+            <Label
+                Grid.Row="1"
+                Text="{loc:LocalizedText Auth_Otp_VerifyYourEmail}"
+                Style="{StaticResource Headline}"
+                Margin="0,20,0,8"
+                SemanticProperties.HeadingLevel="Level1" />
+
+            <Label
+                Grid.Row="2"
+                Text="{loc:LocalizedText Auth_Otp_WeSentASixDigitConfirmation}"
+                Style="{StaticResource MutedLabel}"
+                Margin="{StaticResource AuthCodeInstructionSpacing}" />
+
+            <Label
+                Grid.Row="3"
+                Text="{Binding Email}"
+                Style="{StaticResource AccentLabel}"
+                FontAttributes="Bold"
+                Margin="{StaticResource AuthCodeRecipientSpacing}" />
+
+            <Grid
+                Grid.Row="4"
+                RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                RowSpacing="{StaticResource AuthCodeSectionSpacing}">
+                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource AuthCodeFieldSpacing}">
+                    <Label Text="{loc:LocalizedText Auth_Otp_SixDigitVerificationCodeLabel}" Style="{StaticResource FormFieldLabel}" />
+                    <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                        <Entry
+                            x:Name="OtpEntry"
+                            AutomationId="OtpEntry"
+                            Placeholder="123456"
+                            Text="{Binding OtpCode}"
+                            Keyboard="Numeric"
+                            MaxLength="{StaticResource AuthCodeLength}"
+                            HorizontalTextAlignment="Center"
+                            FontSize="{StaticResource AuthCodeEntryFontSize}"
+                            ReturnType="Done"
+                            ReturnCommand="{Binding VerifyCommand}"
+                            SemanticProperties.Description="{loc:LocalizedText Auth_Otp_SixDigitVerificationCodeDescription}"
+                            SemanticProperties.Hint="{loc:LocalizedText Auth_Otp_EnterTheSixDigitVerificationCode}" />
+                    </Border>
+                </Grid>
+
+                <Label
+                    Grid.Row="1"
+                    Text="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}"
+                    Style="{StaticResource AccentLabel}"
+                    IsVisible="{Binding InfoMessage, Converter={StaticResource StringToBoolConverter}}"
+                    SemanticProperties.Description="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}" />
+
+                <Label
+                    Grid.Row="2"
+                    Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
+                    Style="{StaticResource ErrorLabel}"
+                    IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+                    SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
+                    SemanticProperties.HeadingLevel="Level3" />
+
+                <Button
+                    Grid.Row="3"
+                    Text="{loc:LocalizedText Auth_VerifyCode}"
+                    Command="{Binding VerifyCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    MinimumHeightRequest="{StaticResource AuthCodeVerifyButtonHeight}"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Otp_VerifyConfirmationCode}" />
+
+                <ActivityIndicator
+                    Grid.Row="4"
+                    HorizontalOptions="Center"
+                    IsRunning="{Binding IsVerifying}"
+                    IsVisible="{Binding IsVerifying}"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Otp_VerifyingCodePleaseWait}" />
+
+                <Grid
+                    Grid.Row="5"
+                    ColumnDefinitions="*,*"
+                    RowDefinitions="Auto,Auto"
+                    ColumnSpacing="{StaticResource AuthCodeActionSpacing}"
+                    Margin="{StaticResource AuthCodeActionsTopSpacing}">
+                    <Button
+                        Text="{loc:LocalizedText Auth_Otp_ResendCode}"
+                        Command="{Binding ResendCodeCommand}"
+                        IsEnabled="{Binding CanResend}"
+                        Style="{StaticResource PlatformAuthButton}"
+                        MinimumHeightRequest="{StaticResource AuthCodeSecondaryButtonHeight}"
+                        SemanticProperties.Description="{loc:LocalizedText Auth_Otp_ResendVerificationCode}" />
+                    <Button
+                        Grid.Column="1"
+                        Text="{loc:LocalizedText Auth_Otp_ChangeEmail}"
+                        Command="{Binding GoBackCommand}"
+                        Style="{StaticResource PlatformAuthButton}"
+                        MinimumHeightRequest="{StaticResource AuthCodeSecondaryButtonHeight}"
+                        SemanticProperties.Description="{loc:LocalizedText Auth_Otp_GoBackToChangeEmailAddress}" />
+                    <Label
+                        Grid.Row="1"
+                        Grid.ColumnSpan="2"
+                        Margin="{StaticResource AuthOtpCountdownTopSpacing}"
+                        Text="{Binding ResendButtonText, Converter={StaticResource LocalizedStringConverter}}"
+                        IsVisible="{Binding CanResend, Converter={StaticResource InvertedBoolConverter}}"
+                        Style="{StaticResource MutedLabel}"
+                        SemanticProperties.Description="{Binding ResendButtonText, Converter={StaticResource LocalizedStringConverter}}" />
+                </Grid>
+            </Grid>
+        </Grid>
+    </ScrollView>
+</ContentPage>

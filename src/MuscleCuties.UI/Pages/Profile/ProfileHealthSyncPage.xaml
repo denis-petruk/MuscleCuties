@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Profile.ProfileHealthSyncPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
+    x:DataType="{x:Type vm:ProfileHealthSyncViewModel}"
+    Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <Grid Padding="20,40,20,32"
+              RowSpacing="16"
+              HorizontalOptions="Fill"
+              MaximumWidthRequest="640"
+              RowDefinitions="Auto,Auto,Auto">
+            <sharedControls:PageHeader Grid.Row="0"
+                                       Title="{loc:LocalizedText Profile_HealthSync_HealthData}"
+                                       Subtitle="{loc:LocalizedText Profile_HealthSync_StepsSubtitle}"
+                                       BackCommand="{Binding BackCommand}" />
+
+            <Border Grid.Row="1"
+                    Style="{StaticResource CardPrimary}"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                <VerticalStackLayout Spacing="12">
+                    <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_HealthSync_CurrentStatus}"
+                                                      IconGlyph="HeartPulse32" />
+                    <Label Text="{Binding StatusText, Converter={StaticResource LocalizedStringConverter}}"
+                           Style="{StaticResource CardTitle}" />
+                    <Label Text="{loc:LocalizedText Profile_HealthSync_StepsConsent}"
+                           Style="{StaticResource BodyLabel}" />
+                    <Button Text="{Binding ConnectionBadgeText, Converter={StaticResource LocalizedStringConverter}}"
+                            Command="{Binding ConnectCommand}"
+                            IsVisible="{Binding IsAppleHealthAvailable}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                            SemanticProperties.Description="{loc:LocalizedText Profile_HealthSync_ConnectOrRefreshAppleHealth}" />
+                    <Button Text="{loc:LocalizedText Profile_HealthSync_DisconnectSteps}"
+                            Command="{Binding DisconnectCommand}"
+                            IsVisible="{Binding IsConnected}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+                    <Label Text="{Binding LastSyncedText, Converter={StaticResource LocalizedStringConverter}}"
+                           Style="{StaticResource CaptionLabel}" />
+                    <Label Text="{loc:LocalizedText Profile_HealthSync_DisconnectExplanation}"
+                           Style="{StaticResource CaptionLabel}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Grid.Row="2"
+                   Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+                   Style="{StaticResource CaptionLabel}"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+        </Grid>
+    </ScrollView>
+</ContentPage>

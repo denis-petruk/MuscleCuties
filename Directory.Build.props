@@ -2,5 +2,7 @@
     <PropertyGroup>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <AssetTargetFallback>net8.0;net8.0-macos14.0;net8.0-windows10.0.19041;$(AssetTargetFallback)</AssetTargetFallback>
+        <NoWarn>$(NoWarn);NU1202;NU1701</NoWarn>
     </PropertyGroup>
 </Project>
