@@ -292,6 +292,29 @@
                                 SemanticProperties.Description="{Binding CurrentExercise.RecommendationText, Converter={StaticResource LocalizedStringConverter}}" />
                             <VerticalStackLayout BindingContext="{Binding CurrentExercise}"
                                                  x:DataType="models:WorkoutExerciseItem" Spacing="12">
+                                <Border Style="{StaticResource SessionAccent}">
+                                    <VerticalStackLayout Spacing="8">
+                                        <HorizontalStackLayout Spacing="10">
+                                            <Label Text="{loc:LocalizedText Workout_Readiness_OptionalExercise}" Style="{StaticResource BodyLabel}"
+                                                   VerticalOptions="Center" />
+                                            <Switch IsToggled="{Binding IsOptional, Mode=TwoWay}"
+                                                    IsEnabled="{Binding CanMarkOptional}"
+                                                    Toggled="OnOptionalExerciseToggled" />
+                                        </HorizontalStackLayout>
+                                        <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsOptional}">
+                                            <Label Text="{loc:LocalizedText Workout_Readiness_OptionalSets}" Style="{StaticResource BodyLabel}"
+                                                   VerticalOptions="Center" />
+                                            <Stepper Minimum="0" Maximum="{Binding MaxOptionalSets}"
+                                                     Increment="1" Value="{Binding OptionalSets, Mode=TwoWay}"
+                                                     IsEnabled="{Binding CanMarkOptional}"
+                                                     ValueChanged="OnOptionalSetsChanged" />
+                                            <Label Text="{Binding OptionalSets}" Style="{StaticResource BodyLabel}"
+                                                   VerticalOptions="Center" />
+                                        </HorizontalStackLayout>
+                                        <Label Text="{loc:LocalizedText Workout_Readiness_OneRequiredSetHint}"
+                                               Style="{StaticResource CaptionLabel}" IsVisible="{Binding IsOptional}" />
+                                    </VerticalStackLayout>
+                                </Border>
                                 <!-- Strength inputs -->
                                 <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8" RowDefinitions="Auto, Auto"
                                       RowSpacing="4" IsVisible="{Binding UsesStrengthMetrics}">

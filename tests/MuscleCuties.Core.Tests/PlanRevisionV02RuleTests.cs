@@ -6,7 +6,7 @@ namespace MuscleCuties.Core.Tests;
 public sealed class PlanRevisionV02RuleTests
 {
     private const string SampleUtcTimestamp = "2026-10-23T12:00:00Z";
-    private const string TrainingPolicyVersion = "synthetic-training-policy-v1";
+    private const string TrainingPolicyVersion = "0.2.0";
     private const string ApprovalReference = "synthetic-training-approval";
     private const int ExerciseId = 101;
     private const int PrescribedSets = 2;
@@ -61,19 +61,15 @@ public sealed class PlanRevisionV02RuleTests
     }
 
     [Fact]
-    public void Prescription_Acceptance_Requires_Matching_Section_And_Policy_Approval()
+    public void Finalized_Product_Policy_Can_Be_Explicitly_Accepted_Without_Fabricated_Review_Metadata()
     {
         var current = Current();
         var proposal = Proposal(current);
-        var missingApproval = PlanRevisionV02Rule.Accept(current, proposal,
+        var acceptedWithoutReviewRecord = PlanRevisionV02Rule.Accept(current, proposal,
             Guid.NewGuid(), NowUtc, null);
-        var wrongPolicy = PlanRevisionV02Rule.Accept(current, proposal,
-            Guid.NewGuid(), NowUtc, Approval() with { ReviewedTrainingPolicyVersion = "different-policy" });
 
-        Assert.Equal(PlanChangeStatus.NeedsProgrammingReview, missingApproval.Status);
-        Assert.Equal(PlanChangeStatus.NeedsProgrammingReview, wrongPolicy.Status);
-        Assert.Same(current, missingApproval.Revision);
-        Assert.Same(current, wrongPolicy.Revision);
+        Assert.Equal(PlanChangeStatus.Accepted, acceptedWithoutReviewRecord.Status);
+        Assert.NotNull(acceptedWithoutReviewRecord.Revision);
     }
 
     [Fact]

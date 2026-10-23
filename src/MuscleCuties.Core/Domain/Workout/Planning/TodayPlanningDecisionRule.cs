@@ -6,7 +6,8 @@ public enum TodayPlanningStatus
     SymptomReviewRequired,
     BaselineVisible,
     RetainCurrentPlan,
-    OptionalWorkReviewAvailable
+    OptionalWorkReviewAvailable,
+    EasierDayOptionsAvailable
 }
 
 public enum TodayPlanningReason
@@ -14,19 +15,16 @@ public enum TodayPlanningReason
     ExplicitRestrictionConflict,
     CurrentSymptomsRequireReviewedPathway,
     CheckInUnavailable,
-    SuggestionsDisabled,
-    SuggestionsNeedProfessionalReview,
     HighScoreDoesNotIncreasePlan,
-    OptionalWorkMayBeReviewed
+    OptionalWorkMayBeReviewed,
+    ConsiderEasierDay
 }
 
 public sealed record TodayPlanningContext(
     bool HasCurrentSessionSymptoms,
     bool HasDailySymptoms,
     bool HasExplicitRestrictionConflict,
-    CheckInScoreResult? CheckInScore,
-    bool SuggestionsEnabled,
-    PlanningReviewApproval? Approval);
+    CheckInScoreResult? CheckInScore);
 
 public sealed record TodayPlanningDecision(
     TodayPlanningStatus Status,
@@ -54,23 +52,19 @@ public static class TodayPlanningDecisionRule
         if (context.CheckInScore is not { Status: CheckInScoreStatus.Available, Band: { } band })
             return new TodayPlanningDecision(TodayPlanningStatus.BaselineVisible,
                 [TodayPlanningReason.CheckInUnavailable]);
-        if (band == CheckInScoreBand.FeelingReady)
-            return new TodayPlanningDecision(TodayPlanningStatus.RetainCurrentPlan,
-                [TodayPlanningReason.HighScoreDoesNotIncreasePlan]);
-        if (!context.SuggestionsEnabled)
-            return new TodayPlanningDecision(TodayPlanningStatus.BaselineVisible,
-                [TodayPlanningReason.SuggestionsDisabled]);
-        if (!HasSuggestionApproval(context.Approval))
-            return new TodayPlanningDecision(TodayPlanningStatus.BaselineVisible,
-                [TodayPlanningReason.SuggestionsNeedProfessionalReview]);
-
-        return new TodayPlanningDecision(TodayPlanningStatus.OptionalWorkReviewAvailable,
-            [TodayPlanningReason.OptionalWorkMayBeReviewed]);
+        return band switch
+        {
+            CheckInScoreBand.FeelingReady => new TodayPlanningDecision(
+                TodayPlanningStatus.RetainCurrentPlan,
+                [TodayPlanningReason.HighScoreDoesNotIncreasePlan]),
+            CheckInScoreBand.ConsiderLighterSession => new TodayPlanningDecision(
+                TodayPlanningStatus.OptionalWorkReviewAvailable,
+                [TodayPlanningReason.OptionalWorkMayBeReviewed]),
+            CheckInScoreBand.ConsiderEasierDay => new TodayPlanningDecision(
+                TodayPlanningStatus.EasierDayOptionsAvailable,
+                [TodayPlanningReason.ConsiderEasierDay]),
+            _ => new TodayPlanningDecision(TodayPlanningStatus.BaselineVisible,
+                [TodayPlanningReason.CheckInUnavailable])
+        };
     }
-
-    private static bool HasSuggestionApproval(PlanningReviewApproval? approval) =>
-        approval is not null && approval.RulesetVersion == TodayCheckInScoreRule.RulesetVersion &&
-        !string.IsNullOrWhiteSpace(approval.ApprovalReference) &&
-        approval.ApprovedAtUtc.Offset == TimeSpan.Zero &&
-        approval.CoveredSections?.Contains(PlanningReviewSection.ReadinessSuggestions) == true;
 }

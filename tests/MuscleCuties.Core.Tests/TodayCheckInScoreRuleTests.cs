@@ -8,7 +8,6 @@ public sealed class TodayCheckInScoreRuleTests
     private const string UtcTimeZone = "UTC";
     private const string TorontoTimeZone = "America/Toronto";
     private const string SampleUtcTimestamp = "2026-10-23T12:00:00Z";
-    private const string ApprovalReference = "synthetic-review-fixture";
     private const decimal WorstFavorableScaleValue = 1m;
     private const decimal BestFavorableScaleValue = 5m;
     private const decimal MidpointScaleValue = 3m;
@@ -78,9 +77,9 @@ public sealed class TodayCheckInScoreRuleTests
     public void Missing_Or_Fractional_Scale_Produces_No_Score()
     {
         var incomplete = TodayCheckInScoreRule.Evaluate(
-            Observation(sleep: null), NowUtc, UtcTimeZone, true, Approved());
+            Observation(sleep: null), NowUtc, UtcTimeZone);
         var fractional = TodayCheckInScoreRule.Evaluate(
-            Observation(sleep: FractionalScaleValue), NowUtc, UtcTimeZone, true, Approved());
+            Observation(sleep: FractionalScaleValue), NowUtc, UtcTimeZone);
 
         Assert.Equal(CheckInScoreStatus.Incomplete, incomplete.Status);
         Assert.Null(incomplete.RawScore);
@@ -92,9 +91,9 @@ public sealed class TodayCheckInScoreRuleTests
     public void Yesterday_And_Changed_TimeZone_Do_Not_Reassign_Observation()
     {
         var yesterday = TodayCheckInScoreRule.Evaluate(
-            Observation(date: TodayUtc.AddDays(PreviousDayOffset)), NowUtc, UtcTimeZone, true, Approved());
+            Observation(date: TodayUtc.AddDays(PreviousDayOffset)), NowUtc, UtcTimeZone);
         var changedZone = TodayCheckInScoreRule.Evaluate(
-            Observation(), NowUtc, TorontoTimeZone, true, Approved());
+            Observation(), NowUtc, TorontoTimeZone);
 
         Assert.Equal(CheckInScoreStatus.Stale, yesterday.Status);
         Assert.Null(yesterday.RawScore);
@@ -103,28 +102,18 @@ public sealed class TodayCheckInScoreRuleTests
     }
 
     [Fact]
-    public void Display_Requires_Both_Flag_And_Section_Approval()
+    public void Valid_CheckIn_Score_Is_Available_Without_Approval_Metadata()
     {
-        var disabled = TodayCheckInScoreRule.Evaluate(
-            Observation(), NowUtc, UtcTimeZone, false, Approved());
-        var unapproved = TodayCheckInScoreRule.Evaluate(
-            Observation(), NowUtc, UtcTimeZone, true, null);
-        var wrongSection = TodayCheckInScoreRule.Evaluate(
-            Observation(), NowUtc, UtcTimeZone, true,
-            Approved(PlanningReviewSection.TrainingPrescriptions));
+        var score = TodayCheckInScoreRule.Evaluate(Observation(), NowUtc, UtcTimeZone);
 
-        Assert.Equal(CheckInScoreStatus.FeatureDisabled, disabled.Status);
-        Assert.Equal(CheckInScoreStatus.NeedsProfessionalReview, unapproved.Status);
-        Assert.Equal(CheckInScoreStatus.NeedsProfessionalReview, wrongSection.Status);
-        Assert.Null(disabled.RawScore);
-        Assert.Null(unapproved.RawScore);
-        Assert.Null(wrongSection.RawScore);
+        Assert.Equal(CheckInScoreStatus.Available, score.Status);
+        Assert.Equal(ExpectedMidpointScore, score.RawScore);
     }
 
     private static CheckInScoreResult Evaluate(decimal sleep, decimal energy, decimal soreness, decimal stress) =>
         TodayCheckInScoreRule.Evaluate(
             Observation(sleep: sleep, energy: energy, soreness: soreness, stress: stress),
-            NowUtc, UtcTimeZone, true, Approved());
+            NowUtc, UtcTimeZone);
 
     private static TodayCheckInObservation Observation(
         DateOnly? date = null, decimal? sleep = MidpointScaleValue,
@@ -132,8 +121,4 @@ public sealed class TodayCheckInScoreRuleTests
         decimal? stress = MidpointScaleValue) =>
         new(date ?? TodayUtc, UtcTimeZone, NowUtc, 1, sleep, energy, soreness, stress);
 
-    private static PlanningReviewApproval Approved(
-        PlanningReviewSection section = PlanningReviewSection.ReadinessScoreDisplay) =>
-        new(TodayCheckInScoreRule.RulesetVersion, ApprovalReference, NowUtc,
-            new HashSet<PlanningReviewSection> { section });
 }

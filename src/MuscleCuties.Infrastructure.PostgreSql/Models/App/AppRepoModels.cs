@@ -282,6 +282,40 @@ public sealed class WorkoutPlanRecord : ITenantRecord
     public DateTime CreatedAt { get; set; }
 }
 
+/// <summary>Immutable v0.2 proposal and input snapshot; acceptance state changes only inside the API.</summary>
+public sealed class WorkoutPlanProposalV02Record : ITenantRecord
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public Guid PlanId { get; set; }
+    public Guid ExpectedRevisionId { get; set; }
+    public string RulesetVersion { get; set; } = string.Empty;
+    public string TrainingPolicyVersion { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string InputSnapshotJson { get; set; } = "{}";
+    public string ProposalJson { get; set; } = "{}";
+    public string ReasonsJson { get; set; } = "[]";
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime? DecidedAtUtc { get; set; }
+    public Guid? AcceptedRevisionId { get; set; }
+    public int ConcurrencyVersion { get; set; } = 1;
+}
+
+/// <summary>Append-only accepted v0.2 plan revision; prior revisions remain queryable.</summary>
+public sealed class WorkoutPlanRevisionV02Record : ITenantRecord
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public Guid PlanId { get; set; }
+    public long RevisionNumber { get; set; }
+    public Guid SourceProposalId { get; set; }
+    public string RulesetVersion { get; set; } = string.Empty;
+    public string TrainingPolicyVersion { get; set; } = string.Empty;
+    public string PlanJson { get; set; } = "{}";
+    public string InputSnapshotJson { get; set; } = "{}";
+    public DateTime AcceptedAtUtc { get; set; }
+}
+
 public sealed class WorkoutDayRecord : ITenantRecord
 {
     public Guid Id { get; set; }
@@ -292,6 +326,9 @@ public sealed class WorkoutDayRecord : ITenantRecord
     public string Name { get; set; } = string.Empty;
     public int WeekIndex { get; set; }
     public DateOnly? Date { get; set; }
+    public bool IsOptional { get; set; }
+    public bool IsEasierAlternative { get; set; }
+    public bool IsRemovedByReadiness { get; set; }
 }
 
 public sealed class WorkoutDayExerciseRecord : ITenantRecord
@@ -301,8 +338,11 @@ public sealed class WorkoutDayExerciseRecord : ITenantRecord
     public Guid WorkoutDayId { get; set; }
     public int ExerciseId { get; set; }
     public int Sets { get; set; }
+    public int OptionalSets { get; set; }
     public int Reps { get; set; }
     public int? DurationSeconds { get; set; }
+    public bool IsOptional { get; set; }
+    public bool IsRemovedByReadiness { get; set; }
 }
 
 public sealed class WorkoutSessionLogRecord : ITenantRecord

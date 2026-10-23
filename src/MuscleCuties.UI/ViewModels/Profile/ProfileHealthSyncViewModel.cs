@@ -17,7 +17,7 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
     [ObservableProperty] private string _lastSyncedText = "No sync yet";
 
     [ObservableProperty]
-    private string _readinessExplanationText = "Numerical guidance is unavailable pending qualified review.";
+    private string _readinessExplanationText = "This check-in score is a planning estimate based on your answers, not a direct measurement of recovery or a medical assessment.";
 
     [ObservableProperty] private int _readinessScore;
     [ObservableProperty] private string _statusMessage = string.Empty;

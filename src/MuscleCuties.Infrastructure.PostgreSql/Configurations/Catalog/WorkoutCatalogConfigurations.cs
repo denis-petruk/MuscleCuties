@@ -83,6 +83,14 @@ public sealed class WorkoutExerciseDefinitionConfiguration : IEntityTypeConfigur
         builder.Property(x => x.SupineOrProne).HasColumnName("supine_or_prone").IsRequired();
         builder.Property(x => x.ValsalvaDemand).HasColumnName("valsalva_demand").IsRequired();
         builder.Property(x => x.SubstituteGroupId).HasColumnName("substitute_group_id");
+        builder.Property(x => x.TrainingCatalogVersionV020).HasColumnName("training_catalog_version_v020").HasMaxLength(32);
+        builder.Property(x => x.SupportedExperiencesV020Json).HasColumnName("supported_experiences_v020").HasColumnType("jsonb");
+        builder.Property(x => x.DemandTagsV020Json).HasColumnName("demand_tags_v020").HasColumnType("jsonb");
+        builder.Property(x => x.DemandTagsReviewedV020).HasColumnName("demand_tags_reviewed_v020");
+        builder.Property(x => x.RestrictionConflictTagsV020Json).HasColumnName("restriction_conflict_tags_v020").HasColumnType("jsonb");
+        builder.Property(x => x.RestrictionMappingsReviewedV020).HasColumnName("restriction_mappings_reviewed_v020");
+        builder.Property(x => x.SupportedTimingMethodsV020Json).HasColumnName("supported_timing_methods_v020").HasColumnType("jsonb");
+        builder.Property(x => x.ReviewedSubstituteExerciseIdsV020Json).HasColumnName("reviewed_substitute_exercise_ids_v020").HasColumnType("jsonb");
         builder.HasIndex(x => x.SeedCode).IsUnique();
         builder.HasIndex(x => x.Name);
         builder.HasIndex(x => x.Pattern);

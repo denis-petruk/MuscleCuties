@@ -75,7 +75,7 @@ public partial class DailyCheckInPage : ContentPage
 
     private void UpdateEnergyChips()
     {
-        UpdateChipGroup(EnergyChips, _viewModel.EnergyLevel - 1,
+        UpdateChipGroup(EnergyChips, (_viewModel.EnergyLevel ?? 0) - 1,
             (i, sel) => UiTextCatalog.Translate($"Energy {i + 1} of 5") +
                         (sel ? ", " + UiTextCatalog.Translate("Selected") : string.Empty));
     }

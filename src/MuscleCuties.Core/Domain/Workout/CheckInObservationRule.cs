@@ -59,12 +59,14 @@ public static class CheckInObservationRule
         IsWithin(soreness, MinimumSoreness, MaximumSoreness) &&
         IsWithin(previousDayLoad, MinimumPreviousDayLoad, MaximumPreviousDayLoad);
 
-    public static bool ArePlanningInputsValid(int? sleepQuality, int? soreness, int? stress, string? timeZoneId) =>
-        IsWithin(sleepQuality, MinimumPlanningScaleValue, MaximumPlanningScaleValue) &&
-        IsWithin(soreness, MinimumPlanningScaleValue, MaximumPlanningScaleValue) &&
-        IsWithin(stress, MinimumPlanningScaleValue, MaximumPlanningScaleValue) &&
-        ((sleepQuality is null && soreness is null && stress is null && timeZoneId is null) ||
-         (timeZoneId is not null && IsValidTimeZoneId(timeZoneId)));
+    public static bool ArePlanningInputsValid(int? energy, int? sleepQuality, int? soreness, int? stress,
+        string? timeZoneId) =>
+        ((energy is null && sleepQuality is null && soreness is null && stress is null && timeZoneId is null) ||
+         (IsWithin(energy, MinimumEnergy, MaximumEnergy) && energy.HasValue &&
+          IsWithin(sleepQuality, MinimumPlanningScaleValue, MaximumPlanningScaleValue) && sleepQuality.HasValue &&
+          IsWithin(soreness, MinimumPlanningScaleValue, MaximumPlanningScaleValue) && soreness.HasValue &&
+          IsWithin(stress, MinimumPlanningScaleValue, MaximumPlanningScaleValue) && stress.HasValue &&
+          timeZoneId is not null && IsValidTimeZoneId(timeZoneId)));
 
     private static bool IsValidTimeZoneId(string timeZoneId)
     {

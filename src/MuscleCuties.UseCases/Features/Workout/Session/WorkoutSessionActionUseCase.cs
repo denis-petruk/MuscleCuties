@@ -16,6 +16,7 @@ public interface IWorkoutSessionActionUseCase
         CancellationToken cancellationToken = default);
 
     Task SaveMovementNoteAsync(SaveWorkoutMovementNoteRequest request, CancellationToken cancellationToken = default);
+    Task SetExerciseOptionalAsync(SetWorkoutExerciseOptionalRequest request, CancellationToken cancellationToken = default);
 }
 
 public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store) : IWorkoutSessionActionUseCase
@@ -69,5 +70,14 @@ public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store
         if (request.WorkoutDayExerciseId <= 0 || request.Notes?.Trim().Length > 2000)
             throw new ArgumentException("Invalid movement note.", nameof(request));
         return store.SaveMovementNoteAsync(request, cancellationToken);
+    }
+
+    public Task SetExerciseOptionalAsync(SetWorkoutExerciseOptionalRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.WorkoutDayExerciseId <= 0 || request.OptionalSets < 0)
+            throw new ArgumentException("Invalid optional exercise input.", nameof(request));
+        return store.SetExerciseOptionalAsync(request, cancellationToken);
     }
 }

@@ -33,7 +33,8 @@ public sealed class DailyCheckInNotificationService : IDailyCheckInNotificationS
         var today = DateOnly.FromDateTime(DateTime.Today);
         if (_checkInStore is not null)
         {
-            var status = await _checkInStore.GetStatusAsync(new DailyCheckInStatusRequest(today), CancellationToken.None).ConfigureAwait(false);
+            var status = await _checkInStore.GetStatusAsync(
+                new DailyCheckInStatusRequest(today, TimeZoneInfo.Local.Id), CancellationToken.None).ConfigureAwait(false);
             if (status.IsCompleted)
                 return;
         }

@@ -9,6 +9,9 @@ public interface IWorkoutOverviewUseCase
         CancellationToken cancellationToken = default);
 
     Task RescheduleAsync(RescheduleWorkoutDayRequest request, CancellationToken cancellationToken = default);
+    Task SetSessionOptionalAsync(SetWorkoutSessionOptionalRequest request, CancellationToken cancellationToken = default);
+    Task<ReadinessAdjustmentProposalDto> ReviewReadinessAdjustmentAsync(ReviewReadinessAdjustmentRequest request, CancellationToken cancellationToken = default);
+    Task<ReadinessAdjustmentDecisionDto> DecideReadinessAdjustmentAsync(DecideReadinessAdjustmentRequest request, bool apply, CancellationToken cancellationToken = default);
 }
 
 public sealed class WorkoutOverviewUseCase(IWorkoutOverviewStore store) : IWorkoutOverviewUseCase
@@ -25,5 +28,33 @@ public sealed class WorkoutOverviewUseCase(IWorkoutOverviewStore store) : IWorko
         ArgumentNullException.ThrowIfNull(request);
         WorkoutScheduleMathRule.EnsureValidReschedule(request.WorkoutDayId, request.TargetDate);
         return store.RescheduleAsync(request, cancellationToken);
+    }
+
+    public Task SetSessionOptionalAsync(SetWorkoutSessionOptionalRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.WorkoutDayId <= 0 || (request.IsEasierAlternative && !request.IsOptional))
+            throw new ArgumentException("An easier alternative must be explicitly optional.", nameof(request));
+        return store.SetSessionOptionalAsync(request, cancellationToken);
+    }
+
+    public Task<ReadinessAdjustmentProposalDto> ReviewReadinessAdjustmentAsync(ReviewReadinessAdjustmentRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.LocalDate.Year is < 1970 or > 2099 || string.IsNullOrWhiteSpace(request.TimeZoneId))
+            throw new ArgumentException("A valid local date and time zone are required.", nameof(request));
+        return store.ReviewReadinessAdjustmentAsync(request, cancellationToken);
+    }
+
+    public Task<ReadinessAdjustmentDecisionDto> DecideReadinessAdjustmentAsync(DecideReadinessAdjustmentRequest request,
+        bool apply, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.ProposalId == Guid.Empty || request.LocalDate.Year is < 1970 or > 2099 ||
+            string.IsNullOrWhiteSpace(request.TimeZoneId))
+            throw new ArgumentException("A valid proposal, local date, and time zone are required.", nameof(request));
+        return store.DecideReadinessAdjustmentAsync(request, apply, cancellationToken);
     }
 }

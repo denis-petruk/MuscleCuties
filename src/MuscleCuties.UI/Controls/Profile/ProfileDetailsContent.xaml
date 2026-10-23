@@ -233,7 +233,7 @@
                                     HeightRequest="20"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                    <Label Text="{loc:LocalizedText Profile_Details_NutritionPacing}" FontSize="15" FontAttributes="Bold"
+                                    <Label Text="{loc:LocalizedText Profile_Details_Nutrition}" FontSize="15" FontAttributes="Bold"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1"
                                            Text="{Binding NutritionPacingText, Converter={StaticResource LocalizedStringConverter}}"

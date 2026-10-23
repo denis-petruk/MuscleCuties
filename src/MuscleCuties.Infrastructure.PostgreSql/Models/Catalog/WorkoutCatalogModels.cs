@@ -56,6 +56,14 @@ public sealed class WorkoutExerciseDefinition : ICatalogSeedRecord
     public byte SupineOrProne { get; set; }
     public byte ValsalvaDemand { get; set; }
     public int? SubstituteGroupId { get; set; }
+    public string? TrainingCatalogVersionV020 { get; set; }
+    public string? SupportedExperiencesV020Json { get; set; }
+    public string? DemandTagsV020Json { get; set; }
+    public bool? DemandTagsReviewedV020 { get; set; }
+    public string? RestrictionConflictTagsV020Json { get; set; }
+    public bool? RestrictionMappingsReviewedV020 { get; set; }
+    public string? SupportedTimingMethodsV020Json { get; set; }
+    public string? ReviewedSubstituteExerciseIdsV020Json { get; set; }
     public ICollection<ExerciseMuscleContribution> MuscleContributions { get; set; } = new List<ExerciseMuscleContribution>();
 }
 
