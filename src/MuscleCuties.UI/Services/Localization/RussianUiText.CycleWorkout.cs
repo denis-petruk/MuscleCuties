@@ -192,6 +192,7 @@ internal static partial class RussianUiText
         Values["Workout_Session_TimeFormat"] = "Время: {0}";
         Values["Workout_Session_TimeLabel"] = "Время";
         Values["Workout_Session_ActivitiesTitle"] = "Активности тренировки";
+        Values["Workout_Session_ChooseActivityToStart"] = "Выберите активность, чтобы перейти к упражнениям.";
         Values["Workout_Session_ToggleTipsAccessibility"] = "Показать или скрыть подсказки упражнений и техники";
         Values["Workout_Session_TotalVolumeFormat"] = "Общий объем: {0}";
         Values["Workout_Session_TryAgainButton"] = "Повторить";

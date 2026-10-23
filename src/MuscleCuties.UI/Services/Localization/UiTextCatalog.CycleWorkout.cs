@@ -192,6 +192,7 @@ public static partial class UiTextCatalog
         English["Workout_Session_TimeFormat"] = "Time: {0}";
         English["Workout_Session_TimeLabel"] = "Time";
         English["Workout_Session_ActivitiesTitle"] = "Session activities";
+        English["Workout_Session_ChooseActivityToStart"] = "Choose an activity to continue to its exercise screen.";
         English["Workout_Session_ToggleTipsAccessibility"] = "Show or hide exercise tips and technique cues";
         English["Workout_Session_TotalVolumeFormat"] = "Total volume: {0}";
         English["Workout_Session_TryAgainButton"] = "Try again";
