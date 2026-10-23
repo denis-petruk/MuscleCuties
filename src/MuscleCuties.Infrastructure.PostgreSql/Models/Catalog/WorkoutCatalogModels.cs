@@ -64,6 +64,7 @@ public sealed class WorkoutExerciseDefinition : ICatalogSeedRecord
     public bool? RestrictionMappingsReviewedV020 { get; set; }
     public string? SupportedTimingMethodsV020Json { get; set; }
     public string? ReviewedSubstituteExerciseIdsV020Json { get; set; }
+    public string? ReviewEvidenceV020Json { get; set; }
     public ICollection<ExerciseMuscleContribution> MuscleContributions { get; set; } = new List<ExerciseMuscleContribution>();
 }
 

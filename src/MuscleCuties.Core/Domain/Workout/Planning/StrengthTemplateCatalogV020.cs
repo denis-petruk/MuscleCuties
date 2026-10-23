@@ -157,7 +157,8 @@ public static class StrengthTemplateCatalogV020
         bool heavyMain = false,
         bool highIntensityAccessory = false) =>
         new(id, slot, patterns, preferredPatterns, true, StrengthPrescriptionRoleV020.Main,
-            StrengthPrescriptionRoleV020.Main,
+            slot is StrengthTemplateSlotIdV020.KneeDominant or StrengthTemplateSlotIdV020.HipDominant
+                ? StrengthPrescriptionRoleV020.Main : StrengthPrescriptionRoleV020.Accessory,
             highIntensityAccessory ? StrengthPrescriptionRoleV020.Accessory : StrengthPrescriptionRoleV020.Main,
             heavyMain);
 

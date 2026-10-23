@@ -32,6 +32,10 @@ public static class WorkoutExerciseV020CatalogMapper
             gaps.Add("DemandTagsNotReviewed");
         if (definition.RestrictionMappingsReviewedV020 is not true)
             gaps.Add("RestrictionMappingsNotReviewed");
+        var conditions = ReadReviewConditions(definition.ReviewEvidenceV020Json, gaps);
+        if (definition.SecondsPerRep == 0 &&
+            timingMethods?.Contains(ExerciseTimingMethod.Timed) == true)
+            gaps.Add("TimedHoldOrCarryDurationMissing");
         if (!Enum.IsDefined(definition.Pattern))
             gaps.Add("MovementPatternMissingOrInvalid");
         var knownInjuryFlags = Enum.GetValues<InjuryFlag>()
@@ -53,9 +57,64 @@ public static class WorkoutExerciseV020CatalogMapper
             timingMethods,
             definition.SetupSeconds >= 0 ? definition.SetupSeconds / SecondsPerMinute : null,
             substituteIds,
-            definition.Contraindications);
+            definition.Contraindications,
+            conditions.Experience,
+            conditions.General,
+            conditions.Present,
+            conditions.Substitutions,
+            definition.UnilateralDoublesTime);
         return new StrengthExerciseCatalogEntryV020(definition.Name, candidate,
             Array.AsReadOnly(gaps.Distinct(StringComparer.Ordinal).OrderBy(gap => gap, StringComparer.Ordinal).ToArray()));
+    }
+
+    private static (string? Experience, string? General, bool Present,
+        IReadOnlyList<DirectedSubstitutionReviewV020>? Substitutions) ReadReviewConditions(
+        string? json, ICollection<string> gaps)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            gaps.Add("ReviewEvidenceMissing");
+            return (null, null, false, null);
+        }
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            if (!document.RootElement.TryGetProperty("exercise", out var exercise) ||
+                !document.RootElement.TryGetProperty("ownerRestrictionAssessmentAssertion", out _) ||
+                !exercise.TryGetProperty("effectiveRestrictionAssessmentStatus", out var assessment) ||
+                assessment.GetString() != "OwnerAssessedClearanceSubjectToExistingContraindications" ||
+                !exercise.TryGetProperty("experienceConditions", out var experience) ||
+                !exercise.TryGetProperty("conditionsAndExclusions", out var general) ||
+                !document.RootElement.TryGetProperty("resolvedDirectedSubstitutionReviews", out var substitutions) ||
+                string.IsNullOrWhiteSpace(experience.GetString()) ||
+                string.IsNullOrWhiteSpace(general.GetString()))
+            {
+                gaps.Add("ReviewConditionsMissing");
+                return (null, null, false, null);
+            }
+            var directed = new List<DirectedSubstitutionReviewV020>();
+            foreach (var pair in substitutions.EnumerateArray())
+            {
+                if (!pair.TryGetProperty("targetExerciseId", out var target) ||
+                    !pair.TryGetProperty("category", out var category) ||
+                    !pair.TryGetProperty("conditions", out var pairConditions) ||
+                    !Enum.TryParse<DirectedSubstitutionCategoryV020>(category.GetString(), false,
+                        out var parsed) || !Enum.IsDefined(parsed) || target.GetInt32() <= 0 ||
+                    string.IsNullOrWhiteSpace(pairConditions.GetString()))
+                {
+                    gaps.Add("DirectedSubstitutionReviewInvalid");
+                    return (null, null, false, null);
+                }
+                directed.Add(new DirectedSubstitutionReviewV020(target.GetInt32(), parsed,
+                    pairConditions.GetString()!));
+            }
+            return (experience.GetString(), general.GetString(), true, directed);
+        }
+        catch (Exception exception) when (exception is JsonException or InvalidOperationException or FormatException)
+        {
+            gaps.Add("ReviewEvidenceInvalid");
+            return (null, null, false, null);
+        }
     }
 
     private static IReadOnlySet<ExerciseEquipmentKind>? MapEquipment(EquipmentSet required,
