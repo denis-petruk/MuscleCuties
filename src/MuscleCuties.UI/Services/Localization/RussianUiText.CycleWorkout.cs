@@ -4,6 +4,7 @@ internal static partial class RussianUiText
 {
     static partial void RegisterCycleWorkoutStrings()
     {
+        Values["Injury_Log_ReloadAfterChangeFailed"] = "Изменение сохранено, но журнал травм не загрузился. Попробуйте снова перед тренировкой.";
         Values["Cycle_Guidance_PhaseContext"] = "Фаза цикла даёт контекст, но не измеряет уровень гормонов или физические возможности сегодня.";
         Values["Cycle_Guidance_CheckIn"] = "Обратите внимание на самочувствие сегодня и запишите важные для вас симптомы.";
         Values["Cycle_Guidance_TrainingContext"] = "При оценке плана учитывайте сегодняшнее самочувствие и ограничения. Одна только фаза не задаёт интенсивность тренировки.";
