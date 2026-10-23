@@ -1,5 +1,6 @@
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
+using MuscleCuties.Core.Domain.Nutrition;
 
 namespace MuscleCuties.Core.Models.Nutrition.Planning;
 
@@ -20,7 +21,8 @@ public sealed record NutritionPlan(
     IReadOnlyCollection<string> Notes,
     ProfileNutritionGoals Goals,
     IReadOnlyCollection<MealNutritionTarget> Meals,
-    BreakfastPreference BreakfastPreference = BreakfastPreference.Savoury);
+    BreakfastPreference BreakfastPreference = BreakfastPreference.Savoury,
+    NutritionTargetProvenance? TargetProvenance = null);
 
 public sealed record MealNutritionTarget(
     MealType MealType,

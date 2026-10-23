@@ -1,28 +1,59 @@
-# Build outputs
+# .NET and MAUI build outputs
 bin/
 obj/
 /packages/
+
+# Local secrets, signing material, and machine-specific settings
 .env
+.env.*
+!.env.example
+/certs/
+/lambda-environment.json
+/services/postgresql/docker-compose.yml
+**/docker-compose.override.yml
+appsettings.local.json
+appsettings.*.local.json
+*.p8
 *.p12
+*.pfx
 *.mobileprovision
 *.user
-appsettings.local.json
-.claude
 
-# Local AI-assisted design context
+# Test results and code coverage
+[Tt]est[Rr]esults/
+*.trx
+*.log
+*.coverage
+*.coveragexml
+coverage/
+*.cobertura.xml
+.dotCover/
+_ReSharper*/
+/artifacts/
+
+# Local agent context and profiles are kept outside Git.
+.agents/
 .codex/
 **/.codex/
+.claude
 .impeccable/
 PRODUCT.md
 DESIGN.md
 
 # Rider/ReSharper
 .idea/
+.run/
 riderModule.iml
 /_ReSharper.Caches/
+*.sln.iml
+
+# Generated helper-script bytecode
+__pycache__/
+*.pyc
 
 # macOS
 .DS_Store
+._*
 
-# qodana
-qodana.yaml
+# Local, immutable implementation snapshots (never publish source archives)
+.foundation-baselines/

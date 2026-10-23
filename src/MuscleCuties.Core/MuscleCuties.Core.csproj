@@ -2,25 +2,12 @@
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <RootNamespace>MuscleCuties.Core</RootNamespace>
-        <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-        <!-- EF Core with SQLite requires reflection at runtime and cannot be made fully
-             trim-compatible without EF Core's own model compilation feature. Suppress the
-             known IL2026 noise from DbContext so genuine new warnings remain visible. -->
-        <NoWarn>$(NoWarn);IL2026</NoWarn>
+        <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+        <AnalysisLevel>latest-recommended</AnalysisLevel>
     </PropertyGroup>
 
     <ItemGroup>
         <InternalsVisibleTo Include="MuscleCuties.Core.Tests"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="10.0.9"/>
-        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlcipher" Version="2.1.11"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
-        <PackageReference Include="Microsoft.Maui.Graphics" Version="10.0.10"/>
+        <InternalsVisibleTo Include="MuscleCuties.Infrastructure"/>
     </ItemGroup>
 </Project>

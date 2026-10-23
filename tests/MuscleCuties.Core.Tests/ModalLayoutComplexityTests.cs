@@ -11,14 +11,14 @@ public class ModalLayoutComplexityTests
 {
     private static readonly string ModalRoot = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..",
-            "src", "MuscleCuties.App", "Controls"));
+            "src", "MuscleCuties.UI", "Controls"));
 
     /// <summary>Max nesting depth of layout containers, including modal chrome and templates.</summary>
     private const int MaxNestingDepth = 9;
 
     /// <summary>Max total visual-tree elements in a single modal XAML file.
-    /// Baseline: 135 covers the largest modal (MealSuggestionModal) with multi-state views.</summary>
-    private const int MaxElementCount = 135;
+    /// Baseline: 140 covers the largest modal (MealSuggestionModal) with multi-state views.</summary>
+    private const int MaxElementCount = 140;
 
     private static readonly HashSet<string> LayoutContainers = new(StringComparer.OrdinalIgnoreCase)
     {

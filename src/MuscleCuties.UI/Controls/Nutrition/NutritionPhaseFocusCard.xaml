@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Nutrition.NutritionPhaseFocusCard"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Nutrition"
+    x:DataType="vm:NutritionViewModel">
+
+    <Border
+        Background="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
+        Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+        StrokeShape="RoundRectangle 16"
+        StrokeThickness="1"
+        Padding="18,14">
+        <Grid RowDefinitions="Auto, Auto, Auto" ColumnDefinitions="*, Auto" RowSpacing="3" ColumnSpacing="12">
+            <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="6" VerticalOptions="Center">
+                <BoxView
+                    WidthRequest="6"
+                    HeightRequest="6"
+                    CornerRadius="3"
+                    BackgroundColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                    VerticalOptions="Center" />
+                <Label
+                    Text="{Binding PhaseFocusBadgeText, Converter={StaticResource LocalizedStringConverter}}"
+                    TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                    FontSize="12"
+                    FontAttributes="Bold"
+                    VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <Border
+                Grid.Row="0"
+                Grid.Column="1"
+                Grid.RowSpan="3"
+                WidthRequest="36"
+                HeightRequest="36"
+                StrokeShape="RoundRectangle 18"
+                BackgroundColor="{StaticResource WhiteOverlaySubtle}"
+                Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                StrokeThickness="1"
+                VerticalOptions="Center"
+                SemanticProperties.Description="{loc:LocalizedText Nutrition_PhaseFocus_CurrentCyclePhaseIcon}">
+                <Image
+                    Source="{Binding CurrentPhaseIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                    WidthRequest="16"
+                    HeightRequest="16"
+                    Aspect="AspectFit"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+            </Border>
+
+            <Label
+                Grid.Row="1"
+                Grid.Column="0"
+                Text="{Binding PhaseFocusTitle, Converter={StaticResource LocalizedStringConverter}}"
+                TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                FontSize="18"
+                FontAttributes="Bold"
+                LineBreakMode="WordWrap" />
+            <Label
+                Grid.Row="2"
+                Grid.Column="0"
+                Text="{Binding PhaseFocusCopy, Converter={StaticResource LocalizedStringConverter}}"
+                TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                FontSize="13"
+                LineBreakMode="WordWrap" />
+        </Grid>
+    </Border>
+</ContentView>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:mct="clr-namespace:CommunityToolkit.Maui.Converters;assembly=CommunityToolkit.Maui"
+             xmlns:converters="clr-namespace:MuscleCuties.UI.Resources.Converters;assembly=MuscleCuties.UI"
+             x:Class="MuscleCuties.UI.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+                <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <mct:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <mct:IsStringNotNullOrEmptyConverter x:Key="StringToBoolConverter" />
+            <converters:CyclePhaseToBrushConverter x:Key="CyclePhaseToBrushConverter" />
+            <converters:StringToFluentIconImageSourceConverter x:Key="StringToFluentIconImageSourceConverter" />
+            <converters:BoolToChevronConverter x:Key="BoolToChevronConverter" />
+            <converters:CyclePhaseToTextColorConverter x:Key="CyclePhaseToTextColorConverter" />
+            <converters:ScoreToColorConverter x:Key="ScoreToColorConverter" />
+            <converters:StringToGeometryConverter x:Key="StringToGeometryConverter" />
+            <converters:BoolToSelectionStrokeConverter x:Key="BoolToSelectionStrokeConverter" />
+            <converters:BoolToSelectionBgConverter x:Key="BoolToSelectionBgConverter" />
+            <converters:BoolToEditTitleConverter x:Key="BoolToEditTitleConverter" />
+            <converters:BoolToWarmupTextConverter x:Key="BoolToWarmupTextConverter" />
+            <converters:LocalizedStringConverter x:Key="LocalizedStringConverter" />
+            <converters:LocalizedFormatConverter x:Key="LocalizedFormatConverter" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
