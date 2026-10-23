@@ -391,7 +391,8 @@
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                         <Label Text="Session activities" Style="{StaticResource ModalTitle}"
                                SemanticProperties.HeadingLevel="Level1" />
-                        <Button Grid.Column="1" Text="Close" Clicked="OnCloseSessionActivitiesClicked"
+                        <Button Grid.Column="1" Text="{loc:LocalizedText Common_Close}"
+                                Clicked="OnCloseSessionActivitiesClicked"
                                 MinimumHeightRequest="48" MinimumWidthRequest="48"
                                 BackgroundColor="Transparent" />
                     </Grid>
@@ -423,7 +424,7 @@
                             </VerticalStackLayout>
                         </ScrollView>
                     </Grid>
-                    <Label Grid.Row="2" Text="Choose an activity to continue to its exercise screen."
+                    <Label Grid.Row="2" Text="{loc:LocalizedText Workout_Session_ChooseActivityToStart}"
                            Style="{StaticResource MutedLabel}" />
                 </Grid>
             </Border>
