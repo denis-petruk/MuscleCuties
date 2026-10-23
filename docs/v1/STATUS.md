@@ -2,7 +2,7 @@
 
 **Effective Date:** 2026-10-23
 
-**Onboarding audit recheck (2026-10-23):** Account confirmation retains its isolated 16-point countdown gap while password recovery uses 8 points. Profile setup keeps the photo row inside Personal details above Display name and uses card-styled measurement controls. The current iOS simulator build passed with zero warnings/errors and Core tests passed 265/265. Fresh-registration visual and interaction checks remain open on a controlled account.
+**Onboarding audit recheck (2026-10-23):** Account confirmation retains its isolated 16-point countdown gap while password recovery uses 8 points. Profile setup keeps the photo row inside Personal details above Display name and uses card-styled measurement controls. Shared activity and strength-style pickers now have English/Russian selected-state accessibility hints. The current iOS simulator build passed with zero warnings/errors and Core tests passed 265/265. Fresh-registration, Activity Preferences interaction, and VoiceOver checks remain open on a controlled account.
 
 **UI audit update (2026-10-23):** Train presents a full-height activity-choice sheet and passes the selected activity through navigation into its intro. This was visually verified on iPhone 17 Pro Max. The iOS simulator build passed with zero warnings/errors and 257 Core tests passed. Exercise logging/completion acceptance remains open. Changes are pushed to the private GitLab `test-flight-beta` branch.
 

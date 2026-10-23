@@ -5,6 +5,7 @@
     x:Name="StrengthStyleRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:controls="clr-namespace:MuscleCuties.UI.Controls.Workout"
     xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     x:DataType="controls:StrengthTrainingStylePicker">
@@ -23,7 +24,8 @@
                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
                     <Border.Triggers>
                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                            <Setter Property="SemanticProperties.Hint" Value="Selected training style" />
+                            <Setter Property="SemanticProperties.Hint"
+                                    Value="{loc:LocalizedText Workout_StrengthStyle_SelectedHint}" />
                             <Setter Property="BackgroundColor"
                                     Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
                             <Setter Property="Stroke"
@@ -31,7 +33,8 @@
                             <Setter Property="StrokeThickness" Value="1.5" />
                         </DataTrigger>
                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
-                            <Setter Property="SemanticProperties.Hint" Value="Not selected, double-tap to select" />
+                            <Setter Property="SemanticProperties.Hint"
+                                    Value="{loc:LocalizedText Workout_StrengthStyle_UnselectedHint}" />
                             <Setter Property="BackgroundColor"
                                     Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
                             <Setter Property="Stroke"
