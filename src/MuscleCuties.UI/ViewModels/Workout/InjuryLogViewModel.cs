@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.UI.Models.UI.Workout;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 
@@ -12,6 +13,7 @@ namespace MuscleCuties.UI.ViewModels.Workout;
 
 public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 {
+    private const string ReloadAfterChangeFailedTextKey = "Injury_Log_ReloadAfterChangeFailed";
     private readonly IWorkoutInjuryUseCase _injuries;
     private readonly Func<Task> _injuriesChangedAsync;
 
@@ -23,6 +25,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     private string _errorText = string.Empty;
 
     private bool _hasLoaded;
+    private bool _pendingChangeRefresh;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isHistoryExpanded;
     [ObservableProperty] private bool _isLoadError;
@@ -188,7 +191,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         ErrorText = string.Empty;
         try
         {
-            if (IsPlanRefreshError)
+            if (_pendingChangeRefresh)
                 await RefreshAfterChangeAsync();
             else
                 await ReloadInjuriesAsync();
@@ -266,6 +269,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
                 (WorkoutInjuryStatus)status.Value, NewPainLevel,
                 DateOnly.FromDateTime(SinceDateValue)));
             CancelEdit();
+            _pendingChangeRefresh = true;
             await RefreshAfterChangeAsync();
         }
         catch (Exception ex)
@@ -289,6 +293,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             await actionAsync();
             if (EditingInjuryId == injuryId)
                 CancelEdit();
+            _pendingChangeRefresh = true;
             await RefreshAfterChangeAsync();
         }
         catch (Exception ex)
@@ -392,10 +397,26 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     private async Task RefreshAfterChangeAsync()
     {
         IsPlanRefreshError = false;
+        IsLoadError = false;
         ErrorText = string.Empty;
         try
         {
             await ReloadInjuriesAsync();
+        }
+        catch (Exception ex)
+        {
+            ActiveInjuries = new ObservableCollection<InjuryLogItem>();
+            ClearedInjuries = new ObservableCollection<InjuryLogItem>();
+            OnPropertyChanged(nameof(HasActiveInjuries));
+            OnPropertyChanged(nameof(HasClearedInjuries));
+            IsLoadError = true;
+            ErrorText = UiTextCatalog.Get(ReloadAfterChangeFailedTextKey);
+            Trace.WriteLine($"[InjuryLog] Reload after change failed ({ex.GetType().Name}).");
+            return;
+        }
+
+        try
+        {
             await _injuries.RefreshPlanAfterInjuryChangeAsync();
         }
         catch (Exception ex)
@@ -411,10 +432,14 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         }
         catch (Exception ex)
         {
+            if (!IsPlanRefreshError)
+                ErrorText = "Your injury log was saved, but the page couldn't refresh. Try again.";
             IsPlanRefreshError = true;
-            ErrorText = "Your injury log was saved, but the page couldn't refresh. Try again.";
             Trace.WriteLine($"[InjuryLog] Page refresh failed ({ex.GetType().Name}).");
         }
+
+        if (!IsPlanRefreshError)
+            _pendingChangeRefresh = false;
     }
 
     private async Task RetryPlanRefreshAsync()
