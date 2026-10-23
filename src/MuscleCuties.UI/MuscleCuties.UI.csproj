@@ -1,0 +1,195 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('linux'))">net10.0-ios;net10.0-maccatalyst;net10.0-android</TargetFrameworks>
+        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('linux'))">net10.0-android</TargetFrameworks>
+        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
+
+        <OutputType>Exe</OutputType>
+        <RootNamespace>MuscleCuties.UI</RootNamespace>
+        <AssemblyName>MuscleCuties.UI</AssemblyName>
+        <UseMaui>true</UseMaui>
+        <SingleProject>true</SingleProject>
+
+        <MauiVersion>10.0.20</MauiVersion>
+
+        <ApplicationTitle>MuscleCuties</ApplicationTitle>
+        <ApplicationId>com.musclecuties.app</ApplicationId>
+        <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+        <ApplicationVersion>2</ApplicationVersion>
+        <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+        <AnalysisLevel>latest-recommended</AnalysisLevel>
+
+        <WindowsPackageType>None</WindowsPackageType>
+
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">18.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">18.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">34.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+        <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+        <EnableAppleSignInEntitlements>true</EnableAppleSignInEntitlements>
+        <EnableAppleHealthEntitlements>true</EnableAppleHealthEntitlements>
+        <!-- MauiXamlInflator SourceGen disabled: causes SIGSEGV in CA::Layer::layout_is_active
+             during Shell structural navigation (ShellContent → TabBar) on iOS. Re-enable when
+             dotnet/maui resolves SourceGen compatibility with Shell TabBar transitions. -->
+        <MauiXamlInflator>SourceGen</MauiXamlInflator>
+
+        <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+        <MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
+        <MauiStrictXamlCompilation>true</MauiStrictXamlCompilation>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Remove="Platforms/**/*.cs" />
+    </ItemGroup>
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+        <Compile Include="Platforms/Android/**/*.cs" />
+    </ItemGroup>
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+        <Compile Include="Platforms/iOS/**/*.cs" />
+    </ItemGroup>
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
+        <Compile Include="Platforms/MacCatalyst/**/*.cs" />
+    </ItemGroup>
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+        <Compile Include="Platforms/Windows/**/*.cs" />
+    </ItemGroup>
+
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(EnableAppleSignInEntitlements)' == 'true'">
+        <CodesignEntitlements>Platforms/iOS/Entitlements.plist</CodesignEntitlements>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(EnableAppleSignInEntitlements)' != 'true' and '$(EnableAppleHealthEntitlements)' == 'true'">
+        <CodesignEntitlements>Platforms/iOS/HealthEntitlements.plist</CodesignEntitlements>
+    </PropertyGroup>
+
+    <!-- Windows Release: R2R eliminates JIT startup cost for the managed host. Partial trimming
+         removes dead code without breaking EF Core reflection. Verify in Release on the target
+         Windows version before shipping. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+        <PublishReadyToRun>true</PublishReadyToRun>
+    </PropertyGroup>
+
+    <!-- Android Release: R2R pre-jits managed code at publish time, reducing JIT warm-up on
+         the first run. Partial trimming retains reflection-based dependencies. The linker removes
+         debug scaffolding and unused SDK code.
+         Verify on a physical Android device in Release before shipping. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+        <RunAOTCompilation>true</RunAOTCompilation>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+        <PublishReadyToRun>true</PublishReadyToRun>
+    </PropertyGroup>
+
+    <!-- macOS Catalyst Release: AOT speeds cold launch; partial trimming avoids EF Core
+         reflection breakage. Verify on a physical Mac in Release before shipping. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
+        <RunAOTCompilation>true</RunAOTCompilation>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+    </PropertyGroup>
+
+    <!-- iOS Release: AOT compile assemblies, with an interpreter available for dynamic
+         reflection stubs created by framework code. Keep partial trimming for EF Core. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+        <RunAOTCompilation>true</RunAOTCompilation>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+        <MtouchInterpreter>-all</MtouchInterpreter>
+        <AotCompileMaxDegreeOfParallelism>2</AotCompileMaxDegreeOfParallelism>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+        <BuildIpa>false</BuildIpa>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and ('$(RuntimeIdentifier)' == 'iossimulator-arm64' or '$(RuntimeIdentifier)' == 'iossimulator-x64')">
+        <CodesignKey>-</CodesignKey>
+        <CodesignEntitlements Condition="'$(EnableAppleSignInEntitlements)' == 'true'">Platforms/iOS/Entitlements.plist</CodesignEntitlements>
+        <CodesignEntitlements Condition="'$(EnableAppleSignInEntitlements)' != 'true' and '$(EnableAppleHealthEntitlements)' == 'true'">Platforms/iOS/HealthEntitlements.plist</CodesignEntitlements>
+        <CodesignEntitlements Condition="'$(EnableAppleSignInEntitlements)' != 'true' and '$(EnableAppleHealthEntitlements)' != 'true'">Platforms/iOS/Entitlements.plist</CodesignEntitlements>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <MauiIcon Include="Resources\AppIcon\appicon.png" Color="#FFF8FB" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios'"/>
+        <MauiSplashScreen Include="Resources\Splash\splash.png" Color="#FFF8FB" BaseSize="320,180" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'maccatalyst'"/>
+        <MauiImage Include="Resources\Images\*"/>
+        <MauiImage Update="Resources\Images\musclecuties_logo_light.png" Resize="True" BaseSize="360,200"/>
+        <MauiImage Update="Resources\Images\musclecuties_logo_dark.png" Resize="True" BaseSize="360,200"/>
+        <MauiImage Update="Resources\Images\musclecuties_logo_light_transparent.png" Resize="True" BaseSize="360,200"/>
+        <MauiImage Update="Resources\Images\musclecuties_logo_dark_transparent.png" Resize="True" BaseSize="360,200"/>
+        <MauiImage Update="Resources\Images\icon_fire.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\icon_fire_dark.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\icon_muscle.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\icon_muscle_dark.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\phase_menstrual.svg" Resize="True" BaseSize="96,96"/>
+        <MauiImage Update="Resources\Images\phase_follicular.svg" Resize="True" BaseSize="96,96"/>
+        <MauiImage Update="Resources\Images\phase_ovulatory.svg" Resize="True" BaseSize="96,96"/>
+        <MauiImage Update="Resources\Images\phase_luteal.svg" Resize="True" BaseSize="96,96"/>
+        <MauiImage Update="Resources\Images\tab_today.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\tab_today_dark.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\tab_cycle.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\tab_cycle_dark.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\tab_train.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\tab_train_dark.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\tab_nutrition.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\tab_nutrition_dark.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\tab_you.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\tab_you_dark.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\nav_back.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\feedback_note.svg" Resize="True" BaseSize="64,64"/>
+        <MauiImage Update="Resources\Images\privacy_device.svg" Resize="True" BaseSize="64,64"/>
+        <MauiFont Include="Resources\Fonts\*.ttf"/>
+        <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+        <ImageAsset Include="Assets.xcassets\**\*.*"/>
+        <BundleResource Include="Platforms/iOS/en.lproj/InfoPlist.strings" LogicalName="en.lproj/InfoPlist.strings"/>
+        <BundleResource Include="Platforms/iOS/ru.lproj/InfoPlist.strings" LogicalName="ru.lproj/InfoPlist.strings"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="System.Globalization"/>
+        <Using Include="Microsoft.Extensions.DependencyInjection"/>
+        <Using Include="Microsoft.Maui"/>
+        <Using Include="Microsoft.Maui.ApplicationModel"/>
+        <Using Include="Microsoft.Maui.Controls"/>
+        <Using Include="Microsoft.Maui.Controls.Xaml"/>
+        <Using Include="Microsoft.Maui.Dispatching"/>
+        <Using Include="Microsoft.Maui.Hosting"/>
+        <Using Include="Microsoft.Maui.Graphics"/>
+        <Using Include="Microsoft.Maui.Storage"/>
+        <Using Include="Microsoft.Maui.Media"/>
+        <Using Include="Microsoft.Maui.Accessibility"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AathifMahir.Maui.MauiIcons.Fluent" Version="6.0.0"/>
+        <PackageReference Include="CommunityToolkit.Maui" Version="13.0.0"/>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
+        <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0"/>
+        <PackageReference Include="SkiaSharp.Extended.UI.Maui" Version="3.0.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../MuscleCuties.UseCases/MuscleCuties.UseCases.csproj"/>
+        <ProjectReference Include="../MuscleCuties.Core/MuscleCuties.Core.csproj"/>
+        <ProjectReference Include="../MuscleCuties.Infrastructure/MuscleCuties.Infrastructure.csproj"/>
+    </ItemGroup>
+
+    <!-- Check the resolved closure, including transitive packages, before compiling iOS. -->
+    <Target Name="RejectIosSqliteDependencies" AfterTargets="ResolvePackageAssets"
+            Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+        <ItemGroup>
+            <IosForbiddenDatabasePackage Include="@(PackageDependencies)"
+                Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Identity)', '(?i)sqlite|sqlcipher'))" />
+        </ItemGroup>
+        <Error Condition="'@(IosForbiddenDatabasePackage)' != ''"
+               Text="iOS production cannot include SQLite dependencies: @(IosForbiddenDatabasePackage). Use first-party cloud stores and encrypted snapshots." />
+    </Target>
+
+</Project>

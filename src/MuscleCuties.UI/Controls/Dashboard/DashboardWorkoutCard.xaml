@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Dashboard.DashboardWorkoutCard"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
+    x:DataType="vm:DashboardViewModel">
+
+    <Border
+        Style="{StaticResource CardPrimary}"
+        StrokeThickness="1"
+        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+        SemanticProperties.Description="{Binding WorkoutTitle, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_Workout_SemanticTodayPlan}">
+        <VerticalStackLayout Spacing="12">
+
+            <!-- Header Row: Icon Tile, Title/Badge, and Status Pill -->
+            <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                <Border
+                    WidthRequest="42"
+                    HeightRequest="42"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 12"
+                    VerticalOptions="Center">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="True">
+                            <Setter Property="BackgroundColor"
+                                    Value="{AppThemeBinding Light=#F6EAF4, Dark=#4A3143}" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="False">
+                            <Setter Property="BackgroundColor"
+                                    Value="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+
+                    <Grid HorizontalOptions="Center" VerticalOptions="Center">
+                        <!-- Rest Day: Soothing Crescent Moon -->
+                        <Path
+                            Data="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                            Fill="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                            Aspect="Uniform"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            IsVisible="{Binding IsRestDay}" />
+
+                        <!-- Workout Day: Dumbbell Icon -->
+                        <Path
+                            Data="M6.5 6.5h11M6.5 17.5h11M6.5 6.5v11M17.5 6.5v11M3 9.5h3.5v5H3zM17.5 9.5H21v5h-3.5z"
+                            Stroke="{StaticResource Primary}"
+                            StrokeThickness="1.8"
+                            StrokeLineCap="Round"
+                            StrokeLineJoin="Round"
+                            Aspect="Uniform"
+                            WidthRequest="18"
+                            HeightRequest="18"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}" />
+                    </Grid>
+                </Border>
+
+                <!-- Titles: Badge + Main Name -->
+                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                    <Label
+                        Text="{Binding WorkoutBadgeText, Converter={StaticResource LocalizedStringConverter}}"
+                        TextColor="{StaticResource Primary}"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center" />
+                    <Label
+                        Text="{Binding WorkoutTitle, Converter={StaticResource LocalizedStringConverter}}"
+                        Style="{StaticResource SectionTitle}"
+                        FontSize="18"
+                        LineBreakMode="TailTruncation"
+                        MaxLines="1" />
+                </VerticalStackLayout>
+
+                <!-- Pill on the right: REST DAY or TRAINING -->
+                <Border
+                    Grid.Column="2"
+                    StrokeShape="RoundRectangle 999"
+                    StrokeThickness="0"
+                    Padding="10,4"
+                    VerticalOptions="Center">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="True">
+                            <Setter Property="BackgroundColor"
+                                    Value="{AppThemeBinding Light=#F0DFEE, Dark=#55344D}" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="False">
+                            <Setter Property="BackgroundColor"
+                                    Value="{Binding WorkoutActivityBackground}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+
+                    <Label
+                        FontSize="11"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsRestDay}" Value="True">
+                                <Setter Property="Text" Value="REST DAY" />
+                                <Setter Property="TextColor"
+                                        Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}" />
+                            </DataTrigger>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsRestDay}" Value="False">
+                                <Setter Property="Text" Value="TRAINING" />
+                                <Setter Property="TextColor" Value="{Binding WorkoutActivityTextColor}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+            </Grid>
+
+            <!-- Activity Sections for Workout days -->
+            <FlexLayout
+                Wrap="Wrap"
+                Direction="Row"
+                BindableLayout.ItemsSource="{Binding WorkoutActivitySections}"
+                IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="workoutModels:WorkoutActivitySection">
+                        <Border
+                            StrokeShape="RoundRectangle 999"
+                            StrokeThickness="0"
+                            Padding="8,3"
+                            Margin="0,0,6,4"
+                            BackgroundColor="{Binding Background}">
+                            <Label
+                                Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
+                                TextColor="{Binding TextColor}"
+                                FontSize="11"
+                                FontAttributes="Bold"
+                                VerticalOptions="Center" />
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </FlexLayout>
+
+            <!-- Subtitle -->
+            <Label
+                Text="{Binding WorkoutSubtitle, Converter={StaticResource LocalizedStringConverter}}"
+                Style="{StaticResource MutedLabel}"
+                FontSize="14"
+                LineBreakMode="WordWrap"
+                Margin="0,-4,0,0" />
+
+            <!-- Structured 3-column Visual Metric Tiles -->
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8"
+                  IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}">
+                <!-- Tile 1: Duration -->
+                <Border
+                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 12"
+                    Padding="6,8">
+                    <VerticalStackLayout Spacing="3" HorizontalOptions="Center">
+                        <HorizontalStackLayout Spacing="4" HorizontalOptions="Center">
+                            <Path
+                                Data="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 5v5l3.5 2"
+                                Stroke="{StaticResource Primary}"
+                                StrokeThickness="1.5"
+                                Aspect="Uniform"
+                                WidthRequest="12"
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="{loc:LocalizedText Dashboard_Workout_Duration}"
+                                Style="{StaticResource CaptionLabel}"
+                                FontSize="11"
+                                FontAttributes="Bold"
+                                VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                        <Label
+                            Text="{Binding WorkoutDurationText, Converter={StaticResource LocalizedStringConverter}}"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                            FontSize="13"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Tile 2: Exercises -->
+                <Border
+                    Grid.Column="1"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 12"
+                    Padding="6,8">
+                    <VerticalStackLayout Spacing="3" HorizontalOptions="Center">
+                        <HorizontalStackLayout Spacing="4" HorizontalOptions="Center">
+                            <Path
+                                Data="M4 6h16M4 12h16M4 18h16"
+                                Stroke="{StaticResource Primary}"
+                                StrokeThickness="1.5"
+                                Aspect="Uniform"
+                                WidthRequest="12"
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="{Binding WorkoutCountLabel, Converter={StaticResource LocalizedStringConverter}}"
+                                Style="{StaticResource CaptionLabel}"
+                                FontSize="11"
+                                FontAttributes="Bold"
+                                VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                        <Label
+                            Text="{Binding WorkoutCountValue, Converter={StaticResource LocalizedStringConverter}}"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                            FontSize="13"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Tile 3: Intensity -->
+                <Border
+                    Grid.Column="2"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 12"
+                    Padding="6,8">
+                    <VerticalStackLayout Spacing="3" HorizontalOptions="Center">
+                        <HorizontalStackLayout Spacing="4" HorizontalOptions="Center">
+                            <Path
+                                Data="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+                                Stroke="{StaticResource Primary}"
+                                StrokeThickness="1.5"
+                                Aspect="Uniform"
+                                WidthRequest="12"
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="Intensity"
+                                Style="{StaticResource CaptionLabel}"
+                                FontSize="11"
+                                FontAttributes="Bold"
+                                VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                        <Label
+                            Text="{Binding WorkoutIntensity, Converter={StaticResource LocalizedStringConverter}}"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                            FontSize="13"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <!-- Rest Day Recovery Tip / Guidance (Only on Rest Day) -->
+            <Border
+                IsVisible="{Binding IsRestDay}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 12"
+                Padding="12,9">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9" VerticalOptions="Center">
+                    <Path
+                        Data="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4L2 9.4h7.6z"
+                        Fill="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                        Aspect="Uniform"
+                        WidthRequest="14"
+                        HeightRequest="14"
+                        VerticalOptions="Center" />
+                    <Label
+                        Grid.Column="1"
+                        Text="Muscle fibers rebuild &amp; glycogen replenishes during rest. Prioritize sleep and hydration."
+                        Style="{StaticResource CaptionLabel}"
+                        FontSize="11"
+                        LineBreakMode="WordWrap"
+                        VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
+            <!-- Action Button -->
+            <Border
+                BackgroundColor="{StaticResource Primary}"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 14"
+                HeightRequest="48"
+                MinimumHeightRequest="48"
+                SemanticProperties.Description="{loc:LocalizedText Dashboard_Workout_OpenTodayPlanA11y}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding StartWorkoutCommand}" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="8" HorizontalOptions="Center"
+                      VerticalOptions="Center">
+                    <!-- Rest Day Icon -->
+                    <Path
+                        Data="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"
+                        Stroke="{StaticResource White}"
+                        StrokeThickness="1.8"
+                        Fill="Transparent"
+                        Aspect="Uniform"
+                        WidthRequest="16"
+                        HeightRequest="16"
+                        VerticalOptions="Center"
+                        IsVisible="{Binding IsRestDay}" />
+
+                    <!-- Workout Play Arrow -->
+                    <Path
+                        Data="M8 5v14l11-7z"
+                        Fill="{StaticResource White}"
+                        Aspect="Uniform"
+                        WidthRequest="16"
+                        HeightRequest="16"
+                        VerticalOptions="Center"
+                        IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}" />
+
+                    <Label
+                        Grid.Column="1"
+                        TextColor="{StaticResource White}"
+                        FontSize="15"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsRestDay}" Value="True">
+                                <Setter Property="Text" Value="View rest day" />
+                            </DataTrigger>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsRestDay}" Value="False">
+                                <Setter Property="Text" Value="{loc:LocalizedText Dashboard_Workout_StartWorkout}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Grid>
+            </Border>
+
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

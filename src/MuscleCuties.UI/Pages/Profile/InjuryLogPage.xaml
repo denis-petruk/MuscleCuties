@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Profile.InjuryLogPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:injuryControls="clr-namespace:MuscleCuties.UI.Controls.Injury"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
+    x:DataType="vm:InjuryLogViewModel"
+    Shell.NavBarIsVisible="False">
+    <Grid RowDefinitions="Auto,*" Padding="4,32,4,0" MaximumWidthRequest="640">
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Padding="16,8,16,16">
+            <Border Style="{StaticResource ModalIconButton}" WidthRequest="48" HeightRequest="48"
+                    SemanticProperties.Description="{loc:LocalizedText Injury_LogPage_GoBack}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding NavigateBackCommand}" />
+                </Border.GestureRecognizers>
+                <Path Data="M15 5L8 12L15 19" Style="{StaticResource ModalCloseIcon}" />
+            </Border>
+            <Label Grid.Column="1" Text="{loc:LocalizedText Injury_LogTitle}" Style="{StaticResource SubHeadline}"
+                   VerticalOptions="Center" />
+            <Button Grid.Column="2" Text="{loc:LocalizedText Common_Add}" Command="{Binding ToggleAddFormCommand}"
+                    Style="{StaticResource ButtonLink}" MinimumWidthRequest="48" MinimumHeightRequest="48"
+                    SemanticProperties.Description="{loc:LocalizedText Injury_AddAnInjury}" />
+        </Grid>
+        <injuryControls:InjuryLogContent Grid.Row="1" />
+    </Grid>
+</ContentPage>

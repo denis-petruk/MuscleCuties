@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace MuscleCuties.Core.Models.Nutrition.Planning;
 
 public sealed record ProfileNutritionGoals(
@@ -71,21 +69,6 @@ public sealed record ProfileNutritionGoals(
         null,
         null);
 
-    public static ProfileNutritionGoals FromJson(string? json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-            return Empty;
-
-        try
-        {
-            return JsonSerializer.Deserialize<ProfileNutritionGoals>(json) ?? Empty;
-        }
-        catch (JsonException)
-        {
-            return Empty;
-        }
-    }
-
     public static ProfileNutritionGoals FromPlan(NutritionPlan plan)
     {
         return FromCalculated(
@@ -152,13 +135,43 @@ public sealed record ProfileNutritionGoals(
             UseValue(Potassium, fallback.Potassium));
     }
 
-    public string ToJson()
+    public ProfileNutritionGoals OnlyOverridesFrom(ProfileNutritionGoals calculated)
     {
-        return JsonSerializer.Serialize(this);
+        return new ProfileNutritionGoals(
+            OverrideOrNull(Calories, calculated.Calories),
+            OverrideOrNull(Protein, calculated.Protein),
+            OverrideOrNull(Carbs, calculated.Carbs),
+            OverrideOrNull(Fats, calculated.Fats),
+            OverrideOrNull(Fiber, calculated.Fiber),
+            OverrideOrNull(WaterLiters, calculated.WaterLiters),
+            OverrideOrNull(Iron, calculated.Iron),
+            OverrideOrNull(VitaminB12, calculated.VitaminB12),
+            OverrideOrNull(VitaminC, calculated.VitaminC),
+            OverrideOrNull(VitaminD, calculated.VitaminD),
+            OverrideOrNull(VitaminA, calculated.VitaminA),
+            OverrideOrNull(VitaminB6, calculated.VitaminB6),
+            OverrideOrNull(Folate, calculated.Folate),
+            OverrideOrNull(Calcium, calculated.Calcium),
+            OverrideOrNull(Magnesium, calculated.Magnesium),
+            OverrideOrNull(Zinc, calculated.Zinc),
+            OverrideOrNull(Potassium, calculated.Potassium));
     }
 
     private static float UseValue(float? value, float? fallback)
     {
-        return value is > 0f ? value.Value : fallback is > 0f ? fallback.Value : 0f;
+        if (value is > 0f && float.IsFinite(value.Value))
+            return value.Value;
+
+        return fallback is > 0f && float.IsFinite(fallback.Value) ? fallback.Value : 0f;
+    }
+
+    private static float? OverrideOrNull(float? value, float? calculated)
+    {
+        if (value is not > 0f || !float.IsFinite(value.Value))
+            return null;
+        return calculated is > 0f && float.IsFinite(calculated.Value) &&
+               MathF.Abs(value.Value - calculated.Value) < 0.01f
+            ? null
+            : value;
     }
 }
