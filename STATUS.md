@@ -18,6 +18,8 @@ The active delivery status is maintained at [docs/v1/STATUS.md](docs/v1/STATUS.m
 
 - **Injury log (2026-10-23):** The compact sheet, no-active card with History, and Activity-style selection cards passed simulator inspection. Save/clear refresh failures now distinguish log reload from plan refresh, remove stale rows, and retain a retry path. The iOS build passed with zero warnings/errors and Core tests passed 265/265. A controlled synthetic save/clear check remains open. The supplied review register has no documented formula/copy sign-off, so numerical guidance remains gated.
 
+- **Workout completion return (2026-10-23):** The session page now directly invalidates the injected Train view model when leaving; Train reloads on appearance. The iOS build passed with zero warnings/errors and Core tests passed 265/265. A controlled synthetic exercise log and automatic completion return remain to be checked in the simulator.
+
 - **Today page:** Cycle is first, the workout count is clear, Readiness and Nutrition follow, Trends has three arrow-switched views above Photo, and Calendar is removed. iOS build passed cleanly; Core 215/215 and server 77/77 passed. The updated simulator showed the layout and navigation. Populated phase/trends require the pending backend rollout; numerical readiness/planning review scope remains open.
 
 - **Step 1 Profile setup:** Photo now sits inside Personal details above Display name; measurement controls match activity cards, and shared activity copy is shorter without Required/Optional badges. The strength rule remains enforced. iOS build passed, Core tests passed 211/211, and the design detector found no issues. Fresh simulator interaction review remains open.
