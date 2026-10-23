@@ -4,6 +4,7 @@ public static partial class UiTextCatalog
 {
     static partial void RegisterCycleWorkoutStrings()
     {
+        English["Injury_Log_ReloadAfterChangeFailed"] = "Your change was saved, but the injury log couldn't reload. Try again before training.";
         English["Cycle_Guidance_PhaseContext"] = "A cycle phase is context, not a measurement of hormone levels or today's exercise capacity.";
         English["Cycle_Guidance_CheckIn"] = "Notice how you feel today and record any symptoms that matter to you.";
         English["Cycle_Guidance_TrainingContext"] = "Use your current check-in and restrictions when reviewing your plan. A phase label alone does not set training intensity.";
