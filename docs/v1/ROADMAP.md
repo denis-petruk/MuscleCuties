@@ -2,7 +2,11 @@
 
 All migration phases (`PG01`–`PG10`) and baseline safety/beta packages (`B01`–`B03`) are **accepted as code foundations** across `MuscleCuties.Core`, `MuscleCuties.UseCases`, `MuscleCuties.Infrastructure`, `MuscleCuties.Infrastructure.PostgreSql`, `MuscleCuties.Server`, and `MuscleCuties.UI`. Live service verification and expanded-candidate acceptance remain open.
 
+**UI audit next:** Run the Train activity-choice flow in the iOS simulator, resume pending checks in [UI_WORKFLOW_AUDIT.md](UI_WORKFLOW_AUDIT.md), and push the completed branch to the private GitLab project after GitLab authentication is available.
+
 Audit handoff: verify the new session and meal flows on iOS; complete Units picker styling, shared profile typography, Today streak icons and step display using a verified data source; and test photo save/reopen before calling the vault fixed. Update the audit after each accepted page. Keep numerical readiness and unapproved clinical guidance gated.
+
+Follow-up: Units picker styling and Today streak icons are now implemented. First verify a source for same-day steps and the source/formula for any displayed goal; current dashboard contracts only provide check-in step values (yesterday and a seven-day average). Keep that card deferred until its inputs can be shown without inference.
 
 Workout planning v0.2: Core foundation is implemented and tested, but live flows still use the legacy generator. Next, add server-owned versioned TrainingPolicy and exact review records; remove invented generator defaults and automatic phase prescriptions; carry explicit timing and assumptions through DTOs; persist proposals and accepted revisions atomically in PostgreSQL; connect API and MAUI check-in/plan preview/acceptance; and keep unapproved recommendation flags off. Follow `docs/v1/WORKOUT_PLANNING_V02_HANDOFF.md` for the full sequence and test matrix.
 

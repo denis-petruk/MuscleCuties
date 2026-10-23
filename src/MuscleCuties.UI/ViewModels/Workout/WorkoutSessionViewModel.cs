@@ -119,6 +119,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
     }
 
     public bool IsDayOverview => CurrentScreen == SessionScreen.DayOverview;
+    public int WorkoutDayId => _workoutDayId;
     public bool IsActivityIntro => CurrentScreen == SessionScreen.ActivityIntro;
     public bool IsExerciseFlow => CurrentScreen == SessionScreen.ExerciseFlow;
     public bool IsActivitySummary => CurrentScreen == SessionScreen.ActivitySummary;
@@ -218,7 +219,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
     }
 
     // Awaitable for callers and tests; the query setter can start it without async void.
-    public async Task LoadSession(int workoutDayId)
+    public async Task LoadSession(int workoutDayId, string? activityTag = null)
     {
         StopRestTimer();
         var version = ++_loadVersion;
@@ -266,6 +267,14 @@ public partial class WorkoutSessionViewModel : ObservableObject
                 _savedLogs[item.WorkoutDayExerciseId] = BuildLogInput(item);
             RefreshActivityCards();
             CyclePhaseNote = phaseNote;
+            IsBusy = false;
+            if (!string.IsNullOrWhiteSpace(activityTag))
+            {
+                var activity = ActivityCards.FirstOrDefault(item =>
+                    string.Equals(item.Tag, activityTag, StringComparison.OrdinalIgnoreCase));
+                if (activity is not null)
+                    SelectActivity(activity);
+            }
         }
         catch (Exception)
         {

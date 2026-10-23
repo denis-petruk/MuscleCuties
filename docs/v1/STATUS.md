@@ -2,7 +2,11 @@
 
 **Effective Date:** 2026-10-23
 
+**UI audit update (2026-10-23):** Train now presents the activity-choice sheet before the exercise flow and passes the selected activity through navigation. XAML compiled into the UI assembly; iOS simulator packaging and Core tests could not complete due to local MSBuild task-host/socket errors. GitLab branch push awaits a user-provided credential.
+
 Audit handoff (2026-10-23): session, meal entry/custom food, You menu, Feedback/Privacy, and photo vault changes are present in source. Final simulator session/meal flows and an actual photo save/reopen are unverified. New custom-food company/micronutrient fields are local only and the backend is not deployed. The qualified-review register v0.2 documents no section-level approval for readiness scores or automated guidance.
+
+Today streaks now use the muscle/fire/cycle icons from You, and Units & Display selection cards match Profile setup styling. Dashboard API contracts currently contain no current-day step count or step-goal value; check-in step fields represent yesterday and a seven-day average, so no Today step figure or estimate was added. Review the updated pages in the simulator after the iOS build issue is resolved.
 
 Train and Nutrition page steps (2026-10-23): Train now uses pull-to-refresh for saved-plan regeneration, with full-width outlined week and type choices; the iOS build and simulator layout passed. A preference edit plus live regeneration remains unchecked. Nutrition's calculated-target breakdown is removed. Food log history no longer exits: the simulator revealed missing XAML color resources; after repair, Daily Food Log opened in the rebuilt app.
 

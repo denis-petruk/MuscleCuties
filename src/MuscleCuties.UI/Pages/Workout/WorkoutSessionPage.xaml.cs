@@ -16,6 +16,7 @@ public partial class WorkoutSessionPage : ContentPage
     private readonly WorkoutSessionViewModel _viewModel;
     private int? _loadedWorkoutDayId;
     private int _workoutDayId;
+    private string? _activityTag;
     private int _completionRevision;
 
     public WorkoutSessionPage(
@@ -36,12 +37,15 @@ public partial class WorkoutSessionPage : ContentPage
 
         if (_navigationContext.TryTake<int>("workoutDayId", out var workoutDayId))
             _workoutDayId = workoutDayId;
+        _navigationContext.TryTake<string>("workoutActivityTag", out _activityTag);
 
         if (_loadedWorkoutDayId == _workoutDayId)
             return;
 
         _loadedWorkoutDayId = _workoutDayId;
-        this.BeginPageLoad(() => _viewModel.LoadSession(_workoutDayId));
+        var activityTag = _activityTag;
+        _activityTag = null;
+        this.BeginPageLoad(() => _viewModel.LoadSession(_workoutDayId, activityTag));
     }
 
     protected override void OnNavigatingFrom(NavigatingFromEventArgs args)
