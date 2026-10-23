@@ -159,7 +159,7 @@ public static partial class UiTextCatalog
         ["T3CA01E9189"] = "Bloating",
         ["T3D628A819C"] = "SYMPTOMS & WELLNESS",
         ["T3DA474537A"] = "Skip",
-        ["T3DD3E3C265"] = "Readiness and recovery guidance is pending review. Tap to check in.",
+        ["T3DD3E3C265"] = "Complete today's check-in to see planning suggestions based on your answers.",
         ["T3E62ECFEB6"] = "Calories",
         ["T3F4F547D73"] = "Create an account",
         ["T3F57A10DBF"] = "Enter your unique username, then press next to set your password",
@@ -1001,7 +1001,7 @@ public static partial class UiTextCatalog
         ["T7C39586561"] =
             "Cool sleeping environment and calming evening routines to counteract higher body temperature.",
         ["T7D78772BDF"] =
-            "Numerical readiness and recovery guidance is unavailable pending qualified review. You can still record a daily check-in.",
+            "This check-in score is a planning estimate based on your answers, not a direct measurement of recovery or a medical assessment.",
         ["T7E10F8366C"] = "New movements, technique blocks, plyo basics, or intervals fit well here.",
         ["T7E1F5284D4"] = "Low impact first",
         ["T7E6FBF0397"] = "Fat Loss • Aggressive (22% deficit)",
@@ -1035,7 +1035,7 @@ public static partial class UiTextCatalog
         ["T8CC4E08B65"] = "M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zm4-6v3m4-3v3m4-3v3",
         ["T8CDF53B8B7"] = "Color for recovery",
         ["T8D46C14AD7"] = "Mindful Endurance",
-        ["T8DA17C2579"] = "Numerical guidance is unavailable pending qualified review.",
+        ["T8DA17C2579"] = "This check-in score is a planning estimate based on your answers, not a direct measurement of recovery or a medical assessment.",
         ["T8EB336B633"] = "Apple Health updated.",
         ["T8EBD071709"] = "Failed to update password securely. Please try again.",
         ["T8F0CA35DA8"] = "Consistency over intensity: meet your body where it is and practice deliberate self-care.",

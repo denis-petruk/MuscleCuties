@@ -8,267 +8,152 @@
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     x:DataType="{x:Type vm:DashboardViewModel}">
 
-    <Border
-        Style="{StaticResource CardPrimary}"
-        StrokeThickness="1"
-        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-        SemanticProperties.Description="{loc:LocalizedText Dashboard_Readiness_PendingReviewA11y}">
-        <Border.GestureRecognizers>
-            <TapGestureRecognizer Command="{Binding OpenDailyCheckInCommand}" />
-        </Border.GestureRecognizers>
-
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="12">
-            <!-- Header Row: Icon Tile, Title/Subtitle, and Status Badge -->
-            <Grid ColumnDefinitions="38,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
-                <Border
-                    WidthRequest="38"
-                    HeightRequest="38"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 12"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
-                    VerticalOptions="Center">
-                    <Path
-                        Data="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                        Stroke="{StaticResource Primary}"
-                        StrokeThickness="1.7"
-                        Fill="Transparent"
-                        Aspect="Uniform"
-                        WidthRequest="18"
-                        HeightRequest="18"
-                        HorizontalOptions="Center"
-                        VerticalOptions="Center" />
-                </Border>
-
-                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                    <Label Text="{loc:LocalizedText Dashboard_Readiness_Title}" Style="{StaticResource SectionTitle}" FontSize="17" />
-                    <Label Text="Daily biometric sync &amp; readiness"
-                           Style="{StaticResource CaptionLabel}" FontSize="12" />
+    <Border Style="{StaticResource CardPrimary}"
+            StrokeThickness="1"
+            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+        <VerticalStackLayout Spacing="12">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                    <Label Text="{loc:LocalizedText Dashboard_Readiness_Title}"
+                           Style="{StaticResource SectionTitle}"
+                           FontSize="17" />
+                    <Label Text="{loc:LocalizedText Dashboard_Readiness_SelfReportedSubtitle}"
+                           Style="{StaticResource CaptionLabel}"
+                           FontSize="12" />
                 </VerticalStackLayout>
-
-                <Border
-                    Grid.Column="2"
-                    StrokeShape="RoundRectangle 999"
-                    StrokeThickness="0"
-                    Padding="10,4"
-                    VerticalOptions="Center"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
-                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="5" VerticalOptions="Center">
-                        <BoxView
-                            WidthRequest="7"
-                            HeightRequest="7"
-                            CornerRadius="4"
-                            Color="{StaticResource Primary}"
-                            VerticalOptions="Center"
-                            IsVisible="{Binding NeedsDailyCheckIn}" />
-                        <Path
-                            Data="M20 6L9 17l-5-5"
-                            Stroke="{AppThemeBinding Light={StaticResource SuccessLight}, Dark={StaticResource SuccessDark}}"
-                            StrokeThickness="2"
-                            StrokeLineCap="Round"
-                            StrokeLineJoin="Round"
-                            Aspect="Uniform"
-                            WidthRequest="11"
-                            HeightRequest="11"
-                            VerticalOptions="Center"
-                            IsVisible="{Binding NeedsDailyCheckIn, Converter={StaticResource InvertedBoolConverter}}" />
-                        <Label
-                            Grid.Column="1"
-                            FontSize="12"
-                            FontAttributes="Bold"
-                            VerticalOptions="Center">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding NeedsDailyCheckIn}" Value="True">
-                                    <Setter Property="Text" Value="Check in" />
-                                    <Setter Property="TextColor" Value="{StaticResource Primary}" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="Label" Binding="{Binding NeedsDailyCheckIn}" Value="False">
-                                    <Setter Property="Text" Value="Logged" />
-                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource SuccessLight}, Dark={StaticResource SuccessDark}}" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                    </Grid>
+                <Border Grid.Column="1"
+                        IsVisible="{Binding NeedsDailyCheckIn}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 999"
+                        Padding="10,4"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
+                    <Label Text="{loc:LocalizedText Dashboard_Readiness_CheckInNeeded}"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Primary}" />
                 </Border>
             </Grid>
 
-            <!-- Approved Score Policy: Composite Score -->
-            <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8"
-                  IsVisible="{Binding HasApprovedScorePolicy}">
-                <Label Text="{Binding CompositeScore, Converter={StaticResource LocalizedStringConverter}}"
-                       FontSize="22" FontAttributes="Bold"
-                       TextColor="{StaticResource Primary}" />
-                <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_Readiness_DailyBalanceMax}" Style="{StaticResource MutedLabel}"
-                       FontSize="13" VerticalOptions="Center" />
-                <Label Grid.Column="2" Text="{loc:LocalizedText Dashboard_Readiness_AverageScores}" Style="{StaticResource CaptionLabel}"
-                       FontSize="11" VerticalOptions="Center" />
-            </Grid>
-
-            <!-- Approved Score Policy: Readiness & Recovery Score Grid -->
-            <Grid Grid.Row="2" ColumnDefinitions="*,Auto,*" ColumnSpacing="14"
-                  IsVisible="{Binding HasApprovedScorePolicy}">
-                <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto" RowSpacing="4"
-                      SemanticProperties.Description="{Binding ReadinessScore, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_Readiness_ReadinessScoreFormat}">
-                    <Grid ColumnDefinitions="36,Auto" ColumnSpacing="8">
-                        <Border Style="{StaticResource ReadinessScoreBadge}">
-                            <Path
-                                Style="{StaticResource ReadinessScoreIcon}"
-                                Data="M13 2L4 14h7l-1 8 10-12h-7l1-8z"
-                                Stroke="{Binding ReadinessScore, Converter={StaticResource ScoreToColorConverter}}" />
-                        </Border>
-                        <Label
-                            Grid.Column="1"
-                            Style="{StaticResource ReadinessScoreValue}"
-                            Text="{Binding ReadinessScore, Converter={StaticResource LocalizedStringConverter}}"
-                            TextColor="{Binding ReadinessScore, Converter={StaticResource ScoreToColorConverter}}" />
-                    </Grid>
-                    <Label Grid.Row="1" Text="{loc:LocalizedText Dashboard_Readiness_ReadinessLabel}"
-                           Style="{StaticResource ReadinessScoreMetricTitle}" />
-                    <Label Grid.Row="2"
-                           Text="{Binding ReadinessLabel, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionLabel}"
-                           FontSize="13" LineBreakMode="WordWrap" />
-                </Grid>
-
-                <BoxView Grid.Column="1" WidthRequest="1" Margin="0,2"
-                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}" />
-
-                <Grid Grid.Column="2" RowDefinitions="Auto,Auto,Auto" RowSpacing="4"
-                      SemanticProperties.Description="{Binding RecoveryScore, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_Readiness_RecoveryScoreFormat}">
-                    <Grid ColumnDefinitions="36,Auto" ColumnSpacing="8">
-                        <Border Style="{StaticResource ReadinessScoreBadge}">
-                            <Path
-                                Style="{StaticResource ReadinessScoreIcon}"
-                                Data="M12 21s-8-4.5-8-10a4.5 4.5 0 0 1 8-2.7 4.5 4.5 0 0 1 8 2.7c0 5.5-8 10-8 10z"
-                                Stroke="{Binding RecoveryScore, Converter={StaticResource ScoreToColorConverter}}" />
-                        </Border>
-                        <Label
-                            Grid.Column="1"
-                            Style="{StaticResource ReadinessScoreValue}"
-                            Text="{Binding RecoveryScore, Converter={StaticResource LocalizedStringConverter}}"
-                            TextColor="{Binding RecoveryScore, Converter={StaticResource ScoreToColorConverter}}" />
-                    </Grid>
-                    <Label Grid.Row="1" Text="{loc:LocalizedText Dashboard_Readiness_RecoveryLabel}"
-                           Style="{StaticResource ReadinessScoreMetricTitle}" />
-                    <Label Grid.Row="2"
-                           Text="{Binding RecoveryLabel, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionLabel}"
-                           FontSize="13" LineBreakMode="WordWrap" />
-                </Grid>
-            </Grid>
-
-            <!-- Pending Review / Policy Callout Box -->
-            <Border
-                Grid.Row="3"
-                IsVisible="{Binding HasApprovedScorePolicy, Converter={StaticResource InvertedBoolConverter}}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 12"
-                Padding="12,10">
-                <Grid ColumnDefinitions="28,*" ColumnSpacing="10" VerticalOptions="Center">
-                    <Border
-                        WidthRequest="28"
-                        HeightRequest="28"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 8"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray800}}"
-                        VerticalOptions="Start">
-                        <Path
-                            Data="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                            StrokeThickness="1.5"
-                            Fill="Transparent"
-                            Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
-                    </Border>
-                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                        <Label
-                            Text="Local Health Privacy &amp; Guidance"
-                            FontSize="12"
-                            FontAttributes="Bold"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                        <Label
-                            Text="{Binding ScoreSourceLabel, Converter={StaticResource LocalizedStringConverter}}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontSize="11"
-                            LineBreakMode="WordWrap" />
+            <VerticalStackLayout Spacing="10" IsVisible="{Binding HasTodayReadinessScore}">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" VerticalOptions="Center">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="{loc:LocalizedText Dashboard_Readiness_CheckInScore}"
+                               Style="{StaticResource CaptionLabel}"
+                               FontSize="12" />
+                        <Label Text="{Binding TodayReadinessScoreText, Converter={StaticResource LocalizedStringConverter}}"
+                               FontFamily="Inter"
+                               FontSize="34"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Primary}" />
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
+                        <Label Text="{Binding TodayReadinessBandText, Converter={StaticResource LocalizedStringConverter}}"
+                               FontAttributes="Bold"
+                               FontSize="15" />
+                        <Label Text="{Binding TodayReadinessGuidanceText, Converter={StaticResource LocalizedStringConverter}}"
+                               Style="{StaticResource BodyLabel}"
+                               FontSize="13"
+                               LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                 </Grid>
-            </Border>
 
-            <!-- Daily Check-In Action Tile -->
-            <Border
-                Grid.Row="4"
-                IsVisible="{Binding HasApprovedScorePolicy, Converter={StaticResource InvertedBoolConverter}}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                StrokeThickness="0"
-                StrokeShape="RoundRectangle 12"
-                Padding="12,10">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding OpenDailyCheckInCommand}" />
-                </Border.GestureRecognizers>
-                <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="10" VerticalOptions="Center">
-                    <Border
-                        WidthRequest="32"
-                        HeightRequest="32"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 10"
-                        BackgroundColor="{StaticResource Primary}"
-                        VerticalOptions="Center">
-                        <Path
-                            Data="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
-                            Stroke="{StaticResource White}"
-                            StrokeThickness="1.8"
-                            StrokeLineCap="Round"
-                            StrokeLineJoin="Round"
-                            Aspect="Uniform"
-                            WidthRequest="15"
-                            HeightRequest="15"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="8"
+                  IsVisible="{Binding HasTodayReadinessRecord}">
+                    <Border Style="{StaticResource CardSecondary}" Padding="10,8">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingSleep}"
+                                   Style="{StaticResource CaptionLabel}" />
+                            <Label Grid.Column="1" Text="{Binding TodayReadinessSleepQualityText}"
+                                   FontAttributes="Bold" />
+                        </Grid>
                     </Border>
+                    <Border Grid.Column="1" Style="{StaticResource CardSecondary}" Padding="10,8">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingEnergy}"
+                                   Style="{StaticResource CaptionLabel}" />
+                            <Label Grid.Column="1" Text="{Binding TodayReadinessEnergyText}"
+                                   FontAttributes="Bold" />
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="1" Style="{StaticResource CardSecondary}" Padding="10,8">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingSoreness}"
+                                   Style="{StaticResource CaptionLabel}" />
+                            <Label Grid.Column="1" Text="{Binding TodayReadinessSorenessText}"
+                                   FontAttributes="Bold" />
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardSecondary}" Padding="10,8">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingStress}"
+                                   Style="{StaticResource CaptionLabel}" />
+                            <Label Grid.Column="1" Text="{Binding TodayReadinessStressText}"
+                                   FontAttributes="Bold" />
+                        </Grid>
+                    </Border>
+            </Grid>
 
-                    <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                        <Label FontSize="13" FontAttributes="Bold">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding NeedsDailyCheckIn}" Value="True">
-                                    <Setter Property="Text" Value="Record daily check-in" />
-                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="Label" Binding="{Binding NeedsDailyCheckIn}" Value="False">
-                                    <Setter Property="Text" Value="Today's check-in logged" />
-                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                        <Label FontSize="11" Style="{StaticResource CaptionLabel}">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding NeedsDailyCheckIn}" Value="True">
-                                    <Setter Property="Text" Value="Log sleep, energy, and body metrics" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="Label" Binding="{Binding NeedsDailyCheckIn}" Value="False">
-                                    <Setter Property="Text" Value="Biometrics stored securely on device" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                    </VerticalStackLayout>
+            <Label Text="{loc:LocalizedText Dashboard_Readiness_ScoreExplanation}"
+                   Style="{StaticResource CaptionLabel}"
+                   FontSize="11"
+                   LineBreakMode="WordWrap"
+                   IsVisible="{Binding HasTodayReadinessScore}" />
 
-                    <Path
-                        Grid.Column="2"
-                        Data="M9 18l6-6-6-6"
-                        Stroke="{StaticResource Primary}"
-                        StrokeThickness="2"
-                        StrokeLineCap="Round"
-                        StrokeLineJoin="Round"
-                        Aspect="Uniform"
-                        WidthRequest="14"
-                        HeightRequest="14"
-                        VerticalOptions="Center" />
+            <Label Text="{loc:LocalizedText Dashboard_Readiness_NoCurrentCheckIn}"
+                   Style="{StaticResource BodyLabel}"
+                   FontSize="13"
+                   LineBreakMode="WordWrap"
+                   IsVisible="{Binding HasTodayReadinessRecord, Converter={StaticResource InvertedBoolConverter}}">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding TodayReadinessIncomplete}" Value="True">
+                        <Setter Property="Text" Value="{loc:LocalizedText Dashboard_CheckIn_IncompleteAllFourRatings}" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+
+            <Button Text="{loc:LocalizedText Dashboard_Readiness_CompleteCheckIn}"
+                    Command="{Binding OpenDailyCheckInCommand}"
+                    IsVisible="{Binding HasTodayReadinessScore, Converter={StaticResource InvertedBoolConverter}}"
+                    MinimumHeightRequest="46"
+                    CornerRadius="12" />
+
+            <Button Text="{loc:LocalizedText Dashboard_Readiness_ReviewChanges}"
+                    Command="{Binding ReviewReadinessAdjustmentCommand}"
+                    IsVisible="{Binding CanReviewReadiness}"
+                    IsEnabled="{Binding IsReadinessProposalBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    MinimumHeightRequest="46"
+                    CornerRadius="12" />
+
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding IsReadinessProposalVisible}">
+                <ActivityIndicator IsRunning="{Binding IsReadinessProposalBusy}"
+                                   IsVisible="{Binding IsReadinessProposalBusy}"
+                                   Color="{StaticResource Primary}" />
+                <Label Text="{Binding ReadinessProposalSummary}"
+                       Style="{StaticResource BodyLabel}"
+                       LineBreakMode="WordWrap" />
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding ReadinessProposalChanges}"
+                                     Spacing="6">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Label Text="{Binding .}" Style="{StaticResource BodyLabel}"
+                                   LineBreakMode="WordWrap" />
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8"
+                      IsVisible="{Binding HasReadinessProposalActions}">
+                    <Button Text="{loc:LocalizedText Dashboard_Readiness_ApplyChanges}"
+                            Command="{Binding ApplyReadinessAdjustmentCommand}"
+                            IsEnabled="{Binding IsReadinessProposalBusy, Converter={StaticResource InvertedBoolConverter}}"
+                            MinimumHeightRequest="46" CornerRadius="12" />
+                    <Button Grid.Column="1" Text="{loc:LocalizedText Dashboard_Readiness_KeepPlan}"
+                            Command="{Binding KeepWorkoutPlanCommand}"
+                            IsEnabled="{Binding IsReadinessProposalBusy, Converter={StaticResource InvertedBoolConverter}}"
+                            MinimumHeightRequest="46" CornerRadius="12" />
                 </Grid>
-            </Border>
-        </Grid>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
     </Border>
 </ContentView>

@@ -609,12 +609,23 @@ public sealed class MobileJourneyCloudGateway(
         DateOnly today,
         CancellationToken cancellationToken = default)
     {
+        return await GetDashboardOverviewAsync(today, null, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<BackendApiResponse<DashboardOverviewResponse>> GetDashboardOverviewAsync(
+        DateOnly today,
+        string? timeZoneId,
+        CancellationToken cancellationToken = default)
+    {
         var tokens = await tokenStore.ReadTokensAsync(cancellationToken).ConfigureAwait(false);
         if (tokens is null || tokens.AccountId == Guid.Empty)
             return new BackendApiResponse<DashboardOverviewResponse>(BackendApiStatus.Unauthorized, null, "unauthenticated");
 
+        var timeZoneQuery = string.IsNullOrWhiteSpace(timeZoneId)
+            ? string.Empty
+            : $"&timeZoneId={Uri.EscapeDataString(timeZoneId)}";
         return await apiClient.GetAsync<DashboardOverviewResponse>(
-            $"/api/v1/dashboard/overview?date={today:yyyy-MM-dd}",
+            $"/api/v1/dashboard/overview?date={today:yyyy-MM-dd}{timeZoneQuery}",
             cancellationToken).ConfigureAwait(false);
     }
 

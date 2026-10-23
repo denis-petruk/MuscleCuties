@@ -104,7 +104,7 @@ public partial class NutritionViewModel
             return false;
         }
 
-        return amount >= 0f;
+        return float.IsFinite(amount) && amount >= 0f;
     }
 
     private static bool TryParseOptionalNutrient(string value, out float? amount)

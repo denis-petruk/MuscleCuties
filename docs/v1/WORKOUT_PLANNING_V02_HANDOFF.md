@@ -1,20 +1,20 @@
 # Workout planning v0.2 — implementation handoff
 
-Source: owner-provided **MC-PLANNING-0.2**, dated 2026-10-23, and subsequent
-owner responses on **MC-WORKOUT-POLICY 0.1.0**. The original product document
+Source: owner-provided **MC-WORKOUT-POLICY 0.2.0** instructions and follow-up
+template-mapping requirements, dated 2026-10-23. The original product document
 was attached to the Codex chat and is not part of this repository.
 
 ## Product and release constraints
 
-- Training policy ID: **MC-WORKOUT-POLICY**. Version: **0.1.0**. Approval status:
-  **Approved — reported by product owner**. Reviewer details: **not yet
-  supplied**. Approval date: **not yet supplied**. The owner says this approves
-  the specified training policy, but the conversation and repository still lack
-  its exact numerical prescriptions and HIIT/progression conditions. These
-  missing values block new generation; approval alone does not supply them.
-- The score policy has a separate approval gate. The owner has not validated
-  its numerical formula, approved clinical symptom triage, injury rehab or
-  excluded populations, or approved future numerical prescription changes.
+- Training policy ID: **MC-WORKOUT-POLICY**. Target version: **0.2.0**. The owner
+  supplied numerical prescriptions, activity eligibility, readiness bands,
+  progression/regression conditions, and hard-day limits for this task. Historical
+  0.1.0 approval is reported by the owner; reviewer details and approval date
+  remain unspecified and are not fabricated here.
+- The readiness score is an authorized planning estimate, not a medical assessment
+  or empirical recovery measure. Symptoms and restrictions take precedence. No
+  clinical suitability, rehabilitation, or clearance is inferred from exercise
+  names or missing data.
 - Implement C#/.NET 10 with Core domain rules, UseCases DTOs, PostgreSQL
   persistence, server endpoints, and MAUI iOS views. The repository's AGENTS.md
   prohibits SQLite in the client, despite the source document's proposed SQLite
@@ -43,11 +43,13 @@ provided, without counting the hours between them, and generates no extra hard
 sessions just because all seven days are available. The Core suite passed
 287/287 and the iOS simulator build passed with zero warnings/errors after
 this foundation was added. These types are not connected to the active API, PostgreSQL plan store,
-or MAUI screens. Owner-reported approval is recorded in
-`WorkoutTrainingPolicyV010`; its numerical rules remain incomplete. New legacy
-generation is blocked in server and local flows. Plan reads keep existing
-plans. Registration no longer creates an unconfirmed initial plan, and workout
-preference edits save without replacing a plan while generation is blocked.
+or MAUI screens. The latest implementation adds activity-specific v0.2 rules,
+progression rules, versioned strength slots, a deterministic slot resolver, and
+nullable reviewed catalog fields. `WORKOUT_STRENGTH_TEMPLATE_MAPPING_V020.md`
+records candidate IDs, equipment, policy prescriptions, and missing review
+metadata. Existing catalog rows are intentionally not marked reviewed. The
+active API generator and atomic proposal/revision persistence still require
+integration; these pure rules are not yet a completed user-facing workflow.
 
 The onboarding discomfort slider was checked in source: left is **Severe** and
 right is **None**; `QuizViewModel` saves the semantic discomfort value using
@@ -57,25 +59,25 @@ unchanged, so no stored scale is silently reinterpreted.
 | Rule | Current behavior |
 | --- | --- |
 | `ExplicitSessionDurationRule` | Straight-set, round-block, timed-session, and daily totals with explicit rests, transitions, unilateral coverage, and unavailable results for incomplete timing. |
-| `TodayCheckInScoreRule` | Validates the four 1–5 inputs, time zone and current local date; computes the exact raw prototype formula and bands only when the display flag and documented section approval are supplied. |
+| `TodayCheckInScoreRule` | Validates the four 1–5 inputs, time zone and current local date; computes the supplied raw score and bands. Missing, invalid, or stale values produce no score. |
 | `DailyActivityCapacityRule` | Counts distinct planned sessions, checks time windows and capacity, and returns demand-overlap review reasons without fabricating a fatigue score. |
 | `ExerciseEligibilityV02Rule` | Requires reviewed catalog metadata, applies explicit restrictions/equipment/skill/exclusions, and checks reviewed substitution equivalence. |
-| `PlanRevisionV02Rule` | Validates proposals, preserves completed work, freezes accepted snapshots, rejects stale revisions, and requires exact training-policy review for prescriptions. The database compare/write transaction remains to be built. |
-| `TodayPlanningDecisionRule` | Gives restrictions and current symptoms precedence; a high score never increases work; lower-score suggestions require their own flag and section approval. |
+| `PlanRevisionV02Rule` | Validates proposals, preserves completed work, freezes accepted snapshots, and rejects stale revisions. The database compare/write transaction remains to be built. |
+| `TodayPlanningDecisionRule` | Gives restrictions and current symptoms precedence; a high score never increases work; middle and low bands propose only the supplied optional-work choices. |
 | `ProgressionReviewV02Rule` | Requires a matching approved policy and consecutive complete same-exercise history; current limitations, pain, substitutions, and incomplete work prevent eligibility. It returns review/confirmation state and never changes a prescription. |
 
-The planning score, capacity, eligibility, revision, Today, and progression
-rules remain unwired to live plans. Check-in capture is wired through MAUI,
-the authenticated API, and PostgreSQL; legacy generation is now blocked.
-Core suite: 265 passed. Server build: zero warnings/errors. iOS simulator build:
-zero warnings/errors on 2026-10-23.
+The planning score, capacity, eligibility, revision, Today, progression, and
+strength-slot rules are not yet wired into an end-to-end persisted plan flow.
+Check-in capture and score display are wired through MAUI, the authenticated API,
+and PostgreSQL. Historical test/build results in this handoff predate the current
+uncommitted changes. On 2026-10-23, the focused .NET test command could not start:
+the machine has SDK 9.0.318 while the repository targets .NET 10.
 
 The check-in slice captures optional 1–5 sleep-quality, soreness, and stress
 values plus the device time-zone ID through the authenticated API, stores server
-recording time and a revision number in PostgreSQL, and exposes the fields in
-the localized MAUI check-in form. Partial input remains allowed and is
-associated with the device time zone; this slice does not calculate or display
-the v0.2 prototype score yet. Migration:
+recording time and a revision number in PostgreSQL, and exposes the fields and
+score in the localized MAUI check-in form. Partial input remains allowed and is
+associated with the device time zone. Migration:
 `20261023120000_AddWorkoutPlanningCheckInInputs`.
 
 ## Remaining implementation, in dependency order
@@ -89,21 +91,16 @@ the structured Core session model separates purpose, modality, and style.
 Session cards, editing, completed-session logging, access and ability checks,
 and live duration/overlap checks for every option remain to be wired.
 
-The supplied response does **not** define strength volume/effort/load/rest,
-cardio and swimming duration or progression, HIIT opt-in/eligibility/frequency
-and work/recovery limits, yoga catalog demand, or progression adjustment
-limits. None may be inferred from the activity name. Current user-facing
-descriptions avoid promising heavier lifts, more sets, or universal yoga
-recovery. Obtain the reviewed rule payload before enabling generation.
+The owner supplied concrete rules for strength, cardio, swimming, HIIT, climbing,
+yoga, readiness, progression, and weekly limits. Use the values from
+`WorkoutTrainingPolicyV020`; do not add further numerical rules. Activity-specific
+history, reviewed catalog demand/restriction data, and timing support remain
+incomplete in stored inputs and must produce explicit gaps.
 
-1. **Versioned programming policy and review record.** Define server-owned
-   `TrainingPolicy` and trusted `ReviewApproval` storage with exact ruleset,
-   policy version, section IDs, reviewer evidence, exclusions, and effective
-   dates. Sets, reps, effort, rest, volume, loading increments, and progression
-   eligibility must come from that policy. The owner reports policy approval,
-   while exact values, reviewer details, and approval date remain missing.
-   Missing values return `NeedsProgrammingReview`; no hidden fallback. Never accept a client-provided
-   approval object as authority.
+1. **Versioned policy integration.** Use the supplied `WorkoutTrainingPolicyV020`
+   values as authoritative configuration. Preserve historical versions and the
+   owner-reported 0.1.0 approval without fabricating reviewer details or dates.
+   Never accept a client-provided approval object as authority.
 2. **Generator correction.** Refactor `GenerateWorkoutPlanUseCase` and
    `FourWeekPlanRule` to validate inputs and catalog completeness; use actual
    available days/minutes and outside/completed activities; allow a limited

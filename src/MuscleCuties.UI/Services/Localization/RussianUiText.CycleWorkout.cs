@@ -5,6 +5,8 @@ internal static partial class RussianUiText
     static partial void RegisterCycleWorkoutStrings()
     {
         Values["Injury_Log_ReloadAfterChangeFailed"] = "Изменение сохранено, но журнал травм не загрузился. Попробуйте снова перед тренировкой.";
+        Values["Injury_Log_PlanRefreshFailed"] = "Изменение травмы сохранено, но план тренировок не обновился. Попробуйте снова перед тренировкой.";
+        Values["Injury_Log_PageRefreshFailed"] = "Изменение травмы сохранено, но страница «Сегодня» не обновилась. Попробуйте снова.";
         Values["Cycle_Guidance_PhaseContext"] = "Фаза цикла даёт контекст, но не измеряет уровень гормонов или физические возможности сегодня.";
         Values["Cycle_Guidance_CheckIn"] = "Обратите внимание на самочувствие сегодня и запишите важные для вас симптомы.";
         Values["Cycle_Guidance_TrainingContext"] = "При оценке плана учитывайте сегодняшнее самочувствие и ограничения. Одна только фаза не задаёт интенсивность тренировки.";
@@ -87,6 +89,15 @@ internal static partial class RussianUiText
         Values["Cycle_WarningPopup_ForgotShiftTitle"] = "Забыл зафиксировать смену";
         Values["Cycle_WarningPopup_GotItButton"] = "Понял";
         Values["Workout_Activity_OpenWorkoutFormat"] = "Открыть тренировку: {0}";
+        Values["Workout_Readiness_OptionalSession"] = "Необязательная тренировка";
+        Values["Workout_Readiness_RequiredSession"] = "Обязательная тренировка";
+        Values["Workout_Readiness_EasierAlternativeMarked"] = "Более лёгкий вариант: да";
+        Values["Workout_Readiness_MarkEasierAlternative"] = "Отметить как более лёгкий вариант";
+        Values["Workout_Readiness_OptionalSessionHint"] = "Отметьте тренировку как необязательную для планирования с учётом самочувствия.";
+        Values["Workout_Readiness_EasierAlternativeHint"] = "Отметьте эту необязательную тренировку как более лёгкий вариант.";
+        Values["Workout_Readiness_OptionalExercise"] = "Необязательное упражнение";
+        Values["Workout_Readiness_OptionalSets"] = "Необязательные подходы";
+        Values["Workout_Readiness_OneRequiredSetHint"] = "Оставьте хотя бы один запланированный подход обязательным.";
         Values["Workout_Featured_ExercisesCountFormat"] = "{0} упражнения";
         Values["Workout_Featured_PreviewTitle"] = "Предпросмотр упражнений";
         Values["Workout_Featured_TargetFormat"] = "Цель: {0}";

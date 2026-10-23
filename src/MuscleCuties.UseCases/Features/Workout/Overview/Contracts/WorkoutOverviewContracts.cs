@@ -14,7 +14,11 @@ public sealed record WorkoutListEntry(
     bool IsRestDay,
     bool IsCompleted,
     int ExerciseCount,
-    int ActivityCount);
+    int ActivityCount)
+{
+    public bool IsOptional { get; init; }
+    public bool IsEasierAlternative { get; init; }
+}
 
 public sealed record WorkoutScheduleEntry(
     DateOnly Date,
@@ -25,7 +29,13 @@ public sealed record WorkoutScheduleEntry(
     int WorkoutDayId,
     bool IsToday,
     bool IsCompleted,
-    bool IsRestDay);
+    bool IsRestDay)
+{
+    public bool IsOptional { get; init; }
+    public bool IsEasierAlternative { get; init; }
+}
+
+public sealed record SetWorkoutSessionOptionalRequest(int WorkoutDayId, bool IsOptional, bool IsEasierAlternative);
 
 public sealed record WorkoutActivitySummaryDto(string Tag, string Title, int ExerciseCount);
 

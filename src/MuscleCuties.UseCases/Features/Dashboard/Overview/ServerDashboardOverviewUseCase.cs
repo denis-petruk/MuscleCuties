@@ -12,12 +12,13 @@ public sealed class ServerDashboardOverviewUseCase(IServerDashboardOverviewStore
     public Task<DashboardOverviewResponse> LoadOverviewAsync(
         Guid userId,
         DateOnly today,
+        string? timeZoneId = null,
         CancellationToken cancellationToken = default)
     {
         if (userId == Guid.Empty)
             throw new ArgumentException("User identifier must not be empty.", nameof(userId));
 
-        return store.LoadOverviewAsync(userId, today, cancellationToken);
+        return store.LoadOverviewAsync(userId, today, timeZoneId, cancellationToken);
     }
 
     public Task<DashboardCalendarResponse> LoadCalendarAsync(

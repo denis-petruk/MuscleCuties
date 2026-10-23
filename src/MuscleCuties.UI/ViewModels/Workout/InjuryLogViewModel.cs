@@ -14,6 +14,8 @@ namespace MuscleCuties.UI.ViewModels.Workout;
 public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 {
     private const string ReloadAfterChangeFailedTextKey = "Injury_Log_ReloadAfterChangeFailed";
+    private const string PlanRefreshFailedTextKey = "Injury_Log_PlanRefreshFailed";
+    private const string PageRefreshFailedTextKey = "Injury_Log_PageRefreshFailed";
     private readonly IWorkoutInjuryUseCase _injuries;
     private readonly Func<Task> _injuriesChangedAsync;
 
@@ -30,6 +32,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private bool _isHistoryExpanded;
     [ObservableProperty] private bool _isLoadError;
     [ObservableProperty] private bool _isPlanRefreshError;
+    [ObservableProperty] private bool _isPageRefreshError;
     [ObservableProperty] private int _newPainLevel;
 
     [ObservableProperty] private InjuryFlag _selectedSiteFlag;
@@ -78,6 +81,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         SelectStatusCommand = new RelayCommand<InjuryStatusOption>(SelectStatus);
         ToggleHistoryCommand = new RelayCommand(() => IsHistoryExpanded = !IsHistoryExpanded);
         RetryPlanRefreshCommand = new AsyncRelayCommand(RetryPlanRefreshAsync, () => !IsBusy);
+        RetryPageRefreshCommand = new AsyncRelayCommand(RetryPageRefreshAsync, () => !IsBusy);
     }
 
     public bool IsEditing => EditingInjuryId is not null;
@@ -127,6 +131,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     public RelayCommand<InjuryStatusOption> SelectStatusCommand { get; }
     public RelayCommand ToggleHistoryCommand { get; }
     public AsyncRelayCommand RetryPlanRefreshCommand { get; }
+    public AsyncRelayCommand RetryPageRefreshCommand { get; }
 
     public bool IsPageLoading => IsBusy;
     public AsyncRelayCommand LoadDataCommand => LoadCommand;
@@ -144,6 +149,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         MarkClearedCommand.NotifyCanExecuteChanged();
         EditInjuryCommand.NotifyCanExecuteChanged();
         RetryPlanRefreshCommand.NotifyCanExecuteChanged();
+        RetryPageRefreshCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedSiteFlagChanged(InjuryFlag value)
@@ -397,6 +403,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     private async Task RefreshAfterChangeAsync()
     {
         IsPlanRefreshError = false;
+        IsPageRefreshError = false;
         IsLoadError = false;
         ErrorText = string.Empty;
         try
@@ -422,7 +429,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         catch (Exception ex)
         {
             IsPlanRefreshError = true;
-            ErrorText = "Your injury log was saved, but the plan couldn't refresh. Try again before training.";
+            ErrorText = UiTextCatalog.Get(PlanRefreshFailedTextKey);
             Trace.WriteLine($"[InjuryLog] Plan refresh failed ({ex.GetType().Name}).");
         }
 
@@ -432,13 +439,13 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         }
         catch (Exception ex)
         {
+            IsPageRefreshError = true;
             if (!IsPlanRefreshError)
-                ErrorText = "Your injury log was saved, but the page couldn't refresh. Try again.";
-            IsPlanRefreshError = true;
+                ErrorText = UiTextCatalog.Get(PageRefreshFailedTextKey);
             Trace.WriteLine($"[InjuryLog] Page refresh failed ({ex.GetType().Name}).");
         }
 
-        if (!IsPlanRefreshError)
+        if (!IsPlanRefreshError && !IsPageRefreshError)
             _pendingChangeRefresh = false;
     }
 
@@ -448,6 +455,32 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         try
         {
             await RefreshAfterChangeAsync();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task RetryPageRefreshAsync()
+    {
+        IsBusy = true;
+        try
+        {
+            await _injuriesChangedAsync();
+            IsPageRefreshError = false;
+            if (!IsPlanRefreshError)
+            {
+                ErrorText = string.Empty;
+                _pendingChangeRefresh = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            IsPageRefreshError = true;
+            if (!IsPlanRefreshError)
+                ErrorText = UiTextCatalog.Get(PageRefreshFailedTextKey);
+            Trace.WriteLine($"[InjuryLog] Page refresh retry failed ({ex.GetType().Name}).");
         }
         finally
         {

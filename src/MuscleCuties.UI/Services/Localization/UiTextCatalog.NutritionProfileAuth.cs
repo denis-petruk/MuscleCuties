@@ -140,6 +140,7 @@ public static partial class UiTextCatalog
         English["Injury_LogContent_PainLevel"] = "Pain level";
         English["Injury_LogContent_PainLevelFromZeroToFive"] = "Pain level, from zero to five";
         English["Injury_LogContent_RefreshPlan"] = "Refresh plan";
+        English["Injury_LogContent_RefreshPage"] = "Refresh Today";
         English["Injury_LogContent_SaveInjury"] = "Save injury";
         English["Injury_LogContent_Show"] = "Show";
         English["Injury_LogContent_SinceValue"] = "Since {0}";
@@ -440,11 +441,10 @@ public static partial class UiTextCatalog
         English["Profile_Details_HealthRecordsStayOnThisDevice"] = "Health records synced to your account";
         English["Profile_Details_HealthTraining"] = "HEALTH & TRAINING";
         English["Profile_Details_HidePreview"] = "Hide preview";
-        English["Profile_Details_InjuryLog"] = "Injury Log";
         English["Profile_Details_LatestProgressPhoto"] = "Latest Progress Photo";
         English["Profile_Details_NameEmailPasswordCycleBaselines"] = "Name, email, password, cycle baselines";
         English["Profile_Details_NoPhotosStoredYet"] = "No photos stored yet";
-        English["Profile_Details_NutritionPacing"] = "Nutrition";
+        English["Profile_Details_Nutrition"] = "Nutrition";
         English["Profile_Details_MicronutrientTargets"] = "Micronutrient targets";
         English["Profile_Details_MicronutrientTargetsDetail"] = "Iron, vitamins, and minerals";
         English["Profile_Details_PersonalInfo"] = "Personal Info";
@@ -468,7 +468,6 @@ public static partial class UiTextCatalog
         English["Profile_Feedback_IncludeContactEmailForAReply"] = "Include contact email for a reply";
         English["Profile_Feedback_IncludeReplyEmail"] = "Include reply email";
         English["Profile_Feedback_OpenEmailDraft"] = "Open email draft";
-        English["Profile_Feedback_PleaseLeaveOutCycleWeightSymptom"] = "Please leave out cycle, weight, symptom, and injury details.";
         English["Profile_Feedback_Priority"] = "Priority";
         English["Profile_Feedback_Remove"] = "Remove";
         English["Profile_Feedback_ReplyEmail"] = "Reply email";
@@ -575,7 +574,7 @@ public static partial class UiTextCatalog
         English["Profile_PhotoJourney_SecondPhoto"] = "Use as second photo";
         English["Profile_PhotoJourney_CloseComparison"] = "Close comparison";
         English["Profile_PhotoJourney_ComparisonInstructions"] = "Drag the slider to compare two photos. Close to hide them.";
-        English["Profile_PhotoJourney_NoProgressPhotosYet"] = "No Progress Photos Yet";
+        English["Profile_PhotoJourney_NoProgressPhotoYet"] = "No progress photo yet";
         English["Profile_PhotoJourney_PhotoHiddenForPrivacy"] = "Photo Hidden for Privacy";
         English["Profile_PhotoJourney_PlusAddProgressPhoto"] = "+ Add Progress Photo";
         English["Profile_PhotoJourney_PrivacyFirstPhotoVault"] = "Privacy-First Photo Vault";

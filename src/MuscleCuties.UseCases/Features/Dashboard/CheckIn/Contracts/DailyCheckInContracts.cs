@@ -1,8 +1,21 @@
 namespace MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 
-public sealed record DailyCheckInStatusRequest(DateOnly Date);
+public sealed record DailyCheckInStatusRequest(DateOnly Date, string? TimeZoneId = null);
 
-public sealed record DailyCheckInStatusResponse(bool IsCompleted, string ScoreText, string TierText);
+public sealed record TodayReadinessCheckInDto(
+    string Status,
+    decimal? RawScore,
+    string? Band,
+    int? SleepQuality,
+    int? Energy,
+    int? Soreness,
+    int? Stress);
+
+public sealed record DailyCheckInStatusResponse(
+    bool IsCompleted,
+    string ScoreText,
+    string TierText,
+    TodayReadinessCheckInDto? TodayReadiness = null);
 
 public sealed record SubmitDailyCheckInRequest(
     DateOnly Date,
@@ -20,7 +33,8 @@ public sealed record SubmitDailyCheckInResponse(
     int ReadinessScore,
     string ReadinessTier,
     string SessionSummary,
-    bool PlanRefreshFailed);
+    bool PlanRefreshFailed,
+    TodayReadinessCheckInDto? TodayReadiness = null);
 
 public interface IDailyCheckInStore
 {

@@ -7,30 +7,30 @@ public sealed class CheckInObservationPlanningInputTests
     [Fact]
     public void PlanningInputs_AcceptCompleteValuesInSupportedRanges()
     {
-        Assert.True(CheckInObservationRule.ArePlanningInputsValid(1, 5, 3, "America/Toronto"));
+        Assert.True(CheckInObservationRule.ArePlanningInputsValid(4, 1, 5, 3, "America/Toronto"));
     }
 
     [Theory]
-    [InlineData(0, 3, 3, "America/Toronto")]
-    [InlineData(3, 6, 3, "America/Toronto")]
-    [InlineData(3, 3, -1, "America/Toronto")]
-    [InlineData(3, 3, 3, "")]
-    [InlineData(3, 3, 3, "Unknown/Zone")]
-    public void PlanningInputs_RejectOutOfRangeOrInvalidTimezone(int? sleepQuality, int? soreness, int? stress, string? timeZoneId)
+    [InlineData(4, 0, 3, 3, "America/Toronto")]
+    [InlineData(4, 3, 6, 3, "America/Toronto")]
+    [InlineData(4, 3, 3, -1, "America/Toronto")]
+    [InlineData(4, 3, 3, 3, "")]
+    [InlineData(4, 3, 3, 3, "Unknown/Zone")]
+    public void PlanningInputs_RejectOutOfRangeOrInvalidTimezone(int? energy, int? sleepQuality, int? soreness, int? stress, string? timeZoneId)
     {
-        Assert.False(CheckInObservationRule.ArePlanningInputsValid(sleepQuality, soreness, stress, timeZoneId));
+        Assert.False(CheckInObservationRule.ArePlanningInputsValid(energy, sleepQuality, soreness, stress, timeZoneId));
     }
 
     [Fact]
-    public void PlanningInputs_AllowPartialCheckInWhenAssociatedWithTimezone()
+    public void PlanningInputs_RejectMissingRatingsButAllowLegacyCheckInWithoutPlanningInputs()
     {
-        Assert.True(CheckInObservationRule.ArePlanningInputsValid(4, null, null, "America/Toronto"));
-        Assert.True(CheckInObservationRule.ArePlanningInputsValid(null, null, null, null));
+        Assert.False(CheckInObservationRule.ArePlanningInputsValid(4, 4, null, null, "America/Toronto"));
+        Assert.True(CheckInObservationRule.ArePlanningInputsValid(null, null, null, null, null));
     }
 
     [Fact]
     public void PlanningInputs_RejectPartialCheckInWithoutTimezoneAssociation()
     {
-        Assert.False(CheckInObservationRule.ArePlanningInputsValid(4, null, null, null));
+        Assert.False(CheckInObservationRule.ArePlanningInputsValid(4, 4, null, null, null));
     }
 }

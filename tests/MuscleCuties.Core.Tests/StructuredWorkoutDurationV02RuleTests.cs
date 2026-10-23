@@ -91,6 +91,21 @@ public sealed class StructuredWorkoutDurationV02RuleTests
     }
 
     [Fact]
+    public void Hiit_UsesThreeRecoveriesAndTransitionsDirectlyToCooldown()
+    {
+        var hiit = Session(SessionPurposeV02.Conditioning, ActivityModalityV02.Cycling,
+            [SessionBlockV02.IntervalTraining(new ActivityIntervalV02(
+                WorkoutTrainingPolicyV020.HiitWorkIntervals, 1, 0.5m, 1.5m,
+                WorkoutTrainingPolicyV020.HiitRecoveryIntervals, 0m, 0m), "stationary-cycling-hiit")],
+            WorkoutTrainingPolicyV020.HiitWarmupMinutes, WorkoutTrainingPolicyV020.HiitCooldownMinutes,
+            new HashSet<ActivityDemandTag> { ActivityDemandTag.Conditioning }, IntendedIntensityV02.Vigorous);
+
+        var estimate = StructuredWorkoutDurationV02Rule.EvaluateSession(hiit);
+        Assert.Equal(WorkoutTrainingPolicyV020.HiitSessionDuration,
+            TimeSpan.FromMinutes((double)estimate.Minutes!.Value));
+    }
+
+    [Fact]
     public void Yoga_Modality_Does_Not_Force_Recovery_Purpose_Or_Easy_Intensity()
     {
         var yoga = Session(SessionPurposeV02.Skill, ActivityModalityV02.Yoga,

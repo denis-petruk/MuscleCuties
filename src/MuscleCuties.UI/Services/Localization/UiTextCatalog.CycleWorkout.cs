@@ -5,6 +5,8 @@ public static partial class UiTextCatalog
     static partial void RegisterCycleWorkoutStrings()
     {
         English["Injury_Log_ReloadAfterChangeFailed"] = "Your change was saved, but the injury log couldn't reload. Try again before training.";
+        English["Injury_Log_PlanRefreshFailed"] = "Your injury change was saved, but the workout plan couldn't refresh. Try again before training.";
+        English["Injury_Log_PageRefreshFailed"] = "Your injury change was saved, but Today couldn't refresh. Try again.";
         English["Cycle_Guidance_PhaseContext"] = "A cycle phase is context, not a measurement of hormone levels or today's exercise capacity.";
         English["Cycle_Guidance_CheckIn"] = "Notice how you feel today and record any symptoms that matter to you.";
         English["Cycle_Guidance_TrainingContext"] = "Use your current check-in and restrictions when reviewing your plan. A phase label alone does not set training intensity.";
@@ -87,6 +89,15 @@ public static partial class UiTextCatalog
         English["Cycle_WarningPopup_ForgotShiftTitle"] = "Forgot to log shift";
         English["Cycle_WarningPopup_GotItButton"] = "Got it";
         English["Workout_Activity_OpenWorkoutFormat"] = "Open workout: {0}";
+        English["Workout_Readiness_OptionalSession"] = "Optional session";
+        English["Workout_Readiness_RequiredSession"] = "Required session";
+        English["Workout_Readiness_EasierAlternativeMarked"] = "Easier alternative: yes";
+        English["Workout_Readiness_MarkEasierAlternative"] = "Mark as easier alternative";
+        English["Workout_Readiness_OptionalSessionHint"] = "Mark this session as optional for readiness planning.";
+        English["Workout_Readiness_EasierAlternativeHint"] = "Identify this optional session as an easier alternative.";
+        English["Workout_Readiness_OptionalExercise"] = "Optional exercise";
+        English["Workout_Readiness_OptionalSets"] = "Optional sets";
+        English["Workout_Readiness_OneRequiredSetHint"] = "Keep at least one planned set required.";
         English["Workout_Featured_ExercisesCountFormat"] = "{0} exercises";
         English["Workout_Featured_PreviewTitle"] = "Exercise Preview";
         English["Workout_Featured_TargetFormat"] = "Target: {0}";
