@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Workout.WorkoutActivityPreferencePicker"
+    x:Name="PreferencePickerRoot"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:controls="clr-namespace:MuscleCuties.UI.Controls.Workout"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
+    x:DataType="controls:WorkoutActivityPreferencePicker">
+
+    <VerticalStackLayout
+        Spacing="24"
+        BindableLayout.ItemsSource="{Binding ActivityGroups, Source={x:Reference PreferencePickerRoot}}">
+        <BindableLayout.ItemTemplate>
+            <DataTemplate x:DataType="workoutModels:WorkoutActivityGroupSection">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+                    <Grid Grid.Row="0" ColumnDefinitions="24,*" ColumnSpacing="8" Margin="2,4,2,0">
+                        <Image
+                            Source="{Binding GroupIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                            WidthRequest="20"
+                            HeightRequest="20"
+                            Aspect="AspectFit"
+                            VerticalOptions="Center"
+                            InputTransparent="True" />
+                        <Label
+                            Grid.Column="1"
+                            Text="{Binding GroupTitle, Converter={StaticResource LocalizedStringConverter}}"
+                            Style="{StaticResource FormFieldLabel}"
+                            FontSize="16"
+                            VerticalOptions="Center"
+                            SemanticProperties.HeadingLevel="Level3" />
+                    </Grid>
+
+                    <VerticalStackLayout
+                        Grid.Row="1"
+                        Spacing="10"
+                        BindableLayout.ItemsSource="{Binding Items}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="workoutModels:WorkoutActivityOptionItem">
+                                <Border
+                                    StrokeShape="RoundRectangle 14"
+                                    StrokeThickness="1"
+                                    Padding="14,10"
+                                    MinimumHeightRequest="62"
+                                    HorizontalOptions="Fill"
+                                    Margin="0"
+                                    SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="SemanticProperties.Hint"
+                                                    Value="{loc:LocalizedText Workout_ActivityPreference_SelectedHint}" />
+                                            <Setter Property="BackgroundColor"
+                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
+                                            <Setter Property="Stroke"
+                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                            <Setter Property="StrokeThickness" Value="1.5" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                            <Setter Property="SemanticProperties.Hint"
+                                                    Value="{loc:LocalizedText Workout_ActivityPreference_UnselectedHint}" />
+                                            <Setter Property="BackgroundColor"
+                                                    Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
+                                            <Setter Property="Stroke"
+                                                    Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference PreferencePickerRoot}, Path=ToggleActivityCommand, x:DataType=controls:WorkoutActivityPreferencePicker}"
+                                            CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+
+                                    <Grid ColumnDefinitions="40,*,24" ColumnSpacing="12">
+                                        <Border
+                                            Grid.Column="0"
+                                            WidthRequest="40"
+                                            HeightRequest="40"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 12"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource InputSurfaceDark}}"
+                                            VerticalOptions="Center"
+                                            InputTransparent="True">
+                                            <Image
+                                                Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                                WidthRequest="22"
+                                                HeightRequest="22"
+                                                Aspect="AspectFit"
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="Center" />
+                                        </Border>
+
+                                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="3"
+                                              VerticalOptions="Center">
+                                            <Label
+                                                Grid.Row="0"
+                                                Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
+                                                Style="{StaticResource BodyLabel}"
+                                                FontAttributes="Bold"
+                                                LineBreakMode="WordWrap" />
+
+                                            <Label
+                                                Grid.Row="1"
+                                                Text="{Binding Subtitle, Converter={StaticResource LocalizedStringConverter}}"
+                                                Style="{StaticResource MutedLabel}"
+                                                FontSize="14"
+                                                TextColor="{AppThemeBinding Light={StaticResource DeepMauve}, Dark={StaticResource ActivityDescriptionDark}}"
+                                                LineBreakMode="WordWrap">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}"
+                                                                 Value="True">
+                                                        <Setter Property="TextColor"
+                                                                Value="{AppThemeBinding Light={StaticResource ActivitySelectedSubtitleLight}, Dark={StaticResource ActivityDescriptionDark}}" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </Grid>
+
+                                        <Border
+                                            Grid.Column="2"
+                                            WidthRequest="24" HeightRequest="24"
+                                            StrokeShape="Ellipse"
+                                            StrokeThickness="1.5"
+                                            VerticalOptions="Center"
+                                            BackgroundColor="Transparent">
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
+                                                             Value="True">
+                                                    <Setter Property="BackgroundColor"
+                                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                                    <Setter Property="Stroke"
+                                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
+                                                             Value="False">
+                                                    <Setter Property="Stroke"
+                                                            Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray500}}" />
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                            <Path Data="M5 12L10 17L19 7" Stroke="White" StrokeThickness="2.5"
+                                                  StrokeLineCap="Round" StrokeLineJoin="Round"
+                                                  WidthRequest="16" HeightRequest="16" Aspect="Uniform"
+                                                  HorizontalOptions="Center" VerticalOptions="Center"
+                                                  IsVisible="{Binding IsSelected}" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </Grid>
+            </DataTemplate>
+        </BindableLayout.ItemTemplate>
+    </VerticalStackLayout>
+</ContentView>

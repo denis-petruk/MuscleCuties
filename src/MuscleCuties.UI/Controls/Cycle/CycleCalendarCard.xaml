@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Cycle.CycleCalendarCard"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:cycleControls="clr-namespace:MuscleCuties.UI.Controls.Cycle"
+    xmlns:cycleModels="clr-namespace:MuscleCuties.UI.Models.UI.Cycle"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Cycle"
+    x:DataType="vm:CycleViewModel">
+
+    <ContentView.Resources>
+        <Thickness x:Key="CalendarStripBottomSpacing">0,0,0,8</Thickness>
+        <Thickness x:Key="MonthNavigationBottomSpacing">0,0,0,8</Thickness>
+        <Thickness x:Key="CalendarCardPadding">20</Thickness>
+        <x:Double x:Key="CalendarCardRowSpacing">12</x:Double>
+        <x:Double x:Key="CalendarDayWidth">72</x:Double>
+        <x:Double x:Key="CalendarDayHeight">72</x:Double>
+        <x:Double x:Key="CalendarDaySpacing">8</x:Double>
+        <x:Double x:Key="WeekNavigationTargetSize">44</x:Double>
+    </ContentView.Resources>
+
+    <Border
+        Style="{StaticResource CardPrimary}"
+        Padding="{StaticResource CalendarCardPadding}"
+        StrokeThickness="1"
+        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+        <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto"
+              RowSpacing="{StaticResource CalendarCardRowSpacing}">
+
+            <!-- Row 0: Day summary + period countdown -->
+            <Grid ColumnDefinitions="*, Auto">
+                <Label
+                    Text="{Binding CycleDaySummary, Converter={StaticResource LocalizedStringConverter}}"
+                    Style="{StaticResource SectionTitle}"
+                    VerticalOptions="Center"
+                    SemanticProperties.HeadingLevel="Level2" />
+                <Label
+                    Grid.Column="1"
+                    Text="{Binding PeriodCountdownText, Converter={StaticResource LocalizedStringConverter}}"
+                    TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                    FontSize="13"
+                    FontAttributes="Bold"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="{Binding PeriodCountdownText, Converter={StaticResource LocalizedStringConverter}}" />
+            </Grid>
+
+            <!-- Row 1: Phase icon on neutral BG + Phase label & log info + action button -->
+            <Grid Grid.Row="1" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12" VerticalOptions="Center">
+                <!-- Neutral BG Container for Cycle SVG -->
+                <Border
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    StrokeShape="RoundRectangle 20"
+                    BackgroundColor="#FFFFFF"
+                    Stroke="{AppThemeBinding Light=#E5D6DE, Dark=#6A4A58}"
+                    StrokeThickness="1"
+                    Padding="6"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center">
+                    <Image
+                        Source="{Binding CurrentPhaseIconSource}"
+                        Aspect="AspectFit"
+                        WidthRequest="26"
+                        HeightRequest="26"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+
+                <!-- Phase Label & Last Logged Text -->
+                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                    <Label
+                        Text="{Binding PhaseLabel, Converter={StaticResource LocalizedStringConverter}}"
+                        FontSize="17"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                        VerticalOptions="Center"
+                        SemanticProperties.Description="{Binding PhaseLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_Calendar_CurrentPhaseFormat}" />
+                    <Label
+                        Text="{Binding LastPhaseLogText, Converter={StaticResource LocalizedStringConverter}}"
+                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                        FontSize="13" />
+                </VerticalStackLayout>
+
+                <!-- Action Button -->
+                <Button
+                    Grid.Column="2"
+                    Text="{Binding PhaseLogActionText, Converter={StaticResource LocalizedStringConverter}}"
+                    Command="{Binding AdvancePhaseCommand}"
+                    HeightRequest="42"
+                    MinimumHeightRequest="42"
+                    CornerRadius="12"
+                    Padding="14,0"
+                    FontSize="14"
+                    FontAttributes="Bold"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="{Binding PhaseLogActionText, Converter={StaticResource LocalizedStringConverter}}" />
+            </Grid>
+
+            <!-- Row 2: Prediction summary badge -->
+            <Label
+                Grid.Row="2"
+                Text="{Binding PredictionSummary, Converter={StaticResource LocalizedStringConverter}}"
+                Style="{StaticResource CaptionLabel}"
+                FontSize="13"
+                FontAttributes="Italic"
+                IsVisible="{Binding HasActiveCycle}"
+                SemanticProperties.Description="{Binding PredictionSummary, Converter={StaticResource LocalizedStringConverter}}" />
+
+            <!-- Row 3: Calendar edit hint -->
+            <Label
+                Grid.Row="3"
+                Text="{Binding CalendarEditHintText, Converter={StaticResource LocalizedStringConverter}}"
+                Style="{StaticResource MutedLabel}"
+                FontSize="14"
+                IsVisible="{Binding HasCalendarEditHint}" />
+
+            <!-- Row 4: Week navigation -->
+            <Grid Grid.Row="4" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <Border
+                    WidthRequest="{StaticResource WeekNavigationTargetSize}"
+                    HeightRequest="{StaticResource WeekNavigationTargetSize}"
+                    StrokeShape="RoundRectangle 12"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                    StrokeThickness="0"
+                    SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_PreviousWeekAccessibility}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding PreviousWeekCommand}" />
+                    </Border.GestureRecognizers>
+                    <Path Data="M15 18l-6-6 6-6"
+                          Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                          StrokeThickness="2" StrokeLineCap="Round" StrokeLineJoin="Round"
+                          Aspect="Uniform" WidthRequest="12" HeightRequest="12"
+                          HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+
+                <Label Grid.Column="1"
+                       Text="{Binding WeekRangeLabel}"
+                       Style="{StaticResource MutedLabel}"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center"
+                       VerticalOptions="Center" />
+
+                <Border Grid.Column="2"
+                        WidthRequest="{StaticResource WeekNavigationTargetSize}"
+                        HeightRequest="{StaticResource WeekNavigationTargetSize}"
+                        StrokeShape="RoundRectangle 12"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                        StrokeThickness="0"
+                        SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_NextWeekAccessibility}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NextWeekCommand}" />
+                    </Border.GestureRecognizers>
+                    <Path Data="M9 18l6-6-6-6"
+                          Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                          StrokeThickness="2" StrokeLineCap="Round" StrokeLineJoin="Round"
+                          Aspect="Uniform" WidthRequest="12" HeightRequest="12"
+                          HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+            </Grid>
+
+            <!-- Row 5: Scrollable selected week -->
+            <ScrollView
+                Grid.Row="5"
+                Orientation="Horizontal"
+                HorizontalScrollBarVisibility="Default"
+                Margin="{StaticResource CalendarStripBottomSpacing}"
+                SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_WeeklyStripAccessibility}">
+                <HorizontalStackLayout
+                Spacing="{StaticResource CalendarDaySpacing}"
+                BindableLayout.ItemsSource="{Binding CalendarStripDays}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="cycleModels:CycleDayItem">
+                        <Border
+                            WidthRequest="{StaticResource CalendarDayWidth}"
+                            HeightRequest="{StaticResource CalendarDayHeight}"
+                            StrokeShape="RoundRectangle 12"
+                            BackgroundColor="{Binding BackgroundColor}"
+                            Stroke="{Binding StrokeColor}"
+                            StrokeThickness="{Binding StrokeThickness}"
+                            Padding="12,8"
+                            SemanticProperties.Description="{Binding AccessibilityDescription, Converter={StaticResource LocalizedStringConverter}}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding SelectCalendarDayCommand, Source={RelativeSource AncestorType={x:Type vm:CycleViewModel}}, x:DataType=vm:CycleViewModel}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="2" HorizontalOptions="Center"
+                                  VerticalOptions="Center">
+                                <Label
+                                    Text="{Binding DayOfWeekShort, Converter={StaticResource LocalizedStringConverter}}"
+                                    FontSize="11"
+                                    FontAttributes="Bold"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                    HorizontalOptions="Center" />
+                                <Label
+                                    Grid.Row="1"
+                                    Text="{Binding DisplayDayLabel, Converter={StaticResource LocalizedStringConverter}}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{Binding TextColor}"
+                                    HorizontalOptions="Center" />
+                                <Ellipse
+                                    Grid.Row="2"
+                                    WidthRequest="6"
+                                    HeightRequest="6"
+                                    Fill="{Binding PhaseMarkerColor}"
+                                    HorizontalOptions="Center"
+                                    Margin="0,2,0,0" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
+            </ScrollView>
+
+            <Grid Grid.Row="6" ColumnDefinitions="Auto, *, Auto, Auto" ColumnSpacing="10" VerticalOptions="Center"
+                  Margin="{StaticResource MonthNavigationBottomSpacing}">
+                <Border
+                    WidthRequest="34"
+                    HeightRequest="34"
+                    StrokeShape="RoundRectangle 17"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                    StrokeThickness="1"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_PrevMonthAccessibility}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding PreviousMonthCommand}" />
+                    </Border.GestureRecognizers>
+                    <Path
+                        Data="M15 18l-6-6 6-6"
+                        Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                        StrokeThickness="2"
+                        StrokeLineCap="Round"
+                        StrokeLineJoin="Round"
+                        Aspect="Uniform"
+                        WidthRequest="12"
+                        HeightRequest="12"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+
+                <Label
+                    Grid.Column="1"
+                    Text="{Binding CurrentMonthLabel, Converter={StaticResource LocalizedStringConverter}}"
+                    HorizontalTextAlignment="Center"
+                    VerticalOptions="Center"
+                    Style="{StaticResource SectionTitle}"
+                    FontSize="18" />
+
+                <Border
+                    Grid.Column="2"
+                    Padding="10,4"
+                    StrokeShape="RoundRectangle 12"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
+                    StrokeThickness="0"
+                    VerticalOptions="Center"
+                    IsVisible="{Binding IsViewingCurrentMonth, Converter={StaticResource InvertedBoolConverter}}"
+                    SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_ReturnCurrentMonthAccessibility}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ReturnToTodayCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label
+                        Text="{loc:LocalizedText Cycle_Calendar_TodayAccessibility}"
+                        FontSize="12"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                        VerticalOptions="Center" />
+                </Border>
+
+                <Border
+                    Grid.Column="3"
+                    WidthRequest="34"
+                    HeightRequest="34"
+                    StrokeShape="RoundRectangle 17"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                    StrokeThickness="1"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_NextMonthAccessibility}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NextMonthCommand}" />
+                    </Border.GestureRecognizers>
+                    <Path
+                        Data="M9 18l6-6-6-6"
+                        Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                        StrokeThickness="2"
+                        StrokeLineCap="Round"
+                        StrokeLineJoin="Round"
+                        Aspect="Uniform"
+                        WidthRequest="12"
+                        HeightRequest="12"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+            </Grid>
+
+            <Label
+                Grid.Row="7"
+                Text="{Binding CalendarNavigationStatusText, Converter={StaticResource LocalizedStringConverter}}"
+                Style="{StaticResource CaptionLabel}"
+                IsVisible="{Binding HasCalendarNavigationStatus}" />
+
+            <!-- Expand / Collapse Month Grid Button -->
+            <Border
+                Grid.Row="8"
+                HeightRequest="44"
+                StrokeShape="RoundRectangle 12"
+                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}"
+                Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                StrokeThickness="1">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ToggleMonthGridExpandedCommand}" />
+                </Border.GestureRecognizers>
+                <Label
+                    Text="{Binding MonthExpandButtonText, Converter={StaticResource LocalizedStringConverter}}"
+                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                    FontSize="13"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+            </Border>
+
+            <!-- Expandable Month Grid & Legend -->
+            <VerticalStackLayout
+                Grid.Row="9"
+                Spacing="12"
+                IsVisible="{Binding IsMonthGridExpanded}">
+
+                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Default">
+                    <cycleControls:CycleMonthGrid
+                        ItemsSource="{Binding CalendarDays}"
+                        IsExpanded="{Binding IsMonthGridExpanded}"
+                        DaySelectedCommand="{Binding SelectCalendarDayCommand}" />
+                </ScrollView>
+
+                <!-- Legend for logged vs predicted -->
+                <Grid
+                    ColumnDefinitions="Auto, Auto, 16, Auto, Auto"
+                    ColumnSpacing="6"
+                    SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_LegendAccessibility}">
+
+                    <Border
+                        WidthRequest="14"
+                        HeightRequest="14"
+                        StrokeShape="RoundRectangle 4"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseDefaultLight}, Dark={StaticResource CyclePhaseDefaultDark}}"
+                        StrokeThickness="0"
+                        VerticalOptions="Center" />
+                    <Label
+                        Grid.Column="1"
+                        Text="{loc:LocalizedText Cycle_Calendar_RecordedObservationLegend}"
+                        Style="{StaticResource CaptionLabel}"
+                        FontSize="12"
+                        VerticalOptions="Center" />
+
+                    <Border
+                        Grid.Column="3"
+                        WidthRequest="14"
+                        HeightRequest="14"
+                        StrokeShape="RoundRectangle 4"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseDefaultLight}, Dark={StaticResource CyclePhaseDefaultDark}}"
+                        Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                        StrokeThickness="1"
+                        Opacity="0.72"
+                        VerticalOptions="Center" />
+                    <Label
+                        Grid.Column="4"
+                        Text="{loc:LocalizedText Cycle_Calendar_PredictedEstimatedLegend}"
+                        Style="{StaticResource CaptionLabel}"
+                        FontSize="12"
+                        FontAttributes="Italic"
+                        VerticalOptions="Center" />
+                </Grid>
+            </VerticalStackLayout>
+
+        </Grid>
+    </Border>
+</ContentView>
