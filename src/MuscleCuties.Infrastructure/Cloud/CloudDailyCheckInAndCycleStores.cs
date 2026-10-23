@@ -83,7 +83,11 @@ public sealed class CloudDailyCheckInStore(
             bloating = request.HasBloating,
             weightKg = request.BodyWeightKg.HasValue ? (decimal?)request.BodyWeightKg.Value : null,
             sleep3dAvg = healthSummary?.AverageSleep3dHours is > 0 ? (decimal?)healthSummary.AverageSleep3dHours.Value : null,
-            steps7dAvg = healthSummary?.HasMovementData == true ? (int?)healthSummary.AverageSteps : null
+            steps7dAvg = healthSummary?.HasMovementData == true ? (int?)healthSummary.AverageSteps : null,
+            planningSleepQuality = request.PlanningSleepQuality,
+            planningSoreness = request.PlanningSoreness,
+            planningStress = request.PlanningStress,
+            planningTimeZoneId = request.PlanningTimeZoneId
         };
 
         var response = await apiClient.SendMutationAsync<object, DailyCheckInRecord>(

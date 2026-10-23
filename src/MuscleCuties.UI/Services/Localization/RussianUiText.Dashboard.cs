@@ -34,6 +34,11 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_EnergySectionTitle"] = "ЭНЕРГИЯ";
         Values["Dashboard_CheckIn_EnergyVeryHighLabel"] = "Очень высокая";
         Values["Dashboard_CheckIn_EnergyVeryLowLabel"] = "Очень низкий";
+        Values["Dashboard_CheckIn_PlanningTitle"] = "Для планирования тренировок";
+        Values["Dashboard_CheckIn_PlanningSleepQuality"] = "Качество сна";
+        Values["Dashboard_CheckIn_PlanningSoreness"] = "Болезненность мышц";
+        Values["Dashboard_CheckIn_PlanningStress"] = "Стресс";
+        Values["Dashboard_CheckIn_PlanningSelectRating"] = "Выберите оценку";
         Values["Dashboard_CheckIn_PageTitle"] = "Ежедневная проверка";
         Values["Dashboard_CheckIn_PainMild"] = "Лёгкая";
         Values["Dashboard_CheckIn_PainMildA11y"] = "Боль: Небольшая";

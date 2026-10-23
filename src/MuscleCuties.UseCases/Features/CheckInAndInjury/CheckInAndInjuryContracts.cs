@@ -16,7 +16,13 @@ public sealed record DailyCheckInRecord(
     decimal? PreviousDayLoad,
     int ReadinessScore,
     string ReadinessTier,
-    string Phase);
+    string Phase,
+    int? PlanningSleepQuality = null,
+    int? PlanningSoreness = null,
+    int? PlanningStress = null,
+    string? PlanningTimeZoneId = null,
+    DateTimeOffset? PlanningRecordedAtUtc = null,
+    long PlanningRevision = 0);
 
 public sealed record SaveDailyCheckInRequest(
     Guid UserId,
@@ -33,7 +39,11 @@ public sealed record SaveDailyCheckInRequest(
     decimal? PreviousDayLoad,
     string? Phase = null,
     decimal? Sleep3dAvg = null,
-    int? Steps7dAvg = null);
+    int? Steps7dAvg = null,
+    int? PlanningSleepQuality = null,
+    int? PlanningSoreness = null,
+    int? PlanningStress = null,
+    string? PlanningTimeZoneId = null);
 
 public sealed record InjuryObservationRecord(
     Guid Id,
