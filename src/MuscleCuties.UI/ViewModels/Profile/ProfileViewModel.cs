@@ -110,13 +110,6 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
             },
             new()
             {
-                IconGlyph = "HeartPulse32",
-                Title = "Injury Log",
-                Subtitle = "Track injuries and see how they affect your plan",
-                Route = "InjuryLogPage"
-            },
-            new()
-            {
                 IconGlyph = "ChatBubblesQuestion24",
                 Title = "Feedback",
                 Subtitle = "Send a note or report an issue",
@@ -147,7 +140,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         !string.IsNullOrWhiteSpace(Email) ? Email.Split('@')[0] : UiTextCatalog.Translate("Athlete");
 
     public int SessionCount => CompletedSessions;
-    public int PhasesTracked => WorkoutStreakDays;
+    public int PhasesTracked => CyclesTracked;
     public string CyclesTrackedText => CyclesTracked == 1 ? "1 cycle" : $"{CyclesTracked} cycles";
     public string CurrentPhaseLabel => CurrentPhase.ToString();
     public bool HasProfileImage => !string.IsNullOrWhiteSpace(ProfileImagePath) &&
@@ -353,13 +346,9 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         OnPropertyChanged(nameof(SessionCount));
     }
 
-    partial void OnWorkoutStreakDaysChanged(int value)
-    {
-        OnPropertyChanged(nameof(PhasesTracked));
-    }
-
     partial void OnCyclesTrackedChanged(int value)
     {
+        OnPropertyChanged(nameof(PhasesTracked));
         OnPropertyChanged(nameof(CyclesTrackedText));
     }
 

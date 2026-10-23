@@ -7,6 +7,7 @@ public interface IServerDashboardOverviewStore
     Task<DashboardOverviewResponse> LoadOverviewAsync(
         Guid userId,
         DateOnly today,
+        string? timeZoneId = null,
         CancellationToken cancellationToken = default);
 
     Task<DashboardCalendarResponse> LoadCalendarAsync(

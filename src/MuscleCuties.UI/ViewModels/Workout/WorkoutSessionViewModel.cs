@@ -124,6 +124,33 @@ public partial class WorkoutSessionViewModel : ObservableObject
     public bool IsExerciseFlow => CurrentScreen == SessionScreen.ExerciseFlow;
     public bool IsActivitySummary => CurrentScreen == SessionScreen.ActivitySummary;
     public bool CanInteract => !IsBusy;
+
+    public async Task SaveOptionalExerciseAsync(WorkoutExerciseItem item)
+    {
+        if (item.WorkoutDayExerciseId <= 0) return;
+        if (!item.IsOptional) item.OptionalSets = 0;
+        try
+        {
+            await _session.SetExerciseOptionalAsync(new SetWorkoutExerciseOptionalRequest(
+                item.WorkoutDayExerciseId, item.IsOptional, item.IsOptional ? item.OptionalSets : 0));
+        }
+        catch (Exception ex)
+        {
+            ErrorText = ex.Message;
+            try
+            {
+                var detail = await _session.GetDetailAsync(_workoutDayId);
+                var saved = detail.Exercises.FirstOrDefault(e => e.WorkoutDayExerciseId == item.WorkoutDayExerciseId);
+                if (saved is not null)
+                {
+                    item.IsOptional = saved.IsOptional;
+                    item.OptionalSets = saved.OptionalSets;
+                }
+            }
+            catch { }
+            throw;
+        }
+    }
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
     public bool HasNoActivities => !IsBusy && !HasError && ActivityCards.Count == 0;
     public bool HasSwapCandidates => SwapCandidates.Count > 0;

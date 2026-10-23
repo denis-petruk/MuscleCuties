@@ -64,7 +64,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             var workoutDays = activePlan is null
                 ? []
                 : await dbContext.WorkoutDays.AsNoTracking()
-                    .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id)
+                    .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id && !d.IsRemovedByReadiness)
                     .OrderBy(d => d.WeekIndex)
                     .ThenBy(d => d.DayOfWeek)
                     .ThenBy(d => d.Id)
@@ -75,7 +75,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             var dayExercises = dayIds.Count == 0
                 ? []
                 : await dbContext.WorkoutDayExercises.AsNoTracking()
-                    .Where(e => e.UserId == userId && dayIds.Contains(e.WorkoutDayId))
+                    .Where(e => e.UserId == userId && dayIds.Contains(e.WorkoutDayId) && !e.IsRemovedByReadiness)
                     .OrderBy(e => e.Id)
                     .ToListAsync(cancellationToken)
                     .ConfigureAwait(false);
@@ -155,7 +155,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                 ?? throw new InvalidOperationException("No active workout plan found.");
 
             var days = await dbContext.WorkoutDays
-                .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id)
+                .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id && !d.IsRemovedByReadiness)
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -227,7 +227,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             }
 
             var orderedExercises = await dbContext.WorkoutDayExercises.AsNoTracking()
-                .Where(e => e.UserId == userId && e.WorkoutDayId == day.Id)
+                .Where(e => e.UserId == userId && e.WorkoutDayId == day.Id && !e.IsRemovedByReadiness)
                 .OrderBy(e => e.Id)
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -298,8 +298,61 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                 BuildWorkoutDaySummary(day, orderedExercises),
                 false,
                 exerciseDtos,
-                activities);
+                activities)
+            {
+                IsOptional = day.IsOptional,
+                IsEasierAlternative = day.IsEasierAlternative
+            };
         }).ConfigureAwait(false);
+
+    public async Task SetSessionOptionalAsync(Guid userId, SetWorkoutSessionOptionalRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (request.WorkoutDayId <= 0 || (request.IsEasierAlternative && !request.IsOptional))
+            throw new ArgumentOutOfRangeException(nameof(request));
+        await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            dbContext.ChangeTracker.Clear();
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+            await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            var day = await ResolveWorkoutDayAsync(userId, request.WorkoutDayId, cancellationToken).ConfigureAwait(false)
+                      ?? throw new KeyNotFoundException("Workout session was not found.");
+            var hasLog = await dbContext.WorkoutLogs.AnyAsync(l => l.UserId == userId && l.WorkoutDayId == day.Id, cancellationToken)
+                .ConfigureAwait(false);
+            if (hasLog)
+                throw new InvalidOperationException("A logged session cannot be marked optional.");
+            var tracked = await dbContext.WorkoutDays.SingleAsync(d => d.Id == day.Id && d.UserId == userId, cancellationToken).ConfigureAwait(false);
+            tracked.IsOptional = request.IsOptional;
+            tracked.IsEasierAlternative = request.IsEasierAlternative;
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }).ConfigureAwait(false);
+    }
+
+    public async Task SetExerciseOptionalAsync(Guid userId, SetWorkoutExerciseOptionalRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (request.WorkoutDayExerciseId <= 0 || request.OptionalSets < 0)
+            throw new ArgumentOutOfRangeException(nameof(request));
+        await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            dbContext.ChangeTracker.Clear();
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+            await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            var ex = await ResolveWorkoutDayExerciseAsync(userId, request.WorkoutDayExerciseId, cancellationToken, track: true)
+                     ?? throw new KeyNotFoundException("Workout exercise was not found.");
+            var day = await dbContext.WorkoutDays.SingleAsync(d => d.Id == ex.WorkoutDayId && d.UserId == userId, cancellationToken).ConfigureAwait(false);
+            if (request.OptionalSets >= ex.Sets && request.OptionalSets != 0)
+                throw new ArgumentOutOfRangeException(nameof(request.OptionalSets), "At least one planned set must remain required.");
+            var logged = await dbContext.WorkoutExerciseLogs.AnyAsync(l => l.UserId == userId && l.WorkoutDayExerciseId == ex.Id, cancellationToken)
+                .ConfigureAwait(false);
+            if (logged) throw new InvalidOperationException("A logged exercise cannot be marked optional.");
+            ex.IsOptional = request.IsOptional;
+            ex.OptionalSets = request.IsOptional ? request.OptionalSets : 0;
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }).ConfigureAwait(false);
+    }
 
     public async Task LogAsync(
         Guid userId,
@@ -868,7 +921,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
         CancellationToken cancellationToken)
     {
         var allDays = await dbContext.WorkoutDays.AsNoTracking()
-            .Where(d => d.UserId == userId)
+            .Where(d => d.UserId == userId && !d.IsRemovedByReadiness)
             .OrderByDescending(d => d.Date)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -1121,7 +1174,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                     false,
                     latestLog?.CompletionPercent >= 100,
                     exList.Count,
-                    activityCount));
+                    activityCount) { IsOptional = day.IsOptional, IsEasierAlternative = day.IsEasierAlternative });
             }
         }
 
@@ -1178,7 +1231,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                 ToStableWorkoutIntId(matchingDay.Id),
                 date == today,
                 isCompleted,
-                false));
+                    false) { IsOptional = matchingDay.IsOptional, IsEasierAlternative = matchingDay.IsEasierAlternative });
         }
 
         return result;
@@ -1254,6 +1307,9 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             isLogged,
             sets)
         {
+            PlannedSets = dayExercise.Sets,
+            OptionalSets = dayExercise.OptionalSets,
+            IsOptional = dayExercise.IsOptional,
             ActivityTitle = BuildSectionTitle(activityTag),
             Description = string.IsNullOrWhiteSpace(exercise?.Description)
                 ? "Supports today's workout focus with clear, trackable work."

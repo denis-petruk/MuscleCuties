@@ -6,8 +6,6 @@ public sealed class TodayPlanningDecisionRuleTests
 {
     private const decimal MaximumPrototypeScore = 100m;
     private const decimal ModeratePrototypeScore = 50m;
-    private const string ApprovalReference = "synthetic-suggestion-approval";
-    private static readonly DateTimeOffset ApprovedAtUtc = new(2026, 10, 23, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
     public void Current_Symptoms_Win_Over_Maximum_Score()
@@ -21,11 +19,11 @@ public sealed class TodayPlanningDecisionRuleTests
     }
 
     [Fact]
-    public void Explicit_Restriction_Wins_Over_Score_And_Suggestion_Approval()
+    public void Explicit_Restriction_Wins_Over_Score()
     {
         var decision = TodayPlanningDecisionRule.Evaluate(Context(
             Score(MaximumPrototypeScore, CheckInScoreBand.FeelingReady),
-            restrictionConflict: true, approval: Approval()));
+            restrictionConflict: true));
 
         Assert.Equal(TodayPlanningStatus.RestrictionBlocked, decision.Status);
     }
@@ -45,33 +43,35 @@ public sealed class TodayPlanningDecisionRuleTests
     public void High_Score_Retains_Current_Plan_Without_Increase()
     {
         var decision = TodayPlanningDecisionRule.Evaluate(Context(
-            Score(MaximumPrototypeScore, CheckInScoreBand.FeelingReady), approval: Approval()));
+            Score(MaximumPrototypeScore, CheckInScoreBand.FeelingReady)));
 
         Assert.Equal(TodayPlanningStatus.RetainCurrentPlan, decision.Status);
         Assert.Contains(TodayPlanningReason.HighScoreDoesNotIncreasePlan, decision.Reasons);
     }
 
     [Fact]
-    public void Moderate_Score_Needs_Separate_Suggestion_Approval()
+    public void Moderate_Score_Offers_Optional_Work_Review()
     {
         var score = Score(ModeratePrototypeScore, CheckInScoreBand.ConsiderLighterSession);
-        var unavailable = TodayPlanningDecisionRule.Evaluate(Context(score));
-        var approved = TodayPlanningDecisionRule.Evaluate(Context(score, approval: Approval()));
+        var decision = TodayPlanningDecisionRule.Evaluate(Context(score));
 
-        Assert.Equal(TodayPlanningStatus.BaselineVisible, unavailable.Status);
-        Assert.Contains(TodayPlanningReason.SuggestionsNeedProfessionalReview, unavailable.Reasons);
-        Assert.Equal(TodayPlanningStatus.OptionalWorkReviewAvailable, approved.Status);
+        Assert.Equal(TodayPlanningStatus.OptionalWorkReviewAvailable, decision.Status);
+    }
+
+    [Fact]
+    public void Low_Score_Offers_Easier_Day_Options()
+    {
+        var score = Score(0m, CheckInScoreBand.ConsiderEasierDay);
+        var decision = TodayPlanningDecisionRule.Evaluate(Context(score));
+
+        Assert.Equal(TodayPlanningStatus.EasierDayOptionsAvailable, decision.Status);
+        Assert.Contains(TodayPlanningReason.ConsiderEasierDay, decision.Reasons);
     }
 
     private static CheckInScoreResult Score(decimal raw, CheckInScoreBand band) =>
         new(CheckInScoreStatus.Available, raw, band, null);
 
     private static TodayPlanningContext Context(CheckInScoreResult score,
-        bool currentSymptoms = false, bool restrictionConflict = false,
-        PlanningReviewApproval? approval = null) =>
-        new(currentSymptoms, false, restrictionConflict, score, true, approval);
-
-    private static PlanningReviewApproval Approval() =>
-        new(TodayCheckInScoreRule.RulesetVersion, ApprovalReference, ApprovedAtUtc,
-            new HashSet<PlanningReviewSection> { PlanningReviewSection.ReadinessSuggestions });
+        bool currentSymptoms = false, bool restrictionConflict = false) =>
+        new(currentSymptoms, false, restrictionConflict, score);
 }

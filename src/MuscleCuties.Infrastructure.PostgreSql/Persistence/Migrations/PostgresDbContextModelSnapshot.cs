@@ -2028,6 +2028,24 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("exercise_id");
 
+                    b.Property<bool>("IsOptional")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_optional");
+
+                    b.Property<bool>("IsRemovedByReadiness")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_removed_by_readiness");
+
+                    b.Property<int>("OptionalSets")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("optional_sets");
+
                     b.Property<int>("Reps")
                         .HasColumnType("integer")
                         .HasColumnName("reps");
@@ -2056,7 +2074,10 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
 
                     b.HasIndex("UserId", "WorkoutDayId");
 
-                    b.ToTable("workout_day_exercises", "app");
+                    b.ToTable("workout_day_exercises", "app", t =>
+                        {
+                            t.HasCheckConstraint("ck_workout_day_exercises_optional_sets", "optional_sets >= 0 AND (optional_sets = 0 OR optional_sets < sets)");
+                        });
                 });
 
             modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutDayRecord", b =>
@@ -2072,6 +2093,24 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                     b.Property<int>("DayOfWeek")
                         .HasColumnType("integer")
                         .HasColumnName("day_of_week");
+
+                    b.Property<bool>("IsEasierAlternative")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_easier_alternative");
+
+                    b.Property<bool>("IsOptional")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_optional");
+
+                    b.Property<bool>("IsRemovedByReadiness")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_removed_by_readiness");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -2282,6 +2321,55 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                     b.HasIndex("UserId", "WorkoutDayId");
 
                     b.ToTable("workout_logs", "app");
+                });
+
+            modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutPlanProposalV02Record", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("uuid").HasColumnName("id");
+                    b.Property<Guid>("UserId").HasColumnType("uuid").HasColumnName("user_id");
+                    b.Property<Guid>("PlanId").HasColumnType("uuid").HasColumnName("plan_id");
+                    b.Property<Guid>("ExpectedRevisionId").HasColumnType("uuid").HasColumnName("expected_revision_id");
+                    b.Property<string>("RulesetVersion").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)").HasColumnName("ruleset_version");
+                    b.Property<string>("TrainingPolicyVersion").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)").HasColumnName("training_policy_version");
+                    b.Property<string>("Status").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)").HasColumnName("status");
+                    b.Property<string>("InputSnapshotJson").IsRequired().HasColumnType("jsonb").HasColumnName("input_snapshot_json");
+                    b.Property<string>("ProposalJson").IsRequired().HasColumnType("jsonb").HasColumnName("proposal_json");
+                    b.Property<string>("ReasonsJson").IsRequired().HasColumnType("jsonb").HasColumnName("reasons_json");
+                    b.Property<DateTime>("CreatedAtUtc").HasColumnType("timestamp with time zone").HasColumnName("created_at_utc");
+                    b.Property<DateTime?>("DecidedAtUtc").HasColumnType("timestamp with time zone").HasColumnName("decided_at_utc");
+                    b.Property<Guid?>("AcceptedRevisionId").HasColumnType("uuid").HasColumnName("accepted_revision_id");
+                    b.Property<int>("ConcurrencyVersion").IsConcurrencyToken().HasDefaultValue(1).HasColumnType("integer").HasColumnName("concurrency_version");
+                    b.HasKey("Id");
+                    b.HasAlternateKey("UserId", "Id").HasName("uq_workout_plan_proposals_v02_user_id_id");
+                    b.HasIndex("UserId").HasDatabaseName("ix_workout_plan_proposals_v02_user_id");
+                    b.HasIndex("UserId", "PlanId", "CreatedAtUtc").IsDescending(false, false, true).HasDatabaseName("ix_workout_plan_proposals_v02_owner_plan_created");
+                    b.ToTable("workout_plan_proposals_v02", "app", t =>
+                        {
+                            t.HasCheckConstraint("ck_workout_plan_proposals_v02_status", "status IN ('Proposed', 'Accepted', 'Rejected', 'Expired')");
+                            t.HasCheckConstraint("ck_workout_plan_proposals_v02_decision_pair", "(status = 'Proposed' AND decided_at_utc IS NULL AND accepted_revision_id IS NULL) OR (status = 'Rejected' AND decided_at_utc IS NOT NULL AND accepted_revision_id IS NULL) OR (status = 'Accepted' AND decided_at_utc IS NOT NULL AND accepted_revision_id IS NOT NULL) OR (status = 'Expired' AND decided_at_utc IS NOT NULL AND accepted_revision_id IS NULL)");
+                            t.HasCheckConstraint("ck_workout_plan_proposals_v02_concurrency", "concurrency_version > 0");
+                        });
+                });
+
+            modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutPlanRevisionV02Record", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("uuid").HasColumnName("id");
+                    b.Property<Guid>("UserId").HasColumnType("uuid").HasColumnName("user_id");
+                    b.Property<Guid>("PlanId").HasColumnType("uuid").HasColumnName("plan_id");
+                    b.Property<long>("RevisionNumber").HasColumnType("bigint").HasColumnName("revision_number");
+                    b.Property<Guid>("SourceProposalId").HasColumnType("uuid").HasColumnName("source_proposal_id");
+                    b.Property<string>("RulesetVersion").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)").HasColumnName("ruleset_version");
+                    b.Property<string>("TrainingPolicyVersion").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)").HasColumnName("training_policy_version");
+                    b.Property<string>("PlanJson").IsRequired().HasColumnType("jsonb").HasColumnName("plan_json");
+                    b.Property<string>("InputSnapshotJson").IsRequired().HasColumnType("jsonb").HasColumnName("input_snapshot_json");
+                    b.Property<DateTime>("AcceptedAtUtc").HasColumnType("timestamp with time zone").HasColumnName("accepted_at_utc");
+                    b.HasKey("Id");
+                    b.HasAlternateKey("UserId", "Id").HasName("uq_workout_plan_revisions_v02_user_id_id");
+                    b.HasAlternateKey("UserId", "PlanId", "RevisionNumber").HasName("uq_workout_plan_revisions_v02_owner_plan_number");
+                    b.HasIndex("UserId").HasDatabaseName("ix_workout_plan_revisions_v02_user_id");
+                    b.HasIndex("UserId", "PlanId", "AcceptedAtUtc").IsDescending(false, false, true).HasDatabaseName("ix_workout_plan_revisions_v02_owner_plan_accepted");
+                    b.ToTable("workout_plan_revisions_v02", "app", t =>
+                        t.HasCheckConstraint("ck_workout_plan_revisions_v02_number", "revision_number > 0"));
                 });
 
             modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutPlanRecord", b =>
@@ -3119,6 +3207,39 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("fatigue_cost");
 
+                    b.Property<string>("TrainingCatalogVersionV020")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("training_catalog_version_v020");
+
+                    b.Property<string>("SupportedExperiencesV020Json")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("supported_experiences_v020");
+
+                    b.Property<string>("DemandTagsV020Json")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("demand_tags_v020");
+
+                    b.Property<bool?>("DemandTagsReviewedV020")
+                        .HasColumnType("boolean")
+                        .HasColumnName("demand_tags_reviewed_v020");
+
+                    b.Property<string>("RestrictionConflictTagsV020Json")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("restriction_conflict_tags_v020");
+
+                    b.Property<bool?>("RestrictionMappingsReviewedV020")
+                        .HasColumnType("boolean")
+                        .HasColumnName("restriction_mappings_reviewed_v020");
+
+                    b.Property<string>("SupportedTimingMethodsV020Json")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("supported_timing_methods_v020");
+
+                    b.Property<string>("ReviewedSubstituteExerciseIdsV020Json")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("reviewed_substitute_exercise_ids_v020");
+
                     b.Property<bool>("IsBodyweight")
                         .HasColumnType("boolean")
                         .HasColumnName("is_bodyweight");
@@ -3760,6 +3881,21 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutPlanProposalV02Record", b =>
+                {
+                    b.HasOne("MuscleCuties.Infrastructure.PostgreSql.Models.App.UserRecord", null)
+                        .WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                });
+
+            modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutPlanRevisionV02Record", b =>
+                {
+                    b.HasOne("MuscleCuties.Infrastructure.PostgreSql.Models.App.UserRecord", null)
+                        .WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.HasOne("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutPlanProposalV02Record", null)
+                        .WithMany().HasForeignKey("UserId", "SourceProposalId")
+                        .HasPrincipalKey("UserId", "Id").OnDelete(DeleteBehavior.Restrict).IsRequired();
                 });
 
             modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutSessionLogRecord", b =>

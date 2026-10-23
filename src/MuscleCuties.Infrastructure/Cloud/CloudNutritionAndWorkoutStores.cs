@@ -472,6 +472,19 @@ public sealed class CloudWorkoutOverviewStore(
     public async Task RescheduleAsync(RescheduleWorkoutDayRequest request, CancellationToken cancellationToken) =>
         CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<RescheduleWorkoutDayRequest, object>(
             HttpMethod.Post, "/api/v1/workouts/reschedule", request, cancellationToken: cancellationToken).ConfigureAwait(false), "reschedule workout day");
+
+    public async Task SetSessionOptionalAsync(SetWorkoutSessionOptionalRequest request, CancellationToken cancellationToken) =>
+        CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<SetWorkoutSessionOptionalRequest, object>(
+            HttpMethod.Put, "/api/v1/workouts/optional-session", request, cancellationToken: cancellationToken).ConfigureAwait(false), "mark optional workout session");
+
+    public async Task<ReadinessAdjustmentProposalDto> ReviewReadinessAdjustmentAsync(ReviewReadinessAdjustmentRequest request, CancellationToken cancellationToken) =>
+        CloudStoreResponse.RequireData(await apiClient.SendMutationAsync<ReviewReadinessAdjustmentRequest, ReadinessAdjustmentProposalDto>(
+            HttpMethod.Post, "/api/v1/workouts/readiness-proposals/review", request, cancellationToken: cancellationToken).ConfigureAwait(false), "review readiness adjustment");
+
+    public async Task<ReadinessAdjustmentDecisionDto> DecideReadinessAdjustmentAsync(DecideReadinessAdjustmentRequest request, bool apply, CancellationToken cancellationToken) =>
+        CloudStoreResponse.RequireData(await apiClient.SendMutationAsync<DecideReadinessAdjustmentRequest, ReadinessAdjustmentDecisionDto>(
+            HttpMethod.Post, apply ? "/api/v1/workouts/readiness-proposals/apply" : "/api/v1/workouts/readiness-proposals/keep",
+            request, cancellationToken: cancellationToken).ConfigureAwait(false), apply ? "apply readiness adjustment" : "keep workout plan");
 }
 
 public sealed class CloudWorkoutSessionActionStore(
@@ -500,6 +513,10 @@ public sealed class CloudWorkoutSessionActionStore(
     public async Task SaveMovementNoteAsync(SaveWorkoutMovementNoteRequest request, CancellationToken cancellationToken) =>
         CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<SaveWorkoutMovementNoteRequest, object>(
             HttpMethod.Put, "/api/v1/workouts/day-exercises/movement-note", request, cancellationToken: cancellationToken).ConfigureAwait(false), "save workout movement note");
+
+    public async Task SetExerciseOptionalAsync(SetWorkoutExerciseOptionalRequest request, CancellationToken cancellationToken) =>
+        CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<SetWorkoutExerciseOptionalRequest, object>(
+            HttpMethod.Put, "/api/v1/workouts/optional-exercise", request, cancellationToken: cancellationToken).ConfigureAwait(false), "mark optional workout exercise");
 }
 
 public sealed class CloudWorkoutArchiveStore(

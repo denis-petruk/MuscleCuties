@@ -14,21 +14,22 @@ using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Injury;
-using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
 public sealed class CloudDailyCheckInStore(
     IMuscleCutiesBackendApiClient apiClient,
     MuscleCuties.Core.Services.Health.IHealthSyncService? healthSync = null,
-    MuscleCuties.Core.Services.Auth.IAuthService? authService = null) : IDailyCheckInStore
+    MuscleCuties.Core.Services.Auth.IAuthService? authService = null,
+    TimeProvider? clock = null) : IDailyCheckInStore
 {
     private const string CheckInsRoute = "/api/v1/check-ins";
     private const int MinimumReadinessScore = 0;
     private const int MaximumReadinessScore = 100;
     private const string UnknownScoreText = "—";
-    private const string FallbackCompletedTierText = "Check-in complete";
+    private readonly TimeProvider timeProvider = clock ?? TimeProvider.System;
 
     public async Task<DailyCheckInStatusResponse> GetStatusAsync(DailyCheckInStatusRequest request, CancellationToken ct)
     {
@@ -41,15 +42,25 @@ public sealed class CloudDailyCheckInStore(
             return new DailyCheckInStatusResponse(false, string.Empty, string.Empty);
 
         var latest = records[^1];
-        var score = latest.ReadinessScore is >= MinimumReadinessScore and <= MaximumReadinessScore
-            ? latest.ReadinessScore.ToString(CultureInfo.InvariantCulture)
-            : UnknownScoreText;
-        var tier = FormatReadinessTier(latest.ReadinessTier);
-        return new DailyCheckInStatusResponse(true, score, tier);
+        var readiness = MuscleCuties.Infrastructure.Dashboard.CheckIn.TodayReadinessCheckInMapper.Map(latest,
+            timeProvider.GetUtcNow(), request.TimeZoneId);
+        return new DailyCheckInStatusResponse(readiness.Status == "Available",
+            readiness.RawScore?.ToString("0.##", CultureInfo.InvariantCulture) ?? UnknownScoreText,
+            readiness.Band ?? readiness.Status, readiness);
     }
 
     public async Task<SubmitDailyCheckInResponse> SubmitAsync(SubmitDailyCheckInRequest request, CancellationToken ct)
     {
+        if (request.EnergyLevel is < 1 or > 5 || request.PlanningSleepQuality is not (>= 1 and <= 5) ||
+            request.PlanningSoreness is not (>= 1 and <= 5) || request.PlanningStress is not (>= 1 and <= 5) ||
+            !IsValidTimeZoneId(request.PlanningTimeZoneId))
+            throw new ArgumentException("All four planning ratings and a valid local time zone are required.", nameof(request));
+        var localZone = TimeZoneInfo.FindSystemTimeZoneById(request.PlanningTimeZoneId!);
+        var todayInLocalZone = DateOnly.FromDateTime(
+            TimeZoneInfo.ConvertTime(timeProvider.GetUtcNow(), localZone).DateTime);
+        if (request.Date != todayInLocalZone)
+            throw new ArgumentException("Daily check-in must be saved for today in the current local time zone.", nameof(request));
+
         MuscleCuties.Core.Services.Health.HealthWeeklySummary? healthSummary = null;
         if (healthSync is not null && authService is not null)
         {
@@ -101,40 +112,27 @@ public sealed class CloudDailyCheckInStore(
         if (saved.Id != checkInId || saved.Date != request.Date ||
             saved.ReadinessScore is < MinimumReadinessScore or > MaximumReadinessScore)
             throw new InvalidOperationException("Cloud submit daily check-in returned an invalid record.");
-        var tier = FormatReadinessTier(saved.ReadinessTier);
-
-        var workoutResponse = await apiClient.GetAsync<WorkoutOverviewResponse>(
-            $"/api/v1/workouts/overview?startDate={request.Date:yyyy-MM-dd}",
-            ct).ConfigureAwait(false);
-        if (workoutResponse.Status == BackendApiStatus.Success && workoutResponse.Data is not null)
-        {
-            var todaySchedule = workoutResponse.Data.Schedule.FirstOrDefault(s => s.IsToday);
-            var todayWorkout = todaySchedule is not null
-                ? workoutResponse.Data.Workouts.FirstOrDefault(w => w.WorkoutDayId == todaySchedule.WorkoutDayId)
-                : workoutResponse.Data.Workouts.FirstOrDefault();
-            return new SubmitDailyCheckInResponse(
-                saved.ReadinessScore,
-                tier,
-                todaySchedule?.Title ?? todayWorkout?.Title ?? workoutResponse.Data.PlanName ?? string.Empty,
-                false);
-        }
-
-        return new SubmitDailyCheckInResponse(saved.ReadinessScore, tier, string.Empty, true);
+        var readiness = MuscleCuties.Infrastructure.Dashboard.CheckIn.TodayReadinessCheckInMapper.Map(saved,
+            timeProvider.GetUtcNow(), request.PlanningTimeZoneId);
+        if (readiness.Status != "Available")
+            throw new InvalidOperationException("The saved check-in did not contain a valid score for today.");
+        return new SubmitDailyCheckInResponse(saved.ReadinessScore,
+            readiness.Band ?? readiness.Status, string.Empty, false, readiness);
     }
 
-    private static string FormatReadinessTier(string? rawTier)
+    private static bool IsValidTimeZoneId(string? timeZoneId)
     {
-        if (string.IsNullOrWhiteSpace(rawTier))
-            return FallbackCompletedTierText;
-
-        if (int.TryParse(rawTier, NumberStyles.Integer, CultureInfo.InvariantCulture, out var numericTier) &&
-            Enum.IsDefined(typeof(ReadinessTier), numericTier))
-            return ((ReadinessTier)numericTier).ToString();
-
-        if (Enum.TryParse<ReadinessTier>(rawTier, true, out var parsedTier) && Enum.IsDefined(parsedTier))
-            return parsedTier.ToString();
-
-        return rawTier;
+        if (string.IsNullOrWhiteSpace(timeZoneId))
+            return false;
+        try
+        {
+            _ = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            return true;
+        }
+        catch (Exception exception) when (exception is TimeZoneNotFoundException or InvalidTimeZoneException)
+        {
+            return false;
+        }
     }
 }
 

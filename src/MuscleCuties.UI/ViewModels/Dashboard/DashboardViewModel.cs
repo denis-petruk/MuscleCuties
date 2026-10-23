@@ -15,8 +15,11 @@ using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.ViewModels.Workout;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 using MuscleCuties.UseCases.Features.Workout.Injury;
+using MuscleCuties.UseCases.Features.Workout.Overview;
+using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using IPageLoadAware = MuscleCuties.UI.ViewModels.Common.IPageLoadAware;
 
 namespace MuscleCuties.UI.ViewModels.Dashboard;
@@ -35,6 +38,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     private readonly Func<int, Task> _openWorkoutSessionAsync;
 
     private readonly IDashboardOverviewUseCase _overview;
+    private readonly IWorkoutOverviewUseCase? _workoutOverview;
+    private ReadinessAdjustmentProposalDto? _pendingReadinessProposal;
     private DateOnly? _calendarCycleStart;
     private string _calendarPredictionSource = string.Empty;
     [ObservableProperty] private float _consumedCalories;
@@ -81,6 +86,22 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private string _readinessLabel = string.Empty;
     [ObservableProperty] private int _readinessScore;
     [ObservableProperty] private string _readinessTrendSummary = "Complete a check-in to see readiness history";
+    [ObservableProperty] private bool _hasTodayReadinessScore;
+    [ObservableProperty] private bool _hasTodayReadinessRecord;
+    [ObservableProperty] private bool _todayReadinessIncomplete;
+    [ObservableProperty] private string _todayReadinessScoreText = string.Empty;
+    [ObservableProperty] private string _todayReadinessBandText = string.Empty;
+    [ObservableProperty] private string _todayReadinessGuidanceText = string.Empty;
+    [ObservableProperty] private string _todayReadinessSleepQualityText = "—";
+    [ObservableProperty] private string _todayReadinessEnergyText = "—";
+    [ObservableProperty] private string _todayReadinessSorenessText = "—";
+    [ObservableProperty] private string _todayReadinessStressText = "—";
+    [ObservableProperty] private bool _canReviewReadiness;
+    [ObservableProperty] private bool _hasReadinessProposalActions;
+    [ObservableProperty] private bool _isReadinessProposalBusy;
+    [ObservableProperty] private bool _isReadinessProposalVisible;
+    [ObservableProperty] private string _readinessProposalSummary = string.Empty;
+    [ObservableProperty] private ObservableCollection<string> _readinessProposalChanges = [];
     [ObservableProperty] private string _recoveryLabel = string.Empty;
     [ObservableProperty] private int _recoveryScore;
     [ObservableProperty] private string _sessionProgressText = "Upcoming";
@@ -119,9 +140,11 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         Func<Task> openNutritionAsync,
         Func<Task> openDailyCheckInAsync,
         INutritionChangeNotifier? changeNotifier = null,
-        Func<Task>? openPhotoVaultAsync = null)
+        Func<Task>? openPhotoVaultAsync = null,
+        IWorkoutOverviewUseCase? workoutOverview = null)
     {
         _overview = overview;
+        _workoutOverview = workoutOverview;
         _injuries = injuries;
         _openCycleAsync = openCycleAsync;
         _openWorkoutAsync = openWorkoutAsync;
@@ -138,10 +161,16 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         StartWorkoutCommand = new AsyncRelayCommand(StartWorkoutAsync);
         OpenNutritionCommand = new AsyncRelayCommand(_openNutritionAsync);
         OpenDailyCheckInCommand = new AsyncRelayCommand(_openDailyCheckInAsync);
+        ReviewReadinessAdjustmentCommand = new AsyncRelayCommand(ReviewReadinessAdjustmentAsync);
+        ApplyReadinessAdjustmentCommand = new AsyncRelayCommand(() => DecideReadinessAdjustmentAsync(true));
+        KeepWorkoutPlanCommand = new AsyncRelayCommand(() => DecideReadinessAdjustmentAsync(false));
         OpenPhotoVaultCommand = new AsyncRelayCommand(OpenPhotoVaultAsync);
     }
 
     public AsyncRelayCommand OpenPhotoVaultCommand { get; }
+    public AsyncRelayCommand ReviewReadinessAdjustmentCommand { get; }
+    public AsyncRelayCommand ApplyReadinessAdjustmentCommand { get; }
+    public AsyncRelayCommand KeepWorkoutPlanCommand { get; }
 
     public InjuryLogViewModel InjuryLogVm => _injuryLogVm ??= new InjuryLogViewModel(
         _injuries, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
@@ -260,16 +289,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
 
     public int CompositeScore => (ReadinessScore + RecoveryScore) / 2;
 
-    [SuppressMessage("Performance", "CA1822:Mark members as static",
-        Justification = "Bound in Dashboard XAML / view model contract.")]
-    public bool HasApprovedScorePolicy => false;
-
-    [SuppressMessage("Performance", "CA1822:Mark members as static",
-        Justification = "Bound in Dashboard XAML / view model contract.")]
-    public string ScoreSourceLabel =>
-        "Numerical readiness and recovery guidance is unavailable pending qualified review. You can still record a daily check-in.";
-
-    public bool HasAnyTrend => HasWeightTrend || (HasApprovedScorePolicy && HasReadinessTrend);
+    public bool HasAnyTrend => HasWeightTrend;
 
     public float CaloriesProgress =>
         MacroProgressFormatter.CalculateProgress(ConsumedCalories, TargetCalories);
@@ -392,15 +412,18 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
 
     private async Task LoadDataCoreAsync()
     {
+        IsReadinessProposalVisible = false;
+        HasReadinessProposalActions = false;
+        _pendingReadinessProposal = null;
         IsBusy = true;
         IsLoadError = false;
         try
         {
             var today = DateOnly.FromDateTime(DateTime.Today);
-            var summary = await _overview.LoadAsync(new DashboardOverviewRequest(today));
+            var timeZoneId = TimeZoneInfo.Local.Id;
+            var summary = await _overview.LoadAsync(new DashboardOverviewRequest(today, timeZoneId));
             _isBulkLoading = true;
             DisplayName = summary.DisplayName;
-            NeedsDailyCheckIn = summary.NeedsDailyCheckIn;
             HasActiveInjuries = summary.HasActiveInjuries;
             HasActiveCycle = summary.HasActiveCycle;
             CurrentPhase = Enum.TryParse<CyclePhase>(summary.CurrentPhase, true, out var phase) && Enum.IsDefined(phase)
@@ -433,6 +456,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             SleepGoal = summary.SleepGoal;
             ReadinessScore = summary.ReadinessScore;
             ReadinessLabel = summary.ReadinessLabel;
+            ApplyTodayReadiness(summary.TodayReadiness);
+            NeedsDailyCheckIn = !HasTodayReadinessScore;
             RecoveryScore = summary.RecoveryScore;
             RecoveryLabel = summary.RecoveryLabel;
             TrendPoints = summary.TrendPoints.Select(point =>
@@ -485,6 +510,103 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             IsBusy = false;
         }
     }
+
+    private void ApplyTodayReadiness(TodayReadinessCheckInDto? readiness)
+    {
+        HasTodayReadinessRecord = readiness is not null;
+        HasTodayReadinessScore = readiness is { Status: "Available", RawScore: { } };
+        TodayReadinessIncomplete = readiness?.Status == "Incomplete";
+        TodayReadinessScoreText = HasTodayReadinessScore
+            ? readiness!.RawScore!.Value.ToString("0.##", CultureInfo.CurrentCulture)
+            : string.Empty;
+        TodayReadinessBandText = readiness?.Band switch
+        {
+            "FeelingReady" => "Dashboard_Readiness_Band_FeelingReady",
+            "ConsiderLighterSession" => "Dashboard_Readiness_Band_ConsiderLighterSession",
+            "ConsiderEasierDay" => "Dashboard_Readiness_Band_ConsiderEasierDay",
+            _ => string.Empty
+        };
+        TodayReadinessGuidanceText = readiness?.Band switch
+        {
+            "FeelingReady" => "Dashboard_Readiness_Guidance_FeelingReady",
+            "ConsiderLighterSession" => "Dashboard_Readiness_Guidance_LighterSession",
+            "ConsiderEasierDay" => "Dashboard_Readiness_Guidance_EasierDay",
+            _ => string.Empty
+        };
+        TodayReadinessSleepQualityText = FormatRating(readiness?.SleepQuality);
+        TodayReadinessEnergyText = FormatRating(readiness?.Energy);
+        TodayReadinessSorenessText = FormatRating(readiness?.Soreness);
+        TodayReadinessStressText = FormatRating(readiness?.Stress);
+        CanReviewReadiness = HasTodayReadinessScore && !HasActiveInjuries &&
+                             readiness?.Band is "ConsiderLighterSession" or "ConsiderEasierDay";
+    }
+
+    private async Task ReviewReadinessAdjustmentAsync()
+    {
+        if (_workoutOverview is null || !CanReviewReadiness) return;
+        IsReadinessProposalBusy = true;
+        try
+        {
+            var date = DateOnly.FromDateTime(DateTime.Today);
+            _pendingReadinessProposal = await _workoutOverview.ReviewReadinessAdjustmentAsync(
+                new ReviewReadinessAdjustmentRequest(date, TimeZoneInfo.Local.Id));
+            ReadinessProposalSummary = _pendingReadinessProposal.Summary;
+            ReadinessProposalChanges = new ObservableCollection<string>(
+                _pendingReadinessProposal.Changes.Select(change => change.Description));
+            HasReadinessProposalActions = _pendingReadinessProposal.CanApply &&
+                                          _pendingReadinessProposal.ProposalId != Guid.Empty;
+            IsReadinessProposalVisible = true;
+        }
+        catch (Exception ex)
+        {
+            _pendingReadinessProposal = null;
+            HasReadinessProposalActions = false;
+            ReadinessProposalSummary = ex.Message;
+            ReadinessProposalChanges.Clear();
+            IsReadinessProposalVisible = true;
+        }
+        finally
+        {
+            IsReadinessProposalBusy = false;
+        }
+    }
+
+    private async Task DecideReadinessAdjustmentAsync(bool apply)
+    {
+        if (_workoutOverview is null || _pendingReadinessProposal is not { ProposalId: var id } || id == Guid.Empty)
+            return;
+        IsReadinessProposalBusy = true;
+        var successMessage = string.Empty;
+        try
+        {
+            var request = new DecideReadinessAdjustmentRequest(id,
+                DateOnly.FromDateTime(DateTime.Today), TimeZoneInfo.Local.Id);
+            var result = await _workoutOverview.DecideReadinessAdjustmentAsync(request, apply);
+            ReadinessProposalSummary = result.Message;
+            HasReadinessProposalActions = false;
+            _pendingReadinessProposal = null;
+            ReadinessProposalChanges.Clear();
+            if (result.Applied)
+            {
+                successMessage = result.Message;
+                await RefreshAsync();
+                ReadinessProposalSummary = successMessage;
+                IsReadinessProposalVisible = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            ReadinessProposalSummary = ex.Message;
+            HasReadinessProposalActions = false;
+            _pendingReadinessProposal = null;
+        }
+        finally
+        {
+            IsReadinessProposalBusy = false;
+        }
+    }
+
+    private static string FormatRating(int? rating) => rating?.ToString(CultureInfo.CurrentCulture) ?? "—";
 
     private void NotifyPhaseProperties()
     {
@@ -664,6 +786,5 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     partial void OnNeedsDailyCheckInChanged(bool value)
     {
         OpenDailyCheckInCommand.NotifyCanExecuteChanged();
-        OnPropertyChanged(nameof(ScoreSourceLabel));
     }
 }

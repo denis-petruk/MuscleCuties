@@ -75,7 +75,7 @@
             <Grid Padding="16,8,16,16" RowSpacing="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
                 <ActivityIndicator Grid.Row="0" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                                    SemanticProperties.Description="{loc:LocalizedText Injury_LogContent_UpdatingYourInjuryLog}" />
-                <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="8" IsVisible="{Binding HasError}">
+                <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" IsVisible="{Binding HasError}">
                     <Label Grid.Row="0" Text="{Binding ErrorText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource ErrorLabel}" />
                     <Button Grid.Row="1" Text="{loc:LocalizedText Common_TryAgain}"
@@ -84,6 +84,9 @@
                     <Button Grid.Row="2" Text="{loc:LocalizedText Injury_LogContent_RefreshPlan}"
                             Style="{StaticResource ButtonSecondary}"
                             Command="{Binding RetryPlanRefreshCommand}" IsVisible="{Binding IsPlanRefreshError}" />
+                    <Button Grid.Row="3" Text="{loc:LocalizedText Injury_LogContent_RefreshPage}"
+                            Style="{StaticResource ButtonSecondary}"
+                            Command="{Binding RetryPageRefreshCommand}" IsVisible="{Binding IsPageRefreshError}" />
                 </Grid>
 
                 <!-- Add and edit form -->

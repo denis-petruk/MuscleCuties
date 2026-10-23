@@ -1,8 +1,9 @@
 using Microsoft.Maui.Graphics;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 
-public sealed class WorkoutItem
+public partial class WorkoutItem : ObservableObject
 {
     public int WorkoutDayId { get; set; }
     public string Tag { get; set; } = string.Empty;
@@ -17,6 +18,16 @@ public sealed class WorkoutItem
     public bool IsRestDay { get; set; }
     public string SessionProgressText { get; set; } = "Upcoming";
     public bool IsCompleted { get; set; }
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(EasierAlternativeStatusText))]
+    private bool _isEasierAlternative;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(OptionalStatusText), nameof(CanMarkEasierAlternative))]
+    private bool _isOptional;
+    public string OptionalStatusText => IsOptional ? "Workout_Readiness_OptionalSession" : "Workout_Readiness_RequiredSession";
+    public string EasierAlternativeStatusText => IsEasierAlternative
+        ? "Workout_Readiness_EasierAlternativeMarked"
+        : "Workout_Readiness_MarkEasierAlternative";
+    public bool CanMarkOptional => !IsCompleted && !IsRestDay;
+    public bool CanMarkEasierAlternative => CanMarkOptional && IsOptional;
 }
 
 public sealed record WorkoutActivitySection(

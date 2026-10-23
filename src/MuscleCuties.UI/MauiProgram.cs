@@ -547,7 +547,8 @@ public static class MauiProgram
             () => NavigateToAsync("//NutritionPage"),
             () => NavigateToAsync(nameof(DailyCheckInPage)),
             sp.GetService<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier>(),
-            () => NavigateToAsync(nameof(PhotoJourneyVaultPage))));
+            () => NavigateToAsync(nameof(PhotoJourneyVaultPage)),
+            sp.GetRequiredService<IWorkoutOverviewUseCase>()));
 
         services.AddTransient<DailyCheckInViewModel>(sp => new DailyCheckInViewModel(
             sp.GetRequiredService<IDailyCheckInUseCase>(),

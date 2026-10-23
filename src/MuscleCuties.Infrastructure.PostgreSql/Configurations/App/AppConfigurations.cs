@@ -367,11 +367,58 @@ public sealed class WorkoutPlanConfiguration : IEntityTypeConfiguration<WorkoutP
     public void Configure(EntityTypeBuilder<WorkoutPlanRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "workout_plans");
 }
 
+public sealed class WorkoutPlanProposalV02Configuration : IEntityTypeConfiguration<WorkoutPlanProposalV02Record>
+{
+    public void Configure(EntityTypeBuilder<WorkoutPlanProposalV02Record> builder)
+    {
+        AppModelConfiguration.ConfigureTenant(builder, "workout_plan_proposals_v02");
+        builder.Property(x => x.Status).HasMaxLength(32).IsRequired();
+        builder.Property(x => x.RulesetVersion).HasMaxLength(64).IsRequired();
+        builder.Property(x => x.TrainingPolicyVersion).HasMaxLength(32).IsRequired();
+        builder.Property(x => x.ConcurrencyVersion).IsConcurrencyToken().HasDefaultValue(1);
+        builder.HasIndex(x => new { x.UserId, x.PlanId, x.CreatedAtUtc })
+            .IsDescending(false, false, true).HasDatabaseName("ix_workout_plan_proposals_v02_owner_plan_created");
+        builder.ToTable("workout_plan_proposals_v02", "app", table =>
+        {
+            table.HasCheckConstraint("ck_workout_plan_proposals_v02_status",
+                "status IN ('Proposed', 'Accepted', 'Rejected', 'Expired')");
+            table.HasCheckConstraint("ck_workout_plan_proposals_v02_decision_pair",
+                "(status = 'Proposed' AND decided_at_utc IS NULL AND accepted_revision_id IS NULL) OR " +
+                "(status = 'Rejected' AND decided_at_utc IS NOT NULL AND accepted_revision_id IS NULL) OR " +
+                "(status = 'Accepted' AND decided_at_utc IS NOT NULL AND accepted_revision_id IS NOT NULL) OR " +
+                "(status = 'Expired' AND decided_at_utc IS NOT NULL AND accepted_revision_id IS NULL)");
+            table.HasCheckConstraint("ck_workout_plan_proposals_v02_concurrency", "concurrency_version > 0");
+        });
+    }
+}
+
+public sealed class WorkoutPlanRevisionV02Configuration : IEntityTypeConfiguration<WorkoutPlanRevisionV02Record>
+{
+    public void Configure(EntityTypeBuilder<WorkoutPlanRevisionV02Record> builder)
+    {
+        AppModelConfiguration.ConfigureTenant(builder, "workout_plan_revisions_v02");
+        builder.Property(x => x.RulesetVersion).HasMaxLength(64).IsRequired();
+        builder.Property(x => x.TrainingPolicyVersion).HasMaxLength(32).IsRequired();
+        builder.HasAlternateKey(x => new { x.UserId, x.PlanId, x.RevisionNumber })
+            .HasName("uq_workout_plan_revisions_v02_owner_plan_number");
+        builder.HasIndex(x => new { x.UserId, x.PlanId, x.AcceptedAtUtc })
+            .IsDescending(false, false, true).HasDatabaseName("ix_workout_plan_revisions_v02_owner_plan_accepted");
+        builder.HasOne<WorkoutPlanProposalV02Record>().WithMany()
+            .HasForeignKey(x => new { x.UserId, x.SourceProposalId })
+            .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        builder.ToTable("workout_plan_revisions_v02", "app", table =>
+            table.HasCheckConstraint("ck_workout_plan_revisions_v02_number", "revision_number > 0"));
+    }
+}
+
 public sealed class WorkoutDayConfiguration : IEntityTypeConfiguration<WorkoutDayRecord>
 {
     public void Configure(EntityTypeBuilder<WorkoutDayRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_days");
+        builder.Property(x => x.IsOptional).HasDefaultValue(false);
+        builder.Property(x => x.IsEasierAlternative).HasDefaultValue(false);
+        builder.Property(x => x.IsRemovedByReadiness).HasDefaultValue(false);
         builder.HasOne<WorkoutPlanRecord>().WithMany().HasForeignKey(x => new { x.UserId, x.WorkoutPlanId })
             .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Cascade);
     }
@@ -382,6 +429,12 @@ public sealed class WorkoutDayExerciseConfiguration : IEntityTypeConfiguration<W
     public void Configure(EntityTypeBuilder<WorkoutDayExerciseRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_day_exercises");
+        builder.Property(x => x.OptionalSets).HasDefaultValue(0);
+        builder.Property(x => x.IsOptional).HasDefaultValue(false);
+        builder.Property(x => x.IsRemovedByReadiness).HasDefaultValue(false);
+        builder.ToTable("workout_day_exercises", "app", table =>
+            table.HasCheckConstraint("ck_workout_day_exercises_optional_sets",
+                "optional_sets >= 0 AND (optional_sets = 0 OR optional_sets < sets)"));
         builder.HasOne<WorkoutDayRecord>().WithMany().HasForeignKey(x => new { x.UserId, x.WorkoutDayId })
             .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<Exercise>().WithMany().HasForeignKey(x => x.ExerciseId).OnDelete(DeleteBehavior.Restrict);

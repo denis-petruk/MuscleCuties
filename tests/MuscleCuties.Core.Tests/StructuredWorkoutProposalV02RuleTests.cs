@@ -35,13 +35,29 @@ public sealed class StructuredWorkoutProposalV02RuleTests
         var input = Input();
         var missing = StructuredWorkoutProposalV02Rule.Generate(input, null);
         var unapproved = StructuredWorkoutProposalV02Rule.Generate(input,
-            Policy() with { Approval = Policy().Approval with { CoveredSections = new HashSet<PlanningReviewSection>() } });
+            Policy() with { Approval = Policy().Approval! with { CoveredSections = new HashSet<PlanningReviewSection>() } });
 
         Assert.Equal(StructuredProposalStatusV02.NeedsProgrammingReview, missing.Status);
         Assert.Contains(StructuredProposalReasonV02.MissingPolicy, missing.Reasons);
         Assert.Null(missing.Plan);
         Assert.Equal(StructuredProposalStatusV02.NeedsProgrammingReview, unapproved.Status);
         Assert.Null(unapproved.Plan);
+    }
+
+    [Fact]
+    public void Finalized_V020_Product_Policy_Does_Not_Require_Fabricated_Review_Metadata()
+    {
+        var policy = Policy() with
+        {
+            Version = WorkoutTrainingPolicyV020.Version,
+            RulesetVersion = WorkoutTrainingPolicyV020.RulesetVersion,
+            Approval = null
+        };
+
+        var result = StructuredWorkoutProposalV02Rule.Generate(Input(), policy);
+
+        Assert.Equal(StructuredProposalStatusV02.Proposed, result.Status);
+        Assert.NotNull(result.Plan);
     }
 
     [Fact]
@@ -237,11 +253,11 @@ public sealed class StructuredWorkoutProposalV02RuleTests
         [new ReviewedExerciseCandidate(SyntheticExerciseId, "synthetic-catalog-v1",
             MovementPattern.HorizontalPush,
             new HashSet<ExerciseEquipmentKind> { ExerciseEquipmentKind.Bodyweight },
-            TrainingExperienceLevel.Beginner,
+            new HashSet<ActivityExperienceV020> { ActivityExperienceV020.Beginner },
             new HashSet<ActivityDemandTag> { ActivityDemandTag.UpperBody }, true, true,
             new HashSet<ActivityDemandTag>(),
             new HashSet<ExerciseTimingMethod> { ExerciseTimingMethod.StraightSets },
-            SetupMinutes, new HashSet<int>())]);
+            SetupMinutes, new HashSet<int>(), MuscleCuties.Core.Models.Enums.Workout.InjuryFlag.None)]);
 
     private static ReviewedWorkoutPolicyV02 TwoSessionPolicy() => Policy() with
     {

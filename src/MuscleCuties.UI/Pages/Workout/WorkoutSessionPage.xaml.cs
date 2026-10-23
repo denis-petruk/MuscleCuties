@@ -80,6 +80,22 @@ public partial class WorkoutSessionPage : ContentPage
             catch (Exception exception)
             {
                 Trace.WriteLine($"[WorkoutSessionPage] Completion transition failed ({exception.GetType().Name}).");
+                if (revision != _completionRevision || !_viewModel.IsActivitySummary)
+                    return;
+
+                try
+                {
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
+                    {
+                        if (revision == _completionRevision && _viewModel.IsActivitySummary)
+                            await _viewModel.FinishSessionCommand.ExecuteAsync(null);
+                    });
+                }
+                catch (Exception fallbackException)
+                {
+                    Trace.WriteLine(
+                        $"[WorkoutSessionPage] Completion fallback return failed ({fallbackException.GetType().Name}).");
+                }
             }
             return;
         }
@@ -103,6 +119,26 @@ public partial class WorkoutSessionPage : ContentPage
     {
         if (sender is Slider { BindingContext: WorkoutExerciseItem exercise } slider)
             exercise.CommitEffortSliderValue(slider.Value);
+    }
+
+    private async void OnOptionalExerciseToggled(object? sender, ToggledEventArgs e)
+    {
+        if (sender is not Switch { BindingContext: WorkoutExerciseItem exercise }) return;
+        try { await _viewModel.SaveOptionalExerciseAsync(exercise); }
+        catch (Exception exception)
+        {
+            Trace.WriteLine($"[WorkoutSessionPage] Could not save optional exercise marker ({exception.GetType().Name}).");
+        }
+    }
+
+    private async void OnOptionalSetsChanged(object? sender, ValueChangedEventArgs e)
+    {
+        if (sender is not Stepper { BindingContext: WorkoutExerciseItem exercise }) return;
+        try { await _viewModel.SaveOptionalExerciseAsync(exercise); }
+        catch (Exception exception)
+        {
+            Trace.WriteLine($"[WorkoutSessionPage] Could not save optional set count ({exception.GetType().Name}).");
+        }
     }
 
     protected override bool OnBackButtonPressed()

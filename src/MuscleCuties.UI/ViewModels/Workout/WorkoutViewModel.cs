@@ -104,6 +104,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         RegeneratePlanCommand = new AsyncRelayCommand(RegeneratePlanAsync);
         EmptyWorkoutsActionCommand = new AsyncRelayCommand(HandleEmptyWorkoutsActionAsync, CanUseEmptyWorkoutsAction);
         OpenWorkoutCommand = new AsyncRelayCommand<WorkoutItem>(OpenWorkoutAsync);
+        ToggleSessionOptionalCommand = new AsyncRelayCommand<WorkoutItem>(ToggleSessionOptionalAsync);
+        ToggleEasierAlternativeCommand = new AsyncRelayCommand<WorkoutItem>(ToggleEasierAlternativeAsync);
         SelectFilterCommand = new RelayCommand<FilterChipItem>(SelectFilter);
         StartFeaturedWorkoutCommand = new AsyncRelayCommand(OpenFeaturedWorkoutAsync);
         SelectWeekCommand = new RelayCommand<int>(SelectWeek);
@@ -194,6 +196,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private string SelectedFilterLabel => Filters.FirstOrDefault(f => f.IsSelected)?.Label ?? "All";
     public AsyncRelayCommand EmptyWorkoutsActionCommand { get; }
     public AsyncRelayCommand<WorkoutItem> OpenWorkoutCommand { get; }
+    public AsyncRelayCommand<WorkoutItem> ToggleSessionOptionalCommand { get; }
+    public AsyncRelayCommand<WorkoutItem> ToggleEasierAlternativeCommand { get; }
     public RelayCommand<FilterChipItem> SelectFilterCommand { get; }
     public AsyncRelayCommand StartFeaturedWorkoutCommand { get; }
     public RelayCommand<int> SelectWeekCommand { get; }
@@ -304,6 +308,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                 DetailsText = item.DetailsText,
                 IsRestDay = item.IsRestDay,
                 IsCompleted = item.IsCompleted,
+                IsOptional = item.IsOptional,
+                IsEasierAlternative = item.IsEasierAlternative,
                 SessionProgressText = item.IsCompleted ? "Completed" : "Upcoming",
                 ActivityBackground = WorkoutPresentationPalette.Background(item.Tag),
                 ActivityTextColor = WorkoutPresentationPalette.Text(item.Tag)
@@ -544,6 +550,45 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             await handler(workout.WorkoutDayId);
         else
             await _openWorkoutSessionAsync(workout.WorkoutDayId);
+    }
+
+    private async Task ToggleSessionOptionalAsync(WorkoutItem? workout)
+    {
+        if (workout is null || workout.WorkoutDayId <= 0 || workout.IsCompleted || workout.IsRestDay) return;
+        var wasOptional = workout.IsOptional;
+        var wasEasierAlternative = workout.IsEasierAlternative;
+        workout.IsOptional = !wasOptional;
+        if (wasOptional) workout.IsEasierAlternative = false;
+        OnPropertyChanged(nameof(Workouts));
+        try
+        {
+            await _overview.SetSessionOptionalAsync(new SetWorkoutSessionOptionalRequest(
+                workout.WorkoutDayId, workout.IsOptional, workout.IsEasierAlternative));
+        }
+        catch
+        {
+            workout.IsOptional = wasOptional;
+            workout.IsEasierAlternative = wasEasierAlternative;
+            OnPropertyChanged(nameof(Workouts));
+            throw;
+        }
+    }
+
+    private async Task ToggleEasierAlternativeAsync(WorkoutItem? workout)
+    {
+        if (workout is null || !workout.CanMarkEasierAlternative) return;
+        var previous = workout.IsEasierAlternative;
+        workout.IsEasierAlternative = !previous;
+        try
+        {
+            await _overview.SetSessionOptionalAsync(new SetWorkoutSessionOptionalRequest(
+                workout.WorkoutDayId, IsOptional: true, IsEasierAlternative: workout.IsEasierAlternative));
+        }
+        catch
+        {
+            workout.IsEasierAlternative = previous;
+            throw;
+        }
     }
 
     private static bool IsVisibleWorkoutItem(WorkoutItem workout)

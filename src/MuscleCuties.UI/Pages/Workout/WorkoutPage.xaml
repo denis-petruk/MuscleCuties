@@ -379,6 +379,8 @@
                         Margin="20,0,20,12"
                         MaximumWidthRequest="640"
                         OpenCommand="{Binding OpenWorkoutCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
+                        ToggleOptionalCommand="{Binding ToggleSessionOptionalCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
+                        ToggleEasierAlternativeCommand="{Binding ToggleEasierAlternativeCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
                         CommandParameter="{Binding .}" />
                 </DataTemplate>
             </CollectionView.ItemTemplate>

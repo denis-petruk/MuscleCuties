@@ -235,6 +235,7 @@ public static class ApiApplication
         builder.Services.AddScoped<IServerWorkoutInjuryStore, PostgresWorkoutInjuryStore>();
         builder.Services.AddScoped<ServerWorkoutInjuryUseCase>();
         builder.Services.AddScoped<PostgresWorkoutPlanAndSessionStore>();
+        builder.Services.AddScoped<PostgresReadinessAdjustmentStore>();
         builder.Services.AddScoped<IServerDashboardOverviewStore, PostgresDashboardOverviewStore>();
         builder.Services.AddScoped<ServerDashboardOverviewUseCase>();
         builder.Services.AddHttpContextAccessor();

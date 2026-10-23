@@ -120,7 +120,7 @@
                         Grid.Row="4"
                         Text="{Binding PasswordStatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource CaptionLabel}"
-                        FontSize="14"
+                        FontSize="12"
                         IsVisible="{Binding PasswordStatusMessage, Converter={StaticResource StringToBoolConverter}}"
                         SemanticProperties.Description="{Binding PasswordStatusMessage, Converter={StaticResource LocalizedStringConverter}}" />
 
@@ -143,7 +143,7 @@
                             Grid.Column="1"
                             Text="{loc:LocalizedText Profile_PersonalInfo_LocalOnly}"
                             Style="{StaticResource CaptionLabel}"
-                            FontSize="14"
+                            FontSize="12"
                             VerticalOptions="Center" />
                     </Grid>
                     <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
@@ -179,7 +179,7 @@
                             Grid.Column="1"
                             Text="{loc:LocalizedText Profile_PersonalInfo_LocalOnly}"
                             Style="{StaticResource CaptionLabel}"
-                            FontSize="14"
+                            FontSize="12"
                             VerticalOptions="Center" />
                     </Grid>
                     <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="5">
@@ -207,7 +207,7 @@
                             Grid.Column="1"
                             Text="{loc:LocalizedText Profile_PersonalInfo_LocalOnly}"
                             Style="{StaticResource CaptionLabel}"
-                            FontSize="14"
+                            FontSize="12"
                             VerticalOptions="Center" />
                     </Grid>
 
@@ -241,7 +241,7 @@
                 Grid.Row="6"
                 Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource CaptionLabel}"
-                FontSize="14"
+                FontSize="12"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
                 SemanticProperties.Description="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}" />
 

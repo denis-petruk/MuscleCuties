@@ -66,7 +66,7 @@
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="16" />
             </CollectionView.ItemsLayout>
             <CollectionView.Header>
-                <VerticalStackLayout Spacing="16" Margin="0,0,0,8">
+                <VerticalStackLayout Spacing="16" Margin="0">
                     <!-- Air-Gap Privacy Card -->
                     <Border Style="{StaticResource CardPrimary}" Padding="16"
                             BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}">
@@ -108,7 +108,7 @@
                             WidthRequest="40"
                             HeightRequest="40"
                             HorizontalOptions="Center" />
-                        <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_NoProgressPhotosYet}"
+                        <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_NoProgressPhotoYet}"
                                Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" FontSize="16" />
                         <Label Grid.Row="2" Text="{loc:LocalizedText Profile_PhotoJourney_ChoosePhotosToTrackProgressPhotos}"
                                Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" FontSize="13" />

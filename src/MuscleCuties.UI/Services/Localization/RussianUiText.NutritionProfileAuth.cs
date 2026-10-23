@@ -140,6 +140,7 @@ internal static partial class RussianUiText
         Values["Injury_LogContent_PainLevel"] = "Уровень боли";
         Values["Injury_LogContent_PainLevelFromZeroToFive"] = "Уровень боли от нуля до пяти";
         Values["Injury_LogContent_RefreshPlan"] = "Обновить план";
+        Values["Injury_LogContent_RefreshPage"] = "Обновить «Сегодня»";
         Values["Injury_LogContent_SaveInjury"] = "Сохранить травму";
         Values["Injury_LogContent_Show"] = "Показать";
         Values["Injury_LogContent_SinceValue"] = "С тех пор как {0}";
@@ -440,11 +441,10 @@ internal static partial class RussianUiText
         Values["Profile_Details_HealthRecordsStayOnThisDevice"] = "Данные о здоровье синхронизируются с аккаунтом";
         Values["Profile_Details_HealthTraining"] = "ЗДОРОВЬЕ & ТРЕНИРОВКИ";
         Values["Profile_Details_HidePreview"] = "Скрыть просмотр";
-        Values["Profile_Details_InjuryLog"] = "Журнал травм";
         Values["Profile_Details_LatestProgressPhoto"] = "Последнее фото прогресса";
         Values["Profile_Details_NameEmailPasswordCycleBaselines"] = "Имя, электронная почта, пароль, базовые показатели цикла";
         Values["Profile_Details_NoPhotosStoredYet"] = "Нет сохраненных фотографий";
-        Values["Profile_Details_NutritionPacing"] = "Режим питания";
+        Values["Profile_Details_Nutrition"] = "Питание";
         Values["Profile_Details_MicronutrientTargets"] = "Цели по микронутриентам";
         Values["Profile_Details_MicronutrientTargetsDetail"] = "Железо, витамины и минералы";
         Values["Profile_Details_PersonalInfo"] = "Личная информация";
@@ -468,7 +468,6 @@ internal static partial class RussianUiText
         Values["Profile_Feedback_IncludeContactEmailForAReply"] = "Включить адрес электронной почты для ответа";
         Values["Profile_Feedback_IncludeReplyEmail"] = "Указать почту для ответа";
         Values["Profile_Feedback_OpenEmailDraft"] = "Открыть черновик письма";
-        Values["Profile_Feedback_PleaseLeaveOutCycleWeightSymptom"] = "Пожалуйста, не указывайте детали цикла, веса, симптомов и травм.";
         Values["Profile_Feedback_Priority"] = "Приоритет";
         Values["Profile_Feedback_Remove"] = "Удалить";
         Values["Profile_Feedback_ReplyEmail"] = "Почта для ответа";
@@ -575,7 +574,7 @@ internal static partial class RussianUiText
         Values["Profile_PhotoJourney_SecondPhoto"] = "Выбрать вторым фото";
         Values["Profile_PhotoJourney_CloseComparison"] = "Закрыть сравнение";
         Values["Profile_PhotoJourney_ComparisonInstructions"] = "Перемещайте ползунок для сравнения двух фото. Закройте окно, чтобы скрыть их.";
-        Values["Profile_PhotoJourney_NoProgressPhotosYet"] = "Нет фотографий прогресса";
+        Values["Profile_PhotoJourney_NoProgressPhotoYet"] = "Пока нет фотографий прогресса";
         Values["Profile_PhotoJourney_PhotoHiddenForPrivacy"] = "Фото скрыто для конфиденциальности";
         Values["Profile_PhotoJourney_PlusAddProgressPhoto"] = "+ Добавить фото прогресса";
         Values["Profile_PhotoJourney_PrivacyFirstPhotoVault"] = "Личный фотоальбом";

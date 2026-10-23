@@ -17,7 +17,7 @@ public partial class DailyCheckInViewModel : ObservableObject
     private readonly Action _invalidateDashboard;
     private readonly Func<Task> _onCompletedAsync;
     [ObservableProperty] private double? _bodyWeight;
-    [ObservableProperty] private int _energyLevel = 3;
+    [ObservableProperty] private int? _energyLevel;
     [ObservableProperty] private string _errorMessage = string.Empty;
     [ObservableProperty] private bool _hasBloating;
     [ObservableProperty] private bool _isBusy;
@@ -45,7 +45,10 @@ public partial class DailyCheckInViewModel : ObservableObject
     }
 
     public string SleepDisplay => $"{SleepHours:F1}h";
-    public string EnergyDisplay => $"{EnergyLevel} / 5";
+    public string EnergyDisplay => EnergyLevel is { } value ? $"{value} / 5" : "— / 5";
+    public string PlanningSleepDisplay => FormatPlanningRating(PlanningSleepQuality);
+    public string PlanningSorenessDisplay => FormatPlanningRating(PlanningSoreness);
+    public string PlanningStressDisplay => FormatPlanningRating(PlanningStress);
     public IReadOnlyList<int> PlanningScaleOptions => _planningScaleOptions;
 
     public string PainDisplay => PainLevel switch
@@ -59,10 +62,6 @@ public partial class DailyCheckInViewModel : ObservableObject
 
     public bool HasSessionSummary => !string.IsNullOrWhiteSpace(SessionSummaryText);
 
-    [SuppressMessage("Performance", "CA1822:Mark members as static",
-        Justification = "Bound in CheckIn XAML / view model contract.")]
-    public bool HasApprovedScorePolicy => false;
-
     public AsyncRelayCommand SubmitCommand { get; }
     public AsyncRelayCommand SkipCommand { get; }
 
@@ -72,11 +71,19 @@ public partial class DailyCheckInViewModel : ObservableObject
         try
         {
             var status = await _checkIn.GetStatusAsync(
-                new DailyCheckInStatusRequest(DateOnly.FromDateTime(DateTime.Today)));
-            IsCompleted = status.IsCompleted;
-            ReadinessScoreText = status.ScoreText;
-            ReadinessTierText = status.TierText;
+                new DailyCheckInStatusRequest(DateOnly.FromDateTime(DateTime.Today), TimeZoneInfo.Local.Id));
+            var readiness = status.TodayReadiness;
+            EnergyLevel = readiness?.Energy;
+            PlanningSleepQuality = readiness?.SleepQuality;
+            PlanningSoreness = readiness?.Soreness;
+            PlanningStress = readiness?.Stress;
+            IsCompleted = readiness is { Status: "Available", RawScore: { } rawScore };
+            ReadinessScoreText = IsCompleted
+                ? readiness!.RawScore!.Value.ToString("0.##", CultureInfo.CurrentCulture)
+                : string.Empty;
+            ReadinessTierText = BandLocalizationKey(readiness?.Band);
             SessionSummaryText = string.Empty;
+            OnPropertyChanged(nameof(EnergyDisplay));
         }
         catch (Exception ex)
         {
@@ -90,20 +97,29 @@ public partial class DailyCheckInViewModel : ObservableObject
         if (IsBusy || IsCompleted)
             return;
 
+        if (EnergyLevel is not (>= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue) ||
+            PlanningSleepQuality is not (>= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue) ||
+            PlanningSoreness is not (>= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue) ||
+            PlanningStress is not (>= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue))
+        {
+            ErrorMessage = "Dashboard_CheckIn_IncompleteAllFourRatings";
+            return;
+        }
+
         IsBusy = true;
         ErrorMessage = string.Empty;
         try
         {
             var result = await _checkIn.SubmitAsync(new SubmitDailyCheckInRequest(
-                DateOnly.FromDateTime(DateTime.Today), SleepHours, EnergyLevel,
+                DateOnly.FromDateTime(DateTime.Today), SleepHours, EnergyLevel.Value,
                 PainLevel, HasBloating, BodyWeight, PlanningSleepQuality, PlanningSoreness, PlanningStress,
                 TimeZoneInfo.Local.Id));
-            ReadinessScoreText = result.ReadinessScore.ToString(CultureInfo.InvariantCulture);
-            ReadinessTierText = result.ReadinessTier;
+            ReadinessScoreText = result.TodayReadiness?.RawScore is { } rawScore
+                ? rawScore.ToString("0.##", CultureInfo.CurrentCulture)
+                : string.Empty;
+            ReadinessTierText = BandLocalizationKey(result.TodayReadiness?.Band);
             SessionSummaryText = result.SessionSummary;
             IsCompleted = true;
-            if (result.PlanRefreshFailed)
-                ErrorMessage = "Check-in saved. Return to Today to continue; the plan may need to refresh.";
             await _onCompletedAsync();
         }
         catch (Exception ex)
@@ -129,11 +145,14 @@ public partial class DailyCheckInViewModel : ObservableObject
         OnPropertyChanged(nameof(SleepDisplay));
     }
 
-    partial void OnEnergyLevelChanged(int value)
+    partial void OnEnergyLevelChanged(int? value)
     {
-        EnergyLevel = Math.Clamp(value, 1, 5);
         OnPropertyChanged(nameof(EnergyDisplay));
     }
+
+    partial void OnPlanningSleepQualityChanged(int? value) => OnPropertyChanged(nameof(PlanningSleepDisplay));
+    partial void OnPlanningSorenessChanged(int? value) => OnPropertyChanged(nameof(PlanningSorenessDisplay));
+    partial void OnPlanningStressChanged(int? value) => OnPropertyChanged(nameof(PlanningStressDisplay));
 
     partial void OnPainLevelChanged(int value)
     {
@@ -155,4 +174,15 @@ public partial class DailyCheckInViewModel : ObservableObject
     {
         SubmitCommand.NotifyCanExecuteChanged();
     }
+
+    private static string BandLocalizationKey(string? band) => band switch
+    {
+        "FeelingReady" => "Dashboard_Readiness_Band_FeelingReady",
+        "ConsiderLighterSession" => "Dashboard_Readiness_Band_ConsiderLighterSession",
+        "ConsiderEasierDay" => "Dashboard_Readiness_Band_ConsiderEasierDay",
+        _ => string.Empty
+    };
+
+    private static string FormatPlanningRating(int? value) =>
+        value is >= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue ? $"{value} / 5" : "— / 5";
 }

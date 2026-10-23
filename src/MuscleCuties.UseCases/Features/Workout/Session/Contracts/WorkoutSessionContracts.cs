@@ -32,6 +32,7 @@ public sealed record WorkoutSwapCandidateDto(
     string PrimaryMuscles);
 
 public sealed record SaveWorkoutMovementNoteRequest(int WorkoutDayExerciseId, string? Notes);
+public sealed record SetWorkoutExerciseOptionalRequest(int WorkoutDayExerciseId, bool IsOptional, int OptionalSets);
 
 public sealed record WorkoutMovementNoteDto(int WorkoutDayExerciseId, string Notes);
 
@@ -51,6 +52,9 @@ public sealed record WorkoutExerciseDetailDto(
     bool IsLogged,
     IReadOnlyList<WorkoutSetDetailDto> Sets)
 {
+    public int PlannedSets { get; init; }
+    public int OptionalSets { get; init; }
+    public bool IsOptional { get; init; }
     public string ActivityTitle { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
     public string ImageUrl { get; init; } = string.Empty;
@@ -102,4 +106,8 @@ public sealed record WorkoutSessionDetailDto(
     string SummaryText,
     bool IsRestDay,
     IReadOnlyList<WorkoutExerciseDetailDto> Exercises,
-    IReadOnlyList<WorkoutActivityDetailDto> Activities);
+    IReadOnlyList<WorkoutActivityDetailDto> Activities)
+{
+    public bool IsOptional { get; init; }
+    public bool IsEasierAlternative { get; init; }
+}

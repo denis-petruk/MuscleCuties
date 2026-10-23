@@ -16,13 +16,14 @@ public static class DashboardOverviewEndpointMappings
             ClaimsPrincipal principal,
             [FromServices] ServerDashboardOverviewUseCase useCase,
             [FromQuery] DateOnly? date,
+            [FromQuery] string? timeZoneId,
             CancellationToken cancellationToken) =>
         {
             if (!TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var today = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
-            var overview = await useCase.LoadOverviewAsync(userId, today, cancellationToken)
+            var overview = await useCase.LoadOverviewAsync(userId, today, timeZoneId, cancellationToken)
                 .ConfigureAwait(false);
             return Results.Ok(overview);
         });

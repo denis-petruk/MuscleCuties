@@ -39,6 +39,21 @@ public sealed class ExerciseEligibilityV02RuleTests
     }
 
     [Fact]
+    public void Explicit_Exclusion_Is_Reported_Even_When_Other_Review_Metadata_Is_Missing()
+    {
+        var excludedId = FirstExerciseId;
+        var incomplete = Candidate(excludedId) with { DemandTags = null, DemandTagsReviewed = false };
+
+        var result = ExerciseEligibilityV02Rule.Filter([incomplete],
+            Context(excludedIds: new HashSet<int> { excludedId }));
+
+        Assert.Equal(ExerciseEligibilityStatus.Blocked, result.Status);
+        Assert.Contains(ExerciseEligibilityReason.UserExcluded, result.Decisions.Single().Reasons);
+        Assert.Contains(ExerciseEligibilityReason.MissingCatalogMetadata, result.Decisions.Single().Reasons);
+        Assert.Contains(ExerciseEligibilityReason.UnreviewedCatalogMetadata, result.Decisions.Single().Reasons);
+    }
+
+    [Fact]
     public void Explicit_Exclusion_Restriction_Equipment_And_Skill_Are_Hard_Filters()
     {
         var excluded = ExerciseEligibilityV02Rule.Filter([Candidate(FirstExerciseId)],
@@ -50,7 +65,8 @@ public sealed class ExerciseEligibilityV02RuleTests
                 { RequiredEquipment = new HashSet<ExerciseEquipmentKind> { ExerciseEquipmentKind.Barbell } }],
             Context());
         var skill = ExerciseEligibilityV02Rule.Filter(
-            [Candidate(FirstExerciseId) with { MinimumExperience = TrainingExperienceLevel.Advanced }],
+                [Candidate(FirstExerciseId) with
+                    { SupportedExperiences = new HashSet<ActivityExperienceV020> { ActivityExperienceV020.Returning } }],
             Context());
 
         Assert.Contains(ExerciseEligibilityReason.UserExcluded, excluded.Decisions.Single().Reasons);
@@ -71,6 +87,22 @@ public sealed class ExerciseEligibilityV02RuleTests
         Assert.Empty(result.EligibleCandidates);
         Assert.Contains(ExerciseEligibilityReason.BodyZoneNeedsIndividualReview,
             result.Decisions.Single().Reasons);
+    }
+
+    [Fact]
+    public void Unknown_Experience_Is_Allowed_Only_When_Explicitly_Reviewed_For_It()
+    {
+        var unknownContext = Context() with { Experience = ActivityExperienceV020.Unknown };
+        var unsupported = ExerciseEligibilityV02Rule.Filter([Candidate(FirstExerciseId)], unknownContext);
+        var supportedCandidate = Candidate(SecondExerciseId) with
+        {
+            SupportedExperiences = new HashSet<ActivityExperienceV020> { ActivityExperienceV020.Unknown }
+        };
+        var supported = ExerciseEligibilityV02Rule.Filter([supportedCandidate], unknownContext);
+
+        Assert.Equal(ExerciseEligibilityStatus.Blocked, unsupported.Status);
+        Assert.Contains(ExerciseEligibilityReason.UnsupportedExperience, unsupported.Decisions.Single().Reasons);
+        Assert.Equal(ExerciseEligibilityStatus.Eligible, supported.Status);
     }
 
     [Fact]
@@ -107,18 +139,18 @@ public sealed class ExerciseEligibilityV02RuleTests
     private static ReviewedExerciseCandidate Candidate(int id) => new(
         id, CatalogVersion, MovementPattern.HorizontalPull,
         new HashSet<ExerciseEquipmentKind> { ExerciseEquipmentKind.Bodyweight },
-        TrainingExperienceLevel.Beginner,
+        new HashSet<ActivityExperienceV020> { ActivityExperienceV020.Beginner },
         new HashSet<ActivityDemandTag> { ActivityDemandTag.Pulling },
         true, true, new HashSet<ActivityDemandTag>(),
         new HashSet<ExerciseTimingMethod> { ExerciseTimingMethod.StraightSets },
-        SetupMinutes, new HashSet<int>());
+        SetupMinutes, new HashSet<int>(), MuscleCuties.Core.Models.Enums.Workout.InjuryFlag.None);
 
     private static ExerciseEligibilityContext Context(
         IReadOnlySet<int>? excludedIds = null,
         IReadOnlySet<ActivityDemandTag>? blockedTags = null,
         bool hasBodyZoneLimitation = false) => new(
         new HashSet<ExerciseEquipmentKind> { ExerciseEquipmentKind.Bodyweight },
-        TrainingExperienceLevel.Beginner,
+        ActivityExperienceV020.Beginner,
         excludedIds ?? new HashSet<int>(),
         new HashSet<MovementPattern>(),
         blockedTags ?? new HashSet<ActivityDemandTag>(),

@@ -1,4 +1,3 @@
-using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
@@ -10,7 +9,12 @@ public enum ExerciseEquipmentKind
     ResistanceBand,
     Barbell,
     Cable,
-    Machine
+    Machine,
+    HipThrustBench,
+    BackExtension45,
+    PullUpBar,
+    Kettlebell,
+    ClimbingWall
 }
 
 public enum ExerciseTimingMethod
@@ -45,22 +49,25 @@ public sealed record ReviewedExerciseCandidate(
     string CatalogVersion,
     MovementPattern Pattern,
     IReadOnlySet<ExerciseEquipmentKind>? RequiredEquipment,
-    TrainingExperienceLevel MinimumExperience,
+    IReadOnlySet<ActivityExperienceV020>? SupportedExperiences,
     IReadOnlySet<ActivityDemandTag>? DemandTags,
     bool DemandTagsReviewed,
     bool RestrictionMappingsReviewed,
     IReadOnlySet<ActivityDemandTag>? ReviewedRestrictionConflictTags,
     IReadOnlySet<ExerciseTimingMethod>? SupportedTimingMethods,
     decimal? SetupMinutes,
-    IReadOnlySet<int>? ReviewedSubstituteExerciseIds);
+    IReadOnlySet<int>? ReviewedSubstituteExerciseIds,
+    MuscleCuties.Core.Models.Enums.Workout.InjuryFlag? Contraindications = null);
 
 public sealed record ExerciseEligibilityContext(
     IReadOnlySet<ExerciseEquipmentKind> AvailableEquipment,
-    TrainingExperienceLevel Experience,
+    ActivityExperienceV020 Experience,
     IReadOnlySet<int> ExcludedExerciseIds,
     IReadOnlySet<MovementPattern> BlockedMovementPatterns,
     IReadOnlySet<ActivityDemandTag> ExplicitlyBlockedDemandTags,
-    bool HasBodyZoneLimitation);
+    bool HasBodyZoneLimitation,
+    MuscleCuties.Core.Models.Enums.Workout.InjuryFlag ActiveInjuryFlags =
+        MuscleCuties.Core.Models.Enums.Workout.InjuryFlag.None);
 
 public sealed record ExerciseEligibilityDecision(
     ReviewedExerciseCandidate? Candidate,
@@ -81,7 +88,7 @@ public static class ExerciseEligibilityV02Rule
     {
         if (context is null || context.AvailableEquipment is null || context.ExcludedExerciseIds is null ||
             context.BlockedMovementPatterns is null || context.ExplicitlyBlockedDemandTags is null ||
-            !Enum.IsDefined(context.Experience) || context.Experience == TrainingExperienceLevel.Unknown)
+            !Enum.IsDefined(context.Experience))
             return new ExerciseSelectionResult(ExerciseEligibilityStatus.Blocked, [],
                 [new ExerciseEligibilityDecision(null, ExerciseEligibilityStatus.Blocked,
                     [ExerciseEligibilityReason.MissingCatalogMetadata])]);
@@ -123,38 +130,47 @@ public static class ExerciseEligibilityV02Rule
         ReviewedExerciseCandidate? candidate,
         ExerciseEligibilityContext? context)
     {
-        if (candidate is null || context is null || candidate.ExerciseId <= 0 ||
-            string.IsNullOrWhiteSpace(candidate.CatalogVersion) ||
-            !Enum.IsDefined(candidate.Pattern) ||
-            candidate.RequiredEquipment is null || candidate.RequiredEquipment.Count == 0 ||
-            candidate.RequiredEquipment.Any(kind => !Enum.IsDefined(kind)) ||
-            candidate.DemandTags is null || candidate.DemandTags.Count == 0 ||
-            candidate.DemandTags.Any(tag => !Enum.IsDefined(tag)) ||
-            candidate.ReviewedRestrictionConflictTags is null ||
-            candidate.ReviewedRestrictionConflictTags.Any(tag => !Enum.IsDefined(tag)) ||
-            candidate.SupportedTimingMethods is null || candidate.SupportedTimingMethods.Count == 0 ||
-            candidate.SupportedTimingMethods.Any(method => !Enum.IsDefined(method)) ||
-            candidate.SetupMinutes is null || candidate.SetupMinutes < 0 ||
-            !Enum.IsDefined(candidate.MinimumExperience) ||
-            candidate.MinimumExperience == TrainingExperienceLevel.Unknown)
+        if (candidate is null || context is null)
             return new ExerciseEligibilityDecision(candidate, ExerciseEligibilityStatus.Blocked,
                 [ExerciseEligibilityReason.MissingCatalogMetadata]);
 
         var reasons = new List<ExerciseEligibilityReason>();
+        var metadataMissing = candidate.ExerciseId <= 0 ||
+            string.IsNullOrWhiteSpace(candidate.CatalogVersion) ||
+            !Enum.IsDefined(candidate.Pattern) ||
+            candidate.RequiredEquipment is null || candidate.RequiredEquipment.Count == 0 ||
+            candidate.RequiredEquipment?.Any(kind => !Enum.IsDefined(kind)) == true ||
+            candidate.DemandTags is null ||
+            candidate.DemandTags?.Any(tag => !Enum.IsDefined(tag)) == true ||
+            candidate.ReviewedRestrictionConflictTags is null ||
+            candidate.ReviewedRestrictionConflictTags?.Any(tag => !Enum.IsDefined(tag)) == true ||
+            candidate.SupportedTimingMethods is null || candidate.SupportedTimingMethods.Count == 0 ||
+            candidate.SupportedTimingMethods?.Any(method => !Enum.IsDefined(method)) == true ||
+            candidate.SetupMinutes is null || candidate.SetupMinutes < 0 ||
+            candidate.SupportedExperiences is null || candidate.SupportedExperiences.Count == 0 ||
+            candidate.SupportedExperiences?.Any(experience => !Enum.IsDefined(experience)) == true ||
+            candidate.Contraindications is null;
+        if (metadataMissing)
+            reasons.Add(ExerciseEligibilityReason.MissingCatalogMetadata);
         if (!candidate.DemandTagsReviewed || !candidate.RestrictionMappingsReviewed)
             reasons.Add(ExerciseEligibilityReason.UnreviewedCatalogMetadata);
         if (context.ExcludedExerciseIds.Contains(candidate.ExerciseId))
             reasons.Add(ExerciseEligibilityReason.UserExcluded);
         if (context.BlockedMovementPatterns.Contains(candidate.Pattern) ||
-            candidate.DemandTags.Overlaps(context.ExplicitlyBlockedDemandTags) ||
-            candidate.ReviewedRestrictionConflictTags.Overlaps(context.ExplicitlyBlockedDemandTags))
+            candidate.DemandTags?.Overlaps(context.ExplicitlyBlockedDemandTags) == true ||
+            candidate.ReviewedRestrictionConflictTags?.Overlaps(context.ExplicitlyBlockedDemandTags) == true ||
+            candidate.Contraindications is { } contraindications &&
+            (contraindications & context.ActiveInjuryFlags) != MuscleCuties.Core.Models.Enums.Workout.InjuryFlag.None)
             reasons.Add(ExerciseEligibilityReason.ExplicitRestrictionConflict);
-        if (!candidate.RequiredEquipment.IsSubsetOf(context.AvailableEquipment))
+        if (candidate.RequiredEquipment is not null &&
+            !candidate.RequiredEquipment.IsSubsetOf(context.AvailableEquipment))
             reasons.Add(ExerciseEligibilityReason.EquipmentUnavailable);
-        if (candidate.MinimumExperience > context.Experience)
+        if (candidate.SupportedExperiences is not null &&
+            !candidate.SupportedExperiences.Contains(context.Experience))
             reasons.Add(ExerciseEligibilityReason.UnsupportedExperience);
         if (reasons.Count > 0)
-            return new ExerciseEligibilityDecision(candidate, ExerciseEligibilityStatus.Blocked, reasons);
+            return new ExerciseEligibilityDecision(candidate, ExerciseEligibilityStatus.Blocked,
+                reasons.Distinct().ToArray());
 
         if (context.HasBodyZoneLimitation)
             return new ExerciseEligibilityDecision(candidate, ExerciseEligibilityStatus.NeedsIndividualReview,

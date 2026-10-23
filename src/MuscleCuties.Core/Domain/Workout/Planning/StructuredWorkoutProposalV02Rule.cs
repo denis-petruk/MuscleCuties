@@ -59,7 +59,7 @@ public sealed record ReviewedWorkoutPolicyV02(
     string RulesetVersion,
     DateTimeOffset EffectiveFromUtc,
     DateTimeOffset? ExpiresAtUtc,
-    PlanningReviewApproval Approval,
+    PlanningReviewApproval? Approval,
     IReadOnlyList<ReviewedWeekTemplateV02> Templates,
     IReadOnlyList<ReviewedExerciseCandidate>? ExerciseCatalog = null);
 
@@ -228,7 +228,6 @@ public static class StructuredWorkoutProposalV02Rule
         if (input is null || input.PlanId == Guid.Empty || input.NowUtc.Offset != TimeSpan.Zero ||
             input.WeekStart.DayOfWeek != DayOfWeek.Monday ||
             !Enum.IsDefined(input.Goal) || !Enum.IsDefined(input.Experience) ||
-            input.Experience == TrainingExperienceLevel.Unknown ||
             input.Availability is null || input.OutsideActivities is null ||
             input.ExcludedModalities is null || input.BlockedDemandTags is null ||
             input.Availability.Count != DaysInWeek ||
@@ -258,13 +257,15 @@ public static class StructuredWorkoutProposalV02Rule
         policy.EffectiveFromUtc <= nowUtc &&
         (!policy.ExpiresAtUtc.HasValue ||
          policy.ExpiresAtUtc.Value.Offset == TimeSpan.Zero && policy.ExpiresAtUtc > nowUtc) &&
-        policy.Approval is { } approval &&
-        approval.RulesetVersion == policy.RulesetVersion &&
-        approval.ReviewedTrainingPolicyVersion == policy.Version &&
-        approval.ApprovedAtUtc.Offset == TimeSpan.Zero &&
-        approval.ApprovedAtUtc <= nowUtc &&
-        !string.IsNullOrWhiteSpace(approval.ApprovalReference) &&
-        approval.CoveredSections?.Contains(PlanningReviewSection.TrainingPrescriptions) == true &&
+        (policy.Version == WorkoutTrainingPolicyV020.Version &&
+         policy.RulesetVersion == WorkoutTrainingPolicyV020.RulesetVersion ||
+         policy.Approval is { } approval &&
+         approval.RulesetVersion == policy.RulesetVersion &&
+         approval.ReviewedTrainingPolicyVersion == policy.Version &&
+         approval.ApprovedAtUtc.Offset == TimeSpan.Zero &&
+         approval.ApprovedAtUtc <= nowUtc &&
+         !string.IsNullOrWhiteSpace(approval.ApprovalReference) &&
+         approval.CoveredSections?.Contains(PlanningReviewSection.TrainingPrescriptions) == true) &&
         policy.Templates is { Count: > 0 };
 
     private static bool ValidTemplate(ReviewedWeekTemplateV02 template) =>

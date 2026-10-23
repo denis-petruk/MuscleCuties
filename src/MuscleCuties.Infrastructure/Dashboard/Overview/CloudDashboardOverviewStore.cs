@@ -10,7 +10,7 @@ public sealed class CloudDashboardOverviewStore(
 {
     public async Task<DashboardOverviewResponse> LoadAsync(DashboardOverviewRequest request, CancellationToken ct)
     {
-        var cloud = await cloudGateway.GetDashboardOverviewAsync(request.Today, ct).ConfigureAwait(false);
+        var cloud = await cloudGateway.GetDashboardOverviewAsync(request.Today, request.TimeZoneId, ct).ConfigureAwait(false);
         if (cloud.Status == BackendApiStatus.Success && cloud.Data is not null)
             return cloud.Data;
 

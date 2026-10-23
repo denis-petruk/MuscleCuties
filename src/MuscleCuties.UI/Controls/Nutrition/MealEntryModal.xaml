@@ -193,11 +193,13 @@
                         <Button
                             Text="{loc:LocalizedText Nutrition_AddFood}"
                             Command="{Binding StartManualMealCommand}"
+                            Style="{StaticResource ButtonSecondary}"
                             IsEnabled="{Binding HasEntryMealTypeSelected}"
-                            MinimumHeightRequest="50"
+                            MinimumHeightRequest="52"
+                            HorizontalOptions="Fill"
+                            HorizontalTextAlignment="Center"
                             LineBreakMode="WordWrap"
-                            FontAttributes="Bold"
-                            Margin="0,6,0,0"
+                            Margin="0"
                             SemanticProperties.Description="{loc:LocalizedText Nutrition_AddFood}"
                             SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealEntry_OpensFoodSearchToLogFoods}" />
 
@@ -205,7 +207,11 @@
                             Text="{loc:LocalizedText Nutrition_MealEntry_GetASuggestion}"
                             Command="{Binding StartSuggestedMealCommand}"
                             Style="{StaticResource ButtonSecondary}"
-                            MinimumHeightRequest="48"
+                            MinimumHeightRequest="52"
+                            HorizontalOptions="Fill"
+                            HorizontalTextAlignment="Center"
+                            LineBreakMode="WordWrap"
+                            Margin="0"
                             SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_GetAMealSuggestion}"
                             SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealEntry_OpensMealSuggestionsTailoredToYour}" />
 
@@ -213,7 +219,9 @@
                             Text="{loc:LocalizedText Nutrition_PlanMyDay}"
                             Command="{Binding StartDayPlanCommand}"
                             Style="{StaticResource ButtonSecondary}"
-                            MinimumHeightRequest="48"
+                            MinimumHeightRequest="52"
+                            HorizontalOptions="Fill"
+                            HorizontalTextAlignment="Center"
                             LineBreakMode="WordWrap"
                             Margin="0,0,0,2"
                             SemanticProperties.Description="{loc:LocalizedText Nutrition_PlanMyDay}"

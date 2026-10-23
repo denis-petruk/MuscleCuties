@@ -18,7 +18,6 @@ public sealed class LocalDailyCheckInStore(
     IHealthReadinessBridge health,
     ICycleService cycle,
     IReadinessEngine readinessEngine,
-    IWorkoutService workouts,
     IAppPreloadService preload) : IDailyCheckInStore
 {
     public async Task<DailyCheckInStatusResponse> GetStatusAsync(DailyCheckInStatusRequest request,
@@ -85,21 +84,9 @@ public sealed class LocalDailyCheckInStore(
             throw new UnauthorizedAccessException("Account changed during daily check-in.");
         await data.SaveAsync(log).ConfigureAwait(false);
         preload.InvalidateDashboard();
-        preload.InvalidateWorkout();
         if (await RequireUserAsync().ConfigureAwait(false) != userId)
             throw new UnauthorizedAccessException("Account changed during daily check-in.");
-
-        try
-        {
-            await workouts.RegenerateActivePlanAsync(userId, phase).ConfigureAwait(false);
-            var workout = await workouts.GetTodaysSummaryAsync(userId, phase, DateTime.Today).ConfigureAwait(false);
-            return new SubmitDailyCheckInResponse(result.Score, result.Tier.ToString(), workout.Title, false);
-        }
-        catch (Exception exception)
-        {
-            Trace.WriteLine($"[DailyCheckIn] Plan refresh failed ({exception.GetType().Name}).");
-            return new SubmitDailyCheckInResponse(result.Score, result.Tier.ToString(), string.Empty, true);
-        }
+        return new SubmitDailyCheckInResponse(result.Score, result.Tier.ToString(), string.Empty, false);
     }
 
     private async Task<int> RequireUserAsync()

@@ -209,7 +209,7 @@
                     </Grid>
                 </Border>
 
-                <!-- Workout planning check-in (separate from the legacy readiness inputs) -->
+                <!-- Four required self-reported inputs for the daily planning estimate. -->
                 <Border Style="{StaticResource CheckInSection}">
                     <VerticalStackLayout Spacing="12">
                         <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningTitle}"
@@ -291,7 +291,7 @@
                 <Border
                     Style="{StaticResource CardPrimary}"
                     IsVisible="{Binding IsCompleted}">
-                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" HorizontalOptions="Center">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8" HorizontalOptions="Center">
                         <Label
                             Grid.Row="0"
                             Text="{loc:LocalizedText Dashboard_CheckIn_SuccessMessage}"
@@ -300,9 +300,8 @@
                         <Label
                             Grid.Row="1"
                             Text="{Binding ReadinessScoreText, Converter={StaticResource LocalizedStringConverter}}"
-                            IsVisible="{Binding HasApprovedScorePolicy}"
                             FontFamily="Inter"
-                            FontSize="52"
+                            FontSize="42"
                             FontAttributes="Bold"
                             TextColor="{StaticResource Primary}"
                             HorizontalOptions="Center"
@@ -310,12 +309,44 @@
                         <Label
                             Grid.Row="2"
                             Text="{Binding ReadinessTierText, Converter={StaticResource LocalizedStringConverter}}"
-                            IsVisible="{Binding HasApprovedScorePolicy}"
                             Style="{StaticResource SectionTitle}"
                             HorizontalOptions="Center"
                             HorizontalTextAlignment="Center" />
                         <Label
                             Grid.Row="3"
+                            Text="{loc:LocalizedText Dashboard_Readiness_ScoreExplanation}"
+                            Style="{StaticResource MutedLabel}"
+                            HorizontalOptions="Center"
+                            HorizontalTextAlignment="Center" />
+                        <Grid Grid.Row="4" ColumnDefinitions="*,*,*,*" ColumnSpacing="10"
+                              HorizontalOptions="Fill">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2" HorizontalOptions="Center">
+                                <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}"
+                                       Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                <Label Text="{Binding PlanningSleepDisplay}" Style="{StaticResource BodyLabel}"
+                                       HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center">
+                                <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergyTitle}"
+                                       Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                <Label Text="{Binding EnergyDisplay}" Style="{StaticResource BodyLabel}"
+                                       HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="2" Spacing="2" HorizontalOptions="Center">
+                                <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSoreness}"
+                                       Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                <Label Text="{Binding PlanningSorenessDisplay}" Style="{StaticResource BodyLabel}"
+                                       HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="3" Spacing="2" HorizontalOptions="Center">
+                                <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningStress}"
+                                       Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                <Label Text="{Binding PlanningStressDisplay}" Style="{StaticResource BodyLabel}"
+                                       HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                        </Grid>
+                        <Label
+                            Grid.Row="5"
                             Text="{Binding SessionSummaryText, Converter={StaticResource LocalizedStringConverter}}"
                             Style="{StaticResource MutedLabel}"
                             IsVisible="{Binding HasSessionSummary}"

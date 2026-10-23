@@ -130,9 +130,11 @@ public static class PlanRevisionV02Rule
 
         var hasPrescriptions = proposal.Sessions.Any(session => session.Exercises.Count > 0 ||
             session.ActivityId.HasValue || session.PlannedMinutes is > 0);
-        if (hasPrescriptions && (string.IsNullOrWhiteSpace(proposal.TrainingPolicyVersion) ||
-                                 !HasTrainingApproval(approval, proposal.RulesetVersion,
-                                     proposal.TrainingPolicyVersion)))
+        var finalizedProductPolicy = proposal.TrainingPolicyVersion == WorkoutTrainingPolicyV020.Version &&
+                                     proposal.RulesetVersion == WorkoutTrainingPolicyV020.RulesetVersion;
+        if (hasPrescriptions && !finalizedProductPolicy &&
+            (string.IsNullOrWhiteSpace(proposal.TrainingPolicyVersion) ||
+             !HasTrainingApproval(approval, proposal.RulesetVersion, proposal.TrainingPolicyVersion)))
             return new PlanChangeResult(PlanChangeStatus.NeedsProgrammingReview, current);
 
         if (current?.RevisionNumber == long.MaxValue)

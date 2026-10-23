@@ -4,9 +4,11 @@ using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Domain.Dashboard;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Nutrition;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.Infrastructure.Dashboard.CheckIn;
 using MuscleCuties.UseCases.Features.Dashboard.Overview;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Targets;
@@ -15,7 +17,8 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Dashboard;
 
 public sealed class PostgresDashboardOverviewStore(
     PostgresDbContext dbContext,
-    IServerNutritionTargetProjectionStore targetStore) : IServerDashboardOverviewStore
+    IServerNutritionTargetProjectionStore targetStore,
+    TimeProvider timeProvider) : IServerDashboardOverviewStore
 {
     private const int DefaultCycleLengthDays = 28;
     private const int DefaultWorkoutDaysPerWeek = 3;
@@ -32,6 +35,7 @@ public sealed class PostgresDashboardOverviewStore(
     public async Task<DashboardOverviewResponse> LoadOverviewAsync(
         Guid userId,
         DateOnly today,
+        string? timeZoneId = null,
         CancellationToken cancellationToken = default) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync<DashboardOverviewResponse>(async () =>
         {
@@ -260,7 +264,20 @@ public sealed class PostgresDashboardOverviewStore(
                 trendPoints,
                 weeklyNutrition,
                 weeklyWeights,
-                workoutProgress);
+                workoutProgress,
+                todayCheckIn is null ? null : TodayReadinessCheckInMapper.Map(
+                    todayCheckIn.PlanningSleepQuality,
+                    todayCheckIn.Energy,
+                    todayCheckIn.PlanningSoreness,
+                    todayCheckIn.PlanningStress,
+                    todayCheckIn.Date,
+                    todayCheckIn.PlanningTimeZoneId,
+                    todayCheckIn.PlanningRecordedAtUtc is { } recorded
+                        ? new DateTimeOffset(DateTime.SpecifyKind(recorded, DateTimeKind.Utc))
+                        : null,
+                    todayCheckIn.PlanningRevision,
+                    timeProvider.GetUtcNow(),
+                    timeZoneId));
         }).ConfigureAwait(false);
 
     private async Task<(DashboardWeeklyNutritionDto?, IReadOnlyList<DashboardWeeklyWeightDto>,
@@ -411,7 +428,7 @@ public sealed class PostgresDashboardOverviewStore(
             if (activePlan is not null)
             {
                 var plannedDays = await dbContext.WorkoutDays.AsNoTracking()
-                    .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id)
+                    .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id && !d.IsRemovedByReadiness)
                     .Select(d => d.DayOfWeek)
                     .Distinct()
                     .ToListAsync(cancellationToken)
@@ -571,14 +588,15 @@ public sealed class PostgresDashboardOverviewStore(
         {
             var dayOfWeek = (int)today.DayOfWeek;
             var plannedDay = await dbContext.WorkoutDays.AsNoTracking()
-                .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id && d.DayOfWeek == dayOfWeek)
+                .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id &&
+                            d.DayOfWeek == dayOfWeek && !d.IsRemovedByReadiness)
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             if (plannedDay is not null)
             {
                 var exercisesCount = await dbContext.WorkoutDayExercises.AsNoTracking()
-                    .Where(e => e.UserId == userId && e.WorkoutDayId == plannedDay.Id)
+                    .Where(e => e.UserId == userId && e.WorkoutDayId == plannedDay.Id && !e.IsRemovedByReadiness)
                     .CountAsync(cancellationToken)
                     .ConfigureAwait(false);
 
