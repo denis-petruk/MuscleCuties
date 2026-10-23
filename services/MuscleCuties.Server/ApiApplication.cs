@@ -228,6 +228,8 @@ public static class ApiApplication
         builder.Services.AddScoped<GetWorkoutPlanningCatalogUseCase>();
         builder.Services.AddScoped<IWorkoutPlanningReferenceDataSource, PostgresWorkoutPlanningReferenceDataSource>();
         builder.Services.AddScoped<GenerateWorkoutPlanUseCase>();
+        builder.Services.AddScoped<IStrengthPlanPreviewSourceV020, PostgresStrengthPlanPreviewSourceV020>();
+        builder.Services.AddScoped<PreviewStrengthPlanV020UseCase>();
         builder.Services.AddScoped<IWorkoutActiveSessionStore, PostgresWorkoutActiveSessionStore>();
         builder.Services.AddScoped<WorkoutActiveSessionUseCase>();
         builder.Services.AddScoped<IServerWorkoutArchiveStore, PostgresWorkoutArchiveStore>();

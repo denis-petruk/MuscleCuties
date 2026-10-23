@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using Npgsql;
 
 return await DatabaseMaintenance.RunAsync(args);
@@ -15,6 +16,8 @@ public static class DatabaseMaintenance
     private const string LambdaFunctionEnvironmentVariable = "AWS_LAMBDA_FUNCTION_NAME";
     private const string MigrateCommand = "migrate";
     private const string SeedCommand = "seed";
+    private const string ReviewCatalogDryRunCommand = "review-catalog-dry-run";
+    private const string ReviewCatalogApplyCommand = "review-catalog-apply";
     private const string CleanupPhotosCommand = "cleanup-photos";
     private const string ConfirmationSwitch = "--confirm";
     private const int Sha256HexLength = 64;
@@ -35,7 +38,7 @@ public static class DatabaseMaintenance
     {
         if (!TryParse(args, out var command, out var manifestPath, out var expectedSha256))
         {
-            Console.Error.WriteLine("Usage: DbMaintenance migrate --confirm | seed <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
+            Console.Error.WriteLine("Usage: DbMaintenance migrate --confirm | seed <manifest-path> <expected-sha256> --confirm | review-catalog-dry-run <manifest-path> <expected-sha256> | review-catalog-apply <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
             return InvalidUsageExitCode;
         }
 
@@ -95,11 +98,11 @@ public static class DatabaseMaintenance
                 }
             }
 
-            if (command == SeedCommand)
+            if (command is SeedCommand or ReviewCatalogDryRunCommand or ReviewCatalogApplyCommand)
             {
                 manifestPath = ResolvePath(manifestPath!);
                 if (!await ManifestMatchesAsync(manifestPath, expectedSha256!))
-                    throw new InvalidOperationException("Canonical manifest SHA-256 does not match the approved checksum.");
+                    throw new InvalidOperationException("Manifest SHA-256 does not match the supplied checksum.");
             }
 
             var options = new DbContextOptionsBuilder<PostgresDbContext>()
@@ -116,8 +119,28 @@ public static class DatabaseMaintenance
                 return 0;
             }
 
+            if (command == ReviewCatalogDryRunCommand)
+            {
+                var importer = new PostgresReviewedExerciseCatalogImporterV020(context);
+                var dryRun = await importer.DryRunAsync(manifestPath!);
+                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(dryRun));
+                return dryRun.CanImport ? 0 : 1;
+            }
+
             if ((await context.Database.GetPendingMigrationsAsync()).Any())
-                throw new InvalidOperationException("Apply schema migrations before canonical seeding.");
+                throw new InvalidOperationException("Apply schema migrations before catalog writes.");
+
+            if (command == ReviewCatalogApplyCommand)
+            {
+                var importer = new PostgresReviewedExerciseCatalogImporterV020(context);
+                var dryRun = await importer.DryRunAsync(manifestPath!);
+                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(dryRun));
+                if (!dryRun.CanImport)
+                    return 1;
+                await importer.ApplyAsync(manifestPath!);
+                Console.WriteLine("Exercise review metadata applied with separate owner restriction assertion; existing contraindications remain and automatic substitutions remain disabled.");
+                return 0;
+            }
 
             var summary = await PostgresCanonicalCatalogSeeder.IngestFromManifestAsync(context, manifestPath!);
             Console.WriteLine($"Canonical seed completed: {summary.TotalManifestRows} manifest rows, SHA-256 {summary.ManifestIntegritySha256}.");
@@ -191,6 +214,26 @@ public static class DatabaseMaintenance
             parsedLease > 0 && parsedLease <= MaximumCleanupLeaseMinutes)
         {
             command = CleanupPhotosCommand;
+            return true;
+        }
+
+        if (args is [ReviewCatalogDryRunCommand, var dryRunPath, var dryRunChecksum] &&
+            !string.IsNullOrWhiteSpace(dryRunPath) && dryRunChecksum.Length == Sha256HexLength &&
+            dryRunChecksum.All(Uri.IsHexDigit))
+        {
+            command = ReviewCatalogDryRunCommand;
+            manifestPath = dryRunPath;
+            expectedSha256 = dryRunChecksum;
+            return true;
+        }
+
+        if (args is [ReviewCatalogApplyCommand, var applyPath, var applyChecksum, ConfirmationSwitch] &&
+            !string.IsNullOrWhiteSpace(applyPath) && applyChecksum.Length == Sha256HexLength &&
+            applyChecksum.All(Uri.IsHexDigit))
+        {
+            command = ReviewCatalogApplyCommand;
+            manifestPath = applyPath;
+            expectedSha256 = applyChecksum;
             return true;
         }
 
