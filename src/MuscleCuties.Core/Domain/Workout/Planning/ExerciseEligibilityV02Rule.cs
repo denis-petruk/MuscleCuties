@@ -41,8 +41,25 @@ public enum ExerciseEligibilityReason
     UnsupportedExperience,
     BodyZoneNeedsIndividualReview,
     MissingReviewedSubstitutionMapping,
+    UnknownExperienceNeedsAssessment,
+    ReviewConditionsNeedAcknowledgment,
+    RejectedReviewedSubstitution,
+    ManualProgrammingChangeRequired,
+    SubstitutionConditionsNeedAcknowledgment,
     NoEligibleExercise
 }
+
+public enum DirectedSubstitutionCategoryV020
+{
+    CloseProgrammingAlternative,
+    ManualProgrammingAlternative,
+    RejectedAutomaticSubstitution
+}
+
+public sealed record DirectedSubstitutionReviewV020(
+    int TargetExerciseId,
+    DirectedSubstitutionCategoryV020 Category,
+    string Conditions);
 
 public sealed record ReviewedExerciseCandidate(
     int ExerciseId,
@@ -57,7 +74,12 @@ public sealed record ReviewedExerciseCandidate(
     IReadOnlySet<ExerciseTimingMethod>? SupportedTimingMethods,
     decimal? SetupMinutes,
     IReadOnlySet<int>? ReviewedSubstituteExerciseIds,
-    MuscleCuties.Core.Models.Enums.Workout.InjuryFlag? Contraindications = null);
+    MuscleCuties.Core.Models.Enums.Workout.InjuryFlag? Contraindications = null,
+    string? ExperienceConditionsV020 = null,
+    string? ReviewConditionsV020 = null,
+    bool ReviewEvidencePresent = true,
+    IReadOnlyList<DirectedSubstitutionReviewV020>? DirectedSubstitutionReviewsV020 = null,
+    bool UnilateralDoublesTime = false);
 
 public sealed record ExerciseEligibilityContext(
     IReadOnlySet<ExerciseEquipmentKind> AvailableEquipment,
@@ -67,7 +89,10 @@ public sealed record ExerciseEligibilityContext(
     IReadOnlySet<ActivityDemandTag> ExplicitlyBlockedDemandTags,
     bool HasBodyZoneLimitation,
     MuscleCuties.Core.Models.Enums.Workout.InjuryFlag ActiveInjuryFlags =
-        MuscleCuties.Core.Models.Enums.Workout.InjuryFlag.None);
+        MuscleCuties.Core.Models.Enums.Workout.InjuryFlag.None,
+    IReadOnlySet<int>? AcknowledgedExerciseConditionIds = null,
+    bool UnknownExperienceAssessmentCompleted = false,
+    IReadOnlySet<string>? AcknowledgedSubstitutionPairKeys = null);
 
 public sealed record ExerciseEligibilityDecision(
     ReviewedExerciseCandidate? Candidate,
@@ -118,12 +143,28 @@ public static class ExerciseEligibilityV02Rule
         ReviewedExerciseCandidate? substitute,
         ExerciseEligibilityContext? context)
     {
-        if (original?.ReviewedSubstituteExerciseIds is null ||
-            substitute is null || !original.ReviewedSubstituteExerciseIds.Contains(substitute.ExerciseId))
-            return new ExerciseEligibilityDecision(substitute, ExerciseEligibilityStatus.Blocked,
-                [ExerciseEligibilityReason.MissingReviewedSubstitutionMapping]);
-
-        return Evaluate(substitute, context);
+        if (original?.DirectedSubstitutionReviewsV020 is { } directed)
+        {
+            var review = substitute is null ? null : directed.FirstOrDefault(pair =>
+                pair.TargetExerciseId == substitute.ExerciseId);
+            if (review is null)
+                return new ExerciseEligibilityDecision(substitute, ExerciseEligibilityStatus.Blocked,
+                    [ExerciseEligibilityReason.MissingReviewedSubstitutionMapping]);
+            if (review.Category == DirectedSubstitutionCategoryV020.RejectedAutomaticSubstitution)
+                return new ExerciseEligibilityDecision(substitute, ExerciseEligibilityStatus.Blocked,
+                    [ExerciseEligibilityReason.RejectedReviewedSubstitution]);
+            if (review.Category == DirectedSubstitutionCategoryV020.ManualProgrammingAlternative)
+                return new ExerciseEligibilityDecision(substitute, ExerciseEligibilityStatus.NeedsIndividualReview,
+                    [ExerciseEligibilityReason.ManualProgrammingChangeRequired]);
+            var key = $"{original.ExerciseId}:{substitute!.ExerciseId}";
+            if (string.IsNullOrWhiteSpace(review.Conditions) ||
+                context?.AcknowledgedSubstitutionPairKeys?.Contains(key) != true)
+                return new ExerciseEligibilityDecision(substitute, ExerciseEligibilityStatus.NeedsIndividualReview,
+                    [ExerciseEligibilityReason.SubstitutionConditionsNeedAcknowledgment]);
+            return Evaluate(substitute, context);
+        }
+        return new ExerciseEligibilityDecision(substitute, ExerciseEligibilityStatus.Blocked,
+            [ExerciseEligibilityReason.MissingReviewedSubstitutionMapping]);
     }
 
     private static ExerciseEligibilityDecision Evaluate(
@@ -135,7 +176,7 @@ public static class ExerciseEligibilityV02Rule
                 [ExerciseEligibilityReason.MissingCatalogMetadata]);
 
         var reasons = new List<ExerciseEligibilityReason>();
-        var metadataMissing = candidate.ExerciseId <= 0 ||
+        var metadataMissing = !candidate.ReviewEvidencePresent || candidate.ExerciseId <= 0 ||
             string.IsNullOrWhiteSpace(candidate.CatalogVersion) ||
             !Enum.IsDefined(candidate.Pattern) ||
             candidate.RequiredEquipment is null || candidate.RequiredEquipment.Count == 0 ||
@@ -168,6 +209,13 @@ public static class ExerciseEligibilityV02Rule
         if (candidate.SupportedExperiences is not null &&
             !candidate.SupportedExperiences.Contains(context.Experience))
             reasons.Add(ExerciseEligibilityReason.UnsupportedExperience);
+        if (context.Experience == ActivityExperienceV020.Unknown &&
+            !context.UnknownExperienceAssessmentCompleted)
+            reasons.Add(ExerciseEligibilityReason.UnknownExperienceNeedsAssessment);
+        if ((!string.IsNullOrWhiteSpace(candidate.ExperienceConditionsV020) ||
+             !string.IsNullOrWhiteSpace(candidate.ReviewConditionsV020)) &&
+            context.AcknowledgedExerciseConditionIds?.Contains(candidate.ExerciseId) != true)
+            reasons.Add(ExerciseEligibilityReason.ReviewConditionsNeedAcknowledgment);
         if (reasons.Count > 0)
             return new ExerciseEligibilityDecision(candidate, ExerciseEligibilityStatus.Blocked,
                 reasons.Distinct().ToArray());

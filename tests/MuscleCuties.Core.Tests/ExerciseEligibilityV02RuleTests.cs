@@ -99,10 +99,64 @@ public sealed class ExerciseEligibilityV02RuleTests
             SupportedExperiences = new HashSet<ActivityExperienceV020> { ActivityExperienceV020.Unknown }
         };
         var supported = ExerciseEligibilityV02Rule.Filter([supportedCandidate], unknownContext);
+        var assessed = ExerciseEligibilityV02Rule.Filter([supportedCandidate],
+            unknownContext with { UnknownExperienceAssessmentCompleted = true });
 
         Assert.Equal(ExerciseEligibilityStatus.Blocked, unsupported.Status);
         Assert.Contains(ExerciseEligibilityReason.UnsupportedExperience, unsupported.Decisions.Single().Reasons);
-        Assert.Equal(ExerciseEligibilityStatus.Eligible, supported.Status);
+        Assert.Equal(ExerciseEligibilityStatus.Blocked, supported.Status);
+        Assert.Contains(ExerciseEligibilityReason.UnknownExperienceNeedsAssessment,
+            supported.Decisions.Single().Reasons);
+        Assert.Equal(ExerciseEligibilityStatus.Eligible, assessed.Status);
+    }
+
+    [Fact]
+    public void Conditional_Review_Requires_Exercise_Specific_Acknowledgment()
+    {
+        var candidate = Candidate(FirstExerciseId) with
+        {
+            ExperienceConditionsV020 = "Review setup and demonstrated range.",
+            ReviewConditionsV020 = "Use only a controlled, tolerated range."
+        };
+        var missing = ExerciseEligibilityV02Rule.Filter([candidate], Context());
+        var acknowledged = ExerciseEligibilityV02Rule.Filter([candidate],
+            Context() with { AcknowledgedExerciseConditionIds = new HashSet<int> { FirstExerciseId } });
+
+        Assert.Equal(ExerciseEligibilityStatus.Blocked, missing.Status);
+        Assert.Contains(ExerciseEligibilityReason.ReviewConditionsNeedAcknowledgment,
+            missing.Decisions.Single().Reasons);
+        Assert.Equal(ExerciseEligibilityStatus.Eligible, acknowledged.Status);
+    }
+
+    [Fact]
+    public void Missing_Restriction_Mapping_Remains_Blocked_Even_When_Demand_Is_Assessed_Empty()
+    {
+        var candidate = Candidate(FirstExerciseId) with
+        {
+            DemandTags = new HashSet<ActivityDemandTag>(),
+            DemandTagsReviewed = true,
+            RestrictionMappingsReviewed = false
+        };
+        var result = ExerciseEligibilityV02Rule.Filter([candidate], Context());
+
+        Assert.Equal(ExerciseEligibilityStatus.Blocked, result.Status);
+        Assert.Contains(ExerciseEligibilityReason.UnreviewedCatalogMetadata,
+            result.Decisions.Single().Reasons);
+    }
+
+    [Fact]
+    public void Owner_Cleared_Mapping_Uses_Existing_Contraindication_Flags()
+    {
+        var injury = InjuryFlag.Knee;
+        var context = Context() with { ActiveInjuryFlags = injury };
+        var cleared = ExerciseEligibilityV02Rule.Filter([Candidate(FirstExerciseId)], context);
+        var conflict = ExerciseEligibilityV02Rule.Filter(
+            [Candidate(FirstExerciseId) with { Contraindications = injury }], context);
+
+        Assert.Equal(ExerciseEligibilityStatus.Eligible, cleared.Status);
+        Assert.Equal(ExerciseEligibilityStatus.Blocked, conflict.Status);
+        Assert.Contains(ExerciseEligibilityReason.ExplicitRestrictionConflict,
+            conflict.Decisions.Single().Reasons);
     }
 
     [Fact]
@@ -116,7 +170,7 @@ public sealed class ExerciseEligibilityV02RuleTests
     }
 
     [Fact]
-    public void Substitution_Requires_Reviewed_Equivalence_And_Rechecks_Restrictions()
+    public void Legacy_Substitute_Id_List_Does_Not_Grant_Automatic_Equivalence()
     {
         var original = Candidate(FirstExerciseId) with
         {
@@ -124,16 +178,59 @@ public sealed class ExerciseEligibilityV02RuleTests
         };
         var substitute = Candidate(SecondExerciseId);
 
-        var allowed = ExerciseEligibilityV02Rule.EvaluateSubstitution(original, substitute, Context());
-        var blocked = ExerciseEligibilityV02Rule.EvaluateSubstitution(original, substitute,
-            Context(blockedTags: new HashSet<ActivityDemandTag> { ActivityDemandTag.Pulling }));
+        var legacy = ExerciseEligibilityV02Rule.EvaluateSubstitution(original, substitute, Context());
         var unmapped = ExerciseEligibilityV02Rule.EvaluateSubstitution(
             original with { ReviewedSubstituteExerciseIds = null }, substitute, Context());
 
-        Assert.Equal(ExerciseEligibilityStatus.Eligible, allowed.Status);
-        Assert.Equal(ExerciseEligibilityStatus.Blocked, blocked.Status);
-        Assert.Contains(ExerciseEligibilityReason.ExplicitRestrictionConflict, blocked.Reasons);
+        Assert.Equal(ExerciseEligibilityStatus.Blocked, legacy.Status);
+        Assert.Contains(ExerciseEligibilityReason.MissingReviewedSubstitutionMapping, legacy.Reasons);
         Assert.Contains(ExerciseEligibilityReason.MissingReviewedSubstitutionMapping, unmapped.Reasons);
+    }
+
+    [Fact]
+    public void Directed_Substitution_Decisions_Keep_Manual_And_Rejected_Pairs_Out_Of_Automatic_Flow()
+    {
+        var target = Candidate(SecondExerciseId);
+        var original = Candidate(FirstExerciseId) with
+        {
+            DirectedSubstitutionReviewsV020 =
+            [new(SecondExerciseId, DirectedSubstitutionCategoryV020.CloseProgrammingAlternative,
+                "Recheck setup and establish a separate load.")]
+        };
+        var closeUnacknowledged = ExerciseEligibilityV02Rule.EvaluateSubstitution(
+            original, target, Context());
+        var closeAcknowledged = ExerciseEligibilityV02Rule.EvaluateSubstitution(original, target,
+            Context() with { AcknowledgedSubstitutionPairKeys = new HashSet<string>
+                { $"{FirstExerciseId}:{SecondExerciseId}" } });
+        var closeRestricted = ExerciseEligibilityV02Rule.EvaluateSubstitution(original, target,
+            Context(blockedTags: new HashSet<ActivityDemandTag> { ActivityDemandTag.Pulling }) with
+            {
+                AcknowledgedSubstitutionPairKeys = new HashSet<string>
+                    { $"{FirstExerciseId}:{SecondExerciseId}" }
+            });
+        var manual = ExerciseEligibilityV02Rule.EvaluateSubstitution(original with
+        {
+            DirectedSubstitutionReviewsV020 =
+            [new(SecondExerciseId, DirectedSubstitutionCategoryV020.ManualProgrammingAlternative,
+                "Change the slot and dose manually.")]
+        }, target, Context());
+        var rejected = ExerciseEligibilityV02Rule.EvaluateSubstitution(original with
+        {
+            DirectedSubstitutionReviewsV020 =
+            [new(SecondExerciseId, DirectedSubstitutionCategoryV020.RejectedAutomaticSubstitution,
+                "Not an equivalent replacement.")]
+        }, target, Context());
+        var reverse = ExerciseEligibilityV02Rule.EvaluateSubstitution(target, original, Context());
+
+        Assert.Equal(ExerciseEligibilityStatus.NeedsIndividualReview, closeUnacknowledged.Status);
+        Assert.Equal(ExerciseEligibilityStatus.Eligible, closeAcknowledged.Status);
+        Assert.Equal(ExerciseEligibilityStatus.Blocked, closeRestricted.Status);
+        Assert.Contains(ExerciseEligibilityReason.ExplicitRestrictionConflict, closeRestricted.Reasons);
+        Assert.Equal(ExerciseEligibilityStatus.NeedsIndividualReview, manual.Status);
+        Assert.Contains(ExerciseEligibilityReason.ManualProgrammingChangeRequired, manual.Reasons);
+        Assert.Equal(ExerciseEligibilityStatus.Blocked, rejected.Status);
+        Assert.Contains(ExerciseEligibilityReason.RejectedReviewedSubstitution, rejected.Reasons);
+        Assert.Equal(ExerciseEligibilityStatus.Blocked, reverse.Status);
     }
 
     private static ReviewedExerciseCandidate Candidate(int id) => new(

@@ -22,7 +22,8 @@ public sealed record StrengthTemplateSelectionInputV020(
     IReadOnlyDictionary<int, int>? GoalPriorityByExerciseId = null,
     IReadOnlyDictionary<int, int>? CompletedExerciseExposureCounts = null,
     IReadOnlySet<int>? KnownManageableLoadExerciseIds = null,
-    IReadOnlySet<int>? UserConfirmedFamiliarityExerciseIds = null);
+    IReadOnlySet<int>? UserConfirmedFamiliarityExerciseIds = null,
+    IReadOnlyDictionary<string, IReadOnlySet<int>>? ReviewedAllowedExerciseIdsByTemplateSlot = null);
 
 public sealed record StrengthSlotSelectionV020(
     string SlotId,
@@ -150,11 +151,19 @@ public static class StrengthTemplateResolverV020
                 continue;
             }
 
+            var reviewKey = $"{input.Template.TemplateId}|{slot.SlotId}";
+            IReadOnlySet<int>? reviewedSlotExerciseIds = null;
+            var hasReviewedSlot = input.ReviewedAllowedExerciseIdsByTemplateSlot is null ||
+                                  input.ReviewedAllowedExerciseIdsByTemplateSlot.TryGetValue(reviewKey,
+                                      out reviewedSlotExerciseIds);
             var matched = input.Catalog
                 .Where(entry => entry is not null && entry.Candidate is not null &&
-                                slot.AcceptedPatterns.Contains(entry.Candidate.Pattern))
+                                slot.AcceptedPatterns.Contains(entry.Candidate.Pattern) &&
+                                (input.ReviewedAllowedExerciseIdsByTemplateSlot is null ||
+                                 hasReviewedSlot && reviewedSlotExerciseIds!.Contains(entry.Candidate.ExerciseId)))
                 .ToArray();
             var metadataGaps = matched.SelectMany(entry => entry.MetadataGaps ?? [])
+                .Concat(hasReviewedSlot ? Array.Empty<string>() : new[] { "TemplateSlotReviewMissing" })
                 .Distinct(StringComparer.Ordinal).OrderBy(code => code, StringComparer.Ordinal).ToArray();
 
             var eligibility = ExerciseEligibilityV02Rule.Filter(
@@ -168,8 +177,14 @@ public static class StrengthTemplateResolverV020
             var candidateIds = candidatePool.Select(candidate => candidate.ExerciseId).ToHashSet();
 
             var slotPreferences = input.PreferredExerciseByOriginalId
-                .Where(pair => matched.Any(entry => entry.Candidate.ExerciseId == pair.Key) &&
-                               candidateIds.Contains(pair.Value))
+                .Where(pair => candidateIds.Contains(pair.Value) &&
+                               input.Catalog.FirstOrDefault(entry =>
+                                   entry.Candidate.ExerciseId == pair.Key) is { } original &&
+                               input.Catalog.FirstOrDefault(entry =>
+                                   entry.Candidate.ExerciseId == pair.Value) is { } substitute &&
+                               ExerciseEligibilityV02Rule.EvaluateSubstitution(
+                                   original.Candidate, substitute.Candidate,
+                                   input.EligibilityContext).Status == ExerciseEligibilityStatus.Eligible)
                 .Select(pair => pair.Value).ToHashSet();
             var existingSelections = input.ExistingAcceptedExerciseIds ?? new HashSet<int>();
             var goalPriorities = input.GoalPriorityByExerciseId ?? new Dictionary<int, int>();
@@ -178,6 +193,7 @@ public static class StrengthTemplateResolverV020
             var confirmedFamiliarity = input.UserConfirmedFamiliarityExerciseIds ?? new HashSet<int>();
             var selection = matched
                 .Where(entry => candidateIds.Contains(entry.Candidate.ExerciseId))
+                .Where(entry => chosen.All(previous => previous.ExerciseId != entry.Candidate.ExerciseId))
                 .Where(entry => !IsHeavyMain(slot, input.Activity) ||
                     exposures.GetValueOrDefault(entry.Candidate.ExerciseId) >=
                         WorkoutTrainingPolicyV020.StrengthHighIntensityRequiredExerciseExposures &&

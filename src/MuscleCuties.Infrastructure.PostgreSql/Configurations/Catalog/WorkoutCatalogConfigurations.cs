@@ -91,6 +91,7 @@ public sealed class WorkoutExerciseDefinitionConfiguration : IEntityTypeConfigur
         builder.Property(x => x.RestrictionMappingsReviewedV020).HasColumnName("restriction_mappings_reviewed_v020");
         builder.Property(x => x.SupportedTimingMethodsV020Json).HasColumnName("supported_timing_methods_v020").HasColumnType("jsonb");
         builder.Property(x => x.ReviewedSubstituteExerciseIdsV020Json).HasColumnName("reviewed_substitute_exercise_ids_v020").HasColumnType("jsonb");
+        builder.Property(x => x.ReviewEvidenceV020Json).HasColumnName("review_evidence_v020").HasColumnType("jsonb");
         builder.HasIndex(x => x.SeedCode).IsUnique();
         builder.HasIndex(x => x.Name);
         builder.HasIndex(x => x.Pattern);

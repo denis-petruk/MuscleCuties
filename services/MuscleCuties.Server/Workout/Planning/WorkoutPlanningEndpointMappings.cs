@@ -9,6 +9,7 @@ public static class WorkoutPlanningEndpointMappings
 {
     private const string CatalogRoute = "/api/v1/workouts/catalog";
     private const string PlanRoute = "/api/v1/workouts/plan";
+    private const string StrengthPreviewRoute = "/api/v1/workouts/plan/strength-preview";
 
     public static IEndpointRouteBuilder MapWorkoutPlanningEndpoints(this IEndpointRouteBuilder endpoints)
     {
@@ -35,6 +36,22 @@ public static class WorkoutPlanningEndpointMappings
                 {
                     return Results.UnprocessableEntity(new { error = exception.Message });
                 }
+            })
+            .RequireAuthorization();
+
+        endpoints.MapPost(StrengthPreviewRoute, async (
+                StrengthPlanPreviewRequestV020 request,
+                ClaimsPrincipal principal,
+                [FromServices] PreviewStrengthPlanV020UseCase preview,
+                CancellationToken cancellationToken) =>
+            {
+                if (!TryGetUserId(principal, out var ownerUserId))
+                    return Results.Unauthorized();
+                var result = await preview.ExecuteAsync(ownerUserId, request, cancellationToken)
+                    .ConfigureAwait(false);
+                return result.Status == "InvalidInput"
+                    ? Results.BadRequest(result)
+                    : Results.Ok(result);
             })
             .RequireAuthorization();
 

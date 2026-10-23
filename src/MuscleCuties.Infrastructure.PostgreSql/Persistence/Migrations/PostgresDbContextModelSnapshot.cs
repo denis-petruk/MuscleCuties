@@ -3240,6 +3240,10 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("reviewed_substitute_exercise_ids_v020");
 
+                    b.Property<string>("ReviewEvidenceV020Json")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("review_evidence_v020");
+
                     b.Property<bool>("IsBodyweight")
                         .HasColumnType("boolean")
                         .HasColumnName("is_bodyweight");

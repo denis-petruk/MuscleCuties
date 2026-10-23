@@ -110,12 +110,21 @@ public sealed class StrengthTemplateResolverV020Tests
 
         Assert.Equal("Resolved", result.Status);
         Assert.Equal(5, selected.Length);
-        Assert.All(required, slot =>
+        Assert.All(required.Where(slot => slot.MovementSlot is
+            StrengthTemplateSlotIdV020.KneeDominant or StrengthTemplateSlotIdV020.HipDominant), slot =>
         {
             Assert.Equal(StrengthPrescriptionRoleV020.Main, slot.PrescriptionRole);
             Assert.Equal(3, slot.Sets);
             Assert.Equal(8, slot.InitialRepetitionTarget);
             Assert.Equal(150, slot.RestSeconds);
+        });
+        Assert.All(required.Where(slot => slot.MovementSlot is
+            StrengthTemplateSlotIdV020.UpperPush or StrengthTemplateSlotIdV020.UpperPull), slot =>
+        {
+            Assert.Equal(StrengthPrescriptionRoleV020.Accessory, slot.PrescriptionRole);
+            Assert.Equal(2, slot.Sets);
+            Assert.Equal(10, slot.InitialRepetitionTarget);
+            Assert.Equal(90, slot.RestSeconds);
         });
         var accessory = selected.Single(slot => !slot.IsRequired && slot.ExerciseId.HasValue);
         Assert.Equal(StrengthPrescriptionRoleV020.Accessory, accessory.PrescriptionRole);
@@ -163,6 +172,40 @@ public sealed class StrengthTemplateResolverV020Tests
             Assert.Equal(10, slot.InitialRepetitionTarget);
             Assert.Equal(90, slot.RestSeconds);
         });
+    }
+
+    [Fact]
+    public void Preferred_Substitute_Only_Gains_Priority_After_Directed_Pair_Conditions_Are_Met()
+    {
+        var original = Candidate(11, MovementPattern.SquatPattern) with
+        {
+            Candidate = Candidate(11, MovementPattern.SquatPattern).Candidate with
+            {
+                DirectedSubstitutionReviewsV020 =
+                [new(12, DirectedSubstitutionCategoryV020.CloseProgrammingAlternative,
+                    "Separate load and setup review required")]
+            }
+        };
+        var catalog = Catalog(original, Candidate(12, MovementPattern.SquatPattern),
+            Candidate(21, MovementPattern.HipHinge),
+            Candidate(31, MovementPattern.HorizontalPush),
+            Candidate(41, MovementPattern.HorizontalPull));
+        var input = Input(catalog) with
+        {
+            PreferredExerciseByOriginalId = new Dictionary<int, int> { [11] = 12 }
+        };
+
+        var unacknowledged = StrengthTemplateResolverV020.Resolve(input, 5);
+        var acknowledged = StrengthTemplateResolverV020.Resolve(input with
+        {
+            EligibilityContext = input.EligibilityContext with
+            {
+                AcknowledgedSubstitutionPairKeys = new HashSet<string> { "11:12" }
+            }
+        }, 5);
+
+        Assert.Equal(11, unacknowledged.Slots.Single(slot => slot.SlotId == "knee-dominant").ExerciseId);
+        Assert.Equal(12, acknowledged.Slots.Single(slot => slot.SlotId == "knee-dominant").ExerciseId);
     }
 
     private static StrengthTemplateSelectionInputV020 Input(

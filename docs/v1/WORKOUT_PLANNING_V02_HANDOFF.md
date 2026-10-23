@@ -24,6 +24,40 @@ was attached to the Codex chat and is not part of this repository.
 
 ## Implemented foundation in this batch
 
+### Approved catalog review integration added 2026-10-23
+
+The supplied workbook is represented by `ReviewedExerciseCatalogV020.json`, with
+independently identified policy, catalog snapshot, exercise review, template, and
+directed substitution versions. Its 59 source IDs are mapped to existing catalog
+records by stable seed code; no contiguous-ID assumption is made. The import
+command compares identity, movement, equipment, timing, and contraindication
+fields with PostgreSQL and blocks changed or missing records. The source-only
+dry run matched 59 records, 160 directed pairs, and 52 template slots. The
+deployed database has not been checked and no migration/import was applied.
+
+The owner directly confirmed that the restriction assessment for all 59
+exercises was completed and cleared for injury restriction matching. Each
+record stores `Assessed` with the direct-instruction source. Existing
+contraindication flags remain authoritative and block matching exercises.
+Reviewer attribution and credentials were confirmed by the owner through direct
+instruction in this chat; no separate external credential audit is claimed.
+
+The reviewed catalog mapper distinguishes assessed-empty demand tags from
+unknown tags, retains experience and timing conditions, and exposes directed
+substitution pair decisions. Manual and rejected pairs cannot become automatic
+equivalents. The authenticated strength preview filters by reviewed slot IDs,
+equipment, exclusions, experience, conditions, and prior exercise records,
+then applies v0.2 prescriptions, style limits, time trimming, and the hard-day
+cap. High-intensity load eligibility requires both a recorded positive load and
+user confirmation. Time feasibility requires explicitly supplied warm-up and
+cooldown minutes; unilateral active time uses existing catalog metadata. The mapping is documented in
+`WORKOUT_STRENGTH_REVIEWED_MAPPING_V020.md`.
+
+This is still a preview path. The active v0.1 generator and registration/profile
+regeneration paths have not been replaced, no proposal acceptance flow persists
+these previews, and MAUI does not yet present them. The current machine has only
+.NET SDK 9, so the new .NET 10 code and tests have not been executed here.
+
 ### Structured proposal foundation added 2026-10-23
 
 `StructuredWorkoutPlanV02` now models a week as seven plan days, each with zero or
