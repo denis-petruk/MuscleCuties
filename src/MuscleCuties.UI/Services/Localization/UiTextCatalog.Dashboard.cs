@@ -60,7 +60,7 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_PainTitle"] = "Pain";
         English["Dashboard_CheckIn_PainSectionTitle"] = "PAIN";
         English["Dashboard_CheckIn_PrivateBadge"] = "Private";
-        English["Dashboard_CheckIn_PrivateBadgeA11y"] = "This data stays private on your device";
+        English["Dashboard_CheckIn_PrivateBadgeA11y"] = "Your check-in is saved to your private account";
         English["Dashboard_CheckIn_SavingA11y"] = "Saving your check-in";
         English["Dashboard_CheckIn_SkipButton"] = "Skip for now";
         English["Dashboard_CheckIn_SkipHint"] = "Skip today's check-in";
@@ -70,7 +70,7 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_SleepSliderHint"] = "Drag to set hours of sleep, 0 to 14";
         English["Dashboard_CheckIn_SleepTitle"] = "Sleep last night";
         English["Dashboard_CheckIn_SleepSectionTitle"] = "SLEEP LAST NIGHT";
-        English["Dashboard_CheckIn_StorageNotice"] = "Stored in your private account -- never shared";
+        English["Dashboard_CheckIn_StorageNotice"] = "Saved to your private account";
         English["Dashboard_CheckIn_SubmitButton"] = "Save check-in";
         English["Dashboard_CheckIn_SubmitHint"] = "Save your daily check-in";
         English["Dashboard_CheckIn_Subtitle"] = "How are you feeling today?";

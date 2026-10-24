@@ -1,6 +1,6 @@
 # Workout planning v0.2 — implementation handoff
 
-**Verification update — 2026-10-23:** Current branch `test-flight-beta` is at GitLab `75b7cf9`. Core (337), Registration (34), Server (77), and Mobile Contracts (15) tests pass, and the iOS simulator target builds with 4 analyzer performance warnings and 0 errors. Live PostgreSQL and simulator acceptance were unavailable in this environment. The current review register has no documented section-level professional approval; score display/suggestions now default off, and automated progression, injury substitutions, and symptom triage remain fail-closed. Remaining integration work is listed below.
+**Verification update — 2026-10-23:** GitLab `test-flight-beta` has the committed continuation at `6e46165`; additional verified privacy-copy and review-gate corrections are being prepared. Core (341), Registration (34), Server (77), Mobile Contracts (15), and bundled catalog-manifest checks (3) pass. The iOS simulator target builds with zero warnings and errors; the current app was installed on iPhone 17 Pro Max (iOS 26.3), and Today/check-in were inspected without submitting account data. The project Run target expects unavailable iOS 26.2, so direct app-bundle install was used. No section-level professional approval is documented; strength preview, score display/suggestions, automated progression, injury substitutions, and symptom triage remain fail-closed. PostgreSQL integration variables are unavailable, so live catalog/database checks remain open. Remaining integration work is listed below.
 
 Source: owner-provided **MC-WORKOUT-POLICY 0.2.0** instructions and follow-up
 template-mapping requirements, dated 2026-10-23. The original product document
@@ -121,6 +121,11 @@ unavailable iOS 26.2. Today and the check-in form were inspected without
 submitting or changing account data. PostgreSQL integration-test variables were
 unavailable; database-backed acceptance and deployed catalog metadata remain
 unverified.
+
+The bundled reviewed-catalog manifest checks pass 3/3. They compare the review
+manifest against the canonical repository snapshot and verify changed or
+missing rows block import; they do not establish that deployed PostgreSQL rows
+match.
 
 The check-in slice captures optional 1–5 sleep-quality, soreness, and stress
 values plus the device time-zone ID through the authenticated API, stores server
