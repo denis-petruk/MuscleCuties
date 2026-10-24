@@ -5,9 +5,9 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
-using MuscleCuties.Core.Domain.Cycle;
-using MuscleCuties.Core.Domain.Workout.Planning;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Models.UI.Dashboard;
 using MuscleCuties.UI.Models.UI.Workout;
@@ -17,6 +17,7 @@ using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.ViewModels.Workout;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
+using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
@@ -39,10 +40,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     private readonly Func<int, Task> _openWorkoutSessionAsync;
 
     private readonly IDashboardOverviewUseCase _overview;
+    private readonly ICyclePhaseProjectionUseCase _cyclePhaseProjection;
+    private readonly DailyCheckInPresentationSettings _readinessPresentationSettings;
     private readonly IWorkoutOverviewUseCase? _workoutOverview;
     private ReadinessAdjustmentProposalDto? _pendingReadinessProposal;
-    private DateOnly? _calendarCycleStart;
-    private string _calendarPredictionSource = string.Empty;
     [ObservableProperty] private float _consumedCalories;
     [ObservableProperty] private float _consumedCarbs;
     [ObservableProperty] private float _consumedFats;
@@ -136,6 +137,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     public DashboardViewModel(
         IDashboardOverviewUseCase overview,
         IWorkoutInjuryUseCase injuries,
+        IDailyCheckInUseCase dailyCheckIn,
+        ICyclePhaseProjectionUseCase cyclePhaseProjection,
         Func<Task> openCycleAsync,
         Func<Task> openWorkoutAsync,
         Func<int, Task> openWorkoutSessionAsync,
@@ -146,6 +149,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         IWorkoutOverviewUseCase? workoutOverview = null)
     {
         _overview = overview;
+        _cyclePhaseProjection = cyclePhaseProjection;
+        _readinessPresentationSettings = dailyCheckIn.PresentationSettings;
         _workoutOverview = workoutOverview;
         _injuries = injuries;
         _openCycleAsync = openCycleAsync;
@@ -493,8 +498,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
                     section.Tag, section.Title, section.ExerciseCount,
                     WorkoutPresentationPalette.Background(section.Tag), WorkoutPresentationPalette.Text(section.Tag))));
             HasMultipleActivities = WorkoutActivitySections.Count > 1;
-            _calendarCycleStart = summary.CurrentCycleStartDate;
-            _calendarPredictionSource = summary.PredictionSource;
             _isBulkLoading = false;
             RefreshPhaseCardColors();
             NotifyPhaseProperties();
@@ -516,10 +519,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     private void ApplyTodayReadiness(TodayReadinessCheckInDto? readiness)
     {
         HasTodayReadinessRecord = readiness is not null;
-        HasTodayReadinessScore = WorkoutTrainingPolicyV020.CheckInScoreDisplayEnabled &&
+        HasTodayReadinessScore = _readinessPresentationSettings.IsReadinessScoreDisplayEnabled &&
                                  readiness is { Status: "Available", RawScore: { } };
         TodayReadinessReviewPending = readiness is { Status: "Available" } &&
-                                     !WorkoutTrainingPolicyV020.CheckInScoreDisplayEnabled;
+                                     !_readinessPresentationSettings.IsReadinessScoreDisplayEnabled;
         TodayReadinessIncomplete = readiness?.Status == "Incomplete";
         TodayReadinessScoreText = HasTodayReadinessScore
             ? readiness!.RawScore!.Value.ToString("0.##", CultureInfo.CurrentCulture)
@@ -542,7 +545,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         TodayReadinessEnergyText = FormatRating(readiness?.Energy);
         TodayReadinessSorenessText = FormatRating(readiness?.Soreness);
         TodayReadinessStressText = FormatRating(readiness?.Stress);
-        CanReviewReadiness = WorkoutTrainingPolicyV020.ReadinessSuggestionsEnabled &&
+        CanReviewReadiness = _readinessPresentationSettings.AreReadinessSuggestionsEnabled &&
                              HasTodayReadinessScore && !HasActiveInjuries &&
                              readiness?.Band is "ConsiderLighterSession" or "ConsiderEasierDay";
     }
@@ -647,20 +650,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
 
     private int CalculateDaysLeftInCurrentPhase()
     {
-        var cycleLength = CyclePhaseRule.NormalizeCycleLength(PredictedCycleLength);
-        var currentDay = Math.Clamp(CurrentCycleDay, 1, cycleLength);
-        var daysLeft = 0;
-
-        for (var offset = 1; offset <= cycleLength; offset++)
-        {
-            var projectedDay = (currentDay - 1 + offset) % cycleLength + 1;
-            if (CyclePhaseRule.CalculatePhase(projectedDay, cycleLength) != CurrentPhase)
-                break;
-
-            daysLeft++;
-        }
-
-        return daysLeft;
+        return _cyclePhaseProjection.GetDaysRemaining(
+            new CyclePhaseCountdownInputDto(CurrentCycleDay, PredictedCycleLength, CurrentPhase)).DaysRemaining;
     }
 
     private static string GetFirstName(string? fullName)

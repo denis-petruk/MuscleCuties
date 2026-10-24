@@ -59,8 +59,9 @@ public partial class AppShell : Shell
             Routing.RegisterRoute(nameof(ProfileUnitsDisplayPage), typeof(ProfileUnitsDisplayPage));
             Routing.RegisterRoute(nameof(ProfileFeedbackPage), typeof(ProfileFeedbackPage));
             Routing.RegisterRoute(nameof(ProfilePrivacyPage), typeof(ProfilePrivacyPage));
-            Routing.RegisterRoute(nameof(InjuryLogPage), typeof(InjuryLogPage));
+            Routing.RegisterRoute(nameof(PhaseAdjustmentReviewPageV010), typeof(PhaseAdjustmentReviewPageV010));
             Routing.RegisterRoute(nameof(WorkoutSessionPage), typeof(WorkoutSessionPage));
+            Routing.RegisterRoute(nameof(StrengthPlanGenerationPage), typeof(StrengthPlanGenerationPage));
             Routing.RegisterRoute(nameof(FoodLogPage), typeof(FoodLogPage));
             Routing.RegisterRoute(nameof(WorkoutHistoryPage), typeof(WorkoutHistoryPage));
             Routing.RegisterRoute(nameof(PhotoJourneyVaultPage), typeof(PhotoJourneyVaultPage));
