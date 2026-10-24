@@ -43,7 +43,7 @@
                                      Spacing="{StaticResource UiSpaceCompact}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="x:String">
-                            <Border Style="{StaticResource CardPrimary}" Padding="{StaticResource UiSpaceControl}">
+                            <Border Style="{StaticResource CardSecondary}" Padding="{StaticResource UiSpaceControl}">
                                 <Label Text="{Binding .}"
                                        Style="{StaticResource BodyLabel}"
                                        LineBreakMode="WordWrap" />
@@ -62,7 +62,7 @@
                                      Spacing="{StaticResource UiSpaceCompact}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="vm:PhaseAdjustmentSessionChoiceRowV010">
-                            <Border Style="{StaticResource CardPrimary}" Padding="{StaticResource UiSpaceControl}">
+                            <Border Style="{StaticResource CardSecondary}" Padding="{StaticResource UiSpaceControl}">
                                 <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
                                     <Label Text="{Binding Title}"
                                            Style="{StaticResource BodyLabel}"

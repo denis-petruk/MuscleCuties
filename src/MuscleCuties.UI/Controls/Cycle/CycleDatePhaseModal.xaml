@@ -34,8 +34,8 @@
 
                     <Label
                         Text="{Binding SelectedCalendarDateText, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource SubHeadline}"
-                        FontSize="24" />
+                        Style="{StaticResource ModalTitle}"
+                        FontSize="20" />
 
                     <Label
                         Grid.Row="1"
@@ -45,24 +45,16 @@
                     <Border
                         Grid.Column="1"
                         Grid.RowSpan="2"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        StrokeShape="RoundRectangle 22"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
-                        StrokeThickness="0"
-                        VerticalOptions="Start"
+                        Style="{StaticResource ModalIconButton}"
                         SemanticProperties.Description="{loc:LocalizedText Cycle_DatePhaseModal_CloseAccessibility}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding CloseDatePhaseModalCommand}" />
                         </Border.GestureRecognizers>
                         <Path
-                            Data="M6 6L18 18M18 6L6 18"
-                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                            StrokeThickness="2.2"
-                            StrokeLineCap="Round"
+                            Style="{StaticResource ModalCloseIcon}"
                             Aspect="Uniform"
-                            WidthRequest="18"
-                            HeightRequest="18"
+                            WidthRequest="14"
+                            HeightRequest="14"
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
                     </Border>
@@ -85,10 +77,9 @@
 
                         <Border
                             IsVisible="{Binding HasPhaseJumpWarning}"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray900}}"
-                            Stroke="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
-                            StrokeThickness="1"
-                            StrokeShape="RoundRectangle 18"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource WarningSurfaceLight}, Dark={StaticResource WarningSurfaceDark}}"
+                            StrokeShape="RoundRectangle 14"
+                            StrokeThickness="0"
                             Padding="16,14">
                             <VerticalStackLayout Spacing="10">
                                 <Label
@@ -171,7 +162,7 @@
                                             <Label
                                                 Text="{loc:LocalizedText Cycle_DatePhaseModal_Checkmark}"
                                                 TextColor="{StaticResource White}"
-                                                FontSize="14"
+                                                FontSize="13"
                                                 FontAttributes="Bold"
                                                 HorizontalOptions="Center"
                                                 VerticalOptions="Center"
@@ -197,14 +188,16 @@
                             Text="{loc:LocalizedText Cycle_DatePhaseModal_UseNextPhaseButton}"
                             Command="{Binding UseSuggestedPhaseCommand}"
                             IsVisible="{Binding HasSuggestedPhase}"
-                            HeightRequest="48"
-                            FontSize="14" />
+                            MinimumHeightRequest="52"
+                            HeightRequest="52"
+                            FontSize="15" />
                         <Button
                             Grid.Column="1"
                             Text="{loc:LocalizedText Cycle_DatePhaseModal_ForgotShift}"
                             Command="{Binding ReviewEarlierPhaseRecordsCommand}"
-                            HeightRequest="48"
-                            FontSize="14"
+                            MinimumHeightRequest="52"
+                            HeightRequest="52"
+                            FontSize="15"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                     </Grid>
@@ -212,7 +205,9 @@
                     <Button
                         Text="{loc:LocalizedText Cycle_DatePhaseModal_SaveButton}"
                         Command="{Binding SaveDatePhaseCommand}"
+                        MinimumHeightRequest="52"
                         HeightRequest="52"
+                        FontSize="15"
                         IsVisible="{Binding HasPhaseJumpWarning, Converter={StaticResource InvertedBoolConverter}}" />
                 </Grid>
             </Grid>

@@ -24,8 +24,7 @@
     <Border
         Style="{StaticResource CardPrimary}"
         Padding="{StaticResource CalendarCardPadding}"
-        StrokeThickness="1"
-        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+        StrokeThickness="0">
         <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto"
               RowSpacing="{StaticResource CalendarCardRowSpacing}">
 
@@ -53,9 +52,8 @@
                     WidthRequest="40"
                     HeightRequest="40"
                     StrokeShape="RoundRectangle 20"
-                    BackgroundColor="#FFFFFF"
-                    Stroke="{AppThemeBinding Light=#E5D6DE, Dark=#6A4A58}"
-                    StrokeThickness="1"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                    StrokeThickness="0"
                     Padding="6"
                     VerticalOptions="Center"
                     HorizontalOptions="Center">
@@ -92,7 +90,7 @@
                     MinimumHeightRequest="42"
                     CornerRadius="{StaticResource UiRadiusControl}"
                     Padding="14,0"
-                    FontSize="14"
+                    FontSize="13"
                     FontAttributes="Bold"
                     VerticalOptions="Center"
                     SemanticProperties.Description="{Binding PhaseLogActionText, Converter={StaticResource LocalizedStringConverter}}" />
@@ -113,7 +111,7 @@
                 Grid.Row="3"
                 Text="{Binding CalendarEditHintText, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource MutedLabel}"
-                FontSize="14"
+                FontSize="13"
                 IsVisible="{Binding HasCalendarEditHint}" />
 
             <!-- Row 4: Week navigation -->
@@ -222,8 +220,7 @@
                     HeightRequest="34"
                     StrokeShape="RoundRectangle 17"
                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                    StrokeThickness="1"
+                    StrokeThickness="0"
                     VerticalOptions="Center"
                     SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_PrevMonthAccessibility}">
                     <Border.GestureRecognizers>
@@ -248,7 +245,7 @@
                     HorizontalTextAlignment="Center"
                     VerticalOptions="Center"
                     Style="{StaticResource SectionTitle}"
-                    FontSize="18" />
+                    FontSize="17" />
 
                 <Border
                     Grid.Column="2"
@@ -264,7 +261,7 @@
                     </Border.GestureRecognizers>
                     <Label
                         Text="{loc:LocalizedText Cycle_Calendar_TodayAccessibility}"
-                        FontSize="12"
+                        FontSize="11"
                         FontAttributes="Bold"
                         TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                         VerticalOptions="Center" />
@@ -276,8 +273,7 @@
                     HeightRequest="34"
                     StrokeShape="RoundRectangle 17"
                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                    StrokeThickness="1"
+                    StrokeThickness="0"
                     VerticalOptions="Center"
                     SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_NextMonthAccessibility}">
                     <Border.GestureRecognizers>
@@ -308,9 +304,8 @@
                 Grid.Row="8"
                 HeightRequest="44"
                 StrokeShape="RoundRectangle 12"
-                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}"
-                Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                StrokeThickness="1">
+                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                StrokeThickness="0">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding ToggleMonthGridExpandedCommand}" />
                 </Border.GestureRecognizers>
@@ -353,7 +348,7 @@
                         Grid.Column="1"
                         Text="{loc:LocalizedText Cycle_Calendar_RecordedObservationLegend}"
                         Style="{StaticResource CaptionLabel}"
-                        FontSize="12"
+                        FontSize="13"
                         VerticalOptions="Center" />
 
                     <Border
@@ -370,7 +365,7 @@
                         Grid.Column="4"
                         Text="{loc:LocalizedText Cycle_Calendar_PredictedEstimatedLegend}"
                         Style="{StaticResource CaptionLabel}"
-                        FontSize="12"
+                        FontSize="13"
                         FontAttributes="Italic"
                         VerticalOptions="Center" />
                 </Grid>

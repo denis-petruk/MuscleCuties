@@ -16,80 +16,84 @@
         <x:Double x:Key="CycleWellnessNoteFontSize">11</x:Double>
     </ContentPage.Resources>
 
-    <Grid>
-        <ScrollView>
-            <Grid
-                Padding="20,40,20,32"
-                RowDefinitions="Auto, Auto, Auto, Auto, Auto"
-                RowSpacing="16"
+    <Grid RowDefinitions="Auto, *">
+        <Grid
+            Padding="{StaticResource PageHeaderPadding}"
+            ColumnDefinitions="*, Auto"
+            ColumnSpacing="12"
+            RowDefinitions="Auto, Auto"
+            RowSpacing="4"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="{StaticResource PageContentMaxWidth}">
+            <Label
+                Text="{Binding CurrentMonthLabel, Converter={StaticResource LocalizedStringConverter}}"
+                Style="{StaticResource Headline}" />
+            <Label Grid.Row="1" Text="{loc:LocalizedText Cycle_Page_Title}" Style="{StaticResource MutedLabel}" />
+
+            <Border
+                Grid.Column="1"
+                Grid.RowSpan="2"
+                Style="{StaticResource HeaderIconButton}"
+                SemanticProperties.Description="{loc:LocalizedText Cycle_Page_SettingsAccessibility}"
+                SemanticProperties.Hint="{loc:LocalizedText Cycle_Page_OpenSettingsAccessibility}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding OpenCycleSettingsCommand}" />
+                </Border.GestureRecognizers>
+                <Path
+                    Data="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                    Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                    StrokeThickness="1.5"
+                    StrokeLineCap="Round"
+                    StrokeLineJoin="Round"
+                    Aspect="Uniform"
+                    WidthRequest="18"
+                    HeightRequest="18"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+            </Border>
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout
+                Padding="20,8,20,32"
+                Spacing="16"
                 HorizontalOptions="Fill"
-                MaximumWidthRequest="640">
-                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="4">
-                    <Label
-                        Text="{Binding CurrentMonthLabel, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource SubHeadline}" />
-                    <Label Grid.Row="1" Text="{loc:LocalizedText Cycle_Page_Title}" Style="{StaticResource MutedLabel}" />
-
-                    <Border
-                        Grid.Column="1"
-                        Grid.RowSpan="2"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        StrokeShape="RoundRectangle 22"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                        StrokeThickness="0"
-                        VerticalOptions="Center"
-                        SemanticProperties.Description="{loc:LocalizedText Cycle_Page_SettingsAccessibility}"
-                        SemanticProperties.Hint="{loc:LocalizedText Cycle_Page_OpenSettingsAccessibility}">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding OpenCycleSettingsCommand}" />
-                        </Border.GestureRecognizers>
-                        <Path
-                            Data="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                            StrokeThickness="1.5"
-                            StrokeLineCap="Round"
-                            StrokeLineJoin="Round"
-                            Aspect="Uniform"
-                            WidthRequest="18"
-                            HeightRequest="18"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
-                    </Border>
-                </Grid>
-
-                <toolkit:LazyView x:Name="HeroCardLazy" Grid.Row="1"
+                MaximumWidthRequest="{StaticResource PageContentMaxWidth}">
+                <toolkit:LazyView x:Name="HeroCardLazy"
                                   x:TypeArguments="cycleControls:CycleHeroCard" />
-                <toolkit:LazyView x:Name="CalendarCardLazy" Grid.Row="2"
+                <toolkit:LazyView x:Name="CalendarCardLazy"
                                   x:TypeArguments="cycleControls:CycleCalendarCard" />
-                <toolkit:LazyView x:Name="PhaseExplorerLazy" Grid.Row="3"
+                <toolkit:LazyView x:Name="PhaseExplorerLazy"
                                   x:TypeArguments="cycleControls:CyclePhaseExplorerCarousel" />
                 <Label
-                    Grid.Row="4"
                     Text="{loc:LocalizedText Cycle_Page_MedicalDisclaimer}"
                     Style="{StaticResource CaptionLabel}"
                     FontSize="{StaticResource CycleWellnessNoteFontSize}"
                     HorizontalTextAlignment="Center"
                     Margin="0,8,0,0" />
-            </Grid>
+            </VerticalStackLayout>
         </ScrollView>
 
         <toolkit:LazyView
             x:Name="DatePhaseModal"
+            Grid.RowSpan="2"
             x:TypeArguments="cycleControls:CycleDatePhaseModal"
             InputTransparent="{Binding IsDatePhaseModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView
             x:Name="WarningPopup"
+            Grid.RowSpan="2"
             x:TypeArguments="cycleControls:CycleWarningPopup"
             InputTransparent="{Binding IsCycleWarningPopupVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView
             x:Name="QuickLogSheet"
+            Grid.RowSpan="2"
             x:TypeArguments="cycleControls:CycleQuickLogBottomSheet"
             InputTransparent="{Binding IsQuickLogSheetVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView
             x:Name="PhaseSummarySheet"
+            Grid.RowSpan="2"
             x:TypeArguments="cycleControls:CyclePhaseSummarySheet"
             InputTransparent="{Binding IsPhaseSummarySheetVisible, Converter={StaticResource InvertedBoolConverter}}" />
-        <sharedControls:PageLoadingOverlay />
+        <sharedControls:PageLoadingOverlay Grid.RowSpan="2" />
     </Grid>
 </ContentPage>

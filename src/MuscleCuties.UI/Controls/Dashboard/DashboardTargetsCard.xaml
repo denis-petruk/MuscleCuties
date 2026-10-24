@@ -43,7 +43,7 @@
                     Grid.Row="0"
                     Grid.Column="1"
                     Text="{loc:LocalizedText Dashboard_Targets_HydrationEstimate}"
-                    FontSize="14"
+                    FontSize="13"
                     FontAttributes="Bold"
                     TextColor="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}" />
                 <Label
@@ -59,7 +59,7 @@
                             <Span Text=" " />
                             <Span
                                 Text="{Binding HydrationGoal, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="14"
+                                FontSize="13"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                 FontAttributes="None" />
                         </FormattedString>
@@ -68,7 +68,9 @@
             </Grid>
 
             <!-- Row 2: divider -->
-            <BoxView Grid.Row="2" />
+            <BoxView Grid.Row="2" HeightRequest="1"
+                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                     Opacity="0.6" Margin="0,4" />
 
             <!-- Row 3: sleep target row -->
             <Grid Grid.Row="3" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" RowDefinitions="Auto, Auto"
@@ -98,7 +100,7 @@
                     Grid.Row="0"
                     Grid.Column="1"
                     Text="{loc:LocalizedText Dashboard_Targets_SleepEstimate}"
-                    FontSize="14"
+                    FontSize="13"
                     FontAttributes="Bold"
                     TextColor="{AppThemeBinding Light={StaticResource SleepLight}, Dark={StaticResource SleepDark}}" />
                 <Label

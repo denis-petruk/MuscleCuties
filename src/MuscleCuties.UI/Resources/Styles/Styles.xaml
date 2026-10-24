@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared">
 
+    <x:String x:Key="AppFontFamily">Inter</x:String>
     <x:Int32 x:Key="AuthCodeLength">6</x:Int32>
     <x:Double x:Key="AuthCodeFieldSpacing">6</x:Double>
     <x:Double x:Key="AuthCodeSectionSpacing">18</x:Double>
@@ -18,6 +19,9 @@
     <Thickness x:Key="AuthCodeCountdownTopSpacing">0,8,0,0</Thickness>
     <Thickness x:Key="AuthOtpCountdownTopSpacing">0,16,0,0</Thickness>
     <x:Int32 x:Key="UiRadiusControl">14</x:Int32>
+    <Thickness x:Key="PageHeaderPadding">20,36,20,12</Thickness>
+    <Thickness x:Key="PageContentPadding">20,12,20,32</Thickness>
+    <x:Double x:Key="PageContentMaxWidth">640</x:Double>
 
     <Style TargetType="Page" ApplyToDerivedTypes="True">
         <Setter Property="Padding" Value="0" />
@@ -46,8 +50,8 @@
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
         <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="15" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
@@ -63,6 +67,26 @@
                 </VisualStateGroup>
             </VisualStateGroupList>
         </Setter>
+    </Style>
+
+    <Style TargetType="Span">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+    </Style>
+
+    <Style TargetType="RadioButton">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="15" />
+    </Style>
+
+    <Style TargetType="SearchBar">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="TextColor"
+                Value="{AppThemeBinding Light={StaticResource TextPrimary},
+                                        Dark={StaticResource TextPrimaryDark}}" />
+        <Setter Property="PlaceholderColor"
+                Value="{AppThemeBinding Light={StaticResource TextSecondary},
+                                        Dark={StaticResource TextSecondaryDark}}" />
     </Style>
 
     <Style TargetType="Border">
@@ -81,42 +105,42 @@
 
     <Style TargetType="BoxView">
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource Gray300},
-                                        Dark={StaticResource Gray600}}" />
+                Value="{AppThemeBinding Light={StaticResource Gray200},
+                                        Dark={StaticResource Gray800}}" />
         <Setter Property="HeightRequest" Value="1" />
         <Setter Property="HorizontalOptions" Value="Fill" />
     </Style>
 
     <Style TargetType="Shadow">
-        <Setter Property="Radius" Value="16" />
-        <Setter Property="Opacity" Value="0.08" />
+        <Setter Property="Radius" Value="14" />
+        <Setter Property="Opacity" Value="0.04" />
         <Setter Property="Brush" Value="{StaticResource ShadowBrush}" />
-        <Setter Property="Offset" Value="0,4" />
+        <Setter Property="Offset" Value="0,2" />
     </Style>
 
     <Style x:Key="Headline" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="30" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="28" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="CharacterSpacing" Value="0" />
+        <Setter Property="CharacterSpacing" Value="-0.3" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource DeepMauve},
                                         Dark={StaticResource White}}" />
     </Style>
 
     <Style x:Key="SubHeadline" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="26" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="24" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="CharacterSpacing" Value="0" />
+        <Setter Property="CharacterSpacing" Value="-0.2" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
     </Style>
 
     <Style x:Key="SectionTitle" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="17" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="CharacterSpacing" Value="0" />
         <Setter Property="TextColor"
@@ -125,8 +149,8 @@
     </Style>
 
     <Style x:Key="CardTitle" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="17" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
@@ -134,18 +158,18 @@
     </Style>
 
     <Style x:Key="EyebrowLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="11" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="CharacterSpacing" Value="0.8" />
+        <Setter Property="CharacterSpacing" Value="0.6" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource PrimaryDark},
                                         Dark={StaticResource SecondaryDarkText}}" />
     </Style>
 
     <Style x:Key="BodyLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="15" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
@@ -153,8 +177,8 @@
     </Style>
 
     <Style x:Key="MutedLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextSecondary},
@@ -162,16 +186,16 @@
     </Style>
 
     <Style x:Key="CaptionLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextSecondary},
                                         Dark={StaticResource TextSecondaryDark}}" />
     </Style>
 
     <Style x:Key="FormFieldLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
@@ -179,8 +203,8 @@
     </Style>
 
     <Style x:Key="AccentLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource PrimaryDark},
@@ -188,8 +212,8 @@
     </Style>
 
     <Style x:Key="ErrorLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource ErrorLight},
                                         Dark={StaticResource ErrorDark}}" />
@@ -204,12 +228,12 @@
         <Setter Property="Padding" Value="16" />
         <Setter Property="StrokeShape">
             <Setter.Value>
-                <RoundRectangle CornerRadius="16" />
+                <RoundRectangle CornerRadius="18" />
             </Setter.Value>
         </Setter>
         <Setter Property="Shadow">
             <Setter.Value>
-                <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,3" Radius="12" Opacity="0.07" />
+                <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,2" Radius="14" Opacity="0.04" />
             </Setter.Value>
         </Setter>
     </Style>
@@ -228,7 +252,21 @@
         </Setter>
         <Setter Property="Shadow">
             <Setter.Value>
-                <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,2" Radius="10" Opacity="0.05" />
+                <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,1" Radius="8" Opacity="0.03" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SurfaceTile" TargetType="Border">
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource AccentSurface},
+                                        Dark={StaticResource Gray900}}" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="12" />
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="14" />
             </Setter.Value>
         </Setter>
     </Style>
@@ -238,10 +276,8 @@
         <Setter Property="MaximumWidthRequest" Value="560" />
         <Setter Property="HorizontalOptions" Value="Fill" />
         <Setter Property="VerticalOptions" Value="Center" />
-        <Setter Property="Stroke"
-                Value="{AppThemeBinding Light={StaticResource InputStroke},
-                                        Dark={StaticResource InputStrokeDark}}" />
-        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="StrokeShape">
             <Setter.Value>
                 <RoundRectangle CornerRadius="22" />
@@ -249,7 +285,7 @@
         </Setter>
         <Setter Property="Shadow">
             <Setter.Value>
-                <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,8" Radius="24" Opacity="0.14" />
+                <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,8" Radius="24" Opacity="0.12" />
             </Setter.Value>
         </Setter>
     </Style>
@@ -268,50 +304,38 @@
     </Style>
 
     <Style x:Key="ModalTitle" TargetType="Label" BasedOn="{StaticResource SubHeadline}">
-        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontSize" Value="20" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
     </Style>
 
     <Style x:Key="ModalSubtitle" TargetType="Label" BasedOn="{StaticResource MutedLabel}">
     </Style>
 
-    <Style x:Key="ModalIconButton" TargetType="Border">
-        <Setter Property="WidthRequest" Value="44" />
-        <Setter Property="HeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
+    <Style x:Key="HeaderIconButton" TargetType="Border">
+        <Setter Property="WidthRequest" Value="42" />
+        <Setter Property="HeightRequest" Value="42" />
+        <Setter Property="MinimumWidthRequest" Value="42" />
+        <Setter Property="MinimumHeightRequest" Value="42" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource AccentSurface},
-                                        Dark={StaticResource Gray900}}" />
+                Value="{AppThemeBinding Light={StaticResource Gray200},
+                                        Dark={StaticResource CardSurfaceDark}}" />
         <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="VerticalOptions" Value="Center" />
         <Setter Property="StrokeShape">
             <Setter.Value>
-                <RoundRectangle CornerRadius="22" />
+                <RoundRectangle CornerRadius="21" />
             </Setter.Value>
         </Setter>
     </Style>
 
-    <Style x:Key="CircleIconButton" TargetType="Border">
-        <Setter Property="WidthRequest" Value="44" />
-        <Setter Property="HeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="22" />
-            </Setter.Value>
-        </Setter>
+    <Style x:Key="ModalIconButton" TargetType="Border" BasedOn="{StaticResource HeaderIconButton}">
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource Gray200},
+                Value="{AppThemeBinding Light={StaticResource AccentSurface},
                                         Dark={StaticResource Gray900}}" />
-        <Setter Property="Stroke"
-                Value="{AppThemeBinding Light={StaticResource Gray300},
-                                        Dark={StaticResource Gray800}}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="VerticalOptions" Value="Center" />
     </Style>
+
+    <Style x:Key="CircleIconButton" TargetType="Border" BasedOn="{StaticResource HeaderIconButton}" />
 
     <Style x:Key="ModalCloseIcon" TargetType="Path">
         <Setter Property="Data" Value="M6 6L18 18M18 6L6 18" />
@@ -352,10 +376,7 @@
         <Setter Property="BackgroundColor"
                 Value="{AppThemeBinding Light={StaticResource Gray100},
                                         Dark={StaticResource Gray900}}" />
-        <Setter Property="Stroke"
-                Value="{AppThemeBinding Light={StaticResource Gray300},
-                                        Dark={StaticResource Gray700}}" />
-        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="StrokeShape">
             <Setter.Value>
                 <RoundRectangle CornerRadius="14" />
@@ -393,10 +414,7 @@
         <Setter Property="BackgroundColor"
                 Value="{AppThemeBinding Light={StaticResource CardSurface},
                                         Dark={StaticResource CardSurfaceDark}}" />
-        <Setter Property="Stroke"
-                Value="{AppThemeBinding Light={StaticResource InputStroke},
-                                        Dark={StaticResource InputStrokeDark}}" />
-        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="Padding" Value="16" />
         <Setter Property="StrokeShape">
             <Setter.Value>
@@ -419,6 +437,7 @@
     </Style>
 
     <Style x:Key="WorkoutMetricValue" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
@@ -429,6 +448,7 @@
     </Style>
 
     <Style x:Key="WorkoutMetricLabel" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextSecondary},
                                         Dark={StaticResource TextSecondaryDark}}" />
@@ -455,6 +475,7 @@
     </Style>
 
     <Style x:Key="WorkoutPillText" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
@@ -482,6 +503,7 @@
     </Style>
 
     <Style x:Key="WorkoutInfoValue" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
@@ -515,12 +537,14 @@
     </Style>
 
     <Style x:Key="ReadinessScoreValue" TargetType="Label">
-        <Setter Property="FontSize" Value="27" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="24" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="VerticalOptions" Value="Center" />
     </Style>
 
     <Style x:Key="ReadinessScoreMetricTitle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor"
@@ -532,10 +556,7 @@
         <Setter Property="BackgroundColor"
                 Value="{AppThemeBinding Light={StaticResource AccentSurface},
                                         Dark={StaticResource Gray900}}" />
-        <Setter Property="Stroke"
-                Value="{AppThemeBinding Light={StaticResource InputStroke},
-                                        Dark={StaticResource InputStrokeDark}}" />
-        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="Padding" Value="14,12" />
         <Setter Property="StrokeShape">
             <Setter.Value>
@@ -551,7 +572,7 @@
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource White},
                                         Dark={StaticResource TextPrimary}}" />
-        <Setter Property="FontFamily" Value="Inter" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="FontSize" Value="16" />
         <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
@@ -589,7 +610,7 @@
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource PrimaryDark},
                                         Dark={StaticResource SecondaryDarkText}}" />
-        <Setter Property="FontFamily" Value="Inter" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="BorderWidth" Value="0" />
         <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
@@ -621,6 +642,7 @@
     <Style x:Key="TextActionButton" TargetType="Button" BasedOn="{StaticResource ButtonLink}" />
 
     <Style x:Key="Button" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
     </Style>
 
@@ -635,7 +657,7 @@
                 Value="{AppThemeBinding Light={StaticResource InputStroke},
                                         Dark={StaticResource InputStrokeDark}}" />
         <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="FontFamily" Value="Inter" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="16" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
@@ -678,7 +700,7 @@
                 Value="{AppThemeBinding Light={StaticResource Black},
                                         Dark={StaticResource White}}" />
         <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="FontFamily" Value="Inter" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="16" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
@@ -687,7 +709,7 @@
     </Style>
 
     <Style TargetType="Entry">
-        <Setter Property="FontFamily" Value="Inter" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="16" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
@@ -750,7 +772,7 @@
     </Style>
 
     <Style TargetType="Picker">
-        <Setter Property="FontFamily" Value="Inter" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="16" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
@@ -765,7 +787,7 @@
     </Style>
 
     <Style TargetType="DatePicker">
-        <Setter Property="FontFamily" Value="Inter" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="16" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
@@ -777,7 +799,7 @@
     </Style>
 
     <Style TargetType="TimePicker">
-        <Setter Property="FontFamily" Value="Inter" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="16" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
@@ -789,7 +811,7 @@
     </Style>
 
     <Style TargetType="Editor">
-        <Setter Property="FontFamily" Value="Inter" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="16" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},

@@ -384,25 +384,25 @@
                                         WidthRequest="18"
                                         HeightRequest="18"
                                         VerticalOptions="Center" />
-                                    <Label
+                                     <Label
                                         Grid.Column="1"
                                         Text="{Binding ConceptName, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource CardTitle}"
-                                        FontSize="16"
+                                        FontSize="17"
                                         LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="1"
                                         Grid.ColumnSpan="2"
                                         Text="{Binding ConceptDescription, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource MutedLabel}"
-                                        FontSize="14"
+                                        FontSize="13"
                                         LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="2"
                                         Grid.ColumnSpan="2"
                                         Text="{Binding ComponentSummary, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource MutedLabel}"
-                                        FontSize="14"
+                                        FontSize="13"
                                         LineBreakMode="WordWrap" />
 
                                     <Grid Grid.Row="3" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto"
@@ -422,9 +422,9 @@
                                         <Label
                                             Grid.Column="1"
                                             Text="{Binding CaloriesText, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource MutedLabel}"
+                                            Style="{StaticResource CaptionLabel}"
                                             FontAttributes="Bold"
-                                            FontSize="14"
+                                            FontSize="13"
                                             VerticalOptions="Center" />
                                     </Grid>
 
@@ -433,7 +433,7 @@
                                         Grid.ColumnSpan="2"
                                         Text="{Binding MacrosText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource MutedLabel}"
-                                        FontSize="14" LineBreakMode="WordWrap" />
+                                        FontSize="13" LineBreakMode="WordWrap" />
                                     <Button
                                         Grid.Row="5"
                                         Grid.ColumnSpan="2"
@@ -496,8 +496,8 @@
                                     <Label
                                         Grid.Column="1"
                                         Text="{Binding MealTypeLabel, Converter={StaticResource LocalizedStringConverter}}"
-                                        Style="{StaticResource CardTitle}"
-                                        FontSize="14"
+                                        Style="{StaticResource FormFieldLabel}"
+                                        FontSize="13"
                                         VerticalOptions="Center" />
                                     <Label
                                         Grid.Column="2"
@@ -511,21 +511,21 @@
                                         Grid.ColumnSpan="3"
                                         Text="{Binding MealTitle, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource CardTitle}"
-                                        FontSize="16"
+                                        FontSize="17"
                                         LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="2"
                                         Grid.ColumnSpan="3"
                                         Text="{Binding MealSummaryText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource MutedLabel}"
-                                        FontSize="14"
+                                        FontSize="13"
                                         LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="3"
                                         Grid.ColumnSpan="2"
                                         Text="{Binding MacrosText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource MutedLabel}"
-                                        FontSize="14"
+                                        FontSize="13"
                                         IsVisible="{Binding HasSuggestion}" />
                                     <Grid
                                         Grid.Row="3"

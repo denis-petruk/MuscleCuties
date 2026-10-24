@@ -145,6 +145,43 @@ public class UiCleanlinessAndReachabilityTests
         }
     }
 
+    [Fact]
+    public void Single_font_family_Inter_is_enforced_across_MauiProgram_Styles_and_all_XAML_files()
+    {
+        var mauiProgramPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "MauiProgram.cs");
+        var mauiContent = File.ReadAllText(mauiProgramPath);
+        Assert.Contains("fonts.AddFont(\"OpenSans-Regular.ttf\", \"Inter\");", mauiContent);
+        Assert.DoesNotContain("OpenSansSemibold", mauiContent);
+
+        var stylesPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Resources", "Styles", "Styles.xaml");
+        var stylesContent = File.ReadAllText(stylesPath);
+        Assert.Contains("<x:String x:Key=\"AppFontFamily\">Inter</x:String>", stylesContent);
+        Assert.DoesNotContain("Property=\"FontFamily\" Value=\"Inter\"", stylesContent);
+
+        var uiDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var pageAndControlXamlFiles = Directory.GetFiles(uiDir, "*.xaml", SearchOption.AllDirectories)
+            .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") &&
+                        !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") &&
+                        !string.Equals(f, stylesPath, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var inlineFontFamilyViolations = new List<string>();
+        foreach (var xamlFile in pageAndControlXamlFiles)
+        {
+            var content = File.ReadAllText(xamlFile);
+            if (content.Contains("FontFamily=", StringComparison.Ordinal) ||
+                content.Contains("Property=\"FontFamily\"", StringComparison.Ordinal))
+            {
+                inlineFontFamilyViolations.Add(Path.GetRelativePath(RepoRoot, xamlFile));
+            }
+        }
+
+        Assert.True(
+            inlineFontFamilyViolations.Count == 0,
+            $"Found {inlineFontFamilyViolations.Count} XAML file(s) outside Styles.xaml with inline FontFamily declarations:\n" +
+            string.Join("\n", inlineFontFamilyViolations));
+    }
+
     private static string FindRepositoryRoot()
     {
         var current = AppContext.BaseDirectory;
