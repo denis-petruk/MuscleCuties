@@ -1,5 +1,7 @@
 # iOS workflow UI audit
 
+**Verification update — 2026-10-23:** GitLab `test-flight-beta` was fast-forwarded to `75b7cf9`. Current source builds for the iOS simulator with 4 analyzer performance warnings and 0 errors; Core (337), Registration (34), Server (77), and Mobile Contracts (15) tests pass. The CoreSimulator service is unavailable in this environment, so remaining simulator interaction and visual acceptance checks below are still pending. Readiness score display and suggestions remain disabled until section-level approval is documented.
+
 Started 2026-10-22. Review the current simulator page with the owner, ask one focused question, record the requested change, then move to the next page. A visible simulator observation is evidence of layout only; live service and iOS AutoFill behavior need their own checks.
 
 | Page | Observation | Requested change or decision | State |

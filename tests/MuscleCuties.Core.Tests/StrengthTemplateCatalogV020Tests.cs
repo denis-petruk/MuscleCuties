@@ -54,7 +54,8 @@ public sealed class StrengthTemplateCatalogV020Tests
         var upper = templates.Single(template => template.TemplateId == "MC-UL-4D-UPPER-A");
         var lower = templates.Single(template => template.TemplateId == "MC-UL-4D-LOWER-A");
 
-        Assert.Equal("upper-push", Assert.Single(upper.Slots.Where(slot => slot.IsHeavyMainInHighIntensity)).SlotId);
+        Assert.Equal("upper-push", Assert.Single(upper.Slots,
+            slot => slot.IsHeavyMainInHighIntensity).SlotId);
         Assert.Equal(2, lower.Slots.Count(slot => slot.IsHeavyMainInHighIntensity));
     }
 

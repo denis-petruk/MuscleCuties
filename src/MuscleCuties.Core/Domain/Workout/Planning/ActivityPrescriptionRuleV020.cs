@@ -78,8 +78,6 @@ public static class ActivityPrescriptionRuleV020
 {
     private const int GeneralStrengthAccessoryRestSeconds = WorkoutTrainingPolicyV020.AccessoryRestSeconds;
     private const int HighVolumeMainRestSeconds = WorkoutTrainingPolicyV020.EstablishedMainRestSeconds;
-    private const int HighVolumeAccessorySets = 2;
-    private const int StrengthHighIntensityAccessorySets = 2;
     private const int ClimbingMaximumSessionsPerWeek = 1;
     private const int ContinuousCardioFrequency = WorkoutTrainingPolicyV020.BeginnerCardioSessionsPerWeek;
     private const int EstablishedCardioFrequency = WorkoutTrainingPolicyV020.EstablishedCardioSessionsPerWeekWithoutBaseline;

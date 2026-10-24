@@ -305,19 +305,28 @@
                             FontAttributes="Bold"
                             TextColor="{StaticResource Primary}"
                             HorizontalOptions="Center"
-                            HorizontalTextAlignment="Center" />
+                            HorizontalTextAlignment="Center"
+                            IsVisible="{Binding IsReadinessScoreDisplayEnabled}" />
+                        <Label Grid.Row="1"
+                               Text="{loc:LocalizedText Dashboard_Readiness_ReviewPending}"
+                               Style="{StaticResource BodyLabel}"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center"
+                               IsVisible="{Binding IsReadinessScoreDisplayEnabled, Converter={StaticResource InvertedBoolConverter}}" />
                         <Label
                             Grid.Row="2"
                             Text="{Binding ReadinessTierText, Converter={StaticResource LocalizedStringConverter}}"
                             Style="{StaticResource SectionTitle}"
                             HorizontalOptions="Center"
-                            HorizontalTextAlignment="Center" />
+                            HorizontalTextAlignment="Center"
+                            IsVisible="{Binding IsReadinessScoreDisplayEnabled}" />
                         <Label
                             Grid.Row="3"
                             Text="{loc:LocalizedText Dashboard_Readiness_ScoreExplanation}"
                             Style="{StaticResource MutedLabel}"
                             HorizontalOptions="Center"
-                            HorizontalTextAlignment="Center" />
+                            HorizontalTextAlignment="Center"
+                            IsVisible="{Binding IsReadinessScoreDisplayEnabled}" />
                         <Grid Grid.Row="4" ColumnDefinitions="*,*,*,*" ColumnSpacing="10"
                               HorizontalOptions="Fill">
                             <VerticalStackLayout Grid.Column="0" Spacing="2" HorizontalOptions="Center">

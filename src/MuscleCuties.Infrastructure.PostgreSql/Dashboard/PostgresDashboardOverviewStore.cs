@@ -8,7 +8,7 @@ using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
-using MuscleCuties.Infrastructure.Dashboard.CheckIn;
+using MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 using MuscleCuties.UseCases.Features.Dashboard.Overview;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Targets;

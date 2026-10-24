@@ -123,7 +123,7 @@ public partial class WorkoutSessionPage : ContentPage
 
     private async void OnOptionalExerciseToggled(object? sender, ToggledEventArgs e)
     {
-        if (sender is not Switch { BindingContext: WorkoutExerciseItem exercise }) return;
+        if (sender is not Microsoft.Maui.Controls.Switch { BindingContext: WorkoutExerciseItem exercise }) return;
         try { await _viewModel.SaveOptionalExerciseAsync(exercise); }
         catch (Exception exception)
         {

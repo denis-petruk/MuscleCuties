@@ -2,7 +2,7 @@ using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 
-namespace MuscleCuties.Infrastructure.Dashboard.CheckIn;
+namespace MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 
 public static class TodayReadinessCheckInMapper
 {
@@ -28,9 +28,4 @@ public static class TodayReadinessCheckInMapper
         return new TodayReadinessCheckInDto(result.Status.ToString(), result.RawScore, result.Band?.ToString(),
             sleepQuality, energy, soreness, stress);
     }
-
-    public static TodayReadinessCheckInDto Map(DailyCheckInRecord record, DateTimeOffset nowUtc,
-        string? activeTimeZoneId) => Map(record.PlanningSleepQuality, record.Energy, record.PlanningSoreness,
-        record.PlanningStress, record.Date, record.PlanningTimeZoneId, record.PlanningRecordedAtUtc,
-        record.PlanningRevision, nowUtc, activeTimeZoneId);
 }

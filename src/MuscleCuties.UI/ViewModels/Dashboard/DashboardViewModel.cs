@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 using MuscleCuties.Core.Domain.Cycle;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Models.UI.Dashboard;
@@ -88,6 +89,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private string _readinessTrendSummary = "Complete a check-in to see readiness history";
     [ObservableProperty] private bool _hasTodayReadinessScore;
     [ObservableProperty] private bool _hasTodayReadinessRecord;
+    [ObservableProperty] private bool _todayReadinessReviewPending;
     [ObservableProperty] private bool _todayReadinessIncomplete;
     [ObservableProperty] private string _todayReadinessScoreText = string.Empty;
     [ObservableProperty] private string _todayReadinessBandText = string.Empty;
@@ -457,7 +459,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             ReadinessScore = summary.ReadinessScore;
             ReadinessLabel = summary.ReadinessLabel;
             ApplyTodayReadiness(summary.TodayReadiness);
-            NeedsDailyCheckIn = !HasTodayReadinessScore;
+            NeedsDailyCheckIn = summary.TodayReadiness is not { Status: "Available" };
             RecoveryScore = summary.RecoveryScore;
             RecoveryLabel = summary.RecoveryLabel;
             TrendPoints = summary.TrendPoints.Select(point =>
@@ -514,7 +516,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     private void ApplyTodayReadiness(TodayReadinessCheckInDto? readiness)
     {
         HasTodayReadinessRecord = readiness is not null;
-        HasTodayReadinessScore = readiness is { Status: "Available", RawScore: { } };
+        HasTodayReadinessScore = WorkoutTrainingPolicyV020.CheckInScoreDisplayEnabled &&
+                                 readiness is { Status: "Available", RawScore: { } };
+        TodayReadinessReviewPending = readiness is { Status: "Available" } &&
+                                     !WorkoutTrainingPolicyV020.CheckInScoreDisplayEnabled;
         TodayReadinessIncomplete = readiness?.Status == "Incomplete";
         TodayReadinessScoreText = HasTodayReadinessScore
             ? readiness!.RawScore!.Value.ToString("0.##", CultureInfo.CurrentCulture)
@@ -537,7 +542,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         TodayReadinessEnergyText = FormatRating(readiness?.Energy);
         TodayReadinessSorenessText = FormatRating(readiness?.Soreness);
         TodayReadinessStressText = FormatRating(readiness?.Stress);
-        CanReviewReadiness = HasTodayReadinessScore && !HasActiveInjuries &&
+        CanReviewReadiness = WorkoutTrainingPolicyV020.ReadinessSuggestionsEnabled &&
+                             HasTodayReadinessScore && !HasActiveInjuries &&
                              readiness?.Band is "ConsiderLighterSession" or "ConsiderEasierDay";
     }
 
