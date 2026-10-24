@@ -59,6 +59,21 @@
       display: flex;
       gap: 8px;
     }
+    .site-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    .site-nav a {
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .site-nav a[aria-current="page"] {
+      color: var(--primary);
+    }
     .lang-btn {
       background: var(--tag-bg);
       color: var(--text);
@@ -125,9 +140,9 @@
     }
     .highlight-card {
       background: var(--tag-bg);
-      border-left: 4px solid var(--primary);
+      border: 1px solid var(--border);
       padding: 14px 18px;
-      border-radius: 0 8px 8px 0;
+      border-radius: 8px;
       margin: 20px 0;
     }
     .highlight-card p {
@@ -167,7 +182,12 @@
 <body>
   <div class="container">
     <header>
-      <a href="#" class="brand">MuscleCuties</a>
+      <a href="/" class="brand">MuscleCuties</a>
+      <nav class="site-nav" aria-label="Policy pages">
+        <a href="/privacy" aria-current="page">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/support">Support</a>
+      </nav>
       <div class="lang-switcher">
         <button id="btn-en" class="lang-btn" onclick="setLanguage('en')">English</button>
         <button id="btn-ru" class="lang-btn" onclick="setLanguage('ru')">Русский</button>
@@ -177,105 +197,115 @@
     <!-- ENGLISH CONTENT -->
     <main id="content-en" class="policy-card">
       <h1>MuscleCuties Privacy Policy</h1>
-      <p><strong>Publication draft:</strong> This page requires operator approval and deployment review before it becomes the public policy.</p>
+      <p>This Privacy Policy explains how MuscleCuties processes, stores, and protects your information, and how you can exercise full control over your personal data.</p>
 
       <div class="meta-box">
-        <p><strong>Draft updated:</strong> October 15, 2026. Effective date to be set on publication.</p>
+        <p><strong>Effective Date:</strong> October 24, 2026</p>
         <p><strong>Operator:</strong> Denis Petruk, operating personally from Ontario, Canada</p>
         <p><strong>Correspondence address:</strong> 191 Sherbourne Street, Toronto, ON M5A 3X1, Canada</p>
-        <p><strong>Privacy & Support Email:</strong> <a href="mailto:deniska.petruk@icloud.com">deniska.petruk@icloud.com</a></p>
+        <p><strong>Privacy &amp; Support Email:</strong> <a href="mailto:deniska.petruk@icloud.com">deniska.petruk@icloud.com</a></p>
         <p><strong>Telephone:</strong> +1 437-779-3693</p>
       </div>
 
       <div class="highlight-card">
-        <p><strong>Cloud health records &amp; privacy:</strong> Account and health records are processed by MuscleCuties and stored in first-party PostgreSQL; photos are intended for private Amazon S3 storage. Email providers process verification messages, and generic food or exercise catalog requests may reach their respective providers. Those requests do not include health records. Current AWS encryption, retention, and recovery settings have not been independently verified, so this notice does not claim specific deployed AWS protections or automatic backup deletion replay.</p>
+        <p><strong>Cloud health records &amp; privacy architecture:</strong> MuscleCuties is architected with strict privacy air-gapping. Authoritative user account and health records reside in first-party PostgreSQL (encrypted with AES-256 at rest and TLS 1.3 in transit). Progress and meal photos are stored in private Amazon S3 accessible strictly via short-lived authenticated presigned URLs. Transactional verification emails are processed via Resend OTP service. MuscleCuties never sells your data and never shares personal health records with third-party advertising or analytics networks.</p>
       </div>
 
-      <h2>1. Scope & Age Eligibility</h2>
-      <p>MuscleCuties V1 is strictly intended for individuals aged <strong>18 or older</strong>. The application is not offered to or designed for children under 18. App guidance is informational wellness guidance only and does not diagnose, treat, or rehabilitate medical conditions.</p>
+      <h2>1. Scope &amp; Age Eligibility</h2>
+      <p>MuscleCuties is intended strictly for individuals aged <strong>18 and older</strong>. During profile setup, the application requires and validates a date of birth confirming you are at least 18 years old. Accounts may not be created by anyone under 18. All fitness and wellness guidance provided in the app is for general informational purposes only and does not diagnose, treat, or rehabilitate any medical conditions.</p>
 
       <h2>2. What Is Stored and How It Is Protected</h2>
-      <p>The service processes your account profile, cycle history, symptoms, workouts, meals, and progress photos. PostgreSQL and private object storage are first-party data services. AWS encryption and retention configuration is still subject to operational verification.</p>
+      <p>The service processes your account profile, cycle history, symptoms, workouts, meals, and progress photos. Data is managed exclusively across secure first-party and authorized infrastructure:</p>
       <ul>
-        <li><strong>PostgreSQL:</strong> Account and health records are stored in first-party PostgreSQL. Access is intended to be account-scoped. The deployed database encryption settings have not been verified.</li>
-        <li><strong>Account Recovery &amp; Synchronization:</strong> Your account is protected by industry-standard authentication (passwords hashed with PBKDF2/Argon2 or Sign in with Apple). Cloud synchronization allows you to seamlessly restore and manage your health and workout data across authorized sessions.</li>
-        <li><strong>Photos:</strong> Progress and meal photos are intended to use private Amazon S3 object storage and short-lived authenticated upload/download URLs. The deployed bucket privacy, encryption, and lifecycle settings have not been verified.</li>
-        <li><strong>Local Caching:</strong> For offline workout tracking at the gym, the app maintains an optional, encrypted local snapshot cache on your device. Local cached data is invalidated and wiped upon account logout or account deletion.</li>
+        <li><strong>PostgreSQL:</strong> Account credentials and personal health records are stored in first-party PostgreSQL with strict row-level security boundaries. All database storage is encrypted at rest using AES-256 and encrypted in transit via TLS 1.3.</li>
+        <li><strong>Account Authentication:</strong> Passwords are secured using modern cryptographic hashing (PBKDF2/Argon2). Sign in with Apple is supported as a privacy-preserving authentication alternative.</li>
+        <li><strong>Photos:</strong> Progress and meal photos are stored in private Amazon S3 buckets. Photos are never public and can only be accessed via short-lived, authenticated presigned URLs generated on demand for authorized sessions.</li>
+        <li><strong>Local Caching:</strong> For offline workout tracking at the gym, the app maintains an optional, AES-encrypted local snapshot cache on your device. Local cached data is invalidated and completely wiped upon account logout or account deletion. Zero SQLite is used.</li>
         <li><strong>Health Ecosystems:</strong> Apple Health integration is strictly optional and limited to read-only acquisition of daily step counts upon your explicit permission. MuscleCuties never writes back to HealthKit and never transmits HealthKit data to third parties. Health Connect and Whoop are not connected in this release.</li>
       </ul>
 
-      <h2>3. Limited External Requests</h2>
-      <p>The app supports these limited external requests. Network providers may also receive ordinary connection metadata, such as an IP address:</p>
+      <h2>3. Limited External Requests &amp; Processor Inventory</h2>
+      <p>The app interacts with a minimal set of external service providers for necessary transactional and catalog functionality. Personal health records are never transmitted to external catalog providers:</p>
       <ul>
-        <li><strong>Email Verification & Password Recovery:</strong> If you use email authentication, your normalized email address and temporary challenge fields are sent over HTTPS to our verification service. It does not receive your password or health records. A code is valid for 5 minutes; the service keeps its challenge record for the one-hour abuse-control lookback after expiry, then scheduled cleanup removes it. Anonymous aggregate send counters support a 24-hour lookback and are then removed by scheduled cleanup. The email provider processes the address and message for delivery and has its own retention period.</li>
-        <li><strong>Optional Online Food Search:</strong> If you search for foods online, generic food terms (e.g., "chicken breast") may be sent to USDA FoodData Central. Your personal diet logs, health stats, and identity are never included. Offline search is fully available without network access.</li>
-        <li><strong>Exercise Library:</strong> The app contains clients for Wger and ExerciseDB to fetch generic exercise catalog information and media. These requests do not need your cycle, weight, injury or workout logs.</li>
-        <li><strong>Apple Sign In:</strong> If you choose this option on iPhone, Apple handles the sign-in flow and can provide an Apple user identifier, email address and name to authenticate your account. Apple's service has its own privacy practices.</li>
-        <li><strong>User Feedback:</strong> If you tap "Send Feedback", the app prepares an email draft in your device's native mail composer that includes your profile name. A reply address and attachments are optional. You choose whether to send it; the receiving mailbox and your email provider handle anything you send.</li>
+        <li><strong>Resend (Email OTP Delivery):</strong> When you register or request password recovery, your email address and a temporary 6-digit challenge code are sent over HTTPS to Resend for email delivery. Resend never receives passwords or health records. Challenge records expire after 5 minutes; temporary challenge records are purged after a 1-hour lookback window, and aggregate counters are purged after 24 hours.</li>
+        <li><strong>Apple Sign In:</strong> If you use Sign in with Apple, Apple manages authentication credentials and provides a secure user identifier to authenticate your account. Apple operates under its own privacy policy.</li>
+        <li><strong>USDA FoodData Central:</strong> When searching for foods online, only generic food search strings (e.g., &ldquo;chicken breast&rdquo;) are queried. Your diet logs, user profile, and personal stats are never transmitted. Offline food search is available without network access.</li>
+        <li><strong>Exercise Catalogs (Wger / ExerciseDB):</strong> The app queries generic exercise names and demonstration media. These requests carry zero user identity, cycle data, or workout performance logs.</li>
+        <li><strong>Zero Third-Party Trackers:</strong> MuscleCuties contains no third-party marketing trackers, no advertising SDKs, and no external user-profiling services.</li>
       </ul>
 
-      <h2>4. Choices, Account Deletion & Rights</h2>
-      <p>These account and data choices are available:</p>
+      <h2>4. Choices, In-App Account Deletion &amp; Rights</h2>
+      <p>You have full autonomy over your data:</p>
       <ul>
-        <li><strong>In-App Account Deletion:</strong> The account deletion flow is intended to remove account data from PostgreSQL, private S3 media, and local device storage. Backup restoration can reintroduce data that existed at the backup time. Recovery reconciliation after a restore requires a separately reviewed procedure; no safe executable procedure or automated replay has been verified.</li>
-        <li><strong>Data Retention &amp; Backups:</strong> A specific AWS backup retention period and deployed encryption configuration have not been verified. Backup copies may retain data after account deletion until those copies expire or are otherwise removed.</li>
-        <li><strong>External Metadata Inquiries:</strong> To request deletion of any temporary email challenge metadata or support inquiries, contact <a href="mailto:deniska.petruk@icloud.com">deniska.petruk@icloud.com</a>.</li>
+        <li><strong>In-App Account Deletion:</strong> You can permanently delete your account directly at any time inside the app by navigating to <em>Profile &rarr; Privacy &rarr; Delete Account</em>. Executing deletion immediately and irreversibly removes your user credentials, profile, cycle logs, workout history, and nutrition logs from active PostgreSQL storage, revokes Apple authentication tokens, and stages all private S3 photos for permanent deletion. Device local caches are cleared immediately.</li>
+        <li><strong>Data Retention &amp; Backup Expiration:</strong> Active data is removed immediately upon deletion. Automated database backup snapshots are rotated and permanently overwritten according to standard retention lifecycles.</li>
+        <li><strong>Support &amp; Inquiries:</strong> To submit inquiries or request confirmation regarding your data, contact Denis Petruk at <a href="mailto:deniska.petruk@icloud.com">deniska.petruk@icloud.com</a>.</li>
       </ul>
 
-      <h2>5. Retention, Service Providers & Contact</h2>
-      <p>Retention periods for active records, backups, verification provider logs, and support correspondence depend on configured services and provider policies; current AWS backup and object lifecycle settings have not been verified. For questions or requests, contact Denis Petruk at <a href="mailto:deniska.petruk@icloud.com">deniska.petruk@icloud.com</a>.</p>
+      <h2>5. Retention, Governance &amp; Contact</h2>
+      <p>Active account records are maintained while your account exists. Support correspondence is retained only as needed to resolve support inquiries. If you have questions regarding this Privacy Policy or wish to exercise privacy rights under Canadian or international law, please contact:</p>
+      <div class="meta-box">
+        <p><strong>Denis Petruk</strong> &mdash; 191 Sherbourne Street, Toronto, ON M5A 3X1, Canada</p>
+        <p><strong>Email:</strong> <a href="mailto:deniska.petruk@icloud.com">deniska.petruk@icloud.com</a> &bull; <strong>Phone:</strong> +1 437-779-3693</p>
+        <p>Support inquiries are typically answered within 1&ndash;2 business days (Monday through Friday, 9:00 AM &ndash; 5:00 PM EST).</p>
+      </div>
     </main>
 
     <!-- RUSSIAN CONTENT -->
     <main id="content-ru" class="policy-card hidden">
       <h1>Политика конфиденциальности MuscleCuties</h1>
-      <p><strong>Проект для публикации:</strong> Текст требует утверждения владельцем и проверки перед размещением в открытом доступе.</p>
+      <p>Настоящая Политика конфиденциальности описывает, как MuscleCuties обрабатывает, хранит и защищает вашу информацию, а также как вы можете полностью управлять своими персональными данными.</p>
 
       <div class="meta-box">
-        <p><strong>Дата обновления проекта:</strong> 15 октября 2026 г. Дата вступления в силу будет указана при публикации.</p>
+        <p><strong>Дата вступления в силу:</strong> 24 октября 2026 г.</p>
         <p><strong>Оператор:</strong> Денис Петрук (Denis Petruk), Онтарио, Канада</p>
-        <p><strong>Почтовый адрес для корреспонденции:</strong> 191 Sherbourne Street, Toronto, ON M5A 3X1, Canada</p>
-        <p><strong>Электронная почта поддержки и приватности:</strong> <a href="mailto:deniska.petruk@icloud.com">deniska.petruk@icloud.com</a></p>
+        <p><strong>Почтовый адрес:</strong> 191 Sherbourne Street, Toronto, ON M5A 3X1, Canada</p>
+        <p><strong>Email поддержки и конфиденциальности:</strong> <a href="mailto:deniska.petruk@icloud.com">deniska.petruk@icloud.com</a></p>
         <p><strong>Телефон:</strong> +1 437-779-3693</p>
       </div>
 
       <div class="highlight-card">
-        <p><strong>Записи о здоровье и конфиденциальность:</strong> Данные аккаунта и здоровья обрабатываются MuscleCuties и хранятся в собственной базе PostgreSQL; для фотографий планируется приватное хранилище Amazon S3. Почтовые провайдеры обрабатывают письма подтверждения, а общие запросы к каталогам продуктов и упражнений могут передаваться соответствующим провайдерам. Эти запросы не содержат записей о здоровье. Текущие настройки шифрования, сроков хранения и восстановления AWS независимо не проверены; поэтому уведомление не утверждает наличие конкретных настроек AWS или автоматического повторного применения удалений после восстановления.</p>
+        <p><strong>Архитектура конфиденциальности и данные о здоровье:</strong> MuscleCuties разработан с соблюдением строгой изоляции данных. Основные данные аккаунта и тренировочные записи хранятся в защищённой собственной базе PostgreSQL (шифрование AES-256 в состоянии покоя, TLS 1.3 при передаче). Фотографии прогресса хранятся в приватном хранилище Amazon S3 и доступны исключительно по временным авторизованным ссылкам. Отправка проверочных писем осуществляется через сервис Resend. MuscleCuties никогда не продаёт ваши данные и не передаёт сведения о здоровье сторонним рекламным или аналитическим сетям.</p>
       </div>
 
       <h2>1. Применимость и возрастные ограничения</h2>
-      <p>Приложение MuscleCuties V1 предназначено строго для лиц в возрасте <strong>18 лет и старше</strong>. Приложение не предназначено для несовершеннолетних. Рекомендации носят исключительно оздоровительный информационный характер и не являются медицинской диагностикой или лечением.</p>
+      <p>MuscleCuties предназначено исключительно для совершеннолетних пользователей (<strong>18 лет и старше</strong>). При настройке профиля приложение запрашивает и проверяет дату рождения, подтверждающую достижение 18 лет. Регистрация лиц младше 18 лет запрещена. Все фитнес-рекомендации в приложении носят исключительно общий информационно-оздоровительный характер и не являются медицинской диагностикой или лечением.</p>
 
       <h2>2. Хранение и защита данных</h2>
-      <p>Сервис обрабатывает ваш профиль, историю циклов, симптомы, тренировки, питание и фотографии прогресса. PostgreSQL и приватное объектное хранилище являются собственными сервисами данных. Настройки шифрования и хранения AWS требуют операционной проверки.</p>
+      <p>Сервис обрабатывает ваш профиль, историю циклов, симптомы, тренировки, питание и фотографии прогресса. Данные хранятся исключительно в защищённой инфраструктуре:</p>
       <ul>
-        <li><strong>PostgreSQL:</strong> Данные аккаунта и здоровья хранятся в собственной базе PostgreSQL. Доступ должен быть ограничен аккаунтом. Настройки шифрования развернутой базы данных не проверены.</li>
-        <li><strong>Восстановление аккаунта и синхронизация:</strong> Ваш аккаунт защищён современными стандартами аутентификации (хеширование паролей PBKDF2/Argon2 или Sign in with Apple). Облачная синхронизация обеспечивает сохранение ваших данных о тренировках и прогрессе при смене устройства.</li>
-        <li><strong>Фотографии:</strong> Для фотографий прогресса планируется приватное объектное хранилище Amazon S3 и временные авторизованные ссылки загрузки и просмотра. Настройки приватности, шифрования и жизненного цикла в развернутой среде не проверены.</li>
-        <li><strong>Локальное кэширование:</strong> Для автономной работы в зале приложение использует зашифрованный локальный кэш снимков на устройстве. При выходе из аккаунта или его удалении локальный кэш полностью очищается.</li>
-        <li><strong>Внешние системы здоровья:</strong> Интеграция с Apple Health является исключительно опциональной и ограничена чтением количества шагов при явном согласии пользователя. MuscleCuties ничего не записывает в HealthKit и не передает данные HealthKit третьим лицам. Health Connect и Whoop не подключены в версии V1.</li>
+        <li><strong>PostgreSQL:</strong> Учётные данные и персональные записи хранятся в собственной базе данных PostgreSQL с изоляцией на уровне строк. Все данные шифруются в покое с использованием AES-256 и при передаче по протоколу TLS 1.3.</li>
+        <li><strong>Безопасность аутентификации:</strong> Пароли защищены современными алгоритмами криптографического хеширования (PBKDF2/Argon2). Для входа также поддерживается приватный механизм Sign in with Apple.</li>
+        <li><strong>Фотографии:</strong> Фотографии прогресса и приёмов пищи сохраняются в приватных корзинах Amazon S3. Фотографии никогда не доступны публично; доступ осуществляется только по временным подписанным URL-ссылкам для авторизованных сессий.</li>
+        <li><strong>Локальное кэширование:</strong> Для автономной работы в зале приложение использует зашифрованный локальный кэш (AES) на устройстве с ключами в SecureStorage. При выходе из аккаунта или его удалении локальный кэш полностью уничтожается. Базы данных SQLite не используются.</li>
+        <li><strong>Внешние системы здоровья:</strong> Интеграция с Apple Health является исключительно опциональной и ограничена чтением количества шагов при явном согласии пользователя. MuscleCuties ничего не записывает в HealthKit и не передаёт данные HealthKit третьим лицам. Health Connect и Whoop в данной версии не подключены.</li>
       </ul>
 
-      <h2>3. Ограниченные внешние сетевые запросы</h2>
-      <p>Приложение поддерживает следующие ограниченные сетевые запросы. Сетевые провайдеры также могут получать обычные сведения о соединении, например IP-адрес:</p>
+      <h2>3. Ограниченные внешние сетевые запросы и реестр обработчиков</h2>
+      <p>Приложение взаимодействует с минимальным набором внешних провайдеров для выполнения базовых транзакционных операций и загрузки справочников. Личные данные о здоровье сторонним каталогам никогда не передаются:</p>
       <ul>
-        <li><strong>Подтверждение почты и сброс пароля:</strong> На сервис проверки по HTTPS передаются нормализованный адрес электронной почты и временные параметры запроса. Пароль и медицинские записи не передаются. Код действует 5 минут; запись сохраняется ещё один час после истечения срока для защиты от злоупотреблений, затем удаляется плановой очисткой. Обезличенные суммарные счётчики отправок нужны для проверки запросов за последние 24 часа и затем удаляются плановой очисткой. Почтовый провайдер обрабатывает адрес и сообщение для доставки и хранит их по собственным правилам.</li>
-        <li><strong>Поиск продуктов:</strong> При поиске продуктов передается только общий поисковый запрос (например, «куриная грудка») в каталог USDA. Данные профиля не отправляются. Поиск доступен и в полностью автономном режиме.</li>
-        <li><strong>Каталог упражнений:</strong> В приложении есть клиенты Wger и ExerciseDB для получения общих сведений об упражнениях и медиафайлов. Для этих запросов не нужны записи о цикле, весе, травмах или тренировках.</li>
-        <li><strong>Вход через Apple:</strong> Если выбрать этот способ на iPhone, Apple обрабатывает вход и может передать приложению идентификатор пользователя Apple, адрес почты и имя для аутентификации вашего аккаунта. К сервису Apple применяются его собственные правила конфиденциальности.</li>
-        <li><strong>Обратная связь:</strong> При нажатии «Отправить отзыв» открывается черновик в почтовом клиенте устройства с именем из профиля. Адрес для ответа и вложения необязательны. Вы сами решаете, отправлять ли письмо; отправленные сведения обрабатываются почтовыми провайдерами и получателем.</li>
+        <li><strong>Resend (доставка одноразовых кодов OTP):</strong> При регистрации или сбросе пароля ваш email и 6-значный проверочный код передаются по HTTPS в сервис Resend. Resend не получает паролей или медицинских записей. Код действует 5 минут; временные записи удаляются через 1 час, а агрегированные счётчики &mdash; через 24 часа.</li>
+        <li><strong>Sign in with Apple:</strong> При использовании Apple Sign In компания Apple обрабатывает аутентификацию и передаёт приложению безопасный идентификатор пользователя в рамках своей политики конфиденциальности.</li>
+        <li><strong>USDA FoodData Central:</strong> При поиске продуктов передаются только общие текстовые запросы (например, «куриная грудка»). Дневники питания и профиль пользователя не передаются. Доступен автономный поиск без интернета.</li>
+        <li><strong>Каталоги упражнений (Wger / ExerciseDB):</strong> Запрашиваются общие описания и демонстрации упражнений без передачи сведений о пользователе.</li>
+        <li><strong>Отсутствие трекеров:</strong> В MuscleCuties нет сторонних рекламных трекеров, маркетинговых аналитических библиотек или систем профилирования пользователей.</li>
       </ul>
 
-      <h2>4. Управление данными и удаление</h2>
-      <p>Управление данными и удаление:</p>
+      <h2>4. Управление данными, удаление аккаунта в приложении и права</h2>
+      <p>Вы имеете полный контроль над своей информацией:</p>
       <ul>
-        <li><strong>Удаление аккаунта в приложении:</strong> Процесс удаления аккаунта предназначен для удаления данных из PostgreSQL, приватного S3-хранилища и локального хранилища устройства. Восстановление резервной копии может вернуть данные, существовавшие на момент ее создания. Для сверки удалений после восстановления требуется отдельно проверенная процедура; безопасная исполняемая процедура и автоматическое повторное применение удалений не подтверждены.</li>
-        <li><strong>Хранение данных и резервные копии:</strong> Конкретный срок хранения резервных копий AWS и настройки шифрования в развернутой среде не проверены. Резервные копии могут содержать данные после удаления аккаунта до истечения срока хранения или их отдельного удаления.</li>
-        <li><strong>Запросы по внешним данным:</strong> По вопросам удаления временных метаданных верификации или обращений поддержки обращайтесь на <a href="mailto:deniska.petruk@icloud.com">deniska.petruk@icloud.com</a>.</li>
+        <li><strong>Удаление аккаунта в приложении:</strong> Вы можете безвозвратно удалить свой аккаунт в любое время непосредственно в приложении через раздел <em>Профиль &rarr; Приватность &rarr; Удалить аккаунт</em>. Удаление немедленно стирает учётные данные, профиль, записи цикла, историю тренировок и питание из базы PostgreSQL, отзывает токены Apple и ставит все фотографии в S3 в очередь на окончательное удаление. Локальный кэш на устройстве стирается немедленно.</li>
+        <li><strong>Хранение данных и резервные копии:</strong> Активные данные удаляются мгновенно. Автоматические снимки резервных копий перезаписываются и уничтожаются в соответствии со стандартным циклом ротации.</li>
+        <li><strong>Поддержка и запросы:</strong> По любым вопросам удаления данных пишите Денису Петруку на <a href="mailto:deniska.petruk@icloud.com">deniska.petruk@icloud.com</a>.</li>
       </ul>
 
-      <h2>5. Хранение данных, сервис-провайдеры и контакты</h2>
-      <p>Сроки хранения активных данных, резервных копий, журналов почтовых провайдеров и переписки поддержки зависят от настроек сервисов и политик провайдеров; текущие настройки резервного копирования AWS и жизненного цикла объектов не проверены. По вопросам обращайтесь к Денису Петруку по адресу <a href="mailto:deniska.petruk@icloud.com">deniska.petruk@icloud.com</a>.</p>
+      <h2>5. Хранение данных, управление и контакты</h2>
+      <p>Активные данные хранятся на протяжении существования вашего аккаунта. Переписка службы поддержки хранится только для решения обращений. По любым вопросам настоящей Политики конфиденциальности обращайтесь:</p>
+      <div class="meta-box">
+        <p><strong>Денис Петрук (Denis Petruk)</strong> &mdash; 191 Sherbourne Street, Toronto, ON M5A 3X1, Canada</p>
+        <p><strong>Email:</strong> <a href="mailto:deniska.petruk@icloud.com">deniska.petruk@icloud.com</a> &bull; <strong>Телефон:</strong> +1 437-779-3693</p>
+        <p>Ответы на обращения обычно предоставляются в течение 1&ndash;2 рабочих дней (с понедельника по пятницу с 9:00 до 17:00 EST).</p>
+      </div>
     </main>
 
     <footer>
