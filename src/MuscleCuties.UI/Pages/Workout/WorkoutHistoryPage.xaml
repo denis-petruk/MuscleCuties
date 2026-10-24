@@ -6,7 +6,6 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
-    xmlns:dtos="clr-namespace:MuscleCuties.UseCases.Features.Workout.Archive;assembly=MuscleCuties.UseCases"
     xmlns:uiModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
     xmlns:workout="clr-namespace:MuscleCuties.Core.Models.Workout;assembly=MuscleCuties.Infrastructure"
@@ -381,7 +380,7 @@
                             HeightRequest="32"
                             WidthRequest="32"
                             Padding="0"
-                            CornerRadius="16"
+                            CornerRadius="{StaticResource UiRadiusControl}"
                             BackgroundColor="Transparent"
                             TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                     </Grid>
@@ -519,7 +518,7 @@
                                                                        VerticalOptions="Center" Margin="0" />
                                                             </Border>
                                                             <Button Grid.Column="4" Text="✓" HeightRequest="32"
-                                                                    WidthRequest="32" Padding="0" CornerRadius="6"
+                                                                    WidthRequest="32" Padding="0" CornerRadius="{StaticResource UiRadiusControl}"
                                                                     FontSize="13" FontAttributes="Bold"
                                                                     BackgroundColor="{StaticResource Primary}"
                                                                     TextColor="{StaticResource White}"
@@ -572,7 +571,7 @@
                         Text="{loc:LocalizedText Workout_History_SaveNotesAndRpeButton}"
                         Command="{Binding SaveSessionNotesCommand}"
                         HeightRequest="44"
-                        CornerRadius="10"
+                        CornerRadius="{StaticResource UiRadiusControl}"
                         FontAttributes="Bold"
                         BackgroundColor="{StaticResource Primary}"
                         TextColor="{StaticResource White}" />

@@ -22,6 +22,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private const int MissingWorkoutDayId = 0;
     private const int NoScheduledDays = 0;
     private const int SingleActivityCount = 1;
+    private const string StrengthPlanGenerationRoute = "StrengthPlanGenerationPage";
 
     private readonly IWorkoutInjuryUseCase _injuries;
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
@@ -107,12 +108,13 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         OpenWorkoutCommand = new AsyncRelayCommand<WorkoutItem>(OpenWorkoutAsync);
         ToggleSessionOptionalCommand = new AsyncRelayCommand<WorkoutItem>(ToggleSessionOptionalAsync);
         ToggleEasierAlternativeCommand = new AsyncRelayCommand<WorkoutItem>(ToggleEasierAlternativeAsync);
+        OpenStrengthPlanCommand = new AsyncRelayCommand(() => _navigateAsync(StrengthPlanGenerationRoute));
         SelectFilterCommand = new RelayCommand<FilterChipItem>(SelectFilter);
         StartFeaturedWorkoutCommand = new AsyncRelayCommand(OpenFeaturedWorkoutAsync);
         SelectWeekCommand = new RelayCommand<int>(SelectWeek);
         SelectScheduleDayCommand = new RelayCommand<ScheduleDayItem>(SelectScheduleDay);
         ToggleInjuryBannerCommand = new RelayCommand(() => IsInjuryBannerExpanded = !IsInjuryBannerExpanded);
-        NavigateToInjuryLogCommand = new AsyncRelayCommand(() => _navigateAsync("InjuryLogPage"));
+        NavigateToInjuryLogCommand = new AsyncRelayCommand(OpenInjuryModalAsync);
         Filters = new ObservableCollection<FilterChipItem>
         {
             new() { Label = "All", IsSelected = true },
@@ -201,6 +203,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     public AsyncRelayCommand<WorkoutItem> OpenWorkoutCommand { get; }
     public AsyncRelayCommand<WorkoutItem> ToggleSessionOptionalCommand { get; }
     public AsyncRelayCommand<WorkoutItem> ToggleEasierAlternativeCommand { get; }
+    public AsyncRelayCommand OpenStrengthPlanCommand { get; }
     public RelayCommand<FilterChipItem> SelectFilterCommand { get; }
     public AsyncRelayCommand StartFeaturedWorkoutCommand { get; }
     public RelayCommand<int> SelectWeekCommand { get; }

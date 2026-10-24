@@ -6,7 +6,6 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
-    xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
     xmlns:profileControls="clr-namespace:MuscleCuties.UI.Controls.Profile"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
@@ -226,7 +225,7 @@
                         TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
                         FontAttributes="Bold"
                         FontSize="15"
-                        CornerRadius="14"
+                        CornerRadius="{StaticResource UiRadiusControl}"
                         MinimumHeightRequest="48"
                         HeightRequest="48" />
                     <Label
