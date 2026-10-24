@@ -12,6 +12,8 @@ public sealed class PostgresCreateCustomFoodStore(PostgresDbContext dbContext) :
     public async Task<CustomFoodRecord> CreateAsync(
         Guid ownerUserId,
         CustomFoodNutrition nutrition,
+        CustomFoodMicronutrients micronutrients = default,
+        string? companySource = null,
         CancellationToken cancellationToken = default)
     {
         if (ownerUserId == Guid.Empty)
@@ -46,7 +48,11 @@ public sealed class PostgresCreateCustomFoodStore(PostgresDbContext dbContext) :
                 Protein = (decimal)nutrition.ProteinPer100Grams,
                 Carbs = (decimal)nutrition.CarbsPer100Grams,
                 Fats = (decimal)nutrition.FatsPer100Grams,
-                // Optional nutrients are unknown until the user explicitly supplies them.
+                BrandOwner = string.IsNullOrWhiteSpace(companySource) ? null : companySource.Trim(),
+                Iron = micronutrients.IronMilligramsPer100Grams,
+                VitaminB12 = micronutrients.VitaminB12MicrogramsPer100Grams,
+                VitaminD = micronutrients.VitaminDMicrogramsPer100Grams,
+                Calcium = micronutrients.CalciumMilligramsPer100Grams,
                 DataType = "Custom",
                 ServingSize = (decimal)nutrition.ServingAmount,
                 ServingSizeUnit = nutrition.ServingUnit,
@@ -61,6 +67,17 @@ public sealed class PostgresCreateCustomFoodStore(PostgresDbContext dbContext) :
     }
 
     private static CustomFoodRecord ToCustomFoodRecord(UserFoodItemRecord record) => new(
-        record.Id, record.Name, (float)record.Calories!.Value, (float)record.Protein!.Value,
-        (float)record.Carbs!.Value, (float)record.Fats!.Value, (float)record.ServingSize!.Value, record.ServingSizeUnit!);
+        record.Id,
+        record.Name,
+        (float)record.Calories!.Value,
+        (float)record.Protein!.Value,
+        (float)record.Carbs!.Value,
+        (float)record.Fats!.Value,
+        (float)record.ServingSize!.Value,
+        record.ServingSizeUnit!,
+        record.BrandOwner,
+        (float?)record.Iron,
+        (float?)record.VitaminB12,
+        (float?)record.VitaminD,
+        (float?)record.Calcium);
 }

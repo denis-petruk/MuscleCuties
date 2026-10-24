@@ -17,8 +17,29 @@ public sealed class CreateCustomFoodUseCase(ICreateCustomFoodStore store) : ICre
                 request.Calories, request.Protein, request.Carbs, request.Fats, out var nutrition, out var error))
             throw new ArgumentException(error, nameof(request));
 
-        var saved = await store.CreateAsync(ownerUserId, nutrition, cancellationToken).ConfigureAwait(false);
-        return new CustomFoodDto($"custom:{saved.Id:N}", saved.Name, saved.Calories, saved.Protein,
-            saved.Carbs, saved.Fats, saved.ServingSize, saved.ServingSizeUnit);
+        if (!CustomFoodCreationRule.TryNormalizeMicronutrients(
+                request.IronMilligrams,
+                request.VitaminB12Micrograms,
+                request.VitaminDMicrograms,
+                request.CalciumMilligrams,
+                nutrition.ServingGrams,
+                out var micronutrients))
+            throw new ArgumentException("Micronutrients are outside the supported range.", nameof(request));
+
+        var saved = await store.CreateAsync(ownerUserId, nutrition, micronutrients, request.CompanySource, cancellationToken).ConfigureAwait(false);
+        return new CustomFoodDto(
+            $"custom:{saved.Id:N}",
+            saved.Name,
+            saved.Calories,
+            saved.Protein,
+            saved.Carbs,
+            saved.Fats,
+            saved.ServingSize,
+            saved.ServingSizeUnit,
+            saved.CompanySource,
+            saved.IronMilligrams,
+            saved.VitaminB12Micrograms,
+            saved.VitaminDMicrograms,
+            saved.CalciumMilligrams);
     }
 }

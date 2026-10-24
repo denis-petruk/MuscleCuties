@@ -1,7 +1,8 @@
 using System.Collections.ObjectModel;
-using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.UI.Models.UI.Workout;
+using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.Services.Workout;
 
@@ -10,89 +11,91 @@ public static class WorkoutActivityOptionCatalog
     private static readonly ActivityDefinition[] Definitions =
     [
         new(
-            WorkoutActivityType.HighVolumeStrength,
+            WorkoutActivityDto.HighVolumeStrength,
             "High volume strength",
             "Strength training with activity-specific set, repetition, and rest targets.",
             ActivityGroup.Strength,
             true,
             "Dumbbell24"),
         new(
-            WorkoutActivityType.StrengthHighIntensity,
+            WorkoutActivityDto.StrengthHighIntensity,
             "Strength high intensity",
             "Strength training with heavier main movements and planned rest between sets.",
             ActivityGroup.Strength,
             false,
             "Flash24"),
         new(
-            WorkoutActivityType.RockClimbing,
+            WorkoutActivityDto.RockClimbing,
             "Rock climbing",
             "Plan or log climbing time; demand depends on the selected session.",
             ActivityGroup.Climbing,
             false,
             "Sport24"),
         new(
-            WorkoutActivityType.Hiit,
+            WorkoutActivityDto.Hiit,
             "HIIT",
             "HIIT means high-intensity interval training: short hard efforts with recovery breaks.",
             ActivityGroup.Cardio,
             false,
             "Fire24"),
         new(
-            WorkoutActivityType.Cycling,
+            WorkoutActivityDto.Cycling,
             "Cycling",
             "Ride for low-impact cardio.",
             ActivityGroup.Cardio,
             false,
             "VehicleBicycle24"),
         new(
-            WorkoutActivityType.Running,
+            WorkoutActivityDto.Running,
             "Running",
             "Run steadily or mix in faster intervals.",
             ActivityGroup.Cardio,
             false,
             "Run24"),
         new(
-            WorkoutActivityType.Swimming,
+            WorkoutActivityDto.Swimming,
             "Swimming",
             "Swim for full-body movement and endurance.",
             ActivityGroup.Cardio,
             false,
             "SwimmingPool24"),
         new(
-            WorkoutActivityType.Yoga,
+            WorkoutActivityDto.Yoga,
             "Yoga",
             "Choose gentle or demanding yoga content when planning a session.",
             ActivityGroup.Yoga,
             false,
             "LeafThree24"),
-        new(WorkoutActivityType.GeneralStrength, "General strength training",
+        new(WorkoutActivityDto.GeneralStrength, "General strength training",
             "Strength sessions with targets matched to your activity history.", ActivityGroup.Strength, false, "Dumbbell24"),
-        new(WorkoutActivityType.Walking, "Walking",
+        new(WorkoutActivityDto.Walking, "Walking",
             "Plan or log walking time.", ActivityGroup.Cardio, false, "Run24"),
-        new(WorkoutActivityType.Rowing, "Rowing",
+        new(WorkoutActivityDto.Rowing, "Rowing",
             "Plan or log rowing time.", ActivityGroup.Cardio, false, "PulseSquare24"),
-        new(WorkoutActivityType.Elliptical, "Elliptical",
+        new(WorkoutActivityDto.Elliptical, "Elliptical",
             "Plan or log elliptical time.", ActivityGroup.Cardio, false, "PulseSquare24"),
-        new(WorkoutActivityType.Mobility, "Mobility",
+        new(WorkoutActivityDto.Mobility, "Mobility",
             "Plan or log mobility work.", ActivityGroup.Recovery, false, "LeafThree24"),
-        new(WorkoutActivityType.GentleRecovery, "Gentle recovery activities",
+        new(WorkoutActivityDto.GentleRecovery, "Gentle recovery activities",
             "Plan or log gentle recovery time.", ActivityGroup.Recovery, false, "LeafThree24"),
-        new(WorkoutActivityType.RestDay, "Rest day",
-            "Keep a day free of planned exercise.", ActivityGroup.Rest, false, "WeatherMoon24"),
-        new(WorkoutActivityType.Other, "Other activity",
-            "Record another activity without assigning it a prescription.", ActivityGroup.Other, false, "CircleSmall24")
+        new(WorkoutActivityDto.RestDay, "Rest day",
+            "Keep a day free of planned exercise.", ActivityGroup.Rest, false, "WeatherMoon24")
     ];
 
     public static ObservableCollection<WorkoutActivityOptionItem> Build(
-        IReadOnlySet<WorkoutActivityType> selectedTypes)
+        IReadOnlySet<WorkoutActivityDto> selectedTypes,
+        bool allowInlinePreferenceConfiguration = true)
     {
-        var defaults = WorkoutActivityPreferences.EnsureRequired(
-            selectedTypes.Count == 0
-                ? WorkoutActivityPreferences.BuildDefaultSelection()
-                : selectedTypes);
+        var selected = selectedTypes.Count == 0
+            ? WorkoutPreferencesConstraints.BuildDefaultActivitySelection()
+            : selectedTypes;
+        var defaults = WorkoutPreferencesConstraints.EnsureRequiredActivities(selected);
 
         return new ObservableCollection<WorkoutActivityOptionItem>(
-            Definitions.Select(definition => ToOptionItem(definition, defaults)));
+            Definitions.Select(definition => ToOptionItem(
+                definition,
+                defaults,
+                allowInlinePreferenceConfiguration)));
     }
 
     public static IReadOnlyList<WorkoutActivityGroupSection> BuildGroups(
@@ -116,8 +119,19 @@ public static class WorkoutActivityOptionCatalog
         IEnumerable<WorkoutActivityOptionItem> options,
         WorkoutActivityOptionItem item)
     {
-        if (item.IsSelected && options.Count(option => option.IsSelected) == 1)
-            return "Choose at least one activity.";
+        var optionsList = options as IReadOnlyList<WorkoutActivityOptionItem> ?? options.ToList();
+        if (item.IsSelected)
+        {
+            var selectedList = optionsList.Where(option => option.IsSelected).ToList();
+            if (selectedList.Count == 1)
+                return "Choose at least one activity.";
+
+            if (WorkoutPlanningConstants.IsStrengthActivity(item.ActivityType) &&
+                selectedList.Count(option => WorkoutPlanningConstants.IsStrengthActivity(option.ActivityType)) == 1)
+            {
+                return "At least one strength activity is required for your plan.";
+            }
+        }
 
         item.IsSelected = !item.IsSelected;
         return string.Empty;
@@ -125,7 +139,8 @@ public static class WorkoutActivityOptionCatalog
 
     private static WorkoutActivityOptionItem ToOptionItem(
         ActivityDefinition definition,
-        IReadOnlySet<WorkoutActivityType> selectedTypes)
+        IReadOnlySet<WorkoutActivityDto> selectedTypes,
+        bool allowInlinePreferenceConfiguration)
     {
         return new WorkoutActivityOptionItem
         {
@@ -137,7 +152,12 @@ public static class WorkoutActivityOptionCatalog
             Tag = GetGroupTag(definition.Group),
             IconGlyph = definition.IconGlyph,
             IsRequired = definition.IsCoreDefault,
-            IsSelected = selectedTypes.Contains(definition.ActivityType)
+            IsSelected = selectedTypes.Contains(definition.ActivityType),
+            AllowInlinePreferenceConfiguration = allowInlinePreferenceConfiguration,
+            SessionDurationOptions = WorkoutPreferencesConstraints.SessionDurationChoices(definition.ActivityType),
+            SessionDurationMinutes = WorkoutPreferencesConstraints.DefaultSessionDurationMinutes(
+                definition.ActivityType),
+            WeeklyFrequencyOptions = WorkoutPreferencesConstraints.WeeklyFrequencyChoices()
         };
     }
 
@@ -151,7 +171,6 @@ public static class WorkoutActivityOptionCatalog
             ActivityGroup.Climbing => "Climbing",
             ActivityGroup.Yoga => "Yoga",
             ActivityGroup.Rest => "Rest",
-            ActivityGroup.Other => "Other",
             _ => string.Empty
         };
     }
@@ -166,7 +185,6 @@ public static class WorkoutActivityOptionCatalog
             ActivityGroup.Climbing => "CLIMBING",
             ActivityGroup.Yoga => "YOGA",
             ActivityGroup.Rest => "REST",
-            ActivityGroup.Other => "OTHER",
             _ => string.Empty
         };
     }
@@ -186,7 +204,7 @@ public static class WorkoutActivityOptionCatalog
     }
 
     private sealed record ActivityDefinition(
-        WorkoutActivityType ActivityType,
+        WorkoutActivityDto ActivityType,
         string Title,
         string Subtitle,
         ActivityGroup Group,
@@ -200,7 +218,6 @@ public static class WorkoutActivityOptionCatalog
         Recovery,
         Climbing,
         Yoga,
-        Rest,
-        Other
+        Rest
     }
 }

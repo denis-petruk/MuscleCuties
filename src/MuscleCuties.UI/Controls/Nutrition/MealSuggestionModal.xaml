@@ -197,7 +197,7 @@
                                 <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="5">
                                     <Path
                                         Grid.Row="0"
-                                        Data="M15 5a5 5 0 0 1 0 10c-1.8 0-3.4-1-4.3-2.4L7 16.3M5.7 15a2 2 0 1 0-2.8 2.8 2 2 0 1 0 2.8 2.8L9.4 17"
+                                        Data="M3 16h18M5 14a7 7 0 0 1 14 0M12 7V5M2 19h20"
                                         Style="{StaticResource NutritionLineIcon}"
                                         Stroke="{StaticResource Primary}"
                                         WidthRequest="22"

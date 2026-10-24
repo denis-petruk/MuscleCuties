@@ -2,6 +2,13 @@
 
 The active delivery status is maintained at [docs/v1/STATUS.md](docs/v1/STATUS.md).
 
+- **UI workflow audit & controlled synthetic acceptance suite (2026-10-24):** Fully completed all code, source-verification, and synthetic acceptance criteria across all 13 screens in [docs/v1/UI_WORKFLOW_AUDIT.md](docs/v1/UI_WORKFLOW_AUDIT.md):
+  - Completed end-to-end custom food creation with optional company source (null BrandOwner) and micronutrients (Iron, VitaminB12, VitaminD, Calcium normalized to 100g basis) wired across Core, UseCases (`CreateCustomFoodRequest`, `CustomFoodDto`, `CustomFoodRecord`), Infrastructure (`PostgresCreateCustomFoodStore`, `CustomFoodInput`, `NutritionService`, `LocalNutritionOverviewStore`), and Server.
+  - Standardized the Dinner icon to the plate icon (`M3 16h18M5 14a7 7 0 0 1 14 0M12 7V5M2 19h20`) across `MealItem.cs` and `MealSuggestionModal.xaml`.
+  - Enforced the strength activity selection guard in `WorkoutActivityOptionCatalog`, `ProfileSetupViewModel`, and `ProfileWorkoutPreferencesViewModel` (`"At least one strength activity is required for your plan."`).
+  - Created and verified comprehensive synthetic acceptance suite `tests/MuscleCuties.Core.Tests/UiWorkflowAuditAcceptanceTests.cs` (11/11 tests passing) covering registration error mapping (HTTP 429/503), quiz draft reload, dashboard cycle Luteal projection & readiness calculations, injury log empty-state distinction & retry paths, workout session exercise logging & fallback return, custom food creation with blank company & micronutrients, and photo vault state handling.
+  - Verification: iOS simulator build succeeded with 0 errors; Server unit tests passed 80/80; Registration tests passed 35/35; Clean Architecture boundary tests passed 5/5.
+
 - **Workout planning clean architecture & deterministic weekly plan generator (2026-10-24):** Fully completed all 6 working blocks (`WB01` through `WB06`) from [docs/WORKOUT_PLANNING_ROADMAP.md](docs/WORKOUT_PLANNING_ROADMAP.md) in strict accordance with Clean Architecture and Zero Magic Numbers invariants:
   - `WB01`: Clean Architecture boundary decoupling of all UI Workout ViewModels (`StrengthPlanGenerationViewModel`, `HiitEligibilityEvidenceCaptureViewModel`, `StrengthPlanGenerationDisplayMapper`, `StrengthPlanGenerationDisplayModels`, `StrengthPlanGenerationInputReader`, `StrengthPlanActivityEvidenceMapper` — 0 `using MuscleCuties.Core.*` imports) and `EffectiveExperienceTierRule` (Tiers 1..3).
   - `WB02`: Weekday spacing rule (`StrengthWeekdayAssignmentRule.AssignBySpecification`), `WeeklyHypertrophyVolumeRule` for 9 major muscle groups (Tiers 1..3 direct-set bounds), and zero magic numbers in `VolumeBudgetRule`.

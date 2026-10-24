@@ -7,7 +7,12 @@ public sealed record CreateCustomFoodRequest(
     float Calories,
     float Protein,
     float Carbs,
-    float Fats);
+    float Fats,
+    string? CompanySource = null,
+    float? IronMilligrams = null,
+    float? VitaminB12Micrograms = null,
+    float? VitaminDMicrograms = null,
+    float? CalciumMilligrams = null);
 
 public sealed record CustomFoodDto(
     string FoodKey,
@@ -17,7 +22,12 @@ public sealed record CustomFoodDto(
     float Carbs,
     float Fats,
     float ServingSize,
-    string ServingSizeUnit);
+    string ServingSizeUnit,
+    string? CompanySource = null,
+    float? IronMilligrams = null,
+    float? VitaminB12Micrograms = null,
+    float? VitaminDMicrograms = null,
+    float? CalciumMilligrams = null);
 
 public sealed record CustomFoodRecord(
     Guid Id,
@@ -27,4 +37,9 @@ public sealed record CustomFoodRecord(
     float Carbs,
     float Fats,
     float ServingSize,
-    string ServingSizeUnit);
+    string ServingSizeUnit,
+    string? CompanySource = null,
+    float? IronMilligrams = null,
+    float? VitaminB12Micrograms = null,
+    float? VitaminDMicrograms = null,
+    float? CalciumMilligrams = null);

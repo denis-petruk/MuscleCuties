@@ -317,7 +317,12 @@ public sealed class LocalNutritionOverviewStore(
                 request.Calories,
                 request.Protein,
                 request.Carbs,
-                request.Fats)).ConfigureAwait(false);
+                request.Fats,
+                request.CompanySource,
+                request.IronMilligrams,
+                request.VitaminB12Micrograms,
+                request.VitaminDMicrograms,
+                request.CalciumMilligrams)).ConfigureAwait(false);
 
             return new CustomFoodResultDto(
                 food.Id,
