@@ -1,4 +1,7 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Targets;
@@ -21,6 +24,9 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
     private const string SyntheticDatabasePrefix = "mc_";
     private const int SyntheticStrengthSets = 3;
     private const int SyntheticStrengthRepetitions = 10;
+    private const int TestWorkoutDaysPerWeek = 3;
+    private const int TestCycleLengthDays = 28;
+    private const int TestStrengthSessionDurationMinutes = WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes;
 
     [Xunit.Fact]
     public async Task GroupedMealsAndCustomFoodsRoundTripAgainstPostgreSql()
@@ -55,10 +61,14 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             Goal = "Tone",
             WeightGoalPace = "Maintain",
             TrainingExperienceLevel = "Intermediate",
-            CycleTrackingMode = "Regular",
-            WorkoutDaysPerWeek = 3,
-            CycleLength = 28,
-            SessionDurationMinutes = 60,
+            WorkoutDaysPerWeek = TestWorkoutDaysPerWeek,
+            AvailableWorkoutWeekdaysJson = JsonSerializer.Serialize(new[]
+                { nameof(DayOfWeek.Monday), nameof(DayOfWeek.Wednesday), nameof(DayOfWeek.Friday) }),
+            CycleLength = TestCycleLengthDays,
+            ActivitySessionDurationsJson = JsonSerializer.Serialize(new Dictionary<string, int>
+            {
+                [nameof(WorkoutActivityType.HighVolumeStrength)] = TestStrengthSessionDurationMinutes
+            }),
             EquipmentLevel = "FullGym",
             UpdatedAt = nowUtc
         });
@@ -163,12 +173,16 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             Goal = "BuildMuscle",
             WeightGoalPace = "Maintain",
             TrainingExperienceLevel = "Intermediate",
-            CycleTrackingMode = "Regular",
-            WorkoutDaysPerWeek = 3,
-            CycleLength = 28,
-            SessionDurationMinutes = 60,
+            WorkoutDaysPerWeek = TestWorkoutDaysPerWeek,
+            AvailableWorkoutWeekdaysJson = JsonSerializer.Serialize(new[]
+                { nameof(DayOfWeek.Monday), nameof(DayOfWeek.Wednesday), nameof(DayOfWeek.Friday) }),
+            CycleLength = TestCycleLengthDays,
+            ActivitySessionDurationsJson = JsonSerializer.Serialize(new Dictionary<string, int>
+            {
+                [nameof(WorkoutActivityType.HighVolumeStrength)] = TestStrengthSessionDurationMinutes
+            }),
             EquipmentLevel = "FullGym",
-            PreferredWorkoutActivityTypes = "HighVolumeStrength",
+            PreferredWorkoutActivityTypes = nameof(WorkoutActivityType.HighVolumeStrength),
             UpdatedAt = nowUtc
         });
         await database.SaveChangesAsync();

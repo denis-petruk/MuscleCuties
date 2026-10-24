@@ -464,14 +464,13 @@ public sealed class PostgresNutritionOverviewStore(
             throw new ArgumentException(error);
         }
 
-        if (new[] { request.IronMilligrams, request.VitaminB12Micrograms,
-                request.VitaminDMicrograms, request.CalciumMilligrams }
-            .Any(value => value is < 0 || value.HasValue && !float.IsFinite(value.Value)))
-            throw new ArgumentException("Micronutrients must be non-negative finite numbers.", nameof(request));
-        if (!CustomFoodCreationRule.TryNormalizeOptionalMicronutrient(request.IronMilligrams, validated.ServingGrams, out var iron) ||
-            !CustomFoodCreationRule.TryNormalizeOptionalMicronutrient(request.VitaminB12Micrograms, validated.ServingGrams, out var vitaminB12) ||
-            !CustomFoodCreationRule.TryNormalizeOptionalMicronutrient(request.VitaminDMicrograms, validated.ServingGrams, out var vitaminD) ||
-            !CustomFoodCreationRule.TryNormalizeOptionalMicronutrient(request.CalciumMilligrams, validated.ServingGrams, out var calcium))
+        if (!CustomFoodCreationRule.TryNormalizeMicronutrients(
+                request.IronMilligrams,
+                request.VitaminB12Micrograms,
+                request.VitaminDMicrograms,
+                request.CalciumMilligrams,
+                validated.ServingGrams,
+                out var micronutrients))
             throw new ArgumentException("Micronutrients are outside the supported range.", nameof(request));
 
         return await db.Database.CreateExecutionStrategy().ExecuteAsync<CustomFoodResultDto>(async () =>
@@ -491,10 +490,10 @@ public sealed class PostgresNutritionOverviewStore(
                 Carbs = (decimal)validated.CarbsPer100Grams,
                 Fats = (decimal)validated.FatsPer100Grams,
                 BrandOwner = string.IsNullOrWhiteSpace(request.CompanySource) ? null : request.CompanySource.Trim(),
-                Iron = iron,
-                VitaminB12 = vitaminB12,
-                VitaminD = vitaminD,
-                Calcium = calcium,
+                Iron = micronutrients.IronMilligramsPer100Grams,
+                VitaminB12 = micronutrients.VitaminB12MicrogramsPer100Grams,
+                VitaminD = micronutrients.VitaminDMicrogramsPer100Grams,
+                Calcium = micronutrients.CalciumMilligramsPer100Grams,
                 DataType = "Custom",
                 ServingSize = (decimal)validated.ServingAmount,
                 ServingSizeUnit = validated.ServingUnit,

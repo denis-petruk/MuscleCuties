@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.Server.Cycle;
 
@@ -28,7 +28,7 @@ public static class PhaseLogEndpointMappings
             if (!effectiveDate.HasValue)
                 return Results.BadRequest();
 
-            FlowIntensity? flow = null;
+            FlowIntensityDto? flow = null;
             if (body.FlowIntensity is not null)
             {
                 if (!TryParseFlow(body.FlowIntensity, out var parsedFlow))
@@ -60,17 +60,17 @@ public static class PhaseLogEndpointMappings
     private static bool TryUser(ClaimsPrincipal principal, out Guid userId) =>
         Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 
-    private static bool TryParsePhase(string? value, out CyclePhase phase)
+    private static bool TryParsePhase(string? value, out CyclePhaseDto phase)
     {
         phase = default;
-        return value is not null && Enum.GetNames<CyclePhase>().Contains(value, StringComparer.OrdinalIgnoreCase) &&
+        return value is not null && Enum.GetNames<CyclePhaseDto>().Contains(value, StringComparer.OrdinalIgnoreCase) &&
             Enum.TryParse(value, ignoreCase: true, out phase);
     }
 
-    private static bool TryParseFlow(string? value, out FlowIntensity flow)
+    private static bool TryParseFlow(string? value, out FlowIntensityDto flow)
     {
         flow = default;
-        return value is not null && Enum.GetNames<FlowIntensity>().Contains(value, StringComparer.OrdinalIgnoreCase) &&
+        return value is not null && Enum.GetNames<FlowIntensityDto>().Contains(value, StringComparer.OrdinalIgnoreCase) &&
             Enum.TryParse(value, ignoreCase: true, out flow);
     }
 

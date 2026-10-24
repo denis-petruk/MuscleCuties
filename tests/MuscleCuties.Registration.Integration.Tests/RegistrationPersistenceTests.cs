@@ -7,11 +7,9 @@ using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
-using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 using MuscleCuties.UseCases.Features.Onboarding.ProfileSetup;
 using MuscleCuties.UseCases.Features.Onboarding.Quiz;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 using Npgsql;
 using RegistrationWorkoutType = MuscleCuties.UseCases.Features.Account.Registration.Contracts.WorkoutType;
 
@@ -27,22 +25,21 @@ public sealed class RegistrationPersistenceTests
     private const string SyntheticMac = "synthetic-test-mac";
     private const string SyntheticKeyId = "synthetic-test-key";
     private const int RegistrationChallengePurpose = 1;
-    private const int SixtyMinuteAnswerValue = 3;
-    private const int ThirtyMinuteAnswerValue = 1;
     private const int FullGymAnswerValue = 1;
     private const int BodyweightAnswerValue = 3;
     private const int TestAgeYears = 30;
     private const int ReceiptLifetimeHours = 1;
     private const int UsernameNonceCharacters = 12;
     private const int TestCycleDays = 28;
-    private const int TestTrainingDays = 3;
     private const float TestHeightCm = 170f;
     private const float TestWeightKg = 70f;
+    private static readonly DayOfWeek[] TestAvailableWeekdays =
+        [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday];
 
     [Xunit.Theory]
-    [Xunit.InlineData(SixtyMinuteAnswerValue, FullGymAnswerValue)]
-    [Xunit.InlineData(ThirtyMinuteAnswerValue, BodyweightAnswerValue)]
-    public async Task NewAccountCompletesWithoutGeneratingAnUnconfirmedPlan(int sessionAnswer, int equipmentAnswer)
+    [Xunit.InlineData(FullGymAnswerValue)]
+    [Xunit.InlineData(BodyweightAnswerValue)]
+    public async Task NewAccountCompletesWithoutGeneratingAnUnconfirmedPlan(int equipmentAnswer)
     {
         var connectionString = Environment.GetEnvironmentVariable(ConnectionVariable);
         Xunit.Assert.False(string.IsNullOrWhiteSpace(connectionString),
@@ -53,8 +50,7 @@ public sealed class RegistrationPersistenceTests
 
         var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(connectionString).Options;
         await using var database = new PostgresDbContext(options);
-        var store = new PostgresCompleteAccountRegistrationStore(database, TimeProvider.System,
-            new GenerateWorkoutPlanUseCase(new PostgresWorkoutPlanningReferenceDataSource(database)));
+        var store = new PostgresCompleteAccountRegistrationStore(database, TimeProvider.System);
         var now = DateTimeOffset.UtcNow;
         var nonce = Guid.NewGuid().ToString("N");
         var email = $"registration-{nonce}@example.invalid";
@@ -83,8 +79,11 @@ public sealed class RegistrationPersistenceTests
         try
         {
             var quiz = await store.LoadQuizQuestionsAsync(CancellationToken.None);
-            var selections = quiz.Select(question => new QuizSelectionDto(question.Id,
-                question.QuestionType switch
+            Xunit.Assert.Contains(quiz, question => question.QuestionType == QuizQuestionType.SessionDuration);
+            var selections = quiz.SelectMany(question => question.QuestionType == QuizQuestionType.AvailableWeekdays
+                ? question.Answers.Where(answer => TestAvailableWeekdays.Any(day => answer.MappedValue == (int)day))
+                    .Select(answer => new QuizSelectionDto(question.Id, answer.Id))
+                : [new QuizSelectionDto(question.Id, question.QuestionType switch
                 {
                     QuizQuestionType.Goal => question.Answers.Single(answer =>
                         answer.MappedValue == (int)UserGoal.MaintainHealth).Id,
@@ -92,12 +91,11 @@ public sealed class RegistrationPersistenceTests
                         answer.MappedValue == (int)TrainingExperienceLevel.Beginner).Id,
                     QuizQuestionType.CurrentCyclePhase => question.Answers.Single(answer =>
                         answer.MappedValue == (int)CyclePhase.Follicular).Id,
-                    QuizQuestionType.SessionDuration => question.Answers.Single(answer =>
-                        answer.MappedValue == sessionAnswer).Id,
+                    QuizQuestionType.SessionDuration => question.Answers.First().Id,
                     QuizQuestionType.Equipment => question.Answers.Single(answer =>
                         answer.MappedValue == equipmentAnswer).Id,
                     _ => question.Answers.First().Id
-                })).ToArray();
+                })]).ToArray();
             var request = new CompleteAccountRegistrationRequest(
                 email,
                 username,
@@ -105,7 +103,7 @@ public sealed class RegistrationPersistenceTests
                 "synthetic-only-receipt-token",
                 challengeId.ToString(),
                 new ProfileSetupDraft("Synthetic Registration", now.UtcDateTime.AddYears(-TestAgeYears),
-                    TestHeightCm, TestWeightKg, string.Empty, TestTrainingDays, TestCycleDays,
+                    TestHeightCm, TestWeightKg, string.Empty, TestCycleDays,
                     [(int)WorkoutActivityType.HighVolumeStrength], true),
                 selections);
 

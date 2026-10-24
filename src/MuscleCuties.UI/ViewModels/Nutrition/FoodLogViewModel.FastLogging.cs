@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Nutrition;
 using MuscleCuties.UI.Models.UI.Nutrition;
@@ -550,7 +549,8 @@ public partial class FoodLogViewModel
     {
         CancelFoodSearch();
         var query = FoodSearchQuery.Trim();
-        if (GenericFoodQueryRule.NormalizeOrEmpty(query).Length == 0)
+        var validation = _dailyLogUseCase.ValidateOnlineFoodSearchQuery(query);
+        if (!validation.IsAccepted)
         {
             FoodSearchStatus = "USDA search accepts generic foods only, such as chicken breast.";
             return;
@@ -562,7 +562,7 @@ public partial class FoodLogViewModel
         _foodSearchCancellation = cancellation;
         try
         {
-            var foods = await _dailyLogUseCase.SearchOnlineFoodsAsync(query, 12, cancellation.Token);
+            var foods = await _dailyLogUseCase.SearchOnlineFoodsAsync(validation.NormalizedQuery, 12, cancellation.Token);
             if (cancellation.IsCancellationRequested || query != FoodSearchQuery.Trim())
                 return;
             SetSearchResults(foods.Select(ToQuickFood));

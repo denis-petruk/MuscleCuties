@@ -1,7 +1,8 @@
 using System.Collections.ObjectModel;
 using Microsoft.Maui.Graphics;
-using MuscleCuties.Core.Domain.Cycle;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Services.Dashboard;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
@@ -100,17 +101,24 @@ public static class CycleCalendarItemBuilder
         IReadOnlyCollection<CycleSymptomEntry>? symptomLogs,
         DateTime today,
         DateTime selectedDate,
-        bool useDarkTheme)
+        bool useDarkTheme,
+        ICyclePhaseProjectionUseCase cycleProjection)
     {
         var targetDate = date.Date;
-        var cycleLength = CyclePhaseRule.NormalizeCycleLength(prediction.PredictedCycleLength);
 
         var cycle = orderedCycles.LastOrDefault(item => item.StartDate.Date <= targetDate &&
                                                         (item.EndDate is null || targetDate < item.EndDate.Value.Date));
         var cycleStartDate = cycle?.StartDate.Date;
-        var dayCycleLength = CyclePhaseRule.NormalizeCycleLength(
-            cycle?.CycleLength is > 0 ? cycle.CycleLength : cycleLength);
-        var cycleDay = ResolveCycleDay(targetDate, cycleStartDate, dayCycleLength);
+        var rawCycleLength = cycle?.CycleLength is > 0 ? cycle.CycleLength : prediction.PredictedCycleLength;
+        var dayProjection = cycleProjection.Project(new CyclePhaseProjectionInputDto(
+            targetDate,
+            today,
+            rawCycleLength,
+            cycleStartDate,
+            CurrentPhase: prediction.CurrentPhase,
+            HasActiveCycle: prediction.HasActiveCycle));
+        var dayCycleLength = dayProjection.NormalizedCycleLength;
+        var cycleDay = dayProjection.CycleDay;
         var isToday = targetDate == today;
 
         var latestShift = orderedPhaseLogs.LastOrDefault(log => log.LoggedAt.Date <= targetDate &&
@@ -130,9 +138,19 @@ public static class CycleCalendarItemBuilder
         var isNeutral = !hasRecordAnchor || isStale;
         var isEstimated = !isNeutral && !hasPhaseShiftLog;
         var isPredictedFuture = !isNeutral && targetDate > today;
+        var phaseProjection = cycleProjection.Project(new CyclePhaseProjectionInputDto(
+            targetDate,
+            today,
+            dayCycleLength,
+            cycleStartDate,
+            cycleDay,
+            CurrentPhase: prediction.CurrentPhase,
+            HasActiveCycle: prediction.HasActiveCycle,
+            LoggedPhase: latestShift?.Phase,
+            LoggedAt: latestShift?.LoggedAt));
         var phase = isNeutral
             ? CyclePhase.Unknown
-            : ResolveCalendarPhase(cycleDay, targetDate, dayCycleLength, prediction, latestShift, today);
+            : phaseProjection.Phase;
 
         return new CycleDayItem
         {
@@ -173,41 +191,6 @@ public static class CycleCalendarItemBuilder
             return GetPhaseTextColor(phase, useDarkTheme);
 
         return isEstimated ? GetPredictedDayStrokeColor(phase, useDarkTheme) : Colors.Transparent;
-    }
-
-    public static int ResolveCycleDay(DateTime date, DateTime? cycleStartDate, int cycleLength)
-    {
-        if (cycleStartDate is null)
-            return 0;
-
-        var daysFromCycleStart = (date.Date - cycleStartDate.Value.Date).Days;
-        var normalizedOffset = (daysFromCycleStart % cycleLength + cycleLength) % cycleLength;
-        return normalizedOffset + 1;
-    }
-
-    public static CyclePhase ResolveCalendarPhase(
-        int cycleDay,
-        DateTime date,
-        int cycleLength,
-        CyclePredictionSummary prediction,
-        CyclePhaseEntry? latestShift,
-        DateTime today)
-    {
-        if (latestShift is null)
-            return cycleDay > 0
-                ? CyclePhaseRule.CalculatePhase(cycleDay, cycleLength)
-                : prediction.CurrentPhase;
-
-        if (latestShift.LoggedAt.Date == date.Date)
-            return latestShift.Phase;
-
-        if (date.Date == today.Date && prediction.HasActiveCycle)
-            return prediction.CurrentPhase;
-
-        return CyclePhaseRule.ProjectPhaseFromLog(
-            new CyclePhaseObservation(latestShift.Phase, latestShift.LoggedAt),
-            date,
-            cycleLength);
     }
 
     public static Color GetDayBackground(CyclePhase phase, bool isToday, bool useDarkTheme)

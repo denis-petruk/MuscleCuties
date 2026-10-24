@@ -27,7 +27,6 @@ internal sealed record AccountRegistrationProfileBody(
     DateTime BirthDate,
     float HeightCm,
     float WeightKg,
-    int WorkoutDaysPerWeek,
     IReadOnlyList<int> SelectedActivityTypes,
     bool UseMetricSystem,
     int? CycleLengthDays = null,
@@ -39,6 +38,6 @@ internal sealed record AccountRegistrationProfileBody(
         CycleLengthDays.HasValue && CycleLength.HasValue && CycleLengthDays != CycleLength;
 
     public ProfileSetupDraft ToInput() => new(
-        Name, BirthDate, HeightCm, WeightKg, ProfileImagePath ?? string.Empty, WorkoutDaysPerWeek,
+        Name, BirthDate, HeightCm, WeightKg, ProfileImagePath ?? string.Empty,
         CycleLengthDays ?? CycleLength ?? default, SelectedActivityTypes, UseMetricSystem, UpdateActivityPreferences);
 }

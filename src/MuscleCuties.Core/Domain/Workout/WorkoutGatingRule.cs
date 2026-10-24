@@ -27,12 +27,6 @@ public static class WorkoutGatingRule
             profile.Selected is null || config?.Gating is not { } gating ||
             !Enum.IsDefined(slot))
             return ConservativeDefault();
-        profile = profile with
-        {
-            Style = Enum.IsDefined(profile.Style)
-                ? profile.Style
-                : StrengthTrainingStyle.ComfortableModerate
-        };
         inputs = DailyInputs.CreateSafe(inputs.Date, inputs.SleepHours, inputs.Sleep3dAvg,
             inputs.StepsYesterday, inputs.Steps7dAvg, inputs.Energy, inputs.Pain,
             inputs.Bloating, inputs.WeightKg, inputs.RestingHeartRate,
@@ -50,12 +44,11 @@ public static class WorkoutGatingRule
         if (Math.Max(0, consecutiveLow) >= lowDayThreshold)
             return new GatingResult(
                 WorkoutActivityType.Yoga,
-                profile.Style,
                 0,
                 0,
                 ["Two low days in a row -- today is a Living happy life day."]);
 
-        if (slot == WorkoutType.Recovery) return new GatingResult(WorkoutActivityType.Yoga, profile.Style, 1, 10, []);
+        if (slot == WorkoutType.Recovery) return new GatingResult(WorkoutActivityType.Yoga, 1, 10, []);
 
         if (slot == WorkoutType.Cardio)
             return ResolveCardio(profile, inputs, readiness, phase, gating);
@@ -63,7 +56,7 @@ public static class WorkoutGatingRule
         if (slot == WorkoutType.Strength)
             return ResolveStrength(profile, inputs, readiness, phase, gating);
 
-        return new GatingResult(WorkoutActivityType.Yoga, profile.Style, 1, 10, []);
+        return new GatingResult(WorkoutActivityType.Yoga, 1, 10, []);
     }
 
     private static GatingResult ResolveCardio(
@@ -79,7 +72,6 @@ public static class WorkoutGatingRule
         if (readiness.Tier == ReadinessTier.Low)
             return new GatingResult(
                 WorkoutActivityType.Yoga,
-                profile.Style,
                 1,
                 10,
                 ["Low readiness: cardio swapped for recovery."]);
@@ -106,7 +98,7 @@ public static class WorkoutGatingRule
             && (phase == CyclePhase.Ovulatory
                 || profile.Goal == UserGoal.FatLoss
                 || readiness.Tier == ReadinessTier.High))
-            return new GatingResult(WorkoutActivityType.Hiit, profile.Style, 1, 10, notes);
+            return new GatingResult(WorkoutActivityType.Hiit, 1, 10, notes);
 
         var lowImpactThreshold = baseline is not null ? baseline.Energy : 3;
         var lowImpact = (phase == CyclePhase.Luteal || phase == CyclePhase.Menstrual)
@@ -126,7 +118,7 @@ public static class WorkoutGatingRule
 
         var activity = preferred.Count > 0 ? preferred[0] : WorkoutActivityType.Yoga;
 
-        return new GatingResult(activity, profile.Style, 1, 10, notes);
+        return new GatingResult(activity, 1, 10, notes);
     }
 
     private static GatingResult ResolveStrength(
@@ -137,25 +129,7 @@ public static class WorkoutGatingRule
         GatingConfig gating)
     {
         var notes = new List<string>();
-        var style = profile.Style;
         var baseline = profile.Baselines?.ForPhase(phase);
-
-        if (style == StrengthTrainingStyle.ExpressHard
-            && !(readiness.Tier == ReadinessTier.High
-                 && (profile.Goal == UserGoal.Strength
-                     || profile.Experience == TrainingExperienceLevel.Advanced)))
-        {
-            style = StrengthTrainingStyle.ComfortableModerate;
-            notes.Add("Conditions not met for high-intensity style: defaulting to comfortable-moderate.");
-        }
-
-        if (profile.Experience == TrainingExperienceLevel.Beginner) style = StrengthTrainingStyle.ComfortableModerate;
-
-        if (baseline is not null && baseline.Pain >= 4 && style == StrengthTrainingStyle.ExpressHard)
-        {
-            style = StrengthTrainingStyle.ComfortableModerate;
-            notes.Add($"Phase baseline pain is high during {phase}: intensity reduced.");
-        }
 
         var menstrualEnergyThreshold = gating.HiitMenstrualMinEnergy;
         if (baseline is not null && phase == CyclePhase.Menstrual && baseline.Energy <= 2)
@@ -170,7 +144,6 @@ public static class WorkoutGatingRule
 
         var activity = intensityOk &&
                        (profile.Goal == UserGoal.Strength ||
-                        profile.Style == StrengthTrainingStyle.ExpressHard ||
                         phase == CyclePhase.Ovulatory)
             ? WorkoutActivityType.StrengthHighIntensity
             : WorkoutActivityType.HighVolumeStrength;
@@ -184,20 +157,18 @@ public static class WorkoutGatingRule
             notes.Add("Low readiness: volume and intensity reduced.");
             return new GatingResult(
                 WorkoutActivityType.HighVolumeStrength,
-                style,
                 double.IsFinite(setMultiplier) ? Math.Clamp(setMultiplier, 0, 1) : 0.6,
                 gating.LowReadinessRpeCap,
                 notes);
         }
 
-        return new GatingResult(activity, style, 1, 10, notes);
+        return new GatingResult(activity, 1, 10, notes);
     }
 
     private static GatingResult ConservativeDefault()
     {
         return new GatingResult(
             WorkoutActivityType.Yoga,
-            StrengthTrainingStyle.ComfortableModerate,
             0,
             0,
             ["Planning inputs are unavailable; choose rest or gentle movement."]);

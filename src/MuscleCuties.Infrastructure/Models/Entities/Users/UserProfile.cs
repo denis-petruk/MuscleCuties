@@ -15,7 +15,6 @@ public class UserProfile
     public UserGoal Goal { get; set; }
     public WeightGoalPace WeightGoalPace { get; set; }
     public TrainingExperienceLevel TrainingExperienceLevel { get; set; }
-    public CycleTrackingMode CycleTrackingMode { get; set; }
     public CyclePhase? CurrentCyclePhase { get; set; }
     public int WorkoutDaysPerWeek { get; set; }
     public int CycleLength { get; set; }

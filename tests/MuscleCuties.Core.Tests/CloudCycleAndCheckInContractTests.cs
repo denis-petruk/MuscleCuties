@@ -1,11 +1,13 @@
 using System.Text.Json;
-using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.Infrastructure.Cloud;
 using MuscleCuties.UseCases.Features.Cycle.DailyLog;
 using MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using Xunit;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 
 namespace MuscleCuties.Core.Tests;
 

@@ -77,13 +77,13 @@
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                         MinimumHeightRequest="52"
-                        CornerRadius="18" />
+                        CornerRadius="{StaticResource UiRadiusControl}" />
                     <Button
                         Grid.Column="1"
                         Text="{loc:LocalizedText Profile_ImageCrop_UsePhoto}"
                         Clicked="OnUsePhotoTapped"
                         MinimumHeightRequest="52"
-                        CornerRadius="18" />
+                        CornerRadius="{StaticResource UiRadiusControl}" />
                 </Grid>
 
             </Grid>

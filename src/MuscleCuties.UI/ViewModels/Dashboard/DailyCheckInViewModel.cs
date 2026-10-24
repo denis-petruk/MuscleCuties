@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Dashboard;
@@ -17,7 +16,7 @@ public partial class DailyCheckInViewModel : ObservableObject
     private readonly IDailyCheckInUseCase _checkIn;
     private readonly Action _invalidateDashboard;
     private readonly Func<Task> _onCompletedAsync;
-    private readonly bool _isReadinessScoreDisplayEnabled = WorkoutTrainingPolicyV020.CheckInScoreDisplayEnabled;
+    private readonly bool _isReadinessScoreDisplayEnabled;
     [ObservableProperty] private double? _bodyWeight;
     [ObservableProperty] private int? _energyLevel;
     [ObservableProperty] private string _errorMessage = string.Empty;
@@ -40,6 +39,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         Func<Task> onCompletedAsync)
     {
         _checkIn = checkIn;
+        _isReadinessScoreDisplayEnabled = checkIn.PresentationSettings.IsReadinessScoreDisplayEnabled;
         _invalidateDashboard = invalidateDashboard;
         _onCompletedAsync = onCompletedAsync;
         SubmitCommand = new AsyncRelayCommand(SubmitAsync, () => !IsBusy && !IsCompleted);

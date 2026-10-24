@@ -81,10 +81,10 @@
           "orderIndex": 4
         },
         {
-          "seedCode": "urn:musclecuties:seed:v1:f8ca7c8e-e348-4506-9f0a-981d2baa8a32",
-          "sourceKey": "BuildQuizQuestions:QuestionType=WorkoutDaysPerWeek;OrderIndex=5",
-          "sourceQuestion": "Training days per week?",
-          "questionType": "WorkoutDaysPerWeek",
+          "seedCode": "urn:musclecuties:seed:v1:7f5bd296-1ba1-428c-8b42-9ca8251b4d33",
+          "sourceKey": "BuildQuizQuestions:QuestionType=AvailableWeekdays;OrderIndex=5",
+          "sourceQuestion": "Which days of the week are you available to train?",
+          "questionType": "AvailableWeekdays",
           "orderIndex": 5
         },
         {
@@ -116,32 +116,18 @@
           "orderIndex": 9
         },
         {
-          "seedCode": "urn:musclecuties:seed:v1:4111b082-f329-46bb-a6c3-12e6f5dab805",
-          "sourceKey": "BuildQuizQuestions:PainQuestion(question=Follicular discomfort?;orderIndex=11;questionType=FollicularPain)",
-          "sourceQuestion": "Follicular discomfort?",
-          "questionType": "FollicularPain",
-          "orderIndex": 11
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:bdd13598-a16d-414d-845b-9da0ee774506",
-          "sourceKey": "BuildQuizQuestions:PainQuestion(question=Ovulation discomfort?;orderIndex=13;questionType=OvulatoryPain)",
-          "sourceQuestion": "Ovulation discomfort?",
-          "questionType": "OvulatoryPain",
-          "orderIndex": 13
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:f829cbc0-c476-496b-bf83-26c16296c246",
-          "sourceKey": "BuildQuizQuestions:PainQuestion(question=Luteal symptoms?;orderIndex=15;questionType=LutealPain)",
-          "sourceQuestion": "Luteal symptoms?",
-          "questionType": "LutealPain",
-          "orderIndex": 15
-        },
-        {
           "seedCode": "urn:musclecuties:seed:v1:c98ed630-1f1f-4569-9ee6-e0cb4f49a7e3",
           "sourceKey": "BuildQuizQuestions:EnergyQuestion(question=Period training energy?;orderIndex=10;questionType=MenstrualEnergy)",
           "sourceQuestion": "Period training energy?",
           "questionType": "MenstrualEnergy",
           "orderIndex": 10
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:4111b082-f329-46bb-a6c3-12e6f5dab805",
+          "sourceKey": "BuildQuizQuestions:PainQuestion(question=Follicular discomfort?;orderIndex=11;questionType=FollicularPain)",
+          "sourceQuestion": "Follicular discomfort?",
+          "questionType": "FollicularPain",
+          "orderIndex": 11
         },
         {
           "seedCode": "urn:musclecuties:seed:v1:dd4c044b-8b28-473e-8ac4-63845718ae6c",
@@ -151,11 +137,25 @@
           "orderIndex": 12
         },
         {
+          "seedCode": "urn:musclecuties:seed:v1:bdd13598-a16d-414d-845b-9da0ee774506",
+          "sourceKey": "BuildQuizQuestions:PainQuestion(question=Ovulation discomfort?;orderIndex=13;questionType=OvulatoryPain)",
+          "sourceQuestion": "Ovulation discomfort?",
+          "questionType": "OvulatoryPain",
+          "orderIndex": 13
+        },
+        {
           "seedCode": "urn:musclecuties:seed:v1:104894b7-da07-4a22-824a-86427a461a09",
           "sourceKey": "BuildQuizQuestions:EnergyQuestion(question=Ovulation power?;orderIndex=14;questionType=OvulatoryEnergy)",
           "sourceQuestion": "Ovulation power?",
           "questionType": "OvulatoryEnergy",
           "orderIndex": 14
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:f829cbc0-c476-496b-bf83-26c16296c246",
+          "sourceKey": "BuildQuizQuestions:PainQuestion(question=Luteal symptoms?;orderIndex=15;questionType=LutealPain)",
+          "sourceQuestion": "Luteal symptoms?",
+          "questionType": "LutealPain",
+          "orderIndex": 15
         },
         {
           "seedCode": "urn:musclecuties:seed:v1:9d06f16c-37b1-4974-b88f-19dbbb99786e",
@@ -210,6 +210,16 @@
           "answerOrderIndex": 4,
           "mappedValue": "(int)CyclePhase.Luteal",
           "sourceText": "Luteal",
+          "questionSeedCode": "urn:musclecuties:seed:v1:04fdd745-0da2-42fd-bc68-0f52b1e60486"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:4f26c8bc-cfb3-4c6d-a307-6c6e3ef17b75",
+          "sourceKey": "BuildQuizQuestions:QuestionType=CurrentCyclePhase;OrderIndex=1/Answer(text=Not sure;orderIndex=5;mappedValue=(int)CyclePhase.Unknown)",
+          "questionType": "CurrentCyclePhase",
+          "questionOrderIndex": 1,
+          "answerOrderIndex": 5,
+          "mappedValue": "(int)CyclePhase.Unknown",
+          "sourceText": "Not sure",
           "questionSeedCode": "urn:musclecuties:seed:v1:04fdd745-0da2-42fd-bc68-0f52b1e60486"
         },
         {
@@ -303,44 +313,74 @@
           "questionSeedCode": "urn:musclecuties:seed:v1:477c26c3-3365-4376-b5d1-9f32c6977fb2"
         },
         {
-          "seedCode": "urn:musclecuties:seed:v1:e435cff3-a7f9-464d-bb20-763a19808422",
-          "sourceKey": "BuildQuizQuestions:QuestionType=WorkoutDaysPerWeek;OrderIndex=5/Answer(text=2 days;orderIndex=1;mappedValue=2)",
-          "questionType": "WorkoutDaysPerWeek",
+          "seedCode": "urn:musclecuties:seed:v1:4cadc12a-b17e-439e-b8b9-2e35aabcca10",
+          "sourceKey": "BuildQuizQuestions:QuestionType=AvailableWeekdays;OrderIndex=5/Answer(text=Monday;orderIndex=1;mappedValue=1)",
+          "questionType": "AvailableWeekdays",
           "questionOrderIndex": 5,
           "answerOrderIndex": 1,
-          "mappedValue": "2",
-          "sourceText": "2 days",
-          "questionSeedCode": "urn:musclecuties:seed:v1:f8ca7c8e-e348-4506-9f0a-981d2baa8a32"
+          "mappedValue": 1,
+          "sourceText": "Monday",
+          "questionSeedCode": "urn:musclecuties:seed:v1:7f5bd296-1ba1-428c-8b42-9ca8251b4d33"
         },
         {
-          "seedCode": "urn:musclecuties:seed:v1:0f90563c-0a71-4add-b3f7-ceae61a656e3",
-          "sourceKey": "BuildQuizQuestions:QuestionType=WorkoutDaysPerWeek;OrderIndex=5/Answer(text=3 days;orderIndex=2;mappedValue=3)",
-          "questionType": "WorkoutDaysPerWeek",
+          "seedCode": "urn:musclecuties:seed:v1:e96a8f8e-6ad3-4082-a802-db517bfdfeb1",
+          "sourceKey": "BuildQuizQuestions:QuestionType=AvailableWeekdays;OrderIndex=5/Answer(text=Tuesday;orderIndex=2;mappedValue=2)",
+          "questionType": "AvailableWeekdays",
           "questionOrderIndex": 5,
           "answerOrderIndex": 2,
-          "mappedValue": "3",
-          "sourceText": "3 days",
-          "questionSeedCode": "urn:musclecuties:seed:v1:f8ca7c8e-e348-4506-9f0a-981d2baa8a32"
+          "mappedValue": 2,
+          "sourceText": "Tuesday",
+          "questionSeedCode": "urn:musclecuties:seed:v1:7f5bd296-1ba1-428c-8b42-9ca8251b4d33"
         },
         {
-          "seedCode": "urn:musclecuties:seed:v1:256df14e-0e50-4108-8ee1-e3431a6a13c9",
-          "sourceKey": "BuildQuizQuestions:QuestionType=WorkoutDaysPerWeek;OrderIndex=5/Answer(text=4 days;orderIndex=3;mappedValue=4)",
-          "questionType": "WorkoutDaysPerWeek",
+          "seedCode": "urn:musclecuties:seed:v1:149955df-12ef-4ecb-ac5c-e5f14939c9af",
+          "sourceKey": "BuildQuizQuestions:QuestionType=AvailableWeekdays;OrderIndex=5/Answer(text=Wednesday;orderIndex=3;mappedValue=3)",
+          "questionType": "AvailableWeekdays",
           "questionOrderIndex": 5,
           "answerOrderIndex": 3,
-          "mappedValue": "4",
-          "sourceText": "4 days",
-          "questionSeedCode": "urn:musclecuties:seed:v1:f8ca7c8e-e348-4506-9f0a-981d2baa8a32"
+          "mappedValue": 3,
+          "sourceText": "Wednesday",
+          "questionSeedCode": "urn:musclecuties:seed:v1:7f5bd296-1ba1-428c-8b42-9ca8251b4d33"
         },
         {
-          "seedCode": "urn:musclecuties:seed:v1:1a3b6d14-66af-485d-a7b9-11f1c1b1ea45",
-          "sourceKey": "BuildQuizQuestions:QuestionType=WorkoutDaysPerWeek;OrderIndex=5/Answer(text=5 days;orderIndex=4;mappedValue=5)",
-          "questionType": "WorkoutDaysPerWeek",
+          "seedCode": "urn:musclecuties:seed:v1:007f19a9-13a0-4d12-bd30-7e07aa7d152a",
+          "sourceKey": "BuildQuizQuestions:QuestionType=AvailableWeekdays;OrderIndex=5/Answer(text=Thursday;orderIndex=4;mappedValue=4)",
+          "questionType": "AvailableWeekdays",
           "questionOrderIndex": 5,
           "answerOrderIndex": 4,
-          "mappedValue": "5",
-          "sourceText": "5 days",
-          "questionSeedCode": "urn:musclecuties:seed:v1:f8ca7c8e-e348-4506-9f0a-981d2baa8a32"
+          "mappedValue": 4,
+          "sourceText": "Thursday",
+          "questionSeedCode": "urn:musclecuties:seed:v1:7f5bd296-1ba1-428c-8b42-9ca8251b4d33"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:3462f8de-40bb-42b3-9f1e-969a51da9201",
+          "sourceKey": "BuildQuizQuestions:QuestionType=AvailableWeekdays;OrderIndex=5/Answer(text=Friday;orderIndex=5;mappedValue=5)",
+          "questionType": "AvailableWeekdays",
+          "questionOrderIndex": 5,
+          "answerOrderIndex": 5,
+          "mappedValue": 5,
+          "sourceText": "Friday",
+          "questionSeedCode": "urn:musclecuties:seed:v1:7f5bd296-1ba1-428c-8b42-9ca8251b4d33"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:3939540a-12de-40aa-91cc-4479179252b9",
+          "sourceKey": "BuildQuizQuestions:QuestionType=AvailableWeekdays;OrderIndex=5/Answer(text=Saturday;orderIndex=6;mappedValue=6)",
+          "questionType": "AvailableWeekdays",
+          "questionOrderIndex": 5,
+          "answerOrderIndex": 6,
+          "mappedValue": 6,
+          "sourceText": "Saturday",
+          "questionSeedCode": "urn:musclecuties:seed:v1:7f5bd296-1ba1-428c-8b42-9ca8251b4d33"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:e65171e1-ae22-421b-9dc4-485b6c1b49a5",
+          "sourceKey": "BuildQuizQuestions:QuestionType=AvailableWeekdays;OrderIndex=5/Answer(text=Sunday;orderIndex=7;mappedValue=0)",
+          "questionType": "AvailableWeekdays",
+          "questionOrderIndex": 5,
+          "answerOrderIndex": 7,
+          "mappedValue": 0,
+          "sourceText": "Sunday",
+          "questionSeedCode": "urn:musclecuties:seed:v1:7f5bd296-1ba1-428c-8b42-9ca8251b4d33"
         },
         {
           "seedCode": "urn:musclecuties:seed:v1:e70a7af8-fcf3-4817-abf8-b5bacbbc424b",
@@ -476,7 +516,7 @@
           "seedCode": "urn:musclecuties:seed:v1:82a2ccc5-71b3-4198-950c-91788a510c7f",
           "sourceKey": "PainQuestion:QuestionType=MenstrualPain;OrderIndex=9/Answer(text=Barely there;orderIndex=1;mappedValue=1)",
           "questionType": "MenstrualPain",
-          "questionOrderIndex": 9,
+          "questionOrderIndex": 8,
           "answerOrderIndex": 1,
           "mappedValue": 1,
           "sourceText": "Barely there",
@@ -486,7 +526,7 @@
           "seedCode": "urn:musclecuties:seed:v1:72dc4abf-393d-4e13-9d3c-792bff683453",
           "sourceKey": "PainQuestion:QuestionType=MenstrualPain;OrderIndex=9/Answer(text=Manageable;orderIndex=2;mappedValue=2)",
           "questionType": "MenstrualPain",
-          "questionOrderIndex": 9,
+          "questionOrderIndex": 8,
           "answerOrderIndex": 2,
           "mappedValue": 2,
           "sourceText": "Manageable",
@@ -496,7 +536,7 @@
           "seedCode": "urn:musclecuties:seed:v1:da6776b9-3049-4d48-a4fa-fb01cadc7e55",
           "sourceKey": "PainQuestion:QuestionType=MenstrualPain;OrderIndex=9/Answer(text=Noticeable;orderIndex=3;mappedValue=3)",
           "questionType": "MenstrualPain",
-          "questionOrderIndex": 9,
+          "questionOrderIndex": 8,
           "answerOrderIndex": 3,
           "mappedValue": 3,
           "sourceText": "Noticeable",
@@ -506,7 +546,7 @@
           "seedCode": "urn:musclecuties:seed:v1:9c6f1fb3-3bb8-4e85-9249-05fbe080dc58",
           "sourceKey": "PainQuestion:QuestionType=MenstrualPain;OrderIndex=9/Answer(text=Rough;orderIndex=4;mappedValue=4)",
           "questionType": "MenstrualPain",
-          "questionOrderIndex": 9,
+          "questionOrderIndex": 8,
           "answerOrderIndex": 4,
           "mappedValue": 4,
           "sourceText": "Rough",
@@ -516,167 +556,17 @@
           "seedCode": "urn:musclecuties:seed:v1:30da180f-e31a-4cb6-ad85-1083316ea6c6",
           "sourceKey": "PainQuestion:QuestionType=MenstrualPain;OrderIndex=9/Answer(text=Stops my day;orderIndex=5;mappedValue=5)",
           "questionType": "MenstrualPain",
-          "questionOrderIndex": 9,
+          "questionOrderIndex": 8,
           "answerOrderIndex": 5,
           "mappedValue": 5,
           "sourceText": "Stops my day",
           "questionSeedCode": "urn:musclecuties:seed:v1:9f34545f-ef3d-42e4-90cb-6462face3f51"
         },
         {
-          "seedCode": "urn:musclecuties:seed:v1:5f19e360-b223-4467-822b-d65f0acca94e",
-          "sourceKey": "PainQuestion:QuestionType=FollicularPain;OrderIndex=11/Answer(text=Barely there;orderIndex=1;mappedValue=1)",
-          "questionType": "FollicularPain",
-          "questionOrderIndex": 11,
-          "answerOrderIndex": 1,
-          "mappedValue": 1,
-          "sourceText": "Barely there",
-          "questionSeedCode": "urn:musclecuties:seed:v1:4111b082-f329-46bb-a6c3-12e6f5dab805"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:3f3b5c9e-5e54-4f2c-b22c-be77db2bcc28",
-          "sourceKey": "PainQuestion:QuestionType=FollicularPain;OrderIndex=11/Answer(text=Manageable;orderIndex=2;mappedValue=2)",
-          "questionType": "FollicularPain",
-          "questionOrderIndex": 11,
-          "answerOrderIndex": 2,
-          "mappedValue": 2,
-          "sourceText": "Manageable",
-          "questionSeedCode": "urn:musclecuties:seed:v1:4111b082-f329-46bb-a6c3-12e6f5dab805"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:1789917b-20de-4bc1-973f-6d33d8e98c77",
-          "sourceKey": "PainQuestion:QuestionType=FollicularPain;OrderIndex=11/Answer(text=Noticeable;orderIndex=3;mappedValue=3)",
-          "questionType": "FollicularPain",
-          "questionOrderIndex": 11,
-          "answerOrderIndex": 3,
-          "mappedValue": 3,
-          "sourceText": "Noticeable",
-          "questionSeedCode": "urn:musclecuties:seed:v1:4111b082-f329-46bb-a6c3-12e6f5dab805"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:31564d7a-edc4-4c03-ba23-6ecb6dcb1217",
-          "sourceKey": "PainQuestion:QuestionType=FollicularPain;OrderIndex=11/Answer(text=Rough;orderIndex=4;mappedValue=4)",
-          "questionType": "FollicularPain",
-          "questionOrderIndex": 11,
-          "answerOrderIndex": 4,
-          "mappedValue": 4,
-          "sourceText": "Rough",
-          "questionSeedCode": "urn:musclecuties:seed:v1:4111b082-f329-46bb-a6c3-12e6f5dab805"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:65cb4ae6-e74f-4fd7-bae9-1e5d1ad6a88f",
-          "sourceKey": "PainQuestion:QuestionType=FollicularPain;OrderIndex=11/Answer(text=Stops my day;orderIndex=5;mappedValue=5)",
-          "questionType": "FollicularPain",
-          "questionOrderIndex": 11,
-          "answerOrderIndex": 5,
-          "mappedValue": 5,
-          "sourceText": "Stops my day",
-          "questionSeedCode": "urn:musclecuties:seed:v1:4111b082-f329-46bb-a6c3-12e6f5dab805"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:662a71d7-6b46-4d2f-9e0a-9b0756aeff5f",
-          "sourceKey": "PainQuestion:QuestionType=OvulatoryPain;OrderIndex=13/Answer(text=Barely there;orderIndex=1;mappedValue=1)",
-          "questionType": "OvulatoryPain",
-          "questionOrderIndex": 13,
-          "answerOrderIndex": 1,
-          "mappedValue": 1,
-          "sourceText": "Barely there",
-          "questionSeedCode": "urn:musclecuties:seed:v1:bdd13598-a16d-414d-845b-9da0ee774506"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:51048319-353d-4e52-9d8f-5edb622fd7c0",
-          "sourceKey": "PainQuestion:QuestionType=OvulatoryPain;OrderIndex=13/Answer(text=Manageable;orderIndex=2;mappedValue=2)",
-          "questionType": "OvulatoryPain",
-          "questionOrderIndex": 13,
-          "answerOrderIndex": 2,
-          "mappedValue": 2,
-          "sourceText": "Manageable",
-          "questionSeedCode": "urn:musclecuties:seed:v1:bdd13598-a16d-414d-845b-9da0ee774506"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:6a5bbf6d-9936-4b3c-8790-842d668ae8a7",
-          "sourceKey": "PainQuestion:QuestionType=OvulatoryPain;OrderIndex=13/Answer(text=Noticeable;orderIndex=3;mappedValue=3)",
-          "questionType": "OvulatoryPain",
-          "questionOrderIndex": 13,
-          "answerOrderIndex": 3,
-          "mappedValue": 3,
-          "sourceText": "Noticeable",
-          "questionSeedCode": "urn:musclecuties:seed:v1:bdd13598-a16d-414d-845b-9da0ee774506"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:e8d524d9-d31e-488f-9af6-8984d5c97910",
-          "sourceKey": "PainQuestion:QuestionType=OvulatoryPain;OrderIndex=13/Answer(text=Rough;orderIndex=4;mappedValue=4)",
-          "questionType": "OvulatoryPain",
-          "questionOrderIndex": 13,
-          "answerOrderIndex": 4,
-          "mappedValue": 4,
-          "sourceText": "Rough",
-          "questionSeedCode": "urn:musclecuties:seed:v1:bdd13598-a16d-414d-845b-9da0ee774506"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:45fc337f-5d7c-4971-b7b1-fbb9f2053512",
-          "sourceKey": "PainQuestion:QuestionType=OvulatoryPain;OrderIndex=13/Answer(text=Stops my day;orderIndex=5;mappedValue=5)",
-          "questionType": "OvulatoryPain",
-          "questionOrderIndex": 13,
-          "answerOrderIndex": 5,
-          "mappedValue": 5,
-          "sourceText": "Stops my day",
-          "questionSeedCode": "urn:musclecuties:seed:v1:bdd13598-a16d-414d-845b-9da0ee774506"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:e257aba2-0c6e-429f-86de-47338e388d25",
-          "sourceKey": "PainQuestion:QuestionType=LutealPain;OrderIndex=15/Answer(text=Barely there;orderIndex=1;mappedValue=1)",
-          "questionType": "LutealPain",
-          "questionOrderIndex": 15,
-          "answerOrderIndex": 1,
-          "mappedValue": 1,
-          "sourceText": "Barely there",
-          "questionSeedCode": "urn:musclecuties:seed:v1:f829cbc0-c476-496b-bf83-26c16296c246"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:b4abbcd0-5532-428f-8eef-859f93cb3b40",
-          "sourceKey": "PainQuestion:QuestionType=LutealPain;OrderIndex=15/Answer(text=Manageable;orderIndex=2;mappedValue=2)",
-          "questionType": "LutealPain",
-          "questionOrderIndex": 15,
-          "answerOrderIndex": 2,
-          "mappedValue": 2,
-          "sourceText": "Manageable",
-          "questionSeedCode": "urn:musclecuties:seed:v1:f829cbc0-c476-496b-bf83-26c16296c246"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:e0167e3c-bf0a-4395-90d1-b2288b461225",
-          "sourceKey": "PainQuestion:QuestionType=LutealPain;OrderIndex=15/Answer(text=Noticeable;orderIndex=3;mappedValue=3)",
-          "questionType": "LutealPain",
-          "questionOrderIndex": 15,
-          "answerOrderIndex": 3,
-          "mappedValue": 3,
-          "sourceText": "Noticeable",
-          "questionSeedCode": "urn:musclecuties:seed:v1:f829cbc0-c476-496b-bf83-26c16296c246"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:62940104-01bd-416c-8cb7-4730fefc8130",
-          "sourceKey": "PainQuestion:QuestionType=LutealPain;OrderIndex=15/Answer(text=Rough;orderIndex=4;mappedValue=4)",
-          "questionType": "LutealPain",
-          "questionOrderIndex": 15,
-          "answerOrderIndex": 4,
-          "mappedValue": 4,
-          "sourceText": "Rough",
-          "questionSeedCode": "urn:musclecuties:seed:v1:f829cbc0-c476-496b-bf83-26c16296c246"
-        },
-        {
-          "seedCode": "urn:musclecuties:seed:v1:ee9e5a99-045c-421a-a13f-cbd5fc0a6641",
-          "sourceKey": "PainQuestion:QuestionType=LutealPain;OrderIndex=15/Answer(text=Stops my day;orderIndex=5;mappedValue=5)",
-          "questionType": "LutealPain",
-          "questionOrderIndex": 15,
-          "answerOrderIndex": 5,
-          "mappedValue": 5,
-          "sourceText": "Stops my day",
-          "questionSeedCode": "urn:musclecuties:seed:v1:f829cbc0-c476-496b-bf83-26c16296c246"
-        },
-        {
           "seedCode": "urn:musclecuties:seed:v1:6691b666-1c2f-46cd-8b74-b9ce2b5c6907",
           "sourceKey": "EnergyQuestion:QuestionType=MenstrualEnergy;OrderIndex=10/Answer(text=Couch-level;orderIndex=1;mappedValue=1)",
           "questionType": "MenstrualEnergy",
-          "questionOrderIndex": 10,
+          "questionOrderIndex": 9,
           "answerOrderIndex": 1,
           "mappedValue": 1,
           "sourceText": "Couch-level",
@@ -686,7 +576,7 @@
           "seedCode": "urn:musclecuties:seed:v1:7950a3c4-f8b8-4be2-87f0-928940fe1ca8",
           "sourceKey": "EnergyQuestion:QuestionType=MenstrualEnergy;OrderIndex=10/Answer(text=Slow but moving;orderIndex=2;mappedValue=2)",
           "questionType": "MenstrualEnergy",
-          "questionOrderIndex": 10,
+          "questionOrderIndex": 9,
           "answerOrderIndex": 2,
           "mappedValue": 2,
           "sourceText": "Slow but moving",
@@ -696,7 +586,7 @@
           "seedCode": "urn:musclecuties:seed:v1:71afeb6e-7d93-449c-a49d-218b6111be5b",
           "sourceKey": "EnergyQuestion:QuestionType=MenstrualEnergy;OrderIndex=10/Answer(text=Steady;orderIndex=3;mappedValue=3)",
           "questionType": "MenstrualEnergy",
-          "questionOrderIndex": 10,
+          "questionOrderIndex": 9,
           "answerOrderIndex": 3,
           "mappedValue": 3,
           "sourceText": "Steady",
@@ -706,7 +596,7 @@
           "seedCode": "urn:musclecuties:seed:v1:d3f34e7f-0631-4a37-9da7-8748e0fd98b7",
           "sourceKey": "EnergyQuestion:QuestionType=MenstrualEnergy;OrderIndex=10/Answer(text=Strong;orderIndex=4;mappedValue=4)",
           "questionType": "MenstrualEnergy",
-          "questionOrderIndex": 10,
+          "questionOrderIndex": 9,
           "answerOrderIndex": 4,
           "mappedValue": 4,
           "sourceText": "Strong",
@@ -716,17 +606,67 @@
           "seedCode": "urn:musclecuties:seed:v1:4c4be9b6-b3b6-44de-bd60-2919b721be8e",
           "sourceKey": "EnergyQuestion:QuestionType=MenstrualEnergy;OrderIndex=10/Answer(text=Ready to push;orderIndex=5;mappedValue=5)",
           "questionType": "MenstrualEnergy",
-          "questionOrderIndex": 10,
+          "questionOrderIndex": 9,
           "answerOrderIndex": 5,
           "mappedValue": 5,
           "sourceText": "Ready to push",
           "questionSeedCode": "urn:musclecuties:seed:v1:c98ed630-1f1f-4569-9ee6-e0cb4f49a7e3"
         },
         {
+          "seedCode": "urn:musclecuties:seed:v1:5f19e360-b223-4467-822b-d65f0acca94e",
+          "sourceKey": "PainQuestion:QuestionType=FollicularPain;OrderIndex=11/Answer(text=Barely there;orderIndex=1;mappedValue=1)",
+          "questionType": "FollicularPain",
+          "questionOrderIndex": 10,
+          "answerOrderIndex": 1,
+          "mappedValue": 1,
+          "sourceText": "Barely there",
+          "questionSeedCode": "urn:musclecuties:seed:v1:4111b082-f329-46bb-a6c3-12e6f5dab805"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:3f3b5c9e-5e54-4f2c-b22c-be77db2bcc28",
+          "sourceKey": "PainQuestion:QuestionType=FollicularPain;OrderIndex=11/Answer(text=Manageable;orderIndex=2;mappedValue=2)",
+          "questionType": "FollicularPain",
+          "questionOrderIndex": 10,
+          "answerOrderIndex": 2,
+          "mappedValue": 2,
+          "sourceText": "Manageable",
+          "questionSeedCode": "urn:musclecuties:seed:v1:4111b082-f329-46bb-a6c3-12e6f5dab805"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:1789917b-20de-4bc1-973f-6d33d8e98c77",
+          "sourceKey": "PainQuestion:QuestionType=FollicularPain;OrderIndex=11/Answer(text=Noticeable;orderIndex=3;mappedValue=3)",
+          "questionType": "FollicularPain",
+          "questionOrderIndex": 10,
+          "answerOrderIndex": 3,
+          "mappedValue": 3,
+          "sourceText": "Noticeable",
+          "questionSeedCode": "urn:musclecuties:seed:v1:4111b082-f329-46bb-a6c3-12e6f5dab805"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:31564d7a-edc4-4c03-ba23-6ecb6dcb1217",
+          "sourceKey": "PainQuestion:QuestionType=FollicularPain;OrderIndex=11/Answer(text=Rough;orderIndex=4;mappedValue=4)",
+          "questionType": "FollicularPain",
+          "questionOrderIndex": 10,
+          "answerOrderIndex": 4,
+          "mappedValue": 4,
+          "sourceText": "Rough",
+          "questionSeedCode": "urn:musclecuties:seed:v1:4111b082-f329-46bb-a6c3-12e6f5dab805"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:65cb4ae6-e74f-4fd7-bae9-1e5d1ad6a88f",
+          "sourceKey": "PainQuestion:QuestionType=FollicularPain;OrderIndex=11/Answer(text=Stops my day;orderIndex=5;mappedValue=5)",
+          "questionType": "FollicularPain",
+          "questionOrderIndex": 10,
+          "answerOrderIndex": 5,
+          "mappedValue": 5,
+          "sourceText": "Stops my day",
+          "questionSeedCode": "urn:musclecuties:seed:v1:4111b082-f329-46bb-a6c3-12e6f5dab805"
+        },
+        {
           "seedCode": "urn:musclecuties:seed:v1:a07e2f9e-e307-4a3f-9e1a-ec57352951ba",
           "sourceKey": "EnergyQuestion:QuestionType=FollicularEnergy;OrderIndex=12/Answer(text=Couch-level;orderIndex=1;mappedValue=1)",
           "questionType": "FollicularEnergy",
-          "questionOrderIndex": 12,
+          "questionOrderIndex": 11,
           "answerOrderIndex": 1,
           "mappedValue": 1,
           "sourceText": "Couch-level",
@@ -736,7 +676,7 @@
           "seedCode": "urn:musclecuties:seed:v1:685f3dad-b135-42aa-86a0-2dbf2c477bed",
           "sourceKey": "EnergyQuestion:QuestionType=FollicularEnergy;OrderIndex=12/Answer(text=Slow but moving;orderIndex=2;mappedValue=2)",
           "questionType": "FollicularEnergy",
-          "questionOrderIndex": 12,
+          "questionOrderIndex": 11,
           "answerOrderIndex": 2,
           "mappedValue": 2,
           "sourceText": "Slow but moving",
@@ -746,7 +686,7 @@
           "seedCode": "urn:musclecuties:seed:v1:cb6fdef9-42f5-41ef-806b-3b80c756a52e",
           "sourceKey": "EnergyQuestion:QuestionType=FollicularEnergy;OrderIndex=12/Answer(text=Steady;orderIndex=3;mappedValue=3)",
           "questionType": "FollicularEnergy",
-          "questionOrderIndex": 12,
+          "questionOrderIndex": 11,
           "answerOrderIndex": 3,
           "mappedValue": 3,
           "sourceText": "Steady",
@@ -756,7 +696,7 @@
           "seedCode": "urn:musclecuties:seed:v1:633a2398-6afa-4247-8b4c-540a3f1b1db6",
           "sourceKey": "EnergyQuestion:QuestionType=FollicularEnergy;OrderIndex=12/Answer(text=Strong;orderIndex=4;mappedValue=4)",
           "questionType": "FollicularEnergy",
-          "questionOrderIndex": 12,
+          "questionOrderIndex": 11,
           "answerOrderIndex": 4,
           "mappedValue": 4,
           "sourceText": "Strong",
@@ -766,17 +706,67 @@
           "seedCode": "urn:musclecuties:seed:v1:bec82b78-ee43-41ad-86ad-163948e47b69",
           "sourceKey": "EnergyQuestion:QuestionType=FollicularEnergy;OrderIndex=12/Answer(text=Ready to push;orderIndex=5;mappedValue=5)",
           "questionType": "FollicularEnergy",
-          "questionOrderIndex": 12,
+          "questionOrderIndex": 11,
           "answerOrderIndex": 5,
           "mappedValue": 5,
           "sourceText": "Ready to push",
           "questionSeedCode": "urn:musclecuties:seed:v1:dd4c044b-8b28-473e-8ac4-63845718ae6c"
         },
         {
+          "seedCode": "urn:musclecuties:seed:v1:662a71d7-6b46-4d2f-9e0a-9b0756aeff5f",
+          "sourceKey": "PainQuestion:QuestionType=OvulatoryPain;OrderIndex=13/Answer(text=Barely there;orderIndex=1;mappedValue=1)",
+          "questionType": "OvulatoryPain",
+          "questionOrderIndex": 12,
+          "answerOrderIndex": 1,
+          "mappedValue": 1,
+          "sourceText": "Barely there",
+          "questionSeedCode": "urn:musclecuties:seed:v1:bdd13598-a16d-414d-845b-9da0ee774506"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:51048319-353d-4e52-9d8f-5edb622fd7c0",
+          "sourceKey": "PainQuestion:QuestionType=OvulatoryPain;OrderIndex=13/Answer(text=Manageable;orderIndex=2;mappedValue=2)",
+          "questionType": "OvulatoryPain",
+          "questionOrderIndex": 12,
+          "answerOrderIndex": 2,
+          "mappedValue": 2,
+          "sourceText": "Manageable",
+          "questionSeedCode": "urn:musclecuties:seed:v1:bdd13598-a16d-414d-845b-9da0ee774506"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:6a5bbf6d-9936-4b3c-8790-842d668ae8a7",
+          "sourceKey": "PainQuestion:QuestionType=OvulatoryPain;OrderIndex=13/Answer(text=Noticeable;orderIndex=3;mappedValue=3)",
+          "questionType": "OvulatoryPain",
+          "questionOrderIndex": 12,
+          "answerOrderIndex": 3,
+          "mappedValue": 3,
+          "sourceText": "Noticeable",
+          "questionSeedCode": "urn:musclecuties:seed:v1:bdd13598-a16d-414d-845b-9da0ee774506"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:e8d524d9-d31e-488f-9af6-8984d5c97910",
+          "sourceKey": "PainQuestion:QuestionType=OvulatoryPain;OrderIndex=13/Answer(text=Rough;orderIndex=4;mappedValue=4)",
+          "questionType": "OvulatoryPain",
+          "questionOrderIndex": 12,
+          "answerOrderIndex": 4,
+          "mappedValue": 4,
+          "sourceText": "Rough",
+          "questionSeedCode": "urn:musclecuties:seed:v1:bdd13598-a16d-414d-845b-9da0ee774506"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:45fc337f-5d7c-4971-b7b1-fbb9f2053512",
+          "sourceKey": "PainQuestion:QuestionType=OvulatoryPain;OrderIndex=13/Answer(text=Stops my day;orderIndex=5;mappedValue=5)",
+          "questionType": "OvulatoryPain",
+          "questionOrderIndex": 12,
+          "answerOrderIndex": 5,
+          "mappedValue": 5,
+          "sourceText": "Stops my day",
+          "questionSeedCode": "urn:musclecuties:seed:v1:bdd13598-a16d-414d-845b-9da0ee774506"
+        },
+        {
           "seedCode": "urn:musclecuties:seed:v1:3a4b22fe-143e-4d79-af40-b8fe6a29ae65",
           "sourceKey": "EnergyQuestion:QuestionType=OvulatoryEnergy;OrderIndex=14/Answer(text=Couch-level;orderIndex=1;mappedValue=1)",
           "questionType": "OvulatoryEnergy",
-          "questionOrderIndex": 14,
+          "questionOrderIndex": 13,
           "answerOrderIndex": 1,
           "mappedValue": 1,
           "sourceText": "Couch-level",
@@ -786,7 +776,7 @@
           "seedCode": "urn:musclecuties:seed:v1:721b271f-8e7d-41ab-9525-c144385ed454",
           "sourceKey": "EnergyQuestion:QuestionType=OvulatoryEnergy;OrderIndex=14/Answer(text=Slow but moving;orderIndex=2;mappedValue=2)",
           "questionType": "OvulatoryEnergy",
-          "questionOrderIndex": 14,
+          "questionOrderIndex": 13,
           "answerOrderIndex": 2,
           "mappedValue": 2,
           "sourceText": "Slow but moving",
@@ -796,7 +786,7 @@
           "seedCode": "urn:musclecuties:seed:v1:160b8b8c-7959-4a09-974f-9968e85cfda1",
           "sourceKey": "EnergyQuestion:QuestionType=OvulatoryEnergy;OrderIndex=14/Answer(text=Steady;orderIndex=3;mappedValue=3)",
           "questionType": "OvulatoryEnergy",
-          "questionOrderIndex": 14,
+          "questionOrderIndex": 13,
           "answerOrderIndex": 3,
           "mappedValue": 3,
           "sourceText": "Steady",
@@ -806,7 +796,7 @@
           "seedCode": "urn:musclecuties:seed:v1:8146f8fa-d65a-4a90-9ed5-0f77b34d1611",
           "sourceKey": "EnergyQuestion:QuestionType=OvulatoryEnergy;OrderIndex=14/Answer(text=Strong;orderIndex=4;mappedValue=4)",
           "questionType": "OvulatoryEnergy",
-          "questionOrderIndex": 14,
+          "questionOrderIndex": 13,
           "answerOrderIndex": 4,
           "mappedValue": 4,
           "sourceText": "Strong",
@@ -816,17 +806,67 @@
           "seedCode": "urn:musclecuties:seed:v1:738792ab-16e7-42ad-a80a-44b716eff980",
           "sourceKey": "EnergyQuestion:QuestionType=OvulatoryEnergy;OrderIndex=14/Answer(text=Ready to push;orderIndex=5;mappedValue=5)",
           "questionType": "OvulatoryEnergy",
-          "questionOrderIndex": 14,
+          "questionOrderIndex": 13,
           "answerOrderIndex": 5,
           "mappedValue": 5,
           "sourceText": "Ready to push",
           "questionSeedCode": "urn:musclecuties:seed:v1:104894b7-da07-4a22-824a-86427a461a09"
         },
         {
+          "seedCode": "urn:musclecuties:seed:v1:e257aba2-0c6e-429f-86de-47338e388d25",
+          "sourceKey": "PainQuestion:QuestionType=LutealPain;OrderIndex=15/Answer(text=Barely there;orderIndex=1;mappedValue=1)",
+          "questionType": "LutealPain",
+          "questionOrderIndex": 14,
+          "answerOrderIndex": 1,
+          "mappedValue": 1,
+          "sourceText": "Barely there",
+          "questionSeedCode": "urn:musclecuties:seed:v1:f829cbc0-c476-496b-bf83-26c16296c246"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:b4abbcd0-5532-428f-8eef-859f93cb3b40",
+          "sourceKey": "PainQuestion:QuestionType=LutealPain;OrderIndex=15/Answer(text=Manageable;orderIndex=2;mappedValue=2)",
+          "questionType": "LutealPain",
+          "questionOrderIndex": 14,
+          "answerOrderIndex": 2,
+          "mappedValue": 2,
+          "sourceText": "Manageable",
+          "questionSeedCode": "urn:musclecuties:seed:v1:f829cbc0-c476-496b-bf83-26c16296c246"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:e0167e3c-bf0a-4395-90d1-b2288b461225",
+          "sourceKey": "PainQuestion:QuestionType=LutealPain;OrderIndex=15/Answer(text=Noticeable;orderIndex=3;mappedValue=3)",
+          "questionType": "LutealPain",
+          "questionOrderIndex": 14,
+          "answerOrderIndex": 3,
+          "mappedValue": 3,
+          "sourceText": "Noticeable",
+          "questionSeedCode": "urn:musclecuties:seed:v1:f829cbc0-c476-496b-bf83-26c16296c246"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:62940104-01bd-416c-8cb7-4730fefc8130",
+          "sourceKey": "PainQuestion:QuestionType=LutealPain;OrderIndex=15/Answer(text=Rough;orderIndex=4;mappedValue=4)",
+          "questionType": "LutealPain",
+          "questionOrderIndex": 14,
+          "answerOrderIndex": 4,
+          "mappedValue": 4,
+          "sourceText": "Rough",
+          "questionSeedCode": "urn:musclecuties:seed:v1:f829cbc0-c476-496b-bf83-26c16296c246"
+        },
+        {
+          "seedCode": "urn:musclecuties:seed:v1:ee9e5a99-045c-421a-a13f-cbd5fc0a6641",
+          "sourceKey": "PainQuestion:QuestionType=LutealPain;OrderIndex=15/Answer(text=Stops my day;orderIndex=5;mappedValue=5)",
+          "questionType": "LutealPain",
+          "questionOrderIndex": 14,
+          "answerOrderIndex": 5,
+          "mappedValue": 5,
+          "sourceText": "Stops my day",
+          "questionSeedCode": "urn:musclecuties:seed:v1:f829cbc0-c476-496b-bf83-26c16296c246"
+        },
+        {
           "seedCode": "urn:musclecuties:seed:v1:cdfb4aed-99ce-4e01-bd02-e0cecab2edd4",
           "sourceKey": "EnergyQuestion:QuestionType=LutealEnergy;OrderIndex=16/Answer(text=Couch-level;orderIndex=1;mappedValue=1)",
           "questionType": "LutealEnergy",
-          "questionOrderIndex": 16,
+          "questionOrderIndex": 15,
           "answerOrderIndex": 1,
           "mappedValue": 1,
           "sourceText": "Couch-level",
@@ -836,7 +876,7 @@
           "seedCode": "urn:musclecuties:seed:v1:17e9a7e2-679c-4b58-b373-9c23dcd54594",
           "sourceKey": "EnergyQuestion:QuestionType=LutealEnergy;OrderIndex=16/Answer(text=Slow but moving;orderIndex=2;mappedValue=2)",
           "questionType": "LutealEnergy",
-          "questionOrderIndex": 16,
+          "questionOrderIndex": 15,
           "answerOrderIndex": 2,
           "mappedValue": 2,
           "sourceText": "Slow but moving",
@@ -846,7 +886,7 @@
           "seedCode": "urn:musclecuties:seed:v1:4f346c28-3822-4931-9718-df111cfb163e",
           "sourceKey": "EnergyQuestion:QuestionType=LutealEnergy;OrderIndex=16/Answer(text=Steady;orderIndex=3;mappedValue=3)",
           "questionType": "LutealEnergy",
-          "questionOrderIndex": 16,
+          "questionOrderIndex": 15,
           "answerOrderIndex": 3,
           "mappedValue": 3,
           "sourceText": "Steady",
@@ -856,7 +896,7 @@
           "seedCode": "urn:musclecuties:seed:v1:7d7c1655-dd6d-4b59-86a2-a52a3fbdc375",
           "sourceKey": "EnergyQuestion:QuestionType=LutealEnergy;OrderIndex=16/Answer(text=Strong;orderIndex=4;mappedValue=4)",
           "questionType": "LutealEnergy",
-          "questionOrderIndex": 16,
+          "questionOrderIndex": 15,
           "answerOrderIndex": 4,
           "mappedValue": 4,
           "sourceText": "Strong",
@@ -866,7 +906,7 @@
           "seedCode": "urn:musclecuties:seed:v1:2b3a6a99-cf9d-40ae-a416-0b244042d7cc",
           "sourceKey": "EnergyQuestion:QuestionType=LutealEnergy;OrderIndex=16/Answer(text=Ready to push;orderIndex=5;mappedValue=5)",
           "questionType": "LutealEnergy",
-          "questionOrderIndex": 16,
+          "questionOrderIndex": 15,
           "answerOrderIndex": 5,
           "mappedValue": 5,
           "sourceText": "Ready to push",
@@ -1364,7 +1404,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Margherita Pizza Beans)/Entry(foodName=Cannellini beans, cooked;grams=180)",
           "templateSourceName": "Margherita Pizza Beans",
           "foodSourceName": "Cannellini beans, cooked",
-          "grams": 180.0,
+          "grams": 180,
           "templateSeedCode": "urn:musclecuties:seed:v1:33e460dc-2d35-42d6-a246-2947d9d5bc0d",
           "foodSeedCode": "urn:musclecuties:seed:v1:a8af2ea8-5414-4314-81b2-e2a780ab6bf2"
         },
@@ -1373,7 +1413,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Margherita Pizza Beans)/Entry(foodName=Marinara sauce;grams=90)",
           "templateSourceName": "Margherita Pizza Beans",
           "foodSourceName": "Marinara sauce",
-          "grams": 90.0,
+          "grams": 90,
           "templateSeedCode": "urn:musclecuties:seed:v1:33e460dc-2d35-42d6-a246-2947d9d5bc0d",
           "foodSeedCode": "urn:musclecuties:seed:v1:387f6576-d08e-49ee-acb1-692cd0c53ddc"
         },
@@ -1382,7 +1422,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Margherita Pizza Beans)/Entry(foodName=Mozzarella cheese, part-skim;grams=35)",
           "templateSourceName": "Margherita Pizza Beans",
           "foodSourceName": "Mozzarella cheese, part-skim",
-          "grams": 35.0,
+          "grams": 35,
           "templateSeedCode": "urn:musclecuties:seed:v1:33e460dc-2d35-42d6-a246-2947d9d5bc0d",
           "foodSeedCode": "urn:musclecuties:seed:v1:a0ebd7cd-ad4a-4b7f-88b6-634dca9ceac4"
         },
@@ -1391,7 +1431,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Margherita Pizza Beans)/Entry(foodName=Parmesan cheese;grams=8)",
           "templateSourceName": "Margherita Pizza Beans",
           "foodSourceName": "Parmesan cheese",
-          "grams": 8.0,
+          "grams": 8,
           "templateSeedCode": "urn:musclecuties:seed:v1:33e460dc-2d35-42d6-a246-2947d9d5bc0d",
           "foodSeedCode": "urn:musclecuties:seed:v1:91fac2ba-c67b-44c4-bfc3-dd881bd9e773"
         },
@@ -1400,7 +1440,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Margherita Pizza Beans)/Entry(foodName=Olive oil;grams=8)",
           "templateSourceName": "Margherita Pizza Beans",
           "foodSourceName": "Olive oil",
-          "grams": 8.0,
+          "grams": 8,
           "templateSeedCode": "urn:musclecuties:seed:v1:33e460dc-2d35-42d6-a246-2947d9d5bc0d",
           "foodSeedCode": "urn:musclecuties:seed:v1:4230f26c-907e-4dd6-853e-6c59323b6045"
         },
@@ -1409,7 +1449,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Vegan Pizza Beans)/Entry(foodName=Cannellini beans, cooked;grams=180)",
           "templateSourceName": "Vegan Pizza Beans",
           "foodSourceName": "Cannellini beans, cooked",
-          "grams": 180.0,
+          "grams": 180,
           "templateSeedCode": "urn:musclecuties:seed:v1:3dec9734-4130-4bbb-8c0f-71c6000b5001",
           "foodSeedCode": "urn:musclecuties:seed:v1:a8af2ea8-5414-4314-81b2-e2a780ab6bf2"
         },
@@ -1418,7 +1458,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Vegan Pizza Beans)/Entry(foodName=Tomato paste;grams=35)",
           "templateSourceName": "Vegan Pizza Beans",
           "foodSourceName": "Tomato paste",
-          "grams": 35.0,
+          "grams": 35,
           "templateSeedCode": "urn:musclecuties:seed:v1:3dec9734-4130-4bbb-8c0f-71c6000b5001",
           "foodSeedCode": "urn:musclecuties:seed:v1:b40bc559-96ab-4ff0-90e9-c4ef81dabbce"
         },
@@ -1427,7 +1467,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Vegan Pizza Beans)/Entry(foodName=Red bell pepper, raw;grams=80)",
           "templateSourceName": "Vegan Pizza Beans",
           "foodSourceName": "Red bell pepper, raw",
-          "grams": 80.0,
+          "grams": 80,
           "templateSeedCode": "urn:musclecuties:seed:v1:3dec9734-4130-4bbb-8c0f-71c6000b5001",
           "foodSeedCode": "urn:musclecuties:seed:v1:960428bc-4469-445e-8858-403ee050e7ed"
         },
@@ -1436,7 +1476,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Vegan Pizza Beans)/Entry(foodName=Nutritional yeast, fortified;grams=16)",
           "templateSourceName": "Vegan Pizza Beans",
           "foodSourceName": "Nutritional yeast, fortified",
-          "grams": 16.0,
+          "grams": 16,
           "templateSeedCode": "urn:musclecuties:seed:v1:3dec9734-4130-4bbb-8c0f-71c6000b5001",
           "foodSeedCode": "urn:musclecuties:seed:v1:4e2aba62-9e7d-4830-b2b9-7d0f5b8f60fd"
         },
@@ -1445,7 +1485,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Vegan Pizza Beans)/Entry(foodName=Olive oil;grams=8)",
           "templateSourceName": "Vegan Pizza Beans",
           "foodSourceName": "Olive oil",
-          "grams": 8.0,
+          "grams": 8,
           "templateSeedCode": "urn:musclecuties:seed:v1:3dec9734-4130-4bbb-8c0f-71c6000b5001",
           "foodSeedCode": "urn:musclecuties:seed:v1:4230f26c-907e-4dd6-853e-6c59323b6045"
         },
@@ -1454,7 +1494,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Pepperoni Pizza Beans)/Entry(foodName=Cannellini beans, cooked;grams=170)",
           "templateSourceName": "Pepperoni Pizza Beans",
           "foodSourceName": "Cannellini beans, cooked",
-          "grams": 170.0,
+          "grams": 170,
           "templateSeedCode": "urn:musclecuties:seed:v1:dec3949d-3d04-4e7b-aff9-1199c4c6f6e9",
           "foodSeedCode": "urn:musclecuties:seed:v1:a8af2ea8-5414-4314-81b2-e2a780ab6bf2"
         },
@@ -1463,7 +1503,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Pepperoni Pizza Beans)/Entry(foodName=Marinara sauce;grams=90)",
           "templateSourceName": "Pepperoni Pizza Beans",
           "foodSourceName": "Marinara sauce",
-          "grams": 90.0,
+          "grams": 90,
           "templateSeedCode": "urn:musclecuties:seed:v1:dec3949d-3d04-4e7b-aff9-1199c4c6f6e9",
           "foodSeedCode": "urn:musclecuties:seed:v1:387f6576-d08e-49ee-acb1-692cd0c53ddc"
         },
@@ -1472,7 +1512,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Pepperoni Pizza Beans)/Entry(foodName=Turkey pepperoni;grams=25)",
           "templateSourceName": "Pepperoni Pizza Beans",
           "foodSourceName": "Turkey pepperoni",
-          "grams": 25.0,
+          "grams": 25,
           "templateSeedCode": "urn:musclecuties:seed:v1:dec3949d-3d04-4e7b-aff9-1199c4c6f6e9",
           "foodSeedCode": "urn:musclecuties:seed:v1:704007a4-7fb5-4f8b-ad2a-fe6b45386d2a"
         },
@@ -1481,7 +1521,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Pepperoni Pizza Beans)/Entry(foodName=Mozzarella cheese, part-skim;grams=35)",
           "templateSourceName": "Pepperoni Pizza Beans",
           "foodSourceName": "Mozzarella cheese, part-skim",
-          "grams": 35.0,
+          "grams": 35,
           "templateSeedCode": "urn:musclecuties:seed:v1:dec3949d-3d04-4e7b-aff9-1199c4c6f6e9",
           "foodSeedCode": "urn:musclecuties:seed:v1:a0ebd7cd-ad4a-4b7f-88b6-634dca9ceac4"
         },
@@ -1490,7 +1530,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Pepperoni Pizza Beans)/Entry(foodName=Olive oil;grams=6)",
           "templateSourceName": "Pepperoni Pizza Beans",
           "foodSourceName": "Olive oil",
-          "grams": 6.0,
+          "grams": 6,
           "templateSeedCode": "urn:musclecuties:seed:v1:dec3949d-3d04-4e7b-aff9-1199c4c6f6e9",
           "foodSeedCode": "urn:musclecuties:seed:v1:4230f26c-907e-4dd6-853e-6c59323b6045"
         },
@@ -1499,7 +1539,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Gluten-Free Pizza Beans)/Entry(foodName=Cannellini beans, cooked;grams=180)",
           "templateSourceName": "Gluten-Free Pizza Beans",
           "foodSourceName": "Cannellini beans, cooked",
-          "grams": 180.0,
+          "grams": 180,
           "templateSeedCode": "urn:musclecuties:seed:v1:9024f2b4-e74a-4fbf-91ef-e12cc938589c",
           "foodSeedCode": "urn:musclecuties:seed:v1:a8af2ea8-5414-4314-81b2-e2a780ab6bf2"
         },
@@ -1508,7 +1548,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Gluten-Free Pizza Beans)/Entry(foodName=Marinara sauce;grams=90)",
           "templateSourceName": "Gluten-Free Pizza Beans",
           "foodSourceName": "Marinara sauce",
-          "grams": 90.0,
+          "grams": 90,
           "templateSeedCode": "urn:musclecuties:seed:v1:9024f2b4-e74a-4fbf-91ef-e12cc938589c",
           "foodSeedCode": "urn:musclecuties:seed:v1:387f6576-d08e-49ee-acb1-692cd0c53ddc"
         },
@@ -1517,7 +1557,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Gluten-Free Pizza Beans)/Entry(foodName=Mozzarella cheese, part-skim;grams=35)",
           "templateSourceName": "Gluten-Free Pizza Beans",
           "foodSourceName": "Mozzarella cheese, part-skim",
-          "grams": 35.0,
+          "grams": 35,
           "templateSeedCode": "urn:musclecuties:seed:v1:9024f2b4-e74a-4fbf-91ef-e12cc938589c",
           "foodSeedCode": "urn:musclecuties:seed:v1:a0ebd7cd-ad4a-4b7f-88b6-634dca9ceac4"
         },
@@ -1526,7 +1566,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Gluten-Free Pizza Beans)/Entry(foodName=Kale, raw;grams=60)",
           "templateSourceName": "Gluten-Free Pizza Beans",
           "foodSourceName": "Kale, raw",
-          "grams": 60.0,
+          "grams": 60,
           "templateSeedCode": "urn:musclecuties:seed:v1:9024f2b4-e74a-4fbf-91ef-e12cc938589c",
           "foodSeedCode": "urn:musclecuties:seed:v1:43d1746e-a1cb-495f-9355-480b7abb8f1c"
         },
@@ -1535,7 +1575,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Gluten-Free Pizza Beans)/Entry(foodName=Olive oil;grams=8)",
           "templateSourceName": "Gluten-Free Pizza Beans",
           "foodSourceName": "Olive oil",
-          "grams": 8.0,
+          "grams": 8,
           "templateSeedCode": "urn:musclecuties:seed:v1:9024f2b4-e74a-4fbf-91ef-e12cc938589c",
           "foodSeedCode": "urn:musclecuties:seed:v1:4230f26c-907e-4dd6-853e-6c59323b6045"
         },
@@ -1544,7 +1584,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Chicken Quinoa Power Bowl)/Entry(foodName=Chicken breast, raw;grams=140)",
           "templateSourceName": "Chicken Quinoa Power Bowl",
           "foodSourceName": "Chicken breast, raw",
-          "grams": 140.0,
+          "grams": 140,
           "templateSeedCode": "urn:musclecuties:seed:v1:27506a89-3493-4016-9d8f-4ddef4862613",
           "foodSeedCode": "urn:musclecuties:seed:v1:1ed4c935-041a-4c46-ba51-a04f6bcfe0c3"
         },
@@ -1553,7 +1593,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Chicken Quinoa Power Bowl)/Entry(foodName=Quinoa, cooked;grams=150)",
           "templateSourceName": "Chicken Quinoa Power Bowl",
           "foodSourceName": "Quinoa, cooked",
-          "grams": 150.0,
+          "grams": 150,
           "templateSeedCode": "urn:musclecuties:seed:v1:27506a89-3493-4016-9d8f-4ddef4862613",
           "foodSeedCode": "urn:musclecuties:seed:v1:175a2926-dc28-42ee-9e25-f66321260e5a"
         },
@@ -1562,7 +1602,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Chicken Quinoa Power Bowl)/Entry(foodName=Spinach, raw;grams=70)",
           "templateSourceName": "Chicken Quinoa Power Bowl",
           "foodSourceName": "Spinach, raw",
-          "grams": 70.0,
+          "grams": 70,
           "templateSeedCode": "urn:musclecuties:seed:v1:27506a89-3493-4016-9d8f-4ddef4862613",
           "foodSeedCode": "urn:musclecuties:seed:v1:9cf0d559-2064-4110-84ea-c43614dfc532"
         },
@@ -1571,7 +1611,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Chicken Quinoa Power Bowl)/Entry(foodName=Red bell pepper, raw;grams=80)",
           "templateSourceName": "Chicken Quinoa Power Bowl",
           "foodSourceName": "Red bell pepper, raw",
-          "grams": 80.0,
+          "grams": 80,
           "templateSeedCode": "urn:musclecuties:seed:v1:27506a89-3493-4016-9d8f-4ddef4862613",
           "foodSeedCode": "urn:musclecuties:seed:v1:960428bc-4469-445e-8858-403ee050e7ed"
         },
@@ -1580,7 +1620,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Chicken Quinoa Power Bowl)/Entry(foodName=Avocado, raw;grams=50)",
           "templateSourceName": "Chicken Quinoa Power Bowl",
           "foodSourceName": "Avocado, raw",
-          "grams": 50.0,
+          "grams": 50,
           "templateSeedCode": "urn:musclecuties:seed:v1:27506a89-3493-4016-9d8f-4ddef4862613",
           "foodSeedCode": "urn:musclecuties:seed:v1:320875bd-bf94-468d-b667-7f022ae56b02"
         },
@@ -1589,7 +1629,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Salmon Sweet Potato Plate)/Entry(foodName=Salmon, cooked;grams=130)",
           "templateSourceName": "Salmon Sweet Potato Plate",
           "foodSourceName": "Salmon, cooked",
-          "grams": 130.0,
+          "grams": 130,
           "templateSeedCode": "urn:musclecuties:seed:v1:a81c337a-f3f8-45a4-a257-1ba8da096dfb",
           "foodSeedCode": "urn:musclecuties:seed:v1:f7d86f48-cd1f-4eb2-b806-6062fad8938a"
         },
@@ -1598,7 +1638,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Salmon Sweet Potato Plate)/Entry(foodName=Sweet potato, baked;grams=180)",
           "templateSourceName": "Salmon Sweet Potato Plate",
           "foodSourceName": "Sweet potato, baked",
-          "grams": 180.0,
+          "grams": 180,
           "templateSeedCode": "urn:musclecuties:seed:v1:a81c337a-f3f8-45a4-a257-1ba8da096dfb",
           "foodSeedCode": "urn:musclecuties:seed:v1:6e855b39-a762-474e-88eb-7d16369884b4"
         },
@@ -1607,7 +1647,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Salmon Sweet Potato Plate)/Entry(foodName=Kale, raw;grams=70)",
           "templateSourceName": "Salmon Sweet Potato Plate",
           "foodSourceName": "Kale, raw",
-          "grams": 70.0,
+          "grams": 70,
           "templateSeedCode": "urn:musclecuties:seed:v1:a81c337a-f3f8-45a4-a257-1ba8da096dfb",
           "foodSeedCode": "urn:musclecuties:seed:v1:43d1746e-a1cb-495f-9355-480b7abb8f1c"
         },
@@ -1616,7 +1656,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Salmon Sweet Potato Plate)/Entry(foodName=Olive oil;grams=8)",
           "templateSourceName": "Salmon Sweet Potato Plate",
           "foodSourceName": "Olive oil",
-          "grams": 8.0,
+          "grams": 8,
           "templateSeedCode": "urn:musclecuties:seed:v1:a81c337a-f3f8-45a4-a257-1ba8da096dfb",
           "foodSeedCode": "urn:musclecuties:seed:v1:4230f26c-907e-4dd6-853e-6c59323b6045"
         },
@@ -1625,7 +1665,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Tofu Lentil Iron Bowl)/Entry(foodName=Firm tofu, calcium-set;grams=140)",
           "templateSourceName": "Tofu Lentil Iron Bowl",
           "foodSourceName": "Firm tofu, calcium-set",
-          "grams": 140.0,
+          "grams": 140,
           "templateSeedCode": "urn:musclecuties:seed:v1:3149d6b9-0b06-4692-9d25-6c1d86c862d3",
           "foodSeedCode": "urn:musclecuties:seed:v1:d6b5529b-7ec1-4b9b-8cca-994bbe3f0200"
         },
@@ -1634,7 +1674,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Tofu Lentil Iron Bowl)/Entry(foodName=Lentils, cooked;grams=150)",
           "templateSourceName": "Tofu Lentil Iron Bowl",
           "foodSourceName": "Lentils, cooked",
-          "grams": 150.0,
+          "grams": 150,
           "templateSeedCode": "urn:musclecuties:seed:v1:3149d6b9-0b06-4692-9d25-6c1d86c862d3",
           "foodSeedCode": "urn:musclecuties:seed:v1:6cf21d8e-f3dc-4ece-84bc-8359cdb48d0b"
         },
@@ -1643,7 +1683,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Tofu Lentil Iron Bowl)/Entry(foodName=Spinach, raw;grams=80)",
           "templateSourceName": "Tofu Lentil Iron Bowl",
           "foodSourceName": "Spinach, raw",
-          "grams": 80.0,
+          "grams": 80,
           "templateSeedCode": "urn:musclecuties:seed:v1:3149d6b9-0b06-4692-9d25-6c1d86c862d3",
           "foodSeedCode": "urn:musclecuties:seed:v1:9cf0d559-2064-4110-84ea-c43614dfc532"
         },
@@ -1652,7 +1692,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Tofu Lentil Iron Bowl)/Entry(foodName=Tomato, raw;grams=100)",
           "templateSourceName": "Tofu Lentil Iron Bowl",
           "foodSourceName": "Tomato, raw",
-          "grams": 100.0,
+          "grams": 100,
           "templateSeedCode": "urn:musclecuties:seed:v1:3149d6b9-0b06-4692-9d25-6c1d86c862d3",
           "foodSeedCode": "urn:musclecuties:seed:v1:46c23102-ab19-47ea-8a94-0d9e4f3023eb"
         },
@@ -1661,7 +1701,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Turkey Burger Bowl)/Entry(foodName=Ground turkey, raw;grams=140)",
           "templateSourceName": "Turkey Burger Bowl",
           "foodSourceName": "Ground turkey, raw",
-          "grams": 140.0,
+          "grams": 140,
           "templateSeedCode": "urn:musclecuties:seed:v1:b50e3048-8a7e-4bba-8f29-3f88b45c1392",
           "foodSeedCode": "urn:musclecuties:seed:v1:25893a74-41e8-4011-b535-b43c52ad75a3"
         },
@@ -1670,7 +1710,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Turkey Burger Bowl)/Entry(foodName=White potato, baked;grams=180)",
           "templateSourceName": "Turkey Burger Bowl",
           "foodSourceName": "White potato, baked",
-          "grams": 180.0,
+          "grams": 180,
           "templateSeedCode": "urn:musclecuties:seed:v1:b50e3048-8a7e-4bba-8f29-3f88b45c1392",
           "foodSeedCode": "urn:musclecuties:seed:v1:aa27bdf9-47ca-4dea-b75d-441e2a9047a3"
         },
@@ -1679,7 +1719,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Turkey Burger Bowl)/Entry(foodName=Lettuce, romaine;grams=80)",
           "templateSourceName": "Turkey Burger Bowl",
           "foodSourceName": "Lettuce, romaine",
-          "grams": 80.0,
+          "grams": 80,
           "templateSeedCode": "urn:musclecuties:seed:v1:b50e3048-8a7e-4bba-8f29-3f88b45c1392",
           "foodSeedCode": "urn:musclecuties:seed:v1:60941ad8-f714-4879-a865-32e0e409549a"
         },
@@ -1688,7 +1728,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Turkey Burger Bowl)/Entry(foodName=Tomato, raw;grams=100)",
           "templateSourceName": "Turkey Burger Bowl",
           "foodSourceName": "Tomato, raw",
-          "grams": 100.0,
+          "grams": 100,
           "templateSeedCode": "urn:musclecuties:seed:v1:b50e3048-8a7e-4bba-8f29-3f88b45c1392",
           "foodSeedCode": "urn:musclecuties:seed:v1:46c23102-ab19-47ea-8a94-0d9e4f3023eb"
         },
@@ -1697,7 +1737,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Turkey Burger Bowl)/Entry(foodName=Yellow mustard;grams=12)",
           "templateSourceName": "Turkey Burger Bowl",
           "foodSourceName": "Yellow mustard",
-          "grams": 12.0,
+          "grams": 12,
           "templateSeedCode": "urn:musclecuties:seed:v1:b50e3048-8a7e-4bba-8f29-3f88b45c1392",
           "foodSeedCode": "urn:musclecuties:seed:v1:58ba3d4c-32e2-4fa9-90e2-407da188872a"
         },
@@ -1706,7 +1746,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Greek Yogurt Berry Crunch)/Entry(foodName=Greek yogurt, plain nonfat;grams=220)",
           "templateSourceName": "Greek Yogurt Berry Crunch",
           "foodSourceName": "Greek yogurt, plain nonfat",
-          "grams": 220.0,
+          "grams": 220,
           "templateSeedCode": "urn:musclecuties:seed:v1:668e8419-0e40-4916-babf-2951394119a4",
           "foodSeedCode": "urn:musclecuties:seed:v1:7cb28fd6-5aa1-4e50-a21e-bed96bc6882a"
         },
@@ -1715,7 +1755,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Greek Yogurt Berry Crunch)/Entry(foodName=Blueberries, raw;grams=90)",
           "templateSourceName": "Greek Yogurt Berry Crunch",
           "foodSourceName": "Blueberries, raw",
-          "grams": 90.0,
+          "grams": 90,
           "templateSeedCode": "urn:musclecuties:seed:v1:668e8419-0e40-4916-babf-2951394119a4",
           "foodSeedCode": "urn:musclecuties:seed:v1:ab51e88a-f29d-4ad1-bfff-27b6314b9e73"
         },
@@ -1724,7 +1764,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Greek Yogurt Berry Crunch)/Entry(foodName=Chia seeds;grams=18)",
           "templateSourceName": "Greek Yogurt Berry Crunch",
           "foodSourceName": "Chia seeds",
-          "grams": 18.0,
+          "grams": 18,
           "templateSeedCode": "urn:musclecuties:seed:v1:668e8419-0e40-4916-babf-2951394119a4",
           "foodSeedCode": "urn:musclecuties:seed:v1:0d142e9f-69ee-4a20-9315-594dacf90ed8"
         },
@@ -1733,7 +1773,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Greek Yogurt Berry Crunch)/Entry(foodName=Honey;grams=10)",
           "templateSourceName": "Greek Yogurt Berry Crunch",
           "foodSourceName": "Honey",
-          "grams": 10.0,
+          "grams": 10,
           "templateSeedCode": "urn:musclecuties:seed:v1:668e8419-0e40-4916-babf-2951394119a4",
           "foodSeedCode": "urn:musclecuties:seed:v1:43313937-eed2-4c02-9d9f-91be60ba92f1"
         },
@@ -1742,7 +1782,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Oats Peanut Butter Berry Bowl)/Entry(foodName=Oats, rolled, dry;grams=55)",
           "templateSourceName": "Oats Peanut Butter Berry Bowl",
           "foodSourceName": "Oats, rolled, dry",
-          "grams": 55.0,
+          "grams": 55,
           "templateSeedCode": "urn:musclecuties:seed:v1:6c8397bf-934d-49ea-b914-2c01d4925058",
           "foodSeedCode": "urn:musclecuties:seed:v1:93f9c92a-bc4d-47fc-9c1b-feb5fd2b5622"
         },
@@ -1751,7 +1791,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Oats Peanut Butter Berry Bowl)/Entry(foodName=Fortified soy milk, unsweetened;grams=180)",
           "templateSourceName": "Oats Peanut Butter Berry Bowl",
           "foodSourceName": "Fortified soy milk, unsweetened",
-          "grams": 180.0,
+          "grams": 180,
           "templateSeedCode": "urn:musclecuties:seed:v1:6c8397bf-934d-49ea-b914-2c01d4925058",
           "foodSeedCode": "urn:musclecuties:seed:v1:eb57c10c-1db3-406b-86fe-bf554e7b653b"
         },
@@ -1760,7 +1800,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Oats Peanut Butter Berry Bowl)/Entry(foodName=Peanut butter, natural;grams=18)",
           "templateSourceName": "Oats Peanut Butter Berry Bowl",
           "foodSourceName": "Peanut butter, natural",
-          "grams": 18.0,
+          "grams": 18,
           "templateSeedCode": "urn:musclecuties:seed:v1:6c8397bf-934d-49ea-b914-2c01d4925058",
           "foodSeedCode": "urn:musclecuties:seed:v1:7d2d7d38-7dee-416e-b07d-4a60796ff3db"
         },
@@ -1769,7 +1809,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Oats Peanut Butter Berry Bowl)/Entry(foodName=Strawberries, raw;grams=100)",
           "templateSourceName": "Oats Peanut Butter Berry Bowl",
           "foodSourceName": "Strawberries, raw",
-          "grams": 100.0,
+          "grams": 100,
           "templateSeedCode": "urn:musclecuties:seed:v1:6c8397bf-934d-49ea-b914-2c01d4925058",
           "foodSeedCode": "urn:musclecuties:seed:v1:1e5697d3-9401-4e33-bb32-421cb7a54ee8"
         },
@@ -1778,7 +1818,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Gluten-Free Oat Protein Bowl)/Entry(foodName=Certified gluten-free rolled oats, dry;grams=55)",
           "templateSourceName": "Gluten-Free Oat Protein Bowl",
           "foodSourceName": "Certified gluten-free rolled oats, dry",
-          "grams": 55.0,
+          "grams": 55,
           "templateSeedCode": "urn:musclecuties:seed:v1:1d74f584-b4e7-434f-9d73-b1848dc925d6",
           "foodSeedCode": "urn:musclecuties:seed:v1:c07b76c4-50e5-49e2-9587-951b40ab6b71"
         },
@@ -1787,7 +1827,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Gluten-Free Oat Protein Bowl)/Entry(foodName=Fortified soy milk, unsweetened;grams=180)",
           "templateSourceName": "Gluten-Free Oat Protein Bowl",
           "foodSourceName": "Fortified soy milk, unsweetened",
-          "grams": 180.0,
+          "grams": 180,
           "templateSeedCode": "urn:musclecuties:seed:v1:1d74f584-b4e7-434f-9d73-b1848dc925d6",
           "foodSeedCode": "urn:musclecuties:seed:v1:eb57c10c-1db3-406b-86fe-bf554e7b653b"
         },
@@ -1796,7 +1836,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Gluten-Free Oat Protein Bowl)/Entry(foodName=Blueberries, raw;grams=90)",
           "templateSourceName": "Gluten-Free Oat Protein Bowl",
           "foodSourceName": "Blueberries, raw",
-          "grams": 90.0,
+          "grams": 90,
           "templateSeedCode": "urn:musclecuties:seed:v1:1d74f584-b4e7-434f-9d73-b1848dc925d6",
           "foodSeedCode": "urn:musclecuties:seed:v1:ab51e88a-f29d-4ad1-bfff-27b6314b9e73"
         },
@@ -1805,7 +1845,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Gluten-Free Oat Protein Bowl)/Entry(foodName=Chia seeds;grams=16)",
           "templateSourceName": "Gluten-Free Oat Protein Bowl",
           "foodSourceName": "Chia seeds",
-          "grams": 16.0,
+          "grams": 16,
           "templateSeedCode": "urn:musclecuties:seed:v1:1d74f584-b4e7-434f-9d73-b1848dc925d6",
           "foodSeedCode": "urn:musclecuties:seed:v1:0d142e9f-69ee-4a20-9315-594dacf90ed8"
         },
@@ -1814,7 +1854,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Egg Avocado Toast)/Entry(foodName=Whole wheat bread;grams=70)",
           "templateSourceName": "Egg Avocado Toast",
           "foodSourceName": "Whole wheat bread",
-          "grams": 70.0,
+          "grams": 70,
           "templateSeedCode": "urn:musclecuties:seed:v1:3903d37d-9e2f-463b-b761-f2c23fb64b40",
           "foodSeedCode": "urn:musclecuties:seed:v1:86f87bf4-eab3-4331-903c-fc70e77a48f4"
         },
@@ -1823,7 +1863,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Egg Avocado Toast)/Entry(foodName=Eggs, whole, raw;grams=100)",
           "templateSourceName": "Egg Avocado Toast",
           "foodSourceName": "Eggs, whole, raw",
-          "grams": 100.0,
+          "grams": 100,
           "templateSeedCode": "urn:musclecuties:seed:v1:3903d37d-9e2f-463b-b761-f2c23fb64b40",
           "foodSeedCode": "urn:musclecuties:seed:v1:a7e826d7-997f-4f3c-b083-191294bc1a99"
         },
@@ -1832,7 +1872,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Egg Avocado Toast)/Entry(foodName=Avocado, raw;grams=60)",
           "templateSourceName": "Egg Avocado Toast",
           "foodSourceName": "Avocado, raw",
-          "grams": 60.0,
+          "grams": 60,
           "templateSeedCode": "urn:musclecuties:seed:v1:3903d37d-9e2f-463b-b761-f2c23fb64b40",
           "foodSeedCode": "urn:musclecuties:seed:v1:320875bd-bf94-468d-b667-7f022ae56b02"
         },
@@ -1841,7 +1881,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Egg Avocado Toast)/Entry(foodName=Tomato, raw;grams=80)",
           "templateSourceName": "Egg Avocado Toast",
           "foodSourceName": "Tomato, raw",
-          "grams": 80.0,
+          "grams": 80,
           "templateSeedCode": "urn:musclecuties:seed:v1:3903d37d-9e2f-463b-b761-f2c23fb64b40",
           "foodSeedCode": "urn:musclecuties:seed:v1:46c23102-ab19-47ea-8a94-0d9e4f3023eb"
         },
@@ -1850,7 +1890,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Tuna Hummus Wrap)/Entry(foodName=Tuna, canned in water;grams=120)",
           "templateSourceName": "Tuna Hummus Wrap",
           "foodSourceName": "Tuna, canned in water",
-          "grams": 120.0,
+          "grams": 120,
           "templateSeedCode": "urn:musclecuties:seed:v1:40007119-fca5-4146-9de4-4e48e2baa1eb",
           "foodSeedCode": "urn:musclecuties:seed:v1:82b6d47f-5571-4b1c-a5fc-8ef5a96a874f"
         },
@@ -1859,7 +1899,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Tuna Hummus Wrap)/Entry(foodName=Flour tortilla, whole wheat;grams=70)",
           "templateSourceName": "Tuna Hummus Wrap",
           "foodSourceName": "Flour tortilla, whole wheat",
-          "grams": 70.0,
+          "grams": 70,
           "templateSeedCode": "urn:musclecuties:seed:v1:40007119-fca5-4146-9de4-4e48e2baa1eb",
           "foodSeedCode": "urn:musclecuties:seed:v1:55b0cc42-6876-4f00-8ff0-d7bd53b269ee"
         },
@@ -1868,7 +1908,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Tuna Hummus Wrap)/Entry(foodName=Hummus;grams=45)",
           "templateSourceName": "Tuna Hummus Wrap",
           "foodSourceName": "Hummus",
-          "grams": 45.0,
+          "grams": 45,
           "templateSeedCode": "urn:musclecuties:seed:v1:40007119-fca5-4146-9de4-4e48e2baa1eb",
           "foodSeedCode": "urn:musclecuties:seed:v1:d98e925f-edf4-468b-92b9-278984145064"
         },
@@ -1877,7 +1917,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Tuna Hummus Wrap)/Entry(foodName=Lettuce, romaine;grams=60)",
           "templateSourceName": "Tuna Hummus Wrap",
           "foodSourceName": "Lettuce, romaine",
-          "grams": 60.0,
+          "grams": 60,
           "templateSeedCode": "urn:musclecuties:seed:v1:40007119-fca5-4146-9de4-4e48e2baa1eb",
           "foodSeedCode": "urn:musclecuties:seed:v1:60941ad8-f714-4879-a865-32e0e409549a"
         },
@@ -1886,7 +1926,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Tuna Hummus Wrap)/Entry(foodName=Red bell pepper, raw;grams=70)",
           "templateSourceName": "Tuna Hummus Wrap",
           "foodSourceName": "Red bell pepper, raw",
-          "grams": 70.0,
+          "grams": 70,
           "templateSeedCode": "urn:musclecuties:seed:v1:40007119-fca5-4146-9de4-4e48e2baa1eb",
           "foodSeedCode": "urn:musclecuties:seed:v1:960428bc-4469-445e-8858-403ee050e7ed"
         },
@@ -1895,7 +1935,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Black Bean Quinoa Taco Bowl)/Entry(foodName=Black beans, cooked;grams=150)",
           "templateSourceName": "Black Bean Quinoa Taco Bowl",
           "foodSourceName": "Black beans, cooked",
-          "grams": 150.0,
+          "grams": 150,
           "templateSeedCode": "urn:musclecuties:seed:v1:e9b2f634-c64e-45b5-ba7a-f8268fbec9a9",
           "foodSeedCode": "urn:musclecuties:seed:v1:65301017-3f0e-4801-93b1-b8bc7c93b1fa"
         },
@@ -1904,7 +1944,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Black Bean Quinoa Taco Bowl)/Entry(foodName=Quinoa, cooked;grams=140)",
           "templateSourceName": "Black Bean Quinoa Taco Bowl",
           "foodSourceName": "Quinoa, cooked",
-          "grams": 140.0,
+          "grams": 140,
           "templateSeedCode": "urn:musclecuties:seed:v1:e9b2f634-c64e-45b5-ba7a-f8268fbec9a9",
           "foodSeedCode": "urn:musclecuties:seed:v1:175a2926-dc28-42ee-9e25-f66321260e5a"
         },
@@ -1913,7 +1953,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Black Bean Quinoa Taco Bowl)/Entry(foodName=Avocado, raw;grams=55)",
           "templateSourceName": "Black Bean Quinoa Taco Bowl",
           "foodSourceName": "Avocado, raw",
-          "grams": 55.0,
+          "grams": 55,
           "templateSeedCode": "urn:musclecuties:seed:v1:e9b2f634-c64e-45b5-ba7a-f8268fbec9a9",
           "foodSeedCode": "urn:musclecuties:seed:v1:320875bd-bf94-468d-b667-7f022ae56b02"
         },
@@ -1922,7 +1962,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Black Bean Quinoa Taco Bowl)/Entry(foodName=Tomato, raw;grams=100)",
           "templateSourceName": "Black Bean Quinoa Taco Bowl",
           "foodSourceName": "Tomato, raw",
-          "grams": 100.0,
+          "grams": 100,
           "templateSeedCode": "urn:musclecuties:seed:v1:e9b2f634-c64e-45b5-ba7a-f8268fbec9a9",
           "foodSeedCode": "urn:musclecuties:seed:v1:46c23102-ab19-47ea-8a94-0d9e4f3023eb"
         },
@@ -1931,7 +1971,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Black Bean Quinoa Taco Bowl)/Entry(foodName=Hot sauce, generic;grams=10)",
           "templateSourceName": "Black Bean Quinoa Taco Bowl",
           "foodSourceName": "Hot sauce, generic",
-          "grams": 10.0,
+          "grams": 10,
           "templateSeedCode": "urn:musclecuties:seed:v1:e9b2f634-c64e-45b5-ba7a-f8268fbec9a9",
           "foodSeedCode": "urn:musclecuties:seed:v1:e9a30a11-11c7-4434-bce2-efc008c92ed7"
         },
@@ -1940,7 +1980,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Cottage Cheese Berry Bowl)/Entry(foodName=Cottage cheese, low-fat;grams=180)",
           "templateSourceName": "Cottage Cheese Berry Bowl",
           "foodSourceName": "Cottage cheese, low-fat",
-          "grams": 180.0,
+          "grams": 180,
           "templateSeedCode": "urn:musclecuties:seed:v1:47104642-8795-432e-b0b5-ee89f56f672e",
           "foodSeedCode": "urn:musclecuties:seed:v1:654d9db4-07f9-4004-9435-9fd3ee2be3f6"
         },
@@ -1949,7 +1989,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Cottage Cheese Berry Bowl)/Entry(foodName=Raspberries, raw;grams=90)",
           "templateSourceName": "Cottage Cheese Berry Bowl",
           "foodSourceName": "Raspberries, raw",
-          "grams": 90.0,
+          "grams": 90,
           "templateSeedCode": "urn:musclecuties:seed:v1:47104642-8795-432e-b0b5-ee89f56f672e",
           "foodSeedCode": "urn:musclecuties:seed:v1:b9b0f408-04d2-4dee-bac8-a25672f1c945"
         },
@@ -1958,7 +1998,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Cottage Cheese Berry Bowl)/Entry(foodName=Pumpkin seeds;grams=16)",
           "templateSourceName": "Cottage Cheese Berry Bowl",
           "foodSourceName": "Pumpkin seeds",
-          "grams": 16.0,
+          "grams": 16,
           "templateSeedCode": "urn:musclecuties:seed:v1:47104642-8795-432e-b0b5-ee89f56f672e",
           "foodSeedCode": "urn:musclecuties:seed:v1:267fc209-f4a8-457a-967a-adea6eb4318f"
         },
@@ -1967,7 +2007,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Cottage Cheese Berry Bowl)/Entry(foodName=Maple syrup;grams=8)",
           "templateSourceName": "Cottage Cheese Berry Bowl",
           "foodSourceName": "Maple syrup",
-          "grams": 8.0,
+          "grams": 8,
           "templateSeedCode": "urn:musclecuties:seed:v1:47104642-8795-432e-b0b5-ee89f56f672e",
           "foodSeedCode": "urn:musclecuties:seed:v1:58ca469a-d880-46b9-ba69-9e8c5e1b33db"
         },
@@ -1976,7 +2016,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Hummus Sweet Potato Plate)/Entry(foodName=Sweet potato, baked;grams=180)",
           "templateSourceName": "Hummus Sweet Potato Plate",
           "foodSourceName": "Sweet potato, baked",
-          "grams": 180.0,
+          "grams": 180,
           "templateSeedCode": "urn:musclecuties:seed:v1:9515fad6-124e-4b7a-b07f-c167dc025aed",
           "foodSeedCode": "urn:musclecuties:seed:v1:6e855b39-a762-474e-88eb-7d16369884b4"
         },
@@ -1985,7 +2025,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Hummus Sweet Potato Plate)/Entry(foodName=Hummus;grams=70)",
           "templateSourceName": "Hummus Sweet Potato Plate",
           "foodSourceName": "Hummus",
-          "grams": 70.0,
+          "grams": 70,
           "templateSeedCode": "urn:musclecuties:seed:v1:9515fad6-124e-4b7a-b07f-c167dc025aed",
           "foodSeedCode": "urn:musclecuties:seed:v1:d98e925f-edf4-468b-92b9-278984145064"
         },
@@ -1994,7 +2034,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Hummus Sweet Potato Plate)/Entry(foodName=Spinach, raw;grams=80)",
           "templateSourceName": "Hummus Sweet Potato Plate",
           "foodSourceName": "Spinach, raw",
-          "grams": 80.0,
+          "grams": 80,
           "templateSeedCode": "urn:musclecuties:seed:v1:9515fad6-124e-4b7a-b07f-c167dc025aed",
           "foodSeedCode": "urn:musclecuties:seed:v1:9cf0d559-2064-4110-84ea-c43614dfc532"
         },
@@ -2003,7 +2043,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Hummus Sweet Potato Plate)/Entry(foodName=Tomato, raw;grams=100)",
           "templateSourceName": "Hummus Sweet Potato Plate",
           "foodSourceName": "Tomato, raw",
-          "grams": 100.0,
+          "grams": 100,
           "templateSeedCode": "urn:musclecuties:seed:v1:9515fad6-124e-4b7a-b07f-c167dc025aed",
           "foodSeedCode": "urn:musclecuties:seed:v1:46c23102-ab19-47ea-8a94-0d9e4f3023eb"
         },
@@ -2012,7 +2052,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Hummus Sweet Potato Plate)/Entry(foodName=Olive oil;grams=6)",
           "templateSourceName": "Hummus Sweet Potato Plate",
           "foodSourceName": "Olive oil",
-          "grams": 6.0,
+          "grams": 6,
           "templateSeedCode": "urn:musclecuties:seed:v1:9515fad6-124e-4b7a-b07f-c167dc025aed",
           "foodSeedCode": "urn:musclecuties:seed:v1:4230f26c-907e-4dd6-853e-6c59323b6045"
         },
@@ -2021,7 +2061,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Chicken Potato Recovery Plate)/Entry(foodName=Chicken breast, raw;grams=150)",
           "templateSourceName": "Chicken Potato Recovery Plate",
           "foodSourceName": "Chicken breast, raw",
-          "grams": 150.0,
+          "grams": 150,
           "templateSeedCode": "urn:musclecuties:seed:v1:a1c2a7c8-cf8b-47c0-b6aa-d8c28f0fdb1a",
           "foodSeedCode": "urn:musclecuties:seed:v1:1ed4c935-041a-4c46-ba51-a04f6bcfe0c3"
         },
@@ -2030,7 +2070,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Chicken Potato Recovery Plate)/Entry(foodName=White potato, baked;grams=180)",
           "templateSourceName": "Chicken Potato Recovery Plate",
           "foodSourceName": "White potato, baked",
-          "grams": 180.0,
+          "grams": 180,
           "templateSeedCode": "urn:musclecuties:seed:v1:a1c2a7c8-cf8b-47c0-b6aa-d8c28f0fdb1a",
           "foodSeedCode": "urn:musclecuties:seed:v1:aa27bdf9-47ca-4dea-b75d-441e2a9047a3"
         },
@@ -2039,7 +2079,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Chicken Potato Recovery Plate)/Entry(foodName=Kale, raw;grams=70)",
           "templateSourceName": "Chicken Potato Recovery Plate",
           "foodSourceName": "Kale, raw",
-          "grams": 70.0,
+          "grams": 70,
           "templateSeedCode": "urn:musclecuties:seed:v1:a1c2a7c8-cf8b-47c0-b6aa-d8c28f0fdb1a",
           "foodSeedCode": "urn:musclecuties:seed:v1:43d1746e-a1cb-495f-9355-480b7abb8f1c"
         },
@@ -2048,7 +2088,7 @@
           "sourceKey": "BuildStarterMealTemplates:Template(name=Chicken Potato Recovery Plate)/Entry(foodName=Greek yogurt, plain 2%;grams=45)",
           "templateSourceName": "Chicken Potato Recovery Plate",
           "foodSourceName": "Greek yogurt, plain 2%",
-          "grams": 45.0,
+          "grams": 45,
           "templateSeedCode": "urn:musclecuties:seed:v1:a1c2a7c8-cf8b-47c0-b6aa-d8c28f0fdb1a",
           "foodSeedCode": "urn:musclecuties:seed:v1:7b455f18-8758-4045-b842-f80210e9b0c2"
         }
@@ -4607,7 +4647,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=1;daysPerWeek=2;fractionalSets=11)",
           "muscleGroupId": 1,
           "daysPerWeek": 2,
-          "fractionalSets": 11.0,
+          "fractionalSets": 11,
           "sourceId": 1
         },
         {
@@ -4615,7 +4655,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=1;daysPerWeek=3;fractionalSets=14)",
           "muscleGroupId": 1,
           "daysPerWeek": 3,
-          "fractionalSets": 14.0,
+          "fractionalSets": 14,
           "sourceId": 2
         },
         {
@@ -4623,7 +4663,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=1;daysPerWeek=4;fractionalSets=18)",
           "muscleGroupId": 1,
           "daysPerWeek": 4,
-          "fractionalSets": 18.0,
+          "fractionalSets": 18,
           "sourceId": 3
         },
         {
@@ -4631,7 +4671,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=1;daysPerWeek=5;fractionalSets=21)",
           "muscleGroupId": 1,
           "daysPerWeek": 5,
-          "fractionalSets": 21.0,
+          "fractionalSets": 21,
           "sourceId": 4
         },
         {
@@ -4639,7 +4679,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=1;daysPerWeek=6;fractionalSets=24)",
           "muscleGroupId": 1,
           "daysPerWeek": 6,
-          "fractionalSets": 24.0,
+          "fractionalSets": 24,
           "sourceId": 5
         },
         {
@@ -4647,7 +4687,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=2;daysPerWeek=2;fractionalSets=7)",
           "muscleGroupId": 2,
           "daysPerWeek": 2,
-          "fractionalSets": 7.0,
+          "fractionalSets": 7,
           "sourceId": 6
         },
         {
@@ -4655,7 +4695,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=2;daysPerWeek=3;fractionalSets=9)",
           "muscleGroupId": 2,
           "daysPerWeek": 3,
-          "fractionalSets": 9.0,
+          "fractionalSets": 9,
           "sourceId": 7
         },
         {
@@ -4663,7 +4703,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=2;daysPerWeek=4;fractionalSets=12)",
           "muscleGroupId": 2,
           "daysPerWeek": 4,
-          "fractionalSets": 12.0,
+          "fractionalSets": 12,
           "sourceId": 8
         },
         {
@@ -4671,7 +4711,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=2;daysPerWeek=5;fractionalSets=14)",
           "muscleGroupId": 2,
           "daysPerWeek": 5,
-          "fractionalSets": 14.0,
+          "fractionalSets": 14,
           "sourceId": 9
         },
         {
@@ -4679,7 +4719,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=2;daysPerWeek=6;fractionalSets=15)",
           "muscleGroupId": 2,
           "daysPerWeek": 6,
-          "fractionalSets": 15.0,
+          "fractionalSets": 15,
           "sourceId": 10
         },
         {
@@ -4687,7 +4727,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=3;daysPerWeek=2;fractionalSets=5)",
           "muscleGroupId": 3,
           "daysPerWeek": 2,
-          "fractionalSets": 5.0,
+          "fractionalSets": 5,
           "sourceId": 11
         },
         {
@@ -4695,7 +4735,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=3;daysPerWeek=3;fractionalSets=6)",
           "muscleGroupId": 3,
           "daysPerWeek": 3,
-          "fractionalSets": 6.0,
+          "fractionalSets": 6,
           "sourceId": 12
         },
         {
@@ -4703,7 +4743,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=3;daysPerWeek=4;fractionalSets=8)",
           "muscleGroupId": 3,
           "daysPerWeek": 4,
-          "fractionalSets": 8.0,
+          "fractionalSets": 8,
           "sourceId": 13
         },
         {
@@ -4711,7 +4751,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=3;daysPerWeek=5;fractionalSets=10)",
           "muscleGroupId": 3,
           "daysPerWeek": 5,
-          "fractionalSets": 10.0,
+          "fractionalSets": 10,
           "sourceId": 14
         },
         {
@@ -4719,7 +4759,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=3;daysPerWeek=6;fractionalSets=10)",
           "muscleGroupId": 3,
           "daysPerWeek": 6,
-          "fractionalSets": 10.0,
+          "fractionalSets": 10,
           "sourceId": 15
         },
         {
@@ -4727,7 +4767,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=6;daysPerWeek=2;fractionalSets=4)",
           "muscleGroupId": 6,
           "daysPerWeek": 2,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 16
         },
         {
@@ -4735,7 +4775,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=6;daysPerWeek=3;fractionalSets=5)",
           "muscleGroupId": 6,
           "daysPerWeek": 3,
-          "fractionalSets": 5.0,
+          "fractionalSets": 5,
           "sourceId": 17
         },
         {
@@ -4743,7 +4783,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=6;daysPerWeek=4;fractionalSets=7)",
           "muscleGroupId": 6,
           "daysPerWeek": 4,
-          "fractionalSets": 7.0,
+          "fractionalSets": 7,
           "sourceId": 18
         },
         {
@@ -4751,7 +4791,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=6;daysPerWeek=5;fractionalSets=8)",
           "muscleGroupId": 6,
           "daysPerWeek": 5,
-          "fractionalSets": 8.0,
+          "fractionalSets": 8,
           "sourceId": 19
         },
         {
@@ -4759,7 +4799,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=6;daysPerWeek=6;fractionalSets=8)",
           "muscleGroupId": 6,
           "daysPerWeek": 6,
-          "fractionalSets": 8.0,
+          "fractionalSets": 8,
           "sourceId": 20
         },
         {
@@ -4767,7 +4807,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=7;daysPerWeek=2;fractionalSets=3)",
           "muscleGroupId": 7,
           "daysPerWeek": 2,
-          "fractionalSets": 3.0,
+          "fractionalSets": 3,
           "sourceId": 21
         },
         {
@@ -4775,7 +4815,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=7;daysPerWeek=3;fractionalSets=4)",
           "muscleGroupId": 7,
           "daysPerWeek": 3,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 22
         },
         {
@@ -4783,7 +4823,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=7;daysPerWeek=4;fractionalSets=5)",
           "muscleGroupId": 7,
           "daysPerWeek": 4,
-          "fractionalSets": 5.0,
+          "fractionalSets": 5,
           "sourceId": 23
         },
         {
@@ -4791,7 +4831,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=7;daysPerWeek=5;fractionalSets=6)",
           "muscleGroupId": 7,
           "daysPerWeek": 5,
-          "fractionalSets": 6.0,
+          "fractionalSets": 6,
           "sourceId": 24
         },
         {
@@ -4799,7 +4839,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=7;daysPerWeek=6;fractionalSets=7)",
           "muscleGroupId": 7,
           "daysPerWeek": 6,
-          "fractionalSets": 7.0,
+          "fractionalSets": 7,
           "sourceId": 25
         },
         {
@@ -4807,7 +4847,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=8;daysPerWeek=2;fractionalSets=4)",
           "muscleGroupId": 8,
           "daysPerWeek": 2,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 26
         },
         {
@@ -4815,7 +4855,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=8;daysPerWeek=3;fractionalSets=6)",
           "muscleGroupId": 8,
           "daysPerWeek": 3,
-          "fractionalSets": 6.0,
+          "fractionalSets": 6,
           "sourceId": 27
         },
         {
@@ -4823,7 +4863,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=8;daysPerWeek=4;fractionalSets=8)",
           "muscleGroupId": 8,
           "daysPerWeek": 4,
-          "fractionalSets": 8.0,
+          "fractionalSets": 8,
           "sourceId": 28
         },
         {
@@ -4831,7 +4871,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=8;daysPerWeek=5;fractionalSets=10)",
           "muscleGroupId": 8,
           "daysPerWeek": 5,
-          "fractionalSets": 10.0,
+          "fractionalSets": 10,
           "sourceId": 29
         },
         {
@@ -4839,7 +4879,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=8;daysPerWeek=6;fractionalSets=10)",
           "muscleGroupId": 8,
           "daysPerWeek": 6,
-          "fractionalSets": 10.0,
+          "fractionalSets": 10,
           "sourceId": 30
         },
         {
@@ -4847,7 +4887,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=12;daysPerWeek=2;fractionalSets=4)",
           "muscleGroupId": 12,
           "daysPerWeek": 2,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 31
         },
         {
@@ -4855,7 +4895,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=12;daysPerWeek=3;fractionalSets=6)",
           "muscleGroupId": 12,
           "daysPerWeek": 3,
-          "fractionalSets": 6.0,
+          "fractionalSets": 6,
           "sourceId": 32
         },
         {
@@ -4863,7 +4903,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=12;daysPerWeek=4;fractionalSets=8)",
           "muscleGroupId": 12,
           "daysPerWeek": 4,
-          "fractionalSets": 8.0,
+          "fractionalSets": 8,
           "sourceId": 33
         },
         {
@@ -4871,7 +4911,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=12;daysPerWeek=5;fractionalSets=9)",
           "muscleGroupId": 12,
           "daysPerWeek": 5,
-          "fractionalSets": 9.0,
+          "fractionalSets": 9,
           "sourceId": 34
         },
         {
@@ -4879,7 +4919,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=12;daysPerWeek=6;fractionalSets=10)",
           "muscleGroupId": 12,
           "daysPerWeek": 6,
-          "fractionalSets": 10.0,
+          "fractionalSets": 10,
           "sourceId": 35
         },
         {
@@ -4911,7 +4951,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=10;daysPerWeek=5;fractionalSets=4)",
           "muscleGroupId": 10,
           "daysPerWeek": 5,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 39
         },
         {
@@ -4951,7 +4991,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=11;daysPerWeek=5;fractionalSets=4)",
           "muscleGroupId": 11,
           "daysPerWeek": 5,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 44
         },
         {
@@ -4967,7 +5007,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=5;daysPerWeek=2;fractionalSets=5)",
           "muscleGroupId": 5,
           "daysPerWeek": 2,
-          "fractionalSets": 5.0,
+          "fractionalSets": 5,
           "sourceId": 46
         },
         {
@@ -4975,7 +5015,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=5;daysPerWeek=3;fractionalSets=6)",
           "muscleGroupId": 5,
           "daysPerWeek": 3,
-          "fractionalSets": 6.0,
+          "fractionalSets": 6,
           "sourceId": 47
         },
         {
@@ -4983,7 +5023,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=5;daysPerWeek=4;fractionalSets=8)",
           "muscleGroupId": 5,
           "daysPerWeek": 4,
-          "fractionalSets": 8.0,
+          "fractionalSets": 8,
           "sourceId": 48
         },
         {
@@ -4991,7 +5031,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=5;daysPerWeek=5;fractionalSets=9)",
           "muscleGroupId": 5,
           "daysPerWeek": 5,
-          "fractionalSets": 9.0,
+          "fractionalSets": 9,
           "sourceId": 49
         },
         {
@@ -4999,7 +5039,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=5;daysPerWeek=6;fractionalSets=10)",
           "muscleGroupId": 5,
           "daysPerWeek": 6,
-          "fractionalSets": 10.0,
+          "fractionalSets": 10,
           "sourceId": 50
         },
         {
@@ -5007,7 +5047,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=4;daysPerWeek=2;fractionalSets=2)",
           "muscleGroupId": 4,
           "daysPerWeek": 2,
-          "fractionalSets": 2.0,
+          "fractionalSets": 2,
           "sourceId": 51
         },
         {
@@ -5015,7 +5055,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=4;daysPerWeek=3;fractionalSets=3)",
           "muscleGroupId": 4,
           "daysPerWeek": 3,
-          "fractionalSets": 3.0,
+          "fractionalSets": 3,
           "sourceId": 52
         },
         {
@@ -5023,7 +5063,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=4;daysPerWeek=4;fractionalSets=4)",
           "muscleGroupId": 4,
           "daysPerWeek": 4,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 53
         },
         {
@@ -5031,7 +5071,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=4;daysPerWeek=5;fractionalSets=4)",
           "muscleGroupId": 4,
           "daysPerWeek": 5,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 54
         },
         {
@@ -5039,7 +5079,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=4;daysPerWeek=6;fractionalSets=4)",
           "muscleGroupId": 4,
           "daysPerWeek": 6,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 55
         },
         {
@@ -5047,7 +5087,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=9;daysPerWeek=2;fractionalSets=2)",
           "muscleGroupId": 9,
           "daysPerWeek": 2,
-          "fractionalSets": 2.0,
+          "fractionalSets": 2,
           "sourceId": 56
         },
         {
@@ -5055,7 +5095,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=9;daysPerWeek=3;fractionalSets=3)",
           "muscleGroupId": 9,
           "daysPerWeek": 3,
-          "fractionalSets": 3.0,
+          "fractionalSets": 3,
           "sourceId": 57
         },
         {
@@ -5063,7 +5103,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=9;daysPerWeek=4;fractionalSets=4)",
           "muscleGroupId": 9,
           "daysPerWeek": 4,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 58
         },
         {
@@ -5071,7 +5111,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=9;daysPerWeek=5;fractionalSets=5)",
           "muscleGroupId": 9,
           "daysPerWeek": 5,
-          "fractionalSets": 5.0,
+          "fractionalSets": 5,
           "sourceId": 59
         },
         {
@@ -5079,7 +5119,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=9;daysPerWeek=6;fractionalSets=6)",
           "muscleGroupId": 9,
           "daysPerWeek": 6,
-          "fractionalSets": 6.0,
+          "fractionalSets": 6,
           "sourceId": 60
         },
         {
@@ -5087,7 +5127,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=13;daysPerWeek=2;fractionalSets=1)",
           "muscleGroupId": 13,
           "daysPerWeek": 2,
-          "fractionalSets": 1.0,
+          "fractionalSets": 1,
           "sourceId": 61
         },
         {
@@ -5095,7 +5135,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=13;daysPerWeek=3;fractionalSets=2)",
           "muscleGroupId": 13,
           "daysPerWeek": 3,
-          "fractionalSets": 2.0,
+          "fractionalSets": 2,
           "sourceId": 62
         },
         {
@@ -5103,7 +5143,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=13;daysPerWeek=4;fractionalSets=3)",
           "muscleGroupId": 13,
           "daysPerWeek": 4,
-          "fractionalSets": 3.0,
+          "fractionalSets": 3,
           "sourceId": 63
         },
         {
@@ -5111,7 +5151,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=13;daysPerWeek=5;fractionalSets=4)",
           "muscleGroupId": 13,
           "daysPerWeek": 5,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 64
         },
         {
@@ -5119,7 +5159,7 @@
           "sourceKey": "SeedVolumeBudgetRows:Add(muscleGroupId=13;daysPerWeek=6;fractionalSets=4)",
           "muscleGroupId": 13,
           "daysPerWeek": 6,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 65
         },
         {
@@ -5127,7 +5167,7 @@
           "sourceKey": "SeedVolumeBudgetRows:SevenDayConservativeBudget(muscleGroupId=1;fractionalSets=24)",
           "muscleGroupId": 1,
           "daysPerWeek": 7,
-          "fractionalSets": 24.0,
+          "fractionalSets": 24,
           "sourceId": 66
         },
         {
@@ -5135,7 +5175,7 @@
           "sourceKey": "SeedVolumeBudgetRows:SevenDayConservativeBudget(muscleGroupId=2;fractionalSets=15)",
           "muscleGroupId": 2,
           "daysPerWeek": 7,
-          "fractionalSets": 15.0,
+          "fractionalSets": 15,
           "sourceId": 67
         },
         {
@@ -5143,7 +5183,7 @@
           "sourceKey": "SeedVolumeBudgetRows:SevenDayConservativeBudget(muscleGroupId=3;fractionalSets=10)",
           "muscleGroupId": 3,
           "daysPerWeek": 7,
-          "fractionalSets": 10.0,
+          "fractionalSets": 10,
           "sourceId": 68
         },
         {
@@ -5151,7 +5191,7 @@
           "sourceKey": "SeedVolumeBudgetRows:SevenDayConservativeBudget(muscleGroupId=6;fractionalSets=8)",
           "muscleGroupId": 6,
           "daysPerWeek": 7,
-          "fractionalSets": 8.0,
+          "fractionalSets": 8,
           "sourceId": 69
         },
         {
@@ -5159,7 +5199,7 @@
           "sourceKey": "SeedVolumeBudgetRows:SevenDayConservativeBudget(muscleGroupId=7;fractionalSets=7)",
           "muscleGroupId": 7,
           "daysPerWeek": 7,
-          "fractionalSets": 7.0,
+          "fractionalSets": 7,
           "sourceId": 70
         },
         {
@@ -5167,7 +5207,7 @@
           "sourceKey": "SeedVolumeBudgetRows:SevenDayConservativeBudget(muscleGroupId=8;fractionalSets=10)",
           "muscleGroupId": 8,
           "daysPerWeek": 7,
-          "fractionalSets": 10.0,
+          "fractionalSets": 10,
           "sourceId": 71
         },
         {
@@ -5175,7 +5215,7 @@
           "sourceKey": "SeedVolumeBudgetRows:SevenDayConservativeBudget(muscleGroupId=12;fractionalSets=10)",
           "muscleGroupId": 12,
           "daysPerWeek": 7,
-          "fractionalSets": 10.0,
+          "fractionalSets": 10,
           "sourceId": 72
         },
         {
@@ -5199,7 +5239,7 @@
           "sourceKey": "SeedVolumeBudgetRows:SevenDayConservativeBudget(muscleGroupId=5;fractionalSets=10)",
           "muscleGroupId": 5,
           "daysPerWeek": 7,
-          "fractionalSets": 10.0,
+          "fractionalSets": 10,
           "sourceId": 75
         },
         {
@@ -5207,7 +5247,7 @@
           "sourceKey": "SeedVolumeBudgetRows:SevenDayConservativeBudget(muscleGroupId=4;fractionalSets=4)",
           "muscleGroupId": 4,
           "daysPerWeek": 7,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 76
         },
         {
@@ -5215,7 +5255,7 @@
           "sourceKey": "SeedVolumeBudgetRows:SevenDayConservativeBudget(muscleGroupId=9;fractionalSets=6)",
           "muscleGroupId": 9,
           "daysPerWeek": 7,
-          "fractionalSets": 6.0,
+          "fractionalSets": 6,
           "sourceId": 77
         },
         {
@@ -5223,7 +5263,7 @@
           "sourceKey": "SeedVolumeBudgetRows:SevenDayConservativeBudget(muscleGroupId=13;fractionalSets=4)",
           "muscleGroupId": 13,
           "daysPerWeek": 7,
-          "fractionalSets": 4.0,
+          "fractionalSets": 4,
           "sourceId": 78
         }
       ]
@@ -6507,7 +6547,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=101;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 101,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 1
         },
         {
@@ -6523,7 +6563,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=102;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 102,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 3
         },
         {
@@ -6539,7 +6579,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=103;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 103,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 5
         },
         {
@@ -6555,7 +6595,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=104;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 104,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 7
         },
         {
@@ -6571,7 +6611,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=105;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 105,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 9
         },
         {
@@ -6587,7 +6627,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=106;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 106,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 11
         },
         {
@@ -6595,7 +6635,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=106;muscleGroupId=2;fraction=1.0)",
           "exerciseId": 106,
           "muscleGroupId": 2,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 12
         },
         {
@@ -6611,7 +6651,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=107;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 107,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 14
         },
         {
@@ -6619,7 +6659,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=111;muscleGroupId=2;fraction=1.0)",
           "exerciseId": 111,
           "muscleGroupId": 2,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 15
         },
         {
@@ -6651,7 +6691,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=112;muscleGroupId=2;fraction=1.0)",
           "exerciseId": 112,
           "muscleGroupId": 2,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 19
         },
         {
@@ -6683,7 +6723,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=113;muscleGroupId=2;fraction=1.0)",
           "exerciseId": 113,
           "muscleGroupId": 2,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 23
         },
         {
@@ -6707,7 +6747,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=114;muscleGroupId=2;fraction=1.0)",
           "exerciseId": 114,
           "muscleGroupId": 2,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 26
         },
         {
@@ -6739,7 +6779,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=115;muscleGroupId=2;fraction=1.0)",
           "exerciseId": 115,
           "muscleGroupId": 2,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 30
         },
         {
@@ -6747,7 +6787,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=116;muscleGroupId=2;fraction=1.0)",
           "exerciseId": 116,
           "muscleGroupId": 2,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 31
         },
         {
@@ -6755,7 +6795,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=117;muscleGroupId=2;fraction=1.0)",
           "exerciseId": 117,
           "muscleGroupId": 2,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 32
         },
         {
@@ -6763,7 +6803,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=118;muscleGroupId=2;fraction=1.0)",
           "exerciseId": 118,
           "muscleGroupId": 2,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 33
         },
         {
@@ -6787,7 +6827,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=121;muscleGroupId=5;fraction=1.0)",
           "exerciseId": 121,
           "muscleGroupId": 5,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 36
         },
         {
@@ -6795,7 +6835,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=121;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 121,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 37
         },
         {
@@ -6819,7 +6859,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=122;muscleGroupId=5;fraction=1.0)",
           "exerciseId": 122,
           "muscleGroupId": 5,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 40
         },
         {
@@ -6835,7 +6875,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=123;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 123,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 42
         },
         {
@@ -6843,7 +6883,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=123;muscleGroupId=5;fraction=1.0)",
           "exerciseId": 123,
           "muscleGroupId": 5,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 43
         },
         {
@@ -6859,7 +6899,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=124;muscleGroupId=5;fraction=1.0)",
           "exerciseId": 124,
           "muscleGroupId": 5,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 45
         },
         {
@@ -6883,7 +6923,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=125;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 125,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 48
         },
         {
@@ -6891,7 +6931,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=125;muscleGroupId=5;fraction=1.0)",
           "exerciseId": 125,
           "muscleGroupId": 5,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 49
         },
         {
@@ -6915,7 +6955,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=126;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 126,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 52
         },
         {
@@ -6923,7 +6963,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=126;muscleGroupId=5;fraction=1.0)",
           "exerciseId": 126,
           "muscleGroupId": 5,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 53
         },
         {
@@ -6939,7 +6979,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=127;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 127,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 55
         },
         {
@@ -6963,7 +7003,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=128;muscleGroupId=1;fraction=1.0)",
           "exerciseId": 128,
           "muscleGroupId": 1,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 58
         },
         {
@@ -6987,7 +7027,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=131;muscleGroupId=3;fraction=1.0)",
           "exerciseId": 131,
           "muscleGroupId": 3,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 61
         },
         {
@@ -7003,7 +7043,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=132;muscleGroupId=3;fraction=1.0)",
           "exerciseId": 132,
           "muscleGroupId": 3,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 63
         },
         {
@@ -7019,7 +7059,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=133;muscleGroupId=3;fraction=1.0)",
           "exerciseId": 133,
           "muscleGroupId": 3,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 65
         },
         {
@@ -7035,7 +7075,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=134;muscleGroupId=3;fraction=1.0)",
           "exerciseId": 134,
           "muscleGroupId": 3,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 67
         },
         {
@@ -7051,7 +7091,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=135;muscleGroupId=3;fraction=1.0)",
           "exerciseId": 135,
           "muscleGroupId": 3,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 69
         },
         {
@@ -7059,7 +7099,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=136;muscleGroupId=4;fraction=1.0)",
           "exerciseId": 136,
           "muscleGroupId": 4,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 70
         },
         {
@@ -7075,7 +7115,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=137;muscleGroupId=4;fraction=1.0)",
           "exerciseId": 137,
           "muscleGroupId": 4,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 72
         },
         {
@@ -7083,7 +7123,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=141;muscleGroupId=6;fraction=1.0)",
           "exerciseId": 141,
           "muscleGroupId": 6,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 73
         },
         {
@@ -7107,7 +7147,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=142;muscleGroupId=6;fraction=1.0)",
           "exerciseId": 142,
           "muscleGroupId": 6,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 76
         },
         {
@@ -7123,7 +7163,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=143;muscleGroupId=7;fraction=1.0)",
           "exerciseId": 143,
           "muscleGroupId": 7,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 78
         },
         {
@@ -7147,7 +7187,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=144;muscleGroupId=7;fraction=1.0)",
           "exerciseId": 144,
           "muscleGroupId": 7,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 81
         },
         {
@@ -7171,7 +7211,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=145;muscleGroupId=7;fraction=1.0)",
           "exerciseId": 145,
           "muscleGroupId": 7,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 84
         },
         {
@@ -7195,7 +7235,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=146;muscleGroupId=6;fraction=1.0)",
           "exerciseId": 146,
           "muscleGroupId": 6,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 87
         },
         {
@@ -7203,7 +7243,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=147;muscleGroupId=8;fraction=1.0)",
           "exerciseId": 147,
           "muscleGroupId": 8,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 88
         },
         {
@@ -7219,7 +7259,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=151;muscleGroupId=8;fraction=1.0)",
           "exerciseId": 151,
           "muscleGroupId": 8,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 90
         },
         {
@@ -7235,7 +7275,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=152;muscleGroupId=8;fraction=1.0)",
           "exerciseId": 152,
           "muscleGroupId": 8,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 92
         },
         {
@@ -7251,7 +7291,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=153;muscleGroupId=9;fraction=1.0)",
           "exerciseId": 153,
           "muscleGroupId": 9,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 94
         },
         {
@@ -7275,7 +7315,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=154;muscleGroupId=9;fraction=1.0)",
           "exerciseId": 154,
           "muscleGroupId": 9,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 97
         },
         {
@@ -7299,7 +7339,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=155;muscleGroupId=9;fraction=1.0)",
           "exerciseId": 155,
           "muscleGroupId": 9,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 100
         },
         {
@@ -7323,7 +7363,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=156;muscleGroupId=8;fraction=1.0)",
           "exerciseId": 156,
           "muscleGroupId": 8,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 103
         },
         {
@@ -7331,7 +7371,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=157;muscleGroupId=8;fraction=1.0)",
           "exerciseId": 157,
           "muscleGroupId": 8,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 104
         },
         {
@@ -7339,7 +7379,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=158;muscleGroupId=8;fraction=1.0)",
           "exerciseId": 158,
           "muscleGroupId": 8,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 105
         },
         {
@@ -7355,7 +7395,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=161;muscleGroupId=10;fraction=1.0)",
           "exerciseId": 161,
           "muscleGroupId": 10,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 107
         },
         {
@@ -7363,7 +7403,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=162;muscleGroupId=10;fraction=1.0)",
           "exerciseId": 162,
           "muscleGroupId": 10,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 108
         },
         {
@@ -7371,7 +7411,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=163;muscleGroupId=11;fraction=1.0)",
           "exerciseId": 163,
           "muscleGroupId": 11,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 109
         },
         {
@@ -7379,7 +7419,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=164;muscleGroupId=11;fraction=1.0)",
           "exerciseId": 164,
           "muscleGroupId": 11,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 110
         },
         {
@@ -7387,7 +7427,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=171;muscleGroupId=12;fraction=1.0)",
           "exerciseId": 171,
           "muscleGroupId": 12,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 111
         },
         {
@@ -7395,7 +7435,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=172;muscleGroupId=12;fraction=1.0)",
           "exerciseId": 172,
           "muscleGroupId": 12,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 112
         },
         {
@@ -7411,7 +7451,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=173;muscleGroupId=12;fraction=1.0)",
           "exerciseId": 173,
           "muscleGroupId": 12,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 114
         },
         {
@@ -7419,7 +7459,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=174;muscleGroupId=12;fraction=1.0)",
           "exerciseId": 174,
           "muscleGroupId": 12,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 115
         },
         {
@@ -7427,7 +7467,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=175;muscleGroupId=12;fraction=1.0)",
           "exerciseId": 175,
           "muscleGroupId": 12,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 116
         },
         {
@@ -7435,7 +7475,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=176;muscleGroupId=12;fraction=1.0)",
           "exerciseId": 176,
           "muscleGroupId": 12,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 117
         },
         {
@@ -7443,7 +7483,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=177;muscleGroupId=12;fraction=1.0)",
           "exerciseId": 177,
           "muscleGroupId": 12,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 118
         },
         {
@@ -7451,7 +7491,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=178;muscleGroupId=12;fraction=1.0)",
           "exerciseId": 178,
           "muscleGroupId": 12,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 119
         },
         {
@@ -7467,7 +7507,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=181;muscleGroupId=13;fraction=1.0)",
           "exerciseId": 181,
           "muscleGroupId": 13,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 121
         },
         {
@@ -7475,7 +7515,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=182;muscleGroupId=13;fraction=1.0)",
           "exerciseId": 182,
           "muscleGroupId": 13,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 122
         },
         {
@@ -7483,7 +7523,7 @@
           "sourceKey": "SeedExerciseMuscleContributions:C(exerciseId=191;muscleGroupId=6;fraction=1.0)",
           "exerciseId": 191,
           "muscleGroupId": 6,
-          "fraction": 1.0,
+          "fraction": 1,
           "sourceId": 123
         },
         {

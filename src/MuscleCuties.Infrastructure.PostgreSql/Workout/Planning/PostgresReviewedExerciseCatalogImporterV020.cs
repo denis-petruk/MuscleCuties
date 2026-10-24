@@ -110,8 +110,8 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
         var workbookSha = String(root, "workbookSha256");
         if (reviewVersion != ExpectedExerciseReviewVersion ||
             substitutionVersion != ExpectedSubstitutionReviewVersion ||
-            policyVersion != WorkoutTrainingPolicyV020.Version ||
-            templateVersion != StrengthTemplateCatalogV020.Version ||
+            policyVersion != StrengthPlanPreviewRule.Version ||
+            templateVersion != StrengthTemplateCatalog.Version ||
             catalogSnapshot != ExpectedCatalogSnapshot ||
             workbookSha.Length != 64 || !workbookSha.All(Uri.IsHexDigit))
             issues.Add("ReviewVersionOrSourceHashMismatch");
@@ -178,7 +178,7 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
                     "Owner direct instruction", StringComparison.Ordinal) ||
                 String(entry, "effectiveRestrictionAssessmentStatus") !=
                     "OwnerAssessedClearanceSubjectToExistingContraindications" ||
-                !ValidEnumArray<ActivityExperienceV020>(entry, "supportedExperiences", allowEmpty: false) ||
+                !ValidEnumArray<ActivityExperience>(entry, "supportedExperiences", allowEmpty: false) ||
                 !ValidEnumArray<ActivityDemandTag>(entry, "demandTags", allowEmpty: true) ||
                 !ValidEnumArray<ExerciseTimingMethod>(entry, "supportedTimingMethods", allowEmpty: false) ||
                 !Enum.IsDefined(row.Pattern))
@@ -201,8 +201,8 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
             var fullTemplateId = String(slot, "templateIdAndVersion");
             var templateParts = fullTemplateId.Split(" / ", StringSplitOptions.None);
             var template = templateParts.Length == 2 &&
-                           templateParts[1] == StrengthTemplateCatalogV020.Version
-                ? StrengthTemplateCatalogV020.Templates.FirstOrDefault(item =>
+                           templateParts[1] == StrengthTemplateCatalog.Version
+                ? StrengthTemplateCatalog.Templates.FirstOrDefault(item =>
                     item.TemplateId == templateParts[0])
                 : null;
             var definition = template?.Slots.FirstOrDefault(item =>

@@ -36,6 +36,8 @@ public sealed record TodayPlanningDecision(
 /// </summary>
 public static class TodayPlanningDecisionRule
 {
+    public static bool ReadinessSuggestionsEnabled => false;
+
     public static TodayPlanningDecision Evaluate(TodayPlanningContext? context)
     {
         if (context is null)

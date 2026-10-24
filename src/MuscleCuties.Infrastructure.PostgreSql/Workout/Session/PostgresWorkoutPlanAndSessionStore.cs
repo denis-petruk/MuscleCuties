@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Domain.Health;
@@ -26,8 +27,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
     private const int DaysPerWeek = 7;
     private const int DefaultCycleLengthDays = 28;
     private const int DefaultWorkoutDaysPerWeek = 3;
-    private const int DefaultSessionDurationMinutes = 60;
     private const int FallbackMinutesPerExercise = 12;
+    private const string PlannedDurationMinuteFormat = "0.#";
     private const string StrengthTag = "STRENGTH";
     private const string CardioTag = "CARDIO";
     private const string RecoveryTag = "RECOVERY";
@@ -793,7 +794,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             .ConfigureAwait(false);
 
         // Existing accepted plans stay readable; opening a screen never creates a new prescription.
-        if (!WorkoutTrainingPolicyV010.CanGeneratePlans)
+        if (!WorkoutPlanGenerationRule.CanGeneratePlans)
             return activePlan;
 
         var profile = await dbContext.UserProfiles.AsNoTracking()
@@ -823,10 +824,9 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                 : Equipment.FullGym;
             var daysPerWeek = WeekPlanRule.ClampDaysPerWeek(
                 profile.WorkoutDaysPerWeek > 0 ? profile.WorkoutDaysPerWeek : DefaultWorkoutDaysPerWeek);
-            var sessionMinutes = profile.SessionDurationMinutes > 0
-                ? profile.SessionDurationMinutes
-                : DefaultSessionDurationMinutes;
             var selectedActivities = ParsePreferredActivities(profile.PreferredWorkoutActivityTypes);
+            var sessionMinutes = ResolveSessionDurationMinutes(
+                profile.ActivitySessionDurationsJson, selectedActivities);
             var reproductiveContext = ReproductiveContextCodec.Parse(profile.ReproductiveContextJson);
 
             var activeInjuries = await dbContext.WorkoutInjuryLogs.AsNoTracking()
@@ -849,7 +849,6 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                     daysPerWeek,
                     sessionMinutes,
                     selectedActivities,
-                    StrengthTrainingStyle.ComfortableModerate,
                     equipment,
                     phase,
                     reproductiveContext.AllowsCyclePhaseTrainingAdjustments,
@@ -1170,7 +1169,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                     WorkoutScheduleMathRule.FormatDayLabel((DayOfWeek)day.DayOfWeek),
                     day.Name,
                     BuildDurationText(day, exList),
-                    BuildDetailsText(exList, exercisesById),
+                    BuildDetailsText(day, exList, exercisesById),
                     false,
                     latestLog?.CompletionPercent >= 100,
                     exList.Count,
@@ -1493,6 +1492,9 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
 
     private static string BuildDurationText(WorkoutDayRecord day, IReadOnlyList<WorkoutDayExerciseRecord> exercises)
     {
+        if (day.PlannedMainDurationMinutes is > 0m)
+            return $"{day.PlannedMainDurationMinutes.Value.ToString(PlannedDurationMinuteFormat, CultureInfo.CurrentCulture)} min";
+
         var seconds = exercises.Sum(e => e.DurationSeconds ?? 0);
         var doses = exercises.Where(e => e.Sets > 0 && e.Reps > 0)
             .Select(e => new WorkoutExerciseDose(e.Sets, e.Reps))
@@ -1507,6 +1509,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
     }
 
     private static string BuildDetailsText(
+        WorkoutDayRecord day,
         IReadOnlyList<WorkoutDayExerciseRecord> exercises,
         IReadOnlyDictionary<int, Exercise> exercisesById)
     {
@@ -1517,7 +1520,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             .ToArray();
         return names.Length > 0
             ? string.Join(" and ", names)
-            : (exercises.Count > 0 ? "Exercise details ready" : "Flexible recovery day");
+            : (exercises.Count > 0 ? "Exercise details ready" : $"Planned {day.Name} session.");
     }
 
     private static string BuildWorkoutDaySubtitle(
@@ -1526,9 +1529,11 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
         IReadOnlyDictionary<int, Exercise> exercisesById)
     {
         if (string.Equals(day.WorkoutType, nameof(WorkoutType.Recovery), StringComparison.OrdinalIgnoreCase))
-            return "Easy movement to improve circulation and leave you fresher.";
+            return $"{day.Name} session for easy movement and recovery.";
         if (string.Equals(day.WorkoutType, nameof(WorkoutType.Cardio), StringComparison.OrdinalIgnoreCase))
-            return "Conditioning work paced so you can actually recover from it.";
+            return $"{day.Name} session paced to support recovery.";
+        if (exercises.Count == 0)
+            return $"{day.Name} session planned.";
         var names = exercises
             .Select(e => exercisesById.GetValueOrDefault(e.ExerciseId)?.Name)
             .Where(n => !string.IsNullOrWhiteSpace(n))
@@ -1544,6 +1549,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
         IReadOnlyList<WorkoutDayExerciseRecord> exercises)
     {
         var duration = BuildDurationText(day, exercises);
+        if (exercises.Count == 0)
+            return $"{day.Name}, about {duration}";
         return $"{exercises.Count} {(exercises.Count == 1 ? "exercise" : "exercises")}, about {duration}";
     }
 
@@ -1563,6 +1570,39 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             parsed.Add(WorkoutActivityType.HighVolumeStrength);
         return parsed;
     }
+
+    private static int ResolveSessionDurationMinutes(
+        string? activityDurationsJson,
+        IReadOnlyList<WorkoutActivityType> selectedActivities)
+    {
+        var planningActivity = selectedActivities.FirstOrDefault(IsStrengthPlanningActivity);
+        if (!IsStrengthPlanningActivity(planningActivity))
+            planningActivity = WorkoutActivityType.GeneralStrength;
+
+        var defaultMinutes = WorkoutPreferencesRule.DefaultSessionDurationMinutes(planningActivity) ??
+                             WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes;
+        if (string.IsNullOrWhiteSpace(activityDurationsJson))
+            return defaultMinutes;
+        try
+        {
+            using var document = JsonDocument.Parse(activityDurationsJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                return defaultMinutes;
+            if (document.RootElement.TryGetProperty(planningActivity.ToString(), out var duration) &&
+                duration.TryGetInt32(out var minutes) &&
+                WorkoutPreferencesRule.IsValidSessionDuration(planningActivity, minutes))
+                return minutes;
+        }
+        catch (JsonException)
+        {
+            return defaultMinutes;
+        }
+        return defaultMinutes;
+    }
+
+    private static bool IsStrengthPlanningActivity(WorkoutActivityType activity) => activity is
+        WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
+        WorkoutActivityType.StrengthHighIntensity;
 
     private static int? ExtractPlanningId(string? code)
     {

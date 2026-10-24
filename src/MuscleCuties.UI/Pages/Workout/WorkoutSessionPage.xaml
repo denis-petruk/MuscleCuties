@@ -27,6 +27,7 @@
         </Style>
         <Style x:Key="QuietButton" TargetType="Button">
             <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
             <Setter Property="TextColor"
                     Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
             <Setter Property="MinimumHeightRequest" Value="48" />
@@ -166,7 +167,7 @@
                     <Button Grid.Row="1" Text="{loc:LocalizedText Workout_Session_StartButton}"
                             Command="{Binding StartActivityCommand}"
                             IsEnabled="{Binding SelectedActivity.HasExercises}"
-                            CornerRadius="14" MinimumHeightRequest="52"
+                            CornerRadius="{StaticResource UiRadiusControl}" MinimumHeightRequest="52"
                             SemanticProperties.Hint="{loc:LocalizedText Workout_Session_BeginActivityAccessibility}" />
                 </Grid>
 

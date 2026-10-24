@@ -1727,6 +1727,28 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("body_weight_unit");
 
+                    b.Property<string>("ActivitySessionDurationsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("activity_session_durations_json");
+
+                    b.Property<string>("RequestedActivitySessionsPerWeekJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValueSql("'{}'::jsonb")
+                        .HasColumnName("requested_activity_sessions_per_week_json");
+
+                    b.Property<string>("ExcludedStrengthExerciseIdsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValueSql("'[]'::jsonb")
+                        .HasColumnName("excluded_strength_exercise_ids_json");
+
+                    b.Property<string>("AvailableWorkoutWeekdaysJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("available_workout_weekdays_json");
+
                     b.Property<int>("ConcurrencyVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAdd()
@@ -1741,11 +1763,6 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                     b.Property<int>("CycleLength")
                         .HasColumnType("integer")
                         .HasColumnName("cycle_length");
-
-                    b.Property<string>("CycleTrackingMode")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("cycle_tracking_mode");
 
                     b.Property<DateOnly?>("DateOfBirth")
                         .HasColumnType("date")
@@ -1820,10 +1837,6 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("reproductive_context_json");
 
-                    b.Property<int>("SessionDurationMinutes")
-                        .HasColumnType("integer")
-                        .HasColumnName("session_duration_minutes");
-
                     b.Property<string>("TrainingExperienceLevel")
                         .IsRequired()
                         .HasColumnType("text")
@@ -1864,7 +1877,13 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_user_profiles_user_id");
 
-                    b.ToTable("user_profiles", "app");
+                    b.ToTable("user_profiles", "app", t =>
+                        {
+                            t.HasCheckConstraint("ck_user_profiles_activity_session_durations_object", "jsonb_typeof(activity_session_durations_json) = 'object'");
+                            t.HasCheckConstraint("ck_user_profiles_available_workout_weekdays_array", "jsonb_typeof(available_workout_weekdays_json) = 'array'");
+                            t.HasCheckConstraint("ck_user_profiles_requested_activity_sessions_per_week_object", "jsonb_typeof(requested_activity_sessions_per_week_json) = 'object'");
+                            t.HasCheckConstraint("ck_user_profiles_excluded_strength_exercise_ids_array", "jsonb_typeof(excluded_strength_exercise_ids_json) = 'array'");
+                        });
                 });
 
             modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.UserProfileSnapshotRecord", b =>
@@ -2112,6 +2131,16 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_removed_by_readiness");
 
+                    b.Property<bool>("IsRemovedByUserAdjustment")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_removed_by_user_adjustment");
+
+                    b.Property<decimal?>("PlannedMainDurationMinutes")
+                        .HasColumnType("numeric")
+                        .HasColumnName("planned_main_duration_minutes");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
@@ -2144,7 +2173,10 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
 
                     b.HasIndex("UserId", "WorkoutPlanId");
 
-                    b.ToTable("workout_days", "app");
+                    b.ToTable("workout_days", "app", t =>
+                        {
+                            t.HasCheckConstraint("ck_workout_days_planned_main_duration_nonnegative", "planned_main_duration_minutes IS NULL OR planned_main_duration_minutes >= 0");
+                        });
                 });
 
             modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutExerciseLogRecord", b =>

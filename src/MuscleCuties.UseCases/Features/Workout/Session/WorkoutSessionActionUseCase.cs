@@ -1,3 +1,4 @@
+using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Workout.Session;
@@ -23,7 +24,7 @@ public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store
 {
     public Task<WorkoutSessionDetailDto> GetDetailAsync(int workoutDayId, CancellationToken cancellationToken = default)
     {
-        if (workoutDayId <= 0)
+        if (!WorkoutSessionActionRule.IsValidIdentifier(workoutDayId))
             throw new ArgumentOutOfRangeException(nameof(workoutDayId));
         return store.GetDetailAsync(workoutDayId, cancellationToken);
     }
@@ -31,10 +32,13 @@ public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store
     public Task LogAsync(LogWorkoutSessionRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.WorkoutDayId <= 0 || request.Date.Year is < 1970 or > 2099 ||
-            request.Exercises is null || request.Exercises.Any(e =>
-                e.WorkoutDayExerciseId <= 0 || e.ExerciseId <= 0 || e.CompletedSets < 0 || e.CompletedReps < 0 ||
-                (e.WeightKg is { } weight && (!float.IsFinite(weight) || weight < 0))))
+        var exerciseLogs = request.Exercises?.Select(exercise => new WorkoutSessionExerciseLog(
+            exercise.WorkoutDayExerciseId,
+            exercise.ExerciseId,
+            exercise.CompletedSets,
+            exercise.CompletedReps,
+            exercise.WeightKg));
+        if (!WorkoutSessionActionRule.IsValidSessionLog(request.WorkoutDayId, request.Date, exerciseLogs))
             throw new ArgumentException("Invalid workout session input.", nameof(request));
         return store.LogAsync(request, cancellationToken);
     }
@@ -42,7 +46,7 @@ public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store
     public Task<IReadOnlyList<WorkoutSwapCandidateDto>> GetSwapCandidatesAsync(
         int workoutDayExerciseId, CancellationToken cancellationToken = default)
     {
-        if (workoutDayExerciseId <= 0)
+        if (!WorkoutSessionActionRule.IsValidIdentifier(workoutDayExerciseId))
             throw new ArgumentOutOfRangeException(nameof(workoutDayExerciseId));
         return store.GetSwapCandidatesAsync(workoutDayExerciseId, cancellationToken);
     }
@@ -50,7 +54,7 @@ public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store
     public Task SwapAsync(SwapWorkoutExerciseRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.WorkoutDayExerciseId <= 0 || request.NewExerciseId <= 0)
+        if (!WorkoutSessionActionRule.IsValidSwap(request.WorkoutDayExerciseId, request.NewExerciseId))
             throw new ArgumentException("Invalid exercise swap input.", nameof(request));
         return store.SwapAsync(request, cancellationToken);
     }
@@ -58,7 +62,7 @@ public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store
     public Task<WorkoutMovementNoteDto> GetMovementNoteAsync(int workoutDayExerciseId,
         CancellationToken cancellationToken = default)
     {
-        if (workoutDayExerciseId <= 0)
+        if (!WorkoutSessionActionRule.IsValidIdentifier(workoutDayExerciseId))
             throw new ArgumentOutOfRangeException(nameof(workoutDayExerciseId));
         return store.GetMovementNoteAsync(workoutDayExerciseId, cancellationToken);
     }
@@ -67,7 +71,7 @@ public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.WorkoutDayExerciseId <= 0 || request.Notes?.Trim().Length > 2000)
+        if (!WorkoutSessionActionRule.IsValidMovementNote(request.WorkoutDayExerciseId, request.Notes))
             throw new ArgumentException("Invalid movement note.", nameof(request));
         return store.SaveMovementNoteAsync(request, cancellationToken);
     }
@@ -76,7 +80,7 @@ public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.WorkoutDayExerciseId <= 0 || request.OptionalSets < 0)
+        if (!WorkoutSessionActionRule.IsValidOptionalExercise(request.WorkoutDayExerciseId, request.OptionalSets))
             throw new ArgumentException("Invalid optional exercise input.", nameof(request));
         return store.SetExerciseOptionalAsync(request, cancellationToken);
     }

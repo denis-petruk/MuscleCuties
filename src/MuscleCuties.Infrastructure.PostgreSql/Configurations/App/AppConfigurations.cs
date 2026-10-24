@@ -239,6 +239,27 @@ public sealed class UserProfileConfiguration : IEntityTypeConfiguration<UserProf
         AppModelConfiguration.ConfigureTenant(builder, "user_profiles");
         builder.HasIndex(x => x.UserId).IsUnique().HasDatabaseName("uq_user_profiles_user_id");
         builder.Property(x => x.ConcurrencyVersion).HasDefaultValue(1).IsConcurrencyToken();
+        builder.Property(x => x.AvailableWorkoutWeekdaysJson).HasColumnName("available_workout_weekdays_json")
+            .HasColumnType("jsonb").IsRequired();
+        builder.Property(x => x.ActivitySessionDurationsJson).HasColumnName("activity_session_durations_json")
+            .HasColumnType("jsonb").IsRequired();
+        builder.Property(x => x.RequestedActivitySessionsPerWeekJson)
+            .HasColumnName("requested_activity_sessions_per_week_json")
+            .HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb").IsRequired();
+        builder.Property(x => x.ExcludedStrengthExerciseIdsJson)
+            .HasColumnName("excluded_strength_exercise_ids_json")
+            .HasColumnType("jsonb").HasDefaultValueSql("'[]'::jsonb").IsRequired();
+        builder.ToTable("user_profiles", "app", table =>
+        {
+            table.HasCheckConstraint("ck_user_profiles_available_workout_weekdays_array",
+                "jsonb_typeof(available_workout_weekdays_json) = 'array'");
+            table.HasCheckConstraint("ck_user_profiles_activity_session_durations_object",
+                "jsonb_typeof(activity_session_durations_json) = 'object'");
+            table.HasCheckConstraint("ck_user_profiles_requested_activity_sessions_per_week_object",
+                "jsonb_typeof(requested_activity_sessions_per_week_json) = 'object'");
+            table.HasCheckConstraint("ck_user_profiles_excluded_strength_exercise_ids_array",
+                "jsonb_typeof(excluded_strength_exercise_ids_json) = 'array'");
+        });
     }
 }
 
@@ -419,6 +440,10 @@ public sealed class WorkoutDayConfiguration : IEntityTypeConfiguration<WorkoutDa
         builder.Property(x => x.IsOptional).HasDefaultValue(false);
         builder.Property(x => x.IsEasierAlternative).HasDefaultValue(false);
         builder.Property(x => x.IsRemovedByReadiness).HasDefaultValue(false);
+        builder.Property(x => x.IsRemovedByUserAdjustment).HasDefaultValue(false);
+        builder.ToTable("workout_days", "app", table =>
+            table.HasCheckConstraint("ck_workout_days_planned_main_duration_nonnegative",
+                "planned_main_duration_minutes IS NULL OR planned_main_duration_minutes >= 0"));
         builder.HasOne<WorkoutPlanRecord>().WithMany().HasForeignKey(x => new { x.UserId, x.WorkoutPlanId })
             .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Cascade);
     }

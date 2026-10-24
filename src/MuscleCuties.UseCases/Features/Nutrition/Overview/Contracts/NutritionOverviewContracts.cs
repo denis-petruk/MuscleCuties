@@ -9,8 +9,11 @@ public sealed record NutritionTargetMacrosDto(
     float Calories,
     float Protein,
     float Carbs,
-    float Fats
+    float Fats,
+    NutritionMealDistributionDto? MealDistribution = null
 );
+
+public sealed record NutritionMealDistributionDto(float Breakfast, float Lunch, float Dinner, float Snack);
 
 public sealed record NutritionConsumedMacrosDto(
     float Calories,

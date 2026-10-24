@@ -21,16 +21,6 @@ Accepted code foundations do not establish acceptance of the expanded candidate.
 
 Apple requires an accessible in-app policy link and a policy URL in App Store Connect. See [App Review Guidelines, privacy and health sections](https://developer.apple.com/app-store/review/guidelines/#privacy) and [Manage app privacy](https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy/). Apple's [account-deletion guidance](https://developer.apple.com/help/app-review/guideline-reference/5-1-1-account-deletion) also calls for revoking Sign in with Apple tokens.
 
-## Candidate decisions resolved on 2026-10-21
-
-These product decisions from [roadmap](v1/ROADMAP.md) are now locked in code and documentation; live PostgreSQL and physical-device acceptance remain required before release:
-
-- **P01 (`P01-07`):** **Resolved (Retain saved meal-template shelf alongside recipes).** `GetRecipesAndTemplatesUseCase` and `SaveMealTemplateUseCase` remain active alongside `CreateRecipeUseCase` and `PreviewRecipePortionUseCase` so existing quick meal templates stay available without migration loss.
-- **P02:** **Resolved (Default copy mode: `Overwrite`; Target precedence: Daily macro targets authoritative).** Source-date diary copy defaults to `Overwrite`, and daily macro targets (`Calculated` or `UserWeekdayOverride` via `DiaryTargetPolicy`) remain authoritative; per-meal targets are informational and never override daily macro totals.
-- **P03 (`P03-05`):** **Resolved (First-party and USDA FoodData Central catalog only).** Barcode lookup (`LookupBarcodeUseCase` / `PostgresFoodCatalogStore`) is restricted to first-party and USDA catalog entries (`FoodCatalogProvenanceRule`), with no third-party commercial GTIN provider wired in this build.
-- **P04 (`P04-05`):** **Resolved (Default water presets `250 ml`, `500 ml`, `750 ml`; explicit quiet hours `22:00–08:00` local time).** Confirmed in `DefaultWaterPresets` and `FixedWaterReminderSettings`.
-- **P05 (`P05-01`, `P05-08`):** **Resolved conservatively (6-site vocabulary locked; zero active calorie eat-back).** `BodyMeasurementCodes` locks `Waist`, `Hips`, `Chest`, `UpperArm`, `Thigh`, and `Calf` within `1–500 cm` bounds, and calorie eat-back remains `0` (`no`) so unverified activity burn never inflates nutrition targets.
-- **P06 (`P06-01`):** **Resolved (Included under policy `P06-01-v0`; external clinical copy review complete).** Neutral elapsed-time fasting timer (`FastingSession`) with eligibility attestation and pregnancy safety gate remains active in the candidate.
 
 ## TestFlight checklist
 

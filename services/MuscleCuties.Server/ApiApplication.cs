@@ -229,7 +229,15 @@ public static class ApiApplication
         builder.Services.AddScoped<IWorkoutPlanningReferenceDataSource, PostgresWorkoutPlanningReferenceDataSource>();
         builder.Services.AddScoped<GenerateWorkoutPlanUseCase>();
         builder.Services.AddScoped<IStrengthPlanPreviewSourceV020, PostgresStrengthPlanPreviewSourceV020>();
+        builder.Services.AddScoped<IReviewedExerciseExclusionCatalogV020Store,
+            PostgresReviewedExerciseExclusionCatalogV020Store>();
+        builder.Services.AddScoped<GetReviewedExerciseExclusionCatalogV020UseCase>();
         builder.Services.AddScoped<PreviewStrengthPlanV020UseCase>();
+        builder.Services.AddScoped<IStrengthPlanProposalStoreV020, PostgresStrengthPlanProposalStoreV020>();
+        builder.Services.AddScoped<IAcceptStrengthPlanProposalStoreV020,
+            PostgresAcceptStrengthPlanProposalStoreV020>();
+        builder.Services.AddScoped<CreateStrengthPlanProposalV020UseCase>();
+        builder.Services.AddScoped<AcceptStrengthPlanProposalV020UseCase>();
         builder.Services.AddScoped<IWorkoutActiveSessionStore, PostgresWorkoutActiveSessionStore>();
         builder.Services.AddScoped<WorkoutActiveSessionUseCase>();
         builder.Services.AddScoped<IServerWorkoutArchiveStore, PostgresWorkoutArchiveStore>();
@@ -484,8 +492,8 @@ public static class ApiApplication
             if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
             var result = await profile.UpdateProfileAsync(new UpdateServerProfileRequest(userId, request.ExpectedVersion,
                 request.Name, request.DateOfBirth, request.SetDateOfBirth, request.Height, request.Weight, request.Goal,
-                request.WeightGoalPace, request.TrainingExperienceLevel, request.CycleTrackingMode, request.WorkoutDaysPerWeek,
-                request.CycleLength, request.DietaryTags, request.SessionDurationMinutes, request.EquipmentLevel,
+                request.WeightGoalPace, request.TrainingExperienceLevel,
+                request.CycleLength, request.DietaryTags, request.EquipmentLevel,
                 request.ReproductiveContextJson, request.ProfileImagePath), cancellationToken).ConfigureAwait(false);
             return MapProfileWrite(result);
         }).RequireAuthorization();
@@ -527,8 +535,9 @@ public static class ApiApplication
         {
             if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
             return MapProfileWrite(await profile.UpdateWorkoutPreferencesAsync(new UpdateServerWorkoutPreferencesRequest(
-                userId, request.ExpectedVersion, request.ActivityTypes, request.StrengthStyle, request.DaysPerWeek,
-                request.EquipmentLevel), cancellationToken).ConfigureAwait(false));
+                userId, request.ExpectedVersion, request.ActivityTypes, request.AvailableWeekdays,
+                request.ActivitySessionDurationsMinutes, request.EquipmentLevel,
+                request.RequestedSessionsPerWeek, request.ExcludedExerciseIds), cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
         app.MapPut("/api/v1/profile/nutrition-targets", async (
             UpdateServerNutritionTargetsBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
@@ -788,13 +797,16 @@ public static class ApiApplication
         string? EnergyUnit);
     private sealed record UpdateServerProfileBody(
         int ExpectedVersion, string? Name, DateOnly? DateOfBirth, bool SetDateOfBirth, decimal? Height, decimal? Weight,
-        string? Goal, string? WeightGoalPace, string? TrainingExperienceLevel, string? CycleTrackingMode,
-        int? WorkoutDaysPerWeek, int? CycleLength, string? DietaryTags, int? SessionDurationMinutes, string? EquipmentLevel,
+        string? Goal, string? WeightGoalPace, string? TrainingExperienceLevel,
+        int? CycleLength, string? DietaryTags, string? EquipmentLevel,
         string? ReproductiveContextJson = null, string? ProfileImagePath = null);
     private sealed record CorrectServerQuizResponseBody(int ExpectedVersion, int AnswerId);
     private sealed record UpdateServerNutritionPreferencesBody(int ExpectedVersion, string Goal, string WeightGoalPace, string DietaryTags);
     private sealed record UpdateServerWorkoutPreferencesBody(int ExpectedVersion, IReadOnlyList<int> ActivityTypes,
-        int StrengthStyle, int DaysPerWeek, string? EquipmentLevel = null);
+        IReadOnlyList<int> AvailableWeekdays, IReadOnlyDictionary<int, int> ActivitySessionDurationsMinutes,
+        string? EquipmentLevel = null,
+        IReadOnlyDictionary<int, int>? RequestedSessionsPerWeek = null,
+        IReadOnlySet<int>? ExcludedExerciseIds = null);
     private sealed record UpdateServerNutritionTargetsBody(int ExpectedVersion, IReadOnlyDictionary<string, JsonElement> Targets);
 
     private static readonly JsonSerializerOptions ChallengeJsonOptions = new() { PropertyNamingPolicy = null };

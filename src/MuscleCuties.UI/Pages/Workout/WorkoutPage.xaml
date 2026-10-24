@@ -32,7 +32,7 @@
             <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
             <Setter Property="BorderWidth" Value="1" />
             <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="MinimumHeightRequest" Value="44" />
             <Setter Property="Padding" Value="8,0" />
@@ -102,6 +102,12 @@
                             </Grid>
                         </Border>
                     </Grid>
+
+                    <Button
+                        Text="{loc:LocalizedText Workout_Generation_Open}"
+                        Command="{Binding OpenStrengthPlanCommand}"
+                        MinimumHeightRequest="{StaticResource UiControlHeight}"
+                        SemanticProperties.Hint="{loc:LocalizedText Workout_Generation_OpenHint}" />
 
                     <Border StrokeShape="RoundRectangle 12" Padding="12,10" StrokeThickness="0"
                             BackgroundColor="{AppThemeBinding Light={StaticResource WarningSurfaceLight}, Dark={StaticResource WarningSurfaceDark}}"

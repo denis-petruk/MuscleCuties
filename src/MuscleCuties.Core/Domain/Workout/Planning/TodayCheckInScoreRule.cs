@@ -57,7 +57,13 @@ public sealed record CheckInScoreResult(
 /// </summary>
 public static class TodayCheckInScoreRule
 {
-    public const string RulesetVersion = "MC-PLANNING-0.2";
+    public const string RulesetVersion = StrengthPlanPreviewRule.RulesetVersion;
+    public static bool ScoreDisplayEnabled => false;
+    public const int ReadinessScaleMinimum = 1;
+    public const int ReadinessScaleMaximum = 5;
+    public const int ReadinessScoreMaximum = 100;
+    public const int FeelingReadyThreshold = 75;
+    public const int ConsiderLighterSessionThreshold = 50;
     private const decimal ScoreDenominator = 16m;
 
     public static CheckInScoreResult Evaluate(
@@ -102,23 +108,23 @@ public static class TodayCheckInScoreRule
 
         var rawScore = CalculatePrototype(observation.SleepQuality.Value, observation.Energy.Value,
             observation.Soreness.Value, observation.Stress.Value);
-        var band = rawScore >= WorkoutTrainingPolicyV020.FeelingReadyThreshold
+        var band = rawScore >= TodayCheckInScoreRule.FeelingReadyThreshold
             ? CheckInScoreBand.FeelingReady
-            : rawScore >= WorkoutTrainingPolicyV020.ConsiderLighterSessionThreshold
+            : rawScore >= TodayCheckInScoreRule.ConsiderLighterSessionThreshold
                 ? CheckInScoreBand.ConsiderLighterSession
                 : CheckInScoreBand.ConsiderEasierDay;
         return new CheckInScoreResult(CheckInScoreStatus.Available, rawScore, band, observation);
     }
 
     internal static decimal CalculatePrototype(decimal sleepQuality, decimal energy, decimal soreness, decimal stress) =>
-        WorkoutTrainingPolicyV020.ReadinessScoreMaximum * ((sleepQuality - WorkoutTrainingPolicyV020.ReadinessScaleMinimum) +
-            (energy - WorkoutTrainingPolicyV020.ReadinessScaleMinimum) +
-            (WorkoutTrainingPolicyV020.ReadinessScaleMaximum - soreness) +
-            (WorkoutTrainingPolicyV020.ReadinessScaleMaximum - stress)) / ScoreDenominator;
+        TodayCheckInScoreRule.ReadinessScoreMaximum * ((sleepQuality - TodayCheckInScoreRule.ReadinessScaleMinimum) +
+            (energy - TodayCheckInScoreRule.ReadinessScaleMinimum) +
+            (TodayCheckInScoreRule.ReadinessScaleMaximum - soreness) +
+            (TodayCheckInScoreRule.ReadinessScaleMaximum - stress)) / ScoreDenominator;
 
     private static bool IsValidScaleValue(decimal value) =>
-        value >= WorkoutTrainingPolicyV020.ReadinessScaleMinimum &&
-        value <= WorkoutTrainingPolicyV020.ReadinessScaleMaximum && value == decimal.Truncate(value);
+        value >= TodayCheckInScoreRule.ReadinessScaleMinimum &&
+        value <= TodayCheckInScoreRule.ReadinessScaleMaximum && value == decimal.Truncate(value);
 
     private static CheckInScoreResult Unavailable(CheckInScoreStatus status, TodayCheckInObservation? observation) =>
         new(status, null, null, observation);

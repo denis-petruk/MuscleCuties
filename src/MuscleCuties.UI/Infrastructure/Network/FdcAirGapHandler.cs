@@ -1,6 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text;
-using MuscleCuties.Core.Domain.Nutrition;
+using MuscleCuties.Core.Services.Nutrition;
 
 namespace MuscleCuties.UI.Infrastructure.Network;
 
@@ -58,7 +58,7 @@ public sealed class FdcAirGapHandler : DelegatingHandler
 
         if (query.TryGetValue("query", out var searchTerm))
         {
-            var normalized = GenericFoodQueryRule.NormalizeOrEmpty(searchTerm);
+            var normalized = GenericFoodQueryPolicy.NormalizeOrEmpty(searchTerm);
             if (string.IsNullOrWhiteSpace(normalized))
                 throw new InvalidOperationException("The external food query is not a recognized generic food name.");
 

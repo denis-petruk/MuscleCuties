@@ -11,6 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/MuscleCuties.Infrastructure.PostgreSql/MuscleCuties.Infrastructure.PostgreSql.csproj" />
+    <ProjectReference Include="../../src/MuscleCuties.UseCases/MuscleCuties.UseCases.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Amazon.Lambda.AspNetCoreServer.Hosting" Version="2.2.1" />

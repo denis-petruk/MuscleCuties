@@ -1,5 +1,7 @@
 using System.Text.Json;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.Infrastructure.Cloud;
@@ -267,30 +269,31 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             if (path == "/api/v1/profile")
             {
                 return new ServerProfileSnapshot(
-                    "Elena",
-                    new DateOnly(1998, 5, 14),
-                    168m,
-                    61.5m,
-                    "Strength",
-                    "Steady",
-                    "Advanced",
-                    "ManualPhaseLogging",
-                    4,
-                    29,
-                    "Vegetarian",
-                    60,
-                    "FullGym",
-                    "HighVolumeStrength,Yoga,StrengthStyle:HeavyLowRep",
-                    "Metric",
-                    "kg",
-                    "g",
-                    "cm",
-                    "km",
-                    "kcal",
-                    "{}",
-                    3,
-                    "elena@example.test",
-                    "{\"Pregnancy\":1,\"Contraception\":2}");
+                    Name: "Elena",
+                    DateOfBirth: new DateOnly(1998, 5, 14),
+                    Height: 168m,
+                    Weight: 61.5m,
+                    Goal: "Strength",
+                    WeightGoalPace: "Steady",
+                    TrainingExperienceLevel: "Advanced",
+                    WorkoutDaysPerWeek: 4,
+                    AvailableWorkoutWeekdaysJson: "[1,3,5,6]",
+                    CycleLength: 29,
+                    DietaryTags: "Vegetarian",
+                    ActivitySessionDurationsJson: "{\"HighVolumeStrength\":60,\"Yoga\":15}",
+                    EquipmentLevel: "FullGym",
+                    PreferredWorkoutActivityTypes: "HighVolumeStrength,Yoga",
+                    UnitSystem: "Metric",
+                    BodyWeightUnit: "kg",
+                    FoodMassUnit: "g",
+                    HeightUnit: "cm",
+                    DistanceUnit: "km",
+                    EnergyUnit: "kcal",
+                    NutritionGoalsJson: "{}",
+                    Version: 3,
+                    Email: "elena@example.test",
+                    ReproductiveContextJson: "{\"Pregnancy\":1,\"Contraception\":2}",
+                    RequestedActivitySessionsPerWeekJson: "{\"Yoga\":2}");
             }
 
             if (path.StartsWith("/api/v1/cycle/overview", StringComparison.Ordinal))
@@ -324,7 +327,7 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             new SavePersonalInfoRequest(
                 "elena@example.test", "Elena", new DateTime(1998, 5, 14), 168f, 62f,
                 (int)UserGoal.Strength, (int)WeightGoalPace.Steady, (int)TrainingExperienceLevel.Advanced,
-                (int)CycleTrackingMode.ManualPhaseLogging, 4, 29, 1, 2),
+                29, 1, 2),
             CancellationToken.None);
         Xunit.Assert.True(savedPersonal);
         Xunit.Assert.Contains(("PUT", "/api/v1/profile"), apiClient.RecordedCalls);
@@ -340,7 +343,7 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         var workoutPrefsStore = new CloudProfileWorkoutPreferencesStore(apiClient);
         var loadedWorkoutPrefs = await workoutPrefsStore.LoadAsync(CancellationToken.None);
         Xunit.Assert.NotNull(loadedWorkoutPrefs);
-        Xunit.Assert.Equal(4, loadedWorkoutPrefs!.DaysPerWeek);
+        Xunit.Assert.Equal(new[] { 1, 3, 5, 6 }, loadedWorkoutPrefs!.AvailableWeekdays);
         var savedWorkoutPrefs = await workoutPrefsStore.SaveAndUpdatePlanAsync(loadedWorkoutPrefs, CancellationToken.None);
         Xunit.Assert.Equal(WorkoutPreferencesError.None, savedWorkoutPrefs);
         Xunit.Assert.Contains(("PUT", "/api/v1/profile/workout-preferences"), apiClient.RecordedCalls);

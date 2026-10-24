@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
@@ -122,9 +121,11 @@ public partial class FoodLogViewModel
             return;
         }
 
-        var servingGrams = gramsOverride
-            ?? (catalogItem.ServingSize.HasValue &&
-                FoodPortionMassRule.TryConvertMassToGrams(catalogItem.ServingSize.Value, catalogItem.ServingSizeUnit, out var resolved)
+        var servingConversion = catalogItem.ServingSize is { } servingSize
+            ? _recipePortionUseCase.ConvertMassToGrams(servingSize, catalogItem.ServingSizeUnit)
+            : null;
+        var servingGrams = gramsOverride ??
+            (servingConversion is { Succeeded: true, Grams: { } resolved }
                 ? resolved
                 : DefaultCatalogRecipeGrams);
         var scale = servingGrams / DefaultCatalogRecipeGrams;
@@ -169,35 +170,18 @@ public partial class FoodLogViewModel
                 ? ParseRecipeNumber(SelectedRecipePortionGramsText)
                 : null;
 
-            var batchWeight = MathF.Max(1f, recipe.PerServingGrams * recipe.ServingsCount);
-            var batch = new RecipeBatchTotals(
-                recipe.ServingsCount,
-                batchWeight,
-                batchWeight,
-                recipe.PerServingCalories * recipe.ServingsCount,
-                recipe.PerServingProtein * recipe.ServingsCount,
-                recipe.PerServingCarbs * recipe.ServingsCount,
-                recipe.PerServingNetCarbs * recipe.ServingsCount,
-                recipe.PerServingFats * recipe.ServingsCount);
-            var portion = RecipeBatchCalculationRule.CalculatePortion(batch, requestedServings, requestedGrams);
-            SelectedRecipePortionPreview = new RecipePortionPreviewDto(
+            SelectedRecipePortionPreview = _recipePortionUseCase.Calculate(new CalculateRecipePortionRequest(
                 recipe.Id,
                 recipe.Name,
-                batch.ServingsCount,
-                batch.TotalRawWeightGrams,
-                batch.CookedWeightGrams,
-                batch.TotalCalories,
-                batch.TotalProtein,
-                batch.TotalCarbs,
-                batch.TotalNetCarbs,
-                batch.TotalFats,
-                portion.SelectedServingsCount,
-                portion.SelectedGrams,
-                portion.Calories,
-                portion.Protein,
-                portion.Carbs,
-                portion.NetCarbs,
-                portion.Fats);
+                recipe.ServingsCount,
+                recipe.PerServingGrams,
+                recipe.PerServingCalories,
+                recipe.PerServingProtein,
+                recipe.PerServingCarbs,
+                recipe.PerServingNetCarbs,
+                recipe.PerServingFats,
+                requestedServings,
+                requestedGrams));
         }
         catch
         {

@@ -8,11 +8,11 @@ public sealed record ServerProfileSnapshot(
     string Goal,
     string WeightGoalPace,
     string TrainingExperienceLevel,
-    string CycleTrackingMode,
     int WorkoutDaysPerWeek,
+    string AvailableWorkoutWeekdaysJson,
     int CycleLength,
     string DietaryTags,
-    int SessionDurationMinutes,
+    string ActivitySessionDurationsJson,
     string EquipmentLevel,
     string PreferredWorkoutActivityTypes,
     string UnitSystem,
@@ -26,7 +26,9 @@ public sealed record ServerProfileSnapshot(
     string Email = "",
     string ReproductiveContextJson = "",
     DateTime? CreatedAtUtc = null,
-    string ProfileImagePath = "");
+    string ProfileImagePath = "",
+    string RequestedActivitySessionsPerWeekJson = "{}",
+    string ExcludedStrengthExerciseIdsJson = "[]");
 
 public sealed record UpdateServerProfileRequest(
     Guid UserId,
@@ -39,11 +41,8 @@ public sealed record UpdateServerProfileRequest(
     string? Goal,
     string? WeightGoalPace,
     string? TrainingExperienceLevel,
-    string? CycleTrackingMode,
-    int? WorkoutDaysPerWeek,
     int? CycleLength,
     string? DietaryTags,
-    int? SessionDurationMinutes,
     string? EquipmentLevel,
     string? ReproductiveContextJson = null,
     string? ProfileImagePath = null);
@@ -69,9 +68,11 @@ public sealed record UpdateServerWorkoutPreferencesRequest(
     Guid UserId,
     int ExpectedVersion,
     IReadOnlyList<int> ActivityTypes,
-    int StrengthStyle,
-    int DaysPerWeek,
-    string? EquipmentLevel = null);
+    IReadOnlyList<int> AvailableWeekdays,
+    IReadOnlyDictionary<int, int> ActivitySessionDurationsMinutes,
+    string? EquipmentLevel = null,
+    IReadOnlyDictionary<int, int>? RequestedSessionsPerWeek = null,
+    IReadOnlySet<int>? ExcludedExerciseIds = null);
 
 public sealed record UpdateServerNutritionTargetsRequest(
     Guid UserId,

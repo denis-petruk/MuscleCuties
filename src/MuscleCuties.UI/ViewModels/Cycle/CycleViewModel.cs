@@ -3,8 +3,9 @@ using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
-using MuscleCuties.Core.Domain.Cycle;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Services.Dashboard;
 using MuscleCuties.UI.Services.Profile;
@@ -24,6 +25,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     private readonly Func<DateTime> _currentDateProvider;
     private readonly List<CycleHistoryItem> _cycleHistory = new();
     private readonly ICycleDailyLogUseCase _dailyLog;
+    private readonly ICyclePhaseProjectionUseCase _phaseProjection;
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
 
     private readonly Func<Task>? _openCycleSettingsAsync;
@@ -69,6 +71,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     public CycleViewModel(
         ICycleOverviewUseCase overview,
+        ICyclePhaseProjectionUseCase phaseProjection,
         ICycleDailyLogUseCase dailyLog,
         ICyclePhaseEditUseCase phaseEdit,
         IProfileRefreshNotifier refreshNotifier,
@@ -77,6 +80,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         Func<Task>? openCycleSettingsAsync = null)
     {
         _overview = overview;
+        _phaseProjection = phaseProjection;
         _dailyLog = dailyLog;
         _phaseEdit = phaseEdit;
         _refreshNotifier = refreshNotifier;
@@ -286,7 +290,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         try
         {
             var nextPhase = HasActiveCycle
-                ? CyclePhaseRule.GetNextPhase(CurrentPhase)
+                ? _phaseProjection.GetNextPhase(new NextCyclePhaseInputDto(CurrentPhase)).NextPhase
                 : CyclePhase.Menstrual;
             var date = CurrentDate;
             if (!await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(date, nextPhase,
@@ -468,7 +472,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         return log is null ? "No shift logged yet" : $"{log.Phase} logged {log.LoggedAt:MMM d}";
     }
 
-    private static ObservableCollection<CycleDayItem> BuildCalendarDays(
+    private ObservableCollection<CycleDayItem> BuildCalendarDays(
         CyclePredictionSummary prediction,
         IReadOnlyCollection<CyclePhaseEntry> phaseLogs,
         IReadOnlyCollection<CycleHistoryItem> cycleHistory,
@@ -506,7 +510,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         return items;
     }
 
-    private static CycleDayItem CreateCalendarDayItem(
+    private CycleDayItem CreateCalendarDayItem(
         DateTime date,
         CyclePredictionSummary prediction,
         IReadOnlyCollection<CyclePhaseEntry> orderedPhaseLogs,
@@ -524,7 +528,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             symptomLogs,
             today,
             selectedDate,
-            useDarkTheme);
+            useDarkTheme,
+            _phaseProjection);
     }
 
     private static Color ResolveDayStrokeColor(
@@ -536,23 +541,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     {
         return CycleCalendarItemBuilder.ResolveDayStrokeColor(phase, isToday, hasRecordedObservation, isEstimated,
             useDarkTheme);
-    }
-
-    private static int ResolveCycleDay(DateTime date, DateTime? cycleStartDate, int cycleLength)
-    {
-        return CycleCalendarItemBuilder.ResolveCycleDay(date, cycleStartDate, cycleLength);
-    }
-
-    private static CyclePhase ResolveCalendarPhase(
-        int cycleDay,
-        DateTime date,
-        int cycleLength,
-        CyclePredictionSummary prediction,
-        CyclePhaseEntry? latestShift,
-        DateTime today)
-    {
-        return CycleCalendarItemBuilder.ResolveCalendarPhase(cycleDay, date, cycleLength, prediction, latestShift,
-            today);
     }
 
     private static Color GetDayBackground(CyclePhase phase, bool isToday, bool useDarkTheme)

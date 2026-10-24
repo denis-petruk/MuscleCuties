@@ -14,10 +14,12 @@ public class QuizRepository(AppDatabase db) : BaseRepository<QuizQuestion>(db), 
     {
         var questions = await _db.QuizQuestions
             .AsNoTracking()
-            .Where(q => q.QuestionType != QuizQuestionType.CycleTrackingMode)
             .OrderBy(q => q.OrderIndex)
             .ThenBy(q => q.Id)
             .ToListAsync();
+        questions = questions
+            .Where(question => question.QuestionType.IsAvailableInCurrentOnboarding())
+            .ToList();
 
         if (questions.Count == 0)
             return questions;

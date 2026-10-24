@@ -11,7 +11,6 @@ public sealed record GenerateWorkoutPlanRequest(
     int DaysPerWeek,
     int SessionMinutesCap,
     IReadOnlyList<WorkoutActivityType> SelectedActivities,
-    StrengthTrainingStyle Style,
     Equipment Equipment,
     CyclePhase Phase,
     bool AllowsCyclePhaseAdjustments,

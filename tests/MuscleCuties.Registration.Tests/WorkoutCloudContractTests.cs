@@ -26,6 +26,22 @@ public sealed class WorkoutCloudContractTests
     private static readonly Guid SetId = Guid.Parse("22222222-2222-4222-8222-222222222222");
 
     [Xunit.Fact]
+    public async Task CloudReviewedExerciseExclusionStoreReadsOnlyTheReviewedCatalogRoute()
+    {
+        var expected = new[] { new ReviewedExerciseExclusionOptionV020(101, "Barbell Hip Thrust") };
+        var api = new RecordingWorkoutApiClient((_, responseType) =>
+            responseType == typeof(ReviewedExerciseExclusionOptionV020[]) ? expected : null);
+        var store = new CloudReviewedExerciseExclusionCatalogV020Store(api);
+
+        var choices = await store.LoadAsync();
+
+        Xunit.Assert.Equal(expected, choices);
+        var call = Xunit.Assert.Single(api.Calls);
+        Xunit.Assert.Equal("GET", call.Method);
+        Xunit.Assert.Equal("/api/v1/workouts/plan/exercise-exclusions", call.Path);
+    }
+
+    [Xunit.Fact]
     public async Task CloudStoresPreserveWorkoutRoutesIdsAndMutationBodies()
     {
         var api = new RecordingWorkoutApiClient((path, responseType) => responseType == typeof(WorkoutOverviewResponse)
@@ -140,6 +156,7 @@ public sealed class WorkoutCloudContractTests
         foreach (var route in new (string Method, string Path)[]
         {
             ("GET", "/api/v1/workouts/catalog"), ("POST", "/api/v1/workouts/plan"),
+            ("GET", "/api/v1/workouts/plan/exercise-exclusions"),
             ("GET", "/api/v1/workouts/overview"), ("POST", "/api/v1/workouts/reschedule"),
             ("GET", "/api/v1/workouts/day-sessions/{workoutDayId:int}"),
             ("POST", "/api/v1/workouts/day-sessions/log"),

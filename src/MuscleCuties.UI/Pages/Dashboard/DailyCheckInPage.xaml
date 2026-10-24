@@ -31,6 +31,7 @@
         <Style x:Key="CheckInChoice" TargetType="Button">
             <Setter Property="BackgroundColor"
                     Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" />
+            <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
             <Setter Property="TextColor"
                     Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
             <Setter Property="BorderColor"
@@ -125,35 +126,35 @@
                                     Text="1"
                                     CommandParameter="1" Clicked="OnEnergyClicked"
                                     MinimumHeightRequest="48" Padding="0" FontSize="16" FontAttributes="Bold"
-                                    CornerRadius="12" BorderWidth="1"
+                                    CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Energy1A11y}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_Energy1Hint}" />
                             <Button x:Name="EnergyChip2" Style="{StaticResource CheckInChoice}" Grid.Column="1"
                                     Text="2"
                                     CommandParameter="2" Clicked="OnEnergyClicked"
                                     MinimumHeightRequest="48" Padding="0" FontSize="16" FontAttributes="Bold"
-                                    CornerRadius="12" BorderWidth="1"
+                                    CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Energy2A11y}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_Energy2Hint}" />
                             <Button x:Name="EnergyChip3" Style="{StaticResource CheckInChoice}" Grid.Column="2"
                                     Text="3"
                                     CommandParameter="3" Clicked="OnEnergyClicked"
                                     MinimumHeightRequest="48" Padding="0" FontSize="16" FontAttributes="Bold"
-                                    CornerRadius="12" BorderWidth="1"
+                                    CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Energy3A11y}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_Energy3Hint}" />
                             <Button x:Name="EnergyChip4" Style="{StaticResource CheckInChoice}" Grid.Column="3"
                                     Text="4"
                                     CommandParameter="4" Clicked="OnEnergyClicked"
                                     MinimumHeightRequest="48" Padding="0" FontSize="16" FontAttributes="Bold"
-                                    CornerRadius="12" BorderWidth="1"
+                                    CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Energy4A11y}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_Energy4Hint}" />
                             <Button x:Name="EnergyChip5" Style="{StaticResource CheckInChoice}" Grid.Column="4"
                                     Text="5"
                                     CommandParameter="5" Clicked="OnEnergyClicked"
                                     MinimumHeightRequest="48" Padding="0" FontSize="16" FontAttributes="Bold"
-                                    CornerRadius="12" BorderWidth="1"
+                                    CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Energy5A11y}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_Energy5Hint}" />
                         </Grid>
@@ -181,28 +182,28 @@
                                     Grid.Column="0" Text="{loc:LocalizedText Dashboard_CheckIn_PainNone}"
                                     CommandParameter="0" Clicked="OnPainClicked"
                                     MinimumHeightRequest="48" Padding="4,0" FontSize="14" FontAttributes="Bold"
-                                    CornerRadius="12" BorderWidth="1"
+                                    CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PainNoneA11y}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_PainNoneHint}" />
                             <Button x:Name="PainChip1" Style="{StaticResource CheckInChoice}" Grid.Row="0"
                                     Grid.Column="1" Text="{loc:LocalizedText Dashboard_CheckIn_PainMild}"
                                     CommandParameter="1" Clicked="OnPainClicked"
                                     MinimumHeightRequest="48" Padding="4,0" FontSize="14" FontAttributes="Bold"
-                                    CornerRadius="12" BorderWidth="1"
+                                    CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PainMildA11y}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_PainMildHint}" />
                             <Button x:Name="PainChip2" Style="{StaticResource CheckInChoice}" Grid.Row="1"
                                     Grid.Column="0" Text="{loc:LocalizedText Dashboard_CheckIn_PainModerate}"
                                     CommandParameter="2" Clicked="OnPainClicked"
                                     MinimumHeightRequest="48" Padding="4,0" FontSize="14" FontAttributes="Bold"
-                                    CornerRadius="12" BorderWidth="1"
+                                    CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PainModerateA11y}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_PainModerateHint}" />
                             <Button x:Name="PainChip3" Style="{StaticResource CheckInChoice}" Grid.Row="1"
                                     Grid.Column="1" Text="{loc:LocalizedText Dashboard_CheckIn_PainSevere}"
                                     CommandParameter="3" Clicked="OnPainClicked"
                                     MinimumHeightRequest="48" Padding="4,0" FontSize="14" FontAttributes="Bold"
-                                    CornerRadius="12" BorderWidth="1"
+                                    CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PainSevereA11y}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_PainSevereHint}" />
                         </Grid>

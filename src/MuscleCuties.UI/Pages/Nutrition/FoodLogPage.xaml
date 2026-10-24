@@ -62,7 +62,7 @@
                 Command="{Binding JumpToTodayCommand}"
                 HeightRequest="36"
                 Padding="12,0"
-                CornerRadius="18"
+                CornerRadius="{StaticResource UiRadiusControl}"
                 FontSize="13"
                 FontAttributes="Bold"
                 BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}"
@@ -225,7 +225,7 @@
                                 CommandParameter="{Binding PickerDate}"
                                 HeightRequest="36"
                                 Padding="14,0"
-                                CornerRadius="8"
+                                CornerRadius="{StaticResource UiRadiusControl}"
                                 FontSize="13"
                                 FontAttributes="Bold" />
                         </Grid>
@@ -360,13 +360,13 @@
                                 <Button Grid.Column="2" Text="{loc:LocalizedText Nutrition_FoodLog_SubtractWaterTwoFiftyMl}"
                                         Command="{Binding RemoveWaterCommand}"
                                         CommandParameter="{x:Int32 250}" HeightRequest="30" Padding="8,0" FontSize="11"
-                                        CornerRadius="6"
+                                        CornerRadius="{StaticResource UiRadiusControl}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 <Button Grid.Column="3" Text="{loc:LocalizedText Nutrition_FoodLog_AddWaterTwoFiftyMl}"
                                         Command="{Binding AddWaterCommand}"
                                         CommandParameter="{x:Int32 250}" HeightRequest="30" Padding="8,0" FontSize="11"
-                                        CornerRadius="6"
+                                        CornerRadius="{StaticResource UiRadiusControl}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}"
                                         TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
                             </Grid>
@@ -743,10 +743,10 @@
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                                 <Button Text="{loc:LocalizedText Nutrition_FoodLog_SearchDevice}" Command="{Binding SearchFoodCommand}"
                                         FontSize="12"
-                                        HeightRequest="44" CornerRadius="9" />
+                                        HeightRequest="44" CornerRadius="{StaticResource UiRadiusControl}" />
                                 <Button Grid.Column="1" Text="{loc:LocalizedText Nutrition_FoodLog_SearchUsda}"
                                         Command="{Binding SearchUsdaCommand}"
-                                        FontSize="12" HeightRequest="44" CornerRadius="9"
+                                        FontSize="12" HeightRequest="44" CornerRadius="{StaticResource UiRadiusControl}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                             </Grid>
@@ -774,23 +774,23 @@
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" VerticalOptions="Center">
                                     <Button Text="{Binding SelectedQuickFoodsSummaryText}"
                                             Command="{Binding BatchLogSelectedFoodsCommand}"
-                                            HeightRequest="46" CornerRadius="12"
+                                            HeightRequest="46" CornerRadius="{StaticResource UiRadiusControl}"
                                             FontAttributes="Bold" FontSize="13"
                                             BackgroundColor="{StaticResource PrimaryDark}" TextColor="{StaticResource White}" />
                                     <Button Grid.Column="1" Text="{loc:LocalizedText Common_Cancel}"
                                             Command="{Binding ClearQuickFoodSelectionCommand}"
-                                            HeightRequest="46" CornerRadius="12"
+                                            HeightRequest="46" CornerRadius="{StaticResource UiRadiusControl}"
                                             Style="{StaticResource ButtonSecondary}" Padding="12,0" FontSize="12" />
                                 </Grid>
                             </Border>
 
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                                 <Button Text="⚡ Quick Add" Command="{Binding OpenQuickAddCaloriesCommand}"
-                                        HeightRequest="40" CornerRadius="9"
+                                        HeightRequest="40" CornerRadius="{StaticResource UiRadiusControl}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray800}}"
                                         TextColor="{StaticResource PrimaryDark}" FontAttributes="Bold" />
                                 <Button Grid.Column="1" Text="{loc:LocalizedText Nutrition_FoodLog_AddFoodManually}" Command="{Binding UseManualFoodCommand}"
-                                        HeightRequest="40" CornerRadius="9"
+                                        HeightRequest="40" CornerRadius="{StaticResource UiRadiusControl}"
                                         BackgroundColor="{StaticResource Primary}" TextColor="{StaticResource White}" />
                             </Grid>
                             <Button Text="{loc:LocalizedText Nutrition_Recipe_Create}"
@@ -914,11 +914,11 @@
                             <!-- Actions -->
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,8,0,0">
                                 <Button Text="Cancel" Command="{Binding CancelQuickAddCaloriesCommand}"
-                                        HeightRequest="44" CornerRadius="9"
+                                        HeightRequest="44" CornerRadius="{StaticResource UiRadiusControl}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 <Button Grid.Column="1" Text="Log Calories" Command="{Binding SaveQuickCaloriesCommand}"
-                                        HeightRequest="44" CornerRadius="9"
+                                        HeightRequest="44" CornerRadius="{StaticResource UiRadiusControl}"
                                         BackgroundColor="{StaticResource Primary}" TextColor="{StaticResource White}" FontAttributes="Bold" />
                             </Grid>
                         </VerticalStackLayout>
@@ -930,7 +930,7 @@
                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                        VerticalOptions="Center" />
                                 <Button Grid.Column="1" Text="✕" Command="{Binding CloseBarcodeScannerCommand}"
-                                        HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="16"
+                                        HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="{StaticResource UiRadiusControl}"
                                         BackgroundColor="Transparent"
                                         TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                             </Grid>
@@ -953,7 +953,7 @@
                                             SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_BarcodeLookup}"
                                             Command="{Binding LookupBarcodeCommand}"
                                             CommandParameter="{Binding BarcodeInputText}"
-                                            HeightRequest="44" CornerRadius="9"
+                                            HeightRequest="44" CornerRadius="{StaticResource UiRadiusControl}"
                                             BackgroundColor="{StaticResource Primary}" TextColor="{StaticResource White}" FontAttributes="Bold" />
                                 </Grid>
                             </VerticalStackLayout>
@@ -1079,7 +1079,7 @@
                                     Text="{loc:LocalizedText Common_Save}"
                                     Command="{Binding SaveFoodItemCommand}"
                                     HeightRequest="44"
-                                    CornerRadius="10"
+                                    CornerRadius="{StaticResource UiRadiusControl}"
                                     FontAttributes="Bold"
                                     BackgroundColor="{StaticResource Primary}"
                                     TextColor="{StaticResource White}" />
@@ -1089,7 +1089,7 @@
                                     Text="{loc:LocalizedText Common_Delete}"
                                     Command="{Binding DeleteFoodItemCommand}"
                                     HeightRequest="44"
-                                    CornerRadius="10"
+                                    CornerRadius="{StaticResource UiRadiusControl}"
                                     FontAttributes="Bold"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
                                     TextColor="{StaticResource White}"
@@ -1100,7 +1100,7 @@
                                     Text="{loc:LocalizedText Common_Cancel}"
                                     Command="{Binding CloseEditModalCommand}"
                                     HeightRequest="44"
-                                    CornerRadius="10"
+                                    CornerRadius="{StaticResource UiRadiusControl}"
                                     BackgroundColor="Transparent"
                                     BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
                                     BorderWidth="1"

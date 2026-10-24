@@ -385,8 +385,6 @@ internal static partial class RussianUiText
         Values["Onboarding_Activity_YogaDescription"] = "Двигайтесь, растягивайтесь и дышите в своём темпе.";
         Values["Workout_ActivityPreference_SelectedHint"] = "Занятие выбрано. Двойное нажатие отменит выбор.";
         Values["Workout_ActivityPreference_UnselectedHint"] = "Занятие не выбрано. Двойное нажатие выберет его.";
-        Values["Workout_StrengthStyle_SelectedHint"] = "Стиль силовой тренировки выбран.";
-        Values["Workout_StrengthStyle_UnselectedHint"] = "Не выбрано. Двойное нажатие выберет этот стиль.";
         Values["Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo"] = "Пожалуйста, подтвердите уведомление о благополучии, чтобы продолжить.";
         Values["Onboarding_ProfileSetup_ProfilePhoto"] = "Фотография профиля";
         Values["Onboarding_ProfileSetup_ProfilePhotoOptionalDoubleTapTo"] = "Фото профиля, необязательно. Двойной тап для смены.";
@@ -411,6 +409,7 @@ internal static partial class RussianUiText
         Values["Onboarding_Quiz_DoubleTapToGoBack"] = "Двойной тап, чтобы вернуться назад";
         Values["Onboarding_Quiz_DoubleTapToReloadTheQuiz"] = "Дважды нажмите, чтобы повторно загрузить вопросы опроса.";
         Values["Onboarding_Quiz_DoubleTapToSelectThisAnswer"] = "Дважды коснитесь, чтобы выбрать этот ответ";
+        Values["Onboarding_Quiz_AvailableWeekdaysMinimum"] = "Выберите от 2 до 7 дней, когда вы можете тренироваться.";
         Values["Onboarding_Quiz_GoBackToProfile"] = "Назад";
         Values["Onboarding_Quiz_GoBackToProfileConfirmationTitle"] = "Вернуться к профилю?";
         Values["Onboarding_Quiz_GoBackToProfileConfirmationBody"] = "При возвращении ответы на вопросы будут сброшены.";
@@ -458,7 +457,7 @@ internal static partial class RussianUiText
         Values["Profile_Details_TapToOpenFullPhotoJourney"] = "Нажмите, чтобы открыть полную фотогалерею";
         Values["Profile_Details_TapToOpenVaultAndAdd"] = "Нажмите, чтобы открыть сейф и добавить первое фото прогресса";
         Values["Profile_Details_TapToRevealPreview"] = "Нажмите, чтобы показать";
-        Values["Profile_Details_TrainingSplit"] = "Разделение тренировок";
+        Values["Profile_Details_WorkoutAvailability"] = "Доступность для тренировок";
         Values["Profile_Details_UnitsDisplay"] = "Единицы и отображение";
         Values["Profile_Feedback_AddFile"] = "Добавить файл";
         Values["Profile_Feedback_Attachment"] = "Прикрепление";
@@ -559,6 +558,8 @@ internal static partial class RussianUiText
         Values["Profile_PersonalInfo_HormonalContraceptionOrCyclePattern"] = "Гормональная контрацепция или цикл";
         Values["Profile_PersonalInfo_LocalOnly"] = "Личный аккаунт";
         Values["Profile_PersonalInfo_LoggingMethod"] = "Способ ведения журнала";
+        Values["Profile_PersonalInfo_CycleLengthDays"] = "Обычная длина цикла (дни)";
+        Values["Profile_PersonalInfo_CycleLengthPlaceholder"] = "Например, 28";
         Values["Profile_PersonalInfo_Name"] = "Имя";
         Values["Profile_PersonalInfo_PersonalInfo"] = "Личная информация";
         Values["Profile_PersonalInfo_PregnancyOrBreastfeeding"] = "Беременность или кормление грудью";
@@ -600,19 +601,29 @@ internal static partial class RussianUiText
         Values["Profile_Units_SelectMetricUnits"] = "Выбрать метрические единицы";
         Values["Profile_Units_UnitsAndDisplay"] = "Единицы измерения и отображение";
         Values["Profile_WorkoutPrefs_ActivityPreferences"] = "Предпочтения активности";
-        Values["Profile_WorkoutPrefs_WorkoutsPerWeek"] = "Тренировок в неделю";
-        Values["Profile_WorkoutPrefs_DaysPerWeekFormat"] = "Тренировок в неделю: {0}";
-        Values["Profile_WorkoutPrefs_DecreaseDaysPerWeek"] = "Меньше тренировок в неделю";
-        Values["Profile_WorkoutPrefs_IncreaseDaysPerWeek"] = "Больше тренировок в неделю";
-        Values["Profile_WorkoutPrefs_InvalidPreferences"] = "Проверьте виды активности и выберите от 2 до 6 тренировок в неделю, затем сохраните снова.";
+        Values["Profile_WorkoutPrefs_AvailableWeekdays"] = "Доступные дни недели";
+        Values["Profile_WorkoutPrefs_AvailableWeekdaysHint"] = "Выберите от 2 до 7 дней недели, когда вы можете тренироваться.";
+        Values["Profile_WorkoutPrefs_SelectedWeekdaysFormat"] = "Выбрано дней недели: {0}";
+        Values["Profile_WorkoutPrefs_SessionLength"] = "Длительность занятия в минутах";
+        Values["Profile_WorkoutPrefs_WeeklyFrequency"] = "Занятий в неделю";
+        Values["Profile_WorkoutPrefs_ChooseActivitySessionLength"] =
+            "Выберите допустимую длительность для каждой выбранной активности, которой она требуется.";
+        Values["Profile_WorkoutPrefs_ChooseActivityWeeklyFrequency"] =
+            "Укажите желаемое число занятий йогой, мобильностью или мягким восстановлением в неделю.";
+        Values["Profile_WorkoutPrefs_ActivitySessionLengthHint"] =
+            "Укажите длительность каждой активности и частоту йоги, мобильности или мягкого восстановления в неделю.";
+        Values["Profile_WorkoutPrefs_InvalidPreferences"] = "Проверьте активности, выберите от 2 до 7 доступных дней и укажите обязательную длительность и частоту.";
         Values["Profile_WorkoutPrefs_PlanUpdateFailed"] = "Не удалось обновить план тренировок. Настройки не сохранены. Попробуйте ещё раз.";
         Values["Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"] = "Для вашего плана требуется хотя бы одно упражнение на силу.";
         Values["Profile_WorkoutPrefs_SaveWorkoutPreferences"] = "Сохранить настройки тренировки";
         Values["Profile_WorkoutPrefs_SavingPreferences"] = "Сохранение предпочтений";
         Values["Profile_WorkoutPrefs_UpdatingPlan"] = "Обновляем план тренировок…";
-        Values["Profile_WorkoutPrefs_StrengthStyle"] = "Стиль силовых упражнений";
         Values["Profile_WorkoutPrefs_AvailableEquipment"] = "Доступное оборудование";
         Values["Profile_WorkoutPrefs_ChooseEquipment"] = "Выберите оборудование";
+        Values["Profile_WorkoutPrefs_ExerciseExclusions"] = "Упражнения, которых следует избегать";
+        Values["Profile_WorkoutPrefs_ExerciseExclusionsHint"] = "Выберите проверенные упражнения, которые нужно исключать из каждого нового предварительного плана силовых тренировок.";
+        Values["Profile_WorkoutPrefs_SearchExercises"] = "Поиск проверенных упражнений";
+        Values["Profile_WorkoutPrefs_ExerciseCatalogUnavailable"] = "Не удалось загрузить проверенные упражнения. Подключитесь к сети и снова откройте эти настройки перед сохранением.";
         Values["Profile_WorkoutPrefs_EquipmentFullGym"] = "Полный тренажёрный зал";
         Values["Profile_WorkoutPrefs_EquipmentHome"] = "Гантели и эспандеры";
         Values["Profile_WorkoutPrefs_EquipmentBodyweight"] = "Только вес тела";

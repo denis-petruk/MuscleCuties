@@ -2,6 +2,21 @@ using MuscleCuties.Core.Domain.Fasting;
 
 namespace MuscleCuties.UseCases.Features.Fasting;
 
+public enum FastingEligibilityResponseDto
+{
+    Unanswered,
+    YesAllApply,
+    No,
+    Unsure
+}
+
+public enum FastingSessionStatusDto
+{
+    Active,
+    Paused,
+    Ended
+}
+
 public sealed record FastingPauseIntervalDto(DateTimeOffset PausedAtUtc, DateTimeOffset? ResumedAtUtc);
 
 public sealed record FastingSessionOutputDto(
@@ -10,7 +25,7 @@ public sealed record FastingSessionOutputDto(
     string AttestationPolicyVersion,
     DateTimeOffset StartedAtUtc,
     int DisplayUtcOffsetMinutes,
-    FastingSessionStatus Status,
+    FastingSessionStatusDto Status,
     DateTimeOffset? EndedAtUtc,
     DateTimeOffset? PlannedEndAtUtc,
     bool EnablePlannedEndReminder,
@@ -29,7 +44,7 @@ public sealed record StartFastingSessionInputDto(
     Guid AccountId,
     Guid SessionId,
     Guid CommandId,
-    FastingEligibilityResponse EligibilityResponse,
+    FastingEligibilityResponseDto EligibilityResponse,
     DateTimeOffset StartedAtUtc,
     int DisplayUtcOffsetMinutes,
     DateTimeOffset? PlannedEndAtUtc = null,
@@ -42,7 +57,7 @@ public sealed record TransitionFastingSessionInputDto(
     Guid CommandId,
     int ExpectedVersion,
     DateTimeOffset TransitionAtUtc,
-    FastingEligibilityResponse EligibilityResponse = FastingEligibilityResponse.YesAllApply,
+    FastingEligibilityResponseDto EligibilityResponse = FastingEligibilityResponseDto.YesAllApply,
     bool? IsProfilePregnant = null);
 
 public sealed record CorrectFastingSessionInputDto(
@@ -81,7 +96,8 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
             .OrderByDescending(s => s.StartedAtUtc)
             .Select(s => Map(s, now, isClockUncertain))
             .ToArray();
-        var active = mapped.FirstOrDefault(s => s.Status is FastingSessionStatus.Active or FastingSessionStatus.Paused);
+        var active = mapped.FirstOrDefault(s =>
+            s.Status is FastingSessionStatusDto.Active or FastingSessionStatusDto.Paused);
         return new FastingStateOutputDto(active, mapped);
     }
 
@@ -101,7 +117,7 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
         var session = FastingSession.Start(
             input.SessionId,
             input.AccountId,
-            input.EligibilityResponse,
+            ToDomain(input.EligibilityResponse),
             input.StartedAtUtc,
             input.DisplayUtcOffsetMinutes,
             input.PlannedEndAtUtc,
@@ -136,7 +152,8 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
         if (replay is not null) return replay;
 
         var session = await RequireSessionAsync(input.AccountId, input.SessionId, cancellationToken).ConfigureAwait(false);
-        session.Resume(input.ExpectedVersion, input.TransitionAtUtc, input.EligibilityResponse, input.IsProfilePregnant);
+        session.Resume(input.ExpectedVersion, input.TransitionAtUtc,
+            ToDomain(input.EligibilityResponse), input.IsProfilePregnant);
         var saved = await store.SaveAsync(input.AccountId, input.CommandId, sig, session, input.ExpectedVersion, cancellationToken).ConfigureAwait(false);
         return Map(saved, timeProvider.GetUtcNow(), false);
     }
@@ -202,6 +219,23 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
             throw new ArgumentException("A non-empty command ID is required.", nameof(commandId));
     }
 
+    private static FastingEligibilityResponse ToDomain(FastingEligibilityResponseDto response) => response switch
+    {
+        FastingEligibilityResponseDto.Unanswered => FastingEligibilityResponse.Unanswered,
+        FastingEligibilityResponseDto.YesAllApply => FastingEligibilityResponse.YesAllApply,
+        FastingEligibilityResponseDto.No => FastingEligibilityResponse.No,
+        FastingEligibilityResponseDto.Unsure => FastingEligibilityResponse.Unsure,
+        _ => throw new ArgumentOutOfRangeException(nameof(response), response, "Unknown fasting eligibility response.")
+    };
+
+    private static FastingSessionStatusDto ToDto(FastingSessionStatus status) => status switch
+    {
+        FastingSessionStatus.Active => FastingSessionStatusDto.Active,
+        FastingSessionStatus.Paused => FastingSessionStatusDto.Paused,
+        FastingSessionStatus.Ended => FastingSessionStatusDto.Ended,
+        _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Unknown fasting session status.")
+    };
+
     public static FastingSessionOutputDto Map(FastingSession session, DateTimeOffset referenceNowUtc, bool isClockUncertain)
     {
         var evaluation = session.EvaluateElapsed(referenceNowUtc, isClockUncertain);
@@ -211,7 +245,7 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
             session.AttestationPolicyVersion,
             session.StartedAtUtc,
             session.DisplayUtcOffsetMinutes,
-            session.Status,
+            ToDto(session.Status),
             session.EndedAtUtc,
             session.PlannedEndAtUtc,
             session.EnablePlannedEndReminder,

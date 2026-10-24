@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
-using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Nutrition;
 using MuscleCuties.Core.Models.Nutrition.Planning;
@@ -445,13 +444,13 @@ public partial class NutritionViewModel
 
     private string GetMealTypeCaloriesText(MealType mealType)
     {
-        var share = MealDistributionRule.GetShares(BreakfastPreference);
+        var share = _mealDistribution;
         var targetFraction = mealType switch
         {
-            MealType.Breakfast => share.Breakfast,
-            MealType.Lunch => share.Lunch,
-            MealType.Dinner => share.Dinner,
-            MealType.Snack => share.Snack,
+            MealType.Breakfast => share?.Breakfast ?? 0f,
+            MealType.Lunch => share?.Lunch ?? 0f,
+            MealType.Dinner => share?.Dinner ?? 0f,
+            MealType.Snack => share?.Snack ?? 0f,
             _ => 0.25f
         };
         var calories = (int)(TargetCalories * targetFraction);

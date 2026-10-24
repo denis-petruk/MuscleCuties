@@ -42,7 +42,7 @@ public sealed class LocalProfileSetupStore(
         {
             var staged = new StagedProfileData(
                 draft.Name.Trim(), draft.BirthDate, draft.HeightCm, draft.WeightKg,
-                draft.ProfileImagePath.Trim(), draft.WorkoutDaysPerWeek,
+                draft.ProfileImagePath.Trim(),
                 draft.CycleLength > 0 ? draft.CycleLength : 28, selected, draft.UseMetricSystem);
             if (!pendingRegistration.TryStageProfile(registration, staged))
                 return false;
@@ -67,7 +67,7 @@ public sealed class LocalProfileSetupStore(
     {
         return new ProfileSetupDraft(
             staged.Name, staged.BirthDate, staged.Height, staged.Weight,
-            staged.ProfileImagePath, staged.WorkoutDaysPerWeek, staged.CycleLength,
+            staged.ProfileImagePath, staged.CycleLength,
             staged.SelectedActivities.Select(activity => (int)activity).ToArray(), staged.UseMetricSystem);
     }
 }

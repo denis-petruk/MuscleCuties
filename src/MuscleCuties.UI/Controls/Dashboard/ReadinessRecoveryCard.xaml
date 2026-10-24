@@ -123,14 +123,14 @@
                     Command="{Binding OpenDailyCheckInCommand}"
                     IsVisible="{Binding NeedsDailyCheckIn}"
                     MinimumHeightRequest="46"
-                    CornerRadius="12" />
+                    CornerRadius="{StaticResource UiRadiusControl}" />
 
             <Button Text="{loc:LocalizedText Dashboard_Readiness_ReviewChanges}"
                     Command="{Binding ReviewReadinessAdjustmentCommand}"
                     IsVisible="{Binding CanReviewReadiness}"
                     IsEnabled="{Binding IsReadinessProposalBusy, Converter={StaticResource InvertedBoolConverter}}"
                     MinimumHeightRequest="46"
-                    CornerRadius="12" />
+                    CornerRadius="{StaticResource UiRadiusControl}" />
 
             <VerticalStackLayout Spacing="8" IsVisible="{Binding IsReadinessProposalVisible}">
                 <ActivityIndicator IsRunning="{Binding IsReadinessProposalBusy}"
@@ -153,11 +153,11 @@
                     <Button Text="{loc:LocalizedText Dashboard_Readiness_ApplyChanges}"
                             Command="{Binding ApplyReadinessAdjustmentCommand}"
                             IsEnabled="{Binding IsReadinessProposalBusy, Converter={StaticResource InvertedBoolConverter}}"
-                            MinimumHeightRequest="46" CornerRadius="12" />
+                            MinimumHeightRequest="46" CornerRadius="{StaticResource UiRadiusControl}" />
                     <Button Grid.Column="1" Text="{loc:LocalizedText Dashboard_Readiness_KeepPlan}"
                             Command="{Binding KeepWorkoutPlanCommand}"
                             IsEnabled="{Binding IsReadinessProposalBusy, Converter={StaticResource InvertedBoolConverter}}"
-                            MinimumHeightRequest="46" CornerRadius="12" />
+                            MinimumHeightRequest="46" CornerRadius="{StaticResource UiRadiusControl}" />
                 </Grid>
             </VerticalStackLayout>
         </VerticalStackLayout>

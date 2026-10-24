@@ -39,6 +39,7 @@
                         BindableLayout.ItemsSource="{Binding Items}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="workoutModels:WorkoutActivityOptionItem">
+                                <VerticalStackLayout Spacing="6">
                                 <Border
                                     StrokeShape="RoundRectangle 14"
                                     StrokeThickness="1"
@@ -146,6 +147,21 @@
                                         </Border>
                                     </Grid>
                                 </Border>
+                                <Picker
+                                    IsVisible="{Binding ShowSessionDurationPicker}"
+                                    ItemsSource="{Binding SessionDurationOptions}"
+                                    SelectedItem="{Binding SessionDurationMinutes, Mode=TwoWay}"
+                                    Title="{loc:LocalizedText Profile_WorkoutPrefs_SessionLength}"
+                                    MinimumHeightRequest="{StaticResource UiControlHeight}"
+                                    SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_SessionLength}" />
+                                <Picker
+                                    IsVisible="{Binding ShowWeeklyFrequencyPicker}"
+                                    ItemsSource="{Binding WeeklyFrequencyOptions}"
+                                    SelectedItem="{Binding RequestedSessionsPerWeek, Mode=TwoWay}"
+                                    Title="{loc:LocalizedText Profile_WorkoutPrefs_WeeklyFrequency}"
+                                    MinimumHeightRequest="{StaticResource UiControlHeight}"
+                                    SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_WeeklyFrequency}" />
+                                </VerticalStackLayout>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>

@@ -10,6 +10,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
+using MuscleCuties.UseCases.Features.Hydration.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
@@ -21,6 +22,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     private readonly ISaveMealTemplateUseCase? _saveMealTemplateUseCase;
     private readonly IGetRecipesAndTemplatesUseCase? _getRecipesAndTemplatesUseCase;
     private readonly ICreateRecipeUseCase? _createRecipeUseCase;
+    private readonly IRecipePortionUseCase _recipePortionUseCase;
     private readonly INutritionChangeNotifier? _changeNotifier;
     private readonly INutritionDailyLogUseCase _dailyLogUseCase;
     private readonly SemaphoreSlim _dateLoadLock = new(1, 1);
@@ -112,6 +114,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     public FoodLogViewModel(
         INutritionDailyLogUseCase dailyLogUseCase,
+        IRecipePortionUseCase recipePortionUseCase,
+        WaterQuickAddDefaultsDto waterQuickAddDefaults,
         Func<Task>? navigateBackAsync = null,
         INutritionChangeNotifier? changeNotifier = null,
         ILookupBarcodeUseCase? barcodeUseCase = null,
@@ -121,6 +125,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         ICreateRecipeUseCase? createRecipeUseCase = null)
     {
         _dailyLogUseCase = dailyLogUseCase;
+        _recipePortionUseCase = recipePortionUseCase;
+        WaterPresetVolumesMl = new ObservableCollection<int>(waterQuickAddDefaults.VolumesMillilitres);
         _navigateBackAsync = navigateBackAsync;
         _changeNotifier = changeNotifier;
         _barcodeUseCase = barcodeUseCase;
@@ -604,12 +610,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     [ObservableProperty] private TimeOnly _waterReminderQuietStart = new(22, 0);
     [ObservableProperty] private TimeOnly _waterReminderQuietEnd = new(7, 0);
 
-    public ObservableCollection<int> WaterPresetVolumesMl { get; } =
-    [
-        MuscleCuties.Core.Domain.Hydration.DefaultWaterPresets.SmallMillilitres,
-        MuscleCuties.Core.Domain.Hydration.DefaultWaterPresets.MediumMillilitres,
-        MuscleCuties.Core.Domain.Hydration.DefaultWaterPresets.LargeMillilitres
-    ];
+    public ObservableCollection<int> WaterPresetVolumesMl { get; }
 
     public ObservableCollection<FoodItemEntryDto> TimelineEntries { get; } = [];
     public Dictionary<MealType, double> PerMealCalorieTargets { get; } = new();

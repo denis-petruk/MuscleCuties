@@ -6,7 +6,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:commonModels="clr-namespace:MuscleCuties.UI.Models.UI.Common"
-    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     xmlns:workoutControls="clr-namespace:MuscleCuties.UI.Controls.Workout"
     x:DataType="vm:ProfileWorkoutPreferencesViewModel">
@@ -24,17 +24,40 @@
             </Border>
         </VerticalStackLayout>
 
+        <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_ActivitySessionLengthHint}"
+               Style="{StaticResource MutedLabel}"
+               LineBreakMode="WordWrap" />
+
         <workoutControls:WorkoutActivityPreferencePicker
             ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
             ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
 
-        <sharedControls:IconSectionHeader
-            Text="{loc:LocalizedText Profile_WorkoutPrefs_StrengthStyle}"
-            IconGlyph="Flash24"
-            IsVisible="{Binding IsStrengthStyleVisible}" />
-        <workoutControls:StrengthTrainingStylePicker
-            ItemsSource="{Binding StrengthTrainingStyleOptions}"
-            SelectStyleCommand="{Binding SelectStrengthTrainingStyleCommand}"
-            IsVisible="{Binding IsStrengthStyleVisible}" />
+        <VerticalStackLayout Spacing="8">
+            <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_ExerciseExclusions}"
+                   Style="{StaticResource SectionTitle}"
+                   SemanticProperties.HeadingLevel="Level2" />
+            <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_ExerciseExclusionsHint}"
+                   Style="{StaticResource MutedLabel}"
+                   LineBreakMode="WordWrap" />
+            <Border Style="{StaticResource InputContainer}">
+                <SearchBar Placeholder="{loc:LocalizedText Profile_WorkoutPrefs_SearchExercises}"
+                           Text="{Binding ExerciseExclusionSearchText, Mode=TwoWay}" />
+            </Border>
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding FilteredExerciseExclusionOptions}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="workoutModels:WorkoutExerciseExclusionOptionItem">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                      Color="{StaticResource Primary}"
+                                      VerticalOptions="Center" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding Name}"
+                                   Style="{StaticResource BodyLabel}"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
     </VerticalStackLayout>
 </ContentView>

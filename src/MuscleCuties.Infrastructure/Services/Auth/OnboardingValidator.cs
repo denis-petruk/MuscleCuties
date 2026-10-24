@@ -15,7 +15,7 @@ public static class OnboardingValidator
             ? null
             : new StagedProfileObservation(
                 staged.Name, staged.BirthDate, staged.Height, staged.Weight,
-                staged.CycleLength, staged.WorkoutDaysPerWeek);
+                staged.CycleLength);
         return OnboardingValidationRule.ValidateStagedProfile(observation, username, now);
     }
 

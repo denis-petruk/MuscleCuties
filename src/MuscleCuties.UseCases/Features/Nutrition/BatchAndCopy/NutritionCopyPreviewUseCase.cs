@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Domain.Nutrition;
+using MuscleCuties.UseCases.Features.Nutrition.Diary;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
 
@@ -27,8 +28,8 @@ public sealed class NutritionCopyPreviewUseCase(
         var projection = DiaryCopyProjection.Create(
             source.Items.Select(ToDomain).ToArray(),
             target.Items.Select(ToDomain).ToArray(),
-            request.MealType,
-            request.Mode);
+            request.MealType is { } mealType ? NutritionMealTypeMapper.ToDomain(mealType) : null,
+            ToDomainMode(request.Mode));
 
         return new PreviewNutritionCopyResponse(
             userId,
@@ -58,7 +59,7 @@ public sealed class NutritionCopyPreviewUseCase(
             throw new ArgumentException("A valid idempotency key is required.", nameof(request));
         _ = DiaryCopyDates.Create(request.SourceDate, request.TargetDate);
         if (request.MealType is { } mealType)
-            DailyFoodEntry.RequireMealType(mealType);
+            DailyFoodEntry.RequireMealType(NutritionMealTypeMapper.ToDomain(mealType));
         if (!Enum.IsDefined(request.Mode))
             throw new ArgumentOutOfRangeException(nameof(request));
         if (string.IsNullOrWhiteSpace(request.ExpectedSourceRevision) ||
@@ -75,16 +76,24 @@ public sealed class NutritionCopyPreviewUseCase(
     private static DiaryCopyFood ToDomain(DiaryCopyFoodDto item)
     {
         ArgumentNullException.ThrowIfNull(item);
-        return new DiaryCopyFood(item.Identity, item.Name, item.MealType,
+        return new DiaryCopyFood(item.Identity, item.Name, NutritionMealTypeMapper.ToDomain(item.MealType),
             item.Calories, item.Protein, item.Carbs, item.Fat, item.GroupIdentity);
     }
 
     private static DiaryCopyFoodDto ToDto(DiaryCopyFood item) =>
-        new(item.Identity, item.Name, item.MealType,
+        new(item.Identity, item.Name, NutritionMealTypeMapper.ToContract(item.MealType),
             item.Calories, item.Protein, item.Carbs, item.Fat, item.GroupIdentity);
 
     private static DiaryCopyTotalsDto ToDto(DiaryCopyTotals totals) =>
         new(totals.Count, totals.Calories, totals.Protein, totals.Carbs, totals.Fat);
+
+    private static MuscleCuties.Core.Models.Enums.Nutrition.DiaryCopyMode ToDomainMode(DiaryCopyModeDto mode) =>
+        mode switch
+        {
+            DiaryCopyModeDto.Merge => MuscleCuties.Core.Models.Enums.Nutrition.DiaryCopyMode.Merge,
+            DiaryCopyModeDto.Overwrite => MuscleCuties.Core.Models.Enums.Nutrition.DiaryCopyMode.Overwrite,
+            _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown diary copy mode.")
+        };
 
     private static void ValidateSnapshot(DiaryCopySnapshotDto snapshot, Guid userId, DateOnly expectedDate)
     {
