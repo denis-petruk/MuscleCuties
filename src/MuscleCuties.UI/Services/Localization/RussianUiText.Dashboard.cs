@@ -56,7 +56,7 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_PainTitle"] = "Боль";
         Values["Dashboard_CheckIn_PainSectionTitle"] = "БОЛЬ";
         Values["Dashboard_CheckIn_PrivateBadge"] = "Частное";
-        Values["Dashboard_CheckIn_PrivateBadgeA11y"] = "Эти данные остаются приватными на вашем устройстве";
+        Values["Dashboard_CheckIn_PrivateBadgeA11y"] = "Отметка сохранена в вашей личной учётной записи";
         Values["Dashboard_CheckIn_SavingA11y"] = "Сохранение отметки о посещении";
         Values["Dashboard_CheckIn_SkipButton"] = "Пока пропустить";
         Values["Dashboard_CheckIn_SkipHint"] = "Пропустить сегодняшнюю проверку";
@@ -66,7 +66,7 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_SleepSliderHint"] = "Перетащите, чтобы установить часы сна, от 0 до 14";
         Values["Dashboard_CheckIn_SleepTitle"] = "Сон прошлой ночью";
         Values["Dashboard_CheckIn_SleepSectionTitle"] = "СОН ПРОШЛОЙ НОЧЬЮ";
-        Values["Dashboard_CheckIn_StorageNotice"] = "Хранится в вашем аккаунте — не передается третьим лицам";
+        Values["Dashboard_CheckIn_StorageNotice"] = "Сохранено в вашей личной учётной записи";
         Values["Dashboard_CheckIn_SubmitButton"] = "Сохранить отметку";
         Values["Dashboard_CheckIn_SubmitHint"] = "Сохранить ежедневную отметку";
         Values["Dashboard_CheckIn_Subtitle"] = "Как вы себя чувствуете сегодня?";
