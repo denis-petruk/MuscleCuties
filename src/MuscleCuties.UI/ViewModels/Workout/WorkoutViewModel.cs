@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
@@ -188,11 +189,12 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             : $"No {SelectedFilterLabel.ToLowerInvariant()} workouts";
 
     public string EmptyWorkoutsSubtitle => ActivePlanName is null
-        ? "New plan proposals are unavailable because some activity prescription details are missing. Your activity preferences are saved."
+        ? "Workout_Page_ChooseActivitiesSubtitle"
         : "Try another filter or show the full week.";
 
-    public string EmptyWorkoutsButtonText => ActivePlanName is null ? "Refresh" : "Show All";
-    public bool EmptyWorkoutsButtonVisible => ActivePlanName is not null;
+    public string EmptyWorkoutsButtonText => ActivePlanName is null ? "Workout_Page_ChooseActivities" : "Show All";
+    [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Bound in workout page XAML.")]
+    public bool EmptyWorkoutsButtonVisible => true;
 
     private string SelectedFilterLabel => Filters.FirstOrDefault(f => f.IsSelected)?.Label ?? "All";
     public AsyncRelayCommand EmptyWorkoutsActionCommand { get; }
@@ -498,7 +500,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     {
         if (ActivePlanName is null)
         {
-            await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
+            await _navigateAsync("ProfileWorkoutPreferencesPage");
             return;
         }
 
