@@ -81,11 +81,17 @@ sessions just because all seven days are available. The Core suite passed
 this foundation was added. These types are not connected to the active API, PostgreSQL plan store,
 or MAUI screens. The latest implementation adds activity-specific v0.2 rules,
 progression rules, versioned strength slots, a deterministic slot resolver, and
-nullable reviewed catalog fields. `WORKOUT_STRENGTH_TEMPLATE_MAPPING_V020.md`
+nullable reviewed catalog fields. Product-owner-authorized strength preview is
+enabled independently of score display, readiness suggestions, progression, and
+injury-specific substitutions. `WORKOUT_STRENGTH_TEMPLATE_MAPPING_V020.md`
 records candidate IDs, equipment, policy prescriptions, and missing review
 metadata. Existing catalog rows are intentionally not marked reviewed. The
 active API generator and atomic proposal/revision persistence still require
 integration; these pure rules are not yet a completed user-facing workflow.
+The owner specified that users choose available weekdays for strength sessions
+when accepting a proposal. `StrengthWeekdayAssignmentRuleV020` validates one
+distinct chosen available weekday per session and maps proposal session order to
+Monday-through-Sunday order. The API acceptance flow does not yet call this rule.
 
 The onboarding discomfort slider was checked in source: left is **Severe** and
 right is **None**; `QuizViewModel` saves the semantic discomfort value using
@@ -102,12 +108,19 @@ unchanged, so no stored scale is silently reinterpreted.
 | `TodayPlanningDecisionRule` | Gives restrictions and current symptoms precedence; a high score never increases work; middle and low bands propose only the supplied optional-work choices. |
 | `ProgressionReviewV02Rule` | Requires a matching approved policy and consecutive complete same-exercise history; current limitations, pain, substitutions, and incomplete work prevent eligibility. It returns review/confirmation state and never changes a prescription. |
 
-The planning score, capacity, eligibility, revision, Today, progression, and
-strength-slot rules are not yet wired into an end-to-end persisted plan flow.
+The planning score, capacity, eligibility, revision, Today, progression,
+strength-slot, and weekday-assignment rules are not yet wired into an end-to-end
+persisted plan flow.
 Check-in capture and score display are wired through MAUI, the authenticated API,
-and PostgreSQL. Historical test/build results in this handoff predate the current
-uncommitted changes. On 2026-10-23, the focused .NET test command could not start:
-the machine has SDK 9.0.318 while the repository targets .NET 10.
+and PostgreSQL. As of the latest checkout on 2026-10-23, .NET SDK 10 is installed.
+Core verification passes 341/341, Registration 34/34, Server 77/77, and Mobile
+Contracts 15/15. The iOS simulator target builds with zero warnings and errors.
+The built app was installed and launched on iPhone 17 Pro Max (iOS 26.3) by
+directly installing the app bundle because the project Run target expects
+unavailable iOS 26.2. Today and the check-in form were inspected without
+submitting or changing account data. PostgreSQL integration-test variables were
+unavailable; database-backed acceptance and deployed catalog metadata remain
+unverified.
 
 The check-in slice captures optional 1–5 sleep-quality, soreness, and stress
 values plus the device time-zone ID through the authenticated API, stores server
