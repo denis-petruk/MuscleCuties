@@ -1,6 +1,6 @@
 # Roadmap — MuscleCuties
 
-**2026-10-23 branch audit:** Local `test-flight-beta` is synced to GitLab `75b7cf9`. Core (337), Registration (34), Server (77), and Mobile Contracts (15) pass; the iOS simulator target builds with 4 analyzer performance warnings and 0 errors. Visual/device acceptance is pending because CoreSimulator is unavailable here. Score display and readiness suggestions are gated off pending documented approval. The detailed audit and v0.2 implementation gaps remain tracked in `docs/v1/UI_WORKFLOW_AUDIT.md` and `docs/v1/WORKOUT_PLANNING_V02_HANDOFF.md`.
+**2026-10-23 branch audit update:** Local `test-flight-beta` is at `5303e4f` with uncommitted v0.2 continuation work. Core (341), Registration (34), Server (77), and Mobile Contracts (15) pass. The iOS simulator target builds with 0 warnings and 0 errors. The built app was installed and launched on iPhone 17 Pro Max (iOS 26.3); Today and the check-in form were inspected without submitting or changing account data. The project Run target expects unavailable iOS 26.2, so simulator deployment used the built app bundle directly. PostgreSQL integration variables are unavailable; live database verification remains open. User-selected weekday validation is implemented but not yet wired to plan acceptance. Other v0.2 integration gaps remain in `docs/v1/WORKOUT_PLANNING_V02_HANDOFF.md`.
 
 The active roadmap is maintained at [docs/v1/ROADMAP.md](docs/v1/ROADMAP.md).
 
