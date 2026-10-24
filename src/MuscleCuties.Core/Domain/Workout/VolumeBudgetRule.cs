@@ -6,6 +6,21 @@ public readonly record struct VolumeBudgetObservation(int MuscleGroupId, double 
 
 public static class VolumeBudgetRule
 {
+    public const double BeginnerExperienceModifier = 0.75;
+    public const double IntermediateExperienceModifier = 1.0;
+    public const double AdvancedExperienceModifier = 1.1;
+    public const double DefaultExperienceModifier = BeginnerExperienceModifier;
+
+    public const int MinimumValidMuscleGroupId = 1;
+    public const int PrimaryMuscleGroupId = 1;
+
+    public const double NoFractionalSets = 0.0;
+    public const double PrimaryMuscleWeeklyCeilingSets = 26.0;
+    public const double SecondaryMuscleWeeklyCeilingSets = 22.0;
+
+    public const int ShortSessionMinutesThreshold = 35;
+    public const double TierCMuscleShortSessionReductionMultiplier = 0.6;
+
     public static Dictionary<int, double> Resolve(
         IReadOnlyList<VolumeBudgetObservation>? rows,
         TrainingExperienceLevel experience,
@@ -14,10 +29,10 @@ public static class VolumeBudgetRule
     {
         var modifier = experience switch
         {
-            TrainingExperienceLevel.Beginner => 0.75,
-            TrainingExperienceLevel.Intermediate => 1.0,
-            TrainingExperienceLevel.Advanced => 1.1,
-            _ => 0.75
+            TrainingExperienceLevel.Beginner => BeginnerExperienceModifier,
+            TrainingExperienceLevel.Intermediate => IntermediateExperienceModifier,
+            TrainingExperienceLevel.Advanced => AdvancedExperienceModifier,
+            _ => DefaultExperienceModifier
         };
         var budget = new Dictionary<int, double>();
         if (rows is null)
@@ -25,15 +40,18 @@ public static class VolumeBudgetRule
 
         foreach (var row in rows)
         {
-            if (row.MuscleGroupId <= 0)
+            if (row.MuscleGroupId < MinimumValidMuscleGroupId)
                 continue;
-            var safeSets = double.IsFinite(row.FractionalSets) && row.FractionalSets > 0
+            var safeSets = double.IsFinite(row.FractionalSets) && row.FractionalSets > NoFractionalSets
                 ? row.FractionalSets
-                : 0;
-            var ceiling = row.MuscleGroupId == 1 ? 26d : 22d;
+                : NoFractionalSets;
+            var ceiling = row.MuscleGroupId == PrimaryMuscleGroupId
+                ? PrimaryMuscleWeeklyCeilingSets
+                : SecondaryMuscleWeeklyCeilingSets;
             var scaled = Math.Min(safeSets * modifier, ceiling);
-            if (sessionMinutesTarget is <= 35 && tierCMuscleIds?.Contains(row.MuscleGroupId) == true)
-                scaled *= 0.6;
+            if (sessionMinutesTarget is <= ShortSessionMinutesThreshold &&
+                tierCMuscleIds?.Contains(row.MuscleGroupId) == true)
+                scaled *= TierCMuscleShortSessionReductionMultiplier;
             budget[row.MuscleGroupId] = scaled;
         }
 
