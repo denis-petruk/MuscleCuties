@@ -3,12 +3,12 @@ using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Models.UI.Workout;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UseCases.Features.Onboarding.ProfileSetup;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
@@ -45,7 +45,6 @@ public partial class ProfileSetupViewModel : ObservableObject
 
     [ObservableProperty] private bool _useMetricSystem = true;
     [ObservableProperty] private ObservableCollection<WorkoutActivityOptionItem> _workoutActivityOptions = new();
-    [ObservableProperty] private int _workoutDaysPerWeek = 3;
 
     public ProfileSetupViewModel(
         IProfileSetupUseCase useCase,
@@ -61,7 +60,9 @@ public partial class ProfileSetupViewModel : ObservableObject
         SelectMetricUnitsCommand = new RelayCommand(() => UseMetricSystem = true);
         SelectImperialUnitsCommand = new RelayCommand(() => UseMetricSystem = false);
         ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
-        WorkoutActivityOptions = ProfileWorkoutActivityOptions.Build(new HashSet<WorkoutActivityType>());
+        WorkoutActivityOptions = ProfileWorkoutActivityOptions.Build(
+            new HashSet<WorkoutActivityDto>(),
+            allowInlinePreferenceConfiguration: false);
     }
 
     public DateTime MinBirthDate { get; } = DateTime.Today.AddYears(-100);
@@ -124,7 +125,6 @@ public partial class ProfileSetupViewModel : ObservableObject
                 Name = staged.Name;
                 ApplyLoadedBirthDate(staged.BirthDate);
                 ProfileImagePath = staged.ProfileImagePath;
-                WorkoutDaysPerWeek = staged.WorkoutDaysPerWeek;
                 CycleLength = staged.CycleLength;
                 UseMetricSystem = staged.UseMetricSystem;
                 SelectedHeightCm = (int)staged.HeightCm;
@@ -135,7 +135,8 @@ public partial class ProfileSetupViewModel : ObservableObject
                 SelectedWeightLbs = (int)Math.Round(staged.WeightKg / KilogramsPerPound);
 
                 var selectedOptions = ProfileWorkoutActivityOptions.Build(
-                    staged.SelectedActivityTypes.Select(value => (WorkoutActivityType)value).ToHashSet());
+                    staged.SelectedActivityTypes.Select(value => (WorkoutActivityDto)value).ToHashSet(),
+                    allowInlinePreferenceConfiguration: false);
                 foreach (var option in WorkoutActivityOptions)
                     option.IsSelected = selectedOptions.Any(s => s.ActivityType == option.ActivityType && s.IsSelected);
             }
@@ -159,8 +160,10 @@ public partial class ProfileSetupViewModel : ObservableObject
         ApplyLoadedBirthDate(profile.BirthDate);
         ProfileImagePath = profile.ProfileImagePath;
         var selectedActivities = profile.SelectedActivityTypes
-            .Select(value => (WorkoutActivityType)value).ToHashSet();
-        var loadedOptions = ProfileWorkoutActivityOptions.Build(selectedActivities);
+            .Select(value => (WorkoutActivityDto)value).ToHashSet();
+        var loadedOptions = ProfileWorkoutActivityOptions.Build(
+            selectedActivities,
+            allowInlinePreferenceConfiguration: false);
         foreach (var option in WorkoutActivityOptions)
             option.IsSelected =
                 loadedOptions.Any(loaded => loaded.ActivityType == option.ActivityType && loaded.IsSelected);
@@ -225,32 +228,9 @@ public partial class ProfileSetupViewModel : ObservableObject
         ErrorMessage = string.Empty;
         try
         {
-            if (string.IsNullOrWhiteSpace(Name))
-            {
-                ErrorMessage = "Please enter your name.";
-                return;
-            }
-
-            var today = DateTime.Today;
-            if (!_birthDateWasSelected || BirthDate == default || BirthDate > today)
+            if (!_birthDateWasSelected || BirthDate == default)
             {
                 ErrorMessage = "Please provide your date of birth.";
-                return;
-            }
-
-            var age = today.Year - BirthDate.Year;
-            if (BirthDate.Date > today.AddYears(-age))
-                age--;
-
-            if (age < 18)
-            {
-                ErrorMessage = "Please provide a valid date of birth (must be at least 18 years old).";
-                return;
-            }
-
-            if (age > 120)
-            {
-                ErrorMessage = "Please provide a valid date of birth.";
                 return;
             }
 
@@ -259,9 +239,9 @@ public partial class ProfileSetupViewModel : ObservableObject
                 .Select(option => (int)option.ActivityType)
                 .ToArray();
 
-            if (selectedActivities.Length == 0)
+            if (!WorkoutActivityOptions.Any(option => option.IsSelected && WorkoutPlanningConstants.IsStrengthActivity(option.ActivityType)))
             {
-                ErrorMessage = UiTextCatalog.Get("Onboarding_ProfileSetup_StrengthActivityRequired");
+                ErrorMessage = "At least one strength activity is required for your plan.";
                 return;
             }
 
@@ -273,28 +253,16 @@ public partial class ProfileSetupViewModel : ObservableObject
                 ? SelectedWeightKg
                 : SelectedWeightLbs * KilogramsPerPound;
 
-            if (!float.IsFinite(heightCm) || heightCm < 50f || heightCm > 280f ||
-                !float.IsFinite(weightKg) || weightKg < 20f || weightKg > 400f)
-            {
-                ErrorMessage = "Enter valid height and weight.";
-                return;
-            }
-
             var result = await _useCase.SaveAndPrepareQuizAsync(new ProfileSetupDraft(
                 Name, BirthDate, heightCm, weightKg, ProfileImagePath,
-                WorkoutDaysPerWeek, CycleLength, selectedActivities, UseMetricSystem,
+                CycleLength, selectedActivities, UseMetricSystem,
                 _hasLoadedProfile));
             if (!result.Succeeded)
             {
-                ErrorMessage = result.Error switch
-                {
-                    ProfileSetupError.InvalidName => "Please enter your name.",
-                    ProfileSetupError.InvalidBirthDate => "Please provide your date of birth.",
-                    ProfileSetupError.Underage => "Please provide a valid date of birth (must be at least 18 years old).",
-                    ProfileSetupError.InvalidMeasurements => "Enter valid height and weight.",
-                    ProfileSetupError.InvalidWorkoutActivities => "Please select at least one workout activity.",
-                    _ => "Active account not found. Please try again."
-                };
+                ErrorMessage = result.ErrorMessage ??
+                    (result.Error == ProfileSetupError.AccountMissing
+                        ? "Active account not found. Please try again."
+                        : "Check your profile details and try again.");
                 return;
             }
 
