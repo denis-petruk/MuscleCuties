@@ -69,7 +69,7 @@ Dependencies point strictly inward (`Server / UI -> Infrastructure -> UseCases -
   1. Implement `AerobicHealthTargetRule` in `src/MuscleCuties.Core/Domain/Workout/Planning/AerobicHealthTargetRule.cs` calculating $ME(\text{session}) = \text{MinutesModerate} + 2 \times \text{MinutesVigorous}$, $ME_{week}$, and evaluating WHO health targets ($150 \le ME_{week} \le 300$ and $\ge 2$ resistance training days/week).
   2. Implement `InjurySafetyProgressionRule` in `src/MuscleCuties.Core/Domain/Workout/Planning/InjurySafetyProgressionRule.cs` enforcing `Acute` / `Recovering` / `Cleared` status rules and numeric `PainLevel` ($0..10$) thresholds ($0..3$ mild/safe, $4..6$ moderate maintain/regress, $7..10$ high-risk block/stop).
   3. Add unit tests in `tests/MuscleCuties.Core.Tests/AerobicHealthTargetRuleTests.cs` and `InjurySafetyProgressionRuleTests.cs`.
-- **Status:** Pending
+- **Status:** Completed
 
 ### Block `WB05`: Recovery Deload Trigger & Cycle/Daily Check-In Override Precedence (Spec Sections 12, 13)
 - **Scope:**
