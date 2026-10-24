@@ -15,12 +15,12 @@
 
     <Grid
         BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
-        <ScrollView MaximumWidthRequest="640">
-            <VerticalStackLayout Spacing="0" Padding="0,0,0,36">
+        <ScrollView MaximumWidthRequest="{StaticResource PageContentMaxWidth}">
+            <VerticalStackLayout Spacing="16" Padding="0,0,0,32">
 
                 <!-- Header / Profile Info -->
-                <Grid Padding="20,40,20,12" RowDefinitions="Auto,Auto,Auto" RowSpacing="16">
-                    <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Page_You}" Style="{StaticResource SubHeadline}" />
+                <Grid Padding="{StaticResource PageHeaderPadding}" RowDefinitions="Auto,Auto,Auto" RowSpacing="16">
+                    <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Page_You}" Style="{StaticResource Headline}" />
 
                     <!-- Avatar + Name + Membership Tenure -->
                     <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="16" VerticalOptions="Center">
@@ -76,7 +76,7 @@
                                 Margin="0,2,0,0">
                                 <Label
                                     Text="{Binding CurrentPhaseLabel, Converter={StaticResource LocalizedStringConverter}}"
-                                    FontSize="11"
+                                    FontSize="12"
                                     FontAttributes="Bold"
                                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                             </Border>
@@ -86,10 +86,7 @@
                     <!-- Streak Stats -->
                     <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="8">
                         <Border
-                            BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
-                            StrokeShape="RoundRectangle 12"
-                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                            StrokeThickness="1"
+                            Style="{StaticResource SurfaceTile}"
                             Padding="8,12"
                             MinimumHeightRequest="76"
                             SemanticProperties.Description="{Binding WorkoutStreakDays, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_Page_WorkoutSessionStreakValueDays}">
@@ -121,10 +118,7 @@
 
                         <Border
                             Grid.Column="1"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
-                            StrokeShape="RoundRectangle 12"
-                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                            StrokeThickness="1"
+                            Style="{StaticResource SurfaceTile}"
                             Padding="8,12"
                             MinimumHeightRequest="76"
                             SemanticProperties.Description="{Binding NutritionStreakDays, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_Page_NutritionLogStreakValueDays}">
@@ -156,10 +150,7 @@
 
                         <Border
                             Grid.Column="2"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
-                            StrokeShape="RoundRectangle 12"
-                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                            StrokeThickness="1"
+                            Style="{StaticResource SurfaceTile}"
                             Padding="8,12"
                             MinimumHeightRequest="76"
                             SemanticProperties.Description="{Binding CyclesTracked, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_Page_CyclesLoggedValue}">

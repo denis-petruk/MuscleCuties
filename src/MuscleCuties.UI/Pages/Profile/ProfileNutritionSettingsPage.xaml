@@ -14,10 +14,10 @@
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="20,40,20,32"
+            Padding="{StaticResource PageContentPadding}"
             Spacing="16"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="640">
+            MaximumWidthRequest="{StaticResource PageContentMaxWidth}">
             <sharedControls:PageHeader
                 Title="{loc:LocalizedText Profile_NutritionSettings_NutritionSettings}"
                 Subtitle="Goal, dietary preferences, and nutrient targets"
@@ -61,8 +61,7 @@
                     <!-- Dietary preferences (improved tap targets) -->
                     <Label
                         Text="{loc:LocalizedText Profile_NutritionSettings_DietaryPreferences}"
-                        Style="{StaticResource FormFieldLabel}"
-                        FontSize="14" />
+                        Style="{StaticResource FormFieldLabel}" />
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                         <!-- Vegetarian -->
                         <Border
@@ -80,7 +79,7 @@
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Profile_NutritionSettings_Vegetarian}"
                                     Style="{StaticResource BodyLabel}"
-                                    FontSize="16"
+                                    FontSize="15"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
@@ -101,7 +100,7 @@
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Profile_NutritionSettings_Vegan}"
                                     Style="{StaticResource BodyLabel}"
-                                    FontSize="16"
+                                    FontSize="15"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
@@ -122,7 +121,7 @@
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Profile_NutritionSettings_GlutenFree}"
                                     Style="{StaticResource BodyLabel}"
-                                    FontSize="16"
+                                    FontSize="15"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
@@ -143,7 +142,7 @@
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Profile_NutritionSettings_LactoseFree}"
                                     Style="{StaticResource BodyLabel}"
-                                    FontSize="16"
+                                    FontSize="15"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
@@ -163,7 +162,7 @@
                                     Grid.Column="1"
                                     Text="{Binding AdvancedSettingsButtonText, Converter={StaticResource LocalizedStringConverter}}"
                                     Style="{StaticResource AccentLabel}"
-                                    FontSize="14"
+                                    FontSize="13"
                                     VerticalOptions="Center"
                                     SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_ToggleMacroTargetFields}" />
                             </Grid>
@@ -172,7 +171,7 @@
                             <Label
                                 Text="{loc:LocalizedText Profile_NutritionSettings_OverrideCalculatedTargetsWithYourOwn}"
                                 Style="{StaticResource CaptionLabel}"
-                                FontSize="14" />
+                                FontSize="13" />
                             <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10"
                                   RowSpacing="10">
                                 <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="5">
@@ -248,7 +247,7 @@
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Profile_NutritionSettings_TapToExpand}"
                                     Style="{StaticResource CaptionLabel}"
-                                    FontSize="14"
+                                    FontSize="13"
                                     VerticalOptions="Center"
                                     SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_ExpandMicronutrientTargetsSection}" />
                             </Grid>
@@ -355,7 +354,7 @@
             <Label
                 Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource CaptionLabel}"
-                FontSize="14"
+                FontSize="13"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
 
             <Button Text="{loc:LocalizedText Profile_NutritionSettings_SaveNutritionSettings}" Command="{Binding SaveCommand}" />

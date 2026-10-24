@@ -55,10 +55,18 @@
             MaximumWidthRequest="640">
 
             <!-- Step indicator -->
-            <Label
-                Text="{loc:LocalizedText Onboarding_ProfileSetup_StepOneOfTwo}"
-                Style="{StaticResource EyebrowLabel}"
-                SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_StepOneOfTwoProfileSetup}" />
+            <Border
+                HorizontalOptions="Start"
+                Padding="12,5"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 999"
+                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
+                <Label
+                    Text="{loc:LocalizedText Onboarding_ProfileSetup_StepOneOfTwo}"
+                    Style="{StaticResource EyebrowLabel}"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_StepOneOfTwoProfileSetup}" />
+            </Border>
 
             <VerticalStackLayout Spacing="6">
                 <Label
@@ -149,7 +157,8 @@
 
                     <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource ProfileSectionHeadingSpacing}">
                         <BoxView HeightRequest="{StaticResource ProfileSectionDividerThickness}"
-                                 Color="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+                                 Opacity="0.6"
+                                 Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
                         <Label Grid.Row="1"
                                Text="{loc:LocalizedText Onboarding_ProfileSetup_Measurements}"
                                Style="{StaticResource SectionTitle}"
@@ -292,7 +301,8 @@
             <VerticalStackLayout Spacing="12">
                 <BoxView HeightRequest="{StaticResource ProfileSectionDividerThickness}"
                          Margin="{StaticResource ProfileActivityDividerMargin}"
-                         Color="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+                         Opacity="0.6"
+                         Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
                 <Label
                     Text="{loc:LocalizedText Onboarding_ProfileSetup_ChooseYourActivity}"
                     Style="{StaticResource SectionTitle}"

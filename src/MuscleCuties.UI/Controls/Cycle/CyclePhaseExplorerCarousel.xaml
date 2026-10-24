@@ -17,8 +17,7 @@
     </ContentView.Resources>
 
     <Border Style="{StaticResource CardPrimary}" Padding="{StaticResource CyclePhaseExplorerPadding}"
-            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-            StrokeThickness="1">
+            StrokeThickness="0">
     <Grid RowDefinitions="Auto, Auto" RowSpacing="12">
 
         <!-- Header -->
@@ -27,7 +26,7 @@
                 <Label
                     Text="{loc:LocalizedText Cycle_PhaseExplorer_SectionTitle}"
                     Style="{StaticResource SectionTitle}"
-                    FontSize="18"
+                    FontSize="17"
                     FontAttributes="Bold" />
                 <Label
                     Text="{loc:LocalizedText Cycle_PhaseExplorer_Subtitle}"
@@ -49,7 +48,7 @@
                             StrokeShape="RoundRectangle 16"
                             BackgroundColor="{Binding BackgroundColor}"
                             Stroke="{Binding AccentColor}"
-                            StrokeThickness="1.5"
+                            StrokeThickness="0"
                             Padding="14,10"
                             SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseExplorer_ExplorePhaseFormat}">
                             <Border.GestureRecognizers>
@@ -82,7 +81,7 @@
                                             Padding="4,1">
                                             <Label
                                                 Text="{loc:LocalizedText Cycle_PhaseExplorer_NowBadge}"
-                                                FontSize="9"
+                                                FontSize="11"
                                                 FontAttributes="Bold"
                                                 TextColor="{StaticResource White}" />
                                         </Border>
@@ -94,7 +93,7 @@
                                         TextColor="{Binding AccentColor}" />
                                     <Label
                                         Text="{Binding Tagline, Converter={StaticResource LocalizedStringConverter}}"
-                                        FontSize="11"
+                                        FontSize="13"
                                         LineBreakMode="WordWrap"
                                         TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                                 </VerticalStackLayout>

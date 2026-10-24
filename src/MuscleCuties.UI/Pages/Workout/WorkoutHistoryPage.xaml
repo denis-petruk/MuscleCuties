@@ -18,19 +18,13 @@
         <!-- Top Navigation Bar -->
         <Grid
             Grid.Row="0"
-            Padding="16,44,16,12"
+            Padding="{StaticResource PageHeaderPadding}"
             ColumnDefinitions="Auto,*,Auto"
             ColumnSpacing="12"
             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
             <Border
-                WidthRequest="38"
-                HeightRequest="38"
-                StrokeShape="RoundRectangle 19"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
-                Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                StrokeThickness="1"
-                VerticalOptions="Center"
+                Style="{StaticResource HeaderIconButton}"
                 SemanticProperties.Description="{loc:LocalizedText Workout_History_BackButton}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding NavigateBackCommand}" />
@@ -57,13 +51,7 @@
 
             <Border
                 Grid.Column="2"
-                WidthRequest="38"
-                HeightRequest="38"
-                StrokeShape="RoundRectangle 19"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
-                Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                StrokeThickness="1"
-                VerticalOptions="Center"
+                Style="{StaticResource HeaderIconButton}"
                 SemanticProperties.Description="{loc:LocalizedText Workout_History_RefreshArchiveAccessibility}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding LoadHistoryCommand}" />
@@ -99,29 +87,26 @@
                     <!-- Lifetime Stat Badges Card -->
                     <Border
                         Grid.Row="0"
-                        StrokeShape="RoundRectangle 16"
-                        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                        StrokeThickness="1"
-                        Padding="16,14"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
+                        Style="{StaticResource CardPrimary}"
+                        Padding="16,14">
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
                             <Grid RowDefinitions="Auto,Auto" RowSpacing="2">
-                                <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_CompletedSessionsTitle}" FontSize="12"
+                                <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_CompletedSessionsTitle}" FontSize="13"
                                        FontAttributes="Bold"
                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                                 <Label Grid.Row="1"
                                        Text="{Binding TotalSessionsCount, Converter={StaticResource LocalizedStringConverter}}"
-                                       FontSize="22" FontAttributes="Bold"
+                                       FontSize="24" FontAttributes="Bold"
                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                             </Grid>
 
                             <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_RecordedSetVolumeHeader}" FontSize="12"
+                                <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_RecordedSetVolumeHeader}" FontSize="13"
                                        FontAttributes="Bold"
                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                                 <Label Grid.Row="1"
                                        Text="{Binding LifetimeVolumeFormatted, Converter={StaticResource LocalizedStringConverter}}"
-                                       FontSize="22" FontAttributes="Bold"
+                                       FontSize="24" FontAttributes="Bold"
                                        TextColor="{StaticResource PrimaryDark}" />
                             </Grid>
                         </Grid>
@@ -135,15 +120,14 @@
                                 <DataTemplate x:DataType="uiModels:MonthFilterItem">
                                     <Border
                                         StrokeShape="RoundRectangle 999"
-                                        StrokeThickness="1"
+                                        StrokeThickness="0"
                                         Padding="14,7"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
-                                        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}">
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
                                         <Border.Triggers>
                                             <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
                                                          Value="True">
                                                 <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                                <Setter Property="Stroke" Value="{StaticResource Primary}" />
+                                                <Setter Property="StrokeThickness" Value="0" />
                                             </DataTrigger>
                                         </Border.Triggers>
                                         <Border.GestureRecognizers>
@@ -174,11 +158,8 @@
                     <Border
                         Grid.Row="2"
                         IsVisible="{Binding HasNoSessions}"
-                        StrokeShape="RoundRectangle 16"
-                        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                        StrokeThickness="1"
-                        Padding="24"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
+                        Style="{StaticResource CardPrimary}"
+                        Padding="24">
                         <Grid RowDefinitions="Auto,Auto" RowSpacing="8" HorizontalOptions="Center">
                             <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_EmptyStateTitle}"
                                    Style="{StaticResource CardTitle}" HorizontalTextAlignment="Center" />
@@ -190,7 +171,7 @@
                     <Label
                         Grid.Row="3"
                         Text="{loc:LocalizedText Workout_History_PastSessionsTitle}"
-                        FontSize="14"
+                        FontSize="13"
                         FontAttributes="Bold"
                         Margin="4,4,0,0"
                         TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
@@ -202,11 +183,8 @@
                 <DataTemplate x:DataType="workout:WorkoutSessionSummaryDto">
                     <Border
                         Margin="16,0"
-                        StrokeShape="RoundRectangle 16"
-                        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                        StrokeThickness="1"
-                        Padding="16,14"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
+                        Style="{StaticResource CardPrimary}"
+                        Padding="16,14">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer
                                 Command="{Binding OpenSessionDetailCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutHistoryViewModel}}, x:DataType=vm:WorkoutHistoryViewModel}"
@@ -218,13 +196,13 @@
                             <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                                 <Label
                                     Text="{Binding StartedAt, StringFormat='{0:ddd, MMM d, yyyy}'}"
-                                    FontSize="12"
+                                    FontSize="13"
                                     FontAttributes="Bold"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                                 <Border
                                     Grid.Column="1"
                                     IsVisible="{Binding RpeRating, Converter={StaticResource StringToBoolConverter}}"
-                                    StrokeShape="RoundRectangle 8"
+                                    StrokeShape="RoundRectangle 999"
                                     StrokeThickness="0"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                     Padding="8,2">
@@ -245,7 +223,7 @@
                                 TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                             <Label Grid.Row="2"
                                    Text="{Binding DetailLabel, Converter={StaticResource LocalizedStringConverter}}"
-                                   Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                   Style="{StaticResource CaptionLabel}" FontSize="13" />
 
                             <!-- Primary Exercises -->
                             <HorizontalStackLayout Grid.Row="3" Spacing="6"
@@ -253,10 +231,9 @@
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="x:String">
                                         <Border
-                                            StrokeShape="RoundRectangle 6"
-                                            StrokeThickness="1"
-                                            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource InputSurface}, Dark={StaticResource InputSurfaceDark}}"
+                                            StrokeShape="RoundRectangle 8"
+                                            StrokeThickness="0"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                             Padding="6,3">
                                             <Label Text="{Binding .}" FontSize="11"
                                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
@@ -268,12 +245,12 @@
                             <!-- Metric Pills Row: Duration, Volume, Sets -->
                             <Grid Grid.Row="4" ColumnDefinitions="*,*,*" ColumnSpacing="8" Margin="0,4,0,0">
                                 <Border
-                                    StrokeShape="RoundRectangle 8"
+                                    StrokeShape="RoundRectangle 10"
                                     StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                     Padding="8,6">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="1" HorizontalOptions="Center">
-                                        <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_DurationHeader}" FontSize="10"
+                                        <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_DurationHeader}" FontSize="11"
                                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                                         <Label Grid.Row="1"
                                                Text="{Binding DurationLabel, Converter={StaticResource LocalizedStringConverter}}"
@@ -283,12 +260,12 @@
 
                                 <Border
                                     Grid.Column="1"
-                                    StrokeShape="RoundRectangle 8"
+                                    StrokeShape="RoundRectangle 10"
                                     StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                     Padding="8,6">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="1" HorizontalOptions="Center">
-                                        <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_VolumeHeader}" FontSize="10"
+                                        <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_VolumeHeader}" FontSize="11"
                                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                                         <Label Grid.Row="1"
                                                Text="{Binding VolumeLabel, Converter={StaticResource LocalizedStringConverter}}"
@@ -299,12 +276,12 @@
 
                                 <Border
                                     Grid.Column="2"
-                                    StrokeShape="RoundRectangle 8"
+                                    StrokeShape="RoundRectangle 10"
                                     StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                     Padding="8,6">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="1" HorizontalOptions="Center">
-                                        <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_TotalSetsHeader}" FontSize="10"
+                                        <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_TotalSetsHeader}" FontSize="11"
                                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                                         <Label Grid.Row="1"
                                                Text="{Binding SetCountLabel, Converter={StaticResource LocalizedStringConverter}}"
@@ -361,24 +338,22 @@
                             <Label
                                 Grid.Row="0"
                                 Text="{Binding SelectedSessionDetail.WorkoutName}"
-                                Style="{StaticResource SubHeadline}"
-                                FontSize="18" />
+                                Style="{StaticResource ModalTitle}" />
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding DetailStartedFormatted, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource MutedLabel}"
-                                FontSize="12" />
+                                Style="{StaticResource MutedLabel}" />
                             <Label Grid.Row="2"
                                    Text="{Binding DetailKindLabel, Converter={StaticResource LocalizedStringConverter}}"
-                                   Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                   Style="{StaticResource CaptionLabel}" />
                         </Grid>
 
                         <Button
                             Grid.Column="1"
                             Text="✕"
                             Command="{Binding CloseSessionDetailCommand}"
-                            HeightRequest="32"
-                            WidthRequest="32"
+                            HeightRequest="36"
+                            WidthRequest="36"
                             Padding="0"
                             CornerRadius="{StaticResource UiRadiusControl}"
                             BackgroundColor="Transparent"
@@ -392,7 +367,7 @@
                         <!-- Key Metrics Row -->
                         <Grid Grid.Row="0" ColumnDefinitions="*,*,*" ColumnSpacing="10">
                             <Border StrokeShape="RoundRectangle 10" StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                     Padding="10,8">
                                 <Grid RowDefinitions="Auto,Auto" RowSpacing="2" HorizontalOptions="Center">
                                     <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_DurationHeader}" FontSize="11"
@@ -404,7 +379,7 @@
                             </Border>
 
                             <Border Grid.Column="1" StrokeShape="RoundRectangle 10" StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                     Padding="10,8">
                                 <Grid RowDefinitions="Auto,Auto" RowSpacing="2" HorizontalOptions="Center">
                                     <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_VolumeHeader}" FontSize="11"
@@ -417,7 +392,7 @@
                             </Border>
 
                             <Border Grid.Column="2" StrokeShape="RoundRectangle 10" StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                     Padding="10,8">
                                 <Grid RowDefinitions="Auto,Auto" RowSpacing="2" HorizontalOptions="Center">
                                     <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_RpeHeader}" FontSize="11"
@@ -430,22 +405,19 @@
                         </Grid>
 
                         <!-- Sets Breakdown Grouped by Exercise -->
-                        <Label Grid.Row="1" Text="{loc:LocalizedText Workout_History_BreakdownTitle}" FontSize="14" FontAttributes="Bold"
-                               TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                        <Label Grid.Row="1" Text="{loc:LocalizedText Workout_History_BreakdownTitle}"
+                               Style="{StaticResource SectionTitle}" />
 
                         <VerticalStackLayout Grid.Row="2" Spacing="12"
                                              BindableLayout.ItemsSource="{Binding ExerciseGroups}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="uiModels:ExerciseSetsUiGroup">
                                     <Border
-                                        StrokeShape="RoundRectangle 12"
-                                        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                                        StrokeThickness="1"
-                                        Padding="12,10"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource InputSurface}, Dark={StaticResource InputSurfaceDark}}">
+                                        Style="{StaticResource CardSecondary}"
+                                        Padding="14,12">
                                         <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
                                             <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                                                <Label Text="{Binding ExerciseName}" FontSize="14"
+                                                <Label Text="{Binding ExerciseName}" FontSize="15"
                                                        FontAttributes="Bold" />
                                                 <Label Grid.Column="1"
                                                        Text="{Binding VolumeSummary, Converter={StaticResource LocalizedStringConverter}}"
@@ -456,24 +428,24 @@
                                             <!-- Sets Table Header -->
                                             <Grid Grid.Row="1" ColumnDefinitions="32,*,68,54,34" ColumnSpacing="6"
                                                   Margin="0,4,0,0">
-                                                <Label Text="{loc:LocalizedText Workout_History_SetHeader}" FontSize="10"
+                                                <Label Text="{loc:LocalizedText Workout_History_SetHeader}" FontSize="11"
                                                        FontAttributes="Bold"
                                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                                        VerticalOptions="Center" />
                                                 <Label Grid.Column="1" Text="{loc:LocalizedText Workout_History_TypeHeader}"
-                                                       FontSize="10" FontAttributes="Bold"
+                                                       FontSize="11" FontAttributes="Bold"
                                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                                        VerticalOptions="Center" />
                                                 <Label Grid.Column="2" Text="{loc:LocalizedText Workout_History_KgHeader}"
-                                                       FontSize="10" FontAttributes="Bold"
+                                                       FontSize="11" FontAttributes="Bold"
                                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                                        HorizontalTextAlignment="Center" VerticalOptions="Center" />
                                                 <Label Grid.Column="3" Text="{loc:LocalizedText Workout_History_RepsHeader}"
-                                                       FontSize="10" FontAttributes="Bold"
+                                                       FontSize="11" FontAttributes="Bold"
                                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                                        HorizontalTextAlignment="Center" VerticalOptions="Center" />
                                                 <Label Grid.Column="4" Text="{loc:LocalizedText Workout_History_SaveButton}"
-                                                       FontSize="10" FontAttributes="Bold"
+                                                       FontSize="11" FontAttributes="Bold"
                                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                                        HorizontalTextAlignment="Center" VerticalOptions="Center" />
                                             </Grid>
@@ -493,25 +465,25 @@
                                                                    FontSize="11"
                                                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                                                    VerticalOptions="Center" />
-                                                            <Border Grid.Column="2" StrokeShape="RoundRectangle 6"
+                                                            <Border Grid.Column="2" StrokeShape="RoundRectangle 8"
                                                                     StrokeThickness="1"
                                                                     Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
                                                                     BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                                                                     Padding="4,2" HeightRequest="32">
                                                                 <Entry Text="{Binding WeightInput}" Keyboard="Numeric"
-                                                                       FontSize="12"
+                                                                       FontSize="13"
                                                                        Placeholder="{loc:LocalizedText Workout_History_KgUnit}"
                                                                        SemanticProperties.Description="{loc:LocalizedText Workout_History_WeightInKgAccessibility}"
                                                                        HorizontalTextAlignment="Center"
                                                                        VerticalOptions="Center" Margin="0" />
                                                             </Border>
-                                                            <Border Grid.Column="3" StrokeShape="RoundRectangle 6"
+                                                            <Border Grid.Column="3" StrokeShape="RoundRectangle 8"
                                                                     StrokeThickness="1"
                                                                     Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
                                                                     BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                                                                     Padding="4,2" HeightRequest="32">
                                                                 <Entry Text="{Binding RepsInput}" Keyboard="Numeric"
-                                                                       FontSize="12"
+                                                                       FontSize="13"
                                                                        Placeholder="{loc:LocalizedText Workout_History_RepsUnit}"
                                                                        SemanticProperties.Description="{loc:LocalizedText Workout_History_RepsCompletedAccessibility}"
                                                                        HorizontalTextAlignment="Center"
@@ -537,12 +509,11 @@
 
                         <!-- Retroactive Session Notes & RPE -->
                         <Grid Grid.Row="3" RowDefinitions="Auto,Auto,Auto" RowSpacing="8" Margin="0,4,0,0">
-                            <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_NotesAndRpeSectionTitle}" FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_NotesAndRpeSectionTitle}"
+                                   Style="{StaticResource SectionTitle}" />
 
                             <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalOptions="Center">
-                                <Label Text="{loc:LocalizedText Workout_History_PerceivedExertionTitle}" FontSize="12" VerticalOptions="Center" />
+                                <Label Text="{loc:LocalizedText Workout_History_PerceivedExertionTitle}" FontSize="13" VerticalOptions="Center" />
                                 <Entry
                                     Grid.Column="1"
                                     Text="{Binding EditingRpe}"
@@ -550,9 +521,9 @@
                                     Placeholder="{loc:LocalizedText Workout_History_RpeHeader}"
                                     SemanticProperties.Description="{loc:LocalizedText Workout_History_RpeSliderAccessibility}"
                                     WidthRequest="60"
-                                    HeightRequest="38"
+                                    HeightRequest="44"
                                     HorizontalTextAlignment="Center"
-                                    FontSize="14" />
+                                    FontSize="15" />
                             </Grid>
 
                             <Editor

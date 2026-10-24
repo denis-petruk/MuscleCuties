@@ -16,7 +16,7 @@
             <Grid ColumnDefinitions="*,Auto">
                 <Label Text="{loc:LocalizedText Dashboard_Nutrition_Title}" Style="{StaticResource SectionTitle}" FontSize="17" />
                 <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_Nutrition_ViewAll}" TextColor="{StaticResource Primary}"
-                       FontSize="14" VerticalOptions="Center" />
+                       FontSize="13" VerticalOptions="Center" />
             </Grid>
             <Grid ColumnDefinitions="76,*" ColumnSpacing="16">
                 <Grid WidthRequest="76" HeightRequest="76">
@@ -31,7 +31,7 @@
                            InputTransparent="True" />
                 </Grid>
                 <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
-                    <Label Text="{loc:LocalizedText Dashboard_Nutrition_Calories}" FontSize="14" FontAttributes="Bold"
+                    <Label Text="{loc:LocalizedText Dashboard_Nutrition_Calories}" FontSize="13" FontAttributes="Bold"
                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                     <Label Text="{Binding CaloriesConsumed, Converter={StaticResource LocalizedStringConverter}}"
                            FontSize="20" FontAttributes="Bold"

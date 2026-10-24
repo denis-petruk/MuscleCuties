@@ -28,10 +28,10 @@
 
     <ScrollView>
         <Grid
-            Padding="20,40,20,32"
+            Padding="{StaticResource PageContentPadding}"
             RowSpacing="16"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="640"
+            MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
             RowDefinitions="Auto,Auto,Auto,Auto">
             <sharedControls:PageHeader
                 Grid.Row="0"
@@ -40,9 +40,7 @@
                 BackCommand="{Binding BackCommand}" />
 
             <!-- Measurement system selector -->
-            <Border Grid.Row="1" Style="{StaticResource CardPrimary}"
-                    StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+            <Border Grid.Row="1" Style="{StaticResource CardPrimary}">
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="14">
                     <sharedControls:IconSectionHeader Grid.Row="0" Text="{loc:LocalizedText Profile_Units_MeasurementSystem}"
                                                       IconGlyph="ChatSettings24" />
@@ -54,7 +52,7 @@
                             Grid.Row="1"
                             Text="{loc:LocalizedText Profile_Units_MetricUsesKgGCmAnd}"
                             Style="{StaticResource CaptionLabel}"
-                            FontSize="14" />
+                            FontSize="13" />
                     </Grid>
                     <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="8">
                         <Border
@@ -75,7 +73,7 @@
                             <Label
                                 Text="{loc:LocalizedText Common_Unit_Imperial}"
                                 Style="{StaticResource BodyLabel}"
-                                FontSize="16"
+                                FontSize="15"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center">
                                 <Label.Triggers>
@@ -107,7 +105,7 @@
                             <Label
                                 Text="{loc:LocalizedText Common_Unit_Metric}"
                                 Style="{StaticResource BodyLabel}"
-                                FontSize="16"
+                                FontSize="15"
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center">
                                 <Label.Triggers>
@@ -128,12 +126,12 @@
                             Grid.Row="0"
                             Text="{loc:LocalizedText Profile_Units_PerCategoryOverrides}"
                             Style="{StaticResource FormFieldLabel}"
-                            FontSize="14" />
+                            FontSize="13" />
                         <Label
                             Grid.Row="1"
                             Text="{loc:LocalizedText Profile_Units_LeaveBlankToUseTheSystem}"
                             Style="{StaticResource CaptionLabel}"
-                            FontSize="14" />
+                            FontSize="13" />
                     </Grid>
                     <Grid Grid.Row="5" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10"
                           RowSpacing="10">
@@ -180,7 +178,7 @@
                 Grid.Row="2"
                 Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource CaptionLabel}"
-                FontSize="14"
+                FontSize="13"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
 
             <Button Grid.Row="3" Text="{loc:LocalizedText Profile_Units_SaveUnits}" Command="{Binding SaveCommand}" />

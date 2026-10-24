@@ -11,8 +11,6 @@
 
     <Border
         Style="{StaticResource CardPrimary}"
-        StrokeThickness="1"
-        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
         SemanticProperties.Description="{Binding WorkoutTitle, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_Workout_SemanticTodayPlan}">
         <VerticalStackLayout Spacing="12">
 
@@ -74,7 +72,7 @@
                     <Label
                         Text="{Binding WorkoutTitle, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource SectionTitle}"
-                        FontSize="18"
+                        FontSize="17"
                         LineBreakMode="TailTruncation"
                         MaxLines="1" />
                 </VerticalStackLayout>
@@ -145,7 +143,7 @@
             <Label
                 Text="{Binding WorkoutSubtitle, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource MutedLabel}"
-                FontSize="14"
+                FontSize="13"
                 LineBreakMode="WordWrap"
                 Margin="0,-4,0,0" />
 
@@ -254,9 +252,8 @@
             <!-- Rest Day Recovery Tip / Guidance (Only on Rest Day) -->
             <Border
                 IsVisible="{Binding IsRestDay}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                StrokeThickness="1"
+                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                StrokeThickness="0"
                 StrokeShape="RoundRectangle 12"
                 Padding="12,9">
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9" VerticalOptions="Center">
@@ -271,7 +268,7 @@
                         Grid.Column="1"
                         Text="Muscle fibers rebuild &amp; glycogen replenishes during rest. Prioritize sleep and hydration."
                         Style="{StaticResource CaptionLabel}"
-                        FontSize="11"
+                        FontSize="12"
                         LineBreakMode="WordWrap"
                         VerticalOptions="Center" />
                 </Grid>

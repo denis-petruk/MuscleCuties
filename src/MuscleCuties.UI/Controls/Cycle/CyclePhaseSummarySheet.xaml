@@ -58,28 +58,20 @@
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding SelectedPhaseSummary.Window, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="12"
+                                FontSize="13"
                                 FontAttributes="Bold"
                                 TextColor="{Binding SelectedPhaseSummary.AccentColor}" />
                         </Grid>
 
                         <Border
                             Grid.Column="2"
-                            WidthRequest="36"
-                            HeightRequest="36"
-                            StrokeShape="RoundRectangle 18"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                            StrokeThickness="0"
-                            VerticalOptions="Center"
+                            Style="{StaticResource ModalIconButton}"
                             SemanticProperties.Description="{loc:LocalizedText Cycle_PhaseSummary_CloseAccessibility}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding ClosePhaseSummarySheetCommand}" />
                             </Border.GestureRecognizers>
                             <Path
-                                Data="M6 6L18 18M18 6L6 18"
-                                Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                StrokeThickness="2"
-                                StrokeLineCap="Round"
+                                Style="{StaticResource ModalCloseIcon}"
                                 Aspect="Uniform"
                                 WidthRequest="14"
                                 HeightRequest="14"
@@ -103,9 +95,8 @@
                         <Border
                             Grid.Row="0"
                             BackgroundColor="{Binding SelectedPhaseSummary.BackgroundColor}"
-                            Stroke="{Binding SelectedPhaseSummary.AccentColor}"
                             StrokeShape="RoundRectangle 14"
-                            StrokeThickness="1"
+                            StrokeThickness="0"
                             Padding="16,12">
                             <Label
                                 Text="{Binding SelectedPhaseSummary.Tagline, Converter={StaticResource LocalizedStringConverter}}"
@@ -217,7 +208,7 @@
                                 <Label
                                     Grid.Column="1"
                                     Text="{Binding SelectedPhaseSummary.QuickRule, Converter={StaticResource LocalizedStringConverter}}"
-                                    FontSize="12"
+                                    FontSize="13"
                                     FontAttributes="Italic"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                             </Grid>
@@ -236,8 +227,9 @@
                         Text="{loc:LocalizedText Cycle_PhaseSummary_ExploreFullGuideButton}"
                         Command="{Binding OpenFullPhaseGuideCommand}"
                         IsVisible="{Binding IsPhaseGuideAvailable}"
-                        HeightRequest="48"
-                        FontSize="14"
+                        MinimumHeightRequest="52"
+                        HeightRequest="52"
+                        FontSize="15"
                         FontAttributes="Bold" />
                     <Label Text="{loc:LocalizedText Cycle_PhaseSummary_GuidePendingReview}"
                            IsVisible="{Binding IsPhaseGuideAvailable, Converter={StaticResource InvertedBoolConverter}}"
@@ -247,9 +239,10 @@
                         Grid.Column="1"
                         Text="{loc:LocalizedText Cycle_PhaseSummary_CloseButton}"
                         Command="{Binding ClosePhaseSummarySheetCommand}"
-                        HeightRequest="48"
+                        MinimumHeightRequest="52"
+                        HeightRequest="52"
                         WidthRequest="90"
-                        FontSize="14"
+                        FontSize="15"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                 </Grid>

@@ -19,18 +19,15 @@
         <RoundRectangle x:Key="DashboardTrendNavigationShape" CornerRadius="12" />
     </ContentView.Resources>
 
-    <Border Style="{StaticResource CardPrimary}"
-            StrokeThickness="1"
-            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+    <Border Style="{StaticResource CardPrimary}">
         <VerticalStackLayout Spacing="{StaticResource DashboardTrendSectionSpacing}">
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource DashboardTrendDetailSpacing}">
                 <Border
                     WidthRequest="{StaticResource DashboardTrendNavigationSize}"
                     HeightRequest="{StaticResource DashboardTrendNavigationSize}"
-                    StrokeThickness="1"
+                    StrokeThickness="0"
                     StrokeShape="{StaticResource DashboardTrendNavigationShape}"
-                    Stroke="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
                     SemanticProperties.Description="{loc:LocalizedText Dashboard_Trend_PreviousView}">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding PreviousTrendCommand}" />
@@ -52,10 +49,9 @@
                 <Border Grid.Column="2"
                         WidthRequest="{StaticResource DashboardTrendNavigationSize}"
                         HeightRequest="{StaticResource DashboardTrendNavigationSize}"
-                        StrokeThickness="1"
+                        StrokeThickness="0"
                         StrokeShape="{StaticResource DashboardTrendNavigationShape}"
-                        Stroke="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
                         SemanticProperties.Description="{loc:LocalizedText Dashboard_Trend_NextView}">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding NextTrendCommand}" />

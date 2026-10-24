@@ -20,6 +20,7 @@ public sealed class CycleMonthGrid : Grid
     private const int DayButtonCornerRadius = 10;
     private const int DayCellCornerRadius = 12;
     private const double DayLabelFontSize = 13;
+    private const string AppFontFamilyName = "Inter";
     public static readonly BindableProperty ItemsSourceProperty = BindableProperty.Create(
         nameof(ItemsSource),
         typeof(IReadOnlyList<CycleDayItem>),
@@ -216,6 +217,7 @@ public sealed class CycleMonthGrid : Grid
             MinimumWidthRequest = DayTapTargetSize,
             HeightRequest = DayTapTargetSize,
             CornerRadius = DayButtonCornerRadius,
+            FontFamily = AppFontFamilyName,
             FontSize = DayLabelFontSize,
             FontAttributes = FontAttributes.Bold
         };

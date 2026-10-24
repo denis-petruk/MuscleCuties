@@ -13,7 +13,7 @@
         <x:Double x:Key="InjuryChoiceMinimumHeight">62</x:Double>
         <Style x:Key="InjuryChoiceCard" TargetType="Border">
             <Setter Property="StrokeShape" Value="{StaticResource InjuryChoiceShape}" />
-            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeThickness" Value="0" />
             <Setter Property="Padding" Value="14,10" />
             <Setter Property="MinimumHeightRequest" Value="{StaticResource InjuryChoiceMinimumHeight}" />
             <Setter Property="HorizontalOptions" Value="Fill" />
@@ -120,9 +120,9 @@
                                         </DataTrigger>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
                                             <Setter Property="SemanticProperties.Hint" Value="Not selected" />
+                                            <Setter Property="StrokeThickness" Value="0" />
                                             <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
-                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
+                                                    Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                     <Label Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}"
@@ -157,9 +157,9 @@
                                         </DataTrigger>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
                                             <Setter Property="SemanticProperties.Hint" Value="Not selected" />
+                                            <Setter Property="StrokeThickness" Value="0" />
                                             <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
-                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
+                                                    Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                     <Label Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}"
@@ -200,9 +200,8 @@
 
                 <!-- Empty state -->
                 <Border Grid.Row="4" IsVisible="{Binding ShowEmptyState}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
-                        Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 16" Padding="20">
+                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 16" Padding="20">
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
                         <Image Grid.Row="0" Source="injury_free.png" WidthRequest="64" HeightRequest="64"
                                HorizontalOptions="Center"

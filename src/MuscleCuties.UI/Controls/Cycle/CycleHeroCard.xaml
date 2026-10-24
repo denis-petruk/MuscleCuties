@@ -42,7 +42,7 @@
                     VerticalOptions="Center">
                     <Label
                         Text="{Binding PhaseEnergyBadgeText, Converter={StaticResource LocalizedStringConverter}}"
-                        FontSize="12"
+                        FontSize="11"
                         FontAttributes="Bold"
                         TextColor="{StaticResource Primary}"
                         VerticalOptions="Center" />
@@ -55,7 +55,7 @@
                     <Label
                         Text="{Binding PhaseLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_Hero_PhaseFormat}"
                         Style="{StaticResource SectionTitle}"
-                        FontSize="22"
+                        FontSize="24"
                         FontAttributes="Bold" />
                     <Label
                         Text="{Binding CycleDaySummary, Converter={StaticResource LocalizedStringConverter}}"

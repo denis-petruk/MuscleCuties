@@ -8,9 +8,7 @@
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     x:DataType="{x:Type vm:DashboardViewModel}">
 
-    <Border Style="{StaticResource CardPrimary}"
-            StrokeThickness="1"
-            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+    <Border Style="{StaticResource CardPrimary}">
         <VerticalStackLayout Spacing="12">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalOptions="Center">
                 <VerticalStackLayout Spacing="2" VerticalOptions="Center">
@@ -41,8 +39,7 @@
                                Style="{StaticResource CaptionLabel}"
                                FontSize="12" />
                         <Label Text="{Binding TodayReadinessScoreText, Converter={StaticResource LocalizedStringConverter}}"
-                               FontFamily="Inter"
-                               FontSize="34"
+                               FontSize="28"
                                FontAttributes="Bold"
                                TextColor="{StaticResource Primary}" />
                     </VerticalStackLayout>
@@ -61,7 +58,7 @@
 
             <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="8"
                   IsVisible="{Binding HasTodayReadinessRecord}">
-                    <Border Style="{StaticResource CardSecondary}" Padding="10,8">
+                    <Border Style="{StaticResource SurfaceTile}" Padding="10,8">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                             <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingSleep}"
                                    Style="{StaticResource CaptionLabel}" />
@@ -69,7 +66,7 @@
                                    FontAttributes="Bold" />
                         </Grid>
                     </Border>
-                    <Border Grid.Column="1" Style="{StaticResource CardSecondary}" Padding="10,8">
+                    <Border Grid.Column="1" Style="{StaticResource SurfaceTile}" Padding="10,8">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                             <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingEnergy}"
                                    Style="{StaticResource CaptionLabel}" />
@@ -77,7 +74,7 @@
                                    FontAttributes="Bold" />
                         </Grid>
                     </Border>
-                    <Border Grid.Row="1" Style="{StaticResource CardSecondary}" Padding="10,8">
+                    <Border Grid.Row="1" Style="{StaticResource SurfaceTile}" Padding="10,8">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                             <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingSoreness}"
                                    Style="{StaticResource CaptionLabel}" />
@@ -85,7 +82,7 @@
                                    FontAttributes="Bold" />
                         </Grid>
                     </Border>
-                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardSecondary}" Padding="10,8">
+                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource SurfaceTile}" Padding="10,8">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                             <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingStress}"
                                    Style="{StaticResource CaptionLabel}" />

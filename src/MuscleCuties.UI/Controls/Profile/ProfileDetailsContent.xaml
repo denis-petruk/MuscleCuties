@@ -14,9 +14,7 @@
                 <Border
                     Style="{StaticResource CardPrimary}"
                     Margin="20,0,20,16"
-                    Padding="16"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                    StrokeThickness="1">
+                    Padding="16">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding OpenVaultCommand}" />
                     </Border.GestureRecognizers>
@@ -30,7 +28,7 @@
                                 HeightRequest="22"
                                 VerticalOptions="Center" />
                             <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2" VerticalOptions="Center">
-                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" FontSize="16" FontAttributes="Bold"
+                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" FontSize="15" FontAttributes="Bold"
                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_StoredLocallyOnThisDevice}"
                                        Style="{StaticResource CaptionLabel}" FontSize="12" />
@@ -51,9 +49,9 @@
                         <Border
                             Grid.Row="1"
                             HeightRequest="110"
-                            StrokeShape="RoundRectangle 12"
-                            StrokeThickness="1"
-                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                            StrokeShape="RoundRectangle 14"
+                            StrokeThickness="0"
+                            Stroke="Transparent"
                             BackgroundColor="{AppThemeBinding Light={StaticResource InputSurface}, Dark={StaticResource InputSurfaceDark}}">
                             <Grid>
                                 <!-- Revealed State -->
@@ -77,7 +75,7 @@
                                                 Text="{loc:LocalizedText Profile_Details_HidePreview}"
                                                 Command="{Binding ToggleVaultPrivacyCommand}"
                                                 Style="{StaticResource ButtonLink}"
-                                                FontSize="11"
+                                                FontSize="12"
                                                 HorizontalOptions="Start"
                                                 VerticalOptions="End"
                                                 HeightRequest="28"
@@ -92,7 +90,7 @@
                                         Padding="14" VerticalOptions="Center" HorizontalOptions="Center"
                                         RowDefinitions="Auto,Auto" RowSpacing="4">
                                         <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Details_NoPhotosStoredYet}"
-                                               FontAttributes="Bold" FontSize="14" HorizontalTextAlignment="Center" />
+                                               FontAttributes="Bold" FontSize="15" HorizontalTextAlignment="Center" />
                                         <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToOpenVaultAndAdd}"
                                                Style="{StaticResource CaptionLabel}" FontSize="12"
                                                HorizontalTextAlignment="Center" />
@@ -142,10 +140,7 @@
                 <Border
                     Style="{StaticResource CardPrimary}"
                     Margin="20,0,20,16"
-                    Padding="0"
-                    StrokeShape="RoundRectangle 16"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                    StrokeThickness="1">
+                    Padding="0">
                     <VerticalStackLayout Spacing="0">
                         <!-- Apple Health Status Row -->
                         <Border BackgroundColor="Transparent" StrokeThickness="0" Padding="16,14"
@@ -286,10 +281,7 @@
                 <Border
                     Style="{StaticResource CardPrimary}"
                     Margin="20,0,20,16"
-                    Padding="0"
-                    StrokeShape="RoundRectangle 16"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                    StrokeThickness="1">
+                    Padding="0">
                     <VerticalStackLayout Spacing="0">
                         <!-- Personal Info Row -->
                         <Border BackgroundColor="Transparent" StrokeThickness="0" Padding="16,14">

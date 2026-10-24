@@ -124,11 +124,19 @@
                 <!-- Step indicator + progress bar -->
                 <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="8">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource QuizStepActionSpacing}">
-                        <Label
-                            Text="{loc:LocalizedText Onboarding_Quiz_StepTwoOfTwo}"
-                            Style="{StaticResource EyebrowLabel}"
+                        <Border
+                            HorizontalOptions="Start"
                             VerticalOptions="Center"
-                            SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_StepTwoOfTwoPersonalizedQuestions}" />
+                            Padding="12,5"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 999"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
+                            <Label
+                                Text="{loc:LocalizedText Onboarding_Quiz_StepTwoOfTwo}"
+                                Style="{StaticResource EyebrowLabel}"
+                                VerticalOptions="Center"
+                                SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_StepTwoOfTwoPersonalizedQuestions}" />
+                        </Border>
                         <Button Grid.Column="1"
                                 Text="{loc:LocalizedText Onboarding_Quiz_GoBackToProfile}"
                                 Style="{StaticResource ButtonLink}"
@@ -149,12 +157,19 @@
                             HeightRequest="6"
                             VerticalOptions="Center"
                             SemanticProperties.Description="{Binding ProgressText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_QuizProgressValue}" />
-                        <Label
+                        <Border
                             Grid.Column="1"
-                            Text="{Binding ProgressText, Converter={StaticResource LocalizedStringConverter}}"
-                            Style="{StaticResource AccentLabel}"
-                            VerticalOptions="Center"
-                            SemanticProperties.Description="{Binding ProgressText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_QuestionValue}" />
+                            Padding="10,4"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 999"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            VerticalOptions="Center">
+                            <Label
+                                Text="{Binding ProgressText, Converter={StaticResource LocalizedStringConverter}}"
+                                Style="{StaticResource AccentLabel}"
+                                VerticalOptions="Center"
+                                SemanticProperties.Description="{Binding ProgressText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_QuestionValue}" />
+                        </Border>
                     </Grid>
                 </Grid>
 
@@ -199,7 +214,7 @@
                             <Border
                                 Padding="16,14"
                                 StrokeShape="RoundRectangle 14"
-                                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                                Stroke="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}"
                                 StrokeThickness="1"
                                 MinimumHeightRequest="64"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
@@ -360,17 +375,17 @@
                         SemanticProperties.Description="{Binding PainSliderLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_DiscomfortLevelValue}"
                         SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_OneIsSevereFiveIsNone}" />
                     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto">
-                        <Label Text="{loc:LocalizedText Onboarding_Quiz_Severe}" Style="{StaticResource CaptionLabel}"
-                               FontSize="13" />
+                        <Label Text="{loc:LocalizedText Onboarding_Quiz_Severe}" Style="{StaticResource CaptionLabel}" />
                         <Label Grid.Column="2" Text="{loc:LocalizedText Onboarding_Quiz_None}"
-                               Style="{StaticResource CaptionLabel}" FontSize="13" HorizontalTextAlignment="End" />
+                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" />
                     </Grid>
 
                     <BoxView
                         Grid.Row="3"
                         HeightRequest="1"
                         Margin="0,12,0,0"
-                        Color="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+                        Opacity="0.6"
+                        Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                     <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="12">
                         <Label
@@ -394,10 +409,9 @@
                         SemanticProperties.Description="{Binding EnergySliderLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_TrainingEnergyLevelValue}"
                         SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_OneIsVeryLowFiveIs}" />
                     <Grid Grid.Row="6" ColumnDefinitions="Auto,*,Auto">
-                        <Label Text="{loc:LocalizedText Onboarding_Quiz_VeryLow}" Style="{StaticResource CaptionLabel}"
-                               FontSize="13" />
+                        <Label Text="{loc:LocalizedText Onboarding_Quiz_VeryLow}" Style="{StaticResource CaptionLabel}" />
                         <Label Grid.Column="2" Text="{loc:LocalizedText Onboarding_Quiz_Peak}"
-                               Style="{StaticResource CaptionLabel}" FontSize="13" HorizontalTextAlignment="End" />
+                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" />
                     </Grid>
                 </Grid>
             </ScrollView>
@@ -444,7 +458,7 @@
                     Grid.Row="3"
                     Grid.Column="0"
                     BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                    Stroke="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}"
                     StrokeShape="RoundRectangle 14"
                     StrokeThickness="1"
                     IsVisible="{Binding ShowQuizBackButton}"

@@ -10,10 +10,10 @@
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <Grid Padding="20,40,20,32"
+        <Grid Padding="{StaticResource PageContentPadding}"
               RowSpacing="16"
               HorizontalOptions="Fill"
-              MaximumWidthRequest="640"
+              MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
               RowDefinitions="Auto,Auto,Auto">
             <sharedControls:PageHeader Grid.Row="0"
                                        Title="{loc:LocalizedText Profile_HealthSync_HealthData}"
@@ -21,9 +21,7 @@
                                        BackCommand="{Binding BackCommand}" />
 
             <Border Grid.Row="1"
-                    Style="{StaticResource CardPrimary}"
-                    StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+                    Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="12">
                     <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_HealthSync_CurrentStatus}"
                                                       IconGlyph="HeartPulse32" />

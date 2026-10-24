@@ -41,6 +41,16 @@ public class MacroProgressGrid : ContentView
         "M10 3C7 7 5 10 5 13a5 5 0 0 0 10 0c0-3-2-6-5-10z"
     ];
 
+    private const string AppFontFamilyName = "Inter";
+    private const double MacroColumnSpacing = 12;
+    private const double MacroRowSpacing = 4;
+    private const double MacroIconDimension = 15;
+    private const double MacroHeaderSpacing = 5;
+    private const double MacroNameFontSize = 13;
+    private const double MacroValueFontSize = 15;
+    private const double MacroBarHeight = 5;
+    private const double MacroBarCornerRadius = 2.5;
+
     private static readonly string[] MacroLabels = ["Protein", "Carbs", "Fats"];
     private static readonly double[] StrokeWidths = [1.7, 1.5, 1.6];
     private readonly BoxView[] _fillBars = new BoxView[3];
@@ -54,8 +64,8 @@ public class MacroProgressGrid : ContentView
         {
             ColumnDefinitions = [new(), new(), new()],
             RowDefinitions = [new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Auto)],
-            ColumnSpacing = 10,
-            RowSpacing = 4
+            ColumnSpacing = MacroColumnSpacing,
+            RowSpacing = MacroRowSpacing
         };
 
         var converter = new PathGeometryConverter();
@@ -63,7 +73,7 @@ public class MacroProgressGrid : ContentView
         for (var i = 0; i < 3; i++)
         {
             var macroColor = AppThemeResources.GetColor(LightKeys[i], DarkKeys[i]);
-            var trackColor = AppThemeResources.GetColor("Gray300", "Gray800");
+            var trackColor = AppThemeResources.GetColor("Gray200", "Gray800");
 
             var icon = new Path
             {
@@ -73,8 +83,8 @@ public class MacroProgressGrid : ContentView
                 StrokeLineCap = PenLineCap.Round,
                 StrokeLineJoin = PenLineJoin.Round,
                 Aspect = Stretch.Uniform,
-                WidthRequest = 16,
-                HeightRequest = 16,
+                WidthRequest = MacroIconDimension,
+                HeightRequest = MacroIconDimension,
                 VerticalOptions = LayoutOptions.Center
             };
             _icons[i] = icon;
@@ -83,12 +93,13 @@ public class MacroProgressGrid : ContentView
             {
                 Text = MacroLabels[i],
                 Style = (Style)Application.Current!.Resources["MutedLabel"],
-                FontSize = 14
+                FontFamily = AppFontFamilyName,
+                FontSize = MacroNameFontSize
             };
 
             var header = new HorizontalStackLayout
             {
-                Spacing = 5,
+                Spacing = MacroHeaderSpacing,
                 Children = { icon, nameLabel }
             };
             Grid.SetRow(header, 0);
@@ -97,7 +108,8 @@ public class MacroProgressGrid : ContentView
 
             var valueLabel = new Label
             {
-                FontSize = 15,
+                FontFamily = AppFontFamilyName,
+                FontSize = MacroValueFontSize,
                 FontAttributes = FontAttributes.Bold,
                 TextColor = AppThemeResources.GetColor("TextPrimary", "TextPrimaryDark")
             };
@@ -109,19 +121,19 @@ public class MacroProgressGrid : ContentView
             var track = new BoxView
             {
                 Color = trackColor,
-                HeightRequest = 5,
+                HeightRequest = MacroBarHeight,
                 HorizontalOptions = LayoutOptions.Fill,
-                CornerRadius = 2.5
+                CornerRadius = MacroBarCornerRadius
             };
 
             var fill = new BoxView
             {
                 Color = macroColor,
-                HeightRequest = 5,
+                HeightRequest = MacroBarHeight,
                 HorizontalOptions = LayoutOptions.Fill,
                 AnchorX = 0,
                 ScaleX = 0,
-                CornerRadius = 2.5
+                CornerRadius = MacroBarCornerRadius
             };
             _fillBars[i] = fill;
 

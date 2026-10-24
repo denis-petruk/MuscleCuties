@@ -9,15 +9,15 @@
     Shell.NavBarIsVisible="False">
 
     <ContentPage.Resources>
-        <Thickness x:Key="PrivacyPagePadding">24,40,24,32</Thickness>
+        <Thickness x:Key="PrivacyPagePadding">20,12,20,32</Thickness>
         <Thickness x:Key="PrivacyBackPadding">10</Thickness>
         <x:Double x:Key="PrivacySectionSpacing">28</x:Double>
         <x:Double x:Key="PrivacyTextSpacing">8</x:Double>
         <x:Double x:Key="PrivacyItemSpacing">12</x:Double>
         <x:Double x:Key="PrivacyTouchTarget">44</x:Double>
         <x:Double x:Key="PrivacyPageMaximumWidth">640</x:Double>
-        <x:Double x:Key="PrivacyBodyFontSize">14</x:Double>
-        <x:Double x:Key="PrivacyHeadingFontSize">18</x:Double>
+        <x:Double x:Key="PrivacyBodyFontSize">15</x:Double>
+        <x:Double x:Key="PrivacyHeadingFontSize">17</x:Double>
     </ContentPage.Resources>
 
     <ScrollView>
