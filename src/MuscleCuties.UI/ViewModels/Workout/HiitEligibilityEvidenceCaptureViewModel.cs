@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
@@ -28,22 +29,26 @@ public sealed partial class HiitEligibilityEvidenceCaptureViewModel : Observable
         PreviousFourWeeksAerobicEvidence = new ObservableCollection<HiitAerobicWeekEvidenceCapture>(
             Enumerable.Range(FirstPriorWeekOffset, WorkoutPlanningConstants.HiitRequiredPriorWeeks)
                 .Select(weekOffset => new HiitAerobicWeekEvidenceCapture(weekOffset)));
+        UnderlyingCardioExperienceHelp = string.Format(
+            CultureInfo.CurrentCulture,
+            CompositeFormat.Parse(UiTextCatalog.Get("Workout_Generation_HiitCardioHistoryHelp")),
+            WorkoutPlanningConstants.MinimumConsistentWeeksForEstablished,
+            WorkoutPlanningConstants.EstablishedSessionsPerWeek,
+            WorkoutPlanningConstants.ReturningInactivityDays);
+        AerobicSessionThresholdHelp = string.Format(
+            CultureInfo.CurrentCulture,
+            CompositeFormat.Parse(UiTextCatalog.Get("Workout_Generation_HiitAerobicThresholdHelp")),
+            WorkoutPlanningConstants.HiitMinimumManageableSessionMinutes,
+            WorkoutPlanningConstants.HiitRequiredAerobicSessionsPerWeek);
     }
 
     public ObservableCollection<ActivityEvidenceAnswerChoice> ClearanceScreeningChoices { get; }
 
     public ObservableCollection<HiitAerobicWeekEvidenceCapture> PreviousFourWeeksAerobicEvidence { get; }
 
-    public string UnderlyingCardioExperienceHelp => string.Format(CultureInfo.CurrentCulture,
-        UiTextCatalog.Get("Workout_Generation_HiitCardioHistoryHelp"),
-        WorkoutPlanningConstants.MinimumConsistentWeeksForEstablished,
-        WorkoutPlanningConstants.EstablishedSessionsPerWeek,
-        WorkoutPlanningConstants.ReturningInactivityDays);
+    public string UnderlyingCardioExperienceHelp { get; }
 
-    public string AerobicSessionThresholdHelp => string.Format(CultureInfo.CurrentCulture,
-        UiTextCatalog.Get("Workout_Generation_HiitAerobicThresholdHelp"),
-        WorkoutPlanningConstants.HiitMinimumManageableSessionMinutes,
-        WorkoutPlanningConstants.HiitRequiredAerobicSessionsPerWeek);
+    public string AerobicSessionThresholdHelp { get; }
 
     public HiitEligibilityEvidenceInputV020 ToRequestInput(
         DateOnly localDate,
@@ -82,7 +87,7 @@ public sealed partial class HiitEligibilityEvidenceCaptureViewModel : Observable
             localDate.AddDays(-daysSinceLastSession), true);
     }
 
-    private IReadOnlyList<HiitAerobicWeekInputV020>? TryReadWeeklyEvidence()
+    private List<HiitAerobicWeekInputV020>? TryReadWeeklyEvidence()
     {
         var weeks = new List<HiitAerobicWeekInputV020>(PreviousFourWeeksAerobicEvidence.Count);
         foreach (var week in PreviousFourWeeksAerobicEvidence)
@@ -105,14 +110,19 @@ public sealed partial class HiitAerobicWeekEvidenceCapture : ObservableObject
     public HiitAerobicWeekEvidenceCapture(int weekOffsetFromCurrent)
     {
         WeekOffsetFromCurrent = weekOffsetFromCurrent;
-        WeekLabel = string.Format(CultureInfo.CurrentCulture,
-            UiTextCatalog.Get("Workout_Generation_HiitPriorWeekLabel"), weekOffsetFromCurrent);
+        WeekLabel = string.Format(
+            CultureInfo.CurrentCulture,
+            CompositeFormat.Parse(UiTextCatalog.Get("Workout_Generation_HiitPriorWeekLabel")),
+            weekOffsetFromCurrent);
+        SessionCountAccessibilityDescription = string.Format(
+            CultureInfo.CurrentCulture,
+            CompositeFormat.Parse(UiTextCatalog.Get("Workout_Generation_HiitWeekCountAccessibility")),
+            WeekLabel);
     }
 
     public int WeekOffsetFromCurrent { get; }
 
     public string WeekLabel { get; }
 
-    public string SessionCountAccessibilityDescription => string.Format(CultureInfo.CurrentCulture,
-        UiTextCatalog.Get("Workout_Generation_HiitWeekCountAccessibility"), WeekLabel);
+    public string SessionCountAccessibilityDescription { get; }
 }

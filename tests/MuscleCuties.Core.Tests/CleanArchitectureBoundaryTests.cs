@@ -47,6 +47,7 @@ public class CleanArchitectureBoundaryTests
     private static readonly Regex BlockingResultRegex = new(@"\.Result\b", RegexOptions.Compiled);
     private static readonly Regex BlockingGetAwaiterRegex = new(@"\.GetAwaiter\s*\(\)\s*\.GetResult\s*\(", RegexOptions.Compiled);
     private static readonly Regex CoreDomainUsingRegex = new(@"^\s*using\s+(?:static\s+)?MuscleCuties\.Core\.Domain(\.|\s*;)", RegexOptions.Compiled | RegexOptions.Multiline);
+    private static readonly Regex CoreAnyUsingRegex = new(@"^\s*using\s+(?:static\s+)?MuscleCuties\.Core(\.|\s*;)", RegexOptions.Compiled | RegexOptions.Multiline);
 
     [Fact]
     public void Core_assembly_and_project_reference_zero_outer_dependencies()
@@ -251,6 +252,38 @@ public class CleanArchitectureBoundaryTests
         Assert.True(
             violations.Count == 0,
             $"Found {violations.Count} UI ViewModel(s) importing MuscleCuties.Core.Domain directly:\n" + string.Join("\n", violations));
+    }
+
+    [Fact]
+    public void Zero_Core_imports_in_Workout_Cycle_Dashboard_and_Auth_ViewModels()
+    {
+        string[] migratedFeatureDirs = ["Workout", "Cycle", "Dashboard", "Auth"];
+        var violations = new List<string>();
+
+        foreach (var feature in migratedFeatureDirs)
+        {
+            var featureDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "ViewModels", feature);
+            if (!Directory.Exists(featureDir))
+                continue;
+
+            var csFiles = Directory.EnumerateFiles(featureDir, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar) &&
+                            !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar));
+
+            foreach (var file in csFiles)
+            {
+                var content = File.ReadAllText(file);
+                var match = CoreAnyUsingRegex.Match(content);
+                if (match.Success)
+                {
+                    violations.Add($"{Path.GetRelativePath(RepoRoot, file)} has prohibited import: '{match.Value.Trim()}'");
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} migrated ViewModel(s) importing MuscleCuties.Core directly:\n" + string.Join("\n", violations));
     }
 
     private static string FindRepositoryRoot()

@@ -503,6 +503,7 @@ public static class MauiProgram
         services.AddSingleton<IWorkoutOverviewUseCase, WorkoutOverviewUseCase>();
         services.AddSingleton<IStrengthPlanProposalClientV020, CloudStrengthPlanProposalStoreV020>();
         services.AddSingleton<IPhaseAdjustmentProposalClientV010, CloudPhaseAdjustmentProposalClientV010>();
+        services.AddSingleton<GenerateDeterministicWeeklyPlanUseCase>();
         services.AddScoped<IWorkoutSessionActionStore, CloudWorkoutSessionActionStore>();
         services.AddScoped<IWorkoutSessionActionUseCase, WorkoutSessionActionUseCase>();
     }
