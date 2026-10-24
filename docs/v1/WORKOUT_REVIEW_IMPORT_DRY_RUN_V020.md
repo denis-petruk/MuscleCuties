@@ -1,7 +1,7 @@
 # MuscleCuties exercise review import dry run
 
 Source workbook SHA-256: `9de8cb8fe5739f148e8ff856b2dcd5b0cda939a9c7b3186cef8adbf7f7424c91`
-Review manifest SHA-256: `76a9413f6c42d6c36b315c864caccb67d07a839a491d7d868124716bd10d8b29`
+Review manifest SHA-256: `399a3237475deb01f2189a0eb99989635107e11aa068f9efd1c74a24ae920cc6`
 
 | Check | Result |
 | --- | --- |
@@ -17,13 +17,15 @@ Review manifest SHA-256: `76a9413f6c42d6c36b315c864caccb67d07a839a491d7d86812471
 | Direct instruction verification | 59 restriction assessments, 160 directed pairs, and 52 template slots verified by the owner |
 | Reviewer attribution | Confirmed by owner direct instruction in this chat |
 | Automatic substitutes enabled by import | 0 |
-| Deployed PostgreSQL rows checked | No; no configured PostgreSQL connection in this workspace |
-| Database changes applied | No |
+| Deployed PostgreSQL rows checked | No; no deployed connection was configured or used |
+| Local disposable PostgreSQL rows checked | Yes; 59/59 matched after canonical seed |
+| Local reviewed metadata applied | Yes; clean dry run, 0 issues, automatic substitutions remain disabled |
+| Deployed database changes applied | No |
 
 Repository snapshot comparison: PASS.
 
 ## Before database apply
 
-Run the `review-catalog-dry-run` database maintenance command against the deployed PostgreSQL catalog with the manifest SHA-256 above. It compares seed codes, names, movement patterns, equipment, setup, rep timing and existing contraindication flags. Any missing or changed row blocks import. Apply the new schema migration and then run `review-catalog-apply` only after that database dry run is reviewed. Both commands require the existing protected runner connection; no credentials belong in chat or in the mobile app.
+The local disposable PostgreSQL 17 database on `127.0.0.1:54329` has the schema, canonical seed, and reviewed metadata applied. Its migration and import checks passed. To compare a deployed catalog, run `review-catalog-dry-run` with the manifest SHA-256 above through the protected runner connection. It compares seed codes, names, movement patterns, equipment, setup, rep timing and existing contraindication flags. Any missing or changed row blocks import. Apply the schema migration and run `review-catalog-apply` only after the deployed dry run is reviewed. No deployed connection or credentials were used during the local setup.
 
 The approved catalog records the owner’s direct instruction as the verification source for restriction assessments and all human review decisions. Existing contraindication flags still block exercises that conflict with a user’s active injury flags. The imported catalog will not enable automatic substitutions because pair conditions require the specified conditions to be satisfied.
