@@ -36,7 +36,7 @@
                     Grid.Column="1"
                     Text="{Binding PhaseStatusText, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource FormFieldLabel}"
-                    FontSize="14"
+                    FontSize="13"
                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                     VerticalOptions="Center" />
                 <Path Grid.Column="2"
@@ -59,7 +59,7 @@
                 Grid.Row="2"
                 Text="{Binding PhaseShortAdvice, Converter={StaticResource LocalizedStringConverter}}"
                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                FontSize="14"
+                FontSize="13"
                 LineBreakMode="WordWrap"
                 Margin="0,-4,0,0" />
 
@@ -141,7 +141,8 @@
                     Grid.RowSpan="2"
                     Grid.ColumnSpan="5"
                     HeightRequest="1"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                    Opacity="0.6"
                     VerticalOptions="Start" />
 
                 <Label
@@ -150,7 +151,7 @@
                     Text="{Binding PhaseTimeLeftValue, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource SectionTitle}"
                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    FontSize="16" />
+                    FontSize="17" />
                 <Label
                     Grid.Row="1"
                     Grid.Column="0"
@@ -165,7 +166,8 @@
                     Grid.Column="1"
                     WidthRequest="1"
                     HeightRequest="38"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                    Opacity="0.6"
                     VerticalOptions="End" />
 
                 <Label
@@ -174,7 +176,7 @@
                     Text="{Binding NextPeriodValue, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource SectionTitle}"
                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    FontSize="16"
+                    FontSize="17"
                     Margin="12,0,0,0" />
                 <Label
                     Grid.Row="1"
@@ -191,7 +193,8 @@
                     Grid.Column="3"
                     WidthRequest="1"
                     HeightRequest="38"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                    Opacity="0.6"
                     VerticalOptions="End" />
 
                 <Label
@@ -200,7 +203,7 @@
                     Text="{Binding LoadAdjustmentText, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource SectionTitle}"
                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    FontSize="16"
+                    FontSize="17"
                     Margin="12,0,0,0" />
                 <Label
                     Grid.Row="1"

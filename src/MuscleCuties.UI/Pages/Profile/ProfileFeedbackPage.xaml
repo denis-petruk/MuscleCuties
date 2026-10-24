@@ -12,14 +12,12 @@
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <Grid Padding="20,40,20,32" RowSpacing="16" MaximumWidthRequest="640"
+        <Grid Padding="{StaticResource PageContentPadding}" RowSpacing="16" MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
               RowDefinitions="Auto,Auto,Auto,Auto,Auto">
             <sharedControls:PageHeader Grid.Row="0" Title="{loc:LocalizedText Profile_Feedback_Feedback}"
                                        BackCommand="{Binding BackCommand}" />
 
-            <Border Grid.Row="2" Style="{StaticResource CardPrimary}" Padding="18"
-                    StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+            <Border Grid.Row="2" Style="{StaticResource CardPrimary}" Padding="18">
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
                     <Grid Grid.Row="0" ColumnDefinitions="*,56" ColumnSpacing="12">
                         <Label Text="{loc:LocalizedText Profile_Feedback_YourMessage}" Style="{StaticResource SectionTitle}"
@@ -46,12 +44,10 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Row="1" Style="{StaticResource CardPrimary}" Padding="18"
-                    StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+            <Border Grid.Row="1" Style="{StaticResource CardPrimary}" Padding="18">
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
                     <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Feedback_Details}"
-                           Style="{StaticResource FormFieldLabel}" FontSize="16" />
+                           Style="{StaticResource FormFieldLabel}" FontSize="15" />
                     <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
                         <Grid RowDefinitions="Auto,Auto" RowSpacing="5">
                             <Label Text="{loc:LocalizedText Profile_Feedback_Topic}" Style="{StaticResource FormFieldLabel}" />
@@ -77,7 +73,7 @@
                         </Border>
                     </Grid>
                     <BoxView Grid.Row="3" HeightRequest="1"
-                             Color="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+                             Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
                     <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="12" MinimumHeightRequest="48">
                         <Label Text="{loc:LocalizedText Profile_Feedback_IncludeReplyEmail}" Style="{StaticResource CardTitle}"
                                VerticalOptions="Center" />
@@ -94,7 +90,7 @@
                                SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_ReplyEmail}" />
                     </Border>
                     <BoxView Grid.Row="6" HeightRequest="1"
-                             Color="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+                             Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
                     <Grid Grid.Row="7" ColumnDefinitions="*,Auto" ColumnSpacing="12" MinimumHeightRequest="48">
                         <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Feedback_Attachment}"
                                                           IconGlyph="LinkSquare24" VerticalOptions="Center" />

@@ -13,10 +13,10 @@
 
     <ScrollView>
         <Grid
-            Padding="20,40,20,32"
+            Padding="{StaticResource PageContentPadding}"
             RowSpacing="16"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="640"
+            MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
             RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
             <sharedControls:PageHeader
                 Grid.Row="0"
@@ -24,9 +24,7 @@
                 Subtitle="Account, body metrics, and cycle logging"
                 BackCommand="{Binding BackCommand}" />
 
-            <Border Grid.Row="1" Style="{StaticResource CardPrimary}"
-                    StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+            <Border Grid.Row="1" Style="{StaticResource CardPrimary}">
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="14">
                     <sharedControls:IconSectionHeader Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_Account}"
                                                       IconGlyph="PersonPill24" />
@@ -64,9 +62,7 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Row="2" Style="{StaticResource CardPrimary}"
-                    StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+            <Border Grid.Row="2" Style="{StaticResource CardPrimary}">
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="14">
                     <sharedControls:IconSectionHeader Grid.Row="0" Text="{loc:LocalizedText Auth_Password}"
                                                       IconGlyph="ShieldLock24" />
@@ -133,9 +129,7 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Row="3" Style="{StaticResource CardPrimary}"
-                    StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+            <Border Grid.Row="3" Style="{StaticResource CardPrimary}">
                 <Grid RowDefinitions="Auto,Auto" RowSpacing="14">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                         <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_PersonalInfo_BodyMetrics}" IconGlyph="Target24" />
@@ -168,9 +162,7 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Row="4" Style="{StaticResource CardPrimary}"
-                    StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+            <Border Grid.Row="4" Style="{StaticResource CardPrimary}">
                 <Grid RowDefinitions="Auto,Auto" RowSpacing="14">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                         <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_PersonalInfo_CycleLogging}"
@@ -194,9 +186,7 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Row="5" Style="{StaticResource CardPrimary}"
-                    StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
+            <Border Grid.Row="5" Style="{StaticResource CardPrimary}">
                 <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="14">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                         <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_PersonalInfo_ReproductiveContext}"

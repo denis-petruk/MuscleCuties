@@ -16,15 +16,10 @@
     <Grid RowDefinitions="Auto,*"
           BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
         <!-- Header -->
-        <Grid Grid.Row="0" Padding="20,40,20,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12"
+        <Grid Grid.Row="0" Padding="{StaticResource PageHeaderPadding}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12"
               VerticalOptions="Center">
             <Border
-                WidthRequest="40"
-                HeightRequest="40"
-                StrokeShape="RoundRectangle 20"
-                BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
-                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                StrokeThickness="1"
+                Style="{StaticResource HeaderIconButton}"
                 HorizontalOptions="Start">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding NavigateBackCommand}" />
@@ -38,7 +33,7 @@
             </Border>
 
             <Grid Grid.Column="1" RowDefinitions="Auto,Auto" VerticalOptions="Center">
-                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" Style="{StaticResource SectionTitle}" FontSize="18" />
+                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" Style="{StaticResource SectionTitle}" FontSize="17" />
                 <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_PrivateStoredOnThisDevice}" Style="{StaticResource CaptionLabel}"
                        FontSize="12" />
             </Grid>
@@ -61,7 +56,7 @@
             ItemSizingStrategy="MeasureFirstItem"
             SelectionMode="None"
             Margin="20,0,20,24"
-            MaximumWidthRequest="640">
+            MaximumWidthRequest="{StaticResource PageContentMaxWidth}">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="16" />
             </CollectionView.ItemsLayout>
@@ -77,7 +72,7 @@
                                 HeightRequest="24"
                                 VerticalOptions="Center" />
                             <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_PrivacyFirstPhotoVault}" FontSize="14" FontAttributes="Bold"
+                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_PrivacyFirstPhotoVault}" FontSize="15" FontAttributes="Bold"
                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_YourPhotosAreStoredLocallyAnd}"
                                        Style="{StaticResource CaptionLabel}" FontSize="12" />
@@ -109,7 +104,7 @@
                             HeightRequest="40"
                             HorizontalOptions="Center" />
                         <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_NoProgressPhotoYet}"
-                               Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" FontSize="16" />
+                               Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" FontSize="15" />
                         <Label Grid.Row="2" Text="{loc:LocalizedText Profile_PhotoJourney_ChoosePhotosToTrackProgressPhotos}"
                                Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" FontSize="13" />
                     </Grid>
@@ -154,9 +149,9 @@
                             <Border
                                 Grid.Row="1"
                                 HeightRequest="240"
-                                StrokeShape="RoundRectangle 12"
-                                StrokeThickness="1"
-                                Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                                StrokeShape="RoundRectangle 14"
+                                StrokeThickness="0"
+                                Stroke="Transparent"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
@@ -190,7 +185,7 @@
                                             Grid.Row="1"
                                             Text="{loc:LocalizedText Profile_PhotoJourney_PhotoHiddenForPrivacy}"
                                             Style="{StaticResource SectionTitle}"
-                                            FontSize="14"
+                                            FontSize="15"
                                             IsVisible="{Binding IsImageAvailable}"
                                             HorizontalTextAlignment="Center" />
                                         <Label Grid.Row="2"

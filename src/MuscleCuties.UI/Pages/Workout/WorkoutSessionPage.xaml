@@ -33,7 +33,7 @@
             <Setter Property="MinimumHeightRequest" Value="48" />
             <Setter Property="MinimumWidthRequest" Value="48" />
             <Setter Property="Padding" Value="12,8" />
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontSize" Value="15" />
         </Style>
     </ContentPage.Resources>
     <Grid>
@@ -140,7 +140,7 @@
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="20" Padding="0,16,0,8">
                             <Label
                                 Text="{Binding SelectedActivity.Title, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource SectionTitle}" FontSize="22"
+                                Style="{StaticResource SectionTitle}" FontSize="20"
                                 HorizontalTextAlignment="Center"
                                 SemanticProperties.HeadingLevel="Level2" />
                             <Label Grid.Row="1"
@@ -245,12 +245,12 @@
                                              IconColor="{StaticResource Primary}" WidthRequest="28" HeightRequest="28"
                                              VerticalOptions="Center" />
                                 <Label Grid.Column="1" Text="{Binding CurrentExercise.Name}"
-                                       Style="{StaticResource SectionTitle}" FontSize="22"
+                                       Style="{StaticResource SectionTitle}" FontSize="20"
                                        SemanticProperties.HeadingLevel="Level3"
                                        SemanticProperties.Description="{Binding CurrentExercise.Name}" />
                             </Grid>
-                            <Border StrokeShape="RoundRectangle 14" StrokeThickness="1"
-                                    Stroke="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}"
+                            <Border StrokeShape="RoundRectangle 14" StrokeThickness="0"
+                                    Stroke="Transparent"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}"
                                     HeightRequest="156">
                                 <Grid>
@@ -560,34 +560,34 @@
                                     SemanticProperties.Description="{Binding SummaryStatusText, Converter={StaticResource LocalizedStringConverter}}" />
                             </VerticalStackLayout>
                             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
-                                <Border Style="{StaticResource SessionAccent}"
+                                <Border Style="{StaticResource WorkoutMetricTile}"
                                         SemanticProperties.Description="{Binding SummaryTotalVolume, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_TotalVolumeFormat}">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
                                         <Label
                                             Text="{Binding SummaryTotalVolume, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
+                                            Style="{StaticResource WorkoutMetricValue}" />
                                         <Label Grid.Row="1" Text="{loc:LocalizedText Workout_Session_VolumeHeader}"
-                                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                               Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
-                                <Border Grid.Column="1" Style="{StaticResource SessionAccent}"
+                                <Border Grid.Column="1" Style="{StaticResource WorkoutMetricTile}"
                                         SemanticProperties.Description="{Binding SummaryPrCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_WeightPrsFormat}">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
                                         <Label
                                             Text="{Binding SummaryPrCount, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
+                                            Style="{StaticResource WorkoutMetricValue}" />
                                         <Label Grid.Row="1" Text="{loc:LocalizedText Workout_Session_WeightPrsTitle}"
-                                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                               Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
-                                <Border Grid.Column="2" Style="{StaticResource SessionAccent}"
+                                <Border Grid.Column="2" Style="{StaticResource WorkoutMetricTile}"
                                         SemanticProperties.Description="{Binding SummaryDuration, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_TimeFormat}">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
                                         <Label
                                             Text="{Binding SummaryDuration, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
+                                            Style="{StaticResource WorkoutMetricValue}" />
                                         <Label Grid.Row="1" Text="{loc:LocalizedText Workout_Session_TimeLabel}"
-                                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                               Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
                             </Grid>

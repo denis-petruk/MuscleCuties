@@ -39,17 +39,25 @@ public class PageHeader : ContentView
         set => SetValue(BackCommandProperty, value);
     }
 
+    private const string AppFontFamilyName = "Inter";
+    private const double BackButtonTouchSize = 44;
+    private const double BackButtonPadding = 10;
+    private const double HeaderTitleFontSize = 24;
+    private const double HeaderSubtitleFontSize = 13;
+    private const double HeaderColumnSpacing = 8;
+    private const double HeaderRowSpacing = 2;
+
     private void Rebuild()
     {
         var back = new ImageButton
         {
             Source = ImageSource.FromFile("nav_back.png"),
             BackgroundColor = Colors.Transparent,
-            WidthRequest = 44,
-            HeightRequest = 44,
-            MinimumWidthRequest = 44,
-            MinimumHeightRequest = 44,
-            Padding = 10,
+            WidthRequest = BackButtonTouchSize,
+            HeightRequest = BackButtonTouchSize,
+            MinimumWidthRequest = BackButtonTouchSize,
+            MinimumHeightRequest = BackButtonTouchSize,
+            Padding = BackButtonPadding,
             Aspect = Aspect.AspectFit,
             VerticalOptions = LayoutOptions.Start,
             Command = new Command(() => BackCommand?.Execute(null))
@@ -59,15 +67,16 @@ public class PageHeader : ContentView
         var title = new Label
         {
             Text = Title,
-            FontSize = 24,
+            FontFamily = AppFontFamilyName,
+            FontSize = HeaderTitleFontSize,
             FontAttributes = FontAttributes.Bold,
             VerticalOptions = LayoutOptions.Center,
             LineBreakMode = LineBreakMode.WordWrap
         };
         title.SetDynamicResource(StyleProperty, "SubHeadline");
 
-        var header = new Grid { ColumnSpacing = 8, RowSpacing = 2 };
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
+        var header = new Grid { ColumnSpacing = HeaderColumnSpacing, RowSpacing = HeaderRowSpacing };
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(BackButtonTouchSize) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
         header.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         Grid.SetRow(back, 0);
@@ -82,7 +91,8 @@ public class PageHeader : ContentView
             var subtitle = new Label
             {
                 Text = Subtitle,
-                FontSize = 14,
+                FontFamily = AppFontFamilyName,
+                FontSize = HeaderSubtitleFontSize,
                 LineBreakMode = LineBreakMode.WordWrap
             };
             subtitle.SetDynamicResource(StyleProperty, "MutedLabel");

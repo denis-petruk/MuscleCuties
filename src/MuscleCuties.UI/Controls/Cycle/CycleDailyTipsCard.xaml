@@ -46,7 +46,7 @@
                     <Label
                         Grid.Column="1"
                         Text="{Binding DailyCheerText, Converter={StaticResource LocalizedStringConverter}}"
-                        FontSize="14"
+                        FontSize="15"
                         FontAttributes="Italic"
                         LineBreakMode="WordWrap"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
