@@ -2367,6 +2367,7 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                     b.HasAlternateKey("UserId", "Id").HasName("uq_workout_plan_revisions_v02_user_id_id");
                     b.HasAlternateKey("UserId", "PlanId", "RevisionNumber").HasName("uq_workout_plan_revisions_v02_owner_plan_number");
                     b.HasIndex("UserId").HasDatabaseName("ix_workout_plan_revisions_v02_user_id");
+                    b.HasIndex("UserId", "SourceProposalId");
                     b.HasIndex("UserId", "PlanId", "AcceptedAtUtc").IsDescending(false, false, true).HasDatabaseName("ix_workout_plan_revisions_v02_owner_plan_accepted");
                     b.ToTable("workout_plan_revisions_v02", "app", t =>
                         t.HasCheckConstraint("ck_workout_plan_revisions_v02_number", "revision_number > 0"));
