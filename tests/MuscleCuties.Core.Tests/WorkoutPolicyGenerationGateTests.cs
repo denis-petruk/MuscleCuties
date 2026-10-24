@@ -61,4 +61,14 @@ public sealed class WorkoutPolicyGenerationGateTests
         Assert.DoesNotContain(WorkoutActivityType.HighVolumeStrength, restored);
         Assert.False(WorkoutActivityPreferences.IsStrengthActivity(WorkoutActivityType.RockClimbing));
     }
+
+    [Fact]
+    public void ActivityPreferencesRoundTripEverySupportedActivityIdentity()
+    {
+        var selected = Enum.GetValues<WorkoutActivityType>();
+
+        var restored = WorkoutActivityPreferences.Parse(WorkoutActivityPreferences.Serialize(selected));
+
+        Assert.Equal(selected.Order(), restored.Order());
+    }
 }
