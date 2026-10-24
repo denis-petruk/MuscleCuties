@@ -327,8 +327,12 @@ public partial class AppShell : Shell
                ContainsRoute(route, "ProfileSetupPage") ||
                ContainsRoute(route, "Cycle") ||
                ContainsRoute(route, "Workout") ||
+               ContainsRoute(route, "StrengthPlanGeneration") ||
+               ContainsRoute(route, "PhaseAdjustmentReview") ||
                ContainsRoute(route, "Nutrition") ||
+               ContainsRoute(route, "FoodLog") ||
                ContainsRoute(route, "Profile") ||
+               ContainsRoute(route, "PhotoJourneyVault") ||
                ContainsRoute(route, "MainTab");
     }
 
