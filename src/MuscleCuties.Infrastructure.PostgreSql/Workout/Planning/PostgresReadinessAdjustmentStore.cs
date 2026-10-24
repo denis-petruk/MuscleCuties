@@ -17,6 +17,11 @@ public sealed class PostgresReadinessAdjustmentStore(PostgresDbContext dbContext
         ReviewReadinessAdjustmentRequest request, CancellationToken ct = default) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
+            if (!WorkoutTrainingPolicyV020.ReadinessSuggestionsEnabled)
+                return new ReadinessAdjustmentProposalDto(Guid.Empty, "ReviewPending",
+                    "Your check-in is saved. Training suggestions based on this check-in are not available yet.",
+                    [], false);
+
             dbContext.ChangeTracker.Clear();
             await using var tx = await dbContext.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, ct).ConfigureAwait(false);
@@ -57,6 +62,10 @@ public sealed class PostgresReadinessAdjustmentStore(PostgresDbContext dbContext
         DecideReadinessAdjustmentRequest request, bool apply, CancellationToken ct = default) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
+            if (apply && !WorkoutTrainingPolicyV020.ReadinessSuggestionsEnabled)
+                return new ReadinessAdjustmentDecisionDto(false, true,
+                    "Your check-in is saved. Training suggestions based on this check-in are not available yet.");
+
             dbContext.ChangeTracker.Clear();
             await using var tx = await dbContext.Database.BeginTransactionAsync(
                 System.Data.IsolationLevel.Serializable, ct).ConfigureAwait(false);

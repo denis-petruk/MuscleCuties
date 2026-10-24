@@ -235,7 +235,7 @@ public sealed class StructuredWorkoutProposalV02RuleTests
         [], new HashSet<ActivityModalityV02>(), new HashSet<ActivityDemandTag>(), false, Now,
         new ExerciseEligibilityContext(
             new HashSet<ExerciseEquipmentKind> { ExerciseEquipmentKind.Bodyweight },
-            TrainingExperienceLevel.Beginner, new HashSet<int>(),
+            ActivityExperienceV020.Beginner, new HashSet<int>(),
             new HashSet<MovementPattern>(), new HashSet<ActivityDemandTag>(), false));
 
     private static ReviewedWorkoutPolicyV02 Policy() => new(

@@ -115,6 +115,8 @@ Current Lambda package: `artifacts/deploy/MuscleCuties.Server-net10-linux-arm64-
 
 ## 3. Verification & Build Gate State
 
+- **Branch audit (2026-10-23):** Fetched and fast-forwarded `test-flight-beta` to GitLab `75b7cf9`. After local corrections, `MuscleCuties.Core.Tests` passed 337/337, `MuscleCuties.Registration.Tests` 34/34, `MuscleCuties.Server.Tests` 77/77, and `MuscleCuties.Mobile.Contracts.Tests` 15/15. The iOS simulator target built with 4 analyzer performance warnings and 0 errors. CoreSimulator could not connect, so visual/device checks remain pending. The v0.2 generator, persisted plan proposal/revision integration, catalog review metadata population, and live PostgreSQL checks are still open. The supplied review register contains no section-level approval; score display/suggestions and other restricted recommendation behaviors remain fail-closed.
+
 - **App & Server Blocker Fixes (2026-10-21):**
   - Wired `PrivacyPolicyUrl = "https://musclecuties.app/privacy"` in `ProfilePrivacyPage.xaml.cs`. The registration policy link opens it directly through `MauiProgram.cs`; the Profile Privacy page offers the same full policy link. `ProfilePrivacyPage` remains exempt from the authenticated Shell guard in `AppShell.xaml.cs`.
   - Extended `AppleSignInService`, `AppleSignInResult`, `PlatformSignInResult`, `PlatformSignInRequest`, `IAccountSignInStore`, `MobileJourneyCloudGateway`, `AppleLoginRequest`, `PostgresAccountAuthenticationUseCase`, `ServerAccountDeletionUseCase`, and `ApiApplication` with `AuthorizationCode` propagation and `AppleAccountTokenRevoker` (`https://appleid.apple.com/auth/token` and `https://appleid.apple.com/auth/revoke` via ES256 client secret).

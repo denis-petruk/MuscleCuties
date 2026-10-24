@@ -1,5 +1,7 @@
 # Workout planning v0.2 — implementation handoff
 
+**Verification update — 2026-10-23:** Current branch `test-flight-beta` is at GitLab `75b7cf9`. Core (337), Registration (34), Server (77), and Mobile Contracts (15) tests pass, and the iOS simulator target builds with 4 analyzer performance warnings and 0 errors. Live PostgreSQL and simulator acceptance were unavailable in this environment. The current review register has no documented section-level professional approval; score display/suggestions now default off, and automated progression, injury substitutions, and symptom triage remain fail-closed. Remaining integration work is listed below.
+
 Source: owner-provided **MC-WORKOUT-POLICY 0.2.0** instructions and follow-up
 template-mapping requirements, dated 2026-10-23. The original product document
 was attached to the Codex chat and is not part of this repository.

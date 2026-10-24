@@ -117,6 +117,7 @@ public static partial class UiTextCatalog
         English["Dashboard_Readiness_RatingStress"] = "Stress";
         English["Dashboard_Readiness_ScoreExplanation"] = "Based on your reported sleep, energy, soreness, and stress. This is a planning estimate, not a medical assessment or a direct measurement of recovery.";
         English["Dashboard_Readiness_NoCurrentCheckIn"] = "Complete today’s check-in to see suggestions based on how you feel.";
+        English["Dashboard_Readiness_ReviewPending"] = "Your check-in is saved. Training suggestions based on this check-in are not available yet.";
         English["Dashboard_Readiness_CompleteCheckIn"] = "Complete check-in";
         English["Dashboard_Readiness_ReviewChanges"] = "Review suggested changes";
         English["Dashboard_Readiness_ApplyChanges"] = "Apply changes";

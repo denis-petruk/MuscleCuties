@@ -13,6 +13,7 @@ using MuscleCuties.UseCases.Features.Cycle.History;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
+using MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Injury;
@@ -42,8 +43,9 @@ public sealed class CloudDailyCheckInStore(
             return new DailyCheckInStatusResponse(false, string.Empty, string.Empty);
 
         var latest = records[^1];
-        var readiness = MuscleCuties.Infrastructure.Dashboard.CheckIn.TodayReadinessCheckInMapper.Map(latest,
-            timeProvider.GetUtcNow(), request.TimeZoneId);
+        var readiness = TodayReadinessCheckInMapper.Map(latest.PlanningSleepQuality, latest.Energy,
+            latest.PlanningSoreness, latest.PlanningStress, latest.Date, latest.PlanningTimeZoneId,
+            latest.PlanningRecordedAtUtc, latest.PlanningRevision, timeProvider.GetUtcNow(), request.TimeZoneId);
         return new DailyCheckInStatusResponse(readiness.Status == "Available",
             readiness.RawScore?.ToString("0.##", CultureInfo.InvariantCulture) ?? UnknownScoreText,
             readiness.Band ?? readiness.Status, readiness);
@@ -112,8 +114,10 @@ public sealed class CloudDailyCheckInStore(
         if (saved.Id != checkInId || saved.Date != request.Date ||
             saved.ReadinessScore is < MinimumReadinessScore or > MaximumReadinessScore)
             throw new InvalidOperationException("Cloud submit daily check-in returned an invalid record.");
-        var readiness = MuscleCuties.Infrastructure.Dashboard.CheckIn.TodayReadinessCheckInMapper.Map(saved,
-            timeProvider.GetUtcNow(), request.PlanningTimeZoneId);
+        var readiness = TodayReadinessCheckInMapper.Map(saved.PlanningSleepQuality, saved.Energy,
+            saved.PlanningSoreness, saved.PlanningStress, saved.Date, saved.PlanningTimeZoneId,
+            saved.PlanningRecordedAtUtc, saved.PlanningRevision, timeProvider.GetUtcNow(),
+            request.PlanningTimeZoneId);
         if (readiness.Status != "Available")
             throw new InvalidOperationException("The saved check-in did not contain a valid score for today.");
         return new SubmitDailyCheckInResponse(saved.ReadinessScore,

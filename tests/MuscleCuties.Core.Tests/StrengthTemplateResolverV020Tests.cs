@@ -35,7 +35,7 @@ public sealed class StrengthTemplateResolverV020Tests
     [Fact]
     public void Missing_Reviewed_Catalog_Metadata_Is_Reported_Without_Selecting_Exercise()
     {
-        var incomplete = new StrengthExerciseCatalogEntryV020("Squat", Candidate(1, MovementPattern.SquatPattern),
+        var incomplete = new StrengthExerciseCatalogEntryV020("Squat", Candidate(1, MovementPattern.SquatPattern).Candidate,
             ["DemandTagsNotReviewed", "SupportedExperiencesMissing"]);
 
         var result = StrengthTemplateResolverV020.Resolve(Input([incomplete]), maximumWorkingExercises: 5);
@@ -64,10 +64,11 @@ public sealed class StrengthTemplateResolverV020Tests
     public void User_Exclusions_And_Equipment_Are_Hard_Filters_With_Specific_Reasons()
     {
         var excluded = Candidate(11, MovementPattern.SquatPattern);
-        var equipmentLimited = Candidate(12, MovementPattern.SquatPattern) with
+        var equipmentLimitedCandidate = Candidate(12, MovementPattern.SquatPattern).Candidate with
         {
             RequiredEquipment = new HashSet<ExerciseEquipmentKind> { ExerciseEquipmentKind.Barbell }
         };
+        var equipmentLimited = new StrengthExerciseCatalogEntryV020("Exercise 12", equipmentLimitedCandidate, []);
 
         var result = StrengthTemplateResolverV020.Resolve(
             Input(Catalog(excluded, equipmentLimited), excludedIds: new HashSet<int> { 11 }),

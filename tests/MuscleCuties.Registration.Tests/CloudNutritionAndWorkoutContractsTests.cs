@@ -166,6 +166,7 @@ public sealed class CloudNutritionAndWorkoutContractsTests
     public async Task CloudCheckInInjuryAndCycleStoresMapServerPayloadsAndRoutes()
     {
         var today = new DateOnly(2026, 10, 19);
+        var nowUtc = new DateTimeOffset(2026, 10, 19, 12, 0, 0, TimeSpan.Zero);
         var existingCheckInId = Guid.NewGuid();
         var injuryGuid = Guid.NewGuid();
         var cycleGuid = Guid.NewGuid();
@@ -175,7 +176,8 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             if (path.StartsWith("/api/v1/check-ins", StringComparison.Ordinal))
             {
                 var record = new DailyCheckInRecord(
-                    existingCheckInId, today, 8.0m, 7.8m, 9500, 9000, 4, 1, false, 62.5m, null, null, null, 91, "High", "Ovulatory");
+                    existingCheckInId, today, 8.0m, 7.8m, 9500, 9000, 4, 1, false, 62.5m, null, null, null,
+                    91, "High", "Ovulatory", 5, 1, 1, "UTC", nowUtc, 1);
                 return path == "/api/v1/check-ins" ? (object)record : new[] { record };
             }
 
@@ -220,11 +222,12 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             return new JsonElement();
         });
 
-        var checkInStore = new CloudDailyCheckInStore(apiClient);
-        var status = await checkInStore.GetStatusAsync(new DailyCheckInStatusRequest(today), CancellationToken.None);
+        var checkInStore = new CloudDailyCheckInStore(apiClient, clock: new FixedTimeProvider(nowUtc));
+        var status = await checkInStore.GetStatusAsync(new DailyCheckInStatusRequest(today, "UTC"), CancellationToken.None);
+        Xunit.Assert.Equal("Available", status.TodayReadiness?.Status);
         Xunit.Assert.True(status.IsCompleted);
-        Xunit.Assert.Equal("91", status.ScoreText);
-        Xunit.Assert.Equal("High", status.TierText);
+        Xunit.Assert.Equal("93.75", status.ScoreText);
+        Xunit.Assert.Equal("FeelingReady", status.TierText);
 
         var injuryStore = new CloudWorkoutInjuryStore(apiClient);
         var injuries = await injuryStore.GetAllInjuriesAsync(CancellationToken.None);
@@ -249,6 +252,11 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             CancellationToken.None);
         Xunit.Assert.True(savedPhase);
         Xunit.Assert.Contains(("PUT", "/api/v1/cycle/history/phases"), apiClient.RecordedCalls);
+    }
+
+    private sealed class FixedTimeProvider(DateTimeOffset nowUtc) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => nowUtc;
     }
 
     [Xunit.Fact]

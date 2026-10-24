@@ -105,7 +105,7 @@
                    Style="{StaticResource BodyLabel}"
                    FontSize="13"
                    LineBreakMode="WordWrap"
-                   IsVisible="{Binding HasTodayReadinessRecord, Converter={StaticResource InvertedBoolConverter}}">
+                   IsVisible="{Binding NeedsDailyCheckIn}">
                 <Label.Triggers>
                     <DataTrigger TargetType="Label" Binding="{Binding TodayReadinessIncomplete}" Value="True">
                         <Setter Property="Text" Value="{loc:LocalizedText Dashboard_CheckIn_IncompleteAllFourRatings}" />
@@ -113,9 +113,15 @@
                 </Label.Triggers>
             </Label>
 
+            <Label Text="{loc:LocalizedText Dashboard_Readiness_ReviewPending}"
+                   Style="{StaticResource BodyLabel}"
+                   FontSize="13"
+                   LineBreakMode="WordWrap"
+                   IsVisible="{Binding TodayReadinessReviewPending}" />
+
             <Button Text="{loc:LocalizedText Dashboard_Readiness_CompleteCheckIn}"
                     Command="{Binding OpenDailyCheckInCommand}"
-                    IsVisible="{Binding HasTodayReadinessScore, Converter={StaticResource InvertedBoolConverter}}"
+                    IsVisible="{Binding NeedsDailyCheckIn}"
                     MinimumHeightRequest="46"
                     CornerRadius="12" />
 
@@ -136,7 +142,7 @@
                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding ReadinessProposalChanges}"
                                      Spacing="6">
                     <BindableLayout.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="{x:Type x:String}">
                             <Label Text="{Binding .}" Style="{StaticResource BodyLabel}"
                                    LineBreakMode="WordWrap" />
                         </DataTemplate>

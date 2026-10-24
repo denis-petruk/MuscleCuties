@@ -11,6 +11,9 @@ public static class WorkoutTrainingPolicyV020
     public const string RulesetVersion = "MC-PLANNING-0.2";
     public const string ProductImplementationStatus = "Finalized for this task";
     public const string HistoricalApprovalStatus = "0.1.0 approval reported by product owner";
+    // Default-off gates; enable only after the matching review scope is documented.
+    public static readonly bool CheckInScoreDisplayEnabled;
+    public static readonly bool ReadinessSuggestionsEnabled;
 
     public const int DaysInWeek = 7;
     public const int MinimumConsistentWeeksForEstablished = 12;
@@ -33,11 +36,13 @@ public static class WorkoutTrainingPolicyV020
     public const int EstablishedMainRestSeconds = 150;
     public const int AccessoryRestSeconds = 90;
     public const int HighVolumeMainSets = 3;
+    public const int HighVolumeAccessorySets = 2;
     public const int HighVolumeMainMinimumRepetitions = 8;
     public const int HighVolumeMainMaximumRepetitions = 12;
     public const int HighVolumeMaximumWorkingExercisesPerSession = 5;
     public const int HighVolumeInitialDirectSetsPerPrimaryMusclePerWeek = 10;
     public const int StrengthHighIntensityMainSets = 3;
+    public const int StrengthHighIntensityAccessorySets = 2;
     public const int StrengthHighIntensityMainMinimumRepetitions = 4;
     public const int StrengthHighIntensityMainMaximumRepetitions = 6;
     public const int StrengthHighIntensityMainRestSeconds = 180;

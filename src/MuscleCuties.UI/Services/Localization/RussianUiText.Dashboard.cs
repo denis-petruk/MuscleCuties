@@ -113,6 +113,7 @@ internal static partial class RussianUiText
         Values["Dashboard_Readiness_RatingStress"] = "Стресс";
         Values["Dashboard_Readiness_ScoreExplanation"] = "Эта оценка отметки — ориентир для планирования на основе ваших ответов, а не прямое измерение восстановления или медицинская оценка.";
         Values["Dashboard_Readiness_NoCurrentCheckIn"] = "Заполните сегодняшнюю отметку, чтобы получить подсказки с учётом вашего самочувствия.";
+        Values["Dashboard_Readiness_ReviewPending"] = "Отметка сохранена. Рекомендации по тренировке на её основе пока недоступны.";
         Values["Dashboard_Readiness_CompleteCheckIn"] = "Заполнить отметку";
         Values["Dashboard_Readiness_ReviewChanges"] = "Посмотреть предлагаемые изменения";
         Values["Dashboard_Readiness_ApplyChanges"] = "Применить изменения";
