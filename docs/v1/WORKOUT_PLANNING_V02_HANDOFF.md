@@ -1,6 +1,6 @@
 # Workout planning v0.2 — implementation handoff
 
-**Continuation update — 2026-10-23:** The owner reports MC-WORKOUT-POLICY 0.1.0 approved; reviewer details and approval date were not supplied. Product-owner authorization separately enabled the v0.2 strength preview. Check-in score/recommendations, automated progression, injury-specific substitutions, and symptom triage retain separate gates. Legacy automatic generation remains blocked. The local PostgreSQL schema, canonical seed, and reviewed-catalog import were verified against the disposable local database; no deployed database was contacted. The Train no-plan state now explains missing activity prescription configuration and confirms preferences remain saved. New plan proposal/revision persistence and matching MAUI preview/acceptance UI remain incomplete. Core 341/341, Registration 34/34, Server 77/77, Mobile Contracts 15/15, and the iOS simulator build (0 warnings, 0 errors) pass. Lambda deployment is deferred.
+**Continuation update — 2026-10-23:** The owner reports MC-WORKOUT-POLICY 0.1.0 approved; reviewer details and approval date were not supplied. Product-owner authorization separately enabled the v0.2 strength preview. Check-in score/recommendations, automated progression, injury-specific substitutions, and symptom triage retain separate gates. Legacy automatic generation remains blocked. The local PostgreSQL schema, canonical seed, and reviewed-catalog import were verified against the disposable local database; no deployed database was contacted. The Train no-plan state now explains missing activity prescription configuration and confirms preferences remain saved. New plan proposal/revision persistence and matching MAUI preview/acceptance UI remain incomplete. Core 342/342, Registration 34/34, Server 77/77, Mobile Contracts 15/15, and the iOS simulator build (0 warnings, 0 errors) pass. The Core suite verifies every supported activity identity survives preference persistence. Lambda deployment is deferred.
 
 Source: owner-provided **MC-WORKOUT-POLICY 0.2.0** instructions and follow-up
 template-mapping requirements, dated 2026-10-23. The original product document
@@ -113,7 +113,7 @@ strength-slot, and weekday-assignment rules are not yet wired into an end-to-end
 persisted plan flow.
 Check-in capture and score display are wired through MAUI, the authenticated API,
 and PostgreSQL. As of the latest checkout on 2026-10-23, .NET SDK 10 is installed.
-Core verification passes 341/341, Registration 34/34, Server 77/77, and Mobile
+Core verification passes 342/342, Registration 34/34, Server 77/77, and Mobile
 Contracts 15/15. The iOS simulator target builds with zero warnings and errors.
 The built app was installed and launched on iPhone 17 Pro Max (iOS 26.3) by
 directly installing the app bundle because the project Run target expects
