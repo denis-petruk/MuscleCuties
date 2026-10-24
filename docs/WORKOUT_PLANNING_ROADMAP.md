@@ -52,7 +52,7 @@ Dependencies point strictly inward (`Server / UI -> Infrastructure -> UseCases -
   2. Implement `WeeklyHypertrophyVolumeRule` in `src/MuscleCuties.Core/Domain/Workout/Planning/WeeklyHypertrophyVolumeRule.cs` for the 9 major muscle groups $M = \{\text{Chest}, \text{Back}, \text{Shoulders}, \text{Quads}, \text{Glutes}, \text{Hamstrings}, \text{Arms}, \text{Calves}, \text{Core}\}$ with `EffectiveExperienceTier` direct-set bounds (Tier 1: $4..8$, Tier 2: $8..16$, Tier 3: $12..22$).
   3. Eliminate all bare magic numbers in `src/MuscleCuties.Core/Domain/Workout/VolumeBudgetRule.cs`.
   4. Add unit tests in `tests/MuscleCuties.Core.Tests/WeeklyHypertrophyVolumeRuleTests.cs` and `StrengthWeekdayAssignmentRuleTests.cs`.
-- **Status:** Pending
+- **Status:** Completed
 
 ### Block `WB03`: Deterministic Load Selection & Double Progression Engine (Spec Section 9)
 - **Scope:**
