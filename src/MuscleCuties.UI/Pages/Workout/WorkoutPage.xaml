@@ -369,6 +369,7 @@
                         <Button
                             Text="{Binding EmptyWorkoutsButtonText, Converter={StaticResource LocalizedStringConverter}}"
                             Command="{Binding EmptyWorkoutsActionCommand}"
+                            IsVisible="{Binding EmptyWorkoutsButtonVisible}"
                             MinimumHeightRequest="48" />
                     </VerticalStackLayout>
                 </Border>

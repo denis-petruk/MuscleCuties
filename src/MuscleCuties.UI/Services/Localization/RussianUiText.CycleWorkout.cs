@@ -4,6 +4,7 @@ internal static partial class RussianUiText
 {
     static partial void RegisterCycleWorkoutStrings()
     {
+        Values["Workout_Page_PlanProposalsUnavailable"] = "Новые предложения плана пока недоступны: не заданы правила назначения для некоторых видов активности. Ваши предпочтения сохранены.";
         Values["Injury_Log_ReloadAfterChangeFailed"] = "Изменение сохранено, но журнал травм не загрузился. Попробуйте снова перед тренировкой.";
         Values["Injury_Log_PlanRefreshFailed"] = "Изменение травмы сохранено, но план тренировок не обновился. Попробуйте снова перед тренировкой.";
         Values["Injury_Log_PageRefreshFailed"] = "Изменение травмы сохранено, но страница «Сегодня» не обновилась. Попробуйте снова.";

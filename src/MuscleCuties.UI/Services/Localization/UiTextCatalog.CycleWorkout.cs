@@ -4,6 +4,7 @@ public static partial class UiTextCatalog
 {
     static partial void RegisterCycleWorkoutStrings()
     {
+        English["Workout_Page_PlanProposalsUnavailable"] = "New plan proposals are unavailable because some activity prescription details are missing. Your activity preferences are saved.";
         English["Injury_Log_ReloadAfterChangeFailed"] = "Your change was saved, but the injury log couldn't reload. Try again before training.";
         English["Injury_Log_PlanRefreshFailed"] = "Your injury change was saved, but the workout plan couldn't refresh. Try again before training.";
         English["Injury_Log_PageRefreshFailed"] = "Your injury change was saved, but Today couldn't refresh. Try again.";

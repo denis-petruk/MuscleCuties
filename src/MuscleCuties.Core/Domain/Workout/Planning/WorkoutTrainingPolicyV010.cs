@@ -7,7 +7,7 @@ public static class WorkoutTrainingPolicyV010
     public const string Version = "0.1.0";
     public const string ApprovalStatus = "Approved — reported by product owner";
     public const string GenerationUnavailableMessage =
-        "Workout plan generation is unavailable until the approved policy prescriptions are configured.";
+        "Workout plan generation is unavailable because activity-specific prescription rules are not fully configured.";
 
     public static string? ReviewerDetails => null;
     public static DateTimeOffset? ApprovalDate => null;

@@ -188,10 +188,11 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             : $"No {SelectedFilterLabel.ToLowerInvariant()} workouts";
 
     public string EmptyWorkoutsSubtitle => ActivePlanName is null
-        ? "Your weekly sessions will appear here once a plan exists."
+        ? "New plan proposals are unavailable because some activity prescription details are missing. Your activity preferences are saved."
         : "Try another filter or show the full week.";
 
     public string EmptyWorkoutsButtonText => ActivePlanName is null ? "Refresh" : "Show All";
+    public bool EmptyWorkoutsButtonVisible => ActivePlanName is not null;
 
     private string SelectedFilterLabel => Filters.FirstOrDefault(f => f.IsSelected)?.Label ?? "All";
     public AsyncRelayCommand EmptyWorkoutsActionCommand { get; }
@@ -639,6 +640,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         OnPropertyChanged(nameof(EmptyWorkoutsTitle));
         OnPropertyChanged(nameof(EmptyWorkoutsSubtitle));
         OnPropertyChanged(nameof(EmptyWorkoutsButtonText));
+        OnPropertyChanged(nameof(EmptyWorkoutsButtonVisible));
         EmptyWorkoutsActionCommand.NotifyCanExecuteChanged();
     }
 
