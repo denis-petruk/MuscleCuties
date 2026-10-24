@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Planning.Contracts;
 
@@ -47,6 +49,18 @@ public static class WorkoutPlanningEndpointMappings
             {
                 if (!TryGetUserId(principal, out var ownerUserId))
                     return Results.Unauthorized();
+                if (!WorkoutTrainingPolicyV020.TrainingPrescriptionPreviewEnabled)
+                    return Results.Ok(new StrengthPlanPreviewResponseV020(
+                        WorkoutTrainingPolicyV020.PolicyId,
+                        WorkoutTrainingPolicyV020.Version,
+                        WorkoutTrainingPolicyV020.RulesetVersion,
+                        "ReviewPending",
+                        ActivityExperienceV020.Unknown,
+                        [],
+                        ["TrainingPrescriptionReviewPending"],
+                        null,
+                        [],
+                        []));
                 var result = await preview.ExecuteAsync(ownerUserId, request, cancellationToken)
                     .ConfigureAwait(false);
                 return result.Status == "InvalidInput"
