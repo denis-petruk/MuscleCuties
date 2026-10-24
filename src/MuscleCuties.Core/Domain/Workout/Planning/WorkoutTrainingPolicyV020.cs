@@ -11,12 +11,11 @@ public static class WorkoutTrainingPolicyV020
     public const string RulesetVersion = "MC-PLANNING-0.2";
     public const string ProductImplementationStatus = "Finalized for this task";
     public const string HistoricalApprovalStatus = "0.1.0 approval reported by product owner";
-    // Training prescriptions are authorized by the product owner for this policy version.
-    // The check-in score, score-based suggestions, automated progression and
-    // injury-specific substitutions retain separate approval gates.
+    // Each capability requires its own documented review scope. Product-owner
+    // implementation instructions do not substitute for professional approval.
     public static readonly bool CheckInScoreDisplayEnabled;
     public static readonly bool ReadinessSuggestionsEnabled;
-    public static readonly bool TrainingPrescriptionPreviewEnabled = true;
+    public static readonly bool TrainingPrescriptionPreviewEnabled;
     public static readonly bool AutomatedProgressionEnabled;
     public static readonly bool InjurySpecificSubstitutionsEnabled;
 

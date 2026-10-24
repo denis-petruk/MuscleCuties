@@ -2,6 +2,7 @@ using System.Text.Json;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
+using Xunit;
 
 namespace MuscleCuties.Registration.Integration.Tests;
 

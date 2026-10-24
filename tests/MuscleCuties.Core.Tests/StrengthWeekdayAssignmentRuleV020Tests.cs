@@ -5,9 +5,9 @@ namespace MuscleCuties.Core.Tests;
 public sealed class StrengthWeekdayAssignmentRuleV020Tests
 {
     [Fact]
-    public void Product_Owner_Authorized_Training_Preview_Is_Independent_Of_Score_And_Progression_Gates()
+    public void Unreviewed_Features_Default_Off_Independently()
     {
-        Assert.True(WorkoutTrainingPolicyV020.TrainingPrescriptionPreviewEnabled);
+        Assert.False(WorkoutTrainingPolicyV020.TrainingPrescriptionPreviewEnabled);
         Assert.False(WorkoutTrainingPolicyV020.CheckInScoreDisplayEnabled);
         Assert.False(WorkoutTrainingPolicyV020.ReadinessSuggestionsEnabled);
         Assert.False(WorkoutTrainingPolicyV020.AutomatedProgressionEnabled);
