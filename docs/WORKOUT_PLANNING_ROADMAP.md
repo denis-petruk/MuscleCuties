@@ -62,7 +62,7 @@ Dependencies point strictly inward (`Server / UI -> Infrastructure -> UseCases -
      - Two-consecutive-week double progression rule (all working sets reach $r_{high}$ with $\rho_{actual} \ge \rho_{target}$ and acceptable technique $\implies L + \Delta L$).
      - Tier-capped concurrent progressions and guard preventing simultaneous load + weekly volume increases for the same muscle group.
   2. Add unit tests in `tests/MuscleCuties.Core.Tests/StrengthProgressionRuleTests.cs`.
-- **Status:** Pending
+- **Status:** Completed
 
 ### Block `WB04`: Aerobic Moderate-Equivalent Minutes (`ME_week`) & Numeric Injury/Pain Safety Rules (Spec Sections 10, 11)
 - **Scope:**
