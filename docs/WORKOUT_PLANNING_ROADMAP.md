@@ -79,7 +79,7 @@ Dependencies point strictly inward (`Server / UI -> Infrastructure -> UseCases -
      - Daily check-in readiness can override baseline phase suggestions when the user feels ready despite high baseline $D_p$ (or downgrade when daily check-in is poor).
      - Proposals are never auto-applied without explicit `ApplyChanges` confirmation.
   3. Add unit tests in `tests/MuscleCuties.Core.Tests/DeloadTriggerRuleTests.cs` and `PhaseAndCheckInPrecedenceRuleTests.cs`.
-- **Status:** Pending
+- **Status:** Completed
 
 ### Block `WB06`: Unified Deterministic Weekly Workout Plan Generator & Rule-Trace Orchestration (Spec Section 14)
 - **Scope:**
