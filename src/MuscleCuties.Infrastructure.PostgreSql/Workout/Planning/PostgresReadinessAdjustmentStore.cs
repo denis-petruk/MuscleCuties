@@ -17,7 +17,7 @@ public sealed class PostgresReadinessAdjustmentStore(PostgresDbContext dbContext
         ReviewReadinessAdjustmentRequest request, CancellationToken ct = default) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-            if (!WorkoutTrainingPolicyV020.ReadinessSuggestionsEnabled)
+            if (!TodayPlanningDecisionRule.ReadinessSuggestionsEnabled)
                 return new ReadinessAdjustmentProposalDto(Guid.Empty, "ReviewPending",
                     "Your check-in is saved. Training suggestions based on this check-in are not available yet.",
                     [], false);
@@ -45,7 +45,7 @@ public sealed class PostgresReadinessAdjustmentStore(PostgresDbContext dbContext
                 PlanId = state.PlanId,
                 ExpectedRevisionId = state.ExpectedRevisionId,
                 RulesetVersion = TodayCheckInScoreRule.RulesetVersion,
-                TrainingPolicyVersion = WorkoutTrainingPolicyV020.Version,
+                TrainingPolicyVersion = StrengthPlanPreviewRule.Version,
                 Status = "Proposed",
                 InputSnapshotJson = JsonSerializer.Serialize(state.Snapshot, JsonOptions),
                 ProposalJson = JsonSerializer.Serialize(state.Actions, JsonOptions),
@@ -62,7 +62,7 @@ public sealed class PostgresReadinessAdjustmentStore(PostgresDbContext dbContext
         DecideReadinessAdjustmentRequest request, bool apply, CancellationToken ct = default) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-            if (apply && !WorkoutTrainingPolicyV020.ReadinessSuggestionsEnabled)
+            if (apply && !TodayPlanningDecisionRule.ReadinessSuggestionsEnabled)
                 return new ReadinessAdjustmentDecisionDto(false, true,
                     "Your check-in is saved. Training suggestions based on this check-in are not available yet.");
 
@@ -100,7 +100,7 @@ public sealed class PostgresReadinessAdjustmentStore(PostgresDbContext dbContext
             if (state.Error is not null || state.Actions.Count == 0 || state.PlanId != proposal.PlanId ||
                 proposal.ExpectedRevisionId != latestRevisionId || proposal.InputSnapshotJson != snapshotJson ||
                 proposal.ProposalJson != actionsJson || proposal.RulesetVersion != TodayCheckInScoreRule.RulesetVersion ||
-                proposal.TrainingPolicyVersion != WorkoutTrainingPolicyV020.Version ||
+                proposal.TrainingPolicyVersion != StrengthPlanPreviewRule.Version ||
                 proposal.ReasonsJson != JsonSerializer.Serialize(new[] { state.Band }, JsonOptions))
             {
                 proposal.Status = "Expired";

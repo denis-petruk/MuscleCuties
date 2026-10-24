@@ -23,7 +23,6 @@ public sealed class RegistrationErrorPresentationTests
     private const string ChallengeStartRoute = "/api/v1/email-challenges/start";
     private const int SyntheticQuestionId = 1;
     private const int SyntheticAnswerId = 1;
-    private const int SyntheticWorkoutDays = 3;
     private const int SyntheticCycleDays = 28;
     private const int SyntheticBirthYear = 1996;
     private const int SyntheticBirthMonth = 4;
@@ -96,7 +95,7 @@ public sealed class RegistrationErrorPresentationTests
         pending.StageProfile(new StagedProfileData(
             "Synthetic Registration", new DateTime(SyntheticBirthYear, SyntheticBirthMonth, SyntheticBirthDay),
             SyntheticHeightCm, SyntheticWeightKg,
-            string.Empty, SyntheticWorkoutDays, SyntheticCycleDays,
+            string.Empty, SyntheticCycleDays,
             new HashSet<WorkoutActivityType> { WorkoutActivityType.StrengthHighIntensity }));
         var store = new CloudOnboardingQuizStore(pending, null!, new RegistrationErrorApiClient(serverCode));
 

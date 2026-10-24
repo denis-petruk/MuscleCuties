@@ -113,12 +113,14 @@ public sealed class UserProfileRecord : ITenantRecord
     public string Goal { get; set; } = string.Empty;
     public string WeightGoalPace { get; set; } = string.Empty;
     public string TrainingExperienceLevel { get; set; } = string.Empty;
-    public string CycleTrackingMode { get; set; } = string.Empty;
     public string? CurrentCyclePhase { get; set; }
     public int WorkoutDaysPerWeek { get; set; }
+    public string AvailableWorkoutWeekdaysJson { get; set; } = "[]";
     public int CycleLength { get; set; }
     public string DietaryTags { get; set; } = string.Empty;
-    public int SessionDurationMinutes { get; set; }
+    public string ActivitySessionDurationsJson { get; set; } = "{}";
+    public string RequestedActivitySessionsPerWeekJson { get; set; } = "{}";
+    public string ExcludedStrengthExerciseIdsJson { get; set; } = "[]";
     public string EquipmentLevel { get; set; } = string.Empty;
     public string PhaseBaselinesJson { get; set; } = string.Empty;
     public string PreferredWorkoutActivityTypes { get; set; } = string.Empty;
@@ -329,6 +331,8 @@ public sealed class WorkoutDayRecord : ITenantRecord
     public bool IsOptional { get; set; }
     public bool IsEasierAlternative { get; set; }
     public bool IsRemovedByReadiness { get; set; }
+    public bool IsRemovedByUserAdjustment { get; set; }
+    public decimal? PlannedMainDurationMinutes { get; set; }
 }
 
 public sealed class WorkoutDayExerciseRecord : ITenantRecord

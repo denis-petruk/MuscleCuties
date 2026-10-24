@@ -2,12 +2,11 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
 using MuscleCuties.UseCases.Features.Cycle;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 using MuscleCuties.UseCases.Features.Cycle.DailyLog;
 using MuscleCuties.UseCases.Features.Cycle.History;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
@@ -147,7 +146,6 @@ public sealed class CloudWorkoutInjuryStore(
     private const string InjuryImpactRoute = "/api/v1/workouts/injuries/impact";
     private const string ProfileRoute = "/api/v1/profile";
     private const string WorkoutPreferencesRoute = "/api/v1/profile/workout-preferences";
-    private const int DefaultWorkoutDaysPerWeek = 3;
     private readonly Dictionary<Guid, int> _intIdByGuid = [];
     private readonly Dictionary<int, InjuryObservationRecord> _recordByIntId = [];
     private readonly object _identityLock = new();
@@ -266,12 +264,7 @@ public sealed class CloudWorkoutInjuryStore(
             return;
 
         var profile = profileResponse.Data;
-        var activities = WorkoutActivityPreferences.EnsureRequired(
-                WorkoutActivityPreferences.Parse(profile.PreferredWorkoutActivityTypes))
-            .Select(activity => (int)activity)
-            .ToArray();
-        var strengthStyle = (int)WorkoutActivityPreferences.ParseStrengthStyle(profile.PreferredWorkoutActivityTypes);
-        var daysPerWeek = profile.WorkoutDaysPerWeek > 0 ? profile.WorkoutDaysPerWeek : DefaultWorkoutDaysPerWeek;
+        var preferences = CloudWorkoutPreferencesSnapshotMapper.ToPreferences(profile);
 
         var response = await apiClient.SendMutationAsync<object, JsonElement>(
             HttpMethod.Put,
@@ -279,9 +272,11 @@ public sealed class CloudWorkoutInjuryStore(
             new
             {
                 expectedVersion = profile.Version,
-                activityTypes = activities,
-                strengthStyle,
-                daysPerWeek
+                activityTypes = preferences.ActivityTypes,
+                availableWeekdays = preferences.AvailableWeekdays,
+                activitySessionDurationsMinutes = preferences.ActivitySessionDurationsMinutes,
+                requestedSessionsPerWeek = preferences.RequestedSessionsPerWeek,
+                equipmentLevel = preferences.EquipmentLevel
             },
             idempotencyKey: Guid.NewGuid().ToString("N"),
             ct).ConfigureAwait(false);
@@ -362,8 +357,8 @@ public sealed class CloudCycleDailyLogStore(
             .LastOrDefault();
         var daySymptoms = overview.History.Symptoms
             .Where(symptom => symptom.Date == dateOnly)
-            .Select(symptom => Enum.TryParse<SymptomType>(symptom.Type, true, out var parsed) && Enum.IsDefined(parsed)
-                ? (SymptomType?)parsed
+            .Select(symptom => Enum.TryParse<SymptomTypeDto>(symptom.Type, true, out var parsed) && Enum.IsDefined(parsed)
+                ? (SymptomTypeDto?)parsed
                 : null)
             .Where(symptom => symptom.HasValue)
             .Select(symptom => symptom!.Value)
@@ -376,9 +371,9 @@ public sealed class CloudCycleDailyLogStore(
         if (phaseLog is null && daySymptoms.Length == 0 && !cycleStartedOnDate && !cycleEndedOnDate)
             return null;
 
-        FlowIntensity? flow = null;
+        FlowIntensityDto? flow = null;
         if (!string.IsNullOrWhiteSpace(phaseLog?.FlowIntensityValue) &&
-            Enum.TryParse<FlowIntensity>(phaseLog.FlowIntensityValue, true, out var parsedFlow) &&
+            Enum.TryParse<FlowIntensityDto>(phaseLog.FlowIntensityValue, true, out var parsedFlow) &&
             Enum.IsDefined(parsedFlow))
         {
             flow = parsedFlow;
@@ -506,22 +501,23 @@ public sealed class CloudCycleDailyLogStore(
         return true;
     }
 
-    private static CyclePhase? ResolveTargetPhase(CycleDailyLogRequest request)
+    private static CyclePhaseDto? ResolveTargetPhase(CycleDailyLogRequest request)
     {
-        if (request.PhaseOverride.HasValue && request.PhaseOverride.Value != CyclePhase.Unknown)
+        if (request.PhaseOverride.HasValue && request.PhaseOverride.Value != CyclePhaseDto.Unknown)
             return request.PhaseOverride.Value;
-        if (request.IsPeriodStart == true || (request.FlowIntensity.HasValue && request.FlowIntensity.Value != FlowIntensity.None))
-            return CyclePhase.Menstrual;
+        if (request.IsPeriodStart == true ||
+            (request.FlowIntensity.HasValue && request.FlowIntensity.Value != FlowIntensityDto.None))
+            return CyclePhaseDto.Menstrual;
         if (request.IsPeriodEnd == true)
-            return CyclePhase.Follicular;
+            return CyclePhaseDto.Follicular;
         return null;
     }
 
     internal static void ThrowPhaseOrderOrConflict(string? errorCode)
     {
         if (!string.IsNullOrWhiteSpace(errorCode) &&
-            Enum.TryParse<CyclePhase>(errorCode, true, out var suggestedPhase) &&
-            Enum.IsDefined(suggestedPhase) && suggestedPhase != CyclePhase.Unknown)
+            Enum.TryParse<CyclePhaseDto>(errorCode, true, out var suggestedPhase) &&
+            Enum.IsDefined(suggestedPhase) && suggestedPhase != CyclePhaseDto.Unknown)
         {
             throw new CyclePhaseOrderIssue("This phase would skip a step.", suggestedPhase);
         }

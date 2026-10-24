@@ -8,6 +8,7 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Account.Registration;
@@ -15,36 +16,25 @@ using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Planning.Contracts;
 using Npgsql;
-using CoreWorkoutType = MuscleCuties.Core.Models.Enums.Workout.WorkoutType;
-using RegistrationWorkoutType = MuscleCuties.UseCases.Features.Account.Registration.Contracts.WorkoutType;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 
 public sealed class PostgresCompleteAccountRegistrationStore(
     PostgresDbContext dbContext,
-    TimeProvider timeProvider,
-    GenerateWorkoutPlanUseCase workoutPlanner) : ICompleteAccountRegistrationStore
+    TimeProvider timeProvider) : ICompleteAccountRegistrationStore
 {
     private const string RegistrationPurpose = "Registration";
     private const string PasswordCredentialType = "Password";
     private const string EmptyProfileImagePath = "";
     private const string NoNutritionTargetsJson = "{}";
     private const string NoReproductiveContextJson = "{}";
+    private const string NoRequestedActivitySessionsPerWeekJson = "{}";
     private const string InitialSnapshotReason = "Initial";
     private const string OnboardingPhaseNote = "Set from onboarding quiz";
-    private const int SessionMinutesByThirtyMinuteChoice = 30;
-    private const int SessionMinutesByFortyFiveMinuteChoice = 45;
-    private const int SessionMinutesBySixtyMinuteChoice = 60;
-    private const int SessionMinutesBySeventyFiveMinuteChoice = 75;
-    private const int SessionMinutesByNinetyMinuteChoice = 90;
-    private const int ThirtyMinuteChoiceValue = 1;
-    private const int FortyFiveMinuteChoiceValue = 2;
-    private const int SixtyMinuteChoiceValue = 3;
-    private const int SeventyFiveMinuteChoiceValue = 4;
-    private const int NinetyMinuteChoiceValue = 5;
     private const int FullGymChoiceValue = 1;
     private const int HomeEquipmentChoiceValue = 2;
     private const int BodyweightEquipmentChoiceValue = 3;
+    private const int DefaultNutritionActivityDaysPerWeek = 3;
     private const int RegistrationEmailChallengePurpose = 1;
     private const int MaximumPrivacyNoticeVersionCharacters = 64;
 
@@ -78,7 +68,9 @@ public sealed class PostgresCompleteAccountRegistrationStore(
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return questions.Select(question => new AccountRegistrationQuizQuestion(
+        return questions
+            .Where(question => question.QuestionType.IsAvailableInCurrentOnboarding())
+            .Select(question => new AccountRegistrationQuizQuestion(
             question.Id,
             question.Question,
             question.OrderIndex,
@@ -191,7 +183,6 @@ public sealed class PostgresCompleteAccountRegistrationStore(
             profileProjection.DateOfBirth = DateOnly.FromDateTime(request.Profile.BirthDate);
             profileProjection.Height = Convert.ToDecimal(request.Profile.HeightCm, CultureInfo.InvariantCulture);
             profileProjection.Weight = Convert.ToDecimal(request.Profile.WeightKg, CultureInfo.InvariantCulture);
-            profileProjection.WorkoutDaysPerWeek = request.Profile.WorkoutDaysPerWeek;
             profileProjection.CycleLength = request.Profile.CycleLength;
             profileProjection.ProfileImagePath = EmptyProfileImagePath;
             profileProjection.UpdatedAt = now.UtcDateTime;
@@ -221,7 +212,8 @@ public sealed class PostgresCompleteAccountRegistrationStore(
                 });
             }
 
-            if (profile.CurrentCyclePhase is not null)
+            if (Enum.TryParse<CyclePhase>(profile.CurrentCyclePhase, true, out var onboardingPhase) &&
+                Enum.IsDefined(onboardingPhase) && onboardingPhase != CyclePhase.Unknown)
             {
                 dbContext.CyclePhaseLogs.Add(new CyclePhaseLogRecord
                 {
@@ -288,68 +280,6 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         }).ConfigureAwait(false);
     }
 
-    private async Task<CompleteAccountRegistrationRequest> GenerateInitialPlanAsync(
-        CompleteAccountRegistrationRequest request,
-        UserProfileRecord profile,
-        DateTime nowUtc,
-        CancellationToken cancellationToken)
-    {
-        if (!Enum.TryParse<UserGoal>(profile.Goal, out var goal) ||
-            !Enum.TryParse<TrainingExperienceLevel>(profile.TrainingExperienceLevel, out var experience) ||
-            !Enum.TryParse<Equipment>(profile.EquipmentLevel, out var equipment) ||
-            !Enum.TryParse<CyclePhase>(profile.CurrentCyclePhase, out var phase))
-            throw new InvalidOperationException("The registration profile cannot generate a workout plan.");
-
-        var generated = await workoutPlanner.ExecuteAsync(Guid.Empty,
-            new GenerateWorkoutPlanRequest(
-                goal,
-                experience,
-                request.Profile.WorkoutDaysPerWeek,
-                profile.SessionDurationMinutes,
-                request.Profile.SelectedActivityTypes.Select(activity => (WorkoutActivityType)activity).ToArray(),
-                StrengthTrainingStyle.ComfortableModerate,
-                equipment,
-                phase,
-                AllowsCyclePhaseAdjustments: false,
-                CreatedAtUtc: nowUtc,
-                Today: DateOnly.FromDateTime(nowUtc)),
-            cancellationToken).ConfigureAwait(false);
-
-        var days = generated.WorkoutDays
-            .Where(day => day.WorkoutType == CoreWorkoutType.Strength && day.Exercises.Count > 0)
-            .Select(day => new InitialWorkoutPlanDayInput(
-                day.WeekIndex + InitialWorkoutPlanRule.MinimumWeekIndex,
-                day.DayOfWeek,
-                day.WorkoutType switch
-                {
-                    CoreWorkoutType.Strength => RegistrationWorkoutType.Strength,
-                    CoreWorkoutType.Cardio => RegistrationWorkoutType.Cardio,
-                    CoreWorkoutType.Recovery => RegistrationWorkoutType.Recovery,
-                    _ => RegistrationWorkoutType.Rest
-                },
-                day.Name,
-                day.Exercises.Select(exercise => new InitialWorkoutPlanExerciseInput(
-                    exercise.ExerciseId, exercise.Sets, exercise.Reps)).ToArray()))
-            .ToArray();
-
-        var validation = InitialWorkoutPlanRule.Validate(days.Select(day =>
-            new InitialWorkoutPlanDayObservation(
-                day.WeekIndex,
-                day.DayOfWeek,
-                day.Exercises.Select(exercise => new InitialWorkoutPlanExerciseObservation(
-                    exercise.ExerciseId, exercise.Sets, exercise.Reps)).ToArray(),
-                Enum.IsDefined(day.WorkoutType),
-                !string.IsNullOrWhiteSpace(day.Name))).ToArray());
-        if (!validation.IsValid || string.IsNullOrWhiteSpace(generated.Name))
-            throw new InvalidOperationException("The generated workout plan is invalid.");
-
-        return request with
-        {
-            InitialWorkoutPlanName = generated.Name,
-            InitialWorkoutPlanDays = days
-        };
-    }
-
     private static UserProfileRecord? TryProjectProfile(
         CompleteAccountRegistrationRequest request,
         IReadOnlyList<SelectedQuizAnswer> selectedAnswers,
@@ -362,10 +292,17 @@ public sealed class PostgresCompleteAccountRegistrationStore(
             !Enum.IsDefined((TrainingExperienceLevel)experienceValue) ||
             !TrySingle(QuizQuestionType.CurrentCyclePhase, out var phaseValue) ||
             !Enum.IsDefined((CyclePhase)phaseValue) ||
-            !TrySingle(QuizQuestionType.SessionDuration, out var sessionChoice) ||
-            !TryMapSessionDuration(sessionChoice, out var sessionMinutes) ||
+            !TrySingle(QuizQuestionType.SessionDuration, out var sessionDurationChoice) ||
+            !ActivitySessionDurationRule.TryResolveStrengthQuizSessionDurationMinutes(
+                sessionDurationChoice, out var strengthSessionDurationMinutes) ||
             !TrySingle(QuizQuestionType.Equipment, out var equipmentChoice) ||
             !TryMapEquipment(equipmentChoice, out var equipmentLevel))
+            return null;
+
+        var availableWeekdays = byType.GetValueOrDefault(QuizQuestionType.AvailableWeekdays) ?? [];
+        var weekdays = availableWeekdays.Select(answer => answer.MappedValue).Distinct().ToArray();
+        if (weekdays.Length is < WorkoutPreferencesRule.MinimumDaysPerWeek or > WorkoutPreferencesRule.MaximumDaysPerWeek ||
+            weekdays.Any(day => !Enum.IsDefined(typeof(DayOfWeek), day)))
             return null;
 
         var goal = (UserGoal)goalValue;
@@ -391,11 +328,18 @@ public sealed class PostgresCompleteAccountRegistrationStore(
             Goal = goal.ToString(),
             WeightGoalPace = pace.ToString(),
             TrainingExperienceLevel = ((TrainingExperienceLevel)experienceValue).ToString(),
-            CycleTrackingMode = CycleTrackingMode.ManualPhaseLogging.ToString(),
             CurrentCyclePhase = ((CyclePhase)phaseValue).ToString(),
+            WorkoutDaysPerWeek = weekdays.Length,
+            AvailableWorkoutWeekdaysJson = JsonSerializer.Serialize(weekdays
+                .Select(value => ((DayOfWeek)value).ToString()).OrderBy(value => value, StringComparer.Ordinal)),
+            ActivitySessionDurationsJson = JsonSerializer.Serialize(
+                RegistrationActivityDurationDefaults.ForSelectedActivities(
+                    request.Profile.SelectedActivityTypes, strengthSessionDurationMinutes)),
+            RequestedActivitySessionsPerWeekJson = JsonSerializer.Serialize(
+                RegistrationActivityDurationDefaults.ForSelectedActivityFrequencies(
+                    request.Profile.SelectedActivityTypes)),
             DietaryTags = string.Join(',', dietary.Select(answer => ((DietaryTag)answer.MappedValue).ToString())
                 .Distinct(StringComparer.Ordinal)),
-            SessionDurationMinutes = sessionMinutes,
             EquipmentLevel = equipmentLevel,
             PhaseBaselinesJson = BuildPhaseBaselines(byType),
             PreferredWorkoutActivityTypes = string.Join(',', request.Profile.SelectedActivityTypes
@@ -431,20 +375,6 @@ public sealed class PostgresCompleteAccountRegistrationStore(
             Luteal = new { Pain = values[QuizQuestionType.LutealPain], Energy = values[QuizQuestionType.LutealEnergy] }
         };
         return JsonSerializer.Serialize(baselines);
-    }
-
-    private static bool TryMapSessionDuration(int answer, out int minutes)
-    {
-        minutes = answer switch
-        {
-            ThirtyMinuteChoiceValue => SessionMinutesByThirtyMinuteChoice,
-            FortyFiveMinuteChoiceValue => SessionMinutesByFortyFiveMinuteChoice,
-            SixtyMinuteChoiceValue => SessionMinutesBySixtyMinuteChoice,
-            SeventyFiveMinuteChoiceValue => SessionMinutesBySeventyFiveMinuteChoice,
-            NinetyMinuteChoiceValue => SessionMinutesByNinetyMinuteChoice,
-            _ => 0
-        };
-        return minutes > 0;
     }
 
     private static bool TryMapEquipment(int answer, out string equipment)

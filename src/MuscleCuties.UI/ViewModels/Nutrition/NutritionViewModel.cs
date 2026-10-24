@@ -2,8 +2,9 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Domain.Nutrition;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Models.UI.Nutrition;
@@ -12,6 +13,8 @@ using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
+using MuscleCuties.UseCases.Features.Nutrition.Recipes;
+using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
@@ -24,6 +27,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     private readonly Func<string, Task>? _navigateAsync;
     private readonly INutritionOverviewUseCase _overviewUseCase;
     private readonly IFoodCatalogSearchUseCase _searchUseCase;
+    private readonly IRecipePortionUseCase _recipePortionUseCase;
+    private readonly FoodPortionCatalogOutputDto _foodPortionCatalog;
+    private NutritionMealDistributionDto? _mealDistribution;
     [ObservableProperty] private string _addFoodMessage = string.Empty;
     [ObservableProperty] private BreakfastPreference _breakfastPreference = BreakfastPreference.Savoury;
     [ObservableProperty] private string _celebrationIconSource = CyclePhaseAssets.FollicularAnimation;
@@ -101,11 +107,14 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     public NutritionViewModel(
         INutritionOverviewUseCase overviewUseCase,
         IFoodCatalogSearchUseCase searchUseCase,
+        IRecipePortionUseCase recipePortionUseCase,
         Func<string, Task>? navigateAsync = null,
         INutritionChangeNotifier? changeNotifier = null)
     {
         _overviewUseCase = overviewUseCase;
         _searchUseCase = searchUseCase;
+        _recipePortionUseCase = recipePortionUseCase;
+        _foodPortionCatalog = recipePortionUseCase.GetCatalog();
         _navigateAsync = navigateAsync;
         _changeNotifier = changeNotifier;
         if (_changeNotifier is not null) _changeNotifier.NutritionChanged += OnNutritionChanged;
@@ -177,7 +186,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
 
     [SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "Bound in Nutrition XAML / view model contract.")]
-    public IReadOnlyList<string> CustomFoodServingUnits => FoodServingOptionHelper.CustomFoodUnits;
+    public IReadOnlyList<string> CustomFoodServingUnits => _foodPortionCatalog.SupportedUnits;
 
     public bool HasFoodSearchResults => FoodSearchResults.Count > 0;
     public bool ShowBrowseMoreFoods => HasFoodSearchResults && HasMoreFoodResults;
@@ -201,40 +210,24 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
 
     public string BreakfastTargetText
     {
-        get
-        {
-            var share = MealDistributionRule.GetShares(BreakfastPreference).Breakfast;
-            return $"Breakfast ({(int)(TargetCalories * share)} kcal)";
-        }
+        get => FormatMealTarget("Breakfast", _mealDistribution?.Breakfast);
     }
 
     public string LunchTargetText
     {
-        get
-        {
-            var share = MealDistributionRule.GetShares(BreakfastPreference).Lunch;
-            return $"Lunch ({(int)(TargetCalories * share)} kcal)";
-        }
+        get => FormatMealTarget("Lunch", _mealDistribution?.Lunch);
     }
 
     public string DinnerTargetText
     {
-        get
-        {
-            var share = MealDistributionRule.GetShares(BreakfastPreference).Dinner;
-            return $"Dinner ({(int)(TargetCalories * share)} kcal)";
-        }
+        get => FormatMealTarget("Dinner", _mealDistribution?.Dinner);
     }
 
     public string SnackTargetText
     {
-        get
-        {
-            var share = MealDistributionRule.GetShares(BreakfastPreference).Snack;
-            return share <= 0f
-                ? "Snack (optional)"
-                : $"Snack ({(int)(TargetCalories * share)} kcal)";
-        }
+        get => _mealDistribution is { Snack: <= 0f }
+            ? "Snack (optional)"
+            : FormatMealTarget("Snack", _mealDistribution?.Snack);
     }
 
     public bool HasMeals => Meals.Count > 0;
@@ -387,6 +380,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             TargetProtein = response.Targets.Protein;
             TargetCarbs = response.Targets.Carbs;
             TargetFats = response.Targets.Fats;
+            _mealDistribution = response.Targets.MealDistribution;
 
             ConsumedCalories = response.Consumed.Calories;
             ConsumedProtein = response.Consumed.Protein;
@@ -405,6 +399,10 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             IsBusy = false;
         }
     }
+
+    private string FormatMealTarget(string mealName, float? share) => share is { } value
+        ? $"{mealName} ({(int)(TargetCalories * value)} kcal)"
+        : $"{mealName} (— kcal)";
 
     private void ToggleMealEditor()
     {

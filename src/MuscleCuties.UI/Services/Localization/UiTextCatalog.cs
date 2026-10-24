@@ -1499,6 +1499,8 @@ public static partial class UiTextCatalog
         RegisterDashboardStrings();
         RegisterCycleWorkoutStrings();
         RegisterNutritionProfileAuthStrings();
+        RegisterWorkoutGenerationStrings();
+        RegisterWorkoutPhaseAdjustmentStrings();
         KeyByEnglish = English.GroupBy(pair => pair.Value, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.First().Key, StringComparer.Ordinal);
     }
@@ -1506,6 +1508,8 @@ public static partial class UiTextCatalog
     static partial void RegisterDashboardStrings();
     static partial void RegisterCycleWorkoutStrings();
     static partial void RegisterNutritionProfileAuthStrings();
+    static partial void RegisterWorkoutGenerationStrings();
+    static partial void RegisterWorkoutPhaseAdjustmentStrings();
 
     private static readonly Dictionary<string, string> KeyByEnglish;
 

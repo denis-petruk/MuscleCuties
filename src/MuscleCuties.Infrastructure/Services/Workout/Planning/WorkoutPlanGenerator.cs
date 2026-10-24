@@ -91,7 +91,7 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
         CyclePhase phase,
         IReadOnlyCollection<WorkoutInjuryLog>? activeInjuries = null)
     {
-        if (!WorkoutTrainingPolicyV010.CanGeneratePlans)
+        if (!WorkoutPlanGenerationRule.CanGeneratePlans)
             return false;
         if (activePlan is null)
             return true;
@@ -153,8 +153,8 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
     {
         ArgumentNullException.ThrowIfNull(profile);
         cancellationToken.ThrowIfCancellationRequested();
-        if (!WorkoutTrainingPolicyV010.CanGeneratePlans)
-            throw new WorkoutPlanningFailureException(WorkoutTrainingPolicyV010.GenerationUnavailableMessage);
+        if (!WorkoutPlanGenerationRule.CanGeneratePlans)
+            throw new WorkoutPlanningFailureException(WorkoutPlanGenerationRule.GenerationUnavailableMessage);
         await _dataSource.EnsurePlanningCatalogAsync(cancellationToken).ConfigureAwait(false);
         var exerciseLibrary = await _dataSource.GetExerciseLibraryAsync(cancellationToken).ConfigureAwait(false);
         if (exerciseLibrary is null || exerciseLibrary.Count == 0)

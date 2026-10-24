@@ -191,10 +191,10 @@
                     <Grid Grid.Row="9" ColumnDefinitions="*,*" ColumnSpacing="8">
                         <Button Text="{loc:LocalizedText Common_Cancel}" Command="{Binding CancelEditCommand}"
                                 Style="{StaticResource ButtonSecondary}"
-                                MinimumHeightRequest="52" CornerRadius="14" />
+                                MinimumHeightRequest="52" CornerRadius="{StaticResource UiRadiusControl}" />
                         <Button Grid.Column="1" Text="{loc:LocalizedText Injury_LogContent_SaveInjury}"
                                 Command="{Binding SaveInjuryCommand}"
-                                MinimumHeightRequest="52" CornerRadius="14" />
+                                MinimumHeightRequest="52" CornerRadius="{StaticResource UiRadiusControl}" />
                     </Grid>
                 </Grid>
 

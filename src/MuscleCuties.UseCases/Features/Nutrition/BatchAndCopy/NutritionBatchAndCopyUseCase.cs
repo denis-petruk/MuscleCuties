@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Domain.Nutrition;
+using MuscleCuties.UseCases.Features.Nutrition.Diary;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
 
@@ -27,7 +28,7 @@ public sealed class NutritionBatchAndCopyUseCase(
                 {
                     ArgumentNullException.ThrowIfNull(entry);
                     return DailyFoodEntry.Create(
-                        entry.MealType,
+                        NutritionMealTypeMapper.ToDomain(entry.MealType),
                         entry.Name,
                         (double)entry.ServingSize,
                         entry.ServingUnit,
@@ -59,7 +60,7 @@ public sealed class NutritionBatchAndCopyUseCase(
         ValidateOwnerAndKey(userId, request.IdempotencyKey);
         _ = DiaryCopyDates.Create(request.SourceDate, request.TargetDate);
         if (request.MealType is { } mealType)
-            DailyFoodEntry.RequireMealType(mealType);
+            DailyFoodEntry.RequireMealType(NutritionMealTypeMapper.ToDomain(mealType));
 
         var response = await store.CopyAsync(userId, request, cancellationToken).ConfigureAwait(false);
         if (!response.Replayed && response.CopiedCount > 0)
@@ -75,7 +76,7 @@ public sealed class NutritionBatchAndCopyUseCase(
         ArgumentNullException.ThrowIfNull(request);
         ValidateOwnerAndKey(userId, request.IdempotencyKey);
         _ = DailyFoodEntry.Create(
-            request.MealType,
+            NutritionMealTypeMapper.ToDomain(request.MealType),
             request.Name,
             (double)request.ServingSize,
             request.ServingUnit,

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <x:Double x:Key="UiSpaceMicro">4</x:Double>
+    <x:Double x:Key="UiSpaceTight">8</x:Double>
+    <x:Double x:Key="UiSpaceCompact">12</x:Double>
+    <x:Double x:Key="UiSpaceControl">16</x:Double>
+    <x:Double x:Key="UiSpaceContent">24</x:Double>
+    <x:Double x:Key="UiControlHeight">48</x:Double>
+
+    <Thickness x:Key="WorkoutPlanningPagePadding">20,24,20,32</Thickness>
+    <x:Double x:Key="WorkoutPlanningContentMaxWidth">720</x:Double>
+    <Thickness x:Key="WorkoutPlanningExerciseSlotPadding">16,12</Thickness>
+    <Thickness x:Key="WorkoutPlanningExerciseDetailsPadding">12,8</Thickness>
+</ResourceDictionary>

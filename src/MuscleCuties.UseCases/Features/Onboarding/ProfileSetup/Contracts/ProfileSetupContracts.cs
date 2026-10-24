@@ -6,7 +6,6 @@ public sealed record ProfileSetupDraft(
     float HeightCm,
     float WeightKg,
     string ProfileImagePath,
-    int WorkoutDaysPerWeek,
     int CycleLength,
     IReadOnlyList<int> SelectedActivityTypes,
     bool UseMetricSystem,
@@ -20,15 +19,11 @@ public sealed record ProfileSetupLoadResult(
 public enum ProfileSetupError
 {
     None,
-    InvalidName,
-    InvalidBirthDate,
-    Underage,
-    InvalidMeasurements,
-    InvalidWorkoutActivities,
-    AccountMissing
+    AccountMissing,
+    InvalidProfile
 }
 
-public sealed record ProfileSetupResult(ProfileSetupError Error)
+public sealed record ProfileSetupResult(ProfileSetupError Error, string? ErrorMessage = null)
 {
     public bool Succeeded => Error == ProfileSetupError.None;
 }

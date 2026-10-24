@@ -16,7 +16,6 @@ public partial class ProfileWorkoutPreferencesPage : ContentPage
         {
             var vm = (ProfileWorkoutPreferencesViewModel)BindingContext;
             await vm.LoadDataCommand.ExecuteAsync(null);
-            WorkoutFrequencySlider.Value = vm.DaysPerWeek;
         });
         this.BeginDeferredLoad(() => PreferenceChoicesLazy.LoadIfNeededAsync(true).AsTask());
     }

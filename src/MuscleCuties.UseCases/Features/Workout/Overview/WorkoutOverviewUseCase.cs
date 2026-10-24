@@ -34,7 +34,10 @@ public sealed class WorkoutOverviewUseCase(IWorkoutOverviewStore store) : IWorko
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.WorkoutDayId <= 0 || (request.IsEasierAlternative && !request.IsOptional))
+        if (!WorkoutOverviewRule.IsValidSessionOptionality(
+                request.WorkoutDayId,
+                request.IsOptional,
+                request.IsEasierAlternative))
             throw new ArgumentException("An easier alternative must be explicitly optional.", nameof(request));
         return store.SetSessionOptionalAsync(request, cancellationToken);
     }
@@ -43,7 +46,7 @@ public sealed class WorkoutOverviewUseCase(IWorkoutOverviewStore store) : IWorko
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.LocalDate.Year is < 1970 or > 2099 || string.IsNullOrWhiteSpace(request.TimeZoneId))
+        if (!WorkoutOverviewRule.IsValidReadinessAdjustmentRequest(request.LocalDate, request.TimeZoneId))
             throw new ArgumentException("A valid local date and time zone are required.", nameof(request));
         return store.ReviewReadinessAdjustmentAsync(request, cancellationToken);
     }
@@ -52,8 +55,8 @@ public sealed class WorkoutOverviewUseCase(IWorkoutOverviewStore store) : IWorko
         bool apply, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.ProposalId == Guid.Empty || request.LocalDate.Year is < 1970 or > 2099 ||
-            string.IsNullOrWhiteSpace(request.TimeZoneId))
+        if (!WorkoutOverviewRule.IsValidReadinessAdjustmentDecision(
+                request.ProposalId, request.LocalDate, request.TimeZoneId))
             throw new ArgumentException("A valid proposal, local date, and time zone are required.", nameof(request));
         return store.DecideReadinessAdjustmentAsync(request, apply, cancellationToken);
     }

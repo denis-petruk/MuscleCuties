@@ -10,12 +10,12 @@ public static class WorkoutExerciseV020CatalogMapper
 {
     private const decimal SecondsPerMinute = 60m;
 
-    public static StrengthExerciseCatalogEntryV020 Map(WorkoutExerciseDefinition definition)
+    public static StrengthExerciseCatalogEntry Map(WorkoutExerciseDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(definition);
         var gaps = new List<string>();
         var equipment = MapEquipment(definition.Required, gaps);
-        var experiences = ParseEnumSet<ActivityExperienceV020>(definition.SupportedExperiencesV020Json,
+        var experiences = ParseEnumSet<ActivityExperience>(definition.SupportedExperiencesV020Json,
             "SupportedExperiences", gaps);
         var demandTags = ParseEnumSet<ActivityDemandTag>(definition.DemandTagsV020Json, "DemandTags", gaps,
             allowEmpty: true);
@@ -63,12 +63,12 @@ public static class WorkoutExerciseV020CatalogMapper
             conditions.Present,
             conditions.Substitutions,
             definition.UnilateralDoublesTime);
-        return new StrengthExerciseCatalogEntryV020(definition.Name, candidate,
+        return new StrengthExerciseCatalogEntry(definition.Name, candidate,
             Array.AsReadOnly(gaps.Distinct(StringComparer.Ordinal).OrderBy(gap => gap, StringComparer.Ordinal).ToArray()));
     }
 
     private static (string? Experience, string? General, bool Present,
-        IReadOnlyList<DirectedSubstitutionReviewV020>? Substitutions) ReadReviewConditions(
+        IReadOnlyList<DirectedSubstitutionReview>? Substitutions) ReadReviewConditions(
         string? json, ICollection<string> gaps)
     {
         if (string.IsNullOrWhiteSpace(json))
@@ -92,20 +92,20 @@ public static class WorkoutExerciseV020CatalogMapper
                 gaps.Add("ReviewConditionsMissing");
                 return (null, null, false, null);
             }
-            var directed = new List<DirectedSubstitutionReviewV020>();
+            var directed = new List<DirectedSubstitutionReview>();
             foreach (var pair in substitutions.EnumerateArray())
             {
                 if (!pair.TryGetProperty("targetExerciseId", out var target) ||
                     !pair.TryGetProperty("category", out var category) ||
                     !pair.TryGetProperty("conditions", out var pairConditions) ||
-                    !Enum.TryParse<DirectedSubstitutionCategoryV020>(category.GetString(), false,
+                    !Enum.TryParse<DirectedSubstitutionCategory>(category.GetString(), false,
                         out var parsed) || !Enum.IsDefined(parsed) || target.GetInt32() <= 0 ||
                     string.IsNullOrWhiteSpace(pairConditions.GetString()))
                 {
                     gaps.Add("DirectedSubstitutionReviewInvalid");
                     return (null, null, false, null);
                 }
-                directed.Add(new DirectedSubstitutionReviewV020(target.GetInt32(), parsed,
+                directed.Add(new DirectedSubstitutionReview(target.GetInt32(), parsed,
                     pairConditions.GetString()!));
             }
             return (experience.GetString(), general.GetString(), true, directed);

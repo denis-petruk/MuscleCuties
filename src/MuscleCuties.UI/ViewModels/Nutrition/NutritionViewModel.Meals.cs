@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
@@ -212,6 +214,7 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(IsSweetBreakfast));
 
         var targets = await _overviewUseCase.GetPlanTargetsAsync(BreakfastPreference.ToString());
+        _mealDistribution = targets.MealDistribution;
         TargetCalories = targets.Calories;
         TargetProtein = targets.Protein;
         TargetCarbs = targets.Carbs;

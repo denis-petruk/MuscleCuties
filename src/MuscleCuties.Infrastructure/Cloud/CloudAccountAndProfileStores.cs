@@ -20,6 +20,7 @@ using MuscleCuties.UseCases.Features.Account.Registration;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Onboarding.ProfileSetup;
 using MuscleCuties.UseCases.Features.Onboarding.Quiz;
@@ -320,12 +321,12 @@ public sealed class CloudProfileSetupStore(
 
     private static ProfileSetupDraft Map(StagedProfileData staged) =>
         new(staged.Name, staged.BirthDate, staged.Height, staged.Weight,
-            staged.ProfileImagePath, staged.WorkoutDaysPerWeek, staged.CycleLength,
+            staged.ProfileImagePath, staged.CycleLength,
             staged.SelectedActivities.Select(a => (int)a).ToArray(), staged.UseMetricSystem);
 
     private static StagedProfileData Map(ProfileSetupDraft draft) =>
         new(draft.Name.Trim(), draft.BirthDate, draft.HeightCm, draft.WeightKg,
-            draft.ProfileImagePath.Trim(), draft.WorkoutDaysPerWeek,
+            draft.ProfileImagePath.Trim(),
             draft.CycleLength > 0 ? draft.CycleLength : DefaultCycleLengthDays,
             draft.SelectedActivityTypes.Where(v => Enum.IsDefined(typeof(WorkoutActivityType), v)).Select(v => (WorkoutActivityType)v).ToHashSet(),
             draft.UseMetricSystem);
@@ -424,7 +425,6 @@ public sealed class CloudOnboardingQuizStore(
                     birthDate = DateOnly.FromDateTime(profile.BirthDate),
                     heightCm = (decimal)profile.Height,
                     weightKg = (decimal)profile.Weight,
-                    workoutDaysPerWeek = profile.WorkoutDaysPerWeek,
                     cycleLengthDays = profile.CycleLength,
                     selectedActivityTypes = profile.SelectedActivities.Select(a => (int)a).ToList(),
                     useMetricSystem = profile.UseMetricSystem
@@ -505,7 +505,6 @@ public sealed class CloudProfileOverviewStore(
     private const string PhotosLatestRoute = "/api/v1/photos?limit=1&offset=0";
     private const string CycleOverviewRoute = "/api/v1/cycle/overview";
     private const int DefaultCycleLengthDays = 28;
-    private const int DefaultWorkoutDaysPerWeek = 3;
 
     public async Task<ProfileOverviewSource> LoadAsync(CancellationToken cancellationToken)
     {
@@ -587,6 +586,9 @@ public sealed class CloudProfileOverviewStore(
               Enum.IsDefined(dashboardPhase)
                 ? dashboardPhase
                 : CyclePhase.Unknown;
+        var availableWeekdaysCount = profile is null
+            ? 0
+            : CloudWorkoutPreferencesSnapshotMapper.ToPreferences(profile).AvailableWeekdays.Count;
 
         var overview = new ProfileOverviewDto(
             Email: profile?.Email ?? string.Empty,
@@ -599,11 +601,11 @@ public sealed class CloudProfileOverviewStore(
             UnitSystem: units.UnitSystem,
             BodyWeightUnit: units.BodyWeightUnit,
             HeightUnit: units.HeightUnit,
-            WorkoutDaysPerWeek: profile?.WorkoutDaysPerWeek is > 0 ? profile.WorkoutDaysPerWeek : DefaultWorkoutDaysPerWeek,
+            AvailableWeekdaysCount: availableWeekdaysCount,
             CompletedSessions: completedSessions,
             WorkoutStreakDays: dashboard?.WorkoutStreakDays ?? 0,
             NutritionStreakDays: dashboard?.NutritionStreakDays ?? 0,
-            CurrentPhase: predictedPhase,
+            CurrentPhase: CycleContractMapper.ToDto(predictedPhase),
             CyclesTracked: dashboard?.CycleCount ?? 0,
             IsHealthConnected: null,
             ActiveInjuryCount: activeInjuryCount,
@@ -650,10 +652,6 @@ public sealed class CloudProfilePersonalInfoStore(
                          Enum.IsDefined(parsedExp)
             ? (int)parsedExp
             : (int)TrainingExperienceLevel.Intermediate;
-        var trackingMode = Enum.TryParse<CycleTrackingMode>(snapshot.CycleTrackingMode, true, out var parsedMode) &&
-                           Enum.IsDefined(parsedMode)
-            ? (int)parsedMode
-            : (int)CycleTrackingMode.ManualPhaseLogging;
         var context = ReproductiveContextCodec.Parse(snapshot.ReproductiveContextJson);
 
         var profile = new PersonalInfoProfileDto(
@@ -664,8 +662,6 @@ public sealed class CloudProfilePersonalInfoStore(
             goal,
             pace,
             experience,
-            trackingMode,
-            snapshot.WorkoutDaysPerWeek,
             snapshot.CycleLength > 0 ? snapshot.CycleLength : DefaultCycleLengthDays,
             (int)context.Pregnancy,
             (int)context.Contraception);
@@ -689,9 +685,6 @@ public sealed class CloudProfilePersonalInfoStore(
         var experience = Enum.IsDefined(typeof(TrainingExperienceLevel), request.TrainingExperienceLevel)
             ? ((TrainingExperienceLevel)request.TrainingExperienceLevel).ToString()
             : currentResponse.Data.TrainingExperienceLevel;
-        var trackingMode = Enum.IsDefined(typeof(CycleTrackingMode), request.CycleTrackingMode)
-            ? ((CycleTrackingMode)request.CycleTrackingMode).ToString()
-            : currentResponse.Data.CycleTrackingMode;
         var pregnancy = Enum.IsDefined(typeof(PregnancyStatus), request.PregnancyStatus)
             ? (PregnancyStatus)request.PregnancyStatus
             : PregnancyStatus.Unknown;
@@ -714,8 +707,6 @@ public sealed class CloudProfilePersonalInfoStore(
                 goal,
                 weightGoalPace = pace,
                 trainingExperienceLevel = experience,
-                cycleTrackingMode = trackingMode,
-                workoutDaysPerWeek = request.WorkoutDaysPerWeek,
                 cycleLength = request.CycleLength,
                 reproductiveContextJson
             },
@@ -880,7 +871,6 @@ public sealed class CloudProfileWorkoutPreferencesStore(
 {
     private const string ProfileRoute = "/api/v1/profile";
     private const string WorkoutPreferencesRoute = "/api/v1/profile/workout-preferences";
-    private const int DefaultDaysPerWeek = 3;
 
     public async Task<WorkoutPreferencesDto?> LoadAsync(CancellationToken cancellationToken)
     {
@@ -888,13 +878,7 @@ public sealed class CloudProfileWorkoutPreferencesStore(
         if (response.Status == BackendApiStatus.NotFound)
             return null;
         var snapshot = CloudStoreResponse.RequireData(response, "workout preferences profile");
-        var activities = WorkoutActivityPreferences.Parse(snapshot.PreferredWorkoutActivityTypes)
-            .Select(activity => (int)activity)
-            .ToArray();
-        var strengthStyle = (int)WorkoutActivityPreferences.ParseStrengthStyle(snapshot.PreferredWorkoutActivityTypes);
-        var days = snapshot.WorkoutDaysPerWeek > 0 ? snapshot.WorkoutDaysPerWeek : DefaultDaysPerWeek;
-
-        return new WorkoutPreferencesDto(activities, strengthStyle, days, snapshot.EquipmentLevel);
+        return CloudWorkoutPreferencesSnapshotMapper.ToPreferences(snapshot);
     }
 
     public async Task<WorkoutPreferencesError> SaveAndUpdatePlanAsync(
@@ -911,8 +895,10 @@ public sealed class CloudProfileWorkoutPreferencesStore(
             {
                 expectedVersion = currentResponse.Data.Version,
                 activityTypes = preferences.ActivityTypes,
-                strengthStyle = preferences.StrengthStyle,
-                daysPerWeek = preferences.DaysPerWeek,
+                availableWeekdays = preferences.AvailableWeekdays,
+                activitySessionDurationsMinutes = preferences.ActivitySessionDurationsMinutes,
+                requestedSessionsPerWeek = preferences.RequestedSessionsPerWeek,
+                excludedExerciseIds = preferences.ExcludedExerciseIds ?? new HashSet<int>(),
                 equipmentLevel = preferences.EquipmentLevel
             },
             idempotencyKey: Guid.NewGuid().ToString("N"),
@@ -926,6 +912,7 @@ public sealed class CloudProfileWorkoutPreferencesStore(
             _ => WorkoutPreferencesError.PlanUpdateFailed
         };
     }
+
 }
 
 public sealed class CloudProfileUnitsStore(

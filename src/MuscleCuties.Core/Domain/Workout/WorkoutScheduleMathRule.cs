@@ -5,6 +5,9 @@ public static class WorkoutScheduleMathRule
     public static readonly DateTime MinSupportedDate = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
     public static readonly DateTime MaxSupportedDate = new(2099, 12, 31, 0, 0, 0, DateTimeKind.Utc);
 
+    public static bool IsSupportedDate(DateOnly date) =>
+        date.Year >= MinSupportedDate.Year && date.Year <= MaxSupportedDate.Year;
+
     public static void EnsureValidReschedule(int workoutDayId, DateOnly targetDate)
     {
         if (workoutDayId <= 0 || targetDate.Year < MinSupportedDate.Year ||

@@ -1,5 +1,11 @@
 namespace MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 
+public static class PersonalInfoConstraints
+{
+    public const int MinimumEligibleAgeYears =
+        MuscleCuties.Core.Domain.Onboarding.BirthDateEligibilityRule.MinimumEligibleAgeYears;
+}
+
 public sealed record PersonalInfoProfileDto(
     string Name,
     DateTime DateOfBirth,
@@ -8,8 +14,6 @@ public sealed record PersonalInfoProfileDto(
     int Goal,
     int WeightGoalPace,
     int TrainingExperienceLevel,
-    int CycleTrackingMode,
-    int WorkoutDaysPerWeek,
     int CycleLength,
     int PregnancyStatus = 0,
     int ContraceptionStatus = 0);
@@ -25,13 +29,11 @@ public sealed record SavePersonalInfoRequest(
     int Goal,
     int WeightGoalPace,
     int TrainingExperienceLevel,
-    int CycleTrackingMode,
-    int WorkoutDaysPerWeek,
     int CycleLength,
     int PregnancyStatus = 0,
     int ContraceptionStatus = 0);
 
-public enum PersonalInfoSaveError { None, InvalidInput, AccountMissing }
+public enum PersonalInfoSaveError { None, InvalidInput, InvalidBirthDate, Underage, AccountMissing }
 
 public sealed record SavePersonalInfoResult(PersonalInfoSaveError Error)
 {

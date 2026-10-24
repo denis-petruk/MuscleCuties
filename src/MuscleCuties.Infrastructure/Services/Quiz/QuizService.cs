@@ -55,17 +55,12 @@ public class QuizService : IQuizService
             Name = string.Empty,
             DateOfBirth = answeredAt.AddYears(-25),
             WeightGoalPace = WeightGoalPace.Steady,
-            CycleTrackingMode = CycleTrackingMode.ManualPhaseLogging,
             WorkoutDaysPerWeek = 3,
             CycleLength = 28,
             UpdatedAt = answeredAt
         };
 
-        QuizSelectionEvaluator.ApplyQuizSelectionsToProfile(
-            profile, selections, null, false, 0);
-
-        if (profile.CycleTrackingMode is not CycleTrackingMode.ManualPhaseLogging)
-            profile.CurrentCyclePhase = null;
+        QuizSelectionEvaluator.ApplyQuizSelectionsToProfile(profile, selections);
 
         profile.UpdatedAt = answeredAt;
 
@@ -122,7 +117,6 @@ public class QuizService : IQuizService
             profile.Goal.ToString(),
             profile.WeightGoalPace.ToString(),
             profile.TrainingExperienceLevel.ToString(),
-            profile.CycleTrackingMode.ToString(),
             profile.CurrentCyclePhase?.ToString() ?? string.Empty,
             profile.WorkoutDaysPerWeek,
             profile.CycleLength,
@@ -177,7 +171,6 @@ public class QuizService : IQuizService
         string Goal,
         string WeightGoalPace,
         string TrainingExperienceLevel,
-        string CycleTrackingMode,
         string CurrentCyclePhase,
         int WorkoutDaysPerWeek,
         int CycleLength,

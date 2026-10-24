@@ -17,6 +17,10 @@ public sealed record DailyCheckInStatusResponse(
     string TierText,
     TodayReadinessCheckInDto? TodayReadiness = null);
 
+public sealed record DailyCheckInPresentationSettings(
+    bool IsReadinessScoreDisplayEnabled,
+    bool AreReadinessSuggestionsEnabled);
+
 public sealed record SubmitDailyCheckInRequest(
     DateOnly Date,
     double SleepHours,
@@ -44,6 +48,7 @@ public interface IDailyCheckInStore
 
 public interface IDailyCheckInUseCase
 {
+    DailyCheckInPresentationSettings PresentationSettings { get; }
     Task<DailyCheckInStatusResponse> GetStatusAsync(DailyCheckInStatusRequest request, CancellationToken ct = default);
     Task<SubmitDailyCheckInResponse> SubmitAsync(SubmitDailyCheckInRequest request, CancellationToken ct = default);
 }

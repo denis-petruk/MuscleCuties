@@ -5,6 +5,7 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 using Npgsql;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Cycle.PhaseLog;
@@ -26,9 +27,26 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
         SaveCyclePhaseLogInput input,
         CancellationToken cancellationToken)
     {
-        if (input is null || !Guid.TryParse(input.OwnerId, out var ownerId) || ownerId == Guid.Empty ||
-            !IsSupportedDate(input.LocalDate) || !IsKnownPhase(input.Phase) ||
-            (input.FlowIntensity is { } flow && !Enum.IsDefined(flow)))
+        if (input is null)
+            return Invalid();
+
+        MuscleCuties.Core.Models.Enums.Cycle.CyclePhase phase;
+        MuscleCuties.Core.Models.Enums.Cycle.FlowIntensity? flowIntensity;
+        try
+        {
+            phase = CycleContractMapper.ToCore(input.Phase);
+            flowIntensity = input.FlowIntensity is { } requestedFlow
+                ? CycleContractMapper.ToCore(requestedFlow)
+                : null;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return Invalid();
+        }
+
+        if (!Guid.TryParse(input.OwnerId, out var ownerId) || ownerId == Guid.Empty ||
+            !IsSupportedDate(input.LocalDate) || !IsKnownPhase(phase) ||
+            (flowIntensity is { } flow && !Enum.IsDefined(flow)))
             return Invalid();
 
         var normalizedNote = NormalizeNote(input.Note);
@@ -49,7 +67,7 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
                 var logs = await db.CyclePhaseLogs.Where(row => row.UserId == ownerId)
                     .OrderBy(row => row.LocalDate).ThenBy(row => row.Id).ToListAsync(cancellationToken).ConfigureAwait(false);
 
-                var cycle = AlignCycle(ownerId, input.Phase, input.LocalDate, cycles, profile);
+                var cycle = AlignCycle(ownerId, phase, input.LocalDate, cycles, profile);
                 if (cycle is null)
                 {
                     await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
@@ -57,12 +75,10 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
                 }
                 if (profile is not null)
                 {
-                    var manualTracking = CycleTrackingMode.ManualPhaseLogging.ToString();
                     var phaseValue = logs.LastOrDefault(row => row.LocalDate > input.LocalDate)?.Phase
-                                     ?? input.Phase.ToString();
-                    if (profile.CycleTrackingMode != manualTracking || profile.CurrentCyclePhase != phaseValue)
+                                     ?? phase.ToString();
+                    if (profile.CurrentCyclePhase != phaseValue)
                     {
-                        profile.CycleTrackingMode = manualTracking;
                         profile.CurrentCyclePhase = phaseValue;
                         profile.UpdatedAt = timeProvider.GetUtcNow().UtcDateTime;
                     }
@@ -83,9 +99,9 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
                 }
 
                 row.CycleLogId = cycle.Id;
-                row.Phase = input.Phase.ToString();
-                if (input.FlowIntensity.HasValue)
-                    row.FlowIntensity = input.FlowIntensity.Value.ToString();
+                row.Phase = phase.ToString();
+                if (flowIntensity.HasValue)
+                    row.FlowIntensity = flowIntensity.Value.ToString();
                 row.Note = normalizedNote;
                 row.CreatedAt = timeProvider.GetUtcNow().UtcDateTime;
                 await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

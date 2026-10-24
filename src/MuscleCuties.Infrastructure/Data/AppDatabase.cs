@@ -239,8 +239,6 @@ public partial class AppDatabase : DbContext
                 Require(profile.Weight >= 0, "Profile weight cannot be negative.");
                 Require((int)profile.TrainingExperienceLevel is >= 0 and <= 3,
                     "Training experience is outside the supported range.");
-                Require((int)profile.CycleTrackingMode is >= 0 and <= 3,
-                    "Cycle tracking mode is outside the supported range.");
                 Require(profile.WorkoutDaysPerWeek is >= 0 and <= 7, "Workout days per week must be between 0 and 7.");
                 Require(profile.CycleLength is >= 0 and <= 60, "Cycle length must be between 0 and 60 days.");
                 break;
@@ -376,7 +374,6 @@ public partial class AppDatabase : DbContext
         modelBuilder.Entity<UserProfile>(entity =>
         {
             entity.HasIndex(p => p.UserId).IsUnique();
-            entity.Property(p => p.CycleTrackingMode).HasConversion<int>();
             entity.Property(p => p.Name).IsRequired().HasMaxLength(120);
             entity.Property(p => p.DietaryTags).HasMaxLength(250);
             entity.Property(p => p.EquipmentLevel).HasMaxLength(50);

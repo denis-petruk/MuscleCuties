@@ -1,8 +1,8 @@
-using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
 
-public sealed record CyclePhaseEditRequest(DateTime Date, CyclePhase Phase, string? Note);
+public sealed record CyclePhaseEditRequest(DateTime Date, CyclePhaseDto Phase, string? Note);
 
 public interface ICyclePhaseEditUseCase
 {

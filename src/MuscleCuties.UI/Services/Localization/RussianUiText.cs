@@ -1548,9 +1548,13 @@ internal static partial class RussianUiText
         RegisterDashboardStrings();
         RegisterCycleWorkoutStrings();
         RegisterNutritionProfileAuthStrings();
+        RegisterWorkoutGenerationStrings();
+        RegisterWorkoutPhaseAdjustmentStrings();
     }
 
     static partial void RegisterDashboardStrings();
     static partial void RegisterCycleWorkoutStrings();
     static partial void RegisterNutritionProfileAuthStrings();
+    static partial void RegisterWorkoutGenerationStrings();
+    static partial void RegisterWorkoutPhaseAdjustmentStrings();
 }

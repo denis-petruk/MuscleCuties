@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Services.Cycle;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 
@@ -29,14 +30,17 @@ public sealed class LocalCycleOverviewStore(IServiceScopeFactory scopeFactory) :
 
         return new CycleOverviewSnapshot(
             new CyclePredictionSummary(prediction.HasActiveCycle, prediction.CurrentCycleStartDate,
-                prediction.CurrentDay, prediction.PredictedCycleLength, prediction.CurrentPhase,
+                prediction.CurrentDay, prediction.PredictedCycleLength,
+                CycleContractMapper.ToDto(prediction.CurrentPhase),
                 prediction.PredictedNextPeriodDate, prediction.DaysUntilPeriod,
                 prediction.PredictedOvulationDate, prediction.FertileWindowStartDate,
                 prediction.FertileWindowEndDate, prediction.PredictionSource),
-            phaseLogs.Select(log => new CyclePhaseEntry(log.Id, log.CycleLogId, log.Phase,
-                log.FlowIntensity, log.LoggedAt, log.Note, log.CreatedAt)).ToArray(),
+            phaseLogs.Select(log => new CyclePhaseEntry(log.Id, log.CycleLogId,
+                CycleContractMapper.ToDto(log.Phase),
+                log.FlowIntensity is { } flow ? CycleContractMapper.ToDto(flow) : null,
+                log.LoggedAt, log.Note, log.CreatedAt)).ToArray(),
             symptoms.Select(log => new CycleSymptomEntry(log.Id, log.CycleLogId, log.Date,
-                log.SymptomType, log.Severity, log.Notes)).ToArray(),
+                CycleContractMapper.ToDto(log.SymptomType), log.Severity, log.Notes)).ToArray(),
             history.Select(log => new CycleHistoryItem(log.Id, log.StartDate, log.EndDate,
                 log.CycleLength)).ToArray());
     }

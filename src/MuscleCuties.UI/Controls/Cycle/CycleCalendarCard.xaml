@@ -90,7 +90,7 @@
                     Command="{Binding AdvancePhaseCommand}"
                     HeightRequest="42"
                     MinimumHeightRequest="42"
-                    CornerRadius="12"
+                    CornerRadius="{StaticResource UiRadiusControl}"
                     Padding="14,0"
                     FontSize="14"
                     FontAttributes="Bold"

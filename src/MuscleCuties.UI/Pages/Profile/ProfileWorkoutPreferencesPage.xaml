@@ -8,6 +8,7 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:profileControls="clr-namespace:MuscleCuties.UI.Controls.Profile"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileWorkoutPreferencesViewModel"
     Shell.NavBarIsVisible="False">
@@ -27,42 +28,37 @@
                 Title="{loc:LocalizedText Profile_WorkoutPrefs_ActivityPreferences}"
                 BackCommand="{Binding BackCommand}" />
 
-            <Border
-                StrokeShape="RoundRectangle 10"
-                StrokeThickness="1"
-                Stroke="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}"
-                Padding="14,10"
-                SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs}">
-                <Label
-                    Text="{loc:LocalizedText Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs}"
-                    FontFamily="Inter"
-                    FontSize="14"
-                    FontAttributes="Bold"
-                    TextColor="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource SecondaryDarkText}}" />
-            </Border>
-
             <VerticalStackLayout Spacing="8">
                 <Label
-                    Text="{loc:LocalizedText Profile_WorkoutPrefs_WorkoutsPerWeek}"
+                    Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdays}"
                     Style="{StaticResource SectionTitle}"
                     SemanticProperties.HeadingLevel="Level2" />
-                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                    <Label Text="{Binding MinimumDaysPerWeek}" VerticalOptions="Center"
-                           Style="{StaticResource MutedLabel}" />
-                    <Slider x:Name="WorkoutFrequencySlider" Grid.Column="1"
-                            Minimum="{Binding MinimumDaysPerWeek}"
-                            Maximum="{Binding MaximumDaysPerWeek}"
-                            Value="{Binding SliderDaysPerWeek, Mode=TwoWay}"
-                            ThumbColor="{StaticResource Primary}"
-                            MinimumTrackColor="{StaticResource Primary}"
-                            MaximumTrackColor="{StaticResource Gray500}"
-                            SemanticProperties.Description="{Binding DaysPerWeek, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_DaysPerWeekFormat}" />
-                    <Label Grid.Column="2" Text="{Binding MaximumDaysPerWeek}"
-                           VerticalOptions="Center" Style="{StaticResource MutedLabel}" />
-                </Grid>
-                <Label Text="{Binding DaysPerWeek, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_DaysPerWeekFormat}"
-                       HorizontalTextAlignment="Center" Style="{StaticResource SectionTitle}" />
+                <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdaysHint}"
+                       Style="{StaticResource MutedLabel}"
+                       LineBreakMode="WordWrap" />
+                <FlexLayout BindableLayout.ItemsSource="{Binding AvailableWeekdays}"
+                            Wrap="Wrap"
+                            JustifyContent="Start">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="workoutModels:WorkoutWeekdayOptionItem">
+                            <Button Text="{Binding Label}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfileWorkoutPreferencesViewModel}}, Path=ToggleWeekdayCommand}"
+                                    CommandParameter="{Binding .}"
+                                    Margin="{StaticResource WorkoutPlanningDayChoiceMargin}"
+                                    MinimumHeightRequest="{StaticResource UiControlHeight}"
+                                    CornerRadius="{StaticResource UiRadiusControl}">
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
+                                        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+                <Label Text="{Binding SelectedWeekdayCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_SelectedWeekdaysFormat}"
+                       HorizontalTextAlignment="Center" Style="{StaticResource MutedLabel}" />
             </VerticalStackLayout>
 
             <toolkit:LazyView
@@ -77,7 +73,7 @@
             <Button
                 Text="{loc:LocalizedText Profile_WorkoutPrefs_SaveWorkoutPreferences}"
                 Command="{Binding SaveCommand}"
-                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+                IsEnabled="{Binding CanSave}" />
 
             <ActivityIndicator
                 IsRunning="{Binding IsBusy}"

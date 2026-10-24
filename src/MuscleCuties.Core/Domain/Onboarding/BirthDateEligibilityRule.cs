@@ -9,6 +9,9 @@ public enum BirthDateEligibility
 
 public static class BirthDateEligibilityRule
 {
+    public const int MinimumEligibleAgeYears = 18;
+    public const int MaximumEligibleAgeYears = 120;
+
     public static BirthDateEligibility Assess(DateTime birthDate, DateTime today)
     {
         var date = birthDate.Date;
@@ -20,9 +23,9 @@ public static class BirthDateEligibilityRule
         if (date > today.AddYears(-age))
             age--;
 
-        if (age < 18)
+        if (age < MinimumEligibleAgeYears)
             return BirthDateEligibility.Underage;
 
-        return age > 120 ? BirthDateEligibility.MissingOrInvalid : BirthDateEligibility.Eligible;
+        return age > MaximumEligibleAgeYears ? BirthDateEligibility.MissingOrInvalid : BirthDateEligibility.Eligible;
     }
 }

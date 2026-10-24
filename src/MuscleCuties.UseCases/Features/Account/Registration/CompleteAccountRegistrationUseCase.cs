@@ -64,8 +64,7 @@ public sealed class CompleteAccountRegistrationUseCase(
                     profile.BirthDate,
                     profile.HeightCm,
                     profile.WeightKg,
-                    profile.CycleLength,
-                    profile.WorkoutDaysPerWeek),
+                    profile.CycleLength),
                 username,
                 timeProvider.GetUtcNow().UtcDateTime);
         if (!profileValidation.IsValid)

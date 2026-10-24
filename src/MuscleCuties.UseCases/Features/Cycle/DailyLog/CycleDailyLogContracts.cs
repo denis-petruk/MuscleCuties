@@ -1,4 +1,4 @@
-using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Cycle.DailyLog;
 
@@ -6,17 +6,17 @@ public sealed record CycleDailyLogRequest(
     DateTime Date,
     bool? IsPeriodStart,
     bool? IsPeriodEnd,
-    FlowIntensity? FlowIntensity,
-    IReadOnlyList<SymptomType> Symptoms,
-    CyclePhase? PhaseOverride = null,
+    FlowIntensityDto? FlowIntensity,
+    IReadOnlyList<SymptomTypeDto> Symptoms,
+    CyclePhaseDto? PhaseOverride = null,
     string? Note = null);
 
 public sealed record CycleDailyLogSnapshot(
     DateTime Date,
     bool IsPeriodStarted,
     bool IsPeriodEnded,
-    FlowIntensity? FlowIntensity,
-    IReadOnlyList<SymptomType> Symptoms);
+    FlowIntensityDto? FlowIntensity,
+    IReadOnlyList<SymptomTypeDto> Symptoms);
 
 public interface ICycleDailyLogUseCase
 {
