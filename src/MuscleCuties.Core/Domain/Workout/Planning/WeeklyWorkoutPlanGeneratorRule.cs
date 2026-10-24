@@ -46,21 +46,67 @@ public static class WeeklyWorkoutPlanGeneratorRule
 
     public const int DefaultCompoundMinReps = 6;
     public const int DefaultCompoundMaxReps = 12;
+    public const int BeginnerGeneralStrengthMinReps = 8;
+    public const int HighVolumeAccessoryMinReps = 10;
+    public const int HighVolumeAccessoryMaxReps = 15;
+    public const int HighIntensityMainMinReps = 3;
+    public const int HighIntensityMainMaxReps = 6;
+    public const int HighIntensityAccessoryMinReps = 6;
+    public const int HighIntensityAccessoryMaxReps = 10;
     public const int DefaultAccessoryMinReps = 10;
     public const int DefaultAccessoryMaxReps = 20;
     public const int DefaultTargetRir = 2;
+    public const int GeneralStrengthTargetRir = 3;
 
     public const decimal DefaultSecondsPerRep = 4.0m;
     public const decimal DefaultCompoundRestSeconds = 90.0m;
     public const decimal DefaultAccessoryRestSeconds = 60.0m;
     public const decimal SecondsPerMinute = 60.0m;
 
+    public const int GeneralStrengthMainSets = 2;
     public const int DefaultCompoundSets = 3;
     public const int DefaultAccessorySets = 2;
     public const int MinimumPrescribedSets = 1;
+    public const int ZeroMinutes = 0;
+
+    public const int ContinuousCardioWarmupCooldownMinutes = 10;
+    public const int ContinuousCardioTier1MainMinutes = 10;
+    public const int ContinuousCardioEstablishedMainMinutes = 20;
+    public const int RockClimbingTier1Minutes = 45;
+    public const int RockClimbingEstablishedMinutes = 60;
+    public const int YogaMinMinutes = 10;
+    public const int YogaMaxMinutes = 20;
+    public const int MobilityMinMinutes = 5;
+    public const int MobilityMaxMinutes = 15;
+    public const int GentleRecoveryMinMinutes = 5;
+    public const int GentleRecoveryMaxMinutes = 20;
 
     public const decimal CompoundProgressionIncrementKg = 2.5m;
     public const decimal AccessoryProgressionIncrementKg = 1.25m;
+
+    public const int ExerciseIdBackSquat = 1;
+    public const int ExerciseIdBenchPress = 2;
+    public const int ExerciseIdBentOverRow = 3;
+    public const int ExerciseIdLateralRaise = 4;
+    public const int ExerciseIdCalfRaise = 5;
+    public const int ExerciseIdRomanianDeadlift = 6;
+    public const int ExerciseIdOverheadPress = 7;
+    public const int ExerciseIdLatPulldown = 8;
+    public const int ExerciseIdHipThrust = 9;
+    public const int ExerciseIdBicepCurl = 10;
+    public const int ExerciseIdPlankHold = 11;
+
+    public const decimal DefaultSquatLoadKg = 40.0m;
+    public const decimal DefaultBenchLoadKg = 30.0m;
+    public const decimal DefaultRowLoadKg = 30.0m;
+    public const decimal DefaultLateralRaiseLoadKg = 6.0m;
+    public const decimal DefaultCalfRaiseLoadKg = 20.0m;
+    public const decimal DefaultRdlLoadKg = 40.0m;
+    public const decimal DefaultOverheadPressLoadKg = 20.0m;
+    public const decimal DefaultLatPulldownLoadKg = 35.0m;
+    public const decimal DefaultHipThrustLoadKg = 50.0m;
+    public const decimal DefaultBicepCurlLoadKg = 8.0m;
+    public const decimal DefaultBodyweightLoadKg = 0.0m;
 
     public static DeterministicWeeklyPlanResult Generate(WeeklyPlanGeneratorInput? input)
     {
@@ -88,7 +134,7 @@ public static class WeeklyWorkoutPlanGeneratorRule
         // Step 2: Compute EffectiveExperienceTier per activity
         // -------------------------------------------------------------
         var effectiveTiers = new Dictionary<WorkoutActivityType, int>();
-        var globalTier = 1;
+        var globalTier = EffectiveExperienceTierRule.GlobalTierBeginner;
         foreach (var activity in sanitizedInput.PreferredActivities)
         {
             sanitizedInput.ActivityHistories.TryGetValue(activity, out var hist);
@@ -166,8 +212,8 @@ public static class WeeklyWorkoutPlanGeneratorRule
                         s.Activity != WorkoutActivityType.StrengthHighIntensity &&
                         s.Activity != WorkoutActivityType.RestDay)
             .Select(s => new AerobicSessionMinutes(
-                MinutesModerate: s.IsHardSession ? 0m : s.EstimatedMinutes,
-                MinutesVigorous: s.IsHardSession ? s.EstimatedMinutes : 0m))
+                MinutesModerate: s.IsHardSession ? AerobicHealthTargetRule.NoMinutes : s.EstimatedMinutes,
+                MinutesVigorous: s.IsHardSession ? s.EstimatedMinutes : AerobicHealthTargetRule.NoMinutes))
             .ToList();
 
         var resistanceDaysCount = packedSessions.Count(s =>
@@ -230,9 +276,20 @@ public static class WeeklyWorkoutPlanGeneratorRule
                     }
                     else
                     {
-                        targetLoad = priorPerf.PreviousLoadKg;
-                        progressionAction = ProgressionAction.Maintain;
-                        rationale = "Target reps or RIR not yet held for two consecutive weeks; maintaining load.";
+                        var singleSetDecision = StrengthProgressionRule.ResolveSingleSetLoad(
+                            repsPrevious: priorPerf.PreviousReps,
+                            loadPrevious: priorPerf.PreviousLoadKg,
+                            rirPrevious: priorPerf.PreviousRir,
+                            loadIncrement: ex.IsCompound ? CompoundProgressionIncrementKg : AccessoryProgressionIncrementKg,
+                            repLow: ex.MinReps,
+                            repHigh: ex.MaxReps,
+                            targetRir: ex.TargetRir,
+                            techniqueAcceptable: !priorPerf.TechnicalFailureObserved);
+                        targetLoad = singleSetDecision.PrescribedLoad;
+                        progressionAction = singleSetDecision.ProgressionAction == StrengthProgressionRule.ActionDecrease
+                            ? ProgressionAction.Regress
+                            : ProgressionAction.Maintain;
+                        rationale = $"Target reps or RIR not yet held for two consecutive weeks ({singleSetDecision.ReasonCode}).";
                     }
                 }
 
@@ -244,12 +301,29 @@ public static class WeeklyWorkoutPlanGeneratorRule
                         painLevel: maxInjury.PainLevel,
                         hasNextDayWorsening: maxInjury.HasNextDayWorsening);
 
-                    if (!painDecision.AllowsLoadProgression)
+                    var mappedStatus = maxInjury.Status switch
+                    {
+                        InjurySafetyStatus.Acute => InjuryStatus.Acute,
+                        InjurySafetyStatus.Recovering => InjuryStatus.Recovering,
+                        _ => InjuryStatus.Cleared
+                    };
+                    var safetyDecision = InjurySafetyProgressionRule.EvaluateExerciseSafety(
+                        status: mappedStatus,
+                        activeInjurySite: InjuryFlag.Knee | InjuryFlag.Shoulder | InjuryFlag.LowBack | InjuryFlag.Hip | InjuryFlag.Wrist | InjuryFlag.Ankle,
+                        isHeavyMovement: ex.IsCompound,
+                        isHighImpactMovement: false,
+                        exerciseInvolvedSite: InjuryFlag.Knee,
+                        requestedLoad: targetLoad,
+                        preInjuryMaxLoad: maxInjury.PreInjuryMaxLoadKg);
+
+                    targetLoad = safetyDecision.PrescribedLoad;
+
+                    if (!painDecision.AllowsLoadProgression || !safetyDecision.IsProgressionAllowed)
                     {
                         progressionAction = ProgressionAction.Maintain;
                         rationale = $"Injury safety constraint active: {painDecision.ReasonCode}";
                     }
-                    if (painDecision.RequiresExerciseStopOrModification || maxInjury.Status == InjurySafetyStatus.Acute)
+                    if (painDecision.RequiresExerciseStopOrModification || !safetyDecision.IsAllowed || maxInjury.Status == InjurySafetyStatus.Acute)
                     {
                         hasInjuryBlock = true;
                     }
@@ -344,6 +418,13 @@ public static class WeeklyWorkoutPlanGeneratorRule
             HasSafetyBlock: hasInjuryBlock);
     }
 
+    public static bool IsHardSessionActivity(WorkoutActivityType activity) =>
+        activity is WorkoutActivityType.GeneralStrength
+            or WorkoutActivityType.HighVolumeStrength
+            or WorkoutActivityType.StrengthHighIntensity
+            or WorkoutActivityType.Hiit
+            or WorkoutActivityType.RockClimbing;
+
     private static SanitizedWeeklyPlanInput SanitizeInput(WeeklyPlanGeneratorInput? input)
     {
         if (input is null)
@@ -374,7 +455,7 @@ public static class WeeklyWorkoutPlanGeneratorRule
 
         var clampedDays = Math.Clamp(input.GeneralDaysPerWeek, MinWeeklyDays, MaxWeeklyDays);
         var clampedDuration = Math.Clamp(
-            input.PreferredSessionLengthMinutes <= 0 ? DefaultPreferredSessionLengthMinutes : input.PreferredSessionLengthMinutes,
+            input.PreferredSessionLengthMinutes <= ZeroMinutes ? DefaultPreferredSessionLengthMinutes : input.PreferredSessionLengthMinutes,
             MinSessionMinutes,
             MaxSessionMinutes);
 
@@ -386,8 +467,8 @@ public static class WeeklyWorkoutPlanGeneratorRule
             ? input.PreferredActivities.Distinct().ToList()
             : [WorkoutActivityType.GeneralStrength];
 
-        var warmup = Math.Max(0, input.WarmupMinutes ?? DefaultWarmupMinutes);
-        var cooldown = Math.Max(0, input.CooldownMinutes ?? DefaultCooldownMinutes);
+        var warmup = Math.Max(ZeroMinutes, input.WarmupMinutes ?? DefaultWarmupMinutes);
+        var cooldown = Math.Max(ZeroMinutes, input.CooldownMinutes ?? DefaultCooldownMinutes);
 
         return new SanitizedWeeklyPlanInput(
             Goal: Enum.IsDefined(input.Goal) ? input.Goal : UserGoal.Strength,
@@ -436,7 +517,7 @@ public static class WeeklyWorkoutPlanGeneratorRule
         IReadOnlySet<int> excludedExerciseIds,
         int workBudgetMinutes)
     {
-        var sessionCount = Math.Min(daysPerWeek, availableWeekdays.Count);
+        var sessionCount = Math.Min(Math.Min(daysPerWeek, availableWeekdays.Count), MaxHardDaysPerWeek);
         var availableSet = availableWeekdays.ToHashSet();
         var assignmentResult = StrengthWeekdayAssignmentRule.AssignBySpecification(sessionCount, availableSet);
         var assignedDays = assignmentResult.Status == StrengthWeekdayAssignmentStatus.Assigned
@@ -454,7 +535,7 @@ public static class WeeklyWorkoutPlanGeneratorRule
                 Activity: strengthActivity,
                 DayOfWeek: day,
                 EstimatedMinutes: workBudgetMinutes + DefaultWarmupMinutes + DefaultCooldownMinutes,
-                IsHardSession: strengthActivity == WorkoutActivityType.StrengthHighIntensity,
+                IsHardSession: IsHardSessionActivity(strengthActivity),
                 Exercises: exercises,
                 Notes: $"Strength Session {i + 1} ({strengthActivity})"));
         }
@@ -478,11 +559,13 @@ public static class WeeklyWorkoutPlanGeneratorRule
             if (excludedExerciseIds.Contains(c.ExerciseId))
                 continue;
 
-            var sets = c.IsCompound ? DefaultCompoundSets : DefaultAccessorySets;
-            var reps = c.IsCompound ? DefaultCompoundMaxReps : DefaultAccessoryMaxReps;
+            var (sets, minReps, maxReps, targetRir) = ResolveStrengthTemplatePrescription(
+                strengthActivity,
+                strengthTier,
+                c.IsCompound);
             var restSec = c.IsCompound ? DefaultCompoundRestSeconds : DefaultAccessoryRestSeconds;
 
-            var timeEstimateMinutes = sets * ((reps * DefaultSecondsPerRep + restSec) / SecondsPerMinute);
+            var timeEstimateMinutes = sets * ((maxReps * DefaultSecondsPerRep + restSec) / SecondsPerMinute);
 
             // Trim optional accessory if work budget exceeded
             if (accumulatedMinutes + timeEstimateMinutes > workBudgetMinutes && c.IsOptional)
@@ -499,15 +582,46 @@ public static class WeeklyWorkoutPlanGeneratorRule
                 IsAccessory: !c.IsCompound,
                 IsOptional: c.IsOptional,
                 TargetSets: sets,
-                MinReps: c.IsCompound ? DefaultCompoundMinReps : DefaultAccessoryMinReps,
-                MaxReps: c.IsCompound ? DefaultCompoundMaxReps : DefaultAccessoryMaxReps,
-                TargetRir: DefaultTargetRir,
+                MinReps: minReps,
+                MaxReps: maxReps,
+                TargetRir: targetRir,
                 PrescribedLoadKg: c.DefaultLoadKg,
                 ProgressionAction: ProgressionAction.Maintain,
                 ProgressionRationale: "Baseline prescription."));
         }
 
         return result;
+    }
+
+    private static (int Sets, int MinReps, int MaxReps, int TargetRir) ResolveStrengthTemplatePrescription(
+        WorkoutActivityType strengthActivity,
+        int strengthTier,
+        bool isCompound)
+    {
+        if (strengthActivity == WorkoutActivityType.StrengthHighIntensity)
+        {
+            return isCompound
+                ? (DefaultCompoundSets, HighIntensityMainMinReps, HighIntensityMainMaxReps, DefaultTargetRir)
+                : (DefaultAccessorySets, HighIntensityAccessoryMinReps, HighIntensityAccessoryMaxReps, DefaultTargetRir);
+        }
+
+        if (strengthActivity == WorkoutActivityType.HighVolumeStrength)
+        {
+            return isCompound
+                ? (DefaultCompoundSets, DefaultCompoundMinReps, DefaultCompoundMaxReps, DefaultTargetRir)
+                : (DefaultAccessorySets, HighVolumeAccessoryMinReps, HighVolumeAccessoryMaxReps, DefaultTargetRir);
+        }
+
+        // GeneralStrength (Spec Section 5.1)
+        if (isCompound)
+        {
+            var gsMinReps = strengthTier <= EffectiveExperienceTierRule.GlobalTierBeginner
+                ? BeginnerGeneralStrengthMinReps
+                : DefaultCompoundMinReps;
+            return (GeneralStrengthMainSets, gsMinReps, DefaultCompoundMaxReps, GeneralStrengthTargetRir);
+        }
+
+        return (DefaultAccessorySets, DefaultAccessoryMinReps, DefaultAccessoryMaxReps, GeneralStrengthTargetRir);
     }
 
     private static (List<DeterministicPlannedSession> Sessions, int HardDaysCount) PackMixedActivities(
@@ -535,23 +649,26 @@ public static class WeeklyWorkoutPlanGeneratorRule
             if (dayIdx >= remainingDays.Count)
                 break;
 
-            var day = remainingDays[dayIdx++];
-            var isHard = act == WorkoutActivityType.Hiit;
+            var isHard = IsHardSessionActivity(act);
 
             if (isHard && hardDaysCount >= MaxHardDaysPerWeek)
             {
-                // Hard-day cap reached: omit or downgrade HIIT to moderate cardio
+                // Hard-day cap reached: omit additional hard session
                 continue;
             }
 
+            var day = remainingDays[dayIdx++];
             if (isHard)
                 hardDaysCount++;
+
+            var tier = effectiveTiers.GetValueOrDefault(act, EffectiveExperienceTierRule.GlobalTierBeginner);
+            var estimatedMinutes = ResolveNonStrengthDurationMinutes(act, tier, preferredDurationMinutes);
 
             sessions.Add(new DeterministicPlannedSession(
                 SessionId: Guid.NewGuid(),
                 Activity: act,
                 DayOfWeek: day,
-                EstimatedMinutes: preferredDurationMinutes,
+                EstimatedMinutes: estimatedMinutes,
                 IsHardSession: isHard,
                 Exercises: [],
                 Notes: $"Cardio/Conditioning Session ({act})"));
@@ -560,27 +677,31 @@ public static class WeeklyWorkoutPlanGeneratorRule
         return (sessions.OrderBy(s => (int)s.DayOfWeek).ToList(), hardDaysCount);
     }
 
-    private static Dictionary<MajorMuscleGroup, int> CalculateWeeklySetsByMuscle(List<DeterministicPlannedSession> sessions)
+    private static int ResolveNonStrengthDurationMinutes(
+        WorkoutActivityType activity,
+        int effectiveTier,
+        int preferredDurationMinutes) => activity switch
     {
-        var dict = new Dictionary<MajorMuscleGroup, int>();
-        foreach (var muscle in Enum.GetValues<MajorMuscleGroup>())
-        {
-            dict[muscle] = 0;
-        }
-
-        foreach (var session in sessions)
-        {
-            foreach (var ex in session.Exercises)
-            {
-                if (TryParseMajorMuscle(ex.PrimaryMuscle, out var group))
-                {
-                    dict[group] += ex.TargetSets;
-                }
-            }
-        }
-
-        return dict;
-    }
+        WorkoutActivityType.Walking or
+        WorkoutActivityType.Running or
+        WorkoutActivityType.Cycling or
+        WorkoutActivityType.Rowing or
+        WorkoutActivityType.Elliptical =>
+            effectiveTier <= EffectiveExperienceTierRule.GlobalTierBeginner
+                ? Math.Max(preferredDurationMinutes, ContinuousCardioWarmupCooldownMinutes + ContinuousCardioTier1MainMinutes)
+                : Math.Max(preferredDurationMinutes, ContinuousCardioWarmupCooldownMinutes + ContinuousCardioEstablishedMainMinutes),
+        WorkoutActivityType.RockClimbing =>
+            effectiveTier <= EffectiveExperienceTierRule.GlobalTierBeginner
+                ? RockClimbingTier1Minutes
+                : RockClimbingEstablishedMinutes,
+        WorkoutActivityType.Yoga =>
+            Math.Clamp(preferredDurationMinutes, YogaMinMinutes, YogaMaxMinutes),
+        WorkoutActivityType.Mobility =>
+            Math.Clamp(preferredDurationMinutes, MobilityMinMinutes, MobilityMaxMinutes),
+        WorkoutActivityType.GentleRecovery =>
+            Math.Clamp(preferredDurationMinutes, GentleRecoveryMinMinutes, GentleRecoveryMaxMinutes),
+        _ => preferredDurationMinutes
+    };
 
     private static bool TryParseMajorMuscle(string muscleName, out MajorMuscleGroup group)
     {
@@ -610,26 +731,26 @@ public static class WeeklyWorkoutPlanGeneratorRule
 
     private static IReadOnlyList<CandidateExerciseSpec> GetDefaultCandidatesForSession(int sessionIndex)
     {
-        if (sessionIndex % 2 == 0)
+        if (sessionIndex % StrengthWeekdayAssignmentRule.TwoSessionsPerWeek == 0)
         {
             return
             [
-                new(1, "Barbell Back Squat", "Quads", IsCompound: true, IsOptional: false, DefaultLoadKg: 40.0m),
-                new(2, "Barbell Bench Press", "Chest", IsCompound: true, IsOptional: false, DefaultLoadKg: 30.0m),
-                new(3, "Barbell Bent-Over Row", "Back", IsCompound: true, IsOptional: false, DefaultLoadKg: 30.0m),
-                new(4, "Dumbbell Lateral Raise", "Shoulders", IsCompound: false, IsOptional: true, DefaultLoadKg: 6.0m),
-                new(5, "Standing Calf Raise", "Calves", IsCompound: false, IsOptional: true, DefaultLoadKg: 20.0m)
+                new(ExerciseIdBackSquat, "Barbell Back Squat", "Quads", IsCompound: true, IsOptional: false, DefaultLoadKg: DefaultSquatLoadKg),
+                new(ExerciseIdBenchPress, "Barbell Bench Press", "Chest", IsCompound: true, IsOptional: false, DefaultLoadKg: DefaultBenchLoadKg),
+                new(ExerciseIdBentOverRow, "Barbell Bent-Over Row", "Back", IsCompound: true, IsOptional: false, DefaultLoadKg: DefaultRowLoadKg),
+                new(ExerciseIdLateralRaise, "Dumbbell Lateral Raise", "Shoulders", IsCompound: false, IsOptional: true, DefaultLoadKg: DefaultLateralRaiseLoadKg),
+                new(ExerciseIdCalfRaise, "Standing Calf Raise", "Calves", IsCompound: false, IsOptional: true, DefaultLoadKg: DefaultCalfRaiseLoadKg)
             ];
         }
 
         return
         [
-            new(6, "Barbell Romanian Deadlift", "Hamstrings", IsCompound: true, IsOptional: false, DefaultLoadKg: 40.0m),
-            new(7, "Overhead Press", "Shoulders", IsCompound: true, IsOptional: false, DefaultLoadKg: 20.0m),
-            new(8, "Lat Pulldown", "Back", IsCompound: true, IsOptional: false, DefaultLoadKg: 35.0m),
-            new(9, "Barbell Hip Thrust", "Glutes", IsCompound: true, IsOptional: false, DefaultLoadKg: 50.0m),
-            new(10, "Bicep Curl", "Arms", IsCompound: false, IsOptional: true, DefaultLoadKg: 8.0m),
-            new(11, "Plank Hold", "Core", IsCompound: false, IsOptional: true, DefaultLoadKg: 0.0m)
+            new(ExerciseIdRomanianDeadlift, "Barbell Romanian Deadlift", "Hamstrings", IsCompound: true, IsOptional: false, DefaultLoadKg: DefaultRdlLoadKg),
+            new(ExerciseIdOverheadPress, "Overhead Press", "Shoulders", IsCompound: true, IsOptional: false, DefaultLoadKg: DefaultOverheadPressLoadKg),
+            new(ExerciseIdLatPulldown, "Lat Pulldown", "Back", IsCompound: true, IsOptional: false, DefaultLoadKg: DefaultLatPulldownLoadKg),
+            new(ExerciseIdHipThrust, "Barbell Hip Thrust", "Glutes", IsCompound: true, IsOptional: false, DefaultLoadKg: DefaultHipThrustLoadKg),
+            new(ExerciseIdBicepCurl, "Bicep Curl", "Arms", IsCompound: false, IsOptional: true, DefaultLoadKg: DefaultBicepCurlLoadKg),
+            new(ExerciseIdPlankHold, "Plank Hold", "Core", IsCompound: false, IsOptional: true, DefaultLoadKg: DefaultBodyweightLoadKg)
         ];
     }
 }
@@ -646,7 +767,8 @@ public sealed record PlannerInjuryRecord(
     string Site,
     int PainLevel,
     InjurySafetyStatus Status = InjurySafetyStatus.Acute,
-    bool HasNextDayWorsening = false);
+    bool HasNextDayWorsening = false,
+    decimal? PreInjuryMaxLoadKg = null);
 
 public sealed record WeeklyPlanGeneratorInput(
     UserGoal Goal,

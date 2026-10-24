@@ -238,6 +238,7 @@ public static class ApiApplication
             PostgresAcceptStrengthPlanProposalStoreV020>();
         builder.Services.AddScoped<CreateStrengthPlanProposalV020UseCase>();
         builder.Services.AddScoped<AcceptStrengthPlanProposalV020UseCase>();
+        builder.Services.AddScoped<GenerateDeterministicWeeklyPlanUseCase>();
         builder.Services.AddScoped<IWorkoutActiveSessionStore, PostgresWorkoutActiveSessionStore>();
         builder.Services.AddScoped<WorkoutActiveSessionUseCase>();
         builder.Services.AddScoped<IServerWorkoutArchiveStore, PostgresWorkoutArchiveStore>();

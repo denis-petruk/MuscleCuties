@@ -201,7 +201,7 @@ public static class MixedActivityWeekScheduleRule
 
     private static void PrepareActivity(ActivityDecisionBuilder decision,
         MixedActivityWeekScheduleContext context,
-        IReadOnlySet<WorkoutActivityType> duplicateEvidenceActivities)
+        HashSet<WorkoutActivityType> duplicateEvidenceActivities)
     {
         if (decision.Activity == WorkoutActivityType.Other)
         {
