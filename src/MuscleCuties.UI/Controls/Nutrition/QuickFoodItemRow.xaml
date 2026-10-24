@@ -61,7 +61,7 @@
                     CommandParameter="{Binding .}"
                     MinimumHeightRequest="44"
                     Padding="8,0"
-                    CornerRadius="6"
+                    CornerRadius="{StaticResource UiRadiusControl}"
                     FontSize="11"
                     FontAttributes="Bold"
                     BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}"

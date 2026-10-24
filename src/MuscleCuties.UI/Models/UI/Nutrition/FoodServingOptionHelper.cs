@@ -1,34 +1,23 @@
 using System.Text.Json;
-using MuscleCuties.Core.Domain.Nutrition;
+using MuscleCuties.UseCases.Features.Nutrition.Recipes;
+using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
 public static class FoodServingOptionHelper
 {
-    private const float NoGrams = FoodPortionMassRule.NoGrams;
-
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    private static readonly IReadOnlyList<FoodServingOptionItem> StandardOptions =
-    [
-        new() { Label = "g", Unit = "g", Grams = FoodPortionMassRule.OneGram, Source = "Standard" },
-        new() { Label = "oz", Unit = "oz", Grams = FoodPortionMassRule.GramsPerOunce, Source = "Standard" },
-        new() { Label = "lb", Unit = "lb", Grams = FoodPortionMassRule.GramsPerPound, Source = "Standard" }
-    ];
-
-    public static IReadOnlyList<string> CustomFoodUnits { get; } =
-    [
-        "g",
-        "oz",
-        "lb"
-    ];
-
-    public static List<FoodServingOptionItem> BuildServingOptionItems(FoodSearchResultItem food)
+    public static List<FoodServingOptionItem> BuildServingOptionItems(
+        FoodSearchResultItem food,
+        FoodPortionCatalogOutputDto catalog,
+        IRecipePortionUseCase portionUseCase)
     {
-        var options = ReadOptions(food.ServingOptionsJson);
+        var options = ReadOptions(food.ServingOptionsJson, catalog.GramUnit);
 
-        if (food.ServingSize is > NoGrams && float.IsFinite(food.ServingSize.Value) &&
-            TryConvertToGrams(food.ServingSize.Value, food.ServingSizeUnit, out var servingGrams))
+        if (food.ServingSize is { } servingSize && float.IsFinite(servingSize) && servingSize > 0f &&
+            portionUseCase.ConvertMassToGrams(servingSize, food.ServingSizeUnit) is
+                { Succeeded: true, Grams: { } servingGrams })
             AddDistinctOption(options, new FoodServingOptionItem
             {
                 Label = "serving",
@@ -37,13 +26,19 @@ public static class FoodServingOptionHelper
                 Source = "Serving"
             });
 
-        foreach (var option in StandardOptions)
-            AddDistinctOption(options, option);
+        foreach (var option in catalog.StandardOptions)
+            AddDistinctOption(options, new FoodServingOptionItem
+            {
+                Label = option.Label,
+                Unit = option.Unit,
+                Grams = option.Grams,
+                Source = "Standard"
+            });
 
         return options;
     }
 
-    private static List<FoodServingOptionItem> ReadOptions(string? json)
+    private static List<FoodServingOptionItem> ReadOptions(string? json, string gramUnit)
     {
         if (string.IsNullOrWhiteSpace(json))
             return [];
@@ -52,7 +47,8 @@ public static class FoodServingOptionHelper
         {
             return JsonSerializer.Deserialize<List<FoodServingOptionItem>>(json, JsonOptions)?
                 .Where(o => !string.IsNullOrWhiteSpace(o.Label) &&
-                            float.IsFinite(o.Grams) && o.Grams > NoGrams)
+                            float.IsFinite(o.Grams) && o.Grams > 0f &&
+                            string.Equals(o.Unit, gramUnit, StringComparison.OrdinalIgnoreCase))
                 .ToList() ?? [];
         }
         catch
@@ -63,7 +59,7 @@ public static class FoodServingOptionHelper
 
     private static void AddDistinctOption(List<FoodServingOptionItem> options, FoodServingOptionItem option)
     {
-        if (!float.IsFinite(option.Grams) || option.Grams <= NoGrams ||
+        if (!float.IsFinite(option.Grams) || option.Grams <= 0f ||
             string.IsNullOrWhiteSpace(option.Label))
             return;
 
@@ -73,8 +69,4 @@ public static class FoodServingOptionHelper
         options.Add(option);
     }
 
-    internal static bool TryConvertToGrams(float amount, string? unit, out float grams)
-    {
-        return FoodPortionMassRule.TryConvertMassToGrams(amount, unit, out grams);
-    }
 }

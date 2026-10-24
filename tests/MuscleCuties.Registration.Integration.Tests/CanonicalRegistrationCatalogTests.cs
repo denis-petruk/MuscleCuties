@@ -58,9 +58,7 @@ public sealed class CanonicalRegistrationCatalogTests
             .UseNpgsql(connectionString)
             .Options;
         await using var database = new PostgresDbContext(options);
-        var quiz = await new PostgresCompleteAccountRegistrationStore(database,
-            TimeProvider.System,
-            new GenerateWorkoutPlanUseCase(new PostgresWorkoutPlanningReferenceDataSource(database)))
+        var quiz = await new PostgresCompleteAccountRegistrationStore(database, TimeProvider.System)
             .LoadQuizQuestionsAsync(CancellationToken.None);
         Xunit.Assert.NotEmpty(quiz);
         Xunit.Assert.All(quiz, question => Xunit.Assert.NotEmpty(question.Answers));
@@ -70,6 +68,9 @@ public sealed class CanonicalRegistrationCatalogTests
         Xunit.Assert.Equal((int)CyclePhase.Luteal,
             quiz.Single(question => question.QuestionType == QuizQuestionType.CurrentCyclePhase)
                 .Answers.Single(answer => answer.Text == "Luteal").MappedValue);
+        Xunit.Assert.Equal((int)CyclePhase.Unknown,
+            quiz.Single(question => question.QuestionType == QuizQuestionType.CurrentCyclePhase)
+                .Answers.Single(answer => answer.Text == "Not sure").MappedValue);
         Xunit.Assert.Equal((int)WeightGoalPace.Aggressive,
             quiz.Single(question => question.QuestionType == QuizQuestionType.GoalPace)
                 .Answers.Single(answer => answer.Text == "Aggressive").MappedValue);
@@ -104,16 +105,16 @@ public sealed class CanonicalRegistrationCatalogTests
 
         var planner = new GenerateWorkoutPlanUseCase(referenceData);
         var nowUtc = DateTime.UtcNow;
-        if (!WorkoutTrainingPolicyV010.CanGeneratePlans)
+        if (!WorkoutPlanGenerationRule.CanGeneratePlans)
         {
             var blocked = await Xunit.Assert.ThrowsAsync<InvalidOperationException>(() =>
                 planner.ExecuteAsync(Guid.Empty, new GenerateWorkoutPlanRequest(
                     UserGoal.MaintainHealth, TrainingExperienceLevel.Beginner,
                     TrainingDaysPerWeek, SessionMinutes,
-                    [WorkoutActivityType.HighVolumeStrength], StrengthTrainingStyle.ComfortableModerate,
+                    [WorkoutActivityType.HighVolumeStrength],
                     Equipment.FullGym, CyclePhase.Follicular, false, nowUtc,
                     DateOnly.FromDateTime(nowUtc))));
-            Xunit.Assert.Equal(WorkoutTrainingPolicyV010.GenerationUnavailableMessage, blocked.Message);
+            Xunit.Assert.Equal(WorkoutPlanGenerationRule.GenerationUnavailableMessage, blocked.Message);
             return;
         }
         var plan = await planner.ExecuteAsync(Guid.Empty,
@@ -123,7 +124,6 @@ public sealed class CanonicalRegistrationCatalogTests
                 TrainingDaysPerWeek,
                 SessionMinutes,
                 [WorkoutActivityType.HighVolumeStrength],
-                StrengthTrainingStyle.ComfortableModerate,
                 Equipment.FullGym,
                 CyclePhase.Follicular,
                 AllowsCyclePhaseAdjustments: false,
@@ -166,13 +166,13 @@ public sealed class CanonicalRegistrationCatalogTests
         var equipmentChoices = new[] { Equipment.FullGym, Equipment.HomeDumbbellsBands, Equipment.Bodyweight };
         var sessionChoices = new[] { ShortRegistrationSessionMinutes, SessionMinutes, LongRegistrationSessionMinutes };
 
-        if (!WorkoutTrainingPolicyV010.CanGeneratePlans)
+        if (!WorkoutPlanGenerationRule.CanGeneratePlans)
         {
             await Xunit.Assert.ThrowsAsync<InvalidOperationException>(() =>
                 new GenerateWorkoutPlanUseCase(referenceData).ExecuteAsync(Guid.Empty,
                     new GenerateWorkoutPlanRequest(UserGoal.MaintainHealth,
                         TrainingExperienceLevel.Beginner, SevenWorkoutDaysPerWeek, SessionMinutes,
-                        [WorkoutActivityType.HighVolumeStrength], StrengthTrainingStyle.ComfortableModerate,
+                        [WorkoutActivityType.HighVolumeStrength],
                         Equipment.FullGym, CyclePhase.Follicular, false, nowUtc,
                         DateOnly.FromDateTime(nowUtc))));
             return;
@@ -188,7 +188,6 @@ public sealed class CanonicalRegistrationCatalogTests
                     SevenWorkoutDaysPerWeek,
                     sessionMinutes,
                     [WorkoutActivityType.HighVolumeStrength],
-                    StrengthTrainingStyle.ComfortableModerate,
                     equipment,
                     CyclePhase.Follicular,
                     AllowsCyclePhaseAdjustments: false,
@@ -230,13 +229,13 @@ public sealed class CanonicalRegistrationCatalogTests
         var equipmentChoices = new[] { Equipment.FullGym, Equipment.HomeDumbbellsBands, Equipment.Bodyweight };
         var sessionChoices = new[] { ShortRegistrationSessionMinutes, SessionMinutes, LongRegistrationSessionMinutes };
 
-        if (!WorkoutTrainingPolicyV010.CanGeneratePlans)
+        if (!WorkoutPlanGenerationRule.CanGeneratePlans)
         {
             await Xunit.Assert.ThrowsAsync<InvalidOperationException>(() =>
                 planner.ExecuteAsync(Guid.Empty, new GenerateWorkoutPlanRequest(
                     UserGoal.MaintainHealth, TrainingExperienceLevel.Beginner,
                     MinimumRegistrationTrainingDays, SessionMinutes,
-                    [WorkoutActivityType.HighVolumeStrength], StrengthTrainingStyle.ComfortableModerate,
+                    [WorkoutActivityType.HighVolumeStrength],
                     Equipment.FullGym, CyclePhase.Follicular, false, nowUtc,
                     DateOnly.FromDateTime(nowUtc))));
             return;
@@ -255,7 +254,6 @@ public sealed class CanonicalRegistrationCatalogTests
                     daysPerWeek,
                     sessionMinutes,
                     [WorkoutActivityType.HighVolumeStrength],
-                    StrengthTrainingStyle.ComfortableModerate,
                     equipment,
                     CyclePhase.Follicular,
                     AllowsCyclePhaseAdjustments: false,

@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Domain.Cycle;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
 
@@ -8,7 +9,7 @@ public sealed class CyclePhaseEditUseCase(ICyclePhaseEditStore store) : ICyclePh
     {
         ArgumentNullException.ThrowIfNull(request);
         CycleQuickLogRule.Validate(new CycleQuickLogInput(request.Date.Date,
-            false, false, null, [], request.Phase, request.Note));
+            false, false, null, [], CycleContractMapper.ToCore(request.Phase), request.Note));
         return store.SaveAsync(request with { Date = request.Date.Date }, cancellationToken);
     }
 }

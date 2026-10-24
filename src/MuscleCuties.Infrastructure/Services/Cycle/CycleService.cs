@@ -202,7 +202,7 @@ public class CycleService : ICycleService
         if (phase == CyclePhase.Unknown || !Enum.IsDefined(phase))
             throw new ArgumentException("Choose a known phase.", nameof(phase));
         await EnsurePhaseOrderAsync(userId, phase, loggedDate);
-        await SwitchToManualTrackingAsync(userId, phase);
+        await UpdateCurrentProfilePhaseAsync(userId, phase);
 
         var cycle = await GetOrCreateCycleForPhaseLogAsync(userId, phase, loggedDate);
         var existingLog = updateExistingDate
@@ -314,28 +314,13 @@ public class CycleService : ICycleService
         return to == from || to == CyclePhaseRules.GetNextPhase(from);
     }
 
-    private async Task SwitchToManualTrackingAsync(int userId, CyclePhase phase)
+    private async Task UpdateCurrentProfilePhaseAsync(int userId, CyclePhase phase)
     {
         var profile = await _userRepository.GetProfileAsync(userId);
-        if (profile is null)
+        if (profile is null || profile.CurrentCyclePhase == phase)
             return;
 
-        var hasChanges = false;
-        if (profile.CycleTrackingMode is not CycleTrackingMode.ManualPhaseLogging)
-        {
-            profile.CycleTrackingMode = CycleTrackingMode.ManualPhaseLogging;
-            hasChanges = true;
-        }
-
-        if (profile.CurrentCyclePhase != phase)
-        {
-            profile.CurrentCyclePhase = phase;
-            hasChanges = true;
-        }
-
-        if (!hasChanges)
-            return;
-
+        profile.CurrentCyclePhase = phase;
         profile.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateProfileAsync(profile);
     }

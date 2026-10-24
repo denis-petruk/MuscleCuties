@@ -23,9 +23,7 @@ public partial class AppDatabase
             .Include(question => question.Answers)
             .ToListAsync();
 
-        // A warm launch must not rewrite every quiz row. Under SQLite's FULL
-        // durability setting those otherwise harmless updates force several
-        // encrypted commits before the first page can load.
+        // A warm launch must not rewrite every quiz row before opening the first page.
         if (IsQuizSeedCurrent(seedQuestions, existingQuestions))
             return;
 
@@ -157,7 +155,8 @@ public partial class AppDatabase
                     Answer("Menstrual", 1, (int)CyclePhase.Menstrual),
                     Answer("Follicular", 2, (int)CyclePhase.Follicular),
                     Answer("Ovulatory", 3, (int)CyclePhase.Ovulatory),
-                    Answer("Luteal", 4, (int)CyclePhase.Luteal)
+                    Answer("Luteal", 4, (int)CyclePhase.Luteal),
+                    Answer("Not sure", 5, (int)CyclePhase.Unknown)
                 ]
             },
             new QuizQuestion
@@ -198,15 +197,18 @@ public partial class AppDatabase
             },
             new QuizQuestion
             {
-                Question = "Training days per week?",
+                Question = "Which days of the week are you available to train?",
                 OrderIndex = 5,
-                QuestionType = QuizQuestionType.WorkoutDaysPerWeek,
+                QuestionType = QuizQuestionType.AvailableWeekdays,
                 Answers =
                 [
-                    Answer("2 days", 1, 2),
-                    Answer("3 days", 2, 3),
-                    Answer("4 days", 3, 4),
-                    Answer("5 days", 4, 5)
+                    Answer("Monday", 1, (int)DayOfWeek.Monday),
+                    Answer("Tuesday", 2, (int)DayOfWeek.Tuesday),
+                    Answer("Wednesday", 3, (int)DayOfWeek.Wednesday),
+                    Answer("Thursday", 4, (int)DayOfWeek.Thursday),
+                    Answer("Friday", 5, (int)DayOfWeek.Friday),
+                    Answer("Saturday", 6, (int)DayOfWeek.Saturday),
+                    Answer("Sunday", 7, (int)DayOfWeek.Sunday)
                 ]
             },
             new QuizQuestion

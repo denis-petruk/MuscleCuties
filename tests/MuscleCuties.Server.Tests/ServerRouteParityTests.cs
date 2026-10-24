@@ -110,6 +110,7 @@ public sealed class ServerRouteParityTests
     [InlineData("/api/v1/profile/quiz-responses")]
     [InlineData("/api/v1/nutrition/catalog/search?query=synthetic")]
     [InlineData("/api/v1/workouts/catalog")]
+    [InlineData("/api/v1/workouts/plan/exercise-exclusions")]
     [InlineData("/api/v1/cycle/history?from=2026-01-01&through=2026-01-31")]
     [InlineData("/api/v1/dashboard/overview?date=2026-01-01")]
     public async Task PrivateGetRoutesRejectAnonymousCallers(string route)
@@ -402,9 +403,30 @@ public sealed class ServerRouteParityTests
             throws
                 ? throw new InvalidOperationException(SyntheticErrorMarker)
                 : Task.FromResult<ServerProfileSnapshot?>(new ServerProfileSnapshot(
-                    userId.ToString("D"), null, 0, 0, "synthetic", "synthetic", "synthetic", "synthetic",
-                    0, 0, "synthetic", 0, "synthetic", "synthetic", "synthetic", "synthetic", "synthetic",
-                    "synthetic", "synthetic", "synthetic", "{}", 1));
+                    Name: userId.ToString("D"),
+                    DateOfBirth: null,
+                    Height: decimal.Zero,
+                    Weight: decimal.Zero,
+                    Goal: "synthetic",
+                    WeightGoalPace: "synthetic",
+                    TrainingExperienceLevel: "synthetic",
+                    WorkoutDaysPerWeek: 0,
+                    AvailableWorkoutWeekdaysJson: "[]",
+                    CycleLength: 0,
+                    DietaryTags: "{}",
+                    ActivitySessionDurationsJson: "{}",
+                    EquipmentLevel: "synthetic",
+                    PreferredWorkoutActivityTypes: "[]",
+                    UnitSystem: "synthetic",
+                    BodyWeightUnit: "synthetic",
+                    FoodMassUnit: "synthetic",
+                    HeightUnit: "synthetic",
+                    DistanceUnit: "synthetic",
+                    EnergyUnit: "synthetic",
+                    NutritionGoalsJson: "{}",
+                    Version: 1,
+                    Email: "synthetic",
+                    ReproductiveContextJson: "{}"));
 
         public Task<IReadOnlyList<ServerProfileHistoryEntry>> LoadHistoryAsync(Guid userId, CancellationToken cancellationToken) =>
             throw new NotSupportedException();

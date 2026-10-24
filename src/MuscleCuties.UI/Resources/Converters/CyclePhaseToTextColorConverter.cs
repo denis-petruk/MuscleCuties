@@ -1,6 +1,8 @@
 using System.Globalization;
 using Microsoft.Maui.Controls;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Resources.Converters;

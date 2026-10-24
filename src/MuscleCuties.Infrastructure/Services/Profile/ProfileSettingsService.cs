@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Repositories.Users;
+using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Infrastructure.Nutrition.Planning;
 
 namespace MuscleCuties.Core.Services.Profile;
@@ -53,7 +54,8 @@ public sealed class ProfileSettingsService(IUserRepository profiles) : IProfileS
         if (profile is null)
             return false;
 
-        profile.PreferredWorkoutActivityTypes = preferredActivityTypes;
+        profile.PreferredWorkoutActivityTypes = WorkoutActivityPreferences.Serialize(
+            WorkoutActivityPreferences.Parse(preferredActivityTypes));
         profile.UpdatedAt = DateTime.UtcNow;
         await profiles.UpdateProfileAsync(profile);
         await profiles.AddSnapshotAsync(new UserProfileSnapshot

@@ -1,9 +1,9 @@
-using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Cycle;
 
-public sealed class CyclePhaseOrderIssue(string message, CyclePhase suggestedPhase)
+public sealed class CyclePhaseOrderIssue(string message, CyclePhaseDto suggestedPhase)
     : InvalidOperationException(message)
 {
-    public CyclePhase SuggestedPhase { get; } = suggestedPhase;
+    public CyclePhaseDto SuggestedPhase { get; } = suggestedPhase;
 }

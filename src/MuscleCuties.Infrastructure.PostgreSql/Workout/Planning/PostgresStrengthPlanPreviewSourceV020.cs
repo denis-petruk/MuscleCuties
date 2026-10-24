@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
+using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 
@@ -11,9 +12,6 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbContext)
     : IStrengthPlanPreviewSourceV020
 {
-    private const string ReviewResourceName =
-        "MuscleCuties.Infrastructure.PostgreSql.Workout.Planning.ReviewData.ReviewedExerciseCatalogV020.json";
-
     public Task<StrengthPlanPreviewSourceV020?> LoadAsync(Guid userId,
         CancellationToken cancellationToken) =>
         dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -40,7 +38,18 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                 .Include(row => row.MuscleContributions)
                 .ThenInclude(row => row.MuscleGroup)
                 .OrderBy(row => row.Id).ToListAsync(cancellationToken).ConfigureAwait(false);
-            var reviewedSlots = MapReviewedSlots(definitions);
+            var goalTierWeights = await dbContext.GoalTierWeights.AsNoTracking()
+                .Where(row => row.Goal == goal)
+                .OrderBy(row => row.MuscleGroupId).ThenBy(row => row.Id)
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            var goalPriorityByExerciseId = GoalSpecificAccessoryPriorityRule.Resolve(
+                goal,
+                definitions.SelectMany(definition => definition.MuscleContributions.Select(contribution =>
+                    new PlanningMuscleContribution(contribution.Id, definition.Id,
+                        contribution.MuscleGroupId, (double)contribution.Fraction))).ToArray(),
+                goalTierWeights.Select(weight => new PlanningGoalTierWeight(
+                    weight.Id, weight.Goal, weight.MuscleGroupId, weight.Tier)).ToArray());
+            var reviewedSlots = ReviewedExerciseCatalogV020ReviewMap.MapSlots(definitions);
             var preferences = await dbContext.UserExercisePreferences.AsNoTracking()
                 .Where(row => row.UserId == userId)
                 .OrderBy(row => row.CreatedAt).ThenBy(row => row.Id)
@@ -72,7 +81,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return new StrengthPlanPreviewSourceV020(
-                goal, equipment, profile.SessionDurationMinutes,
+                goal, equipment,
                 injuries.Aggregate(InjuryFlag.None, (flags, injury) =>
                     flags | (InjuryFlag)injury.SiteFlag),
                 injuries.Any(injury => injury.Pain > 0),
@@ -92,64 +101,117 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                         .ThenBy(contribution => contribution.MuscleGroupId)
                         .First().MuscleGroup?.Name ?? string.Empty),
                 reviewedSlots.AllowedIds,
-                reviewedSlots.Conditions);
+                reviewedSlots.Conditions)
+            {
+                SelectedActivityTypes = ParseActivityTypes(profile.PreferredWorkoutActivityTypes),
+                ExcludedExerciseIds = ParseExcludedExerciseIds(profile.ExcludedStrengthExerciseIdsJson),
+                AvailableWeekdays = ParseAvailableWeekdays(profile.AvailableWorkoutWeekdaysJson),
+                ActivitySessionDurationsMinutes = ParseActivityDurations(profile.ActivitySessionDurationsJson),
+                RequestedSessionsPerWeek = ParseActivityFrequencies(
+                    profile.RequestedActivitySessionsPerWeekJson),
+                ProfileTrainingExperience = Enum.TryParse<TrainingExperienceLevel>(
+                    profile.TrainingExperienceLevel, true, out var trainingExperience) &&
+                    Enum.IsDefined(trainingExperience) ? trainingExperience : null,
+                GoalPriorityByExerciseId = goalPriorityByExerciseId
+            };
         });
 
-    private static (IReadOnlyDictionary<string, IReadOnlySet<int>> AllowedIds,
-        IReadOnlyDictionary<string, string> Conditions) MapReviewedSlots(
-        IReadOnlyList<MuscleCuties.Infrastructure.PostgreSql.Models.Catalog.WorkoutExerciseDefinition> definitions)
+    private static IReadOnlySet<int> ParseExcludedExerciseIds(string? json)
     {
-        using var stream = typeof(PostgresStrengthPlanPreviewSourceV020).Assembly
-            .GetManifestResourceStream(ReviewResourceName);
-        if (stream is null)
-            return (new Dictionary<string, IReadOnlySet<int>>(), new Dictionary<string, string>());
-        using var document = JsonDocument.Parse(stream);
-        var root = document.RootElement;
-        if (root.GetProperty("policyVersion").GetString() != WorkoutTrainingPolicyV020.Version ||
-            root.GetProperty("templateVersion").GetString() != StrengthTemplateCatalogV020.Version)
-            return (new Dictionary<string, IReadOnlySet<int>>(), new Dictionary<string, string>());
-
-        var bySeedCode = definitions.ToDictionary(row => row.SeedCode, StringComparer.Ordinal);
-        var databaseIdBySourceId = new Dictionary<int, int>();
-        foreach (var entry in root.GetProperty("exercises").EnumerateArray())
+        try
         {
-            var seedCode = entry.GetProperty("seedCode").GetString()!;
-            if (!bySeedCode.TryGetValue(seedCode, out var row) ||
-                row.Name != entry.GetProperty("expectedName").GetString() ||
-                row.Pattern.ToString() != entry.GetProperty("expectedPattern").GetString() ||
-                (int)row.Required != entry.GetProperty("expectedRequiredEquipment").GetInt32() ||
-                row.SetupSeconds != entry.GetProperty("expectedSetupSeconds").GetInt32() ||
-                row.SecondsPerRep != entry.GetProperty("expectedSecondsPerRep").GetInt32() ||
-                (int)row.Contraindications != entry.GetProperty("expectedContraindications").GetInt32())
-                continue;
-            databaseIdBySourceId[entry.GetProperty("sourceExerciseId").GetInt32()] = row.Id;
+            using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "[]" : json);
+            if (document.RootElement.ValueKind != JsonValueKind.Array)
+                return new HashSet<int>();
+            return document.RootElement.EnumerateArray()
+                .Where(value => value.ValueKind == JsonValueKind.Number &&
+                                value.TryGetInt32(out var exerciseId) && exerciseId > 0)
+                .Select(value => value.GetInt32())
+                .ToHashSet();
         }
-        var allowed = new Dictionary<string, IReadOnlySet<int>>(StringComparer.Ordinal);
-        var conditions = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var slot in root.GetProperty("templateSlots").EnumerateArray())
+        catch (JsonException)
         {
-            var fullId = slot.GetProperty("templateIdAndVersion").GetString() ?? string.Empty;
-            var parts = fullId.Split(" / ", StringSplitOptions.None);
-            if (parts.Length != 2 || parts[1] != StrengthTemplateCatalogV020.Version)
-                continue;
-            var slotId = slot.GetProperty("movementSlot").GetString() ?? string.Empty;
-            var definition = StrengthTemplateCatalogV020.Templates.FirstOrDefault(item =>
-                item.TemplateId == parts[0]);
-            var slotDefinition = definition?.Slots.FirstOrDefault(item => item.SlotId == slotId);
-            if (slotDefinition is null ||
-                slot.GetProperty("requiredOrOptional").GetString() !=
-                (slotDefinition.IsRequired ? "Required" : "Optional") ||
-                slot.GetProperty("roleByStyle").GetString() !=
-                $"General={slotDefinition.GeneralRole}; High volume={slotDefinition.HighVolumeRole}; High intensity={(slotDefinition.IsHeavyMainInHighIntensity ? "Heavy main" : slotDefinition.HighIntensityRole.ToString())}")
-                continue;
-            var candidateSourceIds = slot.GetProperty("candidateSourceExerciseIds").EnumerateArray()
-                .Select(value => value.GetInt32()).ToArray();
-            if (candidateSourceIds.Any(id => !databaseIdBySourceId.ContainsKey(id)))
-                continue;
-            var key = $"{parts[0]}|{slotId}";
-            allowed[key] = candidateSourceIds.Select(id => databaseIdBySourceId[id]).ToHashSet();
-            conditions[key] = slot.GetProperty("selectionConstraints").GetString() ?? string.Empty;
+            return new HashSet<int>();
         }
-        return (allowed, conditions);
     }
+
+    private static IReadOnlySet<int> ParseActivityTypes(string? value) =>
+        (value ?? string.Empty).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+        .Select(item => Enum.TryParse<WorkoutActivityType>(item, true, out var activity) && Enum.IsDefined(activity)
+            ? (int?)activity
+            : null)
+        .Where(activity => activity.HasValue)
+        .Select(activity => activity!.Value)
+        .ToHashSet();
+
+    private static IReadOnlySet<DayOfWeek> ParseAvailableWeekdays(string? json)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "[]" : json);
+            if (document.RootElement.ValueKind != JsonValueKind.Array)
+                return new HashSet<DayOfWeek>();
+            return document.RootElement.EnumerateArray()
+                .Select(value => value.ValueKind switch
+                {
+                    JsonValueKind.String when Enum.TryParse<DayOfWeek>(value.GetString(), true, out var day) && Enum.IsDefined(day) => (DayOfWeek?)day,
+                    JsonValueKind.Number when value.TryGetInt32(out var dayValue) && Enum.IsDefined(typeof(DayOfWeek), dayValue) => (DayOfWeek?)dayValue,
+                    _ => null
+                })
+                .Where(day => day.HasValue)
+                .Select(day => day!.Value)
+                .ToHashSet();
+        }
+        catch (JsonException)
+        {
+            return new HashSet<DayOfWeek>();
+        }
+    }
+
+    private static IReadOnlyDictionary<int, int> ParseActivityDurations(string? json)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "{}" : json);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                return new Dictionary<int, int>();
+            var result = new Dictionary<int, int>();
+            foreach (var property in document.RootElement.EnumerateObject())
+            {
+                if (Enum.TryParse<WorkoutActivityType>(property.Name, true, out var activity) &&
+                    Enum.IsDefined(activity) && property.Value.TryGetInt32(out var minutes) &&
+                    WorkoutPreferencesRule.IsValidSessionDuration(activity, minutes))
+                    result[(int)activity] = minutes;
+            }
+            return result;
+        }
+        catch (JsonException)
+        {
+            return new Dictionary<int, int>();
+        }
+    }
+
+    private static IReadOnlyDictionary<int, int> ParseActivityFrequencies(string? json)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "{}" : json);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                return new Dictionary<int, int>();
+            var result = new Dictionary<int, int>();
+            foreach (var property in document.RootElement.EnumerateObject())
+            {
+                if (Enum.TryParse<WorkoutActivityType>(property.Name, true, out var activity) &&
+                    Enum.IsDefined(activity) && property.Value.TryGetInt32(out var sessionsPerWeek) &&
+                    WorkoutPreferencesRule.RequiresExplicitWeeklyFrequency(activity))
+                    result[(int)activity] = sessionsPerWeek;
+            }
+            return result;
+        }
+        catch (JsonException)
+        {
+            return new Dictionary<int, int>();
+        }
+    }
+
 }

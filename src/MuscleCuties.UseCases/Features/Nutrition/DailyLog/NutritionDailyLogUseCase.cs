@@ -4,6 +4,8 @@ using MuscleCuties.Core.Models.Enums.Nutrition;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 
+public sealed record GenericFoodSearchQueryValidationDto(bool IsAccepted, string NormalizedQuery);
+
 public interface INutritionDailyLogUseCase
 {
     Task<DailyNutritionLogSnapshot> GetLogForDateAsync(DateOnly date, CancellationToken cancellationToken = default);
@@ -45,6 +47,8 @@ public interface INutritionDailyLogUseCase
 
     Task<IReadOnlyList<FastLookupFoodItemDto>> SearchOnlineFoodsAsync(string query, int maxResults = 12,
         CancellationToken cancellationToken = default);
+
+    GenericFoodSearchQueryValidationDto ValidateOnlineFoodSearchQuery(string? query);
 }
 
 public sealed class NutritionDailyLogUseCase(INutritionDailyLogStore store) : INutritionDailyLogUseCase
@@ -162,8 +166,15 @@ public sealed class NutritionDailyLogUseCase(INutritionDailyLogStore store) : IN
     public Task<IReadOnlyList<FastLookupFoodItemDto>> SearchOnlineFoodsAsync(string query, int maxResults = 12,
         CancellationToken cancellationToken = default)
     {
-        return string.IsNullOrWhiteSpace(query)
+        var validation = ValidateOnlineFoodSearchQuery(query);
+        return !validation.IsAccepted
             ? Task.FromResult<IReadOnlyList<FastLookupFoodItemDto>>([])
-            : store.SearchOnlineFoodsAsync(query.Trim(), Math.Clamp(maxResults, 1, 50), cancellationToken);
+            : store.SearchOnlineFoodsAsync(validation.NormalizedQuery, Math.Clamp(maxResults, 1, 50), cancellationToken);
+    }
+
+    public GenericFoodSearchQueryValidationDto ValidateOnlineFoodSearchQuery(string? query)
+    {
+        var normalized = GenericFoodQueryRule.NormalizeOrEmpty(query);
+        return new GenericFoodSearchQueryValidationDto(!string.IsNullOrEmpty(normalized), normalized);
     }
 }

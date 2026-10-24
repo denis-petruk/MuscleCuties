@@ -2,10 +2,14 @@ using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Core.Domain.Profile;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Nutrition.Planning;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UseCases.Features.Profile.ServerProfile;
 
-public sealed class ServerProfileUseCase(IServerProfileDataStore store, TimeProvider? clock = null)
+public sealed class ServerProfileUseCase(
+    IServerProfileDataStore store,
+    GetReviewedExerciseExclusionCatalogV020UseCase exclusionCatalog,
+    TimeProvider? clock = null)
 {
     private const int MaximumTargetCount = 32;
     private const int MaximumTargetKeyLength = 64;
@@ -28,9 +32,7 @@ public sealed class ServerProfileUseCase(IServerProfileDataStore store, TimeProv
                 request.SetDateOfBirth,
                 request.Height,
                 request.Weight,
-                request.CycleLength,
-                request.WorkoutDaysPerWeek,
-                request.SessionDurationMinutes),
+                request.CycleLength),
                 DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime))
                 ? Invalid()
             : store.UpdateProfileAsync(request, cancellationToken);
@@ -46,11 +48,28 @@ public sealed class ServerProfileUseCase(IServerProfileDataStore store, TimeProv
             ? Invalid()
             : store.UpdateNutritionPreferencesAsync(request, cancellationToken);
 
-    public Task<ServerProfileWriteResult> UpdateWorkoutPreferencesAsync(UpdateServerWorkoutPreferencesRequest request, CancellationToken cancellationToken) =>
-        request.ExpectedVersion <= 0 || request.UserId == Guid.Empty || request.ActivityTypes is null ||
-        !WorkoutPreferencesRule.IsValid(request.ActivityTypes, request.StrengthStyle, request.DaysPerWeek)
-            ? Invalid()
-            : store.UpdateWorkoutPreferencesAsync(request, cancellationToken);
+    public async Task<ServerProfileWriteResult> UpdateWorkoutPreferencesAsync(
+        UpdateServerWorkoutPreferencesRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request.ExpectedVersion <= 0 || request.UserId == Guid.Empty ||
+            !WorkoutPreferencesRule.IsValid(request.ActivityTypes, request.AvailableWeekdays,
+                request.ActivitySessionDurationsMinutes, request.RequestedSessionsPerWeek) ||
+            !WorkoutPreferencesRule.IsValidEquipmentLevel(request.EquipmentLevel) ||
+            request.ExcludedExerciseIds?.Any(exerciseId => exerciseId <= 0) == true)
+            return new ServerProfileWriteResult(ServerProfileWriteStatus.InvalidRequest, null);
+
+        if (request.ExcludedExerciseIds is { Count: > 0 })
+        {
+            var reviewedOptions = await exclusionCatalog.ExecuteAsync(cancellationToken)
+                .ConfigureAwait(false);
+            var reviewedIds = reviewedOptions.Select(option => option.ExerciseId).ToHashSet();
+            if (request.ExcludedExerciseIds.Any(exerciseId => !reviewedIds.Contains(exerciseId)))
+                return new ServerProfileWriteResult(ServerProfileWriteStatus.InvalidCatalogReference, null);
+        }
+
+        return await store.UpdateWorkoutPreferencesAsync(request, cancellationToken).ConfigureAwait(false);
+    }
 
     public Task<ServerProfileWriteResult> UpdateNutritionTargetsAsync(UpdateServerNutritionTargetsRequest request, CancellationToken cancellationToken)
     {

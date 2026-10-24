@@ -38,7 +38,7 @@ internal static class RussianUiPatterns
         New("{0} photos", "Фото: {0}"),
         New("{0} Active", "Активно: {0}"),
         New("Member since {0}", "В приложении с {0}"),
-        New("{0} days / week", "{0} дн. в неделю"),
+        New("{0} available days / week", "Доступно дней в неделю: {0}"),
         New("This week · {0}", "Эта неделя · {0}"),
         New("{0} · Day {1} / {2}", "{0} · день {1} из {2}"),
         New("{0} · Start tracking", "{0} · начните отслеживание"),

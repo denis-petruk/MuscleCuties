@@ -1,5 +1,5 @@
-using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Infrastructure.ApiClient;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 
 namespace MuscleCuties.Infrastructure.Cycle.Overview;
@@ -34,9 +34,9 @@ public sealed class CloudCycleOverviewStore(
         if (cachedResult.Status is BackendApiStatus.Success or BackendApiStatus.OfflineStaleCacheHit &&
             cachedResult.Data is not null)
         {
-            var phase = Enum.TryParse<CyclePhase>(cachedResult.Data.CurrentPhase, true, out var cp) && Enum.IsDefined(cp)
+            var phase = Enum.TryParse<CyclePhaseDto>(cachedResult.Data.CurrentPhase, true, out var cp) && Enum.IsDefined(cp)
                 ? cp
-                : CyclePhase.Follicular;
+                : CyclePhaseDto.Follicular;
             var startDate = cachedResult.Data.AsOfLocalDate.AddDays(-cachedResult.Data.DayOfCycle + 1)
                 .ToDateTime(TimeOnly.MinValue);
             var nextPeriod = cachedResult.Data.PredictedNextPeriodStart?.ToDateTime(TimeOnly.MinValue);
@@ -72,10 +72,10 @@ public sealed class CloudCycleOverviewStore(
     private static CycleOverviewSnapshot MapServerOverview(ServerCycleOverview overview)
     {
         var prediction = overview.Prediction;
-        var currentPhase = Enum.TryParse<CyclePhase>(prediction.CurrentPhase, true, out var parsedPhase) &&
+        var currentPhase = Enum.TryParse<CyclePhaseDto>(prediction.CurrentPhase, true, out var parsedPhase) &&
                            Enum.IsDefined(parsedPhase)
             ? parsedPhase
-            : CyclePhase.Unknown;
+            : CyclePhaseDto.Unknown;
 
         var summary = new CyclePredictionSummary(
             HasActiveCycle: prediction.HasActiveCycle,
@@ -93,11 +93,11 @@ public sealed class CloudCycleOverviewStore(
         var phaseLogs = overview.PhaseLogs
             .Select(log =>
             {
-                var phase = Enum.TryParse<CyclePhase>(log.PhaseValue, true, out var p) && Enum.IsDefined(p)
+                var phase = Enum.TryParse<CyclePhaseDto>(log.PhaseValue, true, out var p) && Enum.IsDefined(p)
                     ? p
-                    : CyclePhase.Unknown;
-                FlowIntensity? flow = !string.IsNullOrWhiteSpace(log.FlowIntensityValue) &&
-                                      Enum.TryParse<FlowIntensity>(log.FlowIntensityValue, true, out var f) &&
+                    : CyclePhaseDto.Unknown;
+                FlowIntensityDto? flow = !string.IsNullOrWhiteSpace(log.FlowIntensityValue) &&
+                                      Enum.TryParse<FlowIntensityDto>(log.FlowIntensityValue, true, out var f) &&
                                       Enum.IsDefined(f)
                     ? f
                     : null;
@@ -115,9 +115,9 @@ public sealed class CloudCycleOverviewStore(
         var symptoms = overview.History.Symptoms
             .Select(symptom =>
             {
-                var type = Enum.TryParse<SymptomType>(symptom.Type, true, out var st) && Enum.IsDefined(st)
+                var type = Enum.TryParse<SymptomTypeDto>(symptom.Type, true, out var st) && Enum.IsDefined(st)
                     ? st
-                    : SymptomType.Other;
+                    : SymptomTypeDto.Other;
                 return new CycleSymptomEntry(
                     ToStableIntId(symptom.Id),
                     ToStableIntId(symptom.CycleId),

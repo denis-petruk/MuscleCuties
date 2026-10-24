@@ -92,7 +92,8 @@ public partial class NutritionViewModel
             return;
         }
 
-        var options = FoodServingOptionHelper.BuildServingOptionItems(food);
+        var options = FoodServingOptionHelper.BuildServingOptionItems(
+            food, _foodPortionCatalog, _recipePortionUseCase);
         _isApplyingServingDefaults = true;
         try
         {
@@ -119,7 +120,7 @@ public partial class NutritionViewModel
         }
     }
 
-    private static string GetDefaultServingAmountText(FoodSearchResultItem? food, FoodServingOptionItem? option)
+    private string GetDefaultServingAmountText(FoodSearchResultItem? food, FoodServingOptionItem? option)
     {
         if (food is null || option is null)
             return string.Empty;
@@ -129,8 +130,8 @@ public partial class NutritionViewModel
 
         if (IsStandardAmountUnit(option) &&
             food.ServingSize is > 0f &&
-            FoodServingOptionHelper.TryConvertToGrams(food.ServingSize.Value, food.ServingSizeUnit,
-                out var servingGrams))
+            _recipePortionUseCase.ConvertMassToGrams(food.ServingSize.Value, food.ServingSizeUnit) is
+                { Succeeded: true, Grams: { } servingGrams })
         {
             var amount = servingGrams / option.Grams;
             if (amount is > 0f and < 1000f)

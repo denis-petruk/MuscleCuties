@@ -8,6 +8,11 @@ public static class FoodPortionMassRule
     public const float GramsPerOunce = 28.3495f;
     public const float GramsPerPound = 453.592f;
     public const float NoGrams = 0f;
+    public const string GramUnit = "g";
+    public const string OunceUnit = "oz";
+    public const string PoundUnit = "lb";
+
+    public static bool IsValidGrams(float grams) => float.IsFinite(grams) && grams > NoGrams;
 
     public static bool TryConvertMassToGrams(float amount, string? unit, out float grams)
     {
@@ -18,14 +23,14 @@ public static class FoodPortionMassRule
         var normalized = unit.Trim().ToLowerInvariant().Replace(".", string.Empty);
         grams = normalized switch
         {
-            "g" or "gram" or "grams" or "gm" => amount,
+            GramUnit or "gram" or "grams" or "gm" => amount,
             "kg" or "kilogram" or "kilograms" or "kgs" => amount * GramsPerKilogram,
             "mg" or "milligram" or "milligrams" => amount / MilligramsPerGram,
-            "oz" or "ounce" or "ounces" => amount * GramsPerOunce,
-            "lb" or "lbs" or "pound" or "pounds" => amount * GramsPerPound,
+            OunceUnit or "ounce" or "ounces" => amount * GramsPerOunce,
+            PoundUnit or "lbs" or "pound" or "pounds" => amount * GramsPerPound,
             _ => NoGrams
         };
 
-        return float.IsFinite(grams) && grams > NoGrams;
+        return IsValidGrams(grams);
     }
 }

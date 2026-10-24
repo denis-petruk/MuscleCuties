@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using MuscleCuties.Core.Domain.Fasting;
 using MuscleCuties.UseCases.Features.Fasting;
 using MuscleCuties.UseCases.Features.Hydration;
 using MuscleCuties.UseCases.Features.Hydration.Contracts;
@@ -334,7 +333,7 @@ public static class HydrationAndFastingEndpointMappings
     public sealed record StartFastingBody(
         Guid SessionId,
         Guid CommandId,
-        FastingEligibilityResponse EligibilityResponse,
+        FastingEligibilityResponseDto EligibilityResponse,
         DateTimeOffset StartedAtUtc,
         int DisplayUtcOffsetMinutes,
         DateTimeOffset? PlannedEndAtUtc,
@@ -345,7 +344,7 @@ public static class HydrationAndFastingEndpointMappings
         Guid CommandId,
         int ExpectedVersion,
         DateTimeOffset TransitionAtUtc,
-        FastingEligibilityResponse EligibilityResponse = FastingEligibilityResponse.YesAllApply,
+        FastingEligibilityResponseDto EligibilityResponse = FastingEligibilityResponseDto.YesAllApply,
         bool? IsProfilePregnant = null);
 
     public sealed record CorrectFastingBody(

@@ -1,6 +1,7 @@
 namespace MuscleCuties.UseCases.Features.Hydration.Contracts;
 
 public sealed record WaterPresetOutputDto(Guid Id, string Label, int Millilitres);
+public sealed record WaterQuickAddDefaultsDto(IReadOnlyList<int> VolumesMillilitres);
 public sealed record WaterPresetCatalogOutputDto(Guid AccountId, string? Version, IReadOnlyList<WaterPresetOutputDto> Presets);
 public sealed record GetWaterPresetsInputDto(Guid AccountId);
 public sealed record CreateWaterPresetInputDto(Guid AccountId, string Label, double Millilitres, Guid OperationId, string? ExpectedVersion);

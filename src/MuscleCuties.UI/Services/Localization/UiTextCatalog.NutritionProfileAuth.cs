@@ -385,8 +385,6 @@ public static partial class UiTextCatalog
         English["Onboarding_Activity_YogaDescription"] = "Move, stretch, and breathe at your own pace.";
         English["Workout_ActivityPreference_SelectedHint"] = "Selected activity. Double tap to deselect.";
         English["Workout_ActivityPreference_UnselectedHint"] = "Not selected. Double tap to select.";
-        English["Workout_StrengthStyle_SelectedHint"] = "Selected training style.";
-        English["Workout_StrengthStyle_UnselectedHint"] = "Not selected. Double tap to select.";
         English["Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo"] = "Please acknowledge the wellness notice to continue.";
         English["Onboarding_ProfileSetup_ProfilePhoto"] = "Profile photo";
         English["Onboarding_ProfileSetup_ProfilePhotoOptionalDoubleTapTo"] = "Profile photo, optional. Double tap to change.";
@@ -411,6 +409,7 @@ public static partial class UiTextCatalog
         English["Onboarding_Quiz_DoubleTapToGoBack"] = "Double tap to go back";
         English["Onboarding_Quiz_DoubleTapToReloadTheQuiz"] = "Double tap to reload the quiz questions";
         English["Onboarding_Quiz_DoubleTapToSelectThisAnswer"] = "Double tap to select this answer";
+        English["Onboarding_Quiz_AvailableWeekdaysMinimum"] = "Choose 2 to 7 days when you are available to train.";
         English["Onboarding_Quiz_GoBackToProfile"] = "Go back";
         English["Onboarding_Quiz_GoBackToProfileConfirmationTitle"] = "Go back to your profile?";
         English["Onboarding_Quiz_GoBackToProfileConfirmationBody"] = "Your quiz answers will reset when you go back.";
@@ -458,7 +457,7 @@ public static partial class UiTextCatalog
         English["Profile_Details_TapToOpenFullPhotoJourney"] = "Tap to open full photo journey";
         English["Profile_Details_TapToOpenVaultAndAdd"] = "Tap to open vault and add your first progress photo";
         English["Profile_Details_TapToRevealPreview"] = "Tap to reveal preview";
-        English["Profile_Details_TrainingSplit"] = "Training Split";
+        English["Profile_Details_WorkoutAvailability"] = "Workout Availability";
         English["Profile_Details_UnitsDisplay"] = "Units & Display";
         English["Profile_Feedback_AddFile"] = "Add file";
         English["Profile_Feedback_Attachment"] = "Attachment";
@@ -559,6 +558,8 @@ public static partial class UiTextCatalog
         English["Profile_PersonalInfo_HormonalContraceptionOrCyclePattern"] = "Hormonal contraception or cycle pattern";
         English["Profile_PersonalInfo_LocalOnly"] = "Private account";
         English["Profile_PersonalInfo_LoggingMethod"] = "Logging method";
+        English["Profile_PersonalInfo_CycleLengthDays"] = "Typical cycle length (days)";
+        English["Profile_PersonalInfo_CycleLengthPlaceholder"] = "For example, 28";
         English["Profile_PersonalInfo_Name"] = "Name";
         English["Profile_PersonalInfo_PersonalInfo"] = "Personal info";
         English["Profile_PersonalInfo_PregnancyOrBreastfeeding"] = "Pregnancy or breastfeeding";
@@ -600,19 +601,29 @@ public static partial class UiTextCatalog
         English["Profile_Units_SelectMetricUnits"] = "Select Metric units";
         English["Profile_Units_UnitsAndDisplay"] = "Units and display";
         English["Profile_WorkoutPrefs_ActivityPreferences"] = "Activity preferences";
-        English["Profile_WorkoutPrefs_WorkoutsPerWeek"] = "Workouts per week";
-        English["Profile_WorkoutPrefs_DaysPerWeekFormat"] = "{0} workouts per week";
-        English["Profile_WorkoutPrefs_DecreaseDaysPerWeek"] = "Fewer workouts per week";
-        English["Profile_WorkoutPrefs_IncreaseDaysPerWeek"] = "More workouts per week";
-        English["Profile_WorkoutPrefs_InvalidPreferences"] = "Review your activities and choose 2–6 workouts per week, then save again.";
+        English["Profile_WorkoutPrefs_AvailableWeekdays"] = "Available weekdays";
+        English["Profile_WorkoutPrefs_AvailableWeekdaysHint"] = "Select 2 to 7 weekdays when you are available to train.";
+        English["Profile_WorkoutPrefs_SelectedWeekdaysFormat"] = "{0} weekdays selected";
+        English["Profile_WorkoutPrefs_SessionLength"] = "Session length in minutes";
+        English["Profile_WorkoutPrefs_WeeklyFrequency"] = "Sessions per week";
+        English["Profile_WorkoutPrefs_ChooseActivitySessionLength"] =
+            "Choose an allowed session duration for each selected activity that requires one.";
+        English["Profile_WorkoutPrefs_ChooseActivityWeeklyFrequency"] =
+            "Choose how many weekly sessions you want for yoga, mobility, or gentle recovery.";
+        English["Profile_WorkoutPrefs_ActivitySessionLengthHint"] =
+            "Choose each activity's duration, then set weekly frequency for yoga, mobility, or gentle recovery.";
+        English["Profile_WorkoutPrefs_InvalidPreferences"] = "Review your activities, select 2–7 available weekdays, and provide each required duration and weekly frequency.";
         English["Profile_WorkoutPrefs_PlanUpdateFailed"] = "Could not update your workout plan. Your preferences were not saved. Please try again.";
         English["Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"] = "At least one strength activity is required for your plan.";
         English["Profile_WorkoutPrefs_SaveWorkoutPreferences"] = "Save workout preferences";
         English["Profile_WorkoutPrefs_SavingPreferences"] = "Saving preferences";
         English["Profile_WorkoutPrefs_UpdatingPlan"] = "Updating your workout plan…";
-        English["Profile_WorkoutPrefs_StrengthStyle"] = "Strength style";
         English["Profile_WorkoutPrefs_AvailableEquipment"] = "Available equipment";
         English["Profile_WorkoutPrefs_ChooseEquipment"] = "Choose your equipment";
+        English["Profile_WorkoutPrefs_ExerciseExclusions"] = "Exercises to avoid";
+        English["Profile_WorkoutPrefs_ExerciseExclusionsHint"] = "Choose reviewed exercises you want left out of every new strength plan preview.";
+        English["Profile_WorkoutPrefs_SearchExercises"] = "Search reviewed exercises";
+        English["Profile_WorkoutPrefs_ExerciseCatalogUnavailable"] = "Reviewed exercise choices could not be loaded. Reconnect and reopen these preferences before saving.";
         English["Profile_WorkoutPrefs_EquipmentFullGym"] = "Full gym";
         English["Profile_WorkoutPrefs_EquipmentHome"] = "Dumbbells and bands";
         English["Profile_WorkoutPrefs_EquipmentBodyweight"] = "Bodyweight only";

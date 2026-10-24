@@ -11,6 +11,8 @@ namespace MuscleCuties.UI.ViewModels.Quiz;
 
 public partial class QuizViewModel : ObservableObject
 {
+    private const int MinimumAvailableWeekdaySelections = 2;
+    private const int MaximumAvailableWeekdaySelections = 7;
     private readonly Func<Task> _navigateToDashboardAsync;
     private readonly Func<Task>? _navigateToLoginAsync;
     private readonly Func<Task> _navigateToProfileAsync;
@@ -99,9 +101,16 @@ public partial class QuizViewModel : ObservableObject
     public bool IsLayoutVisible => LoadState is QuizLoadState.Ready;
     public bool IsLoading => LoadState is QuizLoadState.Loading;
     public bool IsLoadingVisible => IsLoading;
-    public bool IsCurrentQuestionMultiAnswer => CurrentQuestion?.QuestionType is QuizQuestionType.DietaryPreference;
+    public bool IsCurrentQuestionMultiAnswer => CurrentQuestion?.QuestionType is
+        QuizQuestionType.DietaryPreference or QuizQuestionType.AvailableWeekdays;
+    public bool IsCurrentQuestionAvailableWeekdays =>
+        CurrentQuestion?.QuestionType == QuizQuestionType.AvailableWeekdays;
     public bool IsCurrentQuestionPhasePair => IsPainQuestion(CurrentQuestion?.QuestionType);
-    public bool IsStandardAnswerListVisible => !IsCurrentQuestionPhasePair;
+    public bool IsStandardAnswerListVisible =>
+        !IsCurrentQuestionPhasePair && !IsCurrentQuestionAvailableWeekdays;
+    public int SelectedWeekdayCount => IsCurrentQuestionAvailableWeekdays
+        ? CurrentAnswers.Count(answer => answer.IsSelected)
+        : 0;
     public bool IsFirstQuestion => FindPreviousVisibleQuestionIndex(CurrentQuestionIndex) < 0;
     public bool ShowQuizBackButton => !IsFirstQuestion && !AccountCreatedNeedsLogin;
     public bool IsLastQuestion => Questions.Count > 0 && FindNextVisibleQuestionIndex(CurrentQuestionIndex) < 0;
@@ -142,8 +151,10 @@ public partial class QuizViewModel : ObservableObject
         QuizQuestionType.Goal => "Target24",
         QuizQuestionType.GoalPace => "Gauge24",
         QuizQuestionType.ExperienceLevel => "Dumbbell24",
-        QuizQuestionType.WorkoutDaysPerWeek => "CalendarWorkWeek24",
+        QuizQuestionType.AvailableWeekdays => "CalendarWorkWeek24",
         QuizQuestionType.DietaryPreference => "Food24",
+        QuizQuestionType.SessionDuration => "Clock24",
+        QuizQuestionType.Equipment => "Dumbbell24",
         QuizQuestionType.CurrentCyclePhase => "HeartCircle24",
         QuizQuestionType.MenstrualPain or
             QuizQuestionType.FollicularPain or
@@ -240,6 +251,12 @@ public partial class QuizViewModel : ObservableObject
                 ErrorMessage = "Choose an answer to continue.";
                 return;
             }
+            if (CurrentQuestion.QuestionType == QuizQuestionType.AvailableWeekdays &&
+                selectedAnswers.Count is < MinimumAvailableWeekdaySelections or > MaximumAvailableWeekdaySelections)
+            {
+                ErrorMessage = "Onboarding_Quiz_AvailableWeekdaysMinimum";
+                return;
+            }
 
             RecordSelections(CurrentQuestion.Id, selectedAnswers.Select(answer => answer.Id));
             if (CurrentQuestion.QuestionType is QuizQuestionType.Goal && !ShouldShowGoalPace())
@@ -278,7 +295,8 @@ public partial class QuizViewModel : ObservableObject
     private void ApplyQuestions(IEnumerable<QuizQuestionDto> loadedQuestions)
     {
         Questions = loadedQuestions
-            .Where(question => question.Answers.Count > 0)
+            .Where(question => question.QuestionType.IsAvailableInCurrentOnboarding() &&
+                               question.Answers.Count > 0)
             .OrderBy(question => question.OrderIndex)
             .ThenBy(question => question.Id)
             .ToList();
@@ -347,7 +365,8 @@ public partial class QuizViewModel : ObservableObject
 
     private void ToggleMultiAnswer(SelectableQuizAnswer selectedAnswer)
     {
-        var isNoneAnswer = selectedAnswer.Answer.MappedValue == 0;
+        var isNoneAnswer = selectedAnswer.QuestionType == QuizQuestionType.DietaryPreference &&
+                           selectedAnswer.Answer.MappedValue == 0;
 
         if (isNoneAnswer)
         {
@@ -359,8 +378,11 @@ public partial class QuizViewModel : ObservableObject
         }
 
         selectedAnswer.IsSelected = !selectedAnswer.IsSelected;
-        foreach (var answer in CurrentAnswers.Where(answer => answer.Answer.MappedValue == 0))
-            answer.IsSelected = false;
+        if (selectedAnswer.QuestionType == QuizQuestionType.DietaryPreference)
+        {
+            foreach (var answer in CurrentAnswers.Where(answer => answer.Answer.MappedValue == 0))
+                answer.IsSelected = false;
+        }
     }
 
     private void RecordSelections(int questionId, IEnumerable<int> answerIds)
@@ -592,13 +614,16 @@ public partial class QuizViewModel : ObservableObject
         OnPropertyChanged(nameof(FirstSelectedAnswer));
         OnPropertyChanged(nameof(SelectedAnswer));
         OnPropertyChanged(nameof(SelectedAnswers));
+        OnPropertyChanged(nameof(SelectedWeekdayCount));
     }
 
     private void NotifyComputedProperties()
     {
         OnPropertyChanged(nameof(IsCurrentQuestionMultiAnswer));
+        OnPropertyChanged(nameof(IsCurrentQuestionAvailableWeekdays));
         OnPropertyChanged(nameof(IsCurrentQuestionPhasePair));
         OnPropertyChanged(nameof(IsStandardAnswerListVisible));
+        OnPropertyChanged(nameof(SelectedWeekdayCount));
         OnPropertyChanged(nameof(IsFirstQuestion));
         OnPropertyChanged(nameof(ShowQuizBackButton));
         OnPropertyChanged(nameof(IsLastQuestion));

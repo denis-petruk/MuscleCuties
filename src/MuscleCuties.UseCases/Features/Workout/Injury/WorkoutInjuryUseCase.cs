@@ -1,3 +1,5 @@
+using MuscleCuties.Core.Domain.Workout;
+
 namespace MuscleCuties.UseCases.Features.Workout.Injury;
 
 public interface IWorkoutInjuryUseCase
@@ -32,18 +34,18 @@ public sealed class WorkoutInjuryUseCase : IWorkoutInjuryUseCase
     public Task SaveInjuryAsync(SaveWorkoutInjuryInput input, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(input);
-        if (input.Site == WorkoutInjurySite.None)
+        if (!WorkoutInjuryEntryRule.TryNormalize(
+                (int)input.Site,
+                input.Pain,
+                input.Since,
+                DateOnly.FromDateTime(DateTime.Today),
+                out var normalizedEntry))
             throw new ArgumentException("Injury site is required.");
-
-        var safePain = Math.Clamp(input.Pain, 0, 5);
-        var safeSince = input.Since > DateOnly.FromDateTime(DateTime.Today)
-            ? DateOnly.FromDateTime(DateTime.Today)
-            : input.Since;
 
         var normalizedInput = input with
         {
-            Pain = safePain,
-            Since = safeSince
+            Pain = normalizedEntry.Pain,
+            Since = normalizedEntry.Since
         };
 
         return _store.SaveInjuryAsync(normalizedInput, ct);

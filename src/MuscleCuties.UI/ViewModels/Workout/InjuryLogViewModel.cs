@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Common;
@@ -35,8 +34,8 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private bool _isPageRefreshError;
     [ObservableProperty] private int _newPainLevel;
 
-    [ObservableProperty] private InjuryFlag _selectedSiteFlag;
-    [ObservableProperty] private InjuryStatus? _selectedStatus;
+    [ObservableProperty] private WorkoutInjurySite _selectedSiteFlag;
+    [ObservableProperty] private WorkoutInjuryStatus? _selectedStatus;
 
     [ObservableProperty] private bool _showAddForm;
     [ObservableProperty] private DateTime _sinceDateValue = DateTime.Today;
@@ -51,21 +50,21 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         AvailableSites = new List<InjuryFlagOption>
         {
-            new() { Flag = InjuryFlag.Shoulder, Label = "Shoulder" },
-            new() { Flag = InjuryFlag.Neck, Label = "Neck" },
-            new() { Flag = InjuryFlag.LowBack, Label = "Low back" },
-            new() { Flag = InjuryFlag.Hip, Label = "Hip" },
-            new() { Flag = InjuryFlag.Knee, Label = "Knee" },
-            new() { Flag = InjuryFlag.Ankle, Label = "Ankle" },
-            new() { Flag = InjuryFlag.Metatarsal, Label = "Foot" },
-            new() { Flag = InjuryFlag.Wrist, Label = "Wrist" }
+            new() { Flag = WorkoutInjurySite.Shoulder, Label = "Shoulder" },
+            new() { Flag = WorkoutInjurySite.Neck, Label = "Neck" },
+            new() { Flag = WorkoutInjurySite.LowBack, Label = "Low back" },
+            new() { Flag = WorkoutInjurySite.Hip, Label = "Hip" },
+            new() { Flag = WorkoutInjurySite.Knee, Label = "Knee" },
+            new() { Flag = WorkoutInjurySite.Ankle, Label = "Ankle" },
+            new() { Flag = WorkoutInjurySite.Foot, Label = "Foot" },
+            new() { Flag = WorkoutInjurySite.Wrist, Label = "Wrist" }
         };
 
         AvailableStatuses = new List<InjuryStatusOption>
         {
-            new() { Status = InjuryStatus.Acute, Label = "Acute" },
-            new() { Status = InjuryStatus.Recovering, Label = "Recovering" },
-            new() { Status = InjuryStatus.Cleared, Label = "Cleared" }
+            new() { Status = WorkoutInjuryStatus.Acute, Label = "Acute" },
+            new() { Status = WorkoutInjuryStatus.Recovering, Label = "Recovering" },
+            new() { Status = WorkoutInjuryStatus.Cleared, Label = "Cleared" }
         };
 
         LoadCommand = new AsyncRelayCommand(LoadAsync, () => !IsBusy);
@@ -109,7 +108,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
 
-    public bool CanSaveInjury => !IsBusy && SelectedSiteFlag != InjuryFlag.None && SelectedStatus is not null &&
+    public bool CanSaveInjury => !IsBusy && SelectedSiteFlag != WorkoutInjurySite.None && SelectedStatus is not null &&
                                  SinceDateValue.Date <= DateTime.Today;
 
     [SuppressMessage("Performance", "CA1822:Mark members as static",
@@ -152,12 +151,12 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         RetryPageRefreshCommand.NotifyCanExecuteChanged();
     }
 
-    partial void OnSelectedSiteFlagChanged(InjuryFlag value)
+    partial void OnSelectedSiteFlagChanged(WorkoutInjurySite value)
     {
         RefreshSaveState();
     }
 
-    partial void OnSelectedStatusChanged(InjuryStatus? value)
+    partial void OnSelectedStatusChanged(WorkoutInjuryStatus? value)
     {
         RefreshSaveState();
     }
@@ -223,8 +222,8 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         foreach (var log in allLogs)
         {
-            var siteFlag = (InjuryFlag)log.Site;
-            var status = (InjuryStatus)log.Status;
+            var siteFlag = log.Site;
+            var status = log.Status;
             var isActive = log.IsActive;
 
             var item = new InjuryLogItem
@@ -271,8 +270,8 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         try
         {
             await _injuries.SaveInjuryAsync(new SaveWorkoutInjuryInput(
-                EditingInjuryId ?? 0, (WorkoutInjurySite)SelectedSiteFlag,
-                (WorkoutInjuryStatus)status.Value, NewPainLevel,
+                EditingInjuryId ?? 0, SelectedSiteFlag,
+                status.Value, NewPainLevel,
                 DateOnly.FromDateTime(SinceDateValue)));
             CancelEdit();
             _pendingChangeRefresh = true;
@@ -502,13 +501,13 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         };
     }
 
-    internal static string DisplayNameFor(InjuryFlag flag)
+    internal static string DisplayNameFor(WorkoutInjurySite site)
     {
-        return flag switch
+        return site switch
         {
-            InjuryFlag.Metatarsal => "Foot",
-            InjuryFlag.LowBack => "Low back",
-            _ => flag.ToString()
+            WorkoutInjurySite.Foot => "Foot",
+            WorkoutInjurySite.LowBack => "Low back",
+            _ => site.ToString()
         };
     }
 }

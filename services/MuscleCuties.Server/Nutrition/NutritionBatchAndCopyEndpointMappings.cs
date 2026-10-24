@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
 using MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts;
@@ -224,7 +223,7 @@ public static class NutritionBatchAndCopyEndpointMappings
             request.Entries.Where(entry => entry.IsDeleted).Select(entry => entry.Identity ?? string.Empty).ToArray(),
             request.Entries.Where(entry => !entry.IsDeleted).Select(entry => new BatchNutritionDiaryEntryInput(
                 entry.Identity,
-                (MuscleCuties.Core.Models.Enums.Nutrition.MealType)(int)entry.MealType,
+                entry.MealType,
                 entry.Name,
                 entry.ServingSize,
                 entry.ServingUnit,
@@ -245,7 +244,7 @@ public static class NutritionBatchAndCopyEndpointMappings
             $"{NutritionDiaryDefaults.CopyCommandPrefix}{request.RequestId:D}",
             request.SourceDate,
             request.TargetDate,
-            request.MealType.HasValue ? (MuscleCuties.Core.Models.Enums.Nutrition.MealType)(int)request.MealType.Value : null);
+            request.MealType);
     }
 
     private static QuickAddNutritionDiaryRequest ConvertLegacyQuickAdd(
@@ -258,7 +257,7 @@ public static class NutritionBatchAndCopyEndpointMappings
         return new QuickAddNutritionDiaryRequest(
             $"{NutritionDiaryDefaults.QuickAddCommandPrefix}{request.RequestId:D}",
             request.Date,
-            (MuscleCuties.Core.Models.Enums.Nutrition.MealType)(int)request.MealType,
+            request.MealType,
             string.IsNullOrWhiteSpace(request.Name) ? NutritionDiaryDefaults.DefaultQuickAddTitle : request.Name.Trim(),
             request.ServingSize ?? NutritionDiaryDefaults.DefaultQuickAddServingSize,
             string.IsNullOrWhiteSpace(request.ServingUnit) ? NutritionDiaryDefaults.DefaultQuickAddServingUnit : request.ServingUnit,

@@ -1,8 +1,6 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Domain.Onboarding;
-using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Services.Auth;
@@ -21,19 +19,16 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
     [ObservableProperty] private string _statusMessage = string.Empty;
     private bool _hasStoredBirthDate;
     private bool _birthDateWasExplicitlyChanged;
-    [ObservableProperty] private DateTime _birthDate = DateTime.Today.AddYears(-18);
+    [ObservableProperty] private DateTime _birthDate = DateTime.Today.AddYears(-PersonalInfoConstraints.MinimumEligibleAgeYears);
     [ObservableProperty] private string _cycleLength = string.Empty;
-    [ObservableProperty] private CycleTrackingMode _cycleTrackingMode = CycleTrackingMode.ManualPhaseLogging;
     [ObservableProperty] private string _email = string.Empty;
     [ObservableProperty] private UserGoal _goal;
     [ObservableProperty] private string _heightCm = string.Empty;
 
     [ObservableProperty] private string _name = string.Empty;
-    [ObservableProperty] private SelectionOption<CycleTrackingMode>? _selectedCycleLoggingModeOption;
     [ObservableProperty] private TrainingExperienceLevel _trainingExperienceLevel = TrainingExperienceLevel.Unknown;
     [ObservableProperty] private WeightGoalPace _weightGoalPace;
     [ObservableProperty] private string _weightKg = string.Empty;
-    [ObservableProperty] private string _workoutDaysPerWeek = string.Empty;
     [ObservableProperty] private string _currentPassword = string.Empty;
     [ObservableProperty] private string _newPassword = string.Empty;
     [ObservableProperty] private string _confirmNewPassword = string.Empty;
@@ -56,7 +51,6 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         ChangePasswordCommand = new AsyncRelayCommand(ChangePasswordAsync);
-        SelectedCycleLoggingModeOption = CycleLoggingModeOptions.First(option => option.Value == CycleTrackingMode);
         SelectedPregnancyOption = PregnancyOptions[0];
         SelectedContraceptionOption = ContraceptionOptions[0];
     }
@@ -76,13 +70,6 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         new(1, "Regular cycle (no hormonal contraception)"),
         new(2, "Hormonal contraception"),
         new(3, "Irregular cycle")
-    ];
-
-    public IReadOnlyList<SelectionOption<CycleTrackingMode>> CycleLoggingModeOptions { get; } =
-    [
-        new(CycleTrackingMode.ManualPhaseLogging, "Manual"),
-        new(CycleTrackingMode.FloConnector, "Flo"),
-        new(CycleTrackingMode.LunarConnector, "Lunar")
     ];
 
     public DateTime MinBirthDate { get; } = DateTime.Today.AddYears(-100);
@@ -122,9 +109,6 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
                 ? (WeightGoalPace)profile.WeightGoalPace
                 : WeightGoalPace.Steady;
             TrainingExperienceLevel = (TrainingExperienceLevel)profile.TrainingExperienceLevel;
-            CycleTrackingMode = NormalizeCycleLoggingMode((CycleTrackingMode)profile.CycleTrackingMode);
-            SelectedCycleLoggingModeOption = CycleLoggingModeOptions.First(option => option.Value == CycleTrackingMode);
-            WorkoutDaysPerWeek = profile.WorkoutDaysPerWeek.ToString(CultureInfo.CurrentCulture);
             CycleLength = profile.CycleLength > 0
                 ? profile.CycleLength.ToString(CultureInfo.CurrentCulture)
                 : string.Empty;
@@ -145,7 +129,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         if (IsBusy)
             return;
 
-        if (!TryValidate(out var height, out var weight, out var workoutDays, out var cycleLength))
+        if (!TryValidate(out var height, out var weight, out var cycleLength))
             return;
 
         IsBusy = true;
@@ -154,15 +138,19 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             var result = await _useCase.SaveAsync(new SavePersonalInfoRequest(
                 Email, Name, BirthDate, height, weight,
                 (int)Goal, (int)(IsGoalPaceVisible ? WeightGoalPace : WeightGoalPace.Steady),
-                (int)TrainingExperienceLevel, (int)NormalizeCycleLoggingMode(CycleTrackingMode),
-                workoutDays, cycleLength,
+                (int)TrainingExperienceLevel, cycleLength,
                 SelectedPregnancyOption?.Value ?? 0,
                 SelectedContraceptionOption?.Value ?? 0));
             if (!result.Succeeded)
             {
-                StatusMessage = result.Error == PersonalInfoSaveError.AccountMissing
-                    ? "Active account not found."
-                    : "Check your personal info and try again.";
+                StatusMessage = result.Error switch
+                {
+                    PersonalInfoSaveError.AccountMissing => "Active account not found.",
+                    PersonalInfoSaveError.InvalidBirthDate => "Please provide your date of birth.",
+                    PersonalInfoSaveError.Underage =>
+                        $"Please provide a valid date of birth (must be at least {PersonalInfoConstraints.MinimumEligibleAgeYears} years old).",
+                    _ => "Check your personal info and try again."
+                };
                 return;
             }
 
@@ -213,11 +201,10 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         }
     }
 
-    private bool TryValidate(out float height, out float weight, out int workoutDays, out int cycleLength)
+    private bool TryValidate(out float height, out float weight, out int cycleLength)
     {
         height = ParseFloat(HeightCm);
         weight = ParseFloat(WeightKg);
-        workoutDays = ParseInt(WorkoutDaysPerWeek);
         cycleLength = ParseInt(CycleLength);
 
         if (string.IsNullOrWhiteSpace(Name))
@@ -238,21 +225,9 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             return false;
         }
 
-        if (BirthDateEligibilityRule.Assess(BirthDate, DateTime.Today) != BirthDateEligibility.Eligible)
-        {
-            StatusMessage = "Please provide a valid date of birth (must be at least 18 years old).";
-            return false;
-        }
-
         if (height <= 0f || weight <= 0f)
         {
             StatusMessage = "Enter valid height and weight.";
-            return false;
-        }
-
-        if (workoutDays is < 0 or > 7)
-        {
-            StatusMessage = "Workout days must be between 0 and 7.";
             return false;
         }
 
@@ -289,33 +264,9 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         return value <= 0f ? string.Empty : value.ToString("0.#", CultureInfo.CurrentCulture);
     }
 
-    private static CycleTrackingMode NormalizeCycleLoggingMode(CycleTrackingMode mode)
-    {
-        return mode switch
-        {
-            CycleTrackingMode.FloConnector => CycleTrackingMode.FloConnector,
-            CycleTrackingMode.LunarConnector => CycleTrackingMode.LunarConnector,
-            _ => CycleTrackingMode.ManualPhaseLogging
-        };
-    }
-
     private static bool UsesWeightGoalPace(UserGoal goal)
     {
         return goal is UserGoal.FatLoss or UserGoal.Strength;
-    }
-
-    partial void OnCycleTrackingModeChanged(CycleTrackingMode value)
-    {
-        var normalized = NormalizeCycleLoggingMode(value);
-        var selected = CycleLoggingModeOptions.FirstOrDefault(option => option.Value == normalized);
-        if (selected is not null && SelectedCycleLoggingModeOption?.Value != normalized)
-            SelectedCycleLoggingModeOption = selected;
-    }
-
-    partial void OnSelectedCycleLoggingModeOptionChanged(SelectionOption<CycleTrackingMode>? value)
-    {
-        if (value is not null && CycleTrackingMode != value.Value)
-            CycleTrackingMode = value.Value;
     }
 
     partial void OnBirthDateChanged(DateTime value)
@@ -330,15 +281,12 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             _birthDateWasExplicitlyChanged = true;
     }
 
-    // P05 Body Circumference Measurements (Metric cm / Imperial in, 1..500 cm bounds)
+    // Body circumference measurements
     [ObservableProperty] private bool _useMetricCircumferenceUnits = true;
-    [ObservableProperty] private string _selectedCircumferenceSite = MuscleCuties.Core.Domain.Progress.BodyMeasurementCodes.Waist;
-    [ObservableProperty] private string _selectedCircumferenceSide = MuscleCuties.Core.Domain.Progress.BodyMeasurementCodes.NoSide;
     [ObservableProperty] private string _circumferenceValueText = string.Empty;
     public System.Collections.ObjectModel.ObservableCollection<MuscleCuties.UseCases.Features.Progress.BodyMeasurements.BodyMeasurementOutputDto> CircumferenceReadings { get; } = [];
 
-    // P06 Fasting Timer (Policy P06-01-v0 neutral elapsed-time record)
-    [ObservableProperty] private MuscleCuties.Core.Domain.Fasting.FastingEligibilityResponse _fastingEligibility = MuscleCuties.Core.Domain.Fasting.FastingEligibilityResponse.Unanswered;
+    // Fasting session display state
     [ObservableProperty] private MuscleCuties.UseCases.Features.Fasting.FastingSessionOutputDto? _activeFastingSession;
     [ObservableProperty] private DateTimeOffset? _plannedFastingEndUtc;
     [ObservableProperty] private bool _enablePlannedFastingEndReminder;

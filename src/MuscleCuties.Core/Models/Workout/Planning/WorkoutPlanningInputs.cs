@@ -11,7 +11,6 @@ public sealed record AdaptiveProfile(
     int DaysPerWeek,
     int SessionMinutesCap,
     HashSet<WorkoutActivityType> Selected,
-    StrengthTrainingStyle Style,
     Equipment Equipment,
     List<Injury> Injuries,
     int BaselineSteps,
@@ -137,7 +136,6 @@ public sealed record PhaseBaseline(int Pain, int Energy);
 
 public sealed record GatingResult(
     WorkoutActivityType Activity,
-    StrengthTrainingStyle Style,
     double SetMultiplier,
     int RpeCap,
     List<string> Notes);

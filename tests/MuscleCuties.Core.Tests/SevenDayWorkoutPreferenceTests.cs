@@ -1,6 +1,5 @@
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.Core.Models.Workout.Planning;
 
 namespace MuscleCuties.Core.Tests;
 
@@ -9,31 +8,60 @@ public sealed class SevenDayWorkoutPreferenceTests
     private const int SevenDaysPerWeek = 7;
 
     [Fact]
-    public void SevenDaysIsAValidPreferenceWithSixStrengthDaysAndRecovery()
+    public void SevenAvailableWeekdaysAreValidWithoutImplyingSevenStrengthSessions()
     {
-        Assert.Equal(SevenDaysPerWeek, WeekPlanRule.ClampDaysPerWeek(SevenDaysPerWeek));
         Assert.True(WorkoutPreferencesRule.IsValid(
             [(int)WorkoutActivityType.HighVolumeStrength],
-            (int)StrengthTrainingStyle.ComfortableModerate,
-            SevenDaysPerWeek));
+            Enum.GetValues<DayOfWeek>().Select(day => (int)day).ToArray(),
+            new Dictionary<int, int>
+            {
+                [(int)WorkoutActivityType.HighVolumeStrength] =
+                    WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes
+            }));
+        Assert.Equal(SevenDaysPerWeek, Enum.GetValues<DayOfWeek>().Length);
 
-        var template = new PlanningWeekTemplate(6, SevenDaysPerWeek, "1,3,6,2,4,5,0");
-        Assert.True(WeekPlanRule.TryValidateTemplate(template, SevenDaysPerWeek,
-            out var sequence, out var failure), failure?.Validation.Entries.FirstOrDefault()?.Message);
-        Assert.Equal(SevenDaysPerWeek, sequence.Length);
-        Assert.Single(sequence, id => id == 0);
+        var result = ActivityPrescriptionRule.Evaluate(new ActivityPrescriptionContext(
+            WorkoutActivityType.HighVolumeStrength,
+            ActivityExperience.Established,
+            ExistingBaselineMinutes: null,
+            HasCurrentRestrictionOrSymptom: false,
+            IsExplicitlySelected: true,
+            IsEstablishedResistanceHistory: true,
+            CompletedMainExerciseExposures: 0,
+            HasKnownManageableLoad: false,
+            UserConfirmedCurrentFamiliarity: false));
 
-        var strengthIds = sequence.Where(id => id > 0).ToArray();
-        var archetypes = strengthIds.Select(id => new PlanningArchetype(
-            id, $"A{id}", $"Archetype {id}", false, false, [])).ToArray();
-        var exposureMap = strengthIds.ToDictionary(id => id,
-            _ => (IReadOnlySet<int>)new HashSet<int>());
-        var days = Enum.GetValues<DayOfWeek>();
+        Assert.Equal(ActivityPrescriptionStatus.Eligible, result.Status);
+        Assert.Single(result.Sessions);
+        Assert.Equal(ActivityPrescriptionRule.HighVolumeStrengthSessionsPerWeek,
+            result.Sessions[0].FrequencyPerWeek);
+    }
 
-        var mapped = WeekScheduleRule.MapArchetypesToDays(sequence, archetypes, days,
-            exposureMap, new HashSet<int>(), false, SevenDaysPerWeek);
+    [Fact]
+    public void RestDayPreferenceDoesNotRequireOrAcceptAWorkoutDuration()
+    {
+        var availableWeekdays = new[] { (int)DayOfWeek.Monday, (int)DayOfWeek.Wednesday };
+        var noDurations = new Dictionary<int, int>();
+        var restDay = new[] { (int)WorkoutActivityType.RestDay };
 
-        Assert.Equal(strengthIds.Length, mapped.Count);
-        Assert.Equal(mapped.Count, mapped.Select(item => item.Day).Distinct().Count());
+        Assert.True(WorkoutPreferencesRule.IsValid(restDay, availableWeekdays, noDurations));
+        Assert.False(WorkoutPreferencesRule.IsValid(restDay, availableWeekdays,
+            new Dictionary<int, int>
+            {
+                [(int)WorkoutActivityType.RestDay] =
+                    WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes
+            }));
+    }
+
+    [Fact]
+    public void OtherActivityIsNoLongerAcceptedAsCurrentWorkoutPreference()
+    {
+        Assert.False(WorkoutPreferencesRule.RequiresSessionDuration(WorkoutActivityType.Other));
+        Assert.False(WorkoutPreferencesRule.RequiresExplicitSessionDuration(WorkoutActivityType.Other));
+        Assert.False(WorkoutPreferencesRule.RequiresExplicitSessionDuration(WorkoutActivityType.HighVolumeStrength));
+        Assert.False(WorkoutPreferencesRule.IsValid(
+            [(int)WorkoutActivityType.Other],
+            [(int)DayOfWeek.Monday, (int)DayOfWeek.Wednesday],
+            new Dictionary<int, int>()));
     }
 }

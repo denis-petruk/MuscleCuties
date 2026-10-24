@@ -183,14 +183,12 @@
                             VerticalOptions="Center" />
                     </Grid>
                     <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="5">
-                        <Label Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_LoggingMethod}"
+                        <Label Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_CycleLengthDays}"
                                Style="{StaticResource FormFieldLabel}" />
                         <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                            <Picker
-                                Title="{loc:LocalizedText Profile_PersonalInfo_LoggingMethod}"
-                                ItemsSource="{Binding CycleLoggingModeOptions}"
-                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
-                                SelectedItem="{Binding SelectedCycleLoggingModeOption}" />
+                            <Entry Text="{Binding CycleLength}"
+                                   Placeholder="{loc:LocalizedText Profile_PersonalInfo_CycleLengthPlaceholder}"
+                                   Keyboard="Numeric" />
                         </Border>
                     </Grid>
                 </Grid>
