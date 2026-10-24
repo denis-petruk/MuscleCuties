@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Dashboard;
@@ -16,6 +17,7 @@ public partial class DailyCheckInViewModel : ObservableObject
     private readonly IDailyCheckInUseCase _checkIn;
     private readonly Action _invalidateDashboard;
     private readonly Func<Task> _onCompletedAsync;
+    private readonly bool _isReadinessScoreDisplayEnabled = WorkoutTrainingPolicyV020.CheckInScoreDisplayEnabled;
     [ObservableProperty] private double? _bodyWeight;
     [ObservableProperty] private int? _energyLevel;
     [ObservableProperty] private string _errorMessage = string.Empty;
@@ -50,6 +52,7 @@ public partial class DailyCheckInViewModel : ObservableObject
     public string PlanningSorenessDisplay => FormatPlanningRating(PlanningSoreness);
     public string PlanningStressDisplay => FormatPlanningRating(PlanningStress);
     public IReadOnlyList<int> PlanningScaleOptions => _planningScaleOptions;
+    public bool IsReadinessScoreDisplayEnabled => _isReadinessScoreDisplayEnabled;
 
     public string PainDisplay => PainLevel switch
     {
@@ -77,11 +80,11 @@ public partial class DailyCheckInViewModel : ObservableObject
             PlanningSleepQuality = readiness?.SleepQuality;
             PlanningSoreness = readiness?.Soreness;
             PlanningStress = readiness?.Stress;
-            IsCompleted = readiness is { Status: "Available", RawScore: { } rawScore };
-            ReadinessScoreText = IsCompleted
+            IsCompleted = readiness is { Status: "Available" };
+            ReadinessScoreText = IsReadinessScoreDisplayEnabled && readiness is { Status: "Available", RawScore: { } }
                 ? readiness!.RawScore!.Value.ToString("0.##", CultureInfo.CurrentCulture)
                 : string.Empty;
-            ReadinessTierText = BandLocalizationKey(readiness?.Band);
+            ReadinessTierText = IsReadinessScoreDisplayEnabled ? BandLocalizationKey(readiness?.Band) : string.Empty;
             SessionSummaryText = string.Empty;
             OnPropertyChanged(nameof(EnergyDisplay));
         }
@@ -114,10 +117,10 @@ public partial class DailyCheckInViewModel : ObservableObject
                 DateOnly.FromDateTime(DateTime.Today), SleepHours, EnergyLevel.Value,
                 PainLevel, HasBloating, BodyWeight, PlanningSleepQuality, PlanningSoreness, PlanningStress,
                 TimeZoneInfo.Local.Id));
-            ReadinessScoreText = result.TodayReadiness?.RawScore is { } rawScore
+            ReadinessScoreText = IsReadinessScoreDisplayEnabled && result.TodayReadiness?.RawScore is { } rawScore
                 ? rawScore.ToString("0.##", CultureInfo.CurrentCulture)
                 : string.Empty;
-            ReadinessTierText = BandLocalizationKey(result.TodayReadiness?.Band);
+            ReadinessTierText = IsReadinessScoreDisplayEnabled ? BandLocalizationKey(result.TodayReadiness?.Band) : string.Empty;
             SessionSummaryText = result.SessionSummary;
             IsCompleted = true;
             await _onCompletedAsync();

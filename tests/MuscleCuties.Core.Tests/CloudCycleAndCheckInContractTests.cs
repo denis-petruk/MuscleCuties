@@ -16,6 +16,18 @@ public sealed class CloudCycleAndCheckInContractTests
     private const string HistoryRoute = "/api/v1/cycle/history";
     private const string PhaseRoute = "/api/v1/cycle/history/phases";
     private const string CheckInsRoute = "/api/v1/check-ins";
+    private const int PlanningRating = 3;
+    private const int SyntheticSleepHours = 8;
+    private const int SyntheticEnergy = 3;
+    private const int SyntheticPain = 1;
+
+    private static SubmitDailyCheckInRequest ValidCheckInRequest()
+    {
+        var localNow = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimeZoneInfo.Local);
+        return new SubmitDailyCheckInRequest(DateOnly.FromDateTime(localNow.DateTime),
+            SyntheticSleepHours, SyntheticEnergy, SyntheticPain, false, null,
+            PlanningRating, PlanningRating, PlanningRating, TimeZoneInfo.Local.Id);
+    }
 
     [Fact]
     public async Task CheckInStatus_404IsAnEndpointFailure()
@@ -33,7 +45,7 @@ public sealed class CloudCycleAndCheckInContractTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new CloudDailyCheckInStore(api).SubmitAsync(
-                new SubmitDailyCheckInRequest(SampleDate, 8, 3, 1, false, null), CancellationToken.None));
+                ValidCheckInRequest(), CancellationToken.None));
 
         Assert.Empty(api.Mutations);
     }
@@ -51,7 +63,7 @@ public sealed class CloudCycleAndCheckInContractTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new CloudDailyCheckInStore(api).SubmitAsync(
-                new SubmitDailyCheckInRequest(SampleDate, 8, 3, 1, false, null), CancellationToken.None));
+                ValidCheckInRequest(), CancellationToken.None));
 
         Assert.Single(api.Mutations);
     }
