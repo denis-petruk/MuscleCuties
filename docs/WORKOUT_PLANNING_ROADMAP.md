@@ -93,4 +93,4 @@ Dependencies point strictly inward (`Server / UI -> Infrastructure -> UseCases -
      - Step 7: Output the complete plan plus structured `RuleTrace` audit log.
   2. Expose Clean Architecture UseCases interactor + DTO contracts (`GenerateDeterministicWeeklyPlanUseCase`) with zero Core type leakage to UI/Controllers.
   3. Add comprehensive end-to-end unit tests in `tests/MuscleCuties.Core.Tests/WeeklyWorkoutPlanGeneratorRuleTests.cs`, update `ROADMAP.md` / `STATUS.md` / `docs/v1/ROADMAP.md` / `docs/v1/STATUS.md`, verify `dotnet test` + iOS simulator build, and push to `gitlab` and `origin` (GitHub).
-- **Status:** Pending
+- **Status:** Completed
