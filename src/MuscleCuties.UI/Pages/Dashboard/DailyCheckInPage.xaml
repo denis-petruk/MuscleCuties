@@ -110,18 +110,11 @@
 
                         <!-- Sleep quality (1 - 5 styled like Energy) -->
                         <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
-                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                <Label
-                                    Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}"
-                                    Style="{StaticResource CheckInSectionTitle}"
-                                    VerticalOptions="Center" />
-                                <Label
-                                    Grid.Column="1"
-                                    Text="{Binding PlanningSleepDisplay, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource AccentLabel}"
-                                    FontSize="17"
-                                    VerticalOptions="Center" />
-                            </Grid>
+                            <Label
+                                Grid.Row="0"
+                                Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}"
+                                Style="{StaticResource CheckInSectionTitle}"
+                                VerticalOptions="Center" />
                             <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="6">
                                 <Button x:Name="SleepQualityChip1" Style="{StaticResource CheckInChoice}" Grid.Column="0"
                                         Text="1"
@@ -168,15 +161,10 @@
                 <!-- Energy (also drives Stress for planning) -->
                 <Border Style="{StaticResource CheckInSection}">
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
-                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergyTitle}"
-                                   Style="{StaticResource CheckInSectionTitle}"
-                                   VerticalOptions="Center" />
-                            <Label Grid.Column="1"
-                                   Text="{Binding EnergyDisplay, Converter={StaticResource LocalizedStringConverter}}"
-                                   Style="{StaticResource AccentLabel}" FontSize="17"
-                                   VerticalOptions="Center" />
-                        </Grid>
+                        <Label Grid.Row="0"
+                               Text="{loc:LocalizedText Dashboard_CheckIn_EnergyTitle}"
+                               Style="{StaticResource CheckInSectionTitle}"
+                               VerticalOptions="Center" />
                         <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="6">
                             <Button x:Name="EnergyChip1" Style="{StaticResource CheckInChoice}" Grid.Column="0"
                                     Text="1"
@@ -268,15 +256,10 @@
                 <!-- Pain -->
                 <Border Style="{StaticResource CheckInSection}">
                     <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
-                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_PainTitle}"
-                                   Style="{StaticResource CheckInSectionTitle}"
-                                   VerticalOptions="Center" />
-                            <Label Grid.Column="1"
-                                   Text="{Binding PainDisplay, Converter={StaticResource LocalizedStringConverter}}"
-                                   Style="{StaticResource AccentLabel}" FontSize="17"
-                                   VerticalOptions="Center" />
-                        </Grid>
+                        <Label Grid.Row="0"
+                               Text="{loc:LocalizedText Dashboard_CheckIn_PainTitle}"
+                               Style="{StaticResource CheckInSectionTitle}"
+                               VerticalOptions="Center" />
                         <Grid Grid.Row="1" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8"
                               RowSpacing="8">
                             <Button x:Name="PainChip0" Style="{StaticResource CheckInChoice}" Grid.Row="0"
