@@ -16,6 +16,10 @@
 
     <ContentPage.Resources>
         <x:Double x:Key="DashboardStreakIconSize">20</x:Double>
+        <x:Double x:Key="DashboardStreakValueSize">22</x:Double>
+        <x:Double x:Key="DashboardStreakValueSpacing">6</x:Double>
+        <x:Double x:Key="DashboardStreakRowSpacing">8</x:Double>
+        <x:Double x:Key="DashboardStreakColumnSpacing">8</x:Double>
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*">
@@ -48,56 +52,66 @@
                 </Border>
             </Grid>
             <Border Grid.Row="1"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 999"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                    Padding="16,8"
+                    Style="{StaticResource CardPrimary}"
                     HorizontalOptions="Fill"
                     SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_StreaksA11y}">
-                <FlexLayout JustifyContent="SpaceBetween" AlignItems="Center">
-                    <VerticalStackLayout Spacing="1" HorizontalOptions="Center">
-                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="4" HorizontalOptions="Center">
-                            <Image Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
-                                   Aspect="AspectFit"
-                                   WidthRequest="{StaticResource DashboardStreakIconSize}"
-                                   HeightRequest="{StaticResource DashboardStreakIconSize}"
-                                   VerticalOptions="Center" />
-                            <Label Grid.Column="1"
-                                   Text="{Binding WorkoutStreakDays, Converter={StaticResource LocalizedStringConverter}}"
-                                   FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Primary}"
-                                   VerticalOptions="Center" />
-                        </Grid>
-                        <Label Text="{loc:LocalizedText Dashboard_Page_WorkoutStreak}" Style="{StaticResource CaptionLabel}" FontSize="12" HorizontalTextAlignment="Center" />
-                    </VerticalStackLayout>
-                    <VerticalStackLayout Spacing="1" HorizontalOptions="Center">
-                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="4" HorizontalOptions="Center">
-                            <Image Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
-                                   Aspect="AspectFit"
-                                   WidthRequest="{StaticResource DashboardStreakIconSize}"
-                                   HeightRequest="{StaticResource DashboardStreakIconSize}"
-                                   VerticalOptions="Center" />
-                            <Label Grid.Column="1"
-                                   Text="{Binding NutritionStreakDays, Converter={StaticResource LocalizedStringConverter}}"
-                                   FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Primary}"
-                                   VerticalOptions="Center" />
-                        </Grid>
-                        <Label Text="{loc:LocalizedText Dashboard_Page_FoodLogStreak}" Style="{StaticResource CaptionLabel}" FontSize="12" HorizontalTextAlignment="Center" />
-                    </VerticalStackLayout>
-                    <VerticalStackLayout Spacing="1" HorizontalOptions="Center">
-                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="4" HorizontalOptions="Center">
-                            <Image Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
-                                   Aspect="AspectFit"
-                                   WidthRequest="{StaticResource DashboardStreakIconSize}"
-                                   HeightRequest="{StaticResource DashboardStreakIconSize}"
-                                   VerticalOptions="Center" />
-                            <Label Grid.Column="1"
-                                   Text="{Binding CycleCount, Converter={StaticResource LocalizedStringConverter}}"
-                                   FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Primary}"
-                                   VerticalOptions="Center" />
-                        </Grid>
-                        <Label Text="{loc:LocalizedText Dashboard_Page_CyclesLogged}" Style="{StaticResource CaptionLabel}" FontSize="12" HorizontalTextAlignment="Center" />
-                    </VerticalStackLayout>
-                </FlexLayout>
+                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
+                      ColumnSpacing="{StaticResource DashboardStreakColumnSpacing}"
+                      RowSpacing="{StaticResource DashboardStreakRowSpacing}">
+                    <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,Auto"
+                          ColumnSpacing="{StaticResource DashboardStreakValueSpacing}"
+                          HorizontalOptions="Center">
+                        <Image Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
+                               Aspect="AspectFit"
+                               WidthRequest="{StaticResource DashboardStreakIconSize}"
+                               HeightRequest="{StaticResource DashboardStreakIconSize}"
+                               VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="{Binding WorkoutStreakDays, Converter={StaticResource LocalizedStringConverter}}"
+                               FontSize="{StaticResource DashboardStreakValueSize}" FontAttributes="Bold"
+                               TextColor="{StaticResource Primary}" VerticalOptions="Center" />
+                    </Grid>
+                    <Label Grid.Row="1" Grid.Column="0"
+                           Text="{loc:LocalizedText Dashboard_Page_WorkoutStreak}"
+                           Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center"
+                           VerticalOptions="Start" LineBreakMode="WordWrap" />
+
+                    <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="Auto,Auto"
+                          ColumnSpacing="{StaticResource DashboardStreakValueSpacing}"
+                          HorizontalOptions="Center">
+                        <Image Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                               Aspect="AspectFit"
+                               WidthRequest="{StaticResource DashboardStreakIconSize}"
+                               HeightRequest="{StaticResource DashboardStreakIconSize}"
+                               VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="{Binding NutritionStreakDays, Converter={StaticResource LocalizedStringConverter}}"
+                               FontSize="{StaticResource DashboardStreakValueSize}" FontAttributes="Bold"
+                               TextColor="{StaticResource Primary}" VerticalOptions="Center" />
+                    </Grid>
+                    <Label Grid.Row="1" Grid.Column="1"
+                           Text="{loc:LocalizedText Dashboard_Page_FoodLogStreak}"
+                           Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center"
+                           VerticalOptions="Start" LineBreakMode="WordWrap" />
+
+                    <Grid Grid.Row="0" Grid.Column="2" ColumnDefinitions="Auto,Auto"
+                          ColumnSpacing="{StaticResource DashboardStreakValueSpacing}"
+                          HorizontalOptions="Center">
+                        <Image Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
+                               Aspect="AspectFit"
+                               WidthRequest="{StaticResource DashboardStreakIconSize}"
+                               HeightRequest="{StaticResource DashboardStreakIconSize}"
+                               VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="{Binding CycleCount, Converter={StaticResource LocalizedStringConverter}}"
+                               FontSize="{StaticResource DashboardStreakValueSize}" FontAttributes="Bold"
+                               TextColor="{StaticResource Primary}" VerticalOptions="Center" />
+                    </Grid>
+                    <Label Grid.Row="1" Grid.Column="2"
+                           Text="{loc:LocalizedText Dashboard_Page_CyclesLogged}"
+                           Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center"
+                           VerticalOptions="Start" LineBreakMode="WordWrap" />
+                </Grid>
             </Border>
         </Grid>
         <RefreshView Grid.Row="1"

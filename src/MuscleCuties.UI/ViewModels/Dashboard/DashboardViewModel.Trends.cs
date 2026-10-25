@@ -57,6 +57,8 @@ public partial class DashboardViewModel
                                        _workoutProgress.LongestDistanceKm.HasValue ||
                                        _workoutProgress.FastestPaceSecondsPerKm.HasValue);
     public string HeaviestLiftText => FormatMetric(_workoutProgress?.HeaviestLiftKg, "kg");
+    public string HeaviestLiftExerciseName => _workoutProgress?.HeaviestLiftExerciseName ?? string.Empty;
+    public bool HasHeaviestLiftExerciseName => !string.IsNullOrWhiteSpace(HeaviestLiftExerciseName);
     public string HighestVolumeText => FormatMetric(_workoutProgress?.HighestSessionVolumeKg, "kg");
     public string LongestSessionText => _workoutProgress?.LongestSessionMinutes is { } minutes
         ? $"{minutes} min"
@@ -96,7 +98,8 @@ public partial class DashboardViewModel
                      nameof(WeeklyCarbsShare), nameof(WeeklyFatShare), nameof(WeeklyWeightPoints),
                      nameof(HasWeeklyWeights), nameof(WeeklyWeightSummary), nameof(WeeklyWeightValuesText),
                      nameof(HasWorkoutProgress),
-                     nameof(HeaviestLiftText), nameof(HighestVolumeText), nameof(LongestSessionText),
+                     nameof(HeaviestLiftText), nameof(HeaviestLiftExerciseName),
+                     nameof(HasHeaviestLiftExerciseName), nameof(HighestVolumeText), nameof(LongestSessionText),
                      nameof(LongestDistanceText), nameof(FastestPaceText)
                  })
             OnPropertyChanged(property);

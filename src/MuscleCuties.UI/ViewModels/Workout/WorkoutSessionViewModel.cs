@@ -35,7 +35,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
     private readonly IWorkoutSessionActionUseCase _session;
     private readonly HashSet<int> _skippedIds = [];
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasNoActivities))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasNoActivities), nameof(HasActivityChoices))]
     private ObservableCollection<WorkoutActivitySectionItem> _activityCards = [];
 
     [ObservableProperty] private string _activityIntroIntensity = string.Empty;
@@ -57,13 +57,15 @@ public partial class WorkoutSessionViewModel : ObservableObject
     [ObservableProperty] private string _cyclePhaseNote = string.Empty;
     [ObservableProperty] private string _dayTitle = "Workout";
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError), nameof(HasNoActivities))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError), nameof(HasNoActivities),
+        nameof(HasActivityChoices))]
     private string _errorText = string.Empty;
 
     [ObservableProperty] private ObservableCollection<string> _exercisePreviewNames = [];
     [ObservableProperty] private ObservableCollection<SessionExerciseProgress> _exerciseProgress = [];
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanInteract), nameof(HasNoActivities))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanInteract), nameof(HasNoActivities),
+        nameof(HasActivityChoices))]
     private bool _isBusy;
     [ObservableProperty] private bool _isActivityComplete;
 
@@ -155,6 +157,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
     }
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
     public bool HasNoActivities => !IsBusy && !HasError && ActivityCards.Count == 0;
+    public bool HasActivityChoices => !IsBusy && !HasError && ActivityCards.Count > 0;
     public bool HasSwapCandidates => SwapCandidates.Count > 0;
     public bool HasSwapError => !string.IsNullOrEmpty(SwapErrorText);
     public bool CanDismissSwap => !SwapNeedsReload;

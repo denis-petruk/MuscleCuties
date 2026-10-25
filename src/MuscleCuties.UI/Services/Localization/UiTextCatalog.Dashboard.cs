@@ -152,6 +152,8 @@ public static partial class UiTextCatalog
         English["Dashboard_Targets_Title"] = "Planning estimates";
         English["Dashboard_Phase_MissingHeader"] = "This week · Set your cycle phase";
         English["Dashboard_Phase_MissingStatus"] = "Add a cycle phase to get started";
+        English["Dashboard_Phase_MissingInsight"] = "Add a cycle phase to see phase guidance";
+        English["Dashboard_Phase_SelectedInsight"] = "Selected cycle phase is recorded";
         English["Dashboard_Trend_ProgressTitle"] = "Your progress";
         English["Dashboard_Trend_PreviousView"] = "Previous progress view";
         English["Dashboard_Trend_NextView"] = "Next progress view";
@@ -166,7 +168,7 @@ public static partial class UiTextCatalog
         English["Dashboard_Trend_WeeklyWeightEmpty"] = "Log weight to see one point for each week.";
         English["Dashboard_Trend_LoggedWeeksFormat"] = "{0} logged weeks · Latest {1} kg";
         English["Dashboard_Trend_WorkoutHighlightsTitle"] = "Workout highlights";
-        English["Dashboard_Trend_WorkoutHighlightsDescription"] = "Recorded workouts from the last 90 days; rest days are excluded.";
+        English["Dashboard_Trend_WorkoutHighlightsDescription"] = "Last 90 days";
         English["Dashboard_Trend_WorkoutHighlightsEmpty"] = "Complete a workout to see progress here.";
         English["Dashboard_Trend_HeaviestLift"] = "Heaviest lift";
         English["Dashboard_Trend_HighestVolume"] = "Highest session volume";

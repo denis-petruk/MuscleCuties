@@ -316,7 +316,9 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                 IsCompleted = item.IsCompleted,
                 IsOptional = item.IsOptional,
                 IsEasierAlternative = item.IsEasierAlternative,
-                SessionProgressText = item.IsCompleted ? "Completed" : "Upcoming",
+                SessionProgressText = item.IsCompleted
+                    ? "Workout_Overview_Status_Completed"
+                    : "Workout_Overview_Status_Upcoming",
                 ActivityBackground = WorkoutPresentationPalette.Background(item.Tag),
                 ActivityTextColor = WorkoutPresentationPalette.Text(item.Tag)
             }).ToList();
@@ -393,8 +395,29 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         SelectedWeekIndex = weekIndex;
         ScheduleDays = new ObservableCollection<ScheduleDayItem>(
             _datedSchedule.Where(day => day.WeekIndex == weekIndex));
+        UpdateSessionProgressForSelectedWeek();
         SelectScheduleDay(ScheduleDays.FirstOrDefault(day => day.IsToday) ?? ScheduleDays.FirstOrDefault());
         ApplyFilter();
+    }
+
+    private void UpdateSessionProgressForSelectedWeek()
+    {
+        var today = DateTime.Today.Date;
+        foreach (var workout in _allWorkouts)
+        {
+            var scheduledDay = ScheduleDays.FirstOrDefault(day => day.WorkoutDayId == workout.WorkoutDayId);
+            if (scheduledDay is null)
+                continue;
+
+            workout.IsCompleted = scheduledDay.IsCompleted;
+            workout.SessionProgressText = scheduledDay.IsCompleted
+                ? "Workout_Overview_Status_Completed"
+                : scheduledDay.Date.Date < today
+                    ? "Workout_Overview_Status_NotLogged"
+                    : scheduledDay.Date.Date == today
+                        ? "Workout_Overview_Status_Today"
+                        : "Workout_Overview_Status_Upcoming";
+        }
     }
 
     private HashSet<int> GetSelectedWeekWorkoutIds()

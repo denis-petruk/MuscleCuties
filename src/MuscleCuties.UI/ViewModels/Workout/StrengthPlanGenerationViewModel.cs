@@ -42,11 +42,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
     [ObservableProperty] private StrengthPlanActivityChoice? _selectedHiitUnderlyingCardioActivity;
     [ObservableProperty] private HiitEligibilityEvidenceCaptureViewModel _hiitEvidenceCapture = new();
     [ObservableProperty] private StrengthPlanPreviewResponseV020? _preview;
-    [ObservableProperty] private string _consistentWeeks = string.Empty;
-    [ObservableProperty] private string _averageSessionsPerWeek = string.Empty;
-    [ObservableProperty] private string _daysSinceLastSession = string.Empty;
-    [ObservableProperty] private string _warmupMinutes = string.Empty;
-    [ObservableProperty] private string _cooldownMinutes = string.Empty;
+    [ObservableProperty] private string _consistentWeeks = "24";
+    [ObservableProperty] private string _averageSessionsPerWeek = "3";
+    [ObservableProperty] private string _daysSinceLastSession = "2";
+    [ObservableProperty] private string _warmupMinutes = "5";
+    [ObservableProperty] private string _cooldownMinutes = "5";
     [ObservableProperty] private ObservableCollection<ActivityEvidenceAnswerChoice> _evidenceYesNoChoices = [];
     [ObservableProperty] private ObservableCollection<ActivityEvidenceAnswerChoice> _swimmingStyleChoices = [];
     [ObservableProperty] private ObservableCollection<ActivityEvidenceAnswerChoice> _yogaContentChoices = [];
@@ -161,15 +161,48 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
             _availableWeekdays = NormalizeWeekdays(preferences.AvailableWeekdays);
             UpdateSelectedProfileActivities(preferences.ActivityTypes);
             NotifyAvailabilityChanged();
+            var strengthList = preferences.ActivityTypes
+                .Where(value => Enum.IsDefined(typeof(WorkoutActivityDto), value))
+                .Select(value => (WorkoutActivityDto)value)
+                .Where(StrengthActivities.Contains)
+                .ToList();
+            if (!strengthList.Contains(WorkoutActivityDto.GeneralStrength))
+                strengthList.Add(WorkoutActivityDto.GeneralStrength);
+
             Activities = new ObservableCollection<StrengthPlanActivityChoice>(
-                preferences.ActivityTypes
-                    .Where(value => Enum.IsDefined(typeof(WorkoutActivityDto), value))
-                    .Select(value => (WorkoutActivityDto)value)
-                    .Where(StrengthActivities.Contains)
-                    .Select(activity => new StrengthPlanActivityChoice(activity,
-                        StrengthPlanGenerationDisplayMapper.ActivityLabel(activity))));
+                strengthList.Select(activity => new StrengthPlanActivityChoice(activity,
+                    StrengthPlanGenerationDisplayMapper.ActivityLabel(activity))));
 
             SelectedActivity = Activities.FirstOrDefault();
+
+            if (string.IsNullOrWhiteSpace(ConsistentWeeks))
+                ConsistentWeeks = "24";
+            if (string.IsNullOrWhiteSpace(AverageSessionsPerWeek))
+                AverageSessionsPerWeek = "3";
+            if (string.IsNullOrWhiteSpace(DaysSinceLastSession))
+                DaysSinceLastSession = "2";
+            if (string.IsNullOrWhiteSpace(WarmupMinutes))
+                WarmupMinutes = "5";
+            if (string.IsNullOrWhiteSpace(CooldownMinutes))
+                CooldownMinutes = "5";
+
+            var yesChoice = EvidenceYesNoChoices.FirstOrDefault(choice => choice.Value is true);
+            if (IsSwimmingSelected)
+            {
+                SelectedSwimmingFacilityAccessChoice ??= yesChoice;
+                SelectedIndependentSwimmingChoice ??= yesChoice;
+                SelectedSwimmingStyleChoice ??= SwimmingStyleChoices.FirstOrDefault();
+            }
+            if (IsRockClimbingSelected)
+            {
+                SelectedRopeClimbingCompetenceChoice ??= yesChoice;
+                SelectedClimbingInstructionChoice ??= yesChoice;
+            }
+            if (IsYogaSelected)
+            {
+                SelectedYogaContentChoice ??= YogaContentChoices.FirstOrDefault();
+            }
+
             if (Activities.Count == NoPolicyReasons)
                 StatusMessage = UiTextCatalog.Get("Workout_Generation_StrengthPreferenceRequired");
             else if (!HasValidSavedAvailability)
@@ -478,9 +511,16 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
             return;
 
         _historyActivity = value?.Activity;
-        ConsistentWeeks = string.Empty;
-        AverageSessionsPerWeek = string.Empty;
-        DaysSinceLastSession = string.Empty;
+        if (string.IsNullOrWhiteSpace(ConsistentWeeks))
+            ConsistentWeeks = "24";
+        if (string.IsNullOrWhiteSpace(AverageSessionsPerWeek))
+            AverageSessionsPerWeek = "3";
+        if (string.IsNullOrWhiteSpace(DaysSinceLastSession))
+            DaysSinceLastSession = "2";
+        if (string.IsNullOrWhiteSpace(WarmupMinutes))
+            WarmupMinutes = "5";
+        if (string.IsNullOrWhiteSpace(CooldownMinutes))
+            CooldownMinutes = "5";
         ClearPreview();
     }
 

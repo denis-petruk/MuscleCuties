@@ -580,6 +580,7 @@ public static class MauiProgram
             sp.GetRequiredService<ICycleDailyLogUseCase>(),
             sp.GetRequiredService<ICyclePhaseEditUseCase>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
+            sp.GetRequiredService<IDashboardOverviewUseCase>(),
             phase => NavigateWithContextAsync(sp, nameof(CyclePhaseDetailPage), "phase", phase),
             () => DateTime.Today,
             () => NavigateToAsync(nameof(ProfilePersonalInfoPage))));

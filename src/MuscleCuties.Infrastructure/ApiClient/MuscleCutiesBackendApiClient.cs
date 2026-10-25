@@ -218,6 +218,7 @@ public sealed class MuscleCutiesBackendApiClient(
 
         string? errorCode = null;
         int? conflictVersion = null;
+        TResponse? validationData = default;
         try
         {
             using var doc = await JsonDocument.ParseAsync(
@@ -238,6 +239,16 @@ public sealed class MuscleCutiesBackendApiClient(
 
                 if (doc.RootElement.TryGetProperty("version", out var verProp) && verProp.TryGetInt32(out var ver))
                     conflictVersion = ver;
+
+                if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.UnprocessableEntity)
+                    try
+                    {
+                        validationData = doc.RootElement.Deserialize<TResponse>(JsonOptions);
+                    }
+                    catch (Exception exception) when (exception is JsonException or NotSupportedException)
+                    {
+                        // Some validation bodies contain only an error code.
+                    }
             }
         }
         catch (JsonException)
@@ -252,7 +263,8 @@ public sealed class MuscleCutiesBackendApiClient(
             HttpStatusCode.Conflict =>
                 new BackendApiResponse<TResponse>(BackendApiStatus.Conflict, default, errorCode ?? "conflict", conflictVersion),
             HttpStatusCode.BadRequest or HttpStatusCode.UnprocessableEntity =>
-                new BackendApiResponse<TResponse>(BackendApiStatus.ValidationFailed, default, errorCode ?? "validationFailed"),
+                new BackendApiResponse<TResponse>(BackendApiStatus.ValidationFailed, validationData,
+                    errorCode ?? "validationFailed"),
             HttpStatusCode.NotFound =>
                 new BackendApiResponse<TResponse>(BackendApiStatus.NotFound, default, errorCode ?? "notFound"),
             HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable =>

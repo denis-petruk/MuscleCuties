@@ -12,12 +12,13 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
     public async Task<StrengthPlanProposalCreatedV020> CreateAsync(
         StrengthPlanPreviewRequestV020 request, CancellationToken cancellationToken)
     {
-        var result = CloudStoreResponse.RequireData(await apiClient.SendMutationAsync<
+        var response = await apiClient.SendMutationAsync<
             StrengthPlanPreviewRequestV020, StrengthPlanProposalCreatedV020>(
             HttpMethod.Post, ProposalRoute, request,
-            idempotencyKey: Guid.NewGuid().ToString("N"), cancellationToken).ConfigureAwait(false),
-            "create strength plan proposal");
-        return result;
+            idempotencyKey: Guid.NewGuid().ToString("N"), cancellationToken).ConfigureAwait(false);
+        if (response.Status == BackendApiStatus.ValidationFailed && response.Data?.Preview is not null)
+            return response.Data;
+        return CloudStoreResponse.RequireData(response, "create strength plan proposal");
     }
 
     public async Task<AcceptStrengthPlanProposalResultV020> AcceptAsync(

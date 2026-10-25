@@ -60,11 +60,11 @@ public partial class WorkoutPage : ContentPage
 
     private async Task OnSessionActivitiesRequested(int workoutDayId)
     {
-        await MainThread.InvokeOnMainThreadAsync(async () =>
+        await MainThread.InvokeOnMainThreadAsync(() =>
         {
-            SessionActivitiesOverlay.IsVisible = true;
             SessionActivitiesOverlay.BindingContext = _sessionViewModel;
             SessionActivitiesOverlay.IsEnabled = false;
+            SessionActivitiesOverlay.IsVisible = true;
         });
 
         await _sessionViewModel.LoadSession(workoutDayId);

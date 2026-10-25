@@ -10,11 +10,15 @@
     x:DataType="vm:CycleViewModel"
     SemanticProperties.Description="{loc:LocalizedText Cycle_Hero_CardAccessibility}">
 
-    <Border Style="{StaticResource CardPrimary}" Padding="20">
-        <Grid RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="14">
+    <ContentView.Resources>
+        <x:Double x:Key="CycleHeroRowSpacing">12</x:Double>
+    </ContentView.Resources>
 
-            <!-- Top Row: Section header + energy status pill -->
-            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
+    <Border Style="{StaticResource CardPrimary}" Padding="20">
+        <Grid RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="{StaticResource CycleHeroRowSpacing}">
+
+            <!-- Top Row: Section header -->
+            <Grid>
                 <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
                     <Path
                         Data="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"
@@ -33,23 +37,9 @@
                         SemanticProperties.HeadingLevel="Level2" />
                 </HorizontalStackLayout>
 
-                <Border
-                    Grid.Column="1"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
-                    StrokeShape="RoundRectangle 12"
-                    StrokeThickness="0"
-                    Padding="10,4"
-                    VerticalOptions="Center">
-                    <Label
-                        Text="{Binding PhaseEnergyBadgeText, Converter={StaticResource LocalizedStringConverter}}"
-                        FontSize="11"
-                        FontAttributes="Bold"
-                        TextColor="{StaticResource Primary}"
-                        VerticalOptions="Center" />
-                </Border>
             </Grid>
 
-            <!-- Middle Row: Left phase title & hormonal snapshot + Right vector artwork -->
+            <!-- Middle Row: Phase title and artwork -->
             <Grid Grid.Row="1" ColumnDefinitions="*, 80" ColumnSpacing="14" RowSpacing="6">
                 <VerticalStackLayout Spacing="6" VerticalOptions="Center">
                     <Label
@@ -63,12 +53,6 @@
                         FontSize="13"
                         FontAttributes="Bold"
                         TextColor="{StaticResource Primary}" />
-                    <Label
-                        Text="{Binding PhaseHormonalSnapshot, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource MutedLabel}"
-                        FontSize="13"
-                        LineBreakMode="WordWrap"
-                        Margin="0,2,0,0" />
                 </VerticalStackLayout>
 
                 <!-- Vector artwork container -->

@@ -19,13 +19,6 @@
             <Setter Property="Padding" Value="16" />
         </Style>
         <Style x:Key="CheckInSectionTitle" TargetType="Label" BasedOn="{StaticResource FormFieldLabel}" />
-        <Style x:Key="CheckInFieldSurface" TargetType="Border" BasedOn="{StaticResource InputContainer}">
-            <Setter Property="BackgroundColor"
-                    Value="{AppThemeBinding Light={StaticResource InputSurface}, Dark={StaticResource InputSurfaceDark}}" />
-            <Setter Property="Stroke"
-                    Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
-            <Setter Property="StrokeThickness" Value="1" />
-        </Style>
         <Style x:Key="CheckInChoice" TargetType="Button">
             <Setter Property="BackgroundColor"
                     Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" />
@@ -327,23 +320,17 @@
                         </Grid>
                         <Label Grid.Row="1" Text="{loc:LocalizedText Dashboard_CheckIn_StorageNotice}"
                                Style="{StaticResource CaptionLabel}" />
-                        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                            <Border Style="{StaticResource CheckInFieldSurface}">
-                                <Entry
-                                    x:Name="WeightEntry"
-                                    Placeholder="{loc:LocalizedText Dashboard_CheckIn_WeightPlaceholderKg}"
-                                    Text="{Binding BodyWeight}"
-                                    Keyboard="Numeric"
-                                    ReturnType="Done"
-                                    ReturnCommand="{Binding SubmitCommand}"
-                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_WeightA11y}"
-                                    SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_WeightHint}" />
-                            </Border>
-                            <Label Grid.Column="1"
-                                   Text="{loc:LocalizedText Dashboard_CheckIn_WeightPlaceholderKg}"
-                                   Style="{StaticResource MutedLabel}"
-                                   VerticalOptions="Center" />
-                        </Grid>
+                        <Border Grid.Row="2" Style="{StaticResource InputContainer}">
+                            <Entry
+                                x:Name="WeightEntry"
+                                Placeholder="{loc:LocalizedText Dashboard_CheckIn_WeightPlaceholderKg}"
+                                Text="{Binding BodyWeight}"
+                                Keyboard="Numeric"
+                                ReturnType="Done"
+                                ReturnCommand="{Binding SubmitCommand}"
+                                SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_WeightA11y}"
+                                SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_WeightHint}" />
+                        </Border>
                     </Grid>
                 </Border>
 

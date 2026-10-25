@@ -24,14 +24,16 @@ public sealed record DashboardWorkoutProgressObservation(
     double? VolumeKg,
     int? DurationSeconds,
     double? DistanceKm,
-    int? PaceSecondsPerKm);
+    int? PaceSecondsPerKm,
+    string? ExerciseName = null);
 
 public sealed record DashboardWorkoutProgress(
     double? HeaviestLiftKg,
     double? HighestSessionVolumeKg,
     int? LongestSessionMinutes,
     double? LongestDistanceKm,
-    int? FastestPaceSecondsPerKm);
+    int? FastestPaceSecondsPerKm,
+    string? HeaviestLiftExerciseName = null);
 
 public static class DashboardTrendSummaryRule
 {
@@ -90,8 +92,14 @@ public static class DashboardTrendSummaryRule
         IEnumerable<DashboardWorkoutProgressObservation>? observations)
     {
         var active = (observations ?? []).Where(item => !item.IsRestDay).ToArray();
+        var heaviestLift = active
+            .Where(item => item.WeightKg is > 0d && double.IsFinite(item.WeightKg.Value))
+            .OrderByDescending(item => item.WeightKg)
+            .ThenBy(item => string.IsNullOrWhiteSpace(item.ExerciseName))
+            .ThenBy(item => item.ExerciseName, StringComparer.Ordinal)
+            .FirstOrDefault();
         return new DashboardWorkoutProgress(
-            MaxPositive(active.Select(item => item.WeightKg)),
+            heaviestLift?.WeightKg,
             MaxPositive(active.Select(item => item.VolumeKg)),
             active.Where(item => item.DurationSeconds > 0)
                 .Select(item => (int?)Math.Ceiling(item.DurationSeconds!.Value / (double)MinutesDivisor))
@@ -99,7 +107,10 @@ public static class DashboardTrendSummaryRule
             MaxPositive(active.Select(item => item.DistanceKm)),
             active.Where(item => item.PaceSecondsPerKm > 0)
                 .Select(item => item.PaceSecondsPerKm)
-                .Min());
+                .Min(),
+            string.IsNullOrWhiteSpace(heaviestLift?.ExerciseName)
+                ? null
+                : heaviestLift.ExerciseName.Trim());
     }
 
     private static double SafeNonNegative(double value) => double.IsFinite(value) && value > 0d ? value : 0d;
