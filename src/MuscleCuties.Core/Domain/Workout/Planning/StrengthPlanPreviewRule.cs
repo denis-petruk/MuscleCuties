@@ -69,7 +69,10 @@ public sealed record StrengthPlanPreviewResult(
     IReadOnlyList<StrengthPlanPreviewSession> Sessions,
     IReadOnlyList<string> LimitationCodes,
     IReadOnlyList<StrengthExerciseReviewCondition> ExerciseReviewConditions,
-    IReadOnlyList<string> AdvisoryCodes);
+    IReadOnlyList<string> AdvisoryCodes,
+    WorkoutActivityType? EffectiveActivity = null,
+    string? FallbackSource = null,
+    string? FallbackReasonCode = null);
 
 /// <summary>
 /// Evaluates a strength proposal as one Core decision using activity policy, reviewed templates,
@@ -89,6 +92,10 @@ public static class StrengthPlanPreviewRule
     public const string ExperienceHistoryMissingCode = "ActivityExperienceHistoryMissing";
     public const string BeginnerProfileRequiresGeneralStrengthCode =
         "BeginnerProfileRequiresGeneralStrength";
+    public const string HighVolumeRequiresEstablishedResistanceHistoryCode =
+        "HighVolumeRequiresEstablishedResistanceHistory";
+    public const string GeneralStrengthFallbackSource =
+        "GeneralStrengthFallback";
     public const string SymptomsNeedReviewCode = "RestrictionOrSymptomRequiresReview";
     public const string MissingWarmupOrCooldownCode = "StrengthWarmupOrCooldownDurationMissing";
 
@@ -109,6 +116,11 @@ public static class StrengthPlanPreviewRule
 
     public static StrengthPlanPreviewResult Evaluate(
         StrengthPlanPreviewChoices? choices,
+        StrengthPlanPreviewData? data) =>
+        EvaluateWithFallback(choices, data);
+
+    public static StrengthPlanPreviewResult EvaluateDirect(
+        StrengthPlanPreviewChoices? choices,
         StrengthPlanPreviewData? data)
     {
         if (!ValidChoices(choices))
@@ -127,7 +139,7 @@ public static class StrengthPlanPreviewRule
             return Failure(StrengthPlanPreviewStatus.Limited, ActivityExperience.Unknown,
                 SessionDurationMissingCode);
         if (data.ActivitySessionDurationsMinutes.Any(pair => !Enum.IsDefined(pair.Key) ||
-                !IsValidActivityDuration(pair.Key, pair.Value)))
+                pair.Key == activity && !IsValidActivityDuration(pair.Key, pair.Value)))
             return Failure(StrengthPlanPreviewStatus.InvalidInput, ActivityExperience.Unknown,
                 SessionDurationInvalidCode);
 
@@ -153,12 +165,45 @@ public static class StrengthPlanPreviewRule
 
         var experience = ActivityExperienceRule.Classify(activity.ToString(), choices.ActivityHistory,
             choices.LocalDate).Experience;
-        if (experience == ActivityExperience.Unknown && !choices.UnknownExperienceAssessmentCompleted)
+
+        if (data.ProfileTrainingExperience == TrainingExperienceLevel.Beginner &&
+            activity is WorkoutActivityType.HighVolumeStrength or WorkoutActivityType.StrengthHighIntensity)
+        {
+            return Failure(StrengthPlanPreviewStatus.Limited, experience,
+                BeginnerProfileRequiresGeneralStrengthCode);
+        }
+
+        if (activity == WorkoutActivityType.HighVolumeStrength)
+        {
+            var isEstablishedResistance = GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(
+                choices.ActivityHistory, choices.LocalDate);
+
+            if (!isEstablishedResistance || experience != ActivityExperience.Established)
+            {
+                return Failure(StrengthPlanPreviewStatus.Limited, experience,
+                    HighVolumeRequiresEstablishedResistanceHistoryCode);
+            }
+        }
+        else if (activity != WorkoutActivityType.GeneralStrength &&
+                 experience == ActivityExperience.Unknown &&
+                 !choices.UnknownExperienceAssessmentCompleted)
+        {
             return Failure(StrengthPlanPreviewStatus.Limited, experience, ExperienceHistoryMissingCode);
+        }
 
         var profileExperienceDecision = ProfileTrainingExperiencePlanningRule.Resolve(
-            experience, data.ProfileTrainingExperience, choices.ActivityHistory);
+            experience, data.ProfileTrainingExperience, choices.ActivityHistory,
+            allowProfileFallbackWhenHistoryMissing: true);
         var prescriptionExperience = profileExperienceDecision.PrescriptionExperience;
+
+        if (activity == WorkoutActivityType.GeneralStrength)
+        {
+            if (prescriptionExperience == ActivityExperience.Unknown)
+                prescriptionExperience = ActivityExperience.Beginner;
+            if (experience == ActivityExperience.Unknown)
+                experience = ActivityExperience.Beginner;
+        }
+
         if (profileExperienceDecision.UsesConservativeProfileCap &&
             activity is WorkoutActivityType.HighVolumeStrength or WorkoutActivityType.StrengthHighIntensity)
             return Failure(StrengthPlanPreviewStatus.Limited, experience,
@@ -170,10 +215,12 @@ public static class StrengthPlanPreviewRule
             new HashSet<ActivityDemandTag>(), false, data.ActiveInjuryFlags,
             choices.AcknowledgedExerciseConditionIds,
             choices.UnknownExperienceAssessmentCompleted, choices.AcknowledgedSubstitutionPairKeys);
+        var isEstablishedResistanceHistory = GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(
+            choices.ActivityHistory, choices.LocalDate);
         var prescriptionContext = new ActivityPrescriptionContext(activity, prescriptionExperience, null,
-            data.HasCurrentSymptoms, true, experience == ActivityExperience.Established,
+            data.HasCurrentSymptoms, true, isEstablishedResistanceHistory,
             NoCompletedExposures, false, false);
-        var scheduledSessionsPerWeek = ScheduledSessionsPerWeekFor(activity);
+        var scheduledSessionsPerWeek = ScheduledSessionsPerWeekFor(activity, data, choices);
         var templates = StrengthTemplateCatalog.ForSchedule(scheduledSessionsPerWeek);
         if (templates.Count == NoSessions)
             return Failure(StrengthPlanPreviewStatus.InvalidInput, experience, InvalidInputCode);
@@ -214,11 +261,16 @@ public static class StrengthPlanPreviewRule
             var estimatedMinutes = EstimateAndTrimOptional(selected, data, sessionMinutes,
                 choices.WarmupMinutes!.Value, choices.CooldownMinutes!.Value);
 
-            if (activity == WorkoutActivityType.HighVolumeStrength)
+            var applyDirectSetCeiling = activity == WorkoutActivityType.HighVolumeStrength ||
+                activity == WorkoutActivityType.GeneralStrength &&
+                prescriptionExperience == ActivityExperience.Beginner;
+            if (applyDirectSetCeiling)
             {
-                var directSetCeiling = data.ProfileTrainingExperience is null or TrainingExperienceLevel.Unknown
-                    ? ActivityPrescriptionRule.HighVolumeInitialDirectSetsPerPrimaryMusclePerWeek
-                    : profileExperienceDecision.MaximumWeeklySetsPerMuscle;
+                var directSetCeiling = activity == WorkoutActivityType.GeneralStrength
+                    ? WeeklyHypertrophyVolumeRule.Tier1HardCapSets
+                    : data.ProfileTrainingExperience is null or TrainingExperienceLevel.Unknown
+                        ? ActivityPrescriptionRule.HighVolumeInitialDirectSetsPerPrimaryMusclePerWeek
+                        : profileExperienceDecision.MaximumWeeklySetsPerMuscle;
                 var provisionalSetsByMuscle = new Dictionary<string, int>(StringComparer.Ordinal);
                 foreach (var slot in selected.ToArray())
                 {
@@ -286,11 +338,19 @@ public static class StrengthPlanPreviewRule
         var advisories = new List<string>(profileExperienceDecision.ReasonCodes);
         if (scheduledSessionsPerWeek == OneSession)
             advisories.Add("OneDayFullBodyHasLimitedWeeklyCoverage");
+        if (activity == WorkoutActivityType.GeneralStrength &&
+            (data.ProfileTrainingExperience == TrainingExperienceLevel.Beginner ||
+             profileExperienceDecision.EffectiveExperienceLevel == TrainingExperienceLevel.Beginner ||
+             prescriptionExperience == ActivityExperience.Beginner))
+        {
+            advisories.Add("DirectBeginnerGeneralStrengthSettingsApplied");
+        }
         return new StrengthPlanPreviewResult(
             limitationCodes.Length == NoSessions
                 ? StrengthPlanPreviewStatus.Feasible : StrengthPlanPreviewStatus.Limited,
             experience, sessions, limitationCodes, reviewConditions,
-            advisories.Distinct(StringComparer.Ordinal).OrderBy(value => value, StringComparer.Ordinal).ToArray());
+            advisories.Distinct(StringComparer.Ordinal).OrderBy(value => value, StringComparer.Ordinal).ToArray(),
+            activity);
     }
 
     private static bool ValidChoices(StrengthPlanPreviewChoices? choices) =>
@@ -338,7 +398,7 @@ public static class StrengthPlanPreviewRule
                                                        !string.IsNullOrWhiteSpace(pair.Value));
 
     private static bool ValidWeekdays(IReadOnlySet<DayOfWeek>? weekdays) =>
-        weekdays is { Count: >= WorkoutPreferencesRule.MinimumDaysPerWeek and
+        weekdays is { Count: >= MixedActivityWeekScheduleRule.MinimumAvailableWeekdays and
             <= WorkoutPreferencesRule.MaximumDaysPerWeek } && weekdays.All(Enum.IsDefined);
 
     private static bool IsValidActivityDuration(WorkoutActivityType activity, int minutes) =>
@@ -346,14 +406,94 @@ public static class StrengthPlanPreviewRule
 
     private static bool IsPositiveIdentifier(int value) => value >= FirstPositiveIdentifier;
 
-    private static int ScheduledSessionsPerWeekFor(WorkoutActivityType activity) => activity switch
+    private static int ScheduledSessionsPerWeekFor(
+        WorkoutActivityType activity,
+        StrengthPlanPreviewData data,
+        StrengthPlanPreviewChoices choices)
     {
-        WorkoutActivityType.GeneralStrength => ActivityPrescriptionRule.GeneralStrengthSessionsPerWeek,
-        WorkoutActivityType.HighVolumeStrength => ActivityPrescriptionRule.HighVolumeStrengthSessionsPerWeek,
-        WorkoutActivityType.StrengthHighIntensity =>
-            ActivityPrescriptionRule.StrengthHighIntensityMaximumSessionsPerWeekInitially,
-        _ => NoSessions
-    };
+        if (activity == WorkoutActivityType.GeneralStrength)
+        {
+            var isEstablished = GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(
+                choices.ActivityHistory, choices.LocalDate);
+            var weekdaysCount = GeneralStrengthFrequencyResolver.ResolveAvailableWeekdaysCount(
+                choices.RequestedAvailableWeekdays ?? data.AvailableWeekdays);
+            var gsPolicy = GeneralStrengthFrequencyResolver.Resolve(
+                weekdaysCount, isEstablished, data.ProfileTrainingExperience);
+            return Math.Min(gsPolicy.PolicySessionsPerWeek, gsPolicy.TargetSessionsPerWeek);
+        }
+
+        return activity switch
+        {
+            WorkoutActivityType.HighVolumeStrength => ActivityPrescriptionRule.HighVolumeStrengthSessionsPerWeek,
+            WorkoutActivityType.StrengthHighIntensity =>
+                ActivityPrescriptionRule.StrengthHighIntensityMaximumSessionsPerWeekInitially,
+            _ => NoSessions
+        };
+    }
+
+    public static StrengthPlanPreviewResult EvaluateWithFallback(
+        StrengthPlanPreviewChoices? choices,
+        StrengthPlanPreviewData? data)
+    {
+        if (choices is null || data is null)
+            return EvaluateDirect(choices, data);
+
+        var originalResult = EvaluateDirect(choices, data);
+
+        if (choices.Activity != WorkoutActivityType.GeneralStrength)
+        {
+            var fallbackCode = originalResult.LimitationCodes
+                .FirstOrDefault(code => code is BeginnerProfileRequiresGeneralStrengthCode
+                                             or HighVolumeRequiresEstablishedResistanceHistoryCode);
+
+            if (fallbackCode is not null)
+            {
+                var fallbackReason = fallbackCode;
+                var gsHistory = choices.ActivityHistory is not null
+                    ? choices.ActivityHistory with { ActivityId = WorkoutActivityType.GeneralStrength.ToString() }
+                    : null;
+                var gsChoices = choices with
+                {
+                    Activity = WorkoutActivityType.GeneralStrength,
+                    ActivityHistory = gsHistory
+                };
+
+                var selected = data.SelectedActivities is not null
+                    ? new HashSet<WorkoutActivityType>(data.SelectedActivities)
+                    : new HashSet<WorkoutActivityType>();
+                selected.Add(WorkoutActivityType.GeneralStrength);
+
+                var durations = data.ActivitySessionDurationsMinutes is not null
+                    ? new Dictionary<WorkoutActivityType, int>(data.ActivitySessionDurationsMinutes)
+                    : new Dictionary<WorkoutActivityType, int>();
+
+                if (!durations.ContainsKey(WorkoutActivityType.GeneralStrength))
+                {
+                    durations[WorkoutActivityType.GeneralStrength] =
+                        durations.TryGetValue(choices.Activity, out var origDur)
+                            ? origDur
+                            : WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes;
+                }
+
+                var gsData = data with
+                {
+                    SelectedActivities = selected,
+                    ActivitySessionDurationsMinutes = durations
+                };
+
+                var gsResult = EvaluateDirect(gsChoices, gsData);
+
+                return gsResult with
+                {
+                    EffectiveActivity = WorkoutActivityType.GeneralStrength,
+                    FallbackSource = GeneralStrengthFallbackSource,
+                    FallbackReasonCode = fallbackReason
+                };
+            }
+        }
+
+        return originalResult;
+    }
 
     private static int MaximumWorkingExercises(WorkoutActivityType activity,
         StrengthTemplateDefinition template) => activity switch

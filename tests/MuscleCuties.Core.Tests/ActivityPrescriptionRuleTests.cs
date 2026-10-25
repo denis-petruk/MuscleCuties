@@ -71,12 +71,13 @@ public sealed class ActivityPrescriptionRuleTests
     }
 
     [Fact]
-    public void SelectedCardioDurationOverridesBaselineAndInvalidDurationIsRejected()
+    public void CardioDurationIsCalculatedFromBaselineRatherThanStrengthSessionChoice()
     {
+        const int ExistingBaselineMinutes = 37;
         var selected = ActivityPrescriptionRule.Evaluate(Context(WorkoutActivityType.Running,
             ActivityExperience.Established) with
         {
-            ExistingBaselineMinutes = 37,
+            ExistingBaselineMinutes = ExistingBaselineMinutes,
             UserSelectedDurationMinutes = SelectedActivityDurationMinutes
         });
         var invalid = ActivityPrescriptionRule.Evaluate(Context(WorkoutActivityType.Running) with
@@ -85,10 +86,10 @@ public sealed class ActivityPrescriptionRuleTests
         });
 
         Assert.Equal(ActivityPrescriptionStatus.Eligible, selected.Status);
-        Assert.Equal(SelectedActivityDurationMinutes - ActivityPrescriptionRule.ContinuousCardioWarmupMinutes -
-                     ActivityPrescriptionRule.ContinuousCardioCooldownMinutes,
-            selected.Sessions.Single().MainMinutes);
-        Assert.Equal(ActivityPrescriptionStatus.NeedsUserDuration, invalid.Status);
+        Assert.Equal(ExistingBaselineMinutes, selected.Sessions.Single().MainMinutes);
+        Assert.Equal(ActivityPrescriptionStatus.Eligible, invalid.Status);
+        Assert.Equal(ActivityPrescriptionRule.BeginnerCardioMainMinutes,
+            invalid.Sessions.Single().MainMinutes);
     }
 
     [Fact]
@@ -109,13 +110,12 @@ public sealed class ActivityPrescriptionRuleTests
     }
 
     [Fact]
-    public void SwimmingUsesSelectedSessionDurationForItsIntervalPrescription()
+    public void SwimmingCalculatesIntervalDurationIndependentlyOfSessionChoice()
     {
         var result = EvaluateSwimming(access: true, independent: true, continuous: false,
             selectedDurationMinutes: SelectedSwimmingSessionDurationMinutes);
         var session = result.Sessions.Single();
-        var expectedMainMinutes = SelectedSwimmingSessionDurationMinutes - ActivityPrescriptionRule.SwimmingWarmupMinutes -
-                                  ActivityPrescriptionRule.ContinuousCardioCooldownMinutes;
+        var expectedMainMinutes = ActivityPrescriptionRule.BeginnerCardioMainMinutes;
 
         Assert.Equal(ActivityPrescriptionStatus.Eligible, result.Status);
         Assert.Equal(expectedMainMinutes, session.MainMinutes);
@@ -200,7 +200,9 @@ public sealed class ActivityPrescriptionRuleTests
 
         Assert.Equal(ActivityPrescriptionRule.BeginnerClimbingVisitMinutes,
             climbing.Sessions.Single().MainMinutes);
-        Assert.Equal(ActivityPrescriptionStatus.NeedsUserDuration, yogaNeedsDuration.Status);
+        Assert.Equal(ActivityPrescriptionStatus.Eligible, yogaNeedsDuration.Status);
+        Assert.Equal(ActivitySessionDurationRule.YogaDurationMinutesDefault,
+            yogaNeedsDuration.Sessions.Single().MainMinutes);
         Assert.Equal(ActivityPrescriptionStatus.Eligible, yoga.Status);
     }
 

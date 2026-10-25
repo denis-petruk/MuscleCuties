@@ -11,29 +11,25 @@
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
     Shell.NavBarIsVisible="False">
 
-    <ContentPage.Resources>
-        <x:Double x:Key="QuizStepActionSpacing">12</x:Double>
-        <x:Double x:Key="QuizStepActionTouchTarget">44</x:Double>
-    </ContentPage.Resources>
 
     <Grid>
         <!-- Dashboard prep overlay -->
         <Grid
-            Padding="24"
+            Padding="{StaticResource UiInsets24}"
             IsVisible="{Binding IsPreparingDashboard}"
             ZIndex="10"
             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
             <Grid
                 RowDefinitions="Auto,Auto,Auto,Auto"
-                RowSpacing="16"
+                RowSpacing="{StaticResource UiSpaceControl}"
                 HorizontalOptions="Center"
                 VerticalOptions="Center">
                 <Image
                     Grid.Row="0"
                     Source="{AppThemeBinding Light=musclecuties_logo_light_transparent.png, Dark=musclecuties_logo_dark_transparent.png}"
                     Aspect="AspectFit"
-                    WidthRequest="152"
-                    HeightRequest="84"
+                    WidthRequest="{StaticResource UiDimension152}"
+                    HeightRequest="{StaticResource UiDimension84}"
                     HorizontalOptions="Center"
                     SemanticProperties.Description="{loc:LocalizedText Common_MuscleCutiesLogo}" />
                 <ActivityIndicator
@@ -52,11 +48,11 @@
 
         <!-- Loading state -->
         <Grid
-            Padding="24"
+            Padding="{StaticResource UiInsets24}"
             IsVisible="{Binding IsLoadingVisible}">
             <Grid
                 RowDefinitions="Auto,Auto"
-                RowSpacing="10"
+                RowSpacing="{StaticResource UiSpacing10}"
                 HorizontalOptions="Center"
                 VerticalOptions="Center">
                 <ActivityIndicator
@@ -74,14 +70,14 @@
 
         <!-- Empty / error state -->
         <Grid
-            Padding="28"
+            Padding="{StaticResource UiInsets28}"
             IsVisible="{Binding IsEmptyStateVisible}">
             <Grid
                 RowDefinitions="Auto,Auto,Auto"
-                RowSpacing="12"
+                RowSpacing="{StaticResource UiSpaceCompact}"
                 HorizontalOptions="Center"
                 VerticalOptions="Center"
-                MaximumWidthRequest="400">
+                MaximumWidthRequest="{StaticResource UiDimension400}">
                 <Label
                     Grid.Row="0"
                     Text="{Binding QuestionsStateTitle, Converter={StaticResource LocalizedStringConverter}}"
@@ -99,10 +95,10 @@
                     Text="{loc:LocalizedText Common_TryAgain}"
                     Command="{Binding RetryLoadQuestionsCommand}"
                     IsVisible="{Binding CanRetryQuestionsLoad}"
-                    Margin="0,8,0,0"
+                    Margin="{StaticResource UiInsets0_8_0_0}"
                     HorizontalOptions="Center"
-                    MinimumHeightRequest="52"
-                    MinimumWidthRequest="120"
+                    MinimumHeightRequest="{StaticResource UiDimension52}"
+                    MinimumWidthRequest="{StaticResource UiDimension120}"
                     SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_RetryLoadingQuestions}"
                     SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_DoubleTapToReloadTheQuiz}" />
             </Grid>
@@ -115,15 +111,15 @@
 
             <Grid
                 Grid.Row="0"
-                Padding="24,32,24,16"
+                Padding="{StaticResource UiInsets24_32_24_16}"
                 RowDefinitions="Auto,Auto"
-                RowSpacing="16"
-                MaximumWidthRequest="640"
+                RowSpacing="{StaticResource UiSpaceControl}"
+                MaximumWidthRequest="{StaticResource UiDimension640}"
                 HorizontalOptions="Fill">
 
                 <!-- Step indicator + progress bar -->
-                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="8">
-                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource QuizStepActionSpacing}">
+                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                         <Border Style="{StaticResource PillBadge}" VerticalOptions="Center">
                             <Label
                                 Text="{loc:LocalizedText Onboarding_Quiz_StepTwoOfTwo}"
@@ -134,21 +130,21 @@
                         <Button Grid.Column="1"
                                 Text="{loc:LocalizedText Onboarding_Quiz_GoBackToProfile}"
                                 Style="{StaticResource ButtonLink}"
-                                Padding="0"
-                                MinimumHeightRequest="{StaticResource QuizStepActionTouchTarget}"
+                                Padding="{StaticResource UiInsets0}"
+                                MinimumHeightRequest="{StaticResource UiDimension44}"
                                 HorizontalOptions="End"
                                 Clicked="OnEditProfileClicked"
                                 IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                                 IsVisible="{Binding AccountCreatedNeedsLogin, Converter={StaticResource InvertedBoolConverter}}"
                                 SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_GoBackToProfile}" />
                     </Grid>
-                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                         <ProgressBar
                             Grid.Column="0"
                             Progress="{Binding ProgressValue}"
                             ProgressColor="{StaticResource Primary}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                            HeightRequest="6"
+                            HeightRequest="{StaticResource UiDimension6}"
                             VerticalOptions="Center"
                             SemanticProperties.Description="{Binding ProgressText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_QuizProgressValue}" />
                         <Border Grid.Column="1" Style="{StaticResource PillBadge}" VerticalOptions="Center">
@@ -161,18 +157,18 @@
                     </Grid>
                 </Grid>
 
-                <Grid Grid.Row="1" ColumnDefinitions="40,*" ColumnSpacing="12">
+                <Grid Grid.Row="1" ColumnDefinitions="40,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
                     <Border
-                        WidthRequest="40"
-                        HeightRequest="40"
+                        WidthRequest="{StaticResource UiDimension40}"
+                        HeightRequest="{StaticResource UiDimension40}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource CardSurfaceDark}}"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 12"
+                        StrokeThickness="{StaticResource UiStrokeWidth0}"
+                        StrokeShape="{StaticResource UiRoundRectangleRadius12}"
                         VerticalOptions="Start">
                         <Image
                             Source="{Binding CurrentQuestionIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                            WidthRequest="20"
-                            HeightRequest="20"
+                            WidthRequest="{StaticResource UiDimension20}"
+                            HeightRequest="{StaticResource UiDimension20}"
                             Aspect="AspectFit"
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
@@ -189,29 +185,29 @@
             <!-- Standard answer list -->
             <ScrollView
                 Grid.Row="1"
-                Padding="24,0"
-                MaximumWidthRequest="640"
+                Padding="{StaticResource UiInsets24_0}"
+                MaximumWidthRequest="{StaticResource UiDimension640}"
                 HorizontalOptions="Fill"
                 IsVisible="{Binding IsStandardAnswerListVisible}">
                 <VerticalStackLayout
-                    Padding="0,4,0,20"
-                    Spacing="12">
+                    Padding="{StaticResource UiInsets0_4_0_20}"
+                    Spacing="{StaticResource UiSpaceCompact}">
                     <Label
                         Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdaysHint}"
                         Style="{StaticResource MutedLabel}"
                         LineBreakMode="WordWrap"
                         IsVisible="{Binding IsCurrentQuestionAvailableWeekdays}" />
                     <VerticalStackLayout
-                        Spacing="10"
+                        Spacing="{StaticResource UiSpacing10}"
                         BindableLayout.ItemsSource="{Binding CurrentAnswers}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="quizModels:SelectableQuizAnswer">
                             <Border
-                                Padding="16,14"
-                                StrokeShape="RoundRectangle 14"
+                                Padding="{StaticResource UiInsets16_14}"
+                                StrokeShape="{StaticResource UiRoundRectangleRadius14}"
                                 Stroke="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}"
-                                StrokeThickness="1"
-                                MinimumHeightRequest="64"
+                                StrokeThickness="{StaticResource UiStrokeWidth1}"
+                                MinimumHeightRequest="{StaticResource UiDimension64}"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                                 SemanticProperties.Description="{Binding Answer.Text, Converter={StaticResource LocalizedStringConverter}}"
                                 SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_DoubleTapToSelectThisAnswer}">
@@ -226,23 +222,23 @@
                                         <Setter Property="BackgroundColor"
                                                 Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray900}}" />
                                         <Setter Property="Stroke" Value="{StaticResource Primary}" />
-                                        <Setter Property="StrokeThickness" Value="2" />
+                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
                                     </DataTrigger>
                                 </Border.Triggers>
 
-                                <Grid ColumnDefinitions="36,*,24" ColumnSpacing="12">
+                                <Grid ColumnDefinitions="36,*,24" ColumnSpacing="{StaticResource UiSpaceCompact}">
                                     <Border
                                         Grid.Column="0"
-                                        WidthRequest="36"
-                                        HeightRequest="36"
-                                        StrokeShape="RoundRectangle 12"
-                                        StrokeThickness="0"
+                                        WidthRequest="{StaticResource UiDimension36}"
+                                        HeightRequest="{StaticResource UiDimension36}"
+                                        StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                                        StrokeThickness="{StaticResource UiStrokeWidth0}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                         VerticalOptions="Center">
                                         <Image
                                             Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                            WidthRequest="18"
-                                            HeightRequest="18"
+                                            WidthRequest="{StaticResource UiDimension18}"
+                                            HeightRequest="{StaticResource UiDimension18}"
                                             Aspect="AspectFit"
                                             HorizontalOptions="Center"
                                             VerticalOptions="Center" />
@@ -256,9 +252,9 @@
 
                                     <Border
                                         Grid.Column="2"
-                                        WidthRequest="22"
-                                        HeightRequest="22"
-                                        StrokeShape="RoundRectangle 11"
+                                        WidthRequest="{StaticResource UiDimension22}"
+                                        HeightRequest="{StaticResource UiDimension22}"
+                                        StrokeShape="{StaticResource UiRoundRectangleRadius11}"
                                         VerticalOptions="Center">
                                         <Border.Triggers>
                                             <DataTrigger
@@ -279,9 +275,9 @@
                                         </Border.Triggers>
 
                                         <BoxView
-                                            WidthRequest="8"
-                                            HeightRequest="8"
-                                            CornerRadius="4"
+                                            WidthRequest="{StaticResource UiDimension8}"
+                                            HeightRequest="{StaticResource UiDimension8}"
+                                            CornerRadius="{StaticResource UiCornerRadius4}"
                                             Color="{StaticResource White}"
                                             HorizontalOptions="Center"
                                             VerticalOptions="Center"
@@ -303,12 +299,12 @@
             <!-- Phase pair sliders -->
             <ScrollView
                 Grid.Row="1"
-                Padding="24,4,24,20"
-                MaximumWidthRequest="640"
+                Padding="{StaticResource UiInsets24_4_24_20}"
+                MaximumWidthRequest="{StaticResource UiDimension640}"
                 HorizontalOptions="Fill"
                 IsVisible="{Binding IsCurrentQuestionPhasePair}">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="12">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                         <Label
                             Text="{loc:LocalizedText Onboarding_Quiz_Discomfort}"
                             Style="{StaticResource CardTitle}"
@@ -326,7 +322,7 @@
                         MinimumTrackColor="{StaticResource Primary}"
                         MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                         ThumbColor="{StaticResource Primary}"
-                        MinimumHeightRequest="44"
+                        MinimumHeightRequest="{StaticResource UiDimension44}"
                         SemanticProperties.Description="{Binding PainSliderLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_DiscomfortLevelValue}"
                         SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_OneIsSevereFiveIsNone}" />
                     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto">
@@ -337,12 +333,12 @@
 
                     <BoxView
                         Grid.Row="3"
-                        HeightRequest="1"
-                        Margin="0,12,0,0"
-                        Opacity="0.6"
+                        HeightRequest="{StaticResource UiDimension1}"
+                        Margin="{StaticResource UiInsets0_12_0_0}"
+                        Opacity="{StaticResource UiOpacitySubtle}"
                         Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
-                    <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                         <Label
                             Text="{loc:LocalizedText Onboarding_Quiz_TrainingEnergy}"
                             Style="{StaticResource CardTitle}"
@@ -360,7 +356,7 @@
                         MinimumTrackColor="{StaticResource Primary}"
                         MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                         ThumbColor="{StaticResource Primary}"
-                        MinimumHeightRequest="44"
+                        MinimumHeightRequest="{StaticResource UiDimension44}"
                         SemanticProperties.Description="{Binding EnergySliderLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_TrainingEnergyLevelValue}"
                         SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_OneIsVeryLowFiveIs}" />
                     <Grid Grid.Row="6" ColumnDefinitions="Auto,*,Auto">
@@ -374,12 +370,12 @@
             <!-- Bottom navigation bar -->
             <Grid
                 Grid.Row="2"
-                Padding="24,16,24,32"
-                MaximumWidthRequest="640"
+                Padding="{StaticResource UiInsets24_16_24_32}"
+                MaximumWidthRequest="{StaticResource UiDimension640}"
                 HorizontalOptions="Fill"
                 RowDefinitions="Auto,Auto,Auto,Auto"
                 ColumnDefinitions="Auto,*"
-                ColumnSpacing="12">
+                ColumnSpacing="{StaticResource UiSpaceCompact}">
 
                 <Label
                     Grid.Row="0"
@@ -387,7 +383,7 @@
                     Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource ErrorLabel}"
                     IsVisible="{Binding HasError}"
-                    Margin="0,0,0,10"
+                    Margin="{StaticResource UiInsets0_0_0_10}"
                     SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     SemanticProperties.HeadingLevel="Level3" />
 
@@ -397,7 +393,7 @@
                     IsRunning="{Binding IsBusy}"
                     IsVisible="{Binding IsBusy}"
                     HorizontalOptions="Center"
-                    Margin="0,0,0,10"
+                    Margin="{StaticResource UiInsets0_0_0_10}"
                     SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_ProcessingPleaseWait}" />
 
                 <Button
@@ -406,7 +402,7 @@
                     Text="{loc:LocalizedText Onboarding_Quiz_GoToLogIn}"
                     Command="{Binding GoToLoginCommand}"
                     IsVisible="{Binding AccountCreatedNeedsLogin}"
-                    MinimumHeightRequest="52"
+                    MinimumHeightRequest="{StaticResource UiDimension52}"
                     SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_AccountSavedGoToLogIn}" />
 
                 <Border
@@ -414,14 +410,14 @@
                     Grid.Column="0"
                     BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                     Stroke="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}"
-                    StrokeShape="RoundRectangle 14"
-                    StrokeThickness="1"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius14}"
+                    StrokeThickness="{StaticResource UiStrokeWidth1}"
                     IsVisible="{Binding ShowQuizBackButton}"
-                    WidthRequest="56"
-                    HeightRequest="56"
-                    MinimumWidthRequest="44"
-                    MinimumHeightRequest="44"
-                    Padding="0"
+                    WidthRequest="{StaticResource UiDimension56}"
+                    HeightRequest="{StaticResource UiDimension56}"
+                    MinimumWidthRequest="{StaticResource UiDimension44}"
+                    MinimumHeightRequest="{StaticResource UiDimension44}"
+                    Padding="{StaticResource UiInsets0}"
                     SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_GoToPreviousQuestion}"
                     SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_DoubleTapToGoBack}">
                     <Border.GestureRecognizers>
@@ -430,11 +426,11 @@
                     <Path
                         Data="M15 19l-7-7 7-7"
                         Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                        StrokeThickness="2"
+                        StrokeThickness="{StaticResource UiStrokeWidth2}"
                         StrokeLineCap="Round"
                         StrokeLineJoin="Round"
-                        WidthRequest="20"
-                        HeightRequest="20"
+                        WidthRequest="{StaticResource UiDimension20}"
+                        HeightRequest="{StaticResource UiDimension20}"
                         Aspect="Uniform"
                         HorizontalOptions="Center"
                         VerticalOptions="Center" />
@@ -447,8 +443,8 @@
                     Clicked="OnNextClicked"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                     IsVisible="{Binding AccountCreatedNeedsLogin, Converter={StaticResource InvertedBoolConverter}}"
-                    MinimumHeightRequest="56"
-                    CornerRadius="{StaticResource UiRadiusControl}"
+                    MinimumHeightRequest="{StaticResource UiDimension56}"
+                    CornerRadius="{StaticResource UiCornerRadius14}"
                     SemanticProperties.Description="{Binding NextButtonText, Converter={StaticResource LocalizedStringConverter}}"
                     SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_DoubleTapToAdvanceToThe}" />
             </Grid>

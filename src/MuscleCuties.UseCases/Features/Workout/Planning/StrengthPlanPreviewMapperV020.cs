@@ -87,7 +87,10 @@ internal static class StrengthPlanPreviewMapperV020
             condition.ExerciseName,
             condition.ExperienceConditions,
             condition.GeneralConditions)).ToArray(),
-        result.AdvisoryCodes);
+        result.AdvisoryCodes,
+        EffectiveActivityTypeId: result.EffectiveActivity.HasValue ? (int)result.EffectiveActivity.Value : null,
+        FallbackSource: result.FallbackSource,
+        FallbackReasonCode: result.FallbackReasonCode);
 
     public static MixedActivityScheduleV020 ToMixedSchedule(MixedActivityWeekScheduleResult result) => new(
         result.Sessions.Select(session => new MixedActivityScheduleSessionV020(
@@ -103,7 +106,10 @@ internal static class StrengthPlanPreviewMapperV020
             activity.TargetSessionsPerWeek,
             activity.ScheduledSessionsPerWeek,
             activity.Reasons,
-            activity.Prescription?.Modality.ToString())).ToArray(),
+            activity.Prescription?.Modality.ToString(),
+            activity.EffectiveActivity.HasValue ? (int)activity.EffectiveActivity.Value : null,
+            activity.FallbackReasonCode,
+            activity.MaxSessionsPerWeek)).ToArray(),
         result.InputReasons);
 
     public static StrengthPlanPreviewResponseV020 AttachMixedSchedule(
@@ -113,7 +119,8 @@ internal static class StrengthPlanPreviewMapperV020
     {
         var coreStrengthActivity = WorkoutActivityContractMapper.ToCore(chosenStrengthActivity);
         var strengthDays = schedule.Sessions
-            .Where(session => session.Activity == coreStrengthActivity)
+            .Where(session => session.Activity == coreStrengthActivity ||
+                              (response.EffectiveActivityTypeId.HasValue && (int)session.Activity == response.EffectiveActivityTypeId.Value))
             .Select(session => session.Day)
             .ToArray();
         var alignedStrengthSessions = response.Sessions
@@ -128,7 +135,8 @@ internal static class StrengthPlanPreviewMapperV020
                 MixedActivityScheduleDisposition.Scheduled => false,
                 MixedActivityScheduleDisposition.NotScheduled =>
                     decision.Activity != WorkoutActivityType.RestDay &&
-                    !decision.Reasons.Contains(MixedActivityWeekScheduleRule.StrengthAlternativeNotChosen),
+                    !decision.Reasons.Contains(MixedActivityWeekScheduleRule.StrengthAlternativeNotChosen) &&
+                    !decision.Reasons.Contains("ReplacedWithGeneralStrength"),
                 _ => true
             });
         var limitationCodes = isIncomplete

@@ -86,7 +86,7 @@ public partial class DashboardPage : ContentPage
         catch
         {
             Trace.WriteLine("[DashboardPage] Could not present injury modal.");
-            _viewModel.IsLoadError = true;
+            _viewModel.CloseInjuryModalCommand.Execute(null);
         }
     }
 

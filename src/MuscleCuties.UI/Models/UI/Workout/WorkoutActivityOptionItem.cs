@@ -19,9 +19,6 @@ public partial class WorkoutActivityOptionItem : ObservableObject
         IsSelected &&
         WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(ActivityType) &&
         !WorkoutPreferencesConstraints.ActivityRequiresExplicitSessionDuration(ActivityType);
-    public bool ShowWeeklyFrequencyPicker => AllowInlinePreferenceConfiguration &&
-        IsSelected &&
-        WorkoutPreferencesConstraints.ActivityRequiresExplicitWeeklyFrequency(ActivityType);
     public string Title { get; init; } = string.Empty;
     public string Subtitle { get; init; } = string.Empty;
     public string GroupTitle { get; init; } = string.Empty;
@@ -34,6 +31,5 @@ public partial class WorkoutActivityOptionItem : ObservableObject
     partial void OnIsSelectedChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowSessionDurationPicker));
-        OnPropertyChanged(nameof(ShowWeeklyFrequencyPicker));
     }
 }

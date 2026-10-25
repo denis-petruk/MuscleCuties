@@ -500,6 +500,8 @@ public static partial class UiTextCatalog
         English["Profile_ImageCrop_PinchToZoomLabel"] = "Pinch to zoom, drag to reposition";
         English["Profile_ImageCrop_UsePhoto"] = "Use Photo";
         English["Profile_NutritionSettings_Calcium"] = "Calcium";
+        English["Profile_NutritionSettings_AdvancedSettings"] = "Advanced settings";
+        English["Profile_NutritionSettings_HideAdvancedSettings"] = "Hide advanced settings";
         English["Profile_NutritionSettings_ChooseGoal"] = "Choose goal";
         English["Profile_NutritionSettings_ChoosePace"] = "Choose pace";
         English["Profile_NutritionSettings_DailyCalories"] = "Daily calories";
@@ -611,8 +613,8 @@ public static partial class UiTextCatalog
         English["Profile_WorkoutPrefs_ChooseActivityWeeklyFrequency"] =
             "Choose how many weekly sessions you want for yoga, mobility, or gentle recovery.";
         English["Profile_WorkoutPrefs_ActivitySessionLengthHint"] =
-            "Choose each activity's duration, then set weekly frequency for yoga, mobility, or gentle recovery.";
-        English["Profile_WorkoutPrefs_InvalidPreferences"] = "Review your activities, select 2–7 available weekdays, and provide each required duration and weekly frequency.";
+            "Strength session length comes from setup. Cardio and HIIT times are calculated from their activity plans; weekly sessions use your available days.";
+        English["Profile_WorkoutPrefs_InvalidPreferences"] = "Review your activities, select 2–7 available weekdays, and provide each required duration.";
         English["Profile_WorkoutPrefs_PlanUpdateFailed"] = "Could not update your workout plan. Your preferences were not saved. Please try again.";
         English["Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"] = "At least one strength activity is required for your plan.";
         English["Profile_WorkoutPrefs_SaveWorkoutPreferences"] = "Save workout preferences";
@@ -623,6 +625,7 @@ public static partial class UiTextCatalog
         English["Profile_WorkoutPrefs_ExerciseExclusions"] = "Exercises to avoid";
         English["Profile_WorkoutPrefs_ExerciseExclusionsHint"] = "Choose reviewed exercises you want left out of every new strength plan preview.";
         English["Profile_WorkoutPrefs_SearchExercises"] = "Search reviewed exercises";
+        English["Profile_WorkoutPrefs_RemoveAvoidedExercise"] = "Double tap to remove this exercise from your avoid list";
         English["Profile_WorkoutPrefs_ExerciseCatalogUnavailable"] = "Reviewed exercise choices could not be loaded. Reconnect and reopen these preferences before saving.";
         English["Profile_WorkoutPrefs_EquipmentFullGym"] = "Full gym";
         English["Profile_WorkoutPrefs_EquipmentHome"] = "Dumbbells and bands";

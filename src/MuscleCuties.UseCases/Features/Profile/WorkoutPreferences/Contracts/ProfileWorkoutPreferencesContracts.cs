@@ -60,6 +60,11 @@ public static class WorkoutPreferencesConstraints
     public static IReadOnlyList<int> WeeklyFrequencyChoices() =>
         WorkoutPreferencesRule.WeeklyFrequencyChoices();
 
+    public static int? DefaultWeeklyFrequency(WorkoutActivityDto activityType, int availableWeekdays) =>
+        TryToCore(activityType, out var activity)
+            ? ActivityPreferenceDefaults.SessionsPerWeek(activity, availableWeekdays)
+            : null;
+
     public static bool IsValidRequestedWeeklyFrequency(int sessionsPerWeek) =>
         WorkoutPreferencesRule.IsValidRequestedWeeklyFrequency(sessionsPerWeek);
 

@@ -41,6 +41,18 @@ public static class ActivitySessionDurationRule
     public const int GentleRecoveryMaximumMinutes = 20;
     public const int GentleRecoveryIncrementMinutes = 5;
     public const int GentleRecoveryDefaultMinutes = 10;
+    public const int DemandingYogaMinimumMinutes = 20;
+    public const int DemandingYogaMaximumMinutes = 45;
+    public const int DemandingYogaDefaultMinutes = 20;
+    public const int YogaDurationMinutesDefault = GentleYogaDefaultMinutes;
+    public const int MobilityDurationMinutesDefault = GentleMobilityDefaultMinutes;
+    public const int GentleRecoveryDurationMinutesDefault = GentleRecoveryDefaultMinutes;
+    public const int DemandingYogaDurationMinutesDefault = DemandingYogaDefaultMinutes;
+
+    public const int RecoveryPolicySessionsPerWeek = 1;
+    public const int RecoveryMaxSessionsPerWeek = 2;
+    public const int RecoveryTargetMaxLimit = 2;
+
     public const int SwimmingMinimumMinutes = 25;
     public const int SwimmingMaximumMinutes = 30;
     public const int SwimmingIncrementMinutes = 5;
@@ -49,6 +61,11 @@ public static class ActivitySessionDurationRule
     public const int ValidIncrementRemainder = 0;
     public const int FirstChoiceIndex = 0;
     public const int MaximumSupportedDurationMinutes = int.MaxValue;
+
+    public const string YogaDurationNotSet = "YOGA_DURATION_NOT_SET";
+    public const string MobilityDurationNotSet = "MOBILITY_DURATION_NOT_SET";
+    public const string GentleRecoveryDurationNotSet = "GENTLE_RECOVERY_DURATION_NOT_SET";
+    public const string OtherDurationNotSet = "OTHER_DURATION_NOT_SET";
 
     private const int QuizChoiceThirtyMinutes = 1;
     private const int QuizChoiceFortyFiveMinutes = 2;
@@ -68,6 +85,13 @@ public static class ActivitySessionDurationRule
         GentleYogaMaximumMinutes,
         GentleYogaIncrementMinutes,
         GentleYogaDefaultMinutes,
+        false);
+
+    private static readonly ActivitySessionDurationPolicy DemandingYogaPolicy = new(
+        DemandingYogaMinimumMinutes,
+        DemandingYogaMaximumMinutes,
+        GentleYogaIncrementMinutes,
+        DemandingYogaDefaultMinutes,
         false);
 
     private static readonly ActivitySessionDurationPolicy GentleMobilityPolicy = new(
@@ -96,6 +120,15 @@ public static class ActivitySessionDurationRule
         WorkoutActivityType.HighVolumeStrength or
         WorkoutActivityType.StrengthHighIntensity;
 
+    public static bool IsCardioActivity(WorkoutActivityType activity) => activity is
+        WorkoutActivityType.Hiit or
+        WorkoutActivityType.Cycling or
+        WorkoutActivityType.Running or
+        WorkoutActivityType.Swimming or
+        WorkoutActivityType.Walking or
+        WorkoutActivityType.Rowing or
+        WorkoutActivityType.Elliptical;
+
     public static bool TryResolveStrengthQuizSessionDurationMinutes(int mappedValue, out int durationMinutes)
     {
         durationMinutes = mappedValue switch
@@ -115,38 +148,39 @@ public static class ActivitySessionDurationRule
             ? minutes
             : StandardDefaultMinutes;
 
-    public static ActivitySessionDurationPolicy? ForUserPreference(WorkoutActivityType activity) => activity switch
+    public static ActivitySessionDurationPolicy? ForUserPreference(WorkoutActivityType activity, bool isDemandingYoga = false) => activity switch
     {
         WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
             WorkoutActivityType.StrengthHighIntensity or WorkoutActivityType.Cycling or
             WorkoutActivityType.Running or WorkoutActivityType.Walking or WorkoutActivityType.Rowing or
             WorkoutActivityType.Elliptical => StandardPolicy,
         WorkoutActivityType.Swimming => SwimmingPolicy,
-        WorkoutActivityType.Yoga => GentleYogaPolicy,
+        WorkoutActivityType.Yoga => isDemandingYoga ? DemandingYogaPolicy : GentleYogaPolicy,
         WorkoutActivityType.Mobility => GentleMobilityPolicy,
         WorkoutActivityType.GentleRecovery => GentleRecoveryPolicy,
         _ => null
     };
 
     public static bool RequiresUserPreference(WorkoutActivityType activity) =>
-        ForUserPreference(activity) is not null;
+        IsStrengthActivity(activity);
 
-    public static bool RequiresExplicitChoice(WorkoutActivityType activity) =>
-        ForUserPreference(activity)?.RequiresExplicitChoice == true;
+    public static bool RequiresExplicitChoice(WorkoutActivityType activity, bool isDemandingYoga = false) =>
+        ForUserPreference(activity, isDemandingYoga)?.RequiresExplicitChoice == true;
 
-    public static int? DefaultMinutesFor(WorkoutActivityType activity) =>
-        ForUserPreference(activity)?.DefaultMinutes;
+    public static int? DefaultMinutesFor(WorkoutActivityType activity, bool isDemandingYoga = false) =>
+        ForUserPreference(activity, isDemandingYoga)?.DefaultMinutes;
 
-    public static bool IsValidSelection(WorkoutActivityType activity, int minutes)
+    public static bool IsValidSelection(WorkoutActivityType activity, int minutes, bool isDemandingYoga = false)
     {
-        return GetSelectionIssue(activity, minutes) is null;
+        return GetSelectionIssue(activity, minutes, isDemandingYoga) is null;
     }
 
     public static ActivitySessionDurationSelectionIssue? GetSelectionIssue(
         WorkoutActivityType activity,
-        int minutes)
+        int minutes,
+        bool isDemandingYoga = false)
     {
-        var policy = ForUserPreference(activity);
+        var policy = ForUserPreference(activity, isDemandingYoga);
         if (policy is null)
             return ActivitySessionDurationSelectionIssue.UnsupportedActivity;
         if (minutes < policy.MinimumMinutes)
@@ -170,10 +204,22 @@ public static class ActivitySessionDurationRule
 
     public static IReadOnlyList<int> ChoicesFor(WorkoutActivityType activity)
     {
+        if (activity == WorkoutActivityType.Yoga)
+            return ChoicesForPolicy(GentleYogaPolicy)
+                .Concat(ChoicesForPolicy(DemandingYogaPolicy))
+                .Distinct()
+                .OrderBy(minutes => minutes)
+                .ToArray();
+
         var policy = ForUserPreference(activity);
         if (policy is null || policy.RequiresExplicitChoice)
             return [];
 
+        return ChoicesForPolicy(policy);
+    }
+
+    private static int[] ChoicesForPolicy(ActivitySessionDurationPolicy policy)
+    {
         var count = (policy.MaximumMinutes - policy.MinimumMinutes) / policy.IncrementMinutes;
         return Enumerable.Range(FirstChoiceIndex, count + 1)
             .Select(index => policy.MinimumMinutes + index * policy.IncrementMinutes)

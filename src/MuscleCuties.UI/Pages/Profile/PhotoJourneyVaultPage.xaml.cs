@@ -10,14 +10,6 @@ public partial class PhotoJourneyVaultPage : ContentPage
     public const int ComparisonSelectionRow = 3;
     public const int ComparisonSecondColumnIndex = 1;
     public const int ComparisonOverlayPageRow = 1;
-    public const double ComparisonSelectionColumnSpacing = 8d;
-    public const double ComparisonOverlayMaximumWidth = 640d;
-    public const double ComparisonContentSpacing = 12d;
-    public const double ComparisonImageHeight = 280d;
-    public const double ComparisonImageColumnSpacing = 2d;
-    public const double EmptyStateMinimumHeight = 220d;
-    public static Thickness ComparisonOverlayMargin => new(20d);
-    public static Thickness ComparisonOverlayPadding => new(16d);
     private const double MinimumComparisonFraction = 0.1d;
     private const double MaximumComparisonFraction = 0.9d;
     private const double InitialComparisonFraction = 0.5d;

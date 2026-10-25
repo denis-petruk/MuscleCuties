@@ -3,6 +3,28 @@
 
 The active roadmap is maintained at [docs/v1/ROADMAP.md](docs/v1/ROADMAP.md).
 
+- **2026-10-25 next generation step:** Implement same-day scheduling using the saved strength session length as the strength-only limit; allow cycling and gentle yoga on a strength day without charging their minutes to that limit, subject to existing hard-day rules. Then verify the full preview and Apply flow with authenticated data. Remaining discussion: resolve actual yoga duration/evidence and HVS history fallback, inspect reviewed catalog coverage, and decide any safe behavior if those inputs remain unavailable before deployment.
+
+- **2026-10-25 mixed-plan decision:** Apply requires every selected activity. Frequency can decrease to fit weekdays, with a hard floor of two strength sessions; a calendar that cannot fit all minimums remains limited. Verify the signed-in preview and Apply path, inspect catalog coverage and saved yoga evidence, then validate current staging backend parity before deployment.
+
+- **2026-10-25 generation follow-up:** Verify the new bottom sheet on a signed-in narrow iPhone in EN/RU, including long content and Apply navigation. Decide whether a proposal with blocked selected activities may apply its feasible sessions or must remain all-or-nothing. Then verify yoga content/duration, HVS history fallback, reviewed strength catalog coverage, and the current staging backend before an end-to-end generate/apply check.
+
+- **2026-10-25 plan generator hierarchy:** Replaced the strength-template picker with three direct selectable cards, added a four-week saved-session strip, collapsed manual history/timing edits behind one control, and pinned Preview to the safe-area footer. Core tests pass 633/633 and the iOS simulator-architecture build passes with 0 warnings/errors. Signed-in narrow-iPhone visual review remains open because CoreSimulatorService was unavailable.
+
+- **2026-10-25 XAML startup follow-up:** Runtime-reported `UiInsets20` static-resource lookup failure is fixed by placing style-consumed tokens before their styles. Static resource-order audit and iOS build are clean; retry runtime launch when CoreSimulatorService is available.
+
+- **2026-10-25 style follow-up:** Styling now lives in the shared `Styles.xaml` and `Colors.xaml` dictionaries, including the native privacy shield. The full iOS simulator build passes. Narrow signed-in visual verification remains open: Simulator exposes iPhone 17e, but menu activation fails with an accessibility error and `simctl` reports CoreSimulatorService connection refused; the existing signed-in simulator is iPhone 17 Pro Max.
+
+- **2026-10-25 shared retry follow-up:** On a signed-in simulator, verify the page error covers all page content, Retry shows progress, and a successful load dismisses it. Check that the installed Workout Preferences activity cards have no session fields.
+
+- **2026-10-25 duration follow-up:** Verify a signed-in plan preview shows calculated cycling and HIIT durations independently of the strength session length chosen during setup.
+
+- **2026-10-25 workout preference visual follow-up:** Check the query-first exercise search and picker-free activity cards on a signed-in iPhone alongside the weekday calendar selector.
+
+- **2026-10-25 weekday calendar follow-up:** Visually verify the new seven-column Workout Preferences weekday card on a signed-in simulator or device, especially the narrowest supported iPhone width and both languages.
+
+- **2026-10-25 profile and preview follow-up:** Optional activity durations and frequencies now share defaults across saved workout preferences and plan preview. Confirm preview cards and profile settings on an iOS simulator or device, including the reviewed-catalog and activity-eligibility limitation states; those checks must retain their real reasons.
+
 ## Quick Summary
 
 - **Owner-led completion audit (2026-10-25):** Latest backend deployed successfully (revision `423f463f-8959-4d59-b891-35022fd0c458`, matching package hash, HTTP 200 Healthy). Updated simulator app installed and opened. Continue from owner feedback, assigning each bounded fix to a separate local project chat using GPT-6 Luna with extra-high reasoning. Coordinate builds and simulator installs here; verify preview generation during the audit.
@@ -115,3 +137,5 @@ Verify the simplified Step 1 layout on an iPhone: measurements and activity type
 **Train status audit (2026-10-25):** Activity cards now use the selected week's dated schedule for completion state. Past unlogged sessions show “Not logged,” completed sessions show “Completed,” and future sessions show “Upcoming.” Verified in Weeks 1 and 2 on the signed-in simulator; iOS build and 544 Core tests passed. Continue the session logging/completion acceptance flow.
 
 **Workout and Today audit (2026-10-25):** Workout highlights now use a one-line 90-day subtitle and carry the recorded exercise name for the heaviest lift. Train's activity picker occupies a bottom sheet with loading/error/empty states; plan actions share one primary style. Daily check-in weight uses the Profile Setup field treatment. The Today check-in score circles are shown only for an available score. The plan-proposal endpoint returns structured preview limitations to the client. iOS build, 544 Core tests, and 80 Server tests pass. The new backend behavior and live exercise name require a reviewed Lambda deployment; visual review of the picker and weight field remains open while the shared simulator is in use.
+
+**Workout planning policy update (2026-10-25):** Core scheduling places beginner GS up to two times within actual availability, merges HVS-to-GS fallback with selected GS, and permits a single available day. Preview requires real availability and duration input and remains read-only. The archive summary cannot establish resistance-specific history, so user-entered activity history remains the supported input there. Explicit gentle and demanding yoga durations now pass through preferences to Core classification and validation. The 638 Core tests and unsigned iOS simulator build pass; check revised fallback and frequency copy on device before release.

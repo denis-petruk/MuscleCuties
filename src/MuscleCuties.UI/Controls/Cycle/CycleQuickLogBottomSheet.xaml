@@ -12,7 +12,7 @@
     IsOpen="{Binding IsQuickLogSheetVisible}">
 
     <Grid BackgroundColor="{StaticResource ModalScrim}">
-        <BoxView BackgroundColor="Transparent">
+        <BoxView BackgroundColor="{StaticResource Transparent}">
             <BoxView.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding CloseQuickLogSheetCommand}" />
             </BoxView.GestureRecognizers>
@@ -21,36 +21,36 @@
         <Border
             x:Name="SheetSurface"
             Style="{StaticResource AppBottomSheetSurface}"
-            Padding="0">
+            Padding="{StaticResource UiInsets0}">
             <Grid RowDefinitions="Auto, *, Auto">
 
                 <!-- Header (Flattened Grid) -->
                 <Grid RowDefinitions="Auto, Auto, Auto">
                     <BoxView
                         Grid.Row="0"
-                        WidthRequest="40"
-                        HeightRequest="4"
-                        CornerRadius="2"
+                        WidthRequest="{StaticResource UiDimension40}"
+                        HeightRequest="{StaticResource UiDimension4}"
+                        CornerRadius="{StaticResource UiCornerRadius2}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
                         HorizontalOptions="Center"
-                        Margin="0,10,0,10" />
+                        Margin="{StaticResource UiInsets0_10_0_10}" />
 
                     <Grid
                         Grid.Row="1"
                         ColumnDefinitions="*, Auto"
-                        Padding="20,0,20,12"
+                        Padding="{StaticResource UiInsets20_0_20_12}"
                         VerticalOptions="Center">
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="2">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
                             <Label
                                 Grid.Row="0"
                                 Text="{loc:LocalizedText Cycle_QuickLog_HeaderTitle}"
                                 Style="{StaticResource ModalTitle}"
-                                FontSize="20" />
+                                FontSize="{StaticResource UiFontSize20}" />
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding QuickLogDateText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource MutedLabel}"
-                                FontSize="13" />
+                                FontSize="{StaticResource UiFontSize13}" />
                         </Grid>
 
                         <Border
@@ -63,8 +63,8 @@
                             <Path
                                 Style="{StaticResource ModalCloseIcon}"
                                 Aspect="Uniform"
-                                WidthRequest="14"
-                                HeightRequest="14"
+                                WidthRequest="{StaticResource UiDimension14}"
+                                HeightRequest="{StaticResource UiDimension14}"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
                         </Border>
@@ -72,35 +72,35 @@
 
                     <BoxView
                         Grid.Row="2"
-                        HeightRequest="1"
+                        HeightRequest="{StaticResource UiDimension1}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                        Opacity="0.7" />
+                        Opacity="{StaticResource UiOpacityBackdrop}" />
                 </Grid>
 
                 <!-- Scrollable Form Body -->
                 <ScrollView Grid.Row="1">
-                    <VerticalStackLayout Padding="20,16,20,16" Spacing="20">
+                    <VerticalStackLayout Padding="{StaticResource UiInsets20_16_20_16}" Spacing="{StaticResource UiSpacing20}">
 
                         <!-- SECTION 1: Period Status (Flattened Grid) -->
                         <Label
                             Text="{loc:LocalizedText Cycle_QuickLog_LoadingSavedEntry}"
                             Style="{StaticResource CaptionLabel}"
                             IsVisible="{Binding IsQuickLogLoading}" />
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                             <Label
                                 Grid.Row="0"
                                 Text="{loc:LocalizedText Cycle_QuickLog_PeriodStatusSectionTitle}"
-                                FontSize="11"
-                                FontAttributes="Bold"
+                                FontSize="{StaticResource UiFontSize11}"
+                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
 
-                            <Grid Grid.Row="1" ColumnDefinitions="*, *" ColumnSpacing="12">
+                            <Grid Grid.Row="1" ColumnDefinitions="*, *" ColumnSpacing="{StaticResource UiSpaceCompact}">
                                 <!-- Period Started Toggle -->
                                 <Border
-                                    StrokeShape="RoundRectangle 14"
-                                    StrokeThickness="0"
-                                    HeightRequest="48"
-                                    Padding="12,0"
+                                    StrokeShape="{StaticResource UiRoundRectangleRadius14}"
+                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                    HeightRequest="{StaticResource UiDimension48}"
+                                    Padding="{StaticResource UiInsets12_0}"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                                     SemanticProperties.Description="{loc:LocalizedText Cycle_QuickLog_TogglePeriodStartedAccessibility}">
                                     <Border.GestureRecognizers>
@@ -114,24 +114,24 @@
                                             <Setter Property="BackgroundColor"
                                                     Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
                                             <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                            <Setter Property="StrokeThickness" Value="1.5" />
+                                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
                                         </DataTrigger>
                                     </Border.Triggers>
-                                    <HorizontalStackLayout Spacing="8" HorizontalOptions="Center"
+                                    <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center"
                                                            VerticalOptions="Center">
                                         <Path
                                             Data="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"
                                             Stroke="{StaticResource Primary}"
                                             Fill="{StaticResource Primary}"
-                                            StrokeThickness="1"
+                                            StrokeThickness="{StaticResource UiStrokeWidth1}"
                                             Aspect="Uniform"
-                                            WidthRequest="14"
-                                            HeightRequest="14"
+                                            WidthRequest="{StaticResource UiDimension14}"
+                                            HeightRequest="{StaticResource UiDimension14}"
                                             VerticalOptions="Center" />
                                         <Label
                                             Text="{loc:LocalizedText Cycle_QuickLog_PeriodStarted}"
-                                            FontSize="13"
-                                            FontAttributes="Bold"
+                                            FontSize="{StaticResource UiFontSize13}"
+                                            FontAttributes="{StaticResource UiFontAttributesBold}"
                                             VerticalOptions="Center">
                                             <Label.Triggers>
                                                 <DataTrigger
@@ -148,10 +148,10 @@
                                 <!-- Period Ended Toggle -->
                                 <Border
                                     Grid.Column="1"
-                                    StrokeShape="RoundRectangle 14"
-                                    StrokeThickness="0"
-                                    HeightRequest="48"
-                                    Padding="12,0"
+                                    StrokeShape="{StaticResource UiRoundRectangleRadius14}"
+                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                    HeightRequest="{StaticResource UiDimension48}"
+                                    Padding="{StaticResource UiInsets12_0}"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                                     SemanticProperties.Description="{loc:LocalizedText Cycle_QuickLog_TogglePeriodEndedAccessibility}">
                                     <Border.GestureRecognizers>
@@ -165,25 +165,25 @@
                                             <Setter Property="BackgroundColor"
                                                     Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
                                             <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                            <Setter Property="StrokeThickness" Value="1.5" />
+                                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
                                         </DataTrigger>
                                     </Border.Triggers>
-                                    <HorizontalStackLayout Spacing="8" HorizontalOptions="Center"
+                                    <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center"
                                                            VerticalOptions="Center">
                                         <Path
                                             Data="M5 13l4 4L19 7"
                                             Stroke="{StaticResource Primary}"
-                                            StrokeThickness="2"
+                                            StrokeThickness="{StaticResource UiStrokeWidth2}"
                                             StrokeLineCap="Round"
                                             StrokeLineJoin="Round"
                                             Aspect="Uniform"
-                                            WidthRequest="14"
-                                            HeightRequest="14"
+                                            WidthRequest="{StaticResource UiDimension14}"
+                                            HeightRequest="{StaticResource UiDimension14}"
                                             VerticalOptions="Center" />
                                         <Label
                                             Text="{loc:LocalizedText Cycle_QuickLog_PeriodEnded}"
-                                            FontSize="13"
-                                            FontAttributes="Bold"
+                                            FontSize="{StaticResource UiFontSize13}"
+                                            FontAttributes="{StaticResource UiFontAttributesBold}"
                                             VerticalOptions="Center">
                                             <Label.Triggers>
                                                 <DataTrigger
@@ -200,23 +200,23 @@
                         </Grid>
 
                         <!-- SECTION 2: Flow Intensity (Flattened Grid) -->
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                             <Label
                                 Grid.Row="0"
                                 Text="{loc:LocalizedText Cycle_QuickLog_FlowIntensitySectionTitle}"
-                                FontSize="11"
-                                FontAttributes="Bold"
+                                FontSize="{StaticResource UiFontSize11}"
+                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
 
-                            <Grid Grid.Row="1" ColumnDefinitions="*, *, *, *" ColumnSpacing="8"
+                            <Grid Grid.Row="1" ColumnDefinitions="*, *, *, *" ColumnSpacing="{StaticResource UiSpaceTight}"
                                   BindableLayout.ItemsSource="{Binding FlowOptions}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="cycleModels:FlowOptionItem">
                                         <Border
-                                            StrokeShape="RoundRectangle 12"
-                                            StrokeThickness="0"
-                                            HeightRequest="52"
-                                            Padding="4"
+                                            StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                            HeightRequest="{StaticResource UiDimension52}"
+                                            Padding="{StaticResource UiInsets4}"
                                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                                             SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_QuickLog_FlowIntensityFormat}">
                                             <Border.GestureRecognizers>
@@ -232,16 +232,16 @@
                                                     <Setter Property="BackgroundColor"
                                                             Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
                                                     <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                                    <Setter Property="StrokeThickness" Value="1.5" />
+                                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
                                                 </DataTrigger>
                                             </Border.Triggers>
-                                            <Grid RowDefinitions="Auto,Auto" RowSpacing="2" HorizontalOptions="Center"
+                                            <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}" HorizontalOptions="Center"
                                                   VerticalOptions="Center">
                                                 <Label
                                                     Grid.Row="0"
                                                     Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
-                                                    FontSize="13"
-                                                    FontAttributes="Bold"
+                                                    FontSize="{StaticResource UiFontSize13}"
+                                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                                     HorizontalOptions="Center">
                                                     <Label.Triggers>
                                                         <DataTrigger
@@ -258,8 +258,8 @@
                                                     Data="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"
                                                     Fill="{StaticResource Primary}"
                                                     Aspect="Uniform"
-                                                    WidthRequest="8"
-                                                    HeightRequest="8"
+                                                    WidthRequest="{StaticResource UiDimension8}"
+                                                    HeightRequest="{StaticResource UiDimension8}"
                                                     HorizontalOptions="Center"
                                                     IsVisible="{Binding IsSelected}" />
                                             </Grid>
@@ -270,12 +270,12 @@
                         </Grid>
 
                         <!-- SECTION 3: Symptoms (Flattened Grid) -->
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                             <Label
                                 Grid.Row="0"
                                 Text="{loc:LocalizedText Cycle_QuickLog_SymptomsSectionTitle}"
-                                FontSize="11"
-                                FontAttributes="Bold"
+                                FontSize="{StaticResource UiFontSize11}"
+                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
 
                             <FlexLayout
@@ -288,11 +288,11 @@
                                     <DataTemplate x:DataType="cycleModels:SymptomOptionItem">
                                         <Border
                                             FlexLayout.Basis="48%"
-                                            Margin="0,0,0,10"
-                                            StrokeShape="RoundRectangle 14"
-                                            StrokeThickness="0"
-                                            HeightRequest="50"
-                                            Padding="12,0"
+                                            Margin="{StaticResource UiInsets0_0_0_10}"
+                                            StrokeShape="{StaticResource UiRoundRectangleRadius14}"
+                                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                            HeightRequest="{StaticResource UiDimension50}"
+                                            Padding="{StaticResource UiInsets12_0}"
                                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                                             SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_QuickLog_SymptomFormat}">
                                             <Border.GestureRecognizers>
@@ -308,24 +308,24 @@
                                                     <Setter Property="BackgroundColor"
                                                             Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
                                                     <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                                    <Setter Property="StrokeThickness" Value="1.5" />
+                                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
                                                 </DataTrigger>
                                             </Border.Triggers>
-                                            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10"
+                                            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpacing10}"
                                                   VerticalOptions="Center">
                                                 <Path
                                                     Data="{Binding IconData, Converter={StaticResource StringToGeometryConverter}}"
                                                     Stroke="{StaticResource Primary}"
-                                                    StrokeThickness="1.8"
+                                                    StrokeThickness="{StaticResource UiStrokeWidth1_8}"
                                                     Aspect="Uniform"
-                                                    WidthRequest="16"
-                                                    HeightRequest="16"
+                                                    WidthRequest="{StaticResource UiDimension16}"
+                                                    HeightRequest="{StaticResource UiDimension16}"
                                                     VerticalOptions="Center" />
                                                 <Label
                                                     Grid.Column="1"
                                                     Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
-                                                    FontSize="13"
-                                                    FontAttributes="Bold"
+                                                    FontSize="{StaticResource UiFontSize13}"
+                                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                                     VerticalOptions="Center">
                                                     <Label.Triggers>
                                                         <DataTrigger
@@ -341,12 +341,12 @@
                                                     Grid.Column="2"
                                                     Data="M5 13l4 4L19 7"
                                                     Stroke="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}"
-                                                    StrokeThickness="2"
+                                                    StrokeThickness="{StaticResource UiStrokeWidth2}"
                                                     StrokeLineCap="Round"
                                                     StrokeLineJoin="Round"
                                                     Aspect="Uniform"
-                                                    WidthRequest="14"
-                                                    HeightRequest="14"
+                                                    WidthRequest="{StaticResource UiDimension14}"
+                                                    HeightRequest="{StaticResource UiDimension14}"
                                                     IsVisible="{Binding IsSelected}"
                                                     VerticalOptions="Center" />
                                             </Grid>
@@ -368,13 +368,13 @@
                 <!-- Footer Save Action -->
                 <Grid
                     Grid.Row="2"
-                    Padding="20,12,20,24">
+                    Padding="{StaticResource UiInsets20_12_20_24}">
                     <Button
                         Text="{loc:LocalizedText Cycle_QuickLog_SaveButton}"
                         Command="{Binding SaveQuickLogCommand}"
-                        HeightRequest="52"
-                        FontSize="15"
-                        FontAttributes="Bold" />
+                        HeightRequest="{StaticResource UiDimension52}"
+                        FontSize="{StaticResource UiFontSize15}"
+                        FontAttributes="{StaticResource UiFontAttributesBold}" />
                 </Grid>
 
             </Grid>

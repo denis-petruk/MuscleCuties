@@ -1,6 +1,8 @@
 using Microsoft.Maui.Graphics;
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using MuscleCuties.UI.Resources.Styles;
+
 namespace MuscleCuties.UI.Models.UI.Workout;
 
 public partial class WorkoutItem : ObservableObject
@@ -13,8 +15,8 @@ public partial class WorkoutItem : ObservableObject
     public int ExerciseCount { get; set; }
     public int ActivityCount { get; set; }
     public string DetailsText { get; set; } = string.Empty;
-    public Color ActivityBackground { get; set; } = Colors.Transparent;
-    public Color ActivityTextColor { get; set; } = Colors.Black;
+    public Color ActivityBackground { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
+    public Color ActivityTextColor { get; set; } = AppThemeResources.GetRequired<Color>("TextPrimary");
     public bool IsRestDay { get; set; }
     public string SessionProgressText { get; set; } = "Upcoming";
     public bool IsCompleted { get; set; }

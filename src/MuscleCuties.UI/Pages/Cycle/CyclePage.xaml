@@ -12,19 +12,16 @@
     x:DataType="vm:CycleViewModel"
     Shell.NavBarIsVisible="False">
 
-    <ContentPage.Resources>
-        <x:Double x:Key="CycleWellnessNoteFontSize">11</x:Double>
-    </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto, *">
         <Grid
-            Padding="{StaticResource PageHeaderPadding}"
+            Padding="{StaticResource UiInsets20_36_20_12}"
             ColumnDefinitions="*, Auto"
-            ColumnSpacing="12"
+            ColumnSpacing="{StaticResource UiSpaceCompact}"
             RowDefinitions="Auto, Auto"
-            RowSpacing="4"
+            RowSpacing="{StaticResource UiSpaceMicro}"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="{StaticResource PageContentMaxWidth}">
+            MaximumWidthRequest="{StaticResource UiDimension640}">
             <Label
                 Text="{Binding CurrentMonthLabel, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource Headline}" />
@@ -42,12 +39,12 @@
                 <Path
                     Data="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
                     Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                    StrokeThickness="1.5"
+                    StrokeThickness="{StaticResource UiStrokeWidth1_5}"
                     StrokeLineCap="Round"
                     StrokeLineJoin="Round"
                     Aspect="Uniform"
-                    WidthRequest="18"
-                    HeightRequest="18"
+                    WidthRequest="{StaticResource UiDimension18}"
+                    HeightRequest="{StaticResource UiDimension18}"
                     HorizontalOptions="Center"
                     VerticalOptions="Center" />
             </Border>
@@ -55,10 +52,10 @@
 
         <ScrollView Grid.Row="1">
             <VerticalStackLayout
-                Padding="20,8,20,32"
-                Spacing="16"
+                Padding="{StaticResource UiInsets20_8_20_32}"
+                Spacing="{StaticResource UiSpaceControl}"
                 HorizontalOptions="Fill"
-                MaximumWidthRequest="{StaticResource PageContentMaxWidth}">
+                MaximumWidthRequest="{StaticResource UiDimension640}">
                 <toolkit:LazyView x:Name="HeroCardLazy"
                                   x:TypeArguments="cycleControls:CycleHeroCard" />
                 <toolkit:LazyView x:Name="CalendarCardLazy"
@@ -68,9 +65,9 @@
                 <Label
                     Text="{loc:LocalizedText Cycle_Page_MedicalDisclaimer}"
                     Style="{StaticResource CaptionLabel}"
-                    FontSize="{StaticResource CycleWellnessNoteFontSize}"
+                    FontSize="{StaticResource UiFontSize11}"
                     HorizontalTextAlignment="Center"
-                    Margin="0,8,0,0" />
+                    Margin="{StaticResource UiInsets0_8_0_0}" />
             </VerticalStackLayout>
         </ScrollView>
 

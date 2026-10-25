@@ -24,6 +24,28 @@ public sealed class WeeklyWorkoutPlanGeneratorRuleTests
     }
 
     [Fact]
+    public void Generate_One_Available_Day_Blocks_Plan_Instead_Of_Generating_One_Strength_Session()
+    {
+        var input = new WeeklyPlanGeneratorInput(
+            Goal: UserGoal.Strength,
+            GoalPace: null,
+            ProfileExperience: TrainingExperienceLevel.Beginner,
+            PreferredActivities: [WorkoutActivityType.GeneralStrength, WorkoutActivityType.Cycling],
+            GeneralDaysPerWeek: GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
+            PreferredSessionLengthMinutes: WeeklyWorkoutPlanGeneratorRule.DefaultPreferredSessionLengthMinutes,
+            AvailableEquipment: Equipment.FullGym,
+            StrengthStyle: SessionTrainingStyle.General,
+            AvailableWeekdays: [DayOfWeek.Monday],
+            ApplyChanges: true);
+
+        var result = WeeklyWorkoutPlanGeneratorRule.Generate(input);
+
+        Assert.True(result.HasSafetyBlock);
+        Assert.Empty(result.Sessions);
+        Assert.False(result.PrecedenceSummary.IsApplied);
+    }
+
+    [Fact]
     public void Generate_ThreeDaysStrength_BuildsFittedSessionsAndVolume()
     {
         var input = new WeeklyPlanGeneratorInput(
@@ -121,7 +143,8 @@ public sealed class WeeklyWorkoutPlanGeneratorRuleTests
             AvailableEquipment: Equipment.FullGym,
             StrengthStyle: SessionTrainingStyle.General,
             AvailableWeekdays: [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday],
-            RecoveryHistory: recoveryHistory);
+            RecoveryHistory: recoveryHistory,
+            EnableAutomaticDeload: true);
 
         var result = WeeklyWorkoutPlanGeneratorRule.Generate(input);
 
@@ -131,6 +154,39 @@ public sealed class WeeklyWorkoutPlanGeneratorRuleTests
         {
             Assert.Equal(ProgressionAction.Regress, e.ProgressionAction);
             Assert.Contains("Deload active", e.ProgressionRationale);
+        });
+    }
+
+    [Fact]
+    public void Generate_DeloadRemainsInactive_WhenNotExplicitlyEnabled()
+    {
+        var recoveryHistory = new List<WeeklyPerformanceAndRecoveryRecord>
+        {
+            new(WeekIndex: 1, CompoundUnderperformed: true, ExplicitPoorRecovery: true),
+            new(WeekIndex: 2, CompoundUnderperformed: true, ExplicitPoorRecovery: true)
+        };
+
+        var input = new WeeklyPlanGeneratorInput(
+            Goal: UserGoal.Strength,
+            GoalPace: null,
+            ProfileExperience: TrainingExperienceLevel.Intermediate,
+            PreferredActivities: [WorkoutActivityType.GeneralStrength],
+            GeneralDaysPerWeek: 3,
+            PreferredSessionLengthMinutes: 60,
+            AvailableEquipment: Equipment.FullGym,
+            StrengthStyle: SessionTrainingStyle.General,
+            AvailableWeekdays: [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday],
+            RecoveryHistory: recoveryHistory,
+            EnableAutomaticDeload: false);
+
+        var result = WeeklyWorkoutPlanGeneratorRule.Generate(input);
+
+        // Deload trigger is recognized in summary, but NOT applied to sessions when inactive
+        Assert.True(result.DeloadSummary.IsDeloadTriggered);
+        Assert.All(result.Sessions.SelectMany(s => s.Exercises), e =>
+        {
+            Assert.NotEqual(ProgressionAction.Regress, e.ProgressionAction);
+            Assert.DoesNotContain("Deload active", e.ProgressionRationale);
         });
     }
 
@@ -223,5 +279,33 @@ public sealed class WeeklyWorkoutPlanGeneratorRuleTests
         Assert.NotEmpty(response.Sessions);
         Assert.NotEmpty(response.RuleTrace);
         Assert.True(response.IsPrecedenceApplied);
+    }
+
+    [Fact]
+    public void Generate_CardioSessions_DoNotUseUserPickedStrengthLength_GenerateOwnDuration()
+    {
+        var input = new WeeklyPlanGeneratorInput(
+            Goal: UserGoal.FatLoss,
+            GoalPace: "Moderate",
+            ProfileExperience: TrainingExperienceLevel.Beginner,
+            PreferredActivities: [WorkoutActivityType.GeneralStrength, WorkoutActivityType.Running, WorkoutActivityType.Cycling],
+            GeneralDaysPerWeek: 2,
+            PreferredSessionLengthMinutes: 75,
+            AvailableEquipment: Equipment.FullGym,
+            StrengthStyle: SessionTrainingStyle.General,
+            AvailableWeekdays: [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday, DayOfWeek.Saturday],
+            WarmupMinutes: 5,
+            CooldownMinutes: 5);
+
+        var result = WeeklyWorkoutPlanGeneratorRule.Generate(input);
+
+        var runningSession = result.Sessions.FirstOrDefault(s => s.Activity == WorkoutActivityType.Running);
+        var cyclingSession = result.Sessions.FirstOrDefault(s => s.Activity == WorkoutActivityType.Cycling);
+
+        Assert.NotNull(runningSession);
+        Assert.NotNull(cyclingSession);
+        // Beginner continuous cardio duration is 20 minutes (10 warmup/cooldown + 10 main), NOT 75 minutes
+        Assert.Equal(20, runningSession.EstimatedMinutes);
+        Assert.Equal(20, cyclingSession.EstimatedMinutes);
     }
 }

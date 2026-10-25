@@ -14,7 +14,9 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
     private readonly Func<Task> _navigateAfterSaveAsync;
     private readonly IProfileRefreshNotifier _refreshNotifier;
     private readonly IProfileNutritionSettingsUseCase _useCase;
-    [ObservableProperty] private bool _areAdvancedSettingsVisible;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AdvancedSettingsButtonText))]
+    private bool _areAdvancedSettingsVisible;
     [ObservableProperty] private string _calciumGoal = string.Empty;
     [ObservableProperty] private string _caloriesGoal = string.Empty;
     [ObservableProperty] private string _carbsGoal = string.Empty;
@@ -59,11 +61,11 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
         BackCommand = new AsyncRelayCommand(navigateBackAsync);
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
-        ToggleAdvancedSettingsCommand = new RelayCommand(ToggleAdvancedSettings);
         ToggleVegetarianCommand = new RelayCommand(ToggleVegetarian);
         ToggleVeganCommand = new RelayCommand(ToggleVegan);
         ToggleGlutenFreeCommand = new RelayCommand(ToggleGlutenFree);
         ToggleLactoseFreeCommand = new RelayCommand(ToggleLactoseFree);
+        ToggleAdvancedSettingsCommand = new RelayCommand(ToggleAdvancedSettings);
         SelectedGoalOption = GoalOptions.First(option => option.Value == Goal);
         SelectedWeightGoalPaceOption = WeightGoalPaceOptions.First(option => option.Value == WeightGoalPace);
     }
@@ -85,8 +87,8 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
     public bool IsGoalPaceVisible => Goal is UserGoal.FatLoss or UserGoal.Strength;
 
     public string AdvancedSettingsButtonText => AreAdvancedSettingsVisible
-        ? "Hide advanced settings"
-        : "Advanced settings";
+        ? "Profile_NutritionSettings_HideAdvancedSettings"
+        : "Profile_NutritionSettings_AdvancedSettings";
 
     public AsyncRelayCommand BackCommand { get; }
     public AsyncRelayCommand LoadDataCommand { get; }
@@ -131,7 +133,6 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
             ApplyGoals(_hasSavedCustomGoals
                 ? _useCase.MergeGoals(savedGoals, calculatedGoals)
                 : calculatedGoals);
-            AreAdvancedSettingsVisible = false;
         }
         finally
         {
@@ -152,9 +153,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
                 return;
             }
 
-            NutritionGoalsDto? editedGoals = null;
-            if (AreAdvancedSettingsVisible || _hasSavedCustomGoals)
-                editedGoals = BuildGoals();
+            NutritionGoalsDto? editedGoals = BuildGoals();
 
             var saved = await _useCase.SaveAsync(new NutritionSettingsSaveDto(
                 _loadedProfile, CurrentSelection(), editedGoals));
@@ -208,15 +207,11 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
         return string.Join(",", tags);
     }
 
-    private void ToggleAdvancedSettings()
-    {
-        AreAdvancedSettingsVisible = !AreAdvancedSettingsVisible;
-    }
-
     private void ToggleVegetarian() => IsVegetarian = !IsVegetarian;
     private void ToggleVegan() => IsVegan = !IsVegan;
     private void ToggleGlutenFree() => IsGlutenFree = !IsGlutenFree;
     private void ToggleLactoseFree() => IsLactoseFree = !IsLactoseFree;
+    private void ToggleAdvancedSettings() => AreAdvancedSettingsVisible = !AreAdvancedSettingsVisible;
 
     private void ApplyGoals(NutritionGoalsDto goals)
     {
@@ -390,11 +385,6 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
     {
         if (value is not null && WeightGoalPace != value.Value)
             WeightGoalPace = value.Value;
-    }
-
-    partial void OnAreAdvancedSettingsVisibleChanged(bool value)
-    {
-        OnPropertyChanged(nameof(AdvancedSettingsButtonText));
     }
 
     partial void OnCaloriesGoalChanged(string value)

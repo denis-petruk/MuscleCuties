@@ -10,43 +10,35 @@
     x:DataType="vm:CycleViewModel"
     SemanticProperties.Description="{loc:LocalizedText Cycle_PhaseExplorer_CarouselAccessibility}">
 
-    <ContentView.Resources>
-        <Thickness x:Key="CyclePhaseExplorerPadding">16</Thickness>
-        <x:Double x:Key="CyclePhaseRowSpacing">6</x:Double>
-        <x:Double x:Key="CyclePhaseHeaderSpacing">10</x:Double>
-        <x:Double x:Key="CyclePhaseRowMinimumHeight">52</x:Double>
-        <Thickness x:Key="CyclePhaseRowPadding">12,8</Thickness>
-        <x:Double x:Key="CyclePhaseIconSize">28</x:Double>
-    </ContentView.Resources>
 
-    <Border Style="{StaticResource CardPrimary}" Padding="{StaticResource CyclePhaseExplorerPadding}"
-            StrokeThickness="0">
-    <Grid RowDefinitions="Auto, Auto" RowSpacing="{StaticResource CyclePhaseHeaderSpacing}">
+    <Border Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets16}"
+            StrokeThickness="{StaticResource UiStrokeWidth0}">
+    <Grid RowDefinitions="Auto, Auto" RowSpacing="{StaticResource UiSpacing10}">
 
         <!-- Header -->
-        <Grid ColumnDefinitions="*, Auto" Margin="2,0">
+        <Grid ColumnDefinitions="*, Auto" Margin="{StaticResource UiInsets2_0}">
             <Label
                 Text="{loc:LocalizedText Cycle_PhaseExplorer_SectionTitle}"
                 Style="{StaticResource SectionTitle}"
-                FontSize="17"
-                FontAttributes="Bold" />
+                FontSize="{StaticResource UiFontSize17}"
+                FontAttributes="{StaticResource UiFontAttributesBold}" />
         </Grid>
 
         <!-- Four phase rows -->
             <VerticalStackLayout
                 Grid.Row="1"
-                Spacing="{StaticResource CyclePhaseRowSpacing}"
+                Spacing="{StaticResource UiSpacing6}"
                 BindableLayout.ItemsSource="{Binding PhaseExplorerPills}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="cycleModels:PhaseExplorerPillItem">
                         <Border
-                            MinimumHeightRequest="{StaticResource CyclePhaseRowMinimumHeight}"
+                            MinimumHeightRequest="{StaticResource UiDimension52}"
                             HorizontalOptions="Fill"
-                            StrokeShape="RoundRectangle 16"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius16}"
                             BackgroundColor="{Binding BackgroundColor}"
                             Stroke="{Binding AccentColor}"
-                            StrokeThickness="0"
-                            Padding="{StaticResource CyclePhaseRowPadding}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            Padding="{StaticResource UiInsets12_8}"
                             SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseExplorer_ExplorePhaseFormat}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer
@@ -54,31 +46,31 @@
                                     CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
 
-                            <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12" VerticalOptions="Center">
+                            <Grid ColumnDefinitions="Auto, *" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <Image
                                     Source="{Binding IconSource}"
-                                    WidthRequest="{StaticResource CyclePhaseIconSize}"
-                                    HeightRequest="{StaticResource CyclePhaseIconSize}"
+                                    WidthRequest="{StaticResource UiDimension28}"
+                                    HeightRequest="{StaticResource UiDimension28}"
                                     Aspect="AspectFit"
                                     VerticalOptions="Center" />
 
                                 <Grid Grid.Column="1" ColumnDefinitions="*, Auto" VerticalOptions="Center">
                                         <Label
                                             Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
-                                            FontSize="15"
-                                            FontAttributes="Bold"
+                                            FontSize="{StaticResource UiFontSize15}"
+                                            FontAttributes="{StaticResource UiFontAttributesBold}"
                                             TextColor="{Binding TextColor}" />
                                         <Border
                                             Grid.Column="1"
                                             IsVisible="{Binding IsActivePhase}"
                                             BackgroundColor="{Binding AccentColor}"
-                                            StrokeShape="RoundRectangle 6"
-                                            StrokeThickness="0"
-                                            Padding="4,1">
+                                            StrokeShape="{StaticResource UiRoundRectangleRadius6}"
+                                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                            Padding="{StaticResource UiInsets4_1}">
                                             <Label
                                                 Text="{loc:LocalizedText Cycle_PhaseExplorer_NowBadge}"
-                                                FontSize="11"
-                                                FontAttributes="Bold"
+                                                FontSize="{StaticResource UiFontSize11}"
+                                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                                 TextColor="{StaticResource White}" />
                                         </Border>
                                 </Grid>

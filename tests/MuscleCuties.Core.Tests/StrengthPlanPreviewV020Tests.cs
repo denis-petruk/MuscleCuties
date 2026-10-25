@@ -14,6 +14,7 @@ public sealed class StrengthPlanPreviewV020Tests
     private const int NoWarmupOrCooldownMinutes = 0;
     private const int HighIntensitySessionsPerWeek =
         ActivityPrescriptionRule.StrengthHighIntensityMaximumSessionsPerWeekInitially;
+    private const int ExpectedSavedProposalCount = 1;
     private const string MixedScheduleIncompleteReason = "MixedActivityScheduleIncomplete";
     private static readonly DateOnly LocalDate = new(2026, 10, 23);
 
@@ -28,17 +29,18 @@ public sealed class StrengthPlanPreviewV020Tests
         var second = await useCase.ExecuteAsync(Guid.NewGuid(), request);
 
         Assert.Equal("Feasible", first.Status);
-        Assert.Single(first.Sessions);
+        Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek, first.Sessions.Count);
         Assert.Equal([101, 102, 103, 104], first.Sessions[0].Slots
             .Where(slot => slot.IsRequired).Select(slot => slot.ExerciseId));
         Assert.Equal(first.Sessions[0].Slots.Select(slot => slot.ExerciseId),
             second.Sessions[0].Slots.Select(slot => slot.ExerciseId));
         Assert.True(first.Sessions[0].EstimatedMinutes > 0);
-        Assert.Contains("OneDayFullBodyHasLimitedWeeklyCoverage", first.AdvisoryCodes);
+        Assert.DoesNotContain("OneDayFullBodyHasLimitedWeeklyCoverage", first.AdvisoryCodes);
         Assert.NotNull(first.MixedActivitySchedule);
         Assert.Equal(first.MixedActivitySchedule!.Sessions
                 .Where(session => session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength)
                 .Select(session => (DayOfWeek?)session.Weekday)
+                .Take(first.Sessions.Count)
                 .ToArray(),
             first.Sessions.Select(session => session.PlannedWeekday).ToArray());
     }
@@ -55,12 +57,11 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
-    public async Task Missing_Flexible_Activity_Frequency_Limits_The_Mixed_Plan_Without_Losing_Strength_Preview()
+    public async Task Missing_Flexible_Activity_Preferences_Use_Defaults_And_Keep_Strength_Preview()
     {
         var profile = Profile();
         var activities = profile.SelectedActivityTypes!.Append((int)WorkoutActivityType.Yoga).ToHashSet();
         var durations = profile.ActivitySessionDurationsMinutes!.ToDictionary(pair => pair.Key, pair => pair.Value);
-        durations[(int)WorkoutActivityType.Yoga] = ActivitySessionDurationRule.GentleYogaDefaultMinutes;
         var source = new Source(profile with
         {
             SelectedActivityTypes = activities,
@@ -77,13 +78,160 @@ public sealed class StrengthPlanPreviewV020Tests
 
         var result = await new PreviewStrengthPlanV020UseCase(source).ExecuteAsync(Guid.NewGuid(), request);
 
-        Assert.Equal("Limited", result.Status);
-        Assert.Single(result.Sessions);
-        Assert.Contains(MixedScheduleIncompleteReason, result.LimitationCodes);
+        Assert.Equal("Feasible", result.Status);
+        Assert.DoesNotContain(MixedScheduleIncompleteReason, result.LimitationCodes);
+        Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek, result.Sessions.Count);
         var yogaDecision = Assert.Single(result.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Yoga);
-        Assert.Equal("Omitted", yogaDecision.Disposition);
-        Assert.Contains("ActivityFrequencyPreferenceMissing", yogaDecision.ReasonCodes);
+        Assert.Equal("Scheduled", yogaDecision.Disposition);
+        Assert.NotNull(yogaDecision.PolicySessionsPerWeek);
+        Assert.NotNull(yogaDecision.TargetSessionsPerWeek);
+        Assert.Equal(1, yogaDecision.ScheduledSessionsPerWeek);
+        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
+            yogaDecision.ReasonCodes);
+    }
+
+    [Fact]
+    public async Task Mixed_Plan_Reduces_Optional_Frequency_But_Requires_Every_Activity_And_Two_Strength_Days()
+    {
+        var profile = Profile();
+        var selected = profile.SelectedActivityTypes!
+            .Concat([(int)WorkoutActivityType.Cycling, (int)WorkoutActivityType.Yoga])
+            .ToHashSet();
+        var fourDays = new HashSet<DayOfWeek>
+        {
+            DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Thursday, DayOfWeek.Saturday
+        };
+        var request = Request() with
+        {
+            ActivityEligibilityEvidence =
+            [
+                new ActivityEligibilityInputV020(WorkoutActivityDto.Yoga,
+                    IsDemandingYogaContent: false)
+            ]
+        };
+        var store = new ProposalStore();
+        var ready = new CreateStrengthPlanProposalV020UseCase(
+            new PreviewStrengthPlanV020UseCase(new Source(profile with
+            {
+                SelectedActivityTypes = selected,
+                AvailableWeekdays = fourDays
+            })), store);
+
+        var proposal = await ready.ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.True(proposal.IsPersisted);
+        Assert.Equal("Feasible", proposal.Preview.Status);
+        Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
+            proposal.Preview.MixedActivitySchedule!.Sessions.Count(session =>
+                session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength));
+        Assert.Contains(proposal.Preview.MixedActivitySchedule.Sessions, session =>
+            session.ActivityTypeId == (int)WorkoutActivityType.Cycling);
+        Assert.Contains(proposal.Preview.MixedActivitySchedule.Sessions, session =>
+            session.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+        Assert.Equal(ExpectedSavedProposalCount, store.SaveCount);
+
+        var tooFewDays = new CreateStrengthPlanProposalV020UseCase(
+            new PreviewStrengthPlanV020UseCase(new Source(profile with
+            {
+                SelectedActivityTypes = selected,
+                AvailableWeekdays = new HashSet<DayOfWeek>
+                {
+                    DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday
+                }
+            })), store);
+        var limited = await tooFewDays.ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.False(limited.IsPersisted);
+        Assert.Equal("Limited", limited.Preview.Status);
+        Assert.Contains(MixedScheduleIncompleteReason, limited.Preview.LimitationCodes);
+        Assert.Equal(ExpectedSavedProposalCount, store.SaveCount);
+    }
+
+    [Fact]
+    public async Task Missing_Demanding_Yoga_Duration_Uses_Twenty_Minutes_After_Classification()
+    {
+        var profile = Profile();
+        var selected = profile.SelectedActivityTypes!.Append((int)WorkoutActivityType.Yoga).ToHashSet();
+        var source = new Source(profile with { SelectedActivityTypes = selected });
+        var request = Request() with
+        {
+            ActivityEligibilityEvidence =
+            [
+                new ActivityEligibilityInputV020(WorkoutActivityDto.Yoga,
+                    IsDemandingYogaContent: true)
+            ]
+        };
+
+        var result = await new PreviewStrengthPlanV020UseCase(source).ExecuteAsync(Guid.NewGuid(), request);
+
+        var yoga = Assert.Single(result.MixedActivitySchedule!.Sessions,
+            session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+        Assert.Equal(ActivitySessionDurationRule.DemandingYogaDurationMinutesDefault, yoga.DurationMinutes);
+        Assert.True(yoga.IsHardSession);
+    }
+
+    [Fact]
+    public async Task Explicit_Invalid_Demanding_Yoga_Duration_Is_Not_Defaulted()
+    {
+        var profile = Profile();
+        var selected = profile.SelectedActivityTypes!.Append((int)WorkoutActivityType.Yoga).ToHashSet();
+        var durations = profile.ActivitySessionDurationsMinutes!.ToDictionary(pair => pair.Key, pair => pair.Value);
+        durations[(int)WorkoutActivityType.Yoga] = ActivitySessionDurationRule.YogaDurationMinutesDefault;
+        var source = new Source(profile with
+        {
+            SelectedActivityTypes = selected,
+            ActivitySessionDurationsMinutes = durations
+        });
+        var request = Request() with
+        {
+            ActivityEligibilityEvidence =
+            [
+                new ActivityEligibilityInputV020(WorkoutActivityDto.Yoga,
+                    IsDemandingYogaContent: true)
+            ]
+        };
+
+        var result = await new PreviewStrengthPlanV020UseCase(source).ExecuteAsync(Guid.NewGuid(), request);
+
+        var yoga = Assert.Single(result.MixedActivitySchedule!.Activities,
+            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+        Assert.Equal("Blocked", yoga.Disposition);
+        Assert.Contains(MixedActivityWeekScheduleRule.SessionDurationOutsideSavedPreferenceRange,
+            yoga.ReasonCodes);
+        Assert.DoesNotContain(result.MixedActivitySchedule.Sessions,
+            session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+    }
+
+    [Fact]
+    public async Task Explicit_Valid_Demanding_Yoga_Duration_Reaches_Scheduler()
+    {
+        var profile = Profile();
+        var selected = profile.SelectedActivityTypes!.Append((int)WorkoutActivityType.Yoga).ToHashSet();
+        var duration = ActivitySessionDurationRule.DemandingYogaMinimumMinutes +
+            ActivitySessionDurationRule.GentleYogaMinimumMinutes;
+        var durations = profile.ActivitySessionDurationsMinutes!.ToDictionary(pair => pair.Key, pair => pair.Value);
+        durations[(int)WorkoutActivityType.Yoga] = duration;
+        var source = new Source(profile with
+        {
+            SelectedActivityTypes = selected,
+            ActivitySessionDurationsMinutes = durations
+        });
+        var request = Request() with
+        {
+            ActivityEligibilityEvidence =
+            [
+                new ActivityEligibilityInputV020(WorkoutActivityDto.Yoga,
+                    IsDemandingYogaContent: true)
+            ]
+        };
+
+        var result = await new PreviewStrengthPlanV020UseCase(source).ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek, result.Sessions.Count);
+        Assert.Contains(result.MixedActivitySchedule!.Sessions,
+            session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga &&
+                       session.DurationMinutes == duration && session.IsHardSession);
     }
 
     [Fact]
@@ -102,10 +250,13 @@ public sealed class StrengthPlanPreviewV020Tests
         var result = await new PreviewStrengthPlanV020UseCase(source).ExecuteAsync(Guid.NewGuid(), Request());
 
         Assert.Equal("Feasible", result.Status);
+        Assert.DoesNotContain(MixedScheduleIncompleteReason, result.LimitationCodes);
         var walkingDecision = Assert.Single(result.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Walking);
         Assert.Equal("Scheduled", walkingDecision.Disposition);
-        Assert.Equal(2, walkingDecision.ScheduledSessionsPerWeek);
+        Assert.Equal(1, walkingDecision.ScheduledSessionsPerWeek);
+        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
+            walkingDecision.ReasonCodes);
     }
 
     [Theory]
@@ -248,13 +399,13 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
-    public async Task Preview_Succeeds_When_Profile_Source_Has_Missing_Weekdays_And_Unselected_Activity()
+    public async Task Preview_Reports_Missing_Weekdays_Without_Inventing_Availability()
     {
         var profile = Profile() with
         {
             AvailableWeekdays = null,
             SelectedActivityTypes = null,
-            ActivitySessionDurationsMinutes = null
+            ActivitySessionDurationsMinutes = Profile().ActivitySessionDurationsMinutes
         };
         var useCase = new PreviewStrengthPlanV020UseCase(new Source(profile));
 
@@ -263,8 +414,9 @@ public sealed class StrengthPlanPreviewV020Tests
             AvailableWeekdays = null
         });
 
-        Assert.Equal("Feasible", result.Status);
-        Assert.Single(result.Sessions);
+        Assert.Equal("Limited", result.Status);
+        Assert.Contains(StrengthPlanPreviewRule.WeekdaysMissingCode, result.LimitationCodes);
+        Assert.Empty(result.Sessions);
     }
 
     private static StrengthPlanPreviewRequestV020 Request() => new(
@@ -324,9 +476,9 @@ public sealed class StrengthPlanPreviewV020Tests
             Entry(103, MovementPattern.HorizontalPush),
             Entry(104, MovementPattern.HorizontalPull)
         };
-        var template = StrengthTemplateCatalog.ForSchedule(1).Single();
-        var allowed = template.Slots.Where(slot => slot.IsRequired)
-            .Select((slot, index) => (Key: $"{template.TemplateId}|{slot.SlotId}", Id: 101 + index))
+        var templates = StrengthTemplateCatalog.ForSchedule(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek);
+        var allowed = templates.SelectMany(template => template.Slots.Where(slot => slot.IsRequired)
+                .Select((slot, index) => (Key: $"{template.TemplateId}|{slot.SlotId}", Id: 101 + index)))
             .ToDictionary(item => item.Key,
                 item => (IReadOnlySet<int>)new HashSet<int> { item.Id });
         var conditions = allowed.ToDictionary(item => item.Key, _ => "Reviewed slot conditions");
@@ -371,5 +523,17 @@ public sealed class StrengthPlanPreviewV020Tests
     {
         public Task<StrengthPlanPreviewSourceV020?> LoadAsync(Guid userId,
             CancellationToken cancellationToken) => Task.FromResult<StrengthPlanPreviewSourceV020?>(profile);
+    }
+
+    private sealed class ProposalStore : IStrengthPlanProposalStoreV020
+    {
+        public int SaveCount { get; private set; }
+
+        public Task<Guid> SaveAsync(Guid userId, StrengthPlanPreviewRequestV020 request,
+            StrengthPlanPreviewResponseV020 preview, CancellationToken cancellationToken)
+        {
+            SaveCount++;
+            return Task.FromResult(Guid.NewGuid());
+        }
     }
 }

@@ -11,6 +11,7 @@ internal static class StrengthPlanGenerationDisplayMapper
     private const int NoPolicyReasons = 0;
     private const decimal NoDurationMinutes = 0m;
     private const string NoStatusMessage = "";
+    private const string MixedActivityScheduleIncompleteCode = "MixedActivityScheduleIncomplete";
 
     public static MixedActivitySessionDisplay ToMixedActivitySessionDisplay(
         MixedActivityScheduleSessionV020 session)
@@ -37,15 +38,32 @@ internal static class StrengthPlanGenerationDisplayMapper
             ? disposition
             : FormatLocalized("Workout_Generation_ActivityDecisionStatusFormat", disposition,
                 PrescriptionStatusLabel(decision.PrescriptionStatus));
+
+        if (decision.ScheduledSessionsPerWeek > 0 &&
+            decision.EffectiveActivityTypeId.HasValue && decision.EffectiveActivityTypeId.Value != decision.ActivityTypeId)
+        {
+            var replacedActivityLabel = ActivityLabel(decision.ActivityTypeId);
+            status = FormatLocalized("Workout_Generation_Activity_ReplacedWithGeneralStrength", replacedActivityLabel);
+        }
+
         var frequency = FormatLocalized("Workout_Generation_ActivityFrequencySummaryFormat",
             FrequencyValue(decision.PolicySessionsPerWeek),
             FrequencyValue(decision.TargetSessionsPerWeek),
             FrequencyValue(decision.ScheduledSessionsPerWeek));
         var shouldExplain = !string.Equals(decision.Disposition, "Scheduled", StringComparison.Ordinal) ||
                             !string.IsNullOrWhiteSpace(decision.PrescriptionStatus) &&
-                            !string.Equals(decision.PrescriptionStatus, "Eligible", StringComparison.Ordinal);
+                            !string.Equals(decision.PrescriptionStatus, "Eligible", StringComparison.Ordinal) ||
+                            decision.EffectiveActivityTypeId.HasValue && decision.EffectiveActivityTypeId.Value != decision.ActivityTypeId;
         string[] reasons = shouldExplain
-            ? decision.ReasonCodes.Select(ScheduleReasonMessage).ToArray()
+            ? decision.ReasonCodes
+                .Where(code => !IsInformationalDiagnosticCode(code))
+                .Select(code => decision.ScheduledSessionsPerWeek == 0 &&
+                    code is "BeginnerProfileRequiresGeneralStrength" or
+                        "HighVolumeRequiresEstablishedResistanceHistory"
+                    ? UiTextCatalog.Get("Workout_Generation_Reason_HistoryInsufficient")
+                    : ScheduleReasonMessage(code))
+                .Distinct()
+                .ToArray()
             : Array.Empty<string>();
         return new MixedActivityDecisionDisplay(
             ActivityLabel(decision.ActivityTypeId), status, frequency,
@@ -81,6 +99,14 @@ internal static class StrengthPlanGenerationDisplayMapper
         _ => UiTextCatalog.Get("Workout_Generation_UnknownActivity")
     };
 
+    public static string StrengthPlanDescription(WorkoutActivityDto activity) => activity switch
+    {
+        WorkoutActivityDto.GeneralStrength => UiTextCatalog.Get("Workout_Generation_GeneralStrengthDescription"),
+        WorkoutActivityDto.HighVolumeStrength => UiTextCatalog.Get("Workout_Generation_HighVolumeStrengthDescription"),
+        WorkoutActivityDto.StrengthHighIntensity => UiTextCatalog.Get("Workout_Generation_HighIntensityStrengthDescription"),
+        _ => string.Empty
+    };
+
     public static string FullWeekdayLabel(DayOfWeek weekday) => UiTextCatalog.Get(weekday switch
     {
         DayOfWeek.Monday => "Workout_Generation_FullDayMonday",
@@ -96,7 +122,7 @@ internal static class StrengthPlanGenerationDisplayMapper
     public static string ScheduleReasonMessage(string reasonCode) => UiTextCatalog.Get(reasonCode switch
     {
         "ActivitySelectionMissing" or "NoActivitiesSelected" => "Workout_Generation_Reason_NoActivitiesSelected",
-        "AvailableWeekdaysMustContainTwoToSevenDistinctDays" or "AvailableWeekdayValueInvalid" =>
+        "AvailableWeekdaysMustContainOneToSevenDistinctDays" or "AvailableWeekdayValueInvalid" =>
             "Workout_Generation_Reason_AvailableWeekdays",
         "DailyCapacityMissingSingleActivityPerDayFallback" =>
             "Workout_Generation_Reason_DailyCapacityFallback",
@@ -139,7 +165,12 @@ internal static class StrengthPlanGenerationDisplayMapper
         "EstablishedActivityAfterExtendedBreak" => "Workout_Generation_Reason_ExtendedBreak",
         "EstablishedActivityHistory" => "Workout_Generation_Reason_EstablishedHistory",
         "BelowEstablishedActivityThreshold" => "Workout_Generation_Reason_HistoryBelowThreshold",
-        "HighVolumeRequiresEstablishedResistanceHistory" or
+        "BeginnerProfileRequiresGeneralStrength" =>
+            "Workout_Generation_Fallback_BeginnerProfileRequiresGeneralStrength_Scheduled",
+        "HighVolumeRequiresEstablishedResistanceHistory" =>
+            "Workout_Generation_Fallback_HighVolumeRequiresEstablishedResistanceHistory_Scheduled",
+        "ReplacedWithGeneralStrength" => "Workout_Generation_Activity_ReplacedWithGeneralStrength",
+        "DirectBeginnerGeneralStrengthSettingsApplied" => "Workout_Generation_DirectBeginnerGeneralStrength",
         "HeavyStrengthRequiresEstablishedHistoryFourExposuresKnownLoadAndCurrentFamiliarity" =>
             "Workout_Generation_Reason_StrengthHistory",
         "HighIntensityMainNeedsFourExposuresKnownManageableLoad" or
@@ -184,6 +215,41 @@ internal static class StrengthPlanGenerationDisplayMapper
 
         var reasons = preview.LimitationCodes.Concat(
             preview.Sessions.SelectMany(session => session.LimitationCodes)).ToHashSet(StringComparer.Ordinal);
+
+        if (preview.Status == "Feasible" &&
+            preview.FallbackReasonCode is "BeginnerProfileRequiresGeneralStrength" or
+                "HighVolumeRequiresEstablishedResistanceHistory")
+        {
+            return UiTextCatalog.Get("Workout_Generation_Fallback_HvsToGs_Preview");
+        }
+
+        if (reasons.Contains("BeginnerProfileRequiresGeneralStrength") ||
+            reasons.Contains("HighVolumeRequiresEstablishedResistanceHistory"))
+            return UiTextCatalog.Get("Workout_Generation_Reason_HistoryInsufficient");
+
+        if (reasons.Contains("StrengthSessionsExceedAvailableWeekdays"))
+            return UiTextCatalog.Get("Workout_Generation_LimitationStrengthWeekdays");
+
+        if (reasons.Contains(MixedActivityScheduleIncompleteCode) &&
+            preview.MixedActivitySchedule is { } schedule)
+        {
+            var remainingReason = schedule.InputReasonCodes
+                .Concat(schedule.Activities
+                    .Where(activity => activity.Disposition is "Blocked" or "Omitted" or "PartiallyScheduled")
+                    .SelectMany(activity => activity.ReasonCodes))
+                .FirstOrDefault(code => !IsInformationalDiagnosticCode(code) &&
+                    code is not "ActivityPrescriptionNotEligible" and not "ReplacedWithGeneralStrength");
+            return remainingReason is null
+                ? UiTextCatalog.Get("Workout_Generation_Reason_ScheduleIncomplete")
+                : ScheduleReasonMessage(remainingReason);
+        }
+
+        if (preview.Status == "Feasible" &&
+            preview.AdvisoryCodes.Contains("DirectBeginnerGeneralStrengthSettingsApplied"))
+        {
+            return UiTextCatalog.Get("Workout_Generation_DirectBeginnerGeneralStrength");
+        }
+
         if (reasons.Contains("HighIntensityMainNeedsFourExposuresKnownManageableLoad") ||
             reasons.Contains("HighIntensitySelectedMainPrerequisiteMissing"))
             return UiTextCatalog.Get("Workout_Generation_Reason_HighIntensityEvidenceMissing");
@@ -198,7 +264,8 @@ internal static class StrengthPlanGenerationDisplayMapper
             ? "Workout_Generation_LimitationTiming"
             : reasons.Overlaps(["ActivityExperienceHistoryMissing", "ActivityHistoryInsufficientOrInvalid"])
                 ? "Workout_Generation_LimitationExperience"
-                : reasons.Count > NoPolicyReasons
+                : reasons.Overlaps(["CatalogEligibilityMetadataMissing", "TemplateSlotReviewMissing",
+                    "RequiredMovementSlotUnresolved"])
                     ? "Workout_Generation_LimitationReview"
                     : "Workout_Generation_LimitationGeneral";
         return UiTextCatalog.Get(key);
@@ -236,4 +303,37 @@ internal static class StrengthPlanGenerationDisplayMapper
         "Unsupported" => UiTextCatalog.Get("Workout_Generation_Prescription_Unsupported"),
         _ => UiTextCatalog.Get("Workout_Generation_Prescription_Review")
     };
+
+    private static readonly HashSet<string> InformationalDiagnosticCodes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "NoProgression",
+        "HardButNotAllOut",
+        "RetainedManageableBaseline",
+        "RetainedExistingSchedule",
+        "ClassifiedByActualContent",
+        "UserOrCatalogSelectedDuration",
+        "SelectedDurationAppliedToPrescription",
+        "SelectedUnderlyingCardioActivity",
+        "ReplacesOneCardioSession",
+        "OneContinuousSessionReplacedByHiit",
+        "UseEligibleCatalogMovementsAndRestrictionMappings",
+        "TimeBasedWithoutInventedDistanceOrPace",
+        "ComfortableToModerateWithoutInventedPaceOrDistance",
+        "FacilityVisitIncludesWarmupAttemptsRestAndTransitions",
+        "FacilityVisitDuration",
+        "NoGradesOrFingerLoading",
+        "MaximumTwoHeavyMainMovementsPerSession",
+        "MaximumFourExercisesPerSession",
+        "MaximumFiveExercisesPerSession",
+        "AccessoriesUseTwoSetsOfTenToFifteen",
+        "InitialDirectSetLimitTenPerPrimaryMusclePerWeek",
+        "NoMaximalTestingOrFailure",
+        "OptionalThirtySecondsComfortableSwimmingThirtySecondsRest",
+        "EstablishedActivityHistory",
+        "ExplicitRestDay",
+        "RestDayIsNotAWorkoutSession"
+    };
+
+    public static bool IsInformationalDiagnosticCode(string? code) =>
+        !string.IsNullOrWhiteSpace(code) && InformationalDiagnosticCodes.Contains(code);
 }

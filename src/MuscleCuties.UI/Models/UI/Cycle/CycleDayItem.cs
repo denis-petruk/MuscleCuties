@@ -4,6 +4,8 @@ using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensi
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Services.Localization;
 
+using MuscleCuties.UI.Resources.Styles;
+
 namespace MuscleCuties.UI.Models.UI.Cycle;
 
 public class CycleDayItem
@@ -21,12 +23,12 @@ public class CycleDayItem
     public bool IsEstimated { get; set; }
     public bool IsPredictedFuture { get; set; }
     public bool IsPredicted => IsPredictedFuture;
-    public Color BackgroundColor { get; set; } = Colors.Transparent;
-    public Color TextColor { get; set; } = Colors.Black;
-    public Color StrokeColor { get; set; } = Colors.Transparent;
+    public Color BackgroundColor { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
+    public Color TextColor { get; set; } = AppThemeResources.GetRequired<Color>("TextPrimary");
+    public Color StrokeColor { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
     public double StrokeThickness { get; set; }
     public string DayOfWeekShort { get; set; } = string.Empty;
-    public Color PhaseMarkerColor { get; set; } = Colors.Transparent;
+    public Color PhaseMarkerColor { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
     public bool IsSelected { get; set; }
 
     public string DisplayDayLabel =>

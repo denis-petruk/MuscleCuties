@@ -13,12 +13,12 @@
         <Border
             x:Name="SheetSurface"
             Style="{StaticResource AppBottomSheetSurface}"
-            Padding="0"
+            Padding="{StaticResource UiInsets0}"
             HorizontalOptions="Fill">
 
-            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="0">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
 
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="16,12">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{StaticResource UiInsets16_12}">
                     <Label
                         Text="{loc:LocalizedText Profile_ImageCrop_CropPhoto}"
                         Style="{StaticResource ModalTitle}"
@@ -34,18 +34,18 @@
                     </Border>
                 </Grid>
 
-                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" Margin="20,0" />
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" Margin="{StaticResource UiInsets20_0}" />
 
                 <ScrollView
                     Grid.Row="2"
                     Orientation="Vertical">
-                    <VerticalStackLayout Padding="20,16,20,0" Spacing="10">
+                    <VerticalStackLayout Padding="{StaticResource UiInsets20_16_20_0}" Spacing="{StaticResource UiSpacing10}">
                         <Border
                             x:Name="CropViewport"
-                            WidthRequest="260"
-                            HeightRequest="260"
-                            StrokeShape="RoundRectangle 130"
-                            StrokeThickness="0"
+                            WidthRequest="{StaticResource UiDimension260}"
+                            HeightRequest="{StaticResource UiDimension260}"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius130}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
                             HorizontalOptions="Center">
                             <Grid>
@@ -56,8 +56,8 @@
                                 <Image
                                     x:Name="CropImage"
                                     Aspect="AspectFill"
-                                    WidthRequest="260"
-                                    HeightRequest="260" />
+                                    WidthRequest="{StaticResource UiDimension260}"
+                                    HeightRequest="{StaticResource UiDimension260}" />
                             </Grid>
                         </Border>
 
@@ -69,7 +69,7 @@
                     </VerticalStackLayout>
                 </ScrollView>
 
-                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="12" Padding="20,16,20,20">
+                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets20_16_20_20}">
                     <Button
                         Grid.Column="0"
                         Style="{StaticResource ButtonSecondary}"

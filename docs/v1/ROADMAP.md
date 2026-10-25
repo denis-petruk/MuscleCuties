@@ -1,5 +1,25 @@
 # Roadmap — PostgreSQL Migration & V1 Feature Release
 
+**2026-10-25 mixed-plan policy decision:** Every selected activity must fit before Apply is available. Automatically reduce optional frequencies when necessary, with at least two strength sessions per week; if the minimums cannot fit, keep the proposal limited. Next verify the bottom sheet and Apply on a signed-in narrow iPhone in EN/RU, confirm saved yoga content/duration and HVS fallback evidence, check reviewed catalog coverage and current staging backend parity, then run authenticated generation acceptance before deployment approval.
+
+**2026-10-25 generation completion:** Review the bottom sheet on a signed-in narrow iPhone in English and Russian, including long preview scrolling, Close, limited Edit details, and successful Apply navigation. Decide whether blocked selected activities should prevent applying otherwise feasible sessions or whether partial plans are acceptable. Verify yoga content and session duration inputs, HVS-to-General-Strength fallback from real history, reviewed strength catalog coverage, and staging backend parity with current code. Then run authenticated generate/apply acceptance before deployment approval.
+
+**2026-10-25 plan generator hierarchy:** Replaced the strength-template picker with three direct selectable cards, added a four-week saved-session strip, collapsed manual history/timing edits behind one control, and pinned Preview to the safe-area footer. Core tests pass 633/633 and the iOS simulator-architecture build passes with 0 warnings/errors. Signed-in narrow-iPhone visual review remains open because CoreSimulatorService was unavailable.
+
+**2026-10-25 XAML startup follow-up:** Fixed the runtime-reported `UiInsets20` static-resource lookup failure by placing style-consumed tokens before their styles. Static resource-order audit and iOS build are clean; retry runtime launch when CoreSimulatorService is available.
+
+**2026-10-25 style follow-up:** Visual values and palettes are centralized in `Styles.xaml` and `Colors.xaml`, including the native privacy shield; duplicate resource keys and page-local style declarations are absent. The full iOS simulator build passes. Narrow signed-in verification remains open: Simulator exposes iPhone 17e, but menu activation fails with an accessibility error and `simctl` reports CoreSimulatorService connection refused; the existing signed-in simulator is iPhone 17 Pro Max.
+
+**2026-10-25 shared retry follow-up:** Visually verify full-page error coverage and a working retry-to-success transition on a signed-in simulator or device. Confirm the installed workout activity cards contain no session fields.
+
+**2026-10-25 duration follow-up:** Confirm a signed-in plan preview displays calculated cycling and HIIT times when the strength session length is changed.
+
+**2026-10-25 workout preference visual follow-up:** Verify the query-first exercise search, removable selected chips, and activity cards without session pickers on a signed-in iPhone.
+
+**2026-10-25 weekday calendar follow-up:** Confirm the new Workout Preferences calendar selector on a signed-in iPhone simulator or device in English and Russian, including narrow-width tap targets and selection changes.
+
+**2026-10-25 profile and preview follow-up:** Verify updated profile settings and preview frequency cards on an iOS simulator or device. The schedule now supplies baseline policy/target values for blocked activities, but reviewed exercise gaps and eligibility questions must remain visible and actionable. WHO/ACSM guidance supports general aerobic and strength goals; yoga and mobility frequency defaults are product scheduling choices.
+
 **2026-10-24 selected-phase follow-up:** The Today card and staging support response now recognize a chosen phase without an active cycle day. The signed-in simulator shows phase-specific advice; Core 541/541 and Server 80/80 tests pass, and Lambda revision `75658129-0b76-4c83-8f2e-85ff93806717` is active.
 
 **2026-10-24 Today streak presentation:** Replaced the cramped streak pill with a three-column stats card and verified its spacing on the signed-in simulator.

@@ -26,7 +26,10 @@ public static class WorkoutPreferencesRule
         ActivitySessionDurationRule.DefaultMinutesFor(activity);
 
     public static bool IsValidSessionDuration(WorkoutActivityType activity, int minutes) =>
-        ActivitySessionDurationRule.IsValidSelection(activity, minutes);
+        activity == WorkoutActivityType.Yoga
+            ? ActivitySessionDurationRule.IsValidSelection(activity, minutes) ||
+              ActivitySessionDurationRule.IsValidSelection(activity, minutes, isDemandingYoga: true)
+            : ActivitySessionDurationRule.IsValidSelection(activity, minutes);
 
     public static IReadOnlyList<int> SessionDurationChoices(WorkoutActivityType activity) =>
         ActivitySessionDurationRule.ChoicesFor(activity);
@@ -62,9 +65,9 @@ public static class WorkoutPreferencesRule
             .Select(activity => (int)activity)
             .ToArray();
 
-        if (activitySessionDurationsMinutes.Count != activitiesRequiringDuration.Length ||
-            !activitySessionDurationsMinutes.Keys.All(activitiesRequiringDuration.Contains) ||
+        if (!activitiesRequiringDuration.All(activitySessionDurationsMinutes.ContainsKey) ||
             !activitySessionDurationsMinutes.All(pair =>
+                activityTypes.Contains(pair.Key) &&
                 IsValidSessionDuration((WorkoutActivityType)pair.Key, pair.Value)))
             return false;
 

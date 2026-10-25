@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace MuscleCuties.Core.Tests;
 
@@ -190,7 +191,6 @@ public class UiCleanlinessAndReachabilityTests
         [
             Path.Combine(uiDir, "Resources", "Styles", "Colors.xaml"),
             Path.Combine(uiDir, "Resources", "Styles", "Styles.xaml"),
-            Path.Combine(uiDir, "Resources", "Styles", "WorkoutPlanningResources.xaml"),
             Path.Combine(uiDir, "App.xaml")
         ];
 
@@ -292,6 +292,61 @@ public class UiCleanlinessAndReachabilityTests
     }
 
     [Fact]
+    public void All_inputs_use_shared_profile_setup_appearance()
+    {
+        var uiDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var inputNames = new HashSet<string> { "Entry", "Editor", "Picker", "DatePicker", "TimePicker" };
+        var appearanceProperties = new HashSet<string>
+        {
+            "BackgroundColor", "TextColor", "PlaceholderColor", "TitleColor", "FontSize",
+            "FontFamily", "FontAttributes", "HeightRequest", "MinimumHeightRequest",
+            "Padding", "Margin", "Stroke", "StrokeThickness", "CornerRadius",
+            "HorizontalTextAlignment"
+        };
+        var allowedSurfaces = new HashSet<string>
+        {
+            "{StaticResource InputContainer}", "{StaticResource PickerContainer}",
+            "{StaticResource EditorContainer}", "{StaticResource WorkoutMetricInput}",
+            "{StaticResource ProfileMeasurementPickerSurface}"
+        };
+
+        foreach (var file in Directory.GetFiles(uiDir, "*.xaml", SearchOption.AllDirectories)
+                     .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") &&
+                                    !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")))
+        {
+            var document = XDocument.Load(file);
+            foreach (var input in document.Descendants().Where(element => inputNames.Contains(element.Name.LocalName)))
+            {
+                var appearanceOverrides = input.Attributes()
+                    .Where(attribute => appearanceProperties.Contains(attribute.Name.LocalName))
+                    .Select(attribute => attribute.Name.LocalName)
+                    .ToArray();
+                Assert.Empty(appearanceOverrides);
+
+                var surface = input.Ancestors().FirstOrDefault(element => element.Name.LocalName == "Border");
+                Assert.NotNull(surface);
+                var style = surface.Attribute("Style")?.Value;
+                Assert.NotNull(style);
+                Assert.Contains(style, allowedSurfaces);
+            }
+        }
+    }
+
+    [Fact]
+    public void Visual_styles_are_defined_in_shared_styles_file()
+    {
+        var uiDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        foreach (var file in Directory.GetFiles(uiDir, "*.xaml", SearchOption.AllDirectories)
+                     .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") &&
+                                    !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") &&
+                                    !file.EndsWith($"{Path.DirectorySeparatorChar}Styles.xaml", StringComparison.Ordinal)))
+        {
+            var document = XDocument.Load(file);
+            Assert.DoesNotContain(document.Descendants(), element => element.Name.LocalName == "Style");
+        }
+    }
+
+    [Fact]
     public void All_input_elements_are_wrapped_in_standardized_containers()
     {
         var uiDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
@@ -379,6 +434,92 @@ public class UiCleanlinessAndReachabilityTests
             violations.Count == 0,
             $"Found {violations.Count} Button(s) with ad-hoc BackgroundColor overrides outside Styles.xaml:\n" +
             string.Join("\n", violations));
+    }
+
+    [Fact]
+    public void All_xaml_StaticResource_references_are_defined_and_Styles_xaml_has_no_forward_references()
+    {
+        var uiDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var xamlFiles = Directory.GetFiles(uiDir, "*.xaml", SearchOption.AllDirectories)
+            .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") &&
+                        !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+            .ToList();
+
+        var keyDefRegex = new Regex(@"x:Key=""([^""]+)""", RegexOptions.Compiled);
+        var staticResRegex = new Regex(@"\{\s*(?:StaticResource|AppThemeBinding\s+(?:Light|Dark)=\{\s*StaticResource)\s+([^}, ]+)", RegexOptions.Compiled);
+
+        var definedKeys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var file in xamlFiles)
+        {
+            foreach (var line in File.ReadLines(file))
+            {
+                foreach (Match match in keyDefRegex.Matches(line))
+                {
+                    definedKeys.Add(match.Groups[1].Value);
+                }
+            }
+        }
+
+        var missing = new List<string>();
+        foreach (var file in xamlFiles)
+        {
+            var lines = File.ReadAllLines(file);
+            for (var i = 0; i < lines.Length; i++)
+            {
+                foreach (Match match in staticResRegex.Matches(lines[i]))
+                {
+                    var key = match.Groups[1].Value.Trim();
+                    if (!definedKeys.Contains(key))
+                    {
+                        missing.Add($"{Path.GetRelativePath(RepoRoot, file)}:{i + 1} uses undefined key '{key}'");
+                    }
+                }
+            }
+        }
+
+        Assert.True(missing.Count == 0,
+            $"Found {missing.Count} undefined StaticResource reference(s):\n" + string.Join("\n", missing));
+
+        var colorsPath = Path.Combine(uiDir, "Resources", "Styles", "Colors.xaml");
+        var colorsKeys = new HashSet<string>(StringComparer.Ordinal);
+        if (File.Exists(colorsPath))
+        {
+            foreach (var line in File.ReadLines(colorsPath))
+            {
+                foreach (Match match in keyDefRegex.Matches(line))
+                {
+                    colorsKeys.Add(match.Groups[1].Value);
+                }
+            }
+        }
+
+        var stylesPath = Path.Combine(uiDir, "Resources", "Styles", "Styles.xaml");
+        var setterIssues = new List<string>();
+
+        if (File.Exists(stylesPath))
+        {
+            var lines = File.ReadAllLines(stylesPath);
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                if (line.Contains("<Setter", StringComparison.Ordinal) ||
+                    line.Contains("<RoundRectangle", StringComparison.Ordinal) ||
+                    line.Contains("<CornerRadius", StringComparison.Ordinal))
+                {
+                    foreach (Match match in staticResRegex.Matches(line))
+                    {
+                        var key = match.Groups[1].Value.Trim();
+                        if (!colorsKeys.Contains(key))
+                        {
+                            setterIssues.Add($"Styles.xaml:{i + 1} Setter references '{key}' which is not in Colors.xaml");
+                        }
+                    }
+                }
+            }
+        }
+
+        Assert.True(setterIssues.Count == 0,
+            $"Found {setterIssues.Count} Setter reference(s) in Styles.xaml not defined in Colors.xaml:\n" + string.Join("\n", setterIssues));
     }
 
     private static string FindRepositoryRoot()

@@ -1,20 +1,23 @@
 using System.Runtime.CompilerServices;
 using MuscleCuties.UI.Controls.Shared;
+using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Services.Profile;
 
 namespace MuscleCuties.UI.Controls.Profile;
 
 public partial class ProfileImageCropModal : ContentView
 {
-    private double _currentScale = 1;
+    private double _currentScale;
     private bool _hasContent;
     private double _panX;
     private double _panY;
-    private double _startScale = 1;
+    private double _startScale;
     private TaskCompletionSource<string?>? _tcs;
 
     public ProfileImageCropModal()
     {
+        _currentScale = AppThemeResources.GetDouble("UiScaleCropMinimum");
+        _startScale = _currentScale;
         IsVisible = false;
     }
 
@@ -65,7 +68,9 @@ public partial class ProfileImageCropModal : ContentView
                 _startScale = _currentScale;
                 break;
             case GestureStatus.Running:
-                _currentScale = Math.Clamp(_startScale * e.Scale, 1, 5);
+                _currentScale = Math.Clamp(_startScale * e.Scale,
+                    AppThemeResources.GetDouble("UiScaleCropMinimum"),
+                    AppThemeResources.GetDouble("UiScaleCropMaximum"));
                 CropImage.Scale = _currentScale;
                 ClampTranslation();
                 break;
@@ -116,19 +121,20 @@ public partial class ProfileImageCropModal : ContentView
 
     private void ResetTransforms()
     {
-        _panX = 0;
-        _panY = 0;
-        _currentScale = 1;
-        _startScale = 1;
-        CropImage.TranslationX = 0;
-        CropImage.TranslationY = 0;
-        CropImage.Scale = 1;
+        _panX = AppThemeResources.GetDouble("UiMotionOffsetZero");
+        _panY = AppThemeResources.GetDouble("UiMotionOffsetZero");
+        _currentScale = AppThemeResources.GetDouble("UiScaleCropMinimum");
+        _startScale = _currentScale;
+        CropImage.TranslationX = AppThemeResources.GetDouble("UiMotionOffsetZero");
+        CropImage.TranslationY = AppThemeResources.GetDouble("UiMotionOffsetZero");
+        CropImage.Scale = _currentScale;
     }
 
     private void ClampTranslation()
     {
-        var viewportSize = CropViewport.Width > 0 ? CropViewport.Width : 260;
-        var imageSize = CropImage.Width > 0 ? CropImage.Width : 260;
+        var fallbackImageDimension = AppThemeResources.GetDouble("UiDimension260");
+        var viewportSize = CropViewport.Width > 0 ? CropViewport.Width : fallbackImageDimension;
+        var imageSize = CropImage.Width > 0 ? CropImage.Width : fallbackImageDimension;
         var maxOffset = Math.Max(0, (imageSize * _currentScale - viewportSize) / 2);
 
         CropImage.TranslationX = Math.Clamp(CropImage.TranslationX, -maxOffset, maxOffset);

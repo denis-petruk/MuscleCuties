@@ -15,6 +15,11 @@ internal static partial class RussianUiText
         Values["Workout_Generation_OpenHint"] = "Выберите сохранённую силовую активность и проверьте план перед применением.";
         Values["Workout_Generation_Activity"] = "Силовая активность";
         Values["Workout_Generation_ChooseActivity"] = "Выберите активность";
+        Values["Workout_Generation_StrengthPlanType"] = "Тип силового плана";
+        Values["Workout_Generation_GeneralStrengthDescription"] = "Сбалансированный план для развития общей силы и постепенного прогресса.";
+        Values["Workout_Generation_HighVolumeStrengthDescription"] = "Больше силовой работы; нужен достаточный недавний тренировочный опыт.";
+        Values["Workout_Generation_HighIntensityStrengthDescription"] = "Более тяжёлые основные упражнения; могут потребоваться подтверждения знакомства и переносимости нагрузки.";
+        Values["Workout_Generation_StrengthPlanChoiceHint"] = "Выберите этот тип силового плана.";
         Values["Workout_Generation_HighIntensityEvidenceHelp"] = "Тяжёлое упражнение появится в предложении, только если записи тренировок и проверенные данные о нагрузке соответствуют требованиям. В ограниченном предварительном плане для каждого такого упражнения нужно отдельно подтвердить знакомство с движением и переносимость нагрузки.";
         Values["Workout_Generation_HighIntensityConfirmationTitle"] = "Подтвердите каждое основное упражнение высокой интенсивности";
         Values["Workout_Generation_HighIntensityConfirmationHelp"] = "Для этих упражнений есть достаточно проверенных записей и допустимая нагрузка. Числовое значение нагрузки не отображается. Ответьте на оба вопроса для каждого упражнения. Выбирайте «Да», только если движение вам знакомо и записанная нагрузка по-прежнему подходит. Если сомневаетесь, выберите «Нет». Затем план будет проверен повторно.";
@@ -55,13 +60,27 @@ internal static partial class RussianUiText
         Values["Workout_Generation_YogaContentClassification"] = "Насколько интенсивна эта практика йоги?";
         Values["Workout_Generation_YogaGentle"] = "Мягкая или восстановительная";
         Values["Workout_Generation_YogaDemanding"] = "Интенсивная или требующая усилий";
-        Values["Workout_Generation_ExperienceTitle"] = "Ваши недавние силовые тренировки";
-        Values["Workout_Generation_ExperienceHelp"] = "Укажите историю выбранной активности. При смене активности эти значения очищаются.";
-        Values["Workout_Generation_ConsistentWeeks"] = "Недели регулярных тренировок";
+        Values["Workout_Generation_ExperienceTitle"] = "История тренировок";
+        Values["Workout_Generation_ExperienceHelp"] = "Начальные значения рассчитаны по сохранённым тренировкам. Исправьте их, если в журнале есть не все занятия; неизвестные значения можно оставить пустыми.";
+        Values["Workout_Generation_RecentHistorySummaryFormat"] = "За последние четыре недели сохранено тренировок: {0}. Оценки основаны на журнале; поправьте их, если он неполный.";
+        Values["Workout_Generation_NoSavedWorkoutHistory"] = "Сохранённых тренировок пока нет. Предварительный план всё равно доступен; указывайте только известную вам историю.";
+        Values["Workout_Generation_HistoryUnavailable"] = "Не удалось загрузить историю сохранённых тренировок. Можно продолжить просмотр или указать историю вручную.";
+        Values["Workout_Generation_RecentHistoryPeriodsTitle"] = "Записи по неделям";
+        Values["Workout_Generation_RecentWeekLastSevenDays"] = "Последние 7 дней";
+        Values["Workout_Generation_RecentWeekRangeFormat"] = "{0}–{1} дней назад";
+        Values["Workout_Generation_RecentWeekAccessibilityFormat"] = "{0}: сохранено тренировок — {1}";
+        Values["Workout_Generation_EditTrainingDetails"] = "Проверить историю и время";
+        Values["Workout_Generation_HideTrainingDetails"] = "Скрыть историю и время";
+        Values["Workout_Generation_ConsistentWeeks"] = "Недель регулярных тренировок";
+        Values["Workout_Generation_ConsistentWeeksHelp"] = "Целое число недель: 0 или больше.";
         Values["Workout_Generation_WeeksPlaceholder"] = "Например, 8";
-        Values["Workout_Generation_AverageSessions"] = "Среднее число силовых тренировок в неделю за последнее время";
+        Values["Workout_Generation_AverageSessions"] = "В среднем силовых тренировок в неделю";
+        Values["Workout_Generation_AverageSessionsHelp"] = "Среднее за последние четыре недели: 0 или больше; допустимы дробные значения.";
         Values["Workout_Generation_SessionsPlaceholder"] = "Например, 2";
         Values["Workout_Generation_DaysSinceLast"] = "Дней с последней силовой тренировки";
+        Values["Workout_Generation_DaysSinceLastHelp"] = "Целое число дней: 0 или больше.";
+        Values["Workout_Generation_TimingTitle"] = "Время занятия";
+        Values["Workout_Generation_TimingHelp"] = "Целое число минут: 0 или больше. Разминка и заминка входят в длительность занятия.";
         Values["Workout_Generation_Warmup"] = "Разминка, минут";
         Values["Workout_Generation_Cooldown"] = "Заминка, минут";
         Values["Workout_Generation_MinutesPlaceholder"] = "Минуты";
@@ -80,7 +99,28 @@ internal static partial class RussianUiText
         Values["Workout_Generation_LimitationTiming"] = "Сохранённая длительность занятия или параметры разминки и заминки не подходят этому плану.";
         Values["Workout_Generation_LimitationExperience"] = "Недостаточно истории силовых тренировок для выбора подходящего шаблона.";
         Values["Workout_Generation_LimitationReview"] = "Для предложения не хватает проверенных данных об упражнении или движении.";
-        Values["Workout_Generation_LimitationGeneral"] = "Для предложения нужны дополнительные данные профиля, времени или проверенных упражнений.";
+        Values["Workout_Generation_LimitationStrengthWeekdays"] = "Выберите как минимум два разных доступных дня для силовых тренировок.";
+        Values["Workout_Generation_Reason_ScheduleIncomplete"] = "Не все выбранные тренировки удалось разместить в доступные дни.";
+        Values["Workout_Generation_LimitationGeneral"] = "Для этого плана нужны дополнительные данные. Проверьте решения по видам активности и измените данные.";
+        Values["Workout_Generation_DirectBeginnerGeneralStrength"] =
+            "Базовые силовые тренировки доступны с начальными настройками для начинающих.";
+        Values["Workout_Generation_Fallback_HvsToGs_Preview"] =
+            "Высокообъемные силовые тренировки требуют подтвержденного опыта силовых тренировок. Вместо них доступен план базовых силовых тренировок.";
+        Values["Workout_Generation_Fallback_HvsToGs_Scheduled"] =
+            "Переключено на базовые силовые тренировки с базовой прогрессией.";
+        Values["Workout_Generation_Fallback_BeginnerProfileRequiresGeneralStrength"] =
+            "Высокообъемные силовые тренировки требуют подтвержденного опыта силовых тренировок. Вместо них доступен план базовых силовых тренировок.";
+        Values["Workout_Generation_Fallback_BeginnerProfileRequiresGeneralStrength_Preview"] =
+            "Высокообъемные силовые тренировки требуют подтвержденного опыта силовых тренировок. Вместо них доступен план базовых силовых тренировок.";
+        Values["Workout_Generation_Fallback_BeginnerProfileRequiresGeneralStrength_Scheduled"] =
+            "Переключено на базовые силовые тренировки с базовой прогрессией.";
+        Values["Workout_Generation_Fallback_HighVolumeRequiresEstablishedResistanceHistory"] =
+            "Высокообъемные силовые тренировки требуют подтвержденного опыта силовых тренировок. Вместо них доступен план базовых силовых тренировок.";
+        Values["Workout_Generation_Fallback_HighVolumeRequiresEstablishedResistanceHistory_Preview"] =
+            "Высокообъемные силовые тренировки требуют подтвержденного опыта силовых тренировок. Вместо них доступен план базовых силовых тренировок.";
+        Values["Workout_Generation_Fallback_HighVolumeRequiresEstablishedResistanceHistory_Scheduled"] =
+            "Переключено на базовые силовые тренировки с базовой прогрессией.";
+        Values["Workout_Generation_Activity_ReplacedWithGeneralStrength"] = "{0}: заменено на базовую силовую программу.";
         Values["Workout_Generation_ApplyPlan"] = "Применить план";
         Values["Workout_Generation_KeepCurrentPlan"] = "Оставить текущий план";
         Values["Workout_Generation_EditDetails"] = "Изменить данные и попробовать снова";
@@ -100,7 +140,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_RegularEffortSession"] = "Обычная нагрузка";
         Values["Workout_Generation_ActivityDecisionsTitle"] = "Решения по активностям";
         Values["Workout_Generation_ActivityDecisionStatusFormat"] = "{0} · {1}";
-        Values["Workout_Generation_ActivityFrequencySummaryFormat"] = "Правило: {0}/нед. · Цель: {1}/нед. · В расписании: {2}/нед.";
+        Values["Workout_Generation_ActivityFrequencySummaryFormat"] = "Правило {0}/нед. · Цель {1}/нед. · В расписании {2}/нед.";
         Values["Workout_Generation_NotSpecified"] = "Не указано";
         Values["Workout_Generation_UnknownActivity"] = "Активность недоступна";
         Values["Workout_Generation_UnknownDay"] = "День недоступен";
@@ -186,9 +226,9 @@ internal static partial class RussianUiText
         Values["Workout_Generation_CreateFailed"] = "Не удалось составить предварительный план. Попробуйте ещё раз.";
         Values["Workout_Generation_PlanChanged"] = "Текущий план изменился. Составьте новый черновик перед применением.";
         Values["Workout_Generation_AcceptFailed"] = "План не применён. Текущий план не изменён.";
-        Values["Workout_Generation_EnterExperience"] = "Укажите недавний опыт силовых тренировок: целые недели и число тренировок в неделю.";
-        Values["Workout_Generation_EnterLastSession"] = "Укажите неотрицательное целое число дней с последней силовой тренировки.";
-        Values["Workout_Generation_EnterSessionTiming"] = "Укажите длительность разминки и заминки в минутах.";
+        Values["Workout_Generation_EnterExperience"] = "Укажите целое число недель и среднее число тренировок в неделю (0 или больше). Для среднего допустимы дробные значения.";
+        Values["Workout_Generation_EnterLastSession"] = "Укажите число дней с последней силовой тренировки целым числом: 0 или больше.";
+        Values["Workout_Generation_EnterSessionTiming"] = "Укажите разминку и заминку целым числом минут: 0 или больше.";
         Values["Workout_Generation_DayMonday"] = "Пн";
         Values["Workout_Generation_DayTuesday"] = "Вт";
         Values["Workout_Generation_DayWednesday"] = "Ср";

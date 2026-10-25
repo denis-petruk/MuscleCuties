@@ -8,9 +8,6 @@ internal static class StrengthPlanGenerationInputReader
 {
     private const decimal MinimumAverageSessions = 0m;
     private const int NoElapsedDays = 0;
-    public const int DefaultConsistentWeeks = 24;
-    public const decimal DefaultAverageSessions = 3m;
-    public const int DefaultDaysSinceLastSession = 2;
     public const int DefaultWarmupMinutes = 5;
     public const int DefaultCooldownMinutes = 5;
 
@@ -21,8 +18,9 @@ internal static class StrengthPlanGenerationInputReader
         string daysSinceLastSession,
         string warmupMinutes,
         string cooldownMinutes,
+        bool isSelfReported,
         DateOnly localDate,
-        out ActivityTrainingHistoryInputV020 history,
+        out ActivityTrainingHistoryInputV020? history,
         out int warmup,
         out int cooldown,
         out string failureMessageKey)
@@ -38,31 +36,46 @@ internal static class StrengthPlanGenerationInputReader
             return false;
         }
 
-        var weeks = DefaultConsistentWeeks;
-        if (!string.IsNullOrWhiteSpace(consistentWeeks) &&
-            (!int.TryParse(consistentWeeks, NumberStyles.None, CultureInfo.InvariantCulture, out weeks) || weeks < 0))
+        int? weeks = null;
+        if (!string.IsNullOrWhiteSpace(consistentWeeks))
         {
-            failureMessageKey = "Workout_Generation_EnterExperience";
-            return false;
+            if (!int.TryParse(consistentWeeks, NumberStyles.None, CultureInfo.InvariantCulture, out var parsedWeeks) ||
+                parsedWeeks < 0)
+            {
+                failureMessageKey = "Workout_Generation_EnterExperience";
+                return false;
+            }
+
+            weeks = parsedWeeks;
         }
 
-        var averageSessions = DefaultAverageSessions;
-        if (!string.IsNullOrWhiteSpace(averageSessionsPerWeek) &&
-            (!decimal.TryParse(averageSessionsPerWeek, NumberStyles.AllowDecimalPoint,
-                CultureInfo.InvariantCulture, out averageSessions) ||
-             averageSessions < MinimumAverageSessions))
+        decimal? averageSessions = null;
+        if (!string.IsNullOrWhiteSpace(averageSessionsPerWeek))
         {
-            failureMessageKey = "Workout_Generation_EnterExperience";
-            return false;
+            if ((!decimal.TryParse(averageSessionsPerWeek, NumberStyles.AllowDecimalPoint,
+                     CultureInfo.CurrentCulture, out var parsedAverageSessions) &&
+                 !decimal.TryParse(averageSessionsPerWeek, NumberStyles.AllowDecimalPoint,
+                     CultureInfo.InvariantCulture, out parsedAverageSessions)) ||
+                parsedAverageSessions < MinimumAverageSessions)
+            {
+                failureMessageKey = "Workout_Generation_EnterExperience";
+                return false;
+            }
+
+            averageSessions = parsedAverageSessions;
         }
 
-        var daysAgo = DefaultDaysSinceLastSession;
-        if (!string.IsNullOrWhiteSpace(daysSinceLastSession) &&
-            (!int.TryParse(daysSinceLastSession, NumberStyles.None, CultureInfo.InvariantCulture, out daysAgo) ||
-             daysAgo < NoElapsedDays || daysAgo > localDate.DayNumber))
+        int? daysAgo = null;
+        if (!string.IsNullOrWhiteSpace(daysSinceLastSession))
         {
-            failureMessageKey = "Workout_Generation_EnterLastSession";
-            return false;
+            if (!int.TryParse(daysSinceLastSession, NumberStyles.None, CultureInfo.InvariantCulture, out var parsedDaysAgo) ||
+                parsedDaysAgo < NoElapsedDays || parsedDaysAgo > localDate.DayNumber)
+            {
+                failureMessageKey = "Workout_Generation_EnterLastSession";
+                return false;
+            }
+
+            daysAgo = parsedDaysAgo;
         }
 
         if (!string.IsNullOrWhiteSpace(warmupMinutes) &&
@@ -79,9 +92,12 @@ internal static class StrengthPlanGenerationInputReader
             return false;
         }
 
-        history = new ActivityTrainingHistoryInputV020(
-            activity.Value.ToString(), weeks, averageSessions,
-            localDate.AddDays(-daysAgo), true);
+        history = weeks is null && averageSessions is null && daysAgo is null
+            ? null
+            : new ActivityTrainingHistoryInputV020(
+                activity.Value.ToString(), weeks, averageSessions,
+                daysAgo is { } elapsedDays ? localDate.AddDays(-elapsedDays) : null,
+                isSelfReported);
         return true;
     }
 }

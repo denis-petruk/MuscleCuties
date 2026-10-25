@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Microsoft.Maui.Graphics;
+using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.Core.Models.Nutrition;
 using MuscleCuties.UI.Models.UI.Nutrition;
 
@@ -80,7 +81,7 @@ public partial class NutritionViewModel
                 Grams = macros.Protein,
                 Calories = proteinCalories,
                 Progress = CalculateMacroShare(proteinCalories, macroCalories),
-                Color = Color.FromArgb("#A65AC8")
+                Color = AppThemeResources.GetColor("ProteinLight", default)
             },
             new MacroBreakdownItem
             {
@@ -88,7 +89,7 @@ public partial class NutritionViewModel
                 Grams = macros.Carbs,
                 Calories = carbsCalories,
                 Progress = CalculateMacroShare(carbsCalories, macroCalories),
-                Color = Color.FromArgb("#E3A13B")
+                Color = AppThemeResources.GetColor("CarbsLight", default)
             },
             new MacroBreakdownItem
             {
@@ -96,7 +97,7 @@ public partial class NutritionViewModel
                 Grams = macros.Fats,
                 Calories = fatsCalories,
                 Progress = CalculateMacroShare(fatsCalories, macroCalories),
-                Color = Color.FromArgb("#6F8E4E")
+                Color = AppThemeResources.GetColor("FatsLight", default)
             }
         ];
     }

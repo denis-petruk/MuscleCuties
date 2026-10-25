@@ -20,8 +20,15 @@ public sealed class ActivityPreferencePolicyTests
     [Fact]
     public void SessionDurationOptionsFollowActivityPolicy()
     {
+        Assert.True(WorkoutPreferencesRule.RequiresSessionDuration(WorkoutActivityType.GeneralStrength));
+        Assert.False(WorkoutPreferencesRule.RequiresSessionDuration(WorkoutActivityType.Cycling));
+        Assert.False(WorkoutPreferencesRule.RequiresSessionDuration(WorkoutActivityType.Hiit));
         Assert.Equal([25, 30], ActivitySessionDurationRule.ChoicesFor(WorkoutActivityType.Swimming));
-        Assert.Equal([10, 15, 20], ActivitySessionDurationRule.ChoicesFor(WorkoutActivityType.Yoga));
+        Assert.Equal([10, 15, 20, 25, 30, 35, 40, 45],
+            ActivitySessionDurationRule.ChoicesFor(WorkoutActivityType.Yoga));
+        Assert.True(WorkoutPreferencesRule.IsValidSessionDuration(WorkoutActivityType.Yoga, 30));
+        Assert.False(ActivitySessionDurationRule.IsValidSelection(
+            WorkoutActivityType.Yoga, 15, isDemandingYoga: true));
         Assert.Equal([5, 10, 15], ActivitySessionDurationRule.ChoicesFor(WorkoutActivityType.Mobility));
         Assert.Equal([5, 10, 15, 20],
             ActivitySessionDurationRule.ChoicesFor(WorkoutActivityType.GentleRecovery));
@@ -82,8 +89,11 @@ public sealed class ActivityPreferencePolicyTests
 
         Assert.Contains(WorkoutActivityDto.HighVolumeStrength, defaultActivities);
         Assert.Contains(WorkoutActivityDto.Yoga, requiredActivities);
-        Assert.DoesNotContain((WorkoutActivityDto)UnknownActivityDtoValue, requiredActivities);
-        Assert.True(WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(WorkoutActivityDto.Yoga));
+        Assert.False(WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(WorkoutActivityDto.Yoga));
+        Assert.True(WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(WorkoutActivityDto.GeneralStrength));
+        Assert.True(WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(WorkoutActivityDto.HighVolumeStrength));
+        Assert.True(WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(WorkoutActivityDto.StrengthHighIntensity));
+        Assert.False(WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(WorkoutActivityDto.Cycling));
         Assert.Equal(YogaDefaultDurationMinutes,
             WorkoutPreferencesConstraints.DefaultSessionDurationMinutes(WorkoutActivityDto.Yoga));
         Assert.Contains(YogaDefaultDurationMinutes,

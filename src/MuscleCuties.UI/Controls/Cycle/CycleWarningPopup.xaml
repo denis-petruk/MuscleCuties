@@ -17,20 +17,20 @@
             x:Name="SheetSurface"
             Style="{StaticResource AppBottomSheetSurface}"
             VerticalOptions="End">
-            <Grid RowDefinitions="Auto, *, Auto" RowSpacing="0">
-                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12" Padding="18,16,18,12">
+            <Grid RowDefinitions="Auto, *, Auto" RowSpacing="{StaticResource UiSpacing0}">
+                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets18_16_18_12}">
                     <Border
-                        WidthRequest="34"
-                        HeightRequest="34"
-                        StrokeShape="RoundRectangle 17"
+                        WidthRequest="{StaticResource UiDimension34}"
+                        HeightRequest="{StaticResource UiDimension34}"
+                        StrokeShape="{StaticResource UiRoundRectangleRadius17}"
                         BackgroundColor="{StaticResource Secondary}"
-                        StrokeThickness="0"
+                        StrokeThickness="{StaticResource UiStrokeWidth0}"
                         VerticalOptions="Start">
                         <Label
                             Text="!"
                             TextColor="{StaticResource Primary}"
-                            FontSize="17"
-                            FontAttributes="Bold"
+                            FontSize="{StaticResource UiFontSize17}"
+                            FontAttributes="{StaticResource UiFontAttributesBold}"
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
                     </Border>
@@ -52,8 +52,8 @@
                         <Path
                             Style="{StaticResource ModalCloseIcon}"
                             Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
+                            WidthRequest="{StaticResource UiDimension14}"
+                            HeightRequest="{StaticResource UiDimension14}"
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
                     </Border>
@@ -63,16 +63,16 @@
                     <Label
                         Text="{Binding CycleWarningText, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource MutedLabel}"
-                        Padding="18,0,18,12"
+                        Padding="{StaticResource UiInsets18_0_18_12}"
                         LineBreakMode="WordWrap" />
                 </ScrollView>
 
                 <VerticalStackLayout
                     Grid.Row="2"
-                    Padding="18,0,18,16"
-                    Spacing="10">
+                    Padding="{StaticResource UiInsets18_0_18_16}"
+                    Spacing="{StaticResource UiSpacing10}">
                     <VerticalStackLayout
-                        Spacing="10"
+                        Spacing="{StaticResource UiSpacing10}"
                         IsVisible="{Binding HasCycleWarningSuggestedPhase}">
                         <Button
                             Text="{Binding CycleWarningSuggestedActionText, Converter={StaticResource LocalizedStringConverter}}"

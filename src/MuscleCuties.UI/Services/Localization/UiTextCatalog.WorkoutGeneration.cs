@@ -15,6 +15,11 @@ public static partial class UiTextCatalog
         English["Workout_Generation_OpenHint"] = "Choose a saved strength activity and review its plan before applying it.";
         English["Workout_Generation_Activity"] = "Strength activity";
         English["Workout_Generation_ChooseActivity"] = "Choose an activity";
+        English["Workout_Generation_StrengthPlanType"] = "Strength plan type";
+        English["Workout_Generation_GeneralStrengthDescription"] = "A balanced plan focused on general strength and steady progress.";
+        English["Workout_Generation_HighVolumeStrengthDescription"] = "More total strength work; requires enough recent training history.";
+        English["Workout_Generation_HighIntensityStrengthDescription"] = "Heavier main lifts; exercise familiarity and load evidence may be required.";
+        English["Workout_Generation_StrengthPlanChoiceHint"] = "Select this strength plan type.";
         English["Workout_Generation_HighIntensityEvidenceHelp"] = "The planner surfaces a heavy lift only when recorded history and trusted load data meet its requirements. A limited preview may ask you to confirm familiarity and manageable load for each surfaced exercise.";
         English["Workout_Generation_HighIntensityConfirmationTitle"] = "Confirm each high-intensity main lift";
         English["Workout_Generation_HighIntensityConfirmationHelp"] = "These lifts have enough trusted recorded exposure and manageable-load evidence for review. The preview does not show the numeric load. Answer both questions for every lift; choose Yes only if you know the movement and its saved load still feels appropriate. If unsure, choose No. The plan will be reviewed again.";
@@ -55,13 +60,27 @@ public static partial class UiTextCatalog
         English["Workout_Generation_YogaContentClassification"] = "How demanding is the yoga content?";
         English["Workout_Generation_YogaGentle"] = "Gentle or restorative";
         English["Workout_Generation_YogaDemanding"] = "Demanding or vigorous";
-        English["Workout_Generation_ExperienceTitle"] = "Your recent strength training";
-        English["Workout_Generation_ExperienceHelp"] = "Enter the history for the selected activity. Changing activities clears these values.";
+        English["Workout_Generation_ExperienceTitle"] = "Recent training history";
+        English["Workout_Generation_ExperienceHelp"] = "Saved workouts fill these starting estimates. Correct them if your log misses sessions; leave values blank if you do not know.";
+        English["Workout_Generation_RecentHistorySummaryFormat"] = "{0} saved workout sessions in the last four weeks. Estimates use this log; adjust them if it is incomplete.";
+        English["Workout_Generation_NoSavedWorkoutHistory"] = "No saved workout sessions found. Preview is still available; enter only history you can confirm.";
+        English["Workout_Generation_HistoryUnavailable"] = "Saved workout history could not load. You can still preview or enter history manually.";
+        English["Workout_Generation_RecentHistoryPeriodsTitle"] = "Recorded sessions by week";
+        English["Workout_Generation_RecentWeekLastSevenDays"] = "Last 7 days";
+        English["Workout_Generation_RecentWeekRangeFormat"] = "{0}–{1} days ago";
+        English["Workout_Generation_RecentWeekAccessibilityFormat"] = "{0}: {1} logged sessions";
+        English["Workout_Generation_EditTrainingDetails"] = "Review history and timing";
+        English["Workout_Generation_HideTrainingDetails"] = "Hide history and timing";
         English["Workout_Generation_ConsistentWeeks"] = "Weeks training consistently";
+        English["Workout_Generation_ConsistentWeeksHelp"] = "Whole weeks, 0 or more.";
         English["Workout_Generation_WeeksPlaceholder"] = "For example, 8";
-        English["Workout_Generation_AverageSessions"] = "Average strength sessions per week recently";
+        English["Workout_Generation_AverageSessions"] = "Average strength sessions per week";
+        English["Workout_Generation_AverageSessionsHelp"] = "Average over the last four weeks; 0 or more. Decimals are okay.";
         English["Workout_Generation_SessionsPlaceholder"] = "For example, 2";
         English["Workout_Generation_DaysSinceLast"] = "Days since your last strength session";
+        English["Workout_Generation_DaysSinceLastHelp"] = "Whole days, 0 or more.";
+        English["Workout_Generation_TimingTitle"] = "Session timing";
+        English["Workout_Generation_TimingHelp"] = "Enter whole minutes, 0 or more. Warm-up and cool-down count toward the session length.";
         English["Workout_Generation_Warmup"] = "Warm-up minutes";
         English["Workout_Generation_Cooldown"] = "Cool-down minutes";
         English["Workout_Generation_MinutesPlaceholder"] = "Minutes";
@@ -80,7 +99,28 @@ public static partial class UiTextCatalog
         English["Workout_Generation_LimitationTiming"] = "The saved activity length or warm-up and cool-down details do not fit this plan.";
         English["Workout_Generation_LimitationExperience"] = "More strength history is needed to choose an eligible template.";
         English["Workout_Generation_LimitationReview"] = "A reviewed exercise or movement detail is missing for this proposal.";
-        English["Workout_Generation_LimitationGeneral"] = "This proposal needs more profile, timing, or reviewed exercise information.";
+        English["Workout_Generation_LimitationStrengthWeekdays"] = "Choose at least two different available weekdays for strength sessions.";
+        English["Workout_Generation_Reason_ScheduleIncomplete"] = "Some selected sessions could not be placed on the available days.";
+        English["Workout_Generation_LimitationGeneral"] = "This proposal needs more information. Review the activity decisions and edit your details.";
+        English["Workout_Generation_DirectBeginnerGeneralStrength"] =
+            "General Strength is available with beginner starting settings.";
+        English["Workout_Generation_Fallback_HvsToGs_Preview"] =
+            "High-volume strength requires established resistance training history. A General Strength plan is available instead.";
+        English["Workout_Generation_Fallback_HvsToGs_Scheduled"] =
+            "Switched to General Strength with baseline progression.";
+        English["Workout_Generation_Fallback_BeginnerProfileRequiresGeneralStrength"] =
+            "High-volume strength requires established resistance training history. A General Strength plan is available instead.";
+        English["Workout_Generation_Fallback_BeginnerProfileRequiresGeneralStrength_Preview"] =
+            "High-volume strength requires established resistance training history. A General Strength plan is available instead.";
+        English["Workout_Generation_Fallback_BeginnerProfileRequiresGeneralStrength_Scheduled"] =
+            "Switched to General Strength with baseline progression.";
+        English["Workout_Generation_Fallback_HighVolumeRequiresEstablishedResistanceHistory"] =
+            "High-volume strength requires established resistance training history. A General Strength plan is available instead.";
+        English["Workout_Generation_Fallback_HighVolumeRequiresEstablishedResistanceHistory_Preview"] =
+            "High-volume strength requires established resistance training history. A General Strength plan is available instead.";
+        English["Workout_Generation_Fallback_HighVolumeRequiresEstablishedResistanceHistory_Scheduled"] =
+            "Switched to General Strength with baseline progression.";
+        English["Workout_Generation_Activity_ReplacedWithGeneralStrength"] = "{0}: Replaced with General Strength.";
         English["Workout_Generation_ApplyPlan"] = "Apply plan";
         English["Workout_Generation_KeepCurrentPlan"] = "Keep current plan";
         English["Workout_Generation_EditDetails"] = "Edit details and try again";
@@ -100,7 +140,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_RegularEffortSession"] = "Regular-effort session";
         English["Workout_Generation_ActivityDecisionsTitle"] = "Activity decisions";
         English["Workout_Generation_ActivityDecisionStatusFormat"] = "{0} · {1}";
-        English["Workout_Generation_ActivityFrequencySummaryFormat"] = "Policy: {0}/week · Target: {1}/week · Scheduled: {2}/week";
+        English["Workout_Generation_ActivityFrequencySummaryFormat"] = "Policy {0}/week · Target {1}/week · Scheduled {2}/week";
         English["Workout_Generation_NotSpecified"] = "Not specified";
         English["Workout_Generation_UnknownActivity"] = "Activity unavailable";
         English["Workout_Generation_UnknownDay"] = "Day unavailable";
@@ -186,9 +226,9 @@ public static partial class UiTextCatalog
         English["Workout_Generation_CreateFailed"] = "The plan preview could not be created. Try again.";
         English["Workout_Generation_PlanChanged"] = "Your current plan changed. Create a fresh preview before applying it.";
         English["Workout_Generation_AcceptFailed"] = "The plan was not applied. Your current plan is unchanged.";
-        English["Workout_Generation_EnterExperience"] = "Enter your recent strength-training history using whole weeks and sessions per week.";
-        English["Workout_Generation_EnterLastSession"] = "Enter a nonnegative whole number of days since your last strength session.";
-        English["Workout_Generation_EnterSessionTiming"] = "Enter warm-up and cool-down durations in minutes.";
+        English["Workout_Generation_EnterExperience"] = "Enter whole weeks and a nonnegative average of sessions per week. Decimals are allowed for the average.";
+        English["Workout_Generation_EnterLastSession"] = "Enter whole days since your last strength session as 0 or more.";
+        English["Workout_Generation_EnterSessionTiming"] = "Enter warm-up and cool-down as whole minutes, 0 or more.";
         English["Workout_Generation_DayMonday"] = "Mon";
         English["Workout_Generation_DayTuesday"] = "Tue";
         English["Workout_Generation_DayWednesday"] = "Wed";

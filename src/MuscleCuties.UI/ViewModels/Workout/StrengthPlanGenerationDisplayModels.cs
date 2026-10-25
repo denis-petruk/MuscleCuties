@@ -1,9 +1,29 @@
 using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
-public sealed record StrengthPlanActivityChoice(WorkoutActivityDto Activity, string Label);
+public partial class StrengthPlanActivityChoice : ObservableObject
+{
+    public StrengthPlanActivityChoice(WorkoutActivityDto activity, string label, string description = "")
+    {
+        Activity = activity;
+        Label = label;
+        Description = description;
+    }
+
+    public WorkoutActivityDto Activity { get; }
+    public string Label { get; }
+    public string Description { get; }
+
+    [ObservableProperty] private bool _isSelected;
+}
+
+public sealed record StrengthPlanRecentWeekDisplay(
+    string Label,
+    string SessionCount,
+    string AccessibilityDescription);
 
 public sealed record ActivityEvidenceAnswerChoice(string Label, bool Value);
 

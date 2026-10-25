@@ -10,35 +10,26 @@
     xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     x:DataType="workoutControls:FeaturedWorkoutCard">
 
-    <ContentView.Resources>
-        <ResourceDictionary>
-            <x:Double x:Key="RecoveryTipColumnGap">6</x:Double>
-            <x:Double x:Key="RecoveryTipIconGap">5</x:Double>
-            <x:Double x:Key="RecoveryTipIconSize">11</x:Double>
-            <x:Double x:Key="RecoveryTipFontSize">11</x:Double>
-            <x:Int32 x:Key="RecoveryTipMaxLines">1</x:Int32>
-        </ResourceDictionary>
-    </ContentView.Resources>
 
     <Border
         Style="{StaticResource CardPrimary}"
-        StrokeThickness="1"
+        StrokeThickness="{StaticResource UiStrokeWidth1}"
         Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
-        <VerticalStackLayout Spacing="12">
+        <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
 
             <!-- Header Row: Icon Tile, Title/Badge, and Status Pill -->
-            <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+            <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                 <!-- Icon Tile -->
                 <Border
-                    WidthRequest="42"
-                    HeightRequest="42"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 12"
+                    WidthRequest="{StaticResource UiDimension42}"
+                    HeightRequest="{StaticResource UiDimension42}"
+                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
                     VerticalOptions="Center">
                     <Border.Triggers>
                         <DataTrigger TargetType="Border" Binding="{Binding IsRestDay, Source={x:Reference Root}}" Value="True">
                             <Setter Property="BackgroundColor"
-                                    Value="{AppThemeBinding Light=#F6EAF4, Dark=#4A3143}" />
+                                    Value="{AppThemeBinding Light={StaticResource RestDaySurfaceLight}, Dark={StaticResource RestDaySurfaceDark}}" />
                         </DataTrigger>
                         <DataTrigger TargetType="Border" Binding="{Binding IsRestDay, Source={x:Reference Root}}" Value="False">
                             <Setter Property="BackgroundColor"
@@ -52,8 +43,8 @@
                             Data="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
                             Fill="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
                             Aspect="Uniform"
-                            WidthRequest="18"
-                            HeightRequest="18"
+                            WidthRequest="{StaticResource UiDimension18}"
+                            HeightRequest="{StaticResource UiDimension18}"
                             HorizontalOptions="Center"
                             VerticalOptions="Center"
                             IsVisible="{Binding IsRestDay, Source={x:Reference Root}}" />
@@ -62,12 +53,12 @@
                         <Path
                             Data="M6.5 6.5h11M6.5 17.5h11M6.5 6.5v11M17.5 6.5v11M3 9.5h3.5v5H3zM17.5 9.5H21v5h-3.5z"
                             Stroke="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
-                            StrokeThickness="1.8"
+                            StrokeThickness="{StaticResource UiStrokeWidth1_8}"
                             StrokeLineCap="Round"
                             StrokeLineJoin="Round"
                             Aspect="Uniform"
-                            WidthRequest="18"
-                            HeightRequest="18"
+                            WidthRequest="{StaticResource UiDimension18}"
+                            HeightRequest="{StaticResource UiDimension18}"
                             HorizontalOptions="Center"
                             VerticalOptions="Center"
                             IsVisible="{Binding IsRestDay, Source={x:Reference Root}, Converter={StaticResource InvertedBoolConverter}}" />
@@ -75,17 +66,17 @@
                 </Border>
 
                 <!-- Titles: Badge + Main Name -->
-                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
                     <Label
                         Text="{Binding BadgeText, Source={x:Reference Root}}"
                         TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                        FontSize="13"
-                        FontAttributes="Bold"
+                        FontSize="{StaticResource UiFontSize13}"
+                        FontAttributes="{StaticResource UiFontAttributesBold}"
                         VerticalOptions="Center" />
                     <Label
                         Text="{Binding WorkoutTitle, Source={x:Reference Root}}"
                         Style="{StaticResource SectionTitle}"
-                        FontSize="18"
+                        FontSize="{StaticResource UiFontSize18}"
                         LineBreakMode="TailTruncation"
                         MaxLines="1" />
                 </VerticalStackLayout>
@@ -93,14 +84,14 @@
                 <!-- Status Pill on the Right -->
                 <Border
                     Grid.Column="2"
-                    StrokeShape="RoundRectangle 999"
-                    StrokeThickness="0"
-                    Padding="10,4"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius999}"
+                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                    Padding="{StaticResource UiInsets10_4}"
                     VerticalOptions="Center">
                     <Border.Triggers>
                         <DataTrigger TargetType="Border" Binding="{Binding IsRestDay, Source={x:Reference Root}}" Value="True">
                             <Setter Property="BackgroundColor"
-                                    Value="{AppThemeBinding Light=#F0DFEE, Dark=#55344D}" />
+                                    Value="{AppThemeBinding Light={StaticResource RestStatusBadgeSurfaceLight}, Dark={StaticResource RestStatusBadgeSurfaceDark}}" />
                         </DataTrigger>
                         <DataTrigger TargetType="Border" Binding="{Binding IsRestDay, Source={x:Reference Root}}" Value="False">
                             <Setter Property="BackgroundColor"
@@ -109,8 +100,8 @@
                     </Border.Triggers>
 
                     <Label
-                        FontSize="11"
-                        FontAttributes="Bold"
+                        FontSize="{StaticResource UiFontSize11}"
+                        FontAttributes="{StaticResource UiFontAttributesBold}"
                         VerticalOptions="Center">
                         <Label.Triggers>
                             <DataTrigger TargetType="Label" Binding="{Binding IsRestDay, Source={x:Reference Root}}" Value="True">
@@ -132,28 +123,28 @@
             <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Start"
                         IsVisible="{Binding HasMultipleActivities, Source={x:Reference Root}}">
                 <Border
-                    StrokeShape="RoundRectangle 999"
-                    StrokeThickness="0"
-                    Padding="10,4"
-                    Margin="0,0,6,6"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius999}"
+                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                    Padding="{StaticResource UiInsets10_4}"
+                    Margin="{StaticResource UiInsets0_0_6_6}"
                     BackgroundColor="{Binding PrimaryActivityBackground, Source={x:Reference Root}}">
                     <Label
                         Text="{Binding PrimaryActivityTitle, Source={x:Reference Root}}"
                         TextColor="{Binding PrimaryActivityTextColor, Source={x:Reference Root}}"
-                        FontSize="12"
-                        FontAttributes="Bold" />
+                        FontSize="{StaticResource UiFontSize12}"
+                        FontAttributes="{StaticResource UiFontAttributesBold}" />
                 </Border>
                 <Border
-                    StrokeShape="RoundRectangle 999"
-                    StrokeThickness="0"
-                    Padding="10,4"
-                    Margin="0,0,6,6"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius999}"
+                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                    Padding="{StaticResource UiInsets10_4}"
+                    Margin="{StaticResource UiInsets0_0_6_6}"
                     BackgroundColor="{Binding SecondaryActivityBackground, Source={x:Reference Root}}">
                     <Label
                         Text="{Binding SecondaryActivityTitle, Source={x:Reference Root}}"
                         TextColor="{Binding SecondaryActivityTextColor, Source={x:Reference Root}}"
-                        FontSize="12"
-                        FontAttributes="Bold" />
+                        FontSize="{StaticResource UiFontSize12}"
+                        FontAttributes="{StaticResource UiFontAttributesBold}" />
                 </Border>
             </FlexLayout>
 
@@ -161,7 +152,7 @@
             <Label
                 Text="{Binding Subtitle, Source={x:Reference Root}}"
                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                FontSize="14"
+                FontSize="{StaticResource UiFontSize14}"
                 LineBreakMode="WordWrap" />
 
             <!-- Rest Day Recovery Guidance & Focus Pillars -->
@@ -169,42 +160,42 @@
                 IsVisible="{Binding IsRestDay, Source={x:Reference Root}}"
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                 Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 12"
-                Padding="14,12">
-                <VerticalStackLayout Spacing="10">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" VerticalOptions="Center">
+                StrokeThickness="{StaticResource UiStrokeWidth1}"
+                StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                Padding="{StaticResource UiInsets14_12}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpacing10}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing10}" VerticalOptions="Center">
                         <Path
                             Data="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4L2 9.4h7.6z"
                             Fill="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
                             Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
+                            WidthRequest="{StaticResource UiDimension14}"
+                            HeightRequest="{StaticResource UiDimension14}"
                             VerticalOptions="Center" />
                         <Label
                             Grid.Column="1"
                             Text="Muscles rebuild &amp; glycogen restores during rest. Take time to recharge, hydrate, and stretch."
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                            FontSize="12"
+                            FontSize="{StaticResource UiFontSize12}"
                             LineBreakMode="WordWrap"
                             VerticalOptions="Center" />
                     </Grid>
 
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource RecoveryTipColumnGap}">
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpacing6}">
                         <Border
-                            StrokeShape="RoundRectangle 999"
-                            StrokeThickness="0"
-                            Padding="10,4"
-                            BackgroundColor="{AppThemeBinding Light=#F6EAF4, Dark=#4A3143}">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource RecoveryTipIconGap}" VerticalOptions="Center">
+                            StrokeShape="{StaticResource UiRoundRectangleRadius999}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            Padding="{StaticResource UiInsets10_4}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource RestDaySurfaceLight}, Dark={StaticResource RestDaySurfaceDark}}">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing5}" VerticalOptions="Center">
                                 <Path
                                     Data="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
                                     Fill="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                                     Aspect="Uniform"
-                                    WidthRequest="{StaticResource RecoveryTipIconSize}"
-                                    HeightRequest="{StaticResource RecoveryTipIconSize}"
+                                    WidthRequest="{StaticResource UiDimension11}"
+                                    HeightRequest="{StaticResource UiDimension11}"
                                     VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="7-9h Sleep" FontSize="{StaticResource RecoveryTipFontSize}" FontAttributes="Bold"
+                                <Label Grid.Column="1" Text="7-9h Sleep" FontSize="{StaticResource UiFontSize11}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                                        MaxLines="{StaticResource RecoveryTipMaxLines}" LineBreakMode="TailTruncation"
                                        VerticalOptions="Center" />
@@ -213,20 +204,20 @@
 
                         <Border
                             Grid.Column="1"
-                            StrokeShape="RoundRectangle 999"
-                            StrokeThickness="0"
-                            Padding="10,4"
-                            BackgroundColor="{AppThemeBinding Light=#E0F2F1, Dark=#1A3A38}">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource RecoveryTipIconGap}" VerticalOptions="Center">
+                            StrokeShape="{StaticResource UiRoundRectangleRadius999}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            Padding="{StaticResource UiInsets10_4}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource RecoverySurfaceLight}, Dark={StaticResource RecoverySurfaceDark}}">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing5}" VerticalOptions="Center">
                                 <Path
                                     Data="M12 2C10 5 5 10 5 14a7 7 0 0 0 14 0C19 10 14 5 12 2z"
-                                    Fill="{AppThemeBinding Light=#1F6F68, Dark=#7ECBC5}"
+                                    Fill="{AppThemeBinding Light={StaticResource RecoveryTextLight}, Dark={StaticResource RecoveryTextDark}}"
                                     Aspect="Uniform"
-                                    WidthRequest="{StaticResource RecoveryTipIconSize}"
-                                    HeightRequest="{StaticResource RecoveryTipIconSize}"
+                                    WidthRequest="{StaticResource UiDimension11}"
+                                    HeightRequest="{StaticResource UiDimension11}"
                                     VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="Hydration" FontSize="{StaticResource RecoveryTipFontSize}" FontAttributes="Bold"
-                                       TextColor="{AppThemeBinding Light=#1F6F68, Dark=#7ECBC5}"
+                                <Label Grid.Column="1" Text="Hydration" FontSize="{StaticResource UiFontSize11}" FontAttributes="{StaticResource UiFontAttributesBold}"
+                                       TextColor="{AppThemeBinding Light={StaticResource RecoveryTextLight}, Dark={StaticResource RecoveryTextDark}}"
                                        MaxLines="{StaticResource RecoveryTipMaxLines}" LineBreakMode="TailTruncation"
                                        VerticalOptions="Center" />
                             </Grid>
@@ -236,36 +227,36 @@
             </Border>
 
             <!-- Structured 3-column Visual Metric Tiles (Training Days) -->
-            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8"
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
                   IsVisible="{Binding IsRestDay, Source={x:Reference Root}, Converter={StaticResource InvertedBoolConverter}}">
                 <!-- Tile 1: Duration -->
                 <Border
                     BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 12"
-                    Padding="6,8">
-                    <VerticalStackLayout Spacing="3" HorizontalOptions="Center">
-                        <HorizontalStackLayout Spacing="4" HorizontalOptions="Center">
+                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                    Padding="{StaticResource UiInsets6_8}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
+                        <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
                                 Data="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 5v5l3.5 2"
                                 Stroke="{StaticResource Primary}"
-                                StrokeThickness="1.5"
+                                StrokeThickness="{StaticResource UiStrokeWidth1_5}"
                                 Aspect="Uniform"
-                                WidthRequest="12"
-                                HeightRequest="12"
+                                WidthRequest="{StaticResource UiDimension12}"
+                                HeightRequest="{StaticResource UiDimension12}"
                                 VerticalOptions="Center" />
                             <Label
                                 Text="Duration"
                                 Style="{StaticResource CaptionLabel}"
-                                FontSize="11"
-                                FontAttributes="Bold"
+                                FontSize="{StaticResource UiFontSize11}"
+                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                 VerticalOptions="Center" />
                         </HorizontalStackLayout>
                         <Label
                             Text="{Binding DurationText, Source={x:Reference Root}}"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                            FontSize="13"
-                            FontAttributes="Bold"
+                            FontSize="{StaticResource UiFontSize13}"
+                            FontAttributes="{StaticResource UiFontAttributesBold}"
                             HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
                 </Border>
@@ -274,31 +265,31 @@
                 <Border
                     Grid.Column="1"
                     BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 12"
-                    Padding="6,8">
-                    <VerticalStackLayout Spacing="3" HorizontalOptions="Center">
-                        <HorizontalStackLayout Spacing="4" HorizontalOptions="Center">
+                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                    Padding="{StaticResource UiInsets6_8}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
+                        <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
                                 Data="M4 6h16M4 12h16M4 18h16"
                                 Stroke="{StaticResource Primary}"
-                                StrokeThickness="1.5"
+                                StrokeThickness="{StaticResource UiStrokeWidth1_5}"
                                 Aspect="Uniform"
-                                WidthRequest="12"
-                                HeightRequest="12"
+                                WidthRequest="{StaticResource UiDimension12}"
+                                HeightRequest="{StaticResource UiDimension12}"
                                 VerticalOptions="Center" />
                             <Label
                                 Text="Exercises"
                                 Style="{StaticResource CaptionLabel}"
-                                FontSize="11"
-                                FontAttributes="Bold"
+                                FontSize="{StaticResource UiFontSize11}"
+                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                 VerticalOptions="Center" />
                         </HorizontalStackLayout>
                         <Label
                             Text="{Binding ExercisesCount, Source={x:Reference Root}, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Featured_ExercisesCountFormat}"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                            FontSize="13"
-                            FontAttributes="Bold"
+                            FontSize="{StaticResource UiFontSize13}"
+                            FontAttributes="{StaticResource UiFontAttributesBold}"
                             HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
                 </Border>
@@ -307,31 +298,31 @@
                 <Border
                     Grid.Column="2"
                     BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 12"
-                    Padding="6,8">
-                    <VerticalStackLayout Spacing="3" HorizontalOptions="Center">
-                        <HorizontalStackLayout Spacing="4" HorizontalOptions="Center">
+                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                    Padding="{StaticResource UiInsets6_8}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
+                        <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
                                 Data="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
                                 Stroke="{StaticResource Primary}"
-                                StrokeThickness="1.5"
+                                StrokeThickness="{StaticResource UiStrokeWidth1_5}"
                                 Aspect="Uniform"
-                                WidthRequest="12"
-                                HeightRequest="12"
+                                WidthRequest="{StaticResource UiDimension12}"
+                                HeightRequest="{StaticResource UiDimension12}"
                                 VerticalOptions="Center" />
                             <Label
                                 Text="Intensity"
                                 Style="{StaticResource CaptionLabel}"
-                                FontSize="11"
-                                FontAttributes="Bold"
+                                FontSize="{StaticResource UiFontSize11}"
+                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                 VerticalOptions="Center" />
                         </HorizontalStackLayout>
                         <Label
                             Text="{Binding Intensity, Source={x:Reference Root}}"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                            FontSize="13"
-                            FontAttributes="Bold"
+                            FontSize="{StaticResource UiFontSize13}"
+                            FontAttributes="{StaticResource UiFontAttributesBold}"
                             HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
                 </Border>
@@ -339,26 +330,26 @@
 
             <!-- Expandable Exercise Preview Toggle -->
             <Border
-                StrokeShape="RoundRectangle 8"
-                StrokeThickness="1"
+                StrokeShape="{StaticResource UiRoundRectangleRadius8}"
+                StrokeThickness="{StaticResource UiStrokeWidth1}"
                 Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource CardSurfaceDark}}"
-                Padding="12,8"
-                Margin="0,2,0,2"
+                Padding="{StaticResource UiInsets12_8}"
+                Margin="{StaticResource UiInsets0_2_0_2}"
                 IsVisible="{Binding HasExercisePreviews, Source={x:Reference Root}}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding TogglePreviewCommand, Source={x:Reference Root}}" />
                 </Border.GestureRecognizers>
                 <Grid ColumnDefinitions="*,Auto">
-                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                        <Label Text="{loc:LocalizedText Workout_Featured_PreviewTitle}" FontSize="13" FontAttributes="Bold"
+                    <HorizontalStackLayout Spacing="{StaticResource UiSpacing6}" VerticalOptions="Center">
+                        <Label Text="{loc:LocalizedText Workout_Featured_PreviewTitle}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                VerticalOptions="Center" />
-                        <Label Text="{Binding ExercisePreviewsCountText, Source={x:Reference Root}}" FontSize="12"
+                        <Label Text="{Binding ExercisePreviewsCountText, Source={x:Reference Root}}" FontSize="{StaticResource UiFontSize12}"
                                TextColor="{StaticResource Primary}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <Label Grid.Column="1" Text="{Binding PreviewChevron, Source={x:Reference Root}}"
-                           FontSize="12" FontAttributes="Bold"
+                           FontSize="{StaticResource UiFontSize12}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                            VerticalOptions="Center" />
                 </Grid>
@@ -366,30 +357,30 @@
 
             <!-- Expandable Exercise Preview Items List (Flattened Grid) -->
             <Grid
-                RowSpacing="8"
-                Margin="0,2,0,4"
+                RowSpacing="{StaticResource UiSpaceTight}"
+                Margin="{StaticResource UiInsets0_2_0_4}"
                 IsVisible="{Binding IsPreviewExpanded, Source={x:Reference Root}}"
                 BindableLayout.ItemsSource="{Binding ExercisePreviews, Source={x:Reference Root}}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="workoutModels:ExercisePreviewItem">
                         <Border
-                            StrokeShape="RoundRectangle 10"
-                            StrokeThickness="1"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius10}"
+                            StrokeThickness="{StaticResource UiStrokeWidth1}"
                             Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
-                            Padding="12,10">
-                            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+                            Padding="{StaticResource UiInsets12_10}">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                                 <!-- Exercise Name + Sets/Reps Badge -->
                                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                                    <Label Text="{Binding Name}" FontSize="14" FontAttributes="Bold"
+                                    <Label Text="{Binding Name}" FontSize="{StaticResource UiFontSize14}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                            VerticalOptions="Center" />
-                                    <Border Grid.Column="1" StrokeShape="RoundRectangle 6" StrokeThickness="0"
+                                    <Border Grid.Column="1" StrokeShape="{StaticResource UiRoundRectangleRadius6}" StrokeThickness="{StaticResource UiStrokeWidth0}"
                                             BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray800}}"
-                                            Padding="8,2">
+                                            Padding="{StaticResource UiInsets8_2}">
                                         <Label
                                             Text="{Binding SetsReps, Converter={StaticResource LocalizedStringConverter}}"
-                                            FontSize="12" FontAttributes="Bold"
+                                            FontSize="{StaticResource UiFontSize12}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                             TextColor="{StaticResource PrimaryDark}" />
                                     </Border>
                                 </Grid>
@@ -397,22 +388,22 @@
                                 <!-- Target Muscle Groups -->
                                 <Label Grid.Row="1"
                                        Text="{Binding MuscleGroups, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Featured_TargetFormat}"
-                                       FontSize="12"
+                                       FontSize="{StaticResource UiFontSize12}"
                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
 
                                 <!-- Tempo Guidance -->
-                                <HorizontalStackLayout Grid.Row="2" Spacing="6"
+                                <HorizontalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpacing6}"
                                                        IsVisible="{Binding Tempo, Converter={StaticResource StringToBoolConverter}}">
-                                    <Label Text="{loc:LocalizedText Workout_Featured_TempoLabel}" FontSize="11" FontAttributes="Bold"
+                                    <Label Text="{loc:LocalizedText Workout_Featured_TempoLabel}" FontSize="{StaticResource UiFontSize11}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{StaticResource PrimaryDark}" />
                                     <Label Text="{Binding Tempo, Converter={StaticResource LocalizedStringConverter}}"
-                                           FontSize="11"
+                                           FontSize="{StaticResource UiFontSize11}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 </HorizontalStackLayout>
 
                                 <!-- Movement Notes -->
-                                <Label Grid.Row="3" Text="{Binding MovementNotes}" FontSize="11"
-                                       FontAttributes="Italic"
+                                <Label Grid.Row="3" Text="{Binding MovementNotes}" FontSize="{StaticResource UiFontSize11}"
+                                       FontAttributes="{StaticResource UiFontAttributesItalic}"
                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                        LineBreakMode="WordWrap"
                                        IsVisible="{Binding MovementNotes, Converter={StaticResource StringToBoolConverter}}" />
@@ -420,30 +411,30 @@
                                 <!-- Warm-up notes -->
                                 <Border
                                     Grid.Row="4"
-                                    StrokeShape="RoundRectangle 6"
-                                    StrokeThickness="0"
+                                    StrokeShape="{StaticResource UiRoundRectangleRadius6}"
+                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource WarningSurfaceLight}, Dark={StaticResource WarningSurfaceDark}}"
-                                    Padding="8,4"
-                                    Margin="0,2,0,0"
+                                    Padding="{StaticResource UiInsets8_4}"
+                                    Margin="{StaticResource UiInsets0_2_0_0}"
                                     IsVisible="{Binding WarmUpNote, Converter={StaticResource StringToBoolConverter}}">
                                     <Label
                                         Text="{Binding WarmUpNote, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Featured_WarmupFormat}"
-                                        FontSize="11"
+                                        FontSize="{StaticResource UiFontSize11}"
                                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 </Border>
 
                                 <!-- Unavailable Guidance Honest State -->
                                 <Border
                                     Grid.Row="5"
-                                    StrokeShape="RoundRectangle 6"
-                                    StrokeThickness="0"
+                                    StrokeShape="{StaticResource UiRoundRectangleRadius6}"
+                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource CardSurfaceDark}}"
-                                    Padding="8,4"
-                                    Margin="0,2,0,0"
+                                    Padding="{StaticResource UiInsets8_4}"
+                                    Margin="{StaticResource UiInsets0_2_0_0}"
                                     IsVisible="{Binding UnavailableGuidanceText, Converter={StaticResource StringToBoolConverter}}">
                                     <Label
                                         Text="{Binding UnavailableGuidanceText, Converter={StaticResource LocalizedStringConverter}}"
-                                        FontSize="11"
+                                        FontSize="{StaticResource UiFontSize11}"
                                         TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                         LineBreakMode="WordWrap" />
                                 </Border>
@@ -459,7 +450,7 @@
                     ContentLayout="Left,8"
                     Command="{Binding StartCommand, Source={x:Reference Root}}"
                     IsVisible="{Binding IsActionVisible, Source={x:Reference Root}}"
-                    MinimumHeightRequest="52" />
+                    MinimumHeightRequest="{StaticResource UiDimension52}" />
 
         </VerticalStackLayout>
     </Border>

@@ -10,32 +10,32 @@
 
     <Border Style="{StaticResource CardPrimary}"
             SemanticProperties.Description="{loc:LocalizedText Dashboard_Targets_CardA11y}">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="0">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing0}">
             <!-- Row 0: section heading -->
-            <Label Text="{loc:LocalizedText Dashboard_Targets_Title}" Style="{StaticResource SectionTitle}" FontSize="17"
-                   Margin="0,0,0,8" />
+            <Label Text="{loc:LocalizedText Dashboard_Targets_Title}" Style="{StaticResource SectionTitle}" FontSize="{StaticResource UiFontSize17}"
+                   Margin="{StaticResource UiInsets0_0_0_8}" />
 
             <!-- Row 1: hydration target row -->
-            <Grid Grid.Row="1" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" RowDefinitions="Auto, Auto"
-                  RowSpacing="2" Padding="0,10"
+            <Grid Grid.Row="1" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpacing14}" RowDefinitions="Auto, Auto"
+                  RowSpacing="{StaticResource UiSpacing2}" Padding="{StaticResource UiInsets0_10}"
                   SemanticProperties.Description="{Binding HydrationConsumed, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_Targets_HydrationFormat}">
                 <Border
                     Grid.Column="0"
                     Grid.RowSpan="2"
-                    WidthRequest="44"
-                    HeightRequest="44"
-                    StrokeShape="RoundRectangle 12"
+                    WidthRequest="{StaticResource UiDimension44}"
+                    HeightRequest="{StaticResource UiDimension44}"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
                     BackgroundColor="{AppThemeBinding Light={StaticResource WaterSurfaceLight}, Dark={StaticResource WaterSurfaceDark}}"
-                    StrokeThickness="0"
+                    StrokeThickness="{StaticResource UiStrokeWidth0}"
                     VerticalOptions="Center">
                     <Path
                         Data="M12 2.5s7 7.5 7 12a7 7 0 1 1-14 0c0-4.5 7-12 7-12z"
                         Fill="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}"
                         Stroke="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}"
-                        StrokeThickness="0.5"
+                        StrokeThickness="{StaticResource UiStrokeWidth0_5}"
                         Aspect="Uniform"
-                        WidthRequest="18"
-                        HeightRequest="18"
+                        WidthRequest="{StaticResource UiDimension18}"
+                        HeightRequest="{StaticResource UiDimension18}"
                         HorizontalOptions="Center"
                         VerticalOptions="Center" />
                 </Border>
@@ -43,15 +43,15 @@
                     Grid.Row="0"
                     Grid.Column="1"
                     Text="{loc:LocalizedText Dashboard_Targets_HydrationEstimate}"
-                    FontSize="13"
-                    FontAttributes="Bold"
+                    FontSize="{StaticResource UiFontSize13}"
+                    FontAttributes="{StaticResource UiFontAttributesBold}"
                     TextColor="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}" />
                 <Label
                     Grid.Row="1"
                     Grid.Column="1"
                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    FontSize="17"
-                    FontAttributes="Bold">
+                    FontSize="{StaticResource UiFontSize17}"
+                    FontAttributes="{StaticResource UiFontAttributesBold}">
                     <Label.FormattedText>
                         <FormattedString>
                             <Span
@@ -59,40 +59,40 @@
                             <Span Text=" " />
                             <Span
                                 Text="{Binding HydrationGoal, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="13"
+                                FontSize="{StaticResource UiFontSize13}"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                FontAttributes="None" />
+                                FontAttributes="{StaticResource UiFontAttributesNone}" />
                         </FormattedString>
                     </Label.FormattedText>
                 </Label>
             </Grid>
 
             <!-- Row 2: divider -->
-            <BoxView Grid.Row="2" HeightRequest="1"
+            <BoxView Grid.Row="2" HeightRequest="{StaticResource UiDimension1}"
                      BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                     Opacity="0.6" Margin="0,4" />
+                     Opacity="{StaticResource UiOpacitySubtle}" Margin="{StaticResource UiInsets0_4}" />
 
             <!-- Row 3: sleep target row -->
-            <Grid Grid.Row="3" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" RowDefinitions="Auto, Auto"
-                  RowSpacing="2" Padding="0,10"
+            <Grid Grid.Row="3" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpacing14}" RowDefinitions="Auto, Auto"
+                  RowSpacing="{StaticResource UiSpacing2}" Padding="{StaticResource UiInsets0_10}"
                   SemanticProperties.Description="{Binding SleepGoal, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_Targets_SleepFormat}">
                 <Border
                     Grid.Column="0"
                     Grid.RowSpan="2"
-                    WidthRequest="44"
-                    HeightRequest="44"
-                    StrokeShape="RoundRectangle 12"
+                    WidthRequest="{StaticResource UiDimension44}"
+                    HeightRequest="{StaticResource UiDimension44}"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
                     BackgroundColor="{AppThemeBinding Light={StaticResource SleepSurfaceLight}, Dark={StaticResource SleepSurfaceDark}}"
-                    StrokeThickness="0"
+                    StrokeThickness="{StaticResource UiStrokeWidth0}"
                     VerticalOptions="Center">
                     <Path
                         Data="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
                         Fill="{AppThemeBinding Light={StaticResource SleepLight}, Dark={StaticResource SleepDark}}"
                         Stroke="{AppThemeBinding Light={StaticResource SleepLight}, Dark={StaticResource SleepDark}}"
-                        StrokeThickness="0.5"
+                        StrokeThickness="{StaticResource UiStrokeWidth0_5}"
                         Aspect="Uniform"
-                        WidthRequest="18"
-                        HeightRequest="18"
+                        WidthRequest="{StaticResource UiDimension18}"
+                        HeightRequest="{StaticResource UiDimension18}"
                         HorizontalOptions="Center"
                         VerticalOptions="Center" />
                 </Border>
@@ -100,15 +100,15 @@
                     Grid.Row="0"
                     Grid.Column="1"
                     Text="{loc:LocalizedText Dashboard_Targets_SleepEstimate}"
-                    FontSize="13"
-                    FontAttributes="Bold"
+                    FontSize="{StaticResource UiFontSize13}"
+                    FontAttributes="{StaticResource UiFontAttributesBold}"
                     TextColor="{AppThemeBinding Light={StaticResource SleepLight}, Dark={StaticResource SleepDark}}" />
                 <Label
                     Grid.Row="1"
                     Grid.Column="1"
                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    FontSize="17"
-                    FontAttributes="Bold">
+                    FontSize="{StaticResource UiFontSize17}"
+                    FontAttributes="{StaticResource UiFontAttributesBold}">
                     <Label.FormattedText>
                         <FormattedString>
                             <Span Text="{Binding SleepGoal, Converter={StaticResource LocalizedStringConverter}}" />

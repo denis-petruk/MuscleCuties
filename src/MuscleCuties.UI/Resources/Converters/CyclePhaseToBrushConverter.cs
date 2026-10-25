@@ -20,7 +20,7 @@ public class CyclePhaseToBrushConverter : IValueConverter
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not CyclePhase phase)
-            return new SolidColorBrush(Colors.Transparent);
+            return new SolidColorBrush(AppThemeResources.GetRequired<Color>("Transparent"));
 
         var isDark = AppThemeResources.IsDark;
         var key = (phase, isDark);
@@ -42,7 +42,7 @@ public class CyclePhaseToBrushConverter : IValueConverter
             CyclePhase.Luteal => AppThemeResources.GetColor(
                 "CyclePhaseLutealLight",
                 "CyclePhaseLutealDark"),
-            _ => Colors.Transparent
+            _ => AppThemeResources.GetRequired<Color>("Transparent")
         };
 
         var brush = new SolidColorBrush(color);

@@ -19,25 +19,12 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
             var selectedActivities = sourceData.SelectedActivityTypes?.ToHashSet() ?? new HashSet<int>();
             selectedActivities.Add((int)request.Activity);
 
-            var weekdays = sourceData.AvailableWeekdays is { Count: >= 2 }
-                ? sourceData.AvailableWeekdays
-                : request.AvailableWeekdays is { Count: >= 2 }
-                    ? request.AvailableWeekdays
-                    : new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday };
-
-            var durations = sourceData.ActivitySessionDurationsMinutes is not null
-                ? new Dictionary<int, int>(sourceData.ActivitySessionDurationsMinutes)
-                : new Dictionary<int, int>();
-            if (!durations.ContainsKey((int)request.Activity))
-            {
-                durations[(int)request.Activity] = 45;
-            }
-
             sourceData = sourceData with
             {
                 SelectedActivityTypes = selectedActivities,
-                AvailableWeekdays = weekdays,
-                ActivitySessionDurationsMinutes = durations
+                AvailableWeekdays = sourceData.AvailableWeekdays is { Count: > 0 }
+                    ? sourceData.AvailableWeekdays
+                    : request.AvailableWeekdays
             };
         }
 
@@ -52,7 +39,7 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         var planningData = sourceData is null
             ? null
             : StrengthPlanPreviewMapperV020.ToData(sourceData);
-        var result = StrengthPlanPreviewRule.Evaluate(choices, planningData);
+        var result = StrengthPlanPreviewRule.EvaluateWithFallback(choices, planningData);
         var response = StrengthPlanPreviewMapperV020.ToResponse(result);
         if (sourceData is null)
             return response;

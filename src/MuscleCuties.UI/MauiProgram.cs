@@ -606,6 +606,7 @@ public static class MauiProgram
         services.AddTransient<StrengthPlanGenerationViewModel>(sp => new StrengthPlanGenerationViewModel(
             sp.GetRequiredService<IStrengthPlanProposalClientV020>(),
             sp.GetRequiredService<IProfileWorkoutPreferencesUseCase>(),
+            sp.GetRequiredService<IWorkoutArchiveUseCase>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
             () => NavigateToAsync(".."),
             () => NavigateToAsync("//WorkoutPage")));

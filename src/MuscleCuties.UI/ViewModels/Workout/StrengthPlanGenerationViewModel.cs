@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
+using MuscleCuties.UseCases.Features.Workout.Archive;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
@@ -15,11 +16,16 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
 {
     private const int NoPolicyReasons = 0;
     private const string NoStatusMessage = "";
+    private const int RecentWorkoutArchiveLimit = 100;
+    private const int DaysPerHistoryPeriod = 7;
+    private const int RecentHistoryPeriodCount = 4;
+    private const int RecentHistoryWindowDays = DaysPerHistoryPeriod * RecentHistoryPeriodCount;
 
     private static readonly WorkoutActivityDto[] StrengthActivities = WorkoutPlanningConstants.StrengthActivities;
 
     private readonly IStrengthPlanProposalClientV020 _proposalClient;
     private readonly IProfileWorkoutPreferencesUseCase _preferences;
+    private readonly IWorkoutArchiveUseCase _workoutArchive;
     private readonly IProfileRefreshNotifier _refreshNotifier;
     private readonly Func<Task> _navigateBackAsync;
     private readonly Func<Task> _navigateToTrainAsync;
@@ -29,8 +35,10 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
     private WorkoutActivityDto? _candidateReviewActivity;
     private HashSet<int> _candidateReviewExerciseIds = [];
     private StrengthPlanProposalCreatedV020? _proposal;
+    private bool _historyWasSelfReported;
 
     [ObservableProperty] private ObservableCollection<StrengthPlanActivityChoice> _activities = [];
+    [ObservableProperty] private ObservableCollection<StrengthPlanRecentWeekDisplay> _recentTrainingWeeks = [];
     [ObservableProperty] private ObservableCollection<StrengthPlanSessionDisplay> _strengthPreviewSessions = [];
     [ObservableProperty] private ObservableCollection<StrengthPlanHighIntensityCandidateDisplay> _highIntensityCandidates = [];
     [ObservableProperty] private ObservableCollection<MixedActivitySessionDisplay> _mixedActivitySessions = [];
@@ -42,9 +50,9 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
     [ObservableProperty] private StrengthPlanActivityChoice? _selectedHiitUnderlyingCardioActivity;
     [ObservableProperty] private HiitEligibilityEvidenceCaptureViewModel _hiitEvidenceCapture = new();
     [ObservableProperty] private StrengthPlanPreviewResponseV020? _preview;
-    [ObservableProperty] private string _consistentWeeks = "24";
-    [ObservableProperty] private string _averageSessionsPerWeek = "3";
-    [ObservableProperty] private string _daysSinceLastSession = "2";
+    [ObservableProperty] private string _consistentWeeks = string.Empty;
+    [ObservableProperty] private string _averageSessionsPerWeek = string.Empty;
+    [ObservableProperty] private string _daysSinceLastSession = string.Empty;
     [ObservableProperty] private string _warmupMinutes = "5";
     [ObservableProperty] private string _cooldownMinutes = "5";
     [ObservableProperty] private ObservableCollection<ActivityEvidenceAnswerChoice> _evidenceYesNoChoices = [];
@@ -63,17 +71,21 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
     [ObservableProperty] private bool? _appropriateClimbingInstructionAvailable;
     [ObservableProperty] private bool? _isDemandingYogaContent;
     [ObservableProperty] private string _statusMessage = NoStatusMessage;
+    [ObservableProperty] private string _recentTrainingSummary = string.Empty;
+    [ObservableProperty] private bool _isTrainingDetailsExpanded;
     [ObservableProperty] private bool _isBusy;
 
     public StrengthPlanGenerationViewModel(
         IStrengthPlanProposalClientV020 proposalClient,
         IProfileWorkoutPreferencesUseCase preferences,
+        IWorkoutArchiveUseCase workoutArchive,
         IProfileRefreshNotifier refreshNotifier,
         Func<Task> navigateBackAsync,
         Func<Task> navigateToTrainAsync)
     {
         _proposalClient = proposalClient;
         _preferences = preferences;
+        _workoutArchive = workoutArchive;
         _refreshNotifier = refreshNotifier;
         _navigateBackAsync = navigateBackAsync;
         _navigateToTrainAsync = navigateToTrainAsync;
@@ -82,20 +94,26 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
         YogaContentChoices = CreateYogaContentChoices();
 
         LoadCommand = new AsyncRelayCommand(LoadAsync);
+        SelectActivityCommand = new RelayCommand<StrengthPlanActivityChoice>(SelectActivity, CanSelectActivity);
+        ToggleTrainingDetailsCommand = new RelayCommand(ToggleTrainingDetails, CanToggleTrainingDetails);
         CreateProposalCommand = new AsyncRelayCommand(CreateProposalAsync, CanCreateProposal);
         ConfirmHighIntensityExercisesCommand = new AsyncRelayCommand(ConfirmHighIntensityExercisesAsync,
             CanConfirmHighIntensityExercises);
         AcceptProposalCommand = new AsyncRelayCommand(AcceptProposalAsync, CanAcceptProposal);
         EditDetailsCommand = new RelayCommand(EditDetails, CanEditDetails);
+        ClosePreviewCommand = new RelayCommand(ClosePreview, CanEditDetails);
         KeepCurrentPlanCommand = new AsyncRelayCommand(_navigateBackAsync);
         BackCommand = new AsyncRelayCommand(_navigateBackAsync);
     }
 
     public AsyncRelayCommand LoadCommand { get; }
+    public RelayCommand<StrengthPlanActivityChoice> SelectActivityCommand { get; }
+    public RelayCommand ToggleTrainingDetailsCommand { get; }
     public AsyncRelayCommand CreateProposalCommand { get; }
     public AsyncRelayCommand ConfirmHighIntensityExercisesCommand { get; }
     public AsyncRelayCommand AcceptProposalCommand { get; }
     public RelayCommand EditDetailsCommand { get; }
+    public RelayCommand ClosePreviewCommand { get; }
     public AsyncRelayCommand KeepCurrentPlanCommand { get; }
     public AsyncRelayCommand BackCommand { get; }
 
@@ -109,6 +127,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
     public bool HasScheduleInputReasons => ScheduleInputReasons.Count > NoPolicyReasons;
     public bool HasStrengthPreviewSessions => StrengthPreviewSessions.Count > NoPolicyReasons;
     public bool IsBeforePreview => Preview is null;
+    public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
+    public bool IsHistorySelfReported => _historyWasSelfReported;
+    public string TrainingDetailsToggleText => UiTextCatalog.Get(IsTrainingDetailsExpanded
+        ? "Workout_Generation_HideTrainingDetails"
+        : "Workout_Generation_EditTrainingDetails");
     public bool HasHighIntensityCandidates => SelectedActivity?.Activity == WorkoutActivityDto.StrengthHighIntensity &&
         Preview?.Status == "Limited" && HighIntensityCandidates.Count > NoPolicyReasons;
     public bool AreHighIntensityCandidateAnswersComplete => HasHighIntensityCandidates &&
@@ -148,14 +171,10 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
             var preferences = await _preferences.LoadAsync();
             preferences ??= new WorkoutPreferencesDto(
                 ActivityTypes: [(int)WorkoutActivityDto.GeneralStrength],
-                AvailableWeekdays: [(int)DayOfWeek.Monday, (int)DayOfWeek.Wednesday, (int)DayOfWeek.Friday],
-                ActivitySessionDurationsMinutes: new Dictionary<int, int> { [(int)WorkoutActivityDto.GeneralStrength] = 45 });
+                AvailableWeekdays: [],
+                ActivitySessionDurationsMinutes: new Dictionary<int, int>());
 
             var weekdays = NormalizeWeekdays(preferences.AvailableWeekdays);
-            if (weekdays.Length < WorkoutPreferencesConstraints.MinimumAvailableWeekdays)
-            {
-                weekdays = [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday];
-            }
             _availableWeekdays = weekdays;
             var initialActivities = preferences.ActivityTypes.ToHashSet();
             initialActivities.Add((int)WorkoutActivityDto.GeneralStrength);
@@ -171,20 +190,18 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
 
             Activities = new ObservableCollection<StrengthPlanActivityChoice>(
                 strengthList.Select(activity => new StrengthPlanActivityChoice(activity,
-                    StrengthPlanGenerationDisplayMapper.ActivityLabel(activity))));
+                    StrengthPlanGenerationDisplayMapper.ActivityLabel(activity),
+                    StrengthPlanGenerationDisplayMapper.StrengthPlanDescription(activity))));
 
             SelectedActivity = Activities.FirstOrDefault();
+            UpdateActivitySelectionStates();
 
-            if (string.IsNullOrWhiteSpace(ConsistentWeeks))
-                ConsistentWeeks = "24";
-            if (string.IsNullOrWhiteSpace(AverageSessionsPerWeek))
-                AverageSessionsPerWeek = "3";
-            if (string.IsNullOrWhiteSpace(DaysSinceLastSession))
-                DaysSinceLastSession = "2";
             if (string.IsNullOrWhiteSpace(WarmupMinutes))
                 WarmupMinutes = "5";
             if (string.IsNullOrWhiteSpace(CooldownMinutes))
                 CooldownMinutes = "5";
+
+            await LoadRecentWorkoutHistoryAsync(DateOnly.FromDateTime(DateTime.Now));
 
             var yesChoice = EvidenceYesNoChoices.FirstOrDefault(choice => choice.Value is true);
             if (IsSwimmingSelected)
@@ -221,8 +238,89 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
         }
     }
 
+    private async Task LoadRecentWorkoutHistoryAsync(DateOnly localDate)
+    {
+        try
+        {
+            var workoutHistory = await _workoutArchive.GetWorkoutHistoryAsync(RecentWorkoutArchiveLimit, 0);
+            var sessionDates = workoutHistory
+                .Select(session => ToLocalSessionDate(session.StartedAt))
+                .Where(sessionDate => sessionDate <= localDate)
+                .OrderByDescending(sessionDate => sessionDate)
+                .ToArray();
+
+            RecentTrainingWeeks = BuildRecentTrainingWeeks(sessionDates, localDate);
+            if (sessionDates.Length == NoPolicyReasons)
+            {
+                RecentTrainingSummary = UiTextCatalog.Get("Workout_Generation_NoSavedWorkoutHistory");
+                return;
+            }
+
+            var recentWindowStart = localDate.AddDays(-(RecentHistoryWindowDays - 1));
+            var recentSessionCount = sessionDates.Count(sessionDate => sessionDate >= recentWindowStart);
+            RecentTrainingSummary = StrengthPlanGenerationDisplayMapper.FormatLocalized(
+                "Workout_Generation_RecentHistorySummaryFormat",
+                recentSessionCount.ToString(CultureInfo.CurrentCulture));
+
+            // Archive summaries have no activity identifier, so they cannot establish
+            // resistance-specific history for GS/HVS eligibility.
+        }
+        catch (Exception)
+        {
+            RecentTrainingWeeks = BuildRecentTrainingWeeks([], localDate);
+            RecentTrainingSummary = UiTextCatalog.Get("Workout_Generation_HistoryUnavailable");
+        }
+    }
+
+    private static ObservableCollection<StrengthPlanRecentWeekDisplay> BuildRecentTrainingWeeks(
+        DateOnly[] sessionDates,
+        DateOnly localDate)
+    {
+        var result = new ObservableCollection<StrengthPlanRecentWeekDisplay>();
+        for (var periodIndex = 0; periodIndex < RecentHistoryPeriodCount; periodIndex++)
+        {
+            var daysAgo = periodIndex * DaysPerHistoryPeriod;
+            var periodEnd = localDate.AddDays(-daysAgo);
+            var periodStart = periodEnd.AddDays(-(DaysPerHistoryPeriod - 1));
+            var count = sessionDates.Count(sessionDate => sessionDate >= periodStart && sessionDate <= periodEnd);
+            var periodLabel = periodIndex == NoPolicyReasons
+                ? UiTextCatalog.Get("Workout_Generation_RecentWeekLastSevenDays")
+                : StrengthPlanGenerationDisplayMapper.FormatLocalized(
+                    "Workout_Generation_RecentWeekRangeFormat",
+                    (daysAgo + 1).ToString(CultureInfo.CurrentCulture),
+                    (daysAgo + DaysPerHistoryPeriod).ToString(CultureInfo.CurrentCulture));
+            result.Add(new StrengthPlanRecentWeekDisplay(
+                periodLabel,
+                count.ToString(CultureInfo.CurrentCulture),
+                StrengthPlanGenerationDisplayMapper.FormatLocalized(
+                    "Workout_Generation_RecentWeekAccessibilityFormat",
+                    periodLabel,
+                    count.ToString(CultureInfo.CurrentCulture))));
+        }
+
+        return result;
+    }
+
+    private static DateOnly ToLocalSessionDate(DateTime startedAt) =>
+        DateOnly.FromDateTime(DateTime.SpecifyKind(startedAt, DateTimeKind.Utc).ToLocalTime());
+
     private bool CanCreateProposal() => !IsBusy && SelectedActivity is not null &&
         HasValidSavedAvailability && Preview is null;
+
+    private bool CanSelectActivity(StrengthPlanActivityChoice? choice) =>
+        CanEditInputs && choice is not null && Activities.Contains(choice);
+
+    private void SelectActivity(StrengthPlanActivityChoice? choice)
+    {
+        if (!CanSelectActivity(choice))
+            return;
+
+        SelectedActivity = choice;
+    }
+
+    private bool CanToggleTrainingDetails() => CanEditInputs;
+
+    private void ToggleTrainingDetails() => IsTrainingDetailsExpanded = !IsTrainingDetailsExpanded;
 
     private bool CanConfirmHighIntensityExercises() => CanSubmitHighIntensityConfirmations;
 
@@ -260,6 +358,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
                 DaysSinceLastSession,
                 WarmupMinutes,
                 CooldownMinutes,
+                IsHistorySelfReported,
                 DateOnly.FromDateTime(DateTime.Now),
                 out var history,
                 out var warmup,
@@ -316,7 +415,10 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
                 mixedSchedule?.Activities.Select(StrengthPlanGenerationDisplayMapper.ToMixedActivityDecisionDisplay) ??
                 Array.Empty<MixedActivityDecisionDisplay>());
             ScheduleInputReasons = new ObservableCollection<string>(
-                mixedSchedule?.InputReasonCodes.Select(StrengthPlanGenerationDisplayMapper.ScheduleReasonMessage) ??
+                mixedSchedule?.InputReasonCodes
+                    .Where(code => !StrengthPlanGenerationDisplayMapper.IsInformationalDiagnosticCode(code))
+                    .Select(StrengthPlanGenerationDisplayMapper.ScheduleReasonMessage)
+                    .Distinct() ??
                 Array.Empty<string>());
             PreviewLimitations = new ObservableCollection<string>(HasLimitation
                 ? [PreviewLimitationMessage]
@@ -341,7 +443,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
 
     private StrengthPlanPreviewRequestV020 BuildPreviewRequest(
         WorkoutActivityDto activity,
-        ActivityTrainingHistoryInputV020 history,
+        ActivityTrainingHistoryInputV020? history,
         int warmupMinutes,
         int cooldownMinutes,
         IReadOnlySet<int>? familiarExerciseIds,
@@ -466,8 +568,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
 
     private void EditDetails()
     {
+        IsTrainingDetailsExpanded = true;
         ClearPreview();
     }
+
+    private void ClosePreview() => ClearPreview();
 
     private async Task AcceptProposalAsync()
     {
@@ -510,21 +615,42 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
     partial void OnSelectedActivityChanged(StrengthPlanActivityChoice? value)
     {
         OnPropertyChanged(nameof(IsHighIntensityStrengthSelected));
+        UpdateActivitySelectionStates();
         if (_historyActivity == value?.Activity)
             return;
 
         _historyActivity = value?.Activity;
-        if (string.IsNullOrWhiteSpace(ConsistentWeeks))
-            ConsistentWeeks = "24";
-        if (string.IsNullOrWhiteSpace(AverageSessionsPerWeek))
-            AverageSessionsPerWeek = "3";
-        if (string.IsNullOrWhiteSpace(DaysSinceLastSession))
-            DaysSinceLastSession = "2";
         if (string.IsNullOrWhiteSpace(WarmupMinutes))
             WarmupMinutes = "5";
         if (string.IsNullOrWhiteSpace(CooldownMinutes))
             CooldownMinutes = "5";
         ClearPreview();
+    }
+
+    partial void OnStatusMessageChanged(string value) => OnPropertyChanged(nameof(HasStatusMessage));
+
+    partial void OnIsTrainingDetailsExpandedChanged(bool value) =>
+        OnPropertyChanged(nameof(TrainingDetailsToggleText));
+
+    partial void OnConsistentWeeksChanged(string value) => MarkHistoryAsSelfReported();
+
+    partial void OnAverageSessionsPerWeekChanged(string value) => MarkHistoryAsSelfReported();
+
+    partial void OnDaysSinceLastSessionChanged(string value) => MarkHistoryAsSelfReported();
+
+    private void MarkHistoryAsSelfReported()
+    {
+        if (_historyWasSelfReported)
+            return;
+
+        _historyWasSelfReported = true;
+        OnPropertyChanged(nameof(IsHistorySelfReported));
+    }
+
+    private void UpdateActivitySelectionStates()
+    {
+        foreach (var activity in Activities)
+            activity.IsSelected = activity.Activity == SelectedActivity?.Activity;
     }
 
     private void ClearPreview(bool clearStatus = true)
@@ -662,10 +788,13 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
 
     private void NotifyCommandStates()
     {
+        SelectActivityCommand.NotifyCanExecuteChanged();
+        ToggleTrainingDetailsCommand.NotifyCanExecuteChanged();
         CreateProposalCommand.NotifyCanExecuteChanged();
         ConfirmHighIntensityExercisesCommand.NotifyCanExecuteChanged();
         AcceptProposalCommand.NotifyCanExecuteChanged();
         EditDetailsCommand.NotifyCanExecuteChanged();
+        ClosePreviewCommand.NotifyCanExecuteChanged();
     }
 
     private static DayOfWeek[] NormalizeWeekdays(IReadOnlyList<int>? values) =>

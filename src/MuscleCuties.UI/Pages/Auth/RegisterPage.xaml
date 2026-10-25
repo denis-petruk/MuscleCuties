@@ -10,28 +10,20 @@
     x:DataType="vm:RegisterViewModel"
     Shell.NavBarIsVisible="False">
 
-    <ContentPage.Resources>
-        <x:Double x:Key="PrivacyConsentSpacing">8</x:Double>
-        <x:Double x:Key="PrivacyConsentTouchTargetSize">44</x:Double>
-        <Thickness x:Key="PrivacyPolicyAlignmentInset">8,0,0,0</Thickness>
-        <Thickness x:Key="RegisterFooterPadding">24,8,24,12</Thickness>
-        <x:Double x:Key="RegisterFooterSpacing">12</x:Double>
-        <x:Double x:Key="RegisterPrimaryButtonHeight">52</x:Double>
-    </ContentPage.Resources>
 
     <Grid RowDefinitions="*,Auto">
     <ScrollView Grid.Row="0" Orientation="Vertical" VerticalScrollBarVisibility="Always">
         <Grid
-            Padding="24,36,24,32"
+            Padding="{StaticResource UiInsets24_36_24_32}"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="520"
-            RowSpacing="0"
+            MaximumWidthRequest="{StaticResource UiDimension520}"
+            RowSpacing="{StaticResource UiSpacing0}"
             RowDefinitions="Auto,Auto,Auto,Auto">
 
             <sharedControls:ThemeAwareBrandLogoImage
                 Grid.Row="0"
-                WidthRequest="132"
-                HeightRequest="72"
+                WidthRequest="{StaticResource UiDimension132}"
+                HeightRequest="{StaticResource UiDimension72}"
                 HorizontalOptions="Center"
                 Aspect="AspectFit"
                 SemanticProperties.Description="{loc:LocalizedText Common_MuscleCutiesLogo}" />
@@ -40,19 +32,19 @@
                 Grid.Row="1"
                 Text="{loc:LocalizedText Auth_Register_CreateYourAccount}"
                 Style="{StaticResource Headline}"
-                Margin="0,20,0,8"
+                Margin="{StaticResource UiInsets0_20_0_8}"
                 SemanticProperties.HeadingLevel="Level1" />
             <Label
                 Grid.Row="2"
                 Text="{loc:LocalizedText Auth_Register_OneProfileShapedAroundYou}"
                 Style="{StaticResource MutedLabel}"
-                Margin="0,0,0,28" />
+                Margin="{StaticResource UiInsets0_0_0_28}" />
 
             <Grid
                 Grid.Row="3"
                 RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
-                RowSpacing="18">
-                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="6">
+                RowSpacing="{StaticResource UiSpacing18}">
+                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
                     <Label Text="{loc:LocalizedText Auth_Email}" Style="{StaticResource FormFieldLabel}" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                         <Entry
@@ -68,7 +60,7 @@
                     </Border>
                 </Grid>
 
-                <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="6">
+                <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
                     <Label Text="{loc:LocalizedText Auth_Register_UsernameLabel}" Style="{StaticResource FormFieldLabel}" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                         <Entry
@@ -83,7 +75,7 @@
                     </Border>
                 </Grid>
 
-                <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="6">
+                <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
                     <Label Text="{loc:LocalizedText Auth_Password}" Style="{StaticResource FormFieldLabel}" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                         <Entry
@@ -99,7 +91,7 @@
                     </Border>
                 </Grid>
 
-                <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="6">
+                <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
                     <Label Text="{loc:LocalizedText Auth_ConfirmPassword}" Style="{StaticResource FormFieldLabel}" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                         <Entry
@@ -126,8 +118,8 @@
                 <Grid Grid.Row="5"
                       ColumnDefinitions="Auto,*"
                       RowDefinitions="Auto,Auto"
-                      ColumnSpacing="{StaticResource PrivacyConsentSpacing}"
-                      RowSpacing="{StaticResource PrivacyConsentSpacing}">
+                      ColumnSpacing="{StaticResource UiSpaceTight}"
+                      RowSpacing="{StaticResource UiSpaceTight}">
                     <CheckBox x:Name="PrivacyConsentCheckBox"
                               Grid.Row="0"
                               Grid.Column="0"
@@ -136,8 +128,8 @@
                               Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource ActionSurfaceDark}}"
                               HorizontalOptions="Start"
                               VerticalOptions="Start"
-                              MinimumWidthRequest="{StaticResource PrivacyConsentTouchTargetSize}"
-                              MinimumHeightRequest="{StaticResource PrivacyConsentTouchTargetSize}"
+                              MinimumWidthRequest="{StaticResource UiDimension44}"
+                              MinimumHeightRequest="{StaticResource UiDimension44}"
                               SemanticProperties.Description="{loc:LocalizedText Auth_Register_PrivacyConsent}" />
                     <Label Grid.Row="0"
                            Grid.Column="1"
@@ -150,9 +142,9 @@
                         Grid.ColumnSpan="2"
                         Text="{loc:LocalizedText Profile_Privacy_Policy}"
                         Style="{StaticResource ButtonLink}"
-                        Padding="{StaticResource PrivacyPolicyAlignmentInset}"
+                        Padding="{StaticResource UiInsets8_0_0_0}"
                         HorizontalOptions="Start"
-                        MinimumHeightRequest="{StaticResource PrivacyConsentTouchTargetSize}"
+                        MinimumHeightRequest="{StaticResource UiDimension44}"
                         Command="{Binding GoToPrivacyPolicyCommand}"
                         SemanticProperties.Description="{loc:LocalizedText Profile_Privacy_Policy}" />
                 </Grid>
@@ -162,15 +154,15 @@
     </ScrollView>
     <VerticalStackLayout
         Grid.Row="1"
-        Padding="{StaticResource RegisterFooterPadding}"
-        Spacing="{StaticResource RegisterFooterSpacing}"
+        Padding="{StaticResource UiInsets24_8_24_12}"
+        Spacing="{StaticResource UiSpaceCompact}"
         HorizontalOptions="Fill"
-        MaximumWidthRequest="520">
+        MaximumWidthRequest="{StaticResource UiDimension520}">
             <Button
                 Text="{loc:LocalizedText Auth_CreateAccount}"
                 Command="{Binding RegisterCommand}"
                 IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                MinimumHeightRequest="{StaticResource RegisterPrimaryButtonHeight}"
+                MinimumHeightRequest="{StaticResource UiDimension52}"
                 SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreateYourAccount}" />
 
             <ActivityIndicator
@@ -188,10 +180,10 @@
                 SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
             <Grid
                 ColumnDefinitions="Auto,Auto"
-                ColumnSpacing="4"
+                ColumnSpacing="{StaticResource UiSpaceMicro}"
                 HorizontalOptions="Center"
-                MinimumHeightRequest="44"
-                MinimumWidthRequest="44"
+                MinimumHeightRequest="{StaticResource UiDimension44}"
+                MinimumWidthRequest="{StaticResource UiDimension44}"
                 SemanticProperties.Description="{loc:LocalizedText Auth_Register_ReturnToLogin}"
                 SemanticProperties.Hint="{loc:LocalizedText Auth_Register_DoubleTapToGoBackTo}">
                 <Grid.GestureRecognizers>

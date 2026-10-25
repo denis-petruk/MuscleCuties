@@ -155,7 +155,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
         {
             using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "[]" : json);
             if (document.RootElement.ValueKind != JsonValueKind.Array)
-                return new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday };
+                return new HashSet<DayOfWeek>();
             var set = document.RootElement.EnumerateArray()
                 .Select(value => value.ValueKind switch
                 {
@@ -166,13 +166,11 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                 .Where(day => day.HasValue)
                 .Select(day => day!.Value)
                 .ToHashSet();
-            return set.Count >= 2
-                ? set
-                : new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday };
+            return set;
         }
         catch (JsonException)
         {
-            return new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday };
+            return new HashSet<DayOfWeek>();
         }
     }
 
@@ -188,28 +186,13 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                 {
                     if (Enum.TryParse<WorkoutActivityType>(property.Name, true, out var activity) &&
                         Enum.IsDefined(activity) && property.Value.TryGetInt32(out var minutes) &&
-                        WorkoutPreferencesRule.IsValidSessionDuration(activity, minutes))
+                        ActivitySessionDurationRule.ForUserPreference(activity) is not null)
                         result[(int)activity] = minutes;
                 }
             }
         }
         catch (JsonException)
         {
-        }
-
-        foreach (var activity in new[]
-                 {
-                     WorkoutActivityType.HighVolumeStrength,
-                     WorkoutActivityType.StrengthHighIntensity,
-                     WorkoutActivityType.GeneralStrength
-                 })
-        {
-            if (!result.ContainsKey((int)activity))
-            {
-                var defaultMinutes = WorkoutPreferencesRule.DefaultSessionDurationMinutes(activity) ??
-                                     WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes;
-                result[(int)activity] = defaultMinutes;
-            }
         }
 
         return result;

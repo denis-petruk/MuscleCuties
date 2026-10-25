@@ -14,7 +14,7 @@ public class BoolToSelectionStrokeConverter : IValueConverter
         if (Application.Current?.Resources.TryGetValue("Gray300", out var gray) == true)
             return (Color)gray;
 
-        return Colors.Transparent;
+        return default;
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -29,12 +29,12 @@ public class BoolToSelectionBgConverter : IValueConverter
     {
         var isSelected = value is true;
         if (!isSelected)
-            return Colors.Transparent;
+            return default;
 
         if (Application.Current?.Resources.TryGetValue("AccentSurface", out var accent) == true)
             return (Color)accent;
 
-        return Colors.Transparent;
+        return default;
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

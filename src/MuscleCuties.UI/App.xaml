@@ -10,7 +10,6 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
-                <ResourceDictionary Source="Resources/Styles/WorkoutPlanningResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <mct:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <mct:IsStringNotNullOrEmptyConverter x:Key="StringToBoolConverter" />

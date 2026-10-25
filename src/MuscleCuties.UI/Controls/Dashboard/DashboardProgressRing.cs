@@ -1,5 +1,6 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
+using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Controls.Dashboard;
 
@@ -10,7 +11,7 @@ public sealed class DashboardProgressRing : GraphicsView, IDrawable
         propertyChanged: (view, _, _) => ((DashboardProgressRing)view).Invalidate());
 
     public static readonly BindableProperty RingColorProperty = BindableProperty.Create(
-        nameof(RingColor), typeof(Color), typeof(DashboardProgressRing), Color.FromArgb("#C45A86"),
+        nameof(RingColor), typeof(Color), typeof(DashboardProgressRing), AppThemeResources.GetColor("DashboardAccentPink", default),
         propertyChanged: (view, _, _) => ((DashboardProgressRing)view).Invalidate());
 
     public DashboardProgressRing()
@@ -34,16 +35,18 @@ public sealed class DashboardProgressRing : GraphicsView, IDrawable
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         var size = Math.Min(dirtyRect.Width, dirtyRect.Height);
-        if (size <= 14)
+        var ringInset = AppThemeResources.GetDouble("UiDimension5");
+        var diameterReduction = AppThemeResources.GetDouble("UiDimension10");
+        if (size <= AppThemeResources.GetDouble("UiDimension14"))
             return;
 
-        var x = (dirtyRect.Width - size) / 2f + 5f;
-        var y = (dirtyRect.Height - size) / 2f + 5f;
-        var diameter = size - 10f;
-        canvas.StrokeSize = 6f;
-        canvas.StrokeColor = Application.Current?.RequestedTheme == AppTheme.Dark
-            ? Color.FromArgb("#42424B")
-            : Color.FromArgb("#E9E5E8");
+        var x = (dirtyRect.Width - size) / 2f + (float)ringInset;
+        var y = (dirtyRect.Height - size) / 2f + (float)ringInset;
+        var diameter = size - (float)diameterReduction;
+        canvas.StrokeSize = (float)AppThemeResources.GetDouble("UiStrokeWidth6");
+        canvas.StrokeColor = AppThemeResources.GetColor(
+            Application.Current?.RequestedTheme == AppTheme.Dark ? "DashboardRingTrackDark" : "DashboardRingTrackLight",
+            default);
         canvas.DrawEllipse(x, y, diameter, diameter);
 
         var progress = float.IsFinite(Progress) ? Math.Clamp(Progress, 0f, 1f) : 0f;

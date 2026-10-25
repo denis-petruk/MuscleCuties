@@ -39,7 +39,8 @@ public static class WeeklyWorkoutPlanGeneratorRule
     public const int MinSessionMinutes = 15;
     public const int MaxSessionMinutes = 180;
     public const int DefaultGeneralDaysPerWeek = 3;
-    public const int MinWeeklyDays = 2;
+    public const int MinimumStrengthSessionsPerWeek =
+        GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek;
     public const int MaxWeeklyDays = 7;
     public const int MaxHardDaysPerWeek = 3;
     public const int MaxHardDaysPerDay = 1;
@@ -170,6 +171,7 @@ public static class WeeklyWorkoutPlanGeneratorRule
             availableWeekdays: sanitizedInput.AvailableWeekdays,
             excludedExerciseIds: sanitizedInput.ExcludedExerciseIds,
             workBudgetMinutes: workBudgetMinutes);
+        var hasSchedulingBlock = strengthSessions.Count < MinimumStrengthSessionsPerWeek;
 
         trace.Add(new RuleTraceEntry(
             StepNumber: Step3StrengthSessionConstruction,
@@ -191,6 +193,11 @@ public static class WeeklyWorkoutPlanGeneratorRule
             availableWeekdays: sanitizedInput.AvailableWeekdays,
             effectiveTiers: effectiveTiers,
             preferredDurationMinutes: sanitizedInput.PreferredSessionLengthMinutes);
+        if (hasSchedulingBlock)
+        {
+            packedSessions.Clear();
+            hardDaysCount = 0;
+        }
 
         // Weekly hypertrophy direct-set volume check
         var plannedExerciseSets = packedSessions
@@ -253,8 +260,8 @@ public static class WeeklyWorkoutPlanGeneratorRule
                 var progressionAction = ProgressionAction.Maintain;
                 var rationale = "Standard baseline volume prescription.";
 
-                // Deload adjustment
-                if (deloadPrescription.IsDeloadTriggered)
+                // Deload adjustment (only active if EnableAutomaticDeload is explicitly enabled)
+                if (sanitizedInput.EnableAutomaticDeload && deloadPrescription.IsDeloadTriggered)
                 {
                     targetSets = DeloadTriggerRule.CalculateDeloadSets(targetSets, deloadPrescription.SetReductionFraction);
                     targetRir = DeloadTriggerRule.CalculateDeloadRir(targetRir, deloadPrescription.TargetRirIncrease);
@@ -339,9 +346,9 @@ public static class WeeklyWorkoutPlanGeneratorRule
                 });
             }
 
-            // If deload is triggered, drop optional hard conditioning
+            // If deload is triggered and enabled, drop optional hard conditioning
             var isHard = session.IsHardSession;
-            if (deloadPrescription.IsDeloadTriggered && deloadPrescription.RemoveOptionalHardConditioning && isHard)
+            if (sanitizedInput.EnableAutomaticDeload && deloadPrescription.IsDeloadTriggered && deloadPrescription.RemoveOptionalHardConditioning && isHard)
             {
                 isHard = false;
             }
@@ -373,7 +380,7 @@ public static class WeeklyWorkoutPlanGeneratorRule
             HasAcuteInjuryConflict: hasInjuryBlock,
             BaselineCycleTier: baselineCycleTier,
             CheckInScore: sanitizedInput.TodayCheckIn,
-            ApplyChanges: sanitizedInput.ApplyChanges);
+            ApplyChanges: sanitizedInput.ApplyChanges && !hasSchedulingBlock);
 
         var precedenceResult = PhaseAndCheckInPrecedenceRule.Evaluate(precedenceContext);
 
@@ -415,7 +422,7 @@ public static class WeeklyWorkoutPlanGeneratorRule
             RuleTrace: trace,
             IsDeloadWeek: deloadPrescription.IsDeloadTriggered,
             MeetsWhoHealthTargets: aerobicHealthSummary.MeetsAllTargets,
-            HasSafetyBlock: hasInjuryBlock);
+            HasSafetyBlock: hasInjuryBlock || hasSchedulingBlock);
     }
 
     public static bool IsHardSessionActivity(WorkoutActivityType activity) =>
@@ -450,18 +457,18 @@ public static class WeeklyWorkoutPlanGeneratorRule
                 CycleScale: PhaseBaselineScale.QuizMappedOneToFive,
                 TodayCheckIn: null,
                 ApplyChanges: false,
-                PlanWeekStartDate: DateOnly.FromDateTime(DateTime.UtcNow));
+                PlanWeekStartDate: DateOnly.FromDateTime(DateTime.UtcNow),
+                EnableAutomaticDeload: false,
+                ExistingSessionStates: new Dictionary<Guid, WorkoutSessionLifecycleState>());
         }
 
-        var clampedDays = Math.Clamp(input.GeneralDaysPerWeek, MinWeeklyDays, MaxWeeklyDays);
+        var clampedDays = Math.Clamp(input.GeneralDaysPerWeek, MinimumStrengthSessionsPerWeek, MaxWeeklyDays);
         var clampedDuration = Math.Clamp(
             input.PreferredSessionLengthMinutes <= ZeroMinutes ? DefaultPreferredSessionLengthMinutes : input.PreferredSessionLengthMinutes,
             MinSessionMinutes,
             MaxSessionMinutes);
 
-        var weekdays = input.AvailableWeekdays is { Count: >= MinWeeklyDays }
-            ? input.AvailableWeekdays.Distinct().OrderBy(d => (int)d).ToList()
-            : [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday];
+        var weekdays = input.AvailableWeekdays?.Distinct().OrderBy(d => (int)d).ToList() ?? [];
 
         var activities = input.PreferredActivities is { Count: > 0 }
             ? input.PreferredActivities.Distinct().ToList()
@@ -491,7 +498,9 @@ public static class WeeklyWorkoutPlanGeneratorRule
             CycleScale: input.CycleScale,
             TodayCheckIn: input.TodayCheckIn,
             ApplyChanges: input.ApplyChanges,
-            PlanWeekStartDate: input.PlanWeekStartDate == default ? DateOnly.FromDateTime(DateTime.UtcNow) : input.PlanWeekStartDate);
+            PlanWeekStartDate: input.PlanWeekStartDate == default ? DateOnly.FromDateTime(DateTime.UtcNow) : input.PlanWeekStartDate,
+            EnableAutomaticDeload: input.EnableAutomaticDeload,
+            ExistingSessionStates: input.ExistingSessionStates ?? new Dictionary<Guid, WorkoutSessionLifecycleState>());
     }
 
     private static WorkoutActivityType DetermineStrengthActivity(IReadOnlyList<WorkoutActivityType> activities, SessionTrainingStyle style)
@@ -517,6 +526,9 @@ public static class WeeklyWorkoutPlanGeneratorRule
         IReadOnlySet<int> excludedExerciseIds,
         int workBudgetMinutes)
     {
+        if (availableWeekdays.Count < MinimumStrengthSessionsPerWeek)
+            return [];
+
         var sessionCount = Math.Min(Math.Min(daysPerWeek, availableWeekdays.Count), MaxHardDaysPerWeek);
         var availableSet = availableWeekdays.ToHashSet();
         var assignmentResult = StrengthWeekdayAssignmentRule.AssignBySpecification(sessionCount, availableSet);
@@ -688,19 +700,23 @@ public static class WeeklyWorkoutPlanGeneratorRule
         WorkoutActivityType.Rowing or
         WorkoutActivityType.Elliptical =>
             effectiveTier <= EffectiveExperienceTierRule.GlobalTierBeginner
-                ? Math.Max(preferredDurationMinutes, ContinuousCardioWarmupCooldownMinutes + ContinuousCardioTier1MainMinutes)
-                : Math.Max(preferredDurationMinutes, ContinuousCardioWarmupCooldownMinutes + ContinuousCardioEstablishedMainMinutes),
+                ? ContinuousCardioWarmupCooldownMinutes + ContinuousCardioTier1MainMinutes
+                : ContinuousCardioWarmupCooldownMinutes + ContinuousCardioEstablishedMainMinutes,
+        WorkoutActivityType.Swimming =>
+            effectiveTier <= EffectiveExperienceTierRule.GlobalTierBeginner
+                ? ActivitySessionDurationRule.SwimmingMinimumMinutes
+                : ActivitySessionDurationRule.SwimmingMaximumMinutes,
         WorkoutActivityType.RockClimbing =>
             effectiveTier <= EffectiveExperienceTierRule.GlobalTierBeginner
                 ? RockClimbingTier1Minutes
                 : RockClimbingEstablishedMinutes,
         WorkoutActivityType.Yoga =>
-            Math.Clamp(preferredDurationMinutes, YogaMinMinutes, YogaMaxMinutes),
+            ActivitySessionDurationRule.YogaDurationMinutesDefault,
         WorkoutActivityType.Mobility =>
-            Math.Clamp(preferredDurationMinutes, MobilityMinMinutes, MobilityMaxMinutes),
+            ActivitySessionDurationRule.MobilityDurationMinutesDefault,
         WorkoutActivityType.GentleRecovery =>
-            Math.Clamp(preferredDurationMinutes, GentleRecoveryMinMinutes, GentleRecoveryMaxMinutes),
-        _ => preferredDurationMinutes
+            ActivitySessionDurationRule.GentleRecoveryDurationMinutesDefault,
+        _ => ActivitySessionDurationRule.StandardDefaultMinutes
     };
 
     private static bool TryParseMajorMuscle(string muscleName, out MajorMuscleGroup group)
@@ -791,7 +807,9 @@ public sealed record WeeklyPlanGeneratorInput(
     PhaseBaselineScale CycleScale = PhaseBaselineScale.QuizMappedOneToFive,
     CheckInScoreResult? TodayCheckIn = null,
     bool ApplyChanges = false,
-    DateOnly PlanWeekStartDate = default);
+    DateOnly PlanWeekStartDate = default,
+    bool EnableAutomaticDeload = false,
+    IReadOnlyDictionary<Guid, WorkoutSessionLifecycleState>? ExistingSessionStates = null);
 
 internal sealed record SanitizedWeeklyPlanInput(
     UserGoal Goal,
@@ -814,7 +832,9 @@ internal sealed record SanitizedWeeklyPlanInput(
     PhaseBaselineScale CycleScale,
     CheckInScoreResult? TodayCheckIn,
     bool ApplyChanges,
-    DateOnly PlanWeekStartDate);
+    DateOnly PlanWeekStartDate,
+    bool EnableAutomaticDeload,
+    IReadOnlyDictionary<Guid, WorkoutSessionLifecycleState> ExistingSessionStates);
 
 public sealed record PriorExercisePerformanceRecord(
     int ExerciseId,

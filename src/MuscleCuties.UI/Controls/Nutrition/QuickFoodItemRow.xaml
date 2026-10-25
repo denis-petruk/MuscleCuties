@@ -10,20 +10,20 @@
     x:DataType="uiModels:QuickFoodItemUiModel">
 
     <Border
-        StrokeShape="RoundRectangle 10"
-        Padding="10,8"
-        MinimumHeightRequest="44"
+        StrokeShape="{StaticResource UiRoundRectangleRadius10}"
+        Padding="{StaticResource UiInsets10_8}"
+        MinimumHeightRequest="{StaticResource UiDimension44}"
         Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-        StrokeThickness="1">
+        StrokeThickness="{StaticResource UiStrokeWidth1}">
 
-        <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="6">
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}" RowSpacing="{StaticResource UiSpacing6}">
             <!-- Multi-Select Checkbox -->
             <Border Grid.RowSpan="2" Grid.Column="0"
-                    WidthRequest="28" HeightRequest="28"
-                    StrokeShape="RoundRectangle 8"
-                    StrokeThickness="1.5"
+                    WidthRequest="{StaticResource UiDimension28}" HeightRequest="{StaticResource UiDimension28}"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius8}"
+                    StrokeThickness="{StaticResource UiStrokeWidth1_5}"
                     Stroke="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray600}}"
-                    BackgroundColor="Transparent"
+                    BackgroundColor="{StaticResource Transparent}"
                     VerticalOptions="Center">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer
@@ -37,41 +37,41 @@
                     </DataTrigger>
                 </Border.Triggers>
                 <Path Data="M3 7L6 10L13 3"
-                      Stroke="White" StrokeThickness="2"
+                      Stroke="{StaticResource White}" StrokeThickness="{StaticResource UiStrokeWidth2}"
                       HorizontalOptions="Center" VerticalOptions="Center"
                       IsVisible="{Binding IsSelected}" />
             </Border>
 
             <!-- Name and details -->
-            <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2" VerticalOptions="Center">
-                <Label Grid.Row="0" Text="{Binding Name}" FontSize="13" FontAttributes="Bold"
+            <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
+                <Label Grid.Row="0" Text="{Binding Name}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
                        LineBreakMode="TailTruncation" />
                 <Label Grid.Row="1" Text="{Binding Detail, Converter={StaticResource LocalizedStringConverter}}"
-                       FontSize="11" LineBreakMode="TailTruncation" />
+                       FontSize="{StaticResource UiFontSize11}" LineBreakMode="TailTruncation" />
             </Grid>
             <Label Grid.Row="0" Grid.Column="2"
                    Text="{Binding Calories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_CaloriesValueKcal}"
-                   FontSize="12" VerticalOptions="Center" />
+                   FontSize="{StaticResource UiFontSize12}" VerticalOptions="Center" />
             <Button Grid.Row="1" Grid.Column="2"
                     Style="{StaticResource ButtonSecondary}"
                     Text="{loc:LocalizedText Common_Edit}"
                     Command="{Binding SelectQuickFoodCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
                     CommandParameter="{Binding .}"
-                    HeightRequest="36"
-                    MinimumHeightRequest="36"
-                    Padding="8,0"
-                    FontSize="11"
-                    CornerRadius="{StaticResource UiRadiusControl}" />
+                    HeightRequest="{StaticResource UiDimension36}"
+                    MinimumHeightRequest="{StaticResource UiDimension36}"
+                    Padding="{StaticResource UiInsets8_0}"
+                    FontSize="{StaticResource UiFontSize11}"
+                    CornerRadius="{StaticResource UiCornerRadius14}" />
             <Button Grid.Row="1" Grid.Column="3"
                     Text="{loc:LocalizedText Nutrition_QuickFood_Log}"
                     Command="{Binding QuickLogFoodCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
                     CommandParameter="{Binding .}"
-                    HeightRequest="36"
-                    MinimumHeightRequest="36"
-                    Padding="8,0"
-                    CornerRadius="{StaticResource UiRadiusControl}"
-                    FontSize="11"
-                    FontAttributes="Bold"
+                    HeightRequest="{StaticResource UiDimension36}"
+                    MinimumHeightRequest="{StaticResource UiDimension36}"
+                    Padding="{StaticResource UiInsets8_0}"
+                    CornerRadius="{StaticResource UiCornerRadius14}"
+                    FontSize="{StaticResource UiFontSize11}"
+                    FontAttributes="{StaticResource UiFontAttributesBold}"
                     VerticalOptions="Center" />
         </Grid>
     </Border>

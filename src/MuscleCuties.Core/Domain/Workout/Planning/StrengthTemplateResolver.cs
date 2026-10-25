@@ -360,8 +360,8 @@ public static class StrengthTemplateResolver
                 ActivityPrescriptionRule.AccessoryRestSeconds),
             _ => new StrengthSlotPrescription(
                 ActivityPrescriptionRule.GeneralStrengthWorkingSets,
-                ActivityPrescriptionRule.AccessoryMinimumRepetitions,
-                ActivityPrescriptionRule.AccessoryMaximumRepetitions,
+                ActivityPrescriptionRule.GeneralStrengthAccessoryMinimumRepetitions,
+                ActivityPrescriptionRule.GeneralStrengthAccessoryMaximumRepetitions,
                 ActivityPrescriptionRule.InitialRepetitionsInReserve,
                 ActivityPrescriptionRule.AccessoryRestSeconds)
         };

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Microsoft.Maui.Graphics;
+using MuscleCuties.UI.Resources.Styles;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
@@ -14,11 +15,6 @@ public static class CycleCalendarItemBuilder
     private const int DaysInWeek = 7;
     private const int MondayDayOfWeekIndex = 1;
     private const int SundayOffsetDays = -6;
-    private const double SelectedStrokeThickness = 2.0;
-    private const double DefaultStripStrokeThickness = 1.0;
-    private const double TodayStrokeThickness = 2.0;
-    private const double ObservationStrokeThickness = 1.25;
-    private const double EstimatedStrokeThickness = 1.15;
     private const int MaxStaleCyclesMultiplier = 3;
 
     public static ObservableCollection<CycleDayItem> BuildCalendarStrip(
@@ -60,7 +56,7 @@ public static class CycleCalendarItemBuilder
 
         var markerColor = isNeutral
             ? PhaseThemePalette.GetNeutralDividerColor(useDarkTheme)
-            : PhaseThemePalette.GetPhaseTextColor(phase, useDarkTheme, Colors.Gray);
+            : PhaseThemePalette.GetPhaseTextColor(phase, useDarkTheme, default);
 
         return new CycleDayItem
         {
@@ -80,16 +76,18 @@ public static class CycleCalendarItemBuilder
             PhaseMarkerColor = markerColor,
             BackgroundColor = isSelected
                 ? PhaseThemePalette.GetSelectedDayBackgroundColor(useDarkTheme)
-                : existingDay?.BackgroundColor ?? Colors.Transparent,
+                : existingDay?.BackgroundColor ?? AppThemeResources.GetRequired<Color>("Transparent"),
             TextColor = isToday
                 ? GetTodayDayTextColor(useDarkTheme)
                 : existingDay?.TextColor ?? GetPhaseTextColor(phase, useDarkTheme),
             StrokeColor = isSelected
                 ? PhaseThemePalette.GetSelectedDayStrokeColor(useDarkTheme)
-                : (existingDay?.StrokeColor != Colors.Transparent && existingDay?.StrokeColor is not null
+                : (existingDay?.StrokeColor != default && existingDay?.StrokeColor is not null
                     ? existingDay.StrokeColor
-                    : Color.FromArgb(useDarkTheme ? "#4A3540" : "#E8D8E0")),
-            StrokeThickness = isSelected ? SelectedStrokeThickness : DefaultStripStrokeThickness
+                    : AppThemeResources.GetColor(
+                        useDarkTheme ? "CycleStripDefaultStrokeDark" : "CycleStripDefaultStrokeLight",
+                        default)),
+            StrokeThickness = AppThemeResources.GetDouble(isSelected ? "UiStrokeWidth2" : "UiStrokeWidth1")
         };
     }
 
@@ -172,11 +170,17 @@ public static class CycleCalendarItemBuilder
             TextColor = isToday ? GetTodayDayTextColor(useDarkTheme) :
                 isNeutral ? GetNeutralDayTextColor(useDarkTheme) : GetPhaseTextColor(phase, useDarkTheme),
             StrokeColor = ResolveDayStrokeColor(phase, isToday, hasRecordedObservation, isEstimated, useDarkTheme),
-            StrokeThickness = isToday ? TodayStrokeThickness : hasRecordedObservation ? ObservationStrokeThickness : isEstimated ? EstimatedStrokeThickness : 0,
+            StrokeThickness = AppThemeResources.GetDouble(isToday
+                ? "UiStrokeWidth2"
+                : hasRecordedObservation
+                    ? "UiStrokeWidth1_25"
+                    : isEstimated
+                        ? "UiStrokeWidth1_15"
+                        : "UiStrokeWidth0"),
             DayOfWeekShort = date.ToString("ddd", CultureInfo.CurrentCulture)[..1].ToUpperInvariant(),
             PhaseMarkerColor = isNeutral
                 ? PhaseThemePalette.GetNeutralDividerColor(useDarkTheme)
-                : PhaseThemePalette.GetPhaseTextColor(phase, useDarkTheme, Colors.Gray)
+                : PhaseThemePalette.GetPhaseTextColor(phase, useDarkTheme, default)
         };
     }
 
@@ -190,7 +194,9 @@ public static class CycleCalendarItemBuilder
         if (isToday || hasRecordedObservation)
             return GetPhaseTextColor(phase, useDarkTheme);
 
-        return isEstimated ? GetPredictedDayStrokeColor(phase, useDarkTheme) : Colors.Transparent;
+        return isEstimated
+            ? GetPredictedDayStrokeColor(phase, useDarkTheme)
+            : AppThemeResources.GetRequired<Color>("Transparent");
     }
 
     public static Color GetDayBackground(CyclePhase phase, bool isToday, bool useDarkTheme)
@@ -202,24 +208,24 @@ public static class CycleCalendarItemBuilder
 
     public static Color GetPhaseBackgroundColor(CyclePhase phase, bool useDarkTheme)
     {
-        return PhaseThemePalette.GetPhaseBackgroundColor(phase, useDarkTheme, Colors.Transparent);
+        return PhaseThemePalette.GetPhaseBackgroundColor(phase, useDarkTheme, default);
     }
 
     public static Color GetNeutralDayBackground(bool isToday, bool useDarkTheme)
     {
         return isToday
-            ? Color.FromArgb(useDarkTheme ? "#AE8D9B" : "#8B7E86")
-            : Color.FromArgb(useDarkTheme ? "#4C3942" : "#EEF0F2");
+            ? AppThemeResources.GetColor(useDarkTheme ? "Gray500" : "CycleNeutralTextLight", default)
+            : AppThemeResources.GetColor(useDarkTheme ? "Gray900" : "CycleNeutralSurfaceLight", default);
     }
 
     public static Color GetNeutralDayTextColor(bool useDarkTheme)
     {
-        return Color.FromArgb(useDarkTheme ? "#F8EEF4" : "#8B7E86");
+        return AppThemeResources.GetColor(useDarkTheme ? "TextPrimaryDark" : "CycleNeutralTextLight", default);
     }
 
     public static Color GetTodayDayTextColor(bool useDarkTheme)
     {
-        return Color.FromArgb(useDarkTheme ? "#FFFFFF" : "#FFFFFF");
+        return AppThemeResources.GetColor("White", default);
     }
 
     public static Color GetPredictedDayStrokeColor(CyclePhase phase, bool useDarkTheme)
@@ -230,6 +236,6 @@ public static class CycleCalendarItemBuilder
     public static Color GetPhaseTextColor(CyclePhase phase, bool useDarkTheme)
     {
         return PhaseThemePalette.GetPhaseTextColor(phase, useDarkTheme,
-            Color.FromArgb(useDarkTheme ? "#F8EEF4" : "#1F2937"));
+            AppThemeResources.GetColor(useDarkTheme ? "TextPrimaryDark" : "CycleFallbackTextLight", default));
     }
 }
