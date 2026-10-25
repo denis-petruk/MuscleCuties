@@ -239,6 +239,19 @@ public class UiCleanlinessAndReachabilityTests
             string.Join("\n", unresolvedUsages.Distinct(StringComparer.Ordinal)));
     }
 
+    [Fact]
+    public void MealSuggestionModal_does_not_contain_obsolete_embedded_picker_or_choose_meal_button()
+    {
+        var path = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Nutrition", "MealSuggestionModal.xaml");
+        Assert.True(File.Exists(path), $"MealSuggestionModal.xaml not found at {path}");
+
+        var content = File.ReadAllText(path);
+        Assert.DoesNotContain("Nutrition_MealSuggestion_ChooseMeal", content);
+        Assert.DoesNotContain("BackToMealTypePickerCommand", content);
+        Assert.DoesNotContain("Nutrition_MealSuggestion_ChooseAMeal", content);
+        Assert.DoesNotContain("IsMealTypePickerVisible", content);
+    }
+
     private static string FindRepositoryRoot()
     {
         var current = AppContext.BaseDirectory;
