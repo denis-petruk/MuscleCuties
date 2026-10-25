@@ -169,10 +169,12 @@
                     </FlexLayout>
 
                     <Label Grid.Row="5" Text="{loc:LocalizedText Injury_LogContent_StartedOn}" Style="{StaticResource CaptionLabel}" />
-                    <DatePicker Grid.Row="6" Date="{Binding SinceDateValue}" MaximumDate="{Binding Today}"
-                                Format="d" MinimumHeightRequest="48"
-                                HorizontalOptions="Fill"
-                                SemanticProperties.Description="{loc:LocalizedText Injury_LogContent_InjuryStartDate}" />
+                    <Border Grid.Row="6" Style="{StaticResource InputContainer}">
+                        <DatePicker Date="{Binding SinceDateValue}" MaximumDate="{Binding Today}"
+                                    Format="d"
+                                    HorizontalOptions="Fill"
+                                    SemanticProperties.Description="{loc:LocalizedText Injury_LogContent_InjuryStartDate}" />
+                    </Border>
                     <Grid Grid.Row="7" ColumnDefinitions="*,Auto" ColumnSpacing="8">
                         <Label Text="{loc:LocalizedText Injury_LogContent_PainLevel}" Style="{StaticResource CaptionLabel}"
                                VerticalOptions="Center" />

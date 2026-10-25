@@ -465,11 +465,8 @@
                                                                    FontSize="11"
                                                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                                                    VerticalOptions="Center" />
-                                                            <Border Grid.Column="2" StrokeShape="RoundRectangle 8"
-                                                                    StrokeThickness="1"
-                                                                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
-                                                                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
-                                                                    Padding="4,2" HeightRequest="32">
+                                                            <Border Grid.Column="2" Style="{StaticResource WorkoutMetricInput}"
+                                                                    HeightRequest="36" MinimumHeightRequest="36" Padding="6,0">
                                                                 <Entry Text="{Binding WeightInput}" Keyboard="Numeric"
                                                                        FontSize="13"
                                                                        Placeholder="{loc:LocalizedText Workout_History_KgUnit}"
@@ -477,11 +474,8 @@
                                                                        HorizontalTextAlignment="Center"
                                                                        VerticalOptions="Center" Margin="0" />
                                                             </Border>
-                                                            <Border Grid.Column="3" StrokeShape="RoundRectangle 8"
-                                                                    StrokeThickness="1"
-                                                                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
-                                                                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
-                                                                    Padding="4,2" HeightRequest="32">
+                                                            <Border Grid.Column="3" Style="{StaticResource WorkoutMetricInput}"
+                                                                    HeightRequest="36" MinimumHeightRequest="36" Padding="6,0">
                                                                 <Entry Text="{Binding RepsInput}" Keyboard="Numeric"
                                                                        FontSize="13"
                                                                        Placeholder="{loc:LocalizedText Workout_History_RepsUnit}"
@@ -489,11 +483,9 @@
                                                                        HorizontalTextAlignment="Center"
                                                                        VerticalOptions="Center" Margin="0" />
                                                             </Border>
-                                                            <Button Grid.Column="4" Text="✓" HeightRequest="32"
-                                                                    WidthRequest="32" Padding="0" CornerRadius="{StaticResource UiRadiusControl}"
+                                                            <Button Grid.Column="4" Text="✓" HeightRequest="36"
+                                                                    WidthRequest="36" Padding="0" CornerRadius="{StaticResource UiRadiusControl}"
                                                                     FontSize="13" FontAttributes="Bold"
-                                                                    BackgroundColor="{StaticResource Primary}"
-                                                                    TextColor="{StaticResource White}"
                                                                     Command="{Binding SaveSetEditCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutHistoryViewModel}}, x:DataType=vm:WorkoutHistoryViewModel}"
                                                                     CommandParameter="{Binding .}"
                                                                     SemanticProperties.Description="{loc:LocalizedText Workout_History_SaveSetEditAccessibility}" />
@@ -514,24 +506,24 @@
 
                             <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalOptions="Center">
                                 <Label Text="{loc:LocalizedText Workout_History_PerceivedExertionTitle}" FontSize="13" VerticalOptions="Center" />
-                                <Entry
-                                    Grid.Column="1"
-                                    Text="{Binding EditingRpe}"
-                                    Keyboard="Numeric"
-                                    Placeholder="{loc:LocalizedText Workout_History_RpeHeader}"
-                                    SemanticProperties.Description="{loc:LocalizedText Workout_History_RpeSliderAccessibility}"
-                                    WidthRequest="60"
-                                    HeightRequest="44"
-                                    HorizontalTextAlignment="Center"
-                                    FontSize="15" />
+                                <Border Grid.Column="1" Style="{StaticResource InputContainer}" WidthRequest="72" HeightRequest="44" MinimumHeightRequest="44" Padding="8,0">
+                                    <Entry
+                                        Text="{Binding EditingRpe}"
+                                        Keyboard="Numeric"
+                                        Placeholder="{loc:LocalizedText Workout_History_RpeHeader}"
+                                        SemanticProperties.Description="{loc:LocalizedText Workout_History_RpeSliderAccessibility}"
+                                        HorizontalTextAlignment="Center"
+                                        VerticalOptions="Center"
+                                        FontSize="15" />
+                                </Border>
                             </Grid>
 
-                            <Editor
-                                Grid.Row="2"
-                                Text="{Binding EditingNotes}"
-                                Placeholder="{loc:LocalizedText Workout_History_NotesPlaceholder}"
-                                HeightRequest="80"
-                                FontSize="13" />
+                            <Border Grid.Row="2" Style="{StaticResource EditorContainer}">
+                                <Editor
+                                    Text="{Binding EditingNotes}"
+                                    Placeholder="{loc:LocalizedText Workout_History_NotesPlaceholder}"
+                                    FontSize="13" />
+                            </Border>
                         </Grid>
                         </Grid>
                     </ScrollView>
@@ -540,12 +532,7 @@
                         Grid.Row="2"
                         Margin="20,8,20,20"
                         Text="{loc:LocalizedText Workout_History_SaveNotesAndRpeButton}"
-                        Command="{Binding SaveSessionNotesCommand}"
-                        HeightRequest="44"
-                        CornerRadius="{StaticResource UiRadiusControl}"
-                        FontAttributes="Bold"
-                        BackgroundColor="{StaticResource Primary}"
-                        TextColor="{StaticResource White}" />
+                        Command="{Binding SaveSessionNotesCommand}" />
                 </Grid>
             </Border>
         </Grid>

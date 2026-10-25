@@ -132,18 +132,17 @@
 
                     <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="6">
                         <Label Text="{loc:LocalizedText Profile_PersonalInfo_Birthday}" Style="{StaticResource FormFieldLabel}" />
-                        <DatePicker
-                            Grid.Row="1"
-                            AutomationId="ProfileSetupBirthDatePicker"
-                            Date="{Binding BirthDate}"
-                            DateSelected="OnBirthDateSelected"
-                            MinimumDate="{Binding MinBirthDate}"
-                            MaximumDate="{Binding MaxBirthDate}"
-                            Format="d"
-                            MinimumHeightRequest="56"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
-                            SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_Birthday}"
-                            SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_SelectYourDateOfBirth}" />
+                        <Border Grid.Row="1" Style="{StaticResource ProfileFieldSurface}">
+                            <DatePicker
+                                AutomationId="ProfileSetupBirthDatePicker"
+                                Date="{Binding BirthDate}"
+                                DateSelected="OnBirthDateSelected"
+                                MinimumDate="{Binding MinBirthDate}"
+                                MaximumDate="{Binding MaxBirthDate}"
+                                Format="d"
+                                SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_Birthday}"
+                                SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_SelectYourDateOfBirth}" />
+                        </Border>
                     </Grid>
 
                     <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource ProfileSectionHeadingSpacing}">
