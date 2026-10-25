@@ -51,6 +51,7 @@ public sealed class DashboardProgressRing : GraphicsView, IDrawable
             return;
 
         canvas.StrokeColor = RingColor;
+        canvas.StrokeLineCap = LineCap.Round;
         if (progress >= 0.999f)
         {
             canvas.DrawEllipse(x, y, diameter, diameter);

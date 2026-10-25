@@ -103,6 +103,7 @@ public static partial class UiTextCatalog
         English["Dashboard_Readiness_AverageScores"] = "Average of both scores";
         English["Dashboard_Readiness_DailyBalanceMax"] = "Daily balance / 100";
         English["Dashboard_Readiness_SelfReportedSubtitle"] = "Based on your daily check-in";
+        English["Dashboard_Readiness_HealthOrBaselineSubtitle"] = "Apple Health & baseline";
         English["Dashboard_Readiness_CheckInNeeded"] = "Check-in needed";
         English["Dashboard_Readiness_CheckInScore"] = "Check-in score";
         English["Dashboard_Readiness_Band_FeelingReady"] = "Feeling ready";

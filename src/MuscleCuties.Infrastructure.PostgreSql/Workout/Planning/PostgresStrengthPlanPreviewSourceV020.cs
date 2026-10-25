@@ -135,14 +135,19 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
         }
     }
 
-    private static IReadOnlySet<int> ParseActivityTypes(string? value) =>
-        (value ?? string.Empty).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-        .Select(item => Enum.TryParse<WorkoutActivityType>(item, true, out var activity) && Enum.IsDefined(activity)
-            ? (int?)activity
-            : null)
-        .Where(activity => activity.HasValue)
-        .Select(activity => activity!.Value)
-        .ToHashSet();
+    private static IReadOnlySet<int> ParseActivityTypes(string? value)
+    {
+        var set = (value ?? string.Empty).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Select(item => Enum.TryParse<WorkoutActivityType>(item, true, out var activity) && Enum.IsDefined(activity)
+                ? (int?)activity
+                : null)
+            .Where(activity => activity.HasValue)
+            .Select(activity => activity!.Value)
+            .ToHashSet();
+        if (set.Count == 0)
+            set.Add((int)WorkoutActivityType.GeneralStrength);
+        return set;
+    }
 
     private static IReadOnlySet<DayOfWeek> ParseAvailableWeekdays(string? json)
     {
@@ -150,8 +155,8 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
         {
             using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "[]" : json);
             if (document.RootElement.ValueKind != JsonValueKind.Array)
-                return new HashSet<DayOfWeek>();
-            return document.RootElement.EnumerateArray()
+                return new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday };
+            var set = document.RootElement.EnumerateArray()
                 .Select(value => value.ValueKind switch
                 {
                     JsonValueKind.String when Enum.TryParse<DayOfWeek>(value.GetString(), true, out var day) && Enum.IsDefined(day) => (DayOfWeek?)day,
@@ -161,10 +166,13 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                 .Where(day => day.HasValue)
                 .Select(day => day!.Value)
                 .ToHashSet();
+            return set.Count >= 2
+                ? set
+                : new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday };
         }
         catch (JsonException)
         {
-            return new HashSet<DayOfWeek>();
+            return new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday };
         }
     }
 

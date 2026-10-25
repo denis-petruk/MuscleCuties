@@ -99,6 +99,7 @@ internal static partial class RussianUiText
         Values["Dashboard_Readiness_AverageScores"] = "Среднее значение обоих баллов";
         Values["Dashboard_Readiness_DailyBalanceMax"] = "Ежедневный баланс / 100";
         Values["Dashboard_Readiness_SelfReportedSubtitle"] = "На основе ежедневной самооценки";
+        Values["Dashboard_Readiness_HealthOrBaselineSubtitle"] = "Apple Health и база";
         Values["Dashboard_Readiness_CheckInNeeded"] = "Нужна отметка";
         Values["Dashboard_Readiness_CheckInScore"] = "Оценка по отметке";
         Values["Dashboard_Readiness_Band_FeelingReady"] = "Вы чувствуете готовность";

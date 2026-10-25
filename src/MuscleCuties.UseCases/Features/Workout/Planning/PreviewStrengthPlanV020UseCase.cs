@@ -14,12 +14,40 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
                 StrengthPlanPreviewRule.Evaluate(null, null));
 
         var sourceData = await source.LoadAsync(userId, cancellationToken).ConfigureAwait(false);
+        if (sourceData is not null)
+        {
+            var selectedActivities = sourceData.SelectedActivityTypes?.ToHashSet() ?? new HashSet<int>();
+            selectedActivities.Add((int)request.Activity);
+
+            var weekdays = sourceData.AvailableWeekdays is { Count: >= 2 }
+                ? sourceData.AvailableWeekdays
+                : request.AvailableWeekdays is { Count: >= 2 }
+                    ? request.AvailableWeekdays
+                    : new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday };
+
+            var durations = sourceData.ActivitySessionDurationsMinutes is not null
+                ? new Dictionary<int, int>(sourceData.ActivitySessionDurationsMinutes)
+                : new Dictionary<int, int>();
+            if (!durations.ContainsKey((int)request.Activity))
+            {
+                durations[(int)request.Activity] = 45;
+            }
+
+            sourceData = sourceData with
+            {
+                SelectedActivityTypes = selectedActivities,
+                AvailableWeekdays = weekdays,
+                ActivitySessionDurationsMinutes = durations
+            };
+        }
+
         var excludedExerciseIds = new HashSet<int>(request.ExcludedExerciseIds ?? new HashSet<int>());
         if (sourceData?.ExcludedExerciseIds is { } savedExclusions)
             excludedExerciseIds.UnionWith(savedExclusions);
         var choices = StrengthPlanPreviewMapperV020.ToChoices(request with
         {
-            ExcludedExerciseIds = excludedExerciseIds
+            ExcludedExerciseIds = excludedExerciseIds,
+            AvailableWeekdays = (sourceData?.AvailableWeekdays ?? request.AvailableWeekdays)?.ToHashSet()
         });
         var planningData = sourceData is null
             ? null
