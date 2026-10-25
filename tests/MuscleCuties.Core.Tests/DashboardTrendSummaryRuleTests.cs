@@ -19,6 +19,28 @@ public sealed class DashboardTrendSummaryRuleTests
             DashboardPhaseSelectionRule.Resolve(CyclePhase.Unknown, CyclePhase.Unknown));
     }
 
+    [Theory]
+    [InlineData(CyclePhase.Menstrual)]
+    [InlineData(CyclePhase.Follicular)]
+    [InlineData(CyclePhase.Ovulatory)]
+    [InlineData(CyclePhase.Luteal)]
+    public void SelectedPhaseDoesNotPromptToStartTracking(CyclePhase selectedPhase)
+    {
+        var cycle = new DashboardCycleMetrics(false, false, null, null, default, default, default);
+
+        Assert.Equal("Selected cycle phase is recorded",
+            DashboardSupportRule.BuildCycleInsightText(cycle, selectedPhase));
+    }
+
+    [Fact]
+    public void UnknownPhaseStillRequestsTheMissingSelection()
+    {
+        var cycle = new DashboardCycleMetrics(false, false, null, null, default, default, default);
+
+        Assert.Equal("Add a cycle phase to see phase guidance",
+            DashboardSupportRule.BuildCycleInsightText(cycle, CyclePhase.Unknown));
+    }
+
     [Fact]
     public void WeeklyNutritionPrefersDailySummaryAndDoesNotDoubleCountFoodEntries()
     {
@@ -62,13 +84,14 @@ public sealed class DashboardTrendSummaryRuleTests
     {
         var result = DashboardTrendSummaryRule.BuildWorkoutProgress(
         [
-            new(true, 200, 9000, 7200, 50, 100),
-            new(false, 75, 1500, 2700, 5, 330),
-            new(false, 80, 1700, 3100, 6, 300),
+            new(true, 200, 9000, 7200, 50, 100, "Rest day"),
+            new(false, 75, 1500, 2700, 5, 330, "Bench press"),
+            new(false, 80, 1700, 3100, 6, 300, "Hip thrust"),
             new(false, -5, null, null, null, null)
         ]);
 
         Assert.Equal(80, result.HeaviestLiftKg);
+        Assert.Equal("Hip thrust", result.HeaviestLiftExerciseName);
         Assert.Equal(1700, result.HighestSessionVolumeKg);
         Assert.Equal(52, result.LongestSessionMinutes);
         Assert.Equal(6, result.LongestDistanceKm);

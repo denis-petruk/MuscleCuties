@@ -217,28 +217,14 @@
                     </Grid>
                 </ScrollView>
 
-                <!-- Footer Actions -->
+                <!-- Footer Action -->
                 <Grid
                     Grid.Row="2"
-                    ColumnDefinitions="*, Auto"
-                    ColumnSpacing="12"
                     Padding="20,12,20,24">
                     <Button
-                        Text="{loc:LocalizedText Cycle_PhaseSummary_ExploreFullGuideButton}"
-                        Command="{Binding OpenFullPhaseGuideCommand}"
-                        IsVisible="{Binding IsPhaseGuideAvailable}"
-                        MinimumHeightRequest="52"
-                        HeightRequest="52"
-                        FontSize="15"
-                        FontAttributes="Bold" />
-                    <Label Text="{loc:LocalizedText Cycle_PhaseSummary_GuidePendingReview}"
-                           IsVisible="{Binding IsPhaseGuideAvailable, Converter={StaticResource InvertedBoolConverter}}"
-                           Style="{StaticResource CaptionLabel}"
-                           VerticalOptions="Center" />
-                    <Button
-                        Grid.Column="1"
                         Text="{loc:LocalizedText Cycle_PhaseSummary_CloseButton}"
                         Command="{Binding ClosePhaseSummarySheetCommand}"
+                        HorizontalOptions="End"
                         MinimumHeightRequest="52"
                         HeightRequest="52"
                         WidthRequest="90"

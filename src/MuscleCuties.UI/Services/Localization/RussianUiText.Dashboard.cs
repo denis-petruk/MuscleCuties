@@ -148,6 +148,8 @@ internal static partial class RussianUiText
         Values["Dashboard_Targets_Title"] = "Плановые оценки";
         Values["Dashboard_Phase_MissingHeader"] = "На этой неделе · Укажите фазу цикла";
         Values["Dashboard_Phase_MissingStatus"] = "Укажите фазу цикла, чтобы начать";
+        Values["Dashboard_Phase_MissingInsight"] = "Укажите фазу цикла, чтобы увидеть рекомендации";
+        Values["Dashboard_Phase_SelectedInsight"] = "Выбранная фаза цикла сохранена";
         Values["Dashboard_Trend_ProgressTitle"] = "Ваш прогресс";
         Values["Dashboard_Trend_PreviousView"] = "Предыдущий вид прогресса";
         Values["Dashboard_Trend_NextView"] = "Следующий вид прогресса";
@@ -162,7 +164,7 @@ internal static partial class RussianUiText
         Values["Dashboard_Trend_WeeklyWeightEmpty"] = "Записывайте вес, чтобы видеть по одной точке на неделю.";
         Values["Dashboard_Trend_LoggedWeeksFormat"] = "Недель с записями: {0} · Последний вес: {1} кг";
         Values["Dashboard_Trend_WorkoutHighlightsTitle"] = "Достижения в тренировках";
-        Values["Dashboard_Trend_WorkoutHighlightsDescription"] = "Записанные тренировки за последние 90 дней; дни отдыха исключены.";
+        Values["Dashboard_Trend_WorkoutHighlightsDescription"] = "Последние 90 дней";
         Values["Dashboard_Trend_WorkoutHighlightsEmpty"] = "Завершите тренировку, чтобы увидеть прогресс.";
         Values["Dashboard_Trend_HeaviestLift"] = "Самый тяжёлый вес";
         Values["Dashboard_Trend_HighestVolume"] = "Наибольший объём за тренировку";
