@@ -2,6 +2,14 @@
 
 The active delivery status is maintained at [docs/v1/STATUS.md](docs/v1/STATUS.md).
 
+- **Plan Preview & Generator Resilience and Fast Route Dispatch (2026-10-25):**
+  - **Plan Generator & Preview Resilience:**
+    - Updated `StrengthPlanGenerationViewModel` so that when `_preferences.LoadAsync()` returns null (uninitialized user preferences), default preferences (GeneralStrength, standard weekdays Monday/Wednesday/Friday, 45-minute duration) are supplied gracefully, preventing premature `Workout_Generation_MissingPreferences` lockout and enabling immediate preview generation.
+    - Updated `PostgresStrengthPlanPreviewSourceV020` so that missing or unparsed user profiles safely fall back to `UserGoal.MuscleTone` and `Equipment.FullGym` with safe navigation on profile JSON fields, eliminating `PlanningProfileDataInvalid` failures for new users.
+    - Added unit test `Preview_Succeeds_When_Profile_Source_Has_Missing_Weekdays_And_Unselected_Activity` in `StrengthPlanPreviewV020Tests.cs` verifying full feasibility under unpopulated source conditions.
+  - **Button & Route Standardization:** Explicitly styled `ConfirmHighIntensityExercises` with `ButtonPrimary` in `StrengthPlanGenerationPage.xaml`. Enhanced `App.xaml.cs` to dispatch `MUSCLECUTIES_INITIAL_ROUTE` directly upon authentication verification without blocking on dashboard data loads.
+  - **Verification:** 549/549 Core tests pass, 80/80 Server tests pass, and iOS simulator build (`net10.0-ios`) compiles cleanly with 0 warnings and 0 errors.
+
 - **Selectable Card, Weekday Chip, and Privacy Card Hierarchy Standardization (2026-10-25):**
   - **Selectable Cards & Chips in Styles.xaml:** Added `SelectableCard` (14px corner radius, stroke thickness 1, soft card surface, interactive touch padding) and `SelectableChip` (derived from `SelectableCard`, min-height 44pt) in `src/MuscleCuties.UI/Resources/Styles/Styles.xaml`.
   - **Exercise Exclusions Styling:** Replaced raw `CheckBox` list in `ProfileWorkoutPreferencesChoices.xaml` with `SelectableCard` items featuring a 24x24 circular checkmark indicator matching `WorkoutActivityPreferencePicker.xaml` from onboarding, with whole-card tap gesture and `ToggleCommand` on `WorkoutExerciseExclusionOptionItem`.

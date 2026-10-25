@@ -247,6 +247,26 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Equal(new[] { 101, 102 }, options.Select(option => option.ExerciseId));
     }
 
+    [Fact]
+    public async Task Preview_Succeeds_When_Profile_Source_Has_Missing_Weekdays_And_Unselected_Activity()
+    {
+        var profile = Profile() with
+        {
+            AvailableWeekdays = null,
+            SelectedActivityTypes = null,
+            ActivitySessionDurationsMinutes = null
+        };
+        var useCase = new PreviewStrengthPlanV020UseCase(new Source(profile));
+
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), Request() with
+        {
+            AvailableWeekdays = null
+        });
+
+        Assert.Equal("Feasible", result.Status);
+        Assert.Single(result.Sessions);
+    }
+
     private static StrengthPlanPreviewRequestV020 Request() => new(
         WorkoutActivityDto.GeneralStrength, LocalDate,
         HistoryFor(WorkoutActivityType.GeneralStrength),

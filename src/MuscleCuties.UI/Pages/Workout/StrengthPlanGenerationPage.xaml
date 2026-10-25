@@ -837,7 +837,8 @@
                         </VerticalStackLayout>
                         <Button Text="{loc:LocalizedText Workout_Generation_ConfirmHighIntensityExercises}"
                                 Command="{Binding ConfirmHighIntensityExercisesCommand}"
-                                IsEnabled="{Binding CanSubmitHighIntensityConfirmations}" />
+                                IsEnabled="{Binding CanSubmitHighIntensityConfirmations}"
+                                Style="{StaticResource ButtonPrimary}" />
                     </VerticalStackLayout>
 
                     <!-- Limitations Sub-Section -->
