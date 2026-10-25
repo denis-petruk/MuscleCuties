@@ -640,6 +640,7 @@
     </Style>
 
     <Style x:Key="TextActionButton" TargetType="Button" BasedOn="{StaticResource ButtonLink}" />
+    <Style x:Key="QuietButton" TargetType="Button" BasedOn="{StaticResource ButtonLink}" />
 
     <Style x:Key="Button" TargetType="Button">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
