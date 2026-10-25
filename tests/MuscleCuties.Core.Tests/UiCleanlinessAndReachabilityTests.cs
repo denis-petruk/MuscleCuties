@@ -252,6 +252,17 @@ public class UiCleanlinessAndReachabilityTests
         Assert.DoesNotContain("IsMealTypePickerVisible", content);
     }
 
+    [Fact]
+    public void WorkoutActivityCard_gates_optional_button_with_CanMarkOptional()
+    {
+        var path = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Workout", "WorkoutActivityCard.xaml");
+        Assert.True(File.Exists(path), $"WorkoutActivityCard.xaml not found at {path}");
+
+        var content = File.ReadAllText(path);
+        Assert.Contains("IsVisible=\"{Binding CanMarkOptional}\"", content);
+        Assert.Contains("Style=\"{StaticResource ButtonSecondary}\"", content);
+    }
+
     private static string FindRepositoryRoot()
     {
         var current = AppContext.BaseDirectory;
