@@ -15,4 +15,5 @@
     <x:Double x:Key="WorkoutPlanningContentMaxWidth">720</x:Double>
     <Thickness x:Key="WorkoutPlanningExerciseSlotPadding">16,12</Thickness>
     <Thickness x:Key="WorkoutPlanningExerciseDetailsPadding">12,8</Thickness>
+    <Thickness x:Key="WorkoutPlanningDayChoiceMargin">0,0,8,8</Thickness>
 </ResourceDictionary>
