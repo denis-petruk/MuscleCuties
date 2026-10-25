@@ -289,6 +289,61 @@ public class UiCleanlinessAndReachabilityTests
         Assert.Contains("x:Key=\"PillBadge\"", stylesContent);
     }
 
+    [Fact]
+    public void All_input_elements_are_wrapped_in_standardized_containers()
+    {
+        var uiDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var xamlFiles = Directory.GetFiles(uiDir, "*.xaml", SearchOption.AllDirectories)
+            .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") &&
+                        !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+            .ToList();
+
+        var allowedContainerTokens = new[]
+        {
+            "InputContainer",
+            "PickerContainer",
+            "EditorContainer",
+            "WorkoutMetricInput",
+            "ProfileFieldSurface",
+            "PlanFieldSurface",
+            "PlanPickerSurface",
+            "ProfileMeasurementPickerSurface",
+            "ProfileMeasurementChoiceSurface",
+            "CardPrimary",
+            "CardSecondary",
+            "SurfaceTile"
+        };
+
+        var nakedInputs = new List<string>();
+
+        foreach (var file in xamlFiles)
+        {
+            var lines = File.ReadAllLines(file);
+            for (var idx = 0; idx < lines.Length; idx++)
+            {
+                var stripped = lines[idx].Trim();
+                if (stripped.StartsWith("<Entry", StringComparison.Ordinal) ||
+                    stripped.StartsWith("<Editor", StringComparison.Ordinal) ||
+                    stripped.StartsWith("<Picker", StringComparison.Ordinal) ||
+                    stripped.StartsWith("<DatePicker", StringComparison.Ordinal) ||
+                    stripped.StartsWith("<TimePicker", StringComparison.Ordinal))
+                {
+                    var lookbackStart = Math.Max(0, idx - 5);
+                    var lookbackText = string.Join("\n", lines[lookbackStart..idx]);
+                    var hasContainer = allowedContainerTokens.Any(token => lookbackText.Contains(token, StringComparison.Ordinal));
+                    if (!hasContainer)
+                    {
+                        var relativePath = Path.GetRelativePath(RepoRoot, file);
+                        nakedInputs.Add($"{relativePath}:{idx + 1} -> {stripped}");
+                    }
+                }
+            }
+        }
+
+        Assert.True(nakedInputs.Count == 0,
+            $"Found {nakedInputs.Count} uncontained input elements:\n" + string.Join("\n", nakedInputs));
+    }
+
     private static string FindRepositoryRoot()
     {
         var current = AppContext.BaseDirectory;
