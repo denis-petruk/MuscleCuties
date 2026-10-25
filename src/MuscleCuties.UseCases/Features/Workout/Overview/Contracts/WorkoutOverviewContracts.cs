@@ -33,6 +33,7 @@ public sealed record WorkoutScheduleEntry(
 {
     public bool IsOptional { get; init; }
     public bool IsEasierAlternative { get; init; }
+    public int? CompanionWorkoutDayId { get; init; }
 }
 
 public sealed record SetWorkoutSessionOptionalRequest(int WorkoutDayId, bool IsOptional, bool IsEasierAlternative);

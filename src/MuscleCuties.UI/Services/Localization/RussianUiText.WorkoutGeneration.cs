@@ -58,6 +58,8 @@ internal static partial class RussianUiText
         Values["Workout_Generation_YogaEvidenceTitle"] = "Сведения о йоге";
         Values["Workout_Generation_YogaEvidenceHelp"] = "Оцените занятие по фактическому содержанию, а не по его названию.";
         Values["Workout_Generation_YogaContentClassification"] = "Насколько интенсивна эта практика йоги?";
+        Values["Workout_Generation_YogaDurationLabel"] = "Длительность занятия йогой (минуты)";
+        Values["Workout_Generation_YogaDurationPlaceholder"] = "Сначала выберите формат практики";
         Values["Workout_Generation_YogaGentle"] = "Мягкая или восстановительная";
         Values["Workout_Generation_YogaDemanding"] = "Интенсивная или требующая усилий";
         Values["Workout_Generation_ExperienceTitle"] = "История тренировок";
@@ -175,7 +177,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_Activity_Other"] = "Другая активность";
         Values["Workout_Generation_Reason_NoActivitiesSelected"] = "Для недельного расписания не выбраны активности.";
         Values["Workout_Generation_Reason_AvailableWeekdays"] = "Сохраните от 2 до 7 допустимых дней недели в предпочтениях тренировок.";
-        Values["Workout_Generation_Reason_DailyCapacityFallback"] = "Дневной лимит времени не задан, поэтому расписание включает не более одной активности в день.";
+        Values["Workout_Generation_Reason_DailyCapacityFallback"] = "Общий дневной лимит не сохранён, поэтому в один день с силовой тренировкой допускается только одна тренировка на велосипеде или мягкая йога.";
         Values["Workout_Generation_Reason_DailyCapacityInvalid"] = "Сохранённый дневной лимит должен быть больше нуля.";
         Values["Workout_Generation_Reason_ActivityEvidence"] = "Данные для оценки допуска к активности отсутствуют или указаны повторно.";
         Values["Workout_Generation_Reason_ActivityNotSelected"] = "Выберите эту активность в предпочтениях тренировок, чтобы добавить её в расписание.";

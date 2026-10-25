@@ -53,14 +53,18 @@ public static class MixedActivityWeekScheduleRule
     public const int MaximumAvailableWeekdays = 7;
     public const int MaximumHardDaysPerWeek = 3;
     public const int MaximumRequestedSessionsPerWeek = MaximumAvailableWeekdays;
+    public const int MaximumStrengthSessionsPerDay = 1;
+    public const int MaximumStrengthCompanionsPerDay = 1;
+    public const int MaximumSessionsPerDayWithoutDailyCapacity =
+        MaximumStrengthSessionsPerDay + MaximumStrengthCompanionsPerDay;
 
     public const string ActivitySelectionMissing = "ActivitySelectionMissing";
     public const string NoActivitiesSelected = "NoActivitiesSelected";
     public const string AvailableWeekdaysMustContainOneToSevenDistinctDays =
         "AvailableWeekdaysMustContainOneToSevenDistinctDays";
     public const string AvailableWeekdayValueInvalid = "AvailableWeekdayValueInvalid";
-    public const string DailyCapacityMissingSingleActivityPerDayFallback =
-        "DailyCapacityMissingSingleActivityPerDayFallback";
+    public const string DailyCapacityMissingSafePairingFallback =
+        "DailyCapacityMissingSafePairingFallback";
     public const string DailyCapacityMustBePositive = "DailyCapacityMustBePositive";
     public const string ActivityEligibilityEvidenceMissing = "ActivityEligibilityEvidenceMissing";
     public const string ActivityEligibilityEvidenceDuplicate = "ActivityEligibilityEvidenceDuplicate";
@@ -70,6 +74,7 @@ public static class MixedActivityWeekScheduleRule
     public const string ChosenStrengthActivityNotSelected = "ChosenStrengthActivityNotSelected";
     public const string ChosenStrengthActivityMustBeStrengthActivity =
         "ChosenStrengthActivityMustBeStrengthActivity";
+    public const string YogaContentClassificationMissing = "YogaContentClassificationMissing";
     public const string ActivityPrescriptionNotEligible = "ActivityPrescriptionNotEligible";
     public const string ClimbingCompetenceNotConfirmed = "ClimbingCompetenceNotConfirmed";
     public const string SessionDurationMissing = MixedActivitySessionDurationRule.SessionDurationMissing;
@@ -193,7 +198,7 @@ public static class MixedActivityWeekScheduleRule
         if (context.DailyCapacityMinutes is null)
         {
             foreach (var decision in decisions.Where(IsScheduleCandidate))
-                decision.AddReason(DailyCapacityMissingSingleActivityPerDayFallback);
+                decision.AddReason(DailyCapacityMissingSafePairingFallback);
         }
         else if (context.DailyCapacityMinutes <= NoScheduledMinutes)
         {
@@ -266,6 +271,14 @@ public static class MixedActivityWeekScheduleRule
         var isDemandingYoga = false;
         if (decision.Activity == WorkoutActivityType.Yoga)
         {
+            if (evidence.IsDemandingYogaContent is null &&
+                string.IsNullOrWhiteSpace(evidence.ActivityName) &&
+                evidence.ContentTags is not { Count: > 0 })
+            {
+                decision.Block(YogaContentClassificationMissing);
+                return;
+            }
+
             var yogaClassification = YogaClassificationRule.Classify(
                 evidence.IsDemandingYogaContent,
                 evidence.ActivityName,
@@ -552,7 +565,10 @@ public static class MixedActivityWeekScheduleRule
 
         var softDecisions = decisions.Where(decision => decision.IsEligible &&
                 !IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription))
-            .OrderBy(decision => ActivityOrder(decision.Activity))
+            .OrderBy(decision => dailyCapacityMinutes is null && CanBeStrengthCompanion(decision)
+                ? OneSessionPerOccurrence
+                : NoSessionsScheduled)
+            .ThenBy(decision => ActivityOrder(decision.Activity))
             .ToArray();
         foreach (var decision in softDecisions)
             ScheduleActivity(decision, dayStates, dailyCapacityMinutes, availableDays);
@@ -567,12 +583,42 @@ public static class MixedActivityWeekScheduleRule
                 decision.TargetSessionsPerWeek < GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek)
                 decision.TargetSessionsPerWeek = GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek;
 
-        ReduceTargets(candidates.Where(decision =>
-                IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription)).ToArray(),
-            Math.Min(MaximumHardDaysPerWeek, availableDayCount));
+        var hardCandidates = candidates.Where(decision =>
+            IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription)).ToArray();
+        ReduceTargets(hardCandidates, Math.Min(MaximumHardDaysPerWeek, availableDayCount));
 
-        if (dailyCapacityMinutes is null)
-            ReduceTargets(candidates, availableDayCount);
+        if (dailyCapacityMinutes is not null)
+            return;
+
+        var hardSessionCount = hardCandidates.Sum(GetTargetSessions);
+        var occupiedHardDayCount = Math.Min(hardSessionCount, availableDayCount);
+        var emptyDaySlots = availableDayCount - occupiedHardDayCount;
+        var standaloneSoftCandidates = candidates.Where(decision =>
+                !IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription) &&
+                !CanBeStrengthCompanion(decision))
+            .ToArray();
+        ReduceTargets(standaloneSoftCandidates, emptyDaySlots);
+
+        var requestedStandaloneSessions = standaloneSoftCandidates.Sum(GetTargetSessions);
+        var remainingEmptyDaySlots = Math.Max(NoSessionsScheduled, emptyDaySlots - requestedStandaloneSessions);
+        var strengthSessionCount = candidates
+            .Where(decision => IsStrengthChoice(decision.EffectiveActivity ?? decision.Activity))
+            .Sum(GetTargetSessions);
+        var strengthCompanionSlots = Math.Min(strengthSessionCount, availableDayCount);
+        var strengthCompanionCandidates = candidates.Where(CanBeStrengthCompanion).ToArray();
+        ReduceTargets(strengthCompanionCandidates, remainingEmptyDaySlots + strengthCompanionSlots);
+    }
+
+    private static int GetTargetSessions(ActivityDecisionBuilder decision) =>
+        decision.TargetSessionsPerWeek ?? NoSessionsScheduled;
+
+    private static bool CanBeStrengthCompanion(ActivityDecisionBuilder decision)
+    {
+        var activity = decision.EffectiveActivity ?? decision.Activity;
+        if (IsHardActivity(activity, decision.Prescription))
+            return false;
+
+        return activity is WorkoutActivityType.Cycling or WorkoutActivityType.Yoga;
     }
 
     private static void ReduceTargets(ActivityDecisionBuilder[] decisions, int availableSlots)
@@ -638,7 +684,8 @@ public static class MixedActivityWeekScheduleRule
                                                   WorkoutActivityType.RockClimbing))
                     return false;
                 if (dailyCapacityMinutes is null)
-                    return state.Activities.Count == NoSessionsScheduled;
+                    return state.Activities.Count == NoSessionsScheduled ||
+                           CanShareStrengthDayWithoutDailyCapacity(state, decision, isHard);
                 return decision.DurationMinutes <= dailyCapacityMinutes.Value - state.TotalMinutes;
             }).ToArray();
 
@@ -754,6 +801,32 @@ public static class MixedActivityWeekScheduleRule
 
         return false;
     }
+
+    public static bool IsSupportedSameDayStrengthCompanion(
+        WorkoutActivityType firstActivity,
+        bool firstIsHard,
+        WorkoutActivityType secondActivity,
+        bool secondIsHard) =>
+        (IsStrengthChoice(firstActivity) && firstIsHard && IsStrengthCompanion(secondActivity, secondIsHard)) ||
+        (IsStrengthChoice(secondActivity) && secondIsHard && IsStrengthCompanion(firstActivity, firstIsHard));
+
+    private static bool CanShareStrengthDayWithoutDailyCapacity(
+        ScheduledDayState dayState,
+        ActivityDecisionBuilder decision,
+        bool isHard)
+    {
+        if (dayState.Activities.Count != MaximumStrengthSessionsPerDay || !dayState.HasHardSession)
+            return false;
+
+        return IsSupportedSameDayStrengthCompanion(
+            dayState.Activities.Single(),
+            dayState.HasHardSession,
+            decision.EffectiveActivity ?? decision.Activity,
+            isHard);
+    }
+
+    private static bool IsStrengthCompanion(WorkoutActivityType activity, bool isHard) =>
+        !isHard && (activity is WorkoutActivityType.Cycling or WorkoutActivityType.Yoga);
 
     public static string GetHardDayConflictReason(WorkoutActivityType activity) => activity switch
     {

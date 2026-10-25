@@ -28,6 +28,9 @@ public sealed class ScheduleDayItem
     /// <summary>WorkoutDayId for navigation. 0 for rest/unassigned days.</summary>
     public int WorkoutDayId { get; init; }
 
+    /// <summary>Second session on a safely paired strength day, when present.</summary>
+    public int? CompanionWorkoutDayId { get; init; }
+
     /// <summary>True when this day is today's date.</summary>
     public bool IsToday { get; init; }
 

@@ -44,9 +44,19 @@ public static class WorkoutPreferencesConstraints
             ? WorkoutPreferencesRule.DefaultSessionDurationMinutes(activity)
             : null;
 
+    public static int? DefaultSessionDurationMinutes(WorkoutActivityDto activityType, bool isDemandingYoga) =>
+        TryToCore(activityType, out var activity)
+            ? WorkoutPreferencesRule.DefaultSessionDurationMinutes(activity, isDemandingYoga)
+            : null;
+
     public static IReadOnlyList<int> SessionDurationChoices(WorkoutActivityDto activityType) =>
         TryToCore(activityType, out var activity)
             ? WorkoutPreferencesRule.SessionDurationChoices(activity)
+            : [];
+
+    public static IReadOnlyList<int> SessionDurationChoices(WorkoutActivityDto activityType, bool isDemandingYoga) =>
+        TryToCore(activityType, out var activity)
+            ? WorkoutPreferencesRule.SessionDurationChoices(activity, isDemandingYoga)
             : [];
 
     public static bool IsValidSessionDuration(WorkoutActivityDto activityType, int minutes) =>

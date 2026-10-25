@@ -58,6 +58,8 @@ public static partial class UiTextCatalog
         English["Workout_Generation_YogaEvidenceTitle"] = "Yoga details";
         English["Workout_Generation_YogaEvidenceHelp"] = "Classify the class by what it actually includes, not by its name.";
         English["Workout_Generation_YogaContentClassification"] = "How demanding is the yoga content?";
+        English["Workout_Generation_YogaDurationLabel"] = "Yoga session length (minutes)";
+        English["Workout_Generation_YogaDurationPlaceholder"] = "Choose a class first";
         English["Workout_Generation_YogaGentle"] = "Gentle or restorative";
         English["Workout_Generation_YogaDemanding"] = "Demanding or vigorous";
         English["Workout_Generation_ExperienceTitle"] = "Recent training history";
@@ -175,7 +177,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_Activity_Other"] = "Other activity";
         English["Workout_Generation_Reason_NoActivitiesSelected"] = "No activities were selected for the weekly schedule.";
         English["Workout_Generation_Reason_AvailableWeekdays"] = "Save 2 to 7 valid available weekdays in workout preferences.";
-        English["Workout_Generation_Reason_DailyCapacityFallback"] = "No daily time limit was available, so the schedule places at most one activity per day.";
+        English["Workout_Generation_Reason_DailyCapacityFallback"] = "No total daily limit is saved, so only one cycling or gentle yoga session may accompany strength on a day.";
         English["Workout_Generation_Reason_DailyCapacityInvalid"] = "The saved daily time limit needs to be greater than zero.";
         English["Workout_Generation_Reason_ActivityEvidence"] = "The activity's eligibility information is missing or duplicated.";
         English["Workout_Generation_Reason_ActivityNotSelected"] = "Select this activity in your workout preferences to schedule it.";

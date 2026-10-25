@@ -12,7 +12,8 @@ internal static class StrengthPlanActivityEvidenceMapper
         bool? wantsContinuousSwimming,
         bool? hasRopeClimbingCompetence,
         bool? appropriateClimbingInstructionAvailable,
-        bool? isDemandingYogaContent)
+        bool? isDemandingYogaContent,
+        int? yogaSessionDurationMinutes)
     {
         var evidence = new List<ActivityEligibilityInputV020>();
         if (selectedActivities.Contains(WorkoutActivityDto.Swimming))
@@ -31,7 +32,8 @@ internal static class StrengthPlanActivityEvidenceMapper
         if (selectedActivities.Contains(WorkoutActivityDto.Yoga))
             evidence.Add(new ActivityEligibilityInputV020(
                 WorkoutActivityDto.Yoga,
-                IsDemandingYogaContent: isDemandingYogaContent));
+                IsDemandingYogaContent: isDemandingYogaContent,
+                YogaSessionDurationMinutes: yogaSessionDurationMinutes));
 
         return evidence;
     }

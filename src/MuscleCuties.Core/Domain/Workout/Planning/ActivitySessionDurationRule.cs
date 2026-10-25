@@ -218,6 +218,14 @@ public static class ActivitySessionDurationRule
         return ChoicesForPolicy(policy);
     }
 
+    public static IReadOnlyList<int> ChoicesFor(WorkoutActivityType activity, bool isDemandingYoga)
+    {
+        var policy = ForUserPreference(activity, isDemandingYoga);
+        return policy is null || policy.RequiresExplicitChoice
+            ? []
+            : ChoicesForPolicy(policy);
+    }
+
     private static int[] ChoicesForPolicy(ActivitySessionDurationPolicy policy)
     {
         var count = (policy.MaximumMinutes - policy.MinimumMinutes) / policy.IncrementMinutes;

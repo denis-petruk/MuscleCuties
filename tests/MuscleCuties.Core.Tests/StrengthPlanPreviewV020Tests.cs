@@ -12,6 +12,7 @@ public sealed class StrengthPlanPreviewV020Tests
     private const int HistoryAverageSessions = 1;
     private const int PreviousSessionDays = 1;
     private const int NoWarmupOrCooldownMinutes = 0;
+    private const int SelectedDemandingYogaDurationMinutes = 35;
     private const int HighIntensitySessionsPerWeek =
         ActivityPrescriptionRule.StrengthHighIntensityMaximumSessionsPerWeekInitially;
     private const int ExpectedSavedProposalCount = 1;
@@ -86,9 +87,44 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Equal("Scheduled", yogaDecision.Disposition);
         Assert.NotNull(yogaDecision.PolicySessionsPerWeek);
         Assert.NotNull(yogaDecision.TargetSessionsPerWeek);
-        Assert.Equal(1, yogaDecision.ScheduledSessionsPerWeek);
-        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
-            yogaDecision.ReasonCodes);
+        Assert.Equal(yogaDecision.TargetSessionsPerWeek, yogaDecision.ScheduledSessionsPerWeek);
+    }
+
+    [Fact]
+    public async Task PlanSpecificYogaDurationOverridesAnIncompatibleSavedValueAndPreservesStrengthLimit()
+    {
+        var profile = Profile();
+        var selectedActivities = profile.SelectedActivityTypes!
+            .Append((int)WorkoutActivityType.Yoga).ToHashSet();
+        var savedDurations = profile.ActivitySessionDurationsMinutes!
+            .ToDictionary(pair => pair.Key, pair => pair.Value);
+        savedDurations[(int)WorkoutActivityType.Yoga] = ActivitySessionDurationRule.GentleYogaDefaultMinutes;
+        var source = new Source(profile with
+        {
+            SelectedActivityTypes = selectedActivities,
+            ActivitySessionDurationsMinutes = savedDurations
+        });
+        var request = Request() with
+        {
+            ActivityEligibilityEvidence =
+            [
+                new ActivityEligibilityInputV020(WorkoutActivityDto.Yoga,
+                    IsDemandingYogaContent: true,
+                    YogaSessionDurationMinutes: SelectedDemandingYogaDurationMinutes)
+            ]
+        };
+
+        var result = await new PreviewStrengthPlanV020UseCase(source).ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.Equal("Feasible", result.Status);
+        var yogaSession = Assert.Single(result.MixedActivitySchedule!.Sessions,
+            session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+        Assert.Equal((decimal)SelectedDemandingYogaDurationMinutes, yogaSession.DurationMinutes);
+        Assert.All(result.MixedActivitySchedule.Sessions.Where(session =>
+                session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength),
+            session => Assert.Equal(
+                (decimal)profile.ActivitySessionDurationsMinutes![(int)WorkoutActivityType.GeneralStrength],
+                session.DurationMinutes));
     }
 
     [Fact]
@@ -137,7 +173,7 @@ public sealed class StrengthPlanPreviewV020Tests
                 SelectedActivityTypes = selected,
                 AvailableWeekdays = new HashSet<DayOfWeek>
                 {
-                    DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday
+                    DayOfWeek.Monday
                 }
             })), store);
         var limited = await tooFewDays.ExecuteAsync(Guid.NewGuid(), request);
@@ -145,6 +181,48 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.False(limited.IsPersisted);
         Assert.Equal("Limited", limited.Preview.Status);
         Assert.Contains(MixedScheduleIncompleteReason, limited.Preview.LimitationCodes);
+        Assert.Equal(ExpectedSavedProposalCount, store.SaveCount);
+    }
+
+    [Fact]
+    public async Task Preview_And_Proposal_Allow_One_Gentle_Companion_Per_Strength_Day()
+    {
+        var twoDays = new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Thursday };
+        var profile = AddSelectedActivity(Profile(), WorkoutActivityType.Cycling, WorkoutActivityType.Yoga) with
+        {
+            AvailableWeekdays = twoDays
+        };
+        var request = Request() with
+        {
+            ActivityEligibilityEvidence =
+            [
+                new ActivityEligibilityInputV020(WorkoutActivityDto.Yoga,
+                    IsDemandingYogaContent: false)
+            ]
+        };
+        var store = new ProposalStore();
+        var result = await new CreateStrengthPlanProposalV020UseCase(
+                new PreviewStrengthPlanV020UseCase(new Source(profile)), store)
+            .ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.True(result.IsPersisted);
+        Assert.Equal("Feasible", result.Preview.Status);
+        var schedule = result.Preview.MixedActivitySchedule!;
+        Assert.Contains(schedule.Sessions.GroupBy(session => session.Weekday), day => day.Count() > 1);
+        Assert.All(schedule.Sessions.GroupBy(session => session.Weekday), day =>
+        {
+            Assert.InRange(day.Count(), 1,
+                MixedActivityWeekScheduleRule.MaximumSessionsPerDayWithoutDailyCapacity);
+            if (day.Count() > 1)
+            {
+                var sessions = day.ToArray();
+                Assert.True(MixedActivityWeekScheduleRule.IsSupportedSameDayStrengthCompanion(
+                    (WorkoutActivityType)sessions[0].ActivityTypeId,
+                    sessions[0].IsHardSession,
+                    (WorkoutActivityType)sessions[1].ActivityTypeId,
+                    sessions[1].IsHardSession));
+            }
+        });
         Assert.Equal(ExpectedSavedProposalCount, store.SaveCount);
     }
 
@@ -337,6 +415,37 @@ public sealed class StrengthPlanPreviewV020Tests
         });
 
         Assert.Equal(HighIntensitySessionsPerWeek, result.Sessions.Count);
+    }
+
+    [Fact]
+    public async Task High_Volume_Fallback_Uses_General_Strength_For_The_Mixed_Schedule()
+    {
+        var source = new Source(Profile());
+        var request = Request() with
+        {
+            Activity = WorkoutActivityDto.HighVolumeStrength,
+            ActivityHistory = new ActivityTrainingHistoryInputV020(
+                WorkoutActivityType.HighVolumeStrength.ToString(),
+                HistoryConsistentWeeks,
+                HistoryAverageSessions,
+                LocalDate.AddDays(-PreviousSessionDays),
+                true)
+        };
+
+        var result = await new PreviewStrengthPlanV020UseCase(source)
+            .ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.Equal("Feasible", result.Status);
+        Assert.Equal((int)WorkoutActivityType.GeneralStrength, result.EffectiveActivityTypeId);
+        Assert.Equal(StrengthPlanPreviewRule.GeneralStrengthFallbackSource, result.FallbackSource);
+        Assert.Equal(StrengthPlanPreviewRule.HighVolumeRequiresEstablishedResistanceHistoryCode,
+            result.FallbackReasonCode);
+        Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
+            result.Sessions.Count);
+        Assert.Equal(result.Sessions.Count, result.MixedActivitySchedule!.Sessions.Count(session =>
+            session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength));
+        Assert.DoesNotContain(result.MixedActivitySchedule.Sessions, session =>
+            session.ActivityTypeId == (int)WorkoutActivityType.HighVolumeStrength);
     }
 
     [Fact]

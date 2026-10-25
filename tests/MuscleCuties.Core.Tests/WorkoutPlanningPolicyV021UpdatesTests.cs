@@ -558,7 +558,8 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var days = new[] { DayOfWeek.Monday, DayOfWeek.Wednesday };
         // Daily capacity is 10 minutes
         var yogaEvidence = new ActivityPrescriptionContext(
-            WorkoutActivityType.Yoga, ActivityExperience.Beginner, null, false, true, false, 0, false, false);
+            WorkoutActivityType.Yoga, ActivityExperience.Beginner, null, false, true, false, 0, false, false,
+            IsDemandingYogaContent: false);
 
         var context = new MixedActivityWeekScheduleContext(
             [WorkoutActivityType.Yoga],

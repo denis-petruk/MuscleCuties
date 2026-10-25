@@ -3,7 +3,7 @@
 
 The active roadmap is maintained at [docs/v1/ROADMAP.md](docs/v1/ROADMAP.md).
 
-- **2026-10-25 next generation step:** Implement same-day scheduling using the saved strength session length as the strength-only limit; allow cycling and gentle yoga on a strength day without charging their minutes to that limit, subject to existing hard-day rules. Then verify the full preview and Apply flow with authenticated data. Remaining discussion: resolve actual yoga duration/evidence and HVS history fallback, inspect reviewed catalog coverage, and decide any safe behavior if those inputs remain unavailable before deployment.
+- **2026-10-25 generation implementation:** Safe same-day scheduling for one cycling or gentle-yoga companion, the strength-only time limit, per-plan yoga duration selection, and HVS fallback are implemented locally. Verify the full preview and Apply flow with authenticated data, reviewed catalog coverage, and staging backend parity before deployment.
 
 - **2026-10-25 mixed-plan decision:** Apply requires every selected activity. Frequency can decrease to fit weekdays, with a hard floor of two strength sessions; a calendar that cannot fit all minimums remains limited. Verify the signed-in preview and Apply path, inspect catalog coverage and saved yoga evidence, then validate current staging backend parity before deployment.
 

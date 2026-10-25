@@ -25,6 +25,9 @@ public static class WorkoutPreferencesRule
     public static int? DefaultSessionDurationMinutes(WorkoutActivityType activity) =>
         ActivitySessionDurationRule.DefaultMinutesFor(activity);
 
+    public static int? DefaultSessionDurationMinutes(WorkoutActivityType activity, bool isDemandingYoga) =>
+        ActivitySessionDurationRule.DefaultMinutesFor(activity, isDemandingYoga);
+
     public static bool IsValidSessionDuration(WorkoutActivityType activity, int minutes) =>
         activity == WorkoutActivityType.Yoga
             ? ActivitySessionDurationRule.IsValidSelection(activity, minutes) ||
@@ -33,6 +36,9 @@ public static class WorkoutPreferencesRule
 
     public static IReadOnlyList<int> SessionDurationChoices(WorkoutActivityType activity) =>
         ActivitySessionDurationRule.ChoicesFor(activity);
+
+    public static IReadOnlyList<int> SessionDurationChoices(WorkoutActivityType activity, bool isDemandingYoga) =>
+        ActivitySessionDurationRule.ChoicesFor(activity, isDemandingYoga);
 
     public static bool RequiresExplicitWeeklyFrequency(WorkoutActivityType activity) =>
         ActivityFrequencyPreferenceRule.RequiresExplicitWeeklyFrequency(activity);

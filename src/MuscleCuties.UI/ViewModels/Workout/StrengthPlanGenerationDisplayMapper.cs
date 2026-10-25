@@ -124,7 +124,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         "ActivitySelectionMissing" or "NoActivitiesSelected" => "Workout_Generation_Reason_NoActivitiesSelected",
         "AvailableWeekdaysMustContainOneToSevenDistinctDays" or "AvailableWeekdayValueInvalid" =>
             "Workout_Generation_Reason_AvailableWeekdays",
-        "DailyCapacityMissingSingleActivityPerDayFallback" =>
+        "DailyCapacityMissingSafePairingFallback" =>
             "Workout_Generation_Reason_DailyCapacityFallback",
         "DailyCapacityMustBePositive" => "Workout_Generation_Reason_DailyCapacityInvalid",
         "ActivityEligibilityEvidenceMissing" or "ActivityEligibilityEvidenceDuplicate" =>
@@ -138,6 +138,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         "ActivityNotSupportedByPersistedPlan" => "Workout_Generation_Reason_ActivityNotSupportedBySavedPlan",
         "ClimbingCompetenceNotConfirmed" or "RopeActivityRequiresCompetenceConfirmation" =>
             "Workout_Generation_Reason_ClimbingCompetence",
+        "YogaContentClassificationMissing" => "Workout_Generation_Reason_YogaContent",
         "RestrictionOrSymptomRequiresReview" => "Workout_Generation_Reason_RestrictionReview",
         "SessionDurationMissing" or "SessionDurationMustBePositive" or "SelectedDurationOutsideAllowedRange" =>
             "Workout_Generation_Reason_SessionDurationMissing",
