@@ -16,7 +16,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_Activity"] = "Strength activity";
         English["Workout_Generation_ChooseActivity"] = "Choose an activity";
         English["Workout_Generation_StrengthPlanType"] = "Strength plan type";
-        English["Workout_Generation_GeneralStrengthDescription"] = "A balanced plan focused on general strength and steady progress.";
+        English["Workout_Generation_GeneralStrengthDescription"] = "Lower training volume with steady general-strength progress.";
         English["Workout_Generation_HighVolumeStrengthDescription"] = "More total strength work; requires enough recent training history.";
         English["Workout_Generation_HighIntensityStrengthDescription"] = "Heavier main lifts; exercise familiarity and load evidence may be required.";
         English["Workout_Generation_StrengthPlanChoiceHint"] = "Select this strength plan type.";
@@ -245,7 +245,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_FullDayFriday"] = "Friday";
         English["Workout_Generation_FullDaySaturday"] = "Saturday";
         English["Workout_Generation_FullDaySunday"] = "Sunday";
-        English["Workout_Generation_GeneralStrength"] = "General strength";
+        English["Workout_Generation_GeneralStrength"] = "General strength (low volume)";
         English["Workout_Generation_HighVolumeStrength"] = "High-volume strength";
         English["Workout_Generation_HighIntensityStrength"] = "High-intensity strength";
     }

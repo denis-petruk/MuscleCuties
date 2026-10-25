@@ -250,7 +250,7 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
-    public async Task Explicit_Invalid_Demanding_Yoga_Duration_Is_Not_Defaulted()
+    public async Task Saved_Gentle_Yoga_Duration_Does_Not_Block_Demanding_Yoga_Plan()
     {
         var profile = Profile();
         var selected = profile.SelectedActivityTypes!.Append((int)WorkoutActivityType.Yoga).ToHashSet();
@@ -272,17 +272,14 @@ public sealed class StrengthPlanPreviewV020Tests
 
         var result = await new PreviewStrengthPlanV020UseCase(source).ExecuteAsync(Guid.NewGuid(), request);
 
-        var yoga = Assert.Single(result.MixedActivitySchedule!.Activities,
-            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Yoga);
-        Assert.Equal("Blocked", yoga.Disposition);
-        Assert.Contains(MixedActivityWeekScheduleRule.SessionDurationOutsideSavedPreferenceRange,
-            yoga.ReasonCodes);
-        Assert.DoesNotContain(result.MixedActivitySchedule.Sessions,
-            session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+        Assert.Equal("Feasible", result.Status);
+        Assert.Contains(result.MixedActivitySchedule!.Sessions,
+            session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga &&
+                       session.DurationMinutes == ActivitySessionDurationRule.DemandingYogaDefaultMinutes);
     }
 
     [Fact]
-    public async Task Explicit_Valid_Demanding_Yoga_Duration_Reaches_Scheduler()
+    public async Task Saved_Demanding_Yoga_Duration_Is_Replaced_By_Plan_Default()
     {
         var profile = Profile();
         var selected = profile.SelectedActivityTypes!.Append((int)WorkoutActivityType.Yoga).ToHashSet();
@@ -309,7 +306,8 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek, result.Sessions.Count);
         Assert.Contains(result.MixedActivitySchedule!.Sessions,
             session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga &&
-                       session.DurationMinutes == duration && session.IsHardSession);
+                       session.DurationMinutes == ActivitySessionDurationRule.DemandingYogaDefaultMinutes &&
+                       session.IsHardSession);
     }
 
     [Fact]
@@ -446,6 +444,37 @@ public sealed class StrengthPlanPreviewV020Tests
             session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength));
         Assert.DoesNotContain(result.MixedActivitySchedule.Sessions, session =>
             session.ActivityTypeId == (int)WorkoutActivityType.HighVolumeStrength);
+    }
+
+    [Fact]
+    public async Task High_Volume_Fallback_With_Gentle_Yoga_Is_Feasible_Without_Saved_Yoga_Duration()
+    {
+        var profile = AddSelectedActivity(Profile(), WorkoutActivityType.Yoga);
+        var request = Request() with
+        {
+            Activity = WorkoutActivityDto.HighVolumeStrength,
+            ActivityHistory = new ActivityTrainingHistoryInputV020(
+                WorkoutActivityType.HighVolumeStrength.ToString(),
+                HistoryConsistentWeeks,
+                HistoryAverageSessions,
+                LocalDate.AddDays(-PreviousSessionDays),
+                true),
+            ActivityEligibilityEvidence =
+            [
+                new ActivityEligibilityInputV020(WorkoutActivityDto.Yoga,
+                    IsDemandingYogaContent: false)
+            ]
+        };
+
+        var result = await new PreviewStrengthPlanV020UseCase(new Source(profile))
+            .ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.Equal("Feasible", result.Status);
+        Assert.DoesNotContain(MixedScheduleIncompleteReason, result.LimitationCodes);
+        Assert.Equal((int)WorkoutActivityType.GeneralStrength, result.EffectiveActivityTypeId);
+        Assert.Contains(result.MixedActivitySchedule!.Sessions, session =>
+            session.ActivityTypeId == (int)WorkoutActivityType.Yoga &&
+            session.DurationMinutes == ActivitySessionDurationRule.GentleYogaDefaultMinutes);
     }
 
     [Fact]
