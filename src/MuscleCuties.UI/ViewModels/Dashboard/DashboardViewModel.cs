@@ -201,7 +201,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         ? "Add a cycle phase to get started"
         : CurrentCycleDay > 0
             ? $"{CurrentPhase} · Day {CurrentCycleDay} / {PredictedCycleLength}"
-            : $"{CurrentPhase} · Start tracking";
+            : $"{CurrentPhase} · Phase selected";
 
     public string WorkoutCountLabel => IsRestDay
         ? "Activity"
@@ -245,10 +245,14 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
 
     public string PhaseShortAdvice => CurrentPhase switch
     {
-        CyclePhase.Menstrual => FirstPresent(CycleInsightText, "Take it easy, prioritize rest"),
-        CyclePhase.Follicular => FirstPresent(CycleInsightText, "Energy rising, great time to train"),
-        CyclePhase.Ovulatory => FirstPresent(CycleInsightText, "Peak energy and strength"),
-        CyclePhase.Luteal => FirstPresent(CycleInsightText, "Moderate intensity, listen to your body"),
+        CyclePhase.Menstrual => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
+            "Take it easy, prioritize rest"),
+        CyclePhase.Follicular => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
+            "Energy rising, great time to train"),
+        CyclePhase.Ovulatory => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
+            "Peak energy and strength"),
+        CyclePhase.Luteal => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
+            "Moderate intensity, listen to your body"),
         _ => string.Empty
     };
 
@@ -294,7 +298,22 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         ? "1 day log streak"
         : $"{NutritionStreakDays} day log streak";
 
+    private const float MaximumScoreProgressDivisor = 100f;
+    private const int MinimumScoreValue = 0;
+    private const int MaximumScoreValue = 100;
+    private const int MinimumRatingScale = 1;
+    private const int MaximumRatingScale = 5;
+    private const double CheckInRecoveryScaleRange = 8.0;
+    private const double CheckInRecoveryWeight = 0.7;
+    private const double BaselineRecoveryWeight = 0.3;
+
     public int CompositeScore => (ReadinessScore + RecoveryScore) / 2;
+
+    public float ReadinessProgress =>
+        Math.Clamp(ReadinessScore / MaximumScoreProgressDivisor, 0f, 1f);
+
+    public float RecoveryProgress =>
+        Math.Clamp(RecoveryScore / MaximumScoreProgressDivisor, 0f, 1f);
 
     public bool HasAnyTrend => HasWeightTrend;
 
@@ -463,10 +482,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             SleepGoal = summary.SleepGoal;
             ReadinessScore = summary.ReadinessScore;
             ReadinessLabel = summary.ReadinessLabel;
-            ApplyTodayReadiness(summary.TodayReadiness);
-            NeedsDailyCheckIn = summary.TodayReadiness is not { Status: "Available" };
             RecoveryScore = summary.RecoveryScore;
             RecoveryLabel = summary.RecoveryLabel;
+            ApplyTodayReadiness(summary.TodayReadiness);
+            NeedsDailyCheckIn = summary.TodayReadiness is not { Status: "Available" };
             TrendPoints = summary.TrendPoints.Select(point =>
                 new DashboardTrendPoint(point.Date, point.WeightKg, point.ReadinessScore)).ToArray();
             HasWeightTrend = TrendPoints.Any(point => point.WeightKg.HasValue);
@@ -503,6 +522,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             NotifyPhaseProperties();
             NotifyUserLinkedProperties();
             NotifyMacroProperties();
+            OnPropertyChanged(nameof(ReadinessProgress));
+            OnPropertyChanged(nameof(RecoveryProgress));
+            OnPropertyChanged(nameof(CompositeScore));
         }
         catch (Exception ex)
         {
@@ -524,6 +546,26 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         TodayReadinessReviewPending = readiness is { Status: "Available" } &&
                                      !_readinessPresentationSettings.IsReadinessScoreDisplayEnabled;
         TodayReadinessIncomplete = readiness?.Status == "Incomplete";
+        if (readiness is { Status: "Available" })
+        {
+            if (readiness.RawScore is { } rawScore)
+            {
+                ReadinessScore = (int)Math.Round(
+                    Math.Clamp((double)rawScore, MinimumScoreValue, MaximumScoreValue),
+                    MidpointRounding.AwayFromZero);
+            }
+
+            if (readiness.SleepQuality is { } sq && readiness.Soreness is { } s)
+            {
+                var checkInRecovery = ((sq - MinimumRatingScale) + (MaximumRatingScale - s)) *
+                                      MaximumScoreValue / CheckInRecoveryScaleRange;
+                RecoveryScore = (int)Math.Round(
+                    Math.Clamp(checkInRecovery * CheckInRecoveryWeight + RecoveryScore * BaselineRecoveryWeight,
+                        MinimumScoreValue, MaximumScoreValue),
+                    MidpointRounding.AwayFromZero);
+            }
+        }
+
         TodayReadinessScoreText = HasTodayReadinessScore
             ? readiness!.RawScore!.Value.ToString("0.##", CultureInfo.CurrentCulture)
             : string.Empty;
