@@ -294,9 +294,15 @@ public partial class QuizViewModel : ObservableObject
 
     private void ApplyQuestions(IEnumerable<QuizQuestionDto> loadedQuestions)
     {
-        Questions = loadedQuestions
-            .Where(question => question.QuestionType.IsAvailableInCurrentOnboarding() &&
-                               question.Answers.Count > 0)
+        var allLoaded = loadedQuestions
+            .Where(question => question.Answers.Count > 0)
+            .ToList();
+        var hasAvailableWeekdays = allLoaded.Any(
+            question => question.QuestionType == QuizQuestionType.AvailableWeekdays);
+
+        Questions = allLoaded
+            .Where(question => question.QuestionType.IsAvailableInCurrentOnboarding() ||
+                               (!hasAvailableWeekdays && question.QuestionType == QuizQuestionType.WorkoutDaysPerWeek))
             .OrderBy(question => question.OrderIndex)
             .ThenBy(question => question.Id)
             .ToList();
