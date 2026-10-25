@@ -238,9 +238,7 @@
                                        SemanticProperties.HeadingLevel="Level3"
                                        SemanticProperties.Description="{Binding CurrentExercise.Name}" />
                             </Grid>
-                            <Border StrokeShape="RoundRectangle 14" StrokeThickness="0"
-                                    Stroke="Transparent"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}"
+                            <Border Style="{StaticResource SurfaceTile}"
                                     HeightRequest="156">
                                 <Grid>
                                     <mi:MauiIcon Icon="{mi:Fluent Dumbbell24}" IconSize="48"

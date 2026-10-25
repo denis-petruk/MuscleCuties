@@ -56,11 +56,7 @@
                     Style="{StaticResource Headline}"
                     LineBreakMode="WordWrap" />
                 <Border
-                    Padding="10,5"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 999"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
-                    HorizontalOptions="Start"
+                    Style="{StaticResource PillBadge}"
                     IsVisible="{Binding HasKnownCyclePhase}">
                     <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="7">
                         <BoxView WidthRequest="7" HeightRequest="7" CornerRadius="4"
@@ -114,7 +110,7 @@
                         Style="{StaticResource WorkoutPrimaryActionButton}"
                         SemanticProperties.Hint="{loc:LocalizedText Workout_Generation_OpenHint}" />
 
-                    <Border StrokeShape="RoundRectangle 12" Padding="12,10" StrokeThickness="0"
+                    <Border Style="{StaticResource SurfaceTile}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource WarningSurfaceLight}, Dark={StaticResource WarningSurfaceDark}}"
                             IsVisible="{Binding HasActiveInjuries}"
                             SemanticProperties.Description="{loc:LocalizedText Workout_Page_InjuryAdjustmentsActive}"
@@ -266,8 +262,8 @@
                         <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding ScheduleDays}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="workoutModels:ScheduleDayItem">
-                                    <Border Padding="12,8" StrokeShape="RoundRectangle 12"
-                                            StrokeThickness="0"
+                                    <Border Style="{StaticResource SurfaceTile}"
+                                            Padding="12,8"
                                             BackgroundColor="{Binding AccentColor}"
                                             MinimumWidthRequest="72"
                                             SemanticProperties.Description="{Binding WorkoutTitle, Converter={StaticResource LocalizedStringConverter}}">
@@ -303,9 +299,8 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="workoutModels:FilterChipItem">
                                 <Border
+                                    Style="{StaticResource CardSecondary}"
                                     FlexLayout.Basis="25%"
-                                    StrokeShape="RoundRectangle 14"
-                                    StrokeThickness="0"
                                     Padding="6,9"
                                     Margin="2,0"
                                     MinimumHeightRequest="44"
@@ -418,9 +413,8 @@
                                SemanticProperties.HeadingLevel="Level1" />
                         <Button Grid.Column="1" Text="{loc:LocalizedText Common_Close}"
                                 Clicked="OnCloseSessionActivitiesClicked"
-                                MinimumHeightRequest="48" MinimumWidthRequest="48"
-                                BackgroundColor="Transparent"
-                                TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                Style="{StaticResource ButtonLink}"
+                                MinimumHeightRequest="48" MinimumWidthRequest="48" />
                     </Grid>
                     <Grid Grid.Row="1">
                         <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"

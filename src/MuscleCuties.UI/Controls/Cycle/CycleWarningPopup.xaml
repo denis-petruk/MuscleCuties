@@ -76,22 +76,16 @@
                         IsVisible="{Binding HasCycleWarningSuggestedPhase}">
                         <Button
                             Text="{Binding CycleWarningSuggestedActionText, Converter={StaticResource LocalizedStringConverter}}"
-                            Command="{Binding UseCycleWarningSuggestedPhaseCommand}"
-                            MinimumHeightRequest="52"
-                            FontSize="15" />
+                            Command="{Binding UseCycleWarningSuggestedPhaseCommand}" />
                         <Button
+                            Style="{StaticResource ButtonSecondary}"
                             Text="{loc:LocalizedText Cycle_WarningPopup_ForgotShiftTitle}"
-                            Command="{Binding ReviewEarlierPhaseRecordsCommand}"
-                            MinimumHeightRequest="52"
-                            FontSize="15"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                            Command="{Binding ReviewEarlierPhaseRecordsCommand}" />
                     </VerticalStackLayout>
 
                     <Button
                         Text="{loc:LocalizedText Cycle_WarningPopup_GotItButton}"
                         Command="{Binding CloseCycleWarningPopupCommand}"
-                        MinimumHeightRequest="52"
                         IsVisible="{Binding HasCycleWarningSuggestedPhase, Converter={StaticResource InvertedBoolConverter}}" />
                 </VerticalStackLayout>
             </Grid>

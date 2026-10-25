@@ -59,17 +59,12 @@
 
             <Button
                 Grid.Column="2"
+                Style="{StaticResource ButtonSecondary}"
                 Text="{loc:LocalizedText Common_Today}"
                 Command="{Binding JumpToTodayCommand}"
                 HeightRequest="36"
                 Padding="12,0"
-                CornerRadius="{StaticResource UiRadiusControl}"
                 FontSize="13"
-                FontAttributes="Bold"
-                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}"
-                TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                BorderWidth="1"
                 VerticalOptions="Center"
                 IsVisible="{Binding IsSelectedDateToday, Converter={StaticResource InvertedBoolConverter}}" />
 
@@ -353,18 +348,16 @@
                                        FontSize="13"
                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                        VerticalOptions="Center" />
-                                <Button Grid.Column="2" Text="{loc:LocalizedText Nutrition_FoodLog_SubtractWaterTwoFiftyMl}"
+                                <Button Grid.Column="2"
+                                        Style="{StaticResource ButtonSecondary}"
+                                        Text="{loc:LocalizedText Nutrition_FoodLog_SubtractWaterTwoFiftyMl}"
                                         Command="{Binding RemoveWaterCommand}"
-                                        CommandParameter="{x:Int32 250}" HeightRequest="30" Padding="8,0" FontSize="11"
-                                        CornerRadius="{StaticResource UiRadiusControl}"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                                <Button Grid.Column="3" Text="{loc:LocalizedText Nutrition_FoodLog_AddWaterTwoFiftyMl}"
+                                        CommandParameter="{x:Int32 250}" HeightRequest="30" Padding="8,0" FontSize="11" />
+                                <Button Grid.Column="3"
+                                        Style="{StaticResource ButtonSecondary}"
+                                        Text="{loc:LocalizedText Nutrition_FoodLog_AddWaterTwoFiftyMl}"
                                         Command="{Binding AddWaterCommand}"
-                                        CommandParameter="{x:Int32 250}" HeightRequest="30" Padding="8,0" FontSize="11"
-                                        CornerRadius="{StaticResource UiRadiusControl}"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}"
-                                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
+                                        CommandParameter="{x:Int32 250}" HeightRequest="30" Padding="8,0" FontSize="11" />
                             </Grid>
 
                             <!-- Quick Diary Actions Row -->
@@ -376,10 +369,7 @@
                                     VerticalOptions="Center" />
                                 <Border
                                     Grid.Column="1"
-                                    Padding="10,4"
-                                    StrokeShape="RoundRectangle 12"
-                                    StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                    Style="{StaticResource PillBadge}"
                                     VerticalOptions="Center">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding CopyYesterdayDiaryCommand}" />
@@ -488,10 +478,7 @@
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="dtos:FoodItemEntryDto">
                                         <Border
-                                            StrokeShape="RoundRectangle 10"
-                                            StrokeThickness="0"
-                                            Padding="12,10"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
+                                            Style="{StaticResource SurfaceTile}">
                                             <Border.GestureRecognizers>
                                                 <TapGestureRecognizer
                                                     Command="{Binding OpenEditFoodCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
@@ -542,10 +529,7 @@
                                     VerticalOptions="Center"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                                 <Border
-                                    Padding="10,4"
-                                    StrokeShape="RoundRectangle 12"
-                                    StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                    Style="{StaticResource PillBadge}"
                                     VerticalOptions="Center">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -644,10 +628,7 @@
                                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding SavedMealTemplates}" Spacing="4">
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="recipeDtos:MealTemplateDto">
-                                            <Border StrokeShape="RoundRectangle 10"
-                                                    StrokeThickness="0"
-                                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                                    Padding="12,10">
+                                            <Border Style="{StaticResource SurfaceTile}">
                                                 <Border.GestureRecognizers>
                                                     <TapGestureRecognizer
                                                         Command="{Binding LogMealTemplateCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
@@ -678,10 +659,7 @@
                                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding SavedRecipes}" Spacing="4">
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="recipeDtos:RecipeSummaryDto">
-                                            <Border StrokeShape="RoundRectangle 10"
-                                                    StrokeThickness="0"
-                                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                                    Padding="12,10">
+                                            <Border Style="{StaticResource SurfaceTile}">
                                                 <Border.GestureRecognizers>
                                                     <TapGestureRecognizer
                                                         Command="{Binding LogRecipeCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
@@ -756,9 +734,8 @@
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" VerticalOptions="Center">
                                     <Button Text="{Binding SelectedQuickFoodsSummaryText}"
                                             Command="{Binding BatchLogSelectedFoodsCommand}"
-                                            HeightRequest="46" CornerRadius="{StaticResource UiRadiusControl}"
-                                            FontAttributes="Bold" FontSize="13"
-                                            BackgroundColor="{StaticResource PrimaryDark}" TextColor="{StaticResource White}" />
+                                            HeightRequest="46"
+                                            FontSize="13" />
                                     <Button Grid.Column="1" Text="{loc:LocalizedText Common_Cancel}"
                                             Command="{Binding ClearQuickFoodSelectionCommand}"
                                             HeightRequest="46" CornerRadius="{StaticResource UiRadiusControl}"
@@ -932,9 +909,8 @@
                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                        VerticalOptions="Center" />
                                 <Button Grid.Column="1" Text="✕" Command="{Binding CloseBarcodeScannerCommand}"
-                                        HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="{StaticResource UiRadiusControl}"
-                                        BackgroundColor="Transparent"
-                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                        Style="{StaticResource ButtonLink}"
+                                        HeightRequest="32" WidthRequest="32" Padding="0" />
                             </Grid>
 
                             <Label Text="{loc:LocalizedText Nutrition_FoodLog_LocalBarcodeOnly}" FontSize="12"
@@ -1075,12 +1051,10 @@
 
                                 <Button
                                     Grid.Column="1"
+                                    Style="{StaticResource ButtonSecondary}"
                                     Text="{loc:LocalizedText Common_Delete}"
                                     Command="{Binding DeleteFoodItemCommand}"
-                                    CornerRadius="{StaticResource UiRadiusControl}"
-                                    FontAttributes="Bold"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
-                                    TextColor="{StaticResource White}"
+                                    TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
                                     IsVisible="{Binding IsEditingExisting}" />
 
                                 <Button
