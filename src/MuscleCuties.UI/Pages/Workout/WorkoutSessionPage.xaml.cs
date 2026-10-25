@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using MuscleCuties.UI.Models.UI.Workout;
+using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.ViewModels.Workout;
 using WorkoutViewModel = MuscleCuties.UI.ViewModels.Workout.WorkoutViewModel;
@@ -9,9 +10,6 @@ namespace MuscleCuties.UI.Pages.Workout;
 
 public partial class WorkoutSessionPage : ContentPage
 {
-    private const uint CompletionGrowMilliseconds = 340;
-    private const uint CompletionSettleMilliseconds = 220;
-    private static readonly TimeSpan CompletionDisplayTime = TimeSpan.FromMilliseconds(1200);
     private readonly INavigationContextService _navigationContext;
     private readonly WorkoutSessionViewModel _viewModel;
     private readonly WorkoutViewModel _workoutViewModel;
@@ -69,10 +67,14 @@ public partial class WorkoutSessionPage : ContentPage
             {
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    CompletionBadge.Scale = 0.75;
-                    await CompletionBadge.ScaleToAsync(1.12, CompletionGrowMilliseconds, Easing.CubicOut);
-                    await CompletionBadge.ScaleToAsync(1, CompletionSettleMilliseconds, Easing.CubicInOut);
-                    await Task.Delay(CompletionDisplayTime);
+                    CompletionBadge.Scale = AppThemeResources.GetDouble("UiScaleCompletionStart");
+                    await CompletionBadge.ScaleToAsync(
+                        AppThemeResources.GetDouble("UiScaleCelebrationPeak"),
+                        (uint)AppThemeResources.GetDouble("UiMotionDuration340"), Easing.CubicOut);
+                    await CompletionBadge.ScaleToAsync(
+                        AppThemeResources.GetDouble("UiScaleFull"),
+                        (uint)AppThemeResources.GetDouble("UiMotionDuration220"), Easing.CubicInOut);
+                    await Task.Delay((int)AppThemeResources.GetDouble("UiMotionDuration1200"));
                     if (revision == _completionRevision && _viewModel.IsActivitySummary)
                         await _viewModel.FinishSessionCommand.ExecuteAsync(null);
                 });

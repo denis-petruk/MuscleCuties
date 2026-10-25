@@ -13,7 +13,7 @@
     x:DataType="vm:NutritionViewModel"
     IsOpen="{Binding IsBreakdownModalVisible}">
 
-    <Grid Padding="0">
+    <Grid Padding="{StaticResource UiInsets0}">
         <BoxView BackgroundColor="{StaticResource ModalScrim}">
             <BoxView.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding CloseMicronutrientsModalCommand}" />
@@ -30,9 +30,9 @@
                     Grid.Row="0"
                     ColumnDefinitions="*, Auto"
                     RowDefinitions="Auto, Auto"
-                    ColumnSpacing="12"
-                    RowSpacing="6"
-                    Padding="20,18,20,12">
+                    ColumnSpacing="{StaticResource UiSpaceCompact}"
+                    RowSpacing="{StaticResource UiSpacing6}"
+                    Padding="{StaticResource UiInsets20_18_20_12}">
                     <Label
                         Grid.Row="0" Grid.Column="0"
                         Text="{Binding SelectedBreakdownTitle, Converter={StaticResource LocalizedStringConverter}}"
@@ -58,7 +58,7 @@
                 <BoxView
                     Grid.Row="1"
                     Style="{StaticResource ModalDivider}"
-                    Margin="20,0,20,14" />
+                    Margin="{StaticResource UiInsets20_0_20_14}" />
 
                 <CollectionView
                     Grid.Row="2"
@@ -66,14 +66,14 @@
                     ItemSizingStrategy="MeasureAllItems"
                     SelectionMode="None"
                     VerticalScrollBarVisibility="Always"
-                    Margin="20,0,20,20"
+                    Margin="{StaticResource UiInsets20_0_20_20}"
                     VerticalOptions="Fill">
                     <CollectionView.Header>
                         <VerticalStackLayout>
                             <Grid
                                 ColumnDefinitions="104, *"
-                                ColumnSpacing="16"
-                                Padding="0,0,0,16">
+                                ColumnSpacing="{StaticResource UiSpaceControl}"
+                                Padding="{StaticResource UiInsets0_0_0_16}">
 
                                 <controls:MacroPieChart
                                     Grid.Column="0"
@@ -86,7 +86,7 @@
                                     TrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                                     InnerColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                                     InnerStrokeColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
-                                    WidthRequest="104" HeightRequest="104"
+                                    WidthRequest="{StaticResource UiDimension104}" HeightRequest="{StaticResource UiDimension104}"
                                     SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakdown_MacroDistributionNumericValuesAreListed}"
                                     HorizontalOptions="Center"
                                     VerticalOptions="Center" />
@@ -95,20 +95,20 @@
                                     Grid.Column="1"
                                     RowDefinitions="Auto, Auto, Auto, Auto, Auto"
                                     ColumnDefinitions="Auto, *"
-                                    RowSpacing="10"
+                                    RowSpacing="{StaticResource UiSpacing10}"
                                     VerticalOptions="Center">
                                     <Image
                                         Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
-                                        WidthRequest="20"
-                                        HeightRequest="20"
+                                        WidthRequest="{StaticResource UiDimension20}"
+                                        HeightRequest="{StaticResource UiDimension20}"
                                         Aspect="AspectFit"
                                         VerticalOptions="Center"
-                                        Margin="0,0,7,0" />
+                                        Margin="{StaticResource UiInsets0_0_7_0}" />
                                     <Label
                                         Grid.Column="1"
                                         Text="{Binding SelectedBreakdownCaloriesText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource AccentLabel}"
-                                        FontSize="20"
+                                        FontSize="{StaticResource UiFontSize20}"
                                         VerticalOptions="Center" />
                                     <Label
                                         Grid.Row="1"
@@ -124,28 +124,28 @@
                                     <Border
                                         Grid.Row="3"
                                         Grid.ColumnSpan="2"
-                                        StrokeShape="RoundRectangle 16"
-                                        StrokeThickness="0"
+                                        StrokeShape="{StaticResource UiRoundRectangleRadius16}"
+                                        StrokeThickness="{StaticResource UiStrokeWidth0}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                        Padding="10,8"
-                                        MinimumHeightRequest="44"
+                                        Padding="{StaticResource UiInsets10_8}"
+                                        MinimumHeightRequest="{StaticResource UiDimension44}"
                                         HorizontalOptions="Start"
                                         IsVisible="{Binding CanEditSelectedBreakdown}"
                                         SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakdown_EditMeal}">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer Command="{Binding EditSelectedBreakdownMealCommand}" />
                                         </Border.GestureRecognizers>
-                                        <Grid ColumnDefinitions="Auto, Auto" ColumnSpacing="6">
+                                        <Grid ColumnDefinitions="Auto, Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                                             <mi:MauiIcon
-                                                Icon="{mi:Fluent EditSettings24}" IconSize="14" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                                WidthRequest="14"
-                                                HeightRequest="14"
+                                                Icon="{mi:Fluent EditSettings24}" IconSize="{StaticResource UiDimension14}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                                WidthRequest="{StaticResource UiDimension14}"
+                                                HeightRequest="{StaticResource UiDimension14}"
                                                 VerticalOptions="Center" />
                                             <Label
                                                 Grid.Column="1"
                                                 Text="{loc:LocalizedText Nutrition_Breakdown_EditMeal}"
                                                 Style="{StaticResource CaptionLabel}"
-                                                FontAttributes="Bold"
+                                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                                 VerticalOptions="Center" />
                                         </Grid>
                                     </Border>
@@ -153,17 +153,17 @@
                                     <VerticalStackLayout
                                         Grid.Row="4"
                                         Grid.ColumnSpan="2"
-                                        Spacing="7"
+                                        Spacing="{StaticResource UiSpacing7}"
                                         BindableLayout.ItemsSource="{Binding SelectedBreakdownMacroItems}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="nutritionModels:MacroBreakdownItem">
-                                                <Grid ColumnDefinitions="22, Auto, *, Auto" ColumnSpacing="8">
+                                                <Grid ColumnDefinitions="22, Auto, *, Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                                                     <Path
                                                         Data="{Binding IconPathData, Converter={StaticResource StringToGeometryConverter}}"
                                                         Style="{StaticResource NutritionLineIcon}"
                                                         Stroke="{Binding Color}"
-                                                        WidthRequest="15"
-                                                        HeightRequest="15"
+                                                        WidthRequest="{StaticResource UiDimension15}"
+                                                        HeightRequest="{StaticResource UiDimension15}"
                                                         VerticalOptions="Center" />
                                                     <Label
                                                         Grid.Column="1"
@@ -175,13 +175,13 @@
                                                         Progress="{Binding Progress}"
                                                         ProgressColor="{Binding Color}"
                                                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                                                        HeightRequest="5"
+                                                        HeightRequest="{StaticResource UiDimension5}"
                                                         VerticalOptions="Center" />
                                                     <Label
                                                         Grid.Column="3"
                                                         Text="{Binding AmountText, Converter={StaticResource LocalizedStringConverter}}"
                                                         Style="{StaticResource MutedLabel}"
-                                                        FontSize="14"
+                                                        FontSize="{StaticResource UiFontSize14}"
                                                         HorizontalTextAlignment="End" />
                                                 </Grid>
                                             </DataTemplate>
@@ -189,11 +189,11 @@
                                     </VerticalStackLayout>
                                 </Grid>
                             </Grid>
-                            <Grid ColumnDefinitions="*,Auto" Padding="0,2,0,10" ColumnSpacing="12">
+                            <Grid ColumnDefinitions="*,Auto" Padding="{StaticResource UiInsets0_2_0_10}" ColumnSpacing="{StaticResource UiSpaceCompact}">
                                 <Label
                                     Text="{loc:LocalizedText Nutrition_Breakdown_Micronutrients}"
                                     Style="{StaticResource SectionTitle}"
-                                    FontSize="16"
+                                    FontSize="{StaticResource UiFontSize16}"
                                     VerticalOptions="Center" />
                                 <Label
                                     Grid.Column="1"
@@ -207,27 +207,27 @@
                         <DataTemplate x:DataType="nutritionModels:DailyMicronutrientItem">
                             <Border
                                 Style="{StaticResource ModalListItem}"
-                                Padding="16,14"
-                                Margin="0,0,0,8">
+                                Padding="{StaticResource UiInsets16_14}"
+                                Margin="{StaticResource UiInsets0_0_0_8}">
 
                                 <Grid
                                     RowDefinitions="Auto, Auto, 10, Auto"
                                     ColumnDefinitions="34, *, Auto"
-                                    ColumnSpacing="10">
+                                    ColumnSpacing="{StaticResource UiSpacing10}">
                                     <Border
                                         Grid.RowSpan="4"
-                                        WidthRequest="34"
-                                        HeightRequest="34"
-                                        StrokeShape="RoundRectangle 17"
-                                        StrokeThickness="0"
+                                        WidthRequest="{StaticResource UiDimension34}"
+                                        HeightRequest="{StaticResource UiDimension34}"
+                                        StrokeShape="{StaticResource UiRoundRectangleRadius17}"
+                                        StrokeThickness="{StaticResource UiStrokeWidth0}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                         VerticalOptions="Center">
                                         <Path
                                             Data="{Binding IconPathData, Converter={StaticResource StringToGeometryConverter}}"
                                             Style="{StaticResource NutritionLineIcon}"
                                             Stroke="{StaticResource Primary}"
-                                            WidthRequest="17"
-                                            HeightRequest="17"
+                                            WidthRequest="{StaticResource UiDimension17}"
+                                            HeightRequest="{StaticResource UiDimension17}"
                                             HorizontalOptions="Center"
                                             VerticalOptions="Center" />
                                     </Border>
@@ -236,26 +236,26 @@
                                         Grid.Column="1"
                                         Text="{Binding Group, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource EyebrowLabel}"
-                                        FontSize="12"
-                                        CharacterSpacing="1.1"
-                                        Margin="0,0,0,2" />
+                                        FontSize="{StaticResource UiFontSize12}"
+                                        CharacterSpacing="{StaticResource UiCharacterSpacingWide}"
+                                        Margin="{StaticResource UiInsets0_0_0_2}" />
                                     <Label
                                         Grid.Row="1"
                                         Grid.Column="1"
                                         Text="{Binding Name}"
                                         Style="{StaticResource CardTitle}"
-                                        FontSize="15"
+                                        FontSize="{StaticResource UiFontSize15}"
                                         LineBreakMode="WordWrap" />
 
                                     <HorizontalStackLayout
                                         Grid.RowSpan="2"
                                         Grid.Column="2"
-                                        Spacing="3"
+                                        Spacing="{StaticResource UiSpacing3}"
                                         VerticalOptions="Center">
                                         <Label
                                             Text="{Binding AmountText, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource AccentLabel}"
-                                            FontSize="14" />
+                                            FontSize="{StaticResource UiFontSize14}" />
                                         <Label
                                             Text="{Binding GoalText, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}"
@@ -268,7 +268,7 @@
                                         Progress="{Binding Progress}"
                                         ProgressColor="{StaticResource Primary}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                                        HeightRequest="6"
+                                        HeightRequest="{StaticResource UiDimension6}"
                                         VerticalOptions="Center">
                                         <ProgressBar.Triggers>
                                             <DataTrigger
@@ -287,7 +287,7 @@
                                         Grid.Column="2"
                                         Text="{Binding ProgressText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource CaptionLabel}"
-                                        MinimumWidthRequest="56"
+                                        MinimumWidthRequest="{StaticResource UiDimension56}"
                                         HorizontalTextAlignment="End"
                                         VerticalOptions="Center" />
                                 </Grid>

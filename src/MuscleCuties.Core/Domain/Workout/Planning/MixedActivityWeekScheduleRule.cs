@@ -1,3 +1,4 @@
+using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
@@ -35,7 +36,10 @@ public sealed record MixedActivityScheduleDecision(
     int? PolicySessionsPerWeek,
     int? TargetSessionsPerWeek,
     int ScheduledSessionsPerWeek,
-    IReadOnlyList<string> Reasons);
+    IReadOnlyList<string> Reasons,
+    WorkoutActivityType? EffectiveActivity = null,
+    string? FallbackReasonCode = null,
+    int? MaxSessionsPerWeek = null);
 
 public sealed record MixedActivityWeekScheduleResult(
     IReadOnlyList<MixedActivityScheduledSession> Sessions,
@@ -45,15 +49,15 @@ public sealed record MixedActivityWeekScheduleResult(
 /// <summary>Places selected activities over available weekdays under activity and daily-capacity rules.</summary>
 public static class MixedActivityWeekScheduleRule
 {
-    public const int MinimumAvailableWeekdays = 2;
+    public const int MinimumAvailableWeekdays = 1;
     public const int MaximumAvailableWeekdays = 7;
     public const int MaximumHardDaysPerWeek = 3;
     public const int MaximumRequestedSessionsPerWeek = MaximumAvailableWeekdays;
 
     public const string ActivitySelectionMissing = "ActivitySelectionMissing";
     public const string NoActivitiesSelected = "NoActivitiesSelected";
-    public const string AvailableWeekdaysMustContainTwoToSevenDistinctDays =
-        "AvailableWeekdaysMustContainTwoToSevenDistinctDays";
+    public const string AvailableWeekdaysMustContainOneToSevenDistinctDays =
+        "AvailableWeekdaysMustContainOneToSevenDistinctDays";
     public const string AvailableWeekdayValueInvalid = "AvailableWeekdayValueInvalid";
     public const string DailyCapacityMissingSingleActivityPerDayFallback =
         "DailyCapacityMissingSingleActivityPerDayFallback";
@@ -146,6 +150,21 @@ public static class MixedActivityWeekScheduleRule
 
         foreach (var decision in decisions)
         {
+            if (decision.Activity == WorkoutActivityType.GeneralStrength)
+            {
+                var gsEvidence = FindUniqueEvidence(context.EligibilityEvidence, WorkoutActivityType.GeneralStrength);
+                var gsPolicy = ResolveGeneralStrengthPolicy(gsEvidence, days.Length);
+                decision.PolicySessionsPerWeek = gsPolicy.PolicySessionsPerWeek;
+                decision.TargetSessionsPerWeek = gsPolicy.TargetSessionsPerWeek;
+                decision.MaxSessionsPerWeek = gsPolicy.MaxSessionsPerWeek;
+            }
+            else
+            {
+                decision.PolicySessionsPerWeek = ActivityPreferenceDefaults.PolicySessionsPerWeek(decision.Activity);
+                decision.TargetSessionsPerWeek = ActivityPreferenceDefaults.SessionsPerWeek(
+                    decision.Activity, days.Length) ?? decision.PolicySessionsPerWeek;
+            }
+
             if (!Enum.IsDefined(decision.Activity))
             {
                 decision.Block(InvalidActivityValue);
@@ -168,7 +187,7 @@ public static class MixedActivityWeekScheduleRule
                 continue;
             }
 
-            PrepareActivity(decision, context, duplicateEvidenceActivities);
+            PrepareActivity(decision, context, duplicateEvidenceActivities, days, decisions);
         }
 
         if (context.DailyCapacityMinutes is null)
@@ -188,9 +207,11 @@ public static class MixedActivityWeekScheduleRule
             (context.DailyCapacityMinutes is null || context.DailyCapacityMinutes > NoScheduledMinutes))
             PlaceSessions(decisions, days, context.DailyCapacityMinutes);
 
-        var sessions = decisions.SelectMany(decision => decision.ScheduledDays.Select(day =>
-                new MixedActivityScheduledSession(decision.Activity, day, decision.DurationMinutes,
-                    IsHardActivity(decision.Activity))))
+        var sessions = decisions
+            .Where(decision => decision.IsEligible)
+            .SelectMany(decision => decision.ScheduledDays.Select(day =>
+                new MixedActivityScheduledSession(decision.EffectiveActivity ?? decision.Activity, day, decision.DurationMinutes,
+                    IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription))))
             .OrderBy(session => DayIndex(session.Day))
             .ThenBy(session => ActivityOrder(session.Activity))
             .ToArray();
@@ -201,7 +222,9 @@ public static class MixedActivityWeekScheduleRule
 
     private static void PrepareActivity(ActivityDecisionBuilder decision,
         MixedActivityWeekScheduleContext context,
-        HashSet<WorkoutActivityType> duplicateEvidenceActivities)
+        HashSet<WorkoutActivityType> duplicateEvidenceActivities,
+        DayOfWeek[] days,
+        ActivityDecisionBuilder[] allDecisions)
     {
         if (decision.Activity == WorkoutActivityType.Other)
         {
@@ -240,8 +263,23 @@ public static class MixedActivityWeekScheduleRule
             return;
         }
 
+        var isDemandingYoga = false;
+        if (decision.Activity == WorkoutActivityType.Yoga)
+        {
+            var yogaClassification = YogaClassificationRule.Classify(
+                evidence.IsDemandingYogaContent,
+                evidence.ActivityName,
+                evidence.ContentTags);
+            if (yogaClassification.IsInconsistent)
+            {
+                decision.Block(yogaClassification.ReasonCode ?? YogaClassificationRule.YogaClassificationInconsistentCode);
+                return;
+            }
+            isDemandingYoga = yogaClassification.IsDemanding;
+        }
+
         var durationPreference = MixedActivitySessionDurationRule.ReadPreference(
-            decision.Activity, context.SessionDurationsMinutes);
+            decision.Activity, context.SessionDurationsMinutes, isDemandingYoga);
         if (!durationPreference.IsValid)
         {
             decision.Block(durationPreference.ReasonCode ?? SessionDurationMissing);
@@ -254,6 +292,14 @@ public static class MixedActivityWeekScheduleRule
         var prescription = ActivityPrescriptionRule.Evaluate(prescriptionContext);
 
         decision.PrescriptionStatus = prescription.Status;
+
+        if (decision.Activity == WorkoutActivityType.HighVolumeStrength &&
+            prescription.Status == ActivityPrescriptionStatus.OfferGeneralStrength)
+        {
+            HandleHighVolumeStrengthFallback(decision, context, evidence, durationPreference, prescription, days, allDecisions);
+            return;
+        }
+
         if (prescription.Status != ActivityPrescriptionStatus.Eligible || prescription.Sessions.Count != OneSessionPerOccurrence)
         {
             decision.Block(ActivityPrescriptionNotEligible);
@@ -262,9 +308,15 @@ public static class MixedActivityWeekScheduleRule
         }
 
         var session = prescription.Sessions[0];
-        decision.PolicySessionsPerWeek = PreferenceFrequencyActivities.Contains(decision.Activity)
-            ? null
-            : session.FrequencyPerWeek;
+        decision.PolicySessionsPerWeek = session.FrequencyPerWeek;
+
+        if (decision.Activity == WorkoutActivityType.GeneralStrength)
+        {
+            var gsPolicy = ResolveGeneralStrengthPolicy(evidence, days.Length);
+            decision.PolicySessionsPerWeek = gsPolicy.PolicySessionsPerWeek;
+            decision.MaxSessionsPerWeek = gsPolicy.MaxSessionsPerWeek;
+            decision.TargetSessionsPerWeek = gsPolicy.TargetSessionsPerWeek;
+        }
 
         if (!TryGetTargetFrequency(decision, context, session.FrequencyPerWeek))
             return;
@@ -285,9 +337,105 @@ public static class MixedActivityWeekScheduleRule
         decision.IsEligible = true;
     }
 
+    private static void HandleHighVolumeStrengthFallback(
+        ActivityDecisionBuilder decision,
+        MixedActivityWeekScheduleContext context,
+        ActivityPrescriptionContext evidence,
+        SessionDurationPreferenceReadResult durationPreference,
+        ActivityPrescriptionResult prescription,
+        DayOfWeek[] days,
+        ActivityDecisionBuilder[] allDecisions)
+    {
+        var originalReason = prescription.Reasons.FirstOrDefault(r =>
+            r is "HighVolumeRequiresEstablishedResistanceHistory" or "BeginnerProfileRequiresGeneralStrength")
+            ?? (prescription.Reasons.Count > 0 ? prescription.Reasons[0] : null)
+            ?? "HighVolumeRequiresEstablishedResistanceHistory";
+
+        decision.EffectiveActivity = WorkoutActivityType.GeneralStrength;
+        decision.FallbackReasonCode = originalReason;
+        decision.AddReason(originalReason);
+
+        var existingGsDecision = allDecisions.FirstOrDefault(d =>
+            d != decision && d.Activity == WorkoutActivityType.GeneralStrength);
+
+        if (existingGsDecision is not null)
+        {
+            decision.AddReason("ReplacedWithGeneralStrength");
+            decision.IsEligible = false;
+            decision.DispositionOverride = MixedActivityScheduleDisposition.NotScheduled;
+            decision.MergedIntoDecision = existingGsDecision;
+            return;
+        }
+
+        var gsPolicy = ResolveGeneralStrengthPolicy(evidence, days.Length);
+
+        decision.PolicySessionsPerWeek = gsPolicy.PolicySessionsPerWeek;
+        decision.TargetSessionsPerWeek = gsPolicy.TargetSessionsPerWeek;
+        decision.MaxSessionsPerWeek = gsPolicy.MaxSessionsPerWeek;
+
+        var gsEvidence = evidence with { Activity = WorkoutActivityType.GeneralStrength };
+        var gsDurationPreference = MixedActivitySessionDurationRule.ReadPreference(
+            WorkoutActivityType.GeneralStrength, context.SessionDurationsMinutes);
+        if (!gsDurationPreference.IsValid &&
+            gsDurationPreference.ReasonCode == MixedActivitySessionDurationRule.SessionDurationMissing &&
+            durationPreference.IsValid)
+            gsDurationPreference = durationPreference;
+
+        if (!gsDurationPreference.IsValid)
+        {
+            decision.Block(gsDurationPreference.ReasonCode ?? SessionDurationMissing);
+            return;
+        }
+
+        var gsPrescriptionContext = MixedActivitySessionDurationRule.ApplyPreference(gsEvidence,
+            gsDurationPreference.Preference);
+        var gsPrescription = ActivityPrescriptionRule.Evaluate(gsPrescriptionContext);
+
+        if (gsPrescription.Status != ActivityPrescriptionStatus.Eligible || gsPrescription.Sessions.Count != OneSessionPerOccurrence)
+        {
+            decision.Block(gsPrescription.Reasons.Count > 0 ? gsPrescription.Reasons[0] : ActivityPrescriptionNotEligible);
+            decision.AddReasons(gsPrescription.Reasons);
+            return;
+        }
+
+        var session = gsPrescription.Sessions[0];
+        var duration = MixedActivitySessionDurationRule.Resolve(
+            WorkoutActivityType.GeneralStrength, gsDurationPreference.Preference, session);
+        if (!duration.IsResolved)
+        {
+            decision.Block(duration.ReasonCode ?? SessionDurationMissing);
+            return;
+        }
+
+        decision.DurationMinutes = duration.DurationMinutes;
+        if (duration.SelectedDurationAppliedToPrescription)
+            decision.AddReason(SelectedDurationAppliedToPrescription);
+
+        decision.Prescription = session;
+        decision.IsEligible = true;
+    }
+
     private static bool TryGetTargetFrequency(ActivityDecisionBuilder decision,
         MixedActivityWeekScheduleContext context, int policyFrequency)
     {
+        if (decision.Activity == WorkoutActivityType.GeneralStrength)
+            return true;
+
+        if (context.RequestedSessionsPerWeek is not null &&
+            context.RequestedSessionsPerWeek.TryGetValue(decision.Activity, out var savedFrequency))
+        {
+            if (savedFrequency < MinimumRequestedSessionsPerWeek ||
+                savedFrequency > MaximumRequestedSessionsPerWeek)
+            {
+                decision.Omit(ActivityFrequencyPreferenceInvalid);
+                return false;
+            }
+
+            var max = decision.MaxSessionsPerWeek ?? MaximumRequestedSessionsPerWeek;
+            decision.TargetSessionsPerWeek = Math.Min(savedFrequency, max);
+            return true;
+        }
+
         if (!PreferenceFrequencyActivities.Contains(decision.Activity))
         {
             if (policyFrequency < MinimumRequestedSessionsPerWeek ||
@@ -301,12 +449,8 @@ public static class MixedActivityWeekScheduleRule
             return true;
         }
 
-        if (context.RequestedSessionsPerWeek is null ||
-            !context.RequestedSessionsPerWeek.TryGetValue(decision.Activity, out var requestedFrequency))
-        {
-            decision.Omit(ActivityFrequencyPreferenceMissing);
-            return false;
-        }
+        var requestedFrequency = ActivityPreferenceDefaults.SessionsPerWeek(decision.Activity,
+            context.AvailableWeekdays?.Count ?? MinimumAvailableWeekdays) ?? policyFrequency;
 
         if (requestedFrequency < MinimumRequestedSessionsPerWeek ||
             requestedFrequency > MaximumRequestedSessionsPerWeek)
@@ -331,6 +475,16 @@ public static class MixedActivityWeekScheduleRule
             .Take(2)
             .ToArray();
         return matchingEvidence.Length == OneSessionPerOccurrence ? matchingEvidence[0] : null;
+    }
+
+    private static GeneralStrengthFrequencyPolicy ResolveGeneralStrengthPolicy(
+        ActivityPrescriptionContext? evidence, int availableDayCount)
+    {
+        var profileLevel = evidence?.Experience == ActivityExperience.Established
+            ? TrainingExperienceLevel.Intermediate
+            : TrainingExperienceLevel.Beginner;
+        return GeneralStrengthFrequencyResolver.Resolve(
+            availableDayCount, evidence?.IsEstablishedResistanceHistory == true, profileLevel);
     }
 
     private static HashSet<WorkoutActivityType> FindDuplicateEvidenceActivities(
@@ -383,10 +537,12 @@ public static class MixedActivityWeekScheduleRule
     }
 
     private static void PlaceSessions(ActivityDecisionBuilder[] decisions,
-        IReadOnlyList<DayOfWeek> availableDays, decimal? dailyCapacityMinutes)
+        DayOfWeek[] availableDays, decimal? dailyCapacityMinutes)
     {
+        ReduceTargetsToFitAvailability(decisions, availableDays.Length, dailyCapacityMinutes);
         var dayStates = availableDays.ToDictionary(day => day, _ => new ScheduledDayState());
-        var hardDecisions = decisions.Where(decision => decision.IsEligible && IsHardActivity(decision.Activity))
+        var hardDecisions = decisions.Where(decision => decision.IsEligible &&
+                IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription))
             .OrderBy(decision => HardActivityOrder(decision.Activity))
             .ThenBy(decision => ActivityOrder(decision.Activity))
             .ToArray();
@@ -394,17 +550,60 @@ public static class MixedActivityWeekScheduleRule
         foreach (var decision in hardDecisions)
             ScheduleActivity(decision, dayStates, dailyCapacityMinutes, availableDays);
 
-        var softDecisions = decisions.Where(decision => decision.IsEligible && !IsHardActivity(decision.Activity))
+        var softDecisions = decisions.Where(decision => decision.IsEligible &&
+                !IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription))
             .OrderBy(decision => ActivityOrder(decision.Activity))
             .ToArray();
         foreach (var decision in softDecisions)
             ScheduleActivity(decision, dayStates, dailyCapacityMinutes, availableDays);
     }
 
+    private static void ReduceTargetsToFitAvailability(ActivityDecisionBuilder[] decisions,
+        int availableDayCount, decimal? dailyCapacityMinutes)
+    {
+        var candidates = decisions.Where(IsScheduleCandidate).ToArray();
+        foreach (var decision in candidates)
+            if (IsStrengthChoice(decision.EffectiveActivity ?? decision.Activity) &&
+                decision.TargetSessionsPerWeek < GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek)
+                decision.TargetSessionsPerWeek = GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek;
+
+        ReduceTargets(candidates.Where(decision =>
+                IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription)).ToArray(),
+            Math.Min(MaximumHardDaysPerWeek, availableDayCount));
+
+        if (dailyCapacityMinutes is null)
+            ReduceTargets(candidates, availableDayCount);
+    }
+
+    private static void ReduceTargets(ActivityDecisionBuilder[] decisions, int availableSlots)
+    {
+        var requestedSlots = decisions.Sum(decision => decision.TargetSessionsPerWeek ?? NoSessionsScheduled);
+        while (requestedSlots > availableSlots)
+        {
+            var reducible = decisions
+                .Where(decision => decision.TargetSessionsPerWeek > MinimumSessionsForReduction(decision))
+                .OrderByDescending(decision => decision.TargetSessionsPerWeek - MinimumSessionsForReduction(decision))
+                .ThenBy(decision => IsStrengthChoice(decision.EffectiveActivity ?? decision.Activity))
+                .ThenBy(decision => ActivityOrder(decision.Activity))
+                .FirstOrDefault();
+            if (reducible is null)
+                break;
+
+            reducible.TargetSessionsPerWeek--;
+            reducible.AddReason(ActivityFrequencyLimitedByAvailableWeekdays);
+            requestedSlots--;
+        }
+    }
+
+    private static int MinimumSessionsForReduction(ActivityDecisionBuilder decision) =>
+        IsStrengthChoice(decision.EffectiveActivity ?? decision.Activity)
+            ? GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek
+            : MinimumRequestedSessionsPerWeek;
+
     private static void ScheduleActivity(ActivityDecisionBuilder decision,
         IDictionary<DayOfWeek, ScheduledDayState> dayStates,
         decimal? dailyCapacityMinutes,
-        IReadOnlyList<DayOfWeek> availableDays)
+        DayOfWeek[] availableDays)
     {
         if (decision.TargetSessionsPerWeek is null) return;
         if (dailyCapacityMinutes is { } capacity && decision.DurationMinutes > capacity)
@@ -414,12 +613,15 @@ public static class MixedActivityWeekScheduleRule
         }
 
         var target = decision.TargetSessionsPerWeek.Value;
+        if (decision.MaxSessionsPerWeek is { } maxLimit)
+            target = Math.Min(target, maxLimit);
         for (var sessionIndex = NoSessionsScheduled; sessionIndex < target; sessionIndex++)
         {
-            var isHard = IsHardActivity(decision.Activity);
+            var isHard = IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription);
             var hardDays = dayStates.Where(pair => pair.Value.HasHardSession).Select(pair => pair.Key).ToArray();
             if (isHard && hardDays.Length >= MaximumHardDaysPerWeek)
             {
+                decision.AddReason(GetHardDayConflictReason(decision.Activity));
                 decision.AddReason(HardDayLimitReached);
                 break;
             }
@@ -429,6 +631,12 @@ public static class MixedActivityWeekScheduleRule
                 var state = dayStates[day];
                 if (state.Activities.Contains(decision.Activity)) return false;
                 if (isHard && state.HasHardSession) return false;
+                if (decision.Activity == WorkoutActivityType.Hiit &&
+                    state.Activities.Any(a => a is WorkoutActivityType.GeneralStrength or
+                                                  WorkoutActivityType.HighVolumeStrength or
+                                                  WorkoutActivityType.StrengthHighIntensity or
+                                                  WorkoutActivityType.RockClimbing))
+                    return false;
                 if (dailyCapacityMinutes is null)
                     return state.Activities.Count == NoSessionsScheduled;
                 return decision.DurationMinutes <= dailyCapacityMinutes.Value - state.TotalMinutes;
@@ -436,8 +644,11 @@ public static class MixedActivityWeekScheduleRule
 
             if (candidates.Length == NoSessionsScheduled)
             {
-                if (isHard && hardDays.Length >= Math.Min(MaximumHardDaysPerWeek, availableDays.Count))
+                if (isHard && hardDays.Length >= Math.Min(MaximumHardDaysPerWeek, availableDays.Length))
+                {
+                    decision.AddReason(GetHardDayConflictReason(decision.Activity));
                     decision.AddReason(HardDayLimitReached);
+                }
                 else if (dailyCapacityMinutes is { } capacityLimit && availableDays.Any(day =>
                              decision.DurationMinutes > capacityLimit - dayStates[day].TotalMinutes))
                     decision.AddReason(DailyCapacityLimitReached);
@@ -458,7 +669,7 @@ public static class MixedActivityWeekScheduleRule
             decision.ScheduledDays.Add(day);
         }
 
-        if (decision.ScheduledDays.Count < target && decision.ScheduledDays.Count == availableDays.Count)
+        if (decision.ScheduledDays.Count < target && decision.ScheduledDays.Count == availableDays.Length)
             decision.AddReason(ActivityFrequencyLimitedByAvailableWeekdays);
     }
 
@@ -477,7 +688,7 @@ public static class MixedActivityWeekScheduleRule
     {
         if (suppliedDays is null)
         {
-            reasons.Add(AvailableWeekdaysMustContainTwoToSevenDistinctDays);
+            reasons.Add(AvailableWeekdaysMustContainOneToSevenDistinctDays);
             return [];
         }
 
@@ -490,7 +701,7 @@ public static class MixedActivityWeekScheduleRule
 
         var days = suppliedDays.Distinct().OrderBy(DayIndex).ToArray();
         if (days.Length is < MinimumAvailableWeekdays or > MaximumAvailableWeekdays)
-            reasons.Add(AvailableWeekdaysMustContainTwoToSevenDistinctDays);
+            reasons.Add(AvailableWeekdaysMustContainOneToSevenDistinctDays);
         return days;
     }
 
@@ -529,10 +740,31 @@ public static class MixedActivityWeekScheduleRule
         WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
         WorkoutActivityType.StrengthHighIntensity;
 
-    private static bool IsHardActivity(WorkoutActivityType activity) => activity is
-        WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
-        WorkoutActivityType.StrengthHighIntensity or WorkoutActivityType.Hiit or
-        WorkoutActivityType.RockClimbing;
+    public static bool IsHardActivity(WorkoutActivityType activity, ActivitySessionPrescription? prescription = null)
+    {
+        if (activity is WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
+            WorkoutActivityType.StrengthHighIntensity or WorkoutActivityType.Hiit or
+            WorkoutActivityType.RockClimbing)
+            return true;
+
+        if (activity == WorkoutActivityType.Yoga &&
+            prescription is not null &&
+            (prescription.TrainingStyle == SessionTrainingStyle.Demanding || prescription.Intensity == IntendedIntensity.Vigorous))
+            return true;
+
+        return false;
+    }
+
+    public static string GetHardDayConflictReason(WorkoutActivityType activity) => activity switch
+    {
+        WorkoutActivityType.GeneralStrength => "GS_HARD_DAY_CONFLICT",
+        WorkoutActivityType.HighVolumeStrength => "HVS_HARD_DAY_CONFLICT",
+        WorkoutActivityType.StrengthHighIntensity => "SHI_HARD_DAY_CONFLICT",
+        WorkoutActivityType.Hiit => "HIIT_HARD_DAY_CONFLICT",
+        WorkoutActivityType.RockClimbing => "CLIMBING_HARD_DAY_CONFLICT",
+        WorkoutActivityType.Yoga => "YOGA_HARD_DAY_CONFLICT",
+        _ => HardDayLimitReached
+    };
 
     private static int HardActivityOrder(WorkoutActivityType activity)
     {
@@ -577,8 +809,12 @@ public static class MixedActivityWeekScheduleRule
         public ActivitySessionPrescription? Prescription { get; set; }
         public int? PolicySessionsPerWeek { get; set; }
         public int? TargetSessionsPerWeek { get; set; }
+        public int? MaxSessionsPerWeek { get; set; }
         public decimal DurationMinutes { get; set; }
         public bool IsEligible { get; set; }
+        public WorkoutActivityType? EffectiveActivity { get; set; }
+        public string? FallbackReasonCode { get; set; }
+        public ActivityDecisionBuilder? MergedIntoDecision { get; set; }
         public List<DayOfWeek> ScheduledDays { get; } = [];
         public MixedActivityScheduleDisposition? DispositionOverride { get; set; }
 
@@ -615,8 +851,12 @@ public static class MixedActivityWeekScheduleRule
                         ? MixedActivityScheduleDisposition.PartiallyScheduled
                         : MixedActivityScheduleDisposition.Omitted);
 
-            return new(Activity, disposition, PrescriptionStatus, Prescription, PolicySessionsPerWeek,
-                TargetSessionsPerWeek, ScheduledDays.Count, _reasons.ToArray());
+            return new(Activity, disposition, PrescriptionStatus, Prescription,
+                MergedIntoDecision?.PolicySessionsPerWeek ?? PolicySessionsPerWeek,
+                MergedIntoDecision?.TargetSessionsPerWeek ?? TargetSessionsPerWeek,
+                MergedIntoDecision?.ScheduledDays.Count ?? ScheduledDays.Count, _reasons.ToArray(),
+                EffectiveActivity ?? Activity, FallbackReasonCode,
+                MergedIntoDecision?.MaxSessionsPerWeek ?? MaxSessionsPerWeek);
         }
     }
 }

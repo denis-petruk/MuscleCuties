@@ -3,6 +3,8 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Maui.Graphics;
 
+using MuscleCuties.UI.Resources.Styles;
+
 namespace MuscleCuties.UI.Models.UI.Workout;
 
 public class WorkoutActivitySectionItem : ObservableObject, IEnumerable<WorkoutExerciseItem>
@@ -33,8 +35,8 @@ public class WorkoutActivitySectionItem : ObservableObject, IEnumerable<WorkoutE
     public string Subtitle { get; init; } = string.Empty;
     public string MetricText { get; init; } = string.Empty;
     public string SummaryText { get; init; } = string.Empty;
-    public Color ActivityBackground { get; init; } = Colors.Transparent;
-    public Color ActivityTextColor { get; init; } = Colors.Black;
+    public Color ActivityBackground { get; init; } = AppThemeResources.GetRequired<Color>("Transparent");
+    public Color ActivityTextColor { get; init; } = AppThemeResources.GetRequired<Color>("TextPrimary");
     public ObservableCollection<WorkoutExerciseItem> Exercises { get; init; } = new();
 
     public bool HasExercises => Exercises.Count > 0;

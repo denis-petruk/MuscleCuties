@@ -816,7 +816,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                 DayOfWeekShort = day.DayOfWeekShort,
                 PhaseMarkerColor = day.IsNeutral
                     ? PhaseThemePalette.GetNeutralDividerColor(UseDarkTheme)
-                    : PhaseThemePalette.GetPhaseTextColor(day.Phase, UseDarkTheme, Colors.Gray)
+                    : PhaseThemePalette.GetPhaseTextColor(day.Phase, UseDarkTheme, default)
             }));
 
         RefreshCalendarStrip(CalendarDays, SelectedDate, CurrentDate, UseDarkTheme);

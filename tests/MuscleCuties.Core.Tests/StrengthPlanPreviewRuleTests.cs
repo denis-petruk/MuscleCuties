@@ -41,7 +41,7 @@ public sealed class StrengthPlanPreviewRuleTests
         Assert.Equal(StrengthPlanPreviewStatus.Limited, tooShort.Status);
         Assert.Contains("RequiredMovementWorkExceedsSessionDurationOrTimingMissing",
             tooShort.LimitationCodes);
-        Assert.Null(tooShort.Sessions.Single().EstimatedMinutes);
+        Assert.All(tooShort.Sessions, session => Assert.Null(session.EstimatedMinutes));
     }
 
     [Fact]
@@ -55,9 +55,9 @@ public sealed class StrengthPlanPreviewRuleTests
             }, SlowExerciseSecondsPerRep));
 
         Assert.Equal(StrengthPlanPreviewStatus.Feasible, result.Status);
-        Assert.InRange(result.Sessions.Single().EstimatedMinutes!.Value,
-            0m, DurationSufficientMinutes);
-        Assert.Equal(DayOfWeek.Monday, result.Sessions.Single().PlannedWeekday);
+        Assert.All(result.Sessions, session => Assert.InRange(session.EstimatedMinutes!.Value,
+            0m, DurationSufficientMinutes));
+        Assert.Equal(DayOfWeek.Monday, result.Sessions[0].PlannedWeekday);
     }
 
     [Fact]

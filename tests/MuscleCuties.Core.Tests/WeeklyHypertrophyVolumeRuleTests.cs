@@ -12,8 +12,8 @@ public sealed class WeeklyHypertrophyVolumeRuleTests
         var (t2Min, t2Max) = WeeklyHypertrophyVolumeRule.GetBounds(EffectiveExperienceTier.Tier2IntermediateOrEstablished);
         var (t3Min, t3Max) = WeeklyHypertrophyVolumeRule.GetBounds(EffectiveExperienceTier.Tier3Advanced);
 
-        Assert.Equal(4, t1Min);
-        Assert.Equal(8, t1Max);
+        Assert.Equal(8, t1Min);
+        Assert.Equal(12, t1Max);
 
         Assert.Equal(8, t2Min);
         Assert.Equal(16, t2Max);
@@ -47,9 +47,9 @@ public sealed class WeeklyHypertrophyVolumeRuleTests
     {
         var exercises = new[]
         {
-            new PlannedExerciseSets(101, MajorMuscleGroup.Chest, 6), // within 4..8
-            new PlannedExerciseSets(102, MajorMuscleGroup.Back, 2),  // below 4
-            new PlannedExerciseSets(103, MajorMuscleGroup.Quads, 10) // above 8
+            new PlannedExerciseSets(101, MajorMuscleGroup.Chest, 8), // within 8..12
+            new PlannedExerciseSets(102, MajorMuscleGroup.Back, 2),  // below 8
+            new PlannedExerciseSets(103, MajorMuscleGroup.Quads, 13) // above 12
         };
 
         var targeted = new HashSet<MajorMuscleGroup>

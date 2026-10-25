@@ -1,40 +1,48 @@
+using MuscleCuties.UI.Resources.Styles;
+
 namespace MuscleCuties.UI.Controls.Shared;
 
 internal static class ModalTransition
 {
-    internal static void PlayShow(ContentView modal, double slideDistance = 40)
+    internal static void PlayShow(ContentView modal, double? slideDistance = null)
     {
         modal.CancelAnimations();
-        modal.Opacity = 0;
+        modal.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
 
         var card = FindCard(modal);
         if (card != null)
         {
             card.CancelAnimations();
-            card.TranslationY = slideDistance;
-            card.Scale = 0.97;
+            card.TranslationY = slideDistance ?? AppThemeResources.GetDouble("UiMotionOffsetModalShow");
+            card.Scale = AppThemeResources.GetDouble("UiScaleModalStart");
         }
 
         modal.Dispatcher.Dispatch(async () =>
         {
             try
             {
-                var tasks = new List<Task> { modal.FadeToAsync(1, 250, Easing.CubicOut) };
+                var tasks = new List<Task>
+                {
+                    modal.FadeToAsync(AppThemeResources.GetDouble("UiOpacityFull"),
+                        (uint)AppThemeResources.GetDouble("UiMotionDuration250"), Easing.CubicOut)
+                };
                 if (card != null)
                 {
-                    tasks.Add(card.TranslateToAsync(0, 0, 300, Easing.CubicOut));
-                    tasks.Add(card.ScaleToAsync(1, 300, Easing.CubicOut));
+                    var duration = (uint)AppThemeResources.GetDouble("UiMotionDuration300");
+                    tasks.Add(card.TranslateToAsync(AppThemeResources.GetDouble("UiMotionOffsetZero"),
+                        AppThemeResources.GetDouble("UiMotionOffsetZero"), duration, Easing.CubicOut));
+                    tasks.Add(card.ScaleToAsync(AppThemeResources.GetDouble("UiScaleFull"), duration, Easing.CubicOut));
                 }
 
                 await Task.WhenAll(tasks);
             }
             catch
             {
-                modal.Opacity = 1;
+                modal.Opacity = AppThemeResources.GetDouble("UiOpacityFull");
                 if (card != null)
                 {
-                    card.TranslationY = 0;
-                    card.Scale = 1;
+                    card.TranslationY = AppThemeResources.GetDouble("UiMotionOffsetZero");
+                    card.Scale = AppThemeResources.GetDouble("UiScaleFull");
                 }
             }
         });
@@ -47,11 +55,16 @@ internal static class ModalTransition
             try
             {
                 var card = FindCard(modal);
-                var tasks = new List<Task> { modal.FadeToAsync(0, 200, Easing.CubicIn) };
+                var duration = (uint)AppThemeResources.GetDouble("UiMotionDuration200");
+                var tasks = new List<Task>
+                {
+                    modal.FadeToAsync(AppThemeResources.GetDouble("UiOpacityHidden"), duration, Easing.CubicIn)
+                };
                 if (card != null)
                 {
-                    tasks.Add(card.TranslateToAsync(0, 20, 200, Easing.CubicIn));
-                    tasks.Add(card.ScaleToAsync(0.97, 200, Easing.CubicIn));
+                    tasks.Add(card.TranslateToAsync(AppThemeResources.GetDouble("UiMotionOffsetZero"),
+                        AppThemeResources.GetDouble("UiMotionOffsetModalHide"), duration, Easing.CubicIn));
+                    tasks.Add(card.ScaleToAsync(AppThemeResources.GetDouble("UiScaleModalStart"), duration, Easing.CubicIn));
                 }
 
                 await Task.WhenAll(tasks);

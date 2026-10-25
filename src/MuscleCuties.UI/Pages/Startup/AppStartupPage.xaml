@@ -12,22 +12,22 @@
 
     <Grid
         x:Name="StartupRoot"
-        Padding="28"
+        Padding="{StaticResource UiInsets28}"
         BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
         <VerticalStackLayout
-            Spacing="18"
+            Spacing="{StaticResource UiSpacing18}"
             HorizontalOptions="Center"
             VerticalOptions="Center"
-            MaximumWidthRequest="400">
+            MaximumWidthRequest="{StaticResource UiDimension400}">
             <Image
                 x:Name="StartupLogo"
                 Source="{AppThemeBinding Light=musclecuties_logo_light_transparent.png, Dark=musclecuties_logo_dark_transparent.png}"
                 Aspect="AspectFit"
-                WidthRequest="220"
-                HeightRequest="124"
+                WidthRequest="{StaticResource UiDimension220}"
+                HeightRequest="{StaticResource UiDimension124}"
                 HorizontalOptions="Center"
                 VerticalOptions="Center"
-                BackgroundColor="Transparent"
+                BackgroundColor="{StaticResource Transparent}"
                 SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_LogoA11y}" />
             <ActivityIndicator
                 x:Name="StartupActivityIndicator"
@@ -59,8 +59,8 @@
                 IsVisible="False"
                 Text="{loc:LocalizedText Dashboard_Shared_Retry}"
                 Clicked="OnRetryClicked"
-                MinimumHeightRequest="52"
-                MinimumWidthRequest="44"
+                MinimumHeightRequest="{StaticResource UiDimension52}"
+                MinimumWidthRequest="{StaticResource UiDimension44}"
                 SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_RetryUnlockA11y}"
                 SemanticProperties.Hint="{loc:LocalizedText Dashboard_Startup_RetryUnlockHint}" />
             <Button

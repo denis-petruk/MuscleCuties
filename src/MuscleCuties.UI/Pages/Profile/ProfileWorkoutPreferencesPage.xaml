@@ -13,80 +13,80 @@
     x:DataType="vm:ProfileWorkoutPreferencesViewModel"
     Shell.NavBarIsVisible="False">
 
-    <ContentPage.Resources>
-        <x:Double x:Key="PlanUpdateMessageSpacing">12</x:Double>
-    </ContentPage.Resources>
 
     <Grid>
     <ScrollView>
         <VerticalStackLayout
-            Padding="{StaticResource PageContentPadding}"
-            Spacing="16"
+            Padding="{StaticResource UiInsets20_12_20_32}"
+            Spacing="{StaticResource UiSpaceControl}"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="{StaticResource PageContentMaxWidth}">
+            MaximumWidthRequest="{StaticResource UiDimension640}">
             <sharedControls:PageHeader
                 Title="{loc:LocalizedText Profile_WorkoutPrefs_ActivityPreferences}"
                 BackCommand="{Binding BackCommand}" />
 
-            <VerticalStackLayout Spacing="8">
-                <Label
-                    Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdays}"
-                    Style="{StaticResource SectionTitle}"
-                    SemanticProperties.HeadingLevel="Level2" />
-                <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdaysHint}"
-                       Style="{StaticResource MutedLabel}"
-                       LineBreakMode="WordWrap" />
-                <FlexLayout BindableLayout.ItemsSource="{Binding AvailableWeekdays}"
-                            Wrap="Wrap"
-                            JustifyContent="Start">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="workoutModels:WorkoutWeekdayOptionItem">
-                            <Border
-                                Style="{StaticResource SelectableChip}"
-                                Margin="{StaticResource WorkoutPlanningDayChoiceMargin}"
-                                SemanticProperties.Description="{Binding Label}">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfileWorkoutPreferencesViewModel}}, Path=ToggleWeekdayCommand}"
-                                        CommandParameter="{Binding .}" />
-                                </Border.GestureRecognizers>
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                        <Setter Property="BackgroundColor"
-                                                Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                        <Setter Property="Stroke"
-                                                Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                        <Setter Property="StrokeThickness" Value="1.5" />
-                                    </DataTrigger>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
-                                        <Setter Property="BackgroundColor"
-                                                Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
-                                        <Setter Property="Stroke"
-                                                Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
-                                        <Setter Property="StrokeThickness" Value="1" />
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <Label
-                                    Text="{Binding Label}"
-                                    Style="{StaticResource BodyLabel}"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    VerticalTextAlignment="Center"
-                                    VerticalOptions="Center">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                            <Setter Property="TextColor"
-                                                    Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
+            <Border Style="{StaticResource CardPrimary}"
+                    Padding="{StaticResource UiInsets12}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+                    <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdays}"
+                           Style="{StaticResource SectionTitle}"
+                           SemanticProperties.HeadingLevel="Level2" />
+                    <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdaysHint}"
+                           Style="{StaticResource MutedLabel}"
+                           LineBreakMode="WordWrap" />
+                    <Grid ColumnDefinitions="*,*,*,*,*,*,*"
+                          ColumnSpacing="{StaticResource UiSpacing2}"
+                          BindableLayout.ItemsSource="{Binding AvailableWeekdays}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="workoutModels:WorkoutWeekdayOptionItem">
+                                <Border Grid.Column="{Binding CalendarColumn}"
+                                        Style="{StaticResource SelectableCard}"
+                                        Padding="{StaticResource UiInsets2_8}"
+                                        HeightRequest="{StaticResource UiDimension62}"
+                                        SemanticProperties.Description="{Binding Label}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfileWorkoutPreferencesViewModel}}, Path=ToggleWeekdayCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor"
+                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
+                                            <Setter Property="Stroke"
+                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
                                         </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </Border>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </FlexLayout>
-                <Label Text="{Binding SelectedWeekdayCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_SelectedWeekdaysFormat}"
-                       HorizontalTextAlignment="Center" Style="{StaticResource MutedLabel}" />
-            </VerticalStackLayout>
+                                    </Border.Triggers>
+                                    <Grid RowDefinitions="Auto,Auto"
+                                          RowSpacing="{StaticResource UiSpacing2}"
+                                          VerticalOptions="Center" HorizontalOptions="Fill">
+                                        <Label Text="{Binding ShortLabel}"
+                                               Style="{StaticResource BodyLabel}"
+                                               FontSize="{StaticResource UiFontSize13}"
+                                               FontAttributes="{StaticResource UiFontAttributesBold}"
+                                               HorizontalTextAlignment="Center"
+                                               LineBreakMode="NoWrap" />
+                                        <BoxView Grid.Row="1" Color="{StaticResource Transparent}"
+                                                 HeightRequest="{StaticResource UiDimension14}" />
+                                        <Path Grid.Row="1"
+                                              Data="M5 12L10 17L19 7"
+                                              Stroke="{StaticResource Primary}"
+                                              StrokeThickness="{StaticResource UiStrokeWidth2_5}"
+                                              StrokeLineCap="Round" StrokeLineJoin="Round"
+                                              WidthRequest="{StaticResource UiDimension14}"
+                                              HeightRequest="{StaticResource UiDimension14}"
+                                              HorizontalOptions="Center"
+                                              IsVisible="{Binding IsSelected}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </Grid>
+                    <Label Text="{Binding SelectedWeekdayCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_SelectedWeekdaysFormat}"
+                           HorizontalTextAlignment="Center" Style="{StaticResource MutedLabel}" />
+                </VerticalStackLayout>
+            </Border>
 
             <toolkit:LazyView
                 x:Name="PreferenceChoicesLazy"
@@ -114,7 +114,7 @@
             IsVisible="{Binding IsUpdatingPlan}"
             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
             <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center"
-                                 Spacing="{StaticResource PlanUpdateMessageSpacing}">
+                                 Spacing="{StaticResource UiSpaceCompact}">
                 <ActivityIndicator
                     IsRunning="{Binding IsUpdatingPlan}"
                     Color="{StaticResource Primary}"

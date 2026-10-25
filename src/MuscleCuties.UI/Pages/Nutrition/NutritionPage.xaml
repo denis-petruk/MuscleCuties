@@ -18,15 +18,15 @@
         <CollectionView
             ItemsSource="{Binding Meals}"
             ItemSizingStrategy="MeasureFirstItem"
-            MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
+            MaximumWidthRequest="{StaticResource UiDimension640}"
             SelectionMode="None">
             <CollectionView.ItemsLayout>
-                <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="{StaticResource UiSpaceCompact}" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.Header>
-                <VerticalStackLayout Padding="{StaticResource PageHeaderPadding}" Spacing="16">
-                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" VerticalOptions="Center">
+                <VerticalStackLayout Padding="{StaticResource UiInsets20_36_20_12}" Spacing="{StaticResource UiSpaceControl}">
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}" VerticalOptions="Center">
                         <Label Text="{loc:LocalizedText Nutrition_Page_Nutrition}" Style="{StaticResource Headline}"
                                VerticalOptions="Center" />
 
@@ -40,12 +40,12 @@
                             <Path
                                 Data="M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zM16 2v4M8 2v4M3 10h18"
                                 Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                StrokeThickness="1.8"
+                                StrokeThickness="{StaticResource UiStrokeWidth1_8}"
                                 StrokeLineCap="Round"
                                 StrokeLineJoin="Round"
                                 Aspect="Uniform"
-                                WidthRequest="18"
-                                HeightRequest="18"
+                                WidthRequest="{StaticResource UiDimension18}"
+                                HeightRequest="{StaticResource UiDimension18}"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
                         </Border>
@@ -60,11 +60,11 @@
                             <Path
                                 Data="M12 5v14M5 12h14"
                                 Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                StrokeThickness="2.2"
+                                StrokeThickness="{StaticResource UiStrokeWidth2_2}"
                                 StrokeLineCap="Round"
                                 Aspect="Uniform"
-                                WidthRequest="18"
-                                HeightRequest="18"
+                                WidthRequest="{StaticResource UiDimension18}"
+                                HeightRequest="{StaticResource UiDimension18}"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
                         </Border>
@@ -79,29 +79,29 @@
                     <Button
                         Text="{loc:LocalizedText Nutrition_LogAMeal}"
                         Command="{Binding OpenMealEntryCommand}"
-                        MinimumHeightRequest="52"
-                        FontAttributes="Bold"
-                        Margin="0,4"
+                        MinimumHeightRequest="{StaticResource UiDimension52}"
+                        FontAttributes="{StaticResource UiFontAttributesBold}"
+                        Margin="{StaticResource UiInsets0_4}"
                         SemanticProperties.Description="{loc:LocalizedText Nutrition_LogAMeal}"
                         SemanticProperties.Hint="{loc:LocalizedText Nutrition_Page_OpensOptionsToAddFoodGet}" />
 
                     <sharedControls:IconSectionHeader
                         Text="{loc:LocalizedText Nutrition_Page_Meals}"
                         IconGlyph="BowlChopsticks24"
-                        Margin="4,6,4,0" />
+                        Margin="{StaticResource UiInsets4_6_4_0}" />
 
                     <Border
                         Style="{StaticResource CardPrimary}"
-                        Padding="16"
+                        Padding="{StaticResource UiInsets16}"
                         IsVisible="{Binding HasNoMeals}">
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing14}">
                             <Border
                                 Style="{StaticResource ModalIconButton}">
                                 <Path
                                     Data="M3 2v7c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2V2M6 2v20M15 2v8h4M19 2v20"
                                     Style="{StaticResource NutritionLineIcon}"
-                                    WidthRequest="20"
-                                    HeightRequest="20" />
+                                    WidthRequest="{StaticResource UiDimension20}"
+                                    HeightRequest="{StaticResource UiDimension20}" />
                             </Border>
                             <Label
                                 Grid.Column="1"
@@ -117,8 +117,8 @@
                 <DataTemplate x:DataType="nutritionModels:MealItem">
                     <Border
                         Style="{StaticResource CardPrimary}"
-                        Margin="20,0"
-                        Padding="14"
+                        Margin="{StaticResource UiInsets20_0}"
+                        Padding="{StaticResource UiInsets14}"
                         SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Page_MealValueTapToViewBreakdown}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer
@@ -126,13 +126,13 @@
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto"
-                              ColumnSpacing="12" RowSpacing="4" MinimumHeightRequest="72">
-                            <HorizontalStackLayout Spacing="8">
+                              ColumnSpacing="{StaticResource UiSpaceCompact}" RowSpacing="{StaticResource UiSpaceMicro}" MinimumHeightRequest="{StaticResource UiDimension72}">
+                            <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}">
                                 <Label
                                     Text="{Binding MealType, Converter={StaticResource LocalizedStringConverter}}"
                                     TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                                    FontSize="13"
-                                    FontAttributes="Bold" />
+                                    FontSize="{StaticResource UiFontSize13}"
+                                    FontAttributes="{StaticResource UiFontAttributesBold}" />
                                 <Label Text="·" Style="{StaticResource CaptionLabel}" />
                                 <Label Text="{Binding Time, Converter={StaticResource LocalizedStringConverter}}"
                                        Style="{StaticResource CaptionLabel}" />
@@ -148,17 +148,17 @@
                                 Style="{StaticResource MutedLabel}"
                                 LineBreakMode="WordWrap" />
 
-                            <HorizontalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Start">
+                            <HorizontalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}" VerticalOptions="Start">
                                 <Image
                                     Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
                                     Aspect="AspectFit"
-                                    WidthRequest="16"
-                                    HeightRequest="16"
+                                    WidthRequest="{StaticResource UiDimension16}"
+                                    HeightRequest="{StaticResource UiDimension16}"
                                     VerticalOptions="Center" />
                                 <Label
                                     Text="{Binding CaloriesText, Converter={StaticResource LocalizedStringConverter}}"
                                     Style="{StaticResource BodyLabel}"
-                                    FontAttributes="Bold"
+                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                     HorizontalTextAlignment="End"
                                     VerticalOptions="Center" />
                             </HorizontalStackLayout>
@@ -168,7 +168,7 @@
             </CollectionView.ItemTemplate>
 
             <CollectionView.Footer>
-                <BoxView HeightRequest="24" BackgroundColor="Transparent" />
+                <BoxView HeightRequest="{StaticResource UiDimension24}" BackgroundColor="{StaticResource Transparent}" />
             </CollectionView.Footer>
         </CollectionView>
 

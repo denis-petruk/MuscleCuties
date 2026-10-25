@@ -9,49 +9,45 @@
     x:DataType="vm:CycleViewModel"
     SemanticProperties.Description="{loc:LocalizedText Cycle_DailyTips_CardAccessibility}">
 
-    <ContentView.Resources>
-        <x:Double x:Key="CycleTipRowSpacing">8</x:Double>
-        <Thickness x:Key="CycleTipRowPadding">12,10</Thickness>
-    </ContentView.Resources>
 
-    <Grid RowDefinitions="Auto, Auto" RowSpacing="{StaticResource CycleTipRowSpacing}">
+    <Grid RowDefinitions="Auto, Auto" RowSpacing="{StaticResource UiSpaceTight}">
 
             <!-- Row 0: Training Micro-Tip -->
             <Border
                 Grid.Row="0"
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                StrokeShape="RoundRectangle 14"
-                StrokeThickness="0"
-                Padding="{StaticResource CycleTipRowPadding}">
-                <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12" VerticalOptions="Center">
+                StrokeShape="{StaticResource UiRoundRectangleRadius14}"
+                StrokeThickness="{StaticResource UiStrokeWidth0}"
+                Padding="{StaticResource UiInsets12_10}">
+                <Grid ColumnDefinitions="Auto, *" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                     <Border
-                        WidthRequest="34"
-                        HeightRequest="34"
-                        StrokeShape="RoundRectangle 10"
+                        WidthRequest="{StaticResource UiDimension34}"
+                        HeightRequest="{StaticResource UiDimension34}"
+                        StrokeShape="{StaticResource UiRoundRectangleRadius10}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                        StrokeThickness="0"
+                        StrokeThickness="{StaticResource UiStrokeWidth0}"
                         VerticalOptions="Start">
                         <Path
                             Data="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"
                             Stroke="{StaticResource Primary}"
-                            StrokeThickness="2"
+                            StrokeThickness="{StaticResource UiStrokeWidth2}"
                             StrokeLineCap="Round"
                             StrokeLineJoin="Round"
                             Aspect="Uniform"
-                            WidthRequest="16"
-                            HeightRequest="16"
+                            WidthRequest="{StaticResource UiDimension16}"
+                            HeightRequest="{StaticResource UiDimension16}"
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
                     </Border>
-                    <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
+                    <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing3}" VerticalOptions="Center">
                         <Label
                             Text="{loc:LocalizedText Cycle_DailyTips_TrainingFocusTitle}"
-                            FontSize="11"
-                            FontAttributes="Bold"
+                            FontSize="{StaticResource UiFontSize11}"
+                            FontAttributes="{StaticResource UiFontAttributesBold}"
                             TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                         <Label
                             Text="{Binding DailyTrainingTipText, Converter={StaticResource LocalizedStringConverter}}"
-                            FontSize="13"
+                            FontSize="{StaticResource UiFontSize13}"
                             LineBreakMode="WordWrap"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                     </VerticalStackLayout>
@@ -62,38 +58,38 @@
             <Border
                 Grid.Row="1"
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                StrokeShape="RoundRectangle 14"
-                StrokeThickness="0"
-                Padding="{StaticResource CycleTipRowPadding}">
-                <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12" VerticalOptions="Center">
+                StrokeShape="{StaticResource UiRoundRectangleRadius14}"
+                StrokeThickness="{StaticResource UiStrokeWidth0}"
+                Padding="{StaticResource UiInsets12_10}">
+                <Grid ColumnDefinitions="Auto, *" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                     <Border
-                        WidthRequest="34"
-                        HeightRequest="34"
-                        StrokeShape="RoundRectangle 10"
+                        WidthRequest="{StaticResource UiDimension34}"
+                        HeightRequest="{StaticResource UiDimension34}"
+                        StrokeShape="{StaticResource UiRoundRectangleRadius10}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                        StrokeThickness="0"
+                        StrokeThickness="{StaticResource UiStrokeWidth0}"
                         VerticalOptions="Start">
                         <Path
                             Data="M12 21a9 9 0 0 0 9-9c0-4.97-4.03-9-9-9S3 7.03 3 12a9 9 0 0 0 9 9zm0-15v6l4 2"
                             Stroke="{StaticResource Primary}"
-                            StrokeThickness="2"
+                            StrokeThickness="{StaticResource UiStrokeWidth2}"
                             StrokeLineCap="Round"
                             StrokeLineJoin="Round"
                             Aspect="Uniform"
-                            WidthRequest="16"
-                            HeightRequest="16"
+                            WidthRequest="{StaticResource UiDimension16}"
+                            HeightRequest="{StaticResource UiDimension16}"
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
                     </Border>
-                    <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
+                    <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing3}" VerticalOptions="Center">
                         <Label
                             Text="{loc:LocalizedText Cycle_DailyTips_NutritionFocusTitle}"
-                            FontSize="11"
-                            FontAttributes="Bold"
+                            FontSize="{StaticResource UiFontSize11}"
+                            FontAttributes="{StaticResource UiFontAttributesBold}"
                             TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                         <Label
                             Text="{Binding DailyNutritionTipText, Converter={StaticResource LocalizedStringConverter}}"
-                            FontSize="13"
+                            FontSize="{StaticResource UiFontSize13}"
                             LineBreakMode="WordWrap"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                     </VerticalStackLayout>

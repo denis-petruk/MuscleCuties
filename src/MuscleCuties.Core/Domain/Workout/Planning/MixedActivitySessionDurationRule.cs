@@ -33,19 +33,48 @@ internal static class MixedActivitySessionDurationRule
 
     public static SessionDurationPreferenceReadResult ReadPreference(
         WorkoutActivityType activity,
-        IReadOnlyDictionary<WorkoutActivityType, decimal>? savedDurations)
+        IReadOnlyDictionary<WorkoutActivityType, decimal>? savedDurations,
+        bool isDemandingYoga = false)
     {
-        if (!WorkoutPreferencesRule.RequiresSessionDuration(activity))
+        if (ActivitySessionDurationRule.IsCardioActivity(activity))
             return new SessionDurationPreferenceReadResult(true, null, null);
-        if (savedDurations is null || !savedDurations.TryGetValue(activity, out var duration))
-            return Invalid(SessionDurationMissing);
+
+        var duration = decimal.Zero;
+        if (savedDurations is null || !savedDurations.TryGetValue(activity, out duration))
+        {
+            if (WorkoutPreferencesRule.RequiresSessionDuration(activity))
+                return Invalid(SessionDurationMissing);
+
+            if (activity == WorkoutActivityType.Yoga)
+            {
+                var defaultMinutes = isDemandingYoga
+                    ? ActivitySessionDurationRule.DemandingYogaDurationMinutesDefault
+                    : ActivitySessionDurationRule.YogaDurationMinutesDefault;
+                return new SessionDurationPreferenceReadResult(true, new UserSelectedSessionDuration(defaultMinutes), null);
+            }
+
+            if (activity == WorkoutActivityType.Mobility)
+            {
+                return new SessionDurationPreferenceReadResult(true,
+                    new UserSelectedSessionDuration(ActivitySessionDurationRule.MobilityDurationMinutesDefault), null);
+            }
+
+            if (activity == WorkoutActivityType.GentleRecovery)
+            {
+                return new SessionDurationPreferenceReadResult(true,
+                    new UserSelectedSessionDuration(ActivitySessionDurationRule.GentleRecoveryDurationMinutesDefault), null);
+            }
+
+            return new SessionDurationPreferenceReadResult(true, null, null);
+        }
+
         if (duration <= NoDurationMinutes)
             return Invalid(SessionDurationMustBePositive);
         if (decimal.Truncate(duration) != duration || duration > int.MaxValue)
             return Invalid(SessionDurationExceedsSupportedRange);
 
         var minutes = decimal.ToInt32(duration);
-        var selectionIssue = ActivitySessionDurationRule.GetSelectionIssue(activity, minutes);
+        var selectionIssue = ActivitySessionDurationRule.GetSelectionIssue(activity, minutes, isDemandingYoga);
         if (selectionIssue is not null)
             return Invalid(selectionIssue switch
             {
@@ -76,9 +105,6 @@ internal static class MixedActivitySessionDurationRule
 
         if (WorkoutPreferencesRule.RequiresSessionDuration(activity))
             return ResolveUserPreferenceDuration(activity, userSelectedDuration, prescription);
-
-        if (userSelectedDuration is not null)
-            return Unresolved(SessionDurationMissing);
 
         return TryGetPrescribedDuration(prescription, out var prescribedMinutes)
             ? new MixedActivitySessionDurationResolution(true, prescribedMinutes, null, false)

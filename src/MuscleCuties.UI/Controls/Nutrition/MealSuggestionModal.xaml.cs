@@ -1,11 +1,10 @@
 using MuscleCuties.UI.Controls.Shared;
+using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Controls.Nutrition;
 
 public partial class MealSuggestionModal : AnimatedModalView
 {
-    private const double TwoColumnSuggestionMinimumWidth = 760;
-
     public MealSuggestionModal()
     {
         InitializeComponent();
@@ -20,6 +19,6 @@ public partial class MealSuggestionModal : AnimatedModalView
     private void OnSuggestionsSizeChanged(object? sender, EventArgs e)
     {
         // Keep each suggestion readable when names and nutrition details wrap.
-        SuggestionLayout.Span = SuggestionCollection.Width >= TwoColumnSuggestionMinimumWidth ? 2 : 1;
+        SuggestionLayout.Span = SuggestionCollection.Width >= AppThemeResources.GetDouble("UiDimension760") ? 2 : 1;
     }
 }

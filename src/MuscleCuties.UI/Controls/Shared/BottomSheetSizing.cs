@@ -1,24 +1,28 @@
+using MuscleCuties.UI.Resources.Styles;
+
 namespace MuscleCuties.UI.Controls.Shared;
 
 /// <summary>Sizes an app bottom sheet to the available modal viewport.</summary>
 public static class BottomSheetSizing
 {
-    public const double MaximumSheetHeight = 760;
-    public const double MinimumTopClearance = 72;
+    public static double MaximumSheetHeight => AppThemeResources.GetDouble("UiDimension760");
+    public static double MinimumTopClearance => AppThemeResources.GetDouble("UiDimension72");
 
     public static void Apply(VisualElement sheetSurface, double viewportHeight)
         => Apply(sheetSurface, viewportHeight, MaximumSheetHeight);
 
     public static void Apply(VisualElement sheetSurface, double viewportHeight, double preferredHeight)
     {
-        if (!double.IsFinite(viewportHeight) || viewportHeight <= MinimumTopClearance)
+        var maximumSheetHeight = MaximumSheetHeight;
+        var minimumTopClearance = MinimumTopClearance;
+        if (!double.IsFinite(viewportHeight) || viewportHeight <= minimumTopClearance)
             return;
 
         var validPreferredHeight = double.IsFinite(preferredHeight) && preferredHeight > 0
             ? preferredHeight
-            : MaximumSheetHeight;
-        var sheetHeight = Math.Min(Math.Min(MaximumSheetHeight, validPreferredHeight),
-            viewportHeight - MinimumTopClearance);
+            : maximumSheetHeight;
+        var sheetHeight = Math.Min(Math.Min(maximumSheetHeight, validPreferredHeight),
+            viewportHeight - minimumTopClearance);
         if (sheetSurface.HeightRequest != sheetHeight)
             sheetSurface.HeightRequest = sheetHeight;
     }

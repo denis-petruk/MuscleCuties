@@ -17,6 +17,10 @@ public sealed class MixedActivityWeekScheduleRuleTests
         ActivityPrescriptionRule.ContinuousCardioWarmupMinutes +
         ActivityPrescriptionRule.EstablishedCardioMainMinutesWithoutBaseline +
         ActivityPrescriptionRule.ContinuousCardioCooldownMinutes;
+    private const int BeginnerCardioSessionMinutes =
+        ActivityPrescriptionRule.ContinuousCardioWarmupMinutes +
+        ActivityPrescriptionRule.BeginnerCardioMainMinutes +
+        ActivityPrescriptionRule.ContinuousCardioCooldownMinutes;
     private const int ExtendedSelectedCardioSessionMinutes =
         WorkoutPreferencesRule.MinimumActivitySessionDurationMinutes +
         WorkoutPreferencesRule.ActivitySessionDurationIncrementMinutes;
@@ -46,11 +50,11 @@ public sealed class MixedActivityWeekScheduleRuleTests
             Evidence((WorkoutActivityType.GeneralStrength, EvidenceFor(WorkoutActivityType.GeneralStrength)),
                 (WorkoutActivityType.Running, EvidenceFor(WorkoutActivityType.Running))));
 
-        Assert.True(result.Sessions.Count == ExpectedThreeMixedSessions,
+        Assert.True(result.Sessions.Count == ExpectedTwoCardioSessions * 2,
             string.Join(" | ", result.Activities.Select(activity =>
                 $"{activity.Activity}: {activity.Disposition}, {activity.TargetSessionsPerWeek}, " +
                 string.Join(',', activity.Reasons))));
-        Assert.Equal(ExpectedThreeMixedSessions, result.Sessions.Select(session => session.Day).Distinct().Count());
+        Assert.Equal(ExpectedTwoCardioSessions * 2, result.Sessions.Select(session => session.Day).Distinct().Count());
         Assert.All(result.Sessions, session => Assert.Contains(session.Day,
             new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday }));
         Assert.Equal(ExpectedTwoCardioSessions,
@@ -59,24 +63,24 @@ public sealed class MixedActivityWeekScheduleRuleTests
     }
 
     [Fact]
-    public void AppliesSelectedCardioSessionDurationAndReturnsMatchingPrescription()
+    public void CalculatesCyclingDurationWithoutUsingSavedSessionChoice()
     {
         var result = Evaluate(
-            [WorkoutActivityType.Running],
+            [WorkoutActivityType.Cycling],
             [DayOfWeek.Monday, DayOfWeek.Thursday],
             SampleDailyCapacityMinutes,
-            Durations((WorkoutActivityType.Running, ExtendedSelectedCardioSessionMinutes)),
-            Evidence((WorkoutActivityType.Running, EvidenceFor(WorkoutActivityType.Running))));
-        var decision = Decision(result, WorkoutActivityType.Running);
+            Durations((WorkoutActivityType.Cycling, ExtendedSelectedCardioSessionMinutes)),
+            Evidence((WorkoutActivityType.Cycling, EvidenceFor(WorkoutActivityType.Cycling))));
+        var decision = Decision(result, WorkoutActivityType.Cycling);
 
         Assert.Equal(ActivityPrescriptionRule.BeginnerCardioSessionsPerWeek, result.Sessions.Count);
-        Assert.All(result.Sessions, session => Assert.Equal(ExtendedSelectedCardioSessionMinutes, session.DurationMinutes));
+        Assert.All(result.Sessions, session => Assert.Equal(BeginnerCardioSessionMinutes, session.DurationMinutes));
         Assert.NotNull(decision.Prescription);
-        Assert.Equal((decimal)ExtendedSelectedCardioSessionMinutes,
+        Assert.Equal((decimal)BeginnerCardioSessionMinutes,
             (decision.Prescription!.WarmupMinutes ?? decimal.Zero) +
             (decision.Prescription.MainMinutes ?? decimal.Zero) +
             (decision.Prescription.CooldownMinutes ?? decimal.Zero));
-        Assert.Equal(MixedActivityWeekScheduleRule.SelectedDurationAppliedToPrescription, decision.Reasons.Single());
+        Assert.DoesNotContain(MixedActivityWeekScheduleRule.SelectedDurationAppliedToPrescription, decision.Reasons);
     }
 
     [Fact]
@@ -96,13 +100,17 @@ public sealed class MixedActivityWeekScheduleRuleTests
                 (WorkoutActivityType.Running, EvidenceFor(WorkoutActivityType.Running))),
             chosenStrengthActivity: WorkoutActivityType.GeneralStrength);
 
-        Assert.Equal(ExpectedThreeMixedSessions, result.Sessions.Count);
+        Assert.Equal(ExpectedTwoCardioSessions * 2, result.Sessions.Count);
         Assert.DoesNotContain(result.Sessions,
             session => session.Activity == WorkoutActivityType.HighVolumeStrength);
         Assert.Equal(MixedActivityScheduleDisposition.Scheduled,
             Decision(result, WorkoutActivityType.GeneralStrength).Disposition);
         Assert.Equal(MixedActivityScheduleDisposition.NotScheduled,
             Decision(result, WorkoutActivityType.HighVolumeStrength).Disposition);
+        Assert.Equal(ActivityPrescriptionRule.HighVolumeStrengthSessionsPerWeek,
+            Decision(result, WorkoutActivityType.HighVolumeStrength).PolicySessionsPerWeek);
+        Assert.Equal(ActivityPrescriptionRule.HighVolumeStrengthSessionsPerWeek,
+            Decision(result, WorkoutActivityType.HighVolumeStrength).TargetSessionsPerWeek);
         Assert.Contains(MixedActivityWeekScheduleRule.StrengthAlternativeNotChosen,
             Decision(result, WorkoutActivityType.HighVolumeStrength).Reasons);
         Assert.Equal(ExpectedTwoCardioSessions,
@@ -122,10 +130,10 @@ public sealed class MixedActivityWeekScheduleRuleTests
                 (WorkoutActivityType.Walking, EvidenceFor(WorkoutActivityType.Walking))));
 
         Assert.Equal(ExpectedTwoCardioSessions * ActivitiesPerPackedDay, result.Sessions.Count);
-        Assert.Equal(MixedActivityWeekScheduleRule.MinimumAvailableWeekdays,
+        Assert.Equal(ExpectedTwoCardioSessions,
             result.Sessions.Select(session => session.Day).Distinct().Count());
         Assert.All(result.Sessions.GroupBy(session => session.Day), group =>
-            Assert.Equal(SelectedCardioSessionMinutes * ActivitiesPerPackedDay,
+            Assert.Equal(BeginnerCardioSessionMinutes * ActivitiesPerPackedDay,
                 group.Sum(session => session.DurationMinutes)));
     }
 
@@ -212,7 +220,7 @@ public sealed class MixedActivityWeekScheduleRuleTests
             [underlyingActivity, WorkoutActivityType.Hiit],
             AllWeekdays,
             SampleDailyCapacityMinutes,
-            Durations((underlyingActivity, EstablishedCardioSessionMinutes)),
+            Durations((underlyingActivity, ExtendedSelectedCardioSessionMinutes)),
             Evidence((underlyingActivity, EvidenceFor(underlyingActivity,
                 ActivityExperience.Established,
                 existingBaselineMinutes: ActivityPrescriptionRule.EstablishedCardioMainMinutesWithoutBaseline)),
@@ -231,6 +239,8 @@ public sealed class MixedActivityWeekScheduleRuleTests
         Assert.NotEqual(result.Sessions[FirstActivityIndex].Day, result.Sessions[SecondActivityIndex].Day);
         Assert.Equal((decimal)ActivityPrescriptionRule.HiitSessionDuration.TotalMinutes,
             result.Sessions.Single(session => session.Activity == WorkoutActivityType.Hiit).DurationMinutes);
+        Assert.Equal(EstablishedCardioSessionMinutes,
+            result.Sessions.Single(session => session.Activity == underlyingActivity).DurationMinutes);
     }
 
     [Fact]
@@ -331,13 +341,13 @@ public sealed class MixedActivityWeekScheduleRuleTests
             Durations((WorkoutActivityType.GeneralStrength, StrengthSessionMinutes)),
             Evidence((WorkoutActivityType.GeneralStrength, EvidenceFor(WorkoutActivityType.GeneralStrength))));
 
-        Assert.Equal(MixedActivityWeekScheduleRule.MinimumAvailableWeekdays, missingCapacity.Sessions.Count);
-        Assert.Equal(MixedActivityWeekScheduleRule.MinimumAvailableWeekdays,
+        Assert.Equal(ExpectedTwoCardioSessions, missingCapacity.Sessions.Count);
+        Assert.Equal(ExpectedTwoCardioSessions,
             missingCapacity.Sessions.Select(session => session.Day).Distinct().Count());
         Assert.All(missingCapacity.Sessions.GroupBy(session => session.Day), group => Assert.Single(group));
         Assert.Contains(MixedActivityWeekScheduleRule.DailyCapacityMissingSingleActivityPerDayFallback,
             Decision(missingCapacity, WorkoutActivityType.Running).Reasons);
-        Assert.Contains(MixedActivityWeekScheduleRule.NoSafeDayAvailable,
+        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
             Decision(missingCapacity, WorkoutActivityType.Walking).Reasons);
         Assert.Empty(tooSmall.Sessions);
         Assert.Contains(MixedActivityWeekScheduleRule.DailyCapacityTooSmallForSession,
@@ -364,7 +374,7 @@ public sealed class MixedActivityWeekScheduleRuleTests
     }
 
     [Fact]
-    public void RequiresExplicitFrequencyWhenPolicyLeavesFrequencyToPreference()
+    public void UsesDefaultFrequencyWhenPreferenceIsMissing()
     {
         var yoga = Evaluate(
             [WorkoutActivityType.Yoga],
@@ -374,15 +384,16 @@ public sealed class MixedActivityWeekScheduleRuleTests
             Evidence((WorkoutActivityType.Yoga, EvidenceFor(WorkoutActivityType.Yoga,
                 isDemandingYogaContent: false))));
 
-        Assert.Empty(yoga.Sessions);
-        Assert.Equal(MixedActivityScheduleDisposition.Omitted,
+        Assert.Equal(ActivitySessionDurationRule.RecoveryTargetMaxLimit, yoga.Sessions.Count);
+        Assert.Equal(MixedActivityScheduleDisposition.Scheduled,
             Decision(yoga, WorkoutActivityType.Yoga).Disposition);
-        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyPreferenceMissing,
-            Decision(yoga, WorkoutActivityType.Yoga).Reasons);
+        Assert.Equal(ActivitySessionDurationRule.RecoveryTargetMaxLimit,
+            Decision(yoga, WorkoutActivityType.Yoga).TargetSessionsPerWeek);
+        Assert.NotNull(Decision(yoga, WorkoutActivityType.Yoga).PolicySessionsPerWeek);
     }
 
     [Fact]
-    public void AppliesExplicitPreferenceFrequencyWithoutInventingPolicyFrequency()
+    public void AppliesExplicitPreferenceFrequencyAndDisplaysPolicyFrequency()
     {
         var yoga = Evaluate(
             [WorkoutActivityType.Yoga],
@@ -395,7 +406,7 @@ public sealed class MixedActivityWeekScheduleRuleTests
 
         Assert.Equal(ExpectedTwoCardioSessions, yoga.Sessions.Count);
         Assert.Equal(ExpectedTwoCardioSessions, Decision(yoga, WorkoutActivityType.Yoga).TargetSessionsPerWeek);
-        Assert.Null(Decision(yoga, WorkoutActivityType.Yoga).PolicySessionsPerWeek);
+        Assert.NotNull(Decision(yoga, WorkoutActivityType.Yoga).PolicySessionsPerWeek);
         Assert.Equal(MixedActivityScheduleDisposition.Scheduled,
             Decision(yoga, WorkoutActivityType.Yoga).Disposition);
     }
@@ -475,7 +486,9 @@ public sealed class MixedActivityWeekScheduleRuleTests
         Assert.Equal(swimming.Sessions.Count, swimming.Sessions.Select(session => session.Day).Distinct().Count());
         var prescription = Decision(swimming, WorkoutActivityType.Swimming).Prescription;
         Assert.NotNull(prescription);
-        Assert.Equal((decimal)SelectedCardioSessionMinutes,
+        Assert.Equal((decimal)(ActivityPrescriptionRule.SwimmingWarmupMinutes +
+                               ActivityPrescriptionRule.BeginnerCardioMainMinutes +
+                               ActivityPrescriptionRule.ContinuousCardioCooldownMinutes),
             (prescription!.WarmupMinutes ?? decimal.Zero) + (prescription.MainMinutes ?? decimal.Zero) +
             (prescription.CooldownMinutes ?? decimal.Zero));
     }
@@ -488,16 +501,16 @@ public sealed class MixedActivityWeekScheduleRuleTests
             Durations(),
             Evidence((WorkoutActivityType.GeneralStrength, EvidenceFor(WorkoutActivityType.GeneralStrength))));
         var invalidAvailability = Evaluate(
-            [WorkoutActivityType.GeneralStrength], [DayOfWeek.Monday], SampleDailyCapacityMinutes,
+            [WorkoutActivityType.GeneralStrength], [], SampleDailyCapacityMinutes,
             Durations((WorkoutActivityType.GeneralStrength, StrengthSessionMinutes)),
             Evidence((WorkoutActivityType.GeneralStrength, EvidenceFor(WorkoutActivityType.GeneralStrength))));
 
         Assert.Contains(MixedActivityWeekScheduleRule.SessionDurationMissing,
             Decision(missingDuration, WorkoutActivityType.GeneralStrength).Reasons);
         Assert.Empty(invalidAvailability.Sessions);
-        Assert.Contains(MixedActivityWeekScheduleRule.AvailableWeekdaysMustContainTwoToSevenDistinctDays,
+        Assert.Contains(MixedActivityWeekScheduleRule.AvailableWeekdaysMustContainOneToSevenDistinctDays,
             invalidAvailability.InputReasons);
-        Assert.Contains(MixedActivityWeekScheduleRule.AvailableWeekdaysMustContainTwoToSevenDistinctDays,
+        Assert.Contains(MixedActivityWeekScheduleRule.AvailableWeekdaysMustContainOneToSevenDistinctDays,
             Decision(invalidAvailability, WorkoutActivityType.GeneralStrength).Reasons);
     }
 
@@ -528,6 +541,35 @@ public sealed class MixedActivityWeekScheduleRuleTests
                 (activity.Activity, activity.Disposition, activity.PolicySessionsPerWeek,
                     activity.TargetSessionsPerWeek, activity.ScheduledSessionsPerWeek,
                     Reasons: string.Join(',', activity.Reasons))));
+    }
+
+    [Fact]
+    public void CardioSessionsGenerateOwnDurationIgnoringUserSelectedDurations()
+    {
+        var days = new[] { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday };
+        // User picked 90m for Running and Walking, but cardio policy must generate its own duration
+        var durations = Durations(
+            (WorkoutActivityType.GeneralStrength, StrengthSessionMinutes),
+            (WorkoutActivityType.Running, 90m),
+            (WorkoutActivityType.Walking, 90m));
+        var evidence = Evidence(
+            (WorkoutActivityType.GeneralStrength, EvidenceFor(WorkoutActivityType.GeneralStrength)),
+            (WorkoutActivityType.Running, EvidenceFor(WorkoutActivityType.Running,
+                experience: ActivityExperience.Established, existingBaselineMinutes: 30)),
+            (WorkoutActivityType.Walking, EvidenceFor(WorkoutActivityType.Walking,
+                experience: ActivityExperience.Established, existingBaselineMinutes: 30)));
+
+        var result = Evaluate([WorkoutActivityType.GeneralStrength, WorkoutActivityType.Running, WorkoutActivityType.Walking],
+            days, SampleDailyCapacityMinutes, durations, evidence);
+
+        var runningSession = result.Sessions.FirstOrDefault(s => s.Activity == WorkoutActivityType.Running);
+        var walkingSession = result.Sessions.FirstOrDefault(s => s.Activity == WorkoutActivityType.Walking);
+
+        Assert.NotNull(runningSession);
+        Assert.NotNull(walkingSession);
+        // Established continuous cardio: 5 warmup + 30 main + 5 cooldown = 40 minutes (NOT 90)
+        Assert.Equal(40m, runningSession.DurationMinutes);
+        Assert.Equal(40m, walkingSession.DurationMinutes);
     }
 
     private static MixedActivityWeekScheduleResult Evaluate(

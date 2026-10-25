@@ -47,7 +47,10 @@ public sealed record StrengthPlanPreviewResponseV020(
     IReadOnlyList<string> LimitationCodes,
     IReadOnlyList<StrengthExerciseReviewConditionV020> ExerciseReviewConditions,
     IReadOnlyList<string> AdvisoryCodes,
-    MixedActivityScheduleV020? MixedActivitySchedule = null);
+    MixedActivityScheduleV020? MixedActivitySchedule = null,
+    int? EffectiveActivityTypeId = null,
+    string? FallbackSource = null,
+    string? FallbackReasonCode = null);
 
 public sealed record MixedActivityScheduleSessionV020(
     int ActivityTypeId,
@@ -63,7 +66,10 @@ public sealed record MixedActivityScheduleDecisionV020(
     int? TargetSessionsPerWeek,
     int ScheduledSessionsPerWeek,
     IReadOnlyList<string> ReasonCodes,
-    string? Modality = null);
+    string? Modality = null,
+    int? EffectiveActivityTypeId = null,
+    string? FallbackReasonCode = null,
+    int? MaxSessionsPerWeek = null);
 
 public sealed record MixedActivityScheduleV020(
     IReadOnlyList<MixedActivityScheduleSessionV020> Sessions,

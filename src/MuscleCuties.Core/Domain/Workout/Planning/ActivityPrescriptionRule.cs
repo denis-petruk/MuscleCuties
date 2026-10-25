@@ -32,7 +32,9 @@ public sealed record ActivityPrescriptionContext(
     bool? HasRopeClimbingCompetence = null,
     bool? AppropriateClimbingInstructionAvailable = null,
     bool? IsDemandingYogaContent = null,
-    bool? UserSelectedLighterWeek = null);
+    bool? UserSelectedLighterWeek = null,
+    string? ActivityName = null,
+    IReadOnlyList<string>? ContentTags = null);
 
 public sealed record ActivitySessionPrescription(
     WorkoutActivityType Activity,
@@ -64,8 +66,8 @@ public sealed record ActivityPrescriptionResult(
 /// <summary>Applies the activity-specific workout prescription rules.</summary>
 public static class ActivityPrescriptionRule
 {
-    public const int GeneralStrengthSessionsPerWeek = 1;
-    public const int HighVolumeStrengthSessionsPerWeek = 1;
+    public const int GeneralStrengthSessionsPerWeek = GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek;
+    public const int HighVolumeStrengthSessionsPerWeek = GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek;
     public const int GeneralStrengthWorkingSets = 2;
     public const int EstablishedStrengthWorkingSetsInitially = 2;
     public const int GeneralMainMinimumRepetitions = 8;
@@ -74,6 +76,12 @@ public static class ActivityPrescriptionRule
     public const int EstablishedMainMaximumRepetitions = 12;
     public const int AccessoryMinimumRepetitions = 10;
     public const int AccessoryMaximumRepetitions = 15;
+    public const int GeneralStrengthAccessoryMinimumSets = 1;
+    public const int GeneralStrengthAccessoryMaximumSets = 2;
+    public const int GeneralStrengthAccessoryMinimumRepetitions = 10;
+    public const int GeneralStrengthAccessoryMaximumRepetitions = 20;
+    public const int GeneralStrengthAccessoryTargetRirMinimum = 2;
+    public const int GeneralStrengthAccessoryTargetRirMaximum = 3;
     public const int InitialRepetitionsInReserve = 3;
     public const int GeneralMainRestSeconds = 120;
     public const int EstablishedMainRestSeconds = 150;
@@ -150,11 +158,13 @@ public static class ActivityPrescriptionRule
             WorkoutActivityType.Mobility => OptionalDuration(context,
                 ActivitySessionDurationRule.GentleMobilityMinimumMinutes,
                 ActivitySessionDurationRule.GentleMobilityMaximumMinutes,
-                SessionPurpose.Mobility, SessionTrainingStyle.Gentle),
+                SessionPurpose.Mobility, SessionTrainingStyle.Gentle,
+                ActivitySessionDurationRule.MobilityDurationMinutesDefault),
             WorkoutActivityType.GentleRecovery => OptionalDuration(context,
                 ActivitySessionDurationRule.GentleRecoveryMinimumMinutes,
                 ActivitySessionDurationRule.GentleRecoveryMaximumMinutes,
-                SessionPurpose.Recovery, SessionTrainingStyle.Gentle),
+                SessionPurpose.Recovery, SessionTrainingStyle.Gentle,
+                ActivitySessionDurationRule.GentleRecoveryDurationMinutesDefault),
             WorkoutActivityType.RestDay => new(ActivityPrescriptionStatus.Eligible, [], ["ExplicitRestDay"]),
             WorkoutActivityType.Other => OptionalDuration(context,
                 ActivitySessionDurationRule.PositiveDurationMinimumMinutes,
@@ -166,22 +176,26 @@ public static class ActivityPrescriptionRule
 
     private static ActivityPrescriptionResult GeneralStrength(ActivityPrescriptionContext context)
     {
-        var established = context.Experience == ActivityExperience.Established;
-        var sets = established
+        var isEstablishedExperience = context.Experience == ActivityExperience.Established;
+        var isEstablishedResistance = isEstablishedExperience && context.IsEstablishedResistanceHistory;
+        var frequency = isEstablishedResistance
+            ? GeneralStrengthFrequencyResolver.EstablishedPolicySessionsPerWeek
+            : GeneralStrengthFrequencyResolver.BaselinePolicySessionsPerWeek;
+        var sets = isEstablishedExperience
             ? ActivityPrescriptionRule.EstablishedStrengthWorkingSetsInitially
             : ActivityPrescriptionRule.GeneralStrengthWorkingSets;
-        var minReps = established
+        var minReps = isEstablishedExperience
             ? ActivityPrescriptionRule.EstablishedMainMinimumRepetitions
             : ActivityPrescriptionRule.GeneralMainMinimumRepetitions;
-        var maxReps = established
+        var maxReps = isEstablishedExperience
             ? ActivityPrescriptionRule.EstablishedMainMaximumRepetitions
             : ActivityPrescriptionRule.GeneralMainMaximumRepetitions;
         return Session(ActivityPrescriptionStatus.Eligible, context, SessionPurpose.Strength,
             ActivityModality.Strength, IntendedIntensity.Moderate, SessionTrainingStyle.General,
-            ActivityPrescriptionRule.GeneralStrengthSessionsPerWeek,
+            frequency,
             sets: sets, minReps: minReps, maxReps: maxReps,
             repsInReserve: ActivityPrescriptionRule.InitialRepetitionsInReserve,
-            restSeconds: established ? ActivityPrescriptionRule.EstablishedMainRestSeconds :
+            restSeconds: isEstablishedExperience ? ActivityPrescriptionRule.EstablishedMainRestSeconds :
                 ActivityPrescriptionRule.GeneralMainRestSeconds,
             reasons: ["UseEligibleCatalogMovementsAndRestrictionMappings"]);
     }
@@ -224,15 +238,9 @@ public static class ActivityPrescriptionRule
 
     private static ActivityPrescriptionResult ContinuousCardio(ActivityPrescriptionContext context)
     {
-        if (!TryMainMinutesForUserSelectedSession(context,
-            ActivityPrescriptionRule.ContinuousCardioWarmupMinutes,
-            ActivityPrescriptionRule.ContinuousCardioCooldownMinutes, out var selectedMainMinutes))
-            return Result(ActivityPrescriptionStatus.NeedsUserDuration, "SelectedDurationOutsideAllowedRange");
-
-        var main = selectedMainMinutes ??
-            (context.Experience == ActivityExperience.Established
-                ? context.ExistingBaselineMinutes ?? ActivityPrescriptionRule.EstablishedCardioMainMinutesWithoutBaseline
-                : ActivityPrescriptionRule.BeginnerCardioMainMinutes);
+        var main = context.Experience == ActivityExperience.Established
+            ? context.ExistingBaselineMinutes ?? ActivityPrescriptionRule.EstablishedCardioMainMinutesWithoutBaseline
+            : ActivityPrescriptionRule.BeginnerCardioMainMinutes;
         var frequency = context.Experience == ActivityExperience.Established
             ? EstablishedCardioFrequency : ContinuousCardioFrequency;
         return Session(ActivityPrescriptionStatus.Eligible, context, SessionPurpose.Conditioning,
@@ -256,15 +264,9 @@ public static class ActivityPrescriptionRule
             return Result(ActivityPrescriptionStatus.NeedsFamiliarization,
                 "AskContinuousVersusSwimRestPreference");
 
-        if (!TryMainMinutesForUserSelectedSession(context,
-            ActivityPrescriptionRule.SwimmingWarmupMinutes,
-            ActivityPrescriptionRule.ContinuousCardioCooldownMinutes, out var selectedMainMinutes))
-            return Result(ActivityPrescriptionStatus.NeedsUserDuration, "SelectedDurationOutsideAllowedRange");
-
-        var main = selectedMainMinutes ??
-            (context.Experience == ActivityExperience.Established
-                ? context.ExistingBaselineMinutes ?? ActivityPrescriptionRule.EstablishedCardioMainMinutesWithoutBaseline
-                : ActivityPrescriptionRule.BeginnerCardioMainMinutes);
+        var main = context.Experience == ActivityExperience.Established
+            ? context.ExistingBaselineMinutes ?? ActivityPrescriptionRule.EstablishedCardioMainMinutesWithoutBaseline
+            : ActivityPrescriptionRule.BeginnerCardioMainMinutes;
         return Session(ActivityPrescriptionStatus.Eligible, context, SessionPurpose.Conditioning,
             ActivityModality.Swimming, IntendedIntensity.Moderate,
             context.WantsContinuousSwimming.Value ? SessionTrainingStyle.Continuous : SessionTrainingStyle.Intervals,
@@ -326,54 +328,83 @@ public static class ActivityPrescriptionRule
 
     private static ActivityPrescriptionResult Yoga(ActivityPrescriptionContext context)
     {
-        if (context.IsDemandingYogaContent is null)
+        var classification = YogaClassificationRule.Classify(
+            context.IsDemandingYogaContent,
+            context.ActivityName,
+            context.ContentTags);
+
+        if (classification.IsInconsistent)
             return Result(ActivityPrescriptionStatus.NeedsFamiliarization,
-                "ClassifyYogaByContentBeforeSelectingDuration");
-        var duration = context.UserSelectedDurationMinutes ?? context.CatalogDurationMinutes;
-        if (duration is null)
-            return Result(ActivityPrescriptionStatus.NeedsUserDuration, "ChooseAnEligibleCatalogOrUserDuration");
-        var minimum = context.IsDemandingYogaContent == true
-            ? ActivitySessionDurationRule.PositiveDurationMinimumMinutes :
-            ActivitySessionDurationRule.GentleYogaMinimumMinutes;
-        var maximum = context.IsDemandingYogaContent == true
-            ? ActivitySessionDurationRule.MaximumSupportedDurationMinutes :
-            ActivitySessionDurationRule.GentleYogaMaximumMinutes;
-        return OptionalDuration(context with { UserSelectedDurationMinutes = duration }, minimum, maximum,
-            SessionPurpose.Yoga, context.IsDemandingYogaContent == true
-                ? SessionTrainingStyle.Demanding : SessionTrainingStyle.Gentle);
-    }
+                classification.ReasonCode ?? YogaClassificationRule.YogaClassificationInconsistentCode);
 
-    private static bool TryMainMinutesForUserSelectedSession(ActivityPrescriptionContext context,
-        int warmupMinutes, int cooldownMinutes, out int? mainMinutes)
-    {
-        if (context.UserSelectedDurationMinutes is not { } totalSessionMinutes)
+        var isDemanding = classification.IsDemanding;
+        var minimum = isDemanding
+            ? ActivitySessionDurationRule.DemandingYogaMinimumMinutes
+            : ActivitySessionDurationRule.GentleYogaMinimumMinutes;
+        var maximum = isDemanding
+            ? ActivitySessionDurationRule.DemandingYogaMaximumMinutes
+            : ActivitySessionDurationRule.GentleYogaMaximumMinutes;
+
+        int duration;
+        if (context.UserSelectedDurationMinutes is not null)
         {
-            mainMinutes = null;
-            return true;
+            var userMin = context.UserSelectedDurationMinutes.Value;
+            if (userMin < minimum || userMin > maximum ||
+                (userMin - minimum) % ActivitySessionDurationRule.GentleYogaIncrementMinutes != 0)
+            {
+                return Result(ActivityPrescriptionStatus.NeedsUserDuration, "SelectedDurationOutsideAllowedRange");
+            }
+            duration = userMin;
+        }
+        else if (context.CatalogDurationMinutes is not null)
+        {
+            var catMin = context.CatalogDurationMinutes.Value;
+            if (catMin < minimum || catMin > maximum)
+            {
+                return Result(ActivityPrescriptionStatus.NeedsUserDuration, "SelectedDurationOutsideAllowedRange");
+            }
+            duration = catMin;
+        }
+        else
+        {
+            duration = isDemanding
+                ? ActivitySessionDurationRule.DemandingYogaDurationMinutesDefault
+                : ActivitySessionDurationRule.YogaDurationMinutesDefault;
         }
 
-        if (!WorkoutPreferencesRule.IsValidSessionDuration(context.Activity, totalSessionMinutes))
-        {
-            mainMinutes = null;
-            return false;
-        }
+        var style = isDemanding ? SessionTrainingStyle.Demanding : SessionTrainingStyle.Gentle;
+        var intensity = isDemanding ? IntendedIntensity.Vigorous : IntendedIntensity.Easy;
 
-        var calculatedMainMinutes = totalSessionMinutes - warmupMinutes - cooldownMinutes;
-        mainMinutes = calculatedMainMinutes > NoPrescriptionMinutes ? calculatedMainMinutes : null;
-        return mainMinutes is not null;
+        return Session(ActivityPrescriptionStatus.Eligible, context with { UserSelectedDurationMinutes = duration },
+            SessionPurpose.Yoga, ActivityModality.Yoga, intensity, style, 1, main: duration, requiresConfirmation: true,
+            reasons: ["UserOrCatalogSelectedDuration", "ClassifiedByActualContent"]);
     }
 
     private static ActivityPrescriptionResult OptionalDuration(ActivityPrescriptionContext context,
-        int minimum, int maximum, SessionPurpose purpose, SessionTrainingStyle style)
+        int minimum, int maximum, SessionPurpose purpose, SessionTrainingStyle style, int? defaultMinutes = null)
     {
-        var minutes = context.UserSelectedDurationMinutes;
-        if (minutes is null)
+        int minutes;
+        if (context.UserSelectedDurationMinutes is not null)
+        {
+            minutes = context.UserSelectedDurationMinutes.Value;
+            if (!WorkoutPreferencesRule.IsValidSessionDuration(context.Activity, minutes) ||
+                minutes < minimum || minutes > maximum)
+            {
+                return Result(ActivityPrescriptionStatus.NeedsUserDuration, "SelectedDurationOutsideAllowedRange");
+            }
+        }
+        else if (defaultMinutes.HasValue)
+        {
+            minutes = defaultMinutes.Value;
+        }
+        else
+        {
             return Result(ActivityPrescriptionStatus.NeedsUserDuration, "ChooseAnEligibleCatalogOrUserDuration");
-        if (!WorkoutPreferencesRule.IsValidSessionDuration(context.Activity, minutes.Value) ||
-            minutes < minimum || minutes > maximum)
-            return Result(ActivityPrescriptionStatus.NeedsUserDuration, "SelectedDurationOutsideAllowedRange");
+        }
+
         var modality = ToModality(context.Activity);
-        return Session(ActivityPrescriptionStatus.Eligible, context, purpose, modality,
+        return Session(ActivityPrescriptionStatus.Eligible, context with { UserSelectedDurationMinutes = minutes },
+            purpose, modality,
             style == SessionTrainingStyle.Demanding ? IntendedIntensity.Vigorous : IntendedIntensity.Easy,
             style, 1, main: minutes, requiresConfirmation: true,
             reasons: ["UserOrCatalogSelectedDuration", "ClassifiedByActualContent"]);

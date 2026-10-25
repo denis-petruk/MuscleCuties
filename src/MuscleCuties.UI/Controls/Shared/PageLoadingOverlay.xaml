@@ -9,24 +9,15 @@
     x:DataType="vm:IPageLoadAware"
     InputTransparent="False">
 
-    <ContentView.Triggers>
-        <MultiTrigger TargetType="ContentView">
-            <MultiTrigger.Conditions>
-                <BindingCondition Binding="{Binding IsPageLoading}" Value="False" />
-                <BindingCondition Binding="{Binding IsLoadError}" Value="False" />
-            </MultiTrigger.Conditions>
-            <Setter Property="IsVisible" Value="False" />
-        </MultiTrigger>
-    </ContentView.Triggers>
-
-    <Grid Padding="24">
+    <Grid Padding="{StaticResource UiInsets24}"
+          BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
         <!-- Loading state -->
         <VerticalStackLayout
             IsVisible="{Binding IsPageLoading}"
             HorizontalOptions="Center"
             VerticalOptions="Center"
-            Spacing="10">
+            Spacing="{StaticResource UiSpacing10}">
             <ActivityIndicator
                 Color="{StaticResource Primary}"
                 IsRunning="{Binding IsPageLoading}"
@@ -39,12 +30,11 @@
 
         <!-- Error state -->
         <Grid
-            IsVisible="{Binding IsLoadError}"
-            BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+            IsVisible="{Binding IsLoadError}">
             <VerticalStackLayout
                 HorizontalOptions="Center"
                 VerticalOptions="Center"
-                Spacing="16">
+                Spacing="{StaticResource UiSpaceControl}">
                 <Label
                     Text="{loc:LocalizedText Dashboard_Shared_SomethingWentWrong}"
                     Style="{StaticResource SectionTitle}"
@@ -56,8 +46,7 @@
                 <Button
                     Text="{loc:LocalizedText Dashboard_Shared_Retry}"
                     Command="{Binding LoadDataCommand}"
-                    Style="{StaticResource ButtonLink}"
-                    HorizontalOptions="Center"
+                    Style="{StaticResource ButtonPrimary}"
                     SemanticProperties.Description="{loc:LocalizedText Dashboard_Shared_RetryLoadingDataA11y}" />
             </VerticalStackLayout>
         </Grid>

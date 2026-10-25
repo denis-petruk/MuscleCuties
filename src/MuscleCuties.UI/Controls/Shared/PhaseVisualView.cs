@@ -220,7 +220,7 @@ public class PhaseVisualView : ContentView
             var seamlessRotation = progress * FullTurn / 12f;
 
             canvas.StrokeColor = Palette("PhaseVisualOvulatoryRay");
-            canvas.StrokeSize = 5f;
+            canvas.StrokeSize = (float)AppThemeResources.GetDouble("UiStrokeWidth5");
             canvas.StrokeLineCap = LineCap.Round;
 
             for (var index = 0; index < 12; index++)
@@ -235,7 +235,7 @@ public class PhaseVisualView : ContentView
             canvas.FillCircle(center.X, center.Y, 23f + pulse * 1.8f);
 
             canvas.StrokeColor = Palette("PhaseVisualOvulatoryStroke");
-            canvas.StrokeSize = 3f;
+            canvas.StrokeSize = (float)AppThemeResources.GetDouble("UiStrokeWidth3");
             canvas.DrawCircle(center.X, center.Y, 21f + pulse * 1.3f);
 
             canvas.FillColor = Palette("PhaseVisualOvulatoryHighlight");
@@ -252,7 +252,7 @@ public class PhaseVisualView : ContentView
             canvas.FillEllipse(28f, 78f, 44f, 10f);
 
             canvas.StrokeColor = Palette("PhaseVisualFollicularStroke");
-            canvas.StrokeSize = 5f;
+            canvas.StrokeSize = (float)AppThemeResources.GetDouble("UiStrokeWidth5");
             canvas.StrokeLineCap = LineCap.Round;
             canvas.DrawLine(50f, 80f, 50f + sway, stemTop);
 
@@ -307,12 +307,12 @@ public class PhaseVisualView : ContentView
             canvas.FillPath(moon);
 
             canvas.StrokeColor = Palette("PhaseVisualLutealStroke");
-            canvas.StrokeSize = 3f;
+            canvas.StrokeSize = (float)AppThemeResources.GetDouble("UiStrokeWidth3");
             canvas.StrokeLineCap = LineCap.Round;
             canvas.DrawPath(moon);
 
             canvas.StrokeColor = Palette("PhaseVisualLutealDetail");
-            canvas.StrokeSize = 1.6f;
+            canvas.StrokeSize = (float)AppThemeResources.GetDouble("UiStrokeWidth1_6");
             canvas.DrawArc(45f, 21f, 28f, 56f, 101f, 257f, false, false);
 
             canvas.RestoreState();
@@ -342,7 +342,9 @@ public class PhaseVisualView : ContentView
             canvas.FillPath(drop);
 
             canvas.StrokeColor = stroke;
-            canvas.StrokeSize = MathF.Max(1.7f, size * 0.09f);
+            canvas.StrokeSize = MathF.Max(
+                (float)AppThemeResources.GetDouble("UiStrokeWidth1_7"),
+                size * (float)AppThemeResources.GetDouble("PhaseVisualWaterlineStrokeScale"));
             canvas.StrokeLineCap = LineCap.Round;
             canvas.DrawPath(drop);
 
@@ -353,7 +355,7 @@ public class PhaseVisualView : ContentView
         private static void DrawStar(ICanvas canvas, float centerX, float centerY, float size)
         {
             canvas.StrokeColor = Palette("PhaseVisualAccent");
-            canvas.StrokeSize = 2f;
+            canvas.StrokeSize = (float)AppThemeResources.GetDouble("UiStrokeWidth2");
             canvas.StrokeLineCap = LineCap.Round;
             canvas.DrawLine(centerX - size, centerY, centerX + size, centerY);
             canvas.DrawLine(centerX, centerY - size, centerX, centerY + size);
@@ -380,7 +382,7 @@ public class PhaseVisualView : ContentView
             canvas.FillColor = fill;
             canvas.FillPath(path);
             canvas.StrokeColor = stroke;
-            canvas.StrokeSize = 2f;
+            canvas.StrokeSize = (float)AppThemeResources.GetDouble("UiStrokeWidth2");
             canvas.StrokeLineCap = LineCap.Round;
             canvas.DrawPath(path);
         }
@@ -394,7 +396,7 @@ public class PhaseVisualView : ContentView
 
         private static Color Palette(string key)
         {
-            return AppThemeResources.GetColor(key, Colors.Transparent) ?? Colors.Transparent;
+            return AppThemeResources.GetColor(key);
         }
     }
 }

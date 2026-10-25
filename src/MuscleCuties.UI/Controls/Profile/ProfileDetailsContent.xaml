@@ -7,92 +7,92 @@
     xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileViewModel">
-    <VerticalStackLayout Spacing="0">
+    <VerticalStackLayout Spacing="{StaticResource UiSpacing0}">
                 <!-- Private Photo Journey Vault Entry -->
                 <Label Text="{loc:LocalizedText Profile_Details_PrivateVault}" Style="{StaticResource CaptionLabel}"
-                       FontAttributes="Bold" Margin="24,16,24,6" />
+                       FontAttributes="{StaticResource UiFontAttributesBold}" Margin="{StaticResource UiInsets24_16_24_6}" />
                 <Border
                     Style="{StaticResource CardPrimary}"
-                    Margin="20,0,20,16"
-                    Padding="16">
+                    Margin="{StaticResource UiInsets20_0_20_16}"
+                    Padding="{StaticResource UiInsets16}">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding OpenVaultCommand}" />
                     </Border.GestureRecognizers>
-                    <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
                         <!-- Top Row: Icon + Title + Count Pill -->
-                        <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                        <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                             <mi:MauiIcon
-                                Icon="{mi:Fluent CameraAdd24}" IconSize="22"
+                                Icon="{mi:Fluent CameraAdd24}" IconSize="{StaticResource UiDimension22}"
                                 IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                WidthRequest="22"
-                                HeightRequest="22"
+                                WidthRequest="{StaticResource UiDimension22}"
+                                HeightRequest="{StaticResource UiDimension22}"
                                 VerticalOptions="Center" />
-                            <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2" VerticalOptions="Center">
-                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" FontSize="15" FontAttributes="Bold"
+                            <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
+                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_StoredLocallyOnThisDevice}"
-                                       Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                       Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
                             </Grid>
                             <Border
                                 Grid.Column="2"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 8"
-                                Padding="8,4">
+                                StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                StrokeShape="{StaticResource UiRoundRectangleRadius8}"
+                                Padding="{StaticResource UiInsets8_4}">
                                 <Label
                                     Text="{Binding VaultPhotoCountText, Converter={StaticResource LocalizedStringConverter}}"
-                                    FontSize="12" FontAttributes="Bold" />
+                                    FontSize="{StaticResource UiFontSize12}" FontAttributes="{StaticResource UiFontAttributesBold}" />
                             </Border>
                         </Grid>
 
                         <!-- Tap-to-Reveal Privacy Blur Preview Box -->
                         <Border
                             Grid.Row="1"
-                            HeightRequest="110"
-                            StrokeShape="RoundRectangle 14"
-                            StrokeThickness="0"
-                            Stroke="Transparent"
+                            HeightRequest="{StaticResource UiDimension110}"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius14}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            Stroke="{StaticResource Transparent}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource InputSurface}, Dark={StaticResource InputSurfaceDark}}">
                             <Grid>
                                 <!-- Revealed State -->
                                 <Grid IsVisible="{Binding IsVaultRevealed}">
                                     <!-- When photos exist -->
                                     <Grid IsVisible="{Binding HasVaultPhotos}" ColumnDefinitions="110,*"
-                                          ColumnSpacing="12">
+                                          ColumnSpacing="{StaticResource UiSpaceCompact}">
                                         <Image
                                             Source="{Binding LatestVaultPhotoPath}"
                                             Aspect="AspectFill"
-                                            HeightRequest="110"
-                                            WidthRequest="110" />
-                                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*" Padding="0,10,12,10"
-                                              RowSpacing="2">
+                                            HeightRequest="{StaticResource UiDimension110}"
+                                            WidthRequest="{StaticResource UiDimension110}" />
+                                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*" Padding="{StaticResource UiInsets0_10_12_10}"
+                                              RowSpacing="{StaticResource UiSpacing2}">
                                             <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Details_LatestProgressPhoto}"
-                                                   FontAttributes="Bold" FontSize="13" />
+                                                   FontAttributes="{StaticResource UiFontAttributesBold}" FontSize="{StaticResource UiFontSize13}" />
                                             <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToOpenFullPhotoJourney}"
-                                                   Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                                   Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
                                             <Button
                                                 Grid.Row="2"
                                                 Text="{loc:LocalizedText Profile_Details_HidePreview}"
                                                 Command="{Binding ToggleVaultPrivacyCommand}"
                                                 Style="{StaticResource ButtonLink}"
-                                                FontSize="12"
+                                                FontSize="{StaticResource UiFontSize12}"
                                                 HorizontalOptions="Start"
                                                 VerticalOptions="End"
-                                                HeightRequest="28"
-                                                MinimumHeightRequest="28"
-                                                Padding="0" />
+                                                HeightRequest="{StaticResource UiDimension28}"
+                                                MinimumHeightRequest="{StaticResource UiDimension28}"
+                                                Padding="{StaticResource UiInsets0}" />
                                         </Grid>
                                     </Grid>
 
                                     <!-- When no photos exist yet -->
                                     <Grid
                                         IsVisible="{Binding HasVaultPhotos, Converter={StaticResource InvertedBoolConverter}}"
-                                        Padding="14" VerticalOptions="Center" HorizontalOptions="Center"
-                                        RowDefinitions="Auto,Auto" RowSpacing="4">
+                                        Padding="{StaticResource UiInsets14}" VerticalOptions="Center" HorizontalOptions="Center"
+                                        RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                                         <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Details_NoPhotosStoredYet}"
-                                               FontAttributes="Bold" FontSize="15" HorizontalTextAlignment="Center" />
+                                               FontAttributes="{StaticResource UiFontAttributesBold}" FontSize="{StaticResource UiFontSize15}" HorizontalTextAlignment="Center" />
                                         <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToOpenVaultAndAdd}"
-                                               Style="{StaticResource CaptionLabel}" FontSize="12"
+                                               Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}"
                                                HorizontalTextAlignment="Center" />
                                     </Grid>
                                 </Grid>
@@ -100,33 +100,33 @@
                                 <!-- Privacy Blur / Hidden State -->
                                 <Grid
                                     IsVisible="{Binding IsVaultRevealed, Converter={StaticResource InvertedBoolConverter}}"
-                                    BackgroundColor="{AppThemeBinding Light=#EEFFF8FB, Dark=#EE2B1D24}"
-                                    Padding="12">
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource TranslucentPageSurfaceLight}, Dark={StaticResource TranslucentPageSurfaceDark}}"
+                                    Padding="{StaticResource UiInsets12}">
                                     <Grid.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding ToggleVaultPrivacyCommand}" />
                                     </Grid.GestureRecognizers>
-                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                         <mi:MauiIcon
-                                            Icon="{mi:Fluent ShieldLock24}" IconSize="26" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                            WidthRequest="26"
-                                            HeightRequest="26"
+                                            Icon="{mi:Fluent ShieldLock24}" IconSize="{StaticResource UiDimension26}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                            WidthRequest="{StaticResource UiDimension26}"
+                                            HeightRequest="{StaticResource UiDimension26}"
                                             VerticalOptions="Center" />
-                                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2"
+                                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}"
                                               VerticalOptions="Center">
-                                            <Label Text="{loc:LocalizedText Profile_Details_PreviewHiddenForPrivacy}" FontAttributes="Bold"
-                                                   FontSize="13" />
+                                            <Label Text="{loc:LocalizedText Profile_Details_PreviewHiddenForPrivacy}" FontAttributes="{StaticResource UiFontAttributesBold}"
+                                                   FontSize="{StaticResource UiFontSize13}" />
                                             <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToRevealPreview}"
-                                                   Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                                   Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
                                         </Grid>
                                         <Button
                                             Grid.Column="2"
                                             Text="{loc:LocalizedText Profile_Details_Reveal}"
                                             Command="{Binding ToggleVaultPrivacyCommand}"
                                             Style="{StaticResource ButtonSecondary}"
-                                            FontSize="12"
-                                            HeightRequest="32"
-                                            MinimumHeightRequest="32"
-                                            Padding="12,0" />
+                                            FontSize="{StaticResource UiFontSize12}"
+                                            HeightRequest="{StaticResource UiDimension32}"
+                                            MinimumHeightRequest="{StaticResource UiDimension32}"
+                                            Padding="{StaticResource UiInsets12_0}" />
                                     </Grid>
                                 </Grid>
                             </Grid>
@@ -136,139 +136,139 @@
 
                 <!-- Section: HEALTH & TRAINING (Apple Inset Grouped) -->
                 <Label Text="{loc:LocalizedText Profile_Details_HealthTraining}" Style="{StaticResource CaptionLabel}"
-                       FontAttributes="Bold" Margin="24,12,24,6" />
+                       FontAttributes="{StaticResource UiFontAttributesBold}" Margin="{StaticResource UiInsets24_12_24_6}" />
                 <Border
                     Style="{StaticResource CardPrimary}"
-                    Margin="20,0,20,16"
-                    Padding="0">
-                    <VerticalStackLayout Spacing="0">
+                    Margin="{StaticResource UiInsets20_0_20_16}"
+                    Padding="{StaticResource UiInsets0}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpacing0}">
                         <!-- Apple Health Status Row -->
-                        <Border BackgroundColor="Transparent" StrokeThickness="0" Padding="16,14"
+                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}"
                                 IsVisible="{Binding IsAppleHealthAvailable}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileHealthSyncPage" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="32,*,Auto,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                            <Grid ColumnDefinitions="32,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
-                                    Icon="{mi:Fluent HeartPulse32}" IconSize="20" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="20"
-                                    HeightRequest="20"
+                                    Icon="{mi:Fluent HeartPulse32}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension20}"
+                                    HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
-                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                    <Label Text="{loc:LocalizedText Profile_Details_AppleHealth}" FontSize="15" FontAttributes="Bold"
+                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
+                                    <Label Text="{loc:LocalizedText Profile_Details_AppleHealth}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_SleepStepsEnergyHeartRate}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
                                 </Grid>
                                 <Border
                                     Grid.Column="2"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 8"
-                                    Padding="8,3"
+                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                    StrokeShape="{StaticResource UiRoundRectangleRadius8}"
+                                    Padding="{StaticResource UiInsets8_3}"
                                     VerticalOptions="Center">
                                     <Label
                                         Text="{Binding HealthStatusText, Converter={StaticResource LocalizedStringConverter}}"
-                                        FontSize="12" FontAttributes="Bold" VerticalOptions="Center" />
+                                        FontSize="{StaticResource UiFontSize12}" FontAttributes="{StaticResource UiFontAttributesBold}" VerticalOptions="Center" />
                                 </Border>
                                 <mi:MauiIcon
                                     Grid.Column="3"
-                                    Icon="{mi:Fluent ChevronRight24}" IconSize="16" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="16"
-                                    HeightRequest="16"
+                                    Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension16}"
+                                    HeightRequest="{StaticResource UiDimension16}"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
 
-                        <BoxView HeightRequest="1" Margin="56,0,0,0"
+                        <BoxView HeightRequest="{StaticResource UiDimension1}" Margin="{StaticResource UiInsets56_0_0_0}"
                                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                         <!-- Workout Availability Row -->
-                        <Border BackgroundColor="Transparent" StrokeThickness="0" Padding="16,14">
+                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileWorkoutPreferencesPage" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="32,*,Auto,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                            <Grid ColumnDefinitions="32,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
-                                    Icon="{mi:Fluent Dumbbell24}" IconSize="20" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="20"
-                                    HeightRequest="20"
+                                    Icon="{mi:Fluent Dumbbell24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension20}"
+                                    HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
-                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                    <Label Text="{loc:LocalizedText Profile_Details_WorkoutAvailability}" FontSize="15" FontAttributes="Bold"
+                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
+                                    <Label Text="{loc:LocalizedText Profile_Details_WorkoutAvailability}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1"
                                            Text="{Binding AvailableWeekdaysText, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="3"
-                                    Icon="{mi:Fluent ChevronRight24}" IconSize="16" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="16"
-                                    HeightRequest="16"
+                                    Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension16}"
+                                    HeightRequest="{StaticResource UiDimension16}"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
 
-                        <BoxView HeightRequest="1" Margin="56,0,0,0"
+                        <BoxView HeightRequest="{StaticResource UiDimension1}" Margin="{StaticResource UiInsets56_0_0_0}"
                                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                         <!-- Nutrition Row -->
-                        <Border BackgroundColor="Transparent" StrokeThickness="0" Padding="16,14">
+                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileNutritionSettingsPage" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="32,*,Auto,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                            <Grid ColumnDefinitions="32,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
-                                    Icon="{mi:Fluent Food24}" IconSize="20" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="20"
-                                    HeightRequest="20"
+                                    Icon="{mi:Fluent Food24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension20}"
+                                    HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
-                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                    <Label Text="{loc:LocalizedText Profile_Details_Nutrition}" FontSize="15" FontAttributes="Bold"
+                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
+                                    <Label Text="{loc:LocalizedText Profile_Details_Nutrition}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1"
                                            Text="{Binding NutritionPacingText, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="3"
-                                    Icon="{mi:Fluent ChevronRight24}" IconSize="16" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="16"
-                                    HeightRequest="16"
+                                    Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension16}"
+                                    HeightRequest="{StaticResource UiDimension16}"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
 
-                        <BoxView HeightRequest="1" Margin="56,0,0,0"
+                        <BoxView HeightRequest="{StaticResource UiDimension1}" Margin="{StaticResource UiInsets56_0_0_0}"
                                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                         <!-- Micronutrient targets -->
-                        <Border BackgroundColor="Transparent" StrokeThickness="0" Padding="16,14">
+                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileNutritionSettingsPage" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                            <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
-                                    Icon="{mi:Fluent Food24}" IconSize="20" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="20"
-                                    HeightRequest="20"
+                                    Icon="{mi:Fluent Food24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension20}"
+                                    HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
-                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                    <Label Text="{loc:LocalizedText Profile_Details_MicronutrientTargets}" FontSize="15" FontAttributes="Bold"
+                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
+                                    <Label Text="{loc:LocalizedText Profile_Details_MicronutrientTargets}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_MicronutrientTargetsDetail}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="2"
-                                    Icon="{mi:Fluent ChevronRight24}" IconSize="16" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="16"
-                                    HeightRequest="16"
+                                    Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension16}"
+                                    HeightRequest="{StaticResource UiDimension16}"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
@@ -277,126 +277,126 @@
 
                 <!-- Section: ACCOUNT & PREFERENCES (Apple Inset Grouped) -->
                 <Label Text="{loc:LocalizedText Profile_Details_AccountPreferences}" Style="{StaticResource CaptionLabel}"
-                       FontAttributes="Bold" Margin="24,12,24,6" />
+                       FontAttributes="{StaticResource UiFontAttributesBold}" Margin="{StaticResource UiInsets24_12_24_6}" />
                 <Border
                     Style="{StaticResource CardPrimary}"
-                    Margin="20,0,20,16"
-                    Padding="0">
-                    <VerticalStackLayout Spacing="0">
+                    Margin="{StaticResource UiInsets20_0_20_16}"
+                    Padding="{StaticResource UiInsets0}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpacing0}">
                         <!-- Personal Info Row -->
-                        <Border BackgroundColor="Transparent" StrokeThickness="0" Padding="16,14">
+                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfilePersonalInfoPage" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                            <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
-                                    Icon="{mi:Fluent PersonPill24}" IconSize="20" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="20"
-                                    HeightRequest="20"
+                                    Icon="{mi:Fluent PersonPill24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension20}"
+                                    HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
-                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                    <Label Text="{loc:LocalizedText Profile_Details_PersonalInfo}" FontSize="15" FontAttributes="Bold"
+                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
+                                    <Label Text="{loc:LocalizedText Profile_Details_PersonalInfo}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_NameEmailPasswordCycleBaselines}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="2"
-                                    Icon="{mi:Fluent ChevronRight24}" IconSize="16" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="16"
-                                    HeightRequest="16"
+                                    Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension16}"
+                                    HeightRequest="{StaticResource UiDimension16}"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
 
-                        <BoxView HeightRequest="1" Margin="56,0,0,0"
+                        <BoxView HeightRequest="{StaticResource UiDimension1}" Margin="{StaticResource UiInsets56_0_0_0}"
                                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                         <!-- Units & Display Row -->
-                        <Border BackgroundColor="Transparent" StrokeThickness="0" Padding="16,14">
+                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileUnitsDisplayPage" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="32,*,Auto,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                            <Grid ColumnDefinitions="32,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
-                                    Icon="{mi:Fluent ChatSettings24}" IconSize="20" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="20"
-                                    HeightRequest="20"
+                                    Icon="{mi:Fluent ChatSettings24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension20}"
+                                    HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
-                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                    <Label Text="{loc:LocalizedText Profile_Details_UnitsDisplay}" FontSize="15" FontAttributes="Bold"
+                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
+                                    <Label Text="{loc:LocalizedText Profile_Details_UnitsDisplay}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1"
                                            Text="{Binding UnitsDisplayText, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="3"
-                                    Icon="{mi:Fluent ChevronRight24}" IconSize="16" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="16"
-                                    HeightRequest="16"
+                                    Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension16}"
+                                    HeightRequest="{StaticResource UiDimension16}"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
 
-                        <BoxView HeightRequest="1" Margin="56,0,0,0"
+                        <BoxView HeightRequest="{StaticResource UiDimension1}" Margin="{StaticResource UiInsets56_0_0_0}"
                                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                         <!-- Privacy Policy Row -->
-                        <Border BackgroundColor="Transparent" StrokeThickness="0" Padding="16,14">
+                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfilePrivacyPage" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                            <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
-                                    Icon="{mi:Fluent ShieldLock24}" IconSize="20" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="20"
-                                    HeightRequest="20"
+                                    Icon="{mi:Fluent ShieldLock24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension20}"
+                                    HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
-                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                    <Label Text="{loc:LocalizedText Profile_Privacy_Policy}" FontSize="15" FontAttributes="Bold"
+                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
+                                    <Label Text="{loc:LocalizedText Profile_Privacy_Policy}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_HealthRecordsStayOnThisDevice}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="2"
-                                    Icon="{mi:Fluent ChevronRight24}" IconSize="16" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="16"
-                                    HeightRequest="16"
+                                    Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension16}"
+                                    HeightRequest="{StaticResource UiDimension16}"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>
 
-                        <BoxView HeightRequest="1" Margin="56,0,0,0"
+                        <BoxView HeightRequest="{StaticResource UiDimension1}" Margin="{StaticResource UiInsets56_0_0_0}"
                                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                         <!-- Send Feedback Row -->
-                        <Border BackgroundColor="Transparent" StrokeThickness="0" Padding="16,14">
+                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileFeedbackPage" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                            <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
-                                    Icon="{mi:Fluent ChatBubblesQuestion24}" IconSize="20" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="20"
-                                    HeightRequest="20"
+                                    Icon="{mi:Fluent ChatBubblesQuestion24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension20}"
+                                    HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
-                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="2">
-                                    <Label Text="{loc:LocalizedText Profile_Details_SendFeedback}" FontSize="15" FontAttributes="Bold"
+                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
+                                    <Label Text="{loc:LocalizedText Profile_Details_SendFeedback}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_ReportAnIssueOrSuggestA}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="2"
-                                    Icon="{mi:Fluent ChevronRight24}" IconSize="16" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="16"
-                                    HeightRequest="16"
+                                    Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                    WidthRequest="{StaticResource UiDimension16}"
+                                    HeightRequest="{StaticResource UiDimension16}"
                                     VerticalOptions="Center" />
                             </Grid>
                         </Border>

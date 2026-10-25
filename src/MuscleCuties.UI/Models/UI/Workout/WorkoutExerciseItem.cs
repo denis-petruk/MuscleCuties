@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 
+using MuscleCuties.UI.Resources.Styles;
+
 namespace MuscleCuties.UI.Models.UI.Workout;
 
 public partial class WorkoutExerciseItem : ObservableObject
@@ -25,8 +27,8 @@ public partial class WorkoutExerciseItem : ObservableObject
     public int ExerciseId { get; set; }
     public string ActivityTag { get; set; } = string.Empty;
     public string ActivityTitle { get; set; } = string.Empty;
-    public Color ActivityBackground { get; set; } = Colors.Transparent;
-    public Color ActivityTextColor { get; set; } = Colors.Black;
+    public Color ActivityBackground { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
+    public Color ActivityTextColor { get; set; } = AppThemeResources.GetRequired<Color>("TextPrimary");
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;

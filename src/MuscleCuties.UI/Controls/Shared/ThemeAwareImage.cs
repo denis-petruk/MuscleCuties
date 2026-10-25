@@ -1,4 +1,5 @@
 using Microsoft.Maui.Controls;
+using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Controls.Shared;
 
@@ -20,7 +21,7 @@ public class ThemeAwareImage : Image
 
     public ThemeAwareImage()
     {
-        BackgroundColor = Colors.Transparent;
+        BackgroundColor = AppThemeResources.GetRequired<Color>("Transparent");
         _themeObserver = new ThemeChangeObserver(theme => ApplyThemeImage(ResolveTheme(theme)));
     }
 

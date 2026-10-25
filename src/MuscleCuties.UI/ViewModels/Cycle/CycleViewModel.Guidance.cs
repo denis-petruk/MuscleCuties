@@ -5,6 +5,7 @@ using Microsoft.Maui.Graphics;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
+using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Services.Dashboard;
 
@@ -124,9 +125,9 @@ public partial class CycleViewModel
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Menstrual),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, Colors.Red),
+                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, default),
                 IsActivePhase = currentPhase == CyclePhase.Menstrual
             },
             new()
@@ -137,9 +138,9 @@ public partial class CycleViewModel
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Follicular),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, Colors.Green),
+                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, default),
                 IsActivePhase = currentPhase == CyclePhase.Follicular
             },
             new()
@@ -150,9 +151,9 @@ public partial class CycleViewModel
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Ovulatory),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Orange),
+                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, default),
                 IsActivePhase = currentPhase == CyclePhase.Ovulatory
             },
             new()
@@ -163,9 +164,9 @@ public partial class CycleViewModel
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Luteal),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, Colors.Purple),
+                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, default),
                 IsActivePhase = currentPhase == CyclePhase.Luteal
             }
         };
@@ -188,9 +189,9 @@ public partial class CycleViewModel
                 QuickRule = "Log bleeding and symptoms to learn your pattern.",
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Menstrual),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, Colors.Red)
+                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, default)
             },
             CyclePhase.Follicular => new PhaseSummarySheetModel
             {
@@ -205,9 +206,9 @@ public partial class CycleViewModel
                 QuickRule = "Your check-in matters more than an estimated phase.",
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Follicular),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, Colors.Green)
+                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, default)
             },
             CyclePhase.Ovulatory => new PhaseSummarySheetModel
             {
@@ -222,9 +223,9 @@ public partial class CycleViewModel
                 QuickRule = "Treat this as an estimate, not a fertility signal.",
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Ovulatory),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Orange)
+                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, default)
             },
             CyclePhase.Luteal => new PhaseSummarySheetModel
             {
@@ -239,9 +240,9 @@ public partial class CycleViewModel
                 QuickRule = "Record symptoms instead of assuming the phase predicts how you feel.",
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Luteal),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, Colors.Purple)
+                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, default)
             },
             _ => new PhaseSummarySheetModel
             {
@@ -255,9 +256,9 @@ public partial class CycleViewModel
                 RecoveryFocus = PhaseRecoveryText,
                 QuickRule = PhaseCheckInText,
                 IconSource = CyclePhaseAssets.GetIconSource(phase),
-                BackgroundColor = Colors.Transparent,
-                TextColor = Colors.Black,
-                AccentColor = Colors.Gray
+                BackgroundColor = AppThemeResources.GetRequired<Color>("Transparent"),
+                TextColor = AppThemeResources.GetColor(useDarkTheme ? "TextPrimaryDark" : "TextPrimary"),
+                AccentColor = AppThemeResources.GetRequired<Color>("Transparent")
             }
         };
     }

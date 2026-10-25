@@ -12,39 +12,39 @@
     IsOpen="{Binding IsMealDetailVisible}">
 
     <Grid BackgroundColor="{StaticResource ModalScrim}">
-        <BoxView BackgroundColor="Transparent">
+        <BoxView BackgroundColor="{StaticResource Transparent}">
             <BoxView.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding CloseMealDetailCommand}" />
             </BoxView.GestureRecognizers>
         </BoxView>
 
         <Border x:Name="SheetSurface" Style="{StaticResource AppBottomSheetSurface}">
-            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="0">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
 
                 <!-- Header: flattened from Grid+VerticalStackLayout into single Grid -->
                 <Grid
-                    Padding="20,18,20,12"
+                    Padding="{StaticResource UiInsets20_18_20_12}"
                     RowDefinitions="Auto,Auto"
                     ColumnDefinitions="Auto,*,Auto"
-                    ColumnSpacing="12"
-                    RowSpacing="2">
+                    ColumnSpacing="{StaticResource UiSpaceCompact}"
+                    RowSpacing="{StaticResource UiSpacing2}">
                     <Border
                         Grid.RowSpan="2"
-                        WidthRequest="42"
-                        HeightRequest="42"
-                        StrokeShape="RoundRectangle 12"
+                        WidthRequest="{StaticResource UiDimension42}"
+                        HeightRequest="{StaticResource UiDimension42}"
+                        StrokeShape="{StaticResource UiRoundRectangleRadius12}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
-                        StrokeThickness="0"
+                        StrokeThickness="{StaticResource UiStrokeWidth0}"
                         VerticalOptions="Center">
                         <Path
                             Data="{Binding SelectedMealDetail.IconPathData, Converter={StaticResource StringToGeometryConverter}}"
                             Stroke="{StaticResource Primary}"
-                            StrokeThickness="1.5"
+                            StrokeThickness="{StaticResource UiStrokeWidth1_5}"
                             StrokeLineCap="Round"
                             StrokeLineJoin="Round"
                             Aspect="Uniform"
-                            WidthRequest="20"
-                            HeightRequest="20"
+                            WidthRequest="{StaticResource UiDimension20}"
+                            HeightRequest="{StaticResource UiDimension20}"
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
                     </Border>
@@ -78,26 +78,26 @@
 
                 <!-- Scrollable content -->
                 <ScrollView Grid.Row="2">
-                    <VerticalStackLayout Spacing="16" Padding="20,16,20,20">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" Padding="{StaticResource UiInsets20_16_20_20}">
 
                         <!-- Macro summary card: flattened from Grid+HorizontalStackLayouts into single Grid -->
                         <Border
                             Style="{StaticResource ModalAccentPanel}"
-                            Padding="14"
+                            Padding="{StaticResource UiInsets14}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
-                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="6"
-                                  RowSpacing="8">
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing6}"
+                                  RowSpacing="{StaticResource UiSpaceTight}">
                                 <Image
                                     Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
                                     Aspect="AspectFit"
-                                    WidthRequest="16"
-                                    HeightRequest="16"
+                                    WidthRequest="{StaticResource UiDimension16}"
+                                    HeightRequest="{StaticResource UiDimension16}"
                                     VerticalOptions="Center" />
                                 <Label
                                     Grid.Column="1"
                                     Text="{Binding DetailCaloriesText, Converter={StaticResource LocalizedStringConverter}}"
-                                    FontSize="18"
-                                    FontAttributes="Bold"
+                                    FontSize="{StaticResource UiFontSize18}"
+                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                     TextColor="{StaticResource Primary}"
                                     VerticalOptions="Center" />
                                 <Label
@@ -105,26 +105,26 @@
                                     Grid.ColumnSpan="2"
                                     Text="{Binding DetailMacrosText, Converter={StaticResource LocalizedStringConverter}}"
                                     Style="{StaticResource MutedLabel}"
-                                    FontSize="14" LineBreakMode="WordWrap" />
+                                    FontSize="{StaticResource UiFontSize14}" LineBreakMode="WordWrap" />
 
-                                <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
+                                <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                                     <Border
-                                        StrokeShape="RoundRectangle 999"
-                                        StrokeThickness="0"
-                                        Padding="8,3"
+                                        StrokeShape="{StaticResource UiRoundRectangleRadius999}"
+                                        StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                        Padding="{StaticResource UiInsets8_3}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
                                         <Label
                                             Text="{Binding SelectedMealDetail.StyleLabel, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}"
                                             TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                                            FontAttributes="Bold"
-                                            FontSize="13" />
+                                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                                            FontSize="{StaticResource UiFontSize13}" />
                                     </Border>
                                     <Label
                                         Grid.Column="1"
                                         Text="{Binding SelectedMealDetail.StyleDescription, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource MutedLabel}"
-                                        FontSize="14"
+                                        FontSize="{StaticResource UiFontSize14}"
                                         LineBreakMode="WordWrap"
                                         VerticalOptions="Center" />
                                 </Grid>
@@ -132,80 +132,80 @@
                         </Border>
 
                         <!-- Daily fit: flattened from VerticalStackLayout into Grid -->
-                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
+                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                             <Label
                                 Text="{Binding MealFillPercentText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource MutedLabel}"
-                                FontAttributes="Bold"
-                                FontSize="14" />
+                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                FontSize="{StaticResource UiFontSize14}" />
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding DailyProgressText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource MutedLabel}"
-                                FontSize="14" />
+                                FontSize="{StaticResource UiFontSize14}" />
                             <Label
                                 Grid.Row="2"
                                 Text="{Binding DailyMacroRemainingText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource MutedLabel}"
-                                FontSize="14" />
+                                FontSize="{StaticResource UiFontSize14}" />
                         </Grid>
 
                         <!-- Ingredients by group -->
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
                             <Label
                                 Grid.Row="0"
                                 Text="{loc:LocalizedText Nutrition_MealDetail_Ingredients}"
                                 Style="{StaticResource SectionTitle}"
-                                FontSize="17" />
+                                FontSize="{StaticResource UiFontSize17}" />
 
                             <VerticalStackLayout
                                 Grid.Row="1"
                                 BindableLayout.ItemsSource="{Binding SelectedMealDetail.ComponentGroups}"
-                                Spacing="8">
+                                Spacing="{StaticResource UiSpaceTight}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="nutritionModels:MealSuggestionComponentGroup">
                                         <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto"
-                                              ColumnSpacing="8" RowSpacing="4">
+                                              ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceMicro}">
                                             <Image
                                                 Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}, ConverterParameter=Accent}"
-                                                WidthRequest="16"
-                                                HeightRequest="16"
+                                                WidthRequest="{StaticResource UiDimension16}"
+                                                HeightRequest="{StaticResource UiDimension16}"
                                                 Aspect="AspectFit"
                                                 VerticalOptions="Center" />
                                             <Label
                                                 Grid.Column="1"
                                                 Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}"
                                                 Style="{StaticResource CardTitle}"
-                                                FontSize="15"
+                                                FontSize="{StaticResource UiFontSize15}"
                                                 VerticalOptions="Center" />
                                             <Label
                                                 Grid.Column="2"
                                                 Text="{Binding TotalText, Converter={StaticResource LocalizedStringConverter}}"
                                                 Style="{StaticResource MutedLabel}"
-                                                FontSize="14"
+                                                FontSize="{StaticResource UiFontSize14}"
                                                 VerticalOptions="Center" />
 
                                             <VerticalStackLayout
                                                 Grid.Row="1"
                                                 Grid.ColumnSpan="3"
                                                 BindableLayout.ItemsSource="{Binding Items}"
-                                                Spacing="2"
-                                                Padding="24,0,0,0">
+                                                Spacing="{StaticResource UiSpacing2}"
+                                                Padding="{StaticResource UiInsets24_0_0_0}">
                                                 <BindableLayout.ItemTemplate>
                                                     <DataTemplate
                                                         x:DataType="nutritionModels:MealSuggestionComponentItem">
-                                                        <Grid RowDefinitions="Auto,Auto" RowSpacing="2" Padding="0,2">
+                                                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}" Padding="{StaticResource UiInsets0_2}">
                                                             <Label
                                                                 Text="{Binding Name}"
                                                                 Style="{StaticResource BodyLabel}"
-                                                                FontSize="15"
+                                                                FontSize="{StaticResource UiFontSize15}"
                                                                 LineBreakMode="WordWrap"
                                                                 VerticalOptions="Center" />
                                                             <Label
                                                                 Grid.Row="1"
                                                                 Text="{Binding DetailText, Converter={StaticResource LocalizedStringConverter}}"
                                                                 Style="{StaticResource MutedLabel}"
-                                                                FontSize="14"
+                                                                FontSize="{StaticResource UiFontSize14}"
                                                                 VerticalOptions="Center" />
                                                         </Grid>
                                                     </DataTemplate>
@@ -220,46 +220,46 @@
                         <!-- Spice blends -->
                         <Grid
                             RowDefinitions="Auto,Auto"
-                            RowSpacing="6"
+                            RowSpacing="{StaticResource UiSpacing6}"
                             IsVisible="{Binding DetailHasSpiceBlends}">
                             <Label
                                 Grid.Row="0"
                                 Text="{loc:LocalizedText Nutrition_MealDetail_Seasoning}"
                                 Style="{StaticResource SectionTitle}"
-                                FontSize="17" />
+                                FontSize="{StaticResource UiFontSize17}" />
                             <VerticalStackLayout
                                 Grid.Row="1"
                                 BindableLayout.ItemsSource="{Binding SelectedMealDetail.SpiceBlends}"
-                                Spacing="4">
+                                Spacing="{StaticResource UiSpaceMicro}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="nutritionModels:SpiceBlendDetail">
-                                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="8"
-                                              RowSpacing="1" Padding="0,2">
+                                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}"
+                                              RowSpacing="{StaticResource UiSpacing1}" Padding="{StaticResource UiInsets0_2}">
                                             <Border
                                                 Grid.RowSpan="2"
-                                                StrokeShape="RoundRectangle 999"
-                                                StrokeThickness="0"
-                                                Padding="6,2"
+                                                StrokeShape="{StaticResource UiRoundRectangleRadius999}"
+                                                StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                                Padding="{StaticResource UiInsets6_2}"
                                                 BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                                 VerticalOptions="Center"
                                                 IsVisible="{Binding IsRecommended}">
                                                 <Label
                                                     Text="{loc:LocalizedText Nutrition_MealDetail_RecommendedBadge}"
                                                     TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                                                    FontSize="13"
-                                                    FontAttributes="Bold" />
+                                                    FontSize="{StaticResource UiFontSize13}"
+                                                    FontAttributes="{StaticResource UiFontAttributesBold}" />
                                             </Border>
                                             <Label
                                                 Grid.Column="1"
                                                 Text="{Binding Name}"
                                                 Style="{StaticResource CardTitle}"
-                                                FontSize="15" LineBreakMode="WordWrap" />
+                                                FontSize="{StaticResource UiFontSize15}" LineBreakMode="WordWrap" />
                                             <Label
                                                 Grid.Row="1"
                                                 Grid.Column="1"
                                                 Text="{Binding Description}"
                                                 Style="{StaticResource MutedLabel}"
-                                                FontSize="14"
+                                                FontSize="{StaticResource UiFontSize14}"
                                                 LineBreakMode="WordWrap" />
                                         </Grid>
                                     </DataTemplate>
@@ -268,38 +268,38 @@
                         </Grid>
 
                         <!-- Directions -->
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="6">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
                             <Label
                                 Grid.Row="0"
                                 Text="{loc:LocalizedText Nutrition_MealDetail_HowToPrepare}"
                                 Style="{StaticResource SectionTitle}"
-                                FontSize="17" />
+                                FontSize="{StaticResource UiFontSize17}" />
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding DetailDirectionsText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource BodyLabel}"
-                                FontSize="15"
-                                LineHeight="1.5" />
+                                FontSize="{StaticResource UiFontSize15}"
+                                LineHeight="{StaticResource UiLineHeightLongForm}" />
                         </Grid>
 
                     </VerticalStackLayout>
                 </ScrollView>
 
                 <!-- Action buttons -->
-                <Grid Grid.Row="3" Padding="20,8,20,16" ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Grid Grid.Row="3" Padding="{StaticResource UiInsets20_8_20_16}" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpacing10}">
                     <Button
                         Text="{loc:LocalizedText Common_Back}"
                         Command="{Binding CloseMealDetailCommand}"
                         Style="{StaticResource ButtonSecondary}"
-                        MinimumHeightRequest="48" />
+                        MinimumHeightRequest="{StaticResource UiDimension48}" />
                     <Button
                         Grid.Column="1"
                         Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Nutrition_MealDetail_UseThisMeal}"
                         Command="{Binding AcceptSuggestionCommand}"
                         CommandParameter="{Binding SelectedMealDetail}"
-                        MinimumHeightRequest="48"
-                        FontAttributes="Bold" />
+                        MinimumHeightRequest="{StaticResource UiDimension48}"
+                        FontAttributes="{StaticResource UiFontAttributesBold}" />
                 </Grid>
 
             </Grid>

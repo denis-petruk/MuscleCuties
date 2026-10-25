@@ -28,14 +28,14 @@
                     Grid.Row="0"
                     RowDefinitions="Auto, Auto, Auto"
                     ColumnDefinitions="*, Auto"
-                    ColumnSpacing="12"
-                    RowSpacing="6"
-                    Padding="20,18,20,12">
+                    ColumnSpacing="{StaticResource UiSpaceCompact}"
+                    RowSpacing="{StaticResource UiSpacing6}"
+                    Padding="{StaticResource UiInsets20_18_20_12}">
 
                     <Label
                         Text="{Binding SelectedCalendarDateText, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource ModalTitle}"
-                        FontSize="20" />
+                        FontSize="{StaticResource UiFontSize20}" />
 
                     <Label
                         Grid.Row="1"
@@ -53,8 +53,8 @@
                         <Path
                             Style="{StaticResource ModalCloseIcon}"
                             Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
+                            WidthRequest="{StaticResource UiDimension14}"
+                            HeightRequest="{StaticResource UiDimension14}"
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
                     </Border>
@@ -62,14 +62,14 @@
                     <BoxView
                         Grid.Row="2"
                         Grid.ColumnSpan="2"
-                        HeightRequest="1"
-                        Margin="0,6,0,0"
+                        HeightRequest="{StaticResource UiDimension1}"
+                        Margin="{StaticResource UiInsets0_6_0_0}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                        Opacity="0.7" />
+                        Opacity="{StaticResource UiOpacityBackdrop}" />
                 </Grid>
 
                 <ScrollView Grid.Row="1">
-                    <VerticalStackLayout Padding="20,0,20,16" Spacing="12">
+                    <VerticalStackLayout Padding="{StaticResource UiInsets20_0_20_16}" Spacing="{StaticResource UiSpaceCompact}">
                         <Label
                             Text="{Binding PhaseEditStatusText, Converter={StaticResource LocalizedStringConverter}}"
                             Style="{StaticResource ErrorLabel}"
@@ -78,10 +78,10 @@
                         <Border
                             IsVisible="{Binding HasPhaseJumpWarning}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource WarningSurfaceLight}, Dark={StaticResource WarningSurfaceDark}}"
-                            StrokeShape="RoundRectangle 14"
-                            StrokeThickness="0"
-                            Padding="16,14">
-                            <VerticalStackLayout Spacing="10">
+                            StrokeShape="{StaticResource UiRoundRectangleRadius14}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            Padding="{StaticResource UiInsets16_14}">
+                            <VerticalStackLayout Spacing="{StaticResource UiSpacing10}">
                                 <Label
                                     Text="{Binding PhaseJumpWarningTitle, Converter={StaticResource LocalizedStringConverter}}"
                                     Style="{StaticResource CardTitle}" />
@@ -92,17 +92,17 @@
                         </Border>
 
                         <VerticalStackLayout
-                            Spacing="12"
+                            Spacing="{StaticResource UiSpaceCompact}"
                             BindableLayout.ItemsSource="{Binding PhaseEditOptions}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="cycleModels:CyclePhaseOptionItem">
                                 <Border
                                     BackgroundColor="{Binding BackgroundColor}"
-                                    StrokeShape="RoundRectangle 14"
+                                    StrokeShape="{StaticResource UiRoundRectangleRadius14}"
                                     Stroke="{Binding TextColor}"
-                                    StrokeThickness="0"
-                                    Padding="16,14"
-                                    MinimumHeightRequest="60"
+                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                    Padding="{StaticResource UiInsets16_14}"
+                                    MinimumHeightRequest="{StaticResource UiDimension60}"
                                     SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_DatePhaseModal_SelectPhaseFormat}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -114,42 +114,42 @@
                                             TargetType="Border"
                                             Binding="{Binding IsSelected}"
                                             Value="True">
-                                            <Setter Property="StrokeThickness" Value="1.5" />
+                                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
                                         </DataTrigger>
                                     </Border.Triggers>
 
                                     <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, *, Auto"
-                                          ColumnSpacing="12" RowSpacing="3">
+                                          ColumnSpacing="{StaticResource UiSpaceCompact}" RowSpacing="{StaticResource UiSpacing3}">
                                         <sharedControls:PhaseVisualView
                                             Grid.RowSpan="2"
                                             Source="{Binding IconSource}"
-                                            WidthRequest="34"
-                                            HeightRequest="34"
+                                            WidthRequest="{StaticResource UiDimension34}"
+                                            HeightRequest="{StaticResource UiDimension34}"
                                             VerticalOptions="Center" />
 
                                         <Label
                                             Grid.Column="1"
                                             Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
                                             TextColor="{Binding TextColor}"
-                                            FontSize="15"
-                                            FontAttributes="Bold" />
+                                            FontSize="{StaticResource UiFontSize15}"
+                                            FontAttributes="{StaticResource UiFontAttributesBold}" />
                                         <Label
                                             Grid.Row="1"
                                             Grid.Column="1"
                                             Text="{Binding Description, Converter={StaticResource LocalizedStringConverter}}"
                                             TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                            FontSize="13"
+                                            FontSize="{StaticResource UiFontSize13}"
                                             LineBreakMode="WordWrap" />
 
                                         <Border
                                             Grid.Column="2"
                                             Grid.RowSpan="2"
-                                            WidthRequest="26"
-                                            HeightRequest="26"
-                                            StrokeShape="RoundRectangle 13"
+                                            WidthRequest="{StaticResource UiDimension26}"
+                                            HeightRequest="{StaticResource UiDimension26}"
+                                            StrokeShape="{StaticResource UiRoundRectangleRadius13}"
                                             Stroke="{Binding TextColor}"
-                                            StrokeThickness="1.4"
-                                            BackgroundColor="Transparent"
+                                            StrokeThickness="{StaticResource UiStrokeWidth1_4}"
+                                            BackgroundColor="{StaticResource Transparent}"
                                             VerticalOptions="Center">
                                             <Border.Triggers>
                                                 <DataTrigger
@@ -162,8 +162,8 @@
                                             <Label
                                                 Text="{loc:LocalizedText Cycle_DatePhaseModal_Checkmark}"
                                                 TextColor="{StaticResource White}"
-                                                FontSize="13"
-                                                FontAttributes="Bold"
+                                                FontSize="{StaticResource UiFontSize13}"
+                                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                                 HorizontalOptions="Center"
                                                 VerticalOptions="Center"
                                                 IsVisible="{Binding IsSelected}" />
@@ -179,11 +179,11 @@
 
                 <Grid
                     Grid.Row="2"
-                    Padding="20,12,20,20">
+                    Padding="{StaticResource UiInsets20_12_20_20}">
                     <Grid
                         IsVisible="{Binding HasPhaseJumpWarning}"
                         ColumnDefinitions="*, *"
-                        ColumnSpacing="10">
+                        ColumnSpacing="{StaticResource UiSpacing10}">
                         <Button
                             Text="{loc:LocalizedText Cycle_DatePhaseModal_UseNextPhaseButton}"
                             Command="{Binding UseSuggestedPhaseCommand}"
