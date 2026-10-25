@@ -11,9 +11,7 @@
     <ContentView.Resources>
         <RoundRectangle x:Key="InjuryChoiceShape" CornerRadius="14" />
         <x:Double x:Key="InjuryChoiceMinimumHeight">62</x:Double>
-        <Style x:Key="InjuryChoiceCard" TargetType="Border">
-            <Setter Property="StrokeShape" Value="{StaticResource InjuryChoiceShape}" />
-            <Setter Property="StrokeThickness" Value="0" />
+        <Style x:Key="InjuryChoiceCard" TargetType="Border" BasedOn="{StaticResource SurfaceTile}">
             <Setter Property="Padding" Value="14,10" />
             <Setter Property="MinimumHeightRequest" Value="{StaticResource InjuryChoiceMinimumHeight}" />
             <Setter Property="HorizontalOptions" Value="Fill" />

@@ -124,13 +124,7 @@
                 <!-- Step indicator + progress bar -->
                 <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="8">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource QuizStepActionSpacing}">
-                        <Border
-                            HorizontalOptions="Start"
-                            VerticalOptions="Center"
-                            Padding="12,5"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 999"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
+                        <Border Style="{StaticResource PillBadge}" VerticalOptions="Center">
                             <Label
                                 Text="{loc:LocalizedText Onboarding_Quiz_StepTwoOfTwo}"
                                 Style="{StaticResource EyebrowLabel}"
@@ -157,13 +151,7 @@
                             HeightRequest="6"
                             VerticalOptions="Center"
                             SemanticProperties.Description="{Binding ProgressText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_QuizProgressValue}" />
-                        <Border
-                            Grid.Column="1"
-                            Padding="10,4"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 999"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                            VerticalOptions="Center">
+                        <Border Grid.Column="1" Style="{StaticResource PillBadge}" VerticalOptions="Center">
                             <Label
                                 Text="{Binding ProgressText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource AccentLabel}"

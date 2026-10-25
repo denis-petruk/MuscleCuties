@@ -274,6 +274,21 @@
         </Setter>
     </Style>
 
+    <Style x:Key="PillBadge" TargetType="Border">
+        <Setter Property="HorizontalOptions" Value="Start" />
+        <Setter Property="Padding" Value="10,5" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="999" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource AccentSurface},
+                                        Dark={StaticResource Gray900}}" />
+    </Style>
+
     <Style x:Key="ModalSurface" TargetType="Border" BasedOn="{StaticResource CardPrimary}">
         <Setter Property="Padding" Value="0" />
         <Setter Property="MaximumWidthRequest" Value="560" />
@@ -580,6 +595,7 @@
         <Setter Property="FontSize" Value="16" />
         <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
         <Setter Property="MinimumHeightRequest" Value="52" />
+        <Setter Property="HeightRequest" Value="52" />
         <Setter Property="HorizontalOptions" Value="Fill" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
@@ -645,58 +661,19 @@
     <Style x:Key="TextActionButton" TargetType="Button" BasedOn="{StaticResource ButtonLink}" />
     <Style x:Key="QuietButton" TargetType="Button" BasedOn="{StaticResource ButtonLink}" />
 
-    <Style x:Key="Button" TargetType="Button">
-        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
-        <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
-    </Style>
-
-    <Style x:Key="WorkoutPrimaryActionButton" TargetType="Button" BasedOn="{StaticResource Button}">
+    <Style x:Key="ButtonPrimary" TargetType="Button">
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource ActionSurfaceDark}}" />
+                Value="{AppThemeBinding Light={StaticResource PrimaryDark},
+                                        Dark={StaticResource ActionSurfaceDark}}" />
         <Setter Property="TextColor"
-                Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource TextPrimary}}" />
-        <Setter Property="FontSize" Value="{StaticResource WorkoutPrimaryActionFontSize}" />
+                Value="{AppThemeBinding Light={StaticResource White},
+                                        Dark={StaticResource TextPrimary}}" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="MinimumHeightRequest" Value="{StaticResource WorkoutPrimaryActionHeight}" />
-        <Setter Property="VisualStateManager.VisualStateGroups">
-            <VisualStateGroupList>
-                <VisualStateGroup x:Name="CommonStates">
-                    <VisualState x:Name="Normal" />
-                    <VisualState x:Name="Pressed">
-                        <VisualState.Setters>
-                            <Setter Property="BackgroundColor"
-                                    Value="{AppThemeBinding Light={StaticResource ActionPressedLight}, Dark={StaticResource SecondaryDarkText}}" />
-                        </VisualState.Setters>
-                    </VisualState>
-                    <VisualState x:Name="Disabled">
-                        <VisualState.Setters>
-                            <Setter Property="BackgroundColor"
-                                    Value="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}" />
-                            <Setter Property="TextColor"
-                                    Value="{AppThemeBinding Light={StaticResource DisabledTextLight}, Dark={StaticResource DisabledTextDark}}" />
-                        </VisualState.Setters>
-                    </VisualState>
-                </VisualStateGroup>
-            </VisualStateGroupList>
-        </Setter>
-    </Style>
-
-    <Style x:Key="ButtonSecondary" TargetType="Button">
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource CardSurface},
-                                        Dark={StaticResource CardSurfaceDark}}" />
-        <Setter Property="TextColor"
-                Value="{AppThemeBinding Light={StaticResource TextPrimary},
-                                        Dark={StaticResource TextPrimaryDark}}" />
-        <Setter Property="BorderColor"
-                Value="{AppThemeBinding Light={StaticResource InputStroke},
-                                        Dark={StaticResource InputStrokeDark}}" />
-        <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="16" />
-        <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
         <Setter Property="MinimumHeightRequest" Value="52" />
+        <Setter Property="HeightRequest" Value="52" />
         <Setter Property="HorizontalOptions" Value="Fill" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
@@ -705,8 +682,55 @@
                     <VisualState x:Name="Pressed">
                         <VisualState.Setters>
                             <Setter Property="BackgroundColor"
-                                    Value="{AppThemeBinding Light={StaticResource AccentSurface},
-                                                            Dark={StaticResource Gray900}}" />
+                                    Value="{AppThemeBinding Light={StaticResource ActionPressedLight},
+                                                            Dark={StaticResource SecondaryDarkText}}" />
+                            <Setter Property="Scale" Value="0.98" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor"
+                                    Value="{AppThemeBinding Light={StaticResource Gray300},
+                                                            Dark={StaticResource Gray800}}" />
+                            <Setter Property="TextColor"
+                                    Value="{AppThemeBinding Light={StaticResource DisabledTextLight},
+                                                            Dark={StaticResource DisabledTextDark}}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Button" TargetType="Button" BasedOn="{StaticResource ButtonPrimary}" />
+    <Style x:Key="WorkoutPrimaryActionButton" TargetType="Button" BasedOn="{StaticResource ButtonPrimary}" />
+
+    <Style x:Key="ButtonSecondary" TargetType="Button">
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource Gray100},
+                                        Dark={StaticResource Gray900}}" />
+        <Setter Property="TextColor"
+                Value="{AppThemeBinding Light={StaticResource PrimaryDark},
+                                        Dark={StaticResource SecondaryDarkText}}" />
+        <Setter Property="BorderColor" Value="Transparent" />
+        <Setter Property="BorderWidth" Value="0" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
+        <Setter Property="MinimumHeightRequest" Value="52" />
+        <Setter Property="HeightRequest" Value="52" />
+        <Setter Property="HorizontalOptions" Value="Fill" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor"
+                                    Value="{AppThemeBinding Light={StaticResource Gray200},
+                                                            Dark={StaticResource Gray800}}" />
+                            <Setter Property="Scale" Value="0.98" />
                         </VisualState.Setters>
                     </VisualState>
                     <VisualState x:Name="Disabled">
@@ -781,24 +805,34 @@
 
     <Style x:Key="InputContainer" TargetType="Border">
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource InputSurface},
-                                        Dark={StaticResource InputSurfaceDark}}" />
-        <Setter Property="Stroke"
-                Value="{AppThemeBinding Light={StaticResource InputStroke},
-                                        Dark={StaticResource InputStrokeDark}}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="Padding" Value="14,4" />
-        <Setter Property="MinimumHeightRequest" Value="56" />
+                Value="{AppThemeBinding Light={StaticResource Gray100},
+                                        Dark={StaticResource Gray900}}" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="16,0" />
+        <Setter Property="MinimumHeightRequest" Value="52" />
+        <Setter Property="HeightRequest" Value="52" />
         <Setter Property="StrokeShape">
             <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
+                <RoundRectangle CornerRadius="12" />
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <Style x:Key="PickerContainer" TargetType="Border" BasedOn="{StaticResource InputContainer}">
+        <Setter Property="Padding" Value="14,0" />
+    </Style>
+
+    <Style x:Key="EditorContainer" TargetType="Border" BasedOn="{StaticResource InputContainer}">
+        <Setter Property="HeightRequest" Value="-1" />
+        <Setter Property="MinimumHeightRequest" Value="96" />
+        <Setter Property="Padding" Value="16,12" />
     </Style>
 
     <Style x:Key="WorkoutMetricInput" TargetType="Border" BasedOn="{StaticResource InputContainer}">
         <Setter Property="Padding" Value="10,0" />
         <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="HeightRequest" Value="48" />
         <Setter Property="StrokeShape">
             <Setter.Value>
                 <RoundRectangle CornerRadius="12" />
