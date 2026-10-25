@@ -45,6 +45,27 @@ public sealed class OnboardingQuizValidationTests
         Xunit.Assert.Contains("SessionDuration", missingResult.ErrorMessage ?? string.Empty);
     }
 
+    [Xunit.Fact]
+    public void LegacyWorkoutDaysPerWeekCatalogIsValidWhenAvailableWeekdaysNotYetSeeded()
+    {
+        var (questions, responses) = BuildQuiz(CyclePhase.Follicular, includePhaseRatings: true);
+        var legacyQuestions = questions
+            .Select(q => q.QuestionType == QuizQuestionType.AvailableWeekdays
+                ? new QuizQuestionObservation(q.Id, "Training days per week?", QuizQuestionType.WorkoutDaysPerWeek,
+                    [new QuizAnswerObservation(14, 2), new QuizAnswerObservation(15, 3), new QuizAnswerObservation(16, 4), new QuizAnswerObservation(17, 5)])
+                : q)
+            .ToArray();
+        var legacyQuestionId = legacyQuestions.First(q => q.QuestionType == QuizQuestionType.WorkoutDaysPerWeek).Id;
+        var legacyResponses = responses
+            .Where(r => r.QuizQuestionId != legacyQuestionId)
+            .Append(new QuizResponseObservation(legacyQuestionId, 15))
+            .ToArray();
+
+        var result = OnboardingValidationRule.ValidateQuizResponses(legacyResponses, legacyQuestions);
+
+        Xunit.Assert.True(result.IsValid, result.ErrorMessage);
+    }
+
     private static (IReadOnlyList<QuizQuestionObservation> Questions,
         IReadOnlyList<QuizResponseObservation> Responses) BuildQuiz(
         CyclePhase phase, bool includePhaseRatings, bool includeSessionDuration = true)
