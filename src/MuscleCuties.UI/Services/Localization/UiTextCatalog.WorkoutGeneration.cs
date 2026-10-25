@@ -4,6 +4,11 @@ public static partial class UiTextCatalog
 {
     static partial void RegisterWorkoutGenerationStrings()
     {
+        English["Workout_Generation_PlanSetupBadge"] = "PLAN SETUP";
+        English["Workout_Generation_TimingBadge"] = "SESSION TIMING";
+        English["Workout_Generation_RecentHistoryBadge"] = "RECENT HISTORY";
+        English["Workout_Generation_ActivityEvidenceBadge"] = "ACTIVITY DETAILS";
+        English["Workout_Generation_PreviewBadge"] = "PLAN PREVIEW";
         English["Workout_Generation_Title"] = "Build a new workout plan";
         English["Workout_Generation_Intro"] = "Review a draft before it replaces your current plan. Your plan stays unchanged until you choose Apply plan.";
         English["Workout_Generation_Open"] = "Build a new plan";

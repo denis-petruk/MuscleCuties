@@ -4,6 +4,11 @@ internal static partial class RussianUiText
 {
     static partial void RegisterWorkoutGenerationStrings()
     {
+        Values["Workout_Generation_PlanSetupBadge"] = "НАСТРОЙКА ПЛАНА";
+        Values["Workout_Generation_TimingBadge"] = "ВРЕМЯ ТРЕНИРОВКИ";
+        Values["Workout_Generation_RecentHistoryBadge"] = "НЕДАВНЯЯ ИСТОРИЯ";
+        Values["Workout_Generation_ActivityEvidenceBadge"] = "ДЕТАЛИ АКТИВНОСТИ";
+        Values["Workout_Generation_PreviewBadge"] = "ПРЕДПРОСМОТР ПЛАНА";
         Values["Workout_Generation_Title"] = "Составить новый план тренировок";
         Values["Workout_Generation_Intro"] = "Сначала проверьте черновик. Текущий план не изменится, пока вы не выберете «Применить план».";
         Values["Workout_Generation_Open"] = "Составить новый план";
