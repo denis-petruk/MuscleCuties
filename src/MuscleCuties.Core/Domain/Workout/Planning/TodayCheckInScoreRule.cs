@@ -58,7 +58,7 @@ public sealed record CheckInScoreResult(
 public static class TodayCheckInScoreRule
 {
     public const string RulesetVersion = StrengthPlanPreviewRule.RulesetVersion;
-    public static bool ScoreDisplayEnabled => false;
+    public static bool ScoreDisplayEnabled => true;
     public const int ReadinessScaleMinimum = 1;
     public const int ReadinessScaleMaximum = 5;
     public const int ReadinessScoreMaximum = 100;
