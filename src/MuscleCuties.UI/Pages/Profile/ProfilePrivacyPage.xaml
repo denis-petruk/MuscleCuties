@@ -25,60 +25,65 @@
               RowSpacing="{StaticResource PrivacySectionSpacing}"
               MaximumWidthRequest="{StaticResource PrivacyPageMaximumWidth}"
               RowDefinitions="Auto,Auto,Auto,Auto">
-            <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource PrivacyTextSpacing}">
+            <Grid Grid.Row="0" ColumnDefinitions="44,*" ColumnSpacing="8">
                 <ImageButton x:Name="BackButton"
                              Source="nav_back.png"
                              BackgroundColor="Transparent"
-                             WidthRequest="{StaticResource PrivacyTouchTarget}"
-                             HeightRequest="{StaticResource PrivacyTouchTarget}"
-                             MinimumWidthRequest="{StaticResource PrivacyTouchTarget}"
-                             MinimumHeightRequest="{StaticResource PrivacyTouchTarget}"
-                             Padding="{StaticResource PrivacyBackPadding}"
+                             WidthRequest="44"
+                             HeightRequest="44"
+                             MinimumWidthRequest="44"
+                             MinimumHeightRequest="44"
+                             Padding="10"
+                             Aspect="AspectFit"
                              Clicked="OnBackClicked"
                              SemanticProperties.Description="Back to Profile" />
                 <Label x:Name="PageTitle" Grid.Column="1" Text="Privacy"
                        Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
             </Grid>
 
-            <Grid Grid.Row="1" RowDefinitions="Auto,Auto"
-                  RowSpacing="{StaticResource PrivacyTextSpacing}">
-                <Label x:Name="SummaryTitle" Text="Your data, at a glance"
-                       Style="{StaticResource SectionTitle}" FontSize="{StaticResource PrivacyHeadingFontSize}" />
-                <Label x:Name="SummaryBody" Grid.Row="1"
-                       Text="Your account and health records are stored in MuscleCuties services."
-                       Style="{StaticResource BodyLabel}" FontSize="{StaticResource PrivacyBodyFontSize}" />
-            </Grid>
+            <Border Grid.Row="1" Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="8">
+                    <Label x:Name="SummaryTitle" Text="Your data, at a glance"
+                           Style="{StaticResource SectionTitle}" />
+                    <Label x:Name="SummaryBody"
+                           Text="Your account and health records are stored in MuscleCuties services."
+                           Style="{StaticResource BodyLabel}" />
+                </VerticalStackLayout>
+            </Border>
 
-            <Grid Grid.Row="2" RowDefinitions="Auto,Auto,Auto,Auto"
-                  RowSpacing="{StaticResource PrivacyItemSpacing}">
-                <Label x:Name="ServicesTitle" Text="Other services"
-                       Style="{StaticResource SectionTitle}" FontSize="{StaticResource PrivacyHeadingFontSize}" />
-                <Label x:Name="EmailBody" Grid.Row="1"
-                       Text="Verification emails use our email provider."
-                       Style="{StaticResource BodyLabel}" FontSize="{StaticResource PrivacyBodyFontSize}" />
-                <Label x:Name="FoodBody" Grid.Row="2"
-                       Text="Food search may send generic names to USDA, never your logs."
-                       Style="{StaticResource BodyLabel}" FontSize="{StaticResource PrivacyBodyFontSize}" />
-                <Label x:Name="HealthBody" Grid.Row="3"
-                       Text="Apple Health steps are read only with your permission."
-                       Style="{StaticResource BodyLabel}" FontSize="{StaticResource PrivacyBodyFontSize}" />
-            </Grid>
+            <Border Grid.Row="2" Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="12">
+                    <Label x:Name="ServicesTitle" Text="Other services"
+                           Style="{StaticResource SectionTitle}" />
+                    <Label x:Name="EmailBody"
+                           Text="Verification emails use our email provider."
+                           Style="{StaticResource BodyLabel}" />
+                    <BoxView />
+                    <Label x:Name="FoodBody"
+                           Text="Food search may send generic names to USDA, never your logs."
+                           Style="{StaticResource BodyLabel}" />
+                    <BoxView />
+                    <Label x:Name="HealthBody"
+                           Text="Apple Health steps are read only with your permission."
+                           Style="{StaticResource BodyLabel}" />
+                </VerticalStackLayout>
+            </Border>
 
-            <Grid Grid.Row="3" RowDefinitions="Auto,Auto,Auto"
-                  RowSpacing="{StaticResource PrivacyTextSpacing}">
-                <Label x:Name="ChoiceTitle" Text="Your choices"
-                       Style="{StaticResource SectionTitle}" FontSize="{StaticResource PrivacyHeadingFontSize}" />
-                <Label x:Name="ChoiceBody" Grid.Row="1"
-                       Text="You can delete your account and local data from Profile."
-                       Style="{StaticResource BodyLabel}" FontSize="{StaticResource PrivacyBodyFontSize}" />
-                <Button x:Name="PolicyButton" Grid.Row="2"
-                        Text="Read privacy policy"
-                        Style="{StaticResource ButtonSecondary}"
-                        Clicked="OnPrivacyPolicyClicked"
-                        HorizontalOptions="Start"
-                        MinimumHeightRequest="{StaticResource PrivacyTouchTarget}"
-                        SemanticProperties.Description="Open the full privacy policy" />
-            </Grid>
+            <Border Grid.Row="3" Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="14">
+                    <Label x:Name="ChoiceTitle" Text="Your choices"
+                           Style="{StaticResource SectionTitle}" />
+                    <Label x:Name="ChoiceBody"
+                           Text="You can delete your account and local data from Profile."
+                           Style="{StaticResource BodyLabel}" />
+                    <Button x:Name="PolicyButton"
+                            Text="Read privacy policy"
+                            Style="{StaticResource ButtonSecondary}"
+                            Clicked="OnPrivacyPolicyClicked"
+                            HorizontalOptions="Fill"
+                            SemanticProperties.Description="Open the full privacy policy" />
+                </VerticalStackLayout>
+            </Border>
         </Grid>
     </ScrollView>
 </ContentPage>
