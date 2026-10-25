@@ -185,6 +185,15 @@ public static class OnboardingValidationRule
                     return OnboardingValidationResult.Failure("Choose between 2 and 7 available weekdays.");
             }
 
+            if (question.QuestionType == QuizQuestionType.WorkoutDaysPerWeek)
+            {
+                var selectedAnswer = question.Answers.FirstOrDefault(
+                    answer => answer.Id == selected[0].QuizAnswerId);
+                if (selectedAnswer is null ||
+                    selectedAnswer.MappedValue is < WorkoutPreferencesRule.MinimumDaysPerWeek or > WorkoutPreferencesRule.MaximumDaysPerWeek)
+                    return OnboardingValidationResult.Failure("Choose between 2 and 7 available weekdays.");
+            }
+
             if (question.QuestionType == QuizQuestionType.SessionDuration)
             {
                 var selectedAnswer = question.Answers.FirstOrDefault(
@@ -204,12 +213,16 @@ public static class OnboardingValidationRule
         IReadOnlyList<QuizQuestionObservation> questions,
         Dictionary<int, List<QuizResponseObservation>> responsesByQuestion)
     {
+        var scheduleQuestionType = questions.Any(x => x.QuestionType == QuizQuestionType.AvailableWeekdays)
+            ? QuizQuestionType.AvailableWeekdays
+            : QuizQuestionType.WorkoutDaysPerWeek;
+
         ReadOnlySpan<QuizQuestionType> requiredTypes =
         [
             QuizQuestionType.CurrentCyclePhase,
             QuizQuestionType.Goal,
             QuizQuestionType.ExperienceLevel,
-            QuizQuestionType.AvailableWeekdays,
+            scheduleQuestionType,
             QuizQuestionType.DietaryPreference,
             QuizQuestionType.SessionDuration,
             QuizQuestionType.Equipment,

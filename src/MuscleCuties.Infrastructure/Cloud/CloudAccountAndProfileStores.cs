@@ -4,6 +4,7 @@ using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Profile;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Services.Auth;
@@ -378,16 +379,40 @@ public sealed class CloudOnboardingQuizStore(
     private const string RegistrationConflictCode = "registrationConflict";
     private const string PrivacyConsentRequiredCode = "privacyConsentRequired";
     private const string ConflictingCycleLengthsCode = "conflictingCycleLengths";
+    private const string AvailableWeekdaysQuestionPrompt = "Which days of the week are you available to train?";
+    private const int SyntheticWeekdayAnswerIdBase = 10_000;
+    private const int DefaultWorkoutDaysPerWeek = 3;
+    private const int MinimumWorkoutDaysPerWeek = 2;
+    private const int MaximumWorkoutDaysPerWeek = 7;
+
+    private static readonly (string Label, int OrderIndex, DayOfWeek Day)[] CanonicalWeekdayOptions =
+    [
+        ("Monday", 1, DayOfWeek.Monday),
+        ("Tuesday", 2, DayOfWeek.Tuesday),
+        ("Wednesday", 3, DayOfWeek.Wednesday),
+        ("Thursday", 4, DayOfWeek.Thursday),
+        ("Friday", 5, DayOfWeek.Friday),
+        ("Saturday", 6, DayOfWeek.Saturday),
+        ("Sunday", 7, DayOfWeek.Sunday)
+    ];
+
+    private IReadOnlyList<QuizQuestionDto>? _rawServerQuestions;
+    private IReadOnlyList<QuizQuestionDto>? _cachedClientQuestions;
 
     public async Task<IReadOnlyList<QuizQuestionDto>> LoadQuestionsAsync(bool refresh,
         CancellationToken cancellationToken)
     {
+        if (!refresh && _cachedClientQuestions is { Count: > 0 })
+            return _cachedClientQuestions;
+
         var response = await apiClient.GetAsync<QuizQuestionDto[]>(RegistrationQuizRoute,
             cancellationToken).ConfigureAwait(false);
         if (response.Status != BackendApiStatus.Success || response.Data is not { Length: > 0 })
             throw new InvalidOperationException(RegistrationQuizUnavailableMessage);
 
-        return response.Data;
+        _rawServerQuestions = response.Data;
+        _cachedClientQuestions = UpgradeLegacyScheduleQuestionIfNeeded(response.Data);
+        return _cachedClientQuestions;
     }
 
     public async Task<QuizCommitResult> CommitAsync(
@@ -405,6 +430,9 @@ public sealed class CloudOnboardingQuizStore(
                 string.IsNullOrWhiteSpace(reg.PrivacyNoticeVersion) ||
                 reg.PrivacyConsentAcceptedAtUtc is null)
                 return new QuizCommitResult(false, true, "Complete email verification before creating an account.");
+
+            var (normalizedSelections, resolvedWorkoutDaysPerWeek) =
+                NormalizeSelectionsForServerCatalog(selections, _rawServerQuestions);
 
             var request = new
             {
@@ -425,11 +453,14 @@ public sealed class CloudOnboardingQuizStore(
                     birthDate = DateOnly.FromDateTime(profile.BirthDate),
                     heightCm = (decimal)profile.Height,
                     weightKg = (decimal)profile.Weight,
+                    workoutDaysPerWeek = resolvedWorkoutDaysPerWeek,
                     cycleLengthDays = profile.CycleLength,
                     selectedActivityTypes = profile.SelectedActivities.Select(a => (int)a).ToList(),
                     useMetricSystem = profile.UseMetricSystem
                 },
-                quizResponses = selections.Select(s => new { questionId = s.QuestionId, answerId = s.AnswerId }).ToList()
+                quizResponses = normalizedSelections
+                    .Select(s => new { questionId = s.QuestionId, answerId = s.AnswerId })
+                    .ToList()
             };
 
             var response = await apiClient.SendMutationAsync<object, JsonElement>(
@@ -455,6 +486,83 @@ public sealed class CloudOnboardingQuizStore(
 
         return new QuizCommitResult(false, false,
             "Your registration session expired. Please start again.");
+    }
+
+    private static IReadOnlyList<QuizQuestionDto> UpgradeLegacyScheduleQuestionIfNeeded(
+        IReadOnlyList<QuizQuestionDto> serverQuestions)
+    {
+        if (serverQuestions.Any(q => q.QuestionType == QuizQuestionType.AvailableWeekdays) ||
+            serverQuestions.All(q => q.QuestionType != QuizQuestionType.WorkoutDaysPerWeek))
+            return serverQuestions;
+
+        var weekdayAnswers = CanonicalWeekdayOptions
+            .Select(option => new QuizAnswerDto(
+                SyntheticWeekdayAnswerIdBase + option.OrderIndex,
+                option.Label,
+                option.OrderIndex,
+                (int)option.Day))
+            .ToArray();
+
+        return serverQuestions
+            .Select(question => question.QuestionType == QuizQuestionType.WorkoutDaysPerWeek
+                ? new QuizQuestionDto(
+                    question.Id,
+                    AvailableWeekdaysQuestionPrompt,
+                    question.OrderIndex,
+                    QuizQuestionType.AvailableWeekdays,
+                    weekdayAnswers)
+                : question)
+            .ToArray();
+    }
+
+    private static (IReadOnlyList<QuizSelectionDto> Selections, int WorkoutDaysPerWeek)
+        NormalizeSelectionsForServerCatalog(
+            IReadOnlyList<QuizSelectionDto> selections,
+            IReadOnlyList<QuizQuestionDto>? rawServerQuestions)
+    {
+        if (rawServerQuestions is null || rawServerQuestions.Count == 0)
+            return (selections, DefaultWorkoutDaysPerWeek);
+
+        var nativeWeekdaysQuestion = rawServerQuestions.FirstOrDefault(
+            q => q.QuestionType == QuizQuestionType.AvailableWeekdays);
+        if (nativeWeekdaysQuestion is not null)
+        {
+            var count = selections.Count(s => s.QuestionId == nativeWeekdaysQuestion.Id);
+            var clamped = Math.Clamp(
+                count > 0 ? count : DefaultWorkoutDaysPerWeek,
+                MinimumWorkoutDaysPerWeek,
+                MaximumWorkoutDaysPerWeek);
+            return (selections, clamped);
+        }
+
+        var legacyDaysQuestion = rawServerQuestions.FirstOrDefault(
+            q => q.QuestionType == QuizQuestionType.WorkoutDaysPerWeek);
+        if (legacyDaysQuestion is null || legacyDaysQuestion.Answers.Count == 0)
+            return (selections, DefaultWorkoutDaysPerWeek);
+
+        var scheduleSelections = selections
+            .Where(s => s.QuestionId == legacyDaysQuestion.Id)
+            .ToArray();
+
+        var directServerAnswer = scheduleSelections.Length == 1
+            ? legacyDaysQuestion.Answers.FirstOrDefault(a => a.Id == scheduleSelections[0].AnswerId)
+            : null;
+
+        var requestedDays = directServerAnswer?.MappedValue
+                            ?? (scheduleSelections.Length > 0 ? scheduleSelections.Length : DefaultWorkoutDaysPerWeek);
+        var clampedWorkoutDays = Math.Clamp(requestedDays, MinimumWorkoutDaysPerWeek, MaximumWorkoutDaysPerWeek);
+
+        var matchedAnswer = directServerAnswer ?? legacyDaysQuestion.Answers
+            .OrderBy(a => Math.Abs(a.MappedValue - clampedWorkoutDays))
+            .ThenBy(a => a.OrderIndex)
+            .First();
+
+        var normalized = selections
+            .Where(s => s.QuestionId != legacyDaysQuestion.Id)
+            .Append(new QuizSelectionDto(legacyDaysQuestion.Id, matchedAnswer.Id))
+            .ToArray();
+
+        return (normalized, clampedWorkoutDays);
     }
 
     private static string GetRegistrationFailureMessage(BackendApiStatus status, string? errorCode)
