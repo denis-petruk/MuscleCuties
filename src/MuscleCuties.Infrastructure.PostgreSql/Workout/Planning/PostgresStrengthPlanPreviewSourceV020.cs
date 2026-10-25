@@ -14,7 +14,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
 {
     public Task<StrengthPlanPreviewSourceV020?> LoadAsync(Guid userId,
         CancellationToken cancellationToken) =>
-        dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        dbContext.Database.CreateExecutionStrategy().ExecuteAsync<StrengthPlanPreviewSourceV020?>(async () =>
         {
             dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken)
@@ -25,14 +25,14 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             var profile = await dbContext.UserProfiles.AsNoTracking()
                 .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken)
                 .ConfigureAwait(false);
-            if (profile is null || !Enum.TryParse<UserGoal>(profile.Goal, true, out var goal) ||
-                !Enum.IsDefined(goal) ||
-                !Enum.TryParse<Equipment>(profile.EquipmentLevel, true, out var equipment) ||
-                !Enum.IsDefined(equipment))
-            {
-                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-                return null;
-            }
+            var goal = Enum.TryParse<UserGoal>(profile?.Goal, true, out var parsedGoal) &&
+                Enum.IsDefined(parsedGoal)
+                ? parsedGoal
+                : UserGoal.MuscleTone;
+            var equipment = Enum.TryParse<Equipment>(profile?.EquipmentLevel, true, out var parsedEquipment) &&
+                Enum.IsDefined(parsedEquipment)
+                ? parsedEquipment
+                : Equipment.FullGym;
 
             var definitions = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
                 .Include(row => row.MuscleContributions)
@@ -103,14 +103,14 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                 reviewedSlots.AllowedIds,
                 reviewedSlots.Conditions)
             {
-                SelectedActivityTypes = ParseActivityTypes(profile.PreferredWorkoutActivityTypes),
-                ExcludedExerciseIds = ParseExcludedExerciseIds(profile.ExcludedStrengthExerciseIdsJson),
-                AvailableWeekdays = ParseAvailableWeekdays(profile.AvailableWorkoutWeekdaysJson),
-                ActivitySessionDurationsMinutes = ParseActivityDurations(profile.ActivitySessionDurationsJson),
+                SelectedActivityTypes = ParseActivityTypes(profile?.PreferredWorkoutActivityTypes),
+                ExcludedExerciseIds = ParseExcludedExerciseIds(profile?.ExcludedStrengthExerciseIdsJson),
+                AvailableWeekdays = ParseAvailableWeekdays(profile?.AvailableWorkoutWeekdaysJson),
+                ActivitySessionDurationsMinutes = ParseActivityDurations(profile?.ActivitySessionDurationsJson),
                 RequestedSessionsPerWeek = ParseActivityFrequencies(
-                    profile.RequestedActivitySessionsPerWeekJson),
+                    profile?.RequestedActivitySessionsPerWeekJson),
                 ProfileTrainingExperience = Enum.TryParse<TrainingExperienceLevel>(
-                    profile.TrainingExperienceLevel, true, out var trainingExperience) &&
+                    profile?.TrainingExperienceLevel, true, out var trainingExperience) &&
                     Enum.IsDefined(trainingExperience) ? trainingExperience : null,
                 GoalPriorityByExerciseId = goalPriorityByExerciseId
             };

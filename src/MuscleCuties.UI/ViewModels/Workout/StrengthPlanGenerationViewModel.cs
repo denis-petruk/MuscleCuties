@@ -146,17 +146,10 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
         try
         {
             var preferences = await _preferences.LoadAsync();
-            if (preferences is null)
-            {
-                _availableWeekdays = [];
-                UpdateSelectedProfileActivities([]);
-                Activities.Clear();
-                SelectedActivity = null;
-                NotifyAvailabilityChanged();
-                ClearPreview(clearStatus: false);
-                StatusMessage = UiTextCatalog.Get("Workout_Generation_MissingPreferences");
-                return;
-            }
+            preferences ??= new WorkoutPreferencesDto(
+                ActivityTypes: [(int)WorkoutActivityDto.GeneralStrength],
+                AvailableWeekdays: [(int)DayOfWeek.Monday, (int)DayOfWeek.Wednesday, (int)DayOfWeek.Friday],
+                ActivitySessionDurationsMinutes: new Dictionary<int, int> { [(int)WorkoutActivityDto.GeneralStrength] = 45 });
 
             var weekdays = NormalizeWeekdays(preferences.AvailableWeekdays);
             if (weekdays.Length < WorkoutPreferencesConstraints.MinimumAvailableWeekdays)
@@ -281,11 +274,12 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
         try
         {
             var preferences = await _preferences.LoadAsync();
-            if (preferences is null)
-            {
-                StatusMessage = UiTextCatalog.Get("Workout_Generation_MissingPreferences");
-                return;
-            }
+            preferences ??= new WorkoutPreferencesDto(
+                ActivityTypes: [(int)selectedActivity.Activity],
+                AvailableWeekdays: _availableWeekdays.Length >= WorkoutPreferencesConstraints.MinimumAvailableWeekdays
+                    ? _availableWeekdays.Select(d => (int)d).ToList()
+                    : [(int)DayOfWeek.Monday, (int)DayOfWeek.Wednesday, (int)DayOfWeek.Friday],
+                ActivitySessionDurationsMinutes: new Dictionary<int, int> { [(int)selectedActivity.Activity] = 45 });
 
             var weekdays = NormalizeWeekdays(preferences.AvailableWeekdays);
             if (weekdays.Length < WorkoutPreferencesConstraints.MinimumAvailableWeekdays)
