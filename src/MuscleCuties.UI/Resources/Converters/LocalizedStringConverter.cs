@@ -11,8 +11,11 @@ public sealed class LocalizedStringConverter : IValueConverter, IMarkupExtension
     {
         return value switch
         {
+            string text when UiTextCatalog.HasKey(text) => UiTextCatalog.Get(text),
             string text => UiTextCatalog.Translate(text),
-            Enum option => UiTextCatalog.Translate(option.ToString()),
+            Enum option => UiTextCatalog.HasKey(option.ToString())
+                ? UiTextCatalog.Get(option.ToString())
+                : UiTextCatalog.Translate(option.ToString()),
             _ => value
         };
     }

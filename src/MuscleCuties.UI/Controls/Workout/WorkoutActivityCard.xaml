@@ -92,7 +92,10 @@
                     Command="{Binding ToggleOptionalCommand, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}"
                     CommandParameter="{Binding CommandParameter, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}"
                     IsEnabled="{Binding CanMarkOptional}"
-                    HorizontalOptions="Start" Padding="8,2" MinimumHeightRequest="36"
+                    IsVisible="{Binding CanMarkOptional}"
+                    Style="{StaticResource ButtonSecondary}"
+                    FontSize="13"
+                    HorizontalOptions="Start" Padding="10,2" MinimumHeightRequest="32" HeightRequest="32"
                     SemanticProperties.Hint="{loc:LocalizedText Workout_Readiness_OptionalSessionHint}" />
             <Button Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
                     Text="{Binding EasierAlternativeStatusText, Converter={StaticResource LocalizedStringConverter}}"
@@ -100,7 +103,9 @@
                     CommandParameter="{Binding CommandParameter, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}"
                     IsEnabled="{Binding CanMarkEasierAlternative}"
                     IsVisible="{Binding IsOptional}"
-                    HorizontalOptions="Start" Padding="8,2" MinimumHeightRequest="36"
+                    Style="{StaticResource ButtonSecondary}"
+                    FontSize="13"
+                    HorizontalOptions="Start" Padding="10,2" MinimumHeightRequest="32" HeightRequest="32"
                     SemanticProperties.Hint="{loc:LocalizedText Workout_Readiness_EasierAlternativeHint}" />
         </Grid>
     </Border>
