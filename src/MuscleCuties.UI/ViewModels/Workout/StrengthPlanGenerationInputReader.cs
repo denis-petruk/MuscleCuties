@@ -8,6 +8,11 @@ internal static class StrengthPlanGenerationInputReader
 {
     private const decimal MinimumAverageSessions = 0m;
     private const int NoElapsedDays = 0;
+    public const int DefaultConsistentWeeks = 24;
+    public const decimal DefaultAverageSessions = 3m;
+    public const int DefaultDaysSinceLastSession = 2;
+    public const int DefaultWarmupMinutes = 5;
+    public const int DefaultCooldownMinutes = 5;
 
     public static bool TryRead(
         WorkoutActivityDto? activity,
@@ -23,30 +28,52 @@ internal static class StrengthPlanGenerationInputReader
         out string failureMessageKey)
     {
         history = null!;
-        warmup = NoElapsedDays;
-        cooldown = NoElapsedDays;
+        warmup = DefaultWarmupMinutes;
+        cooldown = DefaultCooldownMinutes;
         failureMessageKey = string.Empty;
 
-        if (activity is null ||
-            !int.TryParse(consistentWeeks, NumberStyles.None, CultureInfo.InvariantCulture, out var weeks) ||
-            !decimal.TryParse(averageSessionsPerWeek, NumberStyles.AllowDecimalPoint,
-                CultureInfo.InvariantCulture, out var averageSessions) ||
-            averageSessions < MinimumAverageSessions)
+        if (activity is null)
         {
             failureMessageKey = "Workout_Generation_EnterExperience";
             return false;
         }
 
-        if (!int.TryParse(daysSinceLastSession, NumberStyles.None, CultureInfo.InvariantCulture,
-                out var daysAgo) ||
-            daysAgo < NoElapsedDays || daysAgo > localDate.DayNumber)
+        var weeks = DefaultConsistentWeeks;
+        if (!string.IsNullOrWhiteSpace(consistentWeeks) &&
+            (!int.TryParse(consistentWeeks, NumberStyles.None, CultureInfo.InvariantCulture, out weeks) || weeks < 0))
+        {
+            failureMessageKey = "Workout_Generation_EnterExperience";
+            return false;
+        }
+
+        var averageSessions = DefaultAverageSessions;
+        if (!string.IsNullOrWhiteSpace(averageSessionsPerWeek) &&
+            (!decimal.TryParse(averageSessionsPerWeek, NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture, out averageSessions) ||
+             averageSessions < MinimumAverageSessions))
+        {
+            failureMessageKey = "Workout_Generation_EnterExperience";
+            return false;
+        }
+
+        var daysAgo = DefaultDaysSinceLastSession;
+        if (!string.IsNullOrWhiteSpace(daysSinceLastSession) &&
+            (!int.TryParse(daysSinceLastSession, NumberStyles.None, CultureInfo.InvariantCulture, out daysAgo) ||
+             daysAgo < NoElapsedDays || daysAgo > localDate.DayNumber))
         {
             failureMessageKey = "Workout_Generation_EnterLastSession";
             return false;
         }
 
-        if (!int.TryParse(warmupMinutes, NumberStyles.None, CultureInfo.InvariantCulture, out warmup) ||
-            !int.TryParse(cooldownMinutes, NumberStyles.None, CultureInfo.InvariantCulture, out cooldown))
+        if (!string.IsNullOrWhiteSpace(warmupMinutes) &&
+            (!int.TryParse(warmupMinutes, NumberStyles.None, CultureInfo.InvariantCulture, out warmup) || warmup < 0))
+        {
+            failureMessageKey = "Workout_Generation_EnterSessionTiming";
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(cooldownMinutes) &&
+            (!int.TryParse(cooldownMinutes, NumberStyles.None, CultureInfo.InvariantCulture, out cooldown) || cooldown < 0))
         {
             failureMessageKey = "Workout_Generation_EnterSessionTiming";
             return false;

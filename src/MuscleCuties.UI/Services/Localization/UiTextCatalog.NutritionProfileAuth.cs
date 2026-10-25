@@ -484,9 +484,9 @@ public static partial class UiTextCatalog
         English["Profile_HealthSync_HealthImportIsUnavailableInThis"] = "Read step counts from Apple Health only when you choose to connect it.";
         English["Profile_HealthSync_MakePlanningLessBlind"] = "Make planning less blind";
         English["Profile_HealthSync_StepsSubtitle"] = "Apple Health steps";
-        English["Profile_HealthSync_StepsConsent"] = "Optional. Tap Connect steps to request read-only access to your step count. Steps can inform activity context and be included when you save a check-in to your account. We do not read other Health data or write to Apple Health.";
+        English["Profile_HealthSync_StepsConsent"] = "Read-only access to your daily steps for activity and readiness insights.";
         English["Profile_HealthSync_DisconnectSteps"] = "Disconnect and delete saved steps";
-        English["Profile_HealthSync_DisconnectExplanation"] = "Disconnect deletes this account's saved Health connection and step summary from this device. Previously saved check-ins remain. To revoke Apple Health permission too, use Health app settings.";
+        English["Profile_HealthSync_DisconnectExplanation"] = "Removes saved step summaries from this device.";
         English["Profile_HealthSync_RefreshSteps"] = "Refresh steps";
         English["Profile_HealthSync_ConnectSteps"] = "Connect steps";
         English["Profile_HealthSync_StepsRefreshed"] = "Step counts refreshed.";

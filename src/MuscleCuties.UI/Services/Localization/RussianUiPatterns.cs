@@ -41,7 +41,7 @@ internal static class RussianUiPatterns
         New("{0} available days / week", "Доступно дней в неделю: {0}"),
         New("This week · {0}", "Эта неделя · {0}"),
         New("{0} · Day {1} / {2}", "{0} · день {1} из {2}"),
-        New("{0} · Start tracking", "{0} · начните отслеживание"),
+        New("{0} · Phase selected", "{0} · фаза выбрана"),
         New("Phase focus · {0}", "Акцент фазы · {0}"),
         New("Today · {0}", "Сегодня · {0}"),
         New("Today {0}", "Сегодня · {0}"),

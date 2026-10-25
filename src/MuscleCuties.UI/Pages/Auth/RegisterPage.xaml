@@ -14,15 +14,19 @@
         <x:Double x:Key="PrivacyConsentSpacing">8</x:Double>
         <x:Double x:Key="PrivacyConsentTouchTargetSize">44</x:Double>
         <Thickness x:Key="PrivacyPolicyAlignmentInset">8,0,0,0</Thickness>
+        <Thickness x:Key="RegisterFooterPadding">24,8,24,12</Thickness>
+        <x:Double x:Key="RegisterFooterSpacing">12</x:Double>
+        <x:Double x:Key="RegisterPrimaryButtonHeight">52</x:Double>
     </ContentPage.Resources>
 
-    <ScrollView>
+    <Grid RowDefinitions="*,Auto">
+    <ScrollView Grid.Row="0" Orientation="Vertical" VerticalScrollBarVisibility="Always">
         <Grid
             Padding="24,36,24,32"
             HorizontalOptions="Fill"
             MaximumWidthRequest="520"
             RowSpacing="0"
-            RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+            RowDefinitions="Auto,Auto,Auto,Auto">
 
             <sharedControls:ThemeAwareBrandLogoImage
                 Grid.Row="0"
@@ -46,7 +50,7 @@
 
             <Grid
                 Grid.Row="3"
-                RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
                 RowSpacing="18">
                 <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="6">
                     <Label Text="{loc:LocalizedText Auth_Email}" Style="{StaticResource FormFieldLabel}" />
@@ -153,37 +157,39 @@
                         SemanticProperties.Description="{loc:LocalizedText Profile_Privacy_Policy}" />
                 </Grid>
 
-                <Button
-                    Grid.Row="6"
-                    Text="{loc:LocalizedText Auth_CreateAccount}"
-                    Command="{Binding RegisterCommand}"
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                    MinimumHeightRequest="52"
-                    SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreateYourAccount}" />
-
-                <ActivityIndicator
-                    Grid.Row="7"
-                    HorizontalOptions="Center"
-                    IsRunning="{Binding IsBusy}"
-                    IsVisible="{Binding IsBusy}"
-                    SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreatingAccountPleaseWait}" />
-
-                <Button
-                    Grid.Row="8"
-                    Style="{StaticResource PlatformAuthButton}"
-                    Text="{loc:LocalizedText Auth_SignInWithApple}"
-                    Command="{Binding SignInWithAppleCommand}"
-                    IsVisible="{Binding IsAppleSignInAvailable}"
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                    SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
             </Grid>
+        </Grid>
+    </ScrollView>
+    <VerticalStackLayout
+        Grid.Row="1"
+        Padding="{StaticResource RegisterFooterPadding}"
+        Spacing="{StaticResource RegisterFooterSpacing}"
+        HorizontalOptions="Fill"
+        MaximumWidthRequest="520">
+            <Button
+                Text="{loc:LocalizedText Auth_CreateAccount}"
+                Command="{Binding RegisterCommand}"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                MinimumHeightRequest="{StaticResource RegisterPrimaryButtonHeight}"
+                SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreateYourAccount}" />
 
+            <ActivityIndicator
+                HorizontalOptions="Center"
+                IsRunning="{Binding IsBusy}"
+                IsVisible="{Binding IsBusy}"
+                SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreatingAccountPleaseWait}" />
+
+            <Button
+                Style="{StaticResource PlatformAuthButton}"
+                Text="{loc:LocalizedText Auth_SignInWithApple}"
+                Command="{Binding SignInWithAppleCommand}"
+                IsVisible="{Binding IsAppleSignInAvailable}"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
             <Grid
-                Grid.Row="4"
                 ColumnDefinitions="Auto,Auto"
                 ColumnSpacing="4"
                 HorizontalOptions="Center"
-                Margin="0,24,0,0"
                 MinimumHeightRequest="44"
                 MinimumWidthRequest="44"
                 SemanticProperties.Description="{loc:LocalizedText Auth_Register_ReturnToLogin}"
@@ -196,6 +202,6 @@
                 <Label Grid.Column="1" Text="{loc:LocalizedText Auth_LogIn}" Style="{StaticResource AccentLabel}"
                        VerticalOptions="Center" />
             </Grid>
-        </Grid>
-    </ScrollView>
+    </VerticalStackLayout>
+    </Grid>
 </ContentPage>

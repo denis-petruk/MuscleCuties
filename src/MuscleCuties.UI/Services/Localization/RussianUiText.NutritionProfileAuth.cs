@@ -484,9 +484,9 @@ internal static partial class RussianUiText
         Values["Profile_HealthSync_HealthImportIsUnavailableInThis"] = "Количество шагов из Apple Health считывается только после вашего подключения.";
         Values["Profile_HealthSync_MakePlanningLessBlind"] = "Сделайте планирование менее слепым";
         Values["Profile_HealthSync_StepsSubtitle"] = "Шаги Apple Health";
-        Values["Profile_HealthSync_StepsConsent"] = "Необязательно. Нажмите «Подключить шаги», чтобы запросить доступ только для чтения количества шагов. Шаги могут учитываться как данные об активности и включаться в сохранённые в аккаунте ежедневные записи. Другие данные Здоровья не считываются; запись в Apple Health не выполняется.";
+        Values["Profile_HealthSync_StepsConsent"] = "Доступ только для чтения шагов для аналитики активности и готовности.";
         Values["Profile_HealthSync_DisconnectSteps"] = "Отключить и удалить сохранённые шаги";
-        Values["Profile_HealthSync_DisconnectExplanation"] = "При отключении с этого устройства удаляются подключение и сохранённая сводка шагов для этого аккаунта. Ранее сохранённые ежедневные записи остаются. Для отзыва разрешения также откройте настройки приложения «Здоровье».";
+        Values["Profile_HealthSync_DisconnectExplanation"] = "Удаляет сохраненные данные о шагах с этого устройства.";
         Values["Profile_HealthSync_RefreshSteps"] = "Обновить шаги";
         Values["Profile_HealthSync_ConnectSteps"] = "Подключить шаги";
         Values["Profile_HealthSync_StepsRefreshed"] = "Количество шагов обновлено.";

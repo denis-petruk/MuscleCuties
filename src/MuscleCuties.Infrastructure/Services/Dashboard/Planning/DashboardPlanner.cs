@@ -1,4 +1,3 @@
-using System.Globalization;
 using MuscleCuties.Core.Domain.Dashboard;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.UI.Workout;
@@ -209,21 +208,6 @@ public class DashboardPlanner : IDashboardPlanner
             >= 55 => "Needs care",
             _ => "Rest comes first"
         };
-    }
-
-    private static string BuildCycleInsightText(CyclePrediction prediction)
-    {
-        if (!prediction.HasActiveCycle)
-            return "Start tracking to personalize cycle predictions";
-
-        if (prediction.IsPeriodDue)
-            return "Period is predicted around now";
-
-        var nextPeriod = prediction.PredictedNextPeriodDate?.ToString("MMM d", CultureInfo.InvariantCulture);
-        var ovulation = prediction.PredictedOvulationDate?.ToString("MMM d", CultureInfo.InvariantCulture);
-        return nextPeriod is null
-            ? $"Day {prediction.CurrentDay} of predicted {prediction.PredictedCycleLength}"
-            : $"Next period in {prediction.DaysUntilPeriod}d · Ovulation {ovulation}";
     }
 
     private static string BuildHydrationTarget(float? weight, HealthWeeklySummary? healthSummary,

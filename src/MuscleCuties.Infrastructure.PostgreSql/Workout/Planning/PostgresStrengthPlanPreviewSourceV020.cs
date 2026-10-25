@@ -170,25 +170,41 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
 
     private static IReadOnlyDictionary<int, int> ParseActivityDurations(string? json)
     {
+        var result = new Dictionary<int, int>();
         try
         {
             using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "{}" : json);
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
-                return new Dictionary<int, int>();
-            var result = new Dictionary<int, int>();
-            foreach (var property in document.RootElement.EnumerateObject())
+            if (document.RootElement.ValueKind == JsonValueKind.Object)
             {
-                if (Enum.TryParse<WorkoutActivityType>(property.Name, true, out var activity) &&
-                    Enum.IsDefined(activity) && property.Value.TryGetInt32(out var minutes) &&
-                    WorkoutPreferencesRule.IsValidSessionDuration(activity, minutes))
-                    result[(int)activity] = minutes;
+                foreach (var property in document.RootElement.EnumerateObject())
+                {
+                    if (Enum.TryParse<WorkoutActivityType>(property.Name, true, out var activity) &&
+                        Enum.IsDefined(activity) && property.Value.TryGetInt32(out var minutes) &&
+                        WorkoutPreferencesRule.IsValidSessionDuration(activity, minutes))
+                        result[(int)activity] = minutes;
+                }
             }
-            return result;
         }
         catch (JsonException)
         {
-            return new Dictionary<int, int>();
         }
+
+        foreach (var activity in new[]
+                 {
+                     WorkoutActivityType.HighVolumeStrength,
+                     WorkoutActivityType.StrengthHighIntensity,
+                     WorkoutActivityType.GeneralStrength
+                 })
+        {
+            if (!result.ContainsKey((int)activity))
+            {
+                var defaultMinutes = WorkoutPreferencesRule.DefaultSessionDurationMinutes(activity) ??
+                                     WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes;
+                result[(int)activity] = defaultMinutes;
+            }
+        }
+
+        return result;
     }
 
     private static IReadOnlyDictionary<int, int> ParseActivityFrequencies(string? json)

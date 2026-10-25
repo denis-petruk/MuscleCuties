@@ -81,9 +81,7 @@ public static class WorkoutPlanningEndpointMappings
 
                 var result = await proposals.ExecuteAsync(ownerUserId, request, cancellationToken)
                     .ConfigureAwait(false);
-                return result.Preview.Status == "InvalidInput"
-                    ? Results.BadRequest(result)
-                    : Results.Ok(result);
+                return Results.Ok(result);
             })
             .RequireAuthorization();
 

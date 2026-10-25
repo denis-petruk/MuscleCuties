@@ -87,7 +87,7 @@
                     <Border.Triggers>
                         <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="True">
                             <Setter Property="BackgroundColor"
-                                    Value="{AppThemeBinding Light=#F0DFEE, Dark=#55344D}" />
+                                    Value="{AppThemeBinding Light={StaticResource RestStatusBadgeSurfaceLight}, Dark={StaticResource RestStatusBadgeSurfaceDark}}" />
                         </DataTrigger>
                         <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="False">
                             <Setter Property="BackgroundColor"
@@ -96,7 +96,7 @@
                     </Border.Triggers>
 
                     <Label
-                        FontSize="11"
+                        FontSize="{StaticResource CompactStatusBadgeFontSize}"
                         FontAttributes="Bold"
                         VerticalOptions="Center">
                         <Label.Triggers>

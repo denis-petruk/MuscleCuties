@@ -15,17 +15,17 @@
         <Thickness x:Key="MonthNavigationBottomSpacing">0,0,0,8</Thickness>
         <Thickness x:Key="CalendarCardPadding">20</Thickness>
         <x:Double x:Key="CalendarCardRowSpacing">12</x:Double>
-        <x:Double x:Key="CalendarDayWidth">72</x:Double>
-        <x:Double x:Key="CalendarDayHeight">72</x:Double>
-        <x:Double x:Key="CalendarDaySpacing">8</x:Double>
-        <x:Double x:Key="WeekNavigationTargetSize">44</x:Double>
+        <x:Double x:Key="CalendarDayWidth">56</x:Double>
+        <x:Double x:Key="CalendarDayHeight">60</x:Double>
+        <x:Double x:Key="CalendarDaySpacing">6</x:Double>
+        <Thickness x:Key="CalendarDayPadding">8,6</Thickness>
     </ContentView.Resources>
 
     <Border
         Style="{StaticResource CardPrimary}"
         Padding="{StaticResource CalendarCardPadding}"
         StrokeThickness="0">
-        <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto"
+        <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto"
               RowSpacing="{StaticResource CalendarCardRowSpacing}">
 
             <!-- Row 0: Day summary + period countdown -->
@@ -42,6 +42,7 @@
                     FontSize="13"
                     FontAttributes="Bold"
                     VerticalOptions="Center"
+                    IsVisible="{Binding HasActiveCycle}"
                     SemanticProperties.Description="{Binding PeriodCountdownText, Converter={StaticResource LocalizedStringConverter}}" />
             </Grid>
 
@@ -114,58 +115,16 @@
                 FontSize="13"
                 IsVisible="{Binding HasCalendarEditHint}" />
 
-            <!-- Row 4: Week navigation -->
-            <Grid Grid.Row="4" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                <Border
-                    WidthRequest="{StaticResource WeekNavigationTargetSize}"
-                    HeightRequest="{StaticResource WeekNavigationTargetSize}"
-                    StrokeShape="RoundRectangle 12"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                    StrokeThickness="0"
-                    SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_PreviousWeekAccessibility}">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding PreviousWeekCommand}" />
-                    </Border.GestureRecognizers>
-                    <Path Data="M15 18l-6-6 6-6"
-                          Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                          StrokeThickness="2" StrokeLineCap="Round" StrokeLineJoin="Round"
-                          Aspect="Uniform" WidthRequest="12" HeightRequest="12"
-                          HorizontalOptions="Center" VerticalOptions="Center" />
-                </Border>
-
-                <Label Grid.Column="1"
-                       Text="{Binding WeekRangeLabel}"
-                       Style="{StaticResource MutedLabel}"
-                       FontAttributes="Bold"
-                       HorizontalTextAlignment="Center"
-                       VerticalOptions="Center" />
-
-                <Border Grid.Column="2"
-                        WidthRequest="{StaticResource WeekNavigationTargetSize}"
-                        HeightRequest="{StaticResource WeekNavigationTargetSize}"
-                        StrokeShape="RoundRectangle 12"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                        StrokeThickness="0"
-                        SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_NextWeekAccessibility}">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding NextWeekCommand}" />
-                    </Border.GestureRecognizers>
-                    <Path Data="M9 18l6-6-6-6"
-                          Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                          StrokeThickness="2" StrokeLineCap="Round" StrokeLineJoin="Round"
-                          Aspect="Uniform" WidthRequest="12" HeightRequest="12"
-                          HorizontalOptions="Center" VerticalOptions="Center" />
-                </Border>
-            </Grid>
-
-            <!-- Row 5: Scrollable selected week -->
+            <!-- Row 4: Scrollable month -->
             <ScrollView
-                Grid.Row="5"
+                x:Name="MonthStripScrollView"
+                Grid.Row="4"
                 Orientation="Horizontal"
                 HorizontalScrollBarVisibility="Default"
                 Margin="{StaticResource CalendarStripBottomSpacing}"
                 SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_WeeklyStripAccessibility}">
                 <HorizontalStackLayout
+                x:Name="MonthStripDaysLayout"
                 Spacing="{StaticResource CalendarDaySpacing}"
                 BindableLayout.ItemsSource="{Binding CalendarStripDays}">
                 <BindableLayout.ItemTemplate>
@@ -177,7 +136,7 @@
                             BackgroundColor="{Binding BackgroundColor}"
                             Stroke="{Binding StrokeColor}"
                             StrokeThickness="{Binding StrokeThickness}"
-                            Padding="12,8"
+                            Padding="{StaticResource CalendarDayPadding}"
                             SemanticProperties.Description="{Binding AccessibilityDescription, Converter={StaticResource LocalizedStringConverter}}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer
@@ -213,7 +172,7 @@
                 </HorizontalStackLayout>
             </ScrollView>
 
-            <Grid Grid.Row="6" ColumnDefinitions="Auto, *, Auto, Auto" ColumnSpacing="10" VerticalOptions="Center"
+            <Grid Grid.Row="5" ColumnDefinitions="Auto, *, Auto, Auto" ColumnSpacing="10" VerticalOptions="Center"
                   Margin="{StaticResource MonthNavigationBottomSpacing}">
                 <Border
                     WidthRequest="34"
@@ -294,14 +253,14 @@
             </Grid>
 
             <Label
-                Grid.Row="7"
+                Grid.Row="6"
                 Text="{Binding CalendarNavigationStatusText, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource CaptionLabel}"
                 IsVisible="{Binding HasCalendarNavigationStatus}" />
 
             <!-- Expand / Collapse Month Grid Button -->
             <Border
-                Grid.Row="8"
+                Grid.Row="7"
                 HeightRequest="44"
                 StrokeShape="RoundRectangle 12"
                 BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
@@ -320,7 +279,7 @@
 
             <!-- Expandable Month Grid & Legend -->
             <VerticalStackLayout
-                Grid.Row="9"
+                Grid.Row="8"
                 Spacing="12"
                 IsVisible="{Binding IsMonthGridExpanded}">
 

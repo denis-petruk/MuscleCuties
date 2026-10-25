@@ -1,5 +1,13 @@
 # Roadmap — PostgreSQL Migration & V1 Feature Release
 
+**2026-10-24 selected-phase follow-up:** The Today card and staging support response now recognize a chosen phase without an active cycle day. The signed-in simulator shows phase-specific advice; Core 541/541 and Server 80/80 tests pass, and Lambda revision `75658129-0b76-4c83-8f2e-85ff93806717` is active.
+
+**2026-10-24 Today streak presentation:** Replaced the cramped streak pill with a three-column stats card and verified its spacing on the signed-in simulator.
+
+**2026-10-24 dashboard copy audit:** Removed the Planning estimates paragraph and reduced the cycle phase card copy; verified both on the signed-in simulator. Remaining authenticated flow and device acceptance continues below.
+
+**2026-10-24 staging checkpoint:** RDS has zero pending migrations through `20261024200000_AddWorkoutExerciseExclusionsV010`; corrected Lambda revision `75658129-0b76-4c83-8f2e-85ff93806717` is deployed and public health/quiz checks pass. Twenty focused migrated/seeded disposable PostgreSQL integration tests pass. Continue authenticated simulator and device acceptance, verify the 746-row catalog manifest before live seeding, repeat account-deletion acceptance after the workout-record purge correction, and close the remaining [submission gates](../SUBMISSION_READINESS.md). Earlier pending-deployment notes below are historical.
+
 All migration phases (`PG01`–`PG10`) and baseline safety/beta packages (`B01`–`B03`) are **accepted as code foundations** across `MuscleCuties.Core`, `MuscleCuties.UseCases`, `MuscleCuties.Infrastructure`, `MuscleCuties.Infrastructure.PostgreSql`, `MuscleCuties.Server`, and `MuscleCuties.UI`. Live service verification and expanded-candidate acceptance remain open.
 
 **App-wide Flo + MacroFactor UI style unification & visual noise reduction (2026-10-24):** Completed all 7 workstreams (`WS0` through `WS6`) defined in [docs/UI_STYLE_AND_VISUAL_NOISE_REDUCTION_PLAN.md](../UI_STYLE_AND_VISUAL_NOISE_REDUCTION_PLAN.md) across all 27 pages and controls:

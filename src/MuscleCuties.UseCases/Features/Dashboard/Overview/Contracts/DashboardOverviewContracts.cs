@@ -20,7 +20,8 @@ public sealed record DashboardWorkoutProgressDto(
     double? HighestSessionVolumeKg,
     int? LongestSessionMinutes,
     double? LongestDistanceKm,
-    int? FastestPaceSecondsPerKm);
+    int? FastestPaceSecondsPerKm,
+    string? HeaviestLiftExerciseName = null);
 
 public sealed record DashboardWorkoutActivityDto(string Tag, string Title, int ExerciseCount);
 

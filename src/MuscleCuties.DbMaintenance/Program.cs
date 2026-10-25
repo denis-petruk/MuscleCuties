@@ -15,6 +15,7 @@ public static class DatabaseMaintenance
     private const string CleanupProcessorConnectionStringEnvironmentVariable = "ConnectionStrings__PhotoCleanupProcessor";
     private const string LambdaFunctionEnvironmentVariable = "AWS_LAMBDA_FUNCTION_NAME";
     private const string MigrateCommand = "migrate";
+    private const string MigrationStatusCommand = "migration-status";
     private const string SeedCommand = "seed";
     private const string ReviewCatalogDryRunCommand = "review-catalog-dry-run";
     private const string ReviewCatalogApplyCommand = "review-catalog-apply";
@@ -38,7 +39,7 @@ public static class DatabaseMaintenance
     {
         if (!TryParse(args, out var command, out var manifestPath, out var expectedSha256))
         {
-            Console.Error.WriteLine("Usage: DbMaintenance migrate --confirm | seed <manifest-path> <expected-sha256> --confirm | review-catalog-dry-run <manifest-path> <expected-sha256> | review-catalog-apply <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
+            Console.Error.WriteLine("Usage: DbMaintenance migration-status | migrate --confirm | seed <manifest-path> <expected-sha256> --confirm | review-catalog-dry-run <manifest-path> <expected-sha256> | review-catalog-apply <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
             return InvalidUsageExitCode;
         }
 
@@ -110,6 +111,14 @@ public static class DatabaseMaintenance
                     provider.MigrationsAssembly(typeof(PostgresDbContext).Assembly.GetName().Name))
                 .Options;
             await using var context = new PostgresDbContext(options);
+
+            if (command == MigrationStatusCommand)
+            {
+                var applied = await context.Database.GetAppliedMigrationsAsync();
+                var pending = await context.Database.GetPendingMigrationsAsync();
+                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { Applied = applied, Pending = pending }));
+                return 0;
+            }
 
             if (command == MigrateCommand)
             {
@@ -199,6 +208,12 @@ public static class DatabaseMaintenance
         command = null;
         manifestPath = null;
         expectedSha256 = null;
+
+        if (args is [MigrationStatusCommand])
+        {
+            command = MigrationStatusCommand;
+            return true;
+        }
 
         if (args is [MigrateCommand, ConfirmationSwitch])
         {

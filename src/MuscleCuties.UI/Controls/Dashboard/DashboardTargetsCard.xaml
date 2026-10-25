@@ -10,7 +10,7 @@
 
     <Border Style="{StaticResource CardPrimary}"
             SemanticProperties.Description="{loc:LocalizedText Dashboard_Targets_CardA11y}">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="0">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="0">
             <!-- Row 0: section heading -->
             <Label Text="{loc:LocalizedText Dashboard_Targets_Title}" Style="{StaticResource SectionTitle}" FontSize="17"
                    Margin="0,0,0,8" />
@@ -116,10 +116,6 @@
                     </Label.FormattedText>
                 </Label>
             </Grid>
-            <Label Grid.Row="4"
-                   Text="{loc:LocalizedText Dashboard_Targets_Disclaimer}"
-                   Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"
-                   Margin="0,8,0,0" />
         </Grid>
     </Border>
 </ContentView>

@@ -207,8 +207,15 @@
                 IsVisible="{Binding IsStandardAnswerListVisible}">
                 <VerticalStackLayout
                     Padding="0,4,0,20"
-                    Spacing="10"
-                    BindableLayout.ItemsSource="{Binding CurrentAnswers}">
+                    Spacing="12">
+                    <Label
+                        Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdaysHint}"
+                        Style="{StaticResource MutedLabel}"
+                        LineBreakMode="WordWrap"
+                        IsVisible="{Binding IsCurrentQuestionAvailableWeekdays}" />
+                    <VerticalStackLayout
+                        Spacing="10"
+                        BindableLayout.ItemsSource="{Binding CurrentAnswers}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="quizModels:SelectableQuizAnswer">
                             <Border
@@ -296,52 +303,12 @@
                             </Border>
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
-                </VerticalStackLayout>
-            </ScrollView>
-
-            <!-- Available weekdays chip block -->
-            <ScrollView
-                Grid.Row="1"
-                Padding="24,4,24,20"
-                MaximumWidthRequest="640"
-                HorizontalOptions="Fill"
-                IsVisible="{Binding IsCurrentQuestionAvailableWeekdays}">
-                <VerticalStackLayout Spacing="12">
-                    <Label
-                        Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdaysHint}"
-                        Style="{StaticResource MutedLabel}"
-                        LineBreakMode="WordWrap" />
-                    <FlexLayout
-                        BindableLayout.ItemsSource="{Binding CurrentAnswers}"
-                        Wrap="Wrap"
-                        JustifyContent="Start">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="quizModels:SelectableQuizAnswer">
-                                <Button
-                                    Text="{Binding Answer.Text, Converter={StaticResource LocalizedStringConverter}}"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:QuizViewModel}}, Path=SelectAnswerCommand}"
-                                    CommandParameter="{Binding .}"
-                                    Margin="{StaticResource WorkoutPlanningDayChoiceMargin}"
-                                    MinimumHeightRequest="{StaticResource UiControlHeight}"
-                                    CornerRadius="{StaticResource UiRadiusControl}"
-                                    SemanticProperties.Description="{Binding Answer.Text, Converter={StaticResource LocalizedStringConverter}}"
-                                    SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_DoubleTapToSelectThisAnswer}">
-                                    <Button.Triggers>
-                                        <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="True">
-                                            <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                            <Setter Property="BorderColor"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                        </DataTrigger>
-                                    </Button.Triggers>
-                                </Button>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </FlexLayout>
+                    </VerticalStackLayout>
                     <Label
                         Text="{Binding SelectedWeekdayCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_SelectedWeekdaysFormat}"
                         HorizontalTextAlignment="Center"
-                        Style="{StaticResource MutedLabel}" />
+                        Style="{StaticResource MutedLabel}"
+                        IsVisible="{Binding IsCurrentQuestionAvailableWeekdays}" />
                 </VerticalStackLayout>
             </ScrollView>
 

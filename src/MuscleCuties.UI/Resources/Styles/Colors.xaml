@@ -22,6 +22,8 @@
 
     <Color x:Key="AccentSurface">#FFF1F6</Color>
     <Color x:Key="AccentSurfaceDark">#3A2931</Color>
+    <Color x:Key="RestStatusBadgeSurfaceLight">#F0DFEE</Color>
+    <Color x:Key="RestStatusBadgeSurfaceDark">#55344D</Color>
     <Color x:Key="ChoiceSelectedSurfaceLight">#FBE3ED</Color>
     <Color x:Key="ChoiceSelectedSurfaceDark">#603447</Color>
     <Color x:Key="ChoiceSelectedStrokeLight">#A6446D</Color>

@@ -300,6 +300,8 @@
                                                    VerticalOptions="Center" />
                                             <Switch IsToggled="{Binding IsOptional, Mode=TwoWay}"
                                                     IsEnabled="{Binding CanMarkOptional}"
+                                                    OnColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource ActionSurfaceDark}}"
+                                                    ThumbColor="{StaticResource White}"
                                                     Toggled="OnOptionalExerciseToggled" />
                                         </HorizontalStackLayout>
                                         <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsOptional}">

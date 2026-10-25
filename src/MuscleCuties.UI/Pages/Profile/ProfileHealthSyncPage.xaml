@@ -39,9 +39,11 @@
                             IsVisible="{Binding IsConnected}"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
                     <Label Text="{Binding LastSyncedText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionLabel}" />
+                           Style="{StaticResource CaptionLabel}"
+                           IsVisible="{Binding IsConnected}" />
                     <Label Text="{loc:LocalizedText Profile_HealthSync_DisconnectExplanation}"
-                           Style="{StaticResource CaptionLabel}" />
+                           Style="{StaticResource CaptionLabel}"
+                           IsVisible="{Binding IsConnected}" />
                 </VerticalStackLayout>
             </Border>
 

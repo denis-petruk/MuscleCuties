@@ -332,7 +332,7 @@ public sealed class PostgresDashboardOverviewStore(
         var sets = await dbContext.ExerciseSetLogs.AsNoTracking()
             .Where(row => row.UserId == userId && sessionIds.Contains(row.WorkoutSessionLogId) &&
                           !row.IsDeleted && !row.IsWarmup)
-            .Select(row => new { row.WorkoutSessionLogId, row.WeightKg })
+            .Select(row => new { row.WorkoutSessionLogId, row.WeightKg, row.ExerciseName })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         var activeSessionIds = sets.Select(row => row.WorkoutSessionLogId).ToHashSet();
         var workoutObservations = sessions
@@ -340,17 +340,21 @@ public sealed class PostgresDashboardOverviewStore(
             .Select(row => new DashboardWorkoutProgressObservation(false, null,
                 (double)row.TotalVolumeKg, row.TotalDurationSeconds, null, null))
             .Concat(sets.Select(row => new DashboardWorkoutProgressObservation(false,
-                (double)row.WeightKg, null, null, null, null)))
+                (double)row.WeightKg, null, null, null, null, row.ExerciseName)))
             .ToList();
 
         var exerciseRows = await (
             from exercise in dbContext.WorkoutExerciseLogs.AsNoTracking()
             join log in dbContext.WorkoutLogs.AsNoTracking() on exercise.WorkoutLogId equals log.Id
             join day in dbContext.WorkoutDays.AsNoTracking() on log.WorkoutDayId equals day.Id
+            join catalogExercise in dbContext.Exercises.AsNoTracking()
+                on exercise.ExerciseId equals catalogExercise.Id into catalogMatches
+            from catalogExercise in catalogMatches.DefaultIfEmpty()
             where exercise.UserId == userId && log.UserId == userId && day.UserId == userId &&
                   log.Date >= workoutLogStart && log.Date <= today
             select new { day.WorkoutType, exercise.WeightKg, exercise.CompletedDurationSeconds,
-                exercise.DistanceKm, exercise.PaceSecondsPerKm })
+                exercise.DistanceKm, exercise.PaceSecondsPerKm,
+                ExerciseName = catalogExercise == null ? null : catalogExercise.Name })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         workoutObservations.AddRange(exerciseRows.Select(row => new DashboardWorkoutProgressObservation(
             row.WorkoutType.Equals("Rest", StringComparison.OrdinalIgnoreCase) ||
@@ -359,11 +363,13 @@ public sealed class PostgresDashboardOverviewStore(
             null,
             row.CompletedDurationSeconds,
             row.DistanceKm is { } distance ? (double)distance : null,
-            row.PaceSecondsPerKm)));
+            row.PaceSecondsPerKm,
+            row.ExerciseName)));
         var progress = DashboardTrendSummaryRule.BuildWorkoutProgress(workoutObservations);
         var workoutProgress = new DashboardWorkoutProgressDto(progress.HeaviestLiftKg,
             progress.HighestSessionVolumeKg, progress.LongestSessionMinutes,
-            progress.LongestDistanceKm, progress.FastestPaceSecondsPerKm);
+            progress.LongestDistanceKm, progress.FastestPaceSecondsPerKm,
+            progress.HeaviestLiftExerciseName);
 
         return (weeklyNutrition, weeklyWeights, workoutProgress);
     }

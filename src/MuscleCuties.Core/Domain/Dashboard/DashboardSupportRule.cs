@@ -66,7 +66,7 @@ public static class DashboardSupportRule
         }
 
         return new DashboardSupportResult(
-            BuildCycleInsightText(cycle),
+            BuildCycleInsightText(cycle, phase),
             BuildHydrationTarget(weight, health, localSteps),
             string.Empty,
             BuildSleepGoal(workoutDaysPerWeek, phase, health, localAverageSleepHours),
@@ -218,10 +218,12 @@ public static class DashboardSupportRule
         };
     }
 
-    public static string BuildCycleInsightText(DashboardCycleMetrics cycle)
+    public static string BuildCycleInsightText(DashboardCycleMetrics cycle, CyclePhase phase)
     {
         if (!cycle.HasActiveCycle)
-            return "Start tracking to personalize cycle predictions";
+            return phase == CyclePhase.Unknown
+                ? "Add a cycle phase to see phase guidance"
+                : "Selected cycle phase is recorded";
 
         if (cycle.IsPeriodDue)
             return "Period is predicted around now";

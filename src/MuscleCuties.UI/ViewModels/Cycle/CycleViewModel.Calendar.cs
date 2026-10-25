@@ -8,7 +8,6 @@ namespace MuscleCuties.UI.ViewModels.Cycle;
 
 public partial class CycleViewModel
 {
-    private const int DaysPerWeek = 7;
     private const int EarliestCalendarYear = 1970;
     private const int LatestCalendarYear = 2100;
     private int _calendarLoadVersion;
@@ -18,18 +17,13 @@ public partial class CycleViewModel
     [ObservableProperty] private bool _isMonthGridExpanded;
     [ObservableProperty] private DateTime _selectedDate = DateTime.Today;
 
-    public string MonthExpandButtonText => IsMonthGridExpanded ? "Collapse to week" : "Expand full month";
-    public string WeekRangeLabel => CalendarStripDays.Count == 0
-        ? string.Empty
-        : $"{CalendarStripDays[0].Date:MMM d} – {CalendarStripDays[^1].Date:MMM d}";
+    public string MonthExpandButtonText => IsMonthGridExpanded ? "Hide month grid" : "Show month grid";
 
     public RelayCommand ToggleMonthGridExpandedCommand { get; private set; } = null!;
     public AsyncRelayCommand<CycleDayItem> SelectCalendarDayCommand { get; private set; } = null!;
     public AsyncRelayCommand PreviousMonthCommand { get; private set; } = null!;
     public AsyncRelayCommand NextMonthCommand { get; private set; } = null!;
     public AsyncRelayCommand ReturnToTodayCommand { get; private set; } = null!;
-    public AsyncRelayCommand PreviousWeekCommand { get; private set; } = null!;
-    public AsyncRelayCommand NextWeekCommand { get; private set; } = null!;
 
     public bool IsViewingCurrentMonth =>
         DisplayedMonth.Year == CurrentDate.Year && DisplayedMonth.Month == CurrentDate.Month;
@@ -43,23 +37,6 @@ public partial class CycleViewModel
         PreviousMonthCommand = new AsyncRelayCommand(() => ChangeDisplayedMonthAsync(-1));
         NextMonthCommand = new AsyncRelayCommand(() => ChangeDisplayedMonthAsync(1));
         ReturnToTodayCommand = new AsyncRelayCommand(ReturnToTodayAsync);
-        PreviousWeekCommand = new AsyncRelayCommand(() => ChangeWeekAsync(-1));
-        NextWeekCommand = new AsyncRelayCommand(() => ChangeWeekAsync(1));
-    }
-
-    private async Task ChangeWeekAsync(int offset)
-    {
-        var target = SelectedDate.Date.AddDays(offset * DaysPerWeek);
-        if (target.Year < EarliestCalendarYear || target.Year > LatestCalendarYear)
-            return;
-
-        SelectedDate = target;
-        if (target.Year != DisplayedMonth.Year || target.Month != DisplayedMonth.Month)
-            DisplayedMonth = new DateTime(target.Year, target.Month, 1);
-
-        // The visible week can cross the displayed month's edge. RefreshCycleDataAsync
-        // requests the whole week, including observations in the neighboring month.
-        await LoadDisplayedMonthAsync();
     }
 
     private async Task ChangeDisplayedMonthAsync(int offset)
@@ -108,11 +85,6 @@ public partial class CycleViewModel
         OnPropertyChanged(nameof(HasCalendarNavigationStatus));
     }
 
-    partial void OnCalendarStripDaysChanged(ObservableCollection<CycleDayItem> value)
-    {
-        OnPropertyChanged(nameof(WeekRangeLabel));
-    }
-
     private void ToggleMonthGridExpanded()
     {
         IsMonthGridExpanded = !IsMonthGridExpanded;
@@ -126,11 +98,10 @@ public partial class CycleViewModel
         SelectedDate = day.Date.Value;
         var movedToAnotherMonth =
             SelectedDate.Year != DisplayedMonth.Year || SelectedDate.Month != DisplayedMonth.Month;
-        var movedToAnotherWeek = CalendarStripDays.All(item => item.Date?.Date != SelectedDate.Date);
         if (movedToAnotherMonth)
             DisplayedMonth = new DateTime(SelectedDate.Year, SelectedDate.Month, 1);
 
-        if (movedToAnotherMonth || movedToAnotherWeek)
+        if (movedToAnotherMonth)
             await LoadDisplayedMonthAsync();
         else
         {
@@ -154,22 +125,9 @@ public partial class CycleViewModel
     private void RefreshCalendarStrip(IReadOnlyList<CycleDayItem> allMonthDays, DateTime anchorDate, DateTime today,
         bool useDarkTheme)
     {
-        CalendarStripDays = CycleCalendarItemBuilder.BuildCalendarStrip(
-            allMonthDays,
-            anchorDate,
-            today,
-            SelectedDate,
-            useDarkTheme,
-            date => _cachedPrediction is not null
-                ? CreateCalendarDayItem(
-                    date,
-                    _cachedPrediction,
-                    _phaseLogs,
-                    _cycleHistory,
-                    _symptomLogs,
-                    today,
-                    SelectedDate,
-                    useDarkTheme)
-                : null);
+        CalendarStripDays = new ObservableCollection<CycleDayItem>(allMonthDays
+            .Where(day => day.Date is not null)
+            .Select(day => CycleCalendarItemBuilder.BuildStripDayItem(
+                day.Date!.Value, day, today, anchorDate, useDarkTheme)));
     }
 }

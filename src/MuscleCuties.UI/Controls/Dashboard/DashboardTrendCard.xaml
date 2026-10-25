@@ -132,7 +132,14 @@
                 <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto"
                       RowSpacing="{StaticResource DashboardTrendDetailSpacing}"
                       IsVisible="{Binding HasWorkoutProgress}">
-                    <Label Text="{loc:LocalizedText Dashboard_Trend_HeaviestLift}" Style="{StaticResource MutedLabel}" />
+                    <VerticalStackLayout>
+                        <Label Text="{loc:LocalizedText Dashboard_Trend_HeaviestLift}"
+                               Style="{StaticResource MutedLabel}" />
+                        <Label Text="{Binding HeaviestLiftExerciseName}"
+                               Style="{StaticResource CaptionLabel}"
+                               IsVisible="{Binding HasHeaviestLiftExerciseName}"
+                               LineBreakMode="TailTruncation" />
+                    </VerticalStackLayout>
                     <Label Grid.Column="1" Text="{Binding HeaviestLiftText}" Style="{StaticResource BodyLabel}" />
                     <Label Grid.Row="1" Text="{loc:LocalizedText Dashboard_Trend_HighestVolume}" Style="{StaticResource MutedLabel}" />
                     <Label Grid.Row="1" Grid.Column="1" Text="{Binding HighestVolumeText}" Style="{StaticResource BodyLabel}" />

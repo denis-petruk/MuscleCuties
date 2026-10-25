@@ -602,9 +602,7 @@
             <Button Text="{loc:LocalizedText Workout_Generation_CreatePreview}"
                     Command="{Binding CreateProposalCommand}"
                     IsVisible="{Binding IsBeforePreview}"
-                    HeightRequest="52"
-                    CornerRadius="26"
-                    FontAttributes="Bold" />
+                    Style="{StaticResource WorkoutPrimaryActionButton}" />
 
             <!-- CARD 5: Plan Preview (Visible when HasPreview is true) -->
             <Border IsVisible="{Binding HasPreview}"
@@ -890,19 +888,14 @@
                     <Button Text="{loc:LocalizedText Workout_Generation_ApplyPlan}"
                             Command="{Binding AcceptProposalCommand}"
                             IsVisible="{Binding HasFeasiblePreview}"
-                            HeightRequest="52"
-                            CornerRadius="26"
-                            FontAttributes="Bold" />
+                            Style="{StaticResource WorkoutPrimaryActionButton}" />
                 </VerticalStackLayout>
             </Border>
 
             <!-- Bottom Keep Current Plan Button -->
             <Button Text="{loc:LocalizedText Workout_Generation_KeepCurrentPlan}"
                     Command="{Binding KeepCurrentPlanCommand}"
-                    Style="{StaticResource ButtonSecondary}"
-                    HeightRequest="52"
-                    CornerRadius="26"
-                    FontAttributes="Bold" />
+                    Style="{StaticResource ButtonSecondary}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

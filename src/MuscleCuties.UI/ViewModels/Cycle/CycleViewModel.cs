@@ -15,6 +15,8 @@ using MuscleCuties.UseCases.Features.Cycle.DailyLog;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using System.Diagnostics.CodeAnalysis;
 using MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
+using MuscleCuties.UseCases.Features.Dashboard.Overview;
+using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Cycle;
 
@@ -32,6 +34,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     private readonly Func<CyclePhase, Task> _openPhaseDetailsAsync;
     private readonly ICycleOverviewUseCase _overview;
     private readonly ICyclePhaseEditUseCase _phaseEdit;
+    private readonly IDashboardOverviewUseCase _dashboardOverview;
     private readonly List<CyclePhaseEntry> _phaseLogs = new();
     private readonly IProfileRefreshNotifier _refreshNotifier;
     private readonly List<CycleSymptomEntry> _symptomLogs = new();
@@ -75,6 +78,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         ICycleDailyLogUseCase dailyLog,
         ICyclePhaseEditUseCase phaseEdit,
         IProfileRefreshNotifier refreshNotifier,
+        IDashboardOverviewUseCase dashboardOverview,
         Func<CyclePhase, Task>? openPhaseDetailsAsync = null,
         Func<DateTime>? currentDateProvider = null,
         Func<Task>? openCycleSettingsAsync = null)
@@ -83,6 +87,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         _phaseProjection = phaseProjection;
         _dailyLog = dailyLog;
         _phaseEdit = phaseEdit;
+        _dashboardOverview = dashboardOverview;
         _refreshNotifier = refreshNotifier;
         _openPhaseDetailsAsync = openPhaseDetailsAsync ?? (_ => Task.CompletedTask);
         _currentDateProvider = currentDateProvider ?? (() => DateTime.Today);
@@ -114,13 +119,13 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         ? _cachedPrediction?.PredictionSource == "default"
             ? $"Day {CurrentDay} of an estimated {CycleLength}-day cycle"
             : $"Day {CurrentDay} of {CycleLength}"
-        : "Start cycle tracking";
+        : "No period dates logged";
 
     public string PeriodCountdownText => HasActiveCycle
         ? DaysUntilPeriod == 0 ? "Period due today" : $"Period in {DaysUntilPeriod}d"
         : "Log period start";
 
-    public string PhaseLogActionText => HasActiveCycle ? "Next phase" : "Start cycle";
+    public string PhaseLogActionText => HasActiveCycle ? "Next phase" : "Log menstrual phase";
 
     public string PredictionSummary => HasActiveCycle
         ? _cachedPrediction?.PredictionSource == "default"
@@ -238,11 +243,15 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         OnPropertyChanged(nameof(CycleDaySummary));
         OnPropertyChanged(nameof(PredictionSummary));
 
+        var resolvedPhase = await ResolveCurrentPhaseAsync(prediction.CurrentPhase, today);
+        if (loadVersion != Volatile.Read(ref _calendarLoadVersion))
+            return;
+
         HasActiveCycle = prediction.HasActiveCycle;
         CurrentDay = prediction.CurrentDay;
         CycleLength = prediction.PredictedCycleLength;
         DaysUntilPeriod = prediction.DaysUntilPeriod;
-        CurrentPhase = prediction.CurrentPhase;
+        CurrentPhase = resolvedPhase;
 
         var phaseLogs = overview.PhaseLogs;
         var symptomLogs = overview.Symptoms;
@@ -267,6 +276,27 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         OnPropertyChanged(nameof(Today));
         OnPropertyChanged(nameof(PhaseLabel));
         NotifyCycleSummaryProperties();
+    }
+
+    private async Task<CyclePhase> ResolveCurrentPhaseAsync(CyclePhase predictionPhase, DateTime today)
+    {
+        if (predictionPhase != CyclePhase.Unknown)
+            return predictionPhase;
+
+        try
+        {
+            var dashboard = await _dashboardOverview.LoadAsync(
+                new DashboardOverviewRequest(DateOnly.FromDateTime(today)));
+            if (Enum.TryParse<CyclePhase>(dashboard.CurrentPhase, true, out var selectedPhase) &&
+                Enum.IsDefined(selectedPhase))
+                return selectedPhase;
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Cycle] Phase fallback load failed ({ex.GetType().Name}).");
+        }
+
+        return predictionPhase;
     }
 
     private void NotifyCycleMutated()

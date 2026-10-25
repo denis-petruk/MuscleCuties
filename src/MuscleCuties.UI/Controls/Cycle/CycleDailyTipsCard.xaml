@@ -9,58 +9,20 @@
     x:DataType="vm:CycleViewModel"
     SemanticProperties.Description="{loc:LocalizedText Cycle_DailyTips_CardAccessibility}">
 
-    <Grid RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="14">
+    <ContentView.Resources>
+        <x:Double x:Key="CycleTipRowSpacing">8</x:Double>
+        <Thickness x:Key="CycleTipRowPadding">12,10</Thickness>
+    </ContentView.Resources>
 
-            <!-- Row 0: Section header -->
-            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                <Path
-                    Data="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                    Stroke="{StaticResource Primary}"
-                    Fill="{StaticResource Primary}"
-                    StrokeThickness="1"
-                    Aspect="Uniform"
-                    WidthRequest="14"
-                    HeightRequest="14"
-                    VerticalOptions="Center" />
-                <Label
-                    Text="{loc:LocalizedText Cycle_DailyTips_CheerGuidanceTitle}"
-                    Style="{StaticResource CaptionLabel}"
-                    FontAttributes="Bold"
-                    TextColor="{StaticResource Primary}"
-                    VerticalOptions="Center"
-                    SemanticProperties.HeadingLevel="Level2" />
-            </HorizontalStackLayout>
+    <Grid RowDefinitions="Auto, Auto" RowSpacing="{StaticResource CycleTipRowSpacing}">
 
-            <!-- Row 1: Daily Cheer Quote Box -->
+            <!-- Row 0: Training Micro-Tip -->
             <Border
-                Grid.Row="1"
-                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
-                StrokeShape="RoundRectangle 14"
-                StrokeThickness="0"
-                Padding="16,14">
-                <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12" VerticalOptions="Center">
-                    <Path Data="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"
-                          Stroke="{StaticResource Primary}" StrokeThickness="1.5" StrokeLineJoin="Round"
-                          Fill="Transparent" Aspect="Uniform" WidthRequest="20" HeightRequest="20"
-                          VerticalOptions="Start" />
-                    <Label
-                        Grid.Column="1"
-                        Text="{Binding DailyCheerText, Converter={StaticResource LocalizedStringConverter}}"
-                        FontSize="15"
-                        FontAttributes="Italic"
-                        LineBreakMode="WordWrap"
-                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                        VerticalOptions="Center" />
-                </Grid>
-            </Border>
-
-            <!-- Row 2: Training Micro-Tip -->
-            <Border
-                Grid.Row="2"
+                Grid.Row="0"
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                 StrokeShape="RoundRectangle 14"
                 StrokeThickness="0"
-                Padding="14,12">
+                Padding="{StaticResource CycleTipRowPadding}">
                 <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12" VerticalOptions="Center">
                     <Border
                         WidthRequest="34"
@@ -96,13 +58,13 @@
                 </Grid>
             </Border>
 
-            <!-- Row 3: Nutrition Micro-Tip -->
+            <!-- Row 1: Nutrition Micro-Tip -->
             <Border
-                Grid.Row="3"
+                Grid.Row="1"
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                 StrokeShape="RoundRectangle 14"
                 StrokeThickness="0"
-                Padding="14,12">
+                Padding="{StaticResource CycleTipRowPadding}">
                 <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12" VerticalOptions="Center">
                     <Border
                         WidthRequest="34"

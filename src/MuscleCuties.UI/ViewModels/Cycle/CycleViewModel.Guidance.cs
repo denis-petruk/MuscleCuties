@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
@@ -16,11 +15,11 @@ public partial class CycleViewModel
     private const string PhaseContextText =
         "A cycle phase is context, not a measurement of hormone levels or today's exercise capacity.";
     private const string PhaseCheckInText =
-        "Notice how you feel today and record any symptoms that matter to you.";
+        "Notice how you feel today.";
     private const string PhaseTrainingText =
-        "Use your current check-in and restrictions when reviewing your plan. A phase label alone does not set training intensity.";
+        "Let your check-in and restrictions guide training.";
     private const string PhaseNutritionText =
-        "Follow your personal nutrition goals. A phase label alone does not change calorie or macro targets.";
+        "Follow your personal nutrition goals.";
     private const string PhaseRecoveryText =
         "Rest and activity needs vary. Use your own symptoms and preferences as context.";
     private const string PhaseTimingText = "Timing varies";
@@ -37,16 +36,11 @@ public partial class CycleViewModel
 
     public RelayCommand<PhaseExplorerPillItem> SelectPhaseExplorerPillCommand { get; private set; } = null!;
     public RelayCommand ClosePhaseSummarySheetCommand { get; private set; } = null!;
-    public AsyncRelayCommand OpenFullPhaseGuideCommand { get; private set; } = null!;
-    [SuppressMessage("Performance", "CA1822:Mark members as static",
-        Justification = "Bound in Cycle XAML; keep the unreviewed guide unavailable to this view model.")]
-    public bool IsPhaseGuideAvailable => false;
 
     private void InitializeGuidanceCommands()
     {
         SelectPhaseExplorerPillCommand = new RelayCommand<PhaseExplorerPillItem>(SelectPhaseExplorerPill);
         ClosePhaseSummarySheetCommand = new RelayCommand(ClosePhaseSummarySheet);
-        OpenFullPhaseGuideCommand = new AsyncRelayCommand(OpenFullPhaseGuideAsync);
 
         RefreshGuidanceContent(CurrentPhase, UseDarkTheme);
     }
@@ -61,14 +55,6 @@ public partial class CycleViewModel
     private void ClosePhaseSummarySheet()
     {
         IsPhaseSummarySheetVisible = false;
-    }
-
-    private async Task OpenFullPhaseGuideAsync()
-    {
-        if (!IsPhaseGuideAvailable || SelectedPhaseSummary is null) return;
-        var phase = SelectedPhaseSummary.Phase;
-        IsPhaseSummarySheetVisible = false;
-        await _openPhaseDetailsAsync(phase);
     }
 
     private void RefreshGuidanceContent(CyclePhase phase, bool useDarkTheme)
@@ -194,12 +180,12 @@ public partial class CycleViewModel
                 Phase = CyclePhase.Menstrual,
                 Name = "Menstrual Phase",
                 Window = PhaseTimingText,
-                Tagline = PhaseExplorerTagline,
-                HormonalSummary = PhaseContextText,
-                TrainingFocus = PhaseTrainingText,
-                NutritionFocus = PhaseNutritionText,
-                RecoveryFocus = PhaseRecoveryText,
-                QuickRule = PhaseCheckInText,
+                Tagline = "Period begins",
+                HormonalSummary = "Bleeding starts a new cycle. Cramps or fatigue may occur, but experiences vary.",
+                TrainingFocus = "Choose effort from today's check-in. Adjust or rest if symptoms interfere.",
+                NutritionFocus = "Follow your nutrition goals, with meals and fluids that feel comfortable.",
+                RecoveryFocus = "Notice pain or fatigue and make room for rest if needed.",
+                QuickRule = "Log bleeding and symptoms to learn your pattern.",
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Menstrual),
                 BackgroundColor =
                     PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme, Colors.Transparent),
@@ -211,12 +197,12 @@ public partial class CycleViewModel
                 Phase = CyclePhase.Follicular,
                 Name = "Follicular Phase",
                 Window = PhaseTimingText,
-                Tagline = PhaseExplorerTagline,
-                HormonalSummary = PhaseContextText,
-                TrainingFocus = PhaseTrainingText,
-                NutritionFocus = PhaseNutritionText,
-                RecoveryFocus = PhaseRecoveryText,
-                QuickRule = PhaseCheckInText,
+                Tagline = "Before ovulation",
+                HormonalSummary = "Follicles develop and the uterine lining rebuilds. Timing varies.",
+                TrainingFocus = "Follow your plan and adjust effort to today's energy and restrictions.",
+                NutritionFocus = "Keep your personal nutrition goals; the phase alone does not change targets.",
+                RecoveryFocus = "Track how you feel as the cycle progresses.",
+                QuickRule = "Your check-in matters more than an estimated phase.",
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Follicular),
                 BackgroundColor =
                     PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme, Colors.Transparent),
@@ -228,12 +214,12 @@ public partial class CycleViewModel
                 Phase = CyclePhase.Ovulatory,
                 Name = "Ovulatory Phase",
                 Window = PhaseTimingText,
-                Tagline = PhaseExplorerTagline,
-                HormonalSummary = PhaseContextText,
-                TrainingFocus = PhaseTrainingText,
-                NutritionFocus = PhaseNutritionText,
-                RecoveryFocus = PhaseRecoveryText,
-                QuickRule = PhaseCheckInText,
+                Tagline = "Around ovulation",
+                HormonalSummary = "An egg may be released in this window. A calendar estimate cannot confirm ovulation.",
+                TrainingFocus = "Use your planned session, adjusting for symptoms or restrictions.",
+                NutritionFocus = "Follow your usual nutrition goals and appetite cues.",
+                RecoveryFocus = "Record any changes you notice; they may differ from cycle to cycle.",
+                QuickRule = "Treat this as an estimate, not a fertility signal.",
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Ovulatory),
                 BackgroundColor =
                     PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Transparent),
@@ -245,12 +231,12 @@ public partial class CycleViewModel
                 Phase = CyclePhase.Luteal,
                 Name = "Luteal Phase",
                 Window = PhaseTimingText,
-                Tagline = PhaseExplorerTagline,
-                HormonalSummary = PhaseContextText,
-                TrainingFocus = PhaseTrainingText,
-                NutritionFocus = PhaseNutritionText,
-                RecoveryFocus = PhaseRecoveryText,
-                QuickRule = PhaseCheckInText,
+                Tagline = "After ovulation",
+                HormonalSummary = "Progesterone usually rises after ovulation. Premenstrual symptoms vary between people and cycles.",
+                TrainingFocus = "Keep your plan flexible if symptoms affect comfort.",
+                NutritionFocus = "Follow your goals; if appetite changes, choose satisfying meals.",
+                RecoveryFocus = "Make room for sleep and recovery when you need it.",
+                QuickRule = "Record symptoms instead of assuming the phase predicts how you feel.",
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Luteal),
                 BackgroundColor =
                     PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme, Colors.Transparent),

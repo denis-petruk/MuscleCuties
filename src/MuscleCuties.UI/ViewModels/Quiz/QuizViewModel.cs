@@ -107,7 +107,7 @@ public partial class QuizViewModel : ObservableObject
         CurrentQuestion?.QuestionType == QuizQuestionType.AvailableWeekdays;
     public bool IsCurrentQuestionPhasePair => IsPainQuestion(CurrentQuestion?.QuestionType);
     public bool IsStandardAnswerListVisible =>
-        !IsCurrentQuestionPhasePair && !IsCurrentQuestionAvailableWeekdays;
+        !IsCurrentQuestionPhasePair;
     public int SelectedWeekdayCount => IsCurrentQuestionAvailableWeekdays
         ? CurrentAnswers.Count(answer => answer.IsSelected)
         : 0;
