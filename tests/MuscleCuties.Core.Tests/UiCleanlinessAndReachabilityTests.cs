@@ -263,6 +263,32 @@ public class UiCleanlinessAndReachabilityTests
         Assert.Contains("Style=\"{StaticResource ButtonSecondary}\"", content);
     }
 
+    [Fact]
+    public void Shared_styles_enforce_2_button_options_unified_inputs_and_3_card_levels()
+    {
+        var stylesPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Resources", "Styles", "Styles.xaml");
+        Assert.True(File.Exists(stylesPath), $"Styles.xaml not found at {stylesPath}");
+
+        var stylesContent = File.ReadAllText(stylesPath);
+
+        // 1. Two primary/secondary button options across the app (+ ButtonLink for inline links)
+        Assert.Contains("x:Key=\"ButtonPrimary\"", stylesContent);
+        Assert.Contains("x:Key=\"ButtonSecondary\"", stylesContent);
+        Assert.Contains("x:Key=\"ButtonLink\"", stylesContent);
+        Assert.Contains("<Style TargetType=\"Button\">", stylesContent);
+
+        // 2. Unified input container fields across all pages
+        Assert.Contains("x:Key=\"InputContainer\"", stylesContent);
+        Assert.Contains("x:Key=\"PickerContainer\"", stylesContent);
+        Assert.Contains("x:Key=\"EditorContainer\"", stylesContent);
+
+        // 3. Card surface logic: CardPrimary (main containers), CardSecondary/SurfaceTile (inner sections), PillBadge (badges)
+        Assert.Contains("x:Key=\"CardPrimary\"", stylesContent);
+        Assert.Contains("x:Key=\"CardSecondary\"", stylesContent);
+        Assert.Contains("x:Key=\"SurfaceTile\"", stylesContent);
+        Assert.Contains("x:Key=\"PillBadge\"", stylesContent);
+    }
+
     private static string FindRepositoryRoot()
     {
         var current = AppContext.BaseDirectory;

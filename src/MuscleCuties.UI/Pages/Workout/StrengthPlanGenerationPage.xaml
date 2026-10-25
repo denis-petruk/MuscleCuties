@@ -10,6 +10,11 @@
     x:DataType="vm:StrengthPlanGenerationViewModel"
     Shell.NavBarIsVisible="False">
 
+    <ContentPage.Resources>
+        <Style x:Key="PlanFieldSurface" TargetType="Border" BasedOn="{StaticResource InputContainer}" />
+        <Style x:Key="PlanPickerSurface" TargetType="Border" BasedOn="{StaticResource PickerContainer}" />
+    </ContentPage.Resources>
+
     <ScrollView>
         <VerticalStackLayout
             Padding="20,16,20,32"
@@ -25,22 +30,22 @@
             <Border Style="{StaticResource CardPrimary}" Padding="20">
                 <VerticalStackLayout Spacing="16">
                     <!-- Top Badge -->
-                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                        <Path
-                            Data="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
-                            Fill="{StaticResource Primary}"
-                            Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
-                            VerticalOptions="Center" />
-                        <Label
-                            Text="{loc:LocalizedText Workout_Generation_PlanSetupBadge}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontAttributes="Bold"
-                            TextColor="{StaticResource Primary}"
-                            VerticalOptions="Center"
-                            SemanticProperties.HeadingLevel="Level2" />
-                    </HorizontalStackLayout>
+                    <Border Style="{StaticResource PillBadge}">
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Path
+                                Data="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
+                                Fill="{StaticResource Primary}"
+                                Aspect="Uniform"
+                                WidthRequest="12"
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="{loc:LocalizedText Workout_Generation_PlanSetupBadge}"
+                                Style="{StaticResource EyebrowLabel}"
+                                VerticalOptions="Center"
+                                SemanticProperties.HeadingLevel="Level2" />
+                        </HorizontalStackLayout>
+                    </Border>
 
                     <!-- Title & Intro -->
                     <VerticalStackLayout Spacing="4">
@@ -79,7 +84,7 @@
                     <VerticalStackLayout Spacing="8">
                         <Label Text="{loc:LocalizedText Workout_Generation_Activity}"
                                Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
+                        <Border Style="{StaticResource PlanPickerSurface}">
                             <Picker ItemsSource="{Binding Activities}"
                                     SelectedItem="{Binding SelectedActivity}"
                                     ItemDisplayBinding="{Binding Label}"
@@ -110,31 +115,31 @@
                     Style="{StaticResource CardPrimary}"
                     Padding="20">
                 <VerticalStackLayout Spacing="16">
-                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                        <Path
-                            Data="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"
-                            Fill="{StaticResource Primary}"
-                            Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
-                            VerticalOptions="Center" />
-                        <Label
-                            Text="{loc:LocalizedText Workout_Generation_ActivityEvidenceBadge}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontAttributes="Bold"
-                            TextColor="{StaticResource Primary}"
-                            VerticalOptions="Center"
-                            SemanticProperties.HeadingLevel="Level2" />
-                    </HorizontalStackLayout>
+                    <Border Style="{StaticResource PillBadge}">
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Path
+                                Data="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"
+                                Fill="{StaticResource Primary}"
+                                Aspect="Uniform"
+                                WidthRequest="12"
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="{loc:LocalizedText Workout_Generation_ActivityEvidenceBadge}"
+                                Style="{StaticResource EyebrowLabel}"
+                                VerticalOptions="Center"
+                                SemanticProperties.HeadingLevel="Level2" />
+                        </HorizontalStackLayout>
+                    </Border>
 
                     <VerticalStackLayout Spacing="4">
                         <Label Text="{loc:LocalizedText Workout_Generation_HiitEvidenceTitle}"
-                               Style="{StaticResource SectionTitle}"
-                               FontSize="20"
-                               FontAttributes="Bold" />
+                                Style="{StaticResource SectionTitle}"
+                                FontSize="20"
+                                FontAttributes="Bold" />
                         <Label Text="{loc:LocalizedText Workout_Generation_HiitEvidenceHelp}"
-                               Style="{StaticResource MutedLabel}"
-                               LineBreakMode="WordWrap" />
+                                Style="{StaticResource MutedLabel}"
+                                LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
 
                     <!-- Underlying Activity Picker -->
@@ -144,7 +149,7 @@
                         <Label Text="{loc:LocalizedText Workout_Generation_HiitUnderlyingActivityHelp}"
                                Style="{StaticResource MutedLabel}"
                                LineBreakMode="WordWrap" />
-                        <Border Style="{StaticResource InputContainer}">
+                        <Border Style="{StaticResource PlanPickerSurface}">
                             <Picker ItemsSource="{Binding HiitUnderlyingCardioActivities}"
                                     SelectedItem="{Binding SelectedHiitUnderlyingCardioActivity}"
                                     ItemDisplayBinding="{Binding Label}"
@@ -168,7 +173,7 @@
                             <VerticalStackLayout Spacing="6">
                                 <Label Text="{loc:LocalizedText Workout_Generation_HiitCardioConsistentWeeks}"
                                        Style="{StaticResource FormFieldLabel}" />
-                                <Border Style="{StaticResource InputContainer}">
+                                <Border Style="{StaticResource PlanFieldSurface}">
                                     <Entry Text="{Binding HiitEvidenceCapture.UnderlyingCardioConsistentWeeks}"
                                            Keyboard="Numeric"
                                            IsEnabled="{Binding CanEditInputs}"
@@ -180,7 +185,7 @@
                             <VerticalStackLayout Grid.Column="1" Spacing="6">
                                 <Label Text="{loc:LocalizedText Workout_Generation_HiitCardioAverageSessions}"
                                        Style="{StaticResource FormFieldLabel}" />
-                                <Border Style="{StaticResource InputContainer}">
+                                <Border Style="{StaticResource PlanFieldSurface}">
                                     <Entry Text="{Binding HiitEvidenceCapture.UnderlyingCardioAverageSessionsPerWeek}"
                                            Keyboard="Numeric"
                                            IsEnabled="{Binding CanEditInputs}"
@@ -194,7 +199,7 @@
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{loc:LocalizedText Workout_Generation_HiitCardioDaysSinceLastSession}"
                                    Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
+                            <Border Style="{StaticResource PlanFieldSurface}">
                                 <Entry Text="{Binding HiitEvidenceCapture.UnderlyingCardioDaysSinceLastSession}"
                                        Keyboard="Numeric"
                                        IsEnabled="{Binding CanEditInputs}"
@@ -222,7 +227,7 @@
                                             <Label Text="{Binding WeekLabel}"
                                                    Style="{StaticResource FormFieldLabel}"
                                                    VerticalOptions="Center" />
-                                            <Border Grid.Column="1" Style="{StaticResource InputContainer}" MinimumHeightRequest="44">
+                                            <Border Grid.Column="1" Style="{StaticResource PlanFieldSurface}" HeightRequest="44" MinimumHeightRequest="44" Padding="10,0">
                                                 <Entry Text="{Binding QualifyingManageableSessionCount}"
                                                        Keyboard="Numeric"
                                                        Placeholder="{loc:LocalizedText Workout_Generation_HiitSessionCountPlaceholder}"
@@ -243,7 +248,7 @@
                         <Label Text="{loc:LocalizedText Workout_Generation_HiitClearanceConfirmation}"
                                Style="{StaticResource FormFieldLabel}"
                                LineBreakMode="WordWrap" />
-                        <Border Style="{StaticResource InputContainer}">
+                        <Border Style="{StaticResource PlanPickerSurface}">
                             <Picker ItemsSource="{Binding HiitEvidenceCapture.ClearanceScreeningChoices}"
                                     SelectedItem="{Binding HiitEvidenceCapture.SelectedClearanceScreeningChoice}"
                                     ItemDisplayBinding="{Binding Label}"
@@ -262,22 +267,22 @@
                     Style="{StaticResource CardPrimary}"
                     Padding="20">
                 <VerticalStackLayout Spacing="16">
-                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                        <Path
-                            Data="M21 16v-2c-2.24 0-4.16-.96-5.6-2.4L14.24 10.4C13.6 9.76 12.8 9.36 12 9.36s-1.6.4-2.24 1.04L8.6 11.6C7.16 13.04 5.24 14 3 14v2c2.76 0 5.2-1.12 7-2.92 1.8 1.8 4.24 2.92 7 2.92s5.2-1.12 7-2.92c-.88 1.8-1 2.92-3 2.92zM12 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"
-                            Fill="{StaticResource Primary}"
-                            Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
-                            VerticalOptions="Center" />
-                        <Label
-                            Text="{loc:LocalizedText Workout_Generation_ActivityEvidenceBadge}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontAttributes="Bold"
-                            TextColor="{StaticResource Primary}"
-                            VerticalOptions="Center"
-                            SemanticProperties.HeadingLevel="Level2" />
-                    </HorizontalStackLayout>
+                    <Border Style="{StaticResource PillBadge}">
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Path
+                                Data="M21 16v-2c-2.24 0-4.16-.96-5.6-2.4L14.24 10.4C13.6 9.76 12.8 9.36 12 9.36s-1.6.4-2.24 1.04L8.6 11.6C7.16 13.04 5.24 14 3 14v2c2.76 0 5.2-1.12 7-2.92 1.8 1.8 4.24 2.92 7 2.92s5.2-1.12 7-2.92c-.88 1.8-1 2.92-3 2.92zM12 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"
+                                Fill="{StaticResource Primary}"
+                                Aspect="Uniform"
+                                WidthRequest="12"
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="{loc:LocalizedText Workout_Generation_ActivityEvidenceBadge}"
+                                Style="{StaticResource EyebrowLabel}"
+                                VerticalOptions="Center"
+                                SemanticProperties.HeadingLevel="Level2" />
+                        </HorizontalStackLayout>
+                    </Border>
 
                     <VerticalStackLayout Spacing="4">
                         <Label Text="{loc:LocalizedText Workout_Generation_SwimmingEvidenceTitle}"
@@ -292,7 +297,7 @@
                     <VerticalStackLayout Spacing="8">
                         <Label Text="{loc:LocalizedText Workout_Generation_SwimmingFacilityAccess}"
                                Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
+                        <Border Style="{StaticResource PlanPickerSurface}">
                             <Picker ItemsSource="{Binding EvidenceYesNoChoices}"
                                     SelectedItem="{Binding SelectedSwimmingFacilityAccessChoice}"
                                     ItemDisplayBinding="{Binding Label}"
@@ -307,7 +312,7 @@
                     <VerticalStackLayout Spacing="8">
                         <Label Text="{loc:LocalizedText Workout_Generation_IndependentSwimming}"
                                Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
+                        <Border Style="{StaticResource PlanPickerSurface}">
                             <Picker ItemsSource="{Binding EvidenceYesNoChoices}"
                                     SelectedItem="{Binding SelectedIndependentSwimmingChoice}"
                                     ItemDisplayBinding="{Binding Label}"
@@ -322,7 +327,7 @@
                     <VerticalStackLayout IsVisible="{Binding CanChooseSwimmingStyle}" Spacing="8">
                         <Label Text="{loc:LocalizedText Workout_Generation_SwimmingStyle}"
                                Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
+                        <Border Style="{StaticResource PlanPickerSurface}">
                             <Picker ItemsSource="{Binding SwimmingStyleChoices}"
                                     SelectedItem="{Binding SelectedSwimmingStyleChoice}"
                                     ItemDisplayBinding="{Binding Label}"
@@ -341,22 +346,22 @@
                     Style="{StaticResource CardPrimary}"
                     Padding="20">
                 <VerticalStackLayout Spacing="16">
-                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                        <Path
-                            Data="M14 6l-3.75 5 2.85 3.8-1.6 1.2L7 10l-6 8h22L14 6z"
-                            Fill="{StaticResource Primary}"
-                            Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
-                            VerticalOptions="Center" />
-                        <Label
-                            Text="{loc:LocalizedText Workout_Generation_ActivityEvidenceBadge}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontAttributes="Bold"
-                            TextColor="{StaticResource Primary}"
-                            VerticalOptions="Center"
-                            SemanticProperties.HeadingLevel="Level2" />
-                    </HorizontalStackLayout>
+                    <Border Style="{StaticResource PillBadge}">
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Path
+                                Data="M14 6l-3.75 5 2.85 3.8-1.6 1.2L7 10l-6 8h22L14 6z"
+                                Fill="{StaticResource Primary}"
+                                Aspect="Uniform"
+                                WidthRequest="12"
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="{loc:LocalizedText Workout_Generation_ActivityEvidenceBadge}"
+                                Style="{StaticResource EyebrowLabel}"
+                                VerticalOptions="Center"
+                                SemanticProperties.HeadingLevel="Level2" />
+                        </HorizontalStackLayout>
+                    </Border>
 
                     <VerticalStackLayout Spacing="4">
                         <Label Text="{loc:LocalizedText Workout_Generation_ClimbingEvidenceTitle}"
@@ -371,7 +376,7 @@
                     <VerticalStackLayout Spacing="8">
                         <Label Text="{loc:LocalizedText Workout_Generation_RopeCompetence}"
                                Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
+                        <Border Style="{StaticResource PlanPickerSurface}">
                             <Picker ItemsSource="{Binding EvidenceYesNoChoices}"
                                     SelectedItem="{Binding SelectedRopeClimbingCompetenceChoice}"
                                     ItemDisplayBinding="{Binding Label}"
@@ -386,7 +391,7 @@
                     <VerticalStackLayout IsVisible="{Binding ShouldAskClimbingInstruction}" Spacing="8">
                         <Label Text="{loc:LocalizedText Workout_Generation_ClimbingInstructionAvailable}"
                                Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
+                        <Border Style="{StaticResource PlanPickerSurface}">
                             <Picker ItemsSource="{Binding EvidenceYesNoChoices}"
                                     SelectedItem="{Binding SelectedClimbingInstructionChoice}"
                                     ItemDisplayBinding="{Binding Label}"
@@ -405,22 +410,22 @@
                     Style="{StaticResource CardPrimary}"
                     Padding="20">
                 <VerticalStackLayout Spacing="16">
-                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                        <Path
-                            Data="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9 7h-6v13h-2v-6h-2v6H9V9H3V7h18v2z"
-                            Fill="{StaticResource Primary}"
-                            Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
-                            VerticalOptions="Center" />
-                        <Label
-                            Text="{loc:LocalizedText Workout_Generation_ActivityEvidenceBadge}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontAttributes="Bold"
-                            TextColor="{StaticResource Primary}"
-                            VerticalOptions="Center"
-                            SemanticProperties.HeadingLevel="Level2" />
-                    </HorizontalStackLayout>
+                    <Border Style="{StaticResource PillBadge}">
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Path
+                                Data="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9 7h-6v13h-2v-6h-2v6H9V9H3V7h18v2z"
+                                Fill="{StaticResource Primary}"
+                                Aspect="Uniform"
+                                WidthRequest="12"
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="{loc:LocalizedText Workout_Generation_ActivityEvidenceBadge}"
+                                Style="{StaticResource EyebrowLabel}"
+                                VerticalOptions="Center"
+                                SemanticProperties.HeadingLevel="Level2" />
+                        </HorizontalStackLayout>
+                    </Border>
 
                     <VerticalStackLayout Spacing="4">
                         <Label Text="{loc:LocalizedText Workout_Generation_YogaEvidenceTitle}"
@@ -435,7 +440,7 @@
                     <VerticalStackLayout Spacing="8">
                         <Label Text="{loc:LocalizedText Workout_Generation_YogaContentClassification}"
                                Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
+                        <Border Style="{StaticResource PlanPickerSurface}">
                             <Picker ItemsSource="{Binding YogaContentChoices}"
                                     SelectedItem="{Binding SelectedYogaContentChoice}"
                                     ItemDisplayBinding="{Binding Label}"
@@ -453,22 +458,22 @@
             <Border Style="{StaticResource CardPrimary}" Padding="20">
                 <VerticalStackLayout Spacing="16">
                     <!-- Top Badge -->
-                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                        <Path
-                            Data="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"
-                            Fill="{StaticResource Primary}"
-                            Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
-                            VerticalOptions="Center" />
-                        <Label
-                            Text="{loc:LocalizedText Workout_Generation_RecentHistoryBadge}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontAttributes="Bold"
-                            TextColor="{StaticResource Primary}"
-                            VerticalOptions="Center"
-                            SemanticProperties.HeadingLevel="Level2" />
-                    </HorizontalStackLayout>
+                    <Border Style="{StaticResource PillBadge}">
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Path
+                                Data="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"
+                                Fill="{StaticResource Primary}"
+                                Aspect="Uniform"
+                                WidthRequest="12"
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="{loc:LocalizedText Workout_Generation_RecentHistoryBadge}"
+                                Style="{StaticResource EyebrowLabel}"
+                                VerticalOptions="Center"
+                                SemanticProperties.HeadingLevel="Level2" />
+                        </HorizontalStackLayout>
+                    </Border>
 
                     <!-- Title & Subtitle -->
                     <VerticalStackLayout Spacing="4">
@@ -486,7 +491,7 @@
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{loc:LocalizedText Workout_Generation_ConsistentWeeks}"
                                    Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
+                            <Border Style="{StaticResource PlanFieldSurface}">
                                 <Entry Text="{Binding ConsistentWeeks}"
                                        Keyboard="Numeric"
                                        IsEnabled="{Binding CanEditInputs}"
@@ -500,7 +505,7 @@
                         <VerticalStackLayout Grid.Column="1" Spacing="6">
                             <Label Text="{loc:LocalizedText Workout_Generation_AverageSessions}"
                                    Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
+                            <Border Style="{StaticResource PlanFieldSurface}">
                                 <Entry Text="{Binding AverageSessionsPerWeek}"
                                        Keyboard="Numeric"
                                        IsEnabled="{Binding CanEditInputs}"
@@ -516,7 +521,7 @@
                     <VerticalStackLayout Spacing="6">
                         <Label Text="{loc:LocalizedText Workout_Generation_DaysSinceLast}"
                                Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
+                        <Border Style="{StaticResource PlanFieldSurface}">
                             <Entry Text="{Binding DaysSinceLastSession}"
                                    Keyboard="Numeric"
                                    IsEnabled="{Binding CanEditInputs}"
@@ -532,22 +537,22 @@
             <Border Style="{StaticResource CardPrimary}" Padding="20">
                 <VerticalStackLayout Spacing="16">
                     <!-- Top Badge -->
-                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                        <Path
-                            Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
-                            Fill="{StaticResource Primary}"
-                            Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
-                            VerticalOptions="Center" />
-                        <Label
-                            Text="{loc:LocalizedText Workout_Generation_TimingBadge}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontAttributes="Bold"
-                            TextColor="{StaticResource Primary}"
-                            VerticalOptions="Center"
-                            SemanticProperties.HeadingLevel="Level2" />
-                    </HorizontalStackLayout>
+                    <Border Style="{StaticResource PillBadge}">
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Path
+                                Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                                Fill="{StaticResource Primary}"
+                                Aspect="Uniform"
+                                WidthRequest="12"
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="{loc:LocalizedText Workout_Generation_TimingBadge}"
+                                Style="{StaticResource EyebrowLabel}"
+                                VerticalOptions="Center"
+                                SemanticProperties.HeadingLevel="Level2" />
+                        </HorizontalStackLayout>
+                    </Border>
 
                     <!-- Title -->
                     <VerticalStackLayout Spacing="4">
@@ -562,7 +567,7 @@
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{loc:LocalizedText Workout_Generation_Warmup}"
                                    Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
+                            <Border Style="{StaticResource PlanFieldSurface}">
                                 <Entry Text="{Binding WarmupMinutes}"
                                        Keyboard="Numeric"
                                        IsEnabled="{Binding CanEditInputs}"
@@ -575,7 +580,7 @@
                         <VerticalStackLayout Grid.Column="1" Spacing="6">
                             <Label Text="{loc:LocalizedText Workout_Generation_Cooldown}"
                                    Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
+                            <Border Style="{StaticResource PlanFieldSurface}">
                                 <Entry Text="{Binding CooldownMinutes}"
                                        Keyboard="Numeric"
                                        IsEnabled="{Binding CanEditInputs}"
@@ -610,22 +615,22 @@
                     Padding="20">
                 <VerticalStackLayout Spacing="16">
                     <!-- Top Badge -->
-                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                        <Path
-                            Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
-                            Fill="{StaticResource Primary}"
-                            Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
-                            VerticalOptions="Center" />
-                        <Label
-                            Text="{loc:LocalizedText Workout_Generation_PreviewBadge}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontAttributes="Bold"
-                            TextColor="{StaticResource Primary}"
-                            VerticalOptions="Center"
-                            SemanticProperties.HeadingLevel="Level2" />
-                    </HorizontalStackLayout>
+                    <Border Style="{StaticResource PillBadge}">
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Path
+                                Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+                                Fill="{StaticResource Primary}"
+                                Aspect="Uniform"
+                                WidthRequest="12"
+                                HeightRequest="12"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="{loc:LocalizedText Workout_Generation_PreviewBadge}"
+                                Style="{StaticResource EyebrowLabel}"
+                                VerticalOptions="Center"
+                                SemanticProperties.HeadingLevel="Level2" />
+                        </HorizontalStackLayout>
+                    </Border>
 
                     <!-- Title & Explanation -->
                     <VerticalStackLayout Spacing="4">
@@ -699,11 +704,11 @@
                                                                  BindableLayout.ItemsSource="{Binding Reasons}"
                                                                  Spacing="2">
                                                 <BindableLayout.ItemTemplate>
-                                                    <DataTemplate x:DataType="x:String">
-                                                        <Label Text="{Binding .}"
-                                                               Style="{StaticResource MutedLabel}"
-                                                               LineBreakMode="WordWrap" />
-                                                    </DataTemplate>
+                                                     <DataTemplate x:DataType="x:String">
+                                                         <Label Text="{Binding .}"
+                                                                Style="{StaticResource MutedLabel}"
+                                                                LineBreakMode="WordWrap" />
+                                                     </DataTemplate>
                                                 </BindableLayout.ItemTemplate>
                                             </VerticalStackLayout>
                                         </VerticalStackLayout>
@@ -817,7 +822,7 @@
                                             <VerticalStackLayout Spacing="4">
                                                 <Label Text="{loc:LocalizedText Workout_Generation_FamiliarityQuestion}"
                                                        Style="{StaticResource FormFieldLabel}" />
-                                                <Border Style="{StaticResource InputContainer}">
+                                                <Border Style="{StaticResource PlanPickerSurface}">
                                                     <Picker ItemsSource="{Binding AnswerChoices}"
                                                             SelectedItem="{Binding FamiliarityChoice}"
                                                             ItemDisplayBinding="{Binding Label}"
@@ -831,7 +836,7 @@
                                             <VerticalStackLayout Spacing="4">
                                                 <Label Text="{loc:LocalizedText Workout_Generation_ManageableLoadQuestion}"
                                                        Style="{StaticResource FormFieldLabel}" />
-                                                <Border Style="{StaticResource InputContainer}">
+                                                <Border Style="{StaticResource PlanPickerSurface}">
                                                     <Picker ItemsSource="{Binding AnswerChoices}"
                                                             SelectedItem="{Binding ManageableLoadChoice}"
                                                             ItemDisplayBinding="{Binding Label}"

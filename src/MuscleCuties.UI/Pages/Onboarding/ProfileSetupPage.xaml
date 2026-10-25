@@ -20,11 +20,7 @@
         <Thickness x:Key="ProfileMeasurementChoicePadding">12</Thickness>
         <Thickness x:Key="ProfileMeasurementPickerPadding">14,4</Thickness>
         <RoundRectangle x:Key="ProfileMeasurementCardShape" CornerRadius="14" />
-        <Style x:Key="ProfileFieldSurface" TargetType="Border" BasedOn="{StaticResource InputContainer}">
-            <Setter Property="BackgroundColor"
-                    Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
-            <Setter Property="StrokeThickness" Value="0" />
-        </Style>
+        <Style x:Key="ProfileFieldSurface" TargetType="Border" BasedOn="{StaticResource InputContainer}" />
         <Style x:Key="ProfileMeasurementChoiceSurface" TargetType="Border">
             <Setter Property="Padding" Value="{StaticResource ProfileMeasurementChoicePadding}" />
             <Setter Property="MinimumHeightRequest" Value="{StaticResource ProfileMeasurementCardHeight}" />
@@ -55,12 +51,7 @@
             MaximumWidthRequest="640">
 
             <!-- Step indicator -->
-            <Border
-                HorizontalOptions="Start"
-                Padding="12,5"
-                StrokeThickness="0"
-                StrokeShape="RoundRectangle 999"
-                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
+            <Border Style="{StaticResource PillBadge}">
                 <Label
                     Text="{loc:LocalizedText Onboarding_ProfileSetup_StepOneOfTwo}"
                     Style="{StaticResource EyebrowLabel}"

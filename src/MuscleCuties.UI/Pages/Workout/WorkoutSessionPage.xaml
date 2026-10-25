@@ -14,24 +14,13 @@
              SafeAreaEdges="All"
              BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
     <ContentPage.Resources>
-        <Style x:Key="SessionCard" TargetType="Border">
-            <Setter Property="StrokeThickness" Value="0" />
-            <Setter Property="StrokeShape" Value="RoundRectangle 14" />
+        <Style x:Key="SessionCard" TargetType="Border" BasedOn="{StaticResource CardSecondary}">
             <Setter Property="Padding" Value="12,14" />
-            <Setter Property="BackgroundColor"
-                    Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
         </Style>
-        <Style x:Key="SessionAccent" TargetType="Border" BasedOn="{StaticResource SessionCard}">
-            <Setter Property="BackgroundColor"
-                    Value="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}" />
+        <Style x:Key="SessionAccent" TargetType="Border" BasedOn="{StaticResource SurfaceTile}">
+            <Setter Property="Padding" Value="12,14" />
         </Style>
-        <Style x:Key="QuietButton" TargetType="Button">
-            <Setter Property="BackgroundColor" Value="Transparent" />
-            <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
-            <Setter Property="TextColor"
-                    Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-            <Setter Property="MinimumHeightRequest" Value="48" />
-            <Setter Property="MinimumWidthRequest" Value="48" />
+        <Style x:Key="QuietButton" TargetType="Button" BasedOn="{StaticResource ButtonLink}">
             <Setter Property="Padding" Value="12,8" />
             <Setter Property="FontSize" Value="15" />
         </Style>
