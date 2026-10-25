@@ -16,6 +16,8 @@ variables:
 verify_plan_generation:
   stage: verify
   image: mcr.microsoft.com/dotnet/sdk:10.0.403
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends libfontconfig1
   script:
     - dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj --configuration Release
     - dotnet test tests/MuscleCuties.Server.Tests/MuscleCuties.Server.Tests.csproj --configuration Release
