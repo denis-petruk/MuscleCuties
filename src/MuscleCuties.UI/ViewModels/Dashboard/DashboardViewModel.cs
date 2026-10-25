@@ -86,7 +86,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private string _photoCheckInText = "Add today's progress photo";
     [ObservableProperty] private int _predictedCycleLength = 28;
     [ObservableProperty] private string _readinessLabel = string.Empty;
-    [ObservableProperty] private int _readinessScore;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ReadinessProgress), nameof(CompositeScore))]
+    private int _readinessScore;
     [ObservableProperty] private string _readinessTrendSummary = "Complete a check-in to see readiness history";
     [ObservableProperty] private bool _hasTodayReadinessScore;
     [ObservableProperty] private bool _hasTodayReadinessRecord;
@@ -106,7 +108,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private string _readinessProposalSummary = string.Empty;
     [ObservableProperty] private ObservableCollection<string> _readinessProposalChanges = [];
     [ObservableProperty] private string _recoveryLabel = string.Empty;
-    [ObservableProperty] private int _recoveryScore;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RecoveryProgress), nameof(CompositeScore))]
+    private int _recoveryScore;
     [ObservableProperty] private string _sessionProgressText = "Upcoming";
     [ObservableProperty] private string _sleepGoal = "8h";
     [ObservableProperty] private float _targetCalories;
@@ -308,6 +312,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     private const double BaselineRecoveryWeight = 0.3;
 
     public int CompositeScore => (ReadinessScore + RecoveryScore) / 2;
+
+    public string ReadinessSubtitleText => HasTodayReadinessRecord
+        ? "Dashboard_Readiness_SelfReportedSubtitle"
+        : "Dashboard_Readiness_HealthOrBaselineSubtitle";
 
     public float ReadinessProgress =>
         Math.Clamp(ReadinessScore / MaximumScoreProgressDivisor, 0f, 1f);
@@ -587,6 +595,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         TodayReadinessEnergyText = FormatRating(readiness?.Energy);
         TodayReadinessSorenessText = FormatRating(readiness?.Soreness);
         TodayReadinessStressText = FormatRating(readiness?.Stress);
+        OnPropertyChanged(nameof(ReadinessSubtitleText));
         CanReviewReadiness = _readinessPresentationSettings.AreReadinessSuggestionsEnabled &&
                              HasTodayReadinessScore && !HasActiveInjuries &&
                              readiness?.Band is "ConsiderLighterSession" or "ConsiderEasierDay";
