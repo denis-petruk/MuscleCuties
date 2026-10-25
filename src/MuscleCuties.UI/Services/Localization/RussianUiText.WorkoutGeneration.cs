@@ -16,7 +16,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_Activity"] = "Силовая активность";
         Values["Workout_Generation_ChooseActivity"] = "Выберите активность";
         Values["Workout_Generation_StrengthPlanType"] = "Тип силового плана";
-        Values["Workout_Generation_GeneralStrengthDescription"] = "Сбалансированный план для развития общей силы и постепенного прогресса.";
+        Values["Workout_Generation_GeneralStrengthDescription"] = "Меньший тренировочный объём и постепенный прогресс в общей силе.";
         Values["Workout_Generation_HighVolumeStrengthDescription"] = "Больше силовой работы; нужен достаточный недавний тренировочный опыт.";
         Values["Workout_Generation_HighIntensityStrengthDescription"] = "Более тяжёлые основные упражнения; могут потребоваться подтверждения знакомства и переносимости нагрузки.";
         Values["Workout_Generation_StrengthPlanChoiceHint"] = "Выберите этот тип силового плана.";
@@ -245,7 +245,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_FullDayFriday"] = "Пятница";
         Values["Workout_Generation_FullDaySaturday"] = "Суббота";
         Values["Workout_Generation_FullDaySunday"] = "Воскресенье";
-        Values["Workout_Generation_GeneralStrength"] = "Общая силовая";
+        Values["Workout_Generation_GeneralStrength"] = "Общая силовая (малый объём)";
         Values["Workout_Generation_HighVolumeStrength"] = "Силовая с большим объёмом";
         Values["Workout_Generation_HighIntensityStrength"] = "Силовая высокой интенсивности";
     }
