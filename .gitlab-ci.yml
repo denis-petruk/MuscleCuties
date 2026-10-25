@@ -1,0 +1,62 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
+    - when: never
+
+stages:
+  - verify
+  - package
+  - deploy
+
+variables:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  AWS_REGION: "us-east-2"
+
+verify_plan_generation:
+  stage: verify
+  image: mcr.microsoft.com/dotnet/sdk:10.0.403
+  script:
+    - dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj --configuration Release
+    - dotnet test tests/MuscleCuties.Server.Tests/MuscleCuties.Server.Tests.csproj --configuration Release
+    - dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj --configuration Release --filter FullyQualifiedName~ReviewedExerciseCatalogV020ImportTests
+
+package_staging_lambda:
+  stage: package
+  image: mcr.microsoft.com/dotnet/sdk:10.0.403
+  needs:
+    - job: verify_plan_generation
+      artifacts: false
+  script:
+    - dotnet tool install Amazon.Lambda.Tools --version 7.0.0 --tool-path .tools
+    - mkdir -p artifacts
+    - ./.tools/dotnet-lambda package --project-location services/MuscleCuties.Server --configuration Release --framework net10.0 --function-architecture arm64 --output-package artifacts/MuscleCuties.Server.zip
+  artifacts:
+    paths:
+      - artifacts/MuscleCuties.Server.zip
+    expire_in: 1 day
+
+deploy_staging_lambda:
+  stage: deploy
+  image:
+    name: amazon/aws-cli:2
+    entrypoint: [""]
+  needs:
+    - job: package_staging_lambda
+      artifacts: true
+  id_tokens:
+    AWS_OIDC_TOKEN:
+      aud: sts.amazonaws.com
+  script:
+    - ': "${AWS_ROLE_ARN:?Set the protected AWS_ROLE_ARN GitLab CI variable}"'
+    - ': "${AWS_LAMBDA_FUNCTION_NAME:?Set the protected AWS_LAMBDA_FUNCTION_NAME GitLab CI variable}"'
+    - credentials="$(aws sts assume-role-with-web-identity --role-arn "$AWS_ROLE_ARN" --role-session-name "gitlab-${CI_PROJECT_ID}-${CI_PIPELINE_ID}" --web-identity-token "$AWS_OIDC_TOKEN" --duration-seconds 3600 --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" --output text)"
+    - set -- $credentials
+    - export AWS_ACCESS_KEY_ID="$1" AWS_SECRET_ACCESS_KEY="$2" AWS_SESSION_TOKEN="$3"
+    - unset credentials AWS_OIDC_TOKEN
+    - aws lambda update-function-code --function-name "$AWS_LAMBDA_FUNCTION_NAME" --zip-file "fileb://${CI_PROJECT_DIR}/artifacts/MuscleCuties.Server.zip" --region "$AWS_REGION"
+    - aws lambda wait function-updated --function-name "$AWS_LAMBDA_FUNCTION_NAME" --region "$AWS_REGION"
+    - test "$(aws lambda get-function-configuration --function-name "$AWS_LAMBDA_FUNCTION_NAME" --query LastUpdateStatus --output text --region "$AWS_REGION")" = "Successful"
+    - echo "Staging Lambda update completed for pipeline ${CI_PIPELINE_ID}."
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
