@@ -363,7 +363,7 @@ public static class MauiProgram
             client.Timeout = TimeSpan.FromSeconds(BackendRequestTimeoutSeconds);
         });
         services.AddSingleton(TimeProvider.System);
-        services.AddScoped<MobileJourneyCloudGateway>();
+        services.AddSingleton<MobileJourneyCloudGateway>();
         services.AddSingleton<IPhotoCacheAccountLifecycle>(sp => new PhotoCacheAccountLifecycle(
             async () =>
             {

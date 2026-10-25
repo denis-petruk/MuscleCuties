@@ -182,6 +182,63 @@ public class UiCleanlinessAndReachabilityTests
             string.Join("\n", inlineFontFamilyViolations));
     }
 
+    [Fact]
+    public void All_xaml_static_resource_keys_are_defined_in_app_or_local_resources()
+    {
+        var uiDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        string[] globalResourceFiles =
+        [
+            Path.Combine(uiDir, "Resources", "Styles", "Colors.xaml"),
+            Path.Combine(uiDir, "Resources", "Styles", "Styles.xaml"),
+            Path.Combine(uiDir, "Resources", "Styles", "WorkoutPlanningResources.xaml"),
+            Path.Combine(uiDir, "App.xaml")
+        ];
+
+        var keyDefinitionRegex = new Regex(@"x:Key=""([^""]+)""", RegexOptions.Compiled);
+        var staticResourceUsageRegex = new Regex(@"\{StaticResource\s+(?:Key=)?([A-Za-z0-9_]+)\s*\}", RegexOptions.Compiled);
+
+        var globalKeys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var globalFile in globalResourceFiles)
+        {
+            Assert.True(File.Exists(globalFile), $"Global XAML resource file not found: {globalFile}");
+            var globalContent = File.ReadAllText(globalFile);
+            foreach (Match match in keyDefinitionRegex.Matches(globalContent))
+            {
+                globalKeys.Add(match.Groups[1].Value);
+            }
+        }
+
+        var allXamlFiles = Directory.GetFiles(uiDir, "*.xaml", SearchOption.AllDirectories)
+            .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") &&
+                        !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+            .ToList();
+
+        var unresolvedUsages = new List<string>();
+        foreach (var xamlFile in allXamlFiles)
+        {
+            var content = File.ReadAllText(xamlFile);
+            var localKeys = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Match match in keyDefinitionRegex.Matches(content))
+            {
+                localKeys.Add(match.Groups[1].Value);
+            }
+
+            foreach (Match usage in staticResourceUsageRegex.Matches(content))
+            {
+                var key = usage.Groups[1].Value;
+                if (!globalKeys.Contains(key) && !localKeys.Contains(key))
+                {
+                    unresolvedUsages.Add($"{Path.GetRelativePath(RepoRoot, xamlFile)} -> {key}");
+                }
+            }
+        }
+
+        Assert.True(
+            unresolvedUsages.Count == 0,
+            $"Found {unresolvedUsages.Count} unresolved StaticResource key(s) in XAML:\n" +
+            string.Join("\n", unresolvedUsages.Distinct(StringComparer.Ordinal)));
+    }
+
     private static string FindRepositoryRoot()
     {
         var current = AppContext.BaseDirectory;
