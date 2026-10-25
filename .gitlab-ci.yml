@@ -26,6 +26,8 @@ verify_plan_generation:
 package_staging_lambda:
   stage: package
   image: mcr.microsoft.com/dotnet/sdk:10.0.403
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends zip
   needs:
     - job: verify_plan_generation
       artifacts: false
