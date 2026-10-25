@@ -44,6 +44,17 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
+    public void Request_Can_Be_Serialized_And_Deserialized_Via_SystemTextJson()
+    {
+        var request = Request();
+        var json = System.Text.Json.JsonSerializer.Serialize(request, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+        var deserialized = System.Text.Json.JsonSerializer.Deserialize<StrengthPlanPreviewRequestV020>(json, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+        Assert.NotNull(deserialized);
+        Assert.Equal(request.Activity, deserialized.Activity);
+        Assert.Equal(request.AvailableWeekdays, deserialized.AvailableWeekdays);
+    }
+
+    [Fact]
     public async Task Missing_Flexible_Activity_Frequency_Limits_The_Mixed_Plan_Without_Losing_Strength_Preview()
     {
         var profile = Profile();

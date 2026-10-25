@@ -291,8 +291,9 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
 
             NotifyPreviewChanged();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[StrengthPlanGeneration] Proposal creation failed: {ex}");
             StatusMessage = UiTextCatalog.Get("Workout_Generation_CreateFailed");
         }
         finally
@@ -318,8 +319,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
         return new StrengthPlanPreviewRequestV020(activity,
             localDate,
             history,
-            UserConfirmedFamiliarExerciseIds: familiarExerciseIds,
-            UserConfirmedManageableLoadExerciseIds: manageableLoadExerciseIds,
+            UserConfirmedFamiliarExerciseIds: familiarExerciseIds?.ToHashSet(),
+            UserConfirmedManageableLoadExerciseIds: manageableLoadExerciseIds?.ToHashSet(),
             WarmupMinutes: warmupMinutes,
             CooldownMinutes: cooldownMinutes)
         {

@@ -9,16 +9,16 @@ public sealed record StrengthPlanPreviewRequestV020(
     WorkoutActivityDto Activity,
     DateOnly LocalDate,
     ActivityTrainingHistoryInputV020? ActivityHistory,
-    IReadOnlySet<int>? ExcludedExerciseIds = null,
-    IReadOnlySet<int>? UserConfirmedFamiliarExerciseIds = null,
-    IReadOnlySet<int>? AcknowledgedExerciseConditionIds = null,
+    HashSet<int>? ExcludedExerciseIds = null,
+    HashSet<int>? UserConfirmedFamiliarExerciseIds = null,
+    HashSet<int>? AcknowledgedExerciseConditionIds = null,
     bool UnknownExperienceAssessmentCompleted = false,
-    IReadOnlySet<int>? UserConfirmedManageableLoadExerciseIds = null,
-    IReadOnlySet<string>? AcknowledgedSubstitutionPairKeys = null,
+    HashSet<int>? UserConfirmedManageableLoadExerciseIds = null,
+    HashSet<string>? AcknowledgedSubstitutionPairKeys = null,
     int? WarmupMinutes = null,
     int? CooldownMinutes = null)
 {
-    public IReadOnlySet<DayOfWeek>? AvailableWeekdays { get; init; }
+    public HashSet<DayOfWeek>? AvailableWeekdays { get; init; }
 
     /// <summary>Explicit per-activity facts needed by the mixed planner; absent values remain unknown.</summary>
     public IReadOnlyList<ActivityEligibilityInputV020>? ActivityEligibilityEvidence { get; init; }
