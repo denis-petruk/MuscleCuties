@@ -158,8 +158,15 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
                 return;
             }
 
-            _availableWeekdays = NormalizeWeekdays(preferences.AvailableWeekdays);
-            UpdateSelectedProfileActivities(preferences.ActivityTypes);
+            var weekdays = NormalizeWeekdays(preferences.AvailableWeekdays);
+            if (weekdays.Length < WorkoutPreferencesConstraints.MinimumAvailableWeekdays)
+            {
+                weekdays = [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday];
+            }
+            _availableWeekdays = weekdays;
+            var initialActivities = preferences.ActivityTypes.ToHashSet();
+            initialActivities.Add((int)WorkoutActivityDto.GeneralStrength);
+            UpdateSelectedProfileActivities(initialActivities.ToList());
             NotifyAvailabilityChanged();
             var strengthList = preferences.ActivityTypes
                 .Where(value => Enum.IsDefined(typeof(WorkoutActivityDto), value))
@@ -280,19 +287,21 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
                 return;
             }
 
-            _availableWeekdays = NormalizeWeekdays(preferences.AvailableWeekdays);
-            UpdateSelectedProfileActivities(preferences.ActivityTypes);
+            var weekdays = NormalizeWeekdays(preferences.AvailableWeekdays);
+            if (weekdays.Length < WorkoutPreferencesConstraints.MinimumAvailableWeekdays)
+            {
+                weekdays = _availableWeekdays.Length >= WorkoutPreferencesConstraints.MinimumAvailableWeekdays
+                    ? _availableWeekdays
+                    : [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday];
+            }
+            _availableWeekdays = weekdays;
+            var activeTypes = preferences.ActivityTypes.ToHashSet();
+            activeTypes.Add((int)selectedActivity.Activity);
+            UpdateSelectedProfileActivities(activeTypes.ToList());
             NotifyAvailabilityChanged();
             if (!HasValidSavedAvailability)
             {
                 StatusMessage = UiTextCatalog.Get("Workout_Generation_AvailableDaysMissing");
-                return;
-            }
-
-            if (!preferences.ActivityTypes.Contains((int)selectedActivity.Activity))
-            {
-                ClearPreview(clearStatus: false);
-                StatusMessage = UiTextCatalog.Get("Workout_Generation_StrengthPreferenceRequired");
                 return;
             }
 

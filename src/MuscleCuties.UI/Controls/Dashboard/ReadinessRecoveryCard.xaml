@@ -16,14 +16,13 @@
                     <Label Text="{loc:LocalizedText Dashboard_Readiness_Title}"
                            Style="{StaticResource SectionTitle}"
                            FontSize="17" />
-                    <Label Text="{loc:LocalizedText Dashboard_Readiness_SelfReportedSubtitle}"
+                    <Label Text="{Binding ReadinessSubtitleText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource CaptionLabel}"
                            FontSize="12" />
                 </VerticalStackLayout>
                 <Border Grid.Column="1"
+                        Style="{StaticResource PillBadge}"
                         IsVisible="{Binding NeedsDailyCheckIn}"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 999"
                         Padding="10,4"
                         VerticalOptions="Center"
                         BackgroundColor="{AppThemeBinding Light={StaticResource RestStatusBadgeSurfaceLight}, Dark={StaticResource RestStatusBadgeSurfaceDark}}">
@@ -34,8 +33,7 @@
                 </Border>
             </Grid>
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Padding="0,4"
-                  IsVisible="{Binding HasTodayReadinessScore}">
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Padding="0,4">
                 <Border Style="{StaticResource SurfaceTile}" Padding="14,14">
                     <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
                         <Grid WidthRequest="88" HeightRequest="88" HorizontalOptions="Center">
@@ -170,15 +168,15 @@
             <Button Text="{loc:LocalizedText Dashboard_Readiness_CompleteCheckIn}"
                     Command="{Binding OpenDailyCheckInCommand}"
                     IsVisible="{Binding NeedsDailyCheckIn}"
-                    MinimumHeightRequest="46"
-                    CornerRadius="{StaticResource UiRadiusControl}" />
+                    HeightRequest="46"
+                    MinimumHeightRequest="46" />
 
             <Button Text="{loc:LocalizedText Dashboard_Readiness_ReviewChanges}"
                     Command="{Binding ReviewReadinessAdjustmentCommand}"
                     IsVisible="{Binding CanReviewReadiness}"
                     IsEnabled="{Binding IsReadinessProposalBusy, Converter={StaticResource InvertedBoolConverter}}"
-                    MinimumHeightRequest="46"
-                    CornerRadius="{StaticResource UiRadiusControl}" />
+                    HeightRequest="46"
+                    MinimumHeightRequest="46" />
 
             <VerticalStackLayout Spacing="8" IsVisible="{Binding IsReadinessProposalVisible}">
                 <ActivityIndicator IsRunning="{Binding IsReadinessProposalBusy}"
@@ -201,11 +199,15 @@
                     <Button Text="{loc:LocalizedText Dashboard_Readiness_ApplyChanges}"
                             Command="{Binding ApplyReadinessAdjustmentCommand}"
                             IsEnabled="{Binding IsReadinessProposalBusy, Converter={StaticResource InvertedBoolConverter}}"
-                            MinimumHeightRequest="46" CornerRadius="{StaticResource UiRadiusControl}" />
-                    <Button Grid.Column="1" Text="{loc:LocalizedText Dashboard_Readiness_KeepPlan}"
+                            HeightRequest="46"
+                            MinimumHeightRequest="46" />
+                    <Button Grid.Column="1"
+                            Style="{StaticResource ButtonSecondary}"
+                            Text="{loc:LocalizedText Dashboard_Readiness_KeepPlan}"
                             Command="{Binding KeepWorkoutPlanCommand}"
                             IsEnabled="{Binding IsReadinessProposalBusy, Converter={StaticResource InvertedBoolConverter}}"
-                            MinimumHeightRequest="46" CornerRadius="{StaticResource UiRadiusControl}" />
+                            HeightRequest="46"
+                            MinimumHeightRequest="46" />
                 </Grid>
             </VerticalStackLayout>
         </VerticalStackLayout>

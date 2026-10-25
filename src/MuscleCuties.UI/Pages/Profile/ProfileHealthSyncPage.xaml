@@ -35,6 +35,7 @@
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                             SemanticProperties.Description="{loc:LocalizedText Profile_HealthSync_ConnectOrRefreshAppleHealth}" />
                     <Button Text="{loc:LocalizedText Profile_HealthSync_DisconnectSteps}"
+                            Style="{StaticResource ButtonSecondary}"
                             Command="{Binding DisconnectCommand}"
                             IsVisible="{Binding IsConnected}"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />

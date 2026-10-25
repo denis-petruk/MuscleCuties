@@ -865,10 +865,7 @@
                     <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"
                             Command="{Binding EditDetailsCommand}"
                             IsVisible="{Binding HasLimitation}"
-                            Style="{StaticResource ButtonSecondary}"
-                            HeightRequest="52"
-                            CornerRadius="26"
-                            FontAttributes="Bold" />
+                            Style="{StaticResource ButtonSecondary}" />
                     <Button Text="{loc:LocalizedText Workout_Generation_ApplyPlan}"
                             Command="{Binding AcceptProposalCommand}"
                             IsVisible="{Binding HasFeasiblePreview}"
