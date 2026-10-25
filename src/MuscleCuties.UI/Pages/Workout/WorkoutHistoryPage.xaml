@@ -231,9 +231,7 @@
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="x:String">
                                         <Border
-                                            StrokeShape="RoundRectangle 8"
-                                            StrokeThickness="0"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                            Style="{StaticResource PillBadge}"
                                             Padding="6,3">
                                             <Label Text="{Binding .}" FontSize="11"
                                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
@@ -245,9 +243,7 @@
                             <!-- Metric Pills Row: Duration, Volume, Sets -->
                             <Grid Grid.Row="4" ColumnDefinitions="*,*,*" ColumnSpacing="8" Margin="0,4,0,0">
                                 <Border
-                                    StrokeShape="RoundRectangle 10"
-                                    StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                    Style="{StaticResource WorkoutMetricTile}"
                                     Padding="8,6">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="1" HorizontalOptions="Center">
                                         <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_DurationHeader}" FontSize="11"
@@ -260,9 +256,7 @@
 
                                 <Border
                                     Grid.Column="1"
-                                    StrokeShape="RoundRectangle 10"
-                                    StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                    Style="{StaticResource WorkoutMetricTile}"
                                     Padding="8,6">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="1" HorizontalOptions="Center">
                                         <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_VolumeHeader}" FontSize="11"
@@ -276,9 +270,7 @@
 
                                 <Border
                                     Grid.Column="2"
-                                    StrokeShape="RoundRectangle 10"
-                                    StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                                    Style="{StaticResource WorkoutMetricTile}"
                                     Padding="8,6">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="1" HorizontalOptions="Center">
                                         <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_TotalSetsHeader}" FontSize="11"
@@ -352,12 +344,10 @@
                             Grid.Column="1"
                             Text="✕"
                             Command="{Binding CloseSessionDetailCommand}"
+                            Style="{StaticResource ButtonLink}"
                             HeightRequest="36"
                             WidthRequest="36"
-                            Padding="0"
-                            CornerRadius="{StaticResource UiRadiusControl}"
-                            BackgroundColor="Transparent"
-                            TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            Padding="0" />
                     </Grid>
 
                     <!-- Session content scrolls while the header and save action stay visible. -->
@@ -366,8 +356,7 @@
 
                         <!-- Key Metrics Row -->
                         <Grid Grid.Row="0" ColumnDefinitions="*,*,*" ColumnSpacing="10">
-                            <Border StrokeShape="RoundRectangle 10" StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            <Border Style="{StaticResource WorkoutMetricTile}"
                                     Padding="10,8">
                                 <Grid RowDefinitions="Auto,Auto" RowSpacing="2" HorizontalOptions="Center">
                                     <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_DurationHeader}" FontSize="11"
@@ -378,8 +367,7 @@
                                 </Grid>
                             </Border>
 
-                            <Border Grid.Column="1" StrokeShape="RoundRectangle 10" StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            <Border Grid.Column="1" Style="{StaticResource WorkoutMetricTile}"
                                     Padding="10,8">
                                 <Grid RowDefinitions="Auto,Auto" RowSpacing="2" HorizontalOptions="Center">
                                     <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_VolumeHeader}" FontSize="11"
@@ -391,8 +379,7 @@
                                 </Grid>
                             </Border>
 
-                            <Border Grid.Column="2" StrokeShape="RoundRectangle 10" StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                            <Border Grid.Column="2" Style="{StaticResource WorkoutMetricTile}"
                                     Padding="10,8">
                                 <Grid RowDefinitions="Auto,Auto" RowSpacing="2" HorizontalOptions="Center">
                                     <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_RpeHeader}" FontSize="11"

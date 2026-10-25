@@ -22,9 +22,8 @@
                     <Grid Grid.Row="0" ColumnDefinitions="*,56" ColumnSpacing="12">
                         <Label Text="{loc:LocalizedText Profile_Feedback_YourMessage}" Style="{StaticResource SectionTitle}"
                                VerticalOptions="Center" />
-                        <Border Grid.Column="1" WidthRequest="56" HeightRequest="56"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
-                                StrokeThickness="0" StrokeShape="RoundRectangle 14">
+                        <Border Grid.Column="1" Style="{StaticResource SurfaceTile}"
+                                WidthRequest="56" HeightRequest="56" Padding="0">
                             <Image Source="feedback_note.png" WidthRequest="42" HeightRequest="42"
                                    HorizontalOptions="Center" VerticalOptions="Center"
                                    Aspect="AspectFit" />

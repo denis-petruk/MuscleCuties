@@ -344,6 +344,39 @@ public class UiCleanlinessAndReachabilityTests
             $"Found {nakedInputs.Count} uncontained input elements:\n" + string.Join("\n", nakedInputs));
     }
 
+    [Fact]
+    public void No_xaml_button_has_ad_hoc_background_color_overrides()
+    {
+        var uiDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var xamlFiles = Directory.GetFiles(uiDir, "*.xaml", SearchOption.AllDirectories)
+            .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") &&
+                        !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") &&
+                        !f.EndsWith("Styles.xaml", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var buttonRegex = new Regex(@"<Button\b([^>]*)/?>", RegexOptions.Singleline | RegexOptions.Compiled);
+        var violations = new List<string>();
+
+        foreach (var file in xamlFiles)
+        {
+            var content = File.ReadAllText(file);
+            foreach (Match match in buttonRegex.Matches(content))
+            {
+                var buttonAttributes = match.Groups[1].Value;
+                if (buttonAttributes.Contains("BackgroundColor=", StringComparison.OrdinalIgnoreCase))
+                {
+                    var relativePath = Path.GetRelativePath(RepoRoot, file);
+                    violations.Add($"{relativePath}: {match.Value.Split('\n')[0]}");
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} Button(s) with ad-hoc BackgroundColor overrides outside Styles.xaml:\n" +
+            string.Join("\n", violations));
+    }
+
     private static string FindRepositoryRoot()
     {
         var current = AppContext.BaseDirectory;

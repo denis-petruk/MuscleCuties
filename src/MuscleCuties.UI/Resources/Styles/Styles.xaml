@@ -260,18 +260,11 @@
         </Setter>
     </Style>
 
-    <Style x:Key="SurfaceTile" TargetType="Border">
+    <Style x:Key="SurfaceTile" TargetType="Border" BasedOn="{StaticResource CardSecondary}">
         <Setter Property="BackgroundColor"
                 Value="{AppThemeBinding Light={StaticResource AccentSurface},
                                         Dark={StaticResource Gray900}}" />
-        <Setter Property="Stroke" Value="Transparent" />
-        <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="Padding" Value="12" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
-            </Setter.Value>
-        </Setter>
     </Style>
 
     <Style x:Key="PillBadge" TargetType="Border">
@@ -389,30 +382,16 @@
                                         Dark={StaticResource Gray800}}" />
     </Style>
 
-    <Style x:Key="ModalListItem" TargetType="Border">
-        <Setter Property="Padding" Value="14" />
+    <Style x:Key="ModalListItem" TargetType="Border" BasedOn="{StaticResource CardSecondary}">
         <Setter Property="BackgroundColor"
                 Value="{AppThemeBinding Light={StaticResource Gray100},
                                         Dark={StaticResource Gray900}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
-            </Setter.Value>
-        </Setter>
     </Style>
 
-    <Style x:Key="ModalAccentPanel" TargetType="Border">
-        <Setter Property="Padding" Value="14" />
+    <Style x:Key="ModalAccentPanel" TargetType="Border" BasedOn="{StaticResource CardSecondary}">
         <Setter Property="BackgroundColor"
                 Value="{AppThemeBinding Light={StaticResource AccentSurface},
                                         Dark={StaticResource Gray900}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
-            </Setter.Value>
-        </Setter>
     </Style>
 
     <Style x:Key="ModalFooter" TargetType="Border">
@@ -428,29 +407,12 @@
         </Setter>
     </Style>
 
-    <Style x:Key="FormSection" TargetType="Border">
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource CardSurface},
-                                        Dark={StaticResource CardSurfaceDark}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="Padding" Value="16" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="16" />
-            </Setter.Value>
-        </Setter>
-    </Style>
+    <Style x:Key="FormSection" TargetType="Border" BasedOn="{StaticResource CardPrimary}" />
 
-    <Style x:Key="WorkoutMetricTile" TargetType="Border">
+    <Style x:Key="WorkoutMetricTile" TargetType="Border" BasedOn="{StaticResource CardSecondary}">
         <Setter Property="BackgroundColor"
                 Value="{AppThemeBinding Light={StaticResource AccentSurface},
                                         Dark={StaticResource Gray900}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
-            </Setter.Value>
-        </Setter>
         <Setter Property="Padding" Value="8,10" />
     </Style>
 
@@ -477,16 +439,7 @@
         <Setter Property="HorizontalTextAlignment" Value="Center" />
     </Style>
 
-    <Style x:Key="WorkoutPill" TargetType="Border">
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource AccentSurface},
-                                        Dark={StaticResource Gray900}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="999" />
-            </Setter.Value>
-        </Setter>
+    <Style x:Key="WorkoutPill" TargetType="Border" BasedOn="{StaticResource PillBadge}">
         <Setter Property="Padding" Value="14,8" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="VerticalOptions" Value="Center" />
@@ -507,16 +460,7 @@
     </Style>
 
 
-    <Style x:Key="WorkoutInfoTile" TargetType="Border">
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource CardSurface},
-                                        Dark={StaticResource CardSurfaceDark}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
-            </Setter.Value>
-        </Setter>
+    <Style x:Key="WorkoutInfoTile" TargetType="Border" BasedOn="{StaticResource CardSecondary}">
         <Setter Property="Padding" Value="10,8" />
     </Style>
 
@@ -570,17 +514,11 @@
                                         Dark={StaticResource TextPrimaryDark}}" />
     </Style>
 
-    <Style x:Key="ReadinessStatusTile" TargetType="Border">
+    <Style x:Key="ReadinessStatusTile" TargetType="Border" BasedOn="{StaticResource CardSecondary}">
         <Setter Property="BackgroundColor"
                 Value="{AppThemeBinding Light={StaticResource AccentSurface},
                                         Dark={StaticResource Gray900}}" />
-        <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="Padding" Value="14,12" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="16" />
-            </Setter.Value>
-        </Setter>
     </Style>
 
     <Style TargetType="Button">

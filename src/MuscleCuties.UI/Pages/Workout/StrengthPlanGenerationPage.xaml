@@ -59,9 +59,7 @@
                     </VerticalStackLayout>
 
                     <!-- Saved Availability Tile -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                            StrokeShape="RoundRectangle 12"
-                            StrokeThickness="0"
+                    <Border Style="{StaticResource SurfaceTile}"
                             Padding="14,10"
                             IsVisible="{Binding HasSavedAvailability}">
                         <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10" VerticalOptions="Center">
@@ -97,9 +95,7 @@
                     </VerticalStackLayout>
 
                     <!-- High Intensity Notice -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                            StrokeShape="RoundRectangle 12"
-                            StrokeThickness="0"
+                    <Border Style="{StaticResource SurfaceTile}"
                             Padding="14,10"
                             IsVisible="{Binding IsHighIntensityStrengthSelected}">
                         <Label Text="{loc:LocalizedText Workout_Generation_HighIntensityEvidenceHelp}"
@@ -219,9 +215,7 @@
                                              Spacing="8">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="vm:HiitAerobicWeekEvidenceCapture">
-                                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                                            StrokeShape="RoundRectangle 12"
-                                            StrokeThickness="0"
+                                    <Border Style="{StaticResource SurfaceTile}"
                                             Padding="14,10">
                                         <Grid ColumnDefinitions="*,100" ColumnSpacing="12" VerticalOptions="Center">
                                             <Label Text="{Binding WeekLabel}"
@@ -661,9 +655,7 @@
                                              Spacing="8">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="vm:MixedActivitySessionDisplay">
-                                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                                            StrokeShape="RoundRectangle 12"
-                                            StrokeThickness="0"
+                                    <Border Style="{StaticResource SurfaceTile}"
                                             Padding="14,10">
                                         <VerticalStackLayout Spacing="4">
                                             <Label Text="{Binding Title}"
@@ -688,9 +680,7 @@
                                              Spacing="8">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="vm:MixedActivityDecisionDisplay">
-                                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                                            StrokeShape="RoundRectangle 12"
-                                            StrokeThickness="0"
+                                    <Border Style="{StaticResource SurfaceTile}"
                                             Padding="14,10">
                                         <VerticalStackLayout Spacing="4">
                                             <Label Text="{Binding Activity}"
@@ -725,9 +715,7 @@
                                FontSize="17"
                                FontAttributes="Bold"
                                SemanticProperties.HeadingLevel="Level3" />
-                        <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                                StrokeShape="RoundRectangle 12"
-                                StrokeThickness="0"
+                        <Border Style="{StaticResource SurfaceTile}"
                                 Padding="14,10">
                             <VerticalStackLayout BindableLayout.ItemsSource="{Binding ScheduleInputReasons}"
                                                  Spacing="6">
@@ -753,9 +741,7 @@
                                              Spacing="10">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="vm:StrengthPlanSessionDisplay">
-                                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                                            StrokeShape="RoundRectangle 12"
-                                            StrokeThickness="0"
+                                    <Border Style="{StaticResource SurfaceTile}"
                                             Padding="14,12">
                                         <VerticalStackLayout Spacing="8">
                                             <VerticalStackLayout Spacing="2">
@@ -808,9 +794,7 @@
                                              Spacing="10">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="vm:StrengthPlanHighIntensityCandidateDisplay">
-                                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                                            StrokeShape="RoundRectangle 12"
-                                            StrokeThickness="0"
+                                    <Border Style="{StaticResource SurfaceTile}"
                                             Padding="14,12">
                                         <VerticalStackLayout Spacing="8">
                                             <Label Text="{Binding Name}"
@@ -853,10 +837,7 @@
                         </VerticalStackLayout>
                         <Button Text="{loc:LocalizedText Workout_Generation_ConfirmHighIntensityExercises}"
                                 Command="{Binding ConfirmHighIntensityExercisesCommand}"
-                                IsEnabled="{Binding CanSubmitHighIntensityConfirmations}"
-                                HeightRequest="52"
-                                CornerRadius="26"
-                                FontAttributes="Bold" />
+                                IsEnabled="{Binding CanSubmitHighIntensityConfirmations}" />
                     </VerticalStackLayout>
 
                     <!-- Limitations Sub-Section -->
@@ -866,9 +847,7 @@
                                FontSize="17"
                                FontAttributes="Bold"
                                SemanticProperties.HeadingLevel="Level3" />
-                        <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                                StrokeShape="RoundRectangle 12"
-                                StrokeThickness="0"
+                        <Border Style="{StaticResource SurfaceTile}"
                                 Padding="14,10">
                             <VerticalStackLayout BindableLayout.ItemsSource="{Binding PreviewLimitations}" Spacing="4">
                                 <BindableLayout.ItemTemplate>

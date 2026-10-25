@@ -26,8 +26,7 @@
                     </VerticalStackLayout>
                     <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Swap_CloseButton}"
                             Command="{Binding CloseSwapPanelCommand}" IsVisible="{Binding CanDismissSwap}"
-                            BackgroundColor="Transparent"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                            Style="{StaticResource ButtonLink}"
                             MinimumHeightRequest="48" Padding="12,8" FontSize="14" />
                 </Grid>
                 <ActivityIndicator Grid.Row="1" IsVisible="{Binding IsSwapLoading}" IsRunning="{Binding IsSwapLoading}"
@@ -98,8 +97,7 @@
                             MinimumHeightRequest="52" />
                     <Button Text="{loc:LocalizedText Workout_Swap_LeaveSessionButton}" Command="{Binding FinishSessionCommand}"
                             IsVisible="{Binding SwapNeedsReload}"
-                            BackgroundColor="Transparent"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                            Style="{StaticResource ButtonLink}"
                             MinimumHeightRequest="48" Padding="12,8" FontSize="14" />
                 </VerticalStackLayout>
             </Grid>
