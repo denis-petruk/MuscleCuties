@@ -202,7 +202,7 @@
                     <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="5">
                         <Label Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_CurrentlyPregnantOrBreastfeeding}"
                                Style="{StaticResource FormFieldLabel}" />
-                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                        <Border Grid.Row="1" Style="{StaticResource PickerContainer}">
                             <Picker
                                 Title="{loc:LocalizedText Profile_PersonalInfo_PregnancyOrBreastfeeding}"
                                 ItemsSource="{Binding PregnancyOptions}"
@@ -214,7 +214,7 @@
                     <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="5">
                         <Label Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_HormonalContraceptionOrCyclePattern}"
                                Style="{StaticResource FormFieldLabel}" />
-                        <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                        <Border Grid.Row="1" Style="{StaticResource PickerContainer}">
                             <Picker
                                 Title="{loc:LocalizedText Profile_PersonalInfo_ContraceptionOrCyclePattern}"
                                 ItemsSource="{Binding ContraceptionOptions}"
@@ -235,6 +235,7 @@
 
             <Button
                 Grid.Row="7"
+                Style="{StaticResource ButtonPrimary}"
                 Text="{loc:LocalizedText Profile_PersonalInfo_SavePersonalInfo}"
                 Command="{Binding SaveCommand}"
                 SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_SavePersonalInfo}" />

@@ -15,7 +15,7 @@
         <VerticalStackLayout Spacing="5">
             <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableEquipment}"
                    Style="{StaticResource FormFieldLabel}" />
-            <Border Style="{StaticResource InputContainer}">
+            <Border Style="{StaticResource PickerContainer}">
                 <Picker
                     Title="{loc:LocalizedText Profile_WorkoutPrefs_ChooseEquipment}"
                     ItemsSource="{Binding EquipmentOptions}"

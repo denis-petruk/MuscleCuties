@@ -294,6 +294,7 @@
                         MinimumHeightRequest="48" />
                     <Button
                         Grid.Column="1"
+                        Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Nutrition_MealDetail_UseThisMeal}"
                         Command="{Binding AcceptSuggestionCommand}"
                         CommandParameter="{Binding SelectedMealDetail}"
