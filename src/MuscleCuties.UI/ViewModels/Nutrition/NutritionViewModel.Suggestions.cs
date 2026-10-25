@@ -50,7 +50,6 @@ public partial class NutritionViewModel
     public bool HasNoMealSuggestions =>
         !IsDayPlanMode &&
         !IsLoadingSuggestions &&
-        !IsMealTypePickerVisible &&
         !HasMealSuggestionError &&
         MealSuggestions.Count == 0;
 
@@ -63,7 +62,7 @@ public partial class NutritionViewModel
     public bool ShowDayPlanMeals =>
         IsDayPlanMode && HasDayPlanMeals && !IsLoadingSuggestions && !HasMealSuggestionError;
 
-    public bool ShowSuggestionResults => !IsMealTypePickerVisible;
+    public bool ShowSuggestionResults => !IsDayPlanMode && HasMealSuggestions;
     public string SuggestionPageTitle => IsDayPlanMode ? "Today's meal plan" : "Meal ideas";
     public string LoadingSuggestionText => IsDayPlanMode ? "Building today's meal plan" : "Finding a good fit";
 
@@ -73,11 +72,6 @@ public partial class NutritionViewModel
     public string LunchCaloriesHint => GetMealTypeCaloriesText(MealType.Lunch);
     public string DinnerCaloriesHint => GetMealTypeCaloriesText(MealType.Dinner);
     public string SnackCaloriesHint => GetMealTypeCaloriesText(MealType.Snack);
-
-    public bool IsBreakfastGuessed => SuggestionMealType == MealType.Breakfast && IsMealTypePickerVisible;
-    public bool IsLunchGuessed => SuggestionMealType == MealType.Lunch && IsMealTypePickerVisible;
-    public bool IsDinnerGuessed => SuggestionMealType == MealType.Dinner && IsMealTypePickerVisible;
-    public bool IsSnackGuessed => SuggestionMealType == MealType.Snack && IsMealTypePickerVisible;
 
     public string DetailMacrosText => SelectedMealDetail?.MacrosText ?? string.Empty;
     public string DetailCaloriesText => SelectedMealDetail?.CaloriesText ?? string.Empty;
@@ -127,21 +121,7 @@ public partial class NutritionViewModel
 
     private void OpenSuggestMeal()
     {
-        _suggestionLoadVersion++;
-        _suggestionMealTime = null;
-        IsDayPlanMode = false;
-        SuggestionMealType = GuessNextMealType();
-        IsMealTypePickerVisible = true;
-        IsLoadingSuggestions = false;
-        IsMealDetailVisible = false;
-        SelectedMealDetail = null;
-        MealSuggestions.Clear();
-        DayPlanMeals.Clear();
-        _shownConceptNames.Clear();
-        MealSuggestionError = string.Empty;
-        SuggestionTargetText = "Built around today's targets";
-        IsSuggestionModalVisible = true;
-        NotifySuggestionProperties();
+        OpenMealEntry();
     }
 
     private void SelectSuggestionMealType(MealType mealType)
@@ -298,13 +278,8 @@ public partial class NutritionViewModel
 
     private void BackToMealTypePicker()
     {
-        _suggestionLoadVersion++;
-        IsDayPlanMode = false;
-        IsMealTypePickerVisible = true;
-        IsLoadingSuggestions = false;
-        MealSuggestionError = string.Empty;
-        DayPlanMeals.Clear();
-        NotifySuggestionProperties();
+        CloseSuggestionModal();
+        OpenMealEntry();
     }
 
     private void RefreshDayMeal(DayMealPlanItem? item)
@@ -519,10 +494,6 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(ShowSuggestionResults));
         OnPropertyChanged(nameof(SuggestionPageTitle));
         OnPropertyChanged(nameof(LoadingSuggestionText));
-        OnPropertyChanged(nameof(IsBreakfastGuessed));
-        OnPropertyChanged(nameof(IsLunchGuessed));
-        OnPropertyChanged(nameof(IsDinnerGuessed));
-        OnPropertyChanged(nameof(IsSnackGuessed));
         OnPropertyChanged(nameof(DayPlanSummaryText));
         OnPropertyChanged(nameof(SuggestionMealTypeCaloriesText));
         OnPropertyChanged(nameof(BreakfastCaloriesHint));
