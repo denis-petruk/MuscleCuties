@@ -331,6 +331,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                 WorkoutTag = day.Tag,
                 WorkoutTitle = day.Title,
                 WorkoutDayId = day.WorkoutDayId,
+                CompanionWorkoutDayId = day.CompanionWorkoutDayId,
                 IsToday = day.IsToday,
                 IsCompleted = day.IsCompleted,
                 IsRestDay = day.IsRestDay,
@@ -405,12 +406,13 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         var today = DateTime.Today.Date;
         foreach (var workout in _allWorkouts)
         {
-            var scheduledDay = ScheduleDays.FirstOrDefault(day => day.WorkoutDayId == workout.WorkoutDayId);
+            var scheduledDay = ScheduleDays.FirstOrDefault(day =>
+                day.WorkoutDayId == workout.WorkoutDayId ||
+                day.CompanionWorkoutDayId == workout.WorkoutDayId);
             if (scheduledDay is null)
                 continue;
 
-            workout.IsCompleted = scheduledDay.IsCompleted;
-            workout.SessionProgressText = scheduledDay.IsCompleted
+            workout.SessionProgressText = workout.IsCompleted
                 ? "Workout_Overview_Status_Completed"
                 : scheduledDay.Date.Date < today
                     ? "Workout_Overview_Status_NotLogged"
@@ -424,7 +426,9 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     {
         return _datedSchedule
             .Where(day => day.WeekIndex == SelectedWeekIndex && day.WorkoutDayId > MissingWorkoutDayId)
-            .Select(day => day.WorkoutDayId)
+            .SelectMany(day => day.CompanionWorkoutDayId is { } companionWorkoutDayId
+                ? new[] { day.WorkoutDayId, companionWorkoutDayId }
+                : [day.WorkoutDayId])
             .ToHashSet();
     }
 

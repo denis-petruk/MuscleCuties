@@ -127,49 +127,71 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             }
             dbContext.WorkoutPlans.Add(plan);
 
-            var sessionByWeekday = scheduleSessions.ToDictionary(session => session.Weekday);
+            var sessionsByWeekday = scheduleSessions
+                .GroupBy(session => session.Weekday)
+                .ToDictionary(group => group.Key,
+                    group => group.OrderBy(session => session.ActivityTypeId).ToArray());
             var weekStart = MondayOf(inputSnapshot.Request.LocalDate);
-            var planDays = new List<WorkoutDayRecord>(OverviewScheduleWeeks * DaysPerWeek);
+            var planDays = new List<WorkoutDayRecord>(OverviewScheduleWeeks *
+                (DaysPerWeek + scheduleSessions.Length));
             var exercises = new List<WorkoutDayExerciseRecord>();
             for (var weekIndex = 0; weekIndex < OverviewScheduleWeeks; weekIndex++)
             for (var dayOffset = 0; dayOffset < DaysPerWeek; dayOffset++)
             {
                 var date = weekStart.AddDays(weekIndex * DaysPerWeek + dayOffset);
                 var weekday = date.DayOfWeek;
-                var dayId = Guid.CreateVersion7();
-                sessionByWeekday.TryGetValue(weekday, out var session);
-                var activity = session is { } scheduledSession
-                    ? (WorkoutActivityType)scheduledSession.ActivityTypeId
-                    : WorkoutActivityType.RestDay;
-                var workoutDay = new WorkoutDayRecord
+                if (!sessionsByWeekday.TryGetValue(weekday, out var sessionsForDay))
                 {
-                    Id = dayId,
-                    UserId = userId,
-                    WorkoutPlanId = plan.Id,
-                    DayOfWeek = (int)weekday,
-                    WorkoutType = session is not null ? ToWorkoutType(activity) : nameof(WorkoutType.Rest),
-                    Name = session is not null ? ActivityName(activity) : RestDayName,
-                    WeekIndex = weekIndex,
-                    Date = date,
-                    PlannedMainDurationMinutes = session?.DurationMinutes
-                };
-                planDays.Add(workoutDay);
-                if (session is null || !IsStrengthActivity(activity) ||
-                    !strengthSessions.TryGetValue(weekday, out var strengthSession))
-                    continue;
-                foreach (var slot in strengthSession.Slots.Where(slot => slot.ExerciseId.HasValue &&
-                                                                  slot.Sets is >= MinimumExerciseSetCount &&
-                                                                  slot.MinimumRepetitions is >= MinimumRepetitionCount))
-                    exercises.Add(new WorkoutDayExerciseRecord
+                    planDays.Add(new WorkoutDayRecord
                     {
                         Id = Guid.CreateVersion7(),
                         UserId = userId,
-                        WorkoutDayId = dayId,
-                        ExerciseId = slot.ExerciseId!.Value,
-                        Sets = slot.Sets!.Value,
-                        Reps = slot.MinimumRepetitions!.Value,
-                        IsOptional = !slot.IsRequired
+                        WorkoutPlanId = plan.Id,
+                        DayOfWeek = (int)weekday,
+                        WorkoutType = nameof(WorkoutType.Rest),
+                        Name = RestDayName,
+                        WeekIndex = weekIndex,
+                        Date = date
                     });
+                    continue;
+
+                }
+
+                foreach (var scheduledSession in sessionsForDay)
+                {
+                    var activity = (WorkoutActivityType)scheduledSession.ActivityTypeId;
+                    var dayId = Guid.CreateVersion7();
+                    planDays.Add(new WorkoutDayRecord
+                    {
+                        Id = dayId,
+                        UserId = userId,
+                        WorkoutPlanId = plan.Id,
+                        DayOfWeek = (int)weekday,
+                        WorkoutType = ToWorkoutType(activity),
+                        Name = ActivityName(activity),
+                        WeekIndex = weekIndex,
+                        Date = date,
+                        PlannedMainDurationMinutes = scheduledSession.DurationMinutes
+                    });
+
+                    if (!IsStrengthActivity(activity) ||
+                        !strengthSessions.TryGetValue(weekday, out var strengthSession))
+                        continue;
+
+                    foreach (var slot in strengthSession.Slots.Where(slot => slot.ExerciseId.HasValue &&
+                                                                      slot.Sets is >= MinimumExerciseSetCount &&
+                                                                      slot.MinimumRepetitions is >= MinimumRepetitionCount))
+                        exercises.Add(new WorkoutDayExerciseRecord
+                        {
+                            Id = Guid.CreateVersion7(),
+                            UserId = userId,
+                            WorkoutDayId = dayId,
+                            ExerciseId = slot.ExerciseId!.Value,
+                            Sets = slot.Sets!.Value,
+                            Reps = slot.MinimumRepetitions!.Value,
+                            IsOptional = !slot.IsRequired
+                        });
+                }
             }
 
             dbContext.WorkoutDays.AddRange(planDays);
@@ -230,7 +252,8 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         scheduleSessions = [];
         var schedule = proposal.MixedActivitySchedule;
         if (schedule is null || schedule.Sessions is not { Count: > 0 } || schedule.Activities is null ||
-            schedule.Sessions.Count > availableWeekdays.Count)
+            schedule.Sessions.Count > availableWeekdays.Count *
+            MixedActivityWeekScheduleRule.MaximumSessionsPerDayWithoutDailyCapacity)
             return false;
 
         scheduleSessions = schedule.Sessions.ToArray();
@@ -251,7 +274,15 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                 !IsScheduledDisposition(decision.Disposition)))
             return false;
 
-        if (scheduleSessions.Select(session => session.Weekday).Distinct().Count() != scheduleSessions.Length)
+        if (scheduleSessions.GroupBy(session => session.Weekday).Any(group =>
+                group.Count() > MixedActivityWeekScheduleRule.MaximumSessionsPerDayWithoutDailyCapacity ||
+                group.Select(session => session.ActivityTypeId).Distinct().Count() != group.Count() ||
+                (group.Count() > MixedActivityWeekScheduleRule.MaximumStrengthSessionsPerDay &&
+                 !MixedActivityWeekScheduleRule.IsSupportedSameDayStrengthCompanion(
+                     (WorkoutActivityType)group.First().ActivityTypeId,
+                     group.First().IsHardSession,
+                     (WorkoutActivityType)group.Last().ActivityTypeId,
+                     group.Last().IsHardSession))))
             return false;
 
         var scheduledCountByActivity = scheduleSessions

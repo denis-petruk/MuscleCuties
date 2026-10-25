@@ -36,7 +36,8 @@ public sealed record ActivityEligibilityInputV020(
     bool? WantsContinuousSwimming = null,
     bool? HasRopeClimbingCompetence = null,
     bool? AppropriateClimbingInstructionAvailable = null,
-    bool? IsDemandingYogaContent = null);
+    bool? IsDemandingYogaContent = null,
+    int? YogaSessionDurationMinutes = null);
 
 public sealed record HiitEligibilityEvidenceInputV020(
     ActivityTrainingHistoryInputV020? UnderlyingCardioHistory = null,

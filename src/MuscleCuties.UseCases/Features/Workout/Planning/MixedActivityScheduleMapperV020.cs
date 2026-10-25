@@ -17,27 +17,36 @@ internal static class MixedActivityScheduleMapperV020
         StrengthPlanPreviewSourceV020 source,
         StrengthPlanPreviewResult strengthPreview)
     {
-        var selectedActivities = source.SelectedActivityTypes?
+        var requestedStrengthActivity = WorkoutActivityContractMapper.ToCore(request.Activity);
+        var chosenStrengthActivity = strengthPreview.EffectiveActivity ?? requestedStrengthActivity;
+        var selectedActivityIds = source.SelectedActivityTypes?.ToHashSet() ?? [];
+        selectedActivityIds.Add((int)requestedStrengthActivity);
+        selectedActivityIds.Add((int)chosenStrengthActivity);
+        var planningSource = source with { SelectedActivityTypes = selectedActivityIds };
+        var selectedActivities = planningSource.SelectedActivityTypes?
             .Select(activity => (WorkoutActivityType)activity).ToArray();
         var evidenceInputs = request.ActivityEligibilityEvidence ?? [];
         var histories = BuildActivityHistories(request, evidenceInputs);
         var eligibilityEvidence = evidenceInputs
             .Where(evidence => evidence is not null && Enum.IsDefined(evidence.Activity))
-            .Select(evidence => ToPrescriptionContext(WorkoutActivityContractMapper.ToCore(evidence.Activity), request, source, strengthPreview,
+            .Select(evidence => ToPrescriptionContext(WorkoutActivityContractMapper.ToCore(evidence.Activity), request, planningSource, strengthPreview,
                 evidence, histories))
             .ToList();
         if (selectedActivities is not null)
             foreach (var activity in selectedActivities.Distinct())
                 if (!evidenceInputs.Any(evidence => evidence?.Activity is { } act && WorkoutActivityContractMapper.ToCore(act) == activity))
-                    eligibilityEvidence.Add(ToPrescriptionContext(activity, request, source, strengthPreview,
+                    eligibilityEvidence.Add(ToPrescriptionContext(activity, request, planningSource, strengthPreview,
                         null, histories));
-        var selectedWeekdays = source.AvailableWeekdays?.ToArray() ?? request.AvailableWeekdays?.ToArray();
-        var requestedSessions = source.RequestedSessionsPerWeek?.ToDictionary(
+        var selectedWeekdays = planningSource.AvailableWeekdays?.ToArray() ?? request.AvailableWeekdays?.ToArray();
+        var requestedSessions = planningSource.RequestedSessionsPerWeek?.ToDictionary(
             pair => (WorkoutActivityType)pair.Key, pair => pair.Value) ?? [];
-        var durations = source.ActivitySessionDurationsMinutes?.Where(pair =>
+        var durations = planningSource.ActivitySessionDurationsMinutes?.Where(pair =>
                 Enum.IsDefined(typeof(WorkoutActivityType), pair.Key) &&
                 ActivitySessionDurationRule.ForUserPreference((WorkoutActivityType)pair.Key) is not null)
             .ToDictionary(pair => (WorkoutActivityType)pair.Key, pair => (decimal)pair.Value) ?? [];
+        foreach (var yogaEvidence in evidenceInputs.Where(evidence =>
+                     evidence?.Activity == WorkoutActivityDto.Yoga && evidence.YogaSessionDurationMinutes.HasValue))
+            durations[WorkoutActivityType.Yoga] = yogaEvidence!.YogaSessionDurationMinutes!.Value;
         foreach (var activity in selectedActivities ?? [])
         {
             if (!requestedSessions.ContainsKey(activity) &&
@@ -55,7 +64,7 @@ internal static class MixedActivityScheduleMapperV020
             request.HiitUnderlyingCardioActivity is { } hiitActivity
                 ? WorkoutActivityContractMapper.ToCore(hiitActivity)
                 : null,
-            WorkoutActivityContractMapper.ToCore(request.Activity));
+            chosenStrengthActivity);
     }
 
     private static Dictionary<WorkoutActivityType, ActivityTrainingHistory?> BuildActivityHistories(
@@ -82,7 +91,8 @@ internal static class MixedActivityScheduleMapperV020
         ActivityEligibilityInputV020? evidenceInput,
         IReadOnlyDictionary<WorkoutActivityType, ActivityTrainingHistory?> histories)
     {
-        var isChosenStrength = activity == WorkoutActivityContractMapper.ToCore(request.Activity);
+        var isChosenStrength = activity == (strengthPreview.EffectiveActivity ??
+                                             WorkoutActivityContractMapper.ToCore(request.Activity));
         var activityHistory = histories.GetValueOrDefault(activity);
         var activityExperience = isChosenStrength
             ? strengthPreview.Experience

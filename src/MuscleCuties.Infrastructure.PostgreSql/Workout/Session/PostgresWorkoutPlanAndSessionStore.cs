@@ -1199,56 +1199,80 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             var date = startMonday.AddDays(i);
             var weekIndex = i / DaysPerWeek;
             var dayOfWeek = (int)date.DayOfWeek;
-            var matchingDay = MatchWorkoutDay(workoutDays, date, weekIndex, dayOfWeek);
+            var matchingDays = MatchWorkoutDays(workoutDays, date, weekIndex, dayOfWeek);
             var dayLogs = logsByDate.GetValueOrDefault(date);
-            var isCompleted = dayLogs is not null && dayLogs.Any(l => l.CompletionPercent >= 100);
             var dayLabel = WorkoutScheduleMathRule.FormatDayLabel(date.DayOfWeek);
+            var activeDays = matchingDays
+                .Where(day => !string.Equals(day.WorkoutType, nameof(WorkoutType.Rest), StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(day => string.Equals(day.WorkoutType, nameof(WorkoutType.Strength),
+                    StringComparison.OrdinalIgnoreCase))
+                .ThenBy(day => day.Id)
+                .ToArray();
 
-            if (matchingDay is null || string.Equals(matchingDay.WorkoutType, nameof(WorkoutType.Rest), StringComparison.OrdinalIgnoreCase))
+            if (activeDays.Length == 0)
             {
+                var restDay = matchingDays.FirstOrDefault();
+                var isRestCompleted = dayLogs is not null && dayLogs.Any(log => log.CompletionPercent >= 100);
                 result.Add(new WorkoutScheduleEntry(
                     date,
                     weekIndex,
                     dayLabel,
                     RestTag,
-                    matchingDay?.Name ?? "Living happy life",
-                    matchingDay is not null ? ToStableWorkoutIntId(matchingDay.Id) : 0,
+                    restDay?.Name ?? "Living happy life",
+                    restDay is not null ? ToStableWorkoutIntId(restDay.Id) : 0,
                     date == today,
-                    isCompleted,
+                    isRestCompleted,
                     true));
                 continue;
             }
 
-            var exList = exercisesByDayId.GetValueOrDefault(matchingDay.Id, []);
-            var tag = BuildPrimaryTag(matchingDay, exList, exercisesById);
+            var primaryDay = activeDays[0];
+            var exList = exercisesByDayId.GetValueOrDefault(primaryDay.Id, []);
+            var tag = BuildPrimaryTag(primaryDay, exList, exercisesById);
+            var completedDayIds = dayLogs is null
+                ? new HashSet<Guid>()
+                : dayLogs.Where(log => log.CompletionPercent >= 100)
+                    .Select(log => log.WorkoutDayId)
+                    .ToHashSet();
+            var isCompleted = activeDays.All(day => completedDayIds.Contains(day.Id));
+            var title = string.Join(" + ", activeDays.Select(day => day.Name)
+                .Distinct(StringComparer.Ordinal));
             result.Add(new WorkoutScheduleEntry(
                 date,
                 weekIndex,
                 dayLabel,
                 tag,
-                matchingDay.Name,
-                ToStableWorkoutIntId(matchingDay.Id),
+                title,
+                ToStableWorkoutIntId(primaryDay.Id),
                 date == today,
                 isCompleted,
-                    false) { IsOptional = matchingDay.IsOptional, IsEasierAlternative = matchingDay.IsEasierAlternative });
+                false)
+            {
+                IsOptional = activeDays.All(day => day.IsOptional),
+                IsEasierAlternative = activeDays.All(day => day.IsEasierAlternative),
+                CompanionWorkoutDayId = activeDays.Skip(1).FirstOrDefault() is { } companionDay
+                    ? ToStableWorkoutIntId(companionDay.Id)
+                    : null
+            });
         }
 
         return result;
     }
 
-    private static WorkoutDayRecord? MatchWorkoutDay(
+    private static IReadOnlyList<WorkoutDayRecord> MatchWorkoutDays(
         IReadOnlyList<WorkoutDayRecord> workoutDays,
         DateOnly date,
         int weekIndex,
-        int dayOfWeek) =>
-        workoutDays.FirstOrDefault(d =>
-            ((d.Date == date) || (d.WeekIndex == weekIndex && d.DayOfWeek == dayOfWeek)) &&
-            !string.Equals(d.WorkoutType, nameof(WorkoutType.Rest), StringComparison.OrdinalIgnoreCase))
-        ?? workoutDays.FirstOrDefault(d => (d.Date == date) || (d.WeekIndex == weekIndex && d.DayOfWeek == dayOfWeek))
-        ?? workoutDays.FirstOrDefault(d =>
-            d.DayOfWeek == dayOfWeek &&
-            !string.Equals(d.WorkoutType, nameof(WorkoutType.Rest), StringComparison.OrdinalIgnoreCase))
-        ?? workoutDays.FirstOrDefault(d => d.DayOfWeek == dayOfWeek);
+        int dayOfWeek)
+    {
+        var exactMatches = workoutDays.Where(day =>
+                day.Date == date || (day.WeekIndex == weekIndex && day.DayOfWeek == dayOfWeek))
+            .ToArray();
+        if (exactMatches.Length > 0)
+            return exactMatches;
+
+        return workoutDays.Where(day => day.DayOfWeek == dayOfWeek).ToArray();
+    }
 
     private static WorkoutExerciseDetailDto BuildExerciseDetailDto(
         WorkoutDayExerciseRecord dayExercise,

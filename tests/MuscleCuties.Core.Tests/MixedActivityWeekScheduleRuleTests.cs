@@ -63,6 +63,104 @@ public sealed class MixedActivityWeekScheduleRuleTests
     }
 
     [Fact]
+    public void MissingDailyCapacityAllowsOneCyclingOrGentleYogaCompanionPerStrengthDay()
+    {
+        var twoDays = new[] { DayOfWeek.Monday, DayOfWeek.Thursday };
+        var activities = new[]
+        {
+            WorkoutActivityType.GeneralStrength,
+            WorkoutActivityType.Cycling,
+            WorkoutActivityType.Yoga
+        };
+        var result = Evaluate(
+            activities,
+            twoDays,
+            null,
+            Durations(
+                (WorkoutActivityType.GeneralStrength, StrengthSessionMinutes),
+                (WorkoutActivityType.Cycling, SelectedCardioSessionMinutes),
+                (WorkoutActivityType.Yoga, GentleYogaSessionMinutes)),
+            Evidence(
+                (WorkoutActivityType.GeneralStrength, EvidenceFor(WorkoutActivityType.GeneralStrength)),
+                (WorkoutActivityType.Cycling, EvidenceFor(WorkoutActivityType.Cycling)),
+                (WorkoutActivityType.Yoga, EvidenceFor(WorkoutActivityType.Yoga,
+                    isDemandingYogaContent: false))),
+            RequestedFrequencies(
+                (WorkoutActivityType.Cycling, ExpectedTwoCardioSessions),
+                (WorkoutActivityType.Yoga, ExpectedTwoCardioSessions)));
+
+        Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
+            Decision(result, WorkoutActivityType.GeneralStrength).ScheduledSessionsPerWeek);
+        Assert.Equal(ExpectedSingleSession,
+            Decision(result, WorkoutActivityType.Cycling).ScheduledSessionsPerWeek);
+        Assert.Equal(ExpectedSingleSession,
+            Decision(result, WorkoutActivityType.Yoga).ScheduledSessionsPerWeek);
+        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
+            Decision(result, WorkoutActivityType.Cycling).Reasons);
+        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
+            Decision(result, WorkoutActivityType.Yoga).Reasons);
+        Assert.All(result.Sessions.GroupBy(session => session.Day), day =>
+        {
+            Assert.Equal(twoDays.Length, day.Count());
+            var strength = Assert.Single(day, session =>
+                session.Activity == WorkoutActivityType.GeneralStrength);
+            Assert.Contains(day, session =>
+                MixedActivityWeekScheduleRule.IsSupportedSameDayStrengthCompanion(
+                    strength.Activity,
+                    strength.IsHardSession,
+                    session.Activity,
+                    session.IsHardSession));
+        });
+        Assert.All(result.Sessions.Where(session => session.Activity == WorkoutActivityType.GeneralStrength),
+            session => Assert.Equal((decimal)StrengthSessionMinutes, session.DurationMinutes));
+    }
+
+    [Fact]
+    public void DemandingYogaAndMultipleCompanionsAreNotSafeStrengthDayPairs()
+    {
+        Assert.False(MixedActivityWeekScheduleRule.IsSupportedSameDayStrengthCompanion(
+            WorkoutActivityType.GeneralStrength,
+            true,
+            WorkoutActivityType.Yoga,
+            true));
+        Assert.False(MixedActivityWeekScheduleRule.IsSupportedSameDayStrengthCompanion(
+            WorkoutActivityType.Cycling,
+            false,
+            WorkoutActivityType.Yoga,
+            false));
+        Assert.True(MixedActivityWeekScheduleRule.IsSupportedSameDayStrengthCompanion(
+            WorkoutActivityType.HighVolumeStrength,
+            true,
+            WorkoutActivityType.Cycling,
+            false));
+        Assert.True(MixedActivityWeekScheduleRule.IsSupportedSameDayStrengthCompanion(
+            WorkoutActivityType.StrengthHighIntensity,
+            true,
+            WorkoutActivityType.Yoga,
+            false));
+    }
+
+    [Fact]
+    public void YogaWithoutContentClassificationIsBlockedFromScheduling()
+    {
+        var result = Evaluate(
+            [WorkoutActivityType.GeneralStrength, WorkoutActivityType.Yoga],
+            [DayOfWeek.Monday, DayOfWeek.Thursday],
+            null,
+            Durations(
+                (WorkoutActivityType.GeneralStrength, StrengthSessionMinutes),
+                (WorkoutActivityType.Yoga, GentleYogaSessionMinutes)),
+            Evidence(
+                (WorkoutActivityType.GeneralStrength, EvidenceFor(WorkoutActivityType.GeneralStrength)),
+                (WorkoutActivityType.Yoga, EvidenceFor(WorkoutActivityType.Yoga))));
+
+        var yogaDecision = Decision(result, WorkoutActivityType.Yoga);
+        Assert.Equal(MixedActivityScheduleDisposition.Blocked, yogaDecision.Disposition);
+        Assert.Contains(MixedActivityWeekScheduleRule.YogaContentClassificationMissing, yogaDecision.Reasons);
+        Assert.DoesNotContain(result.Sessions, session => session.Activity == WorkoutActivityType.Yoga);
+    }
+
+    [Fact]
     public void CalculatesCyclingDurationWithoutUsingSavedSessionChoice()
     {
         var result = Evaluate(
@@ -345,7 +443,7 @@ public sealed class MixedActivityWeekScheduleRuleTests
         Assert.Equal(ExpectedTwoCardioSessions,
             missingCapacity.Sessions.Select(session => session.Day).Distinct().Count());
         Assert.All(missingCapacity.Sessions.GroupBy(session => session.Day), group => Assert.Single(group));
-        Assert.Contains(MixedActivityWeekScheduleRule.DailyCapacityMissingSingleActivityPerDayFallback,
+        Assert.Contains(MixedActivityWeekScheduleRule.DailyCapacityMissingSafePairingFallback,
             Decision(missingCapacity, WorkoutActivityType.Running).Reasons);
         Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
             Decision(missingCapacity, WorkoutActivityType.Walking).Reasons);

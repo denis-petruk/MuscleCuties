@@ -353,6 +353,19 @@
                                     SemanticProperties.Description="{loc:LocalizedText Workout_Generation_YogaContentClassification}" />
                         </Border>
                     </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                        <Label Text="{loc:LocalizedText Workout_Generation_YogaDurationLabel}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Style="{StaticResource PickerContainer}">
+                            <Picker ItemsSource="{Binding YogaDurationChoices}"
+                                    SelectedItem="{Binding SelectedYogaSessionDurationMinutes}"
+                                    Title="{loc:LocalizedText Workout_Generation_YogaDurationPlaceholder}"
+                                    IsEnabled="{Binding CanChooseYogaDuration}"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="{loc:LocalizedText Workout_Generation_YogaDurationLabel}" />
+                        </Border>
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
 

@@ -26,6 +26,16 @@ Updated 2026-10-24. This guide is for the **next** candidate. A prior `1.0 (2)` 
 4. In the Lambda function running `MuscleCuties.Server`, open **Configuration → Environment variables**. Set `Resend__ApiKey` to that rotated key and `Resend__FromEmail` to `MuscleCuties <noreply@musclecuties.app>`. `RESEND_API_KEY` is a supported alternative key name. Save the configuration and publish the intended version or alias. Do not put the key in Git, `appsettings.json`, an IPA, a command line, or this chat. AWS encrypts Lambda environment values at rest but [recommends Secrets Manager for API keys](https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html). This code does **not** yet resolve Secrets Manager references automatically.
 5. Use a synthetic test account with a real controlled mailbox to request a registration code and a password reset code. Confirm mailbox delivery, OTP verification, and RSA receipt issuance/validation. Inspect delivery status in Resend without copying recipient addresses or codes into application logs. This integration sends the recipient email and one-time code to Resend; it does not send health records. Reflect this processor and its retention policy in the privacy notice before real-user testing.
 
+## Deploy plan-generation changes to staging from GitLab
+
+The branch-scoped [GitLab pipeline](../.gitlab-ci.yml) runs the Core, Server, and reviewed-exercise catalog checks, packages the .NET 10 ARM64 Lambda, then deploys it to staging. It runs on pushes to `codex/plan-generation-checkpoint`; do not push intermediate work when deployment must wait for the completed change set.
+
+1. **Configured 2026-10-25:** `codex/plan-generation-checkpoint` is protected in GitLab; only Maintainers may push or merge, and force push is disabled.
+2. **Configured 2026-10-25:** `AWS_ROLE_ARN` and `AWS_LAMBDA_FUNCTION_NAME` are protected, masked GitLab CI/CD variables. The target is the staging function connected to API Gateway `y2ejsgrc6l`. Keep the variable values in GitLab settings rather than source control.
+3. **Configured 2026-10-25:** AWS IAM trusts the GitLab.com OIDC provider with audience `sts.amazonaws.com`. The deployment role trust is restricted to `project_path:denis-petruk/musclecuties-testflight-beta:ref_type:branch:ref:codex/plan-generation-checkpoint` and the same audience.
+4. **Configured 2026-10-25:** The role permits only `lambda:UpdateFunctionCode` and `lambda:GetFunctionConfiguration` on the staging Lambda. The pipeline uses GitLab's short-lived OIDC token with STS; it does not use static AWS access keys.
+5. After all implementation and local verification gates are closed, push the completed commit to the protected branch. The pipeline stops before deployment if verification or packaging fails. Confirm the deploy job and staging `/health/ready` response before beginning signed-in acceptance.
+
 ## Production configuration inventory
 
 The checked-in `appsettings.json` contains no secret values. ASP.NET Core maps double underscores in environment variable names to configuration colons. Put the following values in the **server runtime**, never in the iOS app:
