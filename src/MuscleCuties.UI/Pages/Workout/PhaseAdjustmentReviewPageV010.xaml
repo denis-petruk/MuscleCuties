@@ -12,10 +12,10 @@
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="{StaticResource WorkoutPlanningPagePadding}"
+            Padding="{StaticResource UiInsets20_24_20_32}"
             Spacing="{StaticResource UiSpaceContent}"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="{StaticResource WorkoutPlanningContentMaxWidth}">
+            MaximumWidthRequest="{StaticResource UiDimension720}">
             <sharedControls:PageHeader
                 Title="{loc:LocalizedText Workout_PhaseAdjustment_Title}"
                 BackCommand="{Binding BackCommand}" />
@@ -66,7 +66,7 @@
                                 <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
                                     <Label Text="{Binding Title}"
                                            Style="{StaticResource BodyLabel}"
-                                           FontAttributes="Bold" />
+                                           FontAttributes="{StaticResource UiFontAttributesBold}" />
                                     <Border Style="{StaticResource PickerContainer}">
                                         <Picker ItemsSource="{Binding Options}"
                                                 SelectedItem="{Binding SelectedOption, Mode=TwoWay}"

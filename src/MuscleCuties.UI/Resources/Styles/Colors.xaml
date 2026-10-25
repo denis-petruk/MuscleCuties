@@ -24,6 +24,15 @@
     <Color x:Key="AccentSurfaceDark">#3A2931</Color>
     <Color x:Key="RestStatusBadgeSurfaceLight">#F0DFEE</Color>
     <Color x:Key="RestStatusBadgeSurfaceDark">#55344D</Color>
+    <Color x:Key="RestDaySurfaceLight">#F6EAF4</Color>
+    <Color x:Key="RestDaySurfaceDark">#4A3143</Color>
+    <Color x:Key="RecoverySurfaceLight">#E0F2F1</Color>
+    <Color x:Key="RecoverySurfaceDark">#1A3A38</Color>
+    <Color x:Key="RecoveryTextLight">#1F6F68</Color>
+    <Color x:Key="RecoveryTextDark">#7ECBC5</Color>
+    <Color x:Key="TranslucentPageSurfaceLight">#EEFFF8FB</Color>
+    <Color x:Key="TranslucentPageSurfaceDark">#EE2B1D24</Color>
+    <Color x:Key="WorkoutBusyScrim">#40000000</Color>
     <Color x:Key="ChoiceSelectedSurfaceLight">#FBE3ED</Color>
     <Color x:Key="ChoiceSelectedSurfaceDark">#603447</Color>
     <Color x:Key="ChoiceSelectedStrokeLight">#A6446D</Color>
@@ -44,17 +53,15 @@
     <Color x:Key="TextSecondary">#765763</Color>
     <Color x:Key="TextSecondaryDark">#D7BFCA</Color>
     <Color x:Key="TextAccent">#A6446D</Color>
+    <Color x:Key="PrivacyShieldSurface">#FA2B1D24</Color>
 
     <Color x:Key="White">#FFFFFF</Color>
     <Color x:Key="Black">#000000</Color>
     <Color x:Key="DeepMauve">#5B4650</Color>
     <Color x:Key="ShadowColor">#2B1D24</Color>
     <Color x:Key="ModalScrim">#802B1D24</Color>
-    <Color x:Key="OverlayLight">#40FFFFFF</Color>
-    <Color x:Key="OverlayDark">#262B1D24</Color>
     <Color x:Key="PrimaryLightOverlay">#26C85A87</Color>
     <Color x:Key="WhiteOverlaySubtle">#22FFFFFF</Color>
-    <Color x:Key="SelectedOverlay">#33FFFFFF</Color>
     <Color x:Key="LightInkOverlay">#332B1D24</Color>
 
     <Color x:Key="Gray100">#FFF8FB</Color>
@@ -70,7 +77,6 @@
 
     <Color x:Key="ErrorLight">#C0392B</Color>
     <Color x:Key="ErrorDark">#E57373</Color>
-    <Color x:Key="RedDark">#C0392B</Color>
     <Color x:Key="SuccessLight">#2F7D4D</Color>
     <Color x:Key="SuccessDark">#7FD197</Color>
     <Color x:Key="WarningSurfaceLight">#FFF3E0</Color>
@@ -145,54 +151,85 @@
     <Color x:Key="CarbsDark">#F1C46E</Color>
     <Color x:Key="FatsLight">#6F8E4E</Color>
     <Color x:Key="FatsDark">#9DB878</Color>
-
-    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}" />
-    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}" />
     <SolidColorBrush x:Key="ShadowBrush" Color="{StaticResource ShadowColor}" />
 
-    <SolidColorBrush x:Key="CyclePhaseMenstrualLightBrush" Color="{StaticResource CyclePhaseMenstrualLight}" />
-    <SolidColorBrush x:Key="CyclePhaseMenstrualDarkBrush" Color="{StaticResource CyclePhaseMenstrualDark}" />
-    <SolidColorBrush x:Key="CyclePhaseFollicularLightBrush" Color="{StaticResource CyclePhaseFollicularLight}" />
-    <SolidColorBrush x:Key="CyclePhaseFollicularDarkBrush" Color="{StaticResource CyclePhaseFollicularDark}" />
-    <SolidColorBrush x:Key="CyclePhaseOvulatoryLightBrush" Color="{StaticResource CyclePhaseOvulatoryLight}" />
-    <SolidColorBrush x:Key="CyclePhaseOvulatoryDarkBrush" Color="{StaticResource CyclePhaseOvulatoryDark}" />
-    <SolidColorBrush x:Key="CyclePhaseLutealLightBrush" Color="{StaticResource CyclePhaseLutealLight}" />
-    <SolidColorBrush x:Key="CyclePhaseLutealDarkBrush" Color="{StaticResource CyclePhaseLutealDark}" />
-    <SolidColorBrush x:Key="CyclePhaseDefaultLightBrush" Color="{StaticResource CyclePhaseDefaultLight}" />
-    <SolidColorBrush x:Key="CyclePhaseDefaultDarkBrush" Color="{StaticResource CyclePhaseDefaultDark}" />
+    <Color x:Key="PhaseThemeMenstrualBackgroundDark">#482B33</Color>
+    <Color x:Key="PhaseThemeFollicularBackgroundDark">#243B27</Color>
+    <Color x:Key="PhaseThemeOvulatoryBackgroundDark">#3E3218</Color>
+    <Color x:Key="PhaseThemeLutealBackgroundDark">#362548</Color>
+    <Color x:Key="PhaseThemeMenstrualDividerLight">#E8B7BE</Color>
+    <Color x:Key="PhaseThemeMenstrualDividerDark">#7A4A54</Color>
+    <Color x:Key="PhaseThemeFollicularDividerLight">#B8D9B8</Color>
+    <Color x:Key="PhaseThemeFollicularDividerDark">#447146</Color>
+    <Color x:Key="PhaseThemeOvulatoryDividerLight">#E6CF88</Color>
+    <Color x:Key="PhaseThemeOvulatoryDividerDark">#776516</Color>
+    <Color x:Key="PhaseThemeLutealDividerLight">#D4BCEB</Color>
+    <Color x:Key="PhaseThemeLutealDividerDark">#5A3F78</Color>
+    <Color x:Key="PhaseThemeMenstrualPredictionLight">#B86B78</Color>
+    <Color x:Key="PhaseThemeFollicularPredictionLight">#679B67</Color>
+    <Color x:Key="PhaseThemeOvulatoryPredictionLight">#B08A00</Color>
+    <Color x:Key="PhaseThemeLutealPredictionLight">#8B6AB8</Color>
+    <Color x:Key="PhaseThemeSelectedDaySurfaceLight">#F6DDE6</Color>
+    <Color x:Key="PhaseThemeSelectedDaySurfaceDark">#4A3240</Color>
+    <Color x:Key="CycleNeutralTextLight">#8B7E86</Color>
+    <Color x:Key="CycleNeutralSurfaceLight">#EEF0F2</Color>
+    <Color x:Key="CycleFallbackTextLight">#1F2937</Color>
+    <Color x:Key="CycleStripDefaultStrokeLight">#E8D8E0</Color>
+    <Color x:Key="CycleStripDefaultStrokeDark">#4A3540</Color>
+    <Color x:Key="WorkoutRecoverySurfaceLight">#E8F5E9</Color>
+    <Color x:Key="WorkoutRecoverySurfaceDark">#1E3520</Color>
+    <Color x:Key="WorkoutRestSurfaceLight">#F0EFEA</Color>
+    <Color x:Key="WorkoutRestSurfaceDark">#2E2B26</Color>
+    <Color x:Key="WorkoutStrengthSurfaceDark">#3D2435</Color>
+    <Color x:Key="WorkoutRecoveryTextDark">#8FBF8F</Color>
+    <Color x:Key="WorkoutRestTextLight">#5F5A50</Color>
+    <Color x:Key="WorkoutStrengthTextLight">#8D3A5F</Color>
+    <Color x:Key="WorkoutStrengthTextDark">#D98AAF</Color>
+    <Color x:Key="DashboardAccentPink">#C45A86</Color>
+    <Color x:Key="DashboardRingTrackDark">#42424B</Color>
+    <Color x:Key="DashboardRingTrackLight">#E9E5E8</Color>
+    <Color x:Key="DashboardReadinessBlue">#5586B5</Color>
+    <Color x:Key="DashboardChartTrackDark">#505060</Color>
+    <Color x:Key="DashboardChartTrackLight">#DDDDE3</Color>
+    <Color x:Key="DashboardPhaseCardTextLight">#8B4E68</Color>
 
-    <SolidColorBrush x:Key="CyclePhaseMenstrualTextLightBrush" Color="{StaticResource CyclePhaseMenstrualTextLight}" />
-    <SolidColorBrush x:Key="CyclePhaseMenstrualTextDarkBrush" Color="{StaticResource CyclePhaseMenstrualTextDark}" />
-    <SolidColorBrush x:Key="CyclePhaseFollicularTextLightBrush" Color="{StaticResource CyclePhaseFollicularTextLight}" />
-    <SolidColorBrush x:Key="CyclePhaseFollicularTextDarkBrush" Color="{StaticResource CyclePhaseFollicularTextDark}" />
-    <SolidColorBrush x:Key="CyclePhaseOvulatoryTextLightBrush" Color="{StaticResource CyclePhaseOvulatoryTextLight}" />
-    <SolidColorBrush x:Key="CyclePhaseOvulatoryTextDarkBrush" Color="{StaticResource CyclePhaseOvulatoryTextDark}" />
-    <SolidColorBrush x:Key="CyclePhaseLutealTextLightBrush" Color="{StaticResource CyclePhaseLutealTextLight}" />
-    <SolidColorBrush x:Key="CyclePhaseLutealTextDarkBrush" Color="{StaticResource CyclePhaseLutealTextDark}" />
+    <Color x:Key="Transparent">#00000000</Color>
 
-    <SolidColorBrush x:Key="ReadinessHighLightBrush" Color="{StaticResource ReadinessHighLight}" />
-    <SolidColorBrush x:Key="ReadinessHighDarkBrush" Color="{StaticResource ReadinessHighDark}" />
-    <SolidColorBrush x:Key="ReadinessMediumLightBrush" Color="{StaticResource ReadinessMediumLight}" />
-    <SolidColorBrush x:Key="ReadinessMediumDarkBrush" Color="{StaticResource ReadinessMediumDark}" />
-    <SolidColorBrush x:Key="ReadinessLowLightBrush" Color="{StaticResource ReadinessLowLight}" />
-    <SolidColorBrush x:Key="ReadinessLowDarkBrush" Color="{StaticResource ReadinessLowDark}" />
-
-    <SolidColorBrush x:Key="RecoveryHighLightBrush" Color="{StaticResource RecoveryHighLight}" />
-    <SolidColorBrush x:Key="RecoveryHighDarkBrush" Color="{StaticResource RecoveryHighDark}" />
-    <SolidColorBrush x:Key="RecoveryMediumLightBrush" Color="{StaticResource RecoveryMediumLight}" />
-    <SolidColorBrush x:Key="RecoveryMediumDarkBrush" Color="{StaticResource RecoveryMediumDark}" />
-    <SolidColorBrush x:Key="RecoveryLowLightBrush" Color="{StaticResource RecoveryLowLight}" />
-    <SolidColorBrush x:Key="RecoveryLowDarkBrush" Color="{StaticResource RecoveryLowDark}" />
-
-    <SolidColorBrush x:Key="WaterLightBrush" Color="{StaticResource WaterLight}" />
-    <SolidColorBrush x:Key="WaterDarkBrush" Color="{StaticResource WaterDark}" />
-    <SolidColorBrush x:Key="SleepLightBrush" Color="{StaticResource SleepLight}" />
-    <SolidColorBrush x:Key="SleepDarkBrush" Color="{StaticResource SleepDark}" />
-    <SolidColorBrush x:Key="ProteinLightBrush" Color="{StaticResource ProteinLight}" />
-    <SolidColorBrush x:Key="ProteinDarkBrush" Color="{StaticResource ProteinDark}" />
-    <SolidColorBrush x:Key="CarbsLightBrush" Color="{StaticResource CarbsLight}" />
-    <SolidColorBrush x:Key="CarbsDarkBrush" Color="{StaticResource CarbsDark}" />
-    <SolidColorBrush x:Key="FatsLightBrush" Color="{StaticResource FatsLight}" />
-    <SolidColorBrush x:Key="FatsDarkBrush" Color="{StaticResource FatsDark}" />
-
+    <!-- Shared design tokens needed during root dictionary initialization -->
+    <x:String x:Key="AppFontFamily">Inter</x:String>
+    <x:Static x:Key="UiFontAttributesBold" Member="FontAttributes.Bold" />
+    <x:Static x:Key="UiFontAttributesItalic" Member="FontAttributes.Italic" />
+    <x:Static x:Key="UiFontAttributesNone" Member="FontAttributes.None" />
+    <x:Int32 x:Key="AuthCodeLength">6</x:Int32>
+    <x:Int32 x:Key="UiRadiusControl">14</x:Int32>
+    <x:Int32 x:Key="UiRadiusCalendarDay">10</x:Int32>
+    <x:Double x:Key="UiSpaceMicro">4</x:Double>
+    <x:Double x:Key="UiSpaceTight">8</x:Double>
+    <x:Double x:Key="UiSpaceCompact">12</x:Double>
+    <x:Double x:Key="UiSpaceControl">16</x:Double>
+    <x:Double x:Key="UiSpaceContent">24</x:Double>
+    <x:Double x:Key="UiControlHeight">48</x:Double>
+    <Thickness x:Key="UiInsets0">0</Thickness>
+    <Thickness x:Key="UiInsets12">12</Thickness>
+    <Thickness x:Key="UiInsets14">14</Thickness>
+    <Thickness x:Key="UiInsets16">16</Thickness>
+    <Thickness x:Key="UiInsets18">18</Thickness>
+    <Thickness x:Key="UiInsets20">20</Thickness>
+    <Thickness x:Key="UiInsets24">24</Thickness>
+    <Thickness x:Key="UiInsets28">28</Thickness>
+    <Thickness x:Key="UiInsetsPlanStickyAction">20,8,20,8</Thickness>
+    <Thickness x:Key="ProfileMeasurementPickerPadding">14,4</Thickness>
+    <x:String x:Key="PlanMetricColumnWidths">*,112</x:String>
+    <CornerRadius x:Key="BottomSheetTopCornerRadius">24,24,0,0</CornerRadius>
+    <RoundRectangle x:Key="UiRoundRectangleRadius14" CornerRadius="14" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius999" CornerRadius="999" />
+    <x:Double x:Key="UiDimension24">24</x:Double>
+    <x:Double x:Key="UiDimension48">48</x:Double>
+    <x:Double x:Key="UiDimension56">56</x:Double>
+    <x:Double x:Key="UiDimension62">62</x:Double>
+    <x:Double x:Key="UiDimensionPlanCheckmark">14</x:Double>
+    <x:Double x:Key="UiStrokeWidth0">0</x:Double>
+    <x:Double x:Key="UiStrokeWidth1">1</x:Double>
+    <x:Double x:Key="UiStrokeWidth1_5">1.5</x:Double>
+    <x:Double x:Key="UiStrokeWidthPlanCheckmark">2</x:Double>
 </ResourceDictionary>

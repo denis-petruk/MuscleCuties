@@ -19,12 +19,12 @@
         </BoxView>
         <Border x:Name="SheetSurface" Style="{StaticResource AppBottomSheetSurface}">
             <Grid RowDefinitions="Auto,Auto,*">
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Padding="20,16,16,12">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{StaticResource UiInsets20_16_16_12}">
                     <Label Text="{loc:LocalizedText Injury_LogTitle}" Style="{StaticResource ModalTitle}"
                            VerticalOptions="Center" />
                     <Button Grid.Column="1" Text="{loc:LocalizedText Common_Add}"
                             Command="{Binding ToggleAddFormCommand}"
-                            Style="{StaticResource ButtonLink}" MinimumWidthRequest="48" MinimumHeightRequest="48"
+                            Style="{StaticResource ButtonLink}" MinimumWidthRequest="{StaticResource UiDimension48}" MinimumHeightRequest="{StaticResource UiDimension48}"
                             SemanticProperties.Description="{loc:LocalizedText Injury_AddAnInjury}" />
                     <Border Grid.Column="2" Style="{StaticResource ModalIconButton}"
                             SemanticProperties.Description="{loc:LocalizedText Injury_Modal_CloseInjuryLog}">

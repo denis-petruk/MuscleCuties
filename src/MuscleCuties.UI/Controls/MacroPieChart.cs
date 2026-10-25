@@ -1,3 +1,5 @@
+using MuscleCuties.UI.Resources.Styles;
+
 namespace MuscleCuties.UI.Controls;
 
 public class MacroPieChart : GraphicsView, IDrawable
@@ -32,49 +34,49 @@ public class MacroPieChart : GraphicsView, IDrawable
         nameof(TrackColor),
         typeof(Color),
         typeof(MacroPieChart),
-        Colors.Transparent,
+        AppThemeResources.GetRequired<Color>("DashboardChartTrackLight"),
         propertyChanged: Redraw);
 
     public static readonly BindableProperty ProteinColorProperty = BindableProperty.Create(
         nameof(ProteinColor),
         typeof(Color),
         typeof(MacroPieChart),
-        Colors.Transparent,
+        AppThemeResources.GetRequired<Color>("ProteinLight"),
         propertyChanged: Redraw);
 
     public static readonly BindableProperty CarbsColorProperty = BindableProperty.Create(
         nameof(CarbsColor),
         typeof(Color),
         typeof(MacroPieChart),
-        Colors.Transparent,
+        AppThemeResources.GetRequired<Color>("CarbsLight"),
         propertyChanged: Redraw);
 
     public static readonly BindableProperty FatsColorProperty = BindableProperty.Create(
         nameof(FatsColor),
         typeof(Color),
         typeof(MacroPieChart),
-        Colors.Transparent,
+        AppThemeResources.GetRequired<Color>("FatsLight"),
         propertyChanged: Redraw);
 
     public static readonly BindableProperty InnerColorProperty = BindableProperty.Create(
         nameof(InnerColor),
         typeof(Color),
         typeof(MacroPieChart),
-        Colors.Transparent,
+        default,
         propertyChanged: Redraw);
 
     public static readonly BindableProperty InnerStrokeColorProperty = BindableProperty.Create(
         nameof(InnerStrokeColor),
         typeof(Color),
         typeof(MacroPieChart),
-        Colors.Transparent,
+        default,
         propertyChanged: Redraw);
 
     public MacroPieChart()
     {
         Drawable = this;
-        HeightRequest = 132;
-        WidthRequest = 132;
+        HeightRequest = AppThemeResources.GetDouble("UiDimension132");
+        WidthRequest = AppThemeResources.GetDouble("UiDimension132");
     }
 
     public float ProteinValue
@@ -176,7 +178,7 @@ public class MacroPieChart : GraphicsView, IDrawable
         canvas.FillEllipse(x + inset, y + inset, diameter - inset * 2f, diameter - inset * 2f);
 
         canvas.StrokeColor = InnerStrokeColor;
-        canvas.StrokeSize = 2f;
+        canvas.StrokeSize = (float)AppThemeResources.GetDouble("UiStrokeWidth2");
         canvas.DrawEllipse(x + inset, y + inset, diameter - inset * 2f, diameter - inset * 2f);
     }
 

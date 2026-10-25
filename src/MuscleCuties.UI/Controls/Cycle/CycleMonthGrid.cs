@@ -9,18 +9,6 @@ namespace MuscleCuties.UI.Controls.Cycle;
 public sealed class CycleMonthGrid : Grid
 {
     private const int DaysPerWeek = 7;
-    private const double EstimatedDayOpacity = 0.72;
-    private const double StandardDayOpacity = 1.0;
-    private const double SelectedDayRingThickness = 2.8;
-    private const double HiddenDayRingThickness = 0;
-    private const double DayCellSpacing = 0;
-    private const double DayCellPadding = 0;
-    private const double DayCellMargin = 2;
-    private const double DayTapTargetSize = 44;
-    private const int DayButtonCornerRadius = 10;
-    private const int DayCellCornerRadius = 12;
-    private const double DayLabelFontSize = 13;
-    private const string AppFontFamilyName = "Inter";
     public static readonly BindableProperty ItemsSourceProperty = BindableProperty.Create(
         nameof(ItemsSource),
         typeof(IReadOnlyList<CycleDayItem>),
@@ -47,8 +35,8 @@ public sealed class CycleMonthGrid : Grid
 
     public CycleMonthGrid()
     {
-        RowSpacing = DayCellSpacing;
-        ColumnSpacing = DayCellSpacing;
+        RowSpacing = AppThemeResources.GetDouble("UiSpacing0");
+        ColumnSpacing = AppThemeResources.GetDouble("UiSpacing0");
 
         for (var column = 0; column < DaysPerWeek; column++)
             ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
@@ -158,7 +146,7 @@ public sealed class CycleMonthGrid : Grid
             button.BorderWidth = day.StrokeThickness;
             button.Command = WrapCommand(DaySelectedCommand);
             button.CommandParameter = day;
-            button.Opacity = day.IsEstimated ? EstimatedDayOpacity : StandardDayOpacity;
+            button.Opacity = AppThemeResources.GetDouble(day.IsEstimated ? "UiOpacityEstimatedDay" : "UiOpacityFull");
             cell.BindingContext = day;
             SemanticProperties.SetDescription(button, day.AccessibilityDescription);
         }
@@ -181,14 +169,14 @@ public sealed class CycleMonthGrid : Grid
             if (isSelected)
             {
                 cell.Stroke = ResolveSelectionRingColor();
-                cell.StrokeThickness = SelectedDayRingThickness;
+                cell.StrokeThickness = AppThemeResources.GetDouble("UiStrokeWidth2_8");
                 if (cell.Content is Button btn)
                     btn.FontAttributes = FontAttributes.Bold;
             }
             else
             {
-                cell.Stroke = Colors.Transparent;
-                cell.StrokeThickness = HiddenDayRingThickness;
+                cell.Stroke = AppThemeResources.GetRequired<Color>("Transparent");
+                cell.StrokeThickness = AppThemeResources.GetDouble("UiStrokeWidth0");
                 if (cell.Content is Button btn)
                     btn.FontAttributes = FontAttributes.Bold;
             }
@@ -211,28 +199,28 @@ public sealed class CycleMonthGrid : Grid
     {
         var button = new Button
         {
-            Padding = DayCellPadding,
-            Margin = DayCellPadding,
-            MinimumHeightRequest = DayTapTargetSize,
-            MinimumWidthRequest = DayTapTargetSize,
-            HeightRequest = DayTapTargetSize,
-            CornerRadius = DayButtonCornerRadius,
-            FontFamily = AppFontFamilyName,
-            FontSize = DayLabelFontSize,
-            FontAttributes = FontAttributes.Bold
+            Padding = AppThemeResources.GetThickness("UiInsets0"),
+            Margin = AppThemeResources.GetThickness("UiInsets0"),
+            MinimumHeightRequest = AppThemeResources.GetDouble("UiDimension44"),
+            MinimumWidthRequest = AppThemeResources.GetDouble("UiDimension44"),
+            HeightRequest = AppThemeResources.GetDouble("UiDimension44"),
+            CornerRadius = AppThemeResources.GetRequired<int>("UiRadiusCalendarDay"),
+            FontFamily = AppThemeResources.GetString("AppFontFamily"),
+            FontSize = AppThemeResources.GetDouble("UiFontSize13"),
+            FontAttributes = AppThemeResources.GetRequired<FontAttributes>("UiFontAttributesBold")
         };
 
         return new Border
         {
-            Padding = DayCellPadding,
-            Margin = DayCellMargin,
-            StrokeThickness = HiddenDayRingThickness,
-            Stroke = Colors.Transparent,
-            StrokeShape = new RoundRectangle { CornerRadius = DayCellCornerRadius },
-            BackgroundColor = Colors.Transparent,
+            Padding = AppThemeResources.GetThickness("UiInsets0"),
+            Margin = AppThemeResources.GetThickness("UiInsets2"),
+            StrokeThickness = AppThemeResources.GetDouble("UiStrokeWidth0"),
+            Stroke = AppThemeResources.GetRequired<Color>("Transparent"),
+            StrokeShape = new RoundRectangle { CornerRadius = AppThemeResources.GetDouble("UiDimension12") },
+            BackgroundColor = AppThemeResources.GetRequired<Color>("Transparent"),
             Content = button,
-            MinimumHeightRequest = DayTapTargetSize,
-            MinimumWidthRequest = DayTapTargetSize
+            MinimumHeightRequest = AppThemeResources.GetDouble("UiDimension44"),
+            MinimumWidthRequest = AppThemeResources.GetDouble("UiDimension44")
         };
     }
 }

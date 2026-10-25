@@ -12,90 +12,90 @@
         <Border.GestureRecognizers>
             <TapGestureRecognizer Command="{Binding OpenNutritionCommand}" />
         </Border.GestureRecognizers>
-        <VerticalStackLayout Spacing="16">
+        <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
             <Grid ColumnDefinitions="*,Auto">
-                <Label Text="{loc:LocalizedText Dashboard_Nutrition_Title}" Style="{StaticResource SectionTitle}" FontSize="17" />
+                <Label Text="{loc:LocalizedText Dashboard_Nutrition_Title}" Style="{StaticResource SectionTitle}" FontSize="{StaticResource UiFontSize17}" />
                 <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_Nutrition_ViewAll}" TextColor="{StaticResource Primary}"
-                       FontSize="13" VerticalOptions="Center" />
+                       FontSize="{StaticResource UiFontSize13}" VerticalOptions="Center" />
             </Grid>
-            <Grid ColumnDefinitions="76,*" ColumnSpacing="16">
-                <Grid WidthRequest="76" HeightRequest="76">
+            <Grid ColumnDefinitions="76,*" ColumnSpacing="{StaticResource UiSpaceControl}">
+                <Grid WidthRequest="{StaticResource UiDimension76}" HeightRequest="{StaticResource UiDimension76}">
                     <dashboard:DashboardProgressRing Progress="{Binding CaloriesProgress}"
                                                      RingColor="{StaticResource Primary}"
-                                                     WidthRequest="76" HeightRequest="76" />
+                                                     WidthRequest="{StaticResource UiDimension76}" HeightRequest="{StaticResource UiDimension76}" />
                     <Image Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
-                           WidthRequest="26" HeightRequest="26"
+                           WidthRequest="{StaticResource UiDimension26}" HeightRequest="{StaticResource UiDimension26}"
                            Aspect="AspectFit"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"
                            InputTransparent="True" />
                 </Grid>
-                <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
-                    <Label Text="{loc:LocalizedText Dashboard_Nutrition_Calories}" FontSize="13" FontAttributes="Bold"
+                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing3}" VerticalOptions="Center">
+                    <Label Text="{loc:LocalizedText Dashboard_Nutrition_Calories}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                     <Label Text="{Binding CaloriesConsumed, Converter={StaticResource LocalizedStringConverter}}"
-                           FontSize="20" FontAttributes="Bold"
+                           FontSize="{StaticResource UiFontSize20}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            TextColor="{StaticResource Primary}" />
                     <Label Text="{Binding CaloriesGoal, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource MutedLabel}" FontSize="13" />
+                           Style="{StaticResource MutedLabel}" FontSize="{StaticResource UiFontSize13}" />
                 </VerticalStackLayout>
             </Grid>
-            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6">
-                <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
-                    <Grid WidthRequest="60" HeightRequest="60" HorizontalOptions="Center">
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpacing6}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
+                    <Grid WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" HorizontalOptions="Center">
                         <dashboard:DashboardProgressRing Progress="{Binding ProteinProgress}"
                                                          RingColor="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}"
-                                                         WidthRequest="60" HeightRequest="60" />
+                                                         WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" />
                         <Path Data="M4 9v6M7 8v8M17 9v6M14 8v8M7 12h7"
                               Style="{StaticResource NutritionLineIcon}"
                               Stroke="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}"
-                              WidthRequest="18"
-                              HeightRequest="18"
+                              WidthRequest="{StaticResource UiDimension18}"
+                              HeightRequest="{StaticResource UiDimension18}"
                               InputTransparent="True" />
                     </Grid>
-                    <Label Text="{loc:LocalizedText Dashboard_Nutrition_Protein}" FontSize="13" FontAttributes="Bold"
+                    <Label Text="{loc:LocalizedText Dashboard_Nutrition_Protein}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            HorizontalTextAlignment="Center" />
                     <Label Text="{Binding ProteinText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource CaptionLabel}"
-                           FontSize="11" HorizontalTextAlignment="Center" />
+                           FontSize="{StaticResource UiFontSize11}" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
-                <VerticalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="Center">
-                    <Grid WidthRequest="60" HeightRequest="60" HorizontalOptions="Center">
+                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
+                    <Grid WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" HorizontalOptions="Center">
                         <dashboard:DashboardProgressRing Progress="{Binding CarbsProgress}"
                                                          RingColor="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}"
-                                                         WidthRequest="60" HeightRequest="60" />
+                                                         WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" />
                         <Path Data="M9 18V5M9 7C6.5 7 5 5.8 5 4M9 10C6.5 10 5 8.8 5 7M9 13C6.5 13 5 11.8 5 10M9 7c2.5 0 4-1.2 4-3M9 10c2.5 0 4-1.2 4-3M9 13c2.5 0 4-1.2 4-3"
                               Style="{StaticResource NutritionLineIcon}"
                               Stroke="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}"
-                              StrokeThickness="1.5"
-                              WidthRequest="18"
-                              HeightRequest="18"
+                              StrokeThickness="{StaticResource UiStrokeWidth1_5}"
+                              WidthRequest="{StaticResource UiDimension18}"
+                              HeightRequest="{StaticResource UiDimension18}"
                               InputTransparent="True" />
                     </Grid>
-                    <Label Text="{loc:LocalizedText Dashboard_Nutrition_Carbs}" FontSize="13" FontAttributes="Bold"
+                    <Label Text="{loc:LocalizedText Dashboard_Nutrition_Carbs}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            HorizontalTextAlignment="Center" />
                     <Label Text="{Binding CarbsText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource CaptionLabel}"
-                           FontSize="11" HorizontalTextAlignment="Center" />
+                           FontSize="{StaticResource UiFontSize11}" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
-                <VerticalStackLayout Grid.Column="2" Spacing="4" HorizontalOptions="Center">
-                    <Grid WidthRequest="60" HeightRequest="60" HorizontalOptions="Center">
+                <VerticalStackLayout Grid.Column="2" Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
+                    <Grid WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" HorizontalOptions="Center">
                         <dashboard:DashboardProgressRing Progress="{Binding FatsProgress}"
                                                          RingColor="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}"
-                                                         WidthRequest="60" HeightRequest="60" />
+                                                         WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" />
                         <Path Data="M10 3C7 7 5 10 5 13a5 5 0 0 0 10 0c0-3-2-6-5-10z"
                               Style="{StaticResource NutritionLineIcon}"
                               Stroke="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}"
-                              StrokeThickness="1.6"
-                              WidthRequest="18"
-                              HeightRequest="18"
+                              StrokeThickness="{StaticResource UiStrokeWidth1_6}"
+                              WidthRequest="{StaticResource UiDimension18}"
+                              HeightRequest="{StaticResource UiDimension18}"
                               InputTransparent="True" />
                     </Grid>
-                    <Label Text="{loc:LocalizedText Dashboard_Nutrition_Fat}" FontSize="13" FontAttributes="Bold"
+                    <Label Text="{loc:LocalizedText Dashboard_Nutrition_Fat}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            HorizontalTextAlignment="Center" />
                     <Label Text="{Binding FatsText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource CaptionLabel}"
-                           FontSize="11" HorizontalTextAlignment="Center" />
+                           FontSize="{StaticResource UiFontSize11}" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
             </Grid>
         </VerticalStackLayout>

@@ -1,5 +1,7 @@
 using Microsoft.Maui.Graphics;
 
+using MuscleCuties.UI.Resources.Styles;
+
 namespace MuscleCuties.UI.Models.UI.Workout;
 
 /// <summary>
@@ -36,8 +38,8 @@ public sealed class ScheduleDayItem
     public bool IsRestDay { get; init; }
 
     /// <summary>Accent color matching the workout type.</summary>
-    public Color AccentColor { get; init; } = Colors.Transparent;
+    public Color AccentColor { get; init; } = AppThemeResources.GetRequired<Color>("Transparent");
 
     /// <summary>Text color matching the workout type.</summary>
-    public Color AccentTextColor { get; init; } = Colors.Transparent;
+    public Color AccentTextColor { get; init; } = AppThemeResources.GetRequired<Color>("TextPrimary");
 }

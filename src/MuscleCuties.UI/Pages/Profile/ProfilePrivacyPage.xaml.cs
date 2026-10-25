@@ -1,3 +1,4 @@
+using System.Windows.Input;
 using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Pages.Profile;
@@ -6,8 +7,12 @@ public partial class ProfilePrivacyPage : ContentPage
 {
     public const string PrivacyPolicyUrl = "https://musclecuties.app/privacy";
 
+    public ICommand BackCommand { get; }
+
     public ProfilePrivacyPage()
     {
+        BackCommand = new Command(async () => await NavigateBackAsync());
+        BindingContext = this;
         this.InitializeWithTiming(InitializeComponent);
     }
 
@@ -21,8 +26,8 @@ public partial class ProfilePrivacyPage : ContentPage
     {
         if (LocalizationService.ActiveLanguage != "ru")
         {
-            SemanticProperties.SetDescription(BackButton, "Back to Profile");
-            PageTitle.Text = "Privacy";
+            HeaderView.Title = "Privacy";
+            HeaderView.Subtitle = "Your data and account security";
             SummaryTitle.Text = "Your data, at a glance";
             SummaryBody.Text = "Your account and health records are stored in MuscleCuties services.";
             ServicesTitle.Text = "Other services";
@@ -36,8 +41,8 @@ public partial class ProfilePrivacyPage : ContentPage
             return;
         }
 
-        SemanticProperties.SetDescription(BackButton, "Вернуться в профиль");
-        PageTitle.Text = "Конфиденциальность";
+        HeaderView.Title = "Конфиденциальность";
+        HeaderView.Subtitle = "Безопасность данных и аккаунта";
         SummaryTitle.Text = "Ваши данные — кратко";
         SummaryBody.Text = "Данные аккаунта и здоровья хранятся в сервисах MuscleCuties.";
         ServicesTitle.Text = "Другие сервисы";
@@ -50,7 +55,7 @@ public partial class ProfilePrivacyPage : ContentPage
         SemanticProperties.SetDescription(PolicyButton, "Открыть полную политику конфиденциальности");
     }
 
-    private async void OnBackClicked(object? sender, EventArgs e)
+    private static async Task NavigateBackAsync()
     {
         if (Shell.Current is not { } shell)
             return;

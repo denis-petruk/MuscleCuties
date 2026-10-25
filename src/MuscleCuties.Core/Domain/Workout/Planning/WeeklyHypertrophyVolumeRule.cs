@@ -36,14 +36,27 @@ public sealed record WeeklyHypertrophyVolumeResult(
 
 public static class WeeklyHypertrophyVolumeRule
 {
-    public const int Tier1MinimumDirectSets = 4;
-    public const int Tier1MaximumDirectSets = 8;
+    public const int Tier1MinimumDirectSets = Tier1TargetMinSets;
+    public const int Tier1MaximumDirectSets = Tier1HardCapSets;
 
     public const int Tier2MinimumDirectSets = 8;
     public const int Tier2MaximumDirectSets = 16;
 
     public const int Tier3MinimumDirectSets = 12;
     public const int Tier3MaximumDirectSets = 22;
+
+    // Spec Section 9 Direct Working Sets: Target and Hard Cap per Tier
+    public const int Tier1TargetMinSets = 8;
+    public const int Tier1TargetMaxSets = 12;
+    public const int Tier1HardCapSets = 12;
+
+    public const int Tier2TargetMinSets = 12;
+    public const int Tier2TargetMaxSets = 16;
+    public const int Tier2HardCapSets = 16;
+
+    public const int Tier3TargetMinSets = 16;
+    public const int Tier3TargetMaxSets = 20;
+    public const int Tier3HardCapSets = 22;
 
     public const int NoDirectSets = 0;
 
@@ -57,6 +70,14 @@ public static class WeeklyHypertrophyVolumeRule
         EffectiveExperienceTier.Tier2IntermediateOrEstablished => (Tier2MinimumDirectSets, Tier2MaximumDirectSets),
         EffectiveExperienceTier.Tier3Advanced => (Tier3MinimumDirectSets, Tier3MaximumDirectSets),
         _ => (Tier1MinimumDirectSets, Tier1MaximumDirectSets)
+    };
+
+    public static (int TargetMin, int TargetMax, int HardCap) GetTierVolumeBounds(EffectiveExperienceTier tier) => tier switch
+    {
+        EffectiveExperienceTier.Tier1BeginnerOrNew => (Tier1TargetMinSets, Tier1TargetMaxSets, Tier1HardCapSets),
+        EffectiveExperienceTier.Tier2IntermediateOrEstablished => (Tier2TargetMinSets, Tier2TargetMaxSets, Tier2HardCapSets),
+        EffectiveExperienceTier.Tier3Advanced => (Tier3TargetMinSets, Tier3TargetMaxSets, Tier3HardCapSets),
+        _ => (Tier1TargetMinSets, Tier1TargetMaxSets, Tier1HardCapSets)
     };
 
     public static IReadOnlyDictionary<MajorMuscleGroup, int> CalculateVolume(

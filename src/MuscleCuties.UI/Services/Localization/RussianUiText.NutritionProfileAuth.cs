@@ -500,6 +500,8 @@ internal static partial class RussianUiText
         Values["Profile_ImageCrop_PinchToZoomLabel"] = "Прикоснитесь, чтобы увеличить, перетащите, чтобы переместить";
         Values["Profile_ImageCrop_UsePhoto"] = "Использовать фото";
         Values["Profile_NutritionSettings_Calcium"] = "Кальций";
+        Values["Profile_NutritionSettings_AdvancedSettings"] = "Дополнительные настройки";
+        Values["Profile_NutritionSettings_HideAdvancedSettings"] = "Скрыть дополнительные настройки";
         Values["Profile_NutritionSettings_ChooseGoal"] = "Выберите цель";
         Values["Profile_NutritionSettings_ChoosePace"] = "Выбрать темп";
         Values["Profile_NutritionSettings_DailyCalories"] = "Ежедневные калории";
@@ -611,8 +613,8 @@ internal static partial class RussianUiText
         Values["Profile_WorkoutPrefs_ChooseActivityWeeklyFrequency"] =
             "Укажите желаемое число занятий йогой, мобильностью или мягким восстановлением в неделю.";
         Values["Profile_WorkoutPrefs_ActivitySessionLengthHint"] =
-            "Укажите длительность каждой активности и частоту йоги, мобильности или мягкого восстановления в неделю.";
-        Values["Profile_WorkoutPrefs_InvalidPreferences"] = "Проверьте активности, выберите от 2 до 7 доступных дней и укажите обязательную длительность и частоту.";
+            "Длительность силовых занятий берётся из настройки профиля. Время кардио и HIIT рассчитывается по плану активности, а частота — по доступным дням.";
+        Values["Profile_WorkoutPrefs_InvalidPreferences"] = "Проверьте активности, выберите от 2 до 7 доступных дней и укажите обязательную длительность.";
         Values["Profile_WorkoutPrefs_PlanUpdateFailed"] = "Не удалось обновить план тренировок. Настройки не сохранены. Попробуйте ещё раз.";
         Values["Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"] = "Для вашего плана требуется хотя бы одно упражнение на силу.";
         Values["Profile_WorkoutPrefs_SaveWorkoutPreferences"] = "Сохранить настройки тренировки";
@@ -623,6 +625,7 @@ internal static partial class RussianUiText
         Values["Profile_WorkoutPrefs_ExerciseExclusions"] = "Упражнения, которых следует избегать";
         Values["Profile_WorkoutPrefs_ExerciseExclusionsHint"] = "Выберите проверенные упражнения, которые нужно исключать из каждого нового предварительного плана силовых тренировок.";
         Values["Profile_WorkoutPrefs_SearchExercises"] = "Поиск проверенных упражнений";
+        Values["Profile_WorkoutPrefs_RemoveAvoidedExercise"] = "Дважды нажмите, чтобы убрать упражнение из списка исключений";
         Values["Profile_WorkoutPrefs_ExerciseCatalogUnavailable"] = "Не удалось загрузить проверенные упражнения. Подключитесь к сети и снова откройте эти настройки перед сохранением.";
         Values["Profile_WorkoutPrefs_EquipmentFullGym"] = "Полный тренажёрный зал";
         Values["Profile_WorkoutPrefs_EquipmentHome"] = "Гантели и эспандеры";

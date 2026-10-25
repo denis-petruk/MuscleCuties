@@ -10,28 +10,25 @@
     x:DataType="vm:CycleViewModel"
     SemanticProperties.Description="{loc:LocalizedText Cycle_Hero_CardAccessibility}">
 
-    <ContentView.Resources>
-        <x:Double x:Key="CycleHeroRowSpacing">12</x:Double>
-    </ContentView.Resources>
 
-    <Border Style="{StaticResource CardPrimary}" Padding="20">
-        <Grid RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="{StaticResource CycleHeroRowSpacing}">
+    <Border Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets20}">
+        <Grid RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="{StaticResource UiSpaceCompact}">
 
             <!-- Top Row: Section header -->
             <Grid>
-                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                <HorizontalStackLayout Spacing="{StaticResource UiSpacing6}" VerticalOptions="Center">
                     <Path
                         Data="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"
                         Stroke="{StaticResource Primary}"
-                        StrokeThickness="1.5"
+                        StrokeThickness="{StaticResource UiStrokeWidth1_5}"
                         Aspect="Uniform"
-                        WidthRequest="14"
-                        HeightRequest="14"
+                        WidthRequest="{StaticResource UiDimension14}"
+                        HeightRequest="{StaticResource UiDimension14}"
                         VerticalOptions="Center" />
                     <Label
                         Text="{loc:LocalizedText Cycle_Hero_HeaderTitle}"
                         Style="{StaticResource CaptionLabel}"
-                        FontAttributes="Bold"
+                        FontAttributes="{StaticResource UiFontAttributesBold}"
                         TextColor="{StaticResource Primary}"
                         VerticalOptions="Center"
                         SemanticProperties.HeadingLevel="Level2" />
@@ -40,29 +37,29 @@
             </Grid>
 
             <!-- Middle Row: Phase title and artwork -->
-            <Grid Grid.Row="1" ColumnDefinitions="*, 80" ColumnSpacing="14" RowSpacing="6">
-                <VerticalStackLayout Spacing="6" VerticalOptions="Center">
+            <Grid Grid.Row="1" ColumnDefinitions="*, 80" ColumnSpacing="{StaticResource UiSpacing14}" RowSpacing="{StaticResource UiSpacing6}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpacing6}" VerticalOptions="Center">
                     <Label
                         Text="{Binding PhaseLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_Hero_PhaseFormat}"
                         Style="{StaticResource SectionTitle}"
-                        FontSize="24"
-                        FontAttributes="Bold" />
+                        FontSize="{StaticResource UiFontSize24}"
+                        FontAttributes="{StaticResource UiFontAttributesBold}" />
                     <Label
                         Text="{Binding CycleDaySummary, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource CaptionLabel}"
-                        FontSize="13"
-                        FontAttributes="Bold"
+                        FontSize="{StaticResource UiFontSize13}"
+                        FontAttributes="{StaticResource UiFontAttributesBold}"
                         TextColor="{StaticResource Primary}" />
                 </VerticalStackLayout>
 
                 <!-- Vector artwork container -->
                 <Border
                     Grid.Column="1"
-                    WidthRequest="80"
-                    HeightRequest="80"
-                    StrokeShape="RoundRectangle 24"
+                    WidthRequest="{StaticResource UiDimension80}"
+                    HeightRequest="{StaticResource UiDimension80}"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius24}"
                     BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
-                    StrokeThickness="0"
+                    StrokeThickness="{StaticResource UiStrokeWidth0}"
                     VerticalOptions="Center"
                     HorizontalOptions="Center">
                     <Grid HorizontalOptions="Center" VerticalOptions="Center">
@@ -71,12 +68,12 @@
                             Data="{Binding PhaseVectorArtworkData, Converter={StaticResource StringToGeometryConverter}}"
                             Stroke="{StaticResource Primary}"
                             Fill="{AppThemeBinding Light={StaticResource PrimaryLightOverlay}, Dark={StaticResource LightInkOverlay}}"
-                            StrokeThickness="2"
+                            StrokeThickness="{StaticResource UiStrokeWidth2}"
                             StrokeLineCap="Round"
                             StrokeLineJoin="Round"
                             Aspect="Uniform"
-                            WidthRequest="40"
-                            HeightRequest="40"
+                            WidthRequest="{StaticResource UiDimension40}"
+                            HeightRequest="{StaticResource UiDimension40}"
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
                     </Grid>
@@ -87,47 +84,47 @@
             <Border
                 Grid.Row="2"
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                StrokeShape="RoundRectangle 12"
-                StrokeThickness="0"
-                Padding="12,10">
+                StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                StrokeThickness="{StaticResource UiStrokeWidth0}"
+                Padding="{StaticResource UiInsets12_10}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding OpenQuickLogCommand}" />
                 </Border.GestureRecognizers>
-                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10" VerticalOptions="Center">
+                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpacing10}" VerticalOptions="Center">
                     <Border
-                        WidthRequest="28"
-                        HeightRequest="28"
-                        StrokeShape="RoundRectangle 14"
+                        WidthRequest="{StaticResource UiDimension28}"
+                        HeightRequest="{StaticResource UiDimension28}"
+                        StrokeShape="{StaticResource UiRoundRectangleRadius14}"
                         BackgroundColor="{StaticResource Primary}"
-                        StrokeThickness="0"
+                        StrokeThickness="{StaticResource UiStrokeWidth0}"
                         VerticalOptions="Center">
                         <Path
                             Data="M12 5v14M5 12h14"
                             Stroke="{StaticResource White}"
-                            StrokeThickness="2"
+                            StrokeThickness="{StaticResource UiStrokeWidth2}"
                             StrokeLineCap="Round"
                             Aspect="Uniform"
-                            WidthRequest="14"
-                            HeightRequest="14"
+                            WidthRequest="{StaticResource UiDimension14}"
+                            HeightRequest="{StaticResource UiDimension14}"
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
                     </Border>
                     <Label
                         Grid.Column="1"
                         Text="{loc:LocalizedText Cycle_Hero_LogActionAccessibility}"
-                        FontSize="13"
-                        FontAttributes="Bold"
+                        FontSize="{StaticResource UiFontSize13}"
+                        FontAttributes="{StaticResource UiFontAttributesBold}"
                         VerticalOptions="Center" />
                     <Path
                         Grid.Column="2"
                         Data="M9 18l6-6-6-6"
                         Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                        StrokeThickness="2"
+                        StrokeThickness="{StaticResource UiStrokeWidth2}"
                         StrokeLineCap="Round"
                         StrokeLineJoin="Round"
                         Aspect="Uniform"
-                        WidthRequest="12"
-                        HeightRequest="12"
+                        WidthRequest="{StaticResource UiDimension12}"
+                        HeightRequest="{StaticResource UiDimension12}"
                         VerticalOptions="Center" />
                 </Grid>
             </Border>

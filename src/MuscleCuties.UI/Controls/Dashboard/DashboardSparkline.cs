@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using MuscleCuties.UI.Models.UI.Dashboard;
+using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Controls.Dashboard;
 
@@ -17,7 +18,7 @@ public sealed class DashboardSparkline : GraphicsView, IDrawable
     public DashboardSparkline()
     {
         Drawable = this;
-        HeightRequest = 68;
+        HeightRequest = AppThemeResources.GetDouble("UiDimension68");
         InputTransparent = true;
     }
 
@@ -36,7 +37,9 @@ public sealed class DashboardSparkline : GraphicsView, IDrawable
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         var points = Points;
-        if (points is null || points.Count == 0 || dirtyRect.Width < 20 || dirtyRect.Height < 20)
+        if (points is null || points.Count == 0 ||
+            dirtyRect.Width < AppThemeResources.GetDouble("UiDimension20") ||
+            dirtyRect.Height < AppThemeResources.GetDouble("UiDimension20"))
             return;
 
         var values = points.Select(point => IsWeight ? point.WeightKg : point.ReadinessScore).ToArray();
@@ -45,10 +48,14 @@ public sealed class DashboardSparkline : GraphicsView, IDrawable
             return;
 
         var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
-        var ink = IsWeight ? Color.FromArgb("#C45A86") : Color.FromArgb("#5586B5");
-        canvas.StrokeColor = isDark ? Color.FromArgb("#505060") : Color.FromArgb("#DDDDE3");
-        canvas.StrokeSize = 1;
-        canvas.DrawLine(8, dirtyRect.Height - 8, dirtyRect.Width - 8, dirtyRect.Height - 8);
+        var ink = AppThemeResources.GetColor(IsWeight ? "DashboardAccentPink" : "DashboardReadinessBlue", default);
+        canvas.StrokeColor = AppThemeResources.GetColor(isDark ? "DashboardChartTrackDark" : "DashboardChartTrackLight", default);
+        var chartInset = (float)AppThemeResources.GetDouble("UiSpaceTight");
+        var chartWidthInset = (float)AppThemeResources.GetDouble("UiSpaceControl");
+        var chartBottomInset = (float)AppThemeResources.GetDouble("UiDimension18");
+        canvas.StrokeSize = (float)AppThemeResources.GetDouble("UiStrokeWidth1");
+        canvas.DrawLine(chartInset, dirtyRect.Height - chartInset, dirtyRect.Width - chartInset,
+            dirtyRect.Height - chartInset);
 
         var min = IsWeight ? present.Min() : 0d;
         var max = IsWeight ? present.Max() : 100d;
@@ -59,13 +66,13 @@ public sealed class DashboardSparkline : GraphicsView, IDrawable
         if (!double.IsFinite(range) || range <= 0.0001d)
             return;
 
-        var left = 8f;
-        var width = dirtyRect.Width - 16f;
-        var top = 8f;
-        var height = dirtyRect.Height - 18f;
+        var left = chartInset;
+        var width = dirtyRect.Width - chartWidthInset;
+        var top = chartInset;
+        var height = dirtyRect.Height - chartBottomInset;
 
         canvas.StrokeColor = ink;
-        canvas.StrokeSize = 2.5f;
+        canvas.StrokeSize = (float)AppThemeResources.GetDouble("UiStrokeWidth2_5");
         var lastPointIndex = Math.Max(values.Length - 1, 1);
         for (var i = 1; i < values.Length; i++)
         {
@@ -85,7 +92,7 @@ public sealed class DashboardSparkline : GraphicsView, IDrawable
                 continue;
             var x = left + width * i / lastPointIndex;
             var y = top + height * (float)(1d - (values[i]!.Value - min) / range);
-            canvas.FillCircle(x, y, 3.5f);
+            canvas.FillCircle(x, y, (float)AppThemeResources.GetDouble("UiDimension3_5"));
         }
     }
 }

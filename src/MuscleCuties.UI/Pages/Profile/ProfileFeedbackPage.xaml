@@ -12,19 +12,19 @@
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <Grid Padding="{StaticResource PageContentPadding}" RowSpacing="16" MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
+        <Grid Padding="{StaticResource UiInsets20_12_20_32}" RowSpacing="{StaticResource UiSpaceControl}" MaximumWidthRequest="{StaticResource UiDimension640}"
               RowDefinitions="Auto,Auto,Auto,Auto,Auto">
             <sharedControls:PageHeader Grid.Row="0" Title="{loc:LocalizedText Profile_Feedback_Feedback}"
                                        BackCommand="{Binding BackCommand}" />
 
-            <Border Grid.Row="2" Style="{StaticResource CardPrimary}" Padding="18">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
-                    <Grid Grid.Row="0" ColumnDefinitions="*,56" ColumnSpacing="12">
+            <Border Grid.Row="2" Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets18}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,56" ColumnSpacing="{StaticResource UiSpaceCompact}">
                         <Label Text="{loc:LocalizedText Profile_Feedback_YourMessage}" Style="{StaticResource SectionTitle}"
                                VerticalOptions="Center" />
                         <Border Grid.Column="1" Style="{StaticResource SurfaceTile}"
-                                WidthRequest="56" HeightRequest="56" Padding="0">
-                            <Image Source="feedback_note.png" WidthRequest="42" HeightRequest="42"
+                                WidthRequest="{StaticResource UiDimension56}" HeightRequest="{StaticResource UiDimension56}" Padding="{StaticResource UiInsets0}">
+                            <Image Source="feedback_note.png" WidthRequest="{StaticResource UiDimension42}" HeightRequest="{StaticResource UiDimension42}"
                                    HorizontalOptions="Center" VerticalOptions="Center"
                                    Aspect="AspectFit" />
                         </Border>
@@ -43,12 +43,12 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Row="1" Style="{StaticResource CardPrimary}" Padding="18">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
+            <Border Grid.Row="1" Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets18}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
                     <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Feedback_Details}"
-                           Style="{StaticResource FormFieldLabel}" FontSize="15" />
-                    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="5">
+                           Style="{StaticResource FormFieldLabel}" FontSize="{StaticResource UiFontSize15}" />
+                    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpacing10}">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
                             <Label Text="{loc:LocalizedText Profile_Feedback_Topic}" Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource PickerContainer}">
                                 <Picker Title="{loc:LocalizedText Profile_Feedback_Topic}" ItemsSource="{Binding TopicOptions}"
@@ -56,7 +56,7 @@
                                         SelectedItem="{Binding SelectedTopicOption}" />
                             </Border>
                         </Grid>
-                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
+                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
                             <Label Text="{loc:LocalizedText Profile_Feedback_Priority}" Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource PickerContainer}">
                                 <Picker Title="{loc:LocalizedText Profile_Feedback_Priority}" ItemsSource="{Binding PriorityOptions}"
@@ -65,15 +65,15 @@
                             </Border>
                         </Grid>
                     </Grid>
-                    <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="5">
+                    <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
                         <Label Text="{loc:LocalizedText Profile_Feedback_ScreenOptional}" Style="{StaticResource FormFieldLabel}" />
                         <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                             <Entry Placeholder="{loc:LocalizedText Profile_Feedback_EGNutrition}" Text="{Binding ScreenName}" />
                         </Border>
                     </Grid>
-                    <BoxView Grid.Row="3" HeightRequest="1"
+                    <BoxView Grid.Row="3" HeightRequest="{StaticResource UiDimension1}"
                              Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
-                    <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="12" MinimumHeightRequest="48">
+                    <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource UiDimension48}">
                         <Label Text="{loc:LocalizedText Profile_Feedback_IncludeReplyEmail}" Style="{StaticResource CardTitle}"
                                VerticalOptions="Center" />
                         <Switch Grid.Column="1" IsToggled="{Binding IncludeContactEmail}"
@@ -88,17 +88,17 @@
                                Keyboard="Email"
                                SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_ReplyEmail}" />
                     </Border>
-                    <BoxView Grid.Row="6" HeightRequest="1"
+                    <BoxView Grid.Row="6" HeightRequest="{StaticResource UiDimension1}"
                              Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
-                    <Grid Grid.Row="7" ColumnDefinitions="*,Auto" ColumnSpacing="12" MinimumHeightRequest="48">
+                    <Grid Grid.Row="7" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource UiDimension48}">
                         <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Feedback_Attachment}"
                                                           IconGlyph="LinkSquare24" VerticalOptions="Center" />
                         <Button Grid.Column="1" Text="{loc:LocalizedText Profile_Feedback_AddFile}"
                                 Style="{StaticResource ButtonSecondary}"
-                                Clicked="OnAttachFileClicked" MinimumHeightRequest="44" />
+                                Clicked="OnAttachFileClicked" MinimumHeightRequest="{StaticResource UiDimension44}" />
                     </Grid>
                     <Grid Grid.Row="8" IsVisible="{Binding HasAttachment}" ColumnDefinitions="*,Auto"
-                          ColumnSpacing="10">
+                          ColumnSpacing="{StaticResource UiSpacing10}">
                         <Label Text="{Binding AttachmentName}" Style="{StaticResource MutedLabel}"
                                LineBreakMode="MiddleTruncation" VerticalOptions="Center" />
                         <Button Grid.Column="1" Text="{loc:LocalizedText Profile_Feedback_Remove}"

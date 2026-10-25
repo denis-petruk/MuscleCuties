@@ -10,10 +10,10 @@
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <Grid Padding="{StaticResource PageContentPadding}"
-              RowSpacing="16"
+        <Grid Padding="{StaticResource UiInsets20_12_20_32}"
+              RowSpacing="{StaticResource UiSpaceControl}"
               HorizontalOptions="Fill"
-              MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
+              MaximumWidthRequest="{StaticResource UiDimension640}"
               RowDefinitions="Auto,Auto,Auto">
             <sharedControls:PageHeader Grid.Row="0"
                                        Title="{loc:LocalizedText Profile_HealthSync_HealthData}"
@@ -22,7 +22,7 @@
 
             <Border Grid.Row="1"
                     Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="12">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
                     <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_HealthSync_CurrentStatus}"
                                                       IconGlyph="HeartPulse32" />
                     <Label Text="{Binding StatusText, Converter={StaticResource LocalizedStringConverter}}"

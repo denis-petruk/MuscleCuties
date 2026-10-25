@@ -31,16 +31,25 @@ internal static class MixedActivityScheduleMapperV020
                 if (!evidenceInputs.Any(evidence => evidence?.Activity is { } act && WorkoutActivityContractMapper.ToCore(act) == activity))
                     eligibilityEvidence.Add(ToPrescriptionContext(activity, request, source, strengthPreview,
                         null, histories));
+        var selectedWeekdays = source.AvailableWeekdays?.ToArray() ?? request.AvailableWeekdays?.ToArray();
         var requestedSessions = source.RequestedSessionsPerWeek?.ToDictionary(
-            pair => (WorkoutActivityType)pair.Key, pair => pair.Value);
+            pair => (WorkoutActivityType)pair.Key, pair => pair.Value) ?? [];
+        var durations = source.ActivitySessionDurationsMinutes?.Where(pair =>
+                Enum.IsDefined(typeof(WorkoutActivityType), pair.Key) &&
+                ActivitySessionDurationRule.ForUserPreference((WorkoutActivityType)pair.Key) is not null)
+            .ToDictionary(pair => (WorkoutActivityType)pair.Key, pair => (decimal)pair.Value) ?? [];
+        foreach (var activity in selectedActivities ?? [])
+        {
+            if (!requestedSessions.ContainsKey(activity) &&
+                ActivityPreferenceDefaults.SessionsPerWeek(activity, selectedWeekdays?.Length ?? 0) is { } sessions)
+                requestedSessions[activity] = sessions;
+        }
 
         return new MixedActivityWeekScheduleContext(
             selectedActivities,
-            source.AvailableWeekdays?.ToArray() ?? request.AvailableWeekdays?.ToArray(),
+            selectedWeekdays,
             null,
-            source.ActivitySessionDurationsMinutes?.Where(pair =>
-                    Enum.IsDefined(typeof(WorkoutActivityType), pair.Key))
-                .ToDictionary(pair => (WorkoutActivityType)pair.Key, pair => (decimal)pair.Value),
+            durations,
             eligibilityEvidence,
             requestedSessions,
             request.HiitUnderlyingCardioActivity is { } hiitActivity
@@ -85,6 +94,8 @@ internal static class MixedActivityScheduleMapperV020
             : activityExperience;
         var strengthPreviewIsFeasible = isChosenStrength &&
                                          strengthPreview.Status == StrengthPlanPreviewStatus.Feasible;
+        var hasEstablishedResistanceHistory = GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(
+            activityHistory, request.LocalDate);
         var sourceHasRestrictions = source.HasCurrentSymptoms || source.ActiveInjuryFlags != InjuryFlag.None;
         var hiitEvidence = CreateHiitEvidence(activity, request, source, histories);
 
@@ -92,9 +103,10 @@ internal static class MixedActivityScheduleMapperV020
             activity,
             prescriptionExperience,
             null,
-            !isChosenStrength && activity != WorkoutActivityType.Hiit && sourceHasRestrictions,
+            isChosenStrength ? source.HasCurrentSymptoms :
+                activity != WorkoutActivityType.Hiit && sourceHasRestrictions,
             source.SelectedActivityTypes?.Contains((int)activity) == true,
-            strengthPreviewIsFeasible && activityExperience == ActivityExperience.Established,
+            hasEstablishedResistanceHistory,
             strengthPreviewIsFeasible && activity == WorkoutActivityType.StrengthHighIntensity
                 ? RequiredHeavyExerciseExposures
                 : NoCompletedExposures,

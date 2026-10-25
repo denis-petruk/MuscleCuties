@@ -9,7 +9,6 @@ namespace MuscleCuties.UI.Controls.Workout;
 
 public partial class FeaturedWorkoutCard : ContentView
 {
-    private const double ActionIconSize = 15d;
     private const int SingleActivityCount = 1;
     private const int FirstActivityIndex = 0;
     private const int SecondActivityIndex = 1;
@@ -45,11 +44,11 @@ public partial class FeaturedWorkoutCard : ContentView
 
     public static readonly BindableProperty AccentColorProperty =
         BindableProperty.Create(nameof(AccentColor), typeof(Color), typeof(FeaturedWorkoutCard),
-            Colors.Transparent);
+            default);
 
     public static readonly BindableProperty AccentTextColorProperty =
         BindableProperty.Create(nameof(AccentTextColor), typeof(Color), typeof(FeaturedWorkoutCard),
-            Colors.Transparent);
+            default);
 
     public static readonly BindableProperty StartCommandProperty =
         BindableProperty.Create(nameof(StartCommand), typeof(ICommand), typeof(FeaturedWorkoutCard));
@@ -200,17 +199,17 @@ public partial class FeaturedWorkoutCard : ContentView
     public string PreviewChevron => IsPreviewExpanded ? "▲ Hide" : "▼ Preview";
 
     public ImageSource ActionIcon => (IsEditAction ? FluentIcons.Edit24 : FluentIcons.Play24)
-        .ToImageSource(Colors.Black, ActionIconSize);
+        .ToImageSource(AppThemeResources.GetColor("Black"), AppThemeResources.GetDouble("UiDimension15"));
 
     public string PrimaryActivityTitle { get; private set; } = string.Empty;
     public string PrimaryActivityCount { get; private set; } = string.Empty;
-    public Color PrimaryActivityBackground { get; private set; } = Colors.Transparent;
-    public Color PrimaryActivityTextColor { get; private set; } = Colors.Black;
+    public Color PrimaryActivityBackground { get; private set; } = AppThemeResources.GetRequired<Color>("Transparent");
+    public Color PrimaryActivityTextColor { get; private set; } = AppThemeResources.GetRequired<Color>("TextPrimary");
 
     public string SecondaryActivityTitle { get; private set; } = string.Empty;
     public string SecondaryActivityCount { get; private set; } = string.Empty;
-    public Color SecondaryActivityBackground { get; private set; } = Colors.Transparent;
-    public Color SecondaryActivityTextColor { get; private set; } = Colors.Black;
+    public Color SecondaryActivityBackground { get; private set; } = AppThemeResources.GetRequired<Color>("Transparent");
+    public Color SecondaryActivityTextColor { get; private set; } = AppThemeResources.GetRequired<Color>("TextPrimary");
 
     private static void OnExercisePreviewsChanged(BindableObject bindable, object oldValue, object newValue)
     {

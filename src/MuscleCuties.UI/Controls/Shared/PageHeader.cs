@@ -1,4 +1,6 @@
 using System.Windows.Input;
+using Microsoft.Maui.Graphics;
+using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Controls.Shared;
@@ -39,25 +41,17 @@ public class PageHeader : ContentView
         set => SetValue(BackCommandProperty, value);
     }
 
-    private const string AppFontFamilyName = "Inter";
-    private const double BackButtonTouchSize = 44;
-    private const double BackButtonPadding = 10;
-    private const double HeaderTitleFontSize = 24;
-    private const double HeaderSubtitleFontSize = 13;
-    private const double HeaderColumnSpacing = 8;
-    private const double HeaderRowSpacing = 2;
-
     private void Rebuild()
     {
         var back = new ImageButton
         {
             Source = ImageSource.FromFile("nav_back.png"),
-            BackgroundColor = Colors.Transparent,
-            WidthRequest = BackButtonTouchSize,
-            HeightRequest = BackButtonTouchSize,
-            MinimumWidthRequest = BackButtonTouchSize,
-            MinimumHeightRequest = BackButtonTouchSize,
-            Padding = BackButtonPadding,
+            BackgroundColor = AppThemeResources.GetRequired<Color>("Transparent"),
+            WidthRequest = AppThemeResources.GetDouble("UiDimension44"),
+            HeightRequest = AppThemeResources.GetDouble("UiDimension44"),
+            MinimumWidthRequest = AppThemeResources.GetDouble("UiDimension44"),
+            MinimumHeightRequest = AppThemeResources.GetDouble("UiDimension44"),
+            Padding = AppThemeResources.GetThickness("UiInsets10"),
             Aspect = Aspect.AspectFit,
             VerticalOptions = LayoutOptions.Start,
             Command = new Command(() => BackCommand?.Execute(null))
@@ -67,16 +61,20 @@ public class PageHeader : ContentView
         var title = new Label
         {
             Text = Title,
-            FontFamily = AppFontFamilyName,
-            FontSize = HeaderTitleFontSize,
-            FontAttributes = FontAttributes.Bold,
             VerticalOptions = LayoutOptions.Center,
             LineBreakMode = LineBreakMode.WordWrap
         };
         title.SetDynamicResource(StyleProperty, "SubHeadline");
 
-        var header = new Grid { ColumnSpacing = HeaderColumnSpacing, RowSpacing = HeaderRowSpacing };
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(BackButtonTouchSize) });
+        var header = new Grid
+        {
+            ColumnSpacing = AppThemeResources.GetDouble("UiSpaceTight"),
+            RowSpacing = AppThemeResources.GetDouble("UiSpacing2")
+        };
+        header.ColumnDefinitions.Add(new ColumnDefinition
+        {
+            Width = new GridLength(AppThemeResources.GetDouble("UiDimension44"))
+        });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
         header.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         Grid.SetRow(back, 0);
@@ -91,8 +89,6 @@ public class PageHeader : ContentView
             var subtitle = new Label
             {
                 Text = Subtitle,
-                FontFamily = AppFontFamilyName,
-                FontSize = HeaderSubtitleFontSize,
                 LineBreakMode = LineBreakMode.WordWrap
             };
             subtitle.SetDynamicResource(StyleProperty, "MutedLabel");

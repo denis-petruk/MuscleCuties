@@ -1,4 +1,6 @@
 #if IOS || MACCATALYST
+using Microsoft.Maui.Graphics;
+using MuscleCuties.UI.Resources.Styles;
 using UIKit;
 
 namespace MuscleCuties.UI;
@@ -24,14 +26,14 @@ public static class ApplePrivacyShieldHelper
             // even when a system blur style changes or a snapshot is compressed.
             var cover = new UIView(shield.Bounds)
             {
-                BackgroundColor = UIColor.FromRGBA(43, 29, 36, 250),
+                BackgroundColor = ResolveColor("PrivacyShieldSurface"),
                 AutoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
             };
             var brand = new UILabel(cover.Bounds)
             {
                 Text = "MuscleCuties",
-                TextColor = UIColor.FromRGB(248, 238, 244),
-                Font = UIFont.BoldSystemFontOfSize(28),
+                TextColor = ResolveColor("TextPrimaryDark"),
+                Font = UIFont.BoldSystemFontOfSize((nfloat)AppThemeResources.GetDouble("UiFontSize28")),
                 TextAlignment = UITextAlignment.Center,
                 AutoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight,
                 AccessibilityLabel = "MuscleCuties privacy screen"
@@ -56,6 +58,16 @@ public static class ApplePrivacyShieldHelper
         return UIApplication.SharedApplication.ConnectedScenes
             .OfType<UIWindowScene>()
             .SelectMany(connectedScene => connectedScene.Windows);
+    }
+
+    private static UIColor ResolveColor(string key)
+    {
+        var color = AppThemeResources.GetRequired<Color>(key);
+        return UIColor.FromRGBA(
+            (nfloat)color.Red,
+            (nfloat)color.Green,
+            (nfloat)color.Blue,
+            (nfloat)color.Alpha);
     }
 }
 #endif

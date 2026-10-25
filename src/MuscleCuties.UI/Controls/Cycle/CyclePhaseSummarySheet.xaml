@@ -11,7 +11,7 @@
     IsOpen="{Binding IsPhaseSummarySheetVisible}">
 
     <Grid BackgroundColor="{StaticResource ModalScrim}">
-        <BoxView BackgroundColor="Transparent">
+        <BoxView BackgroundColor="{StaticResource Transparent}">
             <BoxView.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding ClosePhaseSummarySheetCommand}" />
             </BoxView.GestureRecognizers>
@@ -20,7 +20,7 @@
         <Border
             x:Name="SheetSurface"
             Style="{StaticResource AppBottomSheetSurface}"
-            Padding="0">
+            Padding="{StaticResource UiInsets0}">
             <Grid RowDefinitions="Auto, *, Auto">
 
                 <!-- Header (Flattened Grid) -->
@@ -28,38 +28,38 @@
                     <!-- Drag handle -->
                     <BoxView
                         Grid.Row="0"
-                        WidthRequest="40"
-                        HeightRequest="4"
-                        CornerRadius="2"
+                        WidthRequest="{StaticResource UiDimension40}"
+                        HeightRequest="{StaticResource UiDimension4}"
+                        CornerRadius="{StaticResource UiCornerRadius2}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
                         HorizontalOptions="Center"
-                        Margin="0,10,0,10" />
+                        Margin="{StaticResource UiInsets0_10_0_10}" />
 
                     <Grid
                         Grid.Row="1"
                         ColumnDefinitions="Auto, *, Auto"
-                        ColumnSpacing="12"
-                        Padding="20,0,20,12"
+                        ColumnSpacing="{StaticResource UiSpaceCompact}"
+                        Padding="{StaticResource UiInsets20_0_20_12}"
                         VerticalOptions="Center">
 
                         <Image
                             Source="{Binding SelectedPhaseSummary.IconSource}"
-                            WidthRequest="38"
-                            HeightRequest="38"
+                            WidthRequest="{StaticResource UiDimension38}"
+                            HeightRequest="{StaticResource UiDimension38}"
                             Aspect="AspectFit"
                             VerticalOptions="Center" />
 
-                        <Grid Grid.Column="1" RowDefinitions="Auto, Auto" RowSpacing="2" VerticalOptions="Center">
+                        <Grid Grid.Column="1" RowDefinitions="Auto, Auto" RowSpacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
                             <Label
                                 Grid.Row="0"
                                 Text="{Binding SelectedPhaseSummary.Name, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource ModalTitle}"
-                                FontSize="20" />
+                                FontSize="{StaticResource UiFontSize20}" />
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding SelectedPhaseSummary.Window, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="13"
-                                FontAttributes="Bold"
+                                FontSize="{StaticResource UiFontSize13}"
+                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                 TextColor="{Binding SelectedPhaseSummary.AccentColor}" />
                         </Grid>
 
@@ -73,8 +73,8 @@
                             <Path
                                 Style="{StaticResource ModalCloseIcon}"
                                 Aspect="Uniform"
-                                WidthRequest="14"
-                                HeightRequest="14"
+                                WidthRequest="{StaticResource UiDimension14}"
+                                HeightRequest="{StaticResource UiDimension14}"
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center" />
                         </Border>
@@ -82,114 +82,114 @@
 
                     <BoxView
                         Grid.Row="2"
-                        HeightRequest="1"
+                        HeightRequest="{StaticResource UiDimension1}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                        Opacity="0.7" />
+                        Opacity="{StaticResource UiOpacityBackdrop}" />
                 </Grid>
 
                 <!-- Scrollable Body (Flattened Grid) -->
                 <ScrollView Grid.Row="1">
-                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="16" Padding="20,16,20,16">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceControl}" Padding="{StaticResource UiInsets20_16_20_16}">
 
                         <!-- Tagline Banner -->
                         <Border
                             Grid.Row="0"
                             BackgroundColor="{Binding SelectedPhaseSummary.BackgroundColor}"
-                            StrokeShape="RoundRectangle 14"
-                            StrokeThickness="0"
-                            Padding="16,12">
+                            StrokeShape="{StaticResource UiRoundRectangleRadius14}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            Padding="{StaticResource UiInsets16_12}">
                             <Label
                                 Text="{Binding SelectedPhaseSummary.Tagline, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="15"
-                                FontAttributes="Bold"
+                                FontSize="{StaticResource UiFontSize15}"
+                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                 TextColor="{Binding SelectedPhaseSummary.TextColor}"
                                 HorizontalOptions="Center" />
                         </Border>
 
                         <!-- Hormonal Profile -->
-                        <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="6">
-                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
+                        <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                                 <Path Grid.Column="0" Data="M8 3h8 M10 3v7l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3 M7 16h10"
-                                      Stroke="{StaticResource Primary}" StrokeThickness="1.7" StrokeLineCap="Round" StrokeLineJoin="Round"
-                                      Fill="Transparent" Aspect="Uniform" WidthRequest="16" HeightRequest="16" VerticalOptions="Center" />
+                                      Stroke="{StaticResource Primary}" StrokeThickness="{StaticResource UiStrokeWidth1_7}" StrokeLineCap="Round" StrokeLineJoin="Round"
+                                      Fill="{StaticResource Transparent}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}" VerticalOptions="Center" />
                                 <Label
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Cycle_PhaseSummary_HormonalProfileTitle}"
-                                    FontSize="11"
-                                    FontAttributes="Bold"
+                                    FontSize="{StaticResource UiFontSize11}"
+                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                     VerticalOptions="Center" />
                             </Grid>
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding SelectedPhaseSummary.HormonalSummary, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="13"
+                                FontSize="{StaticResource UiFontSize13}"
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                         </Grid>
 
                         <!-- Training Strategy -->
-                        <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="6">
-                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
+                        <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                                 <Path Grid.Column="0" Data="M2 9v6 M5 7v10 M8 11h8 M16 11h-8 M19 7v10 M22 9v6"
-                                      Stroke="{StaticResource Primary}" StrokeThickness="2" StrokeLineCap="Round" StrokeLineJoin="Round"
-                                      Fill="Transparent" Aspect="Uniform" WidthRequest="16" HeightRequest="16" VerticalOptions="Center" />
+                                      Stroke="{StaticResource Primary}" StrokeThickness="{StaticResource UiStrokeWidth2}" StrokeLineCap="Round" StrokeLineJoin="Round"
+                                      Fill="{StaticResource Transparent}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}" VerticalOptions="Center" />
                                 <Label
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Cycle_PhaseSummary_TrainingStrategyTitle}"
-                                    FontSize="11"
-                                    FontAttributes="Bold"
+                                    FontSize="{StaticResource UiFontSize11}"
+                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                     VerticalOptions="Center" />
                             </Grid>
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding SelectedPhaseSummary.TrainingFocus, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="13"
+                                FontSize="{StaticResource UiFontSize13}"
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                         </Grid>
 
                         <!-- Nutrition Strategy -->
-                        <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="6">
-                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
+                        <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                                 <Path Grid.Column="0" Data="M12 3c4 0 7 5 7 10s-3 8-7 8-7-3-7-8 3-10 7-10z M12 12a3 3 0 1 0 0 6a3 3 0 0 0 0-6z"
-                                      Stroke="{StaticResource Primary}" StrokeThickness="1.7" StrokeLineCap="Round" StrokeLineJoin="Round"
-                                      Fill="Transparent" Aspect="Uniform" WidthRequest="16" HeightRequest="16" VerticalOptions="Center" />
+                                      Stroke="{StaticResource Primary}" StrokeThickness="{StaticResource UiStrokeWidth1_7}" StrokeLineCap="Round" StrokeLineJoin="Round"
+                                      Fill="{StaticResource Transparent}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}" VerticalOptions="Center" />
                                 <Label
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Cycle_PhaseSummary_NutritionStrategyTitle}"
-                                    FontSize="11"
-                                    FontAttributes="Bold"
+                                    FontSize="{StaticResource UiFontSize11}"
+                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                     VerticalOptions="Center" />
                             </Grid>
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding SelectedPhaseSummary.NutritionFocus, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="13"
+                                FontSize="{StaticResource UiFontSize13}"
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                         </Grid>
 
                         <!-- Recovery & Self-Care -->
-                        <Grid Grid.Row="4" RowDefinitions="Auto,Auto" RowSpacing="6">
-                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
+                        <Grid Grid.Row="4" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                                 <Path Grid.Column="0" Data="M20 15a8 8 0 0 1-11-11A8 8 0 1 0 20 15z"
-                                      Stroke="{StaticResource Primary}" StrokeThickness="1.7" StrokeLineCap="Round" StrokeLineJoin="Round"
-                                      Fill="Transparent" Aspect="Uniform" WidthRequest="16" HeightRequest="16" VerticalOptions="Center" />
+                                      Stroke="{StaticResource Primary}" StrokeThickness="{StaticResource UiStrokeWidth1_7}" StrokeLineCap="Round" StrokeLineJoin="Round"
+                                      Fill="{StaticResource Transparent}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}" VerticalOptions="Center" />
                                 <Label
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Cycle_PhaseSummary_RecoveryTitle}"
-                                    FontSize="11"
-                                    FontAttributes="Bold"
+                                    FontSize="{StaticResource UiFontSize11}"
+                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                     VerticalOptions="Center" />
                             </Grid>
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding SelectedPhaseSummary.RecoveryFocus, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="13"
+                                FontSize="{StaticResource UiFontSize13}"
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                         </Grid>
@@ -198,18 +198,18 @@
                         <Border
                             Grid.Row="5"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                            StrokeShape="RoundRectangle 12"
-                            StrokeThickness="0"
-                            Padding="14,10">
-                            <Grid ColumnDefinitions="Auto, *" ColumnSpacing="8">
+                            StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            Padding="{StaticResource UiInsets14_10}">
+                            <Grid ColumnDefinitions="Auto, *" ColumnSpacing="{StaticResource UiSpaceTight}">
                                 <Path Data="M9 18h6 M10 21h4 M9 15a7 7 0 1 1 6 0l-1 3h-4z"
-                                      Stroke="{StaticResource Primary}" StrokeThickness="1.7" StrokeLineCap="Round" StrokeLineJoin="Round"
-                                      Fill="Transparent" Aspect="Uniform" WidthRequest="18" HeightRequest="18" VerticalOptions="Start" />
+                                      Stroke="{StaticResource Primary}" StrokeThickness="{StaticResource UiStrokeWidth1_7}" StrokeLineCap="Round" StrokeLineJoin="Round"
+                                      Fill="{StaticResource Transparent}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension18}" HeightRequest="{StaticResource UiDimension18}" VerticalOptions="Start" />
                                 <Label
                                     Grid.Column="1"
                                     Text="{Binding SelectedPhaseSummary.QuickRule, Converter={StaticResource LocalizedStringConverter}}"
-                                    FontSize="13"
-                                    FontAttributes="Italic"
+                                    FontSize="{StaticResource UiFontSize13}"
+                                    FontAttributes="{StaticResource UiFontAttributesItalic}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
                             </Grid>
                         </Border>
@@ -220,13 +220,13 @@
                 <!-- Footer Action -->
                 <Grid
                     Grid.Row="2"
-                    Padding="20,12,20,24">
+                    Padding="{StaticResource UiInsets20_12_20_24}">
                     <Button
                         Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Cycle_PhaseSummary_CloseButton}"
                         Command="{Binding ClosePhaseSummarySheetCommand}"
                         HorizontalOptions="End"
-                        WidthRequest="90" />
+                        WidthRequest="{StaticResource UiDimension90}" />
                 </Grid>
 
             </Grid>

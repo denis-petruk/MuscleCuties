@@ -1,3 +1,5 @@
+using MuscleCuties.UI.Resources.Styles;
+
 namespace MuscleCuties.UI.Controls.Shared;
 
 public partial class PhaseSaluteOverlay : ContentView
@@ -25,54 +27,92 @@ public partial class PhaseSaluteOverlay : ContentView
             IconSource = iconSource;
 
         IsVisible = true;
-        OverlayLayer.Opacity = 0;
+        OverlayLayer.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
 
-        LeftBurst.Opacity = 0;
-        RightBurst.Opacity = 0;
-        LeftBurst.TranslationX = -150;
-        RightBurst.TranslationX = 150;
-        LeftBurst.Scale = 0.64;
-        RightBurst.Scale = 0.64;
-        LeftBurst.Rotation = -24;
-        RightBurst.Rotation = 24;
+        LeftBurst.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
+        RightBurst.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
+        LeftBurst.TranslationX = -AppThemeResources.GetDouble("UiMotionOffsetCelebrationEntry");
+        RightBurst.TranslationX = AppThemeResources.GetDouble("UiMotionOffsetCelebrationEntry");
+        LeftBurst.Scale = AppThemeResources.GetDouble("UiScaleCelebrationStart");
+        RightBurst.Scale = AppThemeResources.GetDouble("UiScaleCelebrationStart");
+        LeftBurst.Rotation = -AppThemeResources.GetDouble("UiMotionRotationCelebrationStart");
+        RightBurst.Rotation = AppThemeResources.GetDouble("UiMotionRotationCelebrationStart");
 
-        ResetSpark(LeftSparkTop, -90, -32, 0.6);
-        ResetSpark(LeftSparkBottom, -76, 34, 0.5);
-        ResetSpark(RightSparkTop, 88, -38, 0.58);
-        ResetSpark(RightSparkBottom, 74, 30, 0.62);
-
-        await Task.WhenAll(
-            OverlayLayer.FadeToAsync(1, 70, Easing.CubicOut),
-            LeftBurst.FadeToAsync(0.98, 120, Easing.CubicOut),
-            RightBurst.FadeToAsync(0.98, 120, Easing.CubicOut),
-            LeftBurst.TranslateToAsync(24, 0, 360, Easing.SpringOut),
-            RightBurst.TranslateToAsync(-24, 0, 360, Easing.SpringOut),
-            LeftBurst.ScaleToAsync(1.12, 280, Easing.CubicOut),
-            RightBurst.ScaleToAsync(1.12, 280, Easing.CubicOut),
-            AnimateSparkAsync(LeftSparkTop, 36, -78),
-            AnimateSparkAsync(LeftSparkBottom, 42, 76),
-            AnimateSparkAsync(RightSparkTop, -38, -84),
-            AnimateSparkAsync(RightSparkBottom, -44, 72));
-
-        await Task.WhenAll(
-            LeftBurst.RotateToAsync(10, 170, Easing.CubicInOut),
-            RightBurst.RotateToAsync(-10, 170, Easing.CubicInOut),
-            LeftBurst.ScaleToAsync(0.98, 170, Easing.CubicInOut),
-            RightBurst.ScaleToAsync(0.98, 170, Easing.CubicInOut));
-
-        await Task.Delay(260);
+        ResetSpark(LeftSparkTop,
+            AppThemeResources.GetDouble("UiMotionSparkLeftTopStartX"),
+            AppThemeResources.GetDouble("UiMotionSparkLeftTopStartY"),
+            AppThemeResources.GetDouble("UiScaleSparkMedium"));
+        ResetSpark(LeftSparkBottom,
+            AppThemeResources.GetDouble("UiMotionSparkLeftBottomStartX"),
+            AppThemeResources.GetDouble("UiMotionSparkLeftBottomStartY"),
+            AppThemeResources.GetDouble("UiScaleSparkSmall"));
+        ResetSpark(RightSparkTop,
+            AppThemeResources.GetDouble("UiMotionSparkRightTopStartX"),
+            AppThemeResources.GetDouble("UiMotionSparkRightTopStartY"),
+            AppThemeResources.GetDouble("UiScaleSparkTall"));
+        ResetSpark(RightSparkBottom,
+            AppThemeResources.GetDouble("UiMotionSparkRightBottomStartX"),
+            AppThemeResources.GetDouble("UiMotionSparkRightBottomStartY"),
+            AppThemeResources.GetDouble("UiScaleSparkLarge"));
 
         await Task.WhenAll(
-            OverlayLayer.FadeToAsync(0, 240, Easing.CubicIn),
-            LeftBurst.TranslateToAsync(-110, 0, 240, Easing.CubicIn),
-            RightBurst.TranslateToAsync(110, 0, 240, Easing.CubicIn));
+            OverlayLayer.FadeToAsync(AppThemeResources.GetDouble("UiOpacityFull"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration70"), Easing.CubicOut),
+            LeftBurst.FadeToAsync(AppThemeResources.GetDouble("UiOpacityCelebration"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration120"), Easing.CubicOut),
+            RightBurst.FadeToAsync(AppThemeResources.GetDouble("UiOpacityCelebration"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration120"), Easing.CubicOut),
+            LeftBurst.TranslateToAsync(AppThemeResources.GetDouble("UiMotionOffsetCelebrationSettle"),
+                AppThemeResources.GetDouble("UiMotionOffsetZero"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration360"), Easing.SpringOut),
+            RightBurst.TranslateToAsync(-AppThemeResources.GetDouble("UiMotionOffsetCelebrationSettle"),
+                AppThemeResources.GetDouble("UiMotionOffsetZero"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration360"), Easing.SpringOut),
+            LeftBurst.ScaleToAsync(AppThemeResources.GetDouble("UiScaleCelebrationPeak"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration280"), Easing.CubicOut),
+            RightBurst.ScaleToAsync(AppThemeResources.GetDouble("UiScaleCelebrationPeak"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration280"), Easing.CubicOut),
+            AnimateSparkAsync(LeftSparkTop,
+                AppThemeResources.GetDouble("UiMotionSparkLeftTopEndX"),
+                AppThemeResources.GetDouble("UiMotionSparkLeftTopEndY")),
+            AnimateSparkAsync(LeftSparkBottom,
+                AppThemeResources.GetDouble("UiMotionSparkLeftBottomEndX"),
+                AppThemeResources.GetDouble("UiMotionSparkLeftBottomEndY")),
+            AnimateSparkAsync(RightSparkTop,
+                AppThemeResources.GetDouble("UiMotionSparkRightTopEndX"),
+                AppThemeResources.GetDouble("UiMotionSparkRightTopEndY")),
+            AnimateSparkAsync(RightSparkBottom,
+                AppThemeResources.GetDouble("UiMotionSparkRightBottomEndX"),
+                AppThemeResources.GetDouble("UiMotionSparkRightBottomEndY")));
+
+        await Task.WhenAll(
+            LeftBurst.RotateToAsync(AppThemeResources.GetDouble("UiMotionRotationCelebrationSettle"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration170"), Easing.CubicInOut),
+            RightBurst.RotateToAsync(-AppThemeResources.GetDouble("UiMotionRotationCelebrationSettle"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration170"), Easing.CubicInOut),
+            LeftBurst.ScaleToAsync(AppThemeResources.GetDouble("UiScaleCelebrationSettle"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration170"), Easing.CubicInOut),
+            RightBurst.ScaleToAsync(AppThemeResources.GetDouble("UiScaleCelebrationSettle"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration170"), Easing.CubicInOut));
+
+        await Task.Delay((int)AppThemeResources.GetDouble("UiMotionDuration260"));
+
+        await Task.WhenAll(
+            OverlayLayer.FadeToAsync(AppThemeResources.GetDouble("UiOpacityHidden"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration240"), Easing.CubicIn),
+            LeftBurst.TranslateToAsync(-AppThemeResources.GetDouble("UiMotionOffsetCelebrationExit"),
+                AppThemeResources.GetDouble("UiMotionOffsetZero"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration240"), Easing.CubicIn),
+            RightBurst.TranslateToAsync(AppThemeResources.GetDouble("UiMotionOffsetCelebrationExit"),
+                AppThemeResources.GetDouble("UiMotionOffsetZero"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration240"), Easing.CubicIn));
 
         IsVisible = false;
     }
 
     private static void ResetSpark(VisualElement spark, double translationX, double translationY, double scale)
     {
-        spark.Opacity = 0;
+        spark.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
         spark.TranslationX = translationX;
         spark.TranslationY = translationY;
         spark.Scale = scale;
@@ -81,10 +121,14 @@ public partial class PhaseSaluteOverlay : ContentView
     private static async Task AnimateSparkAsync(VisualElement spark, double translationX, double translationY)
     {
         await Task.WhenAll(
-            spark.FadeToAsync(0.9, 90, Easing.CubicOut),
-            spark.TranslateToAsync(translationX, translationY, 330, Easing.CubicOut),
-            spark.ScaleToAsync(1.35, 220, Easing.CubicOut));
+            spark.FadeToAsync(AppThemeResources.GetDouble("UiOpacitySparkPeak"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration90"), Easing.CubicOut),
+            spark.TranslateToAsync(translationX, translationY,
+                (uint)AppThemeResources.GetDouble("UiMotionDuration330"), Easing.CubicOut),
+            spark.ScaleToAsync(AppThemeResources.GetDouble("UiScaleSparkPeak"),
+                (uint)AppThemeResources.GetDouble("UiMotionDuration220"), Easing.CubicOut));
 
-        await spark.FadeToAsync(0, 160, Easing.CubicIn);
+        await spark.FadeToAsync(AppThemeResources.GetDouble("UiOpacityHidden"),
+            (uint)AppThemeResources.GetDouble("UiMotionDuration160"), Easing.CubicIn);
     }
 }

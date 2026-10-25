@@ -1,5 +1,7 @@
 using Microsoft.Maui.Graphics;
 
+using MuscleCuties.UI.Resources.Styles;
+
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
 public class MacroBreakdownItem
@@ -8,7 +10,7 @@ public class MacroBreakdownItem
     public float Grams { get; set; }
     public float Calories { get; set; }
     public float Progress { get; set; }
-    public Color Color { get; set; } = Colors.Transparent;
+    public Color Color { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
 
     public string AmountText => $"{Grams:N1}g";
     public string CaloriesText => $"{Calories:N0} kcal";

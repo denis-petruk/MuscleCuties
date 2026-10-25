@@ -12,16 +12,16 @@
 
     <ScrollView>
         <Grid
-            Padding="24,44,24,32"
+            Padding="{StaticResource UiInsets24_44_24_32}"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="520"
-            RowSpacing="0"
+            MaximumWidthRequest="{StaticResource UiDimension520}"
+            RowSpacing="{StaticResource UiSpacing0}"
             RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
 
             <sharedControls:ThemeAwareBrandLogoImage
                 Grid.Row="0"
-                WidthRequest="148"
-                HeightRequest="82"
+                WidthRequest="{StaticResource UiDimension148}"
+                HeightRequest="{StaticResource UiDimension82}"
                 HorizontalOptions="Center"
                 Aspect="AspectFit"
                 SemanticProperties.Description="{loc:LocalizedText Common_MuscleCutiesLogo}" />
@@ -30,27 +30,27 @@
                 Grid.Row="1"
                 Text="{loc:LocalizedText Auth_Login_WelcomeBack}"
                 Style="{StaticResource Headline}"
-                Margin="0,24,0,8"
+                Margin="{StaticResource UiInsets0_24_0_8}"
                 SemanticProperties.HeadingLevel="Level1" />
             <Label
                 Grid.Row="2"
                 Text="{loc:LocalizedText Auth_Login_YourPlanIsReadyWhenYou}"
                 Style="{StaticResource MutedLabel}"
-                Margin="0,0,0,32" />
+                Margin="{StaticResource UiInsets0_0_0_32}" />
 
             <Label
                 Grid.Row="3"
                 Text="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource AccentLabel}"
                 IsVisible="{Binding InfoMessage, Converter={StaticResource StringToBoolConverter}}"
-                Margin="0,0,0,16"
+                Margin="{StaticResource UiInsets0_0_0_16}"
                 SemanticProperties.Description="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}" />
 
             <Grid
                 Grid.Row="4"
                 RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
-                RowSpacing="18">
-                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="6">
+                RowSpacing="{StaticResource UiSpacing18}">
+                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
                     <Label Text="{loc:LocalizedText Auth_EmailOrUsername}" Style="{StaticResource FormFieldLabel}" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                         <Entry
@@ -66,7 +66,7 @@
                     </Border>
                 </Grid>
 
-                <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
+                <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
                     <Label Text="{loc:LocalizedText Auth_Password}" Style="{StaticResource FormFieldLabel}" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                         <Entry
@@ -85,7 +85,7 @@
                         Text="{loc:LocalizedText Auth_Login_ForgotPasswordLink}"
                         Style="{StaticResource AccentLabel}"
                         HorizontalOptions="End"
-                        Margin="0,4,0,0"
+                        Margin="{StaticResource UiInsets0_4_0_0}"
                         SemanticProperties.Description="{loc:LocalizedText Auth_Login_ForgotPasswordDescription}"
                         SemanticProperties.Hint="{loc:LocalizedText Auth_Login_DoubleTapToOpenPasswordRecovery}">
                         <Label.GestureRecognizers>
@@ -107,7 +107,7 @@
                     Text="{loc:LocalizedText Auth_LogIn}"
                     Command="{Binding LoginCommand}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                    MinimumHeightRequest="52"
+                    MinimumHeightRequest="{StaticResource UiDimension52}"
                     SemanticProperties.Description="{loc:LocalizedText Auth_Login_LogInToYourAccount}" />
 
                 <ActivityIndicator
@@ -130,11 +130,11 @@
             <Grid
                 Grid.Row="5"
                 ColumnDefinitions="Auto,Auto"
-                ColumnSpacing="4"
+                ColumnSpacing="{StaticResource UiSpaceMicro}"
                 HorizontalOptions="Center"
-                Margin="0,24,0,0"
-                MinimumHeightRequest="44"
-                MinimumWidthRequest="44"
+                Margin="{StaticResource UiInsets0_24_0_0}"
+                MinimumHeightRequest="{StaticResource UiDimension44}"
+                MinimumWidthRequest="{StaticResource UiDimension44}"
                 SemanticProperties.Description="{loc:LocalizedText Auth_Login_CreateAnAccount}"
                 SemanticProperties.Hint="{loc:LocalizedText Auth_Login_DoubleTapToGoToThe}">
                 <Grid.GestureRecognizers>
