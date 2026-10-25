@@ -43,7 +43,7 @@ package_staging_lambda:
 deploy_staging_lambda:
   stage: deploy
   image:
-    name: amazon/aws-cli:2
+    name: public.ecr.aws/aws-cli/aws-cli:latest
     entrypoint: [""]
   needs:
     - job: package_staging_lambda
