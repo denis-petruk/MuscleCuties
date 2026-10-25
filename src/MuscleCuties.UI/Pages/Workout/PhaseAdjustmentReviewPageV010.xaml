@@ -67,11 +67,12 @@
                                     <Label Text="{Binding Title}"
                                            Style="{StaticResource BodyLabel}"
                                            FontAttributes="Bold" />
-                                    <Picker ItemsSource="{Binding Options}"
-                                            SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
-                                            ItemDisplayBinding="{Binding Label}"
-                                            Title="{loc:LocalizedText Workout_PhaseAdjustment_SelectOption}"
-                                            MinimumHeightRequest="{StaticResource UiControlHeight}" />
+                                    <Border Style="{StaticResource PickerContainer}">
+                                        <Picker ItemsSource="{Binding Options}"
+                                                SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                                                ItemDisplayBinding="{Binding Label}"
+                                                Title="{loc:LocalizedText Workout_PhaseAdjustment_SelectOption}" />
+                                    </Border>
                                 </VerticalStackLayout>
                             </Border>
                         </DataTemplate>

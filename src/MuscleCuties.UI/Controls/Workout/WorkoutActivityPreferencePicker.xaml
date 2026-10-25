@@ -147,20 +147,22 @@
                                         </Border>
                                     </Grid>
                                 </Border>
-                                <Picker
-                                    IsVisible="{Binding ShowSessionDurationPicker}"
-                                    ItemsSource="{Binding SessionDurationOptions}"
-                                    SelectedItem="{Binding SessionDurationMinutes, Mode=TwoWay}"
-                                    Title="{loc:LocalizedText Profile_WorkoutPrefs_SessionLength}"
-                                    MinimumHeightRequest="{StaticResource UiControlHeight}"
-                                    SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_SessionLength}" />
-                                <Picker
-                                    IsVisible="{Binding ShowWeeklyFrequencyPicker}"
-                                    ItemsSource="{Binding WeeklyFrequencyOptions}"
-                                    SelectedItem="{Binding RequestedSessionsPerWeek, Mode=TwoWay}"
-                                    Title="{loc:LocalizedText Profile_WorkoutPrefs_WeeklyFrequency}"
-                                    MinimumHeightRequest="{StaticResource UiControlHeight}"
-                                    SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_WeeklyFrequency}" />
+                                <Border Style="{StaticResource PickerContainer}"
+                                        IsVisible="{Binding ShowSessionDurationPicker}">
+                                    <Picker
+                                        ItemsSource="{Binding SessionDurationOptions}"
+                                        SelectedItem="{Binding SessionDurationMinutes, Mode=TwoWay}"
+                                        Title="{loc:LocalizedText Profile_WorkoutPrefs_SessionLength}"
+                                        SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_SessionLength}" />
+                                </Border>
+                                <Border Style="{StaticResource PickerContainer}"
+                                        IsVisible="{Binding ShowWeeklyFrequencyPicker}">
+                                    <Picker
+                                        ItemsSource="{Binding WeeklyFrequencyOptions}"
+                                        SelectedItem="{Binding RequestedSessionsPerWeek, Mode=TwoWay}"
+                                        Title="{loc:LocalizedText Profile_WorkoutPrefs_WeeklyFrequency}"
+                                        SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_WeeklyFrequency}" />
+                                </Border>
                                 </VerticalStackLayout>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
