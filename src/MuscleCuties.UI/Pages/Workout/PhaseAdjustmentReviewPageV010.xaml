@@ -87,10 +87,10 @@
             <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}"
                                  IsVisible="{Binding HasProposal}">
                 <Button Text="{loc:LocalizedText Workout_PhaseAdjustment_Apply}"
-                        Style="{StaticResource ButtonSecondary}"
+                        Style="{StaticResource ButtonPrimary}"
                         Command="{Binding ApplyChangesCommand}" />
                 <Button Text="{loc:LocalizedText Workout_PhaseAdjustment_KeepPlan}"
-                        Style="{StaticResource ButtonLink}"
+                        Style="{StaticResource ButtonSecondary}"
                         Command="{Binding KeepPlanCommand}" />
             </VerticalStackLayout>
         </VerticalStackLayout>

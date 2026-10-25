@@ -54,7 +54,7 @@
                             <Label Grid.ColumnSpan="4" Text="{Binding MealChoiceSummary}"
                                    Style="{StaticResource FormFieldLabel}"
                                    IsVisible="{Binding IsMealChoiceLocked}" />
-                            <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource InputContainer}"
+                            <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource PickerContainer}"
                                     IsVisible="{Binding IsMealChoiceLocked, Converter={StaticResource InvertedBoolConverter}}">
                                 <Picker Title="{loc:LocalizedText Nutrition_MealEditor_MealType}" ItemsSource="{Binding MealTypes}"
                                         SelectedItem="{Binding SelectedMealType}"
@@ -146,7 +146,9 @@
                                    ReturnCommand="{Binding SearchFoodCommand}" Completed="OnSearchSubmitted"
                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_SearchFoods}" />
                         </Border>
-                        <Button Grid.Column="1" Text="{loc:LocalizedText Nutrition_MealEditor_Search}"
+                        <Button Grid.Column="1"
+                                Style="{StaticResource ButtonPrimary}"
+                                Text="{loc:LocalizedText Nutrition_MealEditor_Search}"
                                 Command="{Binding SearchFoodCommand}" Clicked="OnSearchSubmitted"
                                 MinimumHeightRequest="48" />
                     </Grid>
@@ -214,7 +216,7 @@
                                        Placeholder="{loc:LocalizedText Nutrition_MealEditor_Amount}"
                                        SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_IngredientAmount}" />
                             </Border>
-                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource InputContainer}">
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource PickerContainer}">
                                 <Picker Title="{loc:LocalizedText Nutrition_MealEditor_ServingUnit}" ItemsSource="{Binding ServingOptions}"
                                         SelectedItem="{Binding SelectedServingOption}" />
                             </Border>
@@ -244,7 +246,7 @@
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                 <Entry Text="{Binding CustomFoodServingAmount}" Keyboard="Numeric" />
                             </Border>
-                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource InputContainer}">
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource PickerContainer}">
                                 <Picker Title="{loc:LocalizedText Nutrition_MealEditor_ServingUnit}"
                                         ItemsSource="{Binding CustomFoodServingUnits}"
                                         SelectedItem="{Binding SelectedCustomFoodServingUnit}"
@@ -302,16 +304,19 @@
                     <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                                        Color="{StaticResource Primary}"
                                        SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_SavingMealChanges}" />
-                    <Button Text="{Binding LogMealButtonText, Converter={StaticResource LocalizedStringConverter}}"
+                    <Button Style="{StaticResource ButtonPrimary}"
+                            Text="{Binding LogMealButtonText, Converter={StaticResource LocalizedStringConverter}}"
                             Command="{Binding LogMealCommand}" IsVisible="{Binding IsFoodFinderCollapsed}"
                             MinimumHeightRequest="52" />
                     <Button Text="{loc:LocalizedText Nutrition_MealEditor_CreateCustomFood}" Command="{Binding ToggleCustomFoodPanelCommand}"
                             Style="{StaticResource ButtonLink}" IsVisible="{Binding IsIngredientSearchVisible}"
                             MinimumHeightRequest="48" />
-                    <Button Text="{Binding IngredientActionText, Converter={StaticResource LocalizedStringConverter}}"
+                    <Button Style="{StaticResource ButtonPrimary}"
+                            Text="{Binding IngredientActionText, Converter={StaticResource LocalizedStringConverter}}"
                             Command="{Binding AddIngredientCommand}" IsVisible="{Binding IsSelectedFoodEditorVisible}"
                             MinimumHeightRequest="52" />
-                    <Button Text="{loc:LocalizedText Nutrition_MealEditor_SaveCustomFood}" Command="{Binding CreateCustomFoodCommand}"
+                    <Button Style="{StaticResource ButtonPrimary}"
+                            Text="{loc:LocalizedText Nutrition_MealEditor_SaveCustomFood}" Command="{Binding CreateCustomFoodCommand}"
                             IsVisible="{Binding IsCustomFoodPanelVisible}" MinimumHeightRequest="52" />
                 </VerticalStackLayout>
             </Grid>

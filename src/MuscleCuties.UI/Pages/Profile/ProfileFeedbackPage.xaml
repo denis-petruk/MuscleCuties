@@ -29,13 +29,13 @@
                                    Aspect="AspectFit" />
                         </Border>
                     </Grid>
-                    <Border Grid.Row="1" Style="{StaticResource InputContainer}" MinimumHeightRequest="110">
+                    <Border Grid.Row="1" Style="{StaticResource EditorContainer}">
                         <Editor Placeholder="{loc:LocalizedText Profile_Feedback_WhatHappenedOrWhatShouldChange}"
                                 Text="{Binding FeedbackText}" AutoSize="TextChanges"
                                 SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_YourFeedback}" />
                     </Border>
                     <Label Grid.Row="2" Text="{loc:LocalizedText Profile_Feedback_SuggestedFixOptional}" Style="{StaticResource FormFieldLabel}" />
-                    <Border Grid.Row="3" Style="{StaticResource InputContainer}" MinimumHeightRequest="72">
+                    <Border Grid.Row="3" Style="{StaticResource EditorContainer}">
                         <Editor Placeholder="{loc:LocalizedText Profile_Feedback_WhatWouldWorkBetter}"
                                 Text="{Binding AdjustmentText}" AutoSize="TextChanges"
                                 SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_SuggestedChange}" />
@@ -50,7 +50,7 @@
                     <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
                         <Grid RowDefinitions="Auto,Auto" RowSpacing="5">
                             <Label Text="{loc:LocalizedText Profile_Feedback_Topic}" Style="{StaticResource FormFieldLabel}" />
-                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Border Grid.Row="1" Style="{StaticResource PickerContainer}">
                                 <Picker Title="{loc:LocalizedText Profile_Feedback_Topic}" ItemsSource="{Binding TopicOptions}"
                                         ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
                                         SelectedItem="{Binding SelectedTopicOption}" />
@@ -58,7 +58,7 @@
                         </Grid>
                         <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="5">
                             <Label Text="{loc:LocalizedText Profile_Feedback_Priority}" Style="{StaticResource FormFieldLabel}" />
-                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                            <Border Grid.Row="1" Style="{StaticResource PickerContainer}">
                                 <Picker Title="{loc:LocalizedText Profile_Feedback_Priority}" ItemsSource="{Binding PriorityOptions}"
                                         ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
                                         SelectedItem="{Binding SelectedPriorityOption}" />
@@ -115,7 +115,10 @@
             <Label Grid.Row="3" Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                    Style="{StaticResource CaptionLabel}"
                    IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
-            <Button Grid.Row="4" Text="{loc:LocalizedText Profile_Feedback_OpenEmailDraft}" Command="{Binding SendFeedbackCommand}"
+            <Button Grid.Row="4"
+                    Style="{StaticResource ButtonPrimary}"
+                    Text="{loc:LocalizedText Profile_Feedback_OpenEmailDraft}"
+                    Command="{Binding SendFeedbackCommand}"
                     IsEnabled="{Binding IsReadyToSend}" />
         </Grid>
     </ScrollView>

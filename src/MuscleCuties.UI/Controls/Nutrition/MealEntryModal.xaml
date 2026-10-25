@@ -191,6 +191,7 @@
 
                         <!-- Action buttons -->
                         <Button
+                            Style="{StaticResource ButtonPrimary}"
                             Text="{loc:LocalizedText Nutrition_AddFood}"
                             Command="{Binding StartManualMealCommand}"
                             IsEnabled="{Binding HasEntryMealTypeSelected}"

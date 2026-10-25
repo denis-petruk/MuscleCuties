@@ -60,6 +60,10 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         ToggleAdvancedSettingsCommand = new RelayCommand(ToggleAdvancedSettings);
+        ToggleVegetarianCommand = new RelayCommand(ToggleVegetarian);
+        ToggleVeganCommand = new RelayCommand(ToggleVegan);
+        ToggleGlutenFreeCommand = new RelayCommand(ToggleGlutenFree);
+        ToggleLactoseFreeCommand = new RelayCommand(ToggleLactoseFree);
         SelectedGoalOption = GoalOptions.First(option => option.Value == Goal);
         SelectedWeightGoalPaceOption = WeightGoalPaceOptions.First(option => option.Value == WeightGoalPace);
     }
@@ -88,6 +92,10 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand SaveCommand { get; }
     public RelayCommand ToggleAdvancedSettingsCommand { get; }
+    public RelayCommand ToggleVegetarianCommand { get; }
+    public RelayCommand ToggleVeganCommand { get; }
+    public RelayCommand ToggleGlutenFreeCommand { get; }
+    public RelayCommand ToggleLactoseFreeCommand { get; }
 
     private async Task LoadDataAsync()
     {
@@ -204,6 +212,11 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
     {
         AreAdvancedSettingsVisible = !AreAdvancedSettingsVisible;
     }
+
+    private void ToggleVegetarian() => IsVegetarian = !IsVegetarian;
+    private void ToggleVegan() => IsVegan = !IsVegan;
+    private void ToggleGlutenFree() => IsGlutenFree = !IsGlutenFree;
+    private void ToggleLactoseFree() => IsLactoseFree = !IsLactoseFree;
 
     private void ApplyGoals(NutritionGoalsDto goals)
     {
