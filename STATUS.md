@@ -2,6 +2,12 @@
 
 The active delivery status is maintained at [docs/v1/STATUS.md](docs/v1/STATUS.md).
 
+- **Dietary Preference SelectableCards, Form Container, and Button System Standardization (2026-10-25):**
+  - **Dietary Preferences SelectableCards:** Upgraded Vegetarian, Vegan, Gluten-Free, and Lactose-Free options in `ProfileNutritionSettingsPage.xaml` from raw `CheckBox` tiles to `SelectableCard` with circular checkmark indicators and interactive tap feedback matching `ProfileWorkoutPreferencesChoices.xaml` and onboarding. Added `ToggleVegetarianCommand`, `ToggleVeganCommand`, `ToggleGlutenFreeCommand`, and `ToggleLactoseFreeCommand` to `ProfileNutritionSettingsViewModel.cs`.
+  - **Picker & Editor Form Container Unification:** Replaced legacy `InputContainer` with `PickerContainer` (standardized `14,0` padding) across all remaining pickers in `ProfileNutritionSettingsPage.xaml`, `ProfilePersonalInfoPage.xaml`, `ProfileWorkoutPreferencesChoices.xaml`, `ProfileFeedbackPage.xaml`, and `MealEditorModal.xaml`. Replaced `InputContainer` with `EditorContainer` (standardized `16,12` padding and `96pt` minimum height) across multi-line editors in `ProfileFeedbackPage.xaml`. Confirmed 0 uncontained or mis-styled pickers/editors across the entire UI codebase.
+  - **Button System Standardization (Strict 2-Option Rule):** Standardized CTA buttons across subpages and modals to explicit `ButtonPrimary` and `ButtonSecondary` (`PhaseAdjustmentReviewPageV010.xaml`, `ProfileNutritionSettingsPage.xaml`, `ProfilePersonalInfoPage.xaml`, `ProfileFeedbackPage.xaml`, `MealEditorModal.xaml`, `MealEntryModal.xaml`, `MealDetailModal.xaml`, and `MealSuggestionModal.xaml`).
+  - **Verification:** 549/549 Core tests pass, 80/80 Server tests pass, and iOS simulator build (`net10.0-ios`) compiles cleanly with 0 warnings and 0 errors. Verified visually on iPhone 17 Pro Max simulator (`sim_nutrition_settings_page.png`).
+
 - **Plan Preview & Generator Resilience and Fast Route Dispatch (2026-10-25):**
   - **Plan Generator & Preview Resilience:**
     - Updated `StrengthPlanGenerationViewModel` so that when `_preferences.LoadAsync()` returns null (uninitialized user preferences), default preferences (GeneralStrength, standard weekdays Monday/Wednesday/Friday, 45-minute duration) are supplied gracefully, preventing premature `Workout_Generation_MissingPreferences` lockout and enabling immediate preview generation.
