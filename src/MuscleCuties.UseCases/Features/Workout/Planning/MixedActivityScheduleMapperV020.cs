@@ -45,8 +45,10 @@ internal static class MixedActivityScheduleMapperV020
                 ActivitySessionDurationRule.ForUserPreference((WorkoutActivityType)pair.Key) is not null)
             .ToDictionary(pair => (WorkoutActivityType)pair.Key, pair => (decimal)pair.Value) ?? [];
         foreach (var yogaEvidence in evidenceInputs.Where(evidence =>
-                     evidence?.Activity == WorkoutActivityDto.Yoga && evidence.YogaSessionDurationMinutes.HasValue))
-            durations[WorkoutActivityType.Yoga] = yogaEvidence!.YogaSessionDurationMinutes!.Value;
+                     evidence?.Activity == WorkoutActivityDto.Yoga && evidence.IsDemandingYogaContent.HasValue))
+            durations[WorkoutActivityType.Yoga] = yogaEvidence!.YogaSessionDurationMinutes ??
+                ActivitySessionDurationRule.DefaultMinutesFor(
+                    WorkoutActivityType.Yoga, yogaEvidence.IsDemandingYogaContent!.Value)!.Value;
         foreach (var activity in selectedActivities ?? [])
         {
             if (!requestedSessions.ContainsKey(activity) &&

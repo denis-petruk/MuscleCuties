@@ -33,7 +33,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
     private DayOfWeek[] _availableWeekdays = [];
     private WorkoutActivityDto? _historyActivity;
     private WorkoutActivityDto? _candidateReviewActivity;
-    private int? _savedYogaDurationMinutes;
     private HashSet<int> _candidateReviewExerciseIds = [];
     private StrengthPlanProposalCreatedV020? _proposal;
     private bool _historyWasSelfReported;
@@ -59,14 +58,12 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<ActivityEvidenceAnswerChoice> _evidenceYesNoChoices = [];
     [ObservableProperty] private ObservableCollection<ActivityEvidenceAnswerChoice> _swimmingStyleChoices = [];
     [ObservableProperty] private ObservableCollection<ActivityEvidenceAnswerChoice> _yogaContentChoices = [];
-    [ObservableProperty] private ObservableCollection<int> _yogaDurationChoices = [];
     [ObservableProperty] private ActivityEvidenceAnswerChoice? _selectedSwimmingFacilityAccessChoice;
     [ObservableProperty] private ActivityEvidenceAnswerChoice? _selectedIndependentSwimmingChoice;
     [ObservableProperty] private ActivityEvidenceAnswerChoice? _selectedSwimmingStyleChoice;
     [ObservableProperty] private ActivityEvidenceAnswerChoice? _selectedRopeClimbingCompetenceChoice;
     [ObservableProperty] private ActivityEvidenceAnswerChoice? _selectedClimbingInstructionChoice;
     [ObservableProperty] private ActivityEvidenceAnswerChoice? _selectedYogaContentChoice;
-    [ObservableProperty] private int? _selectedYogaSessionDurationMinutes;
     [ObservableProperty] private bool? _hasSwimmingFacilityAccess;
     [ObservableProperty] private bool? _canSwimIndependently;
     [ObservableProperty] private bool? _wantsContinuousSwimming;
@@ -148,7 +145,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
     public bool IsSwimmingSelected => _selectedProfileActivities.Contains(WorkoutActivityDto.Swimming);
     public bool IsRockClimbingSelected => _selectedProfileActivities.Contains(WorkoutActivityDto.RockClimbing);
     public bool IsYogaSelected => _selectedProfileActivities.Contains(WorkoutActivityDto.Yoga);
-    public bool CanChooseYogaDuration => CanEditInputs && IsDemandingYogaContent.HasValue;
     public bool IsHighIntensityStrengthSelected =>
         SelectedActivity?.Activity == WorkoutActivityDto.StrengthHighIntensity;
     public bool CanChooseSwimmingStyle => HasSwimmingFacilityAccess is true && CanSwimIndependently is true;
@@ -177,8 +173,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
                 ActivityTypes: [(int)WorkoutActivityDto.GeneralStrength],
                 AvailableWeekdays: [],
                 ActivitySessionDurationsMinutes: new Dictionary<int, int>());
-            _savedYogaDurationMinutes = preferences.ActivitySessionDurationsMinutes
-                .GetValueOrDefault((int)WorkoutActivityDto.Yoga);
 
             var weekdays = NormalizeWeekdays(preferences.AvailableWeekdays);
             _availableWeekdays = weekdays;
@@ -221,7 +215,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
                 SelectedRopeClimbingCompetenceChoice ??= yesChoice;
                 SelectedClimbingInstructionChoice ??= yesChoice;
             }
-            UpdateYogaDurationChoices(IsDemandingYogaContent);
             if (Activities.Count == NoPolicyReasons)
                 StatusMessage = UiTextCatalog.Get("Workout_Generation_StrengthPreferenceRequired");
             else if (!HasValidSavedAvailability)
@@ -472,8 +465,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
                 WantsContinuousSwimming,
                 HasRopeClimbingCompetence,
                 AppropriateClimbingInstructionAvailable,
-                IsDemandingYogaContent,
-                SelectedYogaSessionDurationMinutes),
+                IsDemandingYogaContent),
             HiitUnderlyingCardioActivity = underlyingCardioActivity,
             HiitEligibilityEvidence = underlyingCardioActivity is { } selectedUnderlyingActivity
                 ? HiitEvidenceCapture.ToRequestInput(localDate, selectedUnderlyingActivity)
@@ -757,39 +749,9 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
     partial void OnSelectedYogaContentChoiceChanged(ActivityEvidenceAnswerChoice? value) =>
         IsDemandingYogaContent = value?.Value;
 
-    partial void OnIsDemandingYogaContentChanged(bool? value)
-    {
-        UpdateYogaDurationChoices(value);
-        OnPropertyChanged(nameof(CanChooseYogaDuration));
-    }
-
     partial void OnPreviewChanged(StrengthPlanPreviewResponseV020? value)
     {
         OnPropertyChanged(nameof(CanEditInputs));
-        OnPropertyChanged(nameof(CanChooseYogaDuration));
-    }
-
-    private void UpdateYogaDurationChoices(bool? isDemandingYoga)
-    {
-        YogaDurationChoices.Clear();
-        if (isDemandingYoga is not { } isDemanding)
-        {
-            SelectedYogaSessionDurationMinutes = null;
-            return;
-        }
-
-        var choices = WorkoutPreferencesConstraints.SessionDurationChoices(
-            WorkoutActivityDto.Yoga, isDemanding);
-        foreach (var choice in choices)
-            YogaDurationChoices.Add(choice);
-
-        var selectedDuration = SelectedYogaSessionDurationMinutes is { } current && choices.Contains(current)
-            ? current
-            : _savedYogaDurationMinutes is { } saved && choices.Contains(saved)
-                ? saved
-                : WorkoutPreferencesConstraints.DefaultSessionDurationMinutes(
-                    WorkoutActivityDto.Yoga, isDemanding);
-        SelectedYogaSessionDurationMinutes = selectedDuration;
     }
 
     partial void OnSelectedHiitUnderlyingCardioActivityChanged(
@@ -819,7 +781,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(CanEditInputs));
-        OnPropertyChanged(nameof(CanChooseYogaDuration));
         OnPropertyChanged(nameof(CanAnswerHighIntensityCandidates));
         OnPropertyChanged(nameof(CanSubmitHighIntensityConfirmations));
         NotifyCommandStates();
