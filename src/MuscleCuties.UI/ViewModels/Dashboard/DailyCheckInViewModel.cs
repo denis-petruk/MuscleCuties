@@ -25,7 +25,8 @@ public partial class DailyCheckInViewModel : ObservableObject
     [ObservableProperty] private bool _isCompleted;
     [ObservableProperty] private int _painLevel;
     [ObservableProperty] private int? _planningSleepQuality;
-    [ObservableProperty] private int? _planningSoreness;
+    [ObservableProperty] private int? _planningSoreness = MinimumPlanningScaleValue;
+    [ObservableProperty] private double _planningSorenessSlider = MinimumPlanningScaleValue;
     [ObservableProperty] private int? _planningStress;
     [ObservableProperty] private string _readinessScoreText = string.Empty;
     [ObservableProperty] private string _readinessTierText = string.Empty;
@@ -78,8 +79,9 @@ public partial class DailyCheckInViewModel : ObservableObject
             var readiness = status.TodayReadiness;
             EnergyLevel = readiness?.Energy;
             PlanningSleepQuality = readiness?.SleepQuality;
-            PlanningSoreness = readiness?.Soreness;
-            PlanningStress = readiness?.Stress;
+            PlanningSoreness = readiness?.Soreness ?? MinimumPlanningScaleValue;
+            PlanningSorenessSlider = PlanningSoreness.Value;
+            PlanningStress = readiness?.Stress ?? readiness?.Energy;
             IsCompleted = readiness is { Status: "Available" };
             ReadinessScoreText = IsReadinessScoreDisplayEnabled && readiness is { Status: "Available", RawScore: { } }
                 ? readiness!.RawScore!.Value.ToString("0.##", CultureInfo.CurrentCulture)
@@ -87,6 +89,8 @@ public partial class DailyCheckInViewModel : ObservableObject
             ReadinessTierText = IsReadinessScoreDisplayEnabled ? BandLocalizationKey(readiness?.Band) : string.Empty;
             SessionSummaryText = string.Empty;
             OnPropertyChanged(nameof(EnergyDisplay));
+            OnPropertyChanged(nameof(PlanningSleepDisplay));
+            OnPropertyChanged(nameof(PlanningSorenessDisplay));
         }
         catch (Exception ex)
         {
@@ -99,6 +103,11 @@ public partial class DailyCheckInViewModel : ObservableObject
     {
         if (IsBusy || IsCompleted)
             return;
+
+        PlanningStress = EnergyLevel;
+        PlanningSoreness ??= (int)Math.Round(
+            Math.Clamp(PlanningSorenessSlider, MinimumPlanningScaleValue, MaximumPlanningScaleValue),
+            MidpointRounding.AwayFromZero);
 
         if (EnergyLevel is not (>= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue) ||
             PlanningSleepQuality is not (>= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue) ||
@@ -150,11 +159,35 @@ public partial class DailyCheckInViewModel : ObservableObject
 
     partial void OnEnergyLevelChanged(int? value)
     {
+        PlanningStress = value;
         OnPropertyChanged(nameof(EnergyDisplay));
     }
 
     partial void OnPlanningSleepQualityChanged(int? value) => OnPropertyChanged(nameof(PlanningSleepDisplay));
-    partial void OnPlanningSorenessChanged(int? value) => OnPropertyChanged(nameof(PlanningSorenessDisplay));
+
+    partial void OnPlanningSorenessChanged(int? value)
+    {
+        if (value is >= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue &&
+            Math.Abs(PlanningSorenessSlider - value.Value) > 0.001)
+        {
+            PlanningSorenessSlider = value.Value;
+        }
+
+        OnPropertyChanged(nameof(PlanningSorenessDisplay));
+    }
+
+    partial void OnPlanningSorenessSliderChanged(double value)
+    {
+        var clamped = Math.Clamp(value, MinimumPlanningScaleValue, MaximumPlanningScaleValue);
+        var rounded = (int)Math.Round(clamped, MidpointRounding.AwayFromZero);
+        if (PlanningSoreness != rounded)
+        {
+            PlanningSoreness = rounded;
+        }
+
+        OnPropertyChanged(nameof(PlanningSorenessDisplay));
+    }
+
     partial void OnPlanningStressChanged(int? value) => OnPropertyChanged(nameof(PlanningStressDisplay));
 
     partial void OnPainLevelChanged(int value)

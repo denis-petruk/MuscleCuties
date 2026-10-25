@@ -7,25 +7,24 @@
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     x:DataType="vm:DailyCheckInViewModel"
-    Shell.NavBarIsVisible="False"
-    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
+    Shell.NavBarIsVisible="False">
 
     <ContentPage.Resources>
-        <x:Double x:Key="CheckInSectionLabelSize">11</x:Double>
         <x:Double x:Key="CheckInTitleSize">24</x:Double>
-        <x:Double x:Key="CheckInSectionSpacing">26</x:Double>
+        <x:Double x:Key="CheckInSectionSpacing">16</x:Double>
         <x:Double x:Key="CheckInActionHeight">52</x:Double>
-        <Thickness x:Key="CheckInBodyPadding">20,28,20,24</Thickness>
-        <Style x:Key="CheckInSection" TargetType="Border">
-            <Setter Property="BackgroundColor" Value="Transparent" />
-            <Setter Property="StrokeThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
+        <x:Double x:Key="CheckInDividerThickness">1</x:Double>
+        <Thickness x:Key="CheckInBodyPadding">20,24,20,28</Thickness>
+        <Style x:Key="CheckInSection" TargetType="Border" BasedOn="{StaticResource CardPrimary}">
+            <Setter Property="Padding" Value="16" />
         </Style>
-        <Style x:Key="CheckInSectionTitle" TargetType="Label">
-            <Setter Property="FontSize" Value="{StaticResource CheckInSectionLabelSize}" />
-            <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor"
-                    Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+        <Style x:Key="CheckInSectionTitle" TargetType="Label" BasedOn="{StaticResource FormFieldLabel}" />
+        <Style x:Key="CheckInFieldSurface" TargetType="Border" BasedOn="{StaticResource InputContainer}">
+            <Setter Property="BackgroundColor"
+                    Value="{AppThemeBinding Light={StaticResource InputSurface}, Dark={StaticResource InputSurfaceDark}}" />
+            <Setter Property="Stroke"
+                    Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
+            <Setter Property="StrokeThickness" Value="1" />
         </Style>
         <Style x:Key="CheckInChoice" TargetType="Button">
             <Setter Property="BackgroundColor"
@@ -34,7 +33,7 @@
             <Setter Property="TextColor"
                     Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
             <Setter Property="BorderColor"
-                    Value="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}" />
+                    Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray700}}" />
         </Style>
     </ContentPage.Resources>
 
@@ -45,81 +44,138 @@
             <VerticalStackLayout
                 Padding="{StaticResource CheckInBodyPadding}"
                 Spacing="{StaticResource CheckInSectionSpacing}"
-                HorizontalOptions="Fill"
-                MaximumWidthRequest="640">
+                HorizontalOptions="Fill">
 
                 <!-- Header -->
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
+                <VerticalStackLayout Spacing="6">
                     <Label
-                        Grid.Row="0"
                         Text="{loc:LocalizedText Dashboard_CheckIn_PageTitle}"
-                        Style="{StaticResource SubHeadline}"
+                        Style="{StaticResource Headline}"
                         FontSize="{StaticResource CheckInTitleSize}" />
                     <Label
-                        Grid.Row="1"
                         Text="{loc:LocalizedText Dashboard_CheckIn_Subtitle}"
                         Style="{StaticResource MutedLabel}" />
-                    <BoxView
-                        Grid.Row="2"
-                        HeightRequest="1"
-                        Margin="0,16,0,0"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                        Opacity="0.6" />
                     <Label
-                        Grid.Row="3"
                         Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource ErrorLabel}"
                         IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
-                </Grid>
+                </VerticalStackLayout>
 
-                <!-- Sleep -->
+                <!-- Sleep last night + Sleep quality (1-5 chips directly under Sleep last night) -->
                 <Border Style="{StaticResource CheckInSection}">
-                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
-                        <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
-                            <Label
-                                Grid.Column="0"
-                                Text="{loc:LocalizedText Dashboard_CheckIn_SleepSectionTitle}"
-                                Style="{StaticResource CheckInSectionTitle}" />
-                            <Label
-                                Grid.Column="1"
-                                Text="{Binding SleepDisplay, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource AccentLabel}"
-                                FontSize="17"
-                                VerticalOptions="Center" />
+                    <VerticalStackLayout Spacing="16">
+                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                            <Grid Grid.Row="0" ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                                <Label
+                                    Grid.Column="0"
+                                    Text="{loc:LocalizedText Dashboard_CheckIn_SleepTitle}"
+                                    Style="{StaticResource CheckInSectionTitle}"
+                                    VerticalOptions="Center" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding SleepDisplay, Converter={StaticResource LocalizedStringConverter}}"
+                                    Style="{StaticResource AccentLabel}"
+                                    FontSize="17"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                            <Slider
+                                Grid.Row="1"
+                                Minimum="0"
+                                Maximum="14"
+                                Value="{Binding SleepHours}"
+                                HorizontalOptions="Fill"
+                                MinimumTrackColor="{StaticResource Primary}"
+                                MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                ThumbColor="{StaticResource Primary}"
+                                SemanticProperties.Description="{Binding SleepDisplay, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_CheckIn_SleepA11yFormat}"
+                                SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_SleepSliderHint}" />
+                            <Grid Grid.Row="2" ColumnDefinitions="*, *">
+                                <Label
+                                    Grid.Column="0"
+                                    Text="{loc:LocalizedText Dashboard_CheckIn_SleepMinLabel}"
+                                    Style="{StaticResource CaptionLabel}"
+                                    HorizontalOptions="Start" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{loc:LocalizedText Dashboard_CheckIn_SleepMaxLabel}"
+                                    Style="{StaticResource CaptionLabel}"
+                                    HorizontalOptions="End" />
+                            </Grid>
                         </Grid>
-                        <Slider
-                            Grid.Row="1"
-                            Minimum="0"
-                            Maximum="14"
-                            Value="{Binding SleepHours}"
-                            MinimumTrackColor="{StaticResource Primary}"
-                            MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-                            ThumbColor="{StaticResource Primary}"
-                            SemanticProperties.Description="{Binding SleepDisplay, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_CheckIn_SleepA11yFormat}"
-                            SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_SleepSliderHint}" />
-                        <Grid Grid.Row="2" ColumnDefinitions="*, *">
-                            <Label
-                                Grid.Column="0"
-                                Text="{loc:LocalizedText Dashboard_CheckIn_SleepMinLabel}"
-                                Style="{StaticResource CaptionLabel}"
-                                HorizontalOptions="Start" />
-                            <Label
-                                Grid.Column="1"
-                                Text="{loc:LocalizedText Dashboard_CheckIn_SleepMaxLabel}"
-                                Style="{StaticResource CaptionLabel}"
-                                HorizontalOptions="End" />
+
+                        <BoxView
+                            HeightRequest="{StaticResource CheckInDividerThickness}"
+                            Opacity="0.6"
+                            Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
+
+                        <!-- Sleep quality (1 - 5 styled like Energy) -->
+                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <Label
+                                    Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}"
+                                    Style="{StaticResource CheckInSectionTitle}"
+                                    VerticalOptions="Center" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding PlanningSleepDisplay, Converter={StaticResource LocalizedStringConverter}}"
+                                    Style="{StaticResource AccentLabel}"
+                                    FontSize="17"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                            <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="6">
+                                <Button x:Name="SleepQualityChip1" Style="{StaticResource CheckInChoice}" Grid.Column="0"
+                                        Text="1"
+                                        CommandParameter="1" Clicked="OnSleepQualityClicked"
+                                        MinimumHeightRequest="48" Padding="0" FontSize="15" FontAttributes="Bold"
+                                        CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
+                                        SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}" />
+                                <Button x:Name="SleepQualityChip2" Style="{StaticResource CheckInChoice}" Grid.Column="1"
+                                        Text="2"
+                                        CommandParameter="2" Clicked="OnSleepQualityClicked"
+                                        MinimumHeightRequest="48" Padding="0" FontSize="15" FontAttributes="Bold"
+                                        CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
+                                        SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}" />
+                                <Button x:Name="SleepQualityChip3" Style="{StaticResource CheckInChoice}" Grid.Column="2"
+                                        Text="3"
+                                        CommandParameter="3" Clicked="OnSleepQualityClicked"
+                                        MinimumHeightRequest="48" Padding="0" FontSize="15" FontAttributes="Bold"
+                                        CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
+                                        SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}" />
+                                <Button x:Name="SleepQualityChip4" Style="{StaticResource CheckInChoice}" Grid.Column="3"
+                                        Text="4"
+                                        CommandParameter="4" Clicked="OnSleepQualityClicked"
+                                        MinimumHeightRequest="48" Padding="0" FontSize="15" FontAttributes="Bold"
+                                        CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
+                                        SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}" />
+                                <Button x:Name="SleepQualityChip5" Style="{StaticResource CheckInChoice}" Grid.Column="4"
+                                        Text="5"
+                                        CommandParameter="5" Clicked="OnSleepQualityClicked"
+                                        MinimumHeightRequest="48" Padding="0" FontSize="15" FontAttributes="Bold"
+                                        CornerRadius="{StaticResource UiRadiusControl}" BorderWidth="1"
+                                        SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}" />
+                            </Grid>
+                            <Grid Grid.Row="2" ColumnDefinitions="*,*">
+                                <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryLowLabel}"
+                                       Style="{StaticResource CaptionLabel}" />
+                                <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryHighLabel}"
+                                       Style="{StaticResource CaptionLabel}"
+                                       HorizontalTextAlignment="End" />
+                            </Grid>
                         </Grid>
-                    </Grid>
+                    </VerticalStackLayout>
                 </Border>
 
-                <!-- Energy -->
+                <!-- Energy (also drives Stress for planning) -->
                 <Border Style="{StaticResource CheckInSection}">
-                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
                         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergySectionTitle}" Style="{StaticResource CheckInSectionTitle}" />
+                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergyTitle}"
+                                   Style="{StaticResource CheckInSectionTitle}"
+                                   VerticalOptions="Center" />
                             <Label Grid.Column="1"
                                    Text="{Binding EnergyDisplay, Converter={StaticResource LocalizedStringConverter}}"
-                                   Style="{StaticResource AccentLabel}" FontSize="17" />
+                                   Style="{StaticResource AccentLabel}" FontSize="17"
+                                   VerticalOptions="Center" />
                         </Grid>
                         <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="6">
                             <Button x:Name="EnergyChip1" Style="{StaticResource CheckInChoice}" Grid.Column="0"
@@ -159,7 +215,8 @@
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_Energy5Hint}" />
                         </Grid>
                         <Grid Grid.Row="2" ColumnDefinitions="*,*">
-                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryLowLabel}" Style="{StaticResource CaptionLabel}" />
+                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryLowLabel}"
+                                   Style="{StaticResource CaptionLabel}" />
                             <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryHighLabel}"
                                    Style="{StaticResource CaptionLabel}"
                                    HorizontalTextAlignment="End" />
@@ -167,14 +224,58 @@
                     </Grid>
                 </Border>
 
+                <!-- Muscle soreness (Slider 1 - 5 like Sleep last night) -->
+                <Border Style="{StaticResource CheckInSection}">
+                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                        <Grid Grid.Row="0" ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                            <Label
+                                Grid.Column="0"
+                                Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSoreness}"
+                                Style="{StaticResource CheckInSectionTitle}"
+                                VerticalOptions="Center" />
+                            <Label
+                                Grid.Column="1"
+                                Text="{Binding PlanningSorenessDisplay, Converter={StaticResource LocalizedStringConverter}}"
+                                Style="{StaticResource AccentLabel}"
+                                FontSize="17"
+                                VerticalOptions="Center" />
+                        </Grid>
+                        <Slider
+                            Grid.Row="1"
+                            Minimum="1"
+                            Maximum="5"
+                            Value="{Binding PlanningSorenessSlider}"
+                            HorizontalOptions="Fill"
+                            MinimumTrackColor="{StaticResource Primary}"
+                            MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                            ThumbColor="{StaticResource Primary}"
+                            SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningSoreness}" />
+                        <Grid Grid.Row="2" ColumnDefinitions="*, *">
+                            <Label
+                                Grid.Column="0"
+                                Text="{loc:LocalizedText Dashboard_CheckIn_PainNone}"
+                                Style="{StaticResource CaptionLabel}"
+                                HorizontalOptions="Start" />
+                            <Label
+                                Grid.Column="1"
+                                Text="{loc:LocalizedText Dashboard_CheckIn_PainSevere}"
+                                Style="{StaticResource CaptionLabel}"
+                                HorizontalOptions="End" />
+                        </Grid>
+                    </Grid>
+                </Border>
+
                 <!-- Pain -->
                 <Border Style="{StaticResource CheckInSection}">
-                    <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
                         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_PainSectionTitle}" Style="{StaticResource CheckInSectionTitle}" />
+                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_PainTitle}"
+                                   Style="{StaticResource CheckInSectionTitle}"
+                                   VerticalOptions="Center" />
                             <Label Grid.Column="1"
                                    Text="{Binding PainDisplay, Converter={StaticResource LocalizedStringConverter}}"
-                                   Style="{StaticResource AccentLabel}" FontSize="17" />
+                                   Style="{StaticResource AccentLabel}" FontSize="17"
+                                   VerticalOptions="Center" />
                         </Grid>
                         <Grid Grid.Row="1" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8"
                               RowSpacing="8">
@@ -210,45 +311,12 @@
                     </Grid>
                 </Border>
 
-                <!-- Four required self-reported inputs for the daily planning estimate. -->
-                <Border Style="{StaticResource CheckInSection}">
-                    <VerticalStackLayout Spacing="12">
-                        <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningTitle}"
-                               Style="{StaticResource CheckInSectionTitle}" />
-                        <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}"
-                               Style="{StaticResource CaptionLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
-                            <Picker Title="{loc:LocalizedText Dashboard_CheckIn_PlanningSelectRating}"
-                                    ItemsSource="{Binding PlanningScaleOptions}"
-                                    SelectedItem="{Binding PlanningSleepQuality, Mode=TwoWay}"
-                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}" />
-                        </Border>
-                        <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSoreness}"
-                               Style="{StaticResource CaptionLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
-                            <Picker Title="{loc:LocalizedText Dashboard_CheckIn_PlanningSelectRating}"
-                                    ItemsSource="{Binding PlanningScaleOptions}"
-                                    SelectedItem="{Binding PlanningSoreness, Mode=TwoWay}"
-                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningSoreness}" />
-                        </Border>
-                        <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningStress}"
-                               Style="{StaticResource CaptionLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
-                            <Picker Title="{loc:LocalizedText Dashboard_CheckIn_PlanningSelectRating}"
-                                    ItemsSource="{Binding PlanningScaleOptions}"
-                                    SelectedItem="{Binding PlanningStress, Mode=TwoWay}"
-                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningStress}" />
-                        </Border>
-                    </VerticalStackLayout>
-                </Border>
-
                 <!-- Bloating -->
                 <Border Style="{StaticResource CheckInSection}">
-                    <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center"
-                          MinimumHeightRequest="{StaticResource CheckInActionHeight}">
+                    <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
                         <Label
                             Grid.Column="0"
-                            Text="{loc:LocalizedText Dashboard_CheckIn_BloatingSectionTitle}"
+                            Text="{loc:LocalizedText Dashboard_CheckIn_BloatingTitle}"
                             Style="{StaticResource CheckInSectionTitle}"
                             VerticalOptions="Center" />
                         <Switch
@@ -262,11 +330,13 @@
                     </Grid>
                 </Border>
 
-                <!-- Body weight -->
+                <!-- Body weight (styled like ProfileSetupPage entry fields) -->
                 <Border Style="{StaticResource CheckInSection}">
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
                         <Grid Grid.Row="0" ColumnDefinitions="*, Auto" ColumnSpacing="8">
-                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_BodyWeightSectionTitle}" Style="{StaticResource CheckInSectionTitle}" />
+                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_BodyWeightTitle}"
+                                   Style="{StaticResource CheckInSectionTitle}"
+                                   VerticalOptions="Center" />
                             <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_CheckIn_PrivateBadge}"
                                    Style="{StaticResource CaptionLabel}"
                                    VerticalOptions="Center"
@@ -274,17 +344,23 @@
                         </Grid>
                         <Label Grid.Row="1" Text="{loc:LocalizedText Dashboard_CheckIn_StorageNotice}"
                                Style="{StaticResource CaptionLabel}" />
-                        <Border Grid.Row="2" Style="{StaticResource InputContainer}">
-                            <Entry
-                                x:Name="WeightEntry"
-                                Placeholder="{loc:LocalizedText Dashboard_CheckIn_WeightPlaceholderKg}"
-                                Text="{Binding BodyWeight}"
-                                Keyboard="Numeric"
-                                ReturnType="Done"
-                                ReturnCommand="{Binding SubmitCommand}"
-                                SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_WeightA11y}"
-                                SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_WeightHint}" />
-                        </Border>
+                        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <Border Style="{StaticResource CheckInFieldSurface}">
+                                <Entry
+                                    x:Name="WeightEntry"
+                                    Placeholder="{loc:LocalizedText Dashboard_CheckIn_WeightPlaceholderKg}"
+                                    Text="{Binding BodyWeight}"
+                                    Keyboard="Numeric"
+                                    ReturnType="Done"
+                                    ReturnCommand="{Binding SubmitCommand}"
+                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_WeightA11y}"
+                                    SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_WeightHint}" />
+                            </Border>
+                            <Label Grid.Column="1"
+                                   Text="{loc:LocalizedText Dashboard_CheckIn_WeightPlaceholderKg}"
+                                   Style="{StaticResource MutedLabel}"
+                                   VerticalOptions="Center" />
+                        </Grid>
                     </Grid>
                 </Border>
 
@@ -327,7 +403,7 @@
                             HorizontalOptions="Center"
                             HorizontalTextAlignment="Center"
                             IsVisible="{Binding IsReadinessScoreDisplayEnabled}" />
-                        <Grid Grid.Row="4" ColumnDefinitions="*,*,*,*" ColumnSpacing="10"
+                        <Grid Grid.Row="4" ColumnDefinitions="*,*,*" ColumnSpacing="10"
                               HorizontalOptions="Fill">
                             <VerticalStackLayout Grid.Column="0" Spacing="2" HorizontalOptions="Center">
                                 <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}"
@@ -345,12 +421,6 @@
                                 <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSoreness}"
                                        Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
                                 <Label Text="{Binding PlanningSorenessDisplay}" Style="{StaticResource BodyLabel}"
-                                       HorizontalTextAlignment="Center" />
-                            </VerticalStackLayout>
-                            <VerticalStackLayout Grid.Column="3" Spacing="2" HorizontalOptions="Center">
-                                <Label Text="{loc:LocalizedText Dashboard_CheckIn_PlanningStress}"
-                                       Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
-                                <Label Text="{Binding PlanningStressDisplay}" Style="{StaticResource BodyLabel}"
                                        HorizontalTextAlignment="Center" />
                             </VerticalStackLayout>
                         </Grid>

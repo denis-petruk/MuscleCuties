@@ -13,6 +13,9 @@ public partial class DailyCheckInPage : ContentPage
         _viewModel = this.InitializeAndBind(InitializeComponent, vm);
     }
 
+    private Button[] SleepQualityChips =>
+        [SleepQualityChip1, SleepQualityChip2, SleepQualityChip3, SleepQualityChip4, SleepQualityChip5];
+
     private Button[] EnergyChips => [EnergyChip1, EnergyChip2, EnergyChip3, EnergyChip4, EnergyChip5];
     private Button[] PainChips => [PainChip0, PainChip1, PainChip2, PainChip3];
 
@@ -45,14 +48,25 @@ public partial class DailyCheckInPage : ContentPage
     private async Task LoadPageAsync()
     {
         await _viewModel.CheckIfAlreadyCompletedAsync();
+        UpdateSleepQualityChips();
         UpdateEnergyChips();
         UpdatePainChips();
     }
 
     private void OnRequestedThemeChanged(object? sender, AppThemeChangedEventArgs e)
     {
+        UpdateSleepQualityChips();
         UpdateEnergyChips();
         UpdatePainChips();
+    }
+
+    private void OnSleepQualityClicked(object? sender, EventArgs e)
+    {
+        if (sender is Button { CommandParameter: { } parameter } && int.TryParse(parameter.ToString(), out var level))
+        {
+            _viewModel.PlanningSleepQuality = level;
+            UpdateSleepQualityChips();
+        }
     }
 
     private void OnEnergyClicked(object? sender, EventArgs e)
@@ -71,6 +85,13 @@ public partial class DailyCheckInPage : ContentPage
             _viewModel.PainLevel = level;
             UpdatePainChips();
         }
+    }
+
+    private void UpdateSleepQualityChips()
+    {
+        UpdateChipGroup(SleepQualityChips, (_viewModel.PlanningSleepQuality ?? 0) - 1,
+            (i, sel) => UiTextCatalog.Translate("Dashboard_CheckIn_PlanningSleepQuality") + $" {i + 1} / 5" +
+                        (sel ? ", " + UiTextCatalog.Translate("Selected") : string.Empty));
     }
 
     private void UpdateEnergyChips()
