@@ -222,15 +222,11 @@
                     Grid.Row="2"
                     Padding="20,12,20,24">
                     <Button
+                        Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Cycle_PhaseSummary_CloseButton}"
                         Command="{Binding ClosePhaseSummarySheetCommand}"
                         HorizontalOptions="End"
-                        MinimumHeightRequest="52"
-                        HeightRequest="52"
-                        WidthRequest="90"
-                        FontSize="15"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                        WidthRequest="90" />
                 </Grid>
 
             </Grid>

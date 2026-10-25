@@ -66,11 +66,9 @@
                         <!-- Vegetarian -->
                         <Border
                             Grid.Row="0" Grid.Column="0"
+                            Style="{StaticResource SurfaceTile}"
                             Padding="10,8"
-                            MinimumHeightRequest="44"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 12">
+                            MinimumHeightRequest="44">
                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4" MinimumHeightRequest="44">
                                 <CheckBox IsChecked="{Binding IsVegetarian}" Color="{StaticResource Primary}"
                                           WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
@@ -87,11 +85,9 @@
                         <!-- Vegan -->
                         <Border
                             Grid.Row="0" Grid.Column="1"
+                            Style="{StaticResource SurfaceTile}"
                             Padding="10,8"
-                            MinimumHeightRequest="44"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 12">
+                            MinimumHeightRequest="44">
                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4" MinimumHeightRequest="44">
                                 <CheckBox IsChecked="{Binding IsVegan}" Color="{StaticResource Primary}"
                                           WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
@@ -108,11 +104,9 @@
                         <!-- Gluten-free -->
                         <Border
                             Grid.Row="1" Grid.Column="0"
+                            Style="{StaticResource SurfaceTile}"
                             Padding="10,8"
-                            MinimumHeightRequest="44"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 12">
+                            MinimumHeightRequest="44">
                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4" MinimumHeightRequest="44">
                                 <CheckBox IsChecked="{Binding IsGlutenFree}" Color="{StaticResource Primary}"
                                           WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
@@ -129,11 +123,9 @@
                         <!-- Lactose-free -->
                         <Border
                             Grid.Row="1" Grid.Column="1"
+                            Style="{StaticResource SurfaceTile}"
                             Padding="10,8"
-                            MinimumHeightRequest="44"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 12">
+                            MinimumHeightRequest="44">
                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4" MinimumHeightRequest="44">
                                 <CheckBox IsChecked="{Binding IsLactoseFree}" Color="{StaticResource Primary}"
                                           WidthRequest="40" HeightRequest="40" VerticalOptions="Center"

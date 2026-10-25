@@ -75,9 +75,7 @@
 
                     <Border
                         Grid.Row="4"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource OverlayLight}, Dark={StaticResource OverlayDark}}"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 16"
+                        Style="{StaticResource SurfaceTile}"
                         Padding="14,12">
                         <Label
                             Text="{Binding QuickRule, Converter={StaticResource LocalizedStringConverter}}"
@@ -106,10 +104,7 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Border
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 20"
-                                    Padding="10,8"
+                                    Style="{StaticResource PillBadge}"
                                     Margin="0,0,6,6"
                                     MinimumHeightRequest="44"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
@@ -211,9 +206,7 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Border
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 14"
+                                    Style="{StaticResource SurfaceTile}"
                                     Padding="14,12"
                                     MinimumHeightRequest="44"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
@@ -336,10 +329,7 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Border
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 20"
-                                    Padding="10,8"
+                                    Style="{StaticResource PillBadge}"
                                     Margin="0,0,6,6"
                                     MinimumHeightRequest="44"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">

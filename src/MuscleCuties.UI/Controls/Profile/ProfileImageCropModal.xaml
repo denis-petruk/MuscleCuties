@@ -72,18 +72,13 @@
                 <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="12" Padding="20,16,20,20">
                     <Button
                         Grid.Column="0"
+                        Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Common_Cancel}"
-                        Clicked="OnCancelTapped"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                        MinimumHeightRequest="52"
-                        CornerRadius="{StaticResource UiRadiusControl}" />
+                        Clicked="OnCancelTapped" />
                     <Button
                         Grid.Column="1"
                         Text="{loc:LocalizedText Profile_ImageCrop_UsePhoto}"
-                        Clicked="OnUsePhotoTapped"
-                        MinimumHeightRequest="52"
-                        CornerRadius="{StaticResource UiRadiusControl}" />
+                        Clicked="OnUsePhotoTapped" />
                 </Grid>
 
             </Grid>

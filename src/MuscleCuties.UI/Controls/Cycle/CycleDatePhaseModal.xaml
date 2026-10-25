@@ -187,27 +187,17 @@
                         <Button
                             Text="{loc:LocalizedText Cycle_DatePhaseModal_UseNextPhaseButton}"
                             Command="{Binding UseSuggestedPhaseCommand}"
-                            IsVisible="{Binding HasSuggestedPhase}"
-                            MinimumHeightRequest="52"
-                            HeightRequest="52"
-                            FontSize="15" />
+                            IsVisible="{Binding HasSuggestedPhase}" />
                         <Button
                             Grid.Column="1"
+                            Style="{StaticResource ButtonSecondary}"
                             Text="{loc:LocalizedText Cycle_DatePhaseModal_ForgotShift}"
-                            Command="{Binding ReviewEarlierPhaseRecordsCommand}"
-                            MinimumHeightRequest="52"
-                            HeightRequest="52"
-                            FontSize="15"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                            Command="{Binding ReviewEarlierPhaseRecordsCommand}" />
                     </Grid>
 
                     <Button
                         Text="{loc:LocalizedText Cycle_DatePhaseModal_SaveButton}"
                         Command="{Binding SaveDatePhaseCommand}"
-                        MinimumHeightRequest="52"
-                        HeightRequest="52"
-                        FontSize="15"
                         IsVisible="{Binding HasPhaseJumpWarning, Converter={StaticResource InvertedBoolConverter}}" />
                 </Grid>
             </Grid>

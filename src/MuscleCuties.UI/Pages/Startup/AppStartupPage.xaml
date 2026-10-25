@@ -68,10 +68,8 @@
                 IsVisible="False"
                 Text="Reset Local Database"
                 Clicked="OnResetClicked"
-                BackgroundColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
-                TextColor="White"
-                MinimumHeightRequest="52"
-                MinimumWidthRequest="44" />
+                Style="{StaticResource ButtonSecondary}"
+                TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}" />
         </VerticalStackLayout>
     </Grid>
 </ContentPage>

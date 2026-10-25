@@ -167,8 +167,7 @@
                             SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_PhotoCheckInA11y}">
                         <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
                             <Border
-                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                                Style="{StaticResource ModalIconButton}"
                                 WidthRequest="40" HeightRequest="40" VerticalOptions="Center">
                                 <Path Data="M3 7h4l2-3h6l2 3h4v13H3z M12 10a4 4 0 1 0 0 8a4 4 0 0 0 0-8z"
                                       Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
@@ -185,7 +184,8 @@
                             <Button Grid.Column="2"
                                     Text="{Binding PhotoButtonText, Converter={StaticResource LocalizedStringConverter}}"
                                     Command="{Binding OpenPhotoVaultCommand}"
-                                    Style="{StaticResource PlatformAuthButton}"
+                                    Style="{StaticResource ButtonSecondary}"
+                                    HeightRequest="36"
                                     MinimumHeightRequest="36"
                                     Padding="12,0"
                                     FontSize="13"

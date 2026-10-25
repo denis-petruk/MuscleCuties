@@ -68,10 +68,8 @@
                                    Style="{StaticResource CaptionLabel}" FontSize="13" />
                             <Border
                                 Grid.Row="2"
-                                HorizontalOptions="Start"
+                                Style="{StaticResource PillBadge}"
                                 Background="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 8"
                                 Padding="8,2"
                                 Margin="0,2,0,0">
                                 <Label
@@ -200,25 +198,15 @@
                         Grid.Row="1"
                         Text="{loc:LocalizedText Profile_Page_LogOut}"
                         Clicked="OnLogoutClicked"
-                        Style="{StaticResource ButtonSecondary}"
-                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                        MinimumHeightRequest="48"
-                        HeightRequest="48" />
+                        Style="{StaticResource ButtonSecondary}" />
 
                     <!-- In-App Delete Account & Data Action -->
                     <Button
                         Grid.Row="2"
                         Text="{loc:LocalizedText Profile_Page_DeleteAccountAndLocalData}"
                         Clicked="OnDeleteAccountClicked"
-                        BackgroundColor="{AppThemeBinding Light=#FFF0F0, Dark=#381E24}"
-                        BorderColor="{AppThemeBinding Light=#F5C2C7, Dark=#732832}"
-                        BorderWidth="1"
-                        TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
-                        FontAttributes="Bold"
-                        FontSize="15"
-                        CornerRadius="{StaticResource UiRadiusControl}"
-                        MinimumHeightRequest="48"
-                        HeightRequest="48" />
+                        Style="{StaticResource ButtonSecondary}"
+                        TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}" />
                     <Label
                         Grid.Row="3"
                         Text="{Binding AccountActionError, Converter={StaticResource LocalizedStringConverter}}"
