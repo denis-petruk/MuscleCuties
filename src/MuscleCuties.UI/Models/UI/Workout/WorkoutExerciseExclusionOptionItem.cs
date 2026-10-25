@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 
@@ -8,4 +9,8 @@ public sealed partial class WorkoutExerciseExclusionOptionItem(int exerciseId, s
     public string Name { get; } = name;
 
     [ObservableProperty] private bool _isSelected;
+
+    [RelayCommand]
+    private void Toggle() => IsSelected = !IsSelected;
 }
+

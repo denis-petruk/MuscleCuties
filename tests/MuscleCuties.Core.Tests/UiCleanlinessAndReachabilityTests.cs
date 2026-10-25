@@ -282,11 +282,13 @@ public class UiCleanlinessAndReachabilityTests
         Assert.Contains("x:Key=\"PickerContainer\"", stylesContent);
         Assert.Contains("x:Key=\"EditorContainer\"", stylesContent);
 
-        // 3. Card surface logic: CardPrimary (main containers), CardSecondary/SurfaceTile (inner sections), PillBadge (badges)
+        // 3. Card surface logic: CardPrimary (main containers), CardSecondary/SurfaceTile (inner sections), PillBadge (badges), SelectableCard/SelectableChip (interactive choice cards)
         Assert.Contains("x:Key=\"CardPrimary\"", stylesContent);
         Assert.Contains("x:Key=\"CardSecondary\"", stylesContent);
         Assert.Contains("x:Key=\"SurfaceTile\"", stylesContent);
         Assert.Contains("x:Key=\"PillBadge\"", stylesContent);
+        Assert.Contains("x:Key=\"SelectableCard\"", stylesContent);
+        Assert.Contains("x:Key=\"SelectableChip\"", stylesContent);
     }
 
     [Fact]
@@ -311,7 +313,9 @@ public class UiCleanlinessAndReachabilityTests
             "ProfileMeasurementChoiceSurface",
             "CardPrimary",
             "CardSecondary",
-            "SurfaceTile"
+            "SurfaceTile",
+            "SelectableCard",
+            "SelectableChip"
         };
 
         var nakedInputs = new List<string>();

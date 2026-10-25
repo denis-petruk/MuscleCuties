@@ -25,7 +25,7 @@
         <VerticalStackLayout
             IsVisible="{Binding IsPageLoading}"
             HorizontalOptions="Center"
-            VerticalOptions="Start"
+            VerticalOptions="Center"
             Spacing="10">
             <ActivityIndicator
                 Color="{StaticResource Primary}"

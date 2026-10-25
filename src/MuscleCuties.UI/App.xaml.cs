@@ -171,6 +171,19 @@ public partial class App : Application
         await dashboardPage.InitialLoadCompleted;
 
         _ = ScheduleNotificationsAsync(userId);
+
+        var initialRoute = Environment.GetEnvironmentVariable("MUSCLECUTIES_INITIAL_ROUTE");
+        if (!string.IsNullOrWhiteSpace(initialRoute) && Shell.Current is { } shell)
+        {
+            try
+            {
+                await shell.GoToAsync(initialRoute, false);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"[Startup] Failed to navigate to initial route {initialRoute}: {ex.Message}");
+            }
+        }
     }
 
     [SuppressMessage("Performance", "CA1822:Mark members as static",

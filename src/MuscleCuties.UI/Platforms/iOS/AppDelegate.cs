@@ -31,4 +31,29 @@ public class AppDelegate : MauiUIApplicationDelegate
         base.OnActivated(application);
         ApplePrivacyShieldHelper.HidePrivacyShield();
     }
+
+    public override bool OpenUrl(UIApplication application, NSUrl url, NSDictionary options)
+    {
+        if (url is not null && url.Scheme == "musclecuties")
+        {
+            var host = url.Host;
+            if (!string.IsNullOrEmpty(host) && Shell.Current is { } shell)
+            {
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    try
+                    {
+                        await shell.GoToAsync(host);
+                    }
+                    catch
+                    {
+                        // Ignore unrecognized deep link route
+                    }
+                });
+                return true;
+            }
+        }
+
+        return url is not null && base.OpenUrl(application, url, options);
+    }
 }

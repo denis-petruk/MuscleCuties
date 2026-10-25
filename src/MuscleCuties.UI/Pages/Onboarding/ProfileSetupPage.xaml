@@ -21,15 +21,9 @@
         <Thickness x:Key="ProfileMeasurementPickerPadding">14,4</Thickness>
         <RoundRectangle x:Key="ProfileMeasurementCardShape" CornerRadius="14" />
         <Style x:Key="ProfileFieldSurface" TargetType="Border" BasedOn="{StaticResource InputContainer}" />
-        <Style x:Key="ProfileMeasurementChoiceSurface" TargetType="Border">
+        <Style x:Key="ProfileMeasurementChoiceSurface" TargetType="Border" BasedOn="{StaticResource SelectableCard}">
             <Setter Property="Padding" Value="{StaticResource ProfileMeasurementChoicePadding}" />
             <Setter Property="MinimumHeightRequest" Value="{StaticResource ProfileMeasurementCardHeight}" />
-            <Setter Property="StrokeShape" Value="{StaticResource ProfileMeasurementCardShape}" />
-            <Setter Property="StrokeThickness" Value="1" />
-            <Setter Property="BackgroundColor"
-                    Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
-            <Setter Property="Stroke"
-                    Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
         </Style>
         <Style x:Key="ProfileMeasurementPickerSurface" TargetType="Border"
                BasedOn="{StaticResource ProfileMeasurementChoiceSurface}">
