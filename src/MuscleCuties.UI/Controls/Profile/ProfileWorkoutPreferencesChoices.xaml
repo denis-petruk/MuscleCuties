@@ -43,18 +43,73 @@
                 <SearchBar Placeholder="{loc:LocalizedText Profile_WorkoutPrefs_SearchExercises}"
                            Text="{Binding ExerciseExclusionSearchText, Mode=TwoWay}" />
             </Border>
-            <VerticalStackLayout BindableLayout.ItemsSource="{Binding FilteredExerciseExclusionOptions}">
+            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding FilteredExerciseExclusionOptions}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="workoutModels:WorkoutExerciseExclusionOptionItem">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                      Color="{StaticResource Primary}"
-                                      VerticalOptions="Center" />
-                            <Label Grid.Column="1"
-                                   Text="{Binding Name}"
-                                   Style="{StaticResource BodyLabel}"
-                                   VerticalOptions="Center" />
-                        </Grid>
+                        <Border
+                            Style="{StaticResource SelectableCard}"
+                            Padding="14,12"
+                            SemanticProperties.Description="{Binding Name}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleCommand}" />
+                            </Border.GestureRecognizers>
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BackgroundColor"
+                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
+                                    <Setter Property="Stroke"
+                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                    <Setter Property="StrokeThickness" Value="1.5" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                    <Setter Property="BackgroundColor"
+                                            Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
+                                    <Setter Property="Stroke"
+                                            Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
+                                    <Setter Property="StrokeThickness" Value="1" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Grid ColumnDefinitions="*,24" ColumnSpacing="12" VerticalOptions="Center">
+                                <Label
+                                    Text="{Binding Name}"
+                                    Style="{StaticResource BodyLabel}"
+                                    FontAttributes="Bold"
+                                    VerticalOptions="Center" />
+                                <Border
+                                    Grid.Column="1"
+                                    WidthRequest="24" HeightRequest="24"
+                                    StrokeShape="Ellipse"
+                                    StrokeThickness="1.5"
+                                    VerticalOptions="Center"
+                                    BackgroundColor="Transparent"
+                                    InputTransparent="True">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor"
+                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                            <Setter Property="Stroke"
+                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                            <Setter Property="Stroke"
+                                                    Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray500}}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Path
+                                        Data="M5 12L10 17L19 7"
+                                        Stroke="White"
+                                        StrokeThickness="2.5"
+                                        StrokeLineCap="Round"
+                                        StrokeLineJoin="Round"
+                                        WidthRequest="16"
+                                        HeightRequest="16"
+                                        Aspect="Uniform"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center"
+                                        IsVisible="{Binding IsSelected}" />
+                                </Border>
+                            </Grid>
+                        </Border>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>

@@ -1,5 +1,13 @@
 # Status — MuscleCuties Delivery & Candidate Status
 
+**Selectable Card, Weekday Chip, and Privacy Card Hierarchy Standardization (2026-10-25):**
+- **Selectable Cards & Chips in Styles.xaml:** Added `SelectableCard` (14px corner radius, stroke thickness 1, soft card surface, interactive touch padding) and `SelectableChip` (derived from `SelectableCard`, min-height 44pt) in `src/MuscleCuties.UI/Resources/Styles/Styles.xaml`.
+- **Exercise Exclusions Styling:** Replaced raw `CheckBox` list in `ProfileWorkoutPreferencesChoices.xaml` with `SelectableCard` items featuring a 24x24 circular checkmark indicator matching `WorkoutActivityPreferencePicker.xaml` from onboarding, with whole-card tap gesture and `ToggleCommand` on `WorkoutExerciseExclusionOptionItem`.
+- **Weekday Selector Standardized:** Refactored available weekday selector in `ProfileWorkoutPreferencesPage.xaml` from ad-hoc `Button` to `Border Style="{StaticResource SelectableChip}"`, strictly maintaining the 2-button rule across the entire application and resolving dark theme button contrast issues.
+- **Privacy Page Hierarchy:** Wrapped raw text sections in `ProfilePrivacyPage.xaml` into `CardPrimary` containers with `SectionTitle`, `BodyLabel`, and subtle dividers; standardized the full policy action to `ButtonSecondary`.
+- **Deterministic Simulator Navigation:** Added `SIMCTL_CHILD_MUSCLECUTIES_INITIAL_ROUTE` environment handling in `App.xaml.cs` and deep link handler `musclecuties://` in `AppDelegate.cs`.
+- **Verification:** 548/548 Core tests pass (including `UiCleanlinessAndReachabilityTests`), 80/80 Server tests pass, and iOS simulator build (`net10.0-ios`) compiles cleanly with 0 warnings and 0 errors.
+
 **Readiness/Recovery 0-100 Dual Circles, Plan Preview & Generator Fix, and Button/UI Polish (2026-10-25):**
 - **Readiness & Recovery Dual Progress Rings:** `ReadinessRecoveryCard.xaml` now unconditionally displays the two circular progress rings (Readiness 0-100 and Recovery 0-100) computed from either daily check-in ratings (if completed) or Apple Health / baseline metrics (if no check-in recorded yet). `DashboardProgressRing.cs` enhanced with rounded stroke caps (`StrokeLineCap = LineCap.Round`). Added `ReadinessSubtitleText` dynamically indicating data source ("Based on your daily check-in" vs "Apple Health & baseline") with property change notifications wired in `DashboardViewModel`.
 - **Plan Generator & Plan Preview End-to-End Fix:**

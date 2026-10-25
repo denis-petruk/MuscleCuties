@@ -41,19 +41,46 @@
                             JustifyContent="Start">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="workoutModels:WorkoutWeekdayOptionItem">
-                            <Button Text="{Binding Label}"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfileWorkoutPreferencesViewModel}}, Path=ToggleWeekdayCommand}"
-                                    CommandParameter="{Binding .}"
-                                    Margin="{StaticResource WorkoutPlanningDayChoiceMargin}"
-                                    MinimumHeightRequest="{StaticResource UiControlHeight}"
-                                    CornerRadius="{StaticResource UiRadiusControl}">
-                                <Button.Triggers>
-                                    <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="True">
-                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                            <Border
+                                Style="{StaticResource SelectableChip}"
+                                Margin="{StaticResource WorkoutPlanningDayChoiceMargin}"
+                                SemanticProperties.Description="{Binding Label}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfileWorkoutPreferencesViewModel}}, Path=ToggleWeekdayCommand}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="BackgroundColor"
+                                                Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
+                                        <Setter Property="Stroke"
+                                                Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                                        <Setter Property="StrokeThickness" Value="1.5" />
                                     </DataTrigger>
-                                </Button.Triggers>
-                            </Button>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                        <Setter Property="BackgroundColor"
+                                                Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
+                                        <Setter Property="Stroke"
+                                                Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
+                                        <Setter Property="StrokeThickness" Value="1" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label
+                                    Text="{Binding Label}"
+                                    Style="{StaticResource BodyLabel}"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="TextColor"
+                                                    Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                 </FlexLayout>
