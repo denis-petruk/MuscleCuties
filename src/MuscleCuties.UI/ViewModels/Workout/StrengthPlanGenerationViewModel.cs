@@ -25,6 +25,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private const int DefaultSessionCooldownMinutes = 5;
 
     private static readonly WorkoutActivityDto[] StrengthActivities = WorkoutPlanningConstants.StrengthActivities;
+    private static readonly DayOfWeek[] CalendarWeekdays =
+    [
+        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday,
+        DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
+    ];
 
     private readonly IStrengthPlanProposalClientV020 _proposalClient;
     private readonly IProfileWorkoutPreferencesUseCase _preferences;
@@ -44,6 +49,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     [ObservableProperty] private ObservableCollection<StrengthPlanSessionDisplay> _strengthPreviewSessions = [];
     [ObservableProperty] private ObservableCollection<StrengthPlanHighIntensityCandidateDisplay> _highIntensityCandidates = [];
     [ObservableProperty] private ObservableCollection<MixedActivitySessionDisplay> _mixedActivitySessions = [];
+    [ObservableProperty] private ObservableCollection<MixedActivityDayDisplay> _mixedActivityDays = [];
     [ObservableProperty] private ObservableCollection<MixedActivityDecisionDisplay> _activityDecisions = [];
     [ObservableProperty] private ObservableCollection<string> _scheduleInputReasons = [];
     [ObservableProperty] private ObservableCollection<string> _previewLimitations = [];
@@ -206,6 +212,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             _availableWeekdays = weekdays;
             var initialActivities = preferences.ActivityTypes.ToHashSet();
             UpdateSelectedProfileActivities(initialActivities.ToList());
+            if (IsYogaSelected && SelectedYogaContentChoice is null)
+                SelectedYogaContentChoice = YogaContentChoices.First(choice => !choice.Value);
             NotifyAvailabilityChanged();
             var savedStrengthActivity = preferences.ActivityTypes
                 .Select(activity => (WorkoutActivityDto)activity)
@@ -406,6 +414,19 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             MixedActivitySessions = new ObservableCollection<MixedActivitySessionDisplay>(
                 mixedSchedule?.Sessions.Select(StrengthPlanGenerationDisplayMapper.ToMixedActivitySessionDisplay) ??
                 Array.Empty<MixedActivitySessionDisplay>());
+            MixedActivityDays = new ObservableCollection<MixedActivityDayDisplay>(
+                mixedSchedule?.Sessions.Count > NoPolicyReasons ? CalendarWeekdays.Select(day =>
+                {
+                    var sessions = mixedSchedule.Sessions.Where(session => session.Weekday == day)
+                        .Select(session => StrengthPlanGenerationDisplayMapper.ToMixedActivitySessionDisplay(session))
+                        .ToArray();
+                    return new MixedActivityDayDisplay(
+                        StrengthPlanGenerationDisplayMapper.FullWeekdayLabel(day),
+                        sessions.Length == NoPolicyReasons
+                            ? UiTextCatalog.Get("Workout_Generation_PlannedRestDay")
+                            : string.Join(" · ", sessions.Select(session => session.Activity + " " + session.Duration)),
+                        sessions.Length == NoPolicyReasons);
+                }) : []);
             ActivityDecisions = new ObservableCollection<MixedActivityDecisionDisplay>(
                 mixedSchedule?.Activities
                     .Where(decision => decision.ActivityTypeId != (int)WorkoutActivityDto.RestDay)
@@ -728,6 +749,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         ClearHighIntensityCandidates();
         StrengthPreviewSessions.Clear();
         MixedActivitySessions.Clear();
+        MixedActivityDays.Clear();
         ActivityDecisions.Clear();
         ScheduleInputReasons.Clear();
         PreviewLimitations.Clear();

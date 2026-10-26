@@ -56,7 +56,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_RopeCompetence"] = "Умеете ли вы уверенно работать с верёвочной страховкой?";
         Values["Workout_Generation_ClimbingInstructionAvailable"] = "Будут ли доступны подходящее обучение или наблюдение инструктора?";
         Values["Workout_Generation_YogaEvidenceTitle"] = "Сведения о йоге";
-        Values["Workout_Generation_YogaEvidenceHelp"] = "Оцените занятие по фактическому содержанию, а не по его названию.";
+        Values["Workout_Generation_YogaEvidenceHelp"] = "По умолчанию выбрана мягкая йога. Для интенсивной практики выберите соответствующий вариант.";
         Values["Workout_Generation_YogaContentClassification"] = "Насколько интенсивна эта практика йоги?";
         Values["Workout_Generation_YogaDurationLabel"] = "Длительность занятия йогой (минуты)";
         Values["Workout_Generation_YogaDurationPlaceholder"] = "Сначала выберите формат практики";
@@ -133,6 +133,8 @@ internal static partial class RussianUiText
         Values["Workout_Generation_AvailableDaysMissing"] = "Сохраните от 2 до 7 доступных дней в предпочтениях тренировок перед созданием плана.";
         Values["Workout_Generation_SavedAvailabilityFormat"] = "Будут учтены сохранённые дни для тренировок: {0}.";
         Values["Workout_Generation_MixedScheduleTitle"] = "Расписание активностей на неделю";
+        Values["Workout_Generation_PlannedRestDay"] = "Отдых · тренировка не запланирована";
+        Values["Workout_Generation_Reason_YogaInconsistent"] = "Описание указывает на интенсивную йогу. Выберите интенсивную практику или исправьте описание.";
         Values["Workout_Generation_MixedScheduleExplanation"] = "Выбранные активности распределяются по доступным дням недели.";
         Values["Workout_Generation_ScheduleEmpty"] = "Не удалось разместить занятия в сохранённые доступные дни недели.";
         Values["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";

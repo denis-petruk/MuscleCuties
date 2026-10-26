@@ -2,6 +2,8 @@
 
 The active delivery status is maintained at [docs/v1/STATUS.md](docs/v1/STATUS.md).
 
+- **2026-10-26 Yoga and weekly preview checkpoint:** A selected Yoga activity now defaults to gentle when no intensity answer exists, while an explicit demanding choice still drives the hard-day rule. Compatible saved Yoga durations are reused; incompatible saved durations fall back to the selected intensity policy. The preview displays every weekday in compact rows and identifies days without scheduled sessions as rest. Yoga classification conflicts have a specific English/Russian explanation. Core 660/660, Server 81/81, Registration 41/41, and Mobile Contracts 8/8 tests pass locally. iOS build and signed-in runtime acceptance are still pending for this checkpoint.
+
 - **2026-10-26 layered logic cleanup:** Cleaned up layered mutations and duplicate properties introduced during plan generation and preview sheet iterations:
   1. `StrengthPlanPreviewMapperV020.AttachMixedSchedule`: Streamlined session alignment and volume cutting into a single declarative pass (`Take(effectiveCount)` with weekday assignment when placed, or preserving unassigned sessions when none placed). Simplified limitation code management and 3-way status resolution without intermediate multi-pass mutations.
   2. `StrengthPlanGenerationViewModel` & `StrengthPlanGenerationPage.xaml`: Consolidated duplicate preview button visibility properties (`CanApplyPlanFromPreview` and `CanEditDetailsFromPreview`) into a single canonical `CanReviewPreview` property, linked `HasFeasiblePreview` to `CanSubmitProposal`, and removed the redundant `IsEnabled` binding on the Apply button in favor of `AcceptProposalCommand`'s native `CanExecute` validation.

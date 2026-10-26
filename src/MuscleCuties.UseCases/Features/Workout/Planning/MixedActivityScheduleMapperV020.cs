@@ -46,11 +46,16 @@ internal static class MixedActivityScheduleMapperV020
             .ToDictionary(pair => (WorkoutActivityType)pair.Key, pair => (decimal)pair.Value) ?? [];
         if (strengthPreview.StrengthSessionLimitMinutes is { } strengthSessionLimit)
             durations[chosenStrengthActivity] = strengthSessionLimit;
-        foreach (var yogaEvidence in evidenceInputs.Where(evidence =>
-                     evidence?.Activity == WorkoutActivityDto.Yoga && evidence.IsDemandingYogaContent.HasValue))
-            durations[WorkoutActivityType.Yoga] = yogaEvidence!.YogaSessionDurationMinutes ??
-                ActivitySessionDurationRule.DefaultMinutesFor(
-                    WorkoutActivityType.Yoga, yogaEvidence.IsDemandingYogaContent!.Value)!.Value;
+        if (selectedActivities?.Contains(WorkoutActivityType.Yoga) == true)
+        {
+            var yogaEvidence = evidenceInputs.FirstOrDefault(evidence =>
+                evidence?.Activity == WorkoutActivityDto.Yoga);
+            durations[WorkoutActivityType.Yoga] = ActivitySessionDurationRule.ResolveYogaPlanDuration(
+                yogaEvidence?.YogaSessionDurationMinutes,
+                durations.TryGetValue(WorkoutActivityType.Yoga, out var savedYogaMinutes)
+                    ? (int?)savedYogaMinutes : null,
+                yogaEvidence?.IsDemandingYogaContent == true);
+        }
         foreach (var activity in selectedActivities ?? [])
         {
             if (!requestedSessions.ContainsKey(activity) &&
