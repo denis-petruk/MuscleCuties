@@ -2,6 +2,8 @@
 
 The active delivery status is maintained at [docs/v1/STATUS.md](docs/v1/STATUS.md).
 
+- **2026-10-26 plan preview actions and deployment:** The preview sheet footer now always exposes both the primary "Apply plan" action and the secondary "Edit details and try again" action while a proposal is under review (`CanApplyPlanFromPreview` and `CanEditDetailsFromPreview`). "Apply plan" enables when the proposal is feasible and persisted, while "Edit details" remains available to modify parameters. The "Open training" action replaces them once the plan is applied. Re-verified Core, Server, and Mobile Contract test suites, as well as iOS simulator builds. Ready for GitLab pipeline deployment.
+
 - **2026-10-26 deployment gate:** GitLab pipeline `#2990556448` failed in backend verification because two direct scheduler fixtures omitted the chosen strength activity and expected the old no-schedule result. The production preview supplies that choice. The fixtures now supply General Strength explicitly and expect the other strength choice to remain unscheduled; a replacement pipeline is needed before the planning backend changes can appear in the app.
 
 - **2026-10-26 High-Volume Strength selection:** The selected high-volume plan remains available without established training history. Its initial prescription uses fewer main/accessory sets and leaves four repetitions in reserve so users can choose a manageable starting weight. Optional activity omissions do not block applying a feasible strength plan. The invalid `SafeAreaEdges=Top` page value was reverted after a simulator abort. The iOS simulator build succeeds with zero warnings/errors. The user requested no further test runs; signed-in plan preview and Apply still need visual confirmation on this build.
