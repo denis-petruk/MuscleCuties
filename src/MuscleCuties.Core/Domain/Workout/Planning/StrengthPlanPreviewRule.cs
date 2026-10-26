@@ -72,7 +72,8 @@ public sealed record StrengthPlanPreviewResult(
     IReadOnlyList<string> AdvisoryCodes,
     WorkoutActivityType? EffectiveActivity = null,
     string? FallbackSource = null,
-    string? FallbackReasonCode = null);
+    string? FallbackReasonCode = null,
+    int? StrengthSessionLimitMinutes = null);
 
 /// <summary>
 /// Evaluates a strength proposal as one Core decision using activity policy, reviewed templates,
@@ -350,7 +351,7 @@ public static class StrengthPlanPreviewRule
                 ? StrengthPlanPreviewStatus.Feasible : StrengthPlanPreviewStatus.Limited,
             experience, sessions, limitationCodes, reviewConditions,
             advisories.Distinct(StringComparer.Ordinal).OrderBy(value => value, StringComparer.Ordinal).ToArray(),
-            activity);
+            activity, StrengthSessionLimitMinutes: sessionMinutes);
     }
 
     private static bool ValidChoices(StrengthPlanPreviewChoices? choices) =>
@@ -467,13 +468,11 @@ public static class StrengthPlanPreviewRule
                     ? new Dictionary<WorkoutActivityType, int>(data.ActivitySessionDurationsMinutes)
                     : new Dictionary<WorkoutActivityType, int>();
 
-                if (!durations.ContainsKey(WorkoutActivityType.GeneralStrength))
-                {
-                    durations[WorkoutActivityType.GeneralStrength] =
-                        durations.TryGetValue(choices.Activity, out var origDur)
-                            ? origDur
-                            : WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes;
-                }
+                // A fallback changes the template, not the user's selected time budget.
+                if (durations.TryGetValue(choices.Activity, out var selectedMinutes))
+                    durations[WorkoutActivityType.GeneralStrength] = selectedMinutes;
+                else
+                    durations.Remove(WorkoutActivityType.GeneralStrength);
 
                 var gsData = data with
                 {

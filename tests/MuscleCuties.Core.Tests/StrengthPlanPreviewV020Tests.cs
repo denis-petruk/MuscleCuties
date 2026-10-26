@@ -13,6 +13,8 @@ public sealed class StrengthPlanPreviewV020Tests
     private const int PreviousSessionDays = 1;
     private const int NoWarmupOrCooldownMinutes = 0;
     private const int SelectedDemandingYogaDurationMinutes = 35;
+    private const int SelectedFallbackStrengthMinutes = 60;
+    private const int StaleGeneralStrengthMinutes = 90;
     private const int HighIntensitySessionsPerWeek =
         ActivityPrescriptionRule.StrengthHighIntensityMaximumSessionsPerWeekInitially;
     private const int ExpectedSavedProposalCount = 1;
@@ -521,6 +523,65 @@ public sealed class StrengthPlanPreviewV020Tests
             session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength));
         Assert.DoesNotContain(result.MixedActivitySchedule.Sessions, session =>
             session.ActivityTypeId == (int)WorkoutActivityType.HighVolumeStrength);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task High_Volume_Fallback_Preserves_Selected_Strength_Duration(bool hasStaleGeneralDuration)
+    {
+        var durations = new Dictionary<int, int>
+        {
+            [(int)WorkoutActivityType.HighVolumeStrength] = SelectedFallbackStrengthMinutes
+        };
+        if (hasStaleGeneralDuration)
+            durations[(int)WorkoutActivityType.GeneralStrength] = StaleGeneralStrengthMinutes;
+        var profile = Profile() with
+        {
+            SelectedActivityTypes = new HashSet<int> { (int)WorkoutActivityType.HighVolumeStrength },
+            ActivitySessionDurationsMinutes = durations
+        };
+        var request = Request() with
+        {
+            Activity = WorkoutActivityDto.HighVolumeStrength,
+            ActivityHistory = new ActivityTrainingHistoryInputV020(
+                WorkoutActivityType.HighVolumeStrength.ToString(), HistoryConsistentWeeks,
+                HistoryAverageSessions, LocalDate.AddDays(-PreviousSessionDays), true)
+        };
+
+        var result = await new PreviewStrengthPlanV020UseCase(new Source(profile))
+            .ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.Equal("Feasible", result.Status);
+        Assert.Equal((int)WorkoutActivityType.GeneralStrength, result.EffectiveActivityTypeId);
+        Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
+            result.MixedActivitySchedule!.Sessions.Count);
+        Assert.All(result.MixedActivitySchedule.Sessions, session =>
+            Assert.Equal((decimal)SelectedFallbackStrengthMinutes, session.DurationMinutes));
+        Assert.All(result.Sessions, session =>
+            Assert.True(session.EstimatedMinutes <= SelectedFallbackStrengthMinutes));
+    }
+
+    [Fact]
+    public async Task High_Volume_Fallback_Does_Not_Invent_A_Missing_Selected_Duration()
+    {
+        var request = Request() with
+        {
+            Activity = WorkoutActivityDto.HighVolumeStrength,
+            ActivityHistory = new ActivityTrainingHistoryInputV020(
+                WorkoutActivityType.HighVolumeStrength.ToString(), HistoryConsistentWeeks,
+                HistoryAverageSessions, LocalDate.AddDays(-PreviousSessionDays), true),
+            ActivitySessionDurationsMinutes = new Dictionary<int, int>
+            {
+                [(int)WorkoutActivityType.GeneralStrength] = StaleGeneralStrengthMinutes
+            }
+        };
+
+        var result = await new PreviewStrengthPlanV020UseCase(new Source(Profile()))
+            .ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.Equal("Limited", result.Status);
+        Assert.Contains(StrengthPlanPreviewRule.SessionDurationMissingCode, result.LimitationCodes);
     }
 
     [Fact]
