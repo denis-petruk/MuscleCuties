@@ -3,6 +3,8 @@
 
 The active roadmap is maintained at [docs/v1/ROADMAP.md](docs/v1/ROADMAP.md).
 
+- **2026-10-26 continuation:** Same-day scheduling is implemented in the current checkpoint and its Core/proposal tests pass. Next connect the owner's Mac through SSH, verify its Xcode/.NET iOS tooling, and run the iOS build and simulator acceptance. Establish disposable local PostgreSQL for persistence checks and authenticated staging access for backend parity. Repository catalog review checks pass; this does not establish deployed catalog parity. Do not treat historical same-day implementation notes as current blockers.
+
 - **2026-10-25 account deletion:** Apple account deletion now asks for fresh Apple authorization when the server reports a missing or rejected token, retries once, and sends the authorization code in the request body. Verify signed-in Apple and password-account deletion against the updated backend; do not use a personal account as a test fixture.
 - **2026-10-25 profile follow-up:** Removed the duplicate Micronutrient targets menu row while keeping the Nutrition settings destination. Improve light-theme selection and field contrast, and show actionable workout-save errors. Signed-in narrow-iPhone visual review remains open.
 
