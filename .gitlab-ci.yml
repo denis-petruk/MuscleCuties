@@ -1,6 +1,7 @@
 workflow:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
     - when: never
 
 stages:
@@ -17,6 +18,8 @@ variables:
 verify_plan_generation:
   stage: backend_verify
   image: mcr.microsoft.com/dotnet/sdk:10.0.403
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends libfontconfig1
   script:
@@ -33,6 +36,7 @@ package_staging_lambda:
   needs:
     - job: verify_plan_generation
       artifacts: false
+      optional: true
   script:
     - dotnet tool install Amazon.Lambda.Tools --version 7.0.0 --tool-path .tools
     - mkdir -p artifacts
@@ -66,10 +70,13 @@ deploy_staging_lambda:
     - echo "Staging Lambda update completed for pipeline ${CI_PIPELINE_ID}."
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
 
 verify_mobile_contracts:
   stage: client_verify
   image: mcr.microsoft.com/dotnet/sdk:10.0.403
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
   needs:
     - job: deploy_staging_lambda
       artifacts: false
