@@ -98,7 +98,7 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         var apiClient = new ConflictThenSuccessApiClient();
         var store = new CloudProfileWorkoutPreferencesStore(apiClient);
 
-        var result = await store.SaveAndUpdatePlanAsync(CreateAllSelectedWorkoutPreferences(), CancellationToken.None);
+        var result = await store.SaveAsync(CreateAllSelectedWorkoutPreferences(), CancellationToken.None);
 
         Xunit.Assert.Equal(WorkoutPreferencesError.None, result);
         Xunit.Assert.Equal(new[] { InitialProfileVersion, RefreshedProfileVersion }, apiClient.ExpectedVersions);
@@ -120,7 +120,7 @@ public sealed class CloudNutritionAndWorkoutContractsTests
     {
         var store = new CloudProfileWorkoutPreferencesStore(new FailedPreferenceWriteApiClient(status, errorCode));
 
-        var result = await store.SaveAndUpdatePlanAsync(CreateAllSelectedWorkoutPreferences(), CancellationToken.None);
+        var result = await store.SaveAsync(CreateAllSelectedWorkoutPreferences(), CancellationToken.None);
 
         Xunit.Assert.Equal(expectedError, result);
     }
@@ -382,7 +382,7 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         var loadedWorkoutPrefs = await workoutPrefsStore.LoadAsync(CancellationToken.None);
         Xunit.Assert.NotNull(loadedWorkoutPrefs);
         Xunit.Assert.Equal(new[] { 1, 3, 5, 6 }, loadedWorkoutPrefs!.AvailableWeekdays);
-        var savedWorkoutPrefs = await workoutPrefsStore.SaveAndUpdatePlanAsync(loadedWorkoutPrefs, CancellationToken.None);
+        var savedWorkoutPrefs = await workoutPrefsStore.SaveAsync(loadedWorkoutPrefs, CancellationToken.None);
         Xunit.Assert.Equal(WorkoutPreferencesError.None, savedWorkoutPrefs);
         Xunit.Assert.Contains(("PUT", "/api/v1/profile/workout-preferences"), apiClient.RecordedCalls);
     }

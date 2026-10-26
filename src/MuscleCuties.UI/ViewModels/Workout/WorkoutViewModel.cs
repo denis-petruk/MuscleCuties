@@ -11,7 +11,6 @@ using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
-using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
@@ -30,8 +29,6 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private readonly Func<int, Task> _openWorkoutSessionAsync;
     public event Func<int, Task>? SessionActivitiesRequested;
     private readonly IWorkoutOverviewUseCase _overview;
-    private readonly IProfileWorkoutPreferencesUseCase _preferences;
-    private readonly IProfileRefreshNotifier _refreshNotifier;
 
     [ObservableProperty] private string? _activePlanName;
     private List<WorkoutItem> _allWorkouts = new();
@@ -78,8 +75,6 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private bool _isRefreshing;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isPlanStale = true;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasPlanRefreshMessage))]
-    private string _planRefreshMessage = string.Empty;
     [ObservableProperty] private ObservableCollection<string> _rehabExerciseNames = new();
     [ObservableProperty] private ObservableCollection<ScheduleDayItem> _scheduleDays = [];
     [ObservableProperty] private ScheduleDayItem? _selectedScheduleDay;
@@ -91,19 +86,15 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     public WorkoutViewModel(
         IWorkoutOverviewUseCase overview,
         IWorkoutInjuryUseCase injuries,
-        IProfileWorkoutPreferencesUseCase preferences,
-        IProfileRefreshNotifier refreshNotifier,
         Func<string, Task>? navigateAsync = null,
         Func<int, Task>? openWorkoutSessionAsync = null)
     {
         _overview = overview;
         _injuries = injuries;
-        _preferences = preferences;
-        _refreshNotifier = refreshNotifier;
         _navigateAsync = navigateAsync ?? (_ => Task.CompletedTask);
         _openWorkoutSessionAsync = openWorkoutSessionAsync ?? (_ => Task.CompletedTask);
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
-        RegeneratePlanCommand = new AsyncRelayCommand(RegeneratePlanAsync);
+        RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         EmptyWorkoutsActionCommand = new AsyncRelayCommand(HandleEmptyWorkoutsActionAsync, CanUseEmptyWorkoutsAction);
         OpenWorkoutCommand = new AsyncRelayCommand<WorkoutItem>(OpenWorkoutAsync);
         ToggleSessionOptionalCommand = new AsyncRelayCommand<WorkoutItem>(ToggleSessionOptionalAsync);
@@ -218,8 +209,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     }
 
     public AsyncRelayCommand LoadDataCommand { get; }
-    public AsyncRelayCommand RegeneratePlanCommand { get; }
-    public bool HasPlanRefreshMessage => !string.IsNullOrWhiteSpace(PlanRefreshMessage);
+    public AsyncRelayCommand RefreshCommand { get; }
     public bool IsPageLoading => IsBusy || IsPlanStale;
 
     [RelayCommand]
@@ -245,7 +235,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
     }
 
-    private async Task RegeneratePlanAsync()
+    private async Task RefreshAsync()
     {
         if (IsBusy)
         {
@@ -253,33 +243,12 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             return;
         }
 
-        IsBusy = true;
-        PlanRefreshMessage = string.Empty;
         try
         {
-            var result = await _preferences.RegenerateSavedPlanAsync();
-            if (!result.Succeeded)
-            {
-                PlanRefreshMessage = result.Error == WorkoutPreferencesError.ProfileMissing
-                    ? "Workout_Page_RegenerateProfileMissing"
-                    : "Workout_Page_RegenerateFailed";
-                return;
-            }
-
-            _refreshNotifier.InvalidateWorkoutAndDashboard();
             await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
-            PlanRefreshMessage = IsLoadError
-                ? "Workout_Page_RegenerateReloadFailed"
-                : "Workout_Page_RegenerateSuccess";
-        }
-        catch (Exception ex)
-        {
-            Trace.WriteLine($"[WorkoutViewModel] Regenerate failed ({ex.GetType().Name}).");
-            PlanRefreshMessage = "Workout_Page_RegenerateFailed";
         }
         finally
         {
-            IsBusy = false;
             IsRefreshing = false;
         }
     }

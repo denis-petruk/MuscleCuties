@@ -990,7 +990,7 @@ public sealed class CloudProfileWorkoutPreferencesStore(
         return CloudWorkoutPreferencesSnapshotMapper.ToPreferences(snapshot);
     }
 
-    public async Task<WorkoutPreferencesError> SaveAndUpdatePlanAsync(
+    public async Task<WorkoutPreferencesError> SaveAsync(
         WorkoutPreferencesDto preferences, CancellationToken cancellationToken)
     {
         for (var attempt = 0; attempt <= MaximumVersionConflictRetries; attempt++)
@@ -1041,7 +1041,7 @@ public sealed class CloudProfileWorkoutPreferencesStore(
         BackendApiStatus.ValidationFailed when string.Equals(errorCode, "invalidCatalogReference",
             StringComparison.Ordinal) => WorkoutPreferencesError.ExerciseCatalogChanged,
         BackendApiStatus.ValidationFailed => WorkoutPreferencesError.InvalidPreferences,
-        _ => WorkoutPreferencesError.PlanUpdateFailed
+        _ => WorkoutPreferencesError.SaveFailed
     };
 
 }

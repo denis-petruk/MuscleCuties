@@ -28,7 +28,12 @@ internal static class StrengthPlanGenerationDisplayMapper
             : UiTextCatalog.Get("Workout_Generation_EstimateUnavailable");
         var details = FormatLocalized("Workout_Generation_MixedSessionDetailsFormat", duration,
             UiTextCatalog.Get(effortKey));
-        return new MixedActivitySessionDisplay(title, details);
+        return new MixedActivitySessionDisplay(title, details)
+        {
+            Day = FullWeekdayLabel(session.Weekday),
+            Activity = ActivityLabel(session.ActivityTypeId),
+            Duration = duration
+        };
     }
 
     public static MixedActivityDecisionDisplay ToMixedActivityDecisionDisplay(
@@ -276,18 +281,12 @@ internal static class StrengthPlanGenerationDisplayMapper
 
     private static string ActivityFrequencySummary(MixedActivityScheduleDecisionV020 decision)
     {
-        var policyFrequency = FrequencySummaryValue(decision.PolicySessionsPerWeek);
-        var targetFrequency = FrequencySummaryValue(decision.TargetSessionsPerWeek);
-        var scheduledFrequency = FrequencySummaryValue(decision.ScheduledSessionsPerWeek);
-
-        if (decision.PolicySessionsPerWeek is { } matchingFrequency &&
-            matchingFrequency == decision.TargetSessionsPerWeek &&
-            matchingFrequency == decision.ScheduledSessionsPerWeek &&
-            matchingFrequency > NoPolicyReasons)
-            return FrequencyValue(matchingFrequency);
-
-        return FormatLocalized("Workout_Generation_ActivityFrequencySummaryFormat",
-            policyFrequency, targetFrequency, scheduledFrequency);
+        if (decision.ScheduledSessionsPerWeek > NoPolicyReasons)
+            return FrequencyValue(decision.ScheduledSessionsPerWeek);
+        return decision.TargetSessionsPerWeek is > NoPolicyReasons
+            ? FormatLocalized("Workout_Generation_ActivityTargetFormat",
+                FrequencyValue(decision.TargetSessionsPerWeek))
+            : NoStatusMessage;
     }
 
     private static string FrequencyValue(int? value)

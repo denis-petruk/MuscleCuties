@@ -27,12 +27,18 @@ public sealed record StrengthPlanRecentWeekDisplay(
 
 public sealed record ActivityEvidenceAnswerChoice(string Label, bool Value);
 
-public sealed record MixedActivitySessionDisplay(string Title, string Details);
+public sealed record MixedActivitySessionDisplay(string Title, string Details)
+{
+    public string Day { get; init; } = string.Empty;
+    public string Activity { get; init; } = string.Empty;
+    public string Duration { get; init; } = string.Empty;
+}
 
 public sealed record MixedActivityDecisionDisplay(string Activity, string Status, string Frequency,
     ObservableCollection<string> Reasons)
 {
     public bool HasReasons => Reasons.Count > 0;
+    public bool HasFrequency => !string.IsNullOrWhiteSpace(Frequency);
 }
 
 public sealed record StrengthPlanSlotDisplay(string Name, string Details, bool IsRequired);

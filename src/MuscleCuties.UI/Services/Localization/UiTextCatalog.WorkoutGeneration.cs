@@ -88,6 +88,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_MinutesPlaceholder"] = "Minutes";
         English["Workout_Generation_CreatePreview"] = "Preview plan";
         English["Workout_Generation_PreviewTitle"] = "Plan preview";
+        English["Workout_Generation_PreviewExplanation"] = "Review the weekly activity schedule, activity decisions, strength exercises, and time estimates before applying the plan.";
         English["Workout_Generation_SessionTitleFormat"] = "Session {0}";
         English["Workout_Generation_EstimatedMinutesFormat"] = "About {0:0} min";
         English["Workout_Generation_EstimateUnavailable"] = "Time estimate unavailable";
@@ -179,6 +180,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_Activity_Other"] = "Other activity";
         English["Workout_Generation_Reason_NoActivitiesSelected"] = "No activities were selected for the weekly schedule.";
         English["Workout_Generation_Reason_AvailableWeekdays"] = "Save 2 to 7 valid available weekdays in workout preferences.";
+        English["Workout_Generation_ActivityTargetFormat"] = "Plan goal: {0}";
         English["Workout_Generation_Reason_ActivityEvidence"] = "The activity's eligibility information is missing or duplicated.";
         English["Workout_Generation_Reason_ActivityNotSelected"] = "Select this activity in your workout preferences to schedule it.";
         English["Workout_Generation_Reason_ActivityNotEligible"] = "This activity does not currently meet its planning requirements.";

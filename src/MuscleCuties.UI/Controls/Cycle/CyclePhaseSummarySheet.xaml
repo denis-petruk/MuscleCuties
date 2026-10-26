@@ -11,7 +11,7 @@
     IsOpen="{Binding IsPhaseSummarySheetVisible}">
 
     <Grid BackgroundColor="{StaticResource ModalScrim}">
-        <BoxView BackgroundColor="{StaticResource Transparent}">
+        <BoxView Style="{StaticResource ModalDismissTarget}">
             <BoxView.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding ClosePhaseSummarySheetCommand}" />
             </BoxView.GestureRecognizers>

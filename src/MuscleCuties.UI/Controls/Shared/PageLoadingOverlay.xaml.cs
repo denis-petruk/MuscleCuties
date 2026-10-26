@@ -1,10 +1,23 @@
 using System.ComponentModel;
+using System.Windows.Input;
 using MuscleCuties.UI.ViewModels.Common;
 
 namespace MuscleCuties.UI.Controls.Shared;
 
 public partial class PageLoadingOverlay : ContentView
 {
+    public static readonly BindableProperty BackCommandProperty = BindableProperty.Create(
+        nameof(BackCommand), typeof(ICommand), typeof(PageLoadingOverlay),
+        propertyChanged: (bindable, _, _) => ((PageLoadingOverlay)bindable).OnPropertyChanged(nameof(HasBackCommand)));
+
+    public ICommand? BackCommand
+    {
+        get => (ICommand?)GetValue(BackCommandProperty);
+        set => SetValue(BackCommandProperty, value);
+    }
+
+    public bool HasBackCommand => BackCommand is not null;
+
     private INotifyPropertyChanged? _observedViewModel;
 
     public PageLoadingOverlay()

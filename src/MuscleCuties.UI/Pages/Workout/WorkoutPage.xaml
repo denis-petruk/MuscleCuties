@@ -14,7 +14,8 @@
     xmlns:injuryControls="clr-namespace:MuscleCuties.UI.Controls.Injury"
     xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     x:DataType="vm:WorkoutViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="{Binding IsInjuryModalVisible, Converter={StaticResource InvertedBoolConverter}}">
 
 
     <Grid RowDefinitions="Auto,*">
@@ -68,7 +69,7 @@
         </Grid>
 
         <RefreshView Grid.Row="1"
-                     Command="{Binding RegeneratePlanCommand}"
+                     Command="{Binding RefreshCommand}"
                      IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}">
         <CollectionView ItemsSource="{Binding Workouts}" SelectionMode="None">
             <CollectionView.Header>
@@ -164,9 +165,6 @@
                         <Label
                             Text="{Binding PlanSummaryText, Converter={StaticResource LocalizedStringConverter}}"
                             Style="{StaticResource MutedLabel}" />
-                        <Label Text="{Binding PlanRefreshMessage, Converter={StaticResource LocalizedStringConverter}}"
-                               IsVisible="{Binding HasPlanRefreshMessage}"
-                               Style="{StaticResource MutedLabel}" />
                     </VerticalStackLayout>
 
                     <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
@@ -358,9 +356,12 @@
         </RefreshView>
 
         <sharedControls:PageLoadingOverlay
+            Grid.RowSpan="{StaticResource WorkoutOverlayRowSpan}"
             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}" />
         <toolkit:LazyView
             x:Name="InjuryModalLazy"
+            Grid.RowSpan="{StaticResource WorkoutOverlayRowSpan}"
+            ZIndex="20"
             x:TypeArguments="injuryControls:InjuryLogModal"
             InputTransparent="{Binding IsInjuryModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
 

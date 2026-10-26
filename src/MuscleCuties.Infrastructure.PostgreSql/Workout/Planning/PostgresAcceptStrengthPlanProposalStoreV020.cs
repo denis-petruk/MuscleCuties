@@ -45,6 +45,11 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             if (proposal is null)
                 return await FinishAsync(transaction, new("NotFound", null, null, "ProposalNotFound"),
                     cancellationToken).ConfigureAwait(false);
+            // A response can be lost after commit. Replaying the same accepted proposal
+            // returns its original result without creating another plan or revision.
+            if (proposal.Status == "Accepted" && proposal.AcceptedRevisionId is { } acceptedRevisionId)
+                return await FinishAsync(transaction, new("Accepted", proposal.PlanId, acceptedRevisionId, null),
+                    cancellationToken).ConfigureAwait(false);
             if (proposal.Status != "Proposed")
                 return await FinishAsync(transaction, new("Conflict", proposal.PlanId, null,
                     "ProposalAlreadyDecided"), cancellationToken).ConfigureAwait(false);
