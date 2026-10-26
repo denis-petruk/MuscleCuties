@@ -1,5 +1,7 @@
 # Status — MuscleCuties Delivery & Candidate Status
 
+**Deployment gate (2026-10-26):** GitLab pipeline `#2990556448` stopped at backend verification before package/deploy. Two scheduler fixtures expected the old high-volume fallback while omitting `ChosenStrengthActivity`; production requests supply that choice. Both fixtures now model the selected strength activity. The updated planning backend is still awaiting a passing deployment and a new iOS client build on the user's device.
+
 **High-Volume Strength first-use policy (2026-10-26):** The selected high-volume activity now stays selected and can be applied with beginner or sparse history, using two initial main sets, one accessory set, and four repetitions in reserve. Heavy/high-intensity strength retains its evidence gate. The earlier plan-sheet safe-area experiment was reverted after a simulator abort. The iOS simulator build succeeds with zero warnings/errors. The user requested no further test runs; signed-in plan preview and Apply still need visual confirmation on this build.
 
 **Optional activity scheduling (2026-10-26):** The chosen strength sessions remain mandatory; optional activities fill safe openings and may be omitted without blocking Apply. At most two compatible sessions may share a day. The preview expands omitted-activity decisions, explains the partial schedule, and hides the setup tab bar so its sheet reaches the bottom. Core tests pass 657/657. Signed-in narrow-iPhone Apply and saved Train schedule verification remain open.
