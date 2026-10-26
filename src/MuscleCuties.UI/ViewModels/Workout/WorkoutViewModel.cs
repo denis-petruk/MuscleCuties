@@ -71,6 +71,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private bool _isInjuryBannerExpanded;
 
     [ObservableProperty] private bool _isInjuryModalVisible;
+    [ObservableProperty] private bool _isSessionActivitiesVisible;
     [ObservableProperty] private bool _isLoadError;
     [ObservableProperty] private bool _isRefreshing;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
@@ -125,6 +126,14 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     {
         OnPropertyChanged(nameof(HasKnownCyclePhase));
     }
+
+    public bool IsTabBarVisible => !IsInjuryModalVisible && !IsSessionActivitiesVisible;
+
+    partial void OnIsInjuryModalVisibleChanged(bool value) =>
+        OnPropertyChanged(nameof(IsTabBarVisible));
+
+    partial void OnIsSessionActivitiesVisibleChanged(bool value) =>
+        OnPropertyChanged(nameof(IsTabBarVisible));
 
     public InjuryLogViewModel InjuryLogVm => _injuryLogVm ??= new InjuryLogViewModel(
         _injuries, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
