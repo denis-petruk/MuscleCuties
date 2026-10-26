@@ -186,7 +186,7 @@ public static class MixedActivityWeekScheduleRule
                 continue;
             }
 
-            PrepareActivity(decision, context, duplicateEvidenceActivities, days, decisions);
+            PrepareActivity(decision, context, duplicateEvidenceActivities, days);
         }
 
         ApplyHiitReplacement(decisions, context);
@@ -210,8 +210,7 @@ public static class MixedActivityWeekScheduleRule
     private static void PrepareActivity(ActivityDecisionBuilder decision,
         MixedActivityWeekScheduleContext context,
         HashSet<WorkoutActivityType> duplicateEvidenceActivities,
-        DayOfWeek[] days,
-        ActivityDecisionBuilder[] allDecisions)
+        DayOfWeek[] days)
     {
         if (decision.Activity == WorkoutActivityType.Other)
         {
@@ -288,13 +287,6 @@ public static class MixedActivityWeekScheduleRule
 
         decision.PrescriptionStatus = prescription.Status;
 
-        if (decision.Activity == WorkoutActivityType.HighVolumeStrength &&
-            prescription.Status == ActivityPrescriptionStatus.OfferGeneralStrength)
-        {
-            HandleHighVolumeStrengthFallback(decision, context, evidence, durationPreference, prescription, days, allDecisions);
-            return;
-        }
-
         if (prescription.Status != ActivityPrescriptionStatus.Eligible || prescription.Sessions.Count != OneSessionPerOccurrence)
         {
             decision.Block(ActivityPrescriptionNotEligible);
@@ -330,84 +322,9 @@ public static class MixedActivityWeekScheduleRule
 
         decision.Prescription = session;
         decision.IsEligible = true;
-    }
-
-    private static void HandleHighVolumeStrengthFallback(
-        ActivityDecisionBuilder decision,
-        MixedActivityWeekScheduleContext context,
-        ActivityPrescriptionContext evidence,
-        SessionDurationPreferenceReadResult durationPreference,
-        ActivityPrescriptionResult prescription,
-        DayOfWeek[] days,
-        ActivityDecisionBuilder[] allDecisions)
-    {
-        var originalReason = prescription.Reasons.FirstOrDefault(r =>
-            r is "HighVolumeRequiresEstablishedResistanceHistory" or "BeginnerProfileRequiresGeneralStrength")
-            ?? (prescription.Reasons.Count > 0 ? prescription.Reasons[0] : null)
-            ?? "HighVolumeRequiresEstablishedResistanceHistory";
-
-        decision.EffectiveActivity = WorkoutActivityType.GeneralStrength;
-        decision.FallbackReasonCode = originalReason;
-        decision.AddReason(originalReason);
-
-        var existingGsDecision = allDecisions.FirstOrDefault(d =>
-            d != decision && d.Activity == WorkoutActivityType.GeneralStrength);
-
-        if (existingGsDecision is not null)
-        {
-            decision.AddReason("ReplacedWithGeneralStrength");
-            decision.IsEligible = false;
-            decision.DispositionOverride = MixedActivityScheduleDisposition.NotScheduled;
-            decision.MergedIntoDecision = existingGsDecision;
-            return;
-        }
-
-        var gsPolicy = ResolveGeneralStrengthPolicy(evidence, days.Length);
-
-        decision.PolicySessionsPerWeek = gsPolicy.PolicySessionsPerWeek;
-        decision.TargetSessionsPerWeek = gsPolicy.TargetSessionsPerWeek;
-        decision.MaxSessionsPerWeek = gsPolicy.MaxSessionsPerWeek;
-
-        var gsEvidence = evidence with { Activity = WorkoutActivityType.GeneralStrength };
-        var gsDurationPreference = MixedActivitySessionDurationRule.ReadPreference(
-            WorkoutActivityType.GeneralStrength, context.SessionDurationsMinutes);
-        if (!gsDurationPreference.IsValid &&
-            gsDurationPreference.ReasonCode == MixedActivitySessionDurationRule.SessionDurationMissing &&
-            durationPreference.IsValid)
-            gsDurationPreference = durationPreference;
-
-        if (!gsDurationPreference.IsValid)
-        {
-            decision.Block(gsDurationPreference.ReasonCode ?? SessionDurationMissing);
-            return;
-        }
-
-        var gsPrescriptionContext = MixedActivitySessionDurationRule.ApplyPreference(gsEvidence,
-            gsDurationPreference.Preference);
-        var gsPrescription = ActivityPrescriptionRule.Evaluate(gsPrescriptionContext);
-
-        if (gsPrescription.Status != ActivityPrescriptionStatus.Eligible || gsPrescription.Sessions.Count != OneSessionPerOccurrence)
-        {
-            decision.Block(gsPrescription.Reasons.Count > 0 ? gsPrescription.Reasons[0] : ActivityPrescriptionNotEligible);
-            decision.AddReasons(gsPrescription.Reasons);
-            return;
-        }
-
-        var session = gsPrescription.Sessions[0];
-        var duration = MixedActivitySessionDurationRule.Resolve(
-            WorkoutActivityType.GeneralStrength, gsDurationPreference.Preference, session);
-        if (!duration.IsResolved)
-        {
-            decision.Block(duration.ReasonCode ?? SessionDurationMissing);
-            return;
-        }
-
-        decision.DurationMinutes = duration.DurationMinutes;
-        if (duration.SelectedDurationAppliedToPrescription)
-            decision.AddReason(SelectedDurationAppliedToPrescription);
-
-        decision.Prescription = session;
-        decision.IsEligible = true;
+        if (decision.Activity == WorkoutActivityType.HighVolumeStrength &&
+            prescription.Reasons.Contains(ActivityPrescriptionRule.HighVolumeConservativeStartCode, StringComparer.Ordinal))
+            decision.AddReason(ActivityPrescriptionRule.HighVolumeConservativeStartCode);
     }
 
     private static bool TryGetTargetFrequency(ActivityDecisionBuilder decision,
@@ -850,7 +767,6 @@ public static class MixedActivityWeekScheduleRule
         public bool IsEligible { get; set; }
         public WorkoutActivityType? EffectiveActivity { get; set; }
         public string? FallbackReasonCode { get; set; }
-        public ActivityDecisionBuilder? MergedIntoDecision { get; set; }
         public List<DayOfWeek> ScheduledDays { get; } = [];
         public MixedActivityScheduleDisposition? DispositionOverride { get; set; }
 
@@ -888,11 +804,11 @@ public static class MixedActivityWeekScheduleRule
                         : MixedActivityScheduleDisposition.Omitted);
 
             return new(Activity, disposition, PrescriptionStatus, Prescription,
-                MergedIntoDecision?.PolicySessionsPerWeek ?? PolicySessionsPerWeek,
-                MergedIntoDecision?.TargetSessionsPerWeek ?? TargetSessionsPerWeek,
-                MergedIntoDecision?.ScheduledDays.Count ?? ScheduledDays.Count, _reasons.ToArray(),
+                PolicySessionsPerWeek,
+                TargetSessionsPerWeek,
+                ScheduledDays.Count, _reasons.ToArray(),
                 EffectiveActivity ?? Activity, FallbackReasonCode,
-                MergedIntoDecision?.MaxSessionsPerWeek ?? MaxSessionsPerWeek);
+                MaxSessionsPerWeek);
         }
     }
 }

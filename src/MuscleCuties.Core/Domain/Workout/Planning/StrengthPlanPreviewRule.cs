@@ -168,24 +168,14 @@ public static class StrengthPlanPreviewRule
             choices.LocalDate).Experience;
 
         if (data.ProfileTrainingExperience == TrainingExperienceLevel.Beginner &&
-            activity is WorkoutActivityType.HighVolumeStrength or WorkoutActivityType.StrengthHighIntensity)
+            activity == WorkoutActivityType.StrengthHighIntensity)
         {
             return Failure(StrengthPlanPreviewStatus.Limited, experience,
                 BeginnerProfileRequiresGeneralStrengthCode);
         }
 
-        if (activity == WorkoutActivityType.HighVolumeStrength)
-        {
-            var isEstablishedResistance = GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(
-                choices.ActivityHistory, choices.LocalDate);
-
-            if (!isEstablishedResistance || experience != ActivityExperience.Established)
-            {
-                return Failure(StrengthPlanPreviewStatus.Limited, experience,
-                    HighVolumeRequiresEstablishedResistanceHistoryCode);
-            }
-        }
-        else if (activity != WorkoutActivityType.GeneralStrength &&
+        if (activity != WorkoutActivityType.GeneralStrength &&
+                 activity != WorkoutActivityType.HighVolumeStrength &&
                  experience == ActivityExperience.Unknown &&
                  !choices.UnknownExperienceAssessmentCompleted)
         {
@@ -197,7 +187,7 @@ public static class StrengthPlanPreviewRule
             allowProfileFallbackWhenHistoryMissing: true);
         var prescriptionExperience = profileExperienceDecision.PrescriptionExperience;
 
-        if (activity == WorkoutActivityType.GeneralStrength)
+        if (activity is WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength)
         {
             if (prescriptionExperience == ActivityExperience.Unknown)
                 prescriptionExperience = ActivityExperience.Beginner;
@@ -206,7 +196,7 @@ public static class StrengthPlanPreviewRule
         }
 
         if (profileExperienceDecision.UsesConservativeProfileCap &&
-            activity is WorkoutActivityType.HighVolumeStrength or WorkoutActivityType.StrengthHighIntensity)
+            activity == WorkoutActivityType.StrengthHighIntensity)
             return Failure(StrengthPlanPreviewStatus.Limited, experience,
                 BeginnerProfileRequiresGeneralStrengthCode);
 

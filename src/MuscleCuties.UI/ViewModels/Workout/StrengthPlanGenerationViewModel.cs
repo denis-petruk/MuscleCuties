@@ -133,6 +133,12 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool HasMixedActivitySessions => MixedActivitySessions.Count > NoPolicyReasons;
     public bool HasNoMixedActivitySessions => !HasMixedActivitySessions;
     public bool HasActivityDecisions => ActivityDecisions.Count > NoPolicyReasons;
+    public bool HasOptionalOmissions => Preview?.MixedActivitySchedule?.Activities.Any(
+        decision => decision.ActivityTypeId != (int)WorkoutActivityDto.RestDay &&
+                    decision.ScheduledSessionsPerWeek == NoPolicyReasons &&
+                    !decision.ReasonCodes.Contains("StrengthAlternativeNotChosen") &&
+                    !decision.ReasonCodes.Contains("ReplacedWithGeneralStrength")) == true;
+    public bool ExpandActivityDecisions => HasLimitation || HasOptionalOmissions;
     public bool HasScheduleInputReasons => ScheduleInputReasons.Count > NoPolicyReasons;
     public bool HasStrengthPreviewSessions => StrengthPreviewSessions.Count > NoPolicyReasons;
     public bool IsBeforePreview => Preview is null;
@@ -414,7 +420,9 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 ? [PreviewLimitationMessage]
                 : []);
             StatusMessage = preview.Status == "Feasible" && _proposal.IsPersisted
-                ? UiTextCatalog.Get("Workout_Generation_PreviewReady")
+                ? HasOptionalOmissions
+                    ? UiTextCatalog.Get("Workout_Generation_OptionalActivitiesSkipped")
+                    : NoStatusMessage
                 : preview.Status == "Feasible"
                     ? UiTextCatalog.Get("Workout_Generation_PreviewNotSaved")
                     : NoStatusMessage;
@@ -738,6 +746,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(HasMixedActivitySessions));
         OnPropertyChanged(nameof(HasNoMixedActivitySessions));
         OnPropertyChanged(nameof(HasActivityDecisions));
+        OnPropertyChanged(nameof(HasOptionalOmissions));
+        OnPropertyChanged(nameof(ExpandActivityDecisions));
         OnPropertyChanged(nameof(HasScheduleInputReasons));
         OnPropertyChanged(nameof(HasStrengthPreviewSessions));
         OnPropertyChanged(nameof(HasHighIntensityCandidates));

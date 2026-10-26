@@ -24,6 +24,8 @@ Apple requires an accessible in-app policy link and a policy URL in App Store Co
 
 ## TestFlight checklist
 
+The checkpoint pipeline orders backend verification, package, and staging deployment before mobile contract verification. It does not build or upload TestFlight: a Mac runner and matching App Store provisioning profile are not configured, so the signed candidate remains an explicit release gate after backend and client verification.
+
 - [ ] Close applicable gates above; associate every result with the candidate build and API revision.
 - [ ] Rerun unit/contract and disposable-PostgreSQL integration suites after final source changes. Run only iOS build targets.
 - [ ] Confirm the upload toolchain against [Apple's current requirements](https://developer.apple.com/news/upcoming-requirements/). As checked on 2026-10-21, uploads require Xcode 26 or later with the iOS 26 SDK or later. The deployment minimum of iOS 18 is a separate setting.
