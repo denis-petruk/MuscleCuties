@@ -2,6 +2,8 @@
 
 The active delivery status is maintained at [docs/v1/STATUS.md](docs/v1/STATUS.md).
 
+- **2026-10-26 deployment gate:** GitLab pipeline `#2990556448` failed in backend verification because two direct scheduler fixtures omitted the chosen strength activity and expected the old no-schedule result. The production preview supplies that choice. The fixtures now supply General Strength explicitly and expect the other strength choice to remain unscheduled; a replacement pipeline is needed before the planning backend changes can appear in the app.
+
 - **2026-10-26 High-Volume Strength selection:** The selected high-volume plan remains available without established training history. Its initial prescription uses fewer main/accessory sets and leaves four repetitions in reserve so users can choose a manageable starting weight. Optional activity omissions do not block applying a feasible strength plan. The invalid `SafeAreaEdges=Top` page value was reverted after a simulator abort. The iOS simulator build succeeds with zero warnings/errors. The user requested no further test runs; signed-in plan preview and Apply still need visual confirmation on this build.
 
 - **2026-10-26 optional activity scheduling:** A preview remains applyable when its chosen strength sessions fit and an optional activity is omitted for eligibility or space. The schedule still permits one compatible cycling or gentle-yoga companion on a strength day, with at most two sessions per day. The preview expands omitted-activity decisions and explains that Apply remains available. The plan setup page hides the tab bar while its bounded sheet is open. Core tests pass 657/657; narrow-iPhone visual and backend acceptance checks are in progress.
