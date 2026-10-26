@@ -179,11 +179,6 @@ public static partial class UiTextCatalog
         English["Workout_Page_OpenInjuryLogAccessibility"] = "Open injury log";
         English["Workout_Page_PhaseFormat"] = "{0} phase";
         English["Workout_Page_RehabRecommendationsTitle"] = "Rehab recommendations";
-        English["Workout_Page_RegenerateSplit"] = "Regenerate workout split";
-        English["Workout_Page_RegenerateSuccess"] = "Workout split regenerated from your saved preferences.";
-        English["Workout_Page_RegenerateFailed"] = "Could not regenerate the split. Please try again.";
-        English["Workout_Page_RegenerateProfileMissing"] = "Complete your workout preferences before regenerating the split.";
-        English["Workout_Page_RegenerateReloadFailed"] = "Split regenerated, but the schedule could not reload. Open Train again to retry.";
         English["Workout_Page_ToggleInjuryAdjustmentsAccessibility"] = "Show or hide injury adjustments";
         English["Workout_Page_Week1"] = "Week 1";
         English["Workout_Page_Week2"] = "Week 2";

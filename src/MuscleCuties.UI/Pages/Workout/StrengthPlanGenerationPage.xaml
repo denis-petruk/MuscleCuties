@@ -8,6 +8,7 @@
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     x:DataType="vm:StrengthPlanGenerationViewModel"
     Shell.NavBarIsVisible="False"
     SafeAreaEdges="All"
@@ -487,15 +488,18 @@
           ZIndex="10">
         <Border x:Name="PreviewSheet"
                 Style="{StaticResource ModalSurface}" VerticalOptions="End">
-            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
+            <Grid RowDefinitions="Auto,*,Auto" Style="{StaticResource ModalBody}">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
                         <sharedControls:IconSectionHeader Text="{loc:LocalizedText Workout_Generation_PreviewTitle}" IconGlyph="Target24" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1"
-                            Text="{loc:LocalizedText Common_Close}"
-                            Command="{Binding ClosePreviewCommand}"
-                            Style="{StaticResource ButtonSecondary}" />
+                    <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
+                            SemanticProperties.Description="{loc:LocalizedText Common_Close}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ClosePreviewCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path Style="{StaticResource ModalCloseIcon}" />
+                    </Border>
                 </Grid>
                 <ScrollView Grid.Row="1">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
@@ -506,9 +510,6 @@
                                    FontSize="{StaticResource UiFontSize17}"
                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                    SemanticProperties.HeadingLevel="Level3" />
-                            <Label Text="{loc:LocalizedText Workout_Generation_MixedScheduleExplanation}"
-                                   Style="{StaticResource MutedLabel}"
-                                   LineBreakMode="WordWrap" />
                             <Label Text="{loc:LocalizedText Workout_Generation_ScheduleEmpty}"
                                    IsVisible="{Binding HasNoMixedActivitySessions}"
                                    Style="{StaticResource MutedLabel}"
@@ -517,39 +518,43 @@
                                                  Spacing="{StaticResource UiSpaceTight}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="vm:MixedActivitySessionDisplay">
-                                        <Border Style="{StaticResource CardAccent}">
-                                            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                                <Label Text="{Binding Title}"
-                                                       Style="{StaticResource FormFieldLabel}" />
-                                                <Label Text="{Binding Details}"
-                                                       Style="{StaticResource MutedLabel}" />
-                                            </VerticalStackLayout>
+                                        <Border Style="{StaticResource CardSecondary}" SemanticProperties.Description="{Binding Title}">
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                                    <Label Text="{Binding Day}" Style="{StaticResource CaptionLabel}" />
+                                                    <Label Text="{Binding Activity}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
+                                                </VerticalStackLayout>
+                                                <Label Grid.Column="1" Text="{Binding Duration}" Style="{StaticResource AccentLabel}" VerticalOptions="Center" />
+                                            </Grid>
                                         </Border>
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
                         </VerticalStackLayout>
 
-                        <!-- Activity Decisions Sub-Section -->
+                        <toolkit:Expander IsVisible="{Binding HasActivityDecisions}" IsExpanded="{Binding HasLimitation, Mode=OneWay}">
+  <toolkit:Expander.Header>
+    <Grid ColumnDefinitions="*,Auto" Style="{StaticResource DisclosureHeader}">
+      <Label Text="{loc:LocalizedText Workout_Generation_ActivityDecisionsTitle}" Style="{StaticResource BodyStrong}" />
+      <Label Grid.Column="1" Text="⌄" Style="{StaticResource MutedLabel}" />
+    </Grid>
+  </toolkit:Expander.Header>
+  <toolkit:Expander.Content>
+    <!-- Activity Decisions Sub-Section -->
                         <VerticalStackLayout IsVisible="{Binding HasActivityDecisions}" Spacing="{StaticResource UiSpacing10}">
-                            <Label Text="{loc:LocalizedText Workout_Generation_ActivityDecisionsTitle}"
-                                   Style="{StaticResource SectionTitle}"
-                                   FontSize="{StaticResource UiFontSize17}"
-                                   FontAttributes="{StaticResource UiFontAttributesBold}"
-                                   SemanticProperties.HeadingLevel="Level3" />
+
                             <VerticalStackLayout BindableLayout.ItemsSource="{Binding ActivityDecisions}"
                                                  Spacing="{StaticResource UiSpaceTight}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="vm:MixedActivityDecisionDisplay">
-                                        <Border Style="{StaticResource CardAccent}">
+                                        <Border Style="{StaticResource CardSecondary}">
                                             <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                                <Label Text="{Binding Activity}"
-                                                       Style="{StaticResource FormFieldLabel}" />
-                                                <Label Text="{Binding Status}"
-                                                       Style="{StaticResource BodyLabel}" />
-                                                <Label Text="{Binding Frequency}"
-                                                       Style="{StaticResource MutedLabel}"
-                                                       LineBreakMode="WordWrap" />
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                                    <Label Text="{Binding Activity}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
+                                                    <Label Grid.Column="1" Text="{Binding Frequency}"
+                                                           IsVisible="{Binding HasFrequency}" Style="{StaticResource AccentLabel}" />
+                                                </Grid>
+                                                <Label Text="{Binding Status}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                                                 <VerticalStackLayout IsVisible="{Binding HasReasons}"
                                                                      BindableLayout.ItemsSource="{Binding Reasons}"
                                                                      Spacing="{StaticResource UiSpacing2}">
@@ -568,7 +573,10 @@
                             </VerticalStackLayout>
                         </VerticalStackLayout>
 
-                        <!-- Scheduling Notes Sub-Section -->
+
+  </toolkit:Expander.Content>
+</toolkit:Expander>
+<!-- Scheduling Notes Sub-Section -->
                         <VerticalStackLayout IsVisible="{Binding HasScheduleInputReasons}" Spacing="{StaticResource UiSpacing10}">
                             <Label Text="{loc:LocalizedText Workout_Generation_SchedulingNotesTitle}"
                                    Style="{StaticResource SectionTitle}"
@@ -589,13 +597,17 @@
                             </Border>
                         </VerticalStackLayout>
 
-                        <!-- Strength Preview Sessions Sub-Section -->
+                        <toolkit:Expander IsVisible="{Binding HasStrengthPreviewSessions}">
+  <toolkit:Expander.Header>
+    <Grid ColumnDefinitions="*,Auto" Style="{StaticResource DisclosureHeader}">
+      <Label Text="{loc:LocalizedText Workout_Generation_StrengthDetailsTitle}" Style="{StaticResource BodyStrong}" />
+      <Label Grid.Column="1" Text="⌄" Style="{StaticResource MutedLabel}" />
+    </Grid>
+  </toolkit:Expander.Header>
+  <toolkit:Expander.Content>
+    <!-- Strength Preview Sessions Sub-Section -->
                         <VerticalStackLayout IsVisible="{Binding HasStrengthPreviewSessions}" Spacing="{StaticResource UiSpaceCompact}">
-                            <Label Text="{loc:LocalizedText Workout_Generation_StrengthDetailsTitle}"
-                                   Style="{StaticResource SectionTitle}"
-                                   FontSize="{StaticResource UiFontSize17}"
-                                   FontAttributes="{StaticResource UiFontAttributesBold}"
-                                   SemanticProperties.HeadingLevel="Level3" />
+
                             <VerticalStackLayout BindableLayout.ItemsSource="{Binding StrengthPreviewSessions}"
                                                  Spacing="{StaticResource UiSpacing10}">
                                 <BindableLayout.ItemTemplate>
@@ -635,7 +647,10 @@
                             </VerticalStackLayout>
                         </VerticalStackLayout>
 
-                        <!-- High Intensity Confirmation Candidates Sub-Section -->
+
+  </toolkit:Expander.Content>
+</toolkit:Expander>
+<!-- High Intensity Confirmation Candidates Sub-Section -->
                         <VerticalStackLayout IsVisible="{Binding HasHighIntensityCandidates}"
                                              IsEnabled="{Binding CanAnswerHighIntensityCandidates}"
                                              Spacing="{StaticResource UiSpaceCompact}">
@@ -747,6 +762,6 @@
         </Border>
     </Grid>
     </Grid>
-    <sharedControls:PageLoadingOverlay />
+    <sharedControls:PageLoadingOverlay BackCommand="{Binding BackCommand}" />
     </Grid>
 </ContentPage>

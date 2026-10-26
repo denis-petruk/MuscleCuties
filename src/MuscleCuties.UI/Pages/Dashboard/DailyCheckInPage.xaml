@@ -47,8 +47,7 @@
                                 <Label
                                     Grid.Column="1"
                                     Text="{Binding SleepDisplay, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource AccentLabel}"
-                                    FontSize="{StaticResource UiFontSize17}"
+                                    Style="{StaticResource MetricValue}"
                                     VerticalOptions="Center" />
                             </Grid>
                             <Slider
@@ -121,8 +120,9 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Energy (also drives Stress for planning) -->
-                <Border Style="{StaticResource CardPrimary}">
+                <Border Style="{StaticResource CardPrimary}"><VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+<!-- Energy (also drives Stress for planning) -->
+
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
                         <Label Grid.Row="0"
                                Text="{loc:LocalizedText Dashboard_CheckIn_EnergyTitle}"
@@ -163,10 +163,10 @@
                                    HorizontalTextAlignment="End" />
                         </Grid>
                     </Grid>
-                </Border>
+                <BoxView Style="{StaticResource ModalDivider}" />
 
                 <!-- Muscle soreness (Slider 1 - 5 like Sleep last night) -->
-                <Border Style="{StaticResource CardPrimary}">
+
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
                         <Grid Grid.Row="0" ColumnDefinitions="*, Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                             <Label
@@ -177,8 +177,7 @@
                             <Label
                                 Grid.Column="1"
                                 Text="{Binding PlanningSorenessDisplay, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource AccentLabel}"
-                                FontSize="{StaticResource UiFontSize17}"
+                                Style="{StaticResource MetricValue}"
                                 VerticalOptions="Center" />
                         </Grid>
                         <Slider
@@ -204,10 +203,10 @@
                                 HorizontalOptions="End" />
                         </Grid>
                     </Grid>
-                </Border>
+                <BoxView Style="{StaticResource ModalDivider}" />
 
                 <!-- Pain -->
-                <Border Style="{StaticResource CardPrimary}">
+
                     <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
                         <Label Grid.Row="0"
                                Text="{loc:LocalizedText Dashboard_CheckIn_PainTitle}"
@@ -237,10 +236,10 @@
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_PainSevereHint}" />
                         </Grid>
                     </Grid>
-                </Border>
+                <BoxView Style="{StaticResource ModalDivider}" />
 
                 <!-- Bloating -->
-                <Border Style="{StaticResource CardPrimary}">
+
                     <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
                         <Label
                             Grid.Column="0"
@@ -256,9 +255,9 @@
                             SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_BloatingA11y}"
                             SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_BloatingHint}" />
                     </Grid>
-                </Border>
 
-                <!-- Body weight (styled like ProfileSetupPage entry fields) -->
+</VerticalStackLayout></Border>
+<!-- Body weight (styled like ProfileSetupPage entry fields) -->
                 <Border Style="{StaticResource CardPrimary}">
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                         <Grid Grid.Row="0" ColumnDefinitions="*, Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
@@ -356,21 +355,19 @@
         <!-- Actions -->
         <Grid
             Grid.Row="1"
-            RowDefinitions="Auto,Auto,Auto"
+            RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
             Padding="{StaticResource UiInsets20_12_20_36}"
             IsVisible="{Binding IsCompleted, Converter={StaticResource InvertedBoolConverter}}"
             BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
-            <BoxView HeightRequest="{StaticResource UiDimension1}" Margin="{StaticResource UiInsets0_0_0_12}"
+            <BoxView Grid.ColumnSpan="2" HeightRequest="{StaticResource UiDimension1}" Margin="{StaticResource UiInsets0_0_0_12}"
                      BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                      Opacity="{StaticResource UiOpacitySubtle}" />
-            <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
-                <ActivityIndicator Grid.Row="0" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                <ActivityIndicator Grid.Row="1" Grid.ColumnSpan="2" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_SavingA11y}" />
-                <Button Style="{StaticResource ButtonPrimary}" Grid.Row="1" Text="{loc:LocalizedText Dashboard_CheckIn_SubmitButton}" Command="{Binding SubmitCommand}"
+                <Button Style="{StaticResource ButtonPrimary}" Grid.Row="2" Grid.Column="1" Text="{loc:LocalizedText Dashboard_CheckIn_SubmitButton}" Command="{Binding SubmitCommand}"
                         SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_SubmitHint}" />
-            </Grid>
             <Button
-                Grid.Row="2"
+                Grid.Row="2" Grid.Column="0"
                 Text="{loc:LocalizedText Dashboard_CheckIn_SkipButton}"
                 Style="{StaticResource ButtonSecondary}"
                 IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"

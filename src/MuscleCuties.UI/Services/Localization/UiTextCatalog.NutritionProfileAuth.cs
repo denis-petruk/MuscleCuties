@@ -608,7 +608,8 @@ public static partial class UiTextCatalog
         English["Profile_WorkoutPrefs_ChooseActivityWeeklyFrequency"] =
             "Choose how many weekly sessions you want for yoga, mobility, or gentle recovery.";
         English["Profile_WorkoutPrefs_InvalidPreferences"] = "Review your activities and choose 2–7 available weekdays.";
-        English["Profile_WorkoutPrefs_PlanUpdateFailed"] = "Could not update your workout plan. Your preferences were not saved. Please try again.";
+        English["Profile_WorkoutPrefs_OpenPlanSetup"] = "Open plan setup";
+        English["Profile_WorkoutPrefs_SaveFailed"] = "Your workout preferences could not be saved. Please try again.";
         English["Profile_WorkoutPrefs_SaveOffline"] = "You’re offline. Your preferences were not saved. Reconnect and try again.";
         English["Profile_WorkoutPrefs_SaveSignInRequired"] = "Your sign-in expired. Sign in again to save workout preferences.";
         English["Profile_WorkoutPrefs_SaveServerUnavailable"] = "The workout service is unavailable. Your preferences were not saved. Try again shortly.";
@@ -618,7 +619,6 @@ public static partial class UiTextCatalog
         English["Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"] = "At least one strength activity is required for your plan.";
         English["Profile_WorkoutPrefs_SaveWorkoutPreferences"] = "Save workout preferences";
         English["Profile_WorkoutPrefs_SavingPreferences"] = "Saving preferences";
-        English["Profile_WorkoutPrefs_UpdatingPlan"] = "Updating your workout plan…";
         English["Profile_WorkoutPrefs_AvailableEquipment"] = "Available equipment";
         English["Profile_WorkoutPrefs_ChooseEquipment"] = "Choose your equipment";
         English["Profile_WorkoutPrefs_ExerciseExclusions"] = "Exercises to avoid";

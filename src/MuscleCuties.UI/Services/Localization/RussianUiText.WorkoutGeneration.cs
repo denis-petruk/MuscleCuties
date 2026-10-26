@@ -88,6 +88,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_MinutesPlaceholder"] = "Минуты";
         Values["Workout_Generation_CreatePreview"] = "Предварительный просмотр";
         Values["Workout_Generation_PreviewTitle"] = "Предварительный план";
+        Values["Workout_Generation_PreviewExplanation"] = "Перед применением проверьте расписание на неделю, решения по активностям, силовые упражнения и оценку времени.";
         Values["Workout_Generation_SessionTitleFormat"] = "Тренировка {0}";
         Values["Workout_Generation_EstimatedMinutesFormat"] = "Около {0:0} мин";
         Values["Workout_Generation_EstimateUnavailable"] = "Оценка времени недоступна";
@@ -179,6 +180,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_Activity_Other"] = "Другая активность";
         Values["Workout_Generation_Reason_NoActivitiesSelected"] = "Для недельного расписания не выбраны активности.";
         Values["Workout_Generation_Reason_AvailableWeekdays"] = "Сохраните от 2 до 7 допустимых дней недели в предпочтениях тренировок.";
+        Values["Workout_Generation_ActivityTargetFormat"] = "Цель плана: {0}";
         Values["Workout_Generation_Reason_ActivityEvidence"] = "Данные для оценки допуска к активности отсутствуют или указаны повторно.";
         Values["Workout_Generation_Reason_ActivityNotSelected"] = "Выберите эту активность в предпочтениях тренировок, чтобы добавить её в расписание.";
         Values["Workout_Generation_Reason_ActivityNotEligible"] = "Эта активность пока не соответствует требованиям планирования.";

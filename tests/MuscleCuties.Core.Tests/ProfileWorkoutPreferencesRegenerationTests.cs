@@ -28,7 +28,7 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
         Assert.Equal(expected, WorkoutPreferencesRule.IsValidEquipmentLevel(equipmentLevel));
 
     [Fact]
-    public async Task RegenerationUsesSavedPreferencesToReplacePlan()
+    public async Task LoadingPreferencesDoesNotSaveOrReplacePlan()
     {
         var saved = new WorkoutPreferencesDto(
             [(int)WorkoutActivityType.StrengthHighIntensity],
@@ -41,27 +41,26 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
             Equipment.Bodyweight.ToString());
         var store = new FakeStore(saved);
 
-        var result = await new ProfileWorkoutPreferencesUseCase(store).RegenerateSavedPlanAsync();
+        var result = await new ProfileWorkoutPreferencesUseCase(store).LoadAsync();
 
-        Assert.True(result.Succeeded);
-        Assert.Same(saved, store.SavedPreferences);
-        Assert.Equal(Equipment.Bodyweight.ToString(), store.SavedPreferences?.EquipmentLevel);
-        Assert.Equal(ExpectedOneSave, store.SaveCount);
-    }
-
-    [Fact]
-    public async Task RegenerationDoesNotCreatePlanWithoutSavedProfile()
-    {
-        var store = new FakeStore(null);
-
-        var result = await new ProfileWorkoutPreferencesUseCase(store).RegenerateSavedPlanAsync();
-
-        Assert.Equal(WorkoutPreferencesError.ProfileMissing, result.Error);
+        Assert.Same(saved, result);
+        Assert.Null(store.SavedPreferences);
         Assert.Equal(0, store.SaveCount);
     }
 
     [Fact]
-    public async Task RegenerationRemovesLegacyOtherSelectionAndItsPreferenceEntries()
+    public async Task LoadingMissingProfileDoesNotCreatePreferences()
+    {
+        var store = new FakeStore(null);
+
+        var result = await new ProfileWorkoutPreferencesUseCase(store).LoadAsync();
+
+        Assert.Null(result);
+        Assert.Equal(0, store.SaveCount);
+    }
+
+    [Fact]
+    public async Task SavingNormalizedPreferencesRemovesLegacyOtherWithoutMutatingLoadedSnapshot()
     {
         var saved = new WorkoutPreferencesDto(
             [(int)WorkoutActivityType.Yoga, (int)WorkoutActivityType.Other],
@@ -82,7 +81,7 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
         Assert.Same(saved, await useCase.LoadAsync());
         Assert.Contains((int)WorkoutActivityType.Other, saved.ActivityTypes);
 
-        var result = await useCase.RegenerateSavedPlanAsync();
+        var result = await useCase.SaveAsync(saved);
 
         Assert.True(result.Succeeded);
         Assert.NotSame(saved, store.SavedPreferences);
@@ -112,7 +111,7 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
                 [(int)WorkoutActivityType.Yoga] = ActivitySessionDurationRule.GentleYogaDefaultMinutes
             });
 
-        var result = await new ProfileWorkoutPreferencesUseCase(store).SaveAndUpdatePlanAsync(preferences);
+        var result = await new ProfileWorkoutPreferencesUseCase(store).SaveAsync(preferences);
 
         Assert.Equal(WorkoutPreferencesError.InvalidPreferences, result.Error);
         Assert.Null(store.SavedPreferences);
@@ -176,7 +175,7 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
         public Task<WorkoutPreferencesDto?> LoadAsync(CancellationToken cancellationToken) =>
             Task.FromResult(saved);
 
-        public Task<WorkoutPreferencesError> SaveAndUpdatePlanAsync(
+        public Task<WorkoutPreferencesError> SaveAsync(
             WorkoutPreferencesDto preferences, CancellationToken cancellationToken)
         {
             SavedPreferences = preferences;

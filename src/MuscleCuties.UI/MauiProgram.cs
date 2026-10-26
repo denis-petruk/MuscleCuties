@@ -601,8 +601,6 @@ public static class MauiProgram
         services.AddSingleton<WorkoutViewModel>(sp => new WorkoutViewModel(
             sp.GetRequiredService<IWorkoutOverviewUseCase>(),
             sp.GetRequiredService<IWorkoutInjuryUseCase>(),
-            sp.GetRequiredService<IProfileWorkoutPreferencesUseCase>(),
-            sp.GetRequiredService<IProfileRefreshNotifier>(),
             NavigateToAsync,
             workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId)));
 

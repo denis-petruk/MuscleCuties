@@ -18,14 +18,11 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         {
             var selectedActivities = request.SelectedActivityTypes?.ToHashSet() ??
                                      sourceData.SelectedActivityTypes?.ToHashSet() ?? new HashSet<int>();
-            selectedActivities.Add((int)request.Activity);
 
             sourceData = sourceData with
             {
                 SelectedActivityTypes = selectedActivities,
-                AvailableWeekdays = request.AvailableWeekdays is { Count: > 0 }
-                    ? request.AvailableWeekdays
-                    : sourceData.AvailableWeekdays,
+                AvailableWeekdays = request.AvailableWeekdays ?? sourceData.AvailableWeekdays,
                 ActivitySessionDurationsMinutes = request.ActivitySessionDurationsMinutes ??
                                                   sourceData.ActivitySessionDurationsMinutes,
                 RequestedSessionsPerWeek = request.RequestedSessionsPerWeek ??

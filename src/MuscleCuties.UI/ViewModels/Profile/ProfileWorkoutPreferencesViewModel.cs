@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Profile;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
@@ -33,7 +34,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isLoadingData;
     [ObservableProperty] private bool _isLoadError;
-    [ObservableProperty] private bool _isUpdatingPlan;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(SaveActionText))]
+    private bool _isPlanSetupNavigationPending;
     [ObservableProperty] private SelectionOption<string>? _selectedEquipmentOption;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private ObservableCollection<WorkoutActivityOptionItem> _workoutActivityOptions = new();
@@ -90,6 +92,9 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     public IReadOnlyList<WorkoutExerciseExclusionOptionItem> SelectedExerciseExclusions =>
         ExerciseExclusionOptions.Where(option => option.IsSelected).ToArray();
     public bool CanSave => !IsBusy && IsExerciseExclusionCatalogLoaded;
+    public string SaveActionText => UiTextCatalog.Get(IsPlanSetupNavigationPending && !HasUnsavedChanges
+        ? "Profile_WorkoutPrefs_OpenPlanSetup"
+        : "Profile_WorkoutPrefs_SaveWorkoutPreferences");
 
     public AsyncRelayCommand BackCommand { get; }
     public AsyncRelayCommand LoadDataCommand { get; }
@@ -184,11 +189,21 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
 
     private async Task SaveAsync()
     {
+        if (IsBusy)
+            return;
+
         IsBusy = true;
         StatusMessage = string.Empty;
         var settingsSaved = false;
         try
         {
+            if (IsPlanSetupNavigationPending && !HasUnsavedChanges)
+            {
+                settingsSaved = true;
+                await OpenPlanSetupAsync();
+                return;
+            }
+
             if (!IsExerciseExclusionCatalogLoaded)
             {
                 StatusMessage = "Profile_WorkoutPrefs_ExerciseCatalogUnavailable";
@@ -223,8 +238,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                 return;
             }
 
-            IsUpdatingPlan = true;
-            var result = await _useCase.SaveAndUpdatePlanAsync(new WorkoutPreferencesDto(
+            var result = await _useCase.SaveAsync(new WorkoutPreferencesDto(
                 selectedActivities.Select(option => (int)option.ActivityType).ToArray(),
                 availableWeekdays,
                 selectedActivities
@@ -253,9 +267,9 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                 return;
             }
 
-            if (result.Error == WorkoutPreferencesError.PlanUpdateFailed)
+            if (result.Error == WorkoutPreferencesError.SaveFailed)
             {
-                StatusMessage = "Profile_WorkoutPrefs_PlanUpdateFailed";
+                StatusMessage = "Profile_WorkoutPrefs_SaveFailed";
                 return;
             }
 
@@ -268,7 +282,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                     WorkoutPreferencesError.ServerUnavailable => "Profile_WorkoutPrefs_SaveServerUnavailable",
                     WorkoutPreferencesError.ConcurrentUpdate => "Profile_WorkoutPrefs_SaveConflict",
                     WorkoutPreferencesError.ExerciseCatalogChanged => "Profile_WorkoutPrefs_SaveCatalogChanged",
-                    _ => "Profile_WorkoutPrefs_PlanUpdateFailed"
+                    _ => "Profile_WorkoutPrefs_SaveFailed"
                 };
                 return;
             }
@@ -278,7 +292,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
             OnPropertyChanged(nameof(HasUnsavedChanges));
             _refreshNotifier.InvalidateWorkoutAndDashboard();
             StatusMessage = "Workout preferences saved.";
-            await _navigateAfterSaveAsync();
+            await OpenPlanSetupAsync();
         }
         catch (Exception ex)
         {
@@ -289,10 +303,23 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         }
         finally
         {
-            IsUpdatingPlan = false;
             IsBusy = false;
             OnPropertyChanged(nameof(CanSave));
         }
+    }
+
+    private async Task OpenPlanSetupAsync()
+    {
+        IsPlanSetupNavigationPending = true;
+        await _navigateAfterSaveAsync();
+        IsPlanSetupNavigationPending = false;
+    }
+
+    protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.PropertyName == nameof(HasUnsavedChanges))
+            OnPropertyChanged(nameof(SaveActionText));
     }
 
     private void ToggleWorkoutActivity(WorkoutActivityOptionItem? item)

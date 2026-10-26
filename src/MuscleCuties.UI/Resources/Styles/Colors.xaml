@@ -239,6 +239,7 @@
     <x:Double x:Key="UiDimension48">48</x:Double>
     <x:Double x:Key="UiDimension56">56</x:Double>
     <x:Double x:Key="UiDimension62">62</x:Double>
+    <x:Double x:Key="UiPreviewSheetHeightFraction">0.72</x:Double>
     <x:Double x:Key="UiDimensionPlanCheckmark">14</x:Double>
     <x:Double x:Key="UiStrokeWidth0">0</x:Double>
     <x:Double x:Key="UiStrokeWidth1">1</x:Double>

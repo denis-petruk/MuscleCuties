@@ -90,7 +90,7 @@ public partial class DailyCheckInPage : ContentPage
     private void UpdateSleepQualityChips()
     {
         UpdateChipGroup(SleepQualityChips, (_viewModel.PlanningSleepQuality ?? 0) - 1,
-            (i, sel) => UiTextCatalog.Translate("Dashboard_CheckIn_PlanningSleepQuality") + $" {i + 1} / 5" +
+            (i, sel) => UiTextCatalog.Get("Dashboard_CheckIn_PlanningSleepQuality") + $" {i + 1} / 5" +
                         (sel ? ", " + UiTextCatalog.Translate("Selected") : string.Empty));
     }
 

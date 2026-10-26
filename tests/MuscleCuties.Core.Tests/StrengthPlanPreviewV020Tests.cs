@@ -49,6 +49,28 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
+    public async Task Preview_Does_Not_Reinsert_A_Strength_Activity_The_User_Removed()
+    {
+        var request = Request() with { SelectedActivityTypes = [] };
+        var result = await new PreviewStrengthPlanV020UseCase(new Source(Profile()))
+            .ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.NotEqual("Feasible", result.Status);
+        Assert.Empty(result.Sessions);
+    }
+
+    [Fact]
+    public async Task Preview_Does_Not_Replace_Explicitly_Empty_Availability_With_Saved_Days()
+    {
+        var request = Request() with { AvailableWeekdays = [] };
+        var result = await new PreviewStrengthPlanV020UseCase(new Source(Profile()))
+            .ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.NotEqual("Feasible", result.Status);
+        Assert.Empty(result.Sessions);
+    }
+
+    [Fact]
     public async Task Preview_Uses_The_Activity_Choices_And_Weekdays_Sent_By_The_User()
     {
         var userActivities = new HashSet<int>
@@ -680,7 +702,6 @@ public sealed class StrengthPlanPreviewV020Tests
         var profile = Profile() with
         {
             AvailableWeekdays = null,
-            SelectedActivityTypes = null,
             ActivitySessionDurationsMinutes = Profile().ActivitySessionDurationsMinutes
         };
         var useCase = new PreviewStrengthPlanV020UseCase(new Source(profile));

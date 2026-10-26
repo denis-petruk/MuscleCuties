@@ -105,7 +105,7 @@ public enum WorkoutPreferencesError
     None,
     ProfileMissing,
     InvalidPreferences,
-    PlanUpdateFailed,
+    SaveFailed,
     Offline,
     SignInRequired,
     ServerUnavailable,
@@ -122,8 +122,7 @@ public interface IProfileWorkoutPreferencesUseCase
 {
     Task<WorkoutPreferencesDto?> LoadAsync(CancellationToken cancellationToken = default);
 
-    Task<WorkoutPreferencesResult> SaveAndUpdatePlanAsync(WorkoutPreferencesDto preferences,
+    Task<WorkoutPreferencesResult> SaveAsync(WorkoutPreferencesDto preferences,
         CancellationToken cancellationToken = default);
 
-    Task<WorkoutPreferencesResult> RegenerateSavedPlanAsync(CancellationToken cancellationToken = default);
 }

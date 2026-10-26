@@ -542,7 +542,7 @@
         <Grid
             Grid.RowSpan="2"
             IsVisible="{Binding IsEditModalVisible}">
-            <BoxView BackgroundColor="{StaticResource ModalScrim}">
+            <BoxView Style="{StaticResource ModalBackdrop}">
                 <BoxView.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding CloseEditModalCommand}" />
                 </BoxView.GestureRecognizers>
