@@ -268,7 +268,7 @@ public sealed class StrengthPlanPreviewV020Tests
             session.ActivityTypeId == (int)WorkoutActivityType.Yoga);
         Assert.Equal(ExpectedSavedProposalCount, store.SaveCount);
 
-        var tooFewDays = new CreateStrengthPlanProposalV020UseCase(
+        var oneDay = new CreateStrengthPlanProposalV020UseCase(
             new PreviewStrengthPlanV020UseCase(new Source(profile with
             {
                 SelectedActivityTypes = selected,
@@ -277,12 +277,14 @@ public sealed class StrengthPlanPreviewV020Tests
                     DayOfWeek.Monday
                 }
             })), store);
-        var limited = await tooFewDays.ExecuteAsync(Guid.NewGuid(), request with { AvailableWeekdays = null });
+        var oneDayProposal = await oneDay.ExecuteAsync(Guid.NewGuid(), request with { AvailableWeekdays = null });
 
-        Assert.False(limited.IsPersisted);
-        Assert.Equal("Limited", limited.Preview.Status);
-        Assert.Contains(MixedScheduleIncompleteReason, limited.Preview.LimitationCodes);
-        Assert.Equal(ExpectedSavedProposalCount, store.SaveCount);
+        Assert.True(oneDayProposal.IsPersisted);
+        Assert.Equal("Feasible", oneDayProposal.Preview.Status);
+        Assert.DoesNotContain(MixedScheduleIncompleteReason, oneDayProposal.Preview.LimitationCodes);
+        Assert.Single(oneDayProposal.Preview.Sessions);
+        Assert.Equal(DayOfWeek.Monday, oneDayProposal.Preview.Sessions[0].PlannedWeekday);
+        Assert.Equal(ExpectedSavedProposalCount + 1, store.SaveCount);
     }
 
     [Fact]
@@ -740,6 +742,60 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Equal("Limited", result.Status);
         Assert.Contains(StrengthPlanPreviewRule.WeekdaysMissingCode, result.LimitationCodes);
         Assert.Empty(result.Sessions);
+    }
+
+    [Fact]
+    public async Task Preview_Cuts_Volume_When_Available_Days_Are_Fewer_Than_Template_Sessions_And_Enables_Apply()
+    {
+        var profile = Profile() with
+        {
+            AvailableWeekdays = new HashSet<DayOfWeek> { DayOfWeek.Tuesday }
+        };
+        var store = new ProposalStore();
+        var useCase = new CreateStrengthPlanProposalV020UseCase(
+            new PreviewStrengthPlanV020UseCase(new Source(profile)), store);
+
+        var proposal = await useCase.ExecuteAsync(Guid.NewGuid(), Request() with
+        {
+            AvailableWeekdays = new HashSet<DayOfWeek> { DayOfWeek.Tuesday }
+        });
+
+        Assert.True(proposal.IsPersisted);
+        Assert.Equal("Feasible", proposal.Preview.Status);
+        Assert.Single(proposal.Preview.Sessions);
+        Assert.Equal(DayOfWeek.Tuesday, proposal.Preview.Sessions[0].PlannedWeekday);
+        Assert.DoesNotContain(MixedScheduleIncompleteReason, proposal.Preview.LimitationCodes);
+        Assert.Equal(1, store.SaveCount);
+    }
+
+    [Fact]
+    public async Task Preview_Is_Feasible_When_Not_All_Available_Days_Are_Filled()
+    {
+        var profile = Profile() with
+        {
+            AvailableWeekdays = new HashSet<DayOfWeek>
+            {
+                DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday
+            }
+        };
+        var store = new ProposalStore();
+        var useCase = new CreateStrengthPlanProposalV020UseCase(
+            new PreviewStrengthPlanV020UseCase(new Source(profile)), store);
+
+        var proposal = await useCase.ExecuteAsync(Guid.NewGuid(), Request() with
+        {
+            AvailableWeekdays = new HashSet<DayOfWeek>
+            {
+                DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday
+            }
+        });
+
+        Assert.True(proposal.IsPersisted);
+        Assert.Equal("Feasible", proposal.Preview.Status);
+        Assert.True(proposal.Preview.Sessions.Count < 5);
+        Assert.All(proposal.Preview.Sessions, s => Assert.NotNull(s.PlannedWeekday));
+        Assert.DoesNotContain(MixedScheduleIncompleteReason, proposal.Preview.LimitationCodes);
+        Assert.Equal(1, store.SaveCount);
     }
 
     private static StrengthPlanPreviewRequestV020 Request() => new(

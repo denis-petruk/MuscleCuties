@@ -123,27 +123,47 @@ internal static class StrengthPlanPreviewMapperV020
                               (response.EffectiveActivityTypeId.HasValue && (int)session.Activity == response.EffectiveActivityTypeId.Value))
             .Select(session => session.Day)
             .ToArray();
+        var effectiveCount = Math.Min(response.Sessions.Count, strengthDays.Length);
         var alignedStrengthSessions = response.Sessions
             .Select((session, index) => session with
             {
                 PlannedWeekday = index < strengthDays.Length ? strengthDays[index] : null
             })
             .ToArray();
-        // Optional activities may be omitted when they cannot fit safely. The chosen
-        // strength sessions and structurally valid availability are required to apply.
+        if (strengthDays.Length > 0 && effectiveCount < response.Sessions.Count)
+        {
+            // If fewer strength days are available than the template originally targeted,
+            // cut volume to the placed strength sessions so the plan fits the available days.
+            alignedStrengthSessions = alignedStrengthSessions.Take(effectiveCount).ToArray();
+        }
+
+        // Structurally valid availability and at least one placed strength session are required to apply.
         var isIncomplete = schedule.InputReasons.Count > 0 ||
-                           response.Sessions.Count == 0 ||
-                           strengthDays.Length != response.Sessions.Count;
-        var limitationCodes = isIncomplete
-            ? response.LimitationCodes.Append(MixedActivityScheduleIncompleteCode)
-                .Distinct(StringComparer.Ordinal).ToArray()
-            : response.LimitationCodes;
+                           (response.Sessions.Count > 0 && strengthDays.Length == 0);
+        var limitationCodes = response.LimitationCodes;
+        if (alignedStrengthSessions.Length > 0 && alignedStrengthSessions.All(s => s.PlannedWeekday.HasValue))
+        {
+            // Volume was successfully cut and all placed strength sessions fit on available weekdays.
+            limitationCodes = limitationCodes
+                .Where(code => code is not "StrengthSessionsExceedAvailableWeekdays" and not MixedActivityScheduleIncompleteCode)
+                .ToArray();
+        }
+
+        if (isIncomplete)
+        {
+            limitationCodes = limitationCodes.Append(MixedActivityScheduleIncompleteCode)
+                .Distinct(StringComparer.Ordinal).ToArray();
+        }
+
+        var isFeasible = !isIncomplete &&
+                         limitationCodes.Count == 0 &&
+                         alignedStrengthSessions.Length > 0 &&
+                         response.Status != nameof(StrengthPlanPreviewStatus.InvalidInput);
 
         return response with
         {
-            Status = isIncomplete && response.Status == nameof(StrengthPlanPreviewStatus.Feasible)
-                ? nameof(StrengthPlanPreviewStatus.Limited)
-                : response.Status,
+            Status = isFeasible ? nameof(StrengthPlanPreviewStatus.Feasible) :
+                     (isIncomplete ? nameof(StrengthPlanPreviewStatus.Limited) : response.Status),
             Sessions = alignedStrengthSessions,
             LimitationCodes = limitationCodes,
             MixedActivitySchedule = ToMixedSchedule(schedule)
