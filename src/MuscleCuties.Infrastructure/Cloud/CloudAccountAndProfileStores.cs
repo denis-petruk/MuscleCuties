@@ -979,6 +979,7 @@ public sealed class CloudProfileWorkoutPreferencesStore(
 {
     private const string ProfileRoute = "/api/v1/profile";
     private const string WorkoutPreferencesRoute = "/api/v1/profile/workout-preferences";
+    private const int MaximumVersionConflictRetries = 2;
 
     public async Task<WorkoutPreferencesDto?> LoadAsync(CancellationToken cancellationToken)
     {
@@ -992,34 +993,56 @@ public sealed class CloudProfileWorkoutPreferencesStore(
     public async Task<WorkoutPreferencesError> SaveAndUpdatePlanAsync(
         WorkoutPreferencesDto preferences, CancellationToken cancellationToken)
     {
-        var currentResponse = await apiClient.GetAsync<ServerProfileSnapshot>(ProfileRoute, cancellationToken).ConfigureAwait(false);
-        if (currentResponse.Status == BackendApiStatus.NotFound || currentResponse.Data is null)
-            return WorkoutPreferencesError.ProfileMissing;
-
-        var response = await apiClient.SendMutationAsync<object, CloudProfileWriteResponse>(
-            HttpMethod.Put,
-            WorkoutPreferencesRoute,
-            new
-            {
-                expectedVersion = currentResponse.Data.Version,
-                activityTypes = preferences.ActivityTypes,
-                availableWeekdays = preferences.AvailableWeekdays,
-                activitySessionDurationsMinutes = preferences.ActivitySessionDurationsMinutes,
-                requestedSessionsPerWeek = preferences.RequestedSessionsPerWeek,
-                excludedExerciseIds = preferences.ExcludedExerciseIds ?? new HashSet<int>(),
-                equipmentLevel = preferences.EquipmentLevel
-            },
-            idempotencyKey: Guid.NewGuid().ToString("N"),
-            cancellationToken).ConfigureAwait(false);
-
-        return response.Status switch
+        for (var attempt = 0; attempt <= MaximumVersionConflictRetries; attempt++)
         {
-            BackendApiStatus.Success => WorkoutPreferencesError.None,
-            BackendApiStatus.NotFound => WorkoutPreferencesError.ProfileMissing,
-            BackendApiStatus.ValidationFailed => WorkoutPreferencesError.InvalidPreferences,
-            _ => WorkoutPreferencesError.PlanUpdateFailed
-        };
+            var currentResponse = await apiClient.GetAsync<ServerProfileSnapshot>(ProfileRoute, cancellationToken)
+                .ConfigureAwait(false);
+            if (currentResponse.Status == BackendApiStatus.NotFound)
+                return WorkoutPreferencesError.ProfileMissing;
+            if (currentResponse.Status != BackendApiStatus.Success || currentResponse.Data is null)
+                return MapWorkoutPreferencesSaveFailure(currentResponse.Status, currentResponse.ErrorCode);
+
+            var response = await apiClient.SendMutationAsync<object, CloudProfileWriteResponse>(
+                HttpMethod.Put,
+                WorkoutPreferencesRoute,
+                new
+                {
+                    expectedVersion = currentResponse.Data.Version,
+                    activityTypes = preferences.ActivityTypes,
+                    availableWeekdays = preferences.AvailableWeekdays,
+                    activitySessionDurationsMinutes = preferences.ActivitySessionDurationsMinutes,
+                    requestedSessionsPerWeek = preferences.RequestedSessionsPerWeek,
+                    excludedExerciseIds = preferences.ExcludedExerciseIds ?? new HashSet<int>(),
+                    equipmentLevel = preferences.EquipmentLevel
+                },
+                idempotencyKey: Guid.NewGuid().ToString("N"),
+                cancellationToken).ConfigureAwait(false);
+
+            if (response.Status == BackendApiStatus.Conflict && attempt < MaximumVersionConflictRetries)
+                continue;
+
+            return response.Status == BackendApiStatus.Success
+                ? WorkoutPreferencesError.None
+                : MapWorkoutPreferencesSaveFailure(response.Status, response.ErrorCode);
+        }
+
+        return WorkoutPreferencesError.ConcurrentUpdate;
     }
+
+    private static WorkoutPreferencesError MapWorkoutPreferencesSaveFailure(
+        BackendApiStatus status,
+        string? errorCode) => status switch
+    {
+        BackendApiStatus.OfflineRejected => WorkoutPreferencesError.Offline,
+        BackendApiStatus.Unauthorized => WorkoutPreferencesError.SignInRequired,
+        BackendApiStatus.ServerError => WorkoutPreferencesError.ServerUnavailable,
+        BackendApiStatus.Conflict => WorkoutPreferencesError.ConcurrentUpdate,
+        BackendApiStatus.NotFound => WorkoutPreferencesError.ProfileMissing,
+        BackendApiStatus.ValidationFailed when string.Equals(errorCode, "invalidCatalogReference",
+            StringComparison.Ordinal) => WorkoutPreferencesError.ExerciseCatalogChanged,
+        BackendApiStatus.ValidationFailed => WorkoutPreferencesError.InvalidPreferences,
+        _ => WorkoutPreferencesError.PlanUpdateFailed
+    };
 
 }
 

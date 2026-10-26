@@ -168,24 +168,13 @@ public sealed class CycleMonthGrid : Grid
 
             if (isSelected)
             {
-                cell.Stroke = ResolveSelectionRingColor();
-                cell.StrokeThickness = AppThemeResources.GetDouble("UiStrokeWidth2_8");
-                if (cell.Content is Button btn)
-                    btn.FontAttributes = FontAttributes.Bold;
+                VisualStateManager.GoToState(cell, "Selected");
             }
             else
             {
-                cell.Stroke = AppThemeResources.GetRequired<Color>("Transparent");
-                cell.StrokeThickness = AppThemeResources.GetDouble("UiStrokeWidth0");
-                if (cell.Content is Button btn)
-                    btn.FontAttributes = FontAttributes.Bold;
+                VisualStateManager.GoToState(cell, "Unselected");
             }
         }
-    }
-
-    private static Color ResolveSelectionRingColor()
-    {
-        return AppThemeResources.GetColor("PrimaryDark", "SecondaryDarkText");
     }
 
     private void ClearCells()
@@ -199,28 +188,15 @@ public sealed class CycleMonthGrid : Grid
     {
         var button = new Button
         {
-            Padding = AppThemeResources.GetThickness("UiInsets0"),
-            Margin = AppThemeResources.GetThickness("UiInsets0"),
-            MinimumHeightRequest = AppThemeResources.GetDouble("UiDimension44"),
-            MinimumWidthRequest = AppThemeResources.GetDouble("UiDimension44"),
-            HeightRequest = AppThemeResources.GetDouble("UiDimension44"),
-            CornerRadius = AppThemeResources.GetRequired<int>("UiRadiusCalendarDay"),
-            FontFamily = AppThemeResources.GetString("AppFontFamily"),
-            FontSize = AppThemeResources.GetDouble("UiFontSize13"),
-            FontAttributes = AppThemeResources.GetRequired<FontAttributes>("UiFontAttributesBold")
+            Style = Application.Current?.Resources["ButtonSecondary"] as Style
+                    ?? throw new InvalidOperationException("The shared secondary button style is unavailable.")
         };
 
         return new Border
         {
-            Padding = AppThemeResources.GetThickness("UiInsets0"),
-            Margin = AppThemeResources.GetThickness("UiInsets2"),
-            StrokeThickness = AppThemeResources.GetDouble("UiStrokeWidth0"),
-            Stroke = AppThemeResources.GetRequired<Color>("Transparent"),
-            StrokeShape = new RoundRectangle { CornerRadius = AppThemeResources.GetDouble("UiDimension12") },
-            BackgroundColor = AppThemeResources.GetRequired<Color>("Transparent"),
+            Style = Application.Current?.Resources["CalendarDayCellSurface"] as Style
+                    ?? throw new InvalidOperationException("The shared calendar cell style is unavailable."),
             Content = button,
-            MinimumHeightRequest = AppThemeResources.GetDouble("UiDimension44"),
-            MinimumWidthRequest = AppThemeResources.GetDouble("UiDimension44")
         };
     }
 }

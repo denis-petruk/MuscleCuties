@@ -60,9 +60,7 @@ public partial class ProfileSetupViewModel : ObservableObject
         SelectMetricUnitsCommand = new RelayCommand(() => UseMetricSystem = true);
         SelectImperialUnitsCommand = new RelayCommand(() => UseMetricSystem = false);
         ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
-        WorkoutActivityOptions = ProfileWorkoutActivityOptions.Build(
-            new HashSet<WorkoutActivityDto>(),
-            allowInlinePreferenceConfiguration: false);
+        WorkoutActivityOptions = ProfileWorkoutActivityOptions.Build(new HashSet<WorkoutActivityDto>());
     }
 
     public DateTime MinBirthDate { get; } = DateTime.Today.AddYears(-100);
@@ -135,8 +133,7 @@ public partial class ProfileSetupViewModel : ObservableObject
                 SelectedWeightLbs = (int)Math.Round(staged.WeightKg / KilogramsPerPound);
 
                 var selectedOptions = ProfileWorkoutActivityOptions.Build(
-                    staged.SelectedActivityTypes.Select(value => (WorkoutActivityDto)value).ToHashSet(),
-                    allowInlinePreferenceConfiguration: false);
+                    staged.SelectedActivityTypes.Select(value => (WorkoutActivityDto)value).ToHashSet());
                 foreach (var option in WorkoutActivityOptions)
                     option.IsSelected = selectedOptions.Any(s => s.ActivityType == option.ActivityType && s.IsSelected);
             }
@@ -161,9 +158,7 @@ public partial class ProfileSetupViewModel : ObservableObject
         ProfileImagePath = profile.ProfileImagePath;
         var selectedActivities = profile.SelectedActivityTypes
             .Select(value => (WorkoutActivityDto)value).ToHashSet();
-        var loadedOptions = ProfileWorkoutActivityOptions.Build(
-            selectedActivities,
-            allowInlinePreferenceConfiguration: false);
+        var loadedOptions = ProfileWorkoutActivityOptions.Build(selectedActivities);
         foreach (var option in WorkoutActivityOptions)
             option.IsSelected =
                 loadedOptions.Any(loaded => loaded.ActivityType == option.ActivityType && loaded.IsSelected);

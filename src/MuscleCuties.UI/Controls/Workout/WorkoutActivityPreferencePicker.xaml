@@ -42,7 +42,6 @@
                                 <VerticalStackLayout Spacing="{StaticResource UiSpacing6}">
                                 <Border
                                     Style="{StaticResource SelectableCard}"
-                                    MinimumHeightRequest="{StaticResource UiDimension62}"
                                     HorizontalOptions="Fill"
                                     Margin="{StaticResource UiInsets0}"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
@@ -50,19 +49,10 @@
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
                                             <Setter Property="SemanticProperties.Hint"
                                                     Value="{loc:LocalizedText Workout_ActivityPreference_SelectedHint}" />
-                                            <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                            <Setter Property="Stroke"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
                                         </DataTrigger>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
                                             <Setter Property="SemanticProperties.Hint"
                                                     Value="{loc:LocalizedText Workout_ActivityPreference_UnselectedHint}" />
-                                            <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
-                                            <Setter Property="Stroke"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
                                         </DataTrigger>
                                     </Border.Triggers>
                                     <Border.GestureRecognizers>
@@ -95,15 +85,13 @@
                                             <Label
                                                 Grid.Row="0"
                                                 Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
-                                                Style="{StaticResource BodyLabel}"
-                                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                                Style="{StaticResource BodyStrong}"
                                                 LineBreakMode="WordWrap" />
 
                                             <Label
                                                 Grid.Row="1"
                                                 Text="{Binding Subtitle, Converter={StaticResource LocalizedStringConverter}}"
-                                                Style="{StaticResource MutedLabel}"
-                                                FontSize="{StaticResource UiFontSize14}"
+                                                Style="{StaticResource MutedMedium}"
                                                 TextColor="{AppThemeBinding Light={StaticResource DeepMauve}, Dark={StaticResource ActivityDescriptionDark}}"
                                                 LineBreakMode="WordWrap">
                                                 <Label.Triggers>
@@ -116,27 +104,9 @@
                                             </Label>
                                         </Grid>
 
-                                        <Border
+                                        <Border Style="{StaticResource SelectionRadioRing}"
                                             Grid.Column="2"
-                                            WidthRequest="{StaticResource UiDimension24}" HeightRequest="{StaticResource UiDimension24}"
-                                            StrokeShape="{StaticResource UiEllipseShape}"
-                                            StrokeThickness="{StaticResource UiStrokeWidth1_5}"
-                                            VerticalOptions="Center"
-                                            BackgroundColor="{StaticResource Transparent}">
-                                            <Border.Triggers>
-                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
-                                                             Value="True">
-                                                    <Setter Property="BackgroundColor"
-                                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                                    <Setter Property="Stroke"
-                                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                                </DataTrigger>
-                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}"
-                                                             Value="False">
-                                                    <Setter Property="Stroke"
-                                                            Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray500}}" />
-                                                </DataTrigger>
-                                            </Border.Triggers>
+                                            VerticalOptions="Center">
                                             <Path Data="M5 12L10 17L19 7" Stroke="{StaticResource White}" StrokeThickness="{StaticResource UiStrokeWidth2_5}"
                                                   StrokeLineCap="Round" StrokeLineJoin="Round"
                                                   WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}" Aspect="Uniform"
@@ -144,18 +114,6 @@
                                                   IsVisible="{Binding IsSelected}" />
                                         </Border>
                                     </Grid>
-                                </Border>
-                                <Border
-                                    Style="{StaticResource PickerContainer}"
-                                    IsVisible="{Binding ShowSessionDurationPicker}"
-                                    Margin="{StaticResource UiInsets2_0}">
-                                    <Picker
-                                        ItemsSource="{Binding SessionDurationOptions}"
-                                        SelectedItem="{Binding SessionDurationMinutes, Mode=TwoWay}"
-                                        ItemDisplayBinding="{Binding ., Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Generation_MixedSessionDurationFormat}"
-                                        Title="{loc:LocalizedText Profile_WorkoutPrefs_SessionLength}"
-                                        VerticalOptions="Center"
-                                        SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_SessionLength}" />
                                 </Border>
                                 </VerticalStackLayout>
                             </DataTemplate>

@@ -16,6 +16,7 @@ public partial class QuizViewModel : ObservableObject
     private readonly Func<Task> _navigateToDashboardAsync;
     private readonly Func<Task>? _navigateToLoginAsync;
     private readonly Func<Task> _navigateToProfileAsync;
+    private readonly Action? _onAccountCreatedNeedsLogin;
     private bool _quizCommitted;
     private readonly List<(int QuestionId, int AnswerId)> _selectedAnswers = new();
     private readonly IOnboardingQuizUseCase _useCase;
@@ -32,7 +33,7 @@ public partial class QuizViewModel : ObservableObject
     private string _errorMessage = string.Empty;
 
     [ObservableProperty] private bool _isBusy;
-    [ObservableProperty] private bool _isPreparingDashboard;
+    [ObservableProperty] private bool _isPreparingWorkoutPreferences;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanRetryQuestionsLoad))]
@@ -55,12 +56,14 @@ public partial class QuizViewModel : ObservableObject
         IOnboardingQuizUseCase useCase,
         Func<Task> navigateToDashboardAsync,
         Func<Task>? navigateToLoginAsync,
-        Func<Task> navigateToProfileAsync)
+        Func<Task> navigateToProfileAsync,
+        Action? onAccountCreatedNeedsLogin = null)
     {
         _useCase = useCase;
         _navigateToDashboardAsync = navigateToDashboardAsync;
         _navigateToLoginAsync = navigateToLoginAsync;
         _navigateToProfileAsync = navigateToProfileAsync;
+        _onAccountCreatedNeedsLogin = onAccountCreatedNeedsLogin;
 
         LoadQuestionsCommand = new AsyncRelayCommand(LoadQuestionsAsync);
         RetryLoadQuestionsCommand = new AsyncRelayCommand(RetryLoadQuestionsAsync);
@@ -281,7 +284,7 @@ public partial class QuizViewModel : ObservableObject
     }
 
     private Task EditProfileAsync() =>
-        IsBusy || IsPreparingDashboard || AccountCreatedNeedsLogin
+        IsBusy || IsPreparingWorkoutPreferences || AccountCreatedNeedsLogin
             ? Task.CompletedTask
             : _navigateToProfileAsync();
 
@@ -549,7 +552,7 @@ public partial class QuizViewModel : ObservableObject
 
         try
         {
-            IsPreparingDashboard = true;
+            IsPreparingWorkoutPreferences = true;
 
             if (!_quizCommitted)
             {
@@ -565,6 +568,7 @@ public partial class QuizViewModel : ObservableObject
 
                 if (commitResult.AccountCreatedNeedsLogin)
                 {
+                    _onAccountCreatedNeedsLogin?.Invoke();
                     AccountCreatedNeedsLogin = true;
                     ErrorMessage = commitResult.ErrorMessage ?? string.Empty;
                     return;
@@ -575,9 +579,8 @@ public partial class QuizViewModel : ObservableObject
                     $"[Performance][Quiz] Answers and profile saved in {totalStopwatch.ElapsedMilliseconds} ms.");
             }
 
-            // The dashboard loads its state after appearing. Finish the quiz overlay
-            // layout before replacing the onboarding shell with the dashboard shell.
-            IsPreparingDashboard = false;
+            // Finish the quiz overlay layout before opening signed-in Activity preferences.
+            IsPreparingWorkoutPreferences = false;
             await Task.Delay(50);
             Trace.WriteLine("[Performance][Quiz] Dashboard navigation starting.");
             await _navigateToDashboardAsync();
@@ -594,7 +597,7 @@ public partial class QuizViewModel : ObservableObject
         }
         finally
         {
-            IsPreparingDashboard = false;
+            IsPreparingWorkoutPreferences = false;
             IsBusy = false;
         }
     }

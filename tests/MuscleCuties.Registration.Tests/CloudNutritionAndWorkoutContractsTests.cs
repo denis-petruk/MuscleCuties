@@ -2,6 +2,8 @@ using System.Text.Json;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
+using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.Infrastructure.Cloud;
@@ -25,6 +27,9 @@ namespace MuscleCuties.Registration.Tests;
 
 public sealed class CloudNutritionAndWorkoutContractsTests
 {
+    private const int InitialProfileVersion = 1;
+    private const int RefreshedProfileVersion = 2;
+
     [Xunit.Fact]
     public async Task CloudNutritionOverviewStoreCallsGroupedMealAndCustomFoodRoutes()
     {
@@ -85,6 +90,39 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         Xunit.Assert.Contains(("POST", "/api/v1/nutrition/meals"), apiClient.RecordedCalls);
         Xunit.Assert.Contains(("PUT", "/api/v1/nutrition/meals/77"), apiClient.RecordedCalls);
         Xunit.Assert.Contains(("GET", "/api/v1/nutrition/meals/77/ingredients"), apiClient.RecordedCalls);
+    }
+
+    [Xunit.Fact]
+    public async Task WorkoutPreferenceSaveRefreshesProfileVersionAfterConcurrentProfileUpdate()
+    {
+        var apiClient = new ConflictThenSuccessApiClient();
+        var store = new CloudProfileWorkoutPreferencesStore(apiClient);
+
+        var result = await store.SaveAndUpdatePlanAsync(CreateAllSelectedWorkoutPreferences(), CancellationToken.None);
+
+        Xunit.Assert.Equal(WorkoutPreferencesError.None, result);
+        Xunit.Assert.Equal(new[] { InitialProfileVersion, RefreshedProfileVersion }, apiClient.ExpectedVersions);
+        Xunit.Assert.Equal(2, apiClient.ProfileReads);
+        Xunit.Assert.Equal(2, apiClient.PreferenceWrites);
+    }
+
+    [Xunit.Theory]
+    [Xunit.InlineData(BackendApiStatus.OfflineRejected, "", WorkoutPreferencesError.Offline)]
+    [Xunit.InlineData(BackendApiStatus.Unauthorized, "", WorkoutPreferencesError.SignInRequired)]
+    [Xunit.InlineData(BackendApiStatus.ServerError, "", WorkoutPreferencesError.ServerUnavailable)]
+    [Xunit.InlineData(BackendApiStatus.Conflict, "", WorkoutPreferencesError.ConcurrentUpdate)]
+    [Xunit.InlineData(BackendApiStatus.ValidationFailed, "invalidCatalogReference",
+        WorkoutPreferencesError.ExerciseCatalogChanged)]
+    public async Task WorkoutPreferenceSavePreservesActionableServerFailure(
+        BackendApiStatus status,
+        string errorCode,
+        WorkoutPreferencesError expectedError)
+    {
+        var store = new CloudProfileWorkoutPreferencesStore(new FailedPreferenceWriteApiClient(status, errorCode));
+
+        var result = await store.SaveAndUpdatePlanAsync(CreateAllSelectedWorkoutPreferences(), CancellationToken.None);
+
+        Xunit.Assert.Equal(expectedError, result);
     }
 
     [Xunit.Fact]
@@ -386,5 +424,143 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             RecordedCalls.Add(("DELETE", relativePath));
             return Task.FromResult(new BackendApiResponse<bool>(BackendApiStatus.Success, true));
         }
+    }
+
+    private sealed class ConflictThenSuccessApiClient : IMuscleCutiesBackendApiClient
+    {
+        public List<int> ExpectedVersions { get; } = [];
+        public int ProfileReads { get; private set; }
+        public int PreferenceWrites { get; private set; }
+
+        public Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(
+            string relativePath,
+            CancellationToken cancellationToken = default)
+        {
+            Xunit.Assert.Equal("/api/v1/profile", relativePath);
+            ProfileReads++;
+            var snapshot = new ServerProfileSnapshot(
+                Name: "Synthetic",
+                DateOfBirth: null,
+                Height: decimal.Zero,
+                Weight: decimal.Zero,
+                Goal: "Strength",
+                WeightGoalPace: "Steady",
+                TrainingExperienceLevel: "Beginner",
+                WorkoutDaysPerWeek: 0,
+                AvailableWorkoutWeekdaysJson: "[]",
+                CycleLength: 0,
+                DietaryTags: string.Empty,
+                ActivitySessionDurationsJson: "{}",
+                EquipmentLevel: Equipment.FullGym.ToString(),
+                PreferredWorkoutActivityTypes: string.Empty,
+                UnitSystem: "Metric",
+                BodyWeightUnit: "kg",
+                FoodMassUnit: "g",
+                HeightUnit: "cm",
+                DistanceUnit: "km",
+                EnergyUnit: "kcal",
+                NutritionGoalsJson: "{}",
+                Version: ProfileReads == 1 ? InitialProfileVersion : RefreshedProfileVersion);
+            return Task.FromResult(new BackendApiResponse<TResponse>(
+                BackendApiStatus.Success, (TResponse)(object)snapshot));
+        }
+
+        public Task<BackendApiResponse<TResponse>> SendMutationAsync<TRequest, TResponse>(
+            HttpMethod method,
+            string relativePath,
+            TRequest payload,
+            string? idempotencyKey = null,
+            CancellationToken cancellationToken = default)
+        {
+            Xunit.Assert.Equal(HttpMethod.Put, method);
+            Xunit.Assert.Equal("/api/v1/profile/workout-preferences", relativePath);
+            using var document = JsonDocument.Parse(JsonSerializer.Serialize(payload,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+            ExpectedVersions.Add(document.RootElement.GetProperty("expectedVersion").GetInt32());
+            PreferenceWrites++;
+            var status = PreferenceWrites == 1 ? BackendApiStatus.Conflict : BackendApiStatus.Success;
+            return Task.FromResult(new BackendApiResponse<TResponse>(status, default,
+                ServerConcurrencyVersion: ProfileReads + 1));
+        }
+
+        public Task<BackendApiResponse<bool>> DeleteAsync(
+            string relativePath,
+            string? idempotencyKey = null,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new BackendApiResponse<bool>(BackendApiStatus.Success, true));
+    }
+
+    private sealed class FailedPreferenceWriteApiClient(
+        BackendApiStatus writeStatus,
+        string errorCode) : IMuscleCutiesBackendApiClient
+    {
+        public Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(
+            string relativePath,
+            CancellationToken cancellationToken = default)
+        {
+            Xunit.Assert.Equal("/api/v1/profile", relativePath);
+            var snapshot = new ServerProfileSnapshot(
+                Name: "Synthetic",
+                DateOfBirth: null,
+                Height: decimal.Zero,
+                Weight: decimal.Zero,
+                Goal: "Strength",
+                WeightGoalPace: "Steady",
+                TrainingExperienceLevel: "Beginner",
+                WorkoutDaysPerWeek: 0,
+                AvailableWorkoutWeekdaysJson: "[]",
+                CycleLength: 0,
+                DietaryTags: string.Empty,
+                ActivitySessionDurationsJson: "{}",
+                EquipmentLevel: Equipment.FullGym.ToString(),
+                PreferredWorkoutActivityTypes: string.Empty,
+                UnitSystem: "Metric",
+                BodyWeightUnit: "kg",
+                FoodMassUnit: "g",
+                HeightUnit: "cm",
+                DistanceUnit: "km",
+                EnergyUnit: "kcal",
+                NutritionGoalsJson: "{}",
+                Version: InitialProfileVersion);
+            return Task.FromResult(new BackendApiResponse<TResponse>(
+                BackendApiStatus.Success, (TResponse)(object)snapshot));
+        }
+
+        public Task<BackendApiResponse<TResponse>> SendMutationAsync<TRequest, TResponse>(
+            HttpMethod method,
+            string relativePath,
+            TRequest payload,
+            string? idempotencyKey = null,
+            CancellationToken cancellationToken = default)
+        {
+            Xunit.Assert.Equal(HttpMethod.Put, method);
+            Xunit.Assert.Equal("/api/v1/profile/workout-preferences", relativePath);
+            return Task.FromResult(new BackendApiResponse<TResponse>(writeStatus, default, errorCode));
+        }
+
+        public Task<BackendApiResponse<bool>> DeleteAsync(
+            string relativePath,
+            string? idempotencyKey = null,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new BackendApiResponse<bool>(BackendApiStatus.Success, true));
+    }
+
+    private static WorkoutPreferencesDto CreateAllSelectedWorkoutPreferences()
+    {
+        var activities = Enum.GetValues<WorkoutActivityType>()
+            .Where(activity => activity != WorkoutActivityType.Other)
+            .Select(activity => (int)activity)
+            .ToArray();
+        var weekdays = Enum.GetValues<DayOfWeek>().Select(day => (int)day).ToArray();
+        var durations = Enum.GetValues<WorkoutActivityType>()
+            .Where(WorkoutPreferencesRule.RequiresSessionDuration)
+            .ToDictionary(activity => (int)activity,
+                activity => WorkoutPreferencesRule.DefaultSessionDurationMinutes(activity)!.Value);
+        var frequencies = Enum.GetValues<WorkoutActivityType>()
+            .Where(WorkoutPreferencesRule.RequiresExplicitWeeklyFrequency)
+            .ToDictionary(activity => (int)activity,
+                activity => ActivityPreferenceDefaults.SessionsPerWeek(activity, weekdays.Length)!.Value);
+        return new WorkoutPreferencesDto(activities, weekdays, durations, Equipment.FullGym.ToString(), frequencies,
+            new HashSet<int>());
     }
 }

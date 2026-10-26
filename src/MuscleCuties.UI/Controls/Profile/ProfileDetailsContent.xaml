@@ -9,12 +9,10 @@
     x:DataType="vm:ProfileViewModel">
     <VerticalStackLayout Spacing="{StaticResource UiSpacing0}">
                 <!-- Private Photo Journey Vault Entry -->
-                <Label Text="{loc:LocalizedText Profile_Details_PrivateVault}" Style="{StaticResource CaptionLabel}"
-                       FontAttributes="{StaticResource UiFontAttributesBold}" Margin="{StaticResource UiInsets24_16_24_6}" />
+                <Label Text="{loc:LocalizedText Profile_Details_PrivateVault}" Style="{StaticResource CaptionStrong}" Margin="{StaticResource UiInsets24_16_24_6}" />
                 <Border
                     Style="{StaticResource CardPrimary}"
-                    Margin="{StaticResource UiInsets20_0_20_16}"
-                    Padding="{StaticResource UiInsets16}">
+                    Margin="{StaticResource UiInsets20_0_20_16}">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding OpenVaultCommand}" />
                     </Border.GestureRecognizers>
@@ -31,7 +29,7 @@
                                 <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_StoredLocallyOnThisDevice}"
-                                       Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
+                                       Style="{StaticResource CaptionSmall}" />
                             </Grid>
                             <Border
                                 Grid.Column="2"
@@ -69,18 +67,14 @@
                                             <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Details_LatestProgressPhoto}"
                                                    FontAttributes="{StaticResource UiFontAttributesBold}" FontSize="{StaticResource UiFontSize13}" />
                                             <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToOpenFullPhotoJourney}"
-                                                   Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
+                                                   Style="{StaticResource CaptionSmall}" />
                                             <Button
                                                 Grid.Row="2"
                                                 Text="{loc:LocalizedText Profile_Details_HidePreview}"
                                                 Command="{Binding ToggleVaultPrivacyCommand}"
-                                                Style="{StaticResource ButtonLink}"
-                                                FontSize="{StaticResource UiFontSize12}"
+                                                Style="{StaticResource ButtonSecondary}"
                                                 HorizontalOptions="Start"
-                                                VerticalOptions="End"
-                                                HeightRequest="{StaticResource UiDimension28}"
-                                                MinimumHeightRequest="{StaticResource UiDimension28}"
-                                                Padding="{StaticResource UiInsets0}" />
+                                                VerticalOptions="End" />
                                         </Grid>
                                     </Grid>
 
@@ -92,8 +86,7 @@
                                         <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Details_NoPhotosStoredYet}"
                                                FontAttributes="{StaticResource UiFontAttributesBold}" FontSize="{StaticResource UiFontSize15}" HorizontalTextAlignment="Center" />
                                         <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToOpenVaultAndAdd}"
-                                               Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}"
-                                               HorizontalTextAlignment="Center" />
+                                               Style="{StaticResource CaptionSmallCentered}" />
                                     </Grid>
                                 </Grid>
 
@@ -116,17 +109,13 @@
                                             <Label Text="{loc:LocalizedText Profile_Details_PreviewHiddenForPrivacy}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                                    FontSize="{StaticResource UiFontSize13}" />
                                             <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToRevealPreview}"
-                                                   Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
+                                                   Style="{StaticResource CaptionSmall}" />
                                         </Grid>
                                         <Button
                                             Grid.Column="2"
                                             Text="{loc:LocalizedText Profile_Details_Reveal}"
                                             Command="{Binding ToggleVaultPrivacyCommand}"
-                                            Style="{StaticResource ButtonSecondary}"
-                                            FontSize="{StaticResource UiFontSize12}"
-                                            HeightRequest="{StaticResource UiDimension32}"
-                                            MinimumHeightRequest="{StaticResource UiDimension32}"
-                                            Padding="{StaticResource UiInsets12_0}" />
+                                            Style="{StaticResource ButtonSecondary}" />
                                     </Grid>
                                 </Grid>
                             </Grid>
@@ -135,15 +124,13 @@
                 </Border>
 
                 <!-- Section: HEALTH & TRAINING (Apple Inset Grouped) -->
-                <Label Text="{loc:LocalizedText Profile_Details_HealthTraining}" Style="{StaticResource CaptionLabel}"
-                       FontAttributes="{StaticResource UiFontAttributesBold}" Margin="{StaticResource UiInsets24_12_24_6}" />
+                <Label Text="{loc:LocalizedText Profile_Details_HealthTraining}" Style="{StaticResource CaptionStrong}" Margin="{StaticResource UiInsets24_12_24_6}" />
                 <Border
                     Style="{StaticResource CardPrimary}"
-                    Margin="{StaticResource UiInsets20_0_20_16}"
-                    Padding="{StaticResource UiInsets0}">
+                    Margin="{StaticResource UiInsets20_0_20_16}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing0}">
                         <!-- Apple Health Status Row -->
-                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}"
+                        <Border Style="{StaticResource ProfileMenuRow}"
                                 IsVisible="{Binding IsAppleHealthAvailable}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
@@ -159,7 +146,7 @@
                                     <Label Text="{loc:LocalizedText Profile_Details_AppleHealth}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_SleepStepsEnergyHeartRate}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
+                                           Style="{StaticResource CaptionSmall}" />
                                 </Grid>
                                 <Border
                                     Grid.Column="2"
@@ -185,7 +172,7 @@
                                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                         <!-- Workout Availability Row -->
-                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
+                        <Border Style="{StaticResource ProfileMenuRow}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileWorkoutPreferencesPage" />
@@ -201,7 +188,7 @@
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1"
                                            Text="{Binding AvailableWeekdaysText, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
+                                           Style="{StaticResource CaptionSmall}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="3"
@@ -216,7 +203,7 @@
                                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                         <!-- Nutrition Row -->
-                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
+                        <Border Style="{StaticResource ProfileMenuRow}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileNutritionSettingsPage" />
@@ -232,7 +219,7 @@
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1"
                                            Text="{Binding NutritionPacingText, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
+                                           Style="{StaticResource CaptionSmall}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="3"
@@ -243,48 +230,17 @@
                             </Grid>
                         </Border>
 
-                        <BoxView HeightRequest="{StaticResource UiDimension1}" Margin="{StaticResource UiInsets56_0_0_0}"
-                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
-
-                        <!-- Micronutrient targets -->
-                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
-                                                      CommandParameter="ProfileNutritionSettingsPage" />
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="32,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
-                                <mi:MauiIcon
-                                    Icon="{mi:Fluent Food24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="{StaticResource UiDimension20}"
-                                    HeightRequest="{StaticResource UiDimension20}"
-                                    VerticalOptions="Center" />
-                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_MicronutrientTargets}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                                    <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_MicronutrientTargetsDetail}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
-                                </Grid>
-                                <mi:MauiIcon
-                                    Grid.Column="2"
-                                    Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="{StaticResource UiDimension16}"
-                                    HeightRequest="{StaticResource UiDimension16}"
-                                    VerticalOptions="Center" />
-                            </Grid>
-                        </Border>
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Section: ACCOUNT & PREFERENCES (Apple Inset Grouped) -->
-                <Label Text="{loc:LocalizedText Profile_Details_AccountPreferences}" Style="{StaticResource CaptionLabel}"
-                       FontAttributes="{StaticResource UiFontAttributesBold}" Margin="{StaticResource UiInsets24_12_24_6}" />
+                <Label Text="{loc:LocalizedText Profile_Details_AccountPreferences}" Style="{StaticResource CaptionStrong}" Margin="{StaticResource UiInsets24_12_24_6}" />
                 <Border
                     Style="{StaticResource CardPrimary}"
-                    Margin="{StaticResource UiInsets20_0_20_16}"
-                    Padding="{StaticResource UiInsets0}">
+                    Margin="{StaticResource UiInsets20_0_20_16}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing0}">
                         <!-- Personal Info Row -->
-                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
+                        <Border Style="{StaticResource ProfileMenuRow}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfilePersonalInfoPage" />
@@ -299,7 +255,7 @@
                                     <Label Text="{loc:LocalizedText Profile_Details_PersonalInfo}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_NameEmailPasswordCycleBaselines}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
+                                           Style="{StaticResource CaptionSmall}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="2"
@@ -314,7 +270,7 @@
                                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                         <!-- Units & Display Row -->
-                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
+                        <Border Style="{StaticResource ProfileMenuRow}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileUnitsDisplayPage" />
@@ -330,7 +286,7 @@
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1"
                                            Text="{Binding UnitsDisplayText, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
+                                           Style="{StaticResource CaptionSmall}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="3"
@@ -345,7 +301,7 @@
                                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                         <!-- Privacy Policy Row -->
-                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
+                        <Border Style="{StaticResource ProfileMenuRow}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfilePrivacyPage" />
@@ -360,7 +316,7 @@
                                     <Label Text="{loc:LocalizedText Profile_Privacy_Policy}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_HealthRecordsStayOnThisDevice}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
+                                           Style="{StaticResource CaptionSmall}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="2"
@@ -375,7 +331,7 @@
                                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
 
                         <!-- Send Feedback Row -->
-                        <Border BackgroundColor="{StaticResource Transparent}" StrokeThickness="{StaticResource UiStrokeWidth0}" Padding="{StaticResource UiInsets16_14}">
+                        <Border Style="{StaticResource ProfileMenuRow}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileFeedbackPage" />
@@ -390,7 +346,7 @@
                                     <Label Text="{loc:LocalizedText Profile_Details_SendFeedback}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_ReportAnIssueOrSuggestA}"
-                                           Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
+                                           Style="{StaticResource CaptionSmall}" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="2"

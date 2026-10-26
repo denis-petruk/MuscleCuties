@@ -58,8 +58,7 @@
                     <Label
                         Grid.Column="1"
                         Text="{loc:LocalizedText Nutrition_Balance_Micros}"
-                        Style="{StaticResource CaptionLabel}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
+                        Style="{StaticResource CaptionStrong}"
                         VerticalOptions="Center" />
                 </Grid>
             </Border>

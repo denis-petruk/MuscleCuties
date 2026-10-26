@@ -64,9 +64,7 @@
                                   x:TypeArguments="cycleControls:CyclePhaseExplorerCarousel" />
                 <Label
                     Text="{loc:LocalizedText Cycle_Page_MedicalDisclaimer}"
-                    Style="{StaticResource CaptionLabel}"
-                    FontSize="{StaticResource UiFontSize11}"
-                    HorizontalTextAlignment="Center"
+                    Style="{StaticResource CaptionTinyCentered}"
                     Margin="{StaticResource UiInsets0_8_0_0}" />
             </VerticalStackLayout>
         </ScrollView>

@@ -47,14 +47,91 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
+    public async Task Preview_Uses_The_Activity_Choices_And_Weekdays_Sent_By_The_User()
+    {
+        var userActivities = new HashSet<int>
+        {
+            (int)WorkoutActivityType.GeneralStrength,
+            (int)WorkoutActivityType.Yoga
+        };
+        var userWeekdays = new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Thursday };
+        var userStrengthDuration = WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes +
+                                   WorkoutPreferencesRule.ActivitySessionDurationIncrementMinutes;
+        var userDurations = new Dictionary<int, int>
+        {
+            [(int)WorkoutActivityType.GeneralStrength] = userStrengthDuration,
+            [(int)WorkoutActivityType.Yoga] = WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes
+        };
+        var userFrequencies = new Dictionary<int, int>
+        {
+            [(int)WorkoutActivityType.Yoga] = userWeekdays.Count
+        };
+        var request = Request() with
+        {
+            SelectedActivityTypes = userActivities,
+            AvailableWeekdays = userWeekdays,
+            ActivitySessionDurationsMinutes = userDurations,
+            RequestedSessionsPerWeek = userFrequencies,
+            ActivityEligibilityEvidence =
+            [
+                new ActivityEligibilityInputV020(WorkoutActivityDto.Yoga,
+                    IsDemandingYogaContent: false)
+            ]
+        };
+        var staleProfile = Profile() with
+        {
+            RequestedSessionsPerWeek = new Dictionary<int, int>
+            {
+                [(int)WorkoutActivityType.Yoga] = ActivityPreferenceDefaults.OptionalSessionsPerWeek
+            }
+        };
+        var result = await new PreviewStrengthPlanV020UseCase(new Source(staleProfile))
+            .ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.Equal("Feasible", result.Status);
+        var schedule = result.MixedActivitySchedule!;
+        Assert.Equal(userActivities.OrderBy(activity => activity), schedule.Activities
+            .Select(decision => decision.ActivityTypeId).OrderBy(activity => activity));
+        Assert.All(schedule.Sessions, session => Assert.Contains((DayOfWeek)session.Weekday, userWeekdays));
+        Assert.All(schedule.Sessions.Where(session =>
+                session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength),
+            session => Assert.Equal((decimal)userStrengthDuration, session.DurationMinutes));
+        var yogaDecision = Assert.Single(schedule.Activities,
+            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+        Assert.Equal(userWeekdays.Count, yogaDecision.TargetSessionsPerWeek);
+        Assert.Contains(schedule.Sessions, session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+    }
+
+    [Fact]
     public void Request_Can_Be_Serialized_And_Deserialized_Via_SystemTextJson()
     {
-        var request = Request();
+        var request = Request() with
+        {
+            SelectedActivityTypes = new HashSet<int>
+            {
+                (int)WorkoutActivityType.GeneralStrength,
+                (int)WorkoutActivityType.Yoga
+            },
+            ActivitySessionDurationsMinutes = new Dictionary<int, int>
+            {
+                [(int)WorkoutActivityType.GeneralStrength] =
+                    WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes
+            },
+            RequestedSessionsPerWeek = new Dictionary<int, int>
+            {
+                [(int)WorkoutActivityType.Yoga] = ActivityPreferenceDefaults.OptionalSessionsPerWeek
+            }
+        };
         var json = System.Text.Json.JsonSerializer.Serialize(request, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
         var deserialized = System.Text.Json.JsonSerializer.Deserialize<StrengthPlanPreviewRequestV020>(json, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
         Assert.NotNull(deserialized);
         Assert.Equal(request.Activity, deserialized.Activity);
         Assert.Equal(request.AvailableWeekdays, deserialized.AvailableWeekdays);
+        Assert.True(request.SelectedActivityTypes!.SetEquals(deserialized.SelectedActivityTypes!));
+        Assert.Equal(request.ActivitySessionDurationsMinutes![(int)WorkoutActivityType.GeneralStrength],
+            deserialized.ActivitySessionDurationsMinutes![(int)WorkoutActivityType.GeneralStrength]);
+        Assert.Equal(request.RequestedSessionsPerWeek![(int)WorkoutActivityType.Yoga],
+            deserialized.RequestedSessionsPerWeek![(int)WorkoutActivityType.Yoga]);
     }
 
     [Fact]
@@ -176,7 +253,7 @@ public sealed class StrengthPlanPreviewV020Tests
                     DayOfWeek.Monday
                 }
             })), store);
-        var limited = await tooFewDays.ExecuteAsync(Guid.NewGuid(), request);
+        var limited = await tooFewDays.ExecuteAsync(Guid.NewGuid(), request with { AvailableWeekdays = null });
 
         Assert.False(limited.IsPersisted);
         Assert.Equal("Limited", limited.Preview.Status);

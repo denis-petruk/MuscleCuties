@@ -25,18 +25,6 @@
             </Border>
         </VerticalStackLayout>
 
-        <VerticalStackLayout Spacing="{StaticResource UiSpacing5}">
-            <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_SessionLength}"
-                   Style="{StaticResource FormFieldLabel}" />
-            <Border Style="{StaticResource PickerContainer}">
-                <Picker
-                    Title="{loc:LocalizedText Profile_WorkoutPrefs_SessionLength}"
-                    ItemsSource="{Binding SessionDurationOptions}"
-                    ItemDisplayBinding="{Binding ., Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Generation_MixedSessionDurationFormat}"
-                    SelectedItem="{Binding SelectedSessionDurationMinutes, Mode=TwoWay}" />
-            </Border>
-        </VerticalStackLayout>
-
          <workoutControls:WorkoutActivityPreferencePicker
              ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
              ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
@@ -45,9 +33,7 @@
              <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_ExerciseExclusions}"
                     Style="{StaticResource SectionTitle}"
                     SemanticProperties.HeadingLevel="Level2" />
-            <Border Style="{StaticResource InputContainer}"
-                    HeightRequest="{StaticResource UiDimension44}"
-                    MinimumHeightRequest="{StaticResource UiDimension44}">
+            <Border Style="{StaticResource SearchContainer}">
                 <Entry Placeholder="{loc:LocalizedText Profile_WorkoutPrefs_SearchExercises}"
                        Text="{Binding ExerciseExclusionSearchText, Mode=TwoWay}"
                        ReturnType="Search" VerticalOptions="Center" />
@@ -56,9 +42,7 @@
                         Wrap="Wrap" JustifyContent="Start">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="workoutModels:WorkoutExerciseExclusionOptionItem">
-                        <Border Style="{StaticResource SelectableChip}" Margin="{StaticResource UiInsets0_0_8_8}"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}"
-                                Stroke="{StaticResource Primary}"
+                        <Border Style="{StaticResource SelectableCard}" Margin="{StaticResource UiInsets0_0_8_8}"
                                 SemanticProperties.Description="{Binding Name}"
                                 SemanticProperties.Hint="{loc:LocalizedText Profile_WorkoutPrefs_RemoveAvoidedExercise}">
                             <Border.GestureRecognizers>
@@ -82,32 +66,14 @@
                     <DataTemplate x:DataType="workoutModels:WorkoutExerciseExclusionOptionItem">
                         <Border
                             Style="{StaticResource SelectableCard}"
-                            Padding="{StaticResource UiInsets14_12}"
                             SemanticProperties.Description="{Binding Name}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding ToggleCommand}" />
                             </Border.GestureRecognizers>
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                    <Setter Property="Stroke"
-                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
-                                    <Setter Property="Stroke"
-                                            Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
-                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
-                                </DataTrigger>
-                            </Border.Triggers>
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <Label
                                     Text="{Binding Name}"
-                                    Style="{StaticResource BodyLabel}"
-                                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                                    Style="{StaticResource BodyStrong}"
                                     VerticalOptions="Center" />
                                 <Path Grid.Column="1" Data="M12 5V19M5 12H19"
                                       Stroke="{StaticResource Primary}"
@@ -120,6 +86,10 @@
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
+            <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_NoExerciseSearchResults}"
+                   Style="{StaticResource MutedLabel}"
+                   IsVisible="{Binding HasNoExerciseExclusionMatches}"
+                   LineBreakMode="WordWrap" />
         </VerticalStackLayout>
     </VerticalStackLayout>
 </ContentView>

@@ -16,15 +16,20 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         var sourceData = await source.LoadAsync(userId, cancellationToken).ConfigureAwait(false);
         if (sourceData is not null)
         {
-            var selectedActivities = sourceData.SelectedActivityTypes?.ToHashSet() ?? new HashSet<int>();
+            var selectedActivities = request.SelectedActivityTypes?.ToHashSet() ??
+                                     sourceData.SelectedActivityTypes?.ToHashSet() ?? new HashSet<int>();
             selectedActivities.Add((int)request.Activity);
 
             sourceData = sourceData with
             {
                 SelectedActivityTypes = selectedActivities,
-                AvailableWeekdays = sourceData.AvailableWeekdays is { Count: > 0 }
-                    ? sourceData.AvailableWeekdays
-                    : request.AvailableWeekdays
+                AvailableWeekdays = request.AvailableWeekdays is { Count: > 0 }
+                    ? request.AvailableWeekdays
+                    : sourceData.AvailableWeekdays,
+                ActivitySessionDurationsMinutes = request.ActivitySessionDurationsMinutes ??
+                                                  sourceData.ActivitySessionDurationsMinutes,
+                RequestedSessionsPerWeek = request.RequestedSessionsPerWeek ??
+                                           sourceData.RequestedSessionsPerWeek
             };
         }
 

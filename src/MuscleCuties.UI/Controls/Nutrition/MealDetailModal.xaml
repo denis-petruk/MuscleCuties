@@ -18,7 +18,7 @@
             </BoxView.GestureRecognizers>
         </BoxView>
 
-        <Border x:Name="SheetSurface" Style="{StaticResource AppBottomSheetSurface}">
+        <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" VerticalOptions="End">
             <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
 
                 <!-- Header: flattened from Grid+VerticalStackLayout into single Grid -->
@@ -82,9 +82,7 @@
 
                         <!-- Macro summary card: flattened from Grid+HorizontalStackLayouts into single Grid -->
                         <Border
-                            Style="{StaticResource ModalAccentPanel}"
-                            Padding="{StaticResource UiInsets14}"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
+                            Style="{StaticResource CardAccent}">
                             <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing6}"
                                   RowSpacing="{StaticResource UiSpaceTight}">
                                 <Image
@@ -104,8 +102,7 @@
                                     Grid.Row="1"
                                     Grid.ColumnSpan="2"
                                     Text="{Binding DetailMacrosText, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource MutedLabel}"
-                                    FontSize="{StaticResource UiFontSize14}" LineBreakMode="WordWrap" />
+                                    Style="{StaticResource MutedMedium}" LineBreakMode="WordWrap" />
 
                                 <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                                     <Border
@@ -115,16 +112,14 @@
                                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
                                         <Label
                                             Text="{Binding SelectedMealDetail.StyleLabel, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource CaptionLabel}"
+                                            Style="{StaticResource CaptionStrong}"
                                             TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                                            FontAttributes="{StaticResource UiFontAttributesBold}"
                                             FontSize="{StaticResource UiFontSize13}" />
                                     </Border>
                                     <Label
                                         Grid.Column="1"
                                         Text="{Binding SelectedMealDetail.StyleDescription, Converter={StaticResource LocalizedStringConverter}}"
-                                        Style="{StaticResource MutedLabel}"
-                                        FontSize="{StaticResource UiFontSize14}"
+                                        Style="{StaticResource MutedMedium}"
                                         LineBreakMode="WordWrap"
                                         VerticalOptions="Center" />
                                 </Grid>
@@ -141,13 +136,11 @@
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding DailyProgressText, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource MutedLabel}"
-                                FontSize="{StaticResource UiFontSize14}" />
+                                Style="{StaticResource MutedMedium}" />
                             <Label
                                 Grid.Row="2"
                                 Text="{Binding DailyMacroRemainingText, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource MutedLabel}"
-                                FontSize="{StaticResource UiFontSize14}" />
+                                Style="{StaticResource MutedMedium}" />
                         </Grid>
 
                         <!-- Ingredients by group -->
@@ -181,8 +174,7 @@
                                             <Label
                                                 Grid.Column="2"
                                                 Text="{Binding TotalText, Converter={StaticResource LocalizedStringConverter}}"
-                                                Style="{StaticResource MutedLabel}"
-                                                FontSize="{StaticResource UiFontSize14}"
+                                                Style="{StaticResource MutedMedium}"
                                                 VerticalOptions="Center" />
 
                                             <VerticalStackLayout
@@ -204,8 +196,7 @@
                                                             <Label
                                                                 Grid.Row="1"
                                                                 Text="{Binding DetailText, Converter={StaticResource LocalizedStringConverter}}"
-                                                                Style="{StaticResource MutedLabel}"
-                                                                FontSize="{StaticResource UiFontSize14}"
+                                                                Style="{StaticResource MutedMedium}"
                                                                 VerticalOptions="Center" />
                                                         </Grid>
                                                     </DataTemplate>
@@ -258,8 +249,7 @@
                                                 Grid.Row="1"
                                                 Grid.Column="1"
                                                 Text="{Binding Description}"
-                                                Style="{StaticResource MutedLabel}"
-                                                FontSize="{StaticResource UiFontSize14}"
+                                                Style="{StaticResource MutedMedium}"
                                                 LineBreakMode="WordWrap" />
                                         </Grid>
                                     </DataTemplate>
@@ -290,16 +280,13 @@
                     <Button
                         Text="{loc:LocalizedText Common_Back}"
                         Command="{Binding CloseMealDetailCommand}"
-                        Style="{StaticResource ButtonSecondary}"
-                        MinimumHeightRequest="{StaticResource UiDimension48}" />
+                        Style="{StaticResource ButtonSecondary}" />
                     <Button
                         Grid.Column="1"
                         Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Nutrition_MealDetail_UseThisMeal}"
                         Command="{Binding AcceptSuggestionCommand}"
-                        CommandParameter="{Binding SelectedMealDetail}"
-                        MinimumHeightRequest="{StaticResource UiDimension48}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}" />
+                        CommandParameter="{Binding SelectedMealDetail}" />
                 </Grid>
 
             </Grid>

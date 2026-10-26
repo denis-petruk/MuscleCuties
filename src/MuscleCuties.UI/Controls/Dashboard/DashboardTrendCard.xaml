@@ -33,8 +33,7 @@
                 <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing2}" HorizontalOptions="Center" VerticalOptions="Center">
                     <Label Text="{loc:LocalizedText Dashboard_Trend_ProgressTitle}"
                            Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
-                    <Label Text="{Binding TrendPositionText}" Style="{StaticResource CaptionLabel}"
-                           HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding TrendPositionText}" Style="{StaticResource CaptionCentered}" />
                 </VerticalStackLayout>
 
                 <Border Grid.Column="2"

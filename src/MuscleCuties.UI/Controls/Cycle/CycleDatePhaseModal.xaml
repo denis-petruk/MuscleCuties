@@ -20,7 +20,7 @@
         </BoxView>
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource AppBottomSheetSurface}">
+            Style="{StaticResource ModalSurface}" VerticalOptions="End">
 
             <Grid RowDefinitions="Auto, *, Auto">
                 <!-- Header: flattened from 3-deep Grid nesting into single Grid -->
@@ -96,13 +96,7 @@
                             BindableLayout.ItemsSource="{Binding PhaseEditOptions}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="cycleModels:CyclePhaseOptionItem">
-                                <Border
-                                    BackgroundColor="{Binding BackgroundColor}"
-                                    StrokeShape="{StaticResource UiRoundRectangleRadius14}"
-                                    Stroke="{Binding TextColor}"
-                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                                    Padding="{StaticResource UiInsets16_14}"
-                                    MinimumHeightRequest="{StaticResource UiDimension60}"
+                                <Border Style="{StaticResource SelectableCard}"
                                     SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_DatePhaseModal_SelectPhaseFormat}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -110,12 +104,7 @@
                                             CommandParameter="{Binding .}" />
                                     </Border.GestureRecognizers>
                                     <Border.Triggers>
-                                        <DataTrigger
-                                            TargetType="Border"
-                                            Binding="{Binding IsSelected}"
-                                            Value="True">
-                                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-                                        </DataTrigger>
+
                                     </Border.Triggers>
 
                                     <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, *, Auto"
@@ -141,31 +130,13 @@
                                             FontSize="{StaticResource UiFontSize13}"
                                             LineBreakMode="WordWrap" />
 
-                                        <Border
+                                        <Border Style="{StaticResource SelectionCheckmark}"
                                             Grid.Column="2"
                                             Grid.RowSpan="2"
-                                            WidthRequest="{StaticResource UiDimension26}"
-                                            HeightRequest="{StaticResource UiDimension26}"
-                                            StrokeShape="{StaticResource UiRoundRectangleRadius13}"
-                                            Stroke="{Binding TextColor}"
-                                            StrokeThickness="{StaticResource UiStrokeWidth1_4}"
-                                            BackgroundColor="{StaticResource Transparent}"
                                             VerticalOptions="Center">
-                                            <Border.Triggers>
-                                                <DataTrigger
-                                                    TargetType="Border"
-                                                    Binding="{Binding IsSelected}"
-                                                    Value="True">
-                                                    <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                                </DataTrigger>
-                                            </Border.Triggers>
                                             <Label
                                                 Text="{loc:LocalizedText Cycle_DatePhaseModal_Checkmark}"
-                                                TextColor="{StaticResource White}"
-                                                FontSize="{StaticResource UiFontSize13}"
-                                                FontAttributes="{StaticResource UiFontAttributesBold}"
-                                                HorizontalOptions="Center"
-                                                VerticalOptions="Center"
+                                                Style="{StaticResource SelectionCheckmarkText}"
                                                 IsVisible="{Binding IsSelected}" />
                                         </Border>
                                     </Grid>
@@ -184,7 +155,7 @@
                         IsVisible="{Binding HasPhaseJumpWarning}"
                         ColumnDefinitions="*, *"
                         ColumnSpacing="{StaticResource UiSpacing10}">
-                        <Button
+                        <Button Style="{StaticResource ButtonSecondary}"
                             Text="{loc:LocalizedText Cycle_DatePhaseModal_UseNextPhaseButton}"
                             Command="{Binding UseSuggestedPhaseCommand}"
                             IsVisible="{Binding HasSuggestedPhase}" />
@@ -195,7 +166,7 @@
                             Command="{Binding ReviewEarlierPhaseRecordsCommand}" />
                     </Grid>
 
-                    <Button
+                    <Button Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Cycle_DatePhaseModal_SaveButton}"
                         Command="{Binding SaveDatePhaseCommand}"
                         IsVisible="{Binding HasPhaseJumpWarning, Converter={StaticResource InvertedBoolConverter}}" />

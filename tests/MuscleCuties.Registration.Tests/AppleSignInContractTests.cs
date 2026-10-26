@@ -29,7 +29,8 @@ public sealed class AppleSignInContractTests
     public async Task AccountDeletionAbortsBeforePurgeWhenAppleTokenRevocationFails()
     {
         var purgeStore = new SpyPurgeStore();
-        var revoker = new StubAppleRevoker(new AppleTokenRevocationResult(false, true, "Revocation rejected"));
+        var revoker = new StubAppleRevoker(new AppleTokenRevocationResult(false, true, "Revocation rejected",
+            AccountDeletionFailureCode.AppleAuthorizationRequired));
         var useCase = new ServerAccountDeletionUseCase(purgeStore, appleTokenRevoker: revoker);
 
         var result = await useCase.DeleteAccountAsync(Guid.CreateVersion7(), appleAuthorizationCode: "synthetic-auth-code");
@@ -37,6 +38,7 @@ public sealed class AppleSignInContractTests
         Assert.False(result.Succeeded);
         Assert.False(purgeStore.Purged);
         Assert.Equal("synthetic-auth-code", revoker.LastAuthorizationCode);
+        Assert.Equal(AccountDeletionFailureCode.AppleAuthorizationRequired, result.FailureCode);
     }
 
     private sealed class RecordingSignInStore : IAccountSignInStore

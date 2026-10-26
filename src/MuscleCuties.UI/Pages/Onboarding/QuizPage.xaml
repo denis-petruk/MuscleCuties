@@ -16,7 +16,7 @@
         <!-- Dashboard prep overlay -->
         <Grid
             Padding="{StaticResource UiInsets24}"
-            IsVisible="{Binding IsPreparingDashboard}"
+            IsVisible="{Binding IsPreparingWorkoutPreferences}"
             ZIndex="10"
             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
             <Grid
@@ -35,14 +35,13 @@
                 <ActivityIndicator
                     Grid.Row="1"
                     Color="{StaticResource Primary}"
-                    IsRunning="{Binding IsPreparingDashboard}"
+                    IsRunning="{Binding IsPreparingWorkoutPreferences}"
                     HorizontalOptions="Center"
-                    SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_PreparingYourDashboardDescription}" />
+                    SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_PreparingWorkoutPreferencesDescription}" />
                 <Label
                     Grid.Row="2"
-                    Text="{loc:LocalizedText Onboarding_Quiz_PreparingYourDashboardText}"
-                    Style="{StaticResource MutedLabel}"
-                    HorizontalTextAlignment="Center" />
+                    Text="{loc:LocalizedText Onboarding_Quiz_PreparingWorkoutPreferencesText}"
+                    Style="{StaticResource MutedCentered}" />
             </Grid>
         </Grid>
 
@@ -63,8 +62,7 @@
                 <Label
                     Grid.Row="1"
                     Text="{loc:LocalizedText Onboarding_Quiz_GettingQuestionsReady}"
-                    Style="{StaticResource MutedLabel}"
-                    HorizontalTextAlignment="Center" />
+                    Style="{StaticResource MutedCentered}" />
             </Grid>
         </Grid>
 
@@ -87,18 +85,15 @@
                 <Label
                     Grid.Row="1"
                     Text="{Binding QuestionsStateMessage, Converter={StaticResource LocalizedStringConverter}}"
-                    Style="{StaticResource MutedLabel}"
-                    HorizontalTextAlignment="Center"
+                    Style="{StaticResource MutedCentered}"
                     SemanticProperties.Description="{Binding QuestionsStateMessage, Converter={StaticResource LocalizedStringConverter}}" />
-                <Button
+                <Button Style="{StaticResource ButtonPrimary}"
                     Grid.Row="2"
                     Text="{loc:LocalizedText Common_TryAgain}"
                     Command="{Binding RetryLoadQuestionsCommand}"
                     IsVisible="{Binding CanRetryQuestionsLoad}"
                     Margin="{StaticResource UiInsets0_8_0_0}"
                     HorizontalOptions="Center"
-                    MinimumHeightRequest="{StaticResource UiDimension52}"
-                    MinimumWidthRequest="{StaticResource UiDimension120}"
                     SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_RetryLoadingQuestions}"
                     SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_DoubleTapToReloadTheQuiz}" />
             </Grid>
@@ -129,9 +124,7 @@
                         </Border>
                         <Button Grid.Column="1"
                                 Text="{loc:LocalizedText Onboarding_Quiz_GoBackToProfile}"
-                                Style="{StaticResource ButtonLink}"
-                                Padding="{StaticResource UiInsets0}"
-                                MinimumHeightRequest="{StaticResource UiDimension44}"
+                                Style="{StaticResource ButtonSecondary}"
                                 HorizontalOptions="End"
                                 Clicked="OnEditProfileClicked"
                                 IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
@@ -203,29 +196,12 @@
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="quizModels:SelectableQuizAnswer">
                             <Border
-                                Padding="{StaticResource UiInsets16_14}"
-                                StrokeShape="{StaticResource UiRoundRectangleRadius14}"
-                                Stroke="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}"
-                                StrokeThickness="{StaticResource UiStrokeWidth1}"
-                                MinimumHeightRequest="{StaticResource UiDimension64}"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                                Style="{StaticResource SelectableCard}"
                                 SemanticProperties.Description="{Binding Answer.Text, Converter={StaticResource LocalizedStringConverter}}"
                                 SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_DoubleTapToSelectThisAnswer}">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnAnswerTapped" />
                                 </Border.GestureRecognizers>
-                                <Border.Triggers>
-                                    <DataTrigger
-                                        TargetType="Border"
-                                        Binding="{Binding IsSelected}"
-                                        Value="True">
-                                        <Setter Property="BackgroundColor"
-                                                Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray900}}" />
-                                        <Setter Property="Stroke" Value="{StaticResource Primary}" />
-                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
-
                                 <Grid ColumnDefinitions="36,*,24" ColumnSpacing="{StaticResource UiSpaceCompact}">
                                     <Border
                                         Grid.Column="0"
@@ -250,30 +226,9 @@
                                         Style="{StaticResource AccentLabel}"
                                         VerticalOptions="Center" />
 
-                                    <Border
+                                    <Border Style="{StaticResource SelectionRadioRing}"
                                         Grid.Column="2"
-                                        WidthRequest="{StaticResource UiDimension22}"
-                                        HeightRequest="{StaticResource UiDimension22}"
-                                        StrokeShape="{StaticResource UiRoundRectangleRadius11}"
                                         VerticalOptions="Center">
-                                        <Border.Triggers>
-                                            <DataTrigger
-                                                TargetType="Border"
-                                                Binding="{Binding IsSelected}"
-                                                Value="True">
-                                                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                                <Setter Property="Stroke" Value="{StaticResource Primary}" />
-                                            </DataTrigger>
-                                            <DataTrigger
-                                                TargetType="Border"
-                                                Binding="{Binding IsSelected}"
-                                                Value="False">
-                                                <Setter Property="BackgroundColor" Value="Transparent" />
-                                                <Setter Property="Stroke"
-                                                        Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
-                                            </DataTrigger>
-                                        </Border.Triggers>
-
                                         <BoxView
                                             WidthRequest="{StaticResource UiDimension8}"
                                             HeightRequest="{StaticResource UiDimension8}"
@@ -290,8 +245,7 @@
                     </VerticalStackLayout>
                     <Label
                         Text="{Binding SelectedWeekdayCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_SelectedWeekdaysFormat}"
-                        HorizontalTextAlignment="Center"
-                        Style="{StaticResource MutedLabel}"
+                        Style="{StaticResource MutedCentered}"
                         IsVisible="{Binding IsCurrentQuestionAvailableWeekdays}" />
                 </VerticalStackLayout>
             </ScrollView>
@@ -396,28 +350,23 @@
                     Margin="{StaticResource UiInsets0_0_0_10}"
                     SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_ProcessingPleaseWait}" />
 
-                <Button
+                <Button Style="{StaticResource ButtonPrimary}"
                     Grid.Row="2"
                     Grid.ColumnSpan="2"
                     Text="{loc:LocalizedText Onboarding_Quiz_GoToLogIn}"
                     Command="{Binding GoToLoginCommand}"
                     IsVisible="{Binding AccountCreatedNeedsLogin}"
-                    MinimumHeightRequest="{StaticResource UiDimension52}"
                     SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_AccountSavedGoToLogIn}" />
 
                 <Border
                     Grid.Row="3"
                     Grid.Column="0"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
-                    Stroke="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}"
-                    StrokeShape="{StaticResource UiRoundRectangleRadius14}"
-                    StrokeThickness="{StaticResource UiStrokeWidth1}"
+                    Style="{StaticResource CardAccent}"
                     IsVisible="{Binding ShowQuizBackButton}"
                     WidthRequest="{StaticResource UiDimension56}"
                     HeightRequest="{StaticResource UiDimension56}"
                     MinimumWidthRequest="{StaticResource UiDimension44}"
                     MinimumHeightRequest="{StaticResource UiDimension44}"
-                    Padding="{StaticResource UiInsets0}"
                     SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_GoToPreviousQuestion}"
                     SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_DoubleTapToGoBack}">
                     <Border.GestureRecognizers>
@@ -436,15 +385,13 @@
                         VerticalOptions="Center" />
                 </Border>
 
-                <Button
+                <Button Style="{StaticResource ButtonPrimary}"
                     Grid.Row="3"
                     Grid.Column="1"
                     Text="{Binding NextButtonText, Converter={StaticResource LocalizedStringConverter}}"
                     Clicked="OnNextClicked"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                     IsVisible="{Binding AccountCreatedNeedsLogin, Converter={StaticResource InvertedBoolConverter}}"
-                    MinimumHeightRequest="{StaticResource UiDimension56}"
-                    CornerRadius="{StaticResource UiCornerRadius14}"
                     SemanticProperties.Description="{Binding NextButtonText, Converter={StaticResource LocalizedStringConverter}}"
                     SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_DoubleTapToAdvanceToThe}" />
             </Grid>

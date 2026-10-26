@@ -422,8 +422,8 @@ public static partial class UiTextCatalog
         English["Onboarding_Quiz_OneIsSevereFiveIsNone"] = "1 is severe, 5 is none. Drag to set your usual discomfort.";
         English["Onboarding_Quiz_OneIsVeryLowFiveIs"] = "1 is very low, 5 is peak. Drag to set your usual energy.";
         English["Onboarding_Quiz_Peak"] = "Peak";
-        English["Onboarding_Quiz_PreparingYourDashboardDescription"] = "Preparing your dashboard";
-        English["Onboarding_Quiz_PreparingYourDashboardText"] = "Preparing your dashboard...";
+        English["Onboarding_Quiz_PreparingWorkoutPreferencesDescription"] = "Opening activity preferences";
+        English["Onboarding_Quiz_PreparingWorkoutPreferencesText"] = "Opening your activity preferences...";
         English["Onboarding_Quiz_ProcessingPleaseWait"] = "Processing, please wait";
         English["Onboarding_Quiz_QuestionValue"] = "Question {0}";
         English["Onboarding_Quiz_QuizProgressValue"] = "Quiz progress: {0}";
@@ -444,8 +444,6 @@ public static partial class UiTextCatalog
         English["Profile_Details_NameEmailPasswordCycleBaselines"] = "Name, email, password, cycle baselines";
         English["Profile_Details_NoPhotosStoredYet"] = "No photos stored yet";
         English["Profile_Details_Nutrition"] = "Nutrition";
-        English["Profile_Details_MicronutrientTargets"] = "Micronutrient targets";
-        English["Profile_Details_MicronutrientTargetsDetail"] = "Iron, vitamins, and minerals";
         English["Profile_Details_PersonalInfo"] = "Personal Info";
         English["Profile_Details_PreviewHiddenForPrivacy"] = "Preview Hidden for Privacy";
         English["Profile_Details_PrivateVault"] = "PRIVATE VAULT";
@@ -606,16 +604,17 @@ public static partial class UiTextCatalog
         English["Profile_WorkoutPrefs_AvailableWeekdays"] = "Available weekdays";
         English["Profile_WorkoutPrefs_AvailableWeekdaysHint"] = "Select 2 to 7 weekdays when you are available to train.";
         English["Profile_WorkoutPrefs_SelectedWeekdaysFormat"] = "{0} weekdays selected";
-        English["Profile_WorkoutPrefs_SessionLength"] = "Session length in minutes";
         English["Profile_WorkoutPrefs_WeeklyFrequency"] = "Sessions per week";
-        English["Profile_WorkoutPrefs_ChooseActivitySessionLength"] =
-            "Choose an allowed session duration for each selected activity that requires one.";
         English["Profile_WorkoutPrefs_ChooseActivityWeeklyFrequency"] =
             "Choose how many weekly sessions you want for yoga, mobility, or gentle recovery.";
-        English["Profile_WorkoutPrefs_ActivitySessionLengthHint"] =
-            "Strength session length comes from setup. Cardio and HIIT times are calculated from their activity plans; weekly sessions use your available days.";
-        English["Profile_WorkoutPrefs_InvalidPreferences"] = "Review your activities, select 2–7 available weekdays, and provide each required duration.";
+        English["Profile_WorkoutPrefs_InvalidPreferences"] = "Review your activities and choose 2–7 available weekdays.";
         English["Profile_WorkoutPrefs_PlanUpdateFailed"] = "Could not update your workout plan. Your preferences were not saved. Please try again.";
+        English["Profile_WorkoutPrefs_SaveOffline"] = "You’re offline. Your preferences were not saved. Reconnect and try again.";
+        English["Profile_WorkoutPrefs_SaveSignInRequired"] = "Your sign-in expired. Sign in again to save workout preferences.";
+        English["Profile_WorkoutPrefs_SaveServerUnavailable"] = "The workout service is unavailable. Your preferences were not saved. Try again shortly.";
+        English["Profile_WorkoutPrefs_SaveConflict"] = "Your profile changed while saving. Reload workout preferences, then try again.";
+        English["Profile_WorkoutPrefs_SaveCatalogChanged"] = "The exercise list changed. Reload workout preferences and review your exclusions.";
+        English["Profile_WorkoutPrefs_PlanSetupCouldNotOpen"] = "Your preferences were saved, but plan setup could not open. Open plan setup from Train to continue.";
         English["Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"] = "At least one strength activity is required for your plan.";
         English["Profile_WorkoutPrefs_SaveWorkoutPreferences"] = "Save workout preferences";
         English["Profile_WorkoutPrefs_SavingPreferences"] = "Saving preferences";
@@ -625,6 +624,11 @@ public static partial class UiTextCatalog
         English["Profile_WorkoutPrefs_ExerciseExclusions"] = "Exercises to avoid";
         English["Profile_WorkoutPrefs_ExerciseExclusionsHint"] = "Choose reviewed exercises you want left out of every new strength plan preview.";
         English["Profile_WorkoutPrefs_SearchExercises"] = "Search reviewed exercises";
+        English["Profile_WorkoutPrefs_NoExerciseSearchResults"] = "No reviewed exercises match that search.";
+        English["Profile_WorkoutPrefs_DiscardChangesTitle"] = "Discard workout changes?";
+        English["Profile_WorkoutPrefs_DiscardChangesMessage"] = "Your saved preferences will stay unchanged.";
+        English["Profile_WorkoutPrefs_KeepEditing"] = "Keep editing";
+        English["Profile_WorkoutPrefs_DiscardChanges"] = "Discard";
         English["Profile_WorkoutPrefs_RemoveAvoidedExercise"] = "Double tap to remove this exercise from your avoid list";
         English["Profile_WorkoutPrefs_ExerciseCatalogUnavailable"] = "Reviewed exercise choices could not be loaded. Reconnect and reopen these preferences before saving.";
         English["Profile_WorkoutPrefs_EquipmentFullGym"] = "Full gym";

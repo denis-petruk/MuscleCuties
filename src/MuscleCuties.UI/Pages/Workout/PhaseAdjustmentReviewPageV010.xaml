@@ -24,7 +24,7 @@
                    Style="{StaticResource MutedLabel}"
                    LineBreakMode="WordWrap" />
 
-            <Border Style="{StaticResource CardPrimary}" Padding="{StaticResource UiSpaceContent}">
+            <Border Style="{StaticResource CardPrimary}">
                 <Label Text="{Binding StatusMessage}"
                        Style="{StaticResource BodyLabel}"
                        LineBreakMode="WordWrap">
@@ -43,7 +43,7 @@
                                      Spacing="{StaticResource UiSpaceCompact}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="x:String">
-                            <Border Style="{StaticResource CardSecondary}" Padding="{StaticResource UiSpaceControl}">
+                            <Border Style="{StaticResource CardSecondary}">
                                 <Label Text="{Binding .}"
                                        Style="{StaticResource BodyLabel}"
                                        LineBreakMode="WordWrap" />
@@ -62,11 +62,10 @@
                                      Spacing="{StaticResource UiSpaceCompact}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="vm:PhaseAdjustmentSessionChoiceRowV010">
-                            <Border Style="{StaticResource CardSecondary}" Padding="{StaticResource UiSpaceControl}">
+                            <Border Style="{StaticResource CardSecondary}">
                                 <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
                                     <Label Text="{Binding Title}"
-                                           Style="{StaticResource BodyLabel}"
-                                           FontAttributes="{StaticResource UiFontAttributesBold}" />
+                                           Style="{StaticResource BodyStrong}" />
                                     <Border Style="{StaticResource PickerContainer}">
                                         <Picker ItemsSource="{Binding Options}"
                                                 SelectedItem="{Binding SelectedOption, Mode=TwoWay}"

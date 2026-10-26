@@ -14,8 +14,7 @@
                 <TapGestureRecognizer Command="{Binding CloseSwapPanelCommand}" />
             </Grid.GestureRecognizers>
         </Grid>
-        <Border x:Name="SheetSurface" Style="{StaticResource AppBottomSheetSurface}"
-                Padding="{StaticResource UiInsets20_18_20_24}">
+        <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" VerticalOptions="End">
             <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing14}" IsEnabled="{Binding CanInteract}">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
@@ -26,8 +25,7 @@
                     </VerticalStackLayout>
                     <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Swap_CloseButton}"
                             Command="{Binding CloseSwapPanelCommand}" IsVisible="{Binding CanDismissSwap}"
-                            Style="{StaticResource ButtonLink}"
-                            MinimumHeightRequest="{StaticResource UiDimension48}" Padding="{StaticResource UiInsets12_8}" FontSize="{StaticResource UiFontSize14}" />
+                            Style="{StaticResource ButtonSecondary}" />
                 </Grid>
                 <ActivityIndicator Grid.Row="1" IsVisible="{Binding IsSwapLoading}" IsRunning="{Binding IsSwapLoading}"
                                    Color="{StaticResource Primary}" />
@@ -42,20 +40,16 @@
                                 SelectionMode="None">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:ExerciseSwapOption">
-                            <Border StrokeThickness="{StaticResource UiStrokeWidth1}" StrokeShape="{StaticResource UiRoundRectangleRadius14}" Padding="{StaticResource UiInsets12_14}"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                            <Border Style="{StaticResource SelectableCard}"
                                     Margin="{StaticResource UiInsets0_0_0_8}"
-                                    Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
                                     SemanticProperties.Description="{Binding Name}">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
                                         <Setter Property="SemanticProperties.Hint"
                                                 Value="Selected swap option, double-tap to confirm" />
-                                        <Setter Property="Stroke"
-                                                Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
-                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
-                                        <Setter Property="BackgroundColor"
-                                                Value="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}" />
+
+
+
                                     </DataTrigger>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
                                         <Setter Property="SemanticProperties.Hint"
@@ -69,19 +63,16 @@
                                 </Border.GestureRecognizers>
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                        <Label Text="{Binding Name}" Style="{StaticResource BodyLabel}"
-                                               FontAttributes="{StaticResource UiFontAttributesBold}" />
+                                        <Label Text="{Binding Name}" Style="{StaticResource BodyStrong}" />
                                         <Label
                                             Text="{Binding MuscleMatch, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}" />
                                         <Label
                                             Text="{Binding PrimaryMuscles, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource CaptionLabel}"
-                                            TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                            Style="{StaticResource CaptionLabel}" />
                                         <Label
                                             Text="{Binding Equipment, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource CaptionLabel}"
-                                            TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                            Style="{StaticResource CaptionLabel}" />
                                     </VerticalStackLayout>
                                     <Label Grid.Column="1" Text="{loc:LocalizedText Workout_Swap_SelectedBadge}"
                                            IsVisible="{Binding IsSelected}" Style="{StaticResource AccentLabel}"
@@ -92,13 +83,11 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
                 <VerticalStackLayout Grid.Row="4" Spacing="{StaticResource UiSpaceMicro}">
-                    <Button Text="{Binding SwapConfirmText, Converter={StaticResource LocalizedStringConverter}}"
-                            Command="{Binding ConfirmSwapCommand}" IsVisible="{Binding HasSwapCandidates}"
-                            MinimumHeightRequest="{StaticResource UiDimension52}" />
+                    <Button Style="{StaticResource ButtonPrimary}" Text="{Binding SwapConfirmText, Converter={StaticResource LocalizedStringConverter}}"
+                            Command="{Binding ConfirmSwapCommand}" IsVisible="{Binding HasSwapCandidates}" />
                     <Button Text="{loc:LocalizedText Workout_Swap_LeaveSessionButton}" Command="{Binding FinishSessionCommand}"
                             IsVisible="{Binding SwapNeedsReload}"
-                            Style="{StaticResource ButtonLink}"
-                            MinimumHeightRequest="{StaticResource UiDimension48}" Padding="{StaticResource UiInsets12_8}" FontSize="{StaticResource UiFontSize14}" />
+                            Style="{StaticResource ButtonSecondary}" />
                 </VerticalStackLayout>
             </Grid>
         </Border>

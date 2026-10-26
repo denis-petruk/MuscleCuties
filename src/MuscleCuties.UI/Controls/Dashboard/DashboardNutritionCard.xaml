@@ -37,7 +37,7 @@
                            FontSize="{StaticResource UiFontSize20}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            TextColor="{StaticResource Primary}" />
                     <Label Text="{Binding CaloriesGoal, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource MutedLabel}" FontSize="{StaticResource UiFontSize13}" />
+                           Style="{StaticResource MutedLabel}" />
                 </VerticalStackLayout>
             </Grid>
             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpacing6}">
@@ -56,8 +56,7 @@
                     <Label Text="{loc:LocalizedText Dashboard_Nutrition_Protein}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            HorizontalTextAlignment="Center" />
                     <Label Text="{Binding ProteinText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionLabel}"
-                           FontSize="{StaticResource UiFontSize11}" HorizontalTextAlignment="Center" />
+                           Style="{StaticResource CaptionTinyCentered}" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                     <Grid WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" HorizontalOptions="Center">
@@ -75,8 +74,7 @@
                     <Label Text="{loc:LocalizedText Dashboard_Nutrition_Carbs}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            HorizontalTextAlignment="Center" />
                     <Label Text="{Binding CarbsText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionLabel}"
-                           FontSize="{StaticResource UiFontSize11}" HorizontalTextAlignment="Center" />
+                           Style="{StaticResource CaptionTinyCentered}" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Grid.Column="2" Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                     <Grid WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" HorizontalOptions="Center">
@@ -94,8 +92,7 @@
                     <Label Text="{loc:LocalizedText Dashboard_Nutrition_Fat}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            HorizontalTextAlignment="Center" />
                     <Label Text="{Binding FatsText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionLabel}"
-                           FontSize="{StaticResource UiFontSize11}" HorizontalTextAlignment="Center" />
+                           Style="{StaticResource CaptionTinyCentered}" />
                 </VerticalStackLayout>
             </Grid>
         </VerticalStackLayout>

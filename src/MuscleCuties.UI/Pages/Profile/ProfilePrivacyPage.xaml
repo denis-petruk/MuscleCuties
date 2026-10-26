@@ -22,7 +22,7 @@
                 Subtitle="Your data and account security"
                 BackCommand="{Binding BackCommand}" />
 
-            <Border Grid.Row="1" Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets18}">
+            <Border Grid.Row="1" Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                     <sharedControls:IconSectionHeader x:Name="SummaryTitle" Text="Your data, at a glance"
                                                       IconGlyph="ShieldCheckmark24" />
@@ -32,7 +32,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border Grid.Row="2" Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets18}">
+            <Border Grid.Row="2" Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
                     <sharedControls:IconSectionHeader x:Name="ServicesTitle" Text="Other services"
                                                       IconGlyph="LinkSquare24" />
@@ -50,7 +50,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border Grid.Row="3" Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets18}">
+            <Border Grid.Row="3" Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpacing14}">
                     <sharedControls:IconSectionHeader x:Name="ChoiceTitle" Text="Your choices"
                                                       IconGlyph="PersonPill24" />

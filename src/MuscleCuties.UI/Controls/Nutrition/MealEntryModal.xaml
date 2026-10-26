@@ -19,7 +19,7 @@
         </BoxView>
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource AppBottomSheetSurface}">
+            Style="{StaticResource ModalSurface}" VerticalOptions="End">
 
             <Grid RowDefinitions="Auto, *">
                 <!-- Header -->
@@ -59,7 +59,7 @@
                             RowSpacing="{StaticResource UiSpacing10}">
 
                             <!-- Breakfast -->
-                            <Border Style="{StaticResource ModalListItem}" Padding="{StaticResource UiInsets12}" MinimumHeightRequest="{StaticResource UiDimension92}"
+                            <Border Style="{StaticResource CardSecondary}" MinimumHeightRequest="{StaticResource UiDimension92}"
                                     SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_BreakfastMealType}">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsEntryBreakfastSelected}"
@@ -89,7 +89,7 @@
                             </Border>
 
                             <!-- Lunch -->
-                            <Border Grid.Column="1" Style="{StaticResource ModalListItem}" Padding="{StaticResource UiInsets12}"
+                            <Border Grid.Column="1" Style="{StaticResource CardSecondary}"
                                     MinimumHeightRequest="{StaticResource UiDimension92}"
                                     SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_LunchMealType}">
                                 <Border.Triggers>
@@ -120,7 +120,7 @@
                             </Border>
 
                             <!-- Dinner -->
-                            <Border Grid.Row="1" Style="{StaticResource ModalListItem}" Padding="{StaticResource UiInsets12}"
+                            <Border Grid.Row="1" Style="{StaticResource CardSecondary}"
                                     MinimumHeightRequest="{StaticResource UiDimension92}"
                                     SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_DinnerMealType}">
                                 <Border.Triggers>
@@ -151,7 +151,7 @@
                             </Border>
 
                             <!-- Snack -->
-                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource ModalListItem}" Padding="{StaticResource UiInsets12}"
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardSecondary}"
                                     MinimumHeightRequest="{StaticResource UiDimension92}"
                                     SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_SnackMealType}">
                                 <Border.Triggers>
@@ -195,9 +195,6 @@
                             Text="{loc:LocalizedText Nutrition_AddFood}"
                             Command="{Binding StartManualMealCommand}"
                             IsEnabled="{Binding HasEntryMealTypeSelected}"
-                            HeightRequest="{StaticResource UiDimension52}"
-                            MinimumHeightRequest="{StaticResource UiDimension52}"
-                            MinimumWidthRequest="{StaticResource UiDimension220}"
                             HorizontalOptions="Center"
                             LineBreakMode="WordWrap"
                             Margin="{StaticResource UiInsets0}"
@@ -208,9 +205,6 @@
                             Text="{loc:LocalizedText Nutrition_MealEntry_GetASuggestion}"
                             Command="{Binding StartSuggestedMealCommand}"
                             Style="{StaticResource ButtonSecondary}"
-                            HeightRequest="{StaticResource UiDimension52}"
-                            MinimumHeightRequest="{StaticResource UiDimension52}"
-                            MinimumWidthRequest="{StaticResource UiDimension220}"
                             HorizontalOptions="Center"
                             LineBreakMode="WordWrap"
                             Margin="{StaticResource UiInsets0}"
@@ -221,9 +215,6 @@
                             Text="{loc:LocalizedText Nutrition_PlanMyDay}"
                             Command="{Binding StartDayPlanCommand}"
                             Style="{StaticResource ButtonSecondary}"
-                            HeightRequest="{StaticResource UiDimension52}"
-                            MinimumHeightRequest="{StaticResource UiDimension52}"
-                            MinimumWidthRequest="{StaticResource UiDimension220}"
                             HorizontalOptions="Center"
                             LineBreakMode="WordWrap"
                             Margin="{StaticResource UiInsets0_0_0_2}"

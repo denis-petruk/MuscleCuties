@@ -227,7 +227,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
 
             if (!result.Succeeded)
             {
-                AccountActionError =
+                AccountActionError = result.FailureMessage ??
                     "Deletion could not be completed. Your local data may still be on this device. Please contact support before handing over the device.";
                 return;
             }

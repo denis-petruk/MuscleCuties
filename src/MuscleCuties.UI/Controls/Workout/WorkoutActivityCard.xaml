@@ -12,7 +12,6 @@
 
     <Border
         Style="{StaticResource CardPrimary}"
-        Padding="{StaticResource UiInsets14}"
         Margin="{StaticResource UiInsets0_0_0_10}"
         SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Activity_OpenWorkoutFormat}"
         SemanticProperties.Hint="{Binding SessionProgressText, Converter={StaticResource LocalizedStringConverter}}">
@@ -94,8 +93,7 @@
                     IsEnabled="{Binding CanMarkOptional}"
                     IsVisible="{Binding CanMarkOptional}"
                     Style="{StaticResource ButtonSecondary}"
-                    FontSize="{StaticResource UiFontSize13}"
-                    HorizontalOptions="Start" Padding="{StaticResource UiInsets10_2}" MinimumHeightRequest="{StaticResource UiDimension32}" HeightRequest="{StaticResource UiDimension32}"
+                    HorizontalOptions="Start"
                     SemanticProperties.Hint="{loc:LocalizedText Workout_Readiness_OptionalSessionHint}" />
             <Button Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
                     Text="{Binding EasierAlternativeStatusText, Converter={StaticResource LocalizedStringConverter}}"
@@ -104,8 +102,7 @@
                     IsEnabled="{Binding CanMarkEasierAlternative}"
                     IsVisible="{Binding IsOptional}"
                     Style="{StaticResource ButtonSecondary}"
-                    FontSize="{StaticResource UiFontSize13}"
-                    HorizontalOptions="Start" Padding="{StaticResource UiInsets10_2}" MinimumHeightRequest="{StaticResource UiDimension32}" HeightRequest="{StaticResource UiDimension32}"
+                    HorizontalOptions="Start"
                     SemanticProperties.Hint="{loc:LocalizedText Workout_Readiness_EasierAlternativeHint}" />
         </Grid>
     </Border>

@@ -19,6 +19,26 @@ public partial class StrengthPlanGenerationPage : ContentPage
         this.BeginPageLoad(() => _viewModel.LoadCommand.ExecuteAsync(null));
     }
 
+    protected override bool OnBackButtonPressed()
+    {
+        if (_viewModel.IsBusy)
+            return true;
+
+        if (_viewModel.HasPreview)
+        {
+            _viewModel.ClosePreviewCommand.Execute(null);
+            return true;
+        }
+
+        if (_viewModel.IsTrainNavigationPending)
+        {
+            _viewModel.OpenTrainCommand.Execute(null);
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
+    }
+
     private void OnPageSizeChanged(object? sender, EventArgs args)
     {
         if (Height > 0)

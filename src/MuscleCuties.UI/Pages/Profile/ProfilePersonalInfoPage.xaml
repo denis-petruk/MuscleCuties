@@ -49,14 +49,12 @@
                         <Label Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_Birthday}"
                                Style="{StaticResource FormFieldLabel}" />
                         <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                            <Grid RowDefinitions="Auto" RowSpacing="{StaticResource UiSpaceTight}">
-                                <DatePicker
-                                    Date="{Binding BirthDate}"
-                                    DateSelected="OnBirthDateSelected"
-                                    MinimumDate="{Binding MinBirthDate}"
-                                    MaximumDate="{Binding MaxBirthDate}"
-                                    Format="MMMM dd, yyyy" />
-                            </Grid>
+                            <DatePicker
+                                Date="{Binding BirthDate}"
+                                DateSelected="OnBirthDateSelected"
+                                MinimumDate="{Binding MinBirthDate}"
+                                MaximumDate="{Binding MaxBirthDate}"
+                                Format="MMMM dd, yyyy" />
                         </Border>
                     </Grid>
                 </Grid>
@@ -115,8 +113,7 @@
                     <Label
                         Grid.Row="4"
                         Text="{Binding PasswordStatusMessage, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource CaptionLabel}"
-                        FontSize="{StaticResource UiFontSize12}"
+                        Style="{StaticResource CaptionSmall}"
                         IsVisible="{Binding PasswordStatusMessage, Converter={StaticResource StringToBoolConverter}}"
                         SemanticProperties.Description="{Binding PasswordStatusMessage, Converter={StaticResource LocalizedStringConverter}}" />
 
@@ -136,8 +133,7 @@
                         <Label
                             Grid.Column="1"
                             Text="{loc:LocalizedText Profile_PersonalInfo_LocalOnly}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontSize="{StaticResource UiFontSize12}"
+                            Style="{StaticResource CaptionSmall}"
                             VerticalOptions="Center" />
                     </Grid>
                     <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpacing10}">
@@ -170,8 +166,7 @@
                         <Label
                             Grid.Column="1"
                             Text="{loc:LocalizedText Profile_PersonalInfo_LocalOnly}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontSize="{StaticResource UiFontSize12}"
+                            Style="{StaticResource CaptionSmall}"
                             VerticalOptions="Center" />
                     </Grid>
                     <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
@@ -194,8 +189,7 @@
                         <Label
                             Grid.Column="1"
                             Text="{loc:LocalizedText Profile_PersonalInfo_LocalOnly}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontSize="{StaticResource UiFontSize12}"
+                            Style="{StaticResource CaptionSmall}"
                             VerticalOptions="Center" />
                     </Grid>
 
@@ -228,8 +222,7 @@
             <Label
                 Grid.Row="6"
                 Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
-                Style="{StaticResource CaptionLabel}"
-                FontSize="{StaticResource UiFontSize12}"
+                Style="{StaticResource CaptionSmall}"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
                 SemanticProperties.Description="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}" />
 

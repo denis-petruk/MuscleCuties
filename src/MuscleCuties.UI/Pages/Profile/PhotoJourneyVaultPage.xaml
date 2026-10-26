@@ -34,19 +34,14 @@
 
             <Grid Grid.Column="1" RowDefinitions="Auto,Auto" VerticalOptions="Center">
                 <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" Style="{StaticResource SectionTitle}" FontSize="{StaticResource UiFontSize17}" />
-                <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_PrivateStoredOnThisDevice}" Style="{StaticResource CaptionLabel}"
-                       FontSize="{StaticResource UiFontSize12}" />
+                <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_PrivateStoredOnThisDevice}" Style="{StaticResource CaptionSmall}" />
             </Grid>
 
             <Button
                 Grid.Column="2"
                 Text="{Binding PrivacyBlurButtonText, Converter={StaticResource LocalizedStringConverter}}"
                 Command="{Binding TogglePrivacyBlurCommand}"
-                Style="{StaticResource ButtonSecondary}"
-                FontSize="{StaticResource UiFontSize12}"
-                MinimumHeightRequest="{StaticResource UiDimension36}"
-                HeightRequest="{StaticResource UiDimension36}"
-                Padding="{StaticResource UiInsets10_0}" />
+                Style="{StaticResource ButtonSecondary}" />
         </Grid>
 
         <!-- Body (Virtualized CollectionView, zero ScrollViews) -->
@@ -63,8 +58,7 @@
             <CollectionView.Header>
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" Margin="{StaticResource UiInsets0}">
                     <!-- Air-Gap Privacy Card -->
-                    <Border Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets16}"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}">
+                    <Border Style="{StaticResource CardPrimary}">
                         <Grid ColumnDefinitions="36,*" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                             <mi:MauiIcon
                                 Icon="{mi:Fluent ShieldLock24}" IconSize="{StaticResource UiDimension24}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
@@ -75,24 +69,21 @@
                                 <Label Text="{loc:LocalizedText Profile_PhotoJourney_PrivacyFirstPhotoVault}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_YourPhotosAreStoredLocallyAnd}"
-                                       Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
+                                       Style="{StaticResource CaptionSmall}" />
                             </Grid>
                         </Grid>
                     </Border>
 
                     <!-- Action Button -->
-                    <Button
+                    <Button Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Profile_PhotoJourney_PlusAddProgressPhoto}"
-                        Clicked="OnAddPhotoClicked"
-                        MinimumHeightRequest="{StaticResource UiDimension48}"
-                        HeightRequest="{StaticResource UiDimension48}" />
+                        Clicked="OnAddPhotoClicked" />
                 </VerticalStackLayout>
             </CollectionView.Header>
             <CollectionView.EmptyView>
                 <!-- Empty State -->
                 <Border
                     Style="{StaticResource CardPrimary}"
-                    Padding="{StaticResource UiInsets24_36}"
                     MinimumHeightRequest="{StaticResource UiDimension220}"
                     HorizontalOptions="Fill">
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}"
@@ -106,13 +97,13 @@
                         <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_NoProgressPhotoYet}"
                                Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" FontSize="{StaticResource UiFontSize15}" />
                         <Label Grid.Row="2" Text="{loc:LocalizedText Profile_PhotoJourney_ChoosePhotosToTrackProgressPhotos}"
-                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" FontSize="{StaticResource UiFontSize13}" />
+                               Style="{StaticResource CaptionCentered}" FontSize="{StaticResource UiFontSize13}" />
                     </Grid>
                 </Border>
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="profileModels:PhotoVaultItem">
-                    <Border Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets14}">
+                    <Border Style="{StaticResource CardPrimary}">
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
                             <!-- Photo header / meta -->
                             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
@@ -135,20 +126,15 @@
                                     Text="{loc:LocalizedText Common_Delete}"
                                     Command="{Binding DeletePhotoCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoJourneyVaultViewModel}}, x:DataType=vm:PhotoJourneyVaultViewModel}"
                                     CommandParameter="{Binding .}"
-                                    Style="{StaticResource ButtonLink}"
-                                    TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
-                                    FontSize="{StaticResource UiFontSize12}"
-                                    HeightRequest="{StaticResource UiDimension30}"
-                                    MinimumHeightRequest="{StaticResource UiDimension30}"
-                                    Padding="{StaticResource UiInsets6_0}" />
+                                    Style="{StaticResource ButtonSecondary}"
+                                    SemanticProperties.Description="{loc:LocalizedText Common_Delete}" />
                             </Grid>
 
                             <!-- Photo Image with Tap-to-Reveal Blur -->
                             <Border
                                 Grid.Row="1"
                                 Style="{StaticResource CardSecondary}"
-                                HeightRequest="{StaticResource UiDimension240}"
-                                Padding="{StaticResource UiInsets0}">
+                                HeightRequest="{StaticResource UiDimension240}">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Command="{Binding ToggleItemRevealCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoJourneyVaultViewModel}}, x:DataType=vm:PhotoJourneyVaultViewModel}"
@@ -186,15 +172,12 @@
                                             HorizontalTextAlignment="Center" />
                                         <Label Grid.Row="2"
                                                Text="{loc:LocalizedText Profile_PhotoJourney_TapToReveal}"
-                                               Style="{StaticResource CaptionLabel}"
-                                               FontSize="{StaticResource UiFontSize12}"
-                                               IsVisible="{Binding IsImageAvailable}"
-                                               HorizontalTextAlignment="Center" />
+                                               Style="{StaticResource CaptionSmallCentered}"
+                                               IsVisible="{Binding IsImageAvailable}" />
                                         <Label Grid.Row="{x:Static photoPage:PhotoJourneyVaultPage.PhotoUnavailableOverlayRow}"
                                                Text="{loc:LocalizedText Profile_PhotoJourney_PhotoUnavailable}"
-                                               Style="{StaticResource CaptionLabel}"
-                                               IsVisible="{Binding IsImageAvailable, Converter={StaticResource InvertedBoolConverter}}"
-                                               HorizontalTextAlignment="Center" />
+                                               Style="{StaticResource CaptionCentered}"
+                                               IsVisible="{Binding IsImageAvailable, Converter={StaticResource InvertedBoolConverter}}" />
                                     </Grid>
                                 </Grid>
                             </Border>
@@ -204,8 +187,7 @@
                                 Grid.Row="2"
                                 Text="{Binding Notes}"
                                 IsVisible="{Binding HasNotes}"
-                                Style="{StaticResource CaptionLabel}"
-                                FontSize="{StaticResource UiFontSize13}" />
+                                Style="{StaticResource CaptionLabel}" />
                             <Grid Grid.Row="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonSelectionRow}"
                                   ColumnDefinitions="*,*"
                                   ColumnSpacing="{StaticResource UiSpaceTight}"
@@ -230,7 +212,6 @@
                 IsVisible="{Binding IsComparisonOpen}"
                 Style="{StaticResource CardPrimary}"
                 Margin="{StaticResource UiInsets20}"
-                Padding="{StaticResource UiInsets16}"
                 VerticalOptions="Center"
                 MaximumWidthRequest="{StaticResource UiDimension640}">
             <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">

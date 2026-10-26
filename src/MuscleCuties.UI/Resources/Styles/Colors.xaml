@@ -37,20 +37,20 @@
     <Color x:Key="ChoiceSelectedSurfaceDark">#603447</Color>
     <Color x:Key="ChoiceSelectedStrokeLight">#A6446D</Color>
     <Color x:Key="ChoiceSelectedStrokeDark">#F0B8CF</Color>
-    <Color x:Key="ActivitySelectedSurfaceLight">#FAF8F9</Color>
+    <Color x:Key="ActivitySelectedSurfaceLight">#FBE3ED</Color>
     <Color x:Key="ActivitySelectedStrokeLight">#8F2F59</Color>
-    <Color x:Key="ActivityUnselectedStrokeLight">#DCCFD5</Color>
+    <Color x:Key="ActivityUnselectedStrokeLight">#A58492</Color>
     <Color x:Key="ActivitySelectedSubtitleLight">#3D2C34</Color>
     <Color x:Key="ActivityDescriptionDark">#E0CFD7</Color>
 
     <Color x:Key="InputSurface">#FFFCFE</Color>
     <Color x:Key="InputSurfaceDark">#33242B</Color>
-    <Color x:Key="InputStroke">#EBD3DE</Color>
+    <Color x:Key="InputStroke">#A58492</Color>
     <Color x:Key="InputStrokeDark">#5A424C</Color>
 
     <Color x:Key="TextPrimary">#2B1D24</Color>
     <Color x:Key="TextPrimaryDark">#F8EEF4</Color>
-    <Color x:Key="TextSecondary">#765763</Color>
+    <Color x:Key="TextSecondary">#6C4B58</Color>
     <Color x:Key="TextSecondaryDark">#D7BFCA</Color>
     <Color x:Key="TextAccent">#A6446D</Color>
     <Color x:Key="PrivacyShieldSurface">#FA2B1D24</Color>
@@ -219,11 +219,23 @@
     <Thickness x:Key="UiInsets28">28</Thickness>
     <Thickness x:Key="UiInsetsPlanStickyAction">20,8,20,8</Thickness>
     <Thickness x:Key="ProfileMeasurementPickerPadding">14,4</Thickness>
+    <Thickness x:Key="UiInsets10_8">10,8</Thickness>
+    <Thickness x:Key="UiInsets12_10">12,10</Thickness>
+    <Thickness x:Key="UiInsets14_10">14,10</Thickness>
+    <Thickness x:Key="UiInsets14_12">14,12</Thickness>
+    <Thickness x:Key="UiInsets16_10">16,10</Thickness>
+    <Thickness x:Key="UiInsets16_14">16,14</Thickness>
+    <Thickness x:Key="UiInsets20_0_20_30">20,0,20,30</Thickness>
+    <Thickness x:Key="UiInsets6_8">6,8</Thickness>
+    <Thickness x:Key="UiInsets8_12">8,12</Thickness>
     <x:String x:Key="PlanMetricColumnWidths">*,112</x:String>
     <CornerRadius x:Key="BottomSheetTopCornerRadius">24,24,0,0</CornerRadius>
     <RoundRectangle x:Key="UiRoundRectangleRadius14" CornerRadius="14" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius12" CornerRadius="12" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius16" CornerRadius="16" />
     <RoundRectangle x:Key="UiRoundRectangleRadius999" CornerRadius="999" />
     <x:Double x:Key="UiDimension24">24</x:Double>
+    <x:Double x:Key="UiDimension22">22</x:Double>
     <x:Double x:Key="UiDimension48">48</x:Double>
     <x:Double x:Key="UiDimension56">56</x:Double>
     <x:Double x:Key="UiDimension62">62</x:Double>
@@ -232,4 +244,9 @@
     <x:Double x:Key="UiStrokeWidth1">1</x:Double>
     <x:Double x:Key="UiStrokeWidth1_5">1.5</x:Double>
     <x:Double x:Key="UiStrokeWidthPlanCheckmark">2</x:Double>
+    <Ellipse x:Key="UiEllipseShape" />
+    <x:Double x:Key="UiFontSize11">11</x:Double>
+    <x:Double x:Key="UiFontSize12">12</x:Double>
+    <x:Double x:Key="UiFontSize13">13</x:Double>
+    <x:Double x:Key="UiFontSize14">14</x:Double>
 </ResourceDictionary>

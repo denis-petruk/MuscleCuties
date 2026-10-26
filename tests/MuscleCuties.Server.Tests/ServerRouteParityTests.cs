@@ -13,7 +13,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Quiz;
+using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Server;
 using MuscleCuties.UseCases.Features.Account.Authentication;
 using MuscleCuties.UseCases.Features.Account.EmailChallenge;
@@ -235,6 +237,42 @@ public sealed class ServerRouteParityTests
     }
 
     [Fact]
+    public async Task WorkoutPreferencesAcceptAllActivitiesAndWeekdaysAsAValidSelection()
+    {
+        await using var fixture = await ServerFixture.StartAsync();
+        fixture.SetBearer(Guid.NewGuid());
+
+        var activities = Enum.GetValues<WorkoutActivityType>()
+            .Where(activity => activity != WorkoutActivityType.Other)
+            .Select(activity => (int)activity)
+            .ToArray();
+        var weekdays = Enum.GetValues<DayOfWeek>().Select(day => (int)day).ToArray();
+        var durations = Enum.GetValues<WorkoutActivityType>()
+            .Where(WorkoutPreferencesRule.RequiresSessionDuration)
+            .ToDictionary(activity => (int)activity,
+                activity => WorkoutPreferencesRule.DefaultSessionDurationMinutes(activity)!.Value);
+        var frequencies = Enum.GetValues<WorkoutActivityType>()
+            .Where(WorkoutPreferencesRule.RequiresExplicitWeeklyFrequency)
+            .ToDictionary(activity => (int)activity,
+                activity => ActivityPreferenceDefaults.SessionsPerWeek(activity, weekdays.Length)!.Value);
+
+        var response = await fixture.Client.PutAsJsonAsync("/api/v1/profile/workout-preferences", new
+        {
+            ExpectedVersion = 1,
+            ActivityTypes = activities,
+            AvailableWeekdays = weekdays,
+            ActivitySessionDurationsMinutes = durations,
+            EquipmentLevel = Equipment.FullGym.ToString(),
+            RequestedSessionsPerWeek = frequencies,
+            ExcludedExerciseIds = new HashSet<int>()
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(activities, fixture.Profile.LastWorkoutPreferences?.ActivityTypes);
+        Assert.Equal(weekdays, fixture.Profile.LastWorkoutPreferences?.AvailableWeekdays);
+    }
+
+    [Fact]
     public async Task EmailAndUsernameExistsReturnOk()
     {
         await using var fixture = await ServerFixture.StartAsync();
@@ -399,6 +437,7 @@ public sealed class ServerRouteParityTests
     private sealed class StubProfileStore(bool throws) : IServerProfileDataStore
     {
         public UpdateServerNutritionPreferencesRequest? LastNutritionPreferences { get; private set; }
+        public UpdateServerWorkoutPreferencesRequest? LastWorkoutPreferences { get; private set; }
         public Task<ServerProfileSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken) =>
             throws
                 ? throw new InvalidOperationException(SyntheticErrorMarker)
@@ -443,8 +482,11 @@ public sealed class ServerRouteParityTests
             LastNutritionPreferences = request;
             return Task.FromResult(new ServerProfileWriteResult(ServerProfileWriteStatus.Saved, request.ExpectedVersion + 1));
         }
-        public Task<ServerProfileWriteResult> UpdateWorkoutPreferencesAsync(UpdateServerWorkoutPreferencesRequest request, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
+        public Task<ServerProfileWriteResult> UpdateWorkoutPreferencesAsync(UpdateServerWorkoutPreferencesRequest request, CancellationToken cancellationToken)
+        {
+            LastWorkoutPreferences = request;
+            return Task.FromResult(new ServerProfileWriteResult(ServerProfileWriteStatus.Saved, request.ExpectedVersion + 1));
+        }
         public Task<ServerProfileWriteResult> UpdateNutritionTargetsAsync(UpdateServerNutritionTargetsRequest request, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
     }

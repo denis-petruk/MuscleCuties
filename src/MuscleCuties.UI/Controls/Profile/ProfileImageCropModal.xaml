@@ -12,9 +12,8 @@
     <Grid BackgroundColor="{StaticResource ModalScrim}">
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource AppBottomSheetSurface}"
-            Padding="{StaticResource UiInsets0}"
-            HorizontalOptions="Fill">
+            Style="{StaticResource ModalSurface}"
+            HorizontalOptions="Fill" VerticalOptions="End">
 
             <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
 
@@ -63,8 +62,7 @@
 
                         <Label
                             Text="{loc:LocalizedText Profile_ImageCrop_PinchToZoomLabel}"
-                            Style="{StaticResource CaptionLabel}"
-                            HorizontalTextAlignment="Center"
+                            Style="{StaticResource CaptionCentered}"
                             SemanticProperties.Description="{loc:LocalizedText Profile_ImageCrop_PinchToZoomDescription}" />
                     </VerticalStackLayout>
                 </ScrollView>
@@ -75,7 +73,7 @@
                         Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Common_Cancel}"
                         Clicked="OnCancelTapped" />
-                    <Button
+                    <Button Style="{StaticResource ButtonSecondary}"
                         Grid.Column="1"
                         Text="{loc:LocalizedText Profile_ImageCrop_UsePhoto}"
                         Clicked="OnUsePhotoTapped" />

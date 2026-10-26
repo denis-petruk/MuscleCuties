@@ -24,8 +24,7 @@
                 SemanticProperties.Description="{loc:LocalizedText Dashboard_Shared_LoadingPageDataA11y}" />
             <Label
                 Text="{loc:LocalizedText Dashboard_Shared_LoadingYourData}"
-                Style="{StaticResource MutedLabel}"
-                HorizontalTextAlignment="Center" />
+                Style="{StaticResource MutedCentered}" />
         </VerticalStackLayout>
 
         <!-- Error state -->
@@ -41,8 +40,7 @@
                     HorizontalTextAlignment="Center" />
                 <Label
                     Text="{loc:LocalizedText Dashboard_Shared_CouldNotLoadData}"
-                    Style="{StaticResource MutedLabel}"
-                    HorizontalTextAlignment="Center" />
+                    Style="{StaticResource MutedCentered}" />
                 <Button
                     Text="{loc:LocalizedText Dashboard_Shared_Retry}"
                     Command="{Binding LoadDataCommand}"

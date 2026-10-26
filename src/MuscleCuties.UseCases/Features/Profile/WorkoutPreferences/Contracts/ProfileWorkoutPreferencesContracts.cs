@@ -100,7 +100,18 @@ public sealed record WorkoutPreferencesDto(
     IReadOnlyDictionary<int, int>? RequestedSessionsPerWeek = null,
     IReadOnlySet<int>? ExcludedExerciseIds = null);
 
-public enum WorkoutPreferencesError { None, ProfileMissing, InvalidPreferences, PlanUpdateFailed }
+public enum WorkoutPreferencesError
+{
+    None,
+    ProfileMissing,
+    InvalidPreferences,
+    PlanUpdateFailed,
+    Offline,
+    SignInRequired,
+    ServerUnavailable,
+    ConcurrentUpdate,
+    ExerciseCatalogChanged
+}
 
 public sealed record WorkoutPreferencesResult(WorkoutPreferencesError Error)
 {

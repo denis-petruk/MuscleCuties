@@ -76,11 +76,9 @@
                     <toolkit:LazyView
                         x:Name="BalanceCardLazy"
                         x:TypeArguments="nutritionControls:NutritionBalanceCard" />
-                    <Button
+                    <Button Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Nutrition_LogAMeal}"
                         Command="{Binding OpenMealEntryCommand}"
-                        MinimumHeightRequest="{StaticResource UiDimension52}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
                         Margin="{StaticResource UiInsets0_4}"
                         SemanticProperties.Description="{loc:LocalizedText Nutrition_LogAMeal}"
                         SemanticProperties.Hint="{loc:LocalizedText Nutrition_Page_OpensOptionsToAddFoodGet}" />
@@ -92,7 +90,6 @@
 
                     <Border
                         Style="{StaticResource CardPrimary}"
-                        Padding="{StaticResource UiInsets16}"
                         IsVisible="{Binding HasNoMeals}">
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing14}">
                             <Border
@@ -118,7 +115,6 @@
                     <Border
                         Style="{StaticResource CardPrimary}"
                         Margin="{StaticResource UiInsets20_0}"
-                        Padding="{StaticResource UiInsets14}"
                         SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Page_MealValueTapToViewBreakdown}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer
@@ -157,8 +153,7 @@
                                     VerticalOptions="Center" />
                                 <Label
                                     Text="{Binding CaloriesText, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource BodyLabel}"
-                                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                                    Style="{StaticResource BodyStrong}"
                                     HorizontalTextAlignment="End"
                                     VerticalOptions="Center" />
                             </HorizontalStackLayout>

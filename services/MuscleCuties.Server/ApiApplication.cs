@@ -697,14 +697,14 @@ public static class ApiApplication
             })
             .RequireAuthorization();
         app.MapDelete("/api/v1/accounts/me", async (
+                [FromBody] AccountDeletionRequest request,
                 HttpContext context,
                 ServerAccountDeletionUseCase accountDeletion,
                 CancellationToken cancellationToken) =>
             {
                 if (!TryGetAuthenticatedUserId(context, out var userId))
                     return Results.Forbid();
-                var authorizationCode = context.Request.Query["authorizationCode"].FirstOrDefault();
-                var result = await accountDeletion.DeleteAccountAsync(userId, cancellationToken, authorizationCode)
+                var result = await accountDeletion.DeleteAccountAsync(userId, cancellationToken, request.AuthorizationCode)
                     .ConfigureAwait(false);
                 return Results.Ok(result);
             })
@@ -807,7 +807,7 @@ public static class ApiApplication
         IReadOnlyList<int> AvailableWeekdays, IReadOnlyDictionary<int, int> ActivitySessionDurationsMinutes,
         string? EquipmentLevel = null,
         IReadOnlyDictionary<int, int>? RequestedSessionsPerWeek = null,
-        IReadOnlySet<int>? ExcludedExerciseIds = null);
+        HashSet<int>? ExcludedExerciseIds = null);
     private sealed record UpdateServerNutritionTargetsBody(int ExpectedVersion, IReadOnlyDictionary<string, JsonElement> Targets);
 
     private static readonly JsonSerializerOptions ChallengeJsonOptions = new() { PropertyNamingPolicy = null };
