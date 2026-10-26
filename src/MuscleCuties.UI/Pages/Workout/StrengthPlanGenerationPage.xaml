@@ -748,12 +748,11 @@
                     </Label>
                     <Button Text="{loc:LocalizedText Workout_Generation_ApplyPlan}"
                             Command="{Binding AcceptProposalCommand}"
-                            IsVisible="{Binding CanApplyPlanFromPreview}"
-                            IsEnabled="{Binding CanSubmitProposal}"
+                            IsVisible="{Binding CanReviewPreview}"
                             Style="{StaticResource ButtonPrimary}" />
                     <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"
                             Command="{Binding EditDetailsCommand}"
-                            IsVisible="{Binding CanEditDetailsFromPreview}"
+                            IsVisible="{Binding CanReviewPreview}"
                             Style="{StaticResource ButtonSecondary}" />
                     <Button Text="{loc:LocalizedText Workout_Generation_OpenTrainAfterApply}"
                             Command="{Binding OpenTrainCommand}"
