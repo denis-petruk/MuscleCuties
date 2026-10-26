@@ -3,6 +3,8 @@
 
 The active roadmap is maintained at [docs/v1/ROADMAP.md](docs/v1/ROADMAP.md).
 
+- **2026-10-26 simulator and beta gates:** Mac Debug iOS simulator build and fresh iPhone 17 Pro launch now pass with a valid ad hoc signature. Production health is Healthy. Public AASA is still not deployed; the Mac has no distribution provisioning profile. CI now runs Registration and Mobile Contracts in addition to Core, Server, and reviewed catalog checks. Next run Release-mode iOS simulator/AOT validation, then close profile/signing, public AASA, authenticated backend, and physical-device gates.
+
 - **2026-10-26 Mac build host:** SSH works; Xcode 26.3 and .NET 10.0.403 are installed and source commit `d1ae97a` is staged in `~/MuscleCuties-codex-d1ae97a`. Next install the `maui-ios` workload with Mac administrator permission, build and launch the iOS simulator candidate, and verify VoiceOver/preview behavior. Windows-only UI build cannot stand in for the Mac iOS toolchain.
 
 - **2026-10-26 preview UI acceptance:** Verify VoiceOver stays within the open preview, announces Apply failure once, and returns to the intact editor after Close. Source now hides the covered editor and announces the sheet's visible status; resource/source checks pass. Mac build and signed-in runtime acceptance remain open.

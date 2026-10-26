@@ -21,6 +21,8 @@ verify_plan_generation:
   script:
     - dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj --configuration Release
     - dotnet test tests/MuscleCuties.Server.Tests/MuscleCuties.Server.Tests.csproj --configuration Release
+    - dotnet test tests/MuscleCuties.Registration.Tests/MuscleCuties.Registration.Tests.csproj --configuration Release
+    - dotnet test tests/MuscleCuties.Mobile.Contracts.Tests/MuscleCuties.Mobile.Contracts.Tests.csproj --configuration Release
     - dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj --configuration Release --filter FullyQualifiedName~ReviewedExerciseCatalogV020ImportTests
 
 package_staging_lambda:
