@@ -1,5 +1,7 @@
 # Roadmap — MuscleCuties
 
+- **2026-10-26 Yoga/rest preview follow-up:** Verify the new gentle Yoga default and saved-duration reuse through a signed-in iPhone preview. Check the seven-day calendar on a narrow iPhone, including unfilled days shown as rest and safe handling when no sessions can be placed. Build the exact checkpoint for iOS Debug/Release, then continue distribution signing, AASA/legal deployment, authenticated backend, VoiceOver, and physical-device gates.
+
 - **2026-10-26 planning policy:** Keep the user's High-Volume Strength choice on first use with conservative starting sets and effort; retain the established-history gate for heavy/high-intensity strength. Allow applying the strength plan when optional activities cannot fit. Verify the signed-in iPhone preview and Apply path after the client update reaches the device.
 
 

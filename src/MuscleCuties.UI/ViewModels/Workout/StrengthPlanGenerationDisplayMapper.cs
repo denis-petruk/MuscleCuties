@@ -140,6 +140,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         "ClimbingCompetenceNotConfirmed" or "RopeActivityRequiresCompetenceConfirmation" =>
             "Workout_Generation_Reason_ClimbingCompetence",
         "YogaContentClassificationMissing" => "Workout_Generation_Reason_YogaContent",
+        "YogaClassificationInconsistent" => "Workout_Generation_Reason_YogaInconsistent",
         "RestrictionOrSymptomRequiresReview" => "Workout_Generation_Reason_RestrictionReview",
         "SessionDurationMissing" or "SessionDurationMustBePositive" or "SelectedDurationOutsideAllowedRange" =>
             "Workout_Generation_Reason_SessionDurationMissing",

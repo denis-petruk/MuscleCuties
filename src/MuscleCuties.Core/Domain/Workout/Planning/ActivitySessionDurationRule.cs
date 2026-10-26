@@ -170,6 +170,15 @@ public static class ActivitySessionDurationRule
     public static int? DefaultMinutesFor(WorkoutActivityType activity, bool isDemandingYoga = false) =>
         ForUserPreference(activity, isDemandingYoga)?.DefaultMinutes;
 
+    public static int ResolveYogaPlanDuration(int? explicitMinutes, int? savedMinutes, bool isDemandingYoga)
+    {
+        if (explicitMinutes.HasValue)
+            return explicitMinutes.Value;
+        if (savedMinutes is { } saved && IsValidSelection(WorkoutActivityType.Yoga, saved, isDemandingYoga))
+            return saved;
+        return DefaultMinutesFor(WorkoutActivityType.Yoga, isDemandingYoga)!.Value;
+    }
+
     public static bool IsValidSelection(WorkoutActivityType activity, int minutes, bool isDemandingYoga = false)
     {
         return GetSelectionIssue(activity, minutes, isDemandingYoga) is null;

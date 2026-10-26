@@ -56,7 +56,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_RopeCompetence"] = "Are you competent with rope climbing systems?";
         English["Workout_Generation_ClimbingInstructionAvailable"] = "Will suitable instruction or supervision be available?";
         English["Workout_Generation_YogaEvidenceTitle"] = "Yoga details";
-        English["Workout_Generation_YogaEvidenceHelp"] = "Classify the class by what it actually includes, not by its name.";
+        English["Workout_Generation_YogaEvidenceHelp"] = "Gentle yoga is selected by default. Choose demanding if the class is vigorous.";
         English["Workout_Generation_YogaContentClassification"] = "How demanding is the yoga content?";
         English["Workout_Generation_YogaDurationLabel"] = "Yoga session length (minutes)";
         English["Workout_Generation_YogaDurationPlaceholder"] = "Choose a class first";
@@ -133,6 +133,8 @@ public static partial class UiTextCatalog
         English["Workout_Generation_AvailableDaysMissing"] = "Save 2–7 available weekdays in workout preferences before generating a plan.";
         English["Workout_Generation_SavedAvailabilityFormat"] = "Using your saved training availability: {0}.";
         English["Workout_Generation_MixedScheduleTitle"] = "Weekly activity schedule";
+        English["Workout_Generation_PlannedRestDay"] = "Rest · no workout planned";
+        English["Workout_Generation_Reason_YogaInconsistent"] = "The yoga description indicates a demanding class. Choose demanding or correct the class details.";
         English["Workout_Generation_MixedScheduleExplanation"] = "This schedule places your selected activities across the available weekdays.";
         English["Workout_Generation_ScheduleEmpty"] = "No activity sessions could be placed on the saved available weekdays.";
         English["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";
