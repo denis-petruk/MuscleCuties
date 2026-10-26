@@ -8,12 +8,15 @@
     <AssetTargetFallback>net8.0;net8.0-macos14.0;net8.0-windows10.0.19041;$(AssetTargetFallback)</AssetTargetFallback>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/MuscleCuties.Infrastructure/MuscleCuties.Infrastructure.csproj" />
+    <Compile Include="../../src/MuscleCuties.UI/Services/Profile/AppPageLoadGate.cs" Link="Mobile/AppPageLoadGate.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/ViewModels/Common/IPageLoadAware.cs" Link="Mobile/IPageLoadAware.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/AppAccountPurgeService.cs" Link="Mobile/AppAccountPurgeService.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/ILocalPhotoCacheService.cs" Link="Mobile/ILocalPhotoCacheService.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/MobilePhotoVaultStore.cs" Link="Mobile/MobilePhotoVaultStore.cs" />

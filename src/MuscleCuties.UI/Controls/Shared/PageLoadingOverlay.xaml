@@ -2,10 +2,12 @@
 
 <ContentView
     x:Class="MuscleCuties.UI.Controls.Shared.PageLoadingOverlay"
+    x:Name="OverlayRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Common"
+    xmlns:shared="clr-namespace:MuscleCuties.UI.Controls.Shared"
     x:DataType="vm:IPageLoadAware"
     InputTransparent="False">
 
@@ -46,6 +48,11 @@
                     Command="{Binding LoadDataCommand}"
                     Style="{StaticResource ButtonPrimary}"
                     SemanticProperties.Description="{loc:LocalizedText Dashboard_Shared_RetryLoadingDataA11y}" />
+                <Button x:DataType="shared:PageLoadingOverlay"
+                    Text="{loc:LocalizedText Common_Back}"
+                    Command="{Binding BackCommand, Source={x:Reference OverlayRoot}}"
+                    IsVisible="{Binding HasBackCommand, Source={x:Reference OverlayRoot}}"
+                    Style="{StaticResource ButtonSecondary}" />
             </VerticalStackLayout>
         </Grid>
 

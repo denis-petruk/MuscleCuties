@@ -1,10 +1,11 @@
 using MuscleCuties.UI.ViewModels.Workout;
+using MuscleCuties.UI.Controls.Shared;
+using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Pages.Workout;
 
 public partial class StrengthPlanGenerationPage : ContentPage
 {
-    private const double PreviewSheetHeightFraction = 0.78;
     private readonly StrengthPlanGenerationViewModel _viewModel;
 
     public StrengthPlanGenerationPage(StrengthPlanGenerationViewModel viewModel)
@@ -42,6 +43,7 @@ public partial class StrengthPlanGenerationPage : ContentPage
     private void OnPageSizeChanged(object? sender, EventArgs args)
     {
         if (Height > 0)
-            PreviewSheet.MaximumHeightRequest = Height * PreviewSheetHeightFraction;
+            PreviewSheet.MaximumHeightRequest = Math.Min(BottomSheetSizing.MaximumSheetHeight,
+                Height * AppThemeResources.GetDouble("UiPreviewSheetHeightFraction"));
     }
 }

@@ -632,6 +632,43 @@
         </Style.Triggers>
     </Style>
 
+    <Style x:Key="WeekdayChoice" TargetType="Border" BasedOn="{StaticResource SelectableCard}">
+        <Setter Property="Padding" Value="{StaticResource UiInsets2}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource UiDimension62}" />
+    </Style>
+
+    <Style x:Key="SelectionTag" TargetType="Border" BasedOn="{StaticResource SelectableCard}">
+        <Setter Property="Padding" Value="{StaticResource UiInsets14_10}" />
+        <Setter Property="Margin" Value="{StaticResource UiInsets0_0_8_8}" />
+    </Style>
+
+    <Style x:Key="ModalBackdrop" TargetType="BoxView">
+        <Setter Property="HeightRequest" Value="-1" />
+        <Setter Property="HorizontalOptions" Value="Fill" />
+        <Setter Property="VerticalOptions" Value="Fill" />
+        <Setter Property="BackgroundColor" Value="{StaticResource ModalScrim}" />
+    </Style>
+
+    <Style x:Key="ModalDismissTarget" TargetType="BoxView" BasedOn="{StaticResource ModalBackdrop}">
+        <Setter Property="BackgroundColor" Value="{StaticResource Transparent}" />
+    </Style>
+
+    <Style x:Key="ModalBody" TargetType="Grid">
+        <Setter Property="Padding" Value="{StaticResource UiInsets18}" />
+        <Setter Property="RowSpacing" Value="{StaticResource UiSpaceControl}" />
+    </Style>
+
+    <Style x:Key="DisclosureHeader" TargetType="Grid">
+        <Setter Property="Padding" Value="0,8" />
+        <Setter Property="ColumnSpacing" Value="{StaticResource UiSpaceTight}" />
+    </Style>
+
+    <Style x:Key="MetricValue" TargetType="Label" BasedOn="{StaticResource AccentLabel}">
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize24}" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
     <Style x:Key="PlanSelectedIndicator" TargetType="Border">
         <Setter Property="WidthRequest" Value="{StaticResource UiDimension24}" />
         <Setter Property="HeightRequest" Value="{StaticResource UiDimension24}" />
@@ -848,7 +885,6 @@
         <Setter Property="FontSize" Value="{StaticResource UiFontSize15}" />
         <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
         <Setter Property="MinimumHeightRequest" Value="{StaticResource UiDimension52}" />
-        <Setter Property="HeightRequest" Value="{StaticResource UiDimension52}" />
         <Setter Property="HorizontalOptions" Value="Fill" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
@@ -991,7 +1027,6 @@
         <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
         <Setter Property="Padding" Value="16,0" />
         <Setter Property="MinimumHeightRequest" Value="52" />
-        <Setter Property="HeightRequest" Value="52" />
         <Setter Property="StrokeShape">
             <Setter.Value>
                 <RoundRectangle CornerRadius="12" />

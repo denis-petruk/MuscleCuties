@@ -48,8 +48,8 @@ public partial class ProfileWorkoutPreferencesPage : ContentPage
             var discardChanges = await DisplayAlertAsync(
                 UiTextCatalog.Get("Profile_WorkoutPrefs_DiscardChangesTitle"),
                 UiTextCatalog.Get("Profile_WorkoutPrefs_DiscardChangesMessage"),
-                UiTextCatalog.Get("Profile_WorkoutPrefs_KeepEditing"),
-                UiTextCatalog.Get("Profile_WorkoutPrefs_DiscardChanges"));
+                UiTextCatalog.Get("Profile_WorkoutPrefs_DiscardChanges"),
+                UiTextCatalog.Get("Profile_WorkoutPrefs_KeepEditing"));
             if (!discardChanges)
                 return;
         }

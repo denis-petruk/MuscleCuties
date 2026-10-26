@@ -608,7 +608,8 @@ internal static partial class RussianUiText
         Values["Profile_WorkoutPrefs_ChooseActivityWeeklyFrequency"] =
             "Укажите желаемое число занятий йогой, мобильностью или мягким восстановлением в неделю.";
         Values["Profile_WorkoutPrefs_InvalidPreferences"] = "Проверьте активности и выберите от 2 до 7 доступных дней.";
-        Values["Profile_WorkoutPrefs_PlanUpdateFailed"] = "Не удалось обновить план тренировок. Настройки не сохранены. Попробуйте ещё раз.";
+        Values["Profile_WorkoutPrefs_OpenPlanSetup"] = "Открыть настройку плана";
+        Values["Profile_WorkoutPrefs_SaveFailed"] = "Не удалось сохранить настройки тренировок. Попробуйте ещё раз.";
         Values["Profile_WorkoutPrefs_SaveOffline"] = "Нет подключения к интернету. Настройки не сохранены. Подключитесь и повторите попытку.";
         Values["Profile_WorkoutPrefs_SaveSignInRequired"] = "Срок действия входа истёк. Войдите снова, чтобы сохранить настройки тренировок.";
         Values["Profile_WorkoutPrefs_SaveServerUnavailable"] = "Сервис тренировок временно недоступен. Настройки не сохранены. Повторите попытку позже.";
@@ -618,7 +619,6 @@ internal static partial class RussianUiText
         Values["Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"] = "Для вашего плана требуется хотя бы одно упражнение на силу.";
         Values["Profile_WorkoutPrefs_SaveWorkoutPreferences"] = "Сохранить настройки тренировки";
         Values["Profile_WorkoutPrefs_SavingPreferences"] = "Сохранение предпочтений";
-        Values["Profile_WorkoutPrefs_UpdatingPlan"] = "Обновляем план тренировок…";
         Values["Profile_WorkoutPrefs_AvailableEquipment"] = "Доступное оборудование";
         Values["Profile_WorkoutPrefs_ChooseEquipment"] = "Выберите оборудование";
         Values["Profile_WorkoutPrefs_ExerciseExclusions"] = "Упражнения, которых следует избегать";

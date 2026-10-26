@@ -4,6 +4,6 @@ public interface IProfileWorkoutPreferencesStore
 {
     Task<WorkoutPreferencesDto?> LoadAsync(CancellationToken cancellationToken);
 
-    Task<WorkoutPreferencesError> SaveAndUpdatePlanAsync(WorkoutPreferencesDto preferences,
+    Task<WorkoutPreferencesError> SaveAsync(WorkoutPreferencesDto preferences,
         CancellationToken cancellationToken);
 }

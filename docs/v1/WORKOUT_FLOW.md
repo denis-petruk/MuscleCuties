@@ -32,7 +32,9 @@ flowchart LR
 - Exercise choices remain hidden until the user searches. Results filter as the query changes; selected exclusions stay visible as removable chips.
 - Activity preferences have no session or duration picker. The onboarding workout question is the single editable strength-session length control; preferences carry its saved answer into plan setup. Cardio and HIIT durations are calculated by their activity rules.
 - Weekly activity allocations are calculated from saved activity choices and available days; the UI does not collect manual per-activity counts.
+- There is no daily workout time limit. The schedule uses selected weekdays, activity eligibility, recovery spacing, and compatible session pairing; session duration is displayed as an estimate, not used as a daily cap.
 - Plan setup sends its loaded activity choices, available days, saved durations, and automatic allocations with the preview request so the schedule is generated from the decisions the user selected.
+- Preview opens as a bounded, scrollable sheet. The weekly schedule stays visible, activity details can expand, and rest days do not appear as activity decisions.
 - A failed preference save must not replace saved preferences or the saved plan. A strength-template change clears activity-specific self-reported history and timing before another preview.
 - Apply is idempotent from the UI: once a proposal is accepted, a navigation retry cannot submit it a second time.
 

@@ -220,18 +220,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
 
             await LoadRecentWorkoutHistoryAsync(DateOnly.FromDateTime(DateTime.Now));
 
-            var yesChoice = EvidenceYesNoChoices.FirstOrDefault(choice => choice.Value is true);
-            if (IsSwimmingSelected)
-            {
-                SelectedSwimmingFacilityAccessChoice ??= yesChoice;
-                SelectedIndependentSwimmingChoice ??= yesChoice;
-                SelectedSwimmingStyleChoice ??= SwimmingStyleChoices.FirstOrDefault();
-            }
-            if (IsRockClimbingSelected)
-            {
-                SelectedRopeClimbingCompetenceChoice ??= yesChoice;
-                SelectedClimbingInstructionChoice ??= yesChoice;
-            }
             if (SelectedActivity is null)
                 StatusMessage = UiTextCatalog.Get("Workout_Generation_StrengthPreferenceRequired");
             else if (!HasValidSavedAvailability)
@@ -377,25 +365,21 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         try
         {
             var preferences = await _preferences.LoadAsync();
-            preferences ??= new WorkoutPreferencesDto(
-                ActivityTypes: [(int)selectedActivity.Activity],
-                AvailableWeekdays: _availableWeekdays.Length >= WorkoutPreferencesConstraints.MinimumAvailableWeekdays
-                    ? _availableWeekdays.Select(d => (int)d).ToList()
-                    : [(int)DayOfWeek.Monday, (int)DayOfWeek.Wednesday, (int)DayOfWeek.Friday],
-                ActivitySessionDurationsMinutes: new Dictionary<int, int> { [(int)selectedActivity.Activity] = 45 });
-
-            var weekdays = NormalizeWeekdays(preferences.AvailableWeekdays);
-            if (weekdays.Length < WorkoutPreferencesConstraints.MinimumAvailableWeekdays)
+            if (preferences is null)
             {
-                weekdays = _availableWeekdays.Length >= WorkoutPreferencesConstraints.MinimumAvailableWeekdays
-                    ? _availableWeekdays
-                    : [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday];
+                StatusMessage = UiTextCatalog.Get("Workout_Generation_StrengthPreferenceRequired");
+                return;
             }
-            _availableWeekdays = weekdays;
-            var activeTypes = preferences.ActivityTypes.ToHashSet();
-            activeTypes.Add((int)selectedActivity.Activity);
-            UpdateSelectedProfileActivities(activeTypes.ToList());
+
+            _availableWeekdays = NormalizeWeekdays(preferences.AvailableWeekdays);
+            UpdateSelectedProfileActivities(preferences.ActivityTypes);
             NotifyAvailabilityChanged();
+            if (!preferences.ActivityTypes.Contains((int)selectedActivity.Activity))
+            {
+                SelectedActivity = null;
+                StatusMessage = UiTextCatalog.Get("Workout_Generation_StrengthPreferenceRequired");
+                return;
+            }
             if (!HasValidSavedAvailability)
             {
                 StatusMessage = UiTextCatalog.Get("Workout_Generation_AvailableDaysMissing");
@@ -416,7 +400,9 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 mixedSchedule?.Sessions.Select(StrengthPlanGenerationDisplayMapper.ToMixedActivitySessionDisplay) ??
                 Array.Empty<MixedActivitySessionDisplay>());
             ActivityDecisions = new ObservableCollection<MixedActivityDecisionDisplay>(
-                mixedSchedule?.Activities.Select(StrengthPlanGenerationDisplayMapper.ToMixedActivityDecisionDisplay) ??
+                mixedSchedule?.Activities
+                    .Where(decision => decision.ActivityTypeId != (int)WorkoutActivityDto.RestDay)
+                    .Select(StrengthPlanGenerationDisplayMapper.ToMixedActivityDecisionDisplay) ??
                 Array.Empty<MixedActivityDecisionDisplay>());
             ScheduleInputReasons = new ObservableCollection<string>(
                 mixedSchedule?.InputReasonCodes
@@ -429,13 +415,15 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 : []);
             StatusMessage = preview.Status == "Feasible" && _proposal.IsPersisted
                 ? UiTextCatalog.Get("Workout_Generation_PreviewReady")
-                : UiTextCatalog.Get("Workout_Generation_PreviewNotSaved");
+                : preview.Status == "Feasible"
+                    ? UiTextCatalog.Get("Workout_Generation_PreviewNotSaved")
+                    : NoStatusMessage;
 
             NotifyPreviewChanged();
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[StrengthPlanGeneration] Proposal creation failed: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[StrengthPlanGeneration] Proposal creation failed: {ex.GetType().Name}.");
             StatusMessage = UiTextCatalog.Get("Workout_Generation_CreateFailed");
         }
         finally
@@ -467,7 +455,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             WarmupMinutes: warmupMinutes,
             CooldownMinutes: cooldownMinutes)
         {
-            SelectedActivityTypes = preferences.ActivityTypes.Append((int)activity).ToHashSet(),
+            SelectedActivityTypes = preferences.ActivityTypes.ToHashSet(),
             AvailableWeekdays = _availableWeekdays.ToHashSet(),
             ActivitySessionDurationsMinutes = preferences.ActivitySessionDurationsMinutes,
             RequestedSessionsPerWeek = preferences.RequestedSessionsPerWeek,
@@ -649,7 +637,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 _proposal.ProposalId));
             if (result.Status != "Accepted")
             {
-                var statusKey = result.Status == "Conflict"
+                var statusKey = result.Status is "Conflict" or "Stale"
                     ? "Workout_Generation_PlanChanged"
                     : "Workout_Generation_AcceptFailed";
                 ClearPreview(clearStatus: false);
@@ -775,6 +763,19 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             : activityTypes.Where(value => Enum.IsDefined(typeof(WorkoutActivityDto), value))
                 .Select(value => (WorkoutActivityDto)value)
                 .ToHashSet();
+        if (!IsSwimmingSelected)
+        {
+            SelectedSwimmingFacilityAccessChoice = null;
+            SelectedIndependentSwimmingChoice = null;
+            SelectedSwimmingStyleChoice = null;
+        }
+        if (!IsRockClimbingSelected)
+        {
+            SelectedRopeClimbingCompetenceChoice = null;
+            SelectedClimbingInstructionChoice = null;
+        }
+        if (!IsYogaSelected)
+            SelectedYogaContentChoice = null;
         HiitUnderlyingCardioActivities = new ObservableCollection<StrengthPlanActivityChoice>(
             WorkoutPlanningConstants.SupportedHiitUnderlyingCardioActivities
                 .Where(_selectedProfileActivities.Contains)

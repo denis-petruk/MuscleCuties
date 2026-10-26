@@ -91,9 +91,7 @@
                                 BindableLayout.ItemsSource="{Binding AvailableSites}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="ui:InjuryFlagOption">
-                                <Border Style="{StaticResource SelectableCard}"
-                                        FlexLayout.Basis="50%"
-                                        Margin="{StaticResource UiInsets0_0_8_8}"
+                                <Border Style="{StaticResource SelectionTag}" FlexLayout.Basis="Auto" FlexLayout.Shrink="0"
                                         SemanticProperties.Description="{Binding Label, Converter={StaticResource LocalizedStringConverter}}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -102,20 +100,18 @@
                                     </Border.GestureRecognizers>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-
-
-
                                             <Setter Property="SemanticProperties.Hint" Value="Selected" />
                                         </DataTrigger>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
                                             <Setter Property="SemanticProperties.Hint" Value="Not selected" />
-
-
                                         </DataTrigger>
                                     </Border.Triggers>
-                                    <Label Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource BodyStrong}"
-                                           VerticalOptions="Center" HorizontalOptions="Center" />
+                                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+  <Label Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
+  <Border Grid.Column="1" Style="{StaticResource PlanSelectedIndicator}" IsVisible="{Binding IsSelected}">
+    <Path Data="M5 12L10 17L19 7" Style="{StaticResource PlanChoiceCheckmark}" />
+  </Border>
+</Grid>
                                 </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
@@ -127,9 +123,7 @@
                                 BindableLayout.ItemsSource="{Binding AvailableStatuses}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="ui:InjuryStatusOption">
-                                <Border Style="{StaticResource SelectableCard}"
-                                        FlexLayout.Basis="33.33%"
-                                        Margin="{StaticResource UiInsets0_0_8_0}"
+                                <Border Style="{StaticResource SelectionTag}" FlexLayout.Basis="Auto" FlexLayout.Shrink="0"
                                         SemanticProperties.Description="{Binding Label, Converter={StaticResource LocalizedStringConverter}}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -138,20 +132,18 @@
                                     </Border.GestureRecognizers>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-
-
-
                                             <Setter Property="SemanticProperties.Hint" Value="Selected" />
                                         </DataTrigger>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
                                             <Setter Property="SemanticProperties.Hint" Value="Not selected" />
-
-
                                         </DataTrigger>
                                     </Border.Triggers>
-                                    <Label Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource BodyStrong}"
-                                           VerticalOptions="Center" HorizontalOptions="Center" />
+                                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+  <Label Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
+  <Border Grid.Column="1" Style="{StaticResource PlanSelectedIndicator}" IsVisible="{Binding IsSelected}">
+    <Path Data="M5 12L10 17L19 7" Style="{StaticResource PlanChoiceCheckmark}" />
+  </Border>
+</Grid>
                                 </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>

@@ -56,7 +56,7 @@
             <Grid Grid.Row="3">
                 <!-- ========== Day overview ========== -->
                 <Grid IsVisible="{Binding IsDayOverview}" Margin="{StaticResource UiInsetsMinus20_Minus8_Minus20_Minus16}">
-                    <BoxView BackgroundColor="{StaticResource ModalScrim}" />
+                    <BoxView Style="{StaticResource ModalBackdrop}" />
                     <Border Style="{StaticResource ModalSurface}" VerticalOptions="Fill">
                     <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{StaticResource UiSpaceControl}" Padding="{StaticResource UiInsets20_20_20_24}">
                         <Label Text="{loc:LocalizedText Workout_Session_ActivitiesTitle}"

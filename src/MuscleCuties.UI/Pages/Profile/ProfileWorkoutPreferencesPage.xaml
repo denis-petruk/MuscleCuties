@@ -16,7 +16,7 @@
 
 
     <Grid>
-    <ScrollView>
+    <ScrollView IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
         <VerticalStackLayout
             Padding="{StaticResource UiInsets20_12_20_32}"
             Spacing="{StaticResource UiSpaceControl}"
@@ -40,8 +40,7 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="workoutModels:WorkoutWeekdayOptionItem">
                                 <Border Grid.Column="{Binding CalendarColumn}"
-                                        Style="{StaticResource SelectableCard}"
-                                        HeightRequest="{StaticResource UiDimension62}"
+                                        Style="{StaticResource WeekdayChoice}"
                                         SemanticProperties.Description="{Binding Label}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -78,8 +77,8 @@
                 Style="{StaticResource AccentLabel}"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
 
-            <Button Style="{StaticResource ButtonSecondary}"
-                Text="{loc:LocalizedText Profile_WorkoutPrefs_SaveWorkoutPreferences}"
+            <Button Style="{StaticResource ButtonPrimary}"
+                Text="{Binding SaveActionText}"
                 Command="{Binding SaveCommand}"
                 IsEnabled="{Binding CanSave}" />
 
@@ -91,20 +90,6 @@
 
         </VerticalStackLayout>
     </ScrollView>
-        <Grid
-            IsVisible="{Binding IsUpdatingPlan}"
-            BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
-            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center"
-                                 Spacing="{StaticResource UiSpaceCompact}">
-                <ActivityIndicator
-                    IsRunning="{Binding IsUpdatingPlan}"
-                    Color="{StaticResource Primary}"
-                    SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_UpdatingPlan}" />
-                <Label
-                    Text="{loc:LocalizedText Profile_WorkoutPrefs_UpdatingPlan}"
-                    Style="{StaticResource MutedCentered}" />
-            </VerticalStackLayout>
-        </Grid>
-        <sharedControls:PageLoadingOverlay />
+        <sharedControls:PageLoadingOverlay BackCommand="{Binding BackCommand, Source={x:Reference Root}}" />
     </Grid>
 </ContentPage>

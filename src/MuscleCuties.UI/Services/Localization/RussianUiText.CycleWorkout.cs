@@ -179,11 +179,6 @@ internal static partial class RussianUiText
         Values["Workout_Page_OpenInjuryLogAccessibility"] = "Открыть журнал травм";
         Values["Workout_Page_PhaseFormat"] = "{0} фаза";
         Values["Workout_Page_RehabRecommendationsTitle"] = "Рекомендации по реабилитации";
-        Values["Workout_Page_RegenerateSplit"] = "Создать сплит заново";
-        Values["Workout_Page_RegenerateSuccess"] = "Сплит обновлён по сохранённым настройкам.";
-        Values["Workout_Page_RegenerateFailed"] = "Не удалось обновить сплит. Попробуйте ещё раз.";
-        Values["Workout_Page_RegenerateProfileMissing"] = "Сначала заполните настройки тренировок.";
-        Values["Workout_Page_RegenerateReloadFailed"] = "Сплит обновлён, но расписание не загрузилось. Откройте вкладку тренировок ещё раз.";
         Values["Workout_Page_ToggleInjuryAdjustmentsAccessibility"] = "Показать или скрыть корректировки травм";
         Values["Workout_Page_Week1"] = "Неделя 1";
         Values["Workout_Page_Week2"] = "Неделя 2";
