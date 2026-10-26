@@ -44,6 +44,8 @@ internal static class MixedActivityScheduleMapperV020
                 Enum.IsDefined(typeof(WorkoutActivityType), pair.Key) &&
                 ActivitySessionDurationRule.ForUserPreference((WorkoutActivityType)pair.Key) is not null)
             .ToDictionary(pair => (WorkoutActivityType)pair.Key, pair => (decimal)pair.Value) ?? [];
+        if (strengthPreview.StrengthSessionLimitMinutes is { } strengthSessionLimit)
+            durations[chosenStrengthActivity] = strengthSessionLimit;
         foreach (var yogaEvidence in evidenceInputs.Where(evidence =>
                      evidence?.Activity == WorkoutActivityDto.Yoga && evidence.IsDemandingYogaContent.HasValue))
             durations[WorkoutActivityType.Yoga] = yogaEvidence!.YogaSessionDurationMinutes ??
