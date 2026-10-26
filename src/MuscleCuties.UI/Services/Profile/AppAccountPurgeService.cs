@@ -12,6 +12,18 @@ public sealed class AppAccountPurgeService : IAppAccountPurgeService
 {
     private const string DeleteAccountRoute = "/api/v1/accounts/me";
     private const string AccountDeletionFailedMessage = "The server did not confirm account deletion.";
+    private const string AccountDeletionOfflineMessage =
+        "Connect to the internet, then try account deletion again. Your account was not deleted.";
+    private const string AccountDeletionSignInMessage =
+        "Your sign-in has expired. Sign in again, then retry account deletion.";
+    private const string AccountDeletionAppleRevocationMessage =
+        "Apple could not verify sign-in revocation. Sign in with Apple again, then retry deletion.";
+    private const string AccountDeletionAppleAuthorizationMessage =
+        "Continue with Sign in with Apple to verify this deletion. Your account has not been deleted yet.";
+    private const string AccountDeletionAppleAuthorizationCanceledMessage =
+        "Sign in with Apple was not completed. Your account has not been deleted.";
+    private const string AccountDeletionAppleAuthorizationFailedMessage =
+        "Apple could not verify your sign-in. Your account has not been deleted. Try again.";
     private readonly Lazy<IAppPreloadService> _preloadService;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly AccountSessionGate _sessionGate;
@@ -47,10 +59,37 @@ public sealed class AppAccountPurgeService : IAppAccountPurgeService
             var serverConfirmed = _acknowledgedServerDeletions.ContainsKey(userId);
             if (!serverConfirmed)
             {
-                var deletion = await apiClient.SendMutationAsync<object, AccountDeletionResult>(
-                    HttpMethod.Delete, DeleteAccountRoute, new { }, cancellationToken: ct).ConfigureAwait(false);
-                if (deletion.Status != BackendApiStatus.Success || deletion.Data?.Succeeded != true)
-                    return new AccountPurgeResult(false, false, false, [AccountDeletionFailedMessage]);
+                var deletion = await RequestServerDeletionAsync(apiClient, ct).ConfigureAwait(false);
+                if (deletion.Data?.FailureCode == AccountDeletionFailureCode.AppleAuthorizationRequired)
+                {
+                    var appleSignIn = scope.ServiceProvider.GetService<IAppleSignInService>();
+                    if (appleSignIn is null)
+                        return Failed(AccountDeletionAppleAuthorizationMessage);
+
+                    AppleSignInResult? credential;
+                    try
+                    {
+                        credential = await appleSignIn.SignInAsync(ct).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch
+                    {
+                        return Failed(AccountDeletionAppleAuthorizationFailedMessage);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(credential?.AuthorizationCode))
+                        return Failed(AccountDeletionAppleAuthorizationCanceledMessage);
+
+                    deletion = await RequestServerDeletionAsync(apiClient, ct, credential.AuthorizationCode)
+                        .ConfigureAwait(false);
+                }
+
+                var failureMessage = GetDeletionFailureMessage(deletion);
+                if (failureMessage is not null)
+                    return Failed(failureMessage);
 
                 _acknowledgedServerDeletions[userId] = true;
             }
@@ -89,4 +128,39 @@ public sealed class AppAccountPurgeService : IAppAccountPurgeService
             _preloadService.Value.InvalidateAll();
         }
     }
+
+    private static string? GetDeletionFailureMessage(BackendApiResponse<AccountDeletionResult> response)
+    {
+        if (response.Status == BackendApiStatus.OfflineRejected)
+            return AccountDeletionOfflineMessage;
+
+        if (response.Status == BackendApiStatus.Unauthorized)
+            return AccountDeletionSignInMessage;
+
+        if (response.Status != BackendApiStatus.Success || response.Data is null)
+            return AccountDeletionFailedMessage;
+
+        if (response.Data.Succeeded)
+            return null;
+
+        if (response.Data.FailureCode == AccountDeletionFailureCode.AppleAuthorizationRequired)
+            return AccountDeletionAppleAuthorizationMessage;
+
+        return response.Data.FailureCode == AccountDeletionFailureCode.AppleRevocationFailed
+            ? AccountDeletionAppleRevocationMessage
+            : AccountDeletionFailedMessage;
+    }
+
+    private static Task<BackendApiResponse<AccountDeletionResult>> RequestServerDeletionAsync(
+        IMuscleCutiesBackendApiClient apiClient,
+        CancellationToken cancellationToken,
+        string? authorizationCode = null) =>
+        apiClient.SendMutationAsync<AccountDeletionRequest, AccountDeletionResult>(
+            HttpMethod.Delete,
+            DeleteAccountRoute,
+            new AccountDeletionRequest(authorizationCode),
+            cancellationToken: cancellationToken);
+
+    private static AccountPurgeResult Failed(string message) =>
+        new(false, false, false, [message]);
 }

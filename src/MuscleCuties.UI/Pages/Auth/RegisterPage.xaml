@@ -141,10 +141,8 @@
                         Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Text="{loc:LocalizedText Profile_Privacy_Policy}"
-                        Style="{StaticResource ButtonLink}"
-                        Padding="{StaticResource UiInsets8_0_0_0}"
+                        Style="{StaticResource ButtonSecondary}"
                         HorizontalOptions="Start"
-                        MinimumHeightRequest="{StaticResource UiDimension44}"
                         Command="{Binding GoToPrivacyPolicyCommand}"
                         SemanticProperties.Description="{loc:LocalizedText Profile_Privacy_Policy}" />
                 </Grid>
@@ -158,11 +156,10 @@
         Spacing="{StaticResource UiSpaceCompact}"
         HorizontalOptions="Fill"
         MaximumWidthRequest="{StaticResource UiDimension520}">
-            <Button
+            <Button Style="{StaticResource ButtonPrimary}"
                 Text="{loc:LocalizedText Auth_CreateAccount}"
                 Command="{Binding RegisterCommand}"
                 IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                MinimumHeightRequest="{StaticResource UiDimension52}"
                 SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreateYourAccount}" />
 
             <ActivityIndicator
@@ -172,7 +169,7 @@
                 SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreatingAccountPleaseWait}" />
 
             <Button
-                Style="{StaticResource PlatformAuthButton}"
+                Style="{StaticResource ButtonSecondary}"
                 Text="{loc:LocalizedText Auth_SignInWithApple}"
                 Command="{Binding SignInWithAppleCommand}"
                 IsVisible="{Binding IsAppleSignInAvailable}"

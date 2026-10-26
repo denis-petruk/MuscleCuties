@@ -18,7 +18,16 @@ public sealed record StrengthPlanPreviewRequestV020(
     int? WarmupMinutes = null,
     int? CooldownMinutes = null)
 {
+    /// <summary>Saved user activity choices used to build the mixed weekly schedule.</summary>
+    public HashSet<int>? SelectedActivityTypes { get; init; }
+
     public HashSet<DayOfWeek>? AvailableWeekdays { get; init; }
+
+    /// <summary>Saved user session durations; explicit activity answers may refine these for this preview.</summary>
+    public IReadOnlyDictionary<int, int>? ActivitySessionDurationsMinutes { get; init; }
+
+    /// <summary>Saved automatic weekly allocations for activities with a user-configurable frequency.</summary>
+    public IReadOnlyDictionary<int, int>? RequestedSessionsPerWeek { get; init; }
 
     /// <summary>Explicit per-activity facts needed by the mixed planner; absent values remain unknown.</summary>
     public IReadOnlyList<ActivityEligibilityInputV020>? ActivityEligibilityEvidence { get; init; }

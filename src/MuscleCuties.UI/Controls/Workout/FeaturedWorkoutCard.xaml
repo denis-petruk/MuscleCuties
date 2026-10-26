@@ -12,9 +12,7 @@
 
 
     <Border
-        Style="{StaticResource CardPrimary}"
-        StrokeThickness="{StaticResource UiStrokeWidth1}"
-        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+        Style="{StaticResource CardPrimary}">
         <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
 
             <!-- Header Row: Icon Tile, Title/Badge, and Status Pill -->
@@ -231,10 +229,7 @@
                   IsVisible="{Binding IsRestDay, Source={x:Reference Root}, Converter={StaticResource InvertedBoolConverter}}">
                 <!-- Tile 1: Duration -->
                 <Border
-                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                    Padding="{StaticResource UiInsets6_8}">
+                    Style="{StaticResource CardAccent}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -247,9 +242,7 @@
                                 VerticalOptions="Center" />
                             <Label
                                 Text="Duration"
-                                Style="{StaticResource CaptionLabel}"
-                                FontSize="{StaticResource UiFontSize11}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                Style="{StaticResource CaptionTinyStrong}"
                                 VerticalOptions="Center" />
                         </HorizontalStackLayout>
                         <Label
@@ -264,10 +257,7 @@
                 <!-- Tile 2: Exercises -->
                 <Border
                     Grid.Column="1"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                    Padding="{StaticResource UiInsets6_8}">
+                    Style="{StaticResource CardAccent}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -280,9 +270,7 @@
                                 VerticalOptions="Center" />
                             <Label
                                 Text="Exercises"
-                                Style="{StaticResource CaptionLabel}"
-                                FontSize="{StaticResource UiFontSize11}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                Style="{StaticResource CaptionTinyStrong}"
                                 VerticalOptions="Center" />
                         </HorizontalStackLayout>
                         <Label
@@ -297,10 +285,7 @@
                 <!-- Tile 3: Intensity -->
                 <Border
                     Grid.Column="2"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                    Padding="{StaticResource UiInsets6_8}">
+                    Style="{StaticResource CardAccent}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -313,9 +298,7 @@
                                 VerticalOptions="Center" />
                             <Label
                                 Text="Intensity"
-                                Style="{StaticResource CaptionLabel}"
-                                FontSize="{StaticResource UiFontSize11}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                Style="{StaticResource CaptionTinyStrong}"
                                 VerticalOptions="Center" />
                         </HorizontalStackLayout>
                         <Label
@@ -444,13 +427,12 @@
                 </BindableLayout.ItemTemplate>
             </Grid>
 
-            <Button
+            <Button Style="{StaticResource ButtonPrimary}"
                     Text="{Binding ActionText, Source={x:Reference Root}}"
                     ImageSource="{Binding ActionIcon, Source={x:Reference Root}}"
                     ContentLayout="Left,8"
                     Command="{Binding StartCommand, Source={x:Reference Root}}"
-                    IsVisible="{Binding IsActionVisible, Source={x:Reference Root}}"
-                    MinimumHeightRequest="{StaticResource UiDimension52}" />
+                    IsVisible="{Binding IsActionVisible, Source={x:Reference Root}}" />
 
         </VerticalStackLayout>
     </Border>

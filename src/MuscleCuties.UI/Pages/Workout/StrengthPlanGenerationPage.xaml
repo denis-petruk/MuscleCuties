@@ -13,6 +13,7 @@
     SafeAreaEdges="All"
     SizeChanged="OnPageSizeChanged">
 
+    <Grid>
     <Grid RowDefinitions="*,Auto,Auto">
     <ScrollView Grid.Row="0">
         <VerticalStackLayout
@@ -26,7 +27,7 @@
                 BackCommand="{Binding BackCommand}" />
 
             <!-- CARD 1: Plan Setup & Availability -->
-            <Border Style="{StaticResource PlanFormCard}">
+            <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
 
                     <!-- Title & Intro -->
@@ -38,8 +39,7 @@
                     </VerticalStackLayout>
 
                     <!-- Saved Availability Tile -->
-                    <Border Style="{StaticResource SurfaceTile}"
-                            Padding="{StaticResource UiInsets14_10}"
+                    <Border Style="{StaticResource CardAccent}"
                             IsVisible="{Binding HasSavedAvailability}">
                         <Grid ColumnDefinitions="Auto, *" ColumnSpacing="{StaticResource UiSpacing10}" VerticalOptions="Center">
                             <Path
@@ -57,47 +57,20 @@
                         </Grid>
                     </Border>
 
-                    <!-- Strength plan choices -->
-                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                    <!-- Read-only strength choice from onboarding preferences -->
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                         IsVisible="{Binding HasSavedStrengthActivity}">
                         <Label Text="{loc:LocalizedText Workout_Generation_StrengthPlanType}"
                                Style="{StaticResource FormFieldLabel}" />
-                        <VerticalStackLayout
-                            BindableLayout.ItemsSource="{Binding Activities}"
-                            Spacing="{StaticResource UiSpaceTight}"
-                            IsEnabled="{Binding CanEditInputs}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate x:DataType="vm:StrengthPlanActivityChoice">
-                                    <Border
-                                        Style="{StaticResource PlanActivityChoiceCard}"
-                                        SemanticProperties.Description="{Binding Label}"
-                                        SemanticProperties.Hint="{loc:LocalizedText Workout_Generation_StrengthPlanChoiceHint}">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer
-                                                Command="{Binding BindingContext.SelectActivityCommand, Source={x:Reference Root}, x:DataType=vm:StrengthPlanGenerationViewModel}"
-                                                CommandParameter="{Binding .}" />
-                                        </Border.GestureRecognizers>
-                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
-                                            <VerticalStackLayout Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
-                                                <Label Text="{Binding Label}" Style="{StaticResource CardTitle}" />
-                                                <Label Text="{Binding Description}" Style="{StaticResource MutedLabel}" />
-                                            </VerticalStackLayout>
-                                            <Border Grid.Column="1"
-                                                    IsVisible="{Binding IsSelected}"
-                                                    Style="{StaticResource PlanSelectedIndicator}">
-                                                <Path Data="M5 12l4 4L19 6"
-                                                      Style="{StaticResource PlanChoiceCheckmark}"
-                                                      InputTransparent="True" />
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </VerticalStackLayout>
+                        <Label Text="{Binding SelectedActivity.Label}"
+                               Style="{StaticResource CardTitle}" />
+                        <Label Text="{Binding SelectedActivity.Description}"
+                               Style="{StaticResource MutedLabel}"
+                               LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
 
                     <!-- High Intensity Notice -->
-                    <Border Style="{StaticResource SurfaceTile}"
-                            Padding="{StaticResource UiInsets14_10}"
+                    <Border Style="{StaticResource CardAccent}"
                             IsVisible="{Binding IsHighIntensityStrengthSelected}">
                         <Label Text="{loc:LocalizedText Workout_Generation_HighIntensityEvidenceHelp}"
                                Style="{StaticResource MutedLabel}"
@@ -109,7 +82,7 @@
             <!-- CARD 2A: HIIT Evidence (Conditional) -->
             <Border IsVisible="{Binding ShouldShowHiitUnderlyingCardioChoice}"
                     IsEnabled="{Binding CanEditInputs}"
-                    Style="{StaticResource PlanFormCard}">
+                    Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
 
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
@@ -192,13 +165,12 @@
                                              Spacing="{StaticResource UiSpaceTight}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="vm:HiitAerobicWeekEvidenceCapture">
-                                    <Border Style="{StaticResource SurfaceTile}"
-                                            Padding="{StaticResource UiInsets14_10}">
+                                    <Border Style="{StaticResource CardAccent}">
                                         <Grid ColumnDefinitions="*,100" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                             <Label Text="{Binding WeekLabel}"
                                                    Style="{StaticResource FormFieldLabel}"
                                                    VerticalOptions="Center" />
-                                            <Border Grid.Column="1" Style="{StaticResource InputContainer}" HeightRequest="{StaticResource UiDimension44}" MinimumHeightRequest="{StaticResource UiDimension44}" Padding="{StaticResource UiInsets10_0}">
+                                            <Border Grid.Column="1" Style="{StaticResource InputContainer}">
                                                 <Entry Text="{Binding QualifyingManageableSessionCount}"
                                                        Keyboard="Numeric"
                                                        Placeholder="{loc:LocalizedText Workout_Generation_HiitSessionCountPlaceholder}"
@@ -232,7 +204,7 @@
 
             <!-- CARD 2B: Swimming Evidence (Conditional) -->
             <Border IsVisible="{Binding IsSwimmingSelected}"
-                    Style="{StaticResource PlanFormCard}">
+                    Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
 
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
@@ -288,7 +260,7 @@
 
             <!-- CARD 2C: Rock Climbing Evidence (Conditional) -->
             <Border IsVisible="{Binding IsRockClimbingSelected}"
-                    Style="{StaticResource PlanFormCard}">
+                    Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
 
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
@@ -330,7 +302,7 @@
 
             <!-- CARD 2D: Yoga Evidence (Conditional) -->
             <Border IsVisible="{Binding IsYogaSelected}"
-                    Style="{StaticResource PlanFormCard}">
+                    Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
 
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
@@ -358,7 +330,7 @@
             </Border>
 
             <!-- Recent history and optional input adjustments -->
-            <Border Style="{StaticResource PlanFormCard}">
+            <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Style="{StaticResource PlanFormSection}">
                     <sharedControls:IconSectionHeader
                         Text="{loc:LocalizedText Workout_Generation_ExperienceTitle}"
@@ -389,7 +361,7 @@
                     <Button Text="{Binding TrainingDetailsToggleText}"
                             Command="{Binding ToggleTrainingDetailsCommand}"
                             IsVisible="{Binding IsBeforePreview}"
-                            Style="{StaticResource ButtonLink}"
+                            Style="{StaticResource ButtonSecondary}"
                             HorizontalOptions="Start" />
 
                     <VerticalStackLayout
@@ -490,9 +462,17 @@
             Style="{StaticResource PlanStickyActionSurface}">
         <VerticalStackLayout Style="{StaticResource PlanStickyActionContent}">
             <BoxView Style="{StaticResource PlanStickyActionDivider}" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}"
+                               HorizontalOptions="Center" />
             <Button Text="{loc:LocalizedText Workout_Generation_CreatePreview}"
                     Command="{Binding CreateProposalCommand}"
-                    Style="{StaticResource WorkoutPrimaryActionButton}" />
+                    IsVisible="{Binding IsTrainNavigationPending, Converter={StaticResource InvertedBoolConverter}}"
+                    Style="{StaticResource ButtonPrimary}" />
+            <Button Text="{loc:LocalizedText Workout_Generation_OpenTrainAfterApply}"
+                    Command="{Binding OpenTrainCommand}"
+                    IsVisible="{Binding IsTrainNavigationPending}"
+                    Style="{StaticResource ButtonPrimary}" />
         </VerticalStackLayout>
     </Border>
 
@@ -502,8 +482,7 @@
           BackgroundColor="{StaticResource ModalScrim}"
           ZIndex="10">
         <Border x:Name="PreviewSheet"
-                Style="{StaticResource AppBottomSheetSurface}"
-                Padding="{StaticResource UiInsets20_20_20_24}">
+                Style="{StaticResource ModalSurface}" VerticalOptions="End">
             <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{StaticResource UiSpaceControl}">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
@@ -515,9 +494,7 @@
                     <Button Grid.Column="1"
                             Text="{loc:LocalizedText Common_Close}"
                             Command="{Binding ClosePreviewCommand}"
-                            Style="{StaticResource ButtonLink}"
-                            MinimumHeightRequest="{StaticResource UiDimension48}"
-                            MinimumWidthRequest="{StaticResource UiDimension48}" />
+                            Style="{StaticResource ButtonSecondary}" />
                 </Grid>
                 <ScrollView Grid.Row="1">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
@@ -539,8 +516,7 @@
                                                  Spacing="{StaticResource UiSpaceTight}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="vm:MixedActivitySessionDisplay">
-                                        <Border Style="{StaticResource SurfaceTile}"
-                                                Padding="{StaticResource UiInsets14_10}">
+                                        <Border Style="{StaticResource CardAccent}">
                                             <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
                                                 <Label Text="{Binding Title}"
                                                        Style="{StaticResource FormFieldLabel}" />
@@ -564,8 +540,7 @@
                                                  Spacing="{StaticResource UiSpaceTight}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="vm:MixedActivityDecisionDisplay">
-                                        <Border Style="{StaticResource SurfaceTile}"
-                                                Padding="{StaticResource UiInsets14_10}">
+                                        <Border Style="{StaticResource CardAccent}">
                                             <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
                                                 <Label Text="{Binding Activity}"
                                                        Style="{StaticResource FormFieldLabel}" />
@@ -599,8 +574,7 @@
                                    FontSize="{StaticResource UiFontSize17}"
                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                    SemanticProperties.HeadingLevel="Level3" />
-                            <Border Style="{StaticResource SurfaceTile}"
-                                    Padding="{StaticResource UiInsets14_10}">
+                            <Border Style="{StaticResource CardAccent}">
                                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding ScheduleInputReasons}"
                                                      Spacing="{StaticResource UiSpacing6}">
                                     <BindableLayout.ItemTemplate>
@@ -625,8 +599,7 @@
                                                  Spacing="{StaticResource UiSpacing10}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="vm:StrengthPlanSessionDisplay">
-                                        <Border Style="{StaticResource SurfaceTile}"
-                                                Padding="{StaticResource UiInsets14_12}">
+                                        <Border Style="{StaticResource CardAccent}">
                                             <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                                                 <VerticalStackLayout Spacing="{StaticResource UiSpacing2}">
                                                     <Label Text="{Binding Title}"
@@ -647,9 +620,8 @@
                                                                 <Label Grid.Column="1"
                                                                        Text="{loc:LocalizedText Workout_Generation_Required}"
                                                                        IsVisible="{Binding IsRequired}"
-                                                                       Style="{StaticResource CaptionLabel}"
+                                                                       Style="{StaticResource CaptionStrong}"
                                                                        TextColor="{StaticResource Primary}"
-                                                                       FontAttributes="{StaticResource UiFontAttributesBold}"
                                                                        VerticalOptions="Center" />
                                                             </Grid>
                                                         </DataTemplate>
@@ -678,8 +650,7 @@
                                                  Spacing="{StaticResource UiSpacing10}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="vm:StrengthPlanHighIntensityCandidateDisplay">
-                                        <Border Style="{StaticResource SurfaceTile}"
-                                                Padding="{StaticResource UiInsets14_12}">
+                                        <Border Style="{StaticResource CardAccent}">
                                             <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                                                 <Label Text="{Binding Name}"
                                                        Style="{StaticResource FormFieldLabel}" />
@@ -730,8 +701,7 @@
                                    FontSize="{StaticResource UiFontSize17}"
                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                    SemanticProperties.HeadingLevel="Level3" />
-                            <Border Style="{StaticResource SurfaceTile}"
-                                    Padding="{StaticResource UiInsets14_10}">
+                            <Border Style="{StaticResource CardAccent}">
                                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding PreviewLimitations}" Spacing="{StaticResource UiSpaceMicro}">
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="x:String">
@@ -748,6 +718,9 @@
                 </ScrollView>
                 <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceTight}">
                     <BoxView Style="{StaticResource PlanStickyActionDivider}" />
+                    <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                       IsVisible="{Binding IsBusy}"
+                                       HorizontalOptions="Center" />
                     <Label Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                            IsVisible="{Binding HasStatusMessage}"
                            Style="{StaticResource MutedLabel}"
@@ -759,10 +732,16 @@
                     <Button Text="{loc:LocalizedText Workout_Generation_ApplyPlan}"
                             Command="{Binding AcceptProposalCommand}"
                             IsVisible="{Binding HasFeasiblePreview}"
-                            Style="{StaticResource WorkoutPrimaryActionButton}" />
+                            Style="{StaticResource ButtonPrimary}" />
+                    <Button Text="{loc:LocalizedText Workout_Generation_OpenTrainAfterApply}"
+                            Command="{Binding OpenTrainCommand}"
+                            IsVisible="{Binding IsTrainNavigationPending}"
+                            Style="{StaticResource ButtonPrimary}" />
                 </VerticalStackLayout>
             </Grid>
         </Border>
     </Grid>
+    </Grid>
+    <sharedControls:PageLoadingOverlay />
     </Grid>
 </ContentPage>

@@ -20,14 +20,18 @@ public sealed class LocalProfileAccountDeletion(
     IAppAccountPurgeService purgeService,
     IProfileAccountSession session) : IProfileAccountDeletion
 {
-    public async Task<bool> DeleteLocalAccountAsync(int userId, CancellationToken cancellationToken)
+    public async Task<ProfileAccountDeletionResult> DeleteLocalAccountAsync(
+        int userId,
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (userId <= 0 || await session.GetCurrentUserIdAsync(cancellationToken).ConfigureAwait(false) != userId)
-            return false;
+            return new ProfileAccountDeletionResult(false,
+                "Could not confirm the signed-in account. Sign in again, then retry account deletion.");
 
         var result = await purgeService.PurgeAccountDataAsync(userId, cancellationToken)
             .ConfigureAwait(false);
-        return result.Succeeded;
+        return new ProfileAccountDeletionResult(result.Succeeded,
+            result.Errors.Count > 0 ? result.Errors[0] : null);
     }
 }

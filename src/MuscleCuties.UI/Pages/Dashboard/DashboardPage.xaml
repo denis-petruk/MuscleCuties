@@ -66,7 +66,7 @@
                     </Grid>
                     <Label Grid.Row="1" Grid.Column="0"
                            Text="{loc:LocalizedText Dashboard_Page_WorkoutStreak}"
-                           Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center"
+                           Style="{StaticResource CaptionCentered}"
                            VerticalOptions="Start" LineBreakMode="WordWrap" />
 
                     <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="Auto,Auto"
@@ -84,7 +84,7 @@
                     </Grid>
                     <Label Grid.Row="1" Grid.Column="1"
                            Text="{loc:LocalizedText Dashboard_Page_FoodLogStreak}"
-                           Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center"
+                           Style="{StaticResource CaptionCentered}"
                            VerticalOptions="Start" LineBreakMode="WordWrap" />
 
                     <Grid Grid.Row="0" Grid.Column="2" ColumnDefinitions="Auto,Auto"
@@ -102,7 +102,7 @@
                     </Grid>
                     <Label Grid.Row="1" Grid.Column="2"
                            Text="{loc:LocalizedText Dashboard_Page_CyclesLogged}"
-                           Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center"
+                           Style="{StaticResource CaptionCentered}"
                            VerticalOptions="Start" LineBreakMode="WordWrap" />
                 </Grid>
             </Border>
@@ -172,16 +172,12 @@
                                 <Label Text="{loc:LocalizedText Dashboard_Page_ProgressPhotoTitle}" Style="{StaticResource CardTitle}" />
                                 <Label
                                     Text="{Binding PhotoCheckInText, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize12}" />
+                                    Style="{StaticResource CaptionSmall}" />
                             </VerticalStackLayout>
                             <Button Grid.Column="2"
                                     Text="{Binding PhotoButtonText, Converter={StaticResource LocalizedStringConverter}}"
                                     Command="{Binding OpenPhotoVaultCommand}"
                                     Style="{StaticResource ButtonSecondary}"
-                                    HeightRequest="{StaticResource UiDimension36}"
-                                    MinimumHeightRequest="{StaticResource UiDimension36}"
-                                    Padding="{StaticResource UiInsets12_0}"
-                                    FontSize="{StaticResource UiFontSize13}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_Page_OpenPhotoVaultA11y}" />
                         </Grid>
                     </Border>

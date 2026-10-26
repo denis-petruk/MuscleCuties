@@ -17,13 +17,13 @@
             <sharedControls:PageHeader Grid.Row="0" Title="{loc:LocalizedText Profile_Feedback_Feedback}"
                                        BackCommand="{Binding BackCommand}" />
 
-            <Border Grid.Row="2" Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets18}">
+            <Border Grid.Row="2" Style="{StaticResource CardPrimary}">
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
                     <Grid Grid.Row="0" ColumnDefinitions="*,56" ColumnSpacing="{StaticResource UiSpaceCompact}">
                         <Label Text="{loc:LocalizedText Profile_Feedback_YourMessage}" Style="{StaticResource SectionTitle}"
                                VerticalOptions="Center" />
-                        <Border Grid.Column="1" Style="{StaticResource SurfaceTile}"
-                                WidthRequest="{StaticResource UiDimension56}" HeightRequest="{StaticResource UiDimension56}" Padding="{StaticResource UiInsets0}">
+                        <Border Grid.Column="1" Style="{StaticResource CardAccent}"
+                                WidthRequest="{StaticResource UiDimension56}" HeightRequest="{StaticResource UiDimension56}">
                             <Image Source="feedback_note.png" WidthRequest="{StaticResource UiDimension42}" HeightRequest="{StaticResource UiDimension42}"
                                    HorizontalOptions="Center" VerticalOptions="Center"
                                    Aspect="AspectFit" />
@@ -43,7 +43,7 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Row="1" Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets18}">
+            <Border Grid.Row="1" Style="{StaticResource CardPrimary}">
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
                     <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Feedback_Details}"
                            Style="{StaticResource FormFieldLabel}" FontSize="{StaticResource UiFontSize15}" />
@@ -95,14 +95,14 @@
                                                           IconGlyph="LinkSquare24" VerticalOptions="Center" />
                         <Button Grid.Column="1" Text="{loc:LocalizedText Profile_Feedback_AddFile}"
                                 Style="{StaticResource ButtonSecondary}"
-                                Clicked="OnAttachFileClicked" MinimumHeightRequest="{StaticResource UiDimension44}" />
+                                Clicked="OnAttachFileClicked" />
                     </Grid>
                     <Grid Grid.Row="8" IsVisible="{Binding HasAttachment}" ColumnDefinitions="*,Auto"
                           ColumnSpacing="{StaticResource UiSpacing10}">
                         <Label Text="{Binding AttachmentName}" Style="{StaticResource MutedLabel}"
                                LineBreakMode="MiddleTruncation" VerticalOptions="Center" />
                         <Button Grid.Column="1" Text="{loc:LocalizedText Profile_Feedback_Remove}"
-                                Style="{StaticResource ButtonLink}"
+                                Style="{StaticResource ButtonSecondary}"
                                 Command="{Binding RemoveAttachmentCommand}" />
                     </Grid>
                     <Label Grid.Row="9"

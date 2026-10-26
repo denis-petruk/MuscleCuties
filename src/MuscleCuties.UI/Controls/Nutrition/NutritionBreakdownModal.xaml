@@ -21,7 +21,7 @@
         </BoxView>
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource AppBottomSheetSurface}"
+            Style="{StaticResource ModalSurface}"
             HorizontalOptions="Fill"
             VerticalOptions="End">
 
@@ -144,8 +144,7 @@
                                             <Label
                                                 Grid.Column="1"
                                                 Text="{loc:LocalizedText Nutrition_Breakdown_EditMeal}"
-                                                Style="{StaticResource CaptionLabel}"
-                                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                                Style="{StaticResource CaptionStrong}"
                                                 VerticalOptions="Center" />
                                         </Grid>
                                     </Border>
@@ -180,8 +179,7 @@
                                                     <Label
                                                         Grid.Column="3"
                                                         Text="{Binding AmountText, Converter={StaticResource LocalizedStringConverter}}"
-                                                        Style="{StaticResource MutedLabel}"
-                                                        FontSize="{StaticResource UiFontSize14}"
+                                                        Style="{StaticResource MutedMedium}"
                                                         HorizontalTextAlignment="End" />
                                                 </Grid>
                                             </DataTemplate>
@@ -206,8 +204,7 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="nutritionModels:DailyMicronutrientItem">
                             <Border
-                                Style="{StaticResource ModalListItem}"
-                                Padding="{StaticResource UiInsets16_14}"
+                                Style="{StaticResource CardSecondary}"
                                 Margin="{StaticResource UiInsets0_0_0_8}">
 
                                 <Grid

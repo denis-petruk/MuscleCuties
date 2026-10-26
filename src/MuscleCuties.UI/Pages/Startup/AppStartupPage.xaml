@@ -37,8 +37,7 @@
             <Label
                 x:Name="StartupStatusLabel"
                 Text="{loc:LocalizedText Dashboard_Startup_GettingReady}"
-                Style="{StaticResource MutedLabel}"
-                HorizontalTextAlignment="Center"
+                Style="{StaticResource MutedCentered}"
                 SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_LoadingStatusA11y}" />
             <Label
                 x:Name="StartupErrorLabel"
@@ -52,15 +51,12 @@
                 x:Name="StartupRecoveryLabel"
                 IsVisible="False"
                 Text="{loc:LocalizedText Dashboard_Startup_UnlockFailedMessage}"
-                Style="{StaticResource MutedLabel}"
-                HorizontalTextAlignment="Center" />
-            <Button
+                Style="{StaticResource MutedCentered}" />
+            <Button Style="{StaticResource ButtonPrimary}"
                 x:Name="RetryButton"
                 IsVisible="False"
                 Text="{loc:LocalizedText Dashboard_Shared_Retry}"
                 Clicked="OnRetryClicked"
-                MinimumHeightRequest="{StaticResource UiDimension52}"
-                MinimumWidthRequest="{StaticResource UiDimension44}"
                 SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_RetryUnlockA11y}"
                 SemanticProperties.Hint="{loc:LocalizedText Dashboard_Startup_RetryUnlockHint}" />
             <Button
@@ -69,7 +65,7 @@
                 Text="Reset Local Database"
                 Clicked="OnResetClicked"
                 Style="{StaticResource ButtonSecondary}"
-                TextColor="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}" />
+                SemanticProperties.Description="Reset Local Database" />
         </VerticalStackLayout>
     </Grid>
 </ContentPage>

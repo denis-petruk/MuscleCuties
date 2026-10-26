@@ -19,8 +19,7 @@
 
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource AppBottomSheetSurface}"
-            Padding="{StaticResource UiInsets0}">
+            Style="{StaticResource ModalSurface}" VerticalOptions="End">
             <Grid RowDefinitions="Auto, *, Auto">
 
                 <!-- Header (Flattened Grid) -->

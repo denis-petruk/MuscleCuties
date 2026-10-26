@@ -11,7 +11,7 @@
     SemanticProperties.Description="{loc:LocalizedText Cycle_Hero_CardAccessibility}">
 
 
-    <Border Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets20}">
+    <Border Style="{StaticResource CardPrimary}">
         <Grid RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="{StaticResource UiSpaceCompact}">
 
             <!-- Top Row: Section header -->
@@ -27,8 +27,7 @@
                         VerticalOptions="Center" />
                     <Label
                         Text="{loc:LocalizedText Cycle_Hero_HeaderTitle}"
-                        Style="{StaticResource CaptionLabel}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
+                        Style="{StaticResource CaptionStrong}"
                         TextColor="{StaticResource Primary}"
                         VerticalOptions="Center"
                         SemanticProperties.HeadingLevel="Level2" />
@@ -46,9 +45,7 @@
                         FontAttributes="{StaticResource UiFontAttributesBold}" />
                     <Label
                         Text="{Binding CycleDaySummary, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource CaptionLabel}"
-                        FontSize="{StaticResource UiFontSize13}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
+                        Style="{StaticResource CaptionStrong}"
                         TextColor="{StaticResource Primary}" />
                 </VerticalStackLayout>
 

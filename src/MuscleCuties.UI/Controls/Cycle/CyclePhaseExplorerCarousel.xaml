@@ -11,8 +11,7 @@
     SemanticProperties.Description="{loc:LocalizedText Cycle_PhaseExplorer_CarouselAccessibility}">
 
 
-    <Border Style="{StaticResource CardPrimary}" Padding="{StaticResource UiInsets16}"
-            StrokeThickness="{StaticResource UiStrokeWidth0}">
+    <Border Style="{StaticResource CardPrimary}">
     <Grid RowDefinitions="Auto, Auto" RowSpacing="{StaticResource UiSpacing10}">
 
         <!-- Header -->

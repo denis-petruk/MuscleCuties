@@ -7,8 +7,10 @@ public interface IProfileAccountSession
 
 public interface IProfileAccountDeletion
 {
-    Task<bool> DeleteLocalAccountAsync(int userId, CancellationToken cancellationToken);
+    Task<ProfileAccountDeletionResult> DeleteLocalAccountAsync(int userId, CancellationToken cancellationToken);
 }
+
+public sealed record ProfileAccountDeletionResult(bool Succeeded, string? FailureMessage = null);
 
 public sealed class ProfilePurgeCoordinator(
     IProfileAccountSession session,
@@ -20,8 +22,8 @@ public sealed class ProfilePurgeCoordinator(
         if (userId <= 0)
             return new ProfilePurgeResult(false, false);
 
-        var succeeded = await deletion.DeleteLocalAccountAsync(userId, cancellationToken)
+        var result = await deletion.DeleteLocalAccountAsync(userId, cancellationToken)
             .ConfigureAwait(false);
-        return new ProfilePurgeResult(succeeded, true);
+        return new ProfilePurgeResult(result.Succeeded, true, result.FailureMessage);
     }
 }

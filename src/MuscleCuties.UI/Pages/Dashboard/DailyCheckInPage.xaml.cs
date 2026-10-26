@@ -115,21 +115,10 @@ public partial class DailyCheckInPage : ContentPage
 
     private static void UpdateChipGroup(Button[] chips, int selectedIndex, Func<int, bool, string> buildDescription)
     {
-        var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
-        var resources = Application.Current!.Resources;
-        var selectedBg = isDark ? (Color)resources["ChoiceSelectedSurfaceDark"] : (Color)resources["ChoiceSelectedSurfaceLight"];
-        var selectedBorder = isDark ? (Color)resources["ChoiceSelectedStrokeDark"] : (Color)resources["ChoiceSelectedStrokeLight"];
-        var unselectedBg = isDark ? (Color)resources["Gray900"] : (Color)resources["Gray100"];
-        var unselectedBorder = isDark ? (Color)resources["Gray700"] : (Color)resources["Gray300"];
-        var selectedText = selectedBorder;
-        var unselectedText = isDark ? (Color)resources["TextPrimaryDark"] : (Color)resources["TextPrimary"];
-
         for (var i = 0; i < chips.Length; i++)
         {
             var selected = i == selectedIndex;
-            chips[i].BackgroundColor = selected ? selectedBg : unselectedBg;
-            chips[i].BorderColor = selected ? selectedBorder : unselectedBorder;
-            chips[i].TextColor = selected ? selectedText : unselectedText;
+            VisualStateManager.GoToState(chips[i], selected ? "Selected" : "Unselected");
             SemanticProperties.SetDescription(chips[i], buildDescription(i, selected));
         }
     }

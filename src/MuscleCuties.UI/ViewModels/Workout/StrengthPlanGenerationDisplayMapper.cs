@@ -10,6 +10,7 @@ internal static class StrengthPlanGenerationDisplayMapper
 {
     private const int NoPolicyReasons = 0;
     private const decimal NoDurationMinutes = 0m;
+    private const int OneSessionPerWeek = 1;
     private const string NoStatusMessage = "";
     private const string MixedActivityScheduleIncompleteCode = "MixedActivityScheduleIncomplete";
 
@@ -34,22 +35,20 @@ internal static class StrengthPlanGenerationDisplayMapper
         MixedActivityScheduleDecisionV020 decision)
     {
         var disposition = DispositionLabel(decision.Disposition);
-        var status = string.IsNullOrWhiteSpace(decision.PrescriptionStatus)
+        var prescriptionStatus = decision.PrescriptionStatus;
+        var status = string.IsNullOrWhiteSpace(prescriptionStatus) ||
+                     string.Equals(prescriptionStatus, "Eligible", StringComparison.Ordinal)
             ? disposition
             : FormatLocalized("Workout_Generation_ActivityDecisionStatusFormat", disposition,
-                PrescriptionStatusLabel(decision.PrescriptionStatus));
+                PrescriptionStatusLabel(prescriptionStatus));
 
         if (decision.ScheduledSessionsPerWeek > 0 &&
             decision.EffectiveActivityTypeId.HasValue && decision.EffectiveActivityTypeId.Value != decision.ActivityTypeId)
         {
-            var replacedActivityLabel = ActivityLabel(decision.ActivityTypeId);
-            status = FormatLocalized("Workout_Generation_Activity_ReplacedWithGeneralStrength", replacedActivityLabel);
+            status = UiTextCatalog.Get("Workout_Generation_Activity_ReplacedWithGeneralStrength");
         }
 
-        var frequency = FormatLocalized("Workout_Generation_ActivityFrequencySummaryFormat",
-            FrequencyValue(decision.PolicySessionsPerWeek),
-            FrequencyValue(decision.TargetSessionsPerWeek),
-            FrequencyValue(decision.ScheduledSessionsPerWeek));
+        var frequency = ActivityFrequencySummary(decision);
         var shouldExplain = !string.Equals(decision.Disposition, "Scheduled", StringComparison.Ordinal) ||
                             !string.IsNullOrWhiteSpace(decision.PrescriptionStatus) &&
                             !string.Equals(decision.PrescriptionStatus, "Eligible", StringComparison.Ordinal) ||
@@ -280,8 +279,37 @@ internal static class StrengthPlanGenerationDisplayMapper
         return formatted;
     }
 
-    private static string FrequencyValue(int? value) => value?.ToString(CultureInfo.CurrentCulture) ??
-        UiTextCatalog.Get("Workout_Generation_NotSpecified");
+    private static string ActivityFrequencySummary(MixedActivityScheduleDecisionV020 decision)
+    {
+        var policyFrequency = FrequencySummaryValue(decision.PolicySessionsPerWeek);
+        var targetFrequency = FrequencySummaryValue(decision.TargetSessionsPerWeek);
+        var scheduledFrequency = FrequencySummaryValue(decision.ScheduledSessionsPerWeek);
+
+        if (decision.PolicySessionsPerWeek is { } matchingFrequency &&
+            matchingFrequency == decision.TargetSessionsPerWeek &&
+            matchingFrequency == decision.ScheduledSessionsPerWeek &&
+            matchingFrequency > NoPolicyReasons)
+            return FrequencyValue(matchingFrequency);
+
+        return FormatLocalized("Workout_Generation_ActivityFrequencySummaryFormat",
+            policyFrequency, targetFrequency, scheduledFrequency);
+    }
+
+    private static string FrequencyValue(int? value)
+    {
+        if (!value.HasValue)
+            return UiTextCatalog.Get("Workout_Generation_NotSpecified");
+
+        return FormatLocalized(value.Value == OneSessionPerWeek
+                ? "Workout_Generation_ActivityFrequencyOneSessionFormat"
+                : "Workout_Generation_ActivityFrequencyMultipleSessionsFormat",
+            value.Value.ToString(CultureInfo.CurrentCulture));
+    }
+
+    private static string FrequencySummaryValue(int? value) => value.HasValue
+        ? FormatLocalized("Workout_Generation_ActivityFrequencyPerWeekFormat",
+            value.Value.ToString(CultureInfo.CurrentCulture))
+        : UiTextCatalog.Get("Workout_Generation_NotSpecified");
 
     private static string DispositionLabel(string disposition) => disposition switch
     {

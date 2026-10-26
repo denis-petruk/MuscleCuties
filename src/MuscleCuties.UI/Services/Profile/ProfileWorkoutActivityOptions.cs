@@ -8,10 +8,9 @@ namespace MuscleCuties.UI.Services.Profile;
 public static class ProfileWorkoutActivityOptions
 {
     public static ObservableCollection<WorkoutActivityOptionItem> Build(
-        IReadOnlySet<WorkoutActivityDto> selected,
-        bool allowInlinePreferenceConfiguration = true)
+        IReadOnlySet<WorkoutActivityDto> selected)
     {
-        return WorkoutActivityOptionCatalog.Build(selected, allowInlinePreferenceConfiguration);
+        return WorkoutActivityOptionCatalog.Build(selected);
     }
 
     public static IReadOnlyList<WorkoutActivityGroupSection> BuildGroups(

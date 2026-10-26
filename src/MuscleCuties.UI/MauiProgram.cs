@@ -121,6 +121,7 @@ namespace MuscleCuties.UI;
 public static class MauiProgram
 {
     private const string ProductionBackendBaseUrl = "https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com";
+    private const string WorkoutPreferencesAfterOnboardingContextKey = "workout-preferences-after-onboarding";
 #if DEBUG
     private const string DebugBackendBaseUrlPreferenceKey = "backend_api_base_url";
 #endif
@@ -512,8 +513,8 @@ public static class MauiProgram
         services.AddTransient<LoginViewModel>(sp => new LoginViewModel(
             sp.GetRequiredService<IAccountSignInUseCase>(),
             sp.GetRequiredService<IAccountLoginScheduler>(),
-            () => NavigateThenPreloadDashboardAsync(sp, preloadRemaining: false),
-            () => NavigateAuthenticatedAsync($"//{nameof(ProfileSetupPage)}"),
+            () => NavigateAfterLoginAsync(sp),
+            () => NavigateToProfileSetupAfterLoginAsync(sp),
             () => NavigateToAsync(nameof(RegisterPage)),
             sp.GetRequiredService<IPlatformAccountSignInAdapter>(),
             () => NavigateToAsync(nameof(PasswordRecoveryPage)),
@@ -546,9 +547,11 @@ public static class MauiProgram
 
         services.AddTransient<QuizViewModel>(sp => new QuizViewModel(
             sp.GetRequiredService<IOnboardingQuizUseCase>(),
-            () => NavigateThenPreloadDashboardAsync(sp, preloadRemaining: false),
+            () => NavigateAfterOnboardingAsync(sp),
             () => NavigateToAsync("//LoginPage"),
-            () => NavigateToAsync($"//{nameof(ProfileSetupPage)}")));
+            () => NavigateToAsync($"//{nameof(ProfileSetupPage)}"),
+            () => sp.GetRequiredService<INavigationContextService>()
+                .Set(WorkoutPreferencesAfterOnboardingContextKey, true)));
 
         services.AddTransient<ProfileSetupViewModel>(sp => new ProfileSetupViewModel(
             sp.GetRequiredService<IProfileSetupUseCase>(),
@@ -664,8 +667,8 @@ public static class MauiProgram
             sp.GetRequiredService<IProfileWorkoutPreferencesUseCase>(),
             sp.GetRequiredService<GetReviewedExerciseExclusionCatalogV020UseCase>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
-            () => NavigateToAsync("//ProfilePage"),
-            () => NavigateToAsync("//WorkoutPage")));
+            () => NavigateToAsync(".."),
+            () => NavigateToAsync(nameof(StrengthPlanGenerationPage))));
 
         services.AddTransient<ProfileHealthSyncViewModel>(sp => new ProfileHealthSyncViewModel(
             sp.GetRequiredService<IProfileHealthSyncUseCase>(),
@@ -799,6 +802,28 @@ public static class MauiProgram
         _ = PreloadAfterDashboardLoadAsync(
             dashboardPage,
             services.GetRequiredService<IAppPreloadService>());
+    }
+
+    private static async Task NavigateAfterOnboardingAsync(IServiceProvider services)
+    {
+        await NavigateThenPreloadDashboardAsync(services, preloadRemaining: false);
+        await NavigateToAsync(nameof(ProfileWorkoutPreferencesPage));
+    }
+
+    private static Task NavigateAfterLoginAsync(IServiceProvider services)
+    {
+        var navigationContext = services.GetRequiredService<INavigationContextService>();
+        if (navigationContext.TryTake<bool>(WorkoutPreferencesAfterOnboardingContextKey, out var pending) && pending)
+            return NavigateAfterOnboardingAsync(services);
+
+        return NavigateThenPreloadDashboardAsync(services, preloadRemaining: false);
+    }
+
+    private static Task NavigateToProfileSetupAfterLoginAsync(IServiceProvider services)
+    {
+        services.GetRequiredService<INavigationContextService>()
+            .TryTake<bool>(WorkoutPreferencesAfterOnboardingContextKey, out _);
+        return NavigateAuthenticatedAsync($"//{nameof(ProfileSetupPage)}");
     }
 
     private static Task NavigateToExistingLoginAsync(IServiceProvider services, string email)

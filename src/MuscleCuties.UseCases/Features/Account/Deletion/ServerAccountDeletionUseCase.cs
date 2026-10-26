@@ -26,7 +26,8 @@ public sealed class ServerAccountDeletionUseCase(
                     Succeeded: false,
                     PurgedRecordCount: 0,
                     CleanedMediaKeys: [],
-                    Message: revocation.FailureReason ?? "Apple Sign-In token revocation failed; account was not purged.");
+                    Message: revocation.FailureReason ?? "Apple Sign-In token revocation failed; account was not purged.",
+                    FailureCode: revocation.FailureCode);
             }
         }
 

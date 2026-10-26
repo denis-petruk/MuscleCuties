@@ -1,17 +1,19 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Profile;
+using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
-public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
+public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPageLoadAware
 {
     private const string FullGymEquipmentValue = "FullGym";
     private const string HomeDumbbellsBandsEquipmentValue = "HomeDumbbellsBands";
@@ -21,11 +23,18 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
     private readonly IProfileRefreshNotifier _refreshNotifier;
     private readonly IProfileWorkoutPreferencesUseCase _useCase;
     private readonly GetReviewedExerciseExclusionCatalogV020UseCase _exerciseExclusionCatalog;
+    private Dictionary<int, int> _savedActivitySessionDurationsMinutes = new();
+    private int _strengthSessionDurationMinutes =
+        WorkoutPreferencesConstraints.DefaultSessionDurationMinutes(WorkoutActivityDto.GeneralStrength) ??
+        WorkoutPreferencesConstraints.DefaultActivitySessionDurationMinutes;
+    private string _savedPreferencesSnapshot = string.Empty;
+    private bool _hasLoadedPreferences;
 
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private bool _isLoadingData;
+    [ObservableProperty] private bool _isLoadError;
     [ObservableProperty] private bool _isUpdatingPlan;
     [ObservableProperty] private SelectionOption<string>? _selectedEquipmentOption;
-    [ObservableProperty] private int _selectedSessionDurationMinutes;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private ObservableCollection<WorkoutActivityOptionItem> _workoutActivityOptions = new();
     [ObservableProperty] private ObservableCollection<WorkoutWeekdayOptionItem> _availableWeekdays = new();
@@ -49,15 +58,11 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
         ToggleWeekdayCommand = new RelayCommand<WorkoutWeekdayOptionItem>(ToggleWeekday);
-        SelectedSessionDurationMinutes = WorkoutPreferencesConstraints.DefaultSessionDurationMinutes(WorkoutActivityDto.GeneralStrength) ?? 60;
-        WorkoutActivityOptions = ProfileWorkoutActivityOptions.Build(new HashSet<WorkoutActivityDto>(), false);
+        WorkoutActivityOptions = ProfileWorkoutActivityOptions.Build(new HashSet<WorkoutActivityDto>());
         AvailableWeekdays = new ObservableCollection<WorkoutWeekdayOptionItem>(CreateWeekdays()
             .Select(day => new WorkoutWeekdayOptionItem(day)));
         SelectedEquipmentOption = EquipmentOptions.First(option => option.Value == FullGymEquipmentValue);
     }
-
-    public IReadOnlyList<int> SessionDurationOptions { get; } =
-        WorkoutPreferencesConstraints.SessionDurationChoices(WorkoutActivityDto.GeneralStrength);
 
     public IReadOnlyList<SelectionOption<string>> EquipmentOptions { get; } =
     [
@@ -70,7 +75,12 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
         ProfileWorkoutActivityOptions.BuildGroups(WorkoutActivityOptions);
 
     public int SelectedWeekdayCount => AvailableWeekdays.Count(day => day.IsSelected);
+    public bool IsPageLoading => IsLoadingData;
+    public bool HasUnsavedChanges => _hasLoadedPreferences &&
+        !string.Equals(_savedPreferencesSnapshot, CapturePreferencesSnapshot(), StringComparison.Ordinal);
     public bool HasExerciseExclusionQuery => !string.IsNullOrWhiteSpace(ExerciseExclusionSearchText);
+    public bool HasNoExerciseExclusionMatches => IsExerciseExclusionCatalogLoaded && HasExerciseExclusionQuery &&
+        FilteredExerciseExclusionOptions.Count == 0;
     public IReadOnlyList<WorkoutExerciseExclusionOptionItem> FilteredExerciseExclusionOptions =>
         !HasExerciseExclusionQuery
             ? []
@@ -89,6 +99,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
 
     private async Task LoadDataAsync()
     {
+        IsLoadError = false;
+        IsLoadingData = true;
         IsBusy = true;
         IsExerciseExclusionCatalogLoaded = false;
         StatusMessage = string.Empty;
@@ -99,36 +111,19 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
                                    .Where(value => Enum.IsDefined(typeof(WorkoutActivityDto), value))
                                    .Select(value => (WorkoutActivityDto)value).ToHashSet()
                                ?? new HashSet<WorkoutActivityDto>();
-            WorkoutActivityOptions = ProfileWorkoutActivityOptions.Build(selectedTypes, false);
-            if (preferences is not null)
-            {
-                var savedStrengthDuration = preferences.ActivitySessionDurationsMinutes
-                    .Where(kvp => WorkoutPlanningConstants.IsStrengthActivity((WorkoutActivityDto)kvp.Key) &&
-                                  WorkoutPreferencesConstraints.IsValidSessionDuration((WorkoutActivityDto)kvp.Key, kvp.Value))
-                    .Select(kvp => (int?)kvp.Value)
-                    .FirstOrDefault();
-                if (savedStrengthDuration.HasValue)
-                {
-                    SelectedSessionDurationMinutes = savedStrengthDuration.Value;
-                }
-
-                foreach (var option in WorkoutActivityOptions)
-                {
-                    if (WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(option.ActivityType))
-                        option.SessionDurationMinutes = SelectedSessionDurationMinutes;
-                    if (preferences.RequestedSessionsPerWeek?.TryGetValue(
-                            (int)option.ActivityType, out var sessionsPerWeek) == true)
-                        option.RequestedSessionsPerWeek = sessionsPerWeek;
-                }
-            }
-            else
-            {
-                foreach (var option in WorkoutActivityOptions)
-                {
-                    if (WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(option.ActivityType))
-                        option.SessionDurationMinutes = SelectedSessionDurationMinutes;
-                }
-            }
+            WorkoutActivityOptions = ProfileWorkoutActivityOptions.Build(selectedTypes);
+            _savedActivitySessionDurationsMinutes = (preferences?.ActivitySessionDurationsMinutes ??
+                    new Dictionary<int, int>())
+                .Where(pair => Enum.IsDefined(typeof(WorkoutActivityDto), pair.Key) &&
+                               WorkoutPreferencesConstraints.IsValidSessionDuration(
+                                   (WorkoutActivityDto)pair.Key, pair.Value))
+                .ToDictionary(pair => pair.Key, pair => pair.Value);
+            _strengthSessionDurationMinutes = _savedActivitySessionDurationsMinutes
+                .Where(pair => WorkoutPlanningConstants.IsStrengthActivity((WorkoutActivityDto)pair.Key))
+                .Select(pair => (int?)pair.Value)
+                .FirstOrDefault() ??
+                WorkoutPreferencesConstraints.DefaultSessionDurationMinutes(WorkoutActivityDto.GeneralStrength) ??
+                WorkoutPreferencesConstraints.DefaultActivitySessionDurationMinutes;
 
             var selectedDays = preferences?.AvailableWeekdays
                                    .Where(value => Enum.IsDefined(typeof(DayOfWeek), value))
@@ -159,21 +154,29 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
                     if (args.PropertyName != nameof(WorkoutExerciseExclusionOptionItem.IsSelected)) return;
                     OnPropertyChanged(nameof(SelectedExerciseExclusions));
                     OnPropertyChanged(nameof(FilteredExerciseExclusionOptions));
+                    OnPropertyChanged(nameof(HasNoExerciseExclusionMatches));
+                    OnPropertyChanged(nameof(HasUnsavedChanges));
                 };
             IsExerciseExclusionCatalogLoaded = true;
+            _hasLoadedPreferences = true;
+            _savedPreferencesSnapshot = CapturePreferencesSnapshot();
+            OnPropertyChanged(nameof(HasUnsavedChanges));
             OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
             OnPropertyChanged(nameof(SelectedWeekdayCount));
             OnPropertyChanged(nameof(FilteredExerciseExclusionOptions));
             OnPropertyChanged(nameof(SelectedExerciseExclusions));
+            OnPropertyChanged(nameof(HasNoExerciseExclusionMatches));
         }
         catch (Exception exception)
         {
             Trace.WriteLine($"[ProfileWorkoutPreferencesViewModel] Catalog load failed ({exception.GetType().Name}).");
             IsExerciseExclusionCatalogLoaded = false;
+            IsLoadError = true;
             StatusMessage = "Profile_WorkoutPrefs_ExerciseCatalogUnavailable";
         }
         finally
         {
+            IsLoadingData = false;
             IsBusy = false;
             OnPropertyChanged(nameof(CanSave));
         }
@@ -220,20 +223,6 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
                 return;
             }
 
-            foreach (var option in selectedActivities)
-            {
-                if (WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(option.ActivityType))
-                    option.SessionDurationMinutes = SelectedSessionDurationMinutes;
-            }
-
-            if (selectedActivities.Any(option =>
-                    WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(option.ActivityType)) &&
-                !WorkoutPreferencesConstraints.IsValidSessionDuration(WorkoutActivityDto.GeneralStrength, SelectedSessionDurationMinutes))
-            {
-                StatusMessage = "Profile_WorkoutPrefs_ChooseActivitySessionLength";
-                return;
-            }
-
             IsUpdatingPlan = true;
             var result = await _useCase.SaveAndUpdatePlanAsync(new WorkoutPreferencesDto(
                 selectedActivities.Select(option => (int)option.ActivityType).ToArray(),
@@ -242,7 +231,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
                     .Where(option => WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(
                         option.ActivityType))
                     .ToDictionary(option => (int)option.ActivityType,
-                        _ => SelectedSessionDurationMinutes),
+                        option => ResolveSessionDurationMinutes(option.ActivityType)),
                 SelectedEquipmentOption.Value,
                 selectedActivities
                     .Where(option => WorkoutPreferencesConstraints.ActivityRequiresExplicitWeeklyFrequency(
@@ -270,7 +259,23 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
                 return;
             }
 
+            if (result.Error != WorkoutPreferencesError.None)
+            {
+                StatusMessage = result.Error switch
+                {
+                    WorkoutPreferencesError.Offline => "Profile_WorkoutPrefs_SaveOffline",
+                    WorkoutPreferencesError.SignInRequired => "Profile_WorkoutPrefs_SaveSignInRequired",
+                    WorkoutPreferencesError.ServerUnavailable => "Profile_WorkoutPrefs_SaveServerUnavailable",
+                    WorkoutPreferencesError.ConcurrentUpdate => "Profile_WorkoutPrefs_SaveConflict",
+                    WorkoutPreferencesError.ExerciseCatalogChanged => "Profile_WorkoutPrefs_SaveCatalogChanged",
+                    _ => "Profile_WorkoutPrefs_PlanUpdateFailed"
+                };
+                return;
+            }
+
             settingsSaved = true;
+            _savedPreferencesSnapshot = CapturePreferencesSnapshot();
+            OnPropertyChanged(nameof(HasUnsavedChanges));
             _refreshNotifier.InvalidateWorkoutAndDashboard();
             StatusMessage = "Workout preferences saved.";
             await _navigateAfterSaveAsync();
@@ -280,7 +285,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
             Trace.WriteLine($"[ProfileWorkoutPreferencesViewModel] Save failed ({ex.GetType().Name}).");
             StatusMessage = !settingsSaved
                 ? "Workout preferences could not be saved. Please try again."
-                : "Plan updated, but Workout could not open. Use the Train tab to continue.";
+                : "Profile_WorkoutPrefs_PlanSetupCouldNotOpen";
         }
         finally
         {
@@ -297,6 +302,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
 
         StatusMessage = ProfileWorkoutActivityOptions.ToggleSelection(WorkoutActivityOptions, item);
         OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
+        OnPropertyChanged(nameof(HasUnsavedChanges));
     }
 
     private void ToggleWeekday(WorkoutWeekdayOptionItem? item)
@@ -307,6 +313,43 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
         item.IsSelected = !item.IsSelected;
         StatusMessage = string.Empty;
         OnPropertyChanged(nameof(SelectedWeekdayCount));
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+    }
+
+    private int ResolveSessionDurationMinutes(WorkoutActivityDto activityType)
+    {
+        if (_savedActivitySessionDurationsMinutes.TryGetValue((int)activityType, out var savedDuration) &&
+            WorkoutPreferencesConstraints.IsValidSessionDuration(activityType, savedDuration))
+            return savedDuration;
+
+        if (WorkoutPlanningConstants.IsStrengthActivity(activityType) &&
+            WorkoutPreferencesConstraints.IsValidSessionDuration(activityType, _strengthSessionDurationMinutes))
+            return _strengthSessionDurationMinutes;
+
+        return WorkoutPreferencesConstraints.DefaultSessionDurationMinutes(activityType) ??
+               WorkoutPreferencesConstraints.DefaultActivitySessionDurationMinutes;
+    }
+
+    private string CapturePreferencesSnapshot()
+    {
+        var selectedActivities = string.Join(",", WorkoutActivityOptions
+            .Where(option => option.IsSelected)
+            .Select(option => ((int)option.ActivityType).ToString(CultureInfo.InvariantCulture))
+            .OrderBy(value => value, StringComparer.Ordinal));
+        var selectedWeekdays = string.Join(",", AvailableWeekdays
+            .Where(day => day.IsSelected)
+            .Select(day => ((int)day.DayOfWeek).ToString(CultureInfo.InvariantCulture))
+            .OrderBy(value => value, StringComparer.Ordinal));
+        var excludedExercises = string.Join(",", ExerciseExclusionOptions
+            .Where(option => option.IsSelected)
+            .Select(option => option.ExerciseId.ToString(CultureInfo.InvariantCulture))
+            .OrderBy(value => value, StringComparer.Ordinal));
+
+        return string.Join("|",
+            SelectedEquipmentOption?.Value ?? string.Empty,
+            selectedActivities,
+            selectedWeekdays,
+            excludedExercises);
     }
 
     private static IReadOnlyList<DayOfWeek> CreateWeekdays() =>
@@ -327,24 +370,22 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(FilteredExerciseExclusionOptions));
         OnPropertyChanged(nameof(SelectedExerciseExclusions));
+        OnPropertyChanged(nameof(HasNoExerciseExclusionMatches));
     }
 
     partial void OnExerciseExclusionSearchTextChanged(string value)
     {
         OnPropertyChanged(nameof(HasExerciseExclusionQuery));
         OnPropertyChanged(nameof(FilteredExerciseExclusionOptions));
+        OnPropertyChanged(nameof(HasNoExerciseExclusionMatches));
     }
 
     partial void OnIsBusyChanged(bool value) => OnPropertyChanged(nameof(CanSave));
 
     partial void OnIsExerciseExclusionCatalogLoadedChanged(bool value) => OnPropertyChanged(nameof(CanSave));
 
-    partial void OnSelectedSessionDurationMinutesChanged(int value)
-    {
-        foreach (var option in WorkoutActivityOptions)
-        {
-            if (WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(option.ActivityType))
-                option.SessionDurationMinutes = value;
-        }
-    }
+    partial void OnIsLoadingDataChanged(bool value) => OnPropertyChanged(nameof(IsPageLoading));
+
+    partial void OnSelectedEquipmentOptionChanged(SelectionOption<string>? value) =>
+        OnPropertyChanged(nameof(HasUnsavedChanges));
 }
