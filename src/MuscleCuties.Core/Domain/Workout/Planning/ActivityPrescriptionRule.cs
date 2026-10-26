@@ -88,6 +88,10 @@ public static class ActivityPrescriptionRule
     public const int AccessoryRestSeconds = 90;
     public const int HighVolumeMainSets = 3;
     public const int HighVolumeAccessorySets = 2;
+    public const int HighVolumeStartingMainSets = 2;
+    public const int HighVolumeStartingAccessorySets = 1;
+    public const int HighVolumeStartingRepetitionsInReserve = 4;
+    public const string HighVolumeConservativeStartCode = "HighVolumeConservativeStart";
     public const int HighVolumeMainMinimumRepetitions = 8;
     public const int HighVolumeMainMaximumRepetitions = 12;
     public const int HighVolumeMaximumWorkingExercisesPerSession = 5;
@@ -202,19 +206,25 @@ public static class ActivityPrescriptionRule
 
     private static ActivityPrescriptionResult HighVolumeStrength(ActivityPrescriptionContext context)
     {
-        if (context.Experience != ActivityExperience.Established || !context.IsEstablishedResistanceHistory)
-            return Result(ActivityPrescriptionStatus.OfferGeneralStrength,
-                "HighVolumeRequiresEstablishedResistanceHistory");
+        var useConservativeStart = context.Experience != ActivityExperience.Established ||
+                                   !context.IsEstablishedResistanceHistory;
         return Session(ActivityPrescriptionStatus.Eligible, context, SessionPurpose.Strength,
             ActivityModality.Strength, IntendedIntensity.Moderate, SessionTrainingStyle.HighVolume,
             ActivityPrescriptionRule.HighVolumeStrengthSessionsPerWeek,
-            sets: ActivityPrescriptionRule.HighVolumeMainSets,
+            sets: useConservativeStart
+                ? ActivityPrescriptionRule.HighVolumeStartingMainSets
+                : ActivityPrescriptionRule.HighVolumeMainSets,
             minReps: ActivityPrescriptionRule.HighVolumeMainMinimumRepetitions,
             maxReps: ActivityPrescriptionRule.HighVolumeMainMaximumRepetitions,
-            repsInReserve: ActivityPrescriptionRule.InitialRepetitionsInReserve,
+            repsInReserve: useConservativeStart
+                ? ActivityPrescriptionRule.HighVolumeStartingRepetitionsInReserve
+                : ActivityPrescriptionRule.InitialRepetitionsInReserve,
             restSeconds: HighVolumeMainRestSeconds,
-            reasons: ["AccessoriesUseTwoSetsOfTenToFifteen", "MaximumFiveExercisesPerSession",
-                "InitialDirectSetLimitTenPerPrimaryMusclePerWeek"]);
+            reasons: useConservativeStart
+                ? [ActivityPrescriptionRule.HighVolumeConservativeStartCode,
+                    "MaximumFiveExercisesPerSession", "InitialDirectSetLimitTenPerPrimaryMusclePerWeek"]
+                : ["AccessoriesUseTwoSetsOfTenToFifteen", "MaximumFiveExercisesPerSession",
+                    "InitialDirectSetLimitTenPerPrimaryMusclePerWeek"]);
     }
 
     private static ActivityPrescriptionResult HighIntensityStrength(ActivityPrescriptionContext context)

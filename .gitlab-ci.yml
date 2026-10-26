@@ -4,9 +4,10 @@ workflow:
     - when: never
 
 stages:
-  - verify
-  - package
-  - deploy
+  - backend_verify
+  - backend_package
+  - backend_deploy
+  - client_verify
 
 variables:
   DOTNET_NOLOGO: "true"
@@ -14,7 +15,7 @@ variables:
   AWS_REGION: "us-east-2"
 
 verify_plan_generation:
-  stage: verify
+  stage: backend_verify
   image: mcr.microsoft.com/dotnet/sdk:10.0.403
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends libfontconfig1
@@ -22,11 +23,10 @@ verify_plan_generation:
     - dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj --configuration Release
     - dotnet test tests/MuscleCuties.Server.Tests/MuscleCuties.Server.Tests.csproj --configuration Release
     - dotnet test tests/MuscleCuties.Registration.Tests/MuscleCuties.Registration.Tests.csproj --configuration Release
-    - dotnet test tests/MuscleCuties.Mobile.Contracts.Tests/MuscleCuties.Mobile.Contracts.Tests.csproj --configuration Release
     - dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj --configuration Release --filter FullyQualifiedName~ReviewedExerciseCatalogV020ImportTests
 
 package_staging_lambda:
-  stage: package
+  stage: backend_package
   image: mcr.microsoft.com/dotnet/sdk:10.0.403
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends zip
@@ -43,7 +43,7 @@ package_staging_lambda:
     expire_in: 1 day
 
 deploy_staging_lambda:
-  stage: deploy
+  stage: backend_deploy
   image:
     name: public.ecr.aws/aws-cli/aws-cli:latest
     entrypoint: [""]
@@ -66,3 +66,12 @@ deploy_staging_lambda:
     - echo "Staging Lambda update completed for pipeline ${CI_PIPELINE_ID}."
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
+
+verify_mobile_contracts:
+  stage: client_verify
+  image: mcr.microsoft.com/dotnet/sdk:10.0.403
+  needs:
+    - job: deploy_staging_lambda
+      artifacts: false
+  script:
+    - dotnet test tests/MuscleCuties.Mobile.Contracts.Tests/MuscleCuties.Mobile.Contracts.Tests.csproj --configuration Release

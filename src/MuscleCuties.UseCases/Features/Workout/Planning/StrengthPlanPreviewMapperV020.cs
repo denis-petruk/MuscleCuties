@@ -129,16 +129,11 @@ internal static class StrengthPlanPreviewMapperV020
                 PlannedWeekday = index < strengthDays.Length ? strengthDays[index] : null
             })
             .ToArray();
-        var isIncomplete = schedule.InputReasons.Count > 0 || schedule.Activities.Any(decision =>
-            decision.Disposition switch
-            {
-                MixedActivityScheduleDisposition.Scheduled => false,
-                MixedActivityScheduleDisposition.NotScheduled =>
-                    decision.Activity != WorkoutActivityType.RestDay &&
-                    !decision.Reasons.Contains(MixedActivityWeekScheduleRule.StrengthAlternativeNotChosen) &&
-                    !decision.Reasons.Contains("ReplacedWithGeneralStrength"),
-                _ => true
-            });
+        // Optional activities may be omitted when they cannot fit safely. The chosen
+        // strength sessions and structurally valid availability are required to apply.
+        var isIncomplete = schedule.InputReasons.Count > 0 ||
+                           response.Sessions.Count == 0 ||
+                           strengthDays.Length != response.Sessions.Count;
         var limitationCodes = isIncomplete
             ? response.LimitationCodes.Append(MixedActivityScheduleIncompleteCode)
                 .Distinct(StringComparer.Ordinal).ToArray()

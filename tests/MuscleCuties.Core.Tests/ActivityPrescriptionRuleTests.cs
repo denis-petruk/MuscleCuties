@@ -30,7 +30,7 @@ public sealed class ActivityPrescriptionRuleTests
     }
 
     [Fact]
-    public void HighVolumeAndHeavyStrengthOfferGeneralStrengthUntilEligible()
+    public void HighVolumeStartsConservativelyWhileHeavyStrengthStillRequiresEvidence()
     {
         var volume = Evaluate(WorkoutActivityType.HighVolumeStrength,
             ActivityExperience.Beginner);
@@ -38,7 +38,10 @@ public sealed class ActivityPrescriptionRuleTests
             ActivityExperience.Established, exposures: EstablishedExerciseExposures - 1,
                 knownLoad: true, familiar: true, establishedResistance: true);
 
-        Assert.Equal(ActivityPrescriptionStatus.OfferGeneralStrength, volume.Status);
+        Assert.Equal(ActivityPrescriptionStatus.Eligible, volume.Status);
+        Assert.Equal(ActivityPrescriptionRule.HighVolumeStartingMainSets, volume.Sessions.Single().Sets);
+        Assert.Equal(ActivityPrescriptionRule.HighVolumeStartingRepetitionsInReserve,
+            volume.Sessions.Single().RepetitionsInReserve);
         Assert.Equal(ActivityPrescriptionStatus.OfferGeneralStrength, heavy.Status);
     }
 

@@ -15,7 +15,7 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
     // =========================================================================
 
     [Fact]
-    public void Beginner_Selecting_HighVolumeStrength_Gets_GeneralStrength_Fallback()
+    public void Beginner_Selecting_HighVolumeStrength_Gets_A_Conservative_Start()
     {
         var days = new[] { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday };
         var evidence = new ActivityPrescriptionContext(
@@ -33,10 +33,9 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
 
         var decision = Assert.Single(result.Activities);
         Assert.Equal(WorkoutActivityType.HighVolumeStrength, decision.Activity);
-        Assert.Equal(WorkoutActivityType.GeneralStrength, decision.EffectiveActivity);
+        Assert.Equal(WorkoutActivityType.HighVolumeStrength, decision.EffectiveActivity);
         Assert.Equal(MixedActivityScheduleDisposition.Scheduled, decision.Disposition);
-        Assert.True(decision.Reasons.Contains("HighVolumeRequiresEstablishedResistanceHistory") ||
-                    decision.Reasons.Contains("BeginnerProfileRequiresGeneralStrength"));
+        Assert.Contains(ActivityPrescriptionRule.HighVolumeConservativeStartCode, decision.Reasons);
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
             decision.PolicySessionsPerWeek);
         Assert.Equal(2, decision.TargetSessionsPerWeek);
@@ -61,10 +60,8 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
             [evidence]);
 
         var decision = Assert.Single(MixedActivityWeekScheduleRule.Evaluate(context).Activities);
-        Assert.Equal(MixedActivityScheduleDisposition.Blocked, decision.Disposition);
-        Assert.Equal(0, decision.ScheduledSessionsPerWeek);
-        Assert.Contains(MixedActivityWeekScheduleRule.SessionDurationOutsideSavedPreferenceRange,
-            decision.Reasons);
+        Assert.Equal(MixedActivityScheduleDisposition.Scheduled, decision.Disposition);
+        Assert.Equal(2, decision.ScheduledSessionsPerWeek);
     }
 
     [Fact]
@@ -229,18 +226,16 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
 
         var result = MixedActivityWeekScheduleRule.Evaluate(context);
 
-        // HVS should be replaced with GS without scheduling separate second GS sessions
+        // Two strength choices compete for the available hard days; the selected activity remains unchanged.
         var gsDecision = Assert.Single(result.Activities, a => a.Activity == WorkoutActivityType.GeneralStrength);
         var hvsDecision = Assert.Single(result.Activities, a => a.Activity == WorkoutActivityType.HighVolumeStrength);
 
         Assert.Equal(MixedActivityScheduleDisposition.Scheduled, gsDecision.Disposition);
-        Assert.Equal(MixedActivityScheduleDisposition.NotScheduled, hvsDecision.Disposition);
-        Assert.Equal(WorkoutActivityType.GeneralStrength, hvsDecision.EffectiveActivity);
-        Assert.Contains("ReplacedWithGeneralStrength", hvsDecision.Reasons);
+        Assert.Equal(MixedActivityScheduleDisposition.Omitted, hvsDecision.Disposition);
+        Assert.Equal(WorkoutActivityType.HighVolumeStrength, hvsDecision.EffectiveActivity);
+        Assert.DoesNotContain("ReplacedWithGeneralStrength", hvsDecision.Reasons);
 
-        // The shared GS target is two sessions; HVS contributes no second quota.
         Assert.Equal(2, result.Sessions.Count(s => s.Activity == WorkoutActivityType.GeneralStrength));
-        Assert.DoesNotContain(result.Sessions, s => s.Activity == WorkoutActivityType.HighVolumeStrength);
     }
 
     [Fact]
@@ -326,7 +321,7 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var hvsDecision = Assert.Single(result.Activities, a => a.Activity == WorkoutActivityType.HighVolumeStrength);
         var yogaDecision = Assert.Single(result.Activities, a => a.Activity == WorkoutActivityType.Yoga);
 
-        Assert.Equal(WorkoutActivityType.GeneralStrength, hvsDecision.EffectiveActivity);
+        Assert.Equal(WorkoutActivityType.HighVolumeStrength, hvsDecision.EffectiveActivity);
         Assert.Equal(2, hvsDecision.TargetSessionsPerWeek);
         Assert.Equal(2, hvsDecision.ScheduledSessionsPerWeek);
 
@@ -621,9 +616,9 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var result = StrengthPlanPreviewRule.EvaluateWithFallback(choices, data);
 
         Assert.Equal(StrengthPlanPreviewStatus.Feasible, result.Status);
-        Assert.Equal(WorkoutActivityType.GeneralStrength, result.EffectiveActivity);
-        Assert.Equal("GeneralStrengthFallback", result.FallbackSource);
-        Assert.Equal("HighVolumeRequiresEstablishedResistanceHistory", result.FallbackReasonCode);
+        Assert.Equal(WorkoutActivityType.HighVolumeStrength, result.EffectiveActivity);
+        Assert.Null(result.FallbackSource);
+        Assert.Null(result.FallbackReasonCode);
         Assert.Empty(result.LimitationCodes);
     }
 
@@ -681,9 +676,9 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var result = StrengthPlanPreviewRule.EvaluateWithFallback(choices, data);
 
         Assert.Equal(StrengthPlanPreviewStatus.Limited, result.Status);
-        Assert.Equal(WorkoutActivityType.GeneralStrength, result.EffectiveActivity);
-        Assert.Equal("GeneralStrengthFallback", result.FallbackSource);
-        Assert.Equal("HighVolumeRequiresEstablishedResistanceHistory", result.FallbackReasonCode);
+        Assert.Equal(WorkoutActivityType.HighVolumeStrength, result.EffectiveActivity);
+        Assert.Null(result.FallbackSource);
+        Assert.Null(result.FallbackReasonCode);
         Assert.Contains("RequiredMovementSlotUnresolved", result.LimitationCodes);
     }
 
@@ -848,7 +843,7 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
     }
 
     [Fact]
-    public void Regression_7_Beginner_With_HVS_Becomes_GS_Fallback()
+    public void Regression_7_Beginner_With_HVS_Keeps_Conservative_HVS()
     {
         var choices = new StrengthPlanPreviewChoices(
             WorkoutActivityType.HighVolumeStrength, ReferenceDate, null,
@@ -858,9 +853,9 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var result = StrengthPlanPreviewRule.EvaluateWithFallback(choices, data);
 
         Assert.Equal(StrengthPlanPreviewStatus.Feasible, result.Status);
-        Assert.Equal(WorkoutActivityType.GeneralStrength, result.EffectiveActivity);
-        Assert.Equal("GeneralStrengthFallback", result.FallbackSource);
-        Assert.Equal("BeginnerProfileRequiresGeneralStrength", result.FallbackReasonCode);
+        Assert.Equal(WorkoutActivityType.HighVolumeStrength, result.EffectiveActivity);
+        Assert.Null(result.FallbackSource);
+        Assert.Null(result.FallbackReasonCode);
     }
 
     [Fact]
@@ -877,7 +872,7 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
 
         // Does not fail from HVS history requirement; derived GS succeeds under beginner rules
         Assert.Equal(StrengthPlanPreviewStatus.Feasible, result.Status);
-        Assert.Equal(WorkoutActivityType.GeneralStrength, result.EffectiveActivity);
+        Assert.Equal(WorkoutActivityType.HighVolumeStrength, result.EffectiveActivity);
         Assert.Empty(result.LimitationCodes);
     }
 
@@ -909,7 +904,7 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
 
         Assert.Equal(StrengthPlanPreviewStatus.Feasible, result.Status);
         Assert.Empty(result.LimitationCodes);
-        Assert.Equal("BeginnerProfileRequiresGeneralStrength", result.FallbackReasonCode);
+        Assert.Null(result.FallbackReasonCode);
     }
 
     [Fact]
@@ -924,9 +919,9 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var result = StrengthPlanPreviewRule.EvaluateWithFallback(choices, data);
 
         Assert.Equal(StrengthPlanPreviewStatus.Limited, result.Status);
-        Assert.Equal(WorkoutActivityType.GeneralStrength, result.EffectiveActivity);
+        Assert.Equal(WorkoutActivityType.HighVolumeStrength, result.EffectiveActivity);
         Assert.Contains("RequiredMovementSlotUnresolved", result.LimitationCodes);
-        Assert.Equal("BeginnerProfileRequiresGeneralStrength", result.FallbackReasonCode);
+        Assert.Null(result.FallbackReasonCode);
     }
 
     [Fact]
@@ -940,8 +935,8 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var hvsData = CreatePreviewData(WorkoutActivityType.HighVolumeStrength, profileLevel: TrainingExperienceLevel.Intermediate);
         var hvsDirect = StrengthPlanPreviewRule.EvaluateDirect(hvsChoices, hvsData);
 
-        Assert.Equal(StrengthPlanPreviewStatus.Limited, hvsDirect.Status);
-        Assert.Contains("HighVolumeRequiresEstablishedResistanceHistory", hvsDirect.LimitationCodes);
+        Assert.Equal(StrengthPlanPreviewStatus.Feasible, hvsDirect.Status);
+        Assert.DoesNotContain("HighVolumeRequiresEstablishedResistanceHistory", hvsDirect.LimitationCodes);
 
         // 2. Beginner requesting SHI is blocked
         var shiChoices = new StrengthPlanPreviewChoices(
@@ -997,14 +992,14 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         Assert.Equal(MixedActivityScheduleDisposition.Scheduled, gsDecision.Disposition);
         Assert.Equal(2, gsDecision.ScheduledSessionsPerWeek);
 
-        // HVS was replaced with GS and should NOT create duplicate quotas
-        Assert.Equal(MixedActivityScheduleDisposition.NotScheduled, hvsDecision.Disposition);
+        // General Strength takes the available hard days; High Volume remains a separate choice.
+        Assert.Equal(MixedActivityScheduleDisposition.Omitted, hvsDecision.Disposition);
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
             hvsDecision.PolicySessionsPerWeek);
         Assert.Equal(2, hvsDecision.TargetSessionsPerWeek);
         Assert.Equal(2, hvsDecision.MaxSessionsPerWeek);
-        Assert.Equal(2, hvsDecision.ScheduledSessionsPerWeek);
-        Assert.Contains("ReplacedWithGeneralStrength", hvsDecision.Reasons);
+        Assert.Equal(0, hvsDecision.ScheduledSessionsPerWeek);
+        Assert.DoesNotContain("ReplacedWithGeneralStrength", hvsDecision.Reasons);
 
         var totalScheduledStrength = result.Sessions.Count(s =>
             s.Activity is WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength);

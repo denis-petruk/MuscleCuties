@@ -206,6 +206,8 @@ public static partial class UiTextCatalog
         English["Workout_Generation_Reason_HighIntensityExerciseEvidence"] = "Each required high-intensity main lift needs four recorded exposures and an existing manageable load, plus your separate confirmations of familiarity and current load. Confirm each surfaced lift below. If none is listed, trusted evidence is missing.";
         English["Workout_Generation_Reason_HighIntensityEvidenceMissing"] = "A required heavy lift does not have enough trusted recorded exposure or manageable-load evidence. The preview cannot ask for confirmation until an eligible candidate is available.";
         English["Workout_Generation_Reason_TrainingLimits"] = "The plan follows limits for exercise count, set volume, and effort.";
+        English["Workout_Generation_Reason_HighVolumeConservativeStart"] =
+            "Start with a manageable weight that leaves about four reps in reserve. The plan begins with fewer sets and can progress as you log sessions.";
         English["Workout_Generation_Reason_SwimAccessOrPreference"] = "Confirm pool access, independent swimming ability, and your preferred session style.";
         English["Workout_Generation_Reason_TimeBasedActivity"] = "The plan uses time and does not assume a pace or distance.";
         English["Workout_Generation_Reason_SwimIntervalsOptional"] = "Swimming intervals are optional and alternate comfortable swimming with rest.";
@@ -225,6 +227,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_AcceptUnavailable"] = "Create and review a feasible proposal before accepting it.";
         English["Workout_Generation_SessionDayTitleFormat"] = "{0} session";
         English["Workout_Generation_PreviewReady"] = "Review the plan preview before applying it.";
+        English["Workout_Generation_OptionalActivitiesSkipped"] = "Some selected activities did not fit. You can still apply the strength plan.";
         English["Workout_Generation_PreviewNotSaved"] = "This draft is not available to apply. Review the information and try again.";
         English["Workout_Generation_CreateFailed"] = "The plan preview could not be created. Try again.";
         English["Workout_Generation_PlanChanged"] = "Your current plan changed. Create a fresh preview before applying it.";

@@ -1,5 +1,7 @@
 # Roadmap — MuscleCuties
 
+- **2026-10-26 planning policy:** Keep the user's High-Volume Strength choice on first use with conservative starting sets and effort; retain the established-history gate for heavy/high-intensity strength. Allow applying the strength plan when optional activities cannot fit. Verify the signed-in iPhone preview and Apply path after the client update reaches the device.
+
 
 The active roadmap is maintained at [docs/v1/ROADMAP.md](docs/v1/ROADMAP.md).
 
@@ -24,9 +26,9 @@ The active roadmap is maintained at [docs/v1/ROADMAP.md](docs/v1/ROADMAP.md).
 
 - **2026-10-26 plan preview follow-up:** The scheduler no longer uses a daily workout time limit. Preview is a bounded, scrollable sheet with concise schedule rows, collapsed activity details, and no rest-day decision card. The signed-in iPhone 17e visual check passed. Verify Apply on a fully eligible selected-activity set and confirm the resulting Train schedule against the current backend before production.
 
-- **2026-10-25 mixed-plan decision:** Apply requires every selected activity. Frequency can decrease to fit weekdays, with a hard floor of two strength sessions; a calendar that cannot fit all minimums remains limited. Verify the signed-in preview and Apply path, inspect catalog coverage and saved yoga evidence, then validate current staging backend parity before deployment.
+- **2026-10-26 mixed-plan decision:** Apply requires the chosen strength sessions; optional activities fill safe openings and may be omitted. Compatible strength plus cycling or gentle yoga can share a day, with at most two sessions. Verify the signed-in Apply path and saved Train schedule against staging.
 
-- **2026-10-25 generation follow-up:** Verify the new bottom sheet on a signed-in narrow iPhone in EN/RU, including long content and Apply navigation. Apply requires every selected activity. Then verify yoga content/duration, HVS history fallback, reviewed strength catalog coverage, and the current staging backend before an end-to-end generate/apply check.
+- **2026-10-26 generation follow-up:** Verify the bounded bottom sheet on a signed-in narrow iPhone in EN/RU, including long content, optional omissions, and Apply navigation. Then verify yoga content/duration, HVS history fallback, reviewed strength catalog coverage, and the current staging backend before an end-to-end generate/apply check.
 
 - **2026-10-25 plan generator hierarchy:** Replaced the strength-template picker with three direct selectable cards, added a four-week saved-session strip, collapsed manual history/timing edits behind one control, and pinned Preview to the safe-area footer. Core tests pass 633/633 and the iOS simulator-architecture build passes with 0 warnings/errors. Signed-in narrow-iPhone visual review remains open because CoreSimulatorService was unavailable.
 
