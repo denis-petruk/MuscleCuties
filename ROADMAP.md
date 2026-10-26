@@ -3,6 +3,8 @@
 
 The active roadmap is maintained at [docs/v1/ROADMAP.md](docs/v1/ROADMAP.md).
 
+- **2026-10-26 preview UI acceptance:** Verify VoiceOver stays within the open preview, announces Apply failure once, and returns to the intact editor after Close. Source now hides the covered editor and announces the sheet's visible status; resource/source checks pass. Mac build and signed-in runtime acceptance remain open.
+
 - **2026-10-26 fallback acceptance:** The selected strength duration now survives HVS-to-General-Strength fallback, including profiles without a saved General Strength entry. Three regression cases pass. Include this case in the authenticated preview/Apply review after Mac and staging access are available.
 
 - **2026-10-26 continuation:** Same-day scheduling is implemented in the current checkpoint and its Core/proposal tests pass. Next connect the owner's Mac through SSH, verify its Xcode/.NET iOS tooling, and run the iOS build and simulator acceptance. Establish disposable local PostgreSQL for persistence checks and authenticated staging access for backend parity. Repository catalog review checks pass; this does not establish deployed catalog parity. Do not treat historical same-day implementation notes as current blockers.
