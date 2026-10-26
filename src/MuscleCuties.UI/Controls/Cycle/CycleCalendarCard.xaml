@@ -12,9 +12,7 @@
 
 
     <Border
-        Style="{StaticResource CardPrimary}"
-        Padding="{StaticResource UiInsets20}"
-        StrokeThickness="{StaticResource UiStrokeWidth0}">
+        Style="{StaticResource CardPrimary}">
         <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto"
               RowSpacing="{StaticResource UiSpaceCompact}">
 
@@ -73,16 +71,10 @@
                 </VerticalStackLayout>
 
                 <!-- Action Button -->
-                <Button
+                <Button Style="{StaticResource ButtonSecondary}"
                     Grid.Column="2"
                     Text="{Binding PhaseLogActionText, Converter={StaticResource LocalizedStringConverter}}"
                     Command="{Binding AdvancePhaseCommand}"
-                    HeightRequest="{StaticResource UiDimension42}"
-                    MinimumHeightRequest="{StaticResource UiDimension42}"
-                    CornerRadius="{StaticResource UiCornerRadius14}"
-                    Padding="{StaticResource UiInsets14_0}"
-                    FontSize="{StaticResource UiFontSize13}"
-                    FontAttributes="{StaticResource UiFontAttributesBold}"
                     VerticalOptions="Center"
                     SemanticProperties.Description="{Binding PhaseLogActionText, Converter={StaticResource LocalizedStringConverter}}" />
             </Grid>
@@ -92,7 +84,6 @@
                 Grid.Row="2"
                 Text="{Binding PredictionSummary, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource CaptionLabel}"
-                FontSize="{StaticResource UiFontSize13}"
                 FontAttributes="{StaticResource UiFontAttributesItalic}"
                 IsVisible="{Binding HasActiveCycle}"
                 SemanticProperties.Description="{Binding PredictionSummary, Converter={StaticResource LocalizedStringConverter}}" />
@@ -102,7 +93,6 @@
                 Grid.Row="3"
                 Text="{Binding CalendarEditHintText, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource MutedLabel}"
-                FontSize="{StaticResource UiFontSize13}"
                 IsVisible="{Binding HasCalendarEditHint}" />
 
             <!-- Row 4: Scrollable month -->
@@ -297,7 +287,6 @@
                         Grid.Column="1"
                         Text="{loc:LocalizedText Cycle_Calendar_RecordedObservationLegend}"
                         Style="{StaticResource CaptionLabel}"
-                        FontSize="{StaticResource UiFontSize13}"
                         VerticalOptions="Center" />
 
                     <Border
@@ -314,7 +303,6 @@
                         Grid.Column="4"
                         Text="{loc:LocalizedText Cycle_Calendar_PredictedEstimatedLegend}"
                         Style="{StaticResource CaptionLabel}"
-                        FontSize="{StaticResource UiFontSize13}"
                         FontAttributes="{StaticResource UiFontAttributesItalic}"
                         VerticalOptions="Center" />
                 </Grid>

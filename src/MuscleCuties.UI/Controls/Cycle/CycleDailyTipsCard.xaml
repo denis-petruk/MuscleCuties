@@ -15,10 +15,7 @@
             <!-- Row 0: Training Micro-Tip -->
             <Border
                 Grid.Row="0"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                StrokeShape="{StaticResource UiRoundRectangleRadius14}"
-                StrokeThickness="{StaticResource UiStrokeWidth0}"
-                Padding="{StaticResource UiInsets12_10}">
+                Style="{StaticResource CardAccent}">
                 <Grid ColumnDefinitions="Auto, *" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                     <Border
                         WidthRequest="{StaticResource UiDimension34}"
@@ -57,10 +54,7 @@
             <!-- Row 1: Nutrition Micro-Tip -->
             <Border
                 Grid.Row="1"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                StrokeShape="{StaticResource UiRoundRectangleRadius14}"
-                StrokeThickness="{StaticResource UiStrokeWidth0}"
-                Padding="{StaticResource UiInsets12_10}">
+                Style="{StaticResource CardAccent}">
                 <Grid ColumnDefinitions="Auto, *" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                     <Border
                         WidthRequest="{StaticResource UiDimension34}"

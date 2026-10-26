@@ -82,12 +82,11 @@
                     SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     SemanticProperties.HeadingLevel="Level3" />
 
-                <Button
+                <Button Style="{StaticResource ButtonPrimary}"
                     Grid.Row="3"
                     Text="{loc:LocalizedText Auth_VerifyCode}"
                     Command="{Binding VerifyCommand}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                    MinimumHeightRequest="{StaticResource UiDimension52}"
                     SemanticProperties.Description="{loc:LocalizedText Auth_Otp_VerifyConfirmationCode}" />
 
                 <ActivityIndicator
@@ -107,15 +106,13 @@
                         Text="{loc:LocalizedText Auth_Otp_ResendCode}"
                         Command="{Binding ResendCodeCommand}"
                         IsEnabled="{Binding CanResend}"
-                        Style="{StaticResource PlatformAuthButton}"
-                        MinimumHeightRequest="{StaticResource UiDimension44}"
+                        Style="{StaticResource ButtonSecondary}"
                         SemanticProperties.Description="{loc:LocalizedText Auth_Otp_ResendVerificationCode}" />
                     <Button
                         Grid.Column="1"
                         Text="{loc:LocalizedText Auth_Otp_ChangeEmail}"
                         Command="{Binding GoBackCommand}"
-                        Style="{StaticResource PlatformAuthButton}"
-                        MinimumHeightRequest="{StaticResource UiDimension44}"
+                        Style="{StaticResource ButtonSecondary}"
                         SemanticProperties.Description="{loc:LocalizedText Auth_Otp_GoBackToChangeEmailAddress}" />
                     <Label
                         Grid.Row="1"

@@ -15,7 +15,7 @@
         BackgroundColor="{StaticResource ModalScrim}">
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource AppBottomSheetSurface}"
+            Style="{StaticResource ModalSurface}"
             VerticalOptions="End">
             <Grid RowDefinitions="Auto, *, Auto" RowSpacing="{StaticResource UiSpacing0}">
                 <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets18_16_18_12}">
@@ -74,7 +74,7 @@
                     <VerticalStackLayout
                         Spacing="{StaticResource UiSpacing10}"
                         IsVisible="{Binding HasCycleWarningSuggestedPhase}">
-                        <Button
+                        <Button Style="{StaticResource ButtonSecondary}"
                             Text="{Binding CycleWarningSuggestedActionText, Converter={StaticResource LocalizedStringConverter}}"
                             Command="{Binding UseCycleWarningSuggestedPhaseCommand}" />
                         <Button
@@ -83,7 +83,7 @@
                             Command="{Binding ReviewEarlierPhaseRecordsCommand}" />
                     </VerticalStackLayout>
 
-                    <Button
+                    <Button Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Cycle_WarningPopup_GotItButton}"
                         Command="{Binding CloseCycleWarningPopupCommand}"
                         IsVisible="{Binding HasCycleWarningSuggestedPhase, Converter={StaticResource InvertedBoolConverter}}" />

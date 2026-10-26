@@ -27,10 +27,8 @@
 
             <!-- Hero phase card -->
             <Border
+                Style="{StaticResource CardPrimary}"
                 Background="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
-                StrokeShape="{StaticResource UiRoundRectangleRadius16}"
-                StrokeThickness="{StaticResource UiStrokeWidth0}"
-                Padding="{StaticResource UiInsets22_20}"
                 SemanticProperties.Description="{Binding PhaseName, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseDetail_OverviewFormat}">
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
 
@@ -75,8 +73,7 @@
 
                     <Border
                         Grid.Row="4"
-                        Style="{StaticResource SurfaceTile}"
-                        Padding="{StaticResource UiInsets14_12}">
+                        Style="{StaticResource CardAccent}">
                         <Label
                             Text="{Binding QuickRule, Converter={StaticResource LocalizedStringConverter}}"
                             TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
@@ -153,7 +150,7 @@
                                      SemanticProperties.Description="{Binding TrainingSignalText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseDetail_TrainingLevelFormat}" />
                         <Label Grid.Column="3"
                                Text="{Binding TrainingSignalText, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize13}" HorizontalTextAlignment="End"
+                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End"
                                VerticalOptions="Center" />
 
                         <Image Grid.Row="1"
@@ -168,7 +165,7 @@
                                      SemanticProperties.Description="{Binding NutritionSignalText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseDetail_NutritionLevelFormat}" />
                         <Label Grid.Row="1" Grid.Column="3"
                                Text="{Binding NutritionSignalText, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize13}" HorizontalTextAlignment="End"
+                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End"
                                VerticalOptions="Center" />
 
                         <Image Grid.Row="2"
@@ -183,7 +180,7 @@
                                      SemanticProperties.Description="{Binding RecoverySignalText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseDetail_RecoveryLevelFormat}" />
                         <Label Grid.Row="2" Grid.Column="3"
                                Text="{Binding RecoverySignalText, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource CaptionLabel}" FontSize="{StaticResource UiFontSize13}" HorizontalTextAlignment="End"
+                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End"
                                VerticalOptions="Center" />
                     </Grid>
                 </Grid>
@@ -206,8 +203,7 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Border
-                                    Style="{StaticResource SurfaceTile}"
-                                    Padding="{StaticResource UiInsets14_12}"
+                                    Style="{StaticResource CardAccent}"
                                     MinimumHeightRequest="{StaticResource UiDimension44}"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
                                     <Grid ColumnDefinitions="22,*" ColumnSpacing="{StaticResource UiSpaceTight}">
@@ -233,9 +229,7 @@
 
             <!-- Watch this (warnings) section - expanded by default, prominent styling -->
             <Border
-                Style="{StaticResource CardPrimary}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource WarningSurfaceLight}, Dark={StaticResource WarningSurfaceDark}}"
-                StrokeThickness="{StaticResource UiStrokeWidth0}">
+                Style="{StaticResource CardPrimary}">
                 <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                     <Grid
                         Grid.Row="0"
@@ -302,7 +296,6 @@
                                             Grid.Row="1"
                                             Text="{Binding Text, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource MutedLabel}"
-                                            FontSize="{StaticResource UiFontSize13}"
                                             LineBreakMode="WordWrap" />
                                     </Grid>
                                 </Grid>

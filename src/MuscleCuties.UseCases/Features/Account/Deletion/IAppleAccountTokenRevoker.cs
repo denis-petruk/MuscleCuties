@@ -3,7 +3,8 @@ namespace MuscleCuties.UseCases.Features.Account.Deletion;
 public sealed record AppleTokenRevocationResult(
     bool Succeeded,
     bool WasAppleAccount,
-    string? FailureReason = null);
+    string? FailureReason = null,
+    string? FailureCode = null);
 
 public interface IAppleAccountTokenRevoker
 {

@@ -36,8 +36,7 @@
                         <Label
                             Grid.Row="1"
                             Text="{loc:LocalizedText Profile_Units_MetricUsesKgGCmAnd}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontSize="{StaticResource UiFontSize13}" />
+                            Style="{StaticResource CaptionLabel}" />
                     </Grid>
                     <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
                         <Border
@@ -57,9 +56,8 @@
                             </Border.Triggers>
                             <Label
                                 Text="{loc:LocalizedText Common_Unit_Imperial}"
-                                Style="{StaticResource BodyLabel}"
+                                Style="{StaticResource BodyStrong}"
                                 FontSize="{StaticResource UiFontSize15}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                 HorizontalTextAlignment="Center">
                                 <Label.Triggers>
                                     <DataTrigger TargetType="Label" Binding="{Binding UseImperialSystem}"
@@ -89,9 +87,8 @@
                             </Border.Triggers>
                             <Label
                                 Text="{loc:LocalizedText Common_Unit_Metric}"
-                                Style="{StaticResource BodyLabel}"
+                                Style="{StaticResource BodyStrong}"
                                 FontSize="{StaticResource UiFontSize15}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                 HorizontalTextAlignment="Center">
                                 <Label.Triggers>
                                     <DataTrigger TargetType="Label" Binding="{Binding UseMetricSystem}"
@@ -115,8 +112,7 @@
                         <Label
                             Grid.Row="1"
                             Text="{loc:LocalizedText Profile_Units_LeaveBlankToUseTheSystem}"
-                            Style="{StaticResource CaptionLabel}"
-                            FontSize="{StaticResource UiFontSize13}" />
+                            Style="{StaticResource CaptionLabel}" />
                     </Grid>
                     <Grid Grid.Row="5" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}"
                           RowSpacing="{StaticResource UiSpacing10}">
@@ -163,10 +159,9 @@
                 Grid.Row="2"
                 Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource CaptionLabel}"
-                FontSize="{StaticResource UiFontSize13}"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
 
-            <Button Grid.Row="3" Text="{loc:LocalizedText Profile_Units_SaveUnits}" Command="{Binding SaveCommand}" />
+            <Button Style="{StaticResource ButtonSecondary}" Grid.Row="3" Text="{loc:LocalizedText Profile_Units_SaveUnits}" Command="{Binding SaveCommand}" />
         </Grid>
     </ScrollView>
 </ContentPage>

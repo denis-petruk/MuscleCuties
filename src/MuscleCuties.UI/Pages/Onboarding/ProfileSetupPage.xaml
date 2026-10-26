@@ -74,11 +74,8 @@
                             <Button
                                 Grid.Row="1"
                                 Text="{loc:LocalizedText Onboarding_ProfileSetup_ChooseFromPhotos}"
-                                Style="{StaticResource ButtonLink}"
-                                Padding="{StaticResource UiInsets0}"
+                                Style="{StaticResource ButtonSecondary}"
                                 HorizontalOptions="Start"
-                                MinimumHeightRequest="{StaticResource UiDimension44}"
-                                MinimumWidthRequest="{StaticResource UiDimension44}"
                                 Clicked="OnProfileImageButtonClicked"
                                 SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ChooseAProfilePhotoFromPhotos}" />
                         </Grid>
@@ -127,7 +124,7 @@
                         <Label Text="{loc:LocalizedText Onboarding_ProfileSetup_Units}" Style="{StaticResource FormFieldLabel}" />
                         <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
                             <Border
-                                Style="{StaticResource ProfileMeasurementChoiceSurface}"
+                                Style="{StaticResource SelectableCard}"
                                 SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ImperialUnits}"
                                 SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_DoubleTapToSelectImperialUnits}">
                                 <Border.GestureRecognizers>
@@ -142,13 +139,12 @@
                                         <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
                                     </DataTrigger>
                                 </Border.Triggers>
-                                <Label Text="{loc:LocalizedText Common_Unit_Imperial}" Style="{StaticResource BodyLabel}"
-                                       FontAttributes="{StaticResource UiFontAttributesBold}" HorizontalTextAlignment="Center" />
+                                <Label Text="{loc:LocalizedText Common_Unit_Imperial}" Style="{StaticResource BodyStrong}" HorizontalTextAlignment="Center" />
                             </Border>
 
                             <Border
                                 Grid.Column="1"
-                                Style="{StaticResource ProfileMeasurementChoiceSurface}"
+                                Style="{StaticResource SelectableCard}"
                                 SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_MetricUnits}"
                                 SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_DoubleTapToSelectMetricUnits}">
                                 <Border.GestureRecognizers>
@@ -163,8 +159,7 @@
                                         <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
                                     </DataTrigger>
                                 </Border.Triggers>
-                                <Label Text="{loc:LocalizedText Common_Unit_Metric}" Style="{StaticResource BodyLabel}"
-                                       FontAttributes="{StaticResource UiFontAttributesBold}" HorizontalTextAlignment="Center" />
+                                <Label Text="{loc:LocalizedText Common_Unit_Metric}" Style="{StaticResource BodyStrong}" HorizontalTextAlignment="Center" />
                             </Border>
                         </Grid>
                     </Grid>
@@ -172,7 +167,7 @@
                     <Grid Grid.Row="5" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}" IsVisible="{Binding UseMetricSystem}">
                         <Label Text="{loc:LocalizedText Common_Height}" Style="{StaticResource FormFieldLabel}" />
                         <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}">
-                            <Border Style="{StaticResource ProfileMeasurementPickerSurface}">
+                            <Border Style="{StaticResource PickerContainer}">
                                 <Picker
                                     AutomationId="ProfileSetupMetricHeightPicker"
                                     Title="{loc:LocalizedText Onboarding_ProfileSetup_SelectHeight}"
@@ -189,7 +184,7 @@
                           IsVisible="{Binding UseMetricSystem, Converter={StaticResource InvertedBoolConverter}}">
                         <Label Text="{loc:LocalizedText Common_Height}" Style="{StaticResource FormFieldLabel}" />
                         <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                            <Border Style="{StaticResource ProfileMeasurementPickerSurface}">
+                            <Border Style="{StaticResource PickerContainer}">
                                 <Picker
                                     AutomationId="ProfileSetupFeetPicker"
                                     Title="{loc:LocalizedText Onboarding_ProfileSetup_Feet}"
@@ -199,7 +194,7 @@
                             </Border>
                             <Label Grid.Column="1" Text="{loc:LocalizedText Common_Unit_Ft}"
                                    Style="{StaticResource MutedLabel}" VerticalOptions="Center" />
-                            <Border Grid.Column="2" Style="{StaticResource ProfileMeasurementPickerSurface}">
+                            <Border Grid.Column="2" Style="{StaticResource PickerContainer}">
                                 <Picker
                                     AutomationId="ProfileSetupInchesPicker"
                                     Title="{loc:LocalizedText Onboarding_ProfileSetup_Inches}"
@@ -215,7 +210,7 @@
                     <Grid Grid.Row="7" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
                         <Label Text="{loc:LocalizedText Common_Weight}" Style="{StaticResource FormFieldLabel}" />
                         <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}">
-                            <Border Style="{StaticResource ProfileMeasurementPickerSurface}" IsVisible="{Binding UseMetricSystem}">
+                            <Border Style="{StaticResource PickerContainer}" IsVisible="{Binding UseMetricSystem}">
                                 <Picker
                                     AutomationId="ProfileSetupMetricWeightPicker"
                                     Title="{loc:LocalizedText Onboarding_ProfileSetup_SelectWeight}"
@@ -223,7 +218,7 @@
                                     SelectedItem="{Binding SelectedWeightKg}"
                                     SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_WeightInKilograms}" />
                             </Border>
-                            <Border Style="{StaticResource ProfileMeasurementPickerSurface}"
+                            <Border Style="{StaticResource PickerContainer}"
                                     IsVisible="{Binding UseMetricSystem, Converter={StaticResource InvertedBoolConverter}}">
                                 <Picker
                                     AutomationId="ProfileSetupImperialWeightPicker"
@@ -246,7 +241,7 @@
                     <Label Text="{loc:LocalizedText Onboarding_ProfileSetup_ConnectAppleHealth}" Style="{StaticResource SectionTitle}" />
                     <Label Text="{loc:LocalizedText Onboarding_ProfileSetup_UseSleepStepsActiveEnergyAnd}"
                            Style="{StaticResource CaptionLabel}" />
-                    <Button Text="{Binding HealthConnectionText, Converter={StaticResource LocalizedStringConverter}}"
+                    <Button Style="{StaticResource ButtonSecondary}" Text="{Binding HealthConnectionText, Converter={StaticResource LocalizedStringConverter}}"
                             Command="{Binding ConnectHealthCommand}"
                             SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ConnectAppleHealthDuringSetup}" />
                     <Label
@@ -304,11 +299,10 @@
                 Text="{loc:LocalizedText Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo}"
                 Style="{StaticResource ErrorLabel}" />
 
-            <Button
+            <Button Style="{StaticResource ButtonPrimary}"
                 Text="{loc:LocalizedText Common_Continue}"
                 IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                 Clicked="OnContinueClicked"
-                MinimumHeightRequest="{StaticResource UiDimension52}"
                 SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ContinueToPersonalizedQuestions}"
                 SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_DoubleTapToSaveYourProfile}" />
         </VerticalStackLayout>

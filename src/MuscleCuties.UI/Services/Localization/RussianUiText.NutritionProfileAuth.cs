@@ -422,8 +422,8 @@ internal static partial class RussianUiText
         Values["Onboarding_Quiz_OneIsSevereFiveIsNone"] = "1 - тяжело, 5 - нет. Перетащите, чтобы установить свой обычный дискомфорт.";
         Values["Onboarding_Quiz_OneIsVeryLowFiveIs"] = "1 - очень низкий, 5 - пик. Перетащите, чтобы установить вашу обычную энергию.";
         Values["Onboarding_Quiz_Peak"] = "Пик";
-        Values["Onboarding_Quiz_PreparingYourDashboardDescription"] = "Подготовка главного экрана";
-        Values["Onboarding_Quiz_PreparingYourDashboardText"] = "Подготовка главного экрана...";
+        Values["Onboarding_Quiz_PreparingWorkoutPreferencesDescription"] = "Открытие настроек активности";
+        Values["Onboarding_Quiz_PreparingWorkoutPreferencesText"] = "Открываем настройки активности...";
         Values["Onboarding_Quiz_ProcessingPleaseWait"] = "Обработка, пожалуйста, подождите";
         Values["Onboarding_Quiz_QuestionValue"] = "Вопрос {0}";
         Values["Onboarding_Quiz_QuizProgressValue"] = "Прогресс викторины: {0}";
@@ -444,8 +444,6 @@ internal static partial class RussianUiText
         Values["Profile_Details_NameEmailPasswordCycleBaselines"] = "Имя, электронная почта, пароль, базовые показатели цикла";
         Values["Profile_Details_NoPhotosStoredYet"] = "Нет сохраненных фотографий";
         Values["Profile_Details_Nutrition"] = "Питание";
-        Values["Profile_Details_MicronutrientTargets"] = "Цели по микронутриентам";
-        Values["Profile_Details_MicronutrientTargetsDetail"] = "Железо, витамины и минералы";
         Values["Profile_Details_PersonalInfo"] = "Личная информация";
         Values["Profile_Details_PreviewHiddenForPrivacy"] = "Предпросмотр скрыт для конфиденциальности";
         Values["Profile_Details_PrivateVault"] = "ЧАСТНОЕ ХРАНИЛИЩЕ";
@@ -606,16 +604,17 @@ internal static partial class RussianUiText
         Values["Profile_WorkoutPrefs_AvailableWeekdays"] = "Доступные дни недели";
         Values["Profile_WorkoutPrefs_AvailableWeekdaysHint"] = "Выберите от 2 до 7 дней недели, когда вы можете тренироваться.";
         Values["Profile_WorkoutPrefs_SelectedWeekdaysFormat"] = "Выбрано дней недели: {0}";
-        Values["Profile_WorkoutPrefs_SessionLength"] = "Длительность занятия в минутах";
         Values["Profile_WorkoutPrefs_WeeklyFrequency"] = "Занятий в неделю";
-        Values["Profile_WorkoutPrefs_ChooseActivitySessionLength"] =
-            "Выберите допустимую длительность для каждой выбранной активности, которой она требуется.";
         Values["Profile_WorkoutPrefs_ChooseActivityWeeklyFrequency"] =
             "Укажите желаемое число занятий йогой, мобильностью или мягким восстановлением в неделю.";
-        Values["Profile_WorkoutPrefs_ActivitySessionLengthHint"] =
-            "Длительность силовых занятий берётся из настройки профиля. Время кардио и HIIT рассчитывается по плану активности, а частота — по доступным дням.";
-        Values["Profile_WorkoutPrefs_InvalidPreferences"] = "Проверьте активности, выберите от 2 до 7 доступных дней и укажите обязательную длительность.";
+        Values["Profile_WorkoutPrefs_InvalidPreferences"] = "Проверьте активности и выберите от 2 до 7 доступных дней.";
         Values["Profile_WorkoutPrefs_PlanUpdateFailed"] = "Не удалось обновить план тренировок. Настройки не сохранены. Попробуйте ещё раз.";
+        Values["Profile_WorkoutPrefs_SaveOffline"] = "Нет подключения к интернету. Настройки не сохранены. Подключитесь и повторите попытку.";
+        Values["Profile_WorkoutPrefs_SaveSignInRequired"] = "Срок действия входа истёк. Войдите снова, чтобы сохранить настройки тренировок.";
+        Values["Profile_WorkoutPrefs_SaveServerUnavailable"] = "Сервис тренировок временно недоступен. Настройки не сохранены. Повторите попытку позже.";
+        Values["Profile_WorkoutPrefs_SaveConflict"] = "Профиль изменился во время сохранения. Обновите настройки тренировок и повторите попытку.";
+        Values["Profile_WorkoutPrefs_SaveCatalogChanged"] = "Список упражнений изменился. Обновите настройки и проверьте исключённые упражнения.";
+        Values["Profile_WorkoutPrefs_PlanSetupCouldNotOpen"] = "Настройки сохранены, но редактор плана не открылся. Откройте его на вкладке «Тренировки», чтобы продолжить.";
         Values["Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"] = "Для вашего плана требуется хотя бы одно упражнение на силу.";
         Values["Profile_WorkoutPrefs_SaveWorkoutPreferences"] = "Сохранить настройки тренировки";
         Values["Profile_WorkoutPrefs_SavingPreferences"] = "Сохранение предпочтений";
@@ -625,6 +624,11 @@ internal static partial class RussianUiText
         Values["Profile_WorkoutPrefs_ExerciseExclusions"] = "Упражнения, которых следует избегать";
         Values["Profile_WorkoutPrefs_ExerciseExclusionsHint"] = "Выберите проверенные упражнения, которые нужно исключать из каждого нового предварительного плана силовых тренировок.";
         Values["Profile_WorkoutPrefs_SearchExercises"] = "Поиск проверенных упражнений";
+        Values["Profile_WorkoutPrefs_NoExerciseSearchResults"] = "Проверенные упражнения по этому запросу не найдены.";
+        Values["Profile_WorkoutPrefs_DiscardChangesTitle"] = "Отменить изменения тренировок?";
+        Values["Profile_WorkoutPrefs_DiscardChangesMessage"] = "Сохранённые настройки останутся без изменений.";
+        Values["Profile_WorkoutPrefs_KeepEditing"] = "Продолжить редактирование";
+        Values["Profile_WorkoutPrefs_DiscardChanges"] = "Отменить";
         Values["Profile_WorkoutPrefs_RemoveAvoidedExercise"] = "Дважды нажмите, чтобы убрать упражнение из списка исключений";
         Values["Profile_WorkoutPrefs_ExerciseCatalogUnavailable"] = "Не удалось загрузить проверенные упражнения. Подключитесь к сети и снова откройте эти настройки перед сохранением.";
         Values["Profile_WorkoutPrefs_EquipmentFullGym"] = "Полный тренажёрный зал";

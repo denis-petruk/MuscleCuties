@@ -29,7 +29,7 @@
                            Style="{StaticResource CardTitle}" />
                     <Label Text="{loc:LocalizedText Profile_HealthSync_StepsConsent}"
                            Style="{StaticResource BodyLabel}" />
-                    <Button Text="{Binding ConnectionBadgeText, Converter={StaticResource LocalizedStringConverter}}"
+                    <Button Style="{StaticResource ButtonSecondary}" Text="{Binding ConnectionBadgeText, Converter={StaticResource LocalizedStringConverter}}"
                             Command="{Binding ConnectCommand}"
                             IsVisible="{Binding IsAppleHealthAvailable}"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"

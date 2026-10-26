@@ -19,13 +19,13 @@
                                    CommandParameter="{Binding Id}" />
                     </SwipeItems>
                 </SwipeView.RightItems>
-                <Border Style="{StaticResource ModalListItem}" Padding="{StaticResource UiInsets16}">
+                <Border Style="{StaticResource CardSecondary}">
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                         <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                             <Label Grid.Row="0"
                                    Text="{Binding SiteName, Converter={StaticResource LocalizedStringConverter}}"
                                    Style="{StaticResource CardTitle}" />
-                            <Label Grid.Row="1" Style="{StaticResource MutedLabel}" FontSize="{StaticResource UiFontSize13}">
+                            <Label Grid.Row="1" Style="{StaticResource MutedLabel}">
                                 <Label.FormattedText>
                                     <FormattedString>
                                         <Span
@@ -41,15 +41,13 @@
                                    Style="{StaticResource CaptionLabel}" />
                         </Grid>
                         <Button Grid.Column="1" Text="{loc:LocalizedText Injury_LogContent_Clear}"
-                                Style="{StaticResource ButtonLink}"
-                                MinimumHeightRequest="{StaticResource UiDimension48}" MinimumWidthRequest="{StaticResource UiDimension48}" VerticalOptions="Center"
+                                Style="{StaticResource ButtonSecondary}" VerticalOptions="Center"
                                 IsVisible="{Binding IsActive}"
                                 SemanticProperties.Description="{Binding SiteName, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Injury_LogContent_MarkValueInjuryCleared}"
                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=MarkClearedCommand, x:DataType=vm:InjuryLogViewModel}"
                                 CommandParameter="{Binding .}" />
                         <Button Grid.Column="2" Text="{loc:LocalizedText Common_Edit}"
-                                Style="{StaticResource ButtonLink}"
-                                MinimumHeightRequest="{StaticResource UiDimension48}" MinimumWidthRequest="{StaticResource UiDimension48}" VerticalOptions="Center"
+                                Style="{StaticResource ButtonSecondary}" VerticalOptions="Center"
                                 SemanticProperties.Description="{Binding SiteName, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Injury_LogContent_EditValueInjury}"
                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=EditInjuryCommand, x:DataType=vm:InjuryLogViewModel}"
                                 CommandParameter="{Binding .}" />
@@ -93,7 +91,7 @@
                                 BindableLayout.ItemsSource="{Binding AvailableSites}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="ui:InjuryFlagOption">
-                                <Border Style="{StaticResource InjuryChoiceCard}"
+                                <Border Style="{StaticResource SelectableCard}"
                                         FlexLayout.Basis="50%"
                                         Margin="{StaticResource UiInsets0_0_8_8}"
                                         SemanticProperties.Description="{Binding Label, Converter={StaticResource LocalizedStringConverter}}">
@@ -104,20 +102,19 @@
                                     </Border.GestureRecognizers>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+
+
+
                                             <Setter Property="SemanticProperties.Hint" Value="Selected" />
                                         </DataTrigger>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
                                             <Setter Property="SemanticProperties.Hint" Value="Not selected" />
-                                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth0}" />
-                                            <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" />
+
+
                                         </DataTrigger>
                                     </Border.Triggers>
                                     <Label Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource BodyLabel}" FontAttributes="{StaticResource UiFontAttributesBold}"
+                                           Style="{StaticResource BodyStrong}"
                                            VerticalOptions="Center" HorizontalOptions="Center" />
                                 </Border>
                             </DataTemplate>
@@ -130,7 +127,7 @@
                                 BindableLayout.ItemsSource="{Binding AvailableStatuses}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="ui:InjuryStatusOption">
-                                <Border Style="{StaticResource InjuryChoiceCard}"
+                                <Border Style="{StaticResource SelectableCard}"
                                         FlexLayout.Basis="33.33%"
                                         Margin="{StaticResource UiInsets0_0_8_0}"
                                         SemanticProperties.Description="{Binding Label, Converter={StaticResource LocalizedStringConverter}}">
@@ -141,20 +138,19 @@
                                     </Border.GestureRecognizers>
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+
+
+
                                             <Setter Property="SemanticProperties.Hint" Value="Selected" />
                                         </DataTrigger>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
                                             <Setter Property="SemanticProperties.Hint" Value="Not selected" />
-                                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth0}" />
-                                            <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" />
+
+
                                         </DataTrigger>
                                     </Border.Triggers>
                                     <Label Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource BodyLabel}" FontAttributes="{StaticResource UiFontAttributesBold}"
+                                           Style="{StaticResource BodyStrong}"
                                            VerticalOptions="Center" HorizontalOptions="Center" />
                                 </Border>
                             </DataTemplate>
@@ -183,11 +179,9 @@
                             SemanticProperties.Description="{loc:LocalizedText Injury_LogContent_PainLevelFromZeroToFive}" />
                     <Grid Grid.Row="9" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
                         <Button Text="{loc:LocalizedText Common_Cancel}" Command="{Binding CancelEditCommand}"
-                                Style="{StaticResource ButtonSecondary}"
-                                MinimumHeightRequest="{StaticResource UiDimension52}" CornerRadius="{StaticResource UiCornerRadius14}" />
-                        <Button Grid.Column="1" Text="{loc:LocalizedText Injury_LogContent_SaveInjury}"
-                                Command="{Binding SaveInjuryCommand}"
-                                MinimumHeightRequest="{StaticResource UiDimension52}" CornerRadius="{StaticResource UiCornerRadius14}" />
+                                Style="{StaticResource ButtonSecondary}" />
+                        <Button Style="{StaticResource ButtonPrimary}" Grid.Column="1" Text="{loc:LocalizedText Injury_LogContent_SaveInjury}"
+                                Command="{Binding SaveInjuryCommand}" />
                     </Grid>
                 </Grid>
 
@@ -202,7 +196,7 @@
                         <Label Grid.Row="1" Text="{Binding EmptyStateTitle, Converter={StaticResource LocalizedStringConverter}}"
                                Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
                         <Label Grid.Row="2" Text="{Binding EmptyStateDetail, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource MutedLabel}" HorizontalTextAlignment="Center" />
+                               Style="{StaticResource MutedCentered}" />
                     </Grid>
                 </Border>
                 <Label Grid.Row="5" Text="{loc:LocalizedText Injury_LogContent_ActiveInjuries}" Style="{StaticResource SectionTitle}"
@@ -214,9 +208,8 @@
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{StaticResource UiInsets16_8}">
                     <Label Text="{loc:LocalizedText Injury_LogContent_History}" Style="{StaticResource SectionTitle}"
                            VerticalOptions="Center" />
-                    <Button Grid.Column="1" Text="{loc:LocalizedText Injury_LogContent_Show}" Style="{StaticResource ButtonLink}"
+                    <Button Grid.Column="1" Text="{loc:LocalizedText Injury_LogContent_Show}" Style="{StaticResource ButtonSecondary}"
                             Command="{Binding ToggleHistoryCommand}"
-                            MinimumWidthRequest="{StaticResource UiDimension48}" MinimumHeightRequest="{StaticResource UiDimension48}"
                             SemanticProperties.Description="{loc:LocalizedText Injury_LogContent_ToggleClearedInjuryHistory}">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding IsHistoryExpanded}" Value="True">

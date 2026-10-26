@@ -22,7 +22,7 @@
 
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource AppBottomSheetSurface}">
+            Style="{StaticResource ModalSurface}" VerticalOptions="End">
             <Grid RowDefinitions="Auto,Auto,*">
                 <Grid
                     Grid.Row="0"
@@ -153,8 +153,7 @@
                         <Label
                             Grid.Row="1"
                             Text="{loc:LocalizedText Nutrition_MealSuggestion_NoCloseMatchYet}"
-                            Style="{StaticResource BodyLabel}"
-                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                            Style="{StaticResource BodyStrong}"
                             HorizontalTextAlignment="Center"
                             HorizontalOptions="Center" />
                         <Label
@@ -186,7 +185,7 @@
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="nutritionModels:MealSuggestionItem">
-                            <Border Style="{StaticResource ModalListItem}">
+                            <Border Style="{StaticResource CardSecondary}">
                                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*"
                                       ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceMicro}">
                                     <Path
@@ -206,14 +205,12 @@
                                         Grid.ColumnSpan="2"
                                         Text="{Binding ConceptDescription, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource MutedLabel}"
-                                        FontSize="{StaticResource UiFontSize13}"
                                         LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="2"
                                         Grid.ColumnSpan="2"
                                         Text="{Binding ComponentSummary, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource MutedLabel}"
-                                        FontSize="{StaticResource UiFontSize13}"
                                         LineBreakMode="WordWrap" />
 
                                     <Grid Grid.Row="3" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto"
@@ -225,16 +222,14 @@
                                             BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
                                             <Label
                                                 Text="{Binding StyleLabel, Converter={StaticResource LocalizedStringConverter}}"
-                                                Style="{StaticResource CaptionLabel}"
+                                                Style="{StaticResource CaptionStrong}"
                                                 TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                                                FontAttributes="{StaticResource UiFontAttributesBold}"
                                                 FontSize="{StaticResource UiFontSize13}" />
                                         </Border>
                                         <Label
                                             Grid.Column="1"
                                             Text="{Binding CaloriesText, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource CaptionLabel}"
-                                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                                            Style="{StaticResource CaptionStrong}"
                                             FontSize="{StaticResource UiFontSize13}"
                                             VerticalOptions="Center" />
                                     </Grid>
@@ -243,8 +238,7 @@
                                         Grid.Row="4"
                                         Grid.ColumnSpan="2"
                                         Text="{Binding MacrosText, Converter={StaticResource LocalizedStringConverter}}"
-                                        Style="{StaticResource MutedLabel}"
-                                        FontSize="{StaticResource UiFontSize13}" LineBreakMode="WordWrap" />
+                                        Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                                     <Button
                                         Grid.Row="5"
                                         Grid.ColumnSpan="2"
@@ -252,8 +246,6 @@
                                         Text="{loc:LocalizedText Nutrition_MealSuggestion_ViewMeal}"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, Path=OpenMealDetailCommand, x:DataType=vm:NutritionViewModel}"
                                         CommandParameter="{Binding .}"
-                                        FontSize="{StaticResource UiFontSize15}"
-                                        MinimumHeightRequest="{StaticResource UiDimension44}"
                                         Margin="{StaticResource UiInsets0_4_0_0}"
                                         SemanticProperties.Description="{loc:LocalizedText Nutrition_MealSuggestion_ViewMealDetails}" />
                                 </Grid>
@@ -271,8 +263,7 @@
                         <Label
                             Grid.Row="0"
                             Text="{loc:LocalizedText Nutrition_MealSuggestion_NoMealsLeftToPlan}"
-                            Style="{StaticResource BodyLabel}"
-                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                            Style="{StaticResource BodyStrong}"
                             HorizontalTextAlignment="Center" />
                         <Label
                             Grid.Row="1"
@@ -295,7 +286,7 @@
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="nutritionModels:DayMealPlanItem">
-                            <Border Style="{StaticResource ModalListItem}" Padding="{StaticResource UiInsets12}">
+                            <Border Style="{StaticResource CardSecondary}">
                                 <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto"
                                       ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpacing5}">
                                     <Path
@@ -314,8 +305,7 @@
                                     <Label
                                         Grid.Column="2"
                                         Text="{Binding TargetSummaryText, Converter={StaticResource LocalizedStringConverter}}"
-                                        Style="{StaticResource CaptionLabel}"
-                                        FontAttributes="{StaticResource UiFontAttributesBold}"
+                                        Style="{StaticResource CaptionStrong}"
                                         HorizontalTextAlignment="End"
                                         VerticalOptions="Center" />
                                     <Label
@@ -330,14 +320,12 @@
                                         Grid.ColumnSpan="3"
                                         Text="{Binding MealSummaryText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource MutedLabel}"
-                                        FontSize="{StaticResource UiFontSize13}"
                                         LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="3"
                                         Grid.ColumnSpan="2"
                                         Text="{Binding MacrosText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource MutedLabel}"
-                                        FontSize="{StaticResource UiFontSize13}"
                                         IsVisible="{Binding HasSuggestion}" />
                                     <Grid
                                         Grid.Row="3"
@@ -352,8 +340,6 @@
                                             Command="{Binding UsePlannedMealCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}"
                                             CommandParameter="{Binding .}"
                                             IsVisible="{Binding HasSuggestion}"
-                                            MinimumHeightRequest="{StaticResource UiDimension48}"
-                                            FontSize="{StaticResource UiFontSize15}"
                                             SemanticProperties.Description="{Binding MealTitle, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_MealSuggestion_UseValue}"
                                             SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealSuggestion_LogsThisSuggestedMealForToday}" />
                                         <Border

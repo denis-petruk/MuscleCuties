@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Account.Deletion;
+using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 
@@ -87,7 +88,22 @@ public sealed class AppleAccountTokenRevoker(
         var tokenTypeHint = "refresh_token";
         var storedCredential = user?.PasswordHash;
 
-        if (!string.IsNullOrWhiteSpace(storedCredential) &&
+        if (!string.IsNullOrWhiteSpace(authorizationCode))
+        {
+            if (!IsConfigured)
+                return new AppleTokenRevocationResult(false, true,
+                    "Apple Sign-In revocation credentials are not configured.",
+                    AccountDeletionFailureCode.AppleRevocationFailed);
+
+            tokenToRevoke = await ExchangeAuthorizationCodeForRefreshTokenAsync(
+                    authorizationCode.Trim(), cancellationToken)
+                .ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(tokenToRevoke))
+                return new AppleTokenRevocationResult(false, true,
+                    "Apple authorization code exchange failed before token revocation.",
+                    AccountDeletionFailureCode.AppleAuthorizationRequired);
+        }
+        else if (!string.IsNullOrWhiteSpace(storedCredential) &&
             storedCredential.StartsWith(StoredRefreshTokenPrefix, StringComparison.Ordinal))
         {
             tokenToRevoke = storedCredential[StoredRefreshTokenPrefix.Length..].Trim();
@@ -104,24 +120,32 @@ public sealed class AppleAccountTokenRevoker(
             if (!string.IsNullOrWhiteSpace(codeToExchange))
             {
                 if (!IsConfigured)
-                    return new AppleTokenRevocationResult(false, true, "Apple Sign-In revocation credentials are not configured.");
+                    return new AppleTokenRevocationResult(false, true,
+                        "Apple Sign-In revocation credentials are not configured.",
+                        AccountDeletionFailureCode.AppleRevocationFailed);
 
                 tokenToRevoke = await ExchangeAuthorizationCodeForRefreshTokenAsync(codeToExchange, cancellationToken)
                     .ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(tokenToRevoke))
-                    return new AppleTokenRevocationResult(false, true, "Apple authorization code exchange failed before token revocation.");
+                    return new AppleTokenRevocationResult(false, true,
+                        "Apple authorization code exchange failed before token revocation.",
+                        AccountDeletionFailureCode.AppleAuthorizationRequired);
             }
         }
 
         if (string.IsNullOrWhiteSpace(tokenToRevoke))
         {
             return IsConfigured
-                ? new AppleTokenRevocationResult(false, true, "An Apple refresh token or fresh authorization code is required to revoke Sign in with Apple.")
+                ? new AppleTokenRevocationResult(false, true,
+                    "An Apple refresh token or fresh authorization code is required to revoke Sign in with Apple.",
+                    AccountDeletionFailureCode.AppleAuthorizationRequired)
                 : new AppleTokenRevocationResult(true, true);
         }
 
         if (!IsConfigured)
-            return new AppleTokenRevocationResult(false, true, "Apple Sign-In revocation credentials are not configured.");
+            return new AppleTokenRevocationResult(false, true,
+                "Apple Sign-In revocation credentials are not configured.",
+                AccountDeletionFailureCode.AppleRevocationFailed);
 
         var clientSecret = CreateClientSecretJwt();
         using var revokeRequest = new HttpRequestMessage(HttpMethod.Post, AppleRevokeEndpoint)
@@ -138,7 +162,9 @@ public sealed class AppleAccountTokenRevoker(
         using var response = await httpClient.SendAsync(revokeRequest, cancellationToken).ConfigureAwait(false);
         return response.IsSuccessStatusCode
             ? new AppleTokenRevocationResult(true, true)
-            : new AppleTokenRevocationResult(false, true, "Apple token revocation endpoint rejected the request.");
+            : new AppleTokenRevocationResult(false, true,
+                "Apple token revocation endpoint rejected the request. A fresh Apple authorization may be required.",
+                AccountDeletionFailureCode.AppleAuthorizationRequired);
     }
 
     public string CreateClientSecretJwt()

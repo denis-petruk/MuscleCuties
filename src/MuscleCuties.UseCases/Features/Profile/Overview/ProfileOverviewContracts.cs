@@ -31,7 +31,7 @@ public sealed record ProfileOverviewSource(
     CyclePhase PredictedPhase,
     CyclePhase? StoredPhase);
 
-public sealed record ProfilePurgeResult(bool Succeeded, bool AccountFound);
+public sealed record ProfilePurgeResult(bool Succeeded, bool AccountFound, string? FailureMessage = null);
 
 public interface IProfileOverviewUseCase
 {

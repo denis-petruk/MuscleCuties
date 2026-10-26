@@ -143,7 +143,6 @@
             <Label
                 Text="{Binding WorkoutSubtitle, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource MutedLabel}"
-                FontSize="{StaticResource UiFontSize13}"
                 LineBreakMode="WordWrap"
                 Margin="{StaticResource UiInsets0_Minus4_0_0}" />
 
@@ -152,10 +151,7 @@
                   IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}">
                 <!-- Tile 1: Duration -->
                 <Border
-                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                    Padding="{StaticResource UiInsets6_8}">
+                    Style="{StaticResource CardAccent}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -168,9 +164,7 @@
                                 VerticalOptions="Center" />
                             <Label
                                 Text="{loc:LocalizedText Dashboard_Workout_Duration}"
-                                Style="{StaticResource CaptionLabel}"
-                                FontSize="{StaticResource UiFontSize11}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                Style="{StaticResource CaptionTinyStrong}"
                                 VerticalOptions="Center" />
                         </HorizontalStackLayout>
                         <Label
@@ -185,10 +179,7 @@
                 <!-- Tile 2: Exercises -->
                 <Border
                     Grid.Column="1"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                    Padding="{StaticResource UiInsets6_8}">
+                    Style="{StaticResource CardAccent}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -201,9 +192,7 @@
                                 VerticalOptions="Center" />
                             <Label
                                 Text="{Binding WorkoutCountLabel, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource CaptionLabel}"
-                                FontSize="{StaticResource UiFontSize11}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                Style="{StaticResource CaptionTinyStrong}"
                                 VerticalOptions="Center" />
                         </HorizontalStackLayout>
                         <Label
@@ -218,10 +207,7 @@
                 <!-- Tile 3: Intensity -->
                 <Border
                     Grid.Column="2"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                    Padding="{StaticResource UiInsets6_8}">
+                    Style="{StaticResource CardAccent}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -234,9 +220,7 @@
                                 VerticalOptions="Center" />
                             <Label
                                 Text="Intensity"
-                                Style="{StaticResource CaptionLabel}"
-                                FontSize="{StaticResource UiFontSize11}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                Style="{StaticResource CaptionTinyStrong}"
                                 VerticalOptions="Center" />
                         </HorizontalStackLayout>
                         <Label
@@ -267,8 +251,7 @@
                     <Label
                         Grid.Column="1"
                         Text="Muscle fibers rebuild &amp; glycogen replenishes during rest. Prioritize sleep and hydration."
-                        Style="{StaticResource CaptionLabel}"
-                        FontSize="{StaticResource UiFontSize12}"
+                        Style="{StaticResource CaptionSmall}"
                         LineBreakMode="WordWrap"
                         VerticalOptions="Center" />
                 </Grid>

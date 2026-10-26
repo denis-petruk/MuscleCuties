@@ -102,12 +102,11 @@
                     SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     SemanticProperties.HeadingLevel="Level3" />
 
-                <Button
+                <Button Style="{StaticResource ButtonPrimary}"
                     Grid.Row="3"
                     Text="{loc:LocalizedText Auth_LogIn}"
                     Command="{Binding LoginCommand}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                    MinimumHeightRequest="{StaticResource UiDimension52}"
                     SemanticProperties.Description="{loc:LocalizedText Auth_Login_LogInToYourAccount}" />
 
                 <ActivityIndicator
@@ -119,7 +118,7 @@
 
                 <Button
                     Grid.Row="5"
-                    Style="{StaticResource PlatformAuthButton}"
+                    Style="{StaticResource ButtonSecondary}"
                     Text="{loc:LocalizedText Auth_SignInWithApple}"
                     Command="{Binding SignInWithAppleCommand}"
                     IsVisible="{Binding IsAppleSignInAvailable}"

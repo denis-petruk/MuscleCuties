@@ -83,8 +83,7 @@ public static class WorkoutActivityOptionCatalog
     ];
 
     public static ObservableCollection<WorkoutActivityOptionItem> Build(
-        IReadOnlySet<WorkoutActivityDto> selectedTypes,
-        bool allowInlinePreferenceConfiguration = true)
+        IReadOnlySet<WorkoutActivityDto> selectedTypes)
     {
         var selected = selectedTypes.Count == 0
             ? WorkoutPreferencesConstraints.BuildDefaultActivitySelection()
@@ -92,10 +91,7 @@ public static class WorkoutActivityOptionCatalog
         var defaults = WorkoutPreferencesConstraints.EnsureRequiredActivities(selected);
 
         return new ObservableCollection<WorkoutActivityOptionItem>(
-            Definitions.Select(definition => ToOptionItem(
-                definition,
-                defaults,
-                allowInlinePreferenceConfiguration)));
+            Definitions.Select(definition => ToOptionItem(definition, defaults)));
     }
 
     public static IReadOnlyList<WorkoutActivityGroupSection> BuildGroups(
@@ -139,8 +135,7 @@ public static class WorkoutActivityOptionCatalog
 
     private static WorkoutActivityOptionItem ToOptionItem(
         ActivityDefinition definition,
-        IReadOnlySet<WorkoutActivityDto> selectedTypes,
-        bool allowInlinePreferenceConfiguration)
+        IReadOnlySet<WorkoutActivityDto> selectedTypes)
     {
         return new WorkoutActivityOptionItem
         {
@@ -152,12 +147,7 @@ public static class WorkoutActivityOptionCatalog
             Tag = GetGroupTag(definition.Group),
             IconGlyph = definition.IconGlyph,
             IsRequired = definition.IsCoreDefault,
-            IsSelected = selectedTypes.Contains(definition.ActivityType),
-            AllowInlinePreferenceConfiguration = allowInlinePreferenceConfiguration,
-            SessionDurationOptions = WorkoutPreferencesConstraints.SessionDurationChoices(definition.ActivityType),
-            SessionDurationMinutes = WorkoutPreferencesConstraints.DefaultSessionDurationMinutes(
-                definition.ActivityType),
-            WeeklyFrequencyOptions = WorkoutPreferencesConstraints.WeeklyFrequencyChoices()
+            IsSelected = selectedTypes.Contains(definition.ActivityType)
         };
     }
 

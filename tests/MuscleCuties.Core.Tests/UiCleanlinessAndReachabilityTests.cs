@@ -156,7 +156,10 @@ public class UiCleanlinessAndReachabilityTests
 
         var stylesPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Resources", "Styles", "Styles.xaml");
         var stylesContent = File.ReadAllText(stylesPath);
-        Assert.Contains("<x:String x:Key=\"AppFontFamily\">Inter</x:String>", stylesContent);
+        var colorsPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Resources", "Styles", "Colors.xaml");
+        var colorsContent = File.ReadAllText(colorsPath);
+        Assert.Contains("<x:String x:Key=\"AppFontFamily\">Inter</x:String>", colorsContent);
+        Assert.Contains("Value=\"{StaticResource AppFontFamily}\"", stylesContent);
         Assert.DoesNotContain("Property=\"FontFamily\" Value=\"Inter\"", stylesContent);
 
         var uiDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
@@ -264,31 +267,105 @@ public class UiCleanlinessAndReachabilityTests
     }
 
     [Fact]
-    public void Shared_styles_enforce_2_button_options_unified_inputs_and_3_card_levels()
+    public void Workout_preferences_carry_onboarding_duration_without_duplicate_picker_and_use_query_first_exclusions()
+    {
+        var activityPickerPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Workout",
+            "WorkoutActivityPreferencePicker.xaml");
+        var preferencesChoicesPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Profile",
+            "ProfileWorkoutPreferencesChoices.xaml");
+        var preferencesViewModelPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "ViewModels", "Profile",
+            "ProfileWorkoutPreferencesViewModel.cs");
+        var registrationStorePath = Path.Combine(RepoRoot, "src", "MuscleCuties.Infrastructure.PostgreSql", "Account",
+            "Registration", "PostgresCompleteAccountRegistrationStore.cs");
+
+        var activityPicker = File.ReadAllText(activityPickerPath);
+        var preferencesChoices = File.ReadAllText(preferencesChoicesPath);
+        var preferencesViewModel = File.ReadAllText(preferencesViewModelPath);
+        var registrationStore = File.ReadAllText(registrationStorePath);
+
+        Assert.DoesNotContain("<Picker", activityPicker);
+        Assert.DoesNotContain("ShowSessionDurationPicker", activityPicker);
+        Assert.DoesNotContain("SessionDuration", preferencesChoices);
+        Assert.DoesNotContain("SelectedSessionDurationMinutes", preferencesViewModel);
+        Assert.Contains("ResolveSessionDurationMinutes(option.ActivityType)", preferencesViewModel);
+        Assert.Contains("_savedActivitySessionDurationsMinutes", preferencesViewModel);
+        Assert.Contains("QuizQuestionType.SessionDuration", registrationStore);
+        Assert.Contains("RegistrationActivityDurationDefaults.ForSelectedActivities", registrationStore);
+        Assert.Contains("{Binding HasExerciseExclusionQuery}", preferencesChoices);
+        Assert.Contains("{Binding SelectedExerciseExclusions}", preferencesChoices);
+        Assert.Contains("{Binding HasNoExerciseExclusionMatches}", preferencesChoices);
+    }
+
+    [Fact]
+    public void Strength_plan_setup_uses_saved_strength_choice_without_a_second_picker()
+    {
+        var generationPagePath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Workout",
+            "StrengthPlanGenerationPage.xaml");
+        var generationViewModelPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "ViewModels", "Workout",
+            "StrengthPlanGenerationViewModel.cs");
+
+        var generationPage = File.ReadAllText(generationPagePath);
+        var generationViewModel = File.ReadAllText(generationViewModelPath);
+
+        Assert.DoesNotContain("BindableLayout.ItemsSource=\"{Binding Activities}\"", generationPage);
+        Assert.DoesNotContain("SelectActivityCommand", generationPage);
+        Assert.Contains("IsVisible=\"{Binding HasSavedStrengthActivity}\"", generationPage);
+        Assert.Contains("Text=\"{Binding SelectedActivity.Label}\"", generationPage);
+        Assert.Contains("var savedStrengthActivity = preferences.ActivityTypes", generationViewModel);
+        Assert.Contains(".Where(StrengthActivities.Contains)", generationViewModel);
+        Assert.DoesNotContain("SelectActivityCommand", generationViewModel);
+        Assert.DoesNotContain("initialActivities.Add((int)WorkoutActivityDto.GeneralStrength)", generationViewModel);
+    }
+
+    [Fact]
+    public void Workout_load_retry_and_apply_navigation_states_are_wired()
+    {
+        var preferencesPage = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Profile",
+            "ProfileWorkoutPreferencesPage.xaml"));
+        var generationPage = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Workout",
+            "StrengthPlanGenerationPage.xaml"));
+        var appNavigation = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "MauiProgram.cs"));
+        var generationViewModel = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "ViewModels",
+            "Workout", "StrengthPlanGenerationViewModel.cs"));
+
+        Assert.Contains("<sharedControls:PageLoadingOverlay", preferencesPage);
+        Assert.Contains("<sharedControls:PageLoadingOverlay", generationPage);
+        Assert.Contains("Command=\"{Binding OpenTrainCommand}\"", generationPage);
+        Assert.Contains("IsProposalAccepted", generationViewModel);
+        Assert.Contains("IsTrainNavigationPending", generationViewModel);
+        Assert.Contains("NavigateAfterOnboardingAsync(sp)", appNavigation);
+        Assert.Contains("NavigateToAsync(nameof(StrengthPlanGenerationPage))", appNavigation);
+    }
+
+    [Fact]
+    public void Shared_styles_enforce_2_button_styles_4_card_styles_and_shared_surfaces()
     {
         var stylesPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Resources", "Styles", "Styles.xaml");
         Assert.True(File.Exists(stylesPath), $"Styles.xaml not found at {stylesPath}");
 
         var stylesContent = File.ReadAllText(stylesPath);
 
-        // 1. Two primary/secondary button options across the app (+ ButtonLink for inline links)
+        // 1. Exactly two button styles own button appearance across the app.
         Assert.Contains("x:Key=\"ButtonPrimary\"", stylesContent);
         Assert.Contains("x:Key=\"ButtonSecondary\"", stylesContent);
-        Assert.Contains("x:Key=\"ButtonLink\"", stylesContent);
-        Assert.Contains("<Style TargetType=\"Button\">", stylesContent);
+        Assert.Equal(2, Regex.Matches(stylesContent, "<Style[^>]*TargetType=\"Button\"").Count);
 
-        // 2. Unified input container fields across all pages
+        // 2. Unified input and search containers across all pages.
         Assert.Contains("x:Key=\"InputContainer\"", stylesContent);
         Assert.Contains("x:Key=\"PickerContainer\"", stylesContent);
         Assert.Contains("x:Key=\"EditorContainer\"", stylesContent);
+        Assert.Contains("x:Key=\"SearchContainer\"", stylesContent);
 
-        // 3. Card surface logic: CardPrimary (main containers), CardSecondary/SurfaceTile (inner sections), PillBadge (badges), SelectableCard/SelectableChip (interactive choice cards)
+        // 3. Four canonical card styles; selection indicators and badges remain utility styles.
         Assert.Contains("x:Key=\"CardPrimary\"", stylesContent);
         Assert.Contains("x:Key=\"CardSecondary\"", stylesContent);
-        Assert.Contains("x:Key=\"SurfaceTile\"", stylesContent);
-        Assert.Contains("x:Key=\"PillBadge\"", stylesContent);
+        Assert.Contains("x:Key=\"CardAccent\"", stylesContent);
         Assert.Contains("x:Key=\"SelectableCard\"", stylesContent);
-        Assert.Contains("x:Key=\"SelectableChip\"", stylesContent);
+        Assert.Equal(4, Regex.Matches(stylesContent, "<Style x:Key=\"(?:CardPrimary|CardSecondary|CardAccent|SelectableCard)\"").Count);
+        Assert.True(Regex.Matches(stylesContent, "<Style x:Key=\"ModalSurface\"").Count == 1);
+        Assert.True(Regex.Matches(stylesContent, "<Style x:Key=\"SearchContainer\"").Count == 1);
+        Assert.Contains("x:Key=\"SelectionRadioRing\"", stylesContent);
+        Assert.Contains("x:Key=\"SelectionCheckbox\"", stylesContent);
     }
 
     [Fact]
@@ -306,8 +383,7 @@ public class UiCleanlinessAndReachabilityTests
         var allowedSurfaces = new HashSet<string>
         {
             "{StaticResource InputContainer}", "{StaticResource PickerContainer}",
-            "{StaticResource EditorContainer}", "{StaticResource WorkoutMetricInput}",
-            "{StaticResource ProfileMeasurementPickerSurface}"
+            "{StaticResource EditorContainer}", "{StaticResource SearchContainer}"
         };
 
         foreach (var file in Directory.GetFiles(uiDir, "*.xaml", SearchOption.AllDirectories)
@@ -360,17 +436,7 @@ public class UiCleanlinessAndReachabilityTests
             "InputContainer",
             "PickerContainer",
             "EditorContainer",
-            "WorkoutMetricInput",
-            "ProfileFieldSurface",
-            "PlanFieldSurface",
-            "PlanPickerSurface",
-            "ProfileMeasurementPickerSurface",
-            "ProfileMeasurementChoiceSurface",
-            "CardPrimary",
-            "CardSecondary",
-            "SurfaceTile",
-            "SelectableCard",
-            "SelectableChip"
+            "SearchContainer"
         };
 
         var nakedInputs = new List<string>();
@@ -404,7 +470,7 @@ public class UiCleanlinessAndReachabilityTests
     }
 
     [Fact]
-    public void No_xaml_button_has_ad_hoc_background_color_overrides()
+    public void Xaml_buttons_use_shared_styles_without_local_appearance_overrides()
     {
         var uiDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
         var xamlFiles = Directory.GetFiles(uiDir, "*.xaml", SearchOption.AllDirectories)
@@ -413,7 +479,11 @@ public class UiCleanlinessAndReachabilityTests
                         !f.EndsWith("Styles.xaml", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        var buttonRegex = new Regex(@"<Button\b([^>]*)/?>", RegexOptions.Singleline | RegexOptions.Compiled);
+        var buttonRegex = new Regex(@"<Button\b(?!\.)([^>]*)/?>", RegexOptions.Singleline | RegexOptions.Compiled);
+        var appearanceRegex = new Regex(
+            @"\b(?:BackgroundColor|TextColor|FontFamily|FontSize|FontAttributes|CornerRadius|BorderColor|BorderWidth|Padding|HeightRequest|MinimumHeightRequest|MinimumWidthRequest)\s*=",
+            RegexOptions.Compiled);
+        var styleRegex = new Regex(@"\bStyle\s*=\s*""\{StaticResource Button(?:Primary|Secondary)\}""", RegexOptions.Compiled);
         var violations = new List<string>();
 
         foreach (var file in xamlFiles)
@@ -422,7 +492,7 @@ public class UiCleanlinessAndReachabilityTests
             foreach (Match match in buttonRegex.Matches(content))
             {
                 var buttonAttributes = match.Groups[1].Value;
-                if (buttonAttributes.Contains("BackgroundColor=", StringComparison.OrdinalIgnoreCase))
+                if (appearanceRegex.IsMatch(buttonAttributes) || !styleRegex.IsMatch(buttonAttributes))
                 {
                     var relativePath = Path.GetRelativePath(RepoRoot, file);
                     violations.Add($"{relativePath}: {match.Value.Split('\n')[0]}");
@@ -432,8 +502,50 @@ public class UiCleanlinessAndReachabilityTests
 
         Assert.True(
             violations.Count == 0,
-            $"Found {violations.Count} Button(s) with ad-hoc BackgroundColor overrides outside Styles.xaml:\n" +
+            $"Found {violations.Count} Button(s) without one shared button style or with local appearance overrides:\n" +
             string.Join("\n", violations));
+    }
+
+    [Fact]
+    public void Canonical_cards_have_no_local_surface_overrides()
+    {
+        var uiDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var cardStyles = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "{StaticResource CardPrimary}", "{StaticResource CardSecondary}",
+            "{StaticResource CardAccent}", "{StaticResource SelectableCard}"
+        };
+        var surfaceProperties = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "BackgroundColor", "Background", "Stroke", "StrokeShape", "StrokeThickness",
+            "Padding", "Shadow", "CornerRadius"
+        };
+        var violations = new List<string>();
+
+        foreach (var file in Directory.GetFiles(uiDir, "*.xaml", SearchOption.AllDirectories)
+                     .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") &&
+                                    !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") &&
+                                    !file.EndsWith($"{Path.DirectorySeparatorChar}Styles.xaml", StringComparison.Ordinal)))
+        {
+            var document = XDocument.Load(file);
+            foreach (var border in document.Descendants().Where(element =>
+                         element.Name.LocalName == "Border" &&
+                         cardStyles.Contains(element.Attribute("Style")?.Value ?? string.Empty)))
+            {
+                foreach (var attribute in border.Attributes().Where(attribute => surfaceProperties.Contains(attribute.Name.LocalName)))
+                {
+                    var isDataBoundState = (attribute.Name.LocalName is "BackgroundColor" or "Background" or "Stroke") &&
+                                           attribute.Value.Contains("{Binding", StringComparison.Ordinal);
+                    if (!isDataBoundState)
+                    {
+                        violations.Add($"{Path.GetRelativePath(RepoRoot, file)}: {attribute.Name.LocalName}");
+                    }
+                }
+            }
+        }
+
+        Assert.True(violations.Count == 0,
+            $"Found {violations.Count} local appearance override(s) on canonical cards:\n" + string.Join("\n", violations));
     }
 
     [Fact]
@@ -480,46 +592,46 @@ public class UiCleanlinessAndReachabilityTests
         Assert.True(missing.Count == 0,
             $"Found {missing.Count} undefined StaticResource reference(s):\n" + string.Join("\n", missing));
 
-        var colorsPath = Path.Combine(uiDir, "Resources", "Styles", "Colors.xaml");
-        var colorsKeys = new HashSet<string>(StringComparer.Ordinal);
-        if (File.Exists(colorsPath))
-        {
-            foreach (var line in File.ReadLines(colorsPath))
-            {
-                foreach (Match match in keyDefRegex.Matches(line))
-                {
-                    colorsKeys.Add(match.Groups[1].Value);
-                }
-            }
-        }
-
         var stylesPath = Path.Combine(uiDir, "Resources", "Styles", "Styles.xaml");
-        var setterIssues = new List<string>();
+        var colorsPath = Path.Combine(uiDir, "Resources", "Styles", "Colors.xaml");
+        var forwardRefIssues = new List<string>();
 
         if (File.Exists(stylesPath))
         {
+            var availableKeys = new HashSet<string>(StringComparer.Ordinal) { "x:Null" };
+            if (File.Exists(colorsPath))
+            {
+                foreach (var line in File.ReadLines(colorsPath))
+                {
+                    foreach (Match match in keyDefRegex.Matches(line))
+                    {
+                        availableKeys.Add(match.Groups[1].Value);
+                    }
+                }
+            }
+
             var lines = File.ReadAllLines(stylesPath);
             for (var i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
-                if (line.Contains("<Setter", StringComparison.Ordinal) ||
-                    line.Contains("<RoundRectangle", StringComparison.Ordinal) ||
-                    line.Contains("<CornerRadius", StringComparison.Ordinal))
+                foreach (Match match in staticResRegex.Matches(line))
                 {
-                    foreach (Match match in staticResRegex.Matches(line))
+                    var key = match.Groups[1].Value.Trim();
+                    if (!availableKeys.Contains(key))
                     {
-                        var key = match.Groups[1].Value.Trim();
-                        if (!colorsKeys.Contains(key))
-                        {
-                            setterIssues.Add($"Styles.xaml:{i + 1} Setter references '{key}' which is not in Colors.xaml");
-                        }
+                        forwardRefIssues.Add($"Styles.xaml:{i + 1} references '{key}' before it is defined");
                     }
+                }
+
+                foreach (Match match in keyDefRegex.Matches(line))
+                {
+                    availableKeys.Add(match.Groups[1].Value);
                 }
             }
         }
 
-        Assert.True(setterIssues.Count == 0,
-            $"Found {setterIssues.Count} Setter reference(s) in Styles.xaml not defined in Colors.xaml:\n" + string.Join("\n", setterIssues));
+        Assert.True(forwardRefIssues.Count == 0,
+            $"Found {forwardRefIssues.Count} forward reference(s) in Styles.xaml:\n" + string.Join("\n", forwardRefIssues));
     }
 
     private static string FindRepositoryRoot()
