@@ -3,6 +3,8 @@
 
 The active roadmap is maintained at [docs/v1/ROADMAP.md](docs/v1/ROADMAP.md).
 
+- **2026-10-26 Mac build host:** SSH works; Xcode 26.3 and .NET 10.0.403 are installed and source commit `d1ae97a` is staged in `~/MuscleCuties-codex-d1ae97a`. Next install the `maui-ios` workload with Mac administrator permission, build and launch the iOS simulator candidate, and verify VoiceOver/preview behavior. Windows-only UI build cannot stand in for the Mac iOS toolchain.
+
 - **2026-10-26 preview UI acceptance:** Verify VoiceOver stays within the open preview, announces Apply failure once, and returns to the intact editor after Close. Source now hides the covered editor and announces the sheet's visible status; resource/source checks pass. Mac build and signed-in runtime acceptance remain open.
 
 - **2026-10-26 fallback acceptance:** The selected strength duration now survives HVS-to-General-Strength fallback, including profiles without a saved General Strength entry. Three regression cases pass. Include this case in the authenticated preview/Apply review after Mac and staging access are available.
