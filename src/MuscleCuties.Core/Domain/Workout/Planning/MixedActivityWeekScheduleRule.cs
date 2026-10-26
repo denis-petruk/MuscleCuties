@@ -252,14 +252,6 @@ public static class MixedActivityWeekScheduleRule
         var isDemandingYoga = false;
         if (decision.Activity == WorkoutActivityType.Yoga)
         {
-            if (evidence.IsDemandingYogaContent is null &&
-                string.IsNullOrWhiteSpace(evidence.ActivityName) &&
-                evidence.ContentTags is not { Count: > 0 })
-            {
-                decision.Block(YogaContentClassificationMissing);
-                return;
-            }
-
             var yogaClassification = YogaClassificationRule.Classify(
                 evidence.IsDemandingYogaContent,
                 evidence.ActivityName,

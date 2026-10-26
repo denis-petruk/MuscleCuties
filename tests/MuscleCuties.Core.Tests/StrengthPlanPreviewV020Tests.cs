@@ -409,7 +409,7 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
-    public async Task Saved_Demanding_Yoga_Duration_Is_Replaced_By_Plan_Default()
+    public async Task Saved_Demanding_Yoga_Duration_Is_Reused_When_Compatible()
     {
         var profile = Profile();
         var selected = profile.SelectedActivityTypes!.Append((int)WorkoutActivityType.Yoga).ToHashSet();
@@ -436,8 +436,22 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek, result.Sessions.Count);
         Assert.Contains(result.MixedActivitySchedule!.Sessions,
             session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga &&
-                       session.DurationMinutes == ActivitySessionDurationRule.DemandingYogaDefaultMinutes &&
+                       session.DurationMinutes == duration &&
                        session.IsHardSession);
+    }
+
+    [Fact]
+    public async Task Selected_Yoga_Without_Additional_Answers_Uses_Gentle_Default()
+    {
+        var profile = AddSelectedActivity(Profile(), WorkoutActivityType.Yoga);
+        var result = await new PreviewStrengthPlanV020UseCase(new Source(profile))
+            .ExecuteAsync(Guid.NewGuid(), Request());
+
+        Assert.Equal("Feasible", result.Status);
+        Assert.Contains(result.MixedActivitySchedule!.Sessions, session =>
+            session.ActivityTypeId == (int)WorkoutActivityType.Yoga &&
+            session.DurationMinutes == ActivitySessionDurationRule.GentleYogaDefaultMinutes &&
+            !session.IsHardSession);
     }
 
     [Fact]

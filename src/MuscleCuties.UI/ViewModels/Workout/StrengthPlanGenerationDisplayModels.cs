@@ -34,6 +34,8 @@ public sealed record MixedActivitySessionDisplay(string Title, string Details)
     public string Duration { get; init; } = string.Empty;
 }
 
+public sealed record MixedActivityDayDisplay(string Day, string Summary, bool IsRestDay);
+
 public sealed record MixedActivityDecisionDisplay(string Activity, string Status, string Frequency,
     ObservableCollection<string> Reasons)
 {

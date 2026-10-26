@@ -135,7 +135,7 @@ public sealed class MixedActivityWeekScheduleRuleTests
     }
 
     [Fact]
-    public void YogaWithoutContentClassificationIsBlockedFromScheduling()
+    public void YogaWithoutContentClassificationUsesGentleDefault()
     {
         var result = Evaluate(
             [WorkoutActivityType.GeneralStrength, WorkoutActivityType.Yoga],
@@ -148,9 +148,9 @@ public sealed class MixedActivityWeekScheduleRuleTests
                 (WorkoutActivityType.Yoga, EvidenceFor(WorkoutActivityType.Yoga))));
 
         var yogaDecision = Decision(result, WorkoutActivityType.Yoga);
-        Assert.Equal(MixedActivityScheduleDisposition.Blocked, yogaDecision.Disposition);
-        Assert.Contains(MixedActivityWeekScheduleRule.YogaContentClassificationMissing, yogaDecision.Reasons);
-        Assert.DoesNotContain(result.Sessions, session => session.Activity == WorkoutActivityType.Yoga);
+        Assert.Equal(MixedActivityScheduleDisposition.Scheduled, yogaDecision.Disposition);
+        Assert.Contains(result.Sessions, session => session.Activity == WorkoutActivityType.Yoga &&
+            !session.IsHardSession && session.DurationMinutes == GentleYogaSessionMinutes);
     }
 
     [Fact]

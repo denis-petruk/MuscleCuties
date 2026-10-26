@@ -515,19 +515,15 @@
                                    IsVisible="{Binding HasNoMixedActivitySessions}"
                                    Style="{StaticResource MutedLabel}"
                                    LineBreakMode="WordWrap" />
-                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding MixedActivitySessions}"
-                                                 Spacing="{StaticResource UiSpaceTight}">
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding MixedActivityDays}"
+                                                 Spacing="{StaticResource UiSpaceMicro}">
                                 <BindableLayout.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:MixedActivitySessionDisplay">
-                                        <Border Style="{StaticResource CardSecondary}" SemanticProperties.Description="{Binding Title}">
-                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                                    <Label Text="{Binding Day}" Style="{StaticResource CaptionLabel}" />
-                                                    <Label Text="{Binding Activity}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
-                                                </VerticalStackLayout>
-                                                <Label Grid.Column="1" Text="{Binding Duration}" Style="{StaticResource AccentLabel}" VerticalOptions="Center" />
-                                            </Grid>
-                                        </Border>
+                                    <DataTemplate x:DataType="vm:MixedActivityDayDisplay">
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                            <Label Text="{Binding Day}" Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                                            <Label Grid.Column="1" Text="{Binding Summary}" Style="{StaticResource BodyStrong}"
+                                                   LineBreakMode="WordWrap" VerticalOptions="Center" />
+                                        </Grid>
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
