@@ -15,6 +15,8 @@
 
     <Grid>
     <Grid RowDefinitions="*,Auto,Auto">
+    <Grid Grid.RowSpan="3" RowDefinitions="*,Auto,Auto"
+          IsVisible="{Binding IsBeforePreview}">
     <ScrollView Grid.Row="0">
         <VerticalStackLayout
             Padding="{StaticResource UiInsets20_16_20_32}"
@@ -476,7 +478,9 @@
         </VerticalStackLayout>
     </Border>
 
-    <!-- The preview has its own scroll area so the decision stays visible. -->
+    </Grid>
+
+    <!-- Hide the covered editor from input and accessibility while the preview is open. -->
     <Grid Grid.RowSpan="3"
           IsVisible="{Binding HasPreview}"
           BackgroundColor="{StaticResource ModalScrim}"
@@ -724,7 +728,11 @@
                     <Label Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                            IsVisible="{Binding HasStatusMessage}"
                            Style="{StaticResource MutedLabel}"
-                           LineBreakMode="WordWrap" />
+                           LineBreakMode="WordWrap">
+                        <Label.Behaviors>
+                            <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                        </Label.Behaviors>
+                    </Label>
                     <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"
                             Command="{Binding EditDetailsCommand}"
                             IsVisible="{Binding HasLimitation}"
