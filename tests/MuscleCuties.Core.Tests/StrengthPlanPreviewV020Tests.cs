@@ -291,7 +291,7 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.All(schedule.Sessions.GroupBy(session => session.Weekday), day =>
         {
             Assert.InRange(day.Count(), 1,
-                MixedActivityWeekScheduleRule.MaximumSessionsPerDayWithoutDailyCapacity);
+                MixedActivityWeekScheduleRule.MaximumSessionsPerDay);
             if (day.Count() > 1)
             {
                 var sessions = day.ToArray();

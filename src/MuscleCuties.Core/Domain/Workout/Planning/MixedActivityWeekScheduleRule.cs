@@ -6,7 +6,6 @@ namespace MuscleCuties.Core.Domain.Workout.Planning;
 public sealed record MixedActivityWeekScheduleContext(
     IReadOnlyList<WorkoutActivityType>? SelectedActivities,
     IReadOnlyList<DayOfWeek>? AvailableWeekdays,
-    decimal? DailyCapacityMinutes,
     IReadOnlyDictionary<WorkoutActivityType, decimal>? SessionDurationsMinutes,
     IReadOnlyList<ActivityPrescriptionContext>? EligibilityEvidence,
     IReadOnlyDictionary<WorkoutActivityType, int>? RequestedSessionsPerWeek = null,
@@ -46,7 +45,7 @@ public sealed record MixedActivityWeekScheduleResult(
     IReadOnlyList<MixedActivityScheduleDecision> Activities,
     IReadOnlyList<string> InputReasons);
 
-/// <summary>Places selected activities over available weekdays under activity and daily-capacity rules.</summary>
+/// <summary>Places selected activities over available weekdays under activity and hard-day safety rules.</summary>
 public static class MixedActivityWeekScheduleRule
 {
     public const int MinimumAvailableWeekdays = 1;
@@ -55,7 +54,7 @@ public static class MixedActivityWeekScheduleRule
     public const int MaximumRequestedSessionsPerWeek = MaximumAvailableWeekdays;
     public const int MaximumStrengthSessionsPerDay = 1;
     public const int MaximumStrengthCompanionsPerDay = 1;
-    public const int MaximumSessionsPerDayWithoutDailyCapacity =
+    public const int MaximumSessionsPerDay =
         MaximumStrengthSessionsPerDay + MaximumStrengthCompanionsPerDay;
 
     public const string ActivitySelectionMissing = "ActivitySelectionMissing";
@@ -63,9 +62,6 @@ public static class MixedActivityWeekScheduleRule
     public const string AvailableWeekdaysMustContainOneToSevenDistinctDays =
         "AvailableWeekdaysMustContainOneToSevenDistinctDays";
     public const string AvailableWeekdayValueInvalid = "AvailableWeekdayValueInvalid";
-    public const string DailyCapacityMissingSafePairingFallback =
-        "DailyCapacityMissingSafePairingFallback";
-    public const string DailyCapacityMustBePositive = "DailyCapacityMustBePositive";
     public const string ActivityEligibilityEvidenceMissing = "ActivityEligibilityEvidenceMissing";
     public const string ActivityEligibilityEvidenceDuplicate = "ActivityEligibilityEvidenceDuplicate";
     public const string ActivityNotSupportedByPersistedPlan = "ActivityNotSupportedByPersistedPlan";
@@ -93,8 +89,6 @@ public static class MixedActivityWeekScheduleRule
     public const string ActivityFrequencyPreferenceInvalid = "ActivityFrequencyPreferenceInvalid";
     public const string ActivityFrequencyLimitedByAvailableWeekdays =
         "ActivityFrequencyLimitedByAvailableWeekdays";
-    public const string DailyCapacityTooSmallForSession = "DailyCapacityTooSmallForSession";
-    public const string DailyCapacityLimitReached = "DailyCapacityLimitReached";
     public const string HardDayLimitReached = "HardDayLimitReached";
     public const string NoSafeDayAvailable = "NoSafeDayAvailable";
     public const string HiitUnderlyingCardioActivityMissing = "HiitUnderlyingCardioActivityMissing";
@@ -195,22 +189,10 @@ public static class MixedActivityWeekScheduleRule
             PrepareActivity(decision, context, duplicateEvidenceActivities, days, decisions);
         }
 
-        if (context.DailyCapacityMinutes is null)
-        {
-            foreach (var decision in decisions.Where(IsScheduleCandidate))
-                decision.AddReason(DailyCapacityMissingSafePairingFallback);
-        }
-        else if (context.DailyCapacityMinutes <= NoScheduledMinutes)
-        {
-            foreach (var decision in decisions.Where(IsScheduleCandidate))
-                decision.Block(DailyCapacityMustBePositive);
-        }
-
         ApplyHiitReplacement(decisions, context);
 
-        if (inputReasons.Count == NoSessionsScheduled &&
-            (context.DailyCapacityMinutes is null || context.DailyCapacityMinutes > NoScheduledMinutes))
-            PlaceSessions(decisions, days, context.DailyCapacityMinutes);
+        if (inputReasons.Count == NoSessionsScheduled)
+            PlaceSessions(decisions, days);
 
         var sessions = decisions
             .Where(decision => decision.IsEligible)
@@ -549,10 +531,9 @@ public static class MixedActivityWeekScheduleRule
         underlying.AddReason(OneContinuousSessionReplacedByHiit);
     }
 
-    private static void PlaceSessions(ActivityDecisionBuilder[] decisions,
-        DayOfWeek[] availableDays, decimal? dailyCapacityMinutes)
+    private static void PlaceSessions(ActivityDecisionBuilder[] decisions, DayOfWeek[] availableDays)
     {
-        ReduceTargetsToFitAvailability(decisions, availableDays.Length, dailyCapacityMinutes);
+        ReduceTargetsToFitAvailability(decisions, availableDays.Length);
         var dayStates = availableDays.ToDictionary(day => day, _ => new ScheduledDayState());
         var hardDecisions = decisions.Where(decision => decision.IsEligible &&
                 IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription))
@@ -561,21 +542,20 @@ public static class MixedActivityWeekScheduleRule
             .ToArray();
 
         foreach (var decision in hardDecisions)
-            ScheduleActivity(decision, dayStates, dailyCapacityMinutes, availableDays);
+            ScheduleActivity(decision, dayStates, availableDays);
 
         var softDecisions = decisions.Where(decision => decision.IsEligible &&
                 !IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription))
-            .OrderBy(decision => dailyCapacityMinutes is null && CanBeStrengthCompanion(decision)
+            .OrderBy(decision => CanBeStrengthCompanion(decision)
                 ? OneSessionPerOccurrence
                 : NoSessionsScheduled)
             .ThenBy(decision => ActivityOrder(decision.Activity))
             .ToArray();
         foreach (var decision in softDecisions)
-            ScheduleActivity(decision, dayStates, dailyCapacityMinutes, availableDays);
+            ScheduleActivity(decision, dayStates, availableDays);
     }
 
-    private static void ReduceTargetsToFitAvailability(ActivityDecisionBuilder[] decisions,
-        int availableDayCount, decimal? dailyCapacityMinutes)
+    private static void ReduceTargetsToFitAvailability(ActivityDecisionBuilder[] decisions, int availableDayCount)
     {
         var candidates = decisions.Where(IsScheduleCandidate).ToArray();
         foreach (var decision in candidates)
@@ -586,9 +566,6 @@ public static class MixedActivityWeekScheduleRule
         var hardCandidates = candidates.Where(decision =>
             IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription)).ToArray();
         ReduceTargets(hardCandidates, Math.Min(MaximumHardDaysPerWeek, availableDayCount));
-
-        if (dailyCapacityMinutes is not null)
-            return;
 
         var hardSessionCount = hardCandidates.Sum(GetTargetSessions);
         var occupiedHardDayCount = Math.Min(hardSessionCount, availableDayCount);
@@ -648,15 +625,9 @@ public static class MixedActivityWeekScheduleRule
 
     private static void ScheduleActivity(ActivityDecisionBuilder decision,
         IDictionary<DayOfWeek, ScheduledDayState> dayStates,
-        decimal? dailyCapacityMinutes,
         DayOfWeek[] availableDays)
     {
         if (decision.TargetSessionsPerWeek is null) return;
-        if (dailyCapacityMinutes is { } capacity && decision.DurationMinutes > capacity)
-        {
-            decision.AddReason(DailyCapacityTooSmallForSession);
-            return;
-        }
 
         var target = decision.TargetSessionsPerWeek.Value;
         if (decision.MaxSessionsPerWeek is { } maxLimit)
@@ -683,10 +654,8 @@ public static class MixedActivityWeekScheduleRule
                                                   WorkoutActivityType.StrengthHighIntensity or
                                                   WorkoutActivityType.RockClimbing))
                     return false;
-                if (dailyCapacityMinutes is null)
-                    return state.Activities.Count == NoSessionsScheduled ||
-                           CanShareStrengthDayWithoutDailyCapacity(state, decision, isHard);
-                return decision.DurationMinutes <= dailyCapacityMinutes.Value - state.TotalMinutes;
+                return state.Activities.Count == NoSessionsScheduled ||
+                       CanShareStrengthDay(state, decision, isHard);
             }).ToArray();
 
             if (candidates.Length == NoSessionsScheduled)
@@ -696,9 +665,6 @@ public static class MixedActivityWeekScheduleRule
                     decision.AddReason(GetHardDayConflictReason(decision.Activity));
                     decision.AddReason(HardDayLimitReached);
                 }
-                else if (dailyCapacityMinutes is { } capacityLimit && availableDays.Any(day =>
-                             decision.DurationMinutes > capacityLimit - dayStates[day].TotalMinutes))
-                    decision.AddReason(DailyCapacityLimitReached);
                 else
                     decision.AddReason(NoSafeDayAvailable);
                 break;
@@ -708,11 +674,10 @@ public static class MixedActivityWeekScheduleRule
                     ? MinimumCircularDistance(candidate, hardDays)
                     : MinimumCircularDistance(candidate, decision.ScheduledDays))
                 .ThenBy(candidate => dayStates[candidate].Activities.Count)
-                .ThenBy(candidate => dayStates[candidate].TotalMinutes)
                 .ThenBy(DayIndex)
                 .First();
 
-            dayStates[day].Add(decision.Activity, decision.DurationMinutes, isHard);
+            dayStates[day].Add(decision.Activity, isHard);
             decision.ScheduledDays.Add(day);
         }
 
@@ -810,7 +775,7 @@ public static class MixedActivityWeekScheduleRule
         (IsStrengthChoice(firstActivity) && firstIsHard && IsStrengthCompanion(secondActivity, secondIsHard)) ||
         (IsStrengthChoice(secondActivity) && secondIsHard && IsStrengthCompanion(firstActivity, firstIsHard));
 
-    private static bool CanShareStrengthDayWithoutDailyCapacity(
+    private static bool CanShareStrengthDay(
         ScheduledDayState dayState,
         ActivityDecisionBuilder decision,
         bool isHard)
@@ -861,14 +826,12 @@ public static class MixedActivityWeekScheduleRule
 
     private sealed class ScheduledDayState
     {
-        public decimal TotalMinutes { get; private set; }
         public bool HasHardSession { get; private set; }
         public HashSet<WorkoutActivityType> Activities { get; } = [];
 
-        public void Add(WorkoutActivityType activity, decimal durationMinutes, bool isHard)
+        public void Add(WorkoutActivityType activity, bool isHard)
         {
             Activities.Add(activity);
-            TotalMinutes += durationMinutes;
             HasHardSession |= isHard;
         }
     }

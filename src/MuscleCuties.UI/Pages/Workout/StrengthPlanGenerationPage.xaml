@@ -487,13 +487,10 @@
           ZIndex="10">
         <Border x:Name="PreviewSheet"
                 Style="{StaticResource ModalSurface}" VerticalOptions="End">
-            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{StaticResource UiSpaceControl}">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
                         <sharedControls:IconSectionHeader Text="{loc:LocalizedText Workout_Generation_PreviewTitle}" IconGlyph="Target24" />
-                        <Label Text="{loc:LocalizedText Workout_Generation_PreviewExplanation}"
-                               Style="{StaticResource MutedLabel}"
-                               LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                     <Button Grid.Column="1"
                             Text="{loc:LocalizedText Common_Close}"
