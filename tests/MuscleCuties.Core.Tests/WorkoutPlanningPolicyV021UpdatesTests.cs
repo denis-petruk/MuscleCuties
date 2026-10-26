@@ -222,18 +222,19 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
                 [WorkoutActivityType.GeneralStrength] = 45m,
                 [WorkoutActivityType.HighVolumeStrength] = 45m
             },
-            [gsEvidence, hvsEvidence]);
+            [gsEvidence, hvsEvidence],
+            ChosenStrengthActivity: WorkoutActivityType.GeneralStrength);
 
         var result = MixedActivityWeekScheduleRule.Evaluate(context);
 
-        // Two strength choices compete for the available hard days; the selected activity remains unchanged.
+        // Only the chosen strength activity is scheduled.
         var gsDecision = Assert.Single(result.Activities, a => a.Activity == WorkoutActivityType.GeneralStrength);
         var hvsDecision = Assert.Single(result.Activities, a => a.Activity == WorkoutActivityType.HighVolumeStrength);
 
         Assert.Equal(MixedActivityScheduleDisposition.Scheduled, gsDecision.Disposition);
-        Assert.Equal(MixedActivityScheduleDisposition.Omitted, hvsDecision.Disposition);
+        Assert.Equal(MixedActivityScheduleDisposition.NotScheduled, hvsDecision.Disposition);
         Assert.Equal(WorkoutActivityType.HighVolumeStrength, hvsDecision.EffectiveActivity);
-        Assert.DoesNotContain("ReplacedWithGeneralStrength", hvsDecision.Reasons);
+        Assert.Contains(MixedActivityWeekScheduleRule.StrengthAlternativeNotChosen, hvsDecision.Reasons);
 
         Assert.Equal(2, result.Sessions.Count(s => s.Activity == WorkoutActivityType.GeneralStrength));
     }
@@ -982,7 +983,8 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
                 [WorkoutActivityType.GeneralStrength] = 45m,
                 [WorkoutActivityType.HighVolumeStrength] = 45m
             },
-            [gsEvidence, hvsEvidence]);
+            [gsEvidence, hvsEvidence],
+            ChosenStrengthActivity: WorkoutActivityType.GeneralStrength);
 
         var result = MixedActivityWeekScheduleRule.Evaluate(context);
 
@@ -992,14 +994,14 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         Assert.Equal(MixedActivityScheduleDisposition.Scheduled, gsDecision.Disposition);
         Assert.Equal(2, gsDecision.ScheduledSessionsPerWeek);
 
-        // General Strength takes the available hard days; High Volume remains a separate choice.
-        Assert.Equal(MixedActivityScheduleDisposition.Omitted, hvsDecision.Disposition);
+        // General Strength is chosen; High Volume remains an unchosen alternative.
+        Assert.Equal(MixedActivityScheduleDisposition.NotScheduled, hvsDecision.Disposition);
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
             hvsDecision.PolicySessionsPerWeek);
         Assert.Equal(2, hvsDecision.TargetSessionsPerWeek);
-        Assert.Equal(2, hvsDecision.MaxSessionsPerWeek);
+        Assert.Null(hvsDecision.MaxSessionsPerWeek);
         Assert.Equal(0, hvsDecision.ScheduledSessionsPerWeek);
-        Assert.DoesNotContain("ReplacedWithGeneralStrength", hvsDecision.Reasons);
+        Assert.Contains(MixedActivityWeekScheduleRule.StrengthAlternativeNotChosen, hvsDecision.Reasons);
 
         var totalScheduledStrength = result.Sessions.Count(s =>
             s.Activity is WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength);
