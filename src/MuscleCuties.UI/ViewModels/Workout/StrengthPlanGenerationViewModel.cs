@@ -128,6 +128,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool HasFeasiblePreview => !IsProposalAccepted && !IsTrainNavigationPending &&
         Preview?.Status == "Feasible" &&
         _proposal is { IsPersisted: true };
+    public bool CanApplyPlanFromPreview => HasPreview && !IsProposalAccepted && !IsTrainNavigationPending;
+    public bool CanEditDetailsFromPreview => HasPreview && !IsProposalAccepted && !IsTrainNavigationPending;
     public bool HasLimitation => Preview is not null && Preview.Status != "Feasible";
     public bool HasMixedSchedule => Preview?.MixedActivitySchedule is not null;
     public bool HasMixedActivitySessions => MixedActivitySessions.Count > NoPolicyReasons;
@@ -741,6 +743,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(HasPreview));
         OnPropertyChanged(nameof(IsBeforePreview));
         OnPropertyChanged(nameof(HasFeasiblePreview));
+        OnPropertyChanged(nameof(CanApplyPlanFromPreview));
+        OnPropertyChanged(nameof(CanEditDetailsFromPreview));
         OnPropertyChanged(nameof(HasLimitation));
         OnPropertyChanged(nameof(HasMixedSchedule));
         OnPropertyChanged(nameof(HasMixedActivitySessions));

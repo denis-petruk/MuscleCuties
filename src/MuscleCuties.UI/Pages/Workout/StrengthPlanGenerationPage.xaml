@@ -746,14 +746,15 @@
                             <sharedControls:ScreenReaderStatusAnnouncementBehavior />
                         </Label.Behaviors>
                     </Label>
-                    <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"
-                            Command="{Binding EditDetailsCommand}"
-                            IsVisible="{Binding HasLimitation}"
-                            Style="{StaticResource ButtonSecondary}" />
                     <Button Text="{loc:LocalizedText Workout_Generation_ApplyPlan}"
                             Command="{Binding AcceptProposalCommand}"
-                            IsVisible="{Binding HasFeasiblePreview}"
+                            IsVisible="{Binding CanApplyPlanFromPreview}"
+                            IsEnabled="{Binding CanSubmitProposal}"
                             Style="{StaticResource ButtonPrimary}" />
+                    <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"
+                            Command="{Binding EditDetailsCommand}"
+                            IsVisible="{Binding CanEditDetailsFromPreview}"
+                            Style="{StaticResource ButtonSecondary}" />
                     <Button Text="{loc:LocalizedText Workout_Generation_OpenTrainAfterApply}"
                             Command="{Binding OpenTrainCommand}"
                             IsVisible="{Binding IsTrainNavigationPending}"
