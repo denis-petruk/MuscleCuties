@@ -88,7 +88,6 @@ internal static partial class RussianUiText
         Values["Workout_Generation_MinutesPlaceholder"] = "Минуты";
         Values["Workout_Generation_CreatePreview"] = "Предварительный просмотр";
         Values["Workout_Generation_PreviewTitle"] = "Предварительный план";
-        Values["Workout_Generation_PreviewExplanation"] = "Перед применением проверьте расписание на неделю, решения по активностям, силовые упражнения и оценку времени.";
         Values["Workout_Generation_SessionTitleFormat"] = "Тренировка {0}";
         Values["Workout_Generation_EstimatedMinutesFormat"] = "Около {0:0} мин";
         Values["Workout_Generation_EstimateUnavailable"] = "Оценка времени недоступна";
@@ -180,8 +179,6 @@ internal static partial class RussianUiText
         Values["Workout_Generation_Activity_Other"] = "Другая активность";
         Values["Workout_Generation_Reason_NoActivitiesSelected"] = "Для недельного расписания не выбраны активности.";
         Values["Workout_Generation_Reason_AvailableWeekdays"] = "Сохраните от 2 до 7 допустимых дней недели в предпочтениях тренировок.";
-        Values["Workout_Generation_Reason_DailyCapacityFallback"] = "Дневной лимит времени для тренировок не сохранён. В один день с силовой тренировкой можно запланировать не более одной велотренировки или занятия мягкой йогой.";
-        Values["Workout_Generation_Reason_DailyCapacityInvalid"] = "Сохранённый дневной лимит должен быть больше нуля.";
         Values["Workout_Generation_Reason_ActivityEvidence"] = "Данные для оценки допуска к активности отсутствуют или указаны повторно.";
         Values["Workout_Generation_Reason_ActivityNotSelected"] = "Выберите эту активность в предпочтениях тренировок, чтобы добавить её в расписание.";
         Values["Workout_Generation_Reason_ActivityNotEligible"] = "Эта активность пока не соответствует требованиям планирования.";
@@ -193,7 +190,6 @@ internal static partial class RussianUiText
         Values["Workout_Generation_Reason_SavedDurationApplied"] = "Используется длительность тренировки, сохранённая при знакомстве с приложением.";
         Values["Workout_Generation_Reason_FrequencyPreference"] = "Укажите допустимую частоту этой активности в неделю в предпочтениях тренировок.";
         Values["Workout_Generation_Reason_FrequencyLimited"] = "Частота в неделю уменьшена с учётом доступных дней.";
-        Values["Workout_Generation_Reason_DailyCapacityReached"] = "Тренировку нельзя добавить, не превысив дневной лимит времени.";
         Values["Workout_Generation_Reason_HardDayLimit"] = "Достигнут недельный лимит дней с повышенной нагрузкой.";
         Values["Workout_Generation_Reason_NoSafeDay"] = "Для этой тренировки не осталось подходящего доступного дня.";
         Values["Workout_Generation_Reason_HiitEligibility"] = "HIIT остаётся заблокированным, если опыт выбранной кардиоактивности не подтверждён, в любой из предыдущих недель не достигнут аэробный порог, вы не подтвердили необходимый скрининг или допуск либо текущие симптомы или травмы требуют проверки.";

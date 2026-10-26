@@ -124,4 +124,4 @@ Per Section 2, all unaffected requirements are implemented deterministically, wh
 ### Ambiguity 13: Absence of Complete Exercise-Selection and Muscle-Priority Algorithms
 - **Specification Gap / Contradiction:** Target direct set volumes $V(m)$ (8–12, 12–16, 16–20 sets) and weekly frequencies do not establish which specific exercises or muscle groups take priority when training days or session lengths are constrained.
 - **Affected Behavior:** When training days are insufficient (e.g., 2 available days), all 9 major muscle groups cannot reach the 8–12 set target without exceeding session capacity.
-- **Implementation Handling:** Hard constraints govern: session durations and available weekdays are strictly respected, tier caps ($V(m) \le 12, 16, 22$) are enforced, and shortfalls are reported via `WeeklyHypertrophyVolumeResult.LimitationCodes` rather than violating daily capacity.
+- **Implementation Handling:** Individual session durations and available weekdays are respected, tier caps ($V(m) \le 12, 16, 22$) are enforced, and shortfalls are reported via `WeeklyHypertrophyVolumeResult.LimitationCodes`; no aggregate daily workout-time limit is used.

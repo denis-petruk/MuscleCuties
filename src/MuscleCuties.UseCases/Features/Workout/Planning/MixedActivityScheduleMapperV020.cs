@@ -61,7 +61,6 @@ internal static class MixedActivityScheduleMapperV020
         return new MixedActivityWeekScheduleContext(
             selectedActivities,
             selectedWeekdays,
-            null,
             durations,
             eligibilityEvidence,
             requestedSessions,

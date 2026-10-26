@@ -123,9 +123,6 @@ internal static class StrengthPlanGenerationDisplayMapper
         "ActivitySelectionMissing" or "NoActivitiesSelected" => "Workout_Generation_Reason_NoActivitiesSelected",
         "AvailableWeekdaysMustContainOneToSevenDistinctDays" or "AvailableWeekdayValueInvalid" =>
             "Workout_Generation_Reason_AvailableWeekdays",
-        "DailyCapacityMissingSafePairingFallback" =>
-            "Workout_Generation_Reason_DailyCapacityFallback",
-        "DailyCapacityMustBePositive" => "Workout_Generation_Reason_DailyCapacityInvalid",
         "ActivityEligibilityEvidenceMissing" or "ActivityEligibilityEvidenceDuplicate" =>
             "Workout_Generation_Reason_ActivityEvidence",
         "ActivityNotExplicitlySelected" or "ActivityNotSelected" or "ChosenStrengthActivityNotSelected" or
@@ -149,8 +146,6 @@ internal static class StrengthPlanGenerationDisplayMapper
         "ActivityFrequencyPreferenceMissing" or "ActivityFrequencyPreferenceInvalid" =>
             "Workout_Generation_Reason_FrequencyPreference",
         "ActivityFrequencyLimitedByAvailableWeekdays" => "Workout_Generation_Reason_FrequencyLimited",
-        "DailyCapacityTooSmallForSession" or "DailyCapacityLimitReached" =>
-            "Workout_Generation_Reason_DailyCapacityReached",
         "HardDayLimitReached" => "Workout_Generation_Reason_HardDayLimit",
         "NoSafeDayAvailable" or "NotOnStrengthOrClimbingDay" => "Workout_Generation_Reason_NoSafeDay",
         "HiitUnderlyingCardioActivityUnsupported" => "Workout_Generation_Reason_HiitUnderlyingCardioUnsupported",

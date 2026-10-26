@@ -4,7 +4,7 @@ namespace MuscleCuties.UI.Pages.Workout;
 
 public partial class StrengthPlanGenerationPage : ContentPage
 {
-    private const double PreviewSheetHeightFraction = 0.9;
+    private const double PreviewSheetHeightFraction = 0.78;
     private readonly StrengthPlanGenerationViewModel _viewModel;
 
     public StrengthPlanGenerationPage(StrengthPlanGenerationViewModel viewModel)

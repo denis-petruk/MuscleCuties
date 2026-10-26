@@ -253,7 +253,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         var schedule = proposal.MixedActivitySchedule;
         if (schedule is null || schedule.Sessions is not { Count: > 0 } || schedule.Activities is null ||
             schedule.Sessions.Count > availableWeekdays.Count *
-            MixedActivityWeekScheduleRule.MaximumSessionsPerDayWithoutDailyCapacity)
+            MixedActivityWeekScheduleRule.MaximumSessionsPerDay)
             return false;
 
         scheduleSessions = schedule.Sessions.ToArray();
@@ -275,7 +275,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             return false;
 
         if (scheduleSessions.GroupBy(session => session.Weekday).Any(group =>
-                group.Count() > MixedActivityWeekScheduleRule.MaximumSessionsPerDayWithoutDailyCapacity ||
+                group.Count() > MixedActivityWeekScheduleRule.MaximumSessionsPerDay ||
                 group.Select(session => session.ActivityTypeId).Distinct().Count() != group.Count() ||
                 (group.Count() > MixedActivityWeekScheduleRule.MaximumStrengthSessionsPerDay &&
                  !MixedActivityWeekScheduleRule.IsSupportedSameDayStrengthCompanion(

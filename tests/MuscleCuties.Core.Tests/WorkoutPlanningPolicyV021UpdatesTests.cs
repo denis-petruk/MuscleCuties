@@ -26,7 +26,6 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var context = new MixedActivityWeekScheduleContext(
             [WorkoutActivityType.HighVolumeStrength],
             days,
-            300m,
             new Dictionary<WorkoutActivityType, decimal> { [WorkoutActivityType.HighVolumeStrength] = 45m },
             [evidence]);
 
@@ -53,7 +52,6 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var context = new MixedActivityWeekScheduleContext(
             [WorkoutActivityType.HighVolumeStrength],
             [DayOfWeek.Monday, DayOfWeek.Wednesday],
-            ActivitySessionDurationRule.StandardMaximumMinutes,
             new Dictionary<WorkoutActivityType, decimal>
             {
                 [WorkoutActivityType.HighVolumeStrength] = ActivitySessionDurationRule.FortyFiveMinutes,
@@ -222,7 +220,6 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var context = new MixedActivityWeekScheduleContext(
             [WorkoutActivityType.GeneralStrength, WorkoutActivityType.HighVolumeStrength],
             days,
-            300m,
             new Dictionary<WorkoutActivityType, decimal>
             {
                 [WorkoutActivityType.GeneralStrength] = 45m,
@@ -279,7 +276,7 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
             WorkoutActivityType.GeneralStrength, ActivityExperience.Beginner,
             null, false, true, false, 0, false, false);
         var context = new MixedActivityWeekScheduleContext(
-            [WorkoutActivityType.GeneralStrength], [DayOfWeek.Monday], 60m,
+            [WorkoutActivityType.GeneralStrength], [DayOfWeek.Monday],
             new Dictionary<WorkoutActivityType, decimal>
             {
                 [WorkoutActivityType.GeneralStrength] = 45m
@@ -317,7 +314,6 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var context = new MixedActivityWeekScheduleContext(
             [WorkoutActivityType.Yoga, WorkoutActivityType.HighVolumeStrength],
             days,
-            300m,
             new Dictionary<WorkoutActivityType, decimal>
             {
                 [WorkoutActivityType.Yoga] = 20m,
@@ -361,7 +357,6 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var context = new MixedActivityWeekScheduleContext(
             [WorkoutActivityType.HighVolumeStrength],
             days,
-            300m,
             new Dictionary<WorkoutActivityType, decimal> { [WorkoutActivityType.HighVolumeStrength] = 45m },
             [hvsEvidence]);
 
@@ -535,7 +530,6 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var context = new MixedActivityWeekScheduleContext(
             [WorkoutActivityType.GeneralStrength, WorkoutActivityType.Yoga],
             days,
-            300m,
             new Dictionary<WorkoutActivityType, decimal>
             {
                 [WorkoutActivityType.GeneralStrength] = 45m,
@@ -553,10 +547,9 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
     }
 
     [Fact]
-    public void Defaults_Still_Respect_Time_And_Injury_Constraints()
+    public void GentleYogaDefaultSchedulesWithoutDailyTimeLimit()
     {
         var days = new[] { DayOfWeek.Monday, DayOfWeek.Wednesday };
-        // Daily capacity is 10 minutes
         var yogaEvidence = new ActivityPrescriptionContext(
             WorkoutActivityType.Yoga, ActivityExperience.Beginner, null, false, true, false, 0, false, false,
             IsDemandingYogaContent: false);
@@ -564,15 +557,15 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var context = new MixedActivityWeekScheduleContext(
             [WorkoutActivityType.Yoga],
             days,
-            10m, // Daily capacity is 10 min, but default yoga is 15 min
             new Dictionary<WorkoutActivityType, decimal>(),
             [yogaEvidence]);
 
         var result = MixedActivityWeekScheduleRule.Evaluate(context);
 
         var decision = Assert.Single(result.Activities);
-        Assert.Equal(MixedActivityScheduleDisposition.Omitted, decision.Disposition);
-        Assert.Contains(MixedActivityWeekScheduleRule.DailyCapacityTooSmallForSession, decision.Reasons);
+        Assert.Equal(MixedActivityScheduleDisposition.Scheduled, decision.Disposition);
+        Assert.Equal(ActivitySessionDurationRule.RecoveryTargetMaxLimit,
+            decision.ScheduledSessionsPerWeek);
     }
 
     [Fact]
@@ -585,7 +578,6 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var context = new MixedActivityWeekScheduleContext(
             [WorkoutActivityType.GeneralStrength], // Only GS selected, not Yoga or Mobility
             days,
-            300m,
             new Dictionary<WorkoutActivityType, decimal> { [WorkoutActivityType.GeneralStrength] = 45m },
             [gsEvidence]);
 
@@ -845,7 +837,6 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var context = new MixedActivityWeekScheduleContext(
             [WorkoutActivityType.GeneralStrength],
             allSevenDays,
-            300m,
             new Dictionary<WorkoutActivityType, decimal> { [WorkoutActivityType.GeneralStrength] = 45m },
             [new ActivityPrescriptionContext(WorkoutActivityType.GeneralStrength, ActivityExperience.Beginner, null, false, true, false, 0, false, false)],
             RequestedSessionsPerWeek: new Dictionary<WorkoutActivityType, int> { [WorkoutActivityType.GeneralStrength] = 5 });
@@ -991,7 +982,6 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var context = new MixedActivityWeekScheduleContext(
             [WorkoutActivityType.GeneralStrength, WorkoutActivityType.HighVolumeStrength],
             days,
-            300m,
             new Dictionary<WorkoutActivityType, decimal>
             {
                 [WorkoutActivityType.GeneralStrength] = 45m,
@@ -1022,9 +1012,8 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
     }
 
     [Fact]
-    public void Regression_15_No_Sessions_Are_Falsely_Reported_As_Scheduled()
+    public void Regression_15_Long_Sessions_Are_Scheduled_Without_DailyTimeLimit()
     {
-        // Daily capacity of 10 min is smaller than the 45-min session duration
         var days = new[] { DayOfWeek.Monday, DayOfWeek.Wednesday };
         var gsEvidence = new ActivityPrescriptionContext(
             WorkoutActivityType.GeneralStrength, ActivityExperience.Beginner, null,
@@ -1033,17 +1022,16 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var context = new MixedActivityWeekScheduleContext(
             [WorkoutActivityType.GeneralStrength],
             days,
-            10m, // 10 minutes max daily capacity
             new Dictionary<WorkoutActivityType, decimal> { [WorkoutActivityType.GeneralStrength] = 45m },
             [gsEvidence]);
 
         var result = MixedActivityWeekScheduleRule.Evaluate(context);
 
         var decision = Assert.Single(result.Activities);
-        Assert.Equal(0, decision.ScheduledSessionsPerWeek);
-        Assert.NotEqual(MixedActivityScheduleDisposition.Scheduled, decision.Disposition);
-        Assert.Equal(MixedActivityScheduleDisposition.Omitted, decision.Disposition);
-        Assert.Empty(result.Sessions);
+        Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
+            decision.ScheduledSessionsPerWeek);
+        Assert.Equal(MixedActivityScheduleDisposition.Scheduled, decision.Disposition);
+        Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek, result.Sessions.Count);
     }
 
     private static StrengthPlanPreviewData CreatePreviewData(

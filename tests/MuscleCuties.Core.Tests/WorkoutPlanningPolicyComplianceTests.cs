@@ -240,7 +240,6 @@ public sealed class WorkoutPlanningPolicyComplianceTests
                 WorkoutActivityType.RockClimbing
             ],
             AvailableWeekdays: [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday],
-            DailyCapacityMinutes: 60,
             SessionDurationsMinutes: null,
             EligibilityEvidence: null);
 
@@ -302,7 +301,6 @@ public sealed class WorkoutPlanningPolicyComplianceTests
                 WorkoutActivityType.Hiit
             ],
             AvailableWeekdays: [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday],
-            DailyCapacityMinutes: 90,
             SessionDurationsMinutes: null,
             EligibilityEvidence: null);
 
