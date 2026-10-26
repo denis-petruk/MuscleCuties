@@ -15,7 +15,7 @@
     xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     x:DataType="vm:WorkoutViewModel"
     Shell.NavBarIsVisible="False"
-    Shell.TabBarIsVisible="{Binding IsInjuryModalVisible, Converter={StaticResource InvertedBoolConverter}}">
+    Shell.TabBarIsVisible="{Binding IsTabBarVisible}">
 
 
     <Grid RowDefinitions="Auto,*">
@@ -367,13 +367,18 @@
 
         <Grid x:Name="SessionActivitiesOverlay" Grid.RowSpan="{StaticResource WorkoutOverlayRowSpan}"
               IsVisible="False" ZIndex="10"
-              BackgroundColor="{StaticResource ModalScrim}"
               BindingContext="{x:Null}">
+            <BoxView BackgroundColor="{StaticResource ModalScrim}">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCloseSessionActivitiesClicked" />
+                </BoxView.GestureRecognizers>
+            </BoxView>
             <Border Style="{StaticResource ModalSurface}"
+                    Padding="{StaticResource UiInsets20_16_20_32}"
                     MaximumHeightRequest="{StaticResource UiDimension520}" VerticalOptions="End">
                 <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing14}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                        <Label Text="Session activities" Style="{StaticResource ModalTitle}"
+                        <Label Text="{loc:LocalizedText Workout_Session_ActivitiesTitle}" Style="{StaticResource ModalTitle}"
                                SemanticProperties.HeadingLevel="Level1" />
                         <Button Grid.Column="1" Text="{loc:LocalizedText Common_Close}"
                                 Clicked="OnCloseSessionActivitiesClicked"

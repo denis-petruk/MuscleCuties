@@ -53,7 +53,7 @@ public partial class WorkoutPage : ContentPage
     {
         _viewModel.CloseInjuryModalCommand.Execute(null);
         _viewModel.SessionActivitiesRequested -= OnSessionActivitiesRequested;
-        SessionActivitiesOverlay.IsVisible = false;
+        CloseSessionActivities();
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         base.OnNavigatedFrom(args);
     }
@@ -62,6 +62,7 @@ public partial class WorkoutPage : ContentPage
     {
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
+            _viewModel.IsSessionActivitiesVisible = true;
             SessionActivitiesOverlay.BindingContext = _sessionViewModel;
             SessionActivitiesOverlay.IsEnabled = false;
             SessionActivitiesOverlay.IsVisible = true;
@@ -79,6 +80,7 @@ public partial class WorkoutPage : ContentPage
     private void CloseSessionActivities()
     {
         SessionActivitiesOverlay.IsVisible = false;
+        _viewModel.IsSessionActivitiesVisible = false;
     }
 
     private void OnCloseSessionActivitiesClicked(object? sender, EventArgs e) => CloseSessionActivities();
@@ -89,7 +91,7 @@ public partial class WorkoutPage : ContentPage
             _sessionViewModel.IsBusy || string.IsNullOrWhiteSpace(activity.Tag))
             return;
 
-        SessionActivitiesOverlay.IsVisible = false;
+        CloseSessionActivities();
         _navigationContext.Set("workoutDayId", _sessionViewModel.WorkoutDayId);
         _navigationContext.Set("workoutActivityTag", activity.Tag);
         await Shell.Current.GoToAsync(nameof(WorkoutSessionPage));
@@ -139,7 +141,7 @@ public partial class WorkoutPage : ContentPage
 
     protected override bool OnBackButtonPressed()
     {
-        if (SessionActivitiesOverlay.IsVisible)
+        if (SessionActivitiesOverlay.IsVisible || _viewModel.IsSessionActivitiesVisible)
         {
             CloseSessionActivities();
             return true;
