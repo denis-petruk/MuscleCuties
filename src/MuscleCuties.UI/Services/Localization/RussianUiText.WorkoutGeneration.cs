@@ -206,6 +206,8 @@ internal static partial class RussianUiText
         Values["Workout_Generation_Reason_HighIntensityExerciseEvidence"] = "Для каждого обязательного основного упражнения высокой интенсивности нужны четыре зарегистрированных выполнения, известная допустимая нагрузка и ваши отдельные подтверждения знакомства с движением и переносимости нагрузки. Подтвердите каждое показанное упражнение ниже. Если упражнений нет, не хватает проверенных данных о нагрузке или выполнениях.";
         Values["Workout_Generation_Reason_HighIntensityEvidenceMissing"] = "Для обязательного тяжёлого упражнения не хватает проверенных данных о выполнениях или допустимой нагрузке. Подтверждение можно запросить только для подходящего варианта, поэтому в черновике такого упражнения пока нет.";
         Values["Workout_Generation_Reason_TrainingLimits"] = "План соблюдает ограничения по числу упражнений, объёму подходов и усилию.";
+        Values["Workout_Generation_Reason_HighVolumeConservativeStart"] =
+            "Начните с посильного веса, оставляя запас примерно в четыре повтора. Сначала план назначает меньше подходов и может повышать нагрузку по мере записи тренировок.";
         Values["Workout_Generation_Reason_SwimAccessOrPreference"] = "Подтвердите доступ к бассейну, умение плавать самостоятельно и стиль занятия.";
         Values["Workout_Generation_Reason_TimeBasedActivity"] = "План задаёт длительность и не предполагает темп или расстояние.";
         Values["Workout_Generation_Reason_SwimIntervalsOptional"] = "Интервалы в плавании необязательны: комфортное плавание чередуется с отдыхом.";
@@ -225,6 +227,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_AcceptUnavailable"] = "Сначала создайте и проверьте подходящее предложение.";
         Values["Workout_Generation_SessionDayTitleFormat"] = "Тренировка: {0}";
         Values["Workout_Generation_PreviewReady"] = "Проверьте предварительный план перед применением.";
+        Values["Workout_Generation_OptionalActivitiesSkipped"] = "Некоторые выбранные активности не поместились. Силовой план всё равно можно применить.";
         Values["Workout_Generation_PreviewNotSaved"] = "Этот черновик нельзя применить. Проверьте данные и попробуйте ещё раз.";
         Values["Workout_Generation_CreateFailed"] = "Не удалось составить предварительный план. Попробуйте ещё раз.";
         Values["Workout_Generation_PlanChanged"] = "Текущий план изменился. Составьте новый черновик перед применением.";

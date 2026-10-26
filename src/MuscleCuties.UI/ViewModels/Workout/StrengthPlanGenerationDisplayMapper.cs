@@ -171,6 +171,7 @@ internal static class StrengthPlanGenerationDisplayMapper
             "Workout_Generation_Fallback_HighVolumeRequiresEstablishedResistanceHistory_Scheduled",
         "ReplacedWithGeneralStrength" => "Workout_Generation_Activity_ReplacedWithGeneralStrength",
         "DirectBeginnerGeneralStrengthSettingsApplied" => "Workout_Generation_DirectBeginnerGeneralStrength",
+        "HighVolumeConservativeStart" => "Workout_Generation_Reason_HighVolumeConservativeStart",
         "HeavyStrengthRequiresEstablishedHistoryFourExposuresKnownLoadAndCurrentFamiliarity" =>
             "Workout_Generation_Reason_StrengthHistory",
         "HighIntensityMainNeedsFourExposuresKnownManageableLoad" or
@@ -354,7 +355,8 @@ internal static class StrengthPlanGenerationDisplayMapper
         "OptionalThirtySecondsComfortableSwimmingThirtySecondsRest",
         "EstablishedActivityHistory",
         "ExplicitRestDay",
-        "RestDayIsNotAWorkoutSession"
+        "RestDayIsNotAWorkoutSession",
+        "HighVolumeConservativeStart"
     };
 
     public static bool IsInformationalDiagnosticCode(string? code) =>

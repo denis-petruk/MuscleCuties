@@ -1,5 +1,7 @@
 # Roadmap — PostgreSQL Migration & V1 Feature Release
 
+**2026-10-26 High-Volume Strength:** Preserve the selected high-volume activity on first use with conservative starting volume and effort. Verify the signed-in preview can apply when Yoga, Swimming, or Mobility is omitted for lack of space, and confirm the bounded modal footer on the narrow iPhone after the client update.
+
 **2026-10-25 account deletion:** Complete the server rollout, then verify Apple-account deletion through fresh authorization and password-account deletion on a signed-in iOS test account. Confirm local cleanup occurs only after server confirmation.
 
 **2026-10-25 profile follow-up:** Verify the removed duplicate micronutrient row leaves the Nutrition settings page reachable, and review the stronger light-theme selection/input contrast and actionable workout-save errors on a narrow iPhone.
@@ -8,7 +10,7 @@
 
 **2026-10-25 selected-decision preview:** Plan setup sends the loaded activity choices, available weekdays, saved durations, and automatic frequency allocations with each preview request. The weekday calendar checkmark has been corrected; verify its placement with the signed-in preview/apply path on a narrow iPhone and confirm current staging backend parity.
 
-**2026-10-26 mixed-plan policy:** Every selected activity must fit before Apply is available. Optional frequencies reduce when necessary, with at least two strength sessions per week; infeasible minimums keep the proposal limited. Same-day pairing uses activity compatibility and recovery rules without a daily workout time limit. Classified yoga defaults, HVS fallback, and repository catalog review checks pass. The signed-in iPhone 17e confirms a bounded preview sheet and compact rows. Next, verify Apply on a fully eligible selection, confirm the saved Train schedule, and check staging backend parity before production.
+**2026-10-26 mixed-plan policy:** The chosen strength sessions must fit before Apply is available. Optional activities fill safe openings and can be omitted without blocking Apply. One compatible cycling or gentle-yoga companion may share a strength day, with no more than two sessions that day. Same-day pairing uses recovery rules without a daily workout time limit. The signed-in iPhone 17e confirms a bounded preview sheet and compact rows. Next, verify Apply with omitted optional activities and confirm the saved Train schedule against staging before production.
 
 **2026-10-25 generation completion:** Review the bottom sheet on a signed-in narrow iPhone in English and Russian, including long preview scrolling, Close, limited Edit details, and successful Apply navigation. Block Apply when any selected activity cannot be scheduled. Verify yoga content and session duration inputs, HVS-to-General-Strength fallback from real history, reviewed strength catalog coverage, and staging backend parity with current code. Then run authenticated generate/apply acceptance before deployment approval.
 

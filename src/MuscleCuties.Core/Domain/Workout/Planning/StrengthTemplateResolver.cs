@@ -347,10 +347,12 @@ public static class StrengthTemplateResolver
         return activity switch
         {
             WorkoutActivityType.HighVolumeStrength => new StrengthSlotPrescription(
-                ActivityPrescriptionRule.HighVolumeAccessorySets,
+                activityPrescription.Sets == ActivityPrescriptionRule.HighVolumeStartingMainSets
+                    ? ActivityPrescriptionRule.HighVolumeStartingAccessorySets
+                    : ActivityPrescriptionRule.HighVolumeAccessorySets,
                 ActivityPrescriptionRule.AccessoryMinimumRepetitions,
                 ActivityPrescriptionRule.AccessoryMaximumRepetitions,
-                ActivityPrescriptionRule.InitialRepetitionsInReserve,
+                activityPrescription.RepetitionsInReserve,
                 ActivityPrescriptionRule.AccessoryRestSeconds),
             WorkoutActivityType.StrengthHighIntensity => new StrengthSlotPrescription(
                 ActivityPrescriptionRule.StrengthHighIntensityAccessorySets,

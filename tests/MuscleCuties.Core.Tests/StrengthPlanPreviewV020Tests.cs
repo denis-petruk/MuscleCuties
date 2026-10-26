@@ -229,7 +229,7 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
-    public async Task Mixed_Plan_Reduces_Optional_Frequency_But_Requires_Every_Activity_And_Two_Strength_Days()
+    public async Task Mixed_Plan_Reduces_Optional_Frequency_But_Keeps_Required_Strength_Sessions()
     {
         var profile = Profile();
         var selected = profile.SelectedActivityTypes!
@@ -324,6 +324,33 @@ public sealed class StrengthPlanPreviewV020Tests
                     sessions[1].IsHardSession));
             }
         });
+        Assert.Equal(ExpectedSavedProposalCount, store.SaveCount);
+    }
+
+    [Fact]
+    public async Task Optional_Activity_Without_A_Safe_Day_Does_Not_Block_The_Strength_Plan()
+    {
+        var twoDays = new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Thursday };
+        var profile = AddSelectedActivity(Profile(), WorkoutActivityType.Mobility) with
+        {
+            AvailableWeekdays = twoDays
+        };
+        var store = new ProposalStore();
+        var result = await new CreateStrengthPlanProposalV020UseCase(
+                new PreviewStrengthPlanV020UseCase(new Source(profile)), store)
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = twoDays });
+
+        Assert.True(result.IsPersisted);
+        Assert.Equal("Feasible", result.Preview.Status);
+        Assert.DoesNotContain(MixedScheduleIncompleteReason, result.Preview.LimitationCodes);
+        var schedule = result.Preview.MixedActivitySchedule!;
+        Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
+            schedule.Sessions.Count(session => session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength));
+        Assert.DoesNotContain(schedule.Sessions,
+            session => session.ActivityTypeId == (int)WorkoutActivityType.Mobility);
+        Assert.Contains(schedule.Activities, decision =>
+            decision.ActivityTypeId == (int)WorkoutActivityType.Mobility &&
+            decision.ScheduledSessionsPerWeek == 0);
         Assert.Equal(ExpectedSavedProposalCount, store.SaveCount);
     }
 
@@ -517,7 +544,7 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
-    public async Task High_Volume_Fallback_Uses_General_Strength_For_The_Mixed_Schedule()
+    public async Task High_Volume_Uses_The_Selected_Activity_In_The_Mixed_Schedule()
     {
         var source = new Source(Profile());
         var request = Request() with
@@ -535,16 +562,15 @@ public sealed class StrengthPlanPreviewV020Tests
             .ExecuteAsync(Guid.NewGuid(), request);
 
         Assert.Equal("Feasible", result.Status);
-        Assert.Equal((int)WorkoutActivityType.GeneralStrength, result.EffectiveActivityTypeId);
-        Assert.Equal(StrengthPlanPreviewRule.GeneralStrengthFallbackSource, result.FallbackSource);
-        Assert.Equal(StrengthPlanPreviewRule.HighVolumeRequiresEstablishedResistanceHistoryCode,
-            result.FallbackReasonCode);
+        Assert.Equal((int)WorkoutActivityType.HighVolumeStrength, result.EffectiveActivityTypeId);
+        Assert.Null(result.FallbackSource);
+        Assert.Null(result.FallbackReasonCode);
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
             result.Sessions.Count);
         Assert.Equal(result.Sessions.Count, result.MixedActivitySchedule!.Sessions.Count(session =>
-            session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength));
+            session.ActivityTypeId == (int)WorkoutActivityType.HighVolumeStrength));
         Assert.DoesNotContain(result.MixedActivitySchedule.Sessions, session =>
-            session.ActivityTypeId == (int)WorkoutActivityType.HighVolumeStrength);
+            session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength);
     }
 
     [Theory]
@@ -575,7 +601,7 @@ public sealed class StrengthPlanPreviewV020Tests
             .ExecuteAsync(Guid.NewGuid(), request);
 
         Assert.Equal("Feasible", result.Status);
-        Assert.Equal((int)WorkoutActivityType.GeneralStrength, result.EffectiveActivityTypeId);
+        Assert.Equal((int)WorkoutActivityType.HighVolumeStrength, result.EffectiveActivityTypeId);
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
             result.MixedActivitySchedule!.Sessions.Count);
         Assert.All(result.MixedActivitySchedule.Sessions, session =>
@@ -631,7 +657,7 @@ public sealed class StrengthPlanPreviewV020Tests
 
         Assert.Equal("Feasible", result.Status);
         Assert.DoesNotContain(MixedScheduleIncompleteReason, result.LimitationCodes);
-        Assert.Equal((int)WorkoutActivityType.GeneralStrength, result.EffectiveActivityTypeId);
+        Assert.Equal((int)WorkoutActivityType.HighVolumeStrength, result.EffectiveActivityTypeId);
         Assert.Contains(result.MixedActivitySchedule!.Sessions, session =>
             session.ActivityTypeId == (int)WorkoutActivityType.Yoga &&
             session.DurationMinutes == ActivitySessionDurationRule.GentleYogaDefaultMinutes);
