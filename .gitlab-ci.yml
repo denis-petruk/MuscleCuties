@@ -2,6 +2,7 @@ workflow:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
     - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "test-flight-beta"'
     - when: never
 
 stages:
@@ -71,6 +72,7 @@ deploy_staging_lambda:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
     - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "test-flight-beta"'
 
 verify_mobile_contracts:
   stage: client_verify
