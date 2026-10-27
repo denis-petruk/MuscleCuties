@@ -90,6 +90,7 @@ public sealed record StrengthPlanPreviewSourceV020(
     public TrainingExperienceLevel? ProfileTrainingExperience { get; init; }
     public IReadOnlyDictionary<int, int>? GoalPriorityByExerciseId { get; init; }
     public IReadOnlyDictionary<int, IReadOnlySet<string>>? MuscleGroupsByExerciseId { get; init; }
+    public IReadOnlyDictionary<string, ReviewedTemplateFloorDto>? TemplateVolumeFloors { get; init; }
     public int? ProfileVersion { get; init; }
     public string? InjuryFingerprint { get; init; }
     public Guid? ActivePlanId { get; init; }
@@ -101,6 +102,9 @@ public sealed record StrengthPlanPreviewSourceV020(
     public long AnswerVersion { get; init; }
     public SavedActivityAnswersDto? SavedAnswers { get; init; }
 }
+
+public sealed record ReviewedTemplateFloorDto(string TemplateId, int MinimumWorkingSets, int MinimumExercises,
+    IReadOnlyDictionary<string, int> MinimumSetsBySlotId);
 
 public interface IStrengthPlanPreviewSourceV020
 {
