@@ -2270,6 +2270,37 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                     b.ToTable("workout_exercise_logs", "app");
                 });
 
+            modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutInjuryEpisodeRecord", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("uuid").HasColumnName("id");
+                    b.Property<Guid>("UserId").HasColumnType("uuid").HasColumnName("user_id");
+                    b.Property<Guid>("SourceInjuryId").HasColumnType("uuid").HasColumnName("source_injury_id");
+                    b.Property<int>("SiteFlag").HasColumnType("integer").HasColumnName("site_flag");
+                    b.Property<DateTime>("RecordedAtUtc").HasColumnType("timestamp with time zone").HasColumnName("recorded_at_utc");
+                    b.Property<DateOnly?>("ClearedDate").HasColumnType("date").HasColumnName("cleared_date");
+                    b.Property<bool>("SourceDeleted").HasColumnType("boolean").HasColumnName("source_deleted");
+                    b.HasKey("Id");
+                    b.HasAlternateKey("UserId", "Id").HasName("uq_workout_injury_episodes_user_id_id");
+                    b.HasIndex("UserId").HasDatabaseName("ix_workout_injury_episodes_user_id");
+                    b.HasIndex("UserId", "SourceInjuryId", "ClearedDate", "SourceDeleted").HasDatabaseName("ix_injury_episodes_source_state");
+                    b.ToTable("workout_injury_episodes", "app");
+                });
+
+            modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutInjuryPrescriptionLinkRecord", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("uuid").HasColumnName("id");
+                    b.Property<Guid>("UserId").HasColumnType("uuid").HasColumnName("user_id");
+                    b.Property<Guid>("WorkoutDayExerciseId").HasColumnType("uuid").HasColumnName("workout_day_exercise_id");
+                    b.Property<Guid>("InjuryEpisodeId").HasColumnType("uuid").HasColumnName("injury_episode_id");
+                    b.Property<int>("OriginalExerciseId").HasColumnType("integer").HasColumnName("original_exercise_id");
+                    b.HasKey("Id");
+                    b.HasAlternateKey("UserId", "Id").HasName("uq_workout_injury_prescription_links_user_id_id");
+                    b.HasIndex("UserId").HasDatabaseName("ix_workout_injury_prescription_links_user_id");
+                    b.HasIndex("UserId", "InjuryEpisodeId").HasDatabaseName("ix_injury_links_episode");
+                    b.HasIndex("UserId", "WorkoutDayExerciseId", "InjuryEpisodeId").IsUnique().HasDatabaseName("ux_injury_links_prescription_episode");
+                    b.ToTable("workout_injury_prescription_links", "app");
+                });
+
             modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutInjuryLogRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3892,6 +3923,24 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .HasPrincipalKey("UserId", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutInjuryEpisodeRecord", b =>
+                {
+                    b.HasOne("MuscleCuties.Infrastructure.PostgreSql.Models.App.UserRecord", null)
+                        .WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                });
+
+            modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutInjuryPrescriptionLinkRecord", b =>
+                {
+                    b.HasOne("MuscleCuties.Infrastructure.PostgreSql.Models.App.UserRecord", null)
+                        .WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.HasOne("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutDayExerciseRecord", null)
+                        .WithMany().HasForeignKey("UserId", "WorkoutDayExerciseId")
+                        .HasPrincipalKey("UserId", "Id").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.HasOne("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutInjuryEpisodeRecord", null)
+                        .WithMany().HasForeignKey("UserId", "InjuryEpisodeId")
+                        .HasPrincipalKey("UserId", "Id").OnDelete(DeleteBehavior.Restrict).IsRequired();
                 });
 
             modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutInjuryLogRecord", b =>

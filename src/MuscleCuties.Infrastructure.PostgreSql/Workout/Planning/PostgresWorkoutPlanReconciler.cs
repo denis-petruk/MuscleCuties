@@ -38,7 +38,10 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
         var injuries = await context.WorkoutInjuryLogs.AsNoTracking().Where(row => row.UserId == userId)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         // Injury revisions require restoration provenance; do not consume the shared pending flag here.
-        if (state.SafetyRegenerationPending && injuries.Count > 0) return;
+        if (state.SafetyRegenerationPending &&
+            (injuries.Count > 0 || await context.WorkoutInjuryEpisodes.AsNoTracking()
+                .AnyAsync(episode => episode.UserId == userId, cancellationToken).ConfigureAwait(false)))
+            return;
         if (injuries.Any(injury => !string.Equals(injury.Status, "Cleared", StringComparison.OrdinalIgnoreCase) ||
             injury.ClearedDate is null || WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(injury.ClearedDate.Value, today)))
             return;
