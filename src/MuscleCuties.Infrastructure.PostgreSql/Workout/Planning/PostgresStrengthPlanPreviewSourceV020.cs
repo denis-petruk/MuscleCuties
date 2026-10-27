@@ -23,6 +23,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
             await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            await PlanningCatalogFingerprint.LockCatalogAsync(dbContext, cancellationToken).ConfigureAwait(false);
 
             var profile = await dbContext.UserProfiles.AsNoTracking()
                 .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken)
@@ -43,7 +44,6 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                 .ThenInclude(row => row.MuscleGroup)
                 .OrderBy(row => row.Id).ToListAsync(cancellationToken).ConfigureAwait(false);
             var goalTierWeights = await dbContext.GoalTierWeights.AsNoTracking()
-                .Where(row => row.Goal == goal)
                 .OrderBy(row => row.MuscleGroupId).ThenBy(row => row.Id)
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
             var goalPriorityByExerciseId = GoalSpecificAccessoryPriorityRule.Resolve(
@@ -51,7 +51,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                 definitions.SelectMany(definition => definition.MuscleContributions.Select(contribution =>
                     new PlanningMuscleContribution(contribution.Id, definition.Id,
                         contribution.MuscleGroupId, (double)contribution.Fraction))).ToArray(),
-                goalTierWeights.Select(weight => new PlanningGoalTierWeight(
+                goalTierWeights.Where(weight => weight.Goal == goal).Select(weight => new PlanningGoalTierWeight(
                     weight.Id, weight.Goal, weight.MuscleGroupId, weight.Tier)).ToArray());
             var reviewedSlots = ReviewedExerciseCatalogV020ReviewMap.MapSlots(definitions);
             var preferences = await dbContext.UserExercisePreferences.AsNoTracking()
@@ -141,6 +141,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                         .ToHashSet(StringComparer.OrdinalIgnoreCase)),
                 GoalPriorityByExerciseId = goalPriorityByExerciseId,
                 ProfileVersion = profile?.ConcurrencyVersion,
+                CatalogFingerprint = PlanningCatalogFingerprint.FromInputs(definitions, goalTierWeights, preferences),
                 InjuryFingerprint = PlanningInputFingerprint.Injuries(injuries),
                 ActivePlanId = activePlanId,
                 ActiveRevisionId = activeRevisionId,
