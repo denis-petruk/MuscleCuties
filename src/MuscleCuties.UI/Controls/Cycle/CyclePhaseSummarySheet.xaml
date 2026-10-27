@@ -231,9 +231,7 @@
                         Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Cycle_PhaseSummary_CloseButton}"
                         Command="{Binding ClosePhaseSummarySheetCommand}"
-                        HorizontalOptions="End"
-                        MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
-                        MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}" />
+                        HorizontalOptions="End" />
                 </Grid>
 
             </Grid>

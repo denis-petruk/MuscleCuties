@@ -124,7 +124,7 @@
                 <!-- ========== Activity intro ========== -->
                 <Grid RowDefinitions="*,Auto" RowSpacing="{StaticResource UiSpaceControl}" IsVisible="{Binding IsActivityIntro}">
                     <ScrollView>
-                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing20}" Padding="{StaticResource UiInsets0_16_0_8}">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing20}" Padding="{StaticResource UiInsets0_16_0_8}">
                             <Label
                                 Text="{Binding SelectedActivity.Title, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource SectionTitle}" FontSize="{StaticResource UiFontSize20}"
@@ -135,8 +135,10 @@
                                    Style="{StaticResource CaptionCentered}" />
                             <Label Grid.Row="2"
                                    Text="{Binding ActivityIntroIntensity, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_IntensityFormat}"
+                                   IsVisible="{Binding HasNoActivityPrescription}"
                                    Style="{StaticResource BodyCentered}" />
-                            <VerticalStackLayout Grid.Row="3" Spacing="{StaticResource UiSpacing14}"
+                            <Label Grid.Row="3" Text="{Binding ActivityPrescriptionText}" Style="{StaticResource BodyCentered}" LineBreakMode="WordWrap" />
+                            <VerticalStackLayout Grid.Row="4" Spacing="{StaticResource UiSpacing14}"
                                                  BindableLayout.ItemsSource="{Binding ExercisePreviewNames}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="x:String">
@@ -144,7 +146,7 @@
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
-                            <Border Grid.Row="4" Style="{StaticResource CardAccent}">
+                            <Border Grid.Row="5" Style="{StaticResource CardAccent}">
                                 <Label
                                     Text="{Binding CyclePhaseNote, Converter={StaticResource LocalizedStringConverter}}"
                                     Style="{StaticResource BodyLabel}" />
@@ -153,7 +155,7 @@
                     </ScrollView>
                     <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}">
                         <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_StartButton}"
-                                Command="{Binding StartActivityCommand}" IsVisible="{Binding IsTimedActivityRunning, Converter={StaticResource InvertedBoolConverter}}"
+                                Command="{Binding StartActivityCommand}" IsEnabled="{Binding CanStartActivity}" IsVisible="{Binding IsTimedActivityRunning, Converter={StaticResource InvertedBoolConverter}}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_BeginActivityAccessibility}" />
                         <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_FinishTimedActivity}"
                                 Command="{Binding FinishTimedActivityCommand}" IsVisible="{Binding IsTimedActivityRunning}" />

@@ -26,7 +26,8 @@ public sealed record MixedActivityScheduledSession(
     DayOfWeek Day,
     decimal DurationMinutes,
     bool IsHardSession,
-    int? DayOrder = null);
+    int? DayOrder = null,
+    ActivitySessionPrescription? OccurrencePrescription = null);
 
 public sealed record MixedActivityScheduleDecision(
     WorkoutActivityType Activity,
@@ -206,13 +207,46 @@ public static class MixedActivityWeekScheduleRule
             .OrderBy(session => DayIndex(session.Day))
             .ThenBy(session => ActivityOrder(session.Activity))
             .ToArray();
+        sessions = ApplyOccurrenceAdjustments(sessions, decisions.Where(decision => decision.IsEligible)
+            .GroupBy(decision => decision.EffectiveActivity ?? decision.Activity)
+            .ToDictionary(group => group.Key, group => group.First(decision => decision.IsEligible).Prescription));
 
         inputReasons.AddRange(WorkoutScheduleValidationRule.Validate(
             sessions.Select(session => new WorkoutScheduleValidationSession(
-                session.Day, session.Activity, session.IsHardSession)).ToArray(),
+                session.Day, session.Activity, session.IsHardSession, null, session.DurationMinutes,
+                decisions.FirstOrDefault(decision => (decision.EffectiveActivity ?? decision.Activity) == session.Activity)?.Prescription,
+                session.OccurrencePrescription)).ToArray(),
             requireStrengthMuscles: false));
         return new MixedActivityWeekScheduleResult(sessions,
             decisions.Select(decision => decision.ToDecision()).ToArray(), inputReasons);
+    }
+
+    public static MixedActivityScheduledSession[] ApplyOccurrenceAdjustments(
+        IEnumerable<MixedActivityScheduledSession> source,
+        IReadOnlyDictionary<WorkoutActivityType, ActivitySessionPrescription?> originals)
+    {
+        var sessions = source.Select(session => session with
+        {
+            DurationMinutes = session.OccurrencePrescription is not null &&
+                originals.TryGetValue(session.Activity, out var original) && original is not null
+                ? SameDayDemandAdjustmentRule.TotalMinutes(original) : session.DurationMinutes,
+            OccurrencePrescription = null
+        }).ToArray();
+        foreach (var day in sessions.Where(session => session.IsHardSession).GroupBy(session => session.Day))
+        {
+            if (day.Count() != MaximumSessionsPerDay) continue;
+            foreach (var session in day)
+            {
+                if (!originals.TryGetValue(session.Activity, out var original)) continue;
+                var adjusted = SameDayDemandAdjustmentRule.Adjust(original);
+                if (adjusted is null) continue;
+                var index = Array.IndexOf(sessions, session);
+                sessions[index] = session with { DurationMinutes = SameDayDemandAdjustmentRule.TotalMinutes(adjusted),
+                    OccurrencePrescription = adjusted };
+                break;
+            }
+        }
+        return sessions;
     }
 
     private static void PrepareActivity(ActivityDecisionBuilder decision,
@@ -482,7 +516,7 @@ public static class MixedActivityWeekScheduleRule
 
         var hardCandidates = candidates.Where(decision =>
             IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription)).ToArray();
-        ReduceTargets(hardCandidates, Math.Min(MaximumHardDaysPerWeek, availableDayCount));
+        ReduceTargets(hardCandidates, Math.Min(MaximumHardDaysPerWeek, availableDayCount) * MaximumSessionsPerDay);
 
         // Every non-hard activity can share a day with another distinct activity.
         // Placement still enforces the per-day and duplicate-activity constraints.
@@ -544,23 +578,11 @@ public static class MixedActivityWeekScheduleRule
         {
             var isHard = IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription);
             var hardDays = dayStates.Where(pair => pair.Value.HasHardSession).Select(pair => pair.Key).ToArray();
-            if (isHard && hardDays.Length >= MaximumHardDaysPerWeek)
-            {
-                decision.AddReason(GetHardDayConflictReason(decision.Activity));
-                decision.AddReason(HardDayLimitReached);
-                break;
-            }
-
             var candidates = availableDays.Where(day =>
             {
                 var state = dayStates[day];
                 if (state.Activities.Contains(decision.Activity)) return false;
-                if (isHard && state.HasHardSession) return false;
-                if (decision.Activity == WorkoutActivityType.Hiit &&
-                    state.Activities.Any(a => IsStrengthChoice(a) || a == WorkoutActivityType.RockClimbing))
-                    return false;
-                if ((IsStrengthChoice(decision.Activity) || decision.Activity == WorkoutActivityType.RockClimbing) &&
-                    state.Activities.Contains(WorkoutActivityType.Hiit))
+                if (isHard && !state.HasHardSession && hardDays.Length >= MaximumHardDaysPerWeek)
                     return false;
                 return state.Activities.Count == NoSessionsScheduled ||
                        CanShareDay(state, decision, isHard);
@@ -585,7 +607,7 @@ public static class MixedActivityWeekScheduleRule
                 .ThenBy(DayIndex)
                 .First();
 
-            dayStates[day].Add(decision.Activity, isHard);
+            dayStates[day].Add(decision, isHard);
             decision.ScheduledDays.Add(day);
         }
 
@@ -688,16 +710,16 @@ public static class MixedActivityWeekScheduleRule
         ActivityDecisionBuilder decision,
         bool isHard)
     {
-        if (dayState.Activities.Count != MaximumStrengthSessionsPerDay ||
-            dayState.HasHardSession && isHard)
+        if (dayState.Activities.Count != MaximumStrengthSessionsPerDay)
             return false;
 
         var existing = dayState.Activities.Single();
         var incoming = decision.EffectiveActivity ?? decision.Activity;
         return existing != incoming &&
                !(IsStrengthChoice(existing) && IsStrengthChoice(incoming)) &&
-               !(existing == WorkoutActivityType.Hiit && (IsStrengthChoice(incoming) || incoming == WorkoutActivityType.RockClimbing)) &&
-               !(incoming == WorkoutActivityType.Hiit && (IsStrengthChoice(existing) || existing == WorkoutActivityType.RockClimbing));
+               (!dayState.HasHardSession || !isHard ||
+                SameDayDemandAdjustmentRule.Adjust(dayState.Decision!.Prescription) is not null ||
+                SameDayDemandAdjustmentRule.Adjust(decision.Prescription) is not null);
     }
 
     private static bool IsStrengthCompanion(WorkoutActivityType activity, bool isHard) =>
@@ -738,10 +760,12 @@ public static class MixedActivityWeekScheduleRule
     {
         public bool HasHardSession { get; private set; }
         public HashSet<WorkoutActivityType> Activities { get; } = [];
+        public ActivityDecisionBuilder? Decision { get; private set; }
 
-        public void Add(WorkoutActivityType activity, bool isHard)
+        public void Add(ActivityDecisionBuilder decision, bool isHard)
         {
-            Activities.Add(activity);
+            Activities.Add(decision.EffectiveActivity ?? decision.Activity);
+            Decision ??= decision;
             HasHardSession |= isHard;
         }
     }

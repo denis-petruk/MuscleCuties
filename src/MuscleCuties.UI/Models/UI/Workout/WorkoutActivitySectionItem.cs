@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Maui.Graphics;
 
 using MuscleCuties.UI.Resources.Styles;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 
@@ -35,6 +36,7 @@ public class WorkoutActivitySectionItem : ObservableObject, IEnumerable<WorkoutE
     public string Subtitle { get; init; } = string.Empty;
     public string MetricText { get; init; } = string.Empty;
     public string SummaryText { get; init; } = string.Empty;
+    public ActivitySessionPrescriptionOutputV020? Prescription { get; init; }
     public Color ActivityBackground { get; init; } = AppThemeResources.GetRequired<Color>("Transparent");
     public Color ActivityTextColor { get; init; } = AppThemeResources.GetRequired<Color>("TextPrimary");
     public ObservableCollection<WorkoutExerciseItem> Exercises { get; init; } = new();
