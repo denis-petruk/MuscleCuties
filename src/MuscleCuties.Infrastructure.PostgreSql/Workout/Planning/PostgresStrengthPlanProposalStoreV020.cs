@@ -21,7 +21,6 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
     private const string ActiveStatus = "Active";
     private const string ClosedStatus = "Closed";
     private const int InitialAnswerVersion = 0;
-    private const int CompletedWorkoutPercent = 100;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<StrengthPlanProposalCreatedV020> SaveAsync(Guid userId, StrengthPlanPreviewRequestV020 request,
@@ -29,7 +28,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(preview);
-        if (userId == Guid.Empty ||
+        if (userId == Guid.Empty || request.DraftPreferences is null ||
             !string.Equals(preview.Status, "Feasible", StringComparison.Ordinal) ||
             preview.MixedActivitySchedule?.Sessions is not { Count: > 0 } ||
             preview.PolicyId != StrengthPlanPreviewRule.PolicyId ||
@@ -45,6 +44,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
             await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            await PlanningCatalogFingerprint.LockCatalogAsync(dbContext, cancellationToken).ConfigureAwait(false);
 
             var now = DateTime.UtcNow;
             var prior = await dbContext.WorkoutPlanProposalsV02
@@ -73,6 +73,9 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             if (profileVersion is null)
                 throw new InvalidOperationException("A planning profile is required to persist a proposal.");
             if (preview.SourceProfileVersion != profileVersion)
+                throw new WorkoutPlanningInputsChangedException();
+            if (string.IsNullOrWhiteSpace(preview.SourceCatalogFingerprint) ||
+                preview.SourceCatalogFingerprint != await PlanningCatalogFingerprint.LoadAsync(dbContext, userId, cancellationToken).ConfigureAwait(false))
                 throw new WorkoutPlanningInputsChangedException();
             var injuries = await dbContext.WorkoutInjuryLogs.AsNoTracking()
                 .Where(row => row.UserId == userId)
@@ -199,21 +202,35 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             var newlyUnsafe = answers.ActivityEligibilityEvidence.Where(item =>
                 Classify(item) == ActivitySafetyAnswerState.Unsafe &&
                 Classify(priorByActivity.GetValueOrDefault(item.Activity)) != ActivitySafetyAnswerState.Unsafe).ToArray();
+            var currentByActivity = answers.ActivityEligibilityEvidence.ToDictionary(item => item.Activity);
+            var safetyNoLongerEstablished = previous.ActivityEligibilityEvidence.Where(item =>
+                Classify(item) == ActivitySafetyAnswerState.Safe &&
+                Classify(currentByActivity.GetValueOrDefault(item.Activity)) == ActivitySafetyAnswerState.Unknown).ToArray();
             var newlySafe = answers.ActivityEligibilityEvidence.Any(item =>
                 Classify(item) == ActivitySafetyAnswerState.Safe &&
-                Classify(priorByActivity.GetValueOrDefault(item.Activity)) == ActivitySafetyAnswerState.Unsafe);
+                Classify(priorByActivity.GetValueOrDefault(item.Activity)) != ActivitySafetyAnswerState.Safe);
+            // The saved answer contract does not retain the selected underlying HIIT activity.
+            // Without it, the Core eligibility rule cannot establish safety, even when the
+            // submitted weeks and history look sufficient. Suppress until canonical regeneration.
+            var hiitEvidenceChanged = JsonSerializer.Serialize(previous.HiitEligibilityEvidence, JsonOptions) !=
+                JsonSerializer.Serialize(answers.HiitEligibilityEvidence, JsonOptions) ||
+                SerializeUnderlyingHistories(previous.ActivityEligibilityEvidence) !=
+                SerializeUnderlyingHistories(answers.ActivityEligibilityEvidence);
             var activePlanId = await dbContext.WorkoutPlans.AsNoTracking().Where(row => row.UserId == userId && row.IsActive)
                 .Select(row => (Guid?)row.Id).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-            if (newlySafe && activePlanId is not null)
+            if ((newlySafe || newlyUnsafe.Length > 0 || safetyNoLongerEstablished.Length > 0 || hiitEvidenceChanged) && activePlanId is not null)
                 state.SafetyRegenerationPending = true;
-            if (newlyUnsafe.Length == 0 && !newlySafe)
+            if (newlyUnsafe.Length == 0 && safetyNoLongerEstablished.Length == 0 && !newlySafe && !hiitEvidenceChanged)
                 await WorkoutSessionAccountLock.RequireNoPreviewAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
-            else if (activePlanId is { } planId)
+            else if ((newlyUnsafe.Length > 0 || safetyNoLongerEstablished.Length > 0 || hiitEvidenceChanged) && activePlanId is { } planId)
             {
-                await SuppressUnsafeActivitiesAsync(userId, planId, newlyUnsafe, cancellationToken).ConfigureAwait(false);
-                safetyPlanChanged = true;
+                var unsafeActivityIds = newlyUnsafe.Concat(safetyNoLongerEstablished).Select(item =>
+                    (int)WorkoutActivityContractMapper.ToCore(item.Activity)).Distinct().ToList();
+                if (hiitEvidenceChanged) unsafeActivityIds.Add((int)WorkoutActivityType.Hiit);
+                safetyPlanChanged = await SuppressUnsafeActivitiesAsync(userId, planId, unsafeActivityIds, cancellationToken)
+                    .ConfigureAwait(false);
             }
-            if (newlyUnsafe.Length > 0 || newlySafe)
+            if (newlyUnsafe.Length > 0 || safetyNoLongerEstablished.Length > 0 || newlySafe || hiitEvidenceChanged)
             {
                 var previews = await dbContext.WorkoutPlanProposalsV02.Where(item => item.UserId == userId && item.Status == ProposedStatus && item.LeaseId != null)
                     .ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -236,14 +253,19 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
         : JsonSerializer.Deserialize<SavedActivityAnswersDto>(json, JsonOptions)
           ?? throw new InvalidOperationException("Saved activity answers are invalid.");
 
+    private static string SerializeUnderlyingHistories(IEnumerable<ActivityEligibilityInputV020> answers) =>
+        JsonSerializer.Serialize(answers.Where(item => HiitEligibilityEvidenceRule.IsSupportedUnderlyingCardioActivity(
+                WorkoutActivityContractMapper.ToCore(item.Activity)))
+            .OrderBy(item => item.Activity).Select(item => new { item.Activity, item.ActivityHistory }), JsonOptions);
+
     private static ActivitySafetyAnswerState Classify(ActivityEligibilityInputV020? item) => item is null
         ? ActivitySafetyAnswerState.Unknown
         : ActivitySafetyAnswersRule.Classify(new ActivitySafetyAnswers(WorkoutActivityContractMapper.ToCore(item.Activity),
             item.HasSwimmingFacilityAccess, item.CanSwimIndependently, item.WantsContinuousSwimming,
             item.HasRopeClimbingCompetence, item.AppropriateClimbingInstructionAvailable, item.IsDemandingYogaContent));
 
-    private async Task SuppressUnsafeActivitiesAsync(Guid userId, Guid planId,
-        IReadOnlyList<ActivityEligibilityInputV020> unsafeAnswers, CancellationToken cancellationToken)
+    private async Task<bool> SuppressUnsafeActivitiesAsync(Guid userId, Guid planId,
+        IReadOnlyList<int> activityIds, CancellationToken cancellationToken)
     {
         var state = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
             .SingleAsync(item => item.UserId == userId, cancellationToken).ConfigureAwait(false);
@@ -253,18 +275,22 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
         catch (TimeZoneNotFoundException) { throw new InvalidOperationException("Establish the account timezone first."); }
         catch (InvalidTimeZoneException) { throw new InvalidOperationException("Establish the account timezone first."); }
         var today = WorkoutAccountCalendarRule.LocalDate(DateTimeOffset.UtcNow, zone);
-        var activityIds = unsafeAnswers.Select(item => (int)WorkoutActivityContractMapper.ToCore(item.Activity)).ToArray();
         var days = await dbContext.WorkoutDays.Where(day => day.UserId == userId && day.WorkoutPlanId == planId &&
                 day.Date >= today && day.WorkoutType != nameof(WorkoutType.Rest) &&
                 (day.ActivityTypeId == null || activityIds.Contains(day.ActivityTypeId.Value)) &&
-                !dbContext.WorkoutLogs.Any(log => log.UserId == userId && log.WorkoutDayId == day.Id &&
-                    log.CompletionPercent >= CompletedWorkoutPercent))
+                !dbContext.WorkoutCompletionDayCredits.Any(credit => credit.UserId == userId &&
+                    credit.SourceWorkoutLogId != null && dbContext.WorkoutLogs.Any(log =>
+                        log.UserId == userId && log.Id == credit.SourceWorkoutLogId && log.WorkoutDayId == day.Id)) &&
+                !dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId &&
+                    session.PlannedWorkoutDayId == day.Id && session.CompletedAt != null))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
+        var changed = days.Any(day => !day.IsRemovedBySafety);
         foreach (var day in days)
         {
             day.IsRemovedBySafety = true;
             day.SafetyActivityTypeId ??= day.ActivityTypeId ?? activityIds[0];
         }
+        return changed;
     }
 
     private async Task<PlanningLeaseResult> UpdateLeaseAsync(Guid userId, PlanningLeaseRequest request, bool close,

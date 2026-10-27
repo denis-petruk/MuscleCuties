@@ -20,8 +20,6 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
     private const int MinimumExerciseSetCount = 1;
     private const int MinimumRepetitionCount = 1;
     private const int MondayWeekOrderOffset = 1;
-    private const int CompletionLookupWindowDays = 2;
-    private const int CompletedWorkoutPercent = 100;
     private const decimal MinimumPlannedActivityDurationMinutes = 0m;
     private const string PlannedDurationMinuteFormat = "0.#";
     private const string MixedActivityPlanName = "Mixed activity plan";
@@ -66,6 +64,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
             await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            await PlanningCatalogFingerprint.LockCatalogAsync(dbContext, cancellationToken).ConfigureAwait(false);
 
             var proposal = await dbContext.WorkoutPlanProposalsV02.SingleOrDefaultAsync(
                     item => item.UserId == userId && item.Id == request.ProposalId,
@@ -107,7 +106,9 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                 .Where(row => row.UserId == userId)
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
             if (proposalSnapshot.SourceHistoryFingerprint != PlanningInputFingerprint.Hash(currentLogs) ||
-                proposalSnapshot.SourceInjuryFingerprint != PlanningInputFingerprint.Injuries(currentInjuries))
+                proposalSnapshot.SourceInjuryFingerprint != PlanningInputFingerprint.Injuries(currentInjuries) ||
+                string.IsNullOrWhiteSpace(proposalSnapshot.SourceCatalogFingerprint) ||
+                proposalSnapshot.SourceCatalogFingerprint != await PlanningCatalogFingerprint.LoadAsync(dbContext, userId, cancellationToken).ConfigureAwait(false))
                 return await FinishAsync(transaction, new(StaleStatus, proposal.PlanId, null,
                     PlanningInputsChangedSinceProposalCode), cancellationToken).ConfigureAwait(false);
             var planningState = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
@@ -169,14 +170,12 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                     WorkoutPreferencesChangedSinceProposalCode), cancellationToken).ConfigureAwait(false);
             }
             var draft = inputSnapshot.Request.DraftPreferences;
-            if (draft is not null && (!WorkoutPreferencesRule.IsValid(draft.ActivityTypes, draft.AvailableWeekdays,
+            if (draft is null || !WorkoutPreferencesRule.IsValid(draft.ActivityTypes, draft.AvailableWeekdays,
                     draft.ActivitySessionDurationsMinutes, draft.RequestedSessionsPerWeek) ||
-                !WorkoutPreferencesRule.IsValidEquipmentLevel(draft.EquipmentLevel)))
+                !WorkoutPreferencesRule.IsValidEquipmentLevel(draft.EquipmentLevel))
                 return await FinishAsync(transaction, new(InvalidProposalStatus, null, null,
                     DraftPreferencesInvalidCode), cancellationToken).ConfigureAwait(false);
-            var availableWeekdays = draft is null
-                ? ParseAvailableWeekdays(currentProfile.AvailableWorkoutWeekdaysJson)
-                : draft.AvailableWeekdays.Select(value => (DayOfWeek)value).ToHashSet();
+            var availableWeekdays = draft.AvailableWeekdays.Select(value => (DayOfWeek)value).ToHashSet();
 
             if (!TryGetMixedSchedule(proposalSnapshot, availableWeekdays, out var scheduleSessions) ||
                 !TryGetStrengthSessions(proposalSnapshot.Sessions, scheduleSessions, availableWeekdays,
@@ -224,17 +223,12 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             var today = WorkoutAccountCalendarRule.LocalDate(now, zone);
             if (inputSnapshot.Request.LocalDate != today)
                 return await FinishAsync(transaction, new(StaleStatus, proposal.PlanId, null, PlanningDateChangedCode), cancellationToken).ConfigureAwait(false);
-            var completedPlannedToday = await dbContext.WorkoutLogs.AsNoTracking().AnyAsync(
-                row => row.UserId == userId && row.Date == today && row.CompletionPercent >= CompletedWorkoutPercent &&
-                       dbContext.WorkoutDays.Any(day => day.UserId == userId && day.Id == row.WorkoutDayId &&
-                           day.WorkoutType != nameof(WorkoutType.Rest)),
-                cancellationToken).ConfigureAwait(false);
-            var recentCompletions = await dbContext.WorkoutSessionLogs.AsNoTracking()
-                .Where(row => row.UserId == userId && row.CompletedAt != null &&
-                              row.CompletedAt >= nowUtc.AddDays(-CompletionLookupWindowDays) && row.CompletedAt <= nowUtc)
-                .Select(row => row.CompletedAt!.Value).ToListAsync(cancellationToken).ConfigureAwait(false);
-            var completedToday = completedPlannedToday || recentCompletions.Any(completed =>
-                WorkoutAccountCalendarRule.LocalDate(new DateTimeOffset(DateTime.SpecifyKind(completed, DateTimeKind.Utc)), zone) == today);
+            // Exercise logs can reach 100% before FinishSession, and legacy session
+            // completion timestamps can be client supplied. Credits are committed with
+            // verified completion and preserve the calendar date earned at that time.
+            var completedToday = await dbContext.WorkoutCompletionDayCredits.AsNoTracking()
+                .AnyAsync(row => row.UserId == userId && row.LocalDate == today, cancellationToken)
+                .ConfigureAwait(false);
             var firstDate = WorkoutPlanStartDateRule.FindNextEligibleDate(now, zone, availableWeekdays, completedToday);
             if (firstDate is null)
                 return await FinishAsync(transaction, new(LimitedStatus, null, null, NoEligibleWorkoutDayCode), cancellationToken).ConfigureAwait(false);
@@ -526,30 +520,6 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         _ => throw new ArgumentOutOfRangeException(nameof(activity), activity, "Unsupported scheduled activity.")
     };
 
-    private static IReadOnlySet<DayOfWeek> ParseAvailableWeekdays(string? json)
-    {
-        try
-        {
-            using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "[]" : json);
-            if (document.RootElement.ValueKind != JsonValueKind.Array)
-                return new HashSet<DayOfWeek>();
-            return document.RootElement.EnumerateArray()
-                .Select(value => value.ValueKind switch
-                {
-                    JsonValueKind.String when Enum.TryParse<DayOfWeek>(value.GetString(), true, out var day) && Enum.IsDefined(day) => (DayOfWeek?)day,
-                    JsonValueKind.Number when value.TryGetInt32(out var number) && Enum.IsDefined(typeof(DayOfWeek), number) => (DayOfWeek?)number,
-                    _ => null
-                })
-                .Where(day => day.HasValue)
-                .Select(day => day!.Value)
-                .ToHashSet();
-        }
-        catch (JsonException)
-        {
-            return new HashSet<DayOfWeek>();
-        }
-    }
-
     private sealed record ProposalInputSnapshot(
         StrengthPlanPreviewRequestV020 Request,
         int ProfileVersion,
@@ -564,6 +534,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         IReadOnlyList<StrengthPlanPreviewSessionV020> Sessions,
         MixedActivityScheduleV020? MixedActivitySchedule = null,
         string? SourceHistoryFingerprint = null,
+        string? SourceCatalogFingerprint = null,
         string? SourceInjuryFingerprint = null,
         long SourceTimeZoneVersion = 0,
         long SourceExperienceVersion = 0,
