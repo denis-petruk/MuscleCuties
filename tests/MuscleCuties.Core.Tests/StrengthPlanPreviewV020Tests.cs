@@ -524,7 +524,7 @@ public sealed class StrengthPlanPreviewV020Tests
     [Theory]
     [InlineData(WorkoutActivityType.Cycling)]
     [InlineData(WorkoutActivityType.Running)]
-    public async Task Explicit_Hiit_Evidence_Uses_Selected_Modality_And_Replaces_One_Continuous_Session(
+    public async Task Unanchored_Hiit_Evidence_Does_Not_Establish_Rolling_Eligibility(
         WorkoutActivityType underlyingActivity)
     {
         var source = AddSelectedActivity(Profile(), underlyingActivity, WorkoutActivityType.Hiit);
@@ -539,16 +539,30 @@ public sealed class StrengthPlanPreviewV020Tests
 
         var hiitDecision = Assert.Single(result.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit);
-        var cardioDecision = Assert.Single(result.MixedActivitySchedule.Activities,
-            decision => decision.ActivityTypeId == (int)underlyingActivity);
-        Assert.Equal("Scheduled", hiitDecision.Disposition);
-        Assert.Equal(underlyingActivity.ToString(), hiitDecision.Modality);
-        Assert.Equal(ActivityPrescriptionRule.HiitMaximumSessionsPerWeek,
-            hiitDecision.ScheduledSessionsPerWeek);
-        Assert.Equal(ActivityPrescriptionRule.EstablishedCardioSessionsPerWeekWithoutBaseline -
-                     ActivityPrescriptionRule.HiitMaximumSessionsPerWeek,
-            cardioDecision.TargetSessionsPerWeek);
-        Assert.Contains("OneContinuousSessionReplacedByHiit", cardioDecision.ReasonCodes);
+        Assert.Equal("Blocked", hiitDecision.Disposition);
+        Assert.Contains("HiitEligibilityNotEstablishedByRequiredEvidence", hiitDecision.ReasonCodes);
+    }
+
+    [Fact]
+    public async Task Server_Stamped_Hiit_Evidence_Is_Valid_Only_On_Its_Account_Date()
+    {
+        var evidence = CompleteHiitEvidence(WorkoutActivityType.Cycling);
+        var answers = new SavedActivityAnswersDto(1, [], evidence)
+        {
+            HiitUnderlyingCardioActivity = WorkoutActivityDto.Cycling,
+            HiitCapture = new HiitEvidenceCaptureStamp(LocalDate, 1)
+        };
+        var source = AddSelectedActivity(Profile(), WorkoutActivityType.Cycling, WorkoutActivityType.Hiit) with
+        {
+            SavedAnswers = answers, TimeZoneVersion = 1, CurrentAccountLocalDate = LocalDate
+        };
+        var fresh = await new PreviewStrengthPlanV020UseCase(new Source(source)).ExecuteAsync(Guid.NewGuid(), Request());
+        var expired = await new PreviewStrengthPlanV020UseCase(new Source(source with
+            { CurrentAccountLocalDate = LocalDate.AddDays(1) })).ExecuteAsync(Guid.NewGuid(), Request());
+        Assert.Equal("Scheduled", Assert.Single(fresh.MixedActivitySchedule!.Activities,
+            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
+        Assert.Equal("Blocked", Assert.Single(expired.MixedActivitySchedule!.Activities,
+            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
     }
 
     [Fact]

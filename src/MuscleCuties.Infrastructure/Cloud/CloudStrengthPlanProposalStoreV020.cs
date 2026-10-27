@@ -9,6 +9,7 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
     private const string ProposalRoute = "/api/v1/workouts/plan/strength-proposals";
     private const string AcceptRouteFormat = "/api/v1/workouts/plan/strength-proposals/{0:D}/accept";
     private const string AnswersRoute = "/api/v1/workouts/plan/answers";
+    private const string HiitCaptureChallengeRoute = "/api/v1/workouts/plan/hiit-evidence-challenge";
     private const long InitialLeaseFence = 0;
     private const string PreviewAlreadyOpenCode = "WorkoutPreviewOpen";
     private const string PlanningInputsChangedCode = "WorkoutPlanningInputsChanged";
@@ -68,6 +69,13 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
     {
         var response = await apiClient.GetAsync<SavedActivityAnswersDto>(AnswersRoute, cancellationToken).ConfigureAwait(false);
         return RequirePlanningData(response, "read workout activity answers");
+    }
+
+    public async Task<HiitEvidenceCaptureChallengeDto> IssueHiitCaptureChallengeAsync(CancellationToken cancellationToken = default)
+    {
+        var response = await apiClient.SendMutationAsync<object, HiitEvidenceCaptureChallengeDto>(
+            HttpMethod.Post, HiitCaptureChallengeRoute, new { }, Guid.NewGuid().ToString("N"), cancellationToken).ConfigureAwait(false);
+        return RequirePlanningData(response, "start HIIT evidence capture");
     }
 
     public async Task<SavedActivityAnswersDto> SaveAnswersAsync(SaveActivityAnswersRequest request,

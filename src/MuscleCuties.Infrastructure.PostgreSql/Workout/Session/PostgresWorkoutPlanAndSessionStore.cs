@@ -155,6 +155,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 schedule,
                 previews) { InProgressWorkout = inProgressWorkout is null ? null : inProgressWorkout with { IsInProgress = true } };
         }).ConfigureAwait(false);
+    }
 
     public async Task RescheduleAsync(
         Guid userId,

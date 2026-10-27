@@ -38,15 +38,6 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         ArgumentNullException.ThrowIfNull(request);
         if (userId == Guid.Empty)
             return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null));
-        var sourceData = await source.LoadAsync(userId, cancellationToken).ConfigureAwait(false);
-        return EvaluateFromSnapshot(request, sourceData);
-    }
-
-    /// <summary>Evaluates a trusted snapshot supplied by a transaction-owning orchestration.</summary>
-    public static StrengthPlanPreviewResponseV020 EvaluateFromSnapshot(StrengthPlanPreviewRequestV020 request,
-        StrengthPlanPreviewSourceV020? sourceData)
-    {
-        ArgumentNullException.ThrowIfNull(request);
         if (request.DraftPreferences is { } draft)
         {
             if (!WorkoutPreferencesRule.IsValid(draft.ActivityTypes, draft.AvailableWeekdays,
@@ -62,11 +53,6 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
                 ExcludedExerciseIds = draft.ExcludedExerciseIds?.ToHashSet()
             };
         }
-        if (userId == Guid.Empty)
-            return StrengthPlanPreviewMapperV020.ToResponse(
-                StrengthPlanPreviewRule.Evaluate(null, null));
-
-
         if (sourceData is not null)
         {
             if (sourceData.SavedAnswers is { } savedAnswers)

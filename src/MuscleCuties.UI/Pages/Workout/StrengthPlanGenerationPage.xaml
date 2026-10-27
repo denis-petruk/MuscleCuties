@@ -187,6 +187,10 @@
                     </VerticalStackLayout>
 
                     <!-- Clearance Confirmation -->
+                    <HorizontalStackLayout>
+                        <CheckBox IsChecked="{Binding HiitEvidenceCapture.ConfirmCurrentWeeks}" IsEnabled="{Binding CanEditInputs}" />
+                        <Label Text="{loc:LocalizedText Workout_Generation_HiitConfirmCurrentWeeks}" LineBreakMode="WordWrap" />
+                    </HorizontalStackLayout>
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                         <Label Text="{loc:LocalizedText Workout_Generation_HiitClearanceConfirmation}"
                                Style="{StaticResource FormFieldLabel}"

@@ -276,17 +276,6 @@ public sealed class WorkoutInjuryLogRecord : ITenantRecord
 }
 
 // An episode keeps its identity across clearance and survives deletion of its source log.
-public sealed class WorkoutInjuryEpisodeRecord : ITenantRecord
-{
-    public Guid Id { get; set; }
-    public Guid UserId { get; set; }
-    public Guid SourceInjuryId { get; set; }
-    public int SiteFlag { get; set; }
-    public DateTime RecordedAtUtc { get; set; }
-    public DateOnly? ClearedDate { get; set; }
-    public bool SourceDeleted { get; set; }
-}
-
 public sealed class WorkoutInjuryPrescriptionLinkRecord : ITenantRecord
 {
     public Guid Id { get; set; }
@@ -378,7 +367,6 @@ public sealed class WorkoutDayExerciseRecord : ITenantRecord
     // Null for legacy or non-injury prescriptions; never infer provenance from a replacement.
     public int? InjuryOriginalExerciseId { get; set; }
     public DateOnly? InjuryRestorationRequiredFromDate { get; set; }
-    public string? PlanningSlotId { get; set; }
     public Guid? OriginWorkoutDayExerciseId { get; set; }
     public int Sets { get; set; }
     public int OptionalSets { get; set; }
