@@ -63,7 +63,7 @@ public sealed class StrengthPlanPreviewV020Tests
     [Fact]
     public void Automatic_Preview_Retains_Selected_Current_Style_Without_Asking_For_Choice()
     {
-        var style = WorkoutActivityDto.HighVolumeStrength;
+        var style = WorkoutActivityDto.GeneralStrength;
         var selected = new HashSet<int>
         {
             (int)WorkoutActivityType.GeneralStrength,
@@ -76,7 +76,7 @@ public sealed class StrengthPlanPreviewV020Tests
             request, source, style);
 
         Assert.Equal("Feasible", result.Status);
-        Assert.Equal((int)WorkoutActivityType.HighVolumeStrength, result.EffectiveActivityTypeId);
+        Assert.Equal((int)WorkoutActivityType.GeneralStrength, result.EffectiveActivityTypeId);
         Assert.False(result.StrengthStyleChoiceRequired);
     }
 
