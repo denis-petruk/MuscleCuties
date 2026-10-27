@@ -65,6 +65,7 @@ public sealed record StrengthPlanPreviewResponseV020(
     public IReadOnlyDictionary<int, string[]>? SourceMuscleGroupsByExerciseId { get; init; }
     public IReadOnlyList<int> FittingStrengthStyleIds { get; init; } = [];
     public bool StrengthStyleChoiceRequired { get; init; }
+    public string? InjuryProvenanceFingerprint { get; init; }
 }
 
 public sealed record MixedActivityScheduleSessionV020(
