@@ -19,6 +19,7 @@ public sealed record WorkoutListEntry(
     public bool IsOptional { get; init; }
     public bool IsEasierAlternative { get; init; }
     public bool IsInProgress { get; init; }
+    public int? DayOrder { get; init; }
 }
 
 public sealed record WorkoutScheduleEntry(

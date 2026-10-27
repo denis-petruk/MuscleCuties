@@ -73,6 +73,14 @@ public sealed class PlanningLeasePersistenceTests
                 CancellationToken.None);
             Xunit.Assert.Equal("Stale", staleApply.Status);
             Xunit.Assert.Equal("PreviewLeaseExpiredOrInvalid", staleApply.LimitationCode);
+            var wrongVersion = await new PostgresAcceptStrengthPlanProposalStoreV020(deviceA).AcceptAsync(userId,
+                new AcceptStrengthPlanProposalRequestV020(proposalId, leases[1].LeaseId, leases[1].Fence,
+                    InitialProposalVersion + 1), CancellationToken.None);
+            Xunit.Assert.Equal("Stale", wrongVersion.Status);
+            var invalidSnapshot = await new PostgresAcceptStrengthPlanProposalStoreV020(deviceA).AcceptAsync(userId,
+                new AcceptStrengthPlanProposalRequestV020(proposalId, leases[1].LeaseId, leases[1].Fence,
+                    InitialProposalVersion), CancellationToken.None);
+            Xunit.Assert.Equal("InvalidProposal", invalidSnapshot.Status);
             Xunit.Assert.False(await setup.WorkoutPlans.AsNoTracking().AnyAsync(item => item.UserId == userId));
             Xunit.Assert.False(await setup.WorkoutPlanRevisionsV02.AsNoTracking().AnyAsync(item => item.UserId == userId));
             var persisted = await setup.WorkoutPlanProposalsV02.AsNoTracking().SingleAsync(item => item.Id == proposalId);

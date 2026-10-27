@@ -1080,7 +1080,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             var activeDays = scheduledDays
                 .Where(d => !string.Equals(d.WorkoutType, nameof(WorkoutType.Rest), StringComparison.OrdinalIgnoreCase))
                 .ToList();
-            var visibleDays = activeDays.Count > 0 ? activeDays : [scheduledDays[0]];
+            var visibleDays = activeDays.Count > 0 ? activeDays.OrderBy(day => day.DayOrder).ToList() : [scheduledDays[0]];
             foreach (var day in visibleDays)
             {
                 var latestLog = latestLogByDayId.GetValueOrDefault(day.Id);
@@ -1114,7 +1114,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     false,
                     latestLog?.CompletionPercent >= 100,
                     exList.Count,
-                    activityCount) { IsOptional = day.IsOptional, IsEasierAlternative = day.IsEasierAlternative });
+                    activityCount) { IsOptional = day.IsOptional, IsEasierAlternative = day.IsEasierAlternative, DayOrder = day.DayOrder });
             }
         }
 

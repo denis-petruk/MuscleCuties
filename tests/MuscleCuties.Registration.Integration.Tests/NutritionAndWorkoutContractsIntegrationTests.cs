@@ -74,6 +74,21 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             Xunit.Assert.True((await database.WorkoutAccountPlanningStates.AsNoTracking()
                 .SingleAsync(row => row.UserId == userId)).PromotionPending);
 
+            // Concurrent reconciliation and a second device takeover must leave the
+            // durable revision pending while either device holds the live lease.
+            var openId = await database.WorkoutPlanProposalsV02.AsNoTracking()
+                .Where(row => row.UserId == userId).Select(row => row.Id).SingleAsync();
+            await using var workerDb = new PostgresDbContext(options);
+            await using var takeoverDb = new PostgresDbContext(options);
+            var reconcileTask = new PostgresWorkoutPlanReconciler(workerDb).ReconcileAsync(userId);
+            var takeoverTask = new PostgresStrengthPlanProposalStoreV020(takeoverDb)
+                .TakeoverAsync(userId, openId, CancellationToken.None);
+            await Task.WhenAll(reconcileTask, takeoverTask);
+            Xunit.Assert.Equal(WorkoutReconciliationOutcome.Deferred, await reconcileTask);
+            Xunit.Assert.Equal("Active", (await takeoverTask).Status);
+            Xunit.Assert.True((await database.WorkoutAccountPlanningStates.AsNoTracking()
+                .SingleAsync(row => row.UserId == userId)).PromotionPending);
+
             var openProposal = await database.WorkoutPlanProposalsV02.SingleAsync(row => row.UserId == userId);
             openProposal.Status = "Expired";
             openProposal.DecidedAtUtc = now;

@@ -136,6 +136,8 @@ public static partial class UiTextCatalog
         English["Workout_Generation_MixedScheduleExplanation"] = "This schedule places your selected activities across the available weekdays.";
         English["Workout_Generation_ScheduleEmpty"] = "No activity sessions could be placed on the saved available weekdays.";
         English["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";
+        English["Workout_Generation_OrderedActivityFormat"] = "{0}. {1}";
+        English["Workout_Generation_ActivityOrderNote"] = "Numbers show the recommended order for activities on the same day.";
         English["Workout_Generation_MixedSessionDurationFormat"] = "{0} min";
         English["Workout_Generation_MixedSessionDetailsFormat"] = "{0} · {1}";
         English["Workout_Generation_HigherEffortSession"] = "Higher-effort session";

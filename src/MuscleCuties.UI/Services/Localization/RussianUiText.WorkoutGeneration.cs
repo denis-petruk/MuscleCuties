@@ -136,6 +136,8 @@ internal static partial class RussianUiText
         Values["Workout_Generation_MixedScheduleExplanation"] = "Выбранные активности распределяются по доступным дням недели.";
         Values["Workout_Generation_ScheduleEmpty"] = "Не удалось разместить занятия в сохранённые доступные дни недели.";
         Values["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";
+        Values["Workout_Generation_OrderedActivityFormat"] = "{0}. {1}";
+        Values["Workout_Generation_ActivityOrderNote"] = "Числа показывают рекомендуемый порядок активностей в течение дня.";
         Values["Workout_Generation_MixedSessionDurationFormat"] = "{0} мин";
         Values["Workout_Generation_MixedSessionDetailsFormat"] = "{0} · {1}";
         Values["Workout_Generation_HigherEffortSession"] = "Тренировка с повышенной нагрузкой";

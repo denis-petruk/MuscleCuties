@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.Server.Workout.ActiveSession;
 
@@ -49,6 +50,8 @@ public static class WorkoutActiveSessionEndpointMappings
                     body.MeasuredSeconds, body.Pause), cancellationToken).ConfigureAwait(false);
                 return result is null ? Results.NotFound() : Results.Ok(result);
             }
+            catch (WorkoutTimingIntervalExpiredException exception)
+            { return Results.Conflict(new { code = "WorkoutTimingIntervalExpired", message = exception.Message }); }
             catch (PostgresIdempotencyConflictException) { return Results.Conflict(); }
             catch (InvalidOperationException) { return Results.Conflict(); }
             catch (ArgumentException) { return Results.BadRequest(); }
@@ -85,7 +88,8 @@ public static class WorkoutActiveSessionEndpointMappings
                         body.WorkoutName,
                         body.StartedAtUtc,
                         body.Notes,
-                        body.PlannedWorkoutDayId),
+                        body.PlannedWorkoutDayId,
+                        body.UnplannedActivity),
                     cancellationToken).ConfigureAwait(false);
                 return Results.Ok(snapshot);
             }
@@ -218,7 +222,8 @@ public static class WorkoutActiveSessionEndpointMappings
         string WorkoutName,
         DateTime StartedAtUtc,
         string? Notes = null,
-        int? PlannedWorkoutDayId = null);
+        int? PlannedWorkoutDayId = null,
+        WorkoutActivityDto? UnplannedActivity = null);
 
     public sealed record UpsertWorkoutSessionSetBody(
         string? IdempotencyKey,

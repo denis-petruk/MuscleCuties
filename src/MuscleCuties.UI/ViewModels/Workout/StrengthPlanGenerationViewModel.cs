@@ -709,6 +709,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 mixedSchedule?.Sessions.Count > NoPolicyReasons ? CalendarWeekdays.Select(day =>
                 {
                     var sessions = mixedSchedule.Sessions.Where(session => session.Weekday == day)
+                        .OrderBy(session => session.DayOrder ?? int.MaxValue)
                         .Select(session => StrengthPlanGenerationDisplayMapper.ToMixedActivitySessionDisplay(session))
                         .ToArray();
                     return new MixedActivityDayDisplay(

@@ -31,7 +31,9 @@ internal static class StrengthPlanGenerationDisplayMapper
         return new MixedActivitySessionDisplay(title, details)
         {
             Day = FullWeekdayLabel(session.Weekday),
-            Activity = ActivityLabel(session.ActivityTypeId),
+            Activity = session.DayOrder is { } order
+                ? FormatLocalized("Workout_Generation_OrderedActivityFormat", order, ActivityLabel(session.ActivityTypeId))
+                : ActivityLabel(session.ActivityTypeId),
             Duration = duration
         };
     }

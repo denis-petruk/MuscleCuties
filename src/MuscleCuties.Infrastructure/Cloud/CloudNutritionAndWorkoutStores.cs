@@ -541,6 +541,8 @@ public sealed class CloudWorkoutSessionActionStore(
             HttpMethod.Post, $"/api/v1/workouts/sessions/{sessionId:D}/timing/checkpoint",
             new CheckpointWorkoutTimingCommand(key, sessionId, intervalId, measuredSeconds, pause),
             idempotencyKey: key, cancellationToken).ConfigureAwait(false);
+        if (response.Status == BackendApiStatus.Conflict && response.ErrorCode == "WorkoutTimingIntervalExpired")
+            throw new WorkoutTimingIntervalExpiredException();
         return RequirePlannedSession(response, "checkpoint workout timing");
     }
 

@@ -26,7 +26,7 @@ public sealed record SaveActivityAnswersRequest(long ExpectedVersion, IReadOnlyL
     public WorkoutActivityDto? HiitUnderlyingCardioActivity { get; init; }
 }
 
-public sealed class WorkoutPreviewAlreadyOpenException : Exception
+public sealed class WorkoutPreviewAlreadyOpenException : InvalidOperationException
 {
     public WorkoutPreviewAlreadyOpenException() : base("A workout plan preview is already open.") { }
 }

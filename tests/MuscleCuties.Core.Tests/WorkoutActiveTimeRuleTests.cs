@@ -19,4 +19,23 @@ public sealed class WorkoutActiveTimeRuleTests
         Assert.False(WorkoutActiveTimeRule.IsValidCheckpoint(ElevenSeconds, FiveSeconds, elapsed));
         Assert.False(WorkoutActiveTimeRule.IsValidCheckpoint(FiveSeconds, FiveSeconds, TimeSpan.FromSeconds(NegativeElapsedSeconds)));
     }
+    [Fact]
+    public void CheckpointExpiresAfterMaximumUnconfirmedGap()
+    {
+        var maximum = TimeSpan.FromSeconds(WorkoutActiveTimeRule.MaximumUnconfirmedSeconds);
+        Assert.True(WorkoutActiveTimeRule.IsFreshCheckpoint(TenSeconds, FiveSeconds, maximum));
+        Assert.False(WorkoutActiveTimeRule.IsFreshCheckpoint(TenSeconds, FiveSeconds,
+            maximum.Add(TimeSpan.FromTicks(1))));
+        Assert.False(WorkoutActiveTimeRule.IsFreshCheckpoint(TenSeconds, FiveSeconds,
+            TimeSpan.FromSeconds(NegativeElapsedSeconds)));
+    }
+
+    [Fact]
+    public void CheckpointCannotClaimMoreThanRecentServerElapsedAllowance()
+    {
+        Assert.False(WorkoutActiveTimeRule.IsFreshCheckpoint(TenSeconds, FiveSeconds, TimeSpan.Zero));
+        Assert.True(WorkoutActiveTimeRule.IsFreshCheckpoint(TenSeconds, FiveSeconds,
+            TimeSpan.FromSeconds(FiveSeconds - WorkoutActiveTimeRule.RoundingAllowanceSeconds)));
+    }
+
 }

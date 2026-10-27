@@ -23,6 +23,25 @@ public sealed class CloudPlannedWorkoutSessionErrorTests
     }
 
     [Fact]
+    public async Task UnsafeActivityCannotResumeAndIsIdentifiedSeparately()
+    {
+        var store = new CloudWorkoutSessionActionStore(
+            new SessionApi(BackendApiStatus.Conflict, "WorkoutActivityNoLongerSafe"));
+        await Assert.ThrowsAsync<WorkoutActivityNoLongerSafeException>(() =>
+            store.ResumePlannedTimingAsync(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ExpiredTimingIntervalRequiresExplicitResume()
+    {
+        var store = new CloudWorkoutSessionActionStore(
+            new SessionApi(BackendApiStatus.Conflict, "WorkoutTimingIntervalExpired"));
+        await Assert.ThrowsAsync<WorkoutTimingIntervalExpiredException>(() =>
+            store.CheckpointPlannedTimingAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 15, true,
+                CancellationToken.None));
+    }
+
+    [Fact]
     public async Task CheckpointRetryUsesSameOperationAndMeasuredPayload()
     {
         var sessionId = Guid.NewGuid();
@@ -65,7 +84,7 @@ public sealed class CloudPlannedWorkoutSessionErrorTests
             CancellationToken cancellationToken = default) => throw new NotSupportedException();
     }
 
-    private sealed class SessionApi(BackendApiStatus status) : IMuscleCutiesBackendApiClient
+    private sealed class SessionApi(BackendApiStatus status, string? code = null) : IMuscleCutiesBackendApiClient
     {
         public Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(string relativePath,
             CancellationToken cancellationToken = default) => throw new NotSupportedException();
@@ -73,7 +92,7 @@ public sealed class CloudPlannedWorkoutSessionErrorTests
         public Task<BackendApiResponse<TResponse>> SendMutationAsync<TRequest, TResponse>(HttpMethod method,
             string relativePath, TRequest payload, string? idempotencyKey = null,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(new BackendApiResponse<TResponse>(status, default));
+            Task.FromResult(new BackendApiResponse<TResponse>(status, default, code));
 
         public Task<BackendApiResponse<bool>> DeleteAsync(string relativePath, string? idempotencyKey = null,
             CancellationToken cancellationToken = default) => throw new NotSupportedException();

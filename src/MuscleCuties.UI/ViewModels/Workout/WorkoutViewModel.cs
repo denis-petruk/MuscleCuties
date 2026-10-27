@@ -7,6 +7,7 @@ using Microsoft.Maui.Graphics;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Workout;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
@@ -294,7 +295,9 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                 WorkoutDayId = item.WorkoutDayId,
                 Tag = item.Tag,
                 DayLabel = item.DayLabel,
-                Title = item.Title,
+                Title = item.DayOrder is { } order
+                    ? string.Format(UiTextCatalog.Get("Workout_Overview_OrderedTitleFormat"), order, item.Title)
+                    : item.Title,
                 Duration = item.Duration,
                 ExerciseCount = item.ExerciseCount,
                 ActivityCount = item.ActivityCount,
