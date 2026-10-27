@@ -80,6 +80,12 @@ public static class StrengthTemplateCatalog
             _ => []
         };
 
+    /// <summary>Alternatives must be explicitly cataloged for the same schedule, split and session position.</summary>
+    public static IReadOnlyList<StrengthTemplateDefinition> AlternativesForSchedule(
+        int strengthDaysPerWeek, StrengthTemplateDefinition current) =>
+        ForSchedule(strengthDaysPerWeek).Where(candidate => candidate.TemplateId != current.TemplateId &&
+            candidate.SessionIndex == current.SessionIndex && candidate.Split == current.Split).ToArray();
+
     private static ReadOnlyCollection<StrengthTemplateDefinition> BuildTemplates()
     {
         var templates = new List<StrengthTemplateDefinition>

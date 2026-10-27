@@ -12,35 +12,41 @@
     <Border
         StrokeShape="{StaticResource UiRoundRectangleRadius10}"
         Padding="{StaticResource UiInsets10_8}"
-        MinimumHeightRequest="{StaticResource UiDimension44}"
+        MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
         Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
         StrokeThickness="{StaticResource UiStrokeWidth1}">
 
         <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}" RowSpacing="{StaticResource UiSpacing6}">
             <!-- Multi-Select Checkbox -->
-            <Border Style="{StaticResource SelectionCheckbox}" Grid.RowSpan="2" Grid.Column="0"
-                    VerticalOptions="Center">
-                <Border.GestureRecognizers>
+            <Grid Grid.RowSpan="2" Grid.Column="0"
+                  WidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                  HeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                  SemanticProperties.Description="{Binding Name}"
+                  VerticalOptions="Center">
+                <Grid.GestureRecognizers>
                     <TapGestureRecognizer
                         Command="{Binding ToggleQuickFoodSelectionCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
                         CommandParameter="{Binding .}" />
-                </Border.GestureRecognizers>
-                <Path Data="M3 7L6 10L13 3"
-                      Stroke="{StaticResource White}" StrokeThickness="{StaticResource UiStrokeWidth2}"
-                      HorizontalOptions="Center" VerticalOptions="Center"
-                      IsVisible="{Binding IsSelected}" />
-            </Border>
+                </Grid.GestureRecognizers>
+                <Border Style="{StaticResource SelectionCheckbox}" HorizontalOptions="Center" VerticalOptions="Center"
+                        InputTransparent="True">
+                    <Path Data="M3 7L6 10L13 3"
+                          Stroke="{StaticResource White}" StrokeThickness="{StaticResource UiStrokeWidth2}"
+                          HorizontalOptions="Center" VerticalOptions="Center"
+                          IsVisible="{Binding IsSelected}" />
+                </Border>
+            </Grid>
 
             <!-- Name and details -->
             <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
-                <Label Grid.Row="0" Text="{Binding Name}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                       LineBreakMode="TailTruncation" />
+                <Label Grid.Row="0" Text="{Binding Name}" Style="{StaticResource CardTitle}" FontSize="{StaticResource UiFontSize13}"
+                       LineBreakMode="WordWrap" />
                 <Label Grid.Row="1" Text="{Binding Detail, Converter={StaticResource LocalizedStringConverter}}"
-                       FontSize="{StaticResource UiFontSize11}" LineBreakMode="TailTruncation" />
+                       Style="{StaticResource MutedLabel}" FontSize="{StaticResource UiFontSize11}" LineBreakMode="WordWrap" />
             </Grid>
             <Label Grid.Row="0" Grid.Column="2"
                    Text="{Binding Calories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_CaloriesValueKcal}"
-                   FontSize="{StaticResource UiFontSize12}" VerticalOptions="Center" />
+                   Style="{StaticResource CaptionStrong}" FontSize="{StaticResource UiFontSize12}" VerticalOptions="Center" />
             <Button Grid.Row="1" Grid.Column="2"
                     Style="{StaticResource ButtonSecondary}"
                     Text="{loc:LocalizedText Common_Edit}"

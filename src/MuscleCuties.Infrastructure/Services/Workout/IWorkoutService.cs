@@ -13,8 +13,6 @@ public interface IWorkoutService
         CyclePhase phase,
         DateTime date);
 
-    Task RegenerateActivePlanAsync(int userId, CyclePhase phase);
-
     Task<WorkoutSessionDetail> GetWorkoutSessionDetailAsync(int userId, int workoutDayId);
 
     Task LogWorkoutSessionAsync(

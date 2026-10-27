@@ -27,6 +27,7 @@
                     TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
                     FontSize="{StaticResource UiFontSize12}"
                     FontAttributes="{StaticResource UiFontAttributesBold}"
+                    LineBreakMode="WordWrap"
                     VerticalOptions="Center" />
             </HorizontalStackLayout>
 

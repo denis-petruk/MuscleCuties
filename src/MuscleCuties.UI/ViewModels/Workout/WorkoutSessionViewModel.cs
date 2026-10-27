@@ -64,7 +64,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<string> _exercisePreviewNames = [];
     [ObservableProperty] private ObservableCollection<SessionExerciseProgress> _exerciseProgress = [];
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanInteract), nameof(HasNoActivities),
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanInteract), nameof(CanAbandonPlannedSession), nameof(HasNoActivities),
         nameof(HasActivityChoices))]
     private bool _isBusy;
     [ObservableProperty] private bool _isActivityComplete;
@@ -111,6 +111,13 @@ public partial class WorkoutSessionViewModel : ObservableObject
     private int _totalExercisesInActivity;
 
     private int _workoutDayId;
+    private bool _isRestDay;
+    private Guid? _plannedSessionId;
+    private DateTime _plannedSessionStartedAtUtc;
+    private DateTime? _pendingCompletionAtUtc;
+    private int? _pendingCompletionSeconds;
+    private readonly Stopwatch _plannedSessionTimer = new();
+    [ObservableProperty] private bool _isTimedActivityRunning;
 
     public WorkoutSessionViewModel(
         IWorkoutSessionActionUseCase session,
@@ -127,6 +134,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
     public bool IsActivityIntro => CurrentScreen == SessionScreen.ActivityIntro;
     public bool IsExerciseFlow => CurrentScreen == SessionScreen.ExerciseFlow;
     public bool IsActivitySummary => CurrentScreen == SessionScreen.ActivitySummary;
+    public bool CanAbandonPlannedSession => _plannedSessionId.HasValue && !IsBusy;
     public bool CanInteract => !IsBusy;
 
     public async Task SaveOptionalExerciseAsync(WorkoutExerciseItem item)
@@ -281,6 +289,15 @@ public partial class WorkoutSessionViewModel : ObservableObject
                 throw new InvalidOperationException("This workout could not be found. Go back and choose a workout.");
 
             var detail = await _session.GetDetailAsync(workoutDayId);
+            _isRestDay = detail.IsRestDay;
+            var existingSession = await _session.GetPlannedSessionAsync(workoutDayId);
+            _plannedSessionId = existingSession is { IsCompleted: false, IsCanceled: false } ? existingSession.SessionId : null;
+            OnPropertyChanged(nameof(CanAbandonPlannedSession));
+            _plannedSessionStartedAtUtc = existingSession?.StartedAtUtc ?? default;
+            _plannedSessionTimer.Reset();
+            _pendingCompletionAtUtc = null;
+            _pendingCompletionSeconds = null;
+            IsTimedActivityRunning = false;
             string phaseNote;
             try
             {
@@ -353,12 +370,34 @@ public partial class WorkoutSessionViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void StartActivity()
+    private async Task StartActivityAsync()
     {
-        if (IsBusy || !IsActivityIntro || SelectedActivity is not { HasExercises: true }) return;
+        if (IsBusy || !IsActivityIntro || SelectedActivity is null || _isRestDay) return;
+        IsBusy = true;
+        try
+        {
+            _plannedSessionId ??= Guid.NewGuid();
+            if (_plannedSessionStartedAtUtc == default)
+                _plannedSessionStartedAtUtc = DateTime.UtcNow;
+            var started = await _session.StartPlannedSessionAsync(_workoutDayId, _plannedSessionId.Value, _plannedSessionStartedAtUtc);
+            _plannedSessionId = started.SessionId;
+            OnPropertyChanged(nameof(CanAbandonPlannedSession));
+            _plannedSessionTimer.Start();
+        }
+        catch (Exception)
+        {
+            ErrorText = "Connection error. Please try starting the activity again.";
+            return;
+        }
+        finally { IsBusy = false; }
         if (!_activityTimers.TryGetValue(SelectedActivity, out var timer))
             _activityTimers[SelectedActivity] = timer = new Stopwatch();
         timer.Start();
+        if (!SelectedActivity.HasExercises)
+        {
+            IsTimedActivityRunning = true;
+            return;
+        }
         CurrentScreen = SessionScreen.ExerciseFlow;
         SetCurrentExercise(0);
     }
@@ -378,7 +417,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
             var log = BuildLogInput(exercise);
             if (version != _loadVersion) return;
             await _session.LogAsync(new LogWorkoutSessionRequest(
-                workoutDayId, DateOnly.FromDateTime(DateTime.Today), [log]));
+                workoutDayId, DateOnly.FromDateTime(DateTime.Today), [log], _plannedSessionId));
             if (version != _loadVersion) return;
             var celebration = GetCelebration(exercise, log);
             _savedLogs[exercise.WorkoutDayExerciseId] = log;
@@ -487,6 +526,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
 
     private void ShowSummary()
     {
+        _plannedSessionTimer.Stop();
         var activity = SelectedActivity!;
         if (_activityTimers.TryGetValue(activity, out var timer)) timer.Stop();
         var ids = activity.Exercises.Select(exercise => exercise.WorkoutDayExerciseId).ToHashSet();
@@ -510,9 +550,10 @@ public partial class WorkoutSessionViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void FinishActivity()
+    private async Task FinishActivityAsync()
     {
         if (IsBusy || SwapNeedsReload) return;
+        if (!await CompletePlannedSessionAsync()) return;
         PauseActivity();
         CloseSwapPanel();
         RefreshActivityCards();
@@ -521,6 +562,76 @@ public partial class WorkoutSessionViewModel : ObservableObject
         Celebration = CelebrationType.None;
         ErrorText = string.Empty;
         CurrentScreen = SessionScreen.DayOverview;
+    }
+
+    [RelayCommand]
+    private async Task FinishTimedActivityAsync()
+    {
+        if (!IsTimedActivityRunning || !await CompletePlannedSessionAsync()) return;
+        IsTimedActivityRunning = false;
+        await _navigateAsync("..");
+    }
+
+    [RelayCommand]
+    private async Task CompleteSessionAsync()
+    {
+        if (await CompletePlannedSessionAsync())
+            await _navigateAsync("..");
+    }
+
+    private async Task<bool> CompletePlannedSessionAsync()
+    {
+        if (IsBusy || _plannedSessionId is not { } sessionId) return false;
+        _plannedSessionTimer.Stop();
+        _pendingCompletionSeconds ??= (int)_plannedSessionTimer.Elapsed.TotalSeconds;
+        if (_pendingCompletionSeconds <= 0)
+        {
+            ErrorText = "Complete at least one second of activity before finishing.";
+            _pendingCompletionSeconds = null;
+            _plannedSessionTimer.Start();
+            return false;
+        }
+        _pendingCompletionAtUtc ??= DateTime.UtcNow;
+        IsBusy = true;
+        try
+        {
+            await _session.FinishPlannedSessionAsync(sessionId, _pendingCompletionAtUtc.Value, _pendingCompletionSeconds.Value);
+            _plannedSessionId = null;
+            OnPropertyChanged(nameof(CanAbandonPlannedSession));
+            _plannedSessionStartedAtUtc = default;
+            _plannedSessionTimer.Reset();
+            _pendingCompletionAtUtc = null;
+            _pendingCompletionSeconds = null;
+            ErrorText = string.Empty;
+            return true;
+        }
+        catch (Exception)
+        {
+            ErrorText = "Connection error. Please try finishing the activity again.";
+            return false;
+        }
+        finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task AbandonPlannedSessionAsync()
+    {
+        if (IsBusy || _plannedSessionId is not { } sessionId) return;
+        IsBusy = true;
+        try
+        {
+            await _session.AbandonPlannedSessionAsync(sessionId);
+            _plannedSessionId = null;
+            OnPropertyChanged(nameof(CanAbandonPlannedSession));
+            _plannedSessionTimer.Reset();
+            IsTimedActivityRunning = false;
+            await _navigateAsync("..");
+        }
+        catch (Exception)
+        {
+            ErrorText = "Connection error. Please try ending the activity again.";
+        }
+        finally { IsBusy = false; }
     }
 
     [RelayCommand]
@@ -563,11 +674,16 @@ public partial class WorkoutSessionViewModel : ObservableObject
             return;
         }
 
-        FinishActivity();
+        PauseActivity();
+        IsTimedActivityRunning = false;
+        SelectedActivity = null;
+        CurrentExercise = null;
+        CurrentScreen = SessionScreen.DayOverview;
     }
 
     private void PauseActivity()
     {
+        _plannedSessionTimer.Stop();
         if (SelectedActivity is not null && _activityTimers.TryGetValue(SelectedActivity, out var timer)) timer.Stop();
     }
 

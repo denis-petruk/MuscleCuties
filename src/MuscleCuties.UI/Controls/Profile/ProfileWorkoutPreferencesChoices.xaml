@@ -32,6 +32,7 @@
          <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
              <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_ExerciseExclusions}"
                     Style="{StaticResource SectionTitle}"
+                    LineBreakMode="WordWrap"
                     SemanticProperties.HeadingLevel="Level2" />
             <Border Style="{StaticResource SearchContainer}">
                 <Entry Placeholder="{loc:LocalizedText Profile_WorkoutPrefs_SearchExercises}"
@@ -74,6 +75,7 @@
                                 <Label
                                     Text="{Binding Name}"
                                     Style="{StaticResource BodyStrong}"
+                                    LineBreakMode="WordWrap"
                                     VerticalOptions="Center" />
                                 <Path Grid.Column="1" Data="M12 5V19M5 12H19"
                                       Stroke="{StaticResource Primary}"

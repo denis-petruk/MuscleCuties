@@ -11,6 +11,9 @@ internal static partial class RussianUiText
         Values["Workout_Overview_Status_Today"] = "Сегодня";
         Values["Workout_Overview_Status_Upcoming"] = "Предстоит";
         Values["Injury_Log_ReloadAfterChangeFailed"] = "Изменение сохранено, но журнал травм не загрузился. Попробуйте снова перед тренировкой.";
+        Values["Injury_Log_ActiveWorkoutPreventsInjury"] = "Завершите или прервите активную тренировку перед записью травмы. Записанные подходы сохранятся.";
+        Values["Workout_Session_FinishTimedActivity"] = "Завершить активность";
+        Values["Workout_Session_AbandonActivity"] = "Прервать активность";
         Values["Injury_Log_PlanRefreshFailed"] = "Изменение травмы сохранено, но план тренировок не обновился. Попробуйте снова перед тренировкой.";
         Values["Injury_Log_PageRefreshFailed"] = "Изменение травмы сохранено, но страница «Сегодня» не обновилась. Попробуйте снова.";
         Values["Cycle_Guidance_PhaseContext"] = "Фаза цикла даёт контекст, но не измеряет уровень гормонов или физические возможности сегодня.";

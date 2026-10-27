@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
+using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Targets;
@@ -11,7 +12,6 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 using Npgsql;
 
@@ -189,9 +189,15 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
 
         try
         {
-            var planner = new GenerateWorkoutPlanUseCase(new PostgresWorkoutPlanningReferenceDataSource(database));
-            var workoutStore = new PostgresWorkoutPlanAndSessionStore(database, planner);
+            var workoutStore = new PostgresWorkoutPlanAndSessionStore(database);
             var archiveStore = new PostgresWorkoutArchiveStore(database);
+            database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+            {
+                Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id,
+                TimeZoneVersion = 1, BaselineExperience = TrainingExperienceLevel.Intermediate,
+                EffectiveExperience = TrainingExperienceLevel.Intermediate
+            });
+            await database.SaveChangesAsync();
 
             var emptyOverview = await workoutStore.LoadOverviewAsync(
                 userId,
@@ -278,6 +284,12 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
 
             var archiveHistory = await archiveStore.GetWorkoutHistoryAsync(userId, 10, 0, CancellationToken.None);
             Xunit.Assert.NotEmpty(archiveHistory);
+            var earnedCredit = await database.WorkoutCompletionDayCredits.AsNoTracking()
+                .SingleAsync(credit => credit.UserId == userId && credit.LocalDate == today);
+            Xunit.Assert.Equal(TimeZoneInfo.Utc.Id, earnedCredit.TimeZoneId);
+            await database.WorkoutLogs.Where(log => log.UserId == userId).ExecuteDeleteAsync();
+            Xunit.Assert.True(await database.WorkoutCompletionDayCredits.AsNoTracking()
+                .AnyAsync(credit => credit.UserId == userId && credit.Id == earnedCredit.Id));
         }
         finally
         {

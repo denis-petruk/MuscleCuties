@@ -6,12 +6,28 @@
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared">
 
     <!-- Layout and content roles remain separate from the four shared card surfaces. -->
+    <!-- Semantic presentation roles; values retain the current iOS geometry. -->
+    <Thickness x:Key="PresentationPageHeaderPadding">20,36,20,12</Thickness>
+    <Thickness x:Key="PresentationPageContentPadding">20,8,20,32</Thickness>
+    <Thickness x:Key="PresentationFormPagePadding">20,12,20,32</Thickness>
+    <Thickness x:Key="PresentationAuthSecondaryPagePadding">24,36,24,32</Thickness>
+    <Thickness x:Key="PresentationAuthPagePadding">24,44,24,32</Thickness>
+    <Thickness x:Key="PresentationModalHeaderPadding">20,18,20,12</Thickness>
+    <Thickness x:Key="PresentationModalPagePadding">20,16,20,32</Thickness>
+    <Thickness x:Key="PresentationActionFooterPadding">20,12,20,36</Thickness>
+    <Thickness x:Key="PresentationInputHorizontalPadding">16,0</Thickness>
+    <x:Double x:Key="PresentationFieldSpacing">6</x:Double>
+    <x:Double x:Key="PresentationFormSpacing">18</x:Double>
+    <x:Double x:Key="PresentationDecorativeIconSize">40</x:Double>
+    <x:Double x:Key="PresentationMinimumTouchSize">44</x:Double>
+    <x:Double x:Key="PresentationInputMinimumHeight">52</x:Double>
+    <x:Double x:Key="PresentationInputCornerRadius">12</x:Double>
+
     <x:Int32 x:Key="WorkoutOverlayRowSpan">2</x:Int32>
 
     <!-- Shared layout and code-behind presentation tokens -->
 
     <Thickness x:Key="UiInsets12_8">12,8</Thickness>
-    <x:Int32 x:Key="RecoveryTipMaxLines">1</x:Int32>
     <RoundRectangle x:Key="UiRoundRectangleRadius4" CornerRadius="4" />
     <RoundRectangle x:Key="UiRoundRectangleRadius5" CornerRadius="5" />
     <RoundRectangle x:Key="UiRoundRectangleRadius6" CornerRadius="6" />
@@ -129,7 +145,6 @@
     <Thickness x:Key="UiInsets18_0_18_16">18,0,18,16</Thickness>
     <Thickness x:Key="UiInsets18_14">18,14</Thickness>
     <Thickness x:Key="UiInsets18_16">18,16</Thickness>
-    <Thickness x:Key="UiInsets18_16_18_12">18,16,18,12</Thickness>
     <Thickness x:Key="UiInsets2">2</Thickness>
     <Thickness x:Key="UiInsets20_0">20,0</Thickness>
     <Thickness x:Key="UiInsets20_0_20_12">20,0,20,12</Thickness>
@@ -140,14 +155,9 @@
     <Thickness x:Key="UiInsets20_0_20_32">20,0,20,32</Thickness>
     <Thickness x:Key="UiInsets20_12_20_20">20,12,20,20</Thickness>
     <Thickness x:Key="UiInsets20_12_20_24">20,12,20,24</Thickness>
-    <Thickness x:Key="UiInsets20_12_20_36">20,12,20,36</Thickness>
-    <Thickness x:Key="UiInsets20_16_16_12">20,16,16,12</Thickness>
     <Thickness x:Key="UiInsets20_16_20_0">20,16,20,0</Thickness>
     <Thickness x:Key="UiInsets20_16_20_16">20,16,20,16</Thickness>
     <Thickness x:Key="UiInsets20_16_20_20">20,16,20,20</Thickness>
-    <Thickness x:Key="UiInsets20_16_20_32">20,16,20,32</Thickness>
-    <Thickness x:Key="UiInsets20_18_20_12">20,18,20,12</Thickness>
-    <Thickness x:Key="UiInsets20_18_20_14">20,18,20,14</Thickness>
     <Thickness x:Key="UiInsets20_18_20_24">20,18,20,24</Thickness>
     <Thickness x:Key="UiInsets20_20">20,20</Thickness>
     <Thickness x:Key="UiInsets20_20_20_24">20,20,20,24</Thickness>
@@ -157,20 +167,14 @@
     <Thickness x:Key="UiInsets20_8">20,8</Thickness>
     <Thickness x:Key="UiInsets20_8_20_16">20,8,20,16</Thickness>
     <Thickness x:Key="UiInsets20_8_20_20">20,8,20,20</Thickness>
-    <Thickness x:Key="UiInsets20_8_20_32">20,8,20,32</Thickness>
     <Thickness x:Key="UiInsets22_20">22,20</Thickness>
     <Thickness x:Key="UiInsets22_Minus108_0_0">22,-108,0,0</Thickness>
     <Thickness x:Key="UiInsets24_0">24,0</Thickness>
     <Thickness x:Key="UiInsets24_0_0_0">24,0,0,0</Thickness>
     <Thickness x:Key="UiInsets24_12_24_6">24,12,24,6</Thickness>
-    <Thickness x:Key="UiInsets24_16_24_32">24,16,24,32</Thickness>
     <Thickness x:Key="UiInsets24_16_24_6">24,16,24,6</Thickness>
-    <Thickness x:Key="UiInsets24_24_24_36">24,24,24,36</Thickness>
     <Thickness x:Key="UiInsets24_32">24,32</Thickness>
-    <Thickness x:Key="UiInsets24_32_24_16">24,32,24,16</Thickness>
     <Thickness x:Key="UiInsets24_36">24,36</Thickness>
-    <Thickness x:Key="UiInsets24_36_24_32">24,36,24,32</Thickness>
-    <Thickness x:Key="UiInsets24_44_24_32">24,44,24,32</Thickness>
     <Thickness x:Key="UiInsets24_4_24_20">24,4,24,20</Thickness>
     <Thickness x:Key="UiInsets28_32">28,32</Thickness>
     <Thickness x:Key="UiInsets2_0">2,0</Thickness>
@@ -250,10 +254,6 @@
     <Thickness x:Key="UiInsets0_18_0_0">0,18,0,0</Thickness>
     <Thickness x:Key="UiInsets0_8_0_0">0,8,0,0</Thickness>
     <Thickness x:Key="UiInsets16_12">16,12</Thickness>
-    <Thickness x:Key="UiInsets20_12_20_32">20,12,20,32</Thickness>
-    <Thickness x:Key="UiInsets20_24_20_28">20,24,20,28</Thickness>
-    <Thickness x:Key="UiInsets20_24_20_32">20,24,20,32</Thickness>
-    <Thickness x:Key="UiInsets20_36_20_12">20,36,20,12</Thickness>
     <Thickness x:Key="UiInsets24_8_24_12">24,8,24,12</Thickness>
     <Thickness x:Key="UiInsets2_8">2,8</Thickness>
     <Thickness x:Key="UiInsets8_0_0_0">8,0,0,0</Thickness>
@@ -436,6 +436,7 @@
         <Setter Property="FontSize" Value="{StaticResource UiFontSize28}" />
         <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
         <Setter Property="CharacterSpacing" Value="-0.3" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource DeepMauve},
                                         Dark={StaticResource White}}" />
@@ -446,9 +447,14 @@
         <Setter Property="FontSize" Value="{StaticResource UiFontSize24}" />
         <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
         <Setter Property="CharacterSpacing" Value="-0.2" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
+    </Style>
+
+    <Style x:Key="PageTitle" TargetType="Label" BasedOn="{StaticResource SubHeadline}">
+        <Setter Property="LineBreakMode" Value="WordWrap" />
     </Style>
 
     <Style x:Key="SectionTitle" TargetType="Label">
@@ -514,6 +520,7 @@
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="{StaticResource UiFontSize13}" />
         <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
@@ -523,6 +530,7 @@
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="{StaticResource UiFontSize13}" />
         <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource PrimaryDark},
                                         Dark={StaticResource SecondaryDarkText}}" />
@@ -531,6 +539,7 @@
     <Style x:Key="ErrorLabel" TargetType="Label">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="{StaticResource UiFontSize13}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource ErrorLight},
                                         Dark={StaticResource ErrorDark}}" />
@@ -661,6 +670,7 @@
     <Style x:Key="DisclosureHeader" TargetType="Grid">
         <Setter Property="Padding" Value="0,8" />
         <Setter Property="ColumnSpacing" Value="{StaticResource UiSpaceTight}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
     </Style>
 
     <Style x:Key="MetricValue" TargetType="Label" BasedOn="{StaticResource AccentLabel}">
@@ -751,7 +761,7 @@
                 Value="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}" />
         <Setter Property="Stroke" Value="Transparent" />
         <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth0}" />
-        <Setter Property="Padding" Value="{StaticResource UiInsetsPlanStickyAction}" />
+        <Setter Property="Padding" Value="{StaticResource PresentationActionFooterPadding}" />
     </Style>
 
     <Style x:Key="PlanStickyActionDivider" TargetType="BoxView">
@@ -789,10 +799,10 @@
     </Style>
 
     <Style x:Key="HeaderIconButton" TargetType="Border">
-        <Setter Property="WidthRequest" Value="42" />
-        <Setter Property="HeightRequest" Value="42" />
-        <Setter Property="MinimumWidthRequest" Value="42" />
-        <Setter Property="MinimumHeightRequest" Value="42" />
+        <Setter Property="WidthRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="HeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="MinimumWidthRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="BackgroundColor"
                 Value="{AppThemeBinding Light={StaticResource Gray200},
@@ -810,6 +820,13 @@
         <Setter Property="BackgroundColor"
                 Value="{AppThemeBinding Light={StaticResource AccentSurface},
                                         Dark={StaticResource Gray900}}" />
+    </Style>
+
+    <Style x:Key="DecorativeIconSurface" TargetType="Border" BasedOn="{StaticResource ModalIconButton}">
+        <Setter Property="WidthRequest" Value="{StaticResource PresentationDecorativeIconSize}" />
+        <Setter Property="HeightRequest" Value="{StaticResource PresentationDecorativeIconSize}" />
+        <Setter Property="MinimumWidthRequest" Value="{StaticResource PresentationDecorativeIconSize}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationDecorativeIconSize}" />
     </Style>
 
     <Style x:Key="CircleIconButton" TargetType="Border" BasedOn="{StaticResource HeaderIconButton}" />
@@ -927,8 +944,8 @@
         <Setter Property="FontSize" Value="{StaticResource UiFontSize15}" />
         <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
         <Setter Property="CornerRadius" Value="{StaticResource UiRadiusControl}" />
-        <Setter Property="MinimumHeightRequest" Value="{StaticResource UiDimension44}" />
-        <Setter Property="MinimumWidthRequest" Value="{StaticResource UiDimension44}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="MinimumWidthRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
         <Setter Property="HeightRequest" Value="{StaticResource UiDimensionMinus1}" />
         <Setter Property="Padding" Value="{StaticResource UiInsets12_0}" />
         <Setter Property="HorizontalOptions" Value="Fill" />
@@ -1025,11 +1042,11 @@
                 Value="{AppThemeBinding Light={StaticResource InputStroke},
                                         Dark={StaticResource InputStrokeDark}}" />
         <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
-        <Setter Property="Padding" Value="16,0" />
-        <Setter Property="MinimumHeightRequest" Value="52" />
+        <Setter Property="Padding" Value="{StaticResource PresentationInputHorizontalPadding}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationInputMinimumHeight}" />
         <Setter Property="StrokeShape">
             <Setter.Value>
-                <RoundRectangle CornerRadius="12" />
+                <RoundRectangle CornerRadius="{StaticResource PresentationInputCornerRadius}" />
             </Setter.Value>
         </Setter>
     </Style>
@@ -1214,8 +1231,8 @@
         <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius12}" />
         <Setter Property="Padding" Value="{StaticResource UiInsets0}" />
         <Setter Property="Margin" Value="{StaticResource UiInsets2}" />
-        <Setter Property="MinimumHeightRequest" Value="{StaticResource UiDimension44}" />
-        <Setter Property="MinimumWidthRequest" Value="{StaticResource UiDimension44}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="MinimumWidthRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="SelectionStates">

@@ -11,14 +11,18 @@
     IsOpen="{Binding IsCycleWarningPopupVisible}"
     ZIndex="3">
 
-    <Grid
-        BackgroundColor="{StaticResource ModalScrim}">
+    <Grid>
+        <BoxView Style="{StaticResource ModalBackdrop}">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CloseCycleWarningPopupCommand}" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
         <Border
             x:Name="SheetSurface"
             Style="{StaticResource ModalSurface}"
             VerticalOptions="End">
             <Grid RowDefinitions="Auto, *, Auto" RowSpacing="{StaticResource UiSpacing0}">
-                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets18_16_18_12}">
+                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource PresentationModalHeaderPadding}">
                     <Border
                         WidthRequest="{StaticResource UiDimension34}"
                         HeightRequest="{StaticResource UiDimension34}"
@@ -40,7 +44,8 @@
                         Text="{Binding CycleWarningTitle, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource ModalTitle}"
                         VerticalOptions="Center"
-                        LineBreakMode="WordWrap" />
+                        LineBreakMode="WordWrap"
+                        SemanticProperties.HeadingLevel="Level2" />
 
                     <Border
                         Grid.Column="2"
@@ -69,12 +74,12 @@
 
                 <VerticalStackLayout
                     Grid.Row="2"
-                    Padding="{StaticResource UiInsets18_0_18_16}"
+                    Padding="{StaticResource PresentationActionFooterPadding}"
                     Spacing="{StaticResource UiSpacing10}">
                     <VerticalStackLayout
                         Spacing="{StaticResource UiSpacing10}"
                         IsVisible="{Binding HasCycleWarningSuggestedPhase}">
-                        <Button Style="{StaticResource ButtonSecondary}"
+                        <Button Style="{StaticResource ButtonPrimary}"
                             Text="{Binding CycleWarningSuggestedActionText, Converter={StaticResource LocalizedStringConverter}}"
                             Command="{Binding UseCycleWarningSuggestedPhaseCommand}" />
                         <Button
@@ -83,7 +88,7 @@
                             Command="{Binding ReviewEarlierPhaseRecordsCommand}" />
                     </VerticalStackLayout>
 
-                    <Button Style="{StaticResource ButtonSecondary}"
+                    <Button Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Cycle_WarningPopup_GotItButton}"
                         Command="{Binding CloseCycleWarningPopupCommand}"
                         IsVisible="{Binding HasCycleWarningSuggestedPhase, Converter={StaticResource InvertedBoolConverter}}" />

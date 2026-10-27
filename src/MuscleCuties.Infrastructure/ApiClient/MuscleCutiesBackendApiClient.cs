@@ -159,12 +159,16 @@ public sealed class MuscleCutiesBackendApiClient(
             return response;
 
         response.Dispose();
-        var refreshed = await TryRefreshSessionAsync(tokens, cancellationToken).ConfigureAwait(false);
+        var (refreshed, failureStatus) = await TryRefreshSessionAsync(tokens, cancellationToken).ConfigureAwait(false);
         if (refreshed is null)
         {
-            await tokenStore.ClearTokensAsync(cancellationToken).ConfigureAwait(false);
-            await snapshotCache.ClearAsync(cancellationToken).ConfigureAwait(false);
-            return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+            if (failureStatus is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            {
+                await tokenStore.ClearTokensAsync(cancellationToken).ConfigureAwait(false);
+                await snapshotCache.ClearAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            return new HttpResponseMessage(failureStatus);
         }
 
         using var retryRequest = requestFactory();
@@ -172,7 +176,7 @@ public sealed class MuscleCutiesBackendApiClient(
         return await httpClient.SendAsync(retryRequest, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<BackendSessionTokens?> TryRefreshSessionAsync(
+    private async Task<(BackendSessionTokens? Tokens, HttpStatusCode FailureStatus)> TryRefreshSessionAsync(
         BackendSessionTokens existing,
         CancellationToken cancellationToken)
     {
@@ -182,13 +186,21 @@ public sealed class MuscleCutiesBackendApiClient(
         };
         using var refreshResponse = await httpClient.SendAsync(refreshRequest, cancellationToken).ConfigureAwait(false);
         if (!refreshResponse.IsSuccessStatusCode)
-            return null;
+            return (null, refreshResponse.StatusCode);
 
-        var payload = await refreshResponse.Content
-            .ReadFromJsonAsync<RefreshTokenDto>(JsonOptions, cancellationToken)
-            .ConfigureAwait(false);
+        RefreshTokenDto? payload;
+        try
+        {
+            payload = await refreshResponse.Content
+                .ReadFromJsonAsync<RefreshTokenDto>(JsonOptions, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is JsonException or NotSupportedException)
+        {
+            return (null, HttpStatusCode.BadGateway);
+        }
         if (payload is null || string.IsNullOrWhiteSpace(payload.AccessToken) || string.IsNullOrWhiteSpace(payload.RefreshToken))
-            return null;
+            return (null, HttpStatusCode.BadGateway);
 
         var updated = new BackendSessionTokens(
             payload.UserId != Guid.Empty ? payload.UserId : existing.AccountId,
@@ -197,7 +209,7 @@ public sealed class MuscleCutiesBackendApiClient(
             payload.AccessTokenExpiresAtUtc);
         await tokenStore.WriteTokensAsync(updated, cancellationToken).ConfigureAwait(false);
         await snapshotCache.ActivateAccountAsync(updated.AccountId, cancellationToken).ConfigureAwait(false);
-        return updated;
+        return (updated, HttpStatusCode.OK);
     }
 
     private static async Task<BackendApiResponse<TResponse>> MapResponseAsync<TResponse>(

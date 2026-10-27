@@ -17,7 +17,7 @@
 
             <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
 
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{StaticResource UiInsets16_12}">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{StaticResource PresentationModalHeaderPadding}">
                     <Label
                         Text="{loc:LocalizedText Profile_ImageCrop_CropPhoto}"
                         Style="{StaticResource ModalTitle}"
@@ -63,18 +63,20 @@
                         <Label
                             Text="{loc:LocalizedText Profile_ImageCrop_PinchToZoomLabel}"
                             Style="{StaticResource CaptionCentered}"
+                            LineBreakMode="WordWrap"
                             SemanticProperties.Description="{loc:LocalizedText Profile_ImageCrop_PinchToZoomDescription}" />
                     </VerticalStackLayout>
                 </ScrollView>
 
-                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets20_16_20_20}">
+                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource PresentationActionFooterPadding}">
                     <Button
                         Grid.Column="0"
                         Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Common_Cancel}"
                         Clicked="OnCancelTapped" />
-                    <Button Style="{StaticResource ButtonSecondary}"
+                    <Button
                         Grid.Column="1"
+                        Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Profile_ImageCrop_UsePhoto}"
                         Clicked="OnUsePhotoTapped" />
                 </Grid>

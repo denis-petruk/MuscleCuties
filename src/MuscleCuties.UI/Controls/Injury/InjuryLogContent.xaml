@@ -24,7 +24,8 @@
                         <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                             <Label Grid.Row="0"
                                    Text="{Binding SiteName, Converter={StaticResource LocalizedStringConverter}}"
-                                   Style="{StaticResource CardTitle}" />
+                                   Style="{StaticResource CardTitle}"
+                                   LineBreakMode="WordWrap" />
                             <Label Grid.Row="1" Style="{StaticResource MutedLabel}">
                                 <Label.FormattedText>
                                     <FormattedString>
@@ -38,7 +39,8 @@
                             </Label>
                             <Label Grid.Row="2"
                                    Text="{Binding SinceText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Injury_LogContent_SinceValue}"
-                                   Style="{StaticResource CaptionLabel}" />
+                                   Style="{StaticResource CaptionLabel}"
+                                   LineBreakMode="WordWrap" />
                         </Grid>
                         <Button Grid.Column="1" Text="{loc:LocalizedText Injury_LogContent_Clear}"
                                 Style="{StaticResource ButtonSecondary}" VerticalOptions="Center"
@@ -58,7 +60,7 @@
     </ContentView.Resources>
 
     <CollectionView x:Name="InjuryList" ItemsSource="{Binding ActiveInjuries}" SelectionMode="None"
-                    ItemSizingStrategy="MeasureFirstItem"
+                    ItemSizingStrategy="MeasureAllItems"
                     ItemTemplate="{StaticResource InjuryRow}">
         <CollectionView.Header>
             <Grid Padding="{StaticResource UiInsets16_8_16_16}" RowSpacing="{StaticResource UiSpacing0}" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
@@ -179,16 +181,18 @@
 
                 <!-- Empty state -->
                 <Border Grid.Row="4" IsVisible="{Binding ShowEmptyState}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                        StrokeThickness="{StaticResource UiStrokeWidth0}" StrokeShape="{StaticResource UiRoundRectangleRadius16}" Padding="{StaticResource UiInsets20}">
+                        Style="{StaticResource CardAccent}"
+                        Padding="{StaticResource UiInsets20}">
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                         <Image Grid.Row="0" Source="injury_free.png" WidthRequest="{StaticResource UiDimension64}" HeightRequest="{StaticResource UiDimension64}"
                                HorizontalOptions="Center"
                                SemanticProperties.Description="{loc:LocalizedText Injury_LogContent_AHeartWithACheckMark}" />
                         <Label Grid.Row="1" Text="{Binding EmptyStateTitle, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
+                               Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center"
+                               LineBreakMode="WordWrap" />
                         <Label Grid.Row="2" Text="{Binding EmptyStateDetail, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource MutedCentered}" />
+                               Style="{StaticResource MutedCentered}"
+                               LineBreakMode="WordWrap" />
                     </Grid>
                 </Border>
                 <Label Grid.Row="5" Text="{loc:LocalizedText Injury_LogContent_ActiveInjuries}" Style="{StaticResource SectionTitle}"

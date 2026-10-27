@@ -58,7 +58,7 @@
                 <Grid IsVisible="{Binding IsDayOverview}" Margin="{StaticResource UiInsetsMinus20_Minus8_Minus20_Minus16}">
                     <BoxView Style="{StaticResource ModalBackdrop}" />
                     <Border Style="{StaticResource ModalSurface}" VerticalOptions="Fill">
-                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{StaticResource UiSpaceControl}" Padding="{StaticResource UiInsets20_20_20_24}">
+                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{StaticResource UiSpaceControl}" Padding="{StaticResource PresentationModalPagePadding}">
                         <Label Text="{loc:LocalizedText Workout_Session_ActivitiesTitle}"
                                Style="{StaticResource ModalTitle}" SemanticProperties.HeadingLevel="Level1" />
                     <ScrollView Grid.Row="1">
@@ -83,14 +83,17 @@
                                                                      VerticalOptions="Center">
                                                     <Label
                                                         Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
-                                                        Style="{StaticResource BodyStrong}" FontSize="{StaticResource UiFontSize15}" />
+                                                        Style="{StaticResource BodyStrong}" FontSize="{StaticResource UiFontSize15}"
+                                                        LineBreakMode="WordWrap" />
                                                     <Label
                                                         Text="{Binding SummaryText, Converter={StaticResource LocalizedStringConverter}}"
-                                                        Style="{StaticResource CaptionLabel}" />
+                                                        Style="{StaticResource CaptionLabel}"
+                                                        LineBreakMode="WordWrap" />
                                                 </VerticalStackLayout>
                                                 <Label Grid.Column="2"
                                                        Text="{Binding MetricText, Converter={StaticResource LocalizedStringConverter}}"
-                                                       Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                                                       Style="{StaticResource CaptionLabel}" VerticalOptions="Center"
+                                                       LineBreakMode="WordWrap" />
                                                 <Path Grid.Column="3" Data="M1 1 L6 6 L1 11"
                                                       Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                                       StrokeThickness="{StaticResource UiStrokeWidth1_5}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension6}"
@@ -139,10 +142,15 @@
                             </Border>
                         </Grid>
                     </ScrollView>
-                    <Button Style="{StaticResource ButtonPrimary}" Grid.Row="1" Text="{loc:LocalizedText Workout_Session_StartButton}"
-                            Command="{Binding StartActivityCommand}"
-                            IsEnabled="{Binding SelectedActivity.HasExercises}"
-                            SemanticProperties.Hint="{loc:LocalizedText Workout_Session_BeginActivityAccessibility}" />
+                    <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}">
+                        <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_StartButton}"
+                                Command="{Binding StartActivityCommand}" IsVisible="{Binding IsTimedActivityRunning, Converter={StaticResource InvertedBoolConverter}}"
+                                SemanticProperties.Hint="{loc:LocalizedText Workout_Session_BeginActivityAccessibility}" />
+                        <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_FinishTimedActivity}"
+                                Command="{Binding FinishTimedActivityCommand}" IsVisible="{Binding IsTimedActivityRunning}" />
+                        <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Workout_Session_AbandonActivity}"
+                                Command="{Binding AbandonPlannedSessionCommand}" IsVisible="{Binding CanAbandonPlannedSession}" />
+                    </VerticalStackLayout>
                 </Grid>
 
                 <!-- ========== One exercise at a time ========== -->
@@ -570,7 +578,7 @@
                         <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_ContinueButton}" Command="{Binding FinishActivityCommand}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_ReturnToActivitiesAccessibility}" />
                         <Button Grid.Row="1" Text="{loc:LocalizedText Workout_Session_FinishSessionButton}"
-                                Command="{Binding FinishSessionCommand}" Style="{StaticResource ButtonSecondary}"
+                                Command="{Binding CompleteSessionCommand}" Style="{StaticResource ButtonSecondary}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_EndSessionAccessibility}" />
                     </Grid>
                 </Grid>

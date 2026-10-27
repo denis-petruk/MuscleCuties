@@ -30,17 +30,18 @@
                     ColumnDefinitions="*, Auto"
                     ColumnSpacing="{StaticResource UiSpaceCompact}"
                     RowSpacing="{StaticResource UiSpacing6}"
-                    Padding="{StaticResource UiInsets20_18_20_12}">
+                    Padding="{StaticResource PresentationModalHeaderPadding}">
 
                     <Label
                         Text="{Binding SelectedCalendarDateText, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource ModalTitle}"
-                        FontSize="{StaticResource UiFontSize20}" />
+                        LineBreakMode="WordWrap" />
 
                     <Label
                         Grid.Row="1"
                         Text="{Binding SelectedCalendarPhaseText, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource MutedLabel}" />
+                        Style="{StaticResource MutedLabel}"
+                        LineBreakMode="WordWrap" />
 
                     <Border
                         Grid.Column="1"
@@ -73,6 +74,7 @@
                         <Label
                             Text="{Binding PhaseEditStatusText, Converter={StaticResource LocalizedStringConverter}}"
                             Style="{StaticResource ErrorLabel}"
+                            LineBreakMode="WordWrap"
                             IsVisible="{Binding HasPhaseEditStatus}" />
 
                         <Border
@@ -84,10 +86,12 @@
                             <VerticalStackLayout Spacing="{StaticResource UiSpacing10}">
                                 <Label
                                     Text="{Binding PhaseJumpWarningTitle, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource CardTitle}" />
+                                    Style="{StaticResource CardTitle}"
+                                    LineBreakMode="WordWrap" />
                                 <Label
                                     Text="{Binding PhaseJumpWarningText, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource MutedLabel}" />
+                                    Style="{StaticResource MutedLabel}"
+                                    LineBreakMode="WordWrap" />
                             </VerticalStackLayout>
                         </Border>
 
@@ -97,6 +101,7 @@
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="cycleModels:CyclePhaseOptionItem">
                                 <Border Style="{StaticResource SelectableCard}"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                                     SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_DatePhaseModal_SelectPhaseFormat}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -121,7 +126,8 @@
                                             Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
                                             TextColor="{Binding TextColor}"
                                             FontSize="{StaticResource UiFontSize15}"
-                                            FontAttributes="{StaticResource UiFontAttributesBold}" />
+                                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                                            LineBreakMode="WordWrap" />
                                         <Label
                                             Grid.Row="1"
                                             Grid.Column="1"
@@ -150,12 +156,12 @@
 
                 <Grid
                     Grid.Row="2"
-                    Padding="{StaticResource UiInsets20_12_20_20}">
+                    Padding="{StaticResource PresentationActionFooterPadding}">
                     <Grid
                         IsVisible="{Binding HasPhaseJumpWarning}"
                         ColumnDefinitions="*, *"
                         ColumnSpacing="{StaticResource UiSpacing10}">
-                        <Button Style="{StaticResource ButtonSecondary}"
+                        <Button Style="{StaticResource ButtonPrimary}"
                             Text="{loc:LocalizedText Cycle_DatePhaseModal_UseNextPhaseButton}"
                             Command="{Binding UseSuggestedPhaseCommand}"
                             IsVisible="{Binding HasSuggestedPhase}" />
@@ -166,7 +172,7 @@
                             Command="{Binding ReviewEarlierPhaseRecordsCommand}" />
                     </Grid>
 
-                    <Button Style="{StaticResource ButtonSecondary}"
+                    <Button Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Cycle_DatePhaseModal_SaveButton}"
                         Command="{Binding SaveDatePhaseCommand}"
                         IsVisible="{Binding HasPhaseJumpWarning, Converter={StaticResource InvertedBoolConverter}}" />

@@ -8,12 +8,13 @@
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileUnitsDisplayViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
 
     <ScrollView>
         <Grid
-            Padding="{StaticResource UiInsets20_12_20_32}"
+            Padding="{StaticResource PresentationFormPagePadding}"
             RowSpacing="{StaticResource UiSpaceControl}"
             HorizontalOptions="Fill"
             MaximumWidthRequest="{StaticResource UiDimension640}"
@@ -36,7 +37,8 @@
                         <Label
                             Grid.Row="1"
                             Text="{loc:LocalizedText Profile_Units_MetricUsesKgGCmAnd}"
-                            Style="{StaticResource CaptionLabel}" />
+                            Style="{StaticResource CaptionLabel}"
+                            LineBreakMode="WordWrap" />
                     </Grid>
                     <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
                         <Border
@@ -102,7 +104,9 @@
                     </Grid>
 
                     <!-- Unit overrides (consolidated into same card) -->
-                    <BoxView Grid.Row="3" />
+                    <BoxView Grid.Row="3" HeightRequest="{StaticResource UiDimension1}"
+                             Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                             Opacity="{StaticResource UiOpacitySubtle}" />
                     <Grid Grid.Row="4" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                         <Label
                             Grid.Row="0"
@@ -112,7 +116,8 @@
                         <Label
                             Grid.Row="1"
                             Text="{loc:LocalizedText Profile_Units_LeaveBlankToUseTheSystem}"
-                            Style="{StaticResource CaptionLabel}" />
+                            Style="{StaticResource CaptionLabel}"
+                            LineBreakMode="WordWrap" />
                     </Grid>
                     <Grid Grid.Row="5" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}"
                           RowSpacing="{StaticResource UiSpacing10}">
@@ -159,9 +164,10 @@
                 Grid.Row="2"
                 Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource CaptionLabel}"
+                LineBreakMode="WordWrap"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
 
-            <Button Style="{StaticResource ButtonSecondary}" Grid.Row="3" Text="{loc:LocalizedText Profile_Units_SaveUnits}" Command="{Binding SaveCommand}" />
+            <Button Style="{StaticResource ButtonPrimary}" Grid.Row="3" Text="{loc:LocalizedText Profile_Units_SaveUnits}" Command="{Binding SaveCommand}" />
         </Grid>
     </ScrollView>
 </ContentPage>

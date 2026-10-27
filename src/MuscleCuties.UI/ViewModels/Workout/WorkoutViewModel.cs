@@ -21,7 +21,6 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private const int MissingWorkoutDayId = 0;
     private const int NoScheduledDays = 0;
     private const int SingleActivityCount = 1;
-    private const string StrengthPlanGenerationRoute = "StrengthPlanGenerationPage";
 
     private readonly IWorkoutInjuryUseCase _injuries;
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
@@ -97,10 +96,10 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         EmptyWorkoutsActionCommand = new AsyncRelayCommand(HandleEmptyWorkoutsActionAsync, CanUseEmptyWorkoutsAction);
+        GeneratePlanCommand = new AsyncRelayCommand(GeneratePlanAsync, () => !IsBusy);
         OpenWorkoutCommand = new AsyncRelayCommand<WorkoutItem>(OpenWorkoutAsync);
         ToggleSessionOptionalCommand = new AsyncRelayCommand<WorkoutItem>(ToggleSessionOptionalAsync);
         ToggleEasierAlternativeCommand = new AsyncRelayCommand<WorkoutItem>(ToggleEasierAlternativeAsync);
-        OpenStrengthPlanCommand = new AsyncRelayCommand(() => _navigateAsync(StrengthPlanGenerationRoute));
         SelectFilterCommand = new RelayCommand<FilterChipItem>(SelectFilter);
         StartFeaturedWorkoutCommand = new AsyncRelayCommand(OpenFeaturedWorkoutAsync);
         SelectWeekCommand = new RelayCommand<int>(SelectWeek);
@@ -138,6 +137,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     public InjuryLogViewModel InjuryLogVm => _injuryLogVm ??= new InjuryLogViewModel(
         _injuries, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
 
+    public bool HasNoPlan => string.IsNullOrEmpty(ActivePlanName);
     public bool HasWorkouts => !IsBusy && Workouts.Count > 0;
     public bool HasNoWorkouts => !IsBusy && !IsLoadError && Workouts.Count == 0;
     public string ActivePlanTitle => ActivePlanName ?? "No active plan";
@@ -184,26 +184,26 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         }
     }
 
-    public string EmptyWorkoutsTitle => ActivePlanName is null
-        ? "No active workout plan"
+    public string EmptyWorkoutsTitle => HasNoPlan
+        ? "Workout_Generation_PromptNoPlanTitle"
         : SelectedFilterLabel == "All"
             ? "No workouts scheduled"
             : $"No {SelectedFilterLabel.ToLowerInvariant()} workouts";
 
-    public string EmptyWorkoutsSubtitle => ActivePlanName is null
-        ? "Workout_Page_ChooseActivitiesSubtitle"
+    public string EmptyWorkoutsSubtitle => HasNoPlan
+        ? "Workout_Generation_PromptNoPlanSubtitle"
         : "Try another filter or show the full week.";
 
-    public string EmptyWorkoutsButtonText => ActivePlanName is null ? "Workout_Page_ChooseActivities" : "Show All";
+    public string EmptyWorkoutsButtonText => HasNoPlan ? "Workout_Generation_PromptGeneratePlanButton" : "Show All";
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Bound in workout page XAML.")]
     public bool EmptyWorkoutsButtonVisible => true;
 
     private string SelectedFilterLabel => Filters.FirstOrDefault(f => f.IsSelected)?.Label ?? "All";
     public AsyncRelayCommand EmptyWorkoutsActionCommand { get; }
+    public AsyncRelayCommand GeneratePlanCommand { get; }
     public AsyncRelayCommand<WorkoutItem> OpenWorkoutCommand { get; }
     public AsyncRelayCommand<WorkoutItem> ToggleSessionOptionalCommand { get; }
     public AsyncRelayCommand<WorkoutItem> ToggleEasierAlternativeCommand { get; }
-    public AsyncRelayCommand OpenStrengthPlanCommand { get; }
     public RelayCommand<FilterChipItem> SelectFilterCommand { get; }
     public AsyncRelayCommand StartFeaturedWorkoutCommand { get; }
     public RelayCommand<int> SelectWeekCommand { get; }
@@ -456,8 +456,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             FeaturedWorkoutHasAction = false;
             FeaturedWorkoutIsEditAction = false;
             FeaturedWorkoutBadgeText = "Today recovery";
-            FeaturedWorkoutTitle = ActivePlanName is null ? "No active plan" : "Living happy life";
-            FeaturedWorkoutSubtitle = ActivePlanName is null
+            FeaturedWorkoutTitle = HasNoPlan ? "No active plan" : "Living happy life";
+            FeaturedWorkoutSubtitle = HasNoPlan
                 ? "Your training sessions will appear once a plan exists."
                 : "Recovery day";
             FeaturedWorkoutDurationText = "Rest day";
@@ -506,15 +506,20 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     private async Task HandleEmptyWorkoutsActionAsync()
     {
-        if (ActivePlanName is null)
+        if (HasNoPlan)
         {
-            await _navigateAsync("ProfileWorkoutPreferencesPage");
+            await GeneratePlanAsync();
             return;
         }
 
         var allFilter = Filters.FirstOrDefault(f => f.Label == "All");
         if (allFilter is not null)
             SelectFilter(allFilter);
+    }
+
+    private async Task GeneratePlanAsync()
+    {
+        await _navigateAsync("ProfileWorkoutPreferencesPage");
     }
 
     private bool CanUseEmptyWorkoutsAction()
@@ -643,6 +648,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     private void NotifyWorkoutStateProperties()
     {
+        OnPropertyChanged(nameof(HasNoPlan));
         OnPropertyChanged(nameof(HasWorkouts));
         OnPropertyChanged(nameof(HasNoWorkouts));
         OnPropertyChanged(nameof(ActivePlanTitle));
@@ -652,6 +658,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         OnPropertyChanged(nameof(EmptyWorkoutsButtonText));
         OnPropertyChanged(nameof(EmptyWorkoutsButtonVisible));
         EmptyWorkoutsActionCommand.NotifyCanExecuteChanged();
+        GeneratePlanCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnActivePlanNameChanged(string? value)

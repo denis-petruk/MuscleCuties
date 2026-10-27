@@ -9,10 +9,11 @@
     xmlns:commonModels="clr-namespace:MuscleCuties.UI.Models.UI.Common"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileFeedbackViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <ScrollView>
-        <Grid Padding="{StaticResource UiInsets20_12_20_32}" RowSpacing="{StaticResource UiSpaceControl}" MaximumWidthRequest="{StaticResource UiDimension640}"
+        <Grid Padding="{StaticResource PresentationFormPagePadding}" RowSpacing="{StaticResource UiSpaceControl}" MaximumWidthRequest="{StaticResource UiDimension640}"
               RowDefinitions="Auto,Auto,Auto,Auto,Auto">
             <sharedControls:PageHeader Grid.Row="0" Title="{loc:LocalizedText Profile_Feedback_Feedback}"
                                        BackCommand="{Binding BackCommand}" />
@@ -34,7 +35,8 @@
                                 Text="{Binding FeedbackText}" AutoSize="TextChanges"
                                 SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_YourFeedback}" />
                     </Border>
-                    <Label Grid.Row="2" Text="{loc:LocalizedText Profile_Feedback_SuggestedFixOptional}" Style="{StaticResource FormFieldLabel}" />
+                    <Label Grid.Row="2" Text="{loc:LocalizedText Profile_Feedback_SuggestedFixOptional}" Style="{StaticResource FormFieldLabel}"
+                           LineBreakMode="WordWrap" />
                     <Border Grid.Row="3" Style="{StaticResource EditorContainer}">
                         <Editor Placeholder="{loc:LocalizedText Profile_Feedback_WhatWouldWorkBetter}"
                                 Text="{Binding AdjustmentText}" AutoSize="TextChanges"
@@ -108,12 +110,14 @@
                     <Label Grid.Row="9"
                            Text="{Binding AttachmentStatus, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource CaptionLabel}"
+                           LineBreakMode="WordWrap"
                            IsVisible="{Binding AttachmentStatus, Converter={StaticResource StringToBoolConverter}}" />
                 </Grid>
             </Border>
 
             <Label Grid.Row="3" Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                    Style="{StaticResource CaptionLabel}"
+                   LineBreakMode="WordWrap"
                    IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
             <Button Grid.Row="4"
                     Style="{StaticResource ButtonPrimary}"

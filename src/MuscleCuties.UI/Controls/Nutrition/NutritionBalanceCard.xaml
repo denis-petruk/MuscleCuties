@@ -31,7 +31,7 @@
                     Grid.Column="1"
                     Text="{loc:LocalizedText Nutrition_Balance_TodaySBalance}"
                     Style="{StaticResource SectionTitle}"
-                    FontSize="{StaticResource UiFontSize16}"
+                    LineBreakMode="WordWrap"
                     VerticalOptions="Center" />
             </Grid>
             <Border
@@ -41,7 +41,8 @@
                 StrokeThickness="{StaticResource UiStrokeWidth0}"
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
                 Padding="{StaticResource UiInsets10_7}"
-                MinimumHeightRequest="{StaticResource UiDimension44}"
+                MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
                 VerticalOptions="Center"
                 SemanticProperties.Description="{loc:LocalizedText Nutrition_Balance_ViewMicronutrientTargets}">
                 <Border.GestureRecognizers>

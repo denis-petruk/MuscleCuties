@@ -10,12 +10,14 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Cycle"
     x:DataType="vm:CycleViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
+    SemanticProperties.Description="{loc:LocalizedText Cycle_Page_Title}">
 
 
     <Grid RowDefinitions="Auto, *">
         <Grid
-            Padding="{StaticResource UiInsets20_36_20_12}"
+            Padding="{StaticResource PresentationPageHeaderPadding}"
             ColumnDefinitions="*, Auto"
             ColumnSpacing="{StaticResource UiSpaceCompact}"
             RowDefinitions="Auto, Auto"
@@ -24,8 +26,14 @@
             MaximumWidthRequest="{StaticResource UiDimension640}">
             <Label
                 Text="{Binding CurrentMonthLabel, Converter={StaticResource LocalizedStringConverter}}"
-                Style="{StaticResource Headline}" />
-            <Label Grid.Row="1" Text="{loc:LocalizedText Cycle_Page_Title}" Style="{StaticResource MutedLabel}" />
+                Style="{StaticResource Headline}"
+                LineBreakMode="WordWrap"
+                SemanticProperties.HeadingLevel="Level1" />
+            <Label
+                Grid.Row="1"
+                Text="{loc:LocalizedText Cycle_Page_Title}"
+                Style="{StaticResource MutedLabel}"
+                LineBreakMode="WordWrap" />
 
             <Border
                 Grid.Column="1"
@@ -52,7 +60,7 @@
 
         <ScrollView Grid.Row="1">
             <VerticalStackLayout
-                Padding="{StaticResource UiInsets20_8_20_32}"
+                Padding="{StaticResource PresentationPageContentPadding}"
                 Spacing="{StaticResource UiSpaceControl}"
                 HorizontalOptions="Fill"
                 MaximumWidthRequest="{StaticResource UiDimension640}">
@@ -65,6 +73,7 @@
                 <Label
                     Text="{loc:LocalizedText Cycle_Page_MedicalDisclaimer}"
                     Style="{StaticResource CaptionTinyCentered}"
+                    LineBreakMode="WordWrap"
                     Margin="{StaticResource UiInsets0_8_0_0}" />
             </VerticalStackLayout>
         </ScrollView>

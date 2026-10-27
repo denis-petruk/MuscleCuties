@@ -285,10 +285,11 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
             decision.PolicySessionsPerWeek);
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
             decision.TargetSessionsPerWeek);
-        Assert.Equal(1, decision.ScheduledSessionsPerWeek);
-        Assert.Equal(MixedActivityScheduleDisposition.PartiallyScheduled, decision.Disposition);
-        Assert.Single(result.Sessions);
-        Assert.Equal(DayOfWeek.Monday, result.Sessions[0].Day);
+        Assert.Equal(0, decision.ScheduledSessionsPerWeek);
+        Assert.Equal(MixedActivityScheduleDisposition.Blocked, decision.Disposition);
+        Assert.Empty(result.Sessions);
+        Assert.Contains(MixedActivityWeekScheduleRule.AvailableWeekdaysMustContainOneToSevenDistinctDays,
+            result.InputReasons);
     }
 
     [Fact]
@@ -607,7 +608,11 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
             null, catalog, new Dictionary<int, int>(), new HashSet<int>(), new Dictionary<int, int>(),
             new HashSet<int>(), catalog.ToDictionary(e => e.Candidate.ExerciseId, _ => 4),
             catalog.ToDictionary(e => e.Candidate.ExerciseId, e => e.Candidate.Pattern.ToString()),
-            reviewedSlots, reviewedSlots.Keys.ToDictionary(k => k, _ => "Reviewed slot"));
+            reviewedSlots, reviewedSlots.Keys.ToDictionary(k => k, _ => "Reviewed slot"))
+        {
+            MuscleGroupsByExerciseId = catalog.ToDictionary(entry => entry.Candidate.ExerciseId,
+                entry => (IReadOnlySet<string>)new HashSet<string> { entry.Candidate.Pattern.ToString() })
+        };
 
         var choices = new StrengthPlanPreviewChoices(
             WorkoutActivityType.HighVolumeStrength, ReferenceDate,
@@ -666,7 +671,11 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
             null, catalog, new Dictionary<int, int>(), new HashSet<int>(), new Dictionary<int, int>(),
             new HashSet<int>(), catalog.ToDictionary(e => e.Candidate.ExerciseId, _ => 4),
             catalog.ToDictionary(e => e.Candidate.ExerciseId, e => e.Candidate.Pattern.ToString()),
-            reviewedSlots, reviewedSlots.Keys.ToDictionary(k => k, _ => "Reviewed slot"));
+            reviewedSlots, reviewedSlots.Keys.ToDictionary(k => k, _ => "Reviewed slot"))
+        {
+            MuscleGroupsByExerciseId = catalog.ToDictionary(entry => entry.Candidate.ExerciseId,
+                entry => (IReadOnlySet<string>)new HashSet<string> { entry.Candidate.Pattern.ToString() })
+        };
 
         var choices = new StrengthPlanPreviewChoices(
             WorkoutActivityType.HighVolumeStrength, ReferenceDate,
@@ -701,7 +710,11 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
             null, catalog, new Dictionary<int, int>(), new HashSet<int>(), new Dictionary<int, int>(),
             new HashSet<int>(), catalog.ToDictionary(e => e.Candidate.ExerciseId, _ => 4),
             catalog.ToDictionary(e => e.Candidate.ExerciseId, e => e.Candidate.Pattern.ToString()),
-            reviewedSlots, reviewedSlots.Keys.ToDictionary(k => k, _ => "Reviewed slot"));
+            reviewedSlots, reviewedSlots.Keys.ToDictionary(k => k, _ => "Reviewed slot"))
+        {
+            MuscleGroupsByExerciseId = catalog.ToDictionary(entry => entry.Candidate.ExerciseId,
+                entry => (IReadOnlySet<string>)new HashSet<string> { entry.Candidate.Pattern.ToString() })
+        };
 
         var choices = new StrengthPlanPreviewChoices(
             WorkoutActivityType.GeneralStrength, ReferenceDate,
@@ -926,6 +939,24 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
     }
 
     [Fact]
+    public void CompatibilityEntryPointDoesNotSubstituteUnselectedStrengthStyle()
+    {
+        var choices = new StrengthPlanPreviewChoices(
+            WorkoutActivityType.StrengthHighIntensity, ReferenceDate, null,
+            WarmupMinutes: 0, CooldownMinutes: 0);
+        var data = CreatePreviewData(WorkoutActivityType.StrengthHighIntensity,
+            profileLevel: TrainingExperienceLevel.Beginner);
+
+        var direct = StrengthPlanPreviewRule.EvaluateDirect(choices, data);
+        var result = StrengthPlanPreviewRule.EvaluateWithFallback(choices, data);
+        Assert.Equal(direct.Status, result.Status);
+        Assert.Equal(direct.LimitationCodes, result.LimitationCodes);
+        Assert.Equal(direct.EffectiveActivity, result.EffectiveActivity);
+        Assert.Null(result.FallbackSource);
+        Assert.NotEqual(WorkoutActivityType.GeneralStrength, result.EffectiveActivity);
+    }
+
+    [Fact]
     public void Regression_12_HVS_And_SHI_Eligibility_Restrictions_Remain_Intact()
     {
         // 1. Intermediate user with insufficient history (< 12 weeks) requesting HVS
@@ -1031,6 +1062,30 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek, result.Sessions.Count);
     }
 
+    [Fact]
+    public void StyleSelectionEvaluatesEverySelectedStyleWithoutAddingUnselectedStyles()
+    {
+        var data = CreatePreviewData(WorkoutActivityType.GeneralStrength) with
+        {
+            SelectedActivities = new HashSet<WorkoutActivityType>
+            {
+                WorkoutActivityType.GeneralStrength, WorkoutActivityType.HighVolumeStrength
+            },
+            ActivitySessionDurationsMinutes = new Dictionary<WorkoutActivityType, int>
+            {
+                [WorkoutActivityType.GeneralStrength] = WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes,
+                [WorkoutActivityType.HighVolumeStrength] = WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes
+            }
+        };
+        var choices = new StrengthPlanPreviewChoices(WorkoutActivityType.GeneralStrength, ReferenceDate, null,
+            WarmupMinutes: 0, CooldownMinutes: 0);
+        var selection = StrengthStyleSelectionRule.Select(choices, data);
+        Assert.Equal(2, selection.Evaluations.Count);
+        Assert.Contains(selection.Evaluations, evaluation => evaluation.Activity == WorkoutActivityType.GeneralStrength);
+        Assert.Contains(selection.Evaluations, evaluation => evaluation.Activity == WorkoutActivityType.HighVolumeStrength);
+        Assert.DoesNotContain(selection.Evaluations, evaluation => evaluation.Activity == WorkoutActivityType.StrengthHighIntensity);
+    }
+
     private static StrengthPlanPreviewData CreatePreviewData(
         WorkoutActivityType activity,
         Equipment equipment = Equipment.Bodyweight,
@@ -1055,7 +1110,11 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
             profileLevel, catalog, new Dictionary<int, int>(), new HashSet<int>(), new Dictionary<int, int>(),
             new HashSet<int>(), catalog.ToDictionary(e => e.Candidate.ExerciseId, _ => 4),
             catalog.ToDictionary(e => e.Candidate.ExerciseId, e => e.Candidate.Pattern.ToString()),
-            reviewedSlots, reviewedSlots.Keys.ToDictionary(k => k, _ => "Reviewed slot"));
+            reviewedSlots, reviewedSlots.Keys.ToDictionary(k => k, _ => "Reviewed slot"))
+        {
+            MuscleGroupsByExerciseId = catalog.ToDictionary(entry => entry.Candidate.ExerciseId,
+                entry => (IReadOnlySet<string>)new HashSet<string> { entry.Candidate.Pattern.ToString() })
+        };
     }
 
     private static StrengthExerciseCatalogEntry Entry(int exerciseId, MovementPattern pattern) => new(

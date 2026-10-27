@@ -10,8 +10,8 @@
     x:DataType="vm:CycleViewModel"
     IsOpen="{Binding IsPhaseSummarySheetVisible}">
 
-    <Grid BackgroundColor="{StaticResource ModalScrim}">
-        <BoxView Style="{StaticResource ModalDismissTarget}">
+    <Grid>
+        <BoxView Style="{StaticResource ModalBackdrop}">
             <BoxView.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding ClosePhaseSummarySheetCommand}" />
             </BoxView.GestureRecognizers>
@@ -53,13 +53,14 @@
                                 Grid.Row="0"
                                 Text="{Binding SelectedPhaseSummary.Name, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource ModalTitle}"
-                                FontSize="{StaticResource UiFontSize20}" />
+                                LineBreakMode="WordWrap" />
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding SelectedPhaseSummary.Window, Converter={StaticResource LocalizedStringConverter}}"
                                 FontSize="{StaticResource UiFontSize13}"
                                 FontAttributes="{StaticResource UiFontAttributesBold}"
-                                TextColor="{Binding SelectedPhaseSummary.AccentColor}" />
+                                TextColor="{Binding SelectedPhaseSummary.AccentColor}"
+                                LineBreakMode="WordWrap" />
                         </Grid>
 
                         <Border
@@ -102,7 +103,8 @@
                                 FontSize="{StaticResource UiFontSize15}"
                                 FontAttributes="{StaticResource UiFontAttributesBold}"
                                 TextColor="{Binding SelectedPhaseSummary.TextColor}"
-                                HorizontalOptions="Center" />
+                                HorizontalOptions="Center"
+                                LineBreakMode="WordWrap" />
                         </Border>
 
                         <!-- Hormonal Profile -->
@@ -117,7 +119,8 @@
                                     FontSize="{StaticResource UiFontSize11}"
                                     FontAttributes="{StaticResource UiFontAttributesBold}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                    VerticalOptions="Center" />
+                                    VerticalOptions="Center"
+                                    LineBreakMode="WordWrap" />
                             </Grid>
                             <Label
                                 Grid.Row="1"
@@ -139,7 +142,8 @@
                                     FontSize="{StaticResource UiFontSize11}"
                                     FontAttributes="{StaticResource UiFontAttributesBold}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                    VerticalOptions="Center" />
+                                    VerticalOptions="Center"
+                                    LineBreakMode="WordWrap" />
                             </Grid>
                             <Label
                                 Grid.Row="1"
@@ -161,7 +165,8 @@
                                     FontSize="{StaticResource UiFontSize11}"
                                     FontAttributes="{StaticResource UiFontAttributesBold}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                    VerticalOptions="Center" />
+                                    VerticalOptions="Center"
+                                    LineBreakMode="WordWrap" />
                             </Grid>
                             <Label
                                 Grid.Row="1"
@@ -183,7 +188,8 @@
                                     FontSize="{StaticResource UiFontSize11}"
                                     FontAttributes="{StaticResource UiFontAttributesBold}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                    VerticalOptions="Center" />
+                                    VerticalOptions="Center"
+                                    LineBreakMode="WordWrap" />
                             </Grid>
                             <Label
                                 Grid.Row="1"
@@ -209,7 +215,8 @@
                                     Text="{Binding SelectedPhaseSummary.QuickRule, Converter={StaticResource LocalizedStringConverter}}"
                                     FontSize="{StaticResource UiFontSize13}"
                                     FontAttributes="{StaticResource UiFontAttributesItalic}"
-                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                    TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                    LineBreakMode="WordWrap" />
                             </Grid>
                         </Border>
 
@@ -219,13 +226,14 @@
                 <!-- Footer Action -->
                 <Grid
                     Grid.Row="2"
-                    Padding="{StaticResource UiInsets20_12_20_24}">
+                    Padding="{StaticResource PresentationActionFooterPadding}">
                     <Button
                         Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Cycle_PhaseSummary_CloseButton}"
                         Command="{Binding ClosePhaseSummarySheetCommand}"
                         HorizontalOptions="End"
-                        WidthRequest="{StaticResource UiDimension90}" />
+                        MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                        MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}" />
                 </Grid>
 
             </Grid>

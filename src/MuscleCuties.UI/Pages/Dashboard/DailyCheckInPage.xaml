@@ -7,7 +7,8 @@
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     x:DataType="vm:DailyCheckInViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
 
     <Grid RowDefinitions="*, Auto">
@@ -15,7 +16,7 @@
         <!-- Check-in -->
         <ScrollView Grid.Row="0">
             <VerticalStackLayout
-                Padding="{StaticResource UiInsets20_24_20_28}"
+                Padding="{StaticResource PresentationFormPagePadding}"
                 Spacing="{StaticResource UiSpaceControl}"
                 HorizontalOptions="Fill">
 
@@ -294,6 +295,7 @@
                             Grid.Row="0"
                             Text="{loc:LocalizedText Dashboard_CheckIn_SuccessMessage}"
                             Style="{StaticResource SectionTitle}"
+                            LineBreakMode="WordWrap"
                             HorizontalOptions="Center" />
                         <Label
                             Grid.Row="1"
@@ -307,12 +309,14 @@
                         <Label Grid.Row="1"
                                Text="{loc:LocalizedText Dashboard_Readiness_ReviewPending}"
                                Style="{StaticResource BodyCentered}"
+                               LineBreakMode="WordWrap"
                                HorizontalOptions="Center"
                                IsVisible="{Binding IsReadinessScoreDisplayEnabled, Converter={StaticResource InvertedBoolConverter}}" />
                         <Label
                             Grid.Row="2"
                             Text="{Binding ReadinessTierText, Converter={StaticResource LocalizedStringConverter}}"
                             Style="{StaticResource SectionTitle}"
+                            LineBreakMode="WordWrap"
                             HorizontalOptions="Center"
                             HorizontalTextAlignment="Center"
                             IsVisible="{Binding IsReadinessScoreDisplayEnabled}" />
@@ -320,6 +324,7 @@
                             Grid.Row="3"
                             Text="{loc:LocalizedText Dashboard_Readiness_ScoreExplanation}"
                             Style="{StaticResource MutedCentered}"
+                            LineBreakMode="WordWrap"
                             HorizontalOptions="Center"
                             IsVisible="{Binding IsReadinessScoreDisplayEnabled}" />
                         <Grid Grid.Row="4" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpacing10}"
@@ -344,6 +349,7 @@
                             Grid.Row="5"
                             Text="{Binding SessionSummaryText, Converter={StaticResource LocalizedStringConverter}}"
                             Style="{StaticResource MutedCentered}"
+                            LineBreakMode="WordWrap"
                             IsVisible="{Binding HasSessionSummary}"
                             HorizontalOptions="Center" />
                     </Grid>
@@ -356,7 +362,7 @@
         <Grid
             Grid.Row="1"
             RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
-            Padding="{StaticResource UiInsets20_12_20_36}"
+            Padding="{StaticResource PresentationActionFooterPadding}"
             IsVisible="{Binding IsCompleted, Converter={StaticResource InvertedBoolConverter}}"
             BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
             <BoxView Grid.ColumnSpan="2" HeightRequest="{StaticResource UiDimension1}" Margin="{StaticResource UiInsets0_0_0_12}"

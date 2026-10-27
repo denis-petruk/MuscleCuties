@@ -217,6 +217,9 @@ public sealed class CloudWorkoutInjuryStore(
             body,
             idempotencyKey: Guid.NewGuid().ToString("N"),
             ct).ConfigureAwait(false);
+        if (response.Status == BackendApiStatus.Conflict &&
+            response.ErrorCode == "ActiveWorkoutPreventsInjury")
+            throw new ActiveWorkoutPreventsInjuryException();
         var saved = CloudStoreResponse.RequireData(response, "save workout injury");
         CacheRecord(saved);
     }

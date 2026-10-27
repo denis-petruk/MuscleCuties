@@ -20,7 +20,7 @@
 
     <Grid RowDefinitions="Auto,*">
         <!-- Top Sticky Header -->
-        <Grid Padding="{StaticResource UiInsets20_36_20_12}"
+        <Grid Padding="{StaticResource PresentationPageHeaderPadding}"
               ColumnDefinitions="*,Auto"
               ColumnSpacing="{StaticResource UiSpaceControl}"
               HorizontalOptions="Fill"
@@ -74,16 +74,10 @@
         <CollectionView ItemsSource="{Binding Workouts}" SelectionMode="None">
             <CollectionView.Header>
                 <VerticalStackLayout
-                    Padding="{StaticResource UiInsets20_8_20_32}"
+                    Padding="{StaticResource PresentationPageContentPadding}"
                     Spacing="{StaticResource UiSpaceControl}"
                     HorizontalOptions="Fill"
                     MaximumWidthRequest="{StaticResource UiDimension640}">
-
-                    <Button
-                        Text="{loc:LocalizedText Workout_Generation_Open}"
-                        Command="{Binding OpenStrengthPlanCommand}"
-                        Style="{StaticResource ButtonPrimary}"
-                        SemanticProperties.Hint="{loc:LocalizedText Workout_Generation_OpenHint}" />
 
                     <Border Style="{StaticResource CardAccent}"
                             IsVisible="{Binding HasActiveInjuries}"
@@ -93,7 +87,7 @@
                             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                                 <Label
                                     Text="{Binding InjuryBannerSummary, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource BodyCompact}" MaxLines="1" LineBreakMode="TailTruncation"
+                                    Style="{StaticResource BodyCompact}" LineBreakMode="WordWrap"
                                     VerticalOptions="Center" />
                                 <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Page_DetailsButton}"
                                         Style="{StaticResource ButtonSecondary}"
@@ -232,6 +226,7 @@
                                     <Border Style="{StaticResource CardAccent}"
                                             BackgroundColor="{Binding AccentColor}"
                                             MinimumWidthRequest="{StaticResource UiDimension72}"
+                                            MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                                             SemanticProperties.Description="{Binding WorkoutTitle, Converter={StaticResource LocalizedStringConverter}}">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer
@@ -242,14 +237,17 @@
                                             <Label
                                                 Text="{Binding DayLabel, Converter={StaticResource LocalizedStringConverter}}"
                                                 HorizontalTextAlignment="Center"
-                                                TextColor="{Binding AccentTextColor}" FontAttributes="{StaticResource UiFontAttributesBold}" />
+                                                TextColor="{Binding AccentTextColor}" FontAttributes="{StaticResource UiFontAttributesBold}"
+                                                LineBreakMode="WordWrap" />
                                             <Label Text="{Binding Date, StringFormat='{0:dd MMM}'}"
                                                    HorizontalTextAlignment="Center"
-                                                   TextColor="{Binding AccentTextColor}" />
+                                                   TextColor="{Binding AccentTextColor}"
+                                                   LineBreakMode="WordWrap" />
                                             <Label
                                                 Text="{Binding WorkoutTag, Converter={StaticResource LocalizedStringConverter}}"
                                                 HorizontalTextAlignment="Center"
-                                                TextColor="{Binding AccentTextColor}" FontSize="{StaticResource UiFontSize11}" />
+                                                TextColor="{Binding AccentTextColor}" FontSize="{StaticResource UiFontSize11}"
+                                                LineBreakMode="WordWrap" />
                                         </VerticalStackLayout>
                                     </Border>
                                 </DataTemplate>
@@ -293,7 +291,8 @@
                                         FontSize="{StaticResource UiFontSize13}"
                                         FontAttributes="{StaticResource UiFontAttributesBold}"
                                         HorizontalTextAlignment="Center"
-                                        VerticalOptions="Center">
+                                        VerticalOptions="Center"
+                                        LineBreakMode="WordWrap">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding IsSelected}"
                                                          Value="True">
@@ -355,8 +354,34 @@
         </CollectionView>
         </RefreshView>
 
+        <!-- Generate Plan Prompt Overlay (shown prominently covering workout cards/blocks when no plan exists) -->
+        <Grid Grid.Row="1"
+              IsVisible="{Binding HasNoPlan}"
+              BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
+              Padding="{StaticResource PresentationPageContentPadding}"
+              ZIndex="5">
+            <Border Style="{StaticResource CardPrimary}"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center"
+                    MaximumWidthRequest="{StaticResource UiDimension640}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+                    <Label Text="{loc:LocalizedText Workout_Generation_PromptNoPlanTitle}"
+                           Style="{StaticResource CardTitle}"
+                           HorizontalTextAlignment="Center" />
+                    <Label Text="{loc:LocalizedText Workout_Generation_PromptNoPlanSubtitle}"
+                           Style="{StaticResource MutedLabel}"
+                           HorizontalTextAlignment="Center" />
+                    <Button Style="{StaticResource ButtonPrimary}"
+                            Text="{loc:LocalizedText Workout_Generation_PromptGeneratePlanButton}"
+                            Command="{Binding GeneratePlanCommand}"
+                            HorizontalOptions="Fill" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
         <sharedControls:PageLoadingOverlay
             Grid.RowSpan="{StaticResource WorkoutOverlayRowSpan}"
+            ZIndex="15"
             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}" />
         <toolkit:LazyView
             x:Name="InjuryModalLazy"
@@ -374,7 +399,7 @@
                 </BoxView.GestureRecognizers>
             </BoxView>
             <Border Style="{StaticResource ModalSurface}"
-                    Padding="{StaticResource UiInsets20_16_20_32}"
+                    Padding="{StaticResource PresentationModalPagePadding}"
                     MaximumHeightRequest="{StaticResource UiDimension520}" VerticalOptions="End">
                 <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing14}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
@@ -406,6 +431,7 @@
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="workoutModels:WorkoutActivitySectionItem">
                                             <Border Style="{StaticResource CardPrimary}"
+                                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                                     SemanticProperties.Hint="{loc:LocalizedText Workout_Session_BeginActivityAccessibility}">
                                                 <Border.GestureRecognizers>

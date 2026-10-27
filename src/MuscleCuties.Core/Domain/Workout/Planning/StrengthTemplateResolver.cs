@@ -26,6 +26,8 @@ public sealed record StrengthTemplateSelectionInput(
     IReadOnlyDictionary<string, IReadOnlySet<int>>? ReviewedAllowedExerciseIdsByTemplateSlot = null,
     IReadOnlySet<int>? UserConfirmedManageableLoadExerciseIds = null);
 
+public enum StrengthSlotResolutionOutcome { Selected, OptionalOmission, NoSafeCandidate, MissingReviewData }
+
 public sealed record StrengthSlotSelection(
     string SlotId,
     StrengthTemplateSlotId MovementSlot,
@@ -44,6 +46,7 @@ public sealed record StrengthSlotSelection(
     IReadOnlyList<string> LimitationCodes)
 {
     public int? InitialRepetitionTarget => MinimumRepetitions;
+    public StrengthSlotResolutionOutcome Outcome { get; init; } = StrengthSlotResolutionOutcome.Selected;
 }
 
 public sealed record StrengthSlotPrescription(
@@ -229,11 +232,17 @@ public static class StrengthTemplateResolver
                 var prescription = activityPrescription?.Sessions.Count > 0
                     ? SlotPrescription(activityPrescription.Sessions[0], slot, input.Activity)
                     : new StrengthSlotPrescription(null, null, null, null, null);
+                var completeReview = hasReviewedSlot && reviewedSlotExerciseIds is { Count: > 0 } &&
+                    reviewedSlotExerciseIds.All(id => matched.Any(entry => entry.Candidate.ExerciseId == id &&
+                        entry.MetadataGaps is { Count: 0 } && entry.Candidate.SupportedTimingMethods is { Count: > 0 }));
                 chosen.Add(new StrengthSlotSelection(slot.SlotId, slot.MovementSlot, slot.IsRequired,
                     RoleFor(slot, input.Activity), IsHeavyMain(slot, input.Activity), null, null, null,
                     PrescriptionRule(input.Activity, slot), prescription.Sets,
                     prescription.MinimumRepetitions, prescription.MaximumRepetitions,
-                    prescription.RepetitionsInReserve, prescription.RestSeconds, codes));
+                    prescription.RepetitionsInReserve, prescription.RestSeconds, codes)
+                {
+                    Outcome = completeReview ? StrengthSlotResolutionOutcome.NoSafeCandidate : StrengthSlotResolutionOutcome.MissingReviewData
+                });
                 continue;
             }
 

@@ -34,6 +34,7 @@
                     Text="{Binding PhaseStatusText, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource FormFieldLabel}"
                     FontSize="{StaticResource UiFontSize13}"
+                    LineBreakMode="WordWrap"
                     VerticalOptions="Center" />
                 <Path Grid.Column="2"
                       Data="M9 18l6-6-6-6"

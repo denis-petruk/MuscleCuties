@@ -249,7 +249,6 @@ public sealed class ReadinessSyncOrchestratorTests
         public Task<WorkoutPlanSummary> GetPlanSummaryAsync(int userId, CyclePhase phase) => throw new NotImplementedException();
         public Task<TodaysWorkoutSummary> GetTodaysSummaryAsync(int userId, CyclePhase phase, DateTime date) =>
             Task.FromResult(TodaysWorkoutSummary.RestDay);
-        public Task RegenerateActivePlanAsync(int userId, CyclePhase phase) => Task.CompletedTask;
         public Task<WorkoutSessionDetail> GetWorkoutSessionDetailAsync(int userId, int workoutDayId) => throw new NotImplementedException();
         public Task LogWorkoutSessionAsync(int userId, int workoutDayId, IReadOnlyCollection<WorkoutExerciseLogInput> exerciseLogs, DateTime date) => throw new NotImplementedException();
         public Task<IReadOnlyList<ExerciseSwapOption>> GetSwapCandidatesAsync(int userId, int workoutDayExerciseId) => throw new NotImplementedException();

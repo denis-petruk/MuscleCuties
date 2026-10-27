@@ -7,6 +7,7 @@ using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Workout.Injury;
+using MuscleCuties.UseCases.Features.CheckInAndInjury;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
@@ -276,6 +277,10 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             CancelEdit();
             _pendingChangeRefresh = true;
             await RefreshAfterChangeAsync();
+        }
+        catch (ActiveWorkoutPreventsInjuryException)
+        {
+            ErrorText = UiTextCatalog.Get("Injury_Log_ActiveWorkoutPreventsInjury");
         }
         catch (Exception ex)
         {

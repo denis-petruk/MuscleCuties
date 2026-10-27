@@ -32,15 +32,17 @@
                     RowDefinitions="Auto, Auto"
                     ColumnSpacing="{StaticResource UiSpaceCompact}"
                     RowSpacing="{StaticResource UiSpacing6}"
-                    Padding="{StaticResource UiInsets20_18_20_12}">
+                    Padding="{StaticResource PresentationModalHeaderPadding}">
                     <Label
                         Grid.Row="0" Grid.Column="0"
                         Text="{Binding SelectedBreakdownTitle, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource ModalTitle}" />
+                        Style="{StaticResource ModalTitle}"
+                        LineBreakMode="WordWrap" />
                     <Label
                         Grid.Row="1" Grid.Column="0"
                         Text="{Binding SelectedBreakdownNutrientSummaryText, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource ModalSubtitle}" />
+                        Style="{StaticResource ModalSubtitle}"
+                        LineBreakMode="WordWrap" />
                     <Border
                         Grid.Row="0"
                         Grid.Column="1"
@@ -66,7 +68,7 @@
                     ItemSizingStrategy="MeasureAllItems"
                     SelectionMode="None"
                     VerticalScrollBarVisibility="Always"
-                    Margin="{StaticResource UiInsets20_0_20_20}"
+                    Margin="{StaticResource UiInsets20_0_20_32}"
                     VerticalOptions="Fill">
                     <CollectionView.Header>
                         <VerticalStackLayout>
@@ -114,12 +116,14 @@
                                         Grid.Row="1"
                                         Grid.ColumnSpan="2"
                                         Text="{Binding SelectedBreakdownMacrosText, Converter={StaticResource LocalizedStringConverter}}"
-                                        Style="{StaticResource CaptionLabel}" />
+                                        Style="{StaticResource CaptionLabel}"
+                                        LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="2"
                                         Grid.ColumnSpan="2"
                                         Text="{Binding SelectedBreakdownFiberText, Converter={StaticResource LocalizedStringConverter}}"
-                                        Style="{StaticResource CaptionLabel}" />
+                                        Style="{StaticResource CaptionLabel}"
+                                        LineBreakMode="WordWrap" />
 
                                     <Border
                                         Grid.Row="3"
@@ -128,12 +132,13 @@
                                         StrokeThickness="{StaticResource UiStrokeWidth0}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
                                         Padding="{StaticResource UiInsets10_8}"
-                                        MinimumHeightRequest="{StaticResource UiDimension44}"
+                                        MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                        MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
                                         HorizontalOptions="Start"
                                         IsVisible="{Binding CanEditSelectedBreakdown}"
                                         SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakdown_EditMeal}">
                                         <Border.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding EditSelectedBreakdownMealCommand}" />
+                                             <TapGestureRecognizer Command="{Binding EditSelectedBreakdownMealCommand}" />
                                         </Border.GestureRecognizers>
                                         <Grid ColumnDefinitions="Auto, Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                                             <mi:MauiIcon
@@ -145,6 +150,7 @@
                                                 Grid.Column="1"
                                                 Text="{loc:LocalizedText Nutrition_Breakdown_EditMeal}"
                                                 Style="{StaticResource CaptionStrong}"
+                                                LineBreakMode="WordWrap"
                                                 VerticalOptions="Center" />
                                         </Grid>
                                     </Border>
@@ -168,6 +174,7 @@
                                                         Grid.Column="1"
                                                         Text="{Binding Name}"
                                                         Style="{StaticResource CaptionLabel}"
+                                                        LineBreakMode="WordWrap"
                                                         VerticalOptions="Center" />
                                                     <ProgressBar
                                                         Grid.Column="2"
@@ -192,11 +199,13 @@
                                     Text="{loc:LocalizedText Nutrition_Breakdown_Micronutrients}"
                                     Style="{StaticResource SectionTitle}"
                                     FontSize="{StaticResource UiFontSize16}"
+                                    LineBreakMode="WordWrap"
                                     VerticalOptions="Center" />
                                 <Label
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Nutrition_Breakdown_DailyTargets}"
                                     Style="{StaticResource CaptionLabel}"
+                                    LineBreakMode="WordWrap"
                                     VerticalOptions="Center" />
                             </Grid>
                         </VerticalStackLayout>
@@ -229,12 +238,13 @@
                                             VerticalOptions="Center" />
                                     </Border>
 
-                                    <Label
+                                     <Label
                                         Grid.Column="1"
                                         Text="{Binding Group, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource EyebrowLabel}"
                                         FontSize="{StaticResource UiFontSize12}"
                                         CharacterSpacing="{StaticResource UiCharacterSpacingWide}"
+                                        LineBreakMode="WordWrap"
                                         Margin="{StaticResource UiInsets0_0_0_2}" />
                                     <Label
                                         Grid.Row="1"
@@ -256,6 +266,7 @@
                                         <Label
                                             Text="{Binding GoalText, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}"
+                                            LineBreakMode="WordWrap"
                                             VerticalOptions="Center" />
                                     </HorizontalStackLayout>
 

@@ -12,10 +12,10 @@
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="{StaticResource UiInsets20_24_20_32}"
+            Padding="{StaticResource PresentationPageContentPadding}"
             Spacing="{StaticResource UiSpaceContent}"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="{StaticResource UiDimension720}">
+            MaximumWidthRequest="{StaticResource UiDimension640}">
             <sharedControls:PageHeader
                 Title="{loc:LocalizedText Workout_PhaseAdjustment_Title}"
                 BackCommand="{Binding BackCommand}" />

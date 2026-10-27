@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\src\MuscleCuties.UI\Services\Workout\WorkoutAccountCalendarClient.cs" Link="WorkoutAccountCalendarClient.cs" />
     <ProjectReference Include="..\..\src\MuscleCuties.Core\MuscleCuties.Core.csproj" />
     <ProjectReference Include="..\..\src\MuscleCuties.UseCases\MuscleCuties.UseCases.csproj" />
     <ProjectReference Include="..\..\src\MuscleCuties.Infrastructure\MuscleCuties.Infrastructure.csproj" />

@@ -56,7 +56,8 @@
                     <Label Text="{loc:LocalizedText Dashboard_Nutrition_Protein}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            HorizontalTextAlignment="Center" />
                     <Label Text="{Binding ProteinText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionTinyCentered}" />
+                           Style="{StaticResource CaptionTinyCentered}"
+                           LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                     <Grid WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" HorizontalOptions="Center">
@@ -74,7 +75,8 @@
                     <Label Text="{loc:LocalizedText Dashboard_Nutrition_Carbs}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            HorizontalTextAlignment="Center" />
                     <Label Text="{Binding CarbsText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionTinyCentered}" />
+                           Style="{StaticResource CaptionTinyCentered}"
+                           LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Grid.Column="2" Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                     <Grid WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" HorizontalOptions="Center">
@@ -92,7 +94,8 @@
                     <Label Text="{loc:LocalizedText Dashboard_Nutrition_Fat}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
                            HorizontalTextAlignment="Center" />
                     <Label Text="{Binding FatsText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionTinyCentered}" />
+                           Style="{StaticResource CaptionTinyCentered}"
+                           LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
             </Grid>
         </VerticalStackLayout>

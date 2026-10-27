@@ -31,8 +31,8 @@
 
             <Border
                 Grid.Column="0"
-                WidthRequest="{StaticResource UiDimension44}"
-                HeightRequest="{StaticResource UiDimension44}"
+                WidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                HeightRequest="{StaticResource PresentationMinimumTouchSize}"
                 StrokeShape="{StaticResource UiRoundRectangleRadius12}"
                 BackgroundColor="{Binding ActivityBackground}"
                 StrokeThickness="{StaticResource UiStrokeWidth0}"

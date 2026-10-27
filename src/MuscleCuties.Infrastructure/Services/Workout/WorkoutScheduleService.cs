@@ -1,15 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Domain.Workout;
-using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Entities.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.UI.Workout;
-using MuscleCuties.Core.Repositories.Users;
 using MuscleCuties.Core.Repositories.Workout;
-using MuscleCuties.Core.Repositories.Workout.Planning;
-using MuscleCuties.Core.Services.Workout.Planning;
 
 namespace MuscleCuties.Core.Services.Workout;
 
@@ -24,23 +20,14 @@ public class WorkoutScheduleService : IWorkoutScheduleService
     private static readonly DateTime MaxSupportedDate = new(2099, 12, 31, 0, 0, 0, DateTimeKind.Utc);
 
     private readonly AppDatabase _db;
-    private readonly IWorkoutInjuryRepository _injuryRepository;
-    private readonly IUserRepository _userRepository;
-    private readonly IWorkoutPlanGenerator _workoutPlanGenerator;
     private readonly IWorkoutRepository _workoutRepository;
 
     public WorkoutScheduleService(
         AppDatabase db,
-        IWorkoutRepository workoutRepository,
-        IUserRepository userRepository,
-        IWorkoutInjuryRepository injuryRepository,
-        IWorkoutPlanGenerator workoutPlanGenerator)
+        IWorkoutRepository workoutRepository)
     {
         _db = db;
         _workoutRepository = workoutRepository;
-        _userRepository = userRepository;
-        _injuryRepository = injuryRepository;
-        _workoutPlanGenerator = workoutPlanGenerator;
     }
 
     public async Task<IReadOnlyList<ScheduleDayItem>> GetDatedScheduleAsync(
@@ -52,8 +39,7 @@ public class WorkoutScheduleService : IWorkoutScheduleService
         if (userId <= MissingUserId)
             return [];
 
-        var effectivePhase = phase ?? CyclePhase.Follicular;
-        var activePlan = await EnsureGeneratedPlanAsync(userId, effectivePhase).ConfigureAwait(false);
+        var activePlan = await _workoutRepository.GetActivePlanAsync(userId).ConfigureAwait(false);
         var workoutDays = activePlan is not null
             ? await _workoutRepository.GetWorkoutDaysByPlanAsync(activePlan.Id).ConfigureAwait(false)
             : [];
@@ -258,91 +244,6 @@ public class WorkoutScheduleService : IWorkoutScheduleService
             AccentTextColor = WorkoutActivityClassifier.GetTextColor(tag)
         };
     }
-
-    private async Task<WorkoutPlan?> EnsureGeneratedPlanAsync(int userId, CyclePhase phase)
-    {
-        var activePlan = await _workoutRepository.GetActivePlanAsync(userId).ConfigureAwait(false);
-        var profile = await _userRepository.GetProfileAsync(userId).ConfigureAwait(false);
-        if (profile is null)
-            return activePlan;
-
-        var activePlanDays = activePlan is null
-            ? []
-            : await _workoutRepository.GetWorkoutDaysByPlanAsync(activePlan.Id).ConfigureAwait(false);
-        var activeInjuries = await _injuryRepository.GetActiveAsync(userId).ConfigureAwait(false);
-        if (!_workoutPlanGenerator.ShouldRegenerate(activePlan, activePlanDays, profile, phase, activeInjuries))
-            return activePlan;
-
-        try
-        {
-            var generatedPlan = await _workoutPlanGenerator.GenerateAsync(profile, phase, DateTime.UtcNow)
-                .ConfigureAwait(false);
-            return await ReplacePlanPreservingCompletedLogsAsync(_db, _workoutRepository, userId, generatedPlan, profile)
-                .ConfigureAwait(false);
-        }
-        catch (WorkoutPlanningFailureException)
-        {
-            return activePlan;
-        }
-    }
-
-    internal static async Task<WorkoutPlan> ReplacePlanPreservingCompletedLogsAsync(AppDatabase db,
-        IWorkoutRepository workoutRepository, int userId, WorkoutPlan generatedPlan, UserProfile expectedProfile)
-    {
-        await using var transaction = db.Database.CurrentTransaction is null
-            ? await db.Database.BeginTransactionAsync().ConfigureAwait(false)
-            : null;
-        var currentProfile = await db.UserProfiles.AsNoTracking()
-            .SingleOrDefaultAsync(profile => profile.UserId == userId).ConfigureAwait(false);
-        if (currentProfile is null || !SamePlanInput(currentProfile, expectedProfile))
-            throw new WorkoutPlanningFailureException("The profile changed while the workout plan was being generated.");
-
-        // Preserve completed workout logs for this user across regeneration
-        var existingCompletedLogs = await db.WorkoutLogs
-            .Include(l => l.ExerciseLogs)
-            .Where(l => l.UserId == userId && l.CompletionPercent >= 100)
-            .ToListAsync().ConfigureAwait(false);
-
-        var savedPlan = await workoutRepository.ReplaceActivePlanAsync(generatedPlan).ConfigureAwait(false);
-
-        // Re-link completed logs to the corresponding new workout days
-        foreach (var log in existingCompletedLogs)
-        {
-            var matchingDay = savedPlan.WorkoutDays.FirstOrDefault(d =>
-                                  d.Date.HasValue && d.Date.Value.Date == log.Date.Date)
-                              ?? savedPlan.WorkoutDays.FirstOrDefault(d => d.DayOfWeek == (int)log.Date.DayOfWeek);
-
-            if (matchingDay is not null && log.WorkoutDayId != matchingDay.Id)
-            {
-                log.WorkoutDayId = matchingDay.Id;
-                if (matchingDay.WorkoutDayExercises.Count > 0 && log.ExerciseLogs.Count > 0)
-                {
-                    var exerciseMap = matchingDay.WorkoutDayExercises.ToDictionary(e => e.ExerciseId);
-                    foreach (var el in log.ExerciseLogs)
-                        if (exerciseMap.TryGetValue(el.ExerciseId, out var wde))
-                            el.WorkoutDayExerciseId = wde.Id;
-                }
-            }
-        }
-
-        await db.SaveChangesAsync().ConfigureAwait(false);
-        if (transaction is not null)
-            await transaction.CommitAsync().ConfigureAwait(false);
-        return savedPlan;
-    }
-
-    private static bool SamePlanInput(UserProfile current, UserProfile expected) =>
-        current.UpdatedAt == expected.UpdatedAt &&
-        current.WorkoutDaysPerWeek == expected.WorkoutDaysPerWeek &&
-        string.Equals(current.PreferredWorkoutActivityTypes, expected.PreferredWorkoutActivityTypes, StringComparison.Ordinal) &&
-        current.Goal == expected.Goal &&
-        current.TrainingExperienceLevel == expected.TrainingExperienceLevel &&
-        current.CurrentCyclePhase == expected.CurrentCyclePhase &&
-        current.CycleLength == expected.CycleLength &&
-        current.SessionDurationMinutes == expected.SessionDurationMinutes &&
-        string.Equals(current.EquipmentLevel, expected.EquipmentLevel, StringComparison.Ordinal) &&
-        string.Equals(current.PhaseBaselinesJson, expected.PhaseBaselinesJson, StringComparison.Ordinal) &&
-        string.Equals(current.ReproductiveContextJson, expected.ReproductiveContextJson, StringComparison.Ordinal);
 
     public static DateTime ClampSafeDate(DateTime date)
     {

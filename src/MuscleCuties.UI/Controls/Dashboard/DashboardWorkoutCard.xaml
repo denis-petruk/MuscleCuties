@@ -73,8 +73,7 @@
                         Text="{Binding WorkoutTitle, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource SectionTitle}"
                         FontSize="{StaticResource UiFontSize17}"
-                        LineBreakMode="TailTruncation"
-                        MaxLines="1" />
+                        LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
 
                 <!-- Pill on the right: REST DAY or TRAINING -->

@@ -225,9 +225,10 @@ public static class ApiApplication
         builder.Services.AddScoped<INutritionOverviewStore>(sp => sp.GetRequiredService<PostgresNutritionOverviewStore>());
         builder.Services.AddScoped<ServerNutritionOverviewUseCase>();
         builder.Services.AddScoped<IWorkoutPlanningCatalogStore, PostgresWorkoutPlanningCatalogStore>();
+        builder.Services.AddScoped<IWorkoutPlanReconciler, PostgresWorkoutPlanReconciler>();
+        builder.Services.AddScoped<IWorkoutProgressStore, PostgresWorkoutProgressStore>();
         builder.Services.AddScoped<GetWorkoutPlanningCatalogUseCase>();
         builder.Services.AddScoped<IWorkoutPlanningReferenceDataSource, PostgresWorkoutPlanningReferenceDataSource>();
-        builder.Services.AddScoped<GenerateWorkoutPlanUseCase>();
         builder.Services.AddScoped<IStrengthPlanPreviewSourceV020, PostgresStrengthPlanPreviewSourceV020>();
         builder.Services.AddScoped<IReviewedExerciseExclusionCatalogV020Store,
             PostgresReviewedExerciseExclusionCatalogV020Store>();
@@ -754,6 +755,7 @@ public static class ApiApplication
         app.MapNutritionBatchAndCopyEndpoints();
         app.MapRecipeEndpoints();
         app.MapWorkoutPlanningEndpoints();
+        app.MapWorkoutProgressEndpoints();
         app.MapWorkoutActiveSessionEndpoints();
         app.MapWorkoutArchiveEndpoints();
         app.MapWorkoutInjuryEndpoints();

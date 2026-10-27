@@ -14,7 +14,9 @@
                 <TapGestureRecognizer Command="{Binding CloseSwapPanelCommand}" />
             </Grid.GestureRecognizers>
         </Grid>
-        <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" VerticalOptions="End">
+        <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}"
+                Padding="{StaticResource PresentationModalPagePadding}"
+                VerticalOptions="End">
             <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing14}" IsEnabled="{Binding CanInteract}">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
@@ -63,16 +65,19 @@
                                 </Border.GestureRecognizers>
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                        <Label Text="{Binding Name}" Style="{StaticResource BodyStrong}" />
+                                        <Label Text="{Binding Name}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
                                         <Label
                                             Text="{Binding MuscleMatch, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource CaptionLabel}" />
+                                            Style="{StaticResource CaptionLabel}"
+                                            LineBreakMode="WordWrap" />
                                         <Label
                                             Text="{Binding PrimaryMuscles, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource CaptionLabel}" />
+                                            Style="{StaticResource CaptionLabel}"
+                                            LineBreakMode="WordWrap" />
                                         <Label
                                             Text="{Binding Equipment, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource CaptionLabel}" />
+                                            Style="{StaticResource CaptionLabel}"
+                                            LineBreakMode="WordWrap" />
                                     </VerticalStackLayout>
                                     <Label Grid.Column="1" Text="{loc:LocalizedText Workout_Swap_SelectedBadge}"
                                            IsVisible="{Binding IsSelected}" Style="{StaticResource AccentLabel}"

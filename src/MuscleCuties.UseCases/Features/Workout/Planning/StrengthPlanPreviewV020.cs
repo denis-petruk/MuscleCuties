@@ -2,6 +2,7 @@ using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
+using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 
 namespace MuscleCuties.UseCases.Features.Workout.Planning;
 
@@ -18,6 +19,8 @@ public sealed record StrengthPlanPreviewRequestV020(
     int? WarmupMinutes = null,
     int? CooldownMinutes = null)
 {
+    public WorkoutPreferencesDto? DraftPreferences { get; init; }
+    public WorkoutActivityDto? ExplicitStrengthStyleChoice { get; init; }
     /// <summary>Saved user activity choices used to build the mixed weekly schedule.</summary>
     public HashSet<int>? SelectedActivityTypes { get; init; }
 
@@ -86,6 +89,16 @@ public sealed record StrengthPlanPreviewSourceV020(
     public IReadOnlyDictionary<int, int>? RequestedSessionsPerWeek { get; init; }
     public TrainingExperienceLevel? ProfileTrainingExperience { get; init; }
     public IReadOnlyDictionary<int, int>? GoalPriorityByExerciseId { get; init; }
+    public IReadOnlyDictionary<int, IReadOnlySet<string>>? MuscleGroupsByExerciseId { get; init; }
+    public int? ProfileVersion { get; init; }
+    public string? InjuryFingerprint { get; init; }
+    public Guid? ActivePlanId { get; init; }
+    public Guid? ActiveRevisionId { get; init; }
+    public string? HistoryFingerprint { get; init; }
+    public long TimeZoneVersion { get; init; }
+    public long ExperienceVersion { get; init; }
+    public long AnswerVersion { get; init; }
+    public SavedActivityAnswersDto? SavedAnswers { get; init; }
 }
 
 public interface IStrengthPlanPreviewSourceV020

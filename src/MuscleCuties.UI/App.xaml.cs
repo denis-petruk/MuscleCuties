@@ -27,6 +27,8 @@ public partial class App : Application
     private int _startupStarted;
     private Task? _startupTask;
     private DateTime _lastDashboardRefreshDate = DateTime.MinValue;
+    private bool _isForeground;
+    private CancellationTokenSource? _foregroundCancellation;
 
     public App(IServiceProvider services)
     {
@@ -57,6 +59,8 @@ public partial class App : Application
 
     private void OnWindowCreated(object? sender, EventArgs e)
     {
+        _isForeground = true;
+        _foregroundCancellation = new CancellationTokenSource();
         BeginStartup();
     }
 
@@ -203,6 +207,8 @@ public partial class App : Application
                 _lastDashboardRefreshDate = DateTime.Today;
         });
         Trace.WriteLine($"[Navigation] {route} selected as the app root.");
+        if (_isForeground && route != "LoginPage")
+            _ = UpdateForegroundCalendarAsync();
     }
 
     internal static async Task<DashboardPage?> WaitForDashboardPageAsync()
@@ -238,11 +244,34 @@ public partial class App : Application
 
     private void OnWindowResumed(object? sender, EventArgs e)
     {
+        _isForeground = true;
+        _foregroundCancellation?.Cancel();
+        _foregroundCancellation = new CancellationTokenSource();
+        _ = UpdateForegroundCalendarAsync();
         _ = HandleDayChangeAsync();
     }
 
     private void OnWindowStopped(object? sender, EventArgs e)
     {
+        _isForeground = false;
+        _foregroundCancellation?.Cancel();
+    }
+
+    private async Task UpdateForegroundCalendarAsync()
+    {
+        try
+        {
+            var cancellationToken = _foregroundCancellation?.Token ?? CancellationToken.None;
+            var tokenStore = _services.GetRequiredService<IBackendSessionTokenStore>();
+            var tokens = await tokenStore.ReadTokensAsync(cancellationToken);
+            if (!_isForeground || tokens is null)
+                return;
+            await _services.GetRequiredService<IWorkoutAccountCalendarClient>().UpdateForegroundTimeZoneAsync(cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            Trace.WriteLine($"[WorkoutCalendar] Foreground update failed ({exception.GetType().Name}).");
+        }
     }
 
     private async Task HandleDayChangeAsync()

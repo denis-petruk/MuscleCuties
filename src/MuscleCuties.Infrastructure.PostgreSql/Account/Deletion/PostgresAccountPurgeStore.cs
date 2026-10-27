@@ -130,6 +130,10 @@ public sealed class PostgresAccountPurgeStore(
                 .ConfigureAwait(false);
 
             // 4. Workout Sessions and Exercise Logs
+            purgedCount += await dbContext.WorkoutCompletionDayCredits.Where(x => x.UserId == userId)
+                .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+            purgedCount += await dbContext.WorkoutAccountPlanningStates.Where(x => x.UserId == userId)
+                .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
             purgedCount += await dbContext.WorkoutExerciseLogs
                 .Where(x => x.UserId == userId)
                 .ExecuteDeleteAsync(cancellationToken)
@@ -337,6 +341,8 @@ public sealed class PostgresAccountPurgeStore(
             || await dbContext.DailyReadinessLogs.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutInjuryLogs.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutPlans.AnyAsync(x => x.UserId == userId, cancellationToken)
+            || await dbContext.WorkoutCompletionDayCredits.AnyAsync(x => x.UserId == userId, cancellationToken)
+            || await dbContext.WorkoutAccountPlanningStates.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutPlanProposalsV02.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutPlanRevisionsV02.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutDays.AnyAsync(x => x.UserId == userId, cancellationToken)

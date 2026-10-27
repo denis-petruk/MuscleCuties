@@ -5,15 +5,45 @@ namespace MuscleCuties.UseCases.Features.Workout.Planning;
 public sealed record StrengthPlanProposalCreatedV020(
     Guid ProposalId,
     StrengthPlanPreviewResponseV020 Preview,
-    bool IsPersisted);
+    bool IsPersisted,
+    PlanningLeaseDto? Lease = null,
+    int ProposalVersion = 0,
+    bool ReplacesExistingPlan = false);
+
+public sealed record PlanningLeaseDto(Guid LeaseId, long Fence, DateTimeOffset ExpiresAtUtc);
+public sealed record PlanningLeaseRequest(Guid ProposalId, Guid LeaseId, long Fence);
+public sealed record PlanningLeaseResult(string Status, PlanningLeaseDto? Lease);
+public sealed record ActivePlanningPreviewDto(Guid? ProposalId, DateTimeOffset? ExpiresAtUtc);
+public sealed record SavedActivityAnswersDto(long Version, IReadOnlyList<ActivityEligibilityInputV020> ActivityEligibilityEvidence,
+    HiitEligibilityEvidenceInputV020? HiitEligibilityEvidence, bool SafetyPlanChanged = false);
+public sealed record SaveActivityAnswersRequest(long ExpectedVersion, IReadOnlyList<ActivityEligibilityInputV020> ActivityEligibilityEvidence,
+    HiitEligibilityEvidenceInputV020? HiitEligibilityEvidence);
+
+public sealed class WorkoutPreviewAlreadyOpenException : Exception
+{
+    public WorkoutPreviewAlreadyOpenException() : base("A workout plan preview is already open.") { }
+}
+
+public sealed class WorkoutPlanningInputsChangedException : Exception
+{
+    public WorkoutPlanningInputsChangedException() : base("Workout planning inputs changed. Please preview again.") { }
+}
 
 public interface IStrengthPlanProposalStoreV020
 {
-    Task<Guid> SaveAsync(Guid userId, StrengthPlanPreviewRequestV020 request,
+    Task<StrengthPlanProposalCreatedV020> SaveAsync(Guid userId, StrengthPlanPreviewRequestV020 request,
         StrengthPlanPreviewResponseV020 preview, CancellationToken cancellationToken);
+    Task<PlanningLeaseResult> RenewAsync(Guid userId, PlanningLeaseRequest request, CancellationToken cancellationToken);
+    Task<PlanningLeaseResult> CloseAsync(Guid userId, PlanningLeaseRequest request, CancellationToken cancellationToken);
+    Task<PlanningLeaseResult> TakeoverAsync(Guid userId, Guid proposalId, CancellationToken cancellationToken);
+    Task<ActivePlanningPreviewDto> GetActivePreviewAsync(Guid userId, CancellationToken cancellationToken);
+    Task<SavedActivityAnswersDto> ReadAnswersAsync(Guid userId, CancellationToken cancellationToken);
+    Task<SavedActivityAnswersDto> SaveAnswersAsync(Guid userId, SaveActivityAnswersRequest request, CancellationToken cancellationToken);
 }
 
-public sealed record AcceptStrengthPlanProposalRequestV020(Guid ProposalId);
+public sealed record AcceptStrengthPlanProposalRequestV020(Guid ProposalId, Guid LeaseId = default,
+    long Fence = 0, int ProposalVersion = 0, bool ReplacementConfirmed = false,
+    bool ReducedVolumeAcknowledged = false);
 
 public sealed record AcceptStrengthPlanProposalResultV020(
     string Status,
@@ -28,6 +58,13 @@ public interface IStrengthPlanProposalClientV020
 
     Task<AcceptStrengthPlanProposalResultV020> AcceptAsync(AcceptStrengthPlanProposalRequestV020 request,
         CancellationToken cancellationToken = default);
+
+    Task<PlanningLeaseResult> RenewAsync(PlanningLeaseRequest request, CancellationToken cancellationToken = default);
+    Task<PlanningLeaseResult> CloseAsync(PlanningLeaseRequest request, CancellationToken cancellationToken = default);
+    Task<PlanningLeaseResult> TakeoverAsync(Guid proposalId, CancellationToken cancellationToken = default);
+    Task<ActivePlanningPreviewDto> GetActivePreviewAsync(CancellationToken cancellationToken = default);
+    Task<SavedActivityAnswersDto> ReadAnswersAsync(CancellationToken cancellationToken = default);
+    Task<SavedActivityAnswersDto> SaveAnswersAsync(SaveActivityAnswersRequest request, CancellationToken cancellationToken = default);
 }
 
 public interface IAcceptStrengthPlanProposalStoreV020
@@ -56,8 +93,6 @@ public sealed class CreateStrengthPlanProposalV020UseCase(
     PreviewStrengthPlanV020UseCase previewUseCase,
     IStrengthPlanProposalStoreV020 store)
 {
-    private const int NoProposalSessions = 0;
-
     public async Task<StrengthPlanProposalCreatedV020> ExecuteAsync(Guid userId,
         StrengthPlanPreviewRequestV020 request, CancellationToken cancellationToken = default)
     {
@@ -65,11 +100,9 @@ public sealed class CreateStrengthPlanProposalV020UseCase(
         var preview = await previewUseCase.ExecuteAsync(userId, request, cancellationToken)
             .ConfigureAwait(false);
         if (!string.Equals(preview.Status, "Feasible", StringComparison.Ordinal) ||
-            preview.Sessions.Count == NoProposalSessions)
+            preview.MixedActivitySchedule?.Sessions is not { Count: > 0 })
             return new StrengthPlanProposalCreatedV020(Guid.Empty, preview, false);
 
-        var proposalId = await store.SaveAsync(userId, request, preview, cancellationToken)
-            .ConfigureAwait(false);
-        return new StrengthPlanProposalCreatedV020(proposalId, preview, true);
+        return await store.SaveAsync(userId, request, preview, cancellationToken).ConfigureAwait(false);
     }
 }

@@ -49,6 +49,30 @@ public static class WorkoutPreferencesRule
     public static IReadOnlyList<int> WeeklyFrequencyChoices() =>
         ActivityFrequencyPreferenceRule.FrequencyChoices();
 
+    public static bool IsStrengthStyle(WorkoutActivityType activity) => activity is
+        WorkoutActivityType.GeneralStrength or
+        WorkoutActivityType.HighVolumeStrength or
+        WorkoutActivityType.StrengthHighIntensity;
+
+    public static bool HasAtLeastOneStrengthStyle(IReadOnlyCollection<int>? activityTypes) =>
+        activityTypes is { Count: > 0 } &&
+        activityTypes.Any(value => Enum.IsDefined(typeof(WorkoutActivityType), value) &&
+            IsStrengthStyle((WorkoutActivityType)value));
+
+    public static bool HasAtLeastOneStrengthStyle(IReadOnlyCollection<WorkoutActivityType>? activities) =>
+        activities is { Count: > 0 } &&
+        activities.Any(IsStrengthStyle);
+
+    public static bool HasMinimumDistinctWeekdays(IReadOnlyCollection<int>? availableWeekdays) =>
+        availableWeekdays is { Count: >= MinimumDaysPerWeek and <= MaximumDaysPerWeek } &&
+        availableWeekdays.All(value => Enum.IsDefined(typeof(DayOfWeek), value)) &&
+        availableWeekdays.Distinct().Count() == availableWeekdays.Count;
+
+    public static bool HasMinimumDistinctWeekdays(IReadOnlyCollection<DayOfWeek>? availableWeekdays) =>
+        availableWeekdays is { Count: >= MinimumDaysPerWeek and <= MaximumDaysPerWeek } &&
+        availableWeekdays.All(day => Enum.IsDefined(typeof(DayOfWeek), day)) &&
+        availableWeekdays.Distinct().Count() == availableWeekdays.Count;
+
     public static bool IsValid(
         IReadOnlyList<int>? activityTypes,
         IReadOnlyList<int>? availableWeekdays,
@@ -58,10 +82,9 @@ public static class WorkoutPreferencesRule
         if (activityTypes is not { Count: > 0 } ||
             activityTypes.Any(value => !Enum.IsDefined(typeof(WorkoutActivityType), value)) ||
             activityTypes.Contains((int)WorkoutActivityType.Other) ||
+            !HasAtLeastOneStrengthStyle(activityTypes) ||
             activityTypes.Distinct().Count() != activityTypes.Count ||
-            availableWeekdays is not { Count: >= MinimumDaysPerWeek and <= MaximumDaysPerWeek } ||
-            availableWeekdays.Any(value => !Enum.IsDefined(typeof(DayOfWeek), value)) ||
-            availableWeekdays.Distinct().Count() != availableWeekdays.Count ||
+            !HasMinimumDistinctWeekdays(availableWeekdays) ||
             activitySessionDurationsMinutes is null)
             return false;
 

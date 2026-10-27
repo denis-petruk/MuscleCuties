@@ -616,7 +616,8 @@ internal static partial class RussianUiText
         Values["Profile_WorkoutPrefs_SaveConflict"] = "Профиль изменился во время сохранения. Обновите настройки тренировок и повторите попытку.";
         Values["Profile_WorkoutPrefs_SaveCatalogChanged"] = "Список упражнений изменился. Обновите настройки и проверьте исключённые упражнения.";
         Values["Profile_WorkoutPrefs_PlanSetupCouldNotOpen"] = "Настройки сохранены, но редактор плана не открылся. Откройте его на вкладке «Тренировки», чтобы продолжить.";
-        Values["Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"] = "Для вашего плана требуется хотя бы одно упражнение на силу.";
+        Values["Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"] = "Выберите хотя бы одну силовую активность";
+        Values["Profile_WorkoutPrefs_PickAtLeastTwoDays"] = "Выберите хотя бы 2 дня";
         Values["Profile_WorkoutPrefs_SaveWorkoutPreferences"] = "Сохранить настройки тренировки";
         Values["Profile_WorkoutPrefs_SavingPreferences"] = "Сохранение предпочтений";
         Values["Profile_WorkoutPrefs_AvailableEquipment"] = "Доступное оборудование";

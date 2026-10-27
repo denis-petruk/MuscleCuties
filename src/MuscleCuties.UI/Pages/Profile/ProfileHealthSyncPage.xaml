@@ -7,10 +7,11 @@
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="{x:Type vm:ProfileHealthSyncViewModel}"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <ScrollView>
-        <Grid Padding="{StaticResource UiInsets20_12_20_32}"
+        <Grid Padding="{StaticResource PresentationFormPagePadding}"
               RowSpacing="{StaticResource UiSpaceControl}"
               HorizontalOptions="Fill"
               MaximumWidthRequest="{StaticResource UiDimension640}"
@@ -26,7 +27,8 @@
                     <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_HealthSync_CurrentStatus}"
                                                       IconGlyph="HeartPulse32" />
                     <Label Text="{Binding StatusText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CardTitle}" />
+                           Style="{StaticResource CardTitle}"
+                           LineBreakMode="WordWrap" />
                     <Label Text="{loc:LocalizedText Profile_HealthSync_StepsConsent}"
                            Style="{StaticResource BodyLabel}" />
                     <Button Style="{StaticResource ButtonSecondary}" Text="{Binding ConnectionBadgeText, Converter={StaticResource LocalizedStringConverter}}"
@@ -41,9 +43,11 @@
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
                     <Label Text="{Binding LastSyncedText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource CaptionLabel}"
+                           LineBreakMode="WordWrap"
                            IsVisible="{Binding IsConnected}" />
                     <Label Text="{loc:LocalizedText Profile_HealthSync_DisconnectExplanation}"
                            Style="{StaticResource CaptionLabel}"
+                           LineBreakMode="WordWrap"
                            IsVisible="{Binding IsConnected}" />
                 </VerticalStackLayout>
             </Border>
@@ -51,6 +55,7 @@
             <Label Grid.Row="2"
                    Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                    Style="{StaticResource CaptionLabel}"
+                   LineBreakMode="WordWrap"
                    IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
         </Grid>
     </ScrollView>

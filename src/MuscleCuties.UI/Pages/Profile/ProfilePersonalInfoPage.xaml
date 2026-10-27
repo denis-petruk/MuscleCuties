@@ -9,11 +9,12 @@
     xmlns:commonModels="clr-namespace:MuscleCuties.UI.Models.UI.Common"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfilePersonalInfoViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <ScrollView>
         <Grid
-            Padding="{StaticResource UiInsets20_12_20_32}"
+            Padding="{StaticResource PresentationFormPagePadding}"
             RowSpacing="{StaticResource UiSpaceControl}"
             HorizontalOptions="Fill"
             MaximumWidthRequest="{StaticResource UiDimension640}"
@@ -114,6 +115,7 @@
                         Grid.Row="4"
                         Text="{Binding PasswordStatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource CaptionSmall}"
+                        LineBreakMode="WordWrap"
                         IsVisible="{Binding PasswordStatusMessage, Converter={StaticResource StringToBoolConverter}}"
                         SemanticProperties.Description="{Binding PasswordStatusMessage, Converter={StaticResource LocalizedStringConverter}}" />
 
@@ -223,6 +225,7 @@
                 Grid.Row="6"
                 Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource CaptionSmall}"
+                LineBreakMode="WordWrap"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
                 SemanticProperties.Description="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}" />
 

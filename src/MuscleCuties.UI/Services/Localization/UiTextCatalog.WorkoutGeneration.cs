@@ -21,12 +21,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_HighIntensityStrengthDescription"] = "Heavier main lifts; exercise familiarity and load evidence may be required.";
         English["Workout_Generation_StrengthPlanChoiceHint"] = "Select this strength plan type.";
         English["Workout_Generation_HighIntensityEvidenceHelp"] = "The planner surfaces a heavy lift only when recorded history and trusted load data meet its requirements. A limited preview may ask you to confirm familiarity and manageable load for each surfaced exercise.";
-        English["Workout_Generation_HighIntensityConfirmationTitle"] = "Confirm each high-intensity main lift";
-        English["Workout_Generation_HighIntensityConfirmationHelp"] = "These lifts have enough trusted recorded exposure and manageable-load evidence for review. The preview does not show the numeric load. Answer both questions for every lift; choose Yes only if you know the movement and its saved load still feels appropriate. If unsure, choose No. The plan will be reviewed again.";
         English["Workout_Generation_HeavyMainAssignmentFormat"] = "Used as a heavy main in: {0}";
-        English["Workout_Generation_FamiliarityQuestion"] = "Are you familiar with this movement?";
-        English["Workout_Generation_ManageableLoadQuestion"] = "Does the load recorded for this lift still feel manageable?";
-        English["Workout_Generation_ConfirmHighIntensityExercises"] = "Review plan with these confirmations";
         English["Workout_Generation_HiitUnderlyingActivityTitle"] = "Choose HIIT's underlying cardio activity";
         English["Workout_Generation_HiitUnderlyingActivityHelp"] = "Choose a continuous cardio activity saved in your preferences. HIIT will replace one session of that activity. Enter its actual history and each prior week's aerobic sessions below, then confirm the required screening or clearance.";
         English["Workout_Generation_HiitEvidenceTitle"] = "Evidence for HIIT";
@@ -124,6 +119,9 @@ public static partial class UiTextCatalog
             "High-volume strength requires a longer history of consistent strength training.";
         English["Workout_Generation_Activity_ReplacedWithGeneralStrength"] = "The plan uses General Strength instead.";
         English["Workout_Generation_ApplyPlan"] = "Apply plan";
+        English["Workout_Generation_ReplacementTitle"] = "Replace your current plan?";
+        English["Workout_Generation_ReplacementSummary"] = "Your current plan will be replaced with this schedule:";
+        English["Workout_Generation_ReplacementCancel"] = "Cancel";
         English["Workout_Generation_KeepCurrentPlan"] = "Keep current plan";
         English["Workout_Generation_EditDetails"] = "Edit details and try again";
         English["Workout_Generation_Loading"] = "Loading workout preferences";
@@ -135,6 +133,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_MixedScheduleTitle"] = "Weekly activity schedule";
         English["Workout_Generation_PlannedRestDay"] = "Rest · no workout planned";
         English["Workout_Generation_Reason_YogaInconsistent"] = "The yoga description indicates a demanding class. Choose demanding or correct the class details.";
+        English["Workout_Generation_Reason_NoSafeStrengthContentRemaining"] = "No safe exercises remain for your selected strength activities. A plan with your safe non-strength activities is available instead.";
         English["Workout_Generation_MixedScheduleExplanation"] = "This schedule places your selected activities across the available weekdays.";
         English["Workout_Generation_ScheduleEmpty"] = "No activity sessions could be placed on the saved available weekdays.";
         English["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";
@@ -232,6 +231,13 @@ public static partial class UiTextCatalog
         English["Workout_Generation_OptionalActivitiesSkipped"] = "Some selected activities did not fit. You can still apply the strength plan.";
         English["Workout_Generation_PreviewNotSaved"] = "This draft is not available to apply. Review the information and try again.";
         English["Workout_Generation_CreateFailed"] = "The plan preview could not be created. Try again.";
+        English["Workout_Generation_ConnectionError"] = "Connection error. Please try again.";
+        English["Workout_Generation_RequiredAnswers"] = "Fill in the required answers before previewing your plan.";
+        English["Workout_Generation_RequiredAnswer"] = "Please choose an answer.";
+        English["Workout_Generation_ChooseFittingStrengthStyle"] = "Choose a strength style for this plan.";
+        English["Workout_Generation_ActivePreviewElsewhere"] = "A plan preview is already open. Take over to create a new preview here.";
+        English["Workout_Generation_TakeOverPreview"] = "Take over preview";
+        English["Workout_Generation_SafetyPlanChanged"] = "An activity was removed from upcoming workouts because of your safety answers.";
         English["Workout_Generation_PlanChanged"] = "Your current plan changed. Create a fresh preview before applying it.";
         English["Workout_Generation_AcceptFailed"] = "The plan was not applied. Your current plan is unchanged.";
         English["Workout_Generation_AppliedTrainNavigationFailed"] = "Your plan was applied, but Train could not open. Try again.";
@@ -256,5 +262,8 @@ public static partial class UiTextCatalog
         English["Workout_Generation_GeneralStrength"] = "General strength (low volume)";
         English["Workout_Generation_HighVolumeStrength"] = "High-volume strength";
         English["Workout_Generation_HighIntensityStrength"] = "High-intensity strength";
+        English["Workout_Generation_PromptNoPlanTitle"] = "No active workout plan";
+        English["Workout_Generation_PromptNoPlanSubtitle"] = "Set up your workout preferences and generate your personalized strength training plan.";
+        English["Workout_Generation_PromptGeneratePlanButton"] = "Generate plan";
     }
 }

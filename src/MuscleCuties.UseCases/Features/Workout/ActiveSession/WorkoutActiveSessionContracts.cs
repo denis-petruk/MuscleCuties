@@ -35,14 +35,16 @@ public sealed record ActiveWorkoutSessionSnapshot(
     bool IsCompleted,
     bool IsCanceled,
     IReadOnlyList<ActiveExerciseSetSnapshot> Sets,
-    bool Replayed = false);
+    bool Replayed = false,
+    int? PlannedWorkoutDayId = null);
 
 public sealed record StartWorkoutSessionCommand(
     string IdempotencyKey,
     Guid SessionId,
     string WorkoutName,
     DateTime StartedAtUtc,
-    string? Notes = null);
+    string? Notes = null,
+    int? PlannedWorkoutDayId = null);
 
 public sealed record UpsertWorkoutSessionSetCommand(
     string IdempotencyKey,
@@ -64,6 +66,7 @@ public sealed record CancelWorkoutSessionCommand(
 
 public interface IWorkoutActiveSessionStore
 {
+    Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(Guid userId, int workoutDayId, CancellationToken cancellationToken);
     Task<ActiveWorkoutSessionSnapshot?> GetSessionAsync(
         Guid userId,
         Guid sessionId,

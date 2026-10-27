@@ -30,23 +30,26 @@
                     RowDefinitions="Auto,Auto"
                     ColumnSpacing="{StaticResource UiSpacing10}"
                     RowSpacing="{StaticResource UiSpaceMicro}"
-                    Padding="{StaticResource UiInsets20_18_20_12}">
+                    Padding="{StaticResource PresentationModalHeaderPadding}">
                     <Label
                         Grid.Row="0"
                         Grid.Column="0"
                         Text="{Binding SuggestionPageTitle, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource ModalTitle}" />
+                        Style="{StaticResource ModalTitle}"
+                        LineBreakMode="WordWrap" />
                     <Label
                         Grid.Row="1"
                         Grid.Column="0"
                         Text="{Binding SuggestionTargetText, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource ModalSubtitle}"
+                        LineBreakMode="WordWrap"
                         IsVisible="{Binding IsDayPlanMode, Converter={StaticResource InvertedBoolConverter}}" />
                     <Label
                         Grid.Row="1"
                         Grid.Column="0"
                         Text="{Binding DayPlanSummaryText, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource ModalSubtitle}"
+                        LineBreakMode="WordWrap"
                         IsVisible="{Binding IsDayPlanMode}" />
 
                     <Border
@@ -104,7 +107,9 @@
                         HeightRequest="{StaticResource UiDimension32}" />
                     <Label Grid.Row="1"
                            Text="{Binding LoadingSuggestionText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource ModalSubtitle}" />
+                           Style="{StaticResource ModalSubtitle}"
+                           LineBreakMode="WordWrap"
+                           HorizontalTextAlignment="Center" />
                 </Grid>
 
                 <ScrollView
@@ -112,7 +117,7 @@
                     IsVisible="{Binding HasMealSuggestionError}">
                     <Grid RowDefinitions="Auto,Auto,Auto"
                           RowSpacing="{StaticResource UiSpaceCompact}"
-                          Padding="{StaticResource UiInsets28_32}">
+                          Padding="{StaticResource PresentationModalPagePadding}">
                         <Path
                             Grid.Row="0"
                             Data="M3 2v7c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2V2M6 2v20M15 2v8h4M19 2v20"
@@ -125,6 +130,7 @@
                             Grid.Row="1"
                             Text="{Binding MealSuggestionError, Converter={StaticResource LocalizedStringConverter}}"
                             Style="{StaticResource ModalSubtitle}"
+                            LineBreakMode="WordWrap"
                             HorizontalTextAlignment="Center" />
                         <Button
                             Grid.Row="2"
@@ -141,7 +147,7 @@
                     IsVisible="{Binding HasNoMealSuggestions}">
                     <Grid RowDefinitions="Auto,Auto,Auto"
                           RowSpacing="{StaticResource UiSpacing10}"
-                          Padding="{StaticResource UiInsets24_32}">
+                          Padding="{StaticResource PresentationModalPagePadding}">
                         <Path
                             Grid.Row="0"
                             Data="M12 21V8M12 11c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 15c3 0 5-2 5-5-3 0-5 2-5 5ZM12 19c-3 0-5-2-5-5 3 0 5 2 5 5"
@@ -154,12 +160,14 @@
                             Grid.Row="1"
                             Text="{loc:LocalizedText Nutrition_MealSuggestion_NoCloseMatchYet}"
                             Style="{StaticResource BodyStrong}"
+                            LineBreakMode="WordWrap"
                             HorizontalTextAlignment="Center"
                             HorizontalOptions="Center" />
                         <Label
                             Grid.Row="2"
                             Text="{loc:LocalizedText Nutrition_MealSuggestion_TryAnotherMealOrRefreshThe}"
                             Style="{StaticResource ModalSubtitle}"
+                            LineBreakMode="WordWrap"
                             HorizontalTextAlignment="Center"
                             HorizontalOptions="Center" />
                     </Grid>
@@ -173,7 +181,7 @@
                     SelectionMode="None"
                     IsVisible="{Binding HasMealSuggestions}"
                     VerticalScrollBarVisibility="Default"
-                    Margin="{StaticResource UiInsets20_12_20_20}"
+                    Margin="{StaticResource PresentationModalPagePadding}"
                     SizeChanged="OnSuggestionsSizeChanged">
                     <CollectionView.ItemsLayout>
                         <GridItemsLayout
@@ -259,16 +267,18 @@
                     IsVisible="{Binding HasNoDayPlanMeals}">
                     <Grid RowDefinitions="Auto,Auto"
                           RowSpacing="{StaticResource UiSpacing10}"
-                          Padding="{StaticResource UiInsets24_32}">
+                          Padding="{StaticResource PresentationModalPagePadding}">
                         <Label
                             Grid.Row="0"
                             Text="{loc:LocalizedText Nutrition_MealSuggestion_NoMealsLeftToPlan}"
                             Style="{StaticResource BodyStrong}"
+                            LineBreakMode="WordWrap"
                             HorizontalTextAlignment="Center" />
                         <Label
                             Grid.Row="1"
                             Text="{loc:LocalizedText Nutrition_MealSuggestion_YourLoggedMealsHaveUsedToday}"
                             Style="{StaticResource ModalSubtitle}"
+                            LineBreakMode="WordWrap"
                             HorizontalTextAlignment="Center" />
                     </Grid>
                 </ScrollView>
@@ -280,7 +290,7 @@
                     SelectionMode="None"
                     IsVisible="{Binding ShowDayPlanMeals}"
                     VerticalScrollBarVisibility="Default"
-                    Margin="{StaticResource UiInsets20_12_20_20}">
+                    Margin="{StaticResource PresentationModalPagePadding}">
                     <CollectionView.ItemsLayout>
                         <LinearItemsLayout Orientation="Vertical" ItemSpacing="{StaticResource UiSpacing10}" />
                     </CollectionView.ItemsLayout>
@@ -301,11 +311,13 @@
                                         Text="{Binding MealTypeLabel, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource FormFieldLabel}"
                                         FontSize="{StaticResource UiFontSize13}"
+                                        LineBreakMode="WordWrap"
                                         VerticalOptions="Center" />
                                     <Label
                                         Grid.Column="2"
                                         Text="{Binding TargetSummaryText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource CaptionStrong}"
+                                        LineBreakMode="WordWrap"
                                         HorizontalTextAlignment="End"
                                         VerticalOptions="Center" />
                                     <Label
@@ -326,6 +338,7 @@
                                         Grid.ColumnSpan="2"
                                         Text="{Binding MacrosText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource MutedLabel}"
+                                        LineBreakMode="WordWrap"
                                         IsVisible="{Binding HasSuggestion}" />
                                     <Grid
                                         Grid.Row="3"

@@ -1,6 +1,7 @@
 using System.Globalization;
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Workout;
@@ -13,20 +14,18 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
-using MuscleCuties.UseCases.Features.Workout.Planning;
-using MuscleCuties.UseCases.Features.Workout.Planning.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 
 public sealed class PostgresWorkoutPlanAndSessionStore(
     PostgresDbContext dbContext,
-    GenerateWorkoutPlanUseCase planGenerator)
+    IWorkoutPlanReconciler? reconciler = null)
 {
     private const int OverviewScheduleWeeks = 4;
+    private const int CompletedWorkoutPercent = 100;
     private const int DaysPerWeek = 7;
     private const int DefaultCycleLengthDays = 28;
-    private const int DefaultWorkoutDaysPerWeek = 3;
     private const int FallbackMinutesPerExercise = 12;
     private const string PlannedDurationMinuteFormat = "0.#";
     private const string StrengthTag = "STRENGTH";
@@ -48,8 +47,12 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
     public async Task<WorkoutOverviewResponse> LoadOverviewAsync(
         Guid userId,
         WorkoutOverviewRequest request,
-        CancellationToken cancellationToken = default) =>
-        await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        CancellationToken cancellationToken = default)
+    {
+        if (reconciler is not null)
+            await reconciler.ReconcileAsync(userId, cancellationToken).ConfigureAwait(false);
+
+        return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken)
@@ -59,13 +62,15 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var phase = await ResolveCyclePhaseAsync(userId, today, cancellationToken).ConfigureAwait(false);
-            var activePlan = await EnsureGeneratedPlanInTransactionAsync(userId, phase, today, cancellationToken)
-                .ConfigureAwait(false);
+            var activePlan = await dbContext.WorkoutPlans.AsNoTracking()
+                .Where(plan => plan.UserId == userId && plan.IsActive)
+                .OrderByDescending(plan => plan.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
             var workoutDays = activePlan is null
                 ? []
                 : await dbContext.WorkoutDays.AsNoTracking()
-                    .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id && !d.IsRemovedByReadiness)
+                    .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id && !d.IsRemovedByReadiness && !d.IsRemovedBySafety)
                     .OrderBy(d => d.WeekIndex)
                     .ThenBy(d => d.DayOfWeek)
                     .ThenBy(d => d.Id)
@@ -147,6 +152,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
+            await WorkoutSessionAccountLock.RequireNoPreviewAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
 
             var activePlan = await dbContext.WorkoutPlans
                 .Where(p => p.UserId == userId && p.IsActive)
@@ -156,7 +162,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                 ?? throw new InvalidOperationException("No active workout plan found.");
 
             var days = await dbContext.WorkoutDays
-                .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id && !d.IsRemovedByReadiness)
+                .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id && !d.IsRemovedByReadiness && !d.IsRemovedBySafety)
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -208,8 +214,6 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var phase = await ResolveCyclePhaseAsync(userId, today, cancellationToken).ConfigureAwait(false);
-            await EnsureGeneratedPlanInTransactionAsync(userId, phase, today, cancellationToken).ConfigureAwait(false);
-
             var day = await ResolveWorkoutDayAsync(userId, workoutDayId, cancellationToken).ConfigureAwait(false)
                 ?? throw new KeyNotFoundException("Workout session was not found.");
 
@@ -316,6 +320,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            await WorkoutSessionAccountLock.RequireNoPreviewAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             var day = await ResolveWorkoutDayAsync(userId, request.WorkoutDayId, cancellationToken).ConfigureAwait(false)
                       ?? throw new KeyNotFoundException("Workout session was not found.");
             var hasLog = await dbContext.WorkoutLogs.AnyAsync(l => l.UserId == userId && l.WorkoutDayId == day.Id, cancellationToken)
@@ -340,6 +345,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            await WorkoutSessionAccountLock.RequireNoPreviewAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             var ex = await ResolveWorkoutDayExerciseAsync(userId, request.WorkoutDayExerciseId, cancellationToken, track: true)
                      ?? throw new KeyNotFoundException("Workout exercise was not found.");
             var day = await dbContext.WorkoutDays.SingleAsync(d => d.Id == ex.WorkoutDayId && d.UserId == userId, cancellationToken).ConfigureAwait(false);
@@ -370,9 +376,22 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
 
-            var day = await ResolveWorkoutDayAsync(userId, request.WorkoutDayId, cancellationToken).ConfigureAwait(false)
-                ?? throw new KeyNotFoundException("Workout session was not found.");
+            WorkoutDayRecord? day;
+            if (request.PlannedSessionId is { } plannedSessionId)
+            {
+                var plannedDayId = await dbContext.WorkoutSessionLogs.AsNoTracking()
+                    .Where(session => session.UserId == userId && session.Id == plannedSessionId &&
+                        !session.IsDeleted && session.CompletedAt == null)
+                    .Select(session => session.PlannedWorkoutDayId).SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+                day = plannedDayId is { } id ? await dbContext.WorkoutDays.AsNoTracking()
+                    .SingleOrDefaultAsync(item => item.UserId == userId && item.Id == id, cancellationToken).ConfigureAwait(false) : null;
+                if (day is null || ToStableWorkoutIntId(day.Id) != request.WorkoutDayId)
+                    throw new InvalidOperationException("The planned workout session is unavailable.");
+            }
+            else day = await ResolveWorkoutDayAsync(userId, request.WorkoutDayId, cancellationToken).ConfigureAwait(false);
+            if (day is null) throw new KeyNotFoundException("Workout session was not found.");
 
             var nowUtc = DateTime.UtcNow;
             if (string.Equals(day.WorkoutType, nameof(WorkoutType.Rest), StringComparison.OrdinalIgnoreCase))
@@ -526,8 +545,10 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                 day,
                 request.Date,
                 nowUtc,
+                primaryLog.CompletionPercent >= CompletedWorkoutPercent,
                 existingExerciseLogs,
                 catalogExercises,
+                request.PlannedSessionId,
                 cancellationToken).ConfigureAwait(false);
 
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -637,6 +658,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
+            await WorkoutSessionAccountLock.RequireNoPreviewAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
 
             var dayExercise = await ResolveWorkoutDayExerciseAsync(userId, request.WorkoutDayExerciseId, cancellationToken, track: true)
                 .ConfigureAwait(false)
@@ -781,146 +803,13 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
-    internal async Task<WorkoutPlanRecord?> EnsureGeneratedPlanInTransactionAsync(
-        Guid userId,
-        CyclePhase phase,
-        DateOnly today,
-        CancellationToken cancellationToken)
-    {
-        var activePlan = await dbContext.WorkoutPlans
-            .Where(p => p.UserId == userId && p.IsActive)
-            .OrderByDescending(p => p.CreatedAt)
-            .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        // Existing accepted plans stay readable; opening a screen never creates a new prescription.
-        if (!WorkoutPlanGenerationRule.CanGeneratePlans)
-            return activePlan;
-
-        var profile = await dbContext.UserProfiles.AsNoTracking()
-            .SingleOrDefaultAsync(p => p.UserId == userId, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (activePlan is not null)
-        {
-            var existingDayCount = await dbContext.WorkoutDays.AsNoTracking()
-                .CountAsync(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id, cancellationToken)
-                .ConfigureAwait(false);
-            if (existingDayCount > 0)
-                return activePlan;
-        }
-
-        if (profile is null)
-            return activePlan;
-
-        try
-        {
-            var goal = Enum.TryParse<UserGoal>(profile.Goal, true, out var g) ? g : UserGoal.MuscleTone;
-            var experience = Enum.TryParse<TrainingExperienceLevel>(profile.TrainingExperienceLevel, true, out var exp)
-                ? exp
-                : TrainingExperienceLevel.Intermediate;
-            var equipment = Enum.TryParse<Equipment>(profile.EquipmentLevel, true, out var eq)
-                ? eq
-                : Equipment.FullGym;
-            var daysPerWeek = WeekPlanRule.ClampDaysPerWeek(
-                profile.WorkoutDaysPerWeek > 0 ? profile.WorkoutDaysPerWeek : DefaultWorkoutDaysPerWeek);
-            var selectedActivities = ParsePreferredActivities(profile.PreferredWorkoutActivityTypes);
-            var sessionMinutes = ResolveSessionDurationMinutes(
-                profile.ActivitySessionDurationsJson, selectedActivities);
-            var reproductiveContext = ReproductiveContextCodec.Parse(profile.ReproductiveContextJson);
-
-            var activeInjuries = await dbContext.WorkoutInjuryLogs.AsNoTracking()
-                .Where(i => i.UserId == userId && i.Status != "Cleared")
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-            var injuries = activeInjuries
-                .Select(i => new MuscleCuties.Core.Models.Workout.Planning.Injury(
-                    (InjuryFlag)i.SiteFlag,
-                    Enum.TryParse<InjuryStatus>(i.Status, true, out var st) ? st : InjuryStatus.Acute,
-                    i.Since))
-                .ToArray();
-
-            var nowUtc = DateTime.UtcNow;
-            var generated = await planGenerator.ExecuteAsync(
-                userId,
-                new GenerateWorkoutPlanRequest(
-                    goal,
-                    experience,
-                    daysPerWeek,
-                    sessionMinutes,
-                    selectedActivities,
-                    equipment,
-                    phase,
-                    reproductiveContext.AllowsCyclePhaseTrainingAdjustments,
-                    nowUtc,
-                    today,
-                    injuries),
-                cancellationToken).ConfigureAwait(false);
-
-            var previousPlans = await dbContext.WorkoutPlans
-                .Where(p => p.UserId == userId && p.IsActive)
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-            foreach (var prev in previousPlans)
-                prev.IsActive = false;
-
-            var newPlan = new WorkoutPlanRecord
-            {
-                Id = Guid.CreateVersion7(),
-                UserId = userId,
-                Name = generated.Name,
-                IsActive = true,
-                CyclePhaseTarget = generated.CyclePhaseTarget.ToString(),
-                CreatedAt = nowUtc
-            };
-            dbContext.WorkoutPlans.Add(newPlan);
-
-            foreach (var day in generated.WorkoutDays)
-            {
-                var dayRecord = new WorkoutDayRecord
-                {
-                    Id = Guid.CreateVersion7(),
-                    UserId = userId,
-                    WorkoutPlanId = newPlan.Id,
-                    DayOfWeek = day.DayOfWeek,
-                    WeekIndex = day.WeekIndex,
-                    Date = DateOnly.FromDateTime(day.Date),
-                    WorkoutType = day.WorkoutType.ToString(),
-                    Name = day.Name
-                };
-                dbContext.WorkoutDays.Add(dayRecord);
-
-                foreach (var ex in day.Exercises)
-                {
-                    dbContext.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
-                    {
-                        Id = Guid.CreateVersion7(),
-                        UserId = userId,
-                        WorkoutDayId = dayRecord.Id,
-                        ExerciseId = ex.ExerciseId,
-                        Sets = ex.Sets,
-                        Reps = ex.Reps,
-                        DurationSeconds = ex.DurationSeconds
-                    });
-                }
-            }
-
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            return newPlan;
-        }
-        catch (InvalidOperationException)
-        {
-            return activePlan;
-        }
-    }
-
     private async Task<WorkoutDayRecord?> ResolveWorkoutDayAsync(
         Guid userId,
         int workoutDayId,
         CancellationToken cancellationToken)
     {
         var allDays = await dbContext.WorkoutDays.AsNoTracking()
-            .Where(d => d.UserId == userId && !d.IsRemovedByReadiness)
+            .Where(d => d.UserId == userId && !d.IsRemovedByReadiness && !d.IsRemovedBySafety)
             .OrderByDescending(d => d.Date)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -1001,15 +890,20 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
         WorkoutDayRecord day,
         DateOnly date,
         DateTime nowUtc,
+        bool isCompleted,
         IReadOnlyList<WorkoutExerciseLogRecord> exerciseLogs,
         IReadOnlyDictionary<int, Exercise> catalogExercises,
+        Guid? plannedSessionId,
         CancellationToken cancellationToken)
     {
         var dayStartUtc = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         var dayEndUtc = date.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
 
-        var session = await dbContext.WorkoutSessionLogs
-            .Where(s => s.UserId == userId && !s.IsDeleted && s.WorkoutName == day.Name &&
+        var session = plannedSessionId is { } sessionId
+            ? await dbContext.WorkoutSessionLogs.SingleAsync(s => s.UserId == userId && s.Id == sessionId &&
+                s.PlannedWorkoutDayId == day.Id && !s.IsDeleted, cancellationToken).ConfigureAwait(false)
+            : await dbContext.WorkoutSessionLogs
+            .Where(s => s.UserId == userId && !s.IsDeleted && s.PlannedWorkoutDayId == null && s.WorkoutName == day.Name &&
                         s.StartedAt >= dayStartUtc && s.StartedAt <= dayEndUtc)
             .OrderByDescending(s => s.StartedAt)
             .FirstOrDefaultAsync(cancellationToken)
@@ -1027,7 +921,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                 UserId = userId,
                 WorkoutName = day.Name,
                 StartedAt = dayStartUtc.AddHours(9),
-                CompletedAt = nowUtc,
+                CompletedAt = isCompleted ? nowUtc : null,
                 TotalDurationSeconds = durationSeconds,
                 CreatedAt = nowUtc,
                 UpdatedAt = nowUtc
@@ -1036,8 +930,9 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
         }
         else
         {
-            session.CompletedAt = nowUtc;
-            session.TotalDurationSeconds = durationSeconds;
+            if (isCompleted && plannedSessionId is null)
+                session.CompletedAt ??= nowUtc;
+            if (plannedSessionId is null) session.TotalDurationSeconds = durationSeconds;
             session.UpdatedAt = nowUtc;
         }
 
@@ -1398,6 +1293,13 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
         var tags = BuildActivityTags(day, orderedExercises, exercisesById)
             .Where(t => byTag.ContainsKey(t))
             .ToList();
+        if (exerciseDtos.Count == 0 && !string.Equals(day.WorkoutType, nameof(WorkoutType.Rest), StringComparison.OrdinalIgnoreCase))
+        {
+            var tag = BuildPrimaryTag(day, orderedExercises, exercisesById);
+            return [new WorkoutActivityDetailDto(1, 1, tag, day.Name, BuildSectionSubtitle(tag),
+                day.PlannedMainDurationMinutes is { } duration ? $"{duration:0.#} min" : string.Empty,
+                string.Empty, [])];
+        }
         if (tags.Count == 0 && exerciseDtos.Count > 0)
             tags.Add(BuildPrimaryTag(day, orderedExercises, exercisesById));
 
@@ -1577,56 +1479,6 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
             return $"{day.Name}, about {duration}";
         return $"{exercises.Count} {(exercises.Count == 1 ? "exercise" : "exercises")}, about {duration}";
     }
-
-    private static IReadOnlyList<WorkoutActivityType> ParsePreferredActivities(string? raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw))
-            return [WorkoutActivityType.HighVolumeStrength];
-
-        var parsed = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(token => Enum.TryParse<WorkoutActivityType>(token, true, out var act) ? (WorkoutActivityType?)act : null)
-            .Where(act => act.HasValue)
-            .Select(act => act!.Value)
-            .Distinct()
-            .ToList();
-
-        if (parsed.Count == 0)
-            parsed.Add(WorkoutActivityType.HighVolumeStrength);
-        return parsed;
-    }
-
-    private static int ResolveSessionDurationMinutes(
-        string? activityDurationsJson,
-        IReadOnlyList<WorkoutActivityType> selectedActivities)
-    {
-        var planningActivity = selectedActivities.FirstOrDefault(IsStrengthPlanningActivity);
-        if (!IsStrengthPlanningActivity(planningActivity))
-            planningActivity = WorkoutActivityType.GeneralStrength;
-
-        var defaultMinutes = WorkoutPreferencesRule.DefaultSessionDurationMinutes(planningActivity) ??
-                             WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes;
-        if (string.IsNullOrWhiteSpace(activityDurationsJson))
-            return defaultMinutes;
-        try
-        {
-            using var document = JsonDocument.Parse(activityDurationsJson);
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
-                return defaultMinutes;
-            if (document.RootElement.TryGetProperty(planningActivity.ToString(), out var duration) &&
-                duration.TryGetInt32(out var minutes) &&
-                WorkoutPreferencesRule.IsValidSessionDuration(planningActivity, minutes))
-                return minutes;
-        }
-        catch (JsonException)
-        {
-            return defaultMinutes;
-        }
-        return defaultMinutes;
-    }
-
-    private static bool IsStrengthPlanningActivity(WorkoutActivityType activity) => activity is
-        WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
-        WorkoutActivityType.StrengthHighIntensity;
 
     private static int? ExtractPlanningId(string? code)
     {

@@ -11,12 +11,13 @@
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:PhotoJourneyVaultViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <Grid RowDefinitions="Auto,*"
           BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
         <!-- Header -->
-        <Grid Grid.Row="0" Padding="{StaticResource UiInsets20_36_20_12}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}"
+        <Grid Grid.Row="0" Padding="{StaticResource PresentationPageHeaderPadding}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}"
               VerticalOptions="Center">
             <Border
                 Style="{StaticResource HeaderIconButton}"
@@ -34,7 +35,8 @@
 
             <Grid Grid.Column="1" RowDefinitions="Auto,Auto" VerticalOptions="Center">
                 <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" Style="{StaticResource SectionTitle}" FontSize="{StaticResource UiFontSize17}" />
-                <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_PrivateStoredOnThisDevice}" Style="{StaticResource CaptionSmall}" />
+                <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_PrivateStoredOnThisDevice}" Style="{StaticResource CaptionSmall}"
+                       LineBreakMode="WordWrap" />
             </Grid>
 
             <Button
@@ -50,7 +52,7 @@
             ItemsSource="{Binding Photos}"
             ItemSizingStrategy="MeasureFirstItem"
             SelectionMode="None"
-            Margin="{StaticResource UiInsets20_0_20_24}"
+            Margin="{StaticResource UiInsets20_0_20_32}"
             MaximumWidthRequest="{StaticResource UiDimension640}">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="{StaticResource UiSpaceControl}" />
@@ -69,7 +71,8 @@
                                 <Label Text="{loc:LocalizedText Profile_PhotoJourney_PrivacyFirstPhotoVault}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                                 <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_YourPhotosAreStoredLocallyAnd}"
-                                       Style="{StaticResource CaptionSmall}" />
+                                       Style="{StaticResource CaptionSmall}"
+                                       LineBreakMode="WordWrap" />
                             </Grid>
                         </Grid>
                     </Border>
@@ -95,9 +98,11 @@
                             HeightRequest="{StaticResource UiDimension40}"
                             HorizontalOptions="Center" />
                         <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_NoProgressPhotoYet}"
-                               Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" FontSize="{StaticResource UiFontSize15}" />
+                               Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" FontSize="{StaticResource UiFontSize15}"
+                               LineBreakMode="WordWrap" />
                         <Label Grid.Row="2" Text="{loc:LocalizedText Profile_PhotoJourney_ChoosePhotosToTrackProgressPhotos}"
-                               Style="{StaticResource CaptionCentered}" FontSize="{StaticResource UiFontSize13}" />
+                               Style="{StaticResource CaptionCentered}" FontSize="{StaticResource UiFontSize13}"
+                               LineBreakMode="WordWrap" />
                     </Grid>
                 </Border>
             </CollectionView.EmptyView>
@@ -187,7 +192,8 @@
                                 Grid.Row="2"
                                 Text="{Binding Notes}"
                                 IsVisible="{Binding HasNotes}"
-                                Style="{StaticResource CaptionLabel}" />
+                                Style="{StaticResource CaptionLabel}"
+                                LineBreakMode="WordWrap" />
                             <Grid Grid.Row="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonSelectionRow}"
                                   ColumnDefinitions="*,*"
                                   ColumnSpacing="{StaticResource UiSpaceTight}"
@@ -218,7 +224,8 @@
                 <Label Text="{loc:LocalizedText Profile_PhotoJourney_ComparePhotos}"
                        Style="{StaticResource SectionTitle}" />
                 <Label Text="{loc:LocalizedText Profile_PhotoJourney_ComparisonInstructions}"
-                       Style="{StaticResource CaptionLabel}" />
+                       Style="{StaticResource CaptionLabel}"
+                       LineBreakMode="WordWrap" />
                 <Grid HeightRequest="{StaticResource UiDimension280}"
                       ColumnSpacing="{StaticResource UiSpacing2}">
                     <Grid.ColumnDefinitions>

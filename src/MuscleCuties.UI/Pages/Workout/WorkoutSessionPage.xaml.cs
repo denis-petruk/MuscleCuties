@@ -16,7 +16,6 @@ public partial class WorkoutSessionPage : ContentPage
     private int? _loadedWorkoutDayId;
     private int _workoutDayId;
     private string? _activityTag;
-    private int _completionRevision;
 
     public WorkoutSessionPage(
         WorkoutSessionViewModel vm,
@@ -51,7 +50,6 @@ public partial class WorkoutSessionPage : ContentPage
 
     protected override void OnNavigatingFrom(NavigatingFromEventArgs args)
     {
-        ++_completionRevision;
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         _workoutViewModel.Invalidate();
         base.OnNavigatingFrom(args);
@@ -62,7 +60,6 @@ public partial class WorkoutSessionPage : ContentPage
         if (e.PropertyName == nameof(WorkoutSessionViewModel.CurrentScreen) &&
             _viewModel.IsActivitySummary && _viewModel.IsActivityComplete)
         {
-            var revision = ++_completionRevision;
             try
             {
                 await MainThread.InvokeOnMainThreadAsync(async () =>
@@ -74,30 +71,11 @@ public partial class WorkoutSessionPage : ContentPage
                     await CompletionBadge.ScaleToAsync(
                         AppThemeResources.GetDouble("UiScaleFull"),
                         (uint)AppThemeResources.GetDouble("UiMotionDuration220"), Easing.CubicInOut);
-                    await Task.Delay((int)AppThemeResources.GetDouble("UiMotionDuration1200"));
-                    if (revision == _completionRevision && _viewModel.IsActivitySummary)
-                        await _viewModel.FinishSessionCommand.ExecuteAsync(null);
                 });
             }
             catch (Exception exception)
             {
                 Trace.WriteLine($"[WorkoutSessionPage] Completion transition failed ({exception.GetType().Name}).");
-                if (revision != _completionRevision || !_viewModel.IsActivitySummary)
-                    return;
-
-                try
-                {
-                    await MainThread.InvokeOnMainThreadAsync(async () =>
-                    {
-                        if (revision == _completionRevision && _viewModel.IsActivitySummary)
-                            await _viewModel.FinishSessionCommand.ExecuteAsync(null);
-                    });
-                }
-                catch (Exception fallbackException)
-                {
-                    Trace.WriteLine(
-                        $"[WorkoutSessionPage] Completion fallback return failed ({fallbackException.GetType().Name}).");
-                }
             }
             return;
         }

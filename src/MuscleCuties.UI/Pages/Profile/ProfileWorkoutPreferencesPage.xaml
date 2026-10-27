@@ -12,13 +12,14 @@
     xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileWorkoutPreferencesViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
 
     <Grid>
     <ScrollView IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
         <VerticalStackLayout
-            Padding="{StaticResource UiInsets20_12_20_32}"
+            Padding="{StaticResource PresentationFormPagePadding}"
             Spacing="{StaticResource UiSpaceControl}"
             HorizontalOptions="Fill"
             MaximumWidthRequest="{StaticResource UiDimension640}">
@@ -53,7 +54,7 @@
                                         <Label Text="{Binding ShortLabel}"
                                                Style="{StaticResource CompactStrongLabel}"
                                                HorizontalTextAlignment="Center"
-                                               LineBreakMode="NoWrap" />
+                                               LineBreakMode="WordWrap" />
                                         <Border Grid.Row="1" Style="{StaticResource WeekdaySelectionIndicator}">
                                             <Path Data="M5 12L10 17L19 7"
                                                   Style="{StaticResource CalendarDayCheckmark}"
@@ -75,6 +76,7 @@
             <Label
                 Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource AccentLabel}"
+                LineBreakMode="WordWrap"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
 
             <Button Style="{StaticResource ButtonPrimary}"
