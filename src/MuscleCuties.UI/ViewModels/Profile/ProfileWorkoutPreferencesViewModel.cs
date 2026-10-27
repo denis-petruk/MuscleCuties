@@ -34,6 +34,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         WorkoutPreferencesConstraints.DefaultActivitySessionDurationMinutes;
     private string _savedPreferencesSnapshot = string.Empty;
     private bool _hasLoadedPreferences;
+    private WorkoutPreferencesDto? _pendingLoadPreferences;
+    private int[]? _pendingOnboardingWeekdays;
 
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isLoadingData;
@@ -117,10 +119,10 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         StatusMessage = string.Empty;
         try
         {
-            WorkoutPreferencesDto? preferences = null;
             if (_navigationContext?.TryTake<WorkoutPreferencesDto>(DraftPreferencesContextKey, out var draft) == true)
-                preferences = draft;
-            preferences ??= await _useCase.LoadAsync();
+                _pendingLoadPreferences = draft;
+            var preferences = _pendingLoadPreferences ?? await _useCase.LoadAsync();
+            _pendingLoadPreferences = preferences;
             var selectedTypes = preferences?.ActivityTypes
                                    .Where(value => Enum.IsDefined(typeof(WorkoutActivityDto), value))
                                    .Select(value => (WorkoutActivityDto)value).ToHashSet()
@@ -144,7 +146,9 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                                    .Select(value => (DayOfWeek)value).ToHashSet()
                                ?? new HashSet<DayOfWeek>();
             if (_navigationContext?.TryTake<int[]>(OnboardingWeekdaysContextKey, out var onboardingDays) == true)
-                selectedDays = onboardingDays.Where(value => Enum.IsDefined(typeof(DayOfWeek), value))
+                _pendingOnboardingWeekdays = onboardingDays;
+            if (_pendingOnboardingWeekdays is not null)
+                selectedDays = _pendingOnboardingWeekdays.Where(value => Enum.IsDefined(typeof(DayOfWeek), value))
                     .Select(value => (DayOfWeek)value).ToHashSet();
             AvailableWeekdays = new ObservableCollection<WorkoutWeekdayOptionItem>(CreateWeekdays()
                 .Select(day => new WorkoutWeekdayOptionItem(day)
@@ -175,6 +179,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                     OnPropertyChanged(nameof(HasUnsavedChanges));
                 };
             IsExerciseExclusionCatalogLoaded = true;
+            _pendingLoadPreferences = null;
+            _pendingOnboardingWeekdays = null;
             _hasLoadedPreferences = true;
             _savedPreferencesSnapshot = CapturePreferencesSnapshot();
             OnPropertyChanged(nameof(HasUnsavedChanges));
