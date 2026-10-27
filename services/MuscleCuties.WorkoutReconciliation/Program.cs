@@ -5,7 +5,7 @@ using Npgsql;
 using NpgsqlTypes;
 
 // One bounded page per explicit invocation. The scheduler owns invocation and alerting.
-const int PageSize = 100;
+const int PageSize = 5;
 const int RequiredDiscoveryPoolSize = 2;
 const string DiscoveryVariable = "MUSCLECUTIES_WORKOUT_DISCOVERY_CONNECTION";
 const string TenantVariable = "MUSCLECUTIES_WORKOUT_TENANT_CONNECTION";
