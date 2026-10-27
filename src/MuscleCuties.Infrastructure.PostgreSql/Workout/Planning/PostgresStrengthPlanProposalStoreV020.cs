@@ -168,7 +168,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
                 .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken).ConfigureAwait(false);
             var answers = DeserializeAnswers(state?.AnswersJson);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-            return answers with { Version = state?.AnswerVersion ?? InitialAnswerVersion };
+            return answers with { Version = state?.AnswerVersion ?? InitialAnswerVersion, SafetyPlanChanged = false };
         }).ConfigureAwait(false);
 
     public async Task<SavedActivityAnswersDto> SaveAnswersAsync(Guid userId, SaveActivityAnswersRequest request,
@@ -186,11 +186,14 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             request.HiitEligibilityEvidence);
         var json = JsonSerializer.Serialize(answers, JsonOptions);
         var previous = DeserializeAnswers(state.AnswersJson);
-        var previousComparable = JsonSerializer.Serialize(previous with { Version = state.AnswerVersion }, JsonOptions);
+        var previousComparable = JsonSerializer.Serialize(previous with
+            { Version = state.AnswerVersion, SafetyPlanChanged = false }, JsonOptions);
         var safetyPlanChanged = false;
         if (state.AnswerVersion != request.ExpectedVersion)
         {
-            if (json != previousComparable) throw new WorkoutPlanningInputsChangedException();
+            if (request.ExpectedVersion < InitialAnswerVersion ||
+                request.ExpectedVersion != state.AnswerVersion - 1 || json != previousComparable)
+                throw new WorkoutPlanningInputsChangedException();
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return previous with { Version = state.AnswerVersion };
         }
@@ -240,7 +243,8 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
                 }
             }
             state.AnswerVersion = checked(state.AnswerVersion + 1);
-            state.AnswersJson = JsonSerializer.Serialize(answers with { Version = state.AnswerVersion }, JsonOptions);
+            state.AnswersJson = JsonSerializer.Serialize(answers with
+                { Version = state.AnswerVersion, SafetyPlanChanged = safetyPlanChanged }, JsonOptions);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         }
