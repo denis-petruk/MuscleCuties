@@ -2073,6 +2073,11 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("optional_sets");
 
+                    b.Property<int?>("PlanningSessionIndex").HasColumnType("integer").HasColumnName("planning_session_index");
+                    b.Property<string>("PlanningSlotId").HasColumnType("text").HasColumnName("planning_slot_id");
+                    b.Property<string>("PlanningTemplateId").HasColumnType("text").HasColumnName("planning_template_id");
+                    b.Property<string>("PlanningTemplateVersion").HasColumnType("text").HasColumnName("planning_template_version");
+
                     b.Property<int>("Reps")
                         .HasColumnType("integer")
                         .HasColumnName("reps");

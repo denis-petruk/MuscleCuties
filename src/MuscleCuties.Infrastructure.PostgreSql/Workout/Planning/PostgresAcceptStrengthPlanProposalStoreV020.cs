@@ -372,6 +372,10 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                         UserId = userId,
                         WorkoutDayId = dayId,
                         ExerciseId = slot.ExerciseId!.Value,
+                        PlanningTemplateId = strengthSession.TemplateId,
+                        PlanningTemplateVersion = strengthSession.TemplateVersion,
+                        PlanningSlotId = slot.SlotId,
+                        PlanningSessionIndex = strengthSession.SessionIndex,
                         Sets = slot.Sets!.Value,
                         Reps = slot.MinimumRepetitions!.Value,
                         IsOptional = !slot.IsRequired
