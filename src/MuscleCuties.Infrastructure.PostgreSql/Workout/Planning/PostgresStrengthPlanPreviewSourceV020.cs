@@ -80,8 +80,10 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                 catch (TimeZoneNotFoundException) { }
                 catch (InvalidTimeZoneException) { }
             }
-            var relevantInjuries = injuries.Where(injury => !string.Equals(injury.Status, "Cleared", StringComparison.OrdinalIgnoreCase) ||
-                injury.ClearedDate is null || today is null ||
+            // Until cleared-load progression is evaluated against reviewed evidence,
+            // recent and unknown clearances remain restrictive in ordinary previews.
+            var activeInjuries = injuries.Where(injury => !string.Equals(injury.Status, "Cleared", StringComparison.OrdinalIgnoreCase) ||
+                injury.ClearedDate is null || today is null || injury.ClearedDate > today ||
                 WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(injury.ClearedDate.Value, today.Value)).ToArray();
             var logs = await dbContext.WorkoutExerciseLogs.AsNoTracking()
                 .Where(row => row.UserId == userId && row.CompletedSets > 0 && row.CompletedReps > 0)
@@ -112,9 +114,9 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
 
             return new StrengthPlanPreviewSourceV020(
                 goal, equipment,
-                relevantInjuries.Aggregate(InjuryFlag.None, (flags, injury) =>
+                activeInjuries.Aggregate(InjuryFlag.None, (flags, injury) =>
                     flags | (InjuryFlag)injury.SiteFlag),
-                relevantInjuries.Any(injury => injury.Pain > 0),
+                activeInjuries.Any(injury => injury.Pain > 0),
                 definitions.Select(WorkoutExerciseV020CatalogMapper.Map).ToArray(),
                 preferences.GroupBy(row => row.OriginalExerciseId)
                     .ToDictionary(group => group.Key, group => group.Last().PreferredExerciseId),

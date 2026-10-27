@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 using Npgsql;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.Core.Domain.Workout.Planning;
@@ -70,19 +71,24 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     // Discard unacknowledged time from any interrupted interval.
                     session.TimingIntervalId = Guid.CreateVersion7();
                     session.TimingIntervalStartedAtUtc = now;
+                    session.TimingIntervalLastConfirmedAtUtc = now;
                     session.TimingIntervalConfirmedSeconds = WorkoutActiveTimeRule.NoSeconds;
                 }
                 else
                 {
                     if (session.TimingIntervalId != checkpoint.IntervalId || session.TimingIntervalStartedAtUtc is not { } started ||
-                        !WorkoutActiveTimeRule.IsValidCheckpoint(checkpoint.MeasuredSeconds, session.TimingIntervalConfirmedSeconds, now - started))
-                        throw new InvalidOperationException("The active interval is stale or its measured time is invalid.");
+                        session.TimingIntervalLastConfirmedAtUtc is not { } lastConfirmed ||
+                        !WorkoutActiveTimeRule.IsValidCheckpoint(checkpoint.MeasuredSeconds, session.TimingIntervalConfirmedSeconds, now - started) ||
+                        !WorkoutActiveTimeRule.IsFreshCheckpoint(checkpoint.MeasuredSeconds, session.TimingIntervalConfirmedSeconds, now - lastConfirmed))
+                        throw new WorkoutTimingIntervalExpiredException();
                     session.ConfirmedActiveSeconds = checked(session.ConfirmedActiveSeconds + checkpoint.MeasuredSeconds - session.TimingIntervalConfirmedSeconds);
                     session.TimingIntervalConfirmedSeconds = checkpoint.MeasuredSeconds;
+                    session.TimingIntervalLastConfirmedAtUtc = now;
                     if (checkpoint.Pause)
                     {
                         session.TimingIntervalId = null;
                         session.TimingIntervalStartedAtUtc = null;
+                        session.TimingIntervalLastConfirmedAtUtc = null;
                         session.TimingIntervalConfirmedSeconds = WorkoutActiveTimeRule.NoSeconds;
                     }
                 }
@@ -117,14 +123,18 @@ public sealed class PostgresWorkoutActiveSessionStore(
         CancellationToken cancellationToken)
     {
         var commandKey = BuildCommandKey(StartCommandPrefix, command.IdempotencyKey);
-        var requestHash = PostgresIdempotencyExecutor.ComputeRequestHash(new
-        {
-            command.SessionId,
-            command.WorkoutName,
-            command.StartedAtUtc,
-            command.Notes,
-            command.PlannedWorkoutDayId
-        });
+        // Preserve the pre-classification hash shape for in-flight legacy retries.
+        var requestHash = command.UnplannedActivity is null
+            ? PostgresIdempotencyExecutor.ComputeRequestHash(new
+            {
+                command.SessionId, command.WorkoutName, command.StartedAtUtc,
+                command.Notes, command.PlannedWorkoutDayId
+            })
+            : PostgresIdempotencyExecutor.ComputeRequestHash(new
+            {
+                command.SessionId, command.WorkoutName, command.StartedAtUtc,
+                command.Notes, command.PlannedWorkoutDayId, command.UnplannedActivity
+            });
 
         var execution = await idempotencyExecutor.ExecuteAsync(
             dbContext,
@@ -149,6 +159,9 @@ public sealed class PostgresWorkoutActiveSessionStore(
                 }
 
                 WorkoutDayRecord? plannedDay = null;
+                if (command.UnplannedActivity is { } unplanned &&
+                    (!Enum.IsDefined(unplanned) || unplanned == WorkoutActivityDto.RestDay || command.PlannedWorkoutDayId is not null))
+                    throw new InvalidOperationException("The unplanned activity is invalid.");
                 WorkoutAccountPlanningStateRecord? planningState = null;
                 DateOnly? localDate = null;
                 string? plannedPrescriptionJson = null;
@@ -186,6 +199,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     UserId = userId,
                     WorkoutName = plannedDay?.Name ?? command.WorkoutName,
                     PlannedWorkoutDayId = plannedDay?.Id,
+                    UnplannedActivityType = command.UnplannedActivity is { } activity ? (int)activity : null,
                     PlannedTimeZoneId = planningState?.TimeZoneId,
                     PlannedTimeZoneVersion = planningState?.TimeZoneVersion,
                     PlannedLocalDate = localDate,
@@ -308,10 +322,11 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     var hasExercises = prescription is not null ? prescription.Exercises.Count > 0 :
                         await context.WorkoutDayExercises.AnyAsync(row => row.UserId == userId &&
                             row.WorkoutDayId == plannedDayId, ct).ConfigureAwait(false);
-                    if (!hasExercises && (session.TimingIntervalId is not null || session.ConfirmedActiveSeconds <= 0 ||
-                        command.TotalDurationSeconds != session.ConfirmedActiveSeconds))
+                    if (session.TimingIntervalId is not null || session.ConfirmedActiveSeconds <= 0 ||
+                        command.TotalDurationSeconds != session.ConfirmedActiveSeconds)
                         throw new InvalidOperationException("Complete the activity before finishing the session.");
-                    if (!hasExercises && plannedDay.WorkoutType != nameof(WorkoutType.Rest))
+                    var sessionWorkoutType = prescription?.WorkoutType ?? plannedDay.WorkoutType;
+                    if (!hasExercises && sessionWorkoutType != nameof(WorkoutType.Rest))
                         await PostgresWorkoutProgressStore.CreditPlannedSessionAsync(context, userId, session, nowUtc, ct).ConfigureAwait(false);
                     if (hasExercises)
                     {
@@ -327,9 +342,23 @@ public sealed class PostgresWorkoutActiveSessionStore(
                 foreach (var set in command.FinalSets ?? [])
                     await ApplySetUpsertAsync(context, userId, session.Id, set, nowUtc, ct).ConfigureAwait(false);
 
+                if (session.PlannedWorkoutDayId is null && session.UnplannedActivityType is not null)
+                {
+                    if (command.TotalDurationSeconds <= 0)
+                        throw new InvalidOperationException("Complete the activity before finishing the session.");
+                    var calendar = await context.WorkoutAccountPlanningStates.AsNoTracking()
+                        .SingleOrDefaultAsync(row => row.UserId == userId, ct).ConfigureAwait(false);
+                    if (calendar?.TimeZoneId is not { } timeZoneId)
+                        throw new InvalidOperationException("Establish the account timezone before finishing a workout.");
+                    var zone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+                    session.UnplannedCompletionLocalDate = WorkoutAccountCalendarRule.LocalDate(new DateTimeOffset(nowUtc, TimeSpan.Zero), zone);
+                    session.UnplannedCompletionTimeZoneId = timeZoneId;
+                    session.UnplannedCompletionTimeZoneVersion = calendar.TimeZoneVersion;
+                }
+
                 // A planned completion is credited using the accepted server instant. Keep its
                 // archive timestamp on that same instant rather than trusting the device clock.
-                session.CompletedAt = session.PlannedWorkoutDayId is not null
+                session.CompletedAt = session.PlannedWorkoutDayId is not null || session.UnplannedActivityType is not null
                     ? nowUtc : DateTime.SpecifyKind(command.CompletedAtUtc, DateTimeKind.Utc);
                 session.TotalDurationSeconds = command.TotalDurationSeconds;
                 session.RpeRating = command.RpeRating;
