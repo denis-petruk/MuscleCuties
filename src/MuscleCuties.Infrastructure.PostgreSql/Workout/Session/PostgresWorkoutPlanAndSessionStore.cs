@@ -49,9 +49,6 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
         WorkoutOverviewRequest request,
         CancellationToken cancellationToken = default)
     {
-        if (reconciler is not null)
-            await reconciler.ReconcileAsync(userId, cancellationToken).ConfigureAwait(false);
-
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             dbContext.ChangeTracker.Clear();
@@ -59,6 +56,11 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
+            if (reconciler is not null)
+            {
+                await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+                await reconciler.ReconcileAsync(userId, cancellationToken).ConfigureAwait(false);
+            }
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var phase = await ResolveCyclePhaseAsync(userId, today, cancellationToken).ConfigureAwait(false);

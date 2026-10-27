@@ -38,6 +38,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
 
     private const string ProposalNotFoundCode = "ProposalNotFound";
     private const string ProposalAlreadyDecidedCode = "ProposalAlreadyDecided";
+    private const string AutomaticProposalNotUserAcceptableCode = "AutomaticProposalNotUserAcceptable";
     private const string PreviewLeaseExpiredOrInvalidCode = "PreviewLeaseExpiredOrInvalid";
     private const string ProposalSnapshotInvalidCode = "ProposalSnapshotInvalid";
     private const string PlanningInputsChangedSinceProposalCode = "PlanningInputsChangedSinceProposal";
@@ -51,6 +52,8 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
     private const string ProposalScheduleSafetyInvalidCode = "ProposalScheduleSafetyInvalid";
     private const string PlanningDateChangedCode = "PlanningDateChanged";
     private const string NoEligibleWorkoutDayCode = "NoEligibleWorkoutDay";
+
+    internal enum AcceptanceOrigin { User, Automatic }
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -66,21 +69,31 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             await PlanningCatalogFingerprint.LockCatalogAsync(dbContext, cancellationToken).ConfigureAwait(false);
 
-            var result = await AcceptInCurrentTransactionAsync(userId, request, cancellationToken).ConfigureAwait(false);
+            var result = await AcceptInCurrentTransactionAsync(userId, request, AcceptanceOrigin.User, cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return result;
         }).ConfigureAwait(false);
 
     // Caller owns the tenant transaction and account/catalog locks and commits the result.
     internal async Task<AcceptStrengthPlanProposalResultV020> AcceptInCurrentTransactionAsync(Guid userId,
-        AcceptStrengthPlanProposalRequestV020 request, CancellationToken cancellationToken)
+        AcceptStrengthPlanProposalRequestV020 request, AcceptanceOrigin origin, CancellationToken cancellationToken)
     {
+        if (origin is not AcceptanceOrigin.User and not AcceptanceOrigin.Automatic)
+            return new(InvalidProposalStatus, null, null, ProposalSnapshotInvalidCode);
         var proposal = await dbContext.WorkoutPlanProposalsV02.SingleOrDefaultAsync(
                 item => item.UserId == userId && item.Id == request.ProposalId,
                 cancellationToken)
             .ConfigureAwait(false);
         if (proposal is null)
             return new(NotFoundStatus, null, null, ProposalNotFoundCode);
+        var inputSnapshot = Deserialize<ProposalInputSnapshot>(proposal.InputSnapshotJson);
+        if (inputSnapshot is not null && inputSnapshot.AutomaticOrigin != (origin == AcceptanceOrigin.Automatic))
+            return new(InvalidProposalStatus, null, null, AutomaticProposalNotUserAcceptableCode);
+        if (origin == AcceptanceOrigin.Automatic && (inputSnapshot is null ||
+            proposal.LeaseId is not null || proposal.LeaseExpiresAtUtc is not null ||
+            request.LeaseId != Guid.Empty || request.Fence != 0 || request.ProposalVersion != 0 ||
+            request.ReplacementConfirmed || request.ReducedVolumeAcknowledged))
+            return new(InvalidProposalStatus, null, null, ProposalSnapshotInvalidCode);
         // A response can be lost after commit. Replaying the same accepted proposal
         // returns its original result without creating another plan or revision.
         if (proposal.Status == AcceptedStatus && proposal.AcceptedRevisionId is { } acceptedRevisionId)
@@ -88,14 +101,13 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         if (proposal.Status != ProposedStatus)
             return new(ConflictStatus, proposal.PlanId, null,
                 ProposalAlreadyDecidedCode);
-        if (proposal.LeaseId != request.LeaseId || proposal.LeaseFence != request.Fence ||
+        if (origin == AcceptanceOrigin.User && (proposal.LeaseId != request.LeaseId || proposal.LeaseFence != request.Fence ||
             proposal.ConcurrencyVersion != request.ProposalVersion || proposal.LeaseExpiresAtUtc is null ||
-            proposal.LeaseExpiresAtUtc <= DateTime.UtcNow)
+            proposal.LeaseExpiresAtUtc <= DateTime.UtcNow))
             return new(StaleStatus, proposal.PlanId, null,
                 PreviewLeaseExpiredOrInvalidCode);
 
         var proposalSnapshot = Deserialize<ProposalSnapshot>(proposal.ProposalJson);
-        var inputSnapshot = Deserialize<ProposalInputSnapshot>(proposal.InputSnapshotJson);
         if (proposalSnapshot is null || inputSnapshot is null ||
             proposalSnapshot.Status != FeasibleStatus || proposalSnapshot.Sessions is null ||
             proposalSnapshot.PolicyId != StrengthPlanPreviewRule.PolicyId ||
@@ -120,6 +132,9 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                 PlanningInputsChangedSinceProposalCode);
         var planningState = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
             .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken).ConfigureAwait(false);
+        if (origin == AcceptanceOrigin.Automatic &&
+            (planningState is null || !planningState.PromotionPending || planningState.SafetyRegenerationPending))
+            return new(StaleStatus, proposal.PlanId, null, PlanningInputsChangedSinceProposalCode);
         if (planningState?.TimeZoneId is not { } zoneId)
             return new(LimitedStatus, null, null, CalendarNotEstablishedCode);
         if (proposalSnapshot.SourceTimeZoneVersion != planningState.TimeZoneVersion ||
@@ -155,11 +170,11 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                 ActivePlanChangedSinceProposalCode);
         }
 
-        if (proposalSnapshot.RequiresReducedVolumeAcknowledgment && !request.ReducedVolumeAcknowledged)
+        if (origin == AcceptanceOrigin.User && proposalSnapshot.RequiresReducedVolumeAcknowledgment && !request.ReducedVolumeAcknowledged)
             return new(ConflictStatus, proposal.PlanId, null,
                 ReducedVolumeAcknowledgmentRequiredCode);
 
-        if (activePlanId is not null && !request.ReplacementConfirmed)
+        if (origin == AcceptanceOrigin.User && activePlanId is not null && !request.ReplacementConfirmed)
             return new(ConflictStatus, proposal.PlanId, null,
                 ReplacementConfirmationRequiredCode);
 
@@ -237,9 +252,24 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             .AnyAsync(row => row.UserId == userId && row.LocalDate == today, cancellationToken)
             .ConfigureAwait(false);
         var firstDate = WorkoutPlanStartDateRule.FindNextEligibleDate(now, zone, availableWeekdays, completedToday);
+        if (origin == AcceptanceOrigin.Automatic)
+        {
+            if (activePlanId is null || inputSnapshot.AutomaticStartDate is null ||
+                await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, userId, nowUtc, cancellationToken).ConfigureAwait(false) ||
+                await dbContext.WorkoutSessionLogs.AnyAsync(session => session.UserId == userId &&
+                    !session.IsDeleted && session.CompletedAt == null, cancellationToken).ConfigureAwait(false))
+                return new(StaleStatus, proposal.PlanId, null, PlanningInputsChangedSinceProposalCode);
+            var earliestScheduled = await FindNextScheduledDateAsync(userId, activePlanId.Value,
+                today, completedToday, cancellationToken).ConfigureAwait(false);
+            var expectedStart = earliestScheduled ?? firstDate;
+            if (expectedStart is null || inputSnapshot.AutomaticStartDate != expectedStart ||
+                !availableWeekdays.Contains(expectedStart.Value.DayOfWeek))
+                return new(StaleStatus, proposal.PlanId, null, PlanningDateChangedCode);
+            firstDate = expectedStart;
+        }
         if (firstDate is null)
             return new(LimitedStatus, null, null, NoEligibleWorkoutDayCode);
-        if (draft is not null)
+        if (origin == AcceptanceOrigin.User && draft is not null)
         {
             var profile = await dbContext.UserProfiles.SingleAsync(
                 item => item.UserId == userId, cancellationToken).ConfigureAwait(false);
@@ -371,6 +401,22 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         proposal.ConcurrencyVersion++;
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return new AcceptStrengthPlanProposalResultV020(AcceptedStatus, plan.Id, revisionId, null);
+    }
+
+    internal async Task<DateOnly?> FindNextScheduledDateAsync(Guid userId, Guid activePlanId,
+        DateOnly today, bool completedToday, CancellationToken cancellationToken)
+    {
+        return await dbContext.WorkoutDays.AsNoTracking()
+                .Where(day => day.UserId == userId && day.WorkoutPlanId == activePlanId &&
+                    day.Date != null && day.Date >= today && day.WorkoutType != nameof(WorkoutType.Rest) &&
+                    !day.IsRemovedByReadiness && !day.IsRemovedByUserAdjustment && !day.IsRemovedBySafety &&
+                    !(completedToday && day.Date == today) &&
+                    !dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId &&
+                        session.PlannedWorkoutDayId == day.Id && session.CompletedAt != null) &&
+                    !dbContext.WorkoutCompletionDayCredits.Any(credit => credit.UserId == userId &&
+                        credit.SourceWorkoutLogId != null && dbContext.WorkoutLogs.Any(log =>
+                            log.UserId == userId && log.Id == credit.SourceWorkoutLogId && log.WorkoutDayId == day.Id)))
+                .OrderBy(day => day.Date).Select(day => day.Date).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private static T? Deserialize<T>(string json)
@@ -522,7 +568,9 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         StrengthPlanPreviewRequestV020 Request,
         int ProfileVersion,
         Guid? BaselineActivePlanId,
-        Guid? BaselineRevisionId);
+        Guid? BaselineRevisionId,
+        bool AutomaticOrigin = false,
+        DateOnly? AutomaticStartDate = null);
 
     private sealed record ProposalSnapshot(
         string PolicyId,

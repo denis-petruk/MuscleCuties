@@ -47,9 +47,11 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
     // Caller owns the tenant transaction and account/catalog locks and commits the result.
     internal async Task<StrengthPlanProposalCreatedV020> SaveInCurrentTransactionAsync(Guid userId,
         StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewResponseV020 preview,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, bool automaticOrigin = false, DateOnly? automaticStartDate = null)
     {
         ValidateProposalInput(userId, request, preview);
+        if (!automaticOrigin && automaticStartDate is not null)
+            throw new ArgumentException("A user proposal cannot specify an automatic start date.");
 
         var now = DateTime.UtcNow;
         var prior = await dbContext.WorkoutPlanProposalsV02
@@ -111,7 +113,8 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             throw new WorkoutPlanningInputsChangedException();
 
         var snapshotJson = JsonSerializer.Serialize(
-            new ProposalInputSnapshot(request, profileVersion.Value, activePlanId, activeRevisionId), JsonOptions);
+            new ProposalInputSnapshot(request, profileVersion.Value, activePlanId, activeRevisionId,
+                automaticOrigin, automaticStartDate), JsonOptions);
         var previewJson = JsonSerializer.Serialize(preview, JsonOptions);
         var record = new WorkoutPlanProposalV02Record
         {
@@ -128,14 +131,14 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
                 preview.LimitationCodes.Concat(preview.AdvisoryCodes).Distinct(StringComparer.Ordinal),
                 JsonOptions),
             CreatedAtUtc = now,
-            LeaseId = Guid.CreateVersion7(),
+            LeaseId = automaticOrigin ? null : Guid.CreateVersion7(),
             LeaseFence = fence,
-            LeaseExpiresAtUtc = now.Add(PlanningLifecycleRule.FiveMinuteLeaseDuration)
+            LeaseExpiresAtUtc = automaticOrigin ? null : now.Add(PlanningLifecycleRule.FiveMinuteLeaseDuration)
         };
         dbContext.WorkoutPlanProposalsV02.Add(record);
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return new StrengthPlanProposalCreatedV020(record.Id, preview, true,
-            ToLease(record), record.ConcurrencyVersion, activePlanId is not null);
+            automaticOrigin ? null : ToLease(record), record.ConcurrencyVersion, activePlanId is not null);
     }
 
     private static void ValidateProposalInput(Guid userId, StrengthPlanPreviewRequestV020 request,
@@ -360,5 +363,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
         StrengthPlanPreviewRequestV020 Request,
         int ProfileVersion,
         Guid? BaselineActivePlanId,
-        Guid? BaselineRevisionId);
+        Guid? BaselineRevisionId,
+        bool AutomaticOrigin = false,
+        DateOnly? AutomaticStartDate = null);
 }

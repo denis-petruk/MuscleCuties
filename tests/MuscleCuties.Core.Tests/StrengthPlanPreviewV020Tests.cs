@@ -47,6 +47,20 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
+    public void Automatic_Preview_Rejects_An_Unselected_Current_Strength_Style()
+    {
+        var request = Request() with
+        {
+            SelectedActivityTypes = [(int)WorkoutActivityType.GeneralStrength]
+        };
+        var result = PreviewStrengthPlanV020UseCase.EvaluateAutomaticLoadedSource(Guid.NewGuid(),
+            request, Profile(), WorkoutActivityDto.HighVolumeStrength);
+
+        Assert.NotEqual("Feasible", result.Status);
+        Assert.Empty(result.Sessions);
+    }
+
+    [Fact]
     public async Task Preview_Does_Not_Reinsert_A_Strength_Activity_The_User_Removed()
     {
         var request = Request() with { SelectedActivityTypes = [] };
