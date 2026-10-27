@@ -251,6 +251,28 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 ? wasAlreadyCleared ? row!.ClearedDate : await AccountLocalDateAsync(request.UserId, cancellationToken).ConfigureAwait(false)
                 : null;
 
+            var openEpisodes = await dbContext.WorkoutInjuryEpisodes.Where(episode =>
+                    episode.UserId == request.UserId && episode.SourceInjuryId == request.Id &&
+                    episode.ClearedDate == null && !episode.SourceDeleted)
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            if (isClearing)
+            {
+                foreach (var episode in openEpisodes)
+                    episode.ClearedDate = originalClearanceDate;
+            }
+            else
+            {
+                // A site change cannot retroactively clear the previous episode.
+                foreach (var episode in openEpisodes.Where(episode => episode.SiteFlag != request.SiteFlag))
+                    episode.SourceDeleted = true;
+                if (!openEpisodes.Any(episode => episode.SiteFlag == request.SiteFlag))
+                    dbContext.WorkoutInjuryEpisodes.Add(new WorkoutInjuryEpisodeRecord
+                    {
+                        Id = Guid.NewGuid(), UserId = request.UserId, SourceInjuryId = request.Id,
+                        SiteFlag = request.SiteFlag, RecordedAtUtc = timeProvider.GetUtcNow().UtcDateTime
+                    });
+            }
+
             row ??= new WorkoutInjuryLogRecord
             {
                 Id = request.Id,
@@ -308,6 +330,10 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 return false;
             }
 
+            var episodes = await dbContext.WorkoutInjuryEpisodes.Where(episode => episode.UserId == userId &&
+                    episode.SourceInjuryId == injuryId && !episode.SourceDeleted)
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            foreach (var episode in episodes) episode.SourceDeleted = true;
             dbContext.WorkoutInjuryLogs.Remove(row);
             await MarkSafetyRegenerationPendingAsync(userId, cancellationToken).ConfigureAwait(false);
             await InvalidatePlanningPreviewsAsync(userId, cancellationToken).ConfigureAwait(false);

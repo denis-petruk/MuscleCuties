@@ -66,6 +66,19 @@ public sealed class InjuryClearancePersistenceTests
             clock.UtcNow = SecondClearanceInstant;
             await store.SaveInjuryAsync(Request("Cleared"), CancellationToken.None);
             Xunit.Assert.Equal(SecondClearanceDate, await PersistedClearanceAsync());
+            var episodes = await database.WorkoutInjuryEpisodes.AsNoTracking()
+                .Where(row => row.UserId == userId && row.SourceInjuryId == injuryId)
+                .OrderBy(row => row.RecordedAtUtc).ToArrayAsync();
+            Xunit.Assert.Equal(2, episodes.Length);
+            Xunit.Assert.NotEqual(episodes[0].Id, episodes[1].Id);
+            Xunit.Assert.Equal(FirstClearanceDate, episodes[0].ClearedDate);
+            Xunit.Assert.Equal(SecondClearanceDate, episodes[1].ClearedDate);
+
+            Xunit.Assert.True(await store.DeleteInjuryAsync(userId, injuryId, CancellationToken.None));
+            var preserved = await database.WorkoutInjuryEpisodes.AsNoTracking()
+                .Where(row => row.UserId == userId && row.SourceInjuryId == injuryId).ToArrayAsync();
+            Xunit.Assert.Equal(2, preserved.Length);
+            Xunit.Assert.All(preserved, episode => Xunit.Assert.True(episode.SourceDeleted));
         }
         finally
         {
