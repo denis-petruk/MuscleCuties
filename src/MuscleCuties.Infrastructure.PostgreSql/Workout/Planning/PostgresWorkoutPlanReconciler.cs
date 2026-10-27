@@ -55,7 +55,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
             (injuries.Count > 0 || await context.WorkoutInjuryEpisodes.AsNoTracking()
                 .AnyAsync(episode => episode.UserId == userId, cancellationToken).ConfigureAwait(false));
         if (injuries.Any(injury => !string.Equals(injury.Status, "Cleared", StringComparison.OrdinalIgnoreCase) ||
-            injury.ClearedDate is null || WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(injury.ClearedDate.Value, today)))
+            injury.ClearedDate is null || injury.ClearedDate > today))
             return WorkoutReconciliationOutcome.NeedsReview;
         var activePlanId = await context.WorkoutPlans.AsNoTracking()
             .Where(row => row.UserId == userId && row.IsActive).OrderByDescending(row => row.CreatedAt)
