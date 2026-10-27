@@ -15,15 +15,14 @@ public sealed record TemplateVolumeFloorEvaluationResult(
     int? ActualWorkingSets);
 
 /// <summary>
-/// Applies explicitly supplied reviewed volume floors for strength templates.
-/// Prohibits arbitrary exercise-dose limits and enforces reviewed template-specific set floors.
+/// Applies explicitly supplied template-specific volume floors without inferring missing limits.
 /// </summary>
 public static class TemplateVolumeFloorRule
 {
     // Limitation & Status Codes
     public const string TemplateVolumeFloorReviewMissing = "TemplateVolumeFloorReviewMissing";
     public const string VolumeBelowTemplateFloor = "VolumeBelowTemplateFloor";
-    public const string ReviewedStatus = "ClinicallyReviewed";
+    public const string ReviewedStatus = "Configured";
     public const string UnreviewedStatus = "Unreviewed";
 
     // Slot Identifiers
@@ -101,7 +100,7 @@ public static class TemplateVolumeFloorRule
         var result = Evaluate(templateId, totalSets, setsBySlot, customFloors);
         return result.IsAllowed && active.Length < floor.MinimumExercises
             ? new TemplateVolumeFloorEvaluationResult(false, VolumeBelowTemplateFloor,
-                "Exercise count is below the reviewed template floor.", floor.MinimumWorkingSets, totalSets)
+                "Exercise count is below the template floor.", floor.MinimumWorkingSets, totalSets)
             : result;
     }
     public static TemplateVolumeFloorEvaluationResult Evaluate(
@@ -116,7 +115,7 @@ public static class TemplateVolumeFloorRule
             return new TemplateVolumeFloorEvaluationResult(
                 IsAllowed: false,
                 LimitationCode: TemplateVolumeFloorReviewMissing,
-                ReasonDetail: $"Template '{templateId}' does not have a clinically reviewed volume floor.",
+                ReasonDetail: $"Template '{templateId}' does not have a volume floor.",
                 MinimumWorkingSets: null,
                 ActualWorkingSets: actualWorkingSets);
         }
