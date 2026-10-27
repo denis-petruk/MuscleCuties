@@ -1,0 +1,5 @@
+# Template floor review gate
+
+The additive migration creates an empty catalog table. Application credentials can read it but cannot write it. A privileged release process must remain closed until an authorized human has reviewed every applicable template version, overall working-set and exercise minimum, and every slot minimum. Record the reviewer, review date, stable evidence reference and SHA-256 of the actual review artifact. These fields are assertions and a digest; this code cannot independently verify reviewer identity, artifact authenticity, approval, or clinical validity. No reviewed values or artifacts are supplied here.
+
+A release operator must independently verify the artifact and its digest against each row before authorizing ingestion, check least-privilege grants, and test catalog-lock contention, fingerprint invalidation and rollback on PostgreSQL. Mismatched template versions, incomplete slot coverage, malformed values or absent evidence do not produce a floor. The catalog is fingerprinted and locked across proposal and acceptance. The migration is definition-only and has not been applied.
