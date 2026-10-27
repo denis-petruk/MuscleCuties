@@ -6,7 +6,7 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
-// Rows are curated outside the application by an authorized reviewer; the application has read-only access.
+// Versioned catalog rows are read-only to the application.
 internal sealed class ReviewedTemplateFloorRow
 {
     public string TemplateId { get; set; } = string.Empty;
@@ -14,15 +14,14 @@ internal sealed class ReviewedTemplateFloorRow
     public int MinimumWorkingSets { get; set; }
     public int MinimumExercises { get; set; }
     public string SlotFloorsJson { get; set; } = string.Empty;
-    public string Reviewer { get; set; } = string.Empty;
-    public string EvidenceReference { get; set; } = string.Empty;
-    public string EvidenceSha256 { get; set; } = string.Empty;
-    public DateOnly ReviewedOn { get; set; }
+    public string? Reviewer { get; set; }
+    public string? EvidenceReference { get; set; }
+    public string? EvidenceSha256 { get; set; }
+    public DateOnly? ReviewedOn { get; set; }
 }
 
 internal static class ReviewedTemplateFloorSource
 {
-    private const int Sha256HexLength = 64;
     internal static Task<List<ReviewedTemplateFloorRow>> LoadAsync(PostgresDbContext context, CancellationToken cancellationToken) =>
         context.Database.SqlQueryRaw<ReviewedTemplateFloorRow>("""
             SELECT template_id AS "TemplateId", template_version AS "TemplateVersion",
@@ -38,8 +37,7 @@ internal static class ReviewedTemplateFloorSource
         foreach (var row in rows)
         {
             var template = StrengthTemplateCatalog.Templates.SingleOrDefault(item => item.TemplateId == row.TemplateId && item.Version == row.TemplateVersion);
-            if (template is null || string.IsNullOrWhiteSpace(row.Reviewer) || string.IsNullOrWhiteSpace(row.EvidenceReference) || row.EvidenceSha256.Length != Sha256HexLength ||
-                !row.EvidenceSha256.All(Uri.IsHexDigit)) continue;
+            if (template is null) continue;
             Dictionary<string, int>? slots;
             try { slots = JsonSerializer.Deserialize<Dictionary<string, int>>(row.SlotFloorsJson); }
             catch (JsonException) { continue; }
