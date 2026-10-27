@@ -95,6 +95,7 @@ public sealed record StrengthPlanPreviewSourceV020(
     public Guid? ActivePlanId { get; init; }
     public Guid? ActiveRevisionId { get; init; }
     public string? HistoryFingerprint { get; init; }
+    public string? CatalogFingerprint { get; init; }
     public long TimeZoneVersion { get; init; }
     public long ExperienceVersion { get; init; }
     public long AnswerVersion { get; init; }

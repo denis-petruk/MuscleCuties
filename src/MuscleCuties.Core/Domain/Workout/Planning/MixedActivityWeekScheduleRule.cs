@@ -43,7 +43,10 @@ public sealed record MixedActivityScheduleDecision(
 public sealed record MixedActivityWeekScheduleResult(
     IReadOnlyList<MixedActivityScheduledSession> Sessions,
     IReadOnlyList<MixedActivityScheduleDecision> Activities,
-    IReadOnlyList<string> InputReasons);
+    IReadOnlyList<string> InputReasons)
+{
+    public IReadOnlyList<StrengthScheduleAssignment>? StrengthAssignments { get; init; }
+}
 
 /// <summary>Places selected activities over available weekdays under activity and hard-day safety rules.</summary>
 public static class MixedActivityWeekScheduleRule

@@ -140,8 +140,6 @@ public sealed class StrengthPlanPreviewRuleTests
     [Theory]
     [InlineData(WorkoutActivityType.GeneralStrength, ActivityPrescriptionRule.GeneralStrengthSessionsPerWeek)]
     [InlineData(WorkoutActivityType.HighVolumeStrength, ActivityPrescriptionRule.HighVolumeStrengthSessionsPerWeek)]
-    [InlineData(WorkoutActivityType.StrengthHighIntensity,
-        ActivityPrescriptionRule.StrengthHighIntensityMaximumSessionsPerWeekInitially)]
     public void ScheduledFrequencyComesFromSelectedActivityPrescription(
         WorkoutActivityType activity, int expectedSessionsPerWeek)
     {
@@ -153,7 +151,7 @@ public sealed class StrengthPlanPreviewRuleTests
     }
 
     [Fact]
-    public void High_Intensity_Preview_Offers_Trusted_Candidates_But_Stays_Limited_Until_Confirmed()
+    public void High_Intensity_Preview_Requires_Reviewed_Safer_Prescription()
     {
         var data = Data(activity: WorkoutActivityType.StrengthHighIntensity);
         var candidateIds = HeavyCandidateIds(data);
@@ -165,18 +163,14 @@ public sealed class StrengthPlanPreviewRuleTests
         };
 
         var result = StrengthPlanPreviewRule.Evaluate(EstablishedHighIntensityChoices(), data);
-        var presentedCandidates = result.Sessions.SelectMany(session => session.Slots)
-            .Where(slot => slot.IsHeavyMain && slot.ExerciseId.HasValue)
-            .Select(slot => slot.ExerciseId!.Value).ToHashSet();
-
         Assert.Equal(StrengthPlanPreviewStatus.Limited, result.Status);
-        Assert.Equal(candidateIds.ToHashSet(), presentedCandidates);
-        Assert.Contains(StrengthHighIntensityExerciseEvidenceRule.UserConfirmationRequired,
+        Assert.Empty(result.Sessions.SelectMany(session => session.Slots));
+        Assert.Contains(ActivityPrescriptionRule.HighIntensitySaferAlternativeReviewMissing,
             result.LimitationCodes);
     }
 
     [Fact]
-    public void High_Intensity_Preview_Resolves_When_Trusted_Candidates_Are_Confirmed()
+    public void High_Intensity_Preview_Remains_Limited_When_Candidates_Are_Confirmed()
     {
         var data = Data(activity: WorkoutActivityType.StrengthHighIntensity);
         var candidateIds = HeavyCandidateIds(data);
@@ -194,9 +188,9 @@ public sealed class StrengthPlanPreviewRuleTests
 
         var result = StrengthPlanPreviewRule.Evaluate(choices, data);
 
-        Assert.Equal(StrengthPlanPreviewStatus.Feasible, result.Status);
-        Assert.Equal(ActivityPrescriptionRule.StrengthHighIntensityMaximumSessionsPerWeekInitially,
-            result.Sessions.Count);
+        Assert.Equal(StrengthPlanPreviewStatus.Limited, result.Status);
+        Assert.Contains(ActivityPrescriptionRule.HighIntensitySaferAlternativeReviewMissing, result.LimitationCodes);
+        Assert.Empty(result.Sessions.SelectMany(session => session.Slots));
     }
 
     [Fact]

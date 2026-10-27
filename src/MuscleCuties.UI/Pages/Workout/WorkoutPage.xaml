@@ -356,7 +356,7 @@
 
         <!-- Generate Plan Prompt Overlay (shown prominently covering workout cards/blocks when no plan exists) -->
         <Grid Grid.Row="1"
-              IsVisible="{Binding HasNoPlan}"
+              IsVisible="{Binding ShowNoPlanPrompt}"
               BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
               Padding="{StaticResource PresentationPageContentPadding}"
               ZIndex="5">

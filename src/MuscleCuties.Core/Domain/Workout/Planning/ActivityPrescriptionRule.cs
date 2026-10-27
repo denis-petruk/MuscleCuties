@@ -105,6 +105,7 @@ public static class ActivityPrescriptionRule
     public const int StrengthHighIntensityMaximumWorkingExercisesPerSession = 4;
     public const int StrengthHighIntensityMaximumSessionsPerWeekInitially = 2;
     public const int StrengthHighIntensityRequiredExerciseExposures = 4;
+    public const string HighIntensitySaferAlternativeReviewMissing = "HighIntensitySaferAlternativePrescriptionReviewMissing";
 
     public const int ContinuousCardioWarmupMinutes = 5;
     public const int ContinuousCardioCooldownMinutes = 5;
@@ -229,21 +230,7 @@ public static class ActivityPrescriptionRule
 
     private static ActivityPrescriptionResult HighIntensityStrength(ActivityPrescriptionContext context)
     {
-        if (context.Experience != ActivityExperience.Established || !context.IsEstablishedResistanceHistory ||
-            context.CompletedMainExerciseExposures < ActivityPrescriptionRule.StrengthHighIntensityRequiredExerciseExposures ||
-            !context.HasKnownManageableLoad || !context.UserConfirmedCurrentFamiliarity)
-            return Result(ActivityPrescriptionStatus.OfferGeneralStrength,
-                "HeavyStrengthRequiresEstablishedHistoryFourExposuresKnownLoadAndCurrentFamiliarity");
-        return Session(ActivityPrescriptionStatus.Eligible, context, SessionPurpose.Strength,
-            ActivityModality.Strength, IntendedIntensity.Vigorous, SessionTrainingStyle.HighIntensity,
-            ActivityPrescriptionRule.StrengthHighIntensityMaximumSessionsPerWeekInitially,
-            sets: ActivityPrescriptionRule.StrengthHighIntensityMainSets,
-            minReps: ActivityPrescriptionRule.StrengthHighIntensityMainMinimumRepetitions,
-            maxReps: ActivityPrescriptionRule.StrengthHighIntensityMainMaximumRepetitions,
-            repsInReserve: ActivityPrescriptionRule.InitialRepetitionsInReserve,
-            restSeconds: ActivityPrescriptionRule.StrengthHighIntensityMainRestSeconds,
-            reasons: ["MaximumTwoHeavyMainMovementsPerSession", "MaximumFourExercisesPerSession",
-                "NoMaximalTestingOrFailure"]);
+        return Result(ActivityPrescriptionStatus.Unsupported, HighIntensitySaferAlternativeReviewMissing);
     }
 
     private static ActivityPrescriptionResult ContinuousCardio(ActivityPrescriptionContext context)

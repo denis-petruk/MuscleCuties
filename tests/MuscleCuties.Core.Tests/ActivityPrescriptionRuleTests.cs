@@ -42,21 +42,19 @@ public sealed class ActivityPrescriptionRuleTests
         Assert.Equal(ActivityPrescriptionRule.HighVolumeStartingMainSets, volume.Sessions.Single().Sets);
         Assert.Equal(ActivityPrescriptionRule.HighVolumeStartingRepetitionsInReserve,
             volume.Sessions.Single().RepetitionsInReserve);
-        Assert.Equal(ActivityPrescriptionStatus.OfferGeneralStrength, heavy.Status);
+        Assert.Equal(ActivityPrescriptionStatus.Unsupported, heavy.Status);
     }
 
     [Fact]
-    public void EstablishedHeavyStrengthRequiresExposuresManageableLoadAndConfirmation()
+    public void ConfirmationsCannotReplaceReviewedSaferHighIntensityPrescription()
     {
         var result = Evaluate(WorkoutActivityType.StrengthHighIntensity,
             ActivityExperience.Established, exposures: EstablishedExerciseExposures,
             knownLoad: true, familiar: true, establishedResistance: true);
 
-        Assert.Equal(ActivityPrescriptionStatus.Eligible, result.Status);
-        Assert.Equal(ActivityPrescriptionRule.StrengthHighIntensityMainMinimumRepetitions,
-            result.Sessions.Single().MinimumRepetitions);
-        Assert.Equal(ActivityPrescriptionRule.StrengthHighIntensityMainRestSeconds,
-            result.Sessions.Single().RestSeconds);
+        Assert.Equal(ActivityPrescriptionStatus.Unsupported, result.Status);
+        Assert.Empty(result.Sessions);
+        Assert.Contains(ActivityPrescriptionRule.HighIntensitySaferAlternativeReviewMissing, result.Reasons);
     }
 
     [Fact]
