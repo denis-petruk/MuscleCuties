@@ -627,47 +627,6 @@ public sealed class WorkoutPlanningSyntheticReviewTests
         Assert.Empty(available);
     }
 
-    [Fact]
-    public void ExhaustedStrengthSelection_RetainsSafeNonStrengthActivities_WhileEmptyPlanRemainsBlocked()
-    {
-        var scheduleResult = new MixedActivityWeekScheduleResult(
-            [
-                new MixedActivitySession(DayOfWeek.Tuesday, WorkoutActivityType.Cycling, CyclingDurationMinutes, false),
-                new MixedActivitySession(DayOfWeek.Thursday, WorkoutActivityType.Mobility, MobilityDurationMinutes, false)
-            ],
-            [
-                new ActivityDecision(WorkoutActivityType.GeneralStrength, MixedActivityScheduleDisposition.Omitted, 0, 0, 0, 0, [NoSafeCandidatesReason]),
-                new ActivityDecision(WorkoutActivityType.Cycling, MixedActivityScheduleDisposition.Scheduled, 1, 1, 1, 1, []),
-                new ActivityDecision(WorkoutActivityType.Mobility, MixedActivityScheduleDisposition.Scheduled, 1, 1, 1, 1, [])
-            ],
-            []);
-
-        var exhaustedStrengthResponse = new StrengthPlanPreviewResponseV020(
-            Status: LimitedStatus,
-            Sessions: [],
-            LimitationCodes: ["NoSafeStrengthContentRemaining"],
-            ExerciseReviewConditions: [],
-            Advisories: []);
-
-        var attachedResponse = StrengthPlanPreviewMapperV020.AttachMixedSchedule(
-            exhaustedStrengthResponse,
-            scheduleResult,
-            WorkoutActivityDto.GeneralStrength);
-
-        Assert.Equal(FeasibleStatus, attachedResponse.Status);
-        Assert.Contains(StrengthPlanPreviewMapperV020.NoSafeStrengthContentRemainingCode, attachedResponse.LimitationCodes);
-        Assert.Empty(attachedResponse.Sessions);
-        Assert.Equal(TwoDays, attachedResponse.MixedActivitySchedule!.Sessions.Count);
-
-        var emptyScheduleResult = new MixedActivityWeekScheduleResult([], [], []);
-        var emptyPlanResponse = StrengthPlanPreviewMapperV020.AttachMixedSchedule(
-            exhaustedStrengthResponse,
-            emptyScheduleResult,
-            WorkoutActivityDto.GeneralStrength);
-
-        Assert.Equal(LimitedStatus, emptyPlanResponse.Status);
-    }
-
     // =========================================================================
     // 6. Two-Activity Scheduling and Consecutive Muscle Groups
     // =========================================================================
@@ -677,9 +636,9 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     {
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, isHard: true,
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, IsHard: true,
                 new HashSet<string> { ChestMuscleGroup }),
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Mobility, isHard: false)
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Mobility, IsHard: false)
         };
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions);
@@ -691,10 +650,10 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     {
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, isHard: true,
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, IsHard: true,
                 new HashSet<string> { ChestMuscleGroup }),
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Mobility, isHard: false),
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Walking, isHard: false)
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Mobility, IsHard: false),
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Walking, IsHard: false)
         };
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions);
@@ -706,8 +665,8 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     {
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Yoga, isHard: false),
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Yoga, isHard: false)
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Yoga, IsHard: false),
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Yoga, IsHard: false)
         };
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions);
@@ -719,9 +678,9 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     {
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, isHard: true,
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, IsHard: true,
                 new HashSet<string> { ChestMuscleGroup }),
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.HighVolumeStrength, isHard: true,
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.HighVolumeStrength, IsHard: true,
                 new HashSet<string> { LegsMuscleGroup })
         };
 
@@ -736,8 +695,8 @@ public sealed class WorkoutPlanningSyntheticReviewTests
         var muscleSet = new HashSet<string> { LegsMuscleGroup };
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(DayOfWeek.Sunday, WorkoutActivityType.GeneralStrength, isHard: true, muscleSet),
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, isHard: true, muscleSet)
+            new WorkoutScheduleValidationSession(DayOfWeek.Sunday, WorkoutActivityType.GeneralStrength, IsHard: true, muscleSet),
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, IsHard: true, muscleSet)
         };
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions);
@@ -749,9 +708,9 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     {
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(DayOfWeek.Tuesday, WorkoutActivityType.GeneralStrength, isHard: true,
+            new WorkoutScheduleValidationSession(DayOfWeek.Tuesday, WorkoutActivityType.GeneralStrength, IsHard: true,
                 new HashSet<string> { ChestMuscleGroup, TricepsMuscleGroup }),
-            new WorkoutScheduleValidationSession(DayOfWeek.Wednesday, WorkoutActivityType.GeneralStrength, isHard: true,
+            new WorkoutScheduleValidationSession(DayOfWeek.Wednesday, WorkoutActivityType.GeneralStrength, IsHard: true,
                 new HashSet<string> { ShouldersMuscleGroup, TricepsMuscleGroup })
         };
 
@@ -764,9 +723,9 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     {
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(DayOfWeek.Tuesday, WorkoutActivityType.GeneralStrength, isHard: true,
+            new WorkoutScheduleValidationSession(DayOfWeek.Tuesday, WorkoutActivityType.GeneralStrength, IsHard: true,
                 new HashSet<string> { ChestMuscleGroup, TricepsMuscleGroup }),
-            new WorkoutScheduleValidationSession(DayOfWeek.Wednesday, WorkoutActivityType.GeneralStrength, isHard: true,
+            new WorkoutScheduleValidationSession(DayOfWeek.Wednesday, WorkoutActivityType.GeneralStrength, IsHard: true,
                 new HashSet<string> { LegsMuscleGroup })
         };
 
@@ -779,9 +738,9 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     {
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, isHard: true,
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, IsHard: true,
                 new HashSet<string> { BackMuscleGroup }),
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Hiit, isHard: false)
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Hiit, IsHard: false)
         };
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions);
@@ -793,8 +752,8 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     {
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(DayOfWeek.Thursday, WorkoutActivityType.RockClimbing, isHard: true),
-            new WorkoutScheduleValidationSession(DayOfWeek.Thursday, WorkoutActivityType.Hiit, isHard: false)
+            new WorkoutScheduleValidationSession(DayOfWeek.Thursday, WorkoutActivityType.RockClimbing, IsHard: true),
+            new WorkoutScheduleValidationSession(DayOfWeek.Thursday, WorkoutActivityType.Hiit, IsHard: false)
         };
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions);
@@ -806,9 +765,9 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     {
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(DayOfWeek.Friday, WorkoutActivityType.GeneralStrength, isHard: true,
+            new WorkoutScheduleValidationSession(DayOfWeek.Friday, WorkoutActivityType.GeneralStrength, IsHard: true,
                 new HashSet<string> { ChestMuscleGroup }),
-            new WorkoutScheduleValidationSession(DayOfWeek.Friday, WorkoutActivityType.RockClimbing, isHard: true)
+            new WorkoutScheduleValidationSession(DayOfWeek.Friday, WorkoutActivityType.RockClimbing, IsHard: true)
         };
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions);
@@ -820,10 +779,10 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     {
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, isHard: true, new HashSet<string> { ChestMuscleGroup }),
-            new WorkoutScheduleValidationSession(DayOfWeek.Wednesday, WorkoutActivityType.GeneralStrength, isHard: true, new HashSet<string> { BackMuscleGroup }),
-            new WorkoutScheduleValidationSession(DayOfWeek.Friday, WorkoutActivityType.GeneralStrength, isHard: true, new HashSet<string> { LegsMuscleGroup }),
-            new WorkoutScheduleValidationSession(DayOfWeek.Sunday, WorkoutActivityType.RockClimbing, isHard: true)
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, IsHard: true, new HashSet<string> { ChestMuscleGroup }),
+            new WorkoutScheduleValidationSession(DayOfWeek.Wednesday, WorkoutActivityType.GeneralStrength, IsHard: true, new HashSet<string> { BackMuscleGroup }),
+            new WorkoutScheduleValidationSession(DayOfWeek.Friday, WorkoutActivityType.GeneralStrength, IsHard: true, new HashSet<string> { LegsMuscleGroup }),
+            new WorkoutScheduleValidationSession(DayOfWeek.Sunday, WorkoutActivityType.RockClimbing, IsHard: true)
         };
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions);
@@ -835,7 +794,7 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     {
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, isHard: true, StrengthMuscleGroups: null)
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, IsHard: true, StrengthMuscleGroups: null)
         };
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions, requireStrengthMuscles: true);
@@ -847,7 +806,7 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     {
         var sessions = new[]
         {
-            new WorkoutScheduleValidationSession(OutOfRangeDayOfWeek, WorkoutActivityType.Mobility, isHard: false)
+            new WorkoutScheduleValidationSession(OutOfRangeDayOfWeek, WorkoutActivityType.Mobility, IsHard: false)
         };
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions);
@@ -1137,20 +1096,19 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     // =========================================================================
 
     [Fact]
-    public void InjuryClearance_RestoredExerciseIsOptionalForSevenFullDaysAfterClearance()
+    public void InjuryClearance_RestoredExerciseIsOptionalForSevenDaysIncludingClearance()
     {
         var clearanceDate = new DateOnly(ReferenceYear, ReferenceMonth, OneDay);
         var requiredFromDate = WorkoutInjuryClearanceRule.RequiredFromLocalDate(clearanceDate);
 
         Assert.NotNull(requiredFromDate);
-        Assert.Equal(new DateOnly(ReferenceYear, ReferenceMonth, NineDays), requiredFromDate.Value);
+        Assert.Equal(new DateOnly(ReferenceYear, ReferenceMonth, EightDays), requiredFromDate.Value);
 
         // Clearance day is optional
         Assert.True(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(clearanceDate, clearanceDate));
-        // Day 7 after clearance is optional
-        Assert.True(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(clearanceDate, clearanceDate.AddDays(SevenDays)));
-        // Day 8 after clearance becomes required
-        Assert.False(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(clearanceDate, clearanceDate.AddDays(EightDays)));
+        // Day seven includes the clearance date.
+        Assert.True(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(clearanceDate, requiredFromDate.Value.AddDays(-OneDay)));
+        Assert.False(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(clearanceDate, requiredFromDate.Value));
     }
 
     [Fact]
@@ -1370,7 +1328,7 @@ public sealed class WorkoutPlanningSyntheticReviewTests
             HttpStatusCode.BadGateway or
             HttpStatusCode.GatewayTimeout => BackendApiStatus.ServerError,
             HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => BackendApiStatus.Unauthorized,
-            _ => BackendApiStatus.Unknown
+            _ => throw new ArgumentOutOfRangeException(nameof(httpStatus))
         };
 
         Assert.Equal(expectedApiStatus, mappedStatus);

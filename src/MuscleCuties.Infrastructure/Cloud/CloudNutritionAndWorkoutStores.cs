@@ -552,6 +552,11 @@ public sealed class CloudWorkoutSessionActionStore(
     private static ActiveWorkoutSessionSnapshot RequirePlannedSession(
         BackendApiResponse<ActiveWorkoutSessionSnapshot> response, string operation)
     {
+        if (response.Status == BackendApiStatus.Conflict &&
+            response.ErrorCode == WorkoutHiitHistoryConfirmationRequiredException.ErrorCode)
+            throw new WorkoutHiitHistoryConfirmationRequiredException();
+        if (response.Status == BackendApiStatus.Conflict && response.ErrorCode == "WorkoutActivityNoLongerSafe")
+            throw new WorkoutActivityNoLongerSafeException();
         if (response.Status == BackendApiStatus.OfflineRejected)
             throw new HttpRequestException("Workout session requires a connection.");
         return CloudStoreResponse.RequireData(response, operation);

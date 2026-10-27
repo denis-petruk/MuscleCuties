@@ -625,7 +625,14 @@ public static class MauiProgram
         services.AddTransient<WorkoutSessionViewModel>(sp => new WorkoutSessionViewModel(
             sp.GetRequiredService<IWorkoutSessionActionUseCase>(),
             sp.GetRequiredService<ICycleOverviewUseCase>(),
-            route => NavigateToAsync(route)));
+            route => NavigateToAsync(route),
+            sp.GetRequiredService<IStrengthPlanProposalClientV020>(),
+            ConfirmHiitHistoryAsync,
+            () =>
+            {
+                sp.GetRequiredService<INavigationContextService>().Set(StrengthPlanGenerationViewModel.EditHiitAnswersContextKey, true);
+                return NavigateToAsync(nameof(StrengthPlanGenerationPage));
+            }));
 
         services.AddTransient<FoodLogViewModel>(sp => new FoodLogViewModel(
             sp.GetRequiredService<INutritionDailyLogUseCase>(),
@@ -808,10 +815,37 @@ public static class MauiProgram
             services.GetRequiredService<IAppPreloadService>());
     }
 
+    private static async Task<HiitConfirmationChoice> ConfirmHiitHistoryAsync(SavedActivityAnswersDto saved)
+    {
+        var evidence = saved.HiitEligibilityEvidence;
+        var history = evidence?.UnderlyingCardioHistory;
+        var weeks = evidence?.PreviousFourWeeksAerobicEvidence;
+        if (history is null || weeks is null || saved.HiitUnderlyingCardioActivity is null ||
+            evidence?.ExistingClearanceScreeningSatisfied is null)
+            return HiitConfirmationChoice.Update;
+
+        var summary = string.Format(System.Globalization.CultureInfo.CurrentCulture,
+            UiTextCatalog.Get("Workout_Session_HiitConfirmationSummary"),
+            saved.HiitUnderlyingCardioActivity, history.ConsistentParticipationWeeks,
+            history.AverageSessionsPerWeekInRecentFourWeeks, history.LastCompletedSessionDate,
+            string.Join(", ", weeks.OrderBy(week => week.WeekOffsetFromCurrent)
+                .Select(week => week.QualifyingManageableAerobicSessionCount)),
+            UiTextCatalog.Get(evidence.ExistingClearanceScreeningSatisfied == true
+                ? "Workout_Session_HiitAnswerYes" : "Workout_Session_HiitAnswerNo"));
+        var confirm = UiTextCatalog.Get("Workout_Session_HiitConfirm");
+        var update = UiTextCatalog.Get("Workout_Session_HiitUpdate");
+        var selected = await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.DisplayActionSheetAsync(
+            summary, UiTextCatalog.Get("Workout_Session_HiitCancel"), null, confirm, update));
+        return selected == confirm ? HiitConfirmationChoice.Confirm :
+            selected == update ? HiitConfirmationChoice.Update : HiitConfirmationChoice.Cancel;
+    }
+
     private static async Task NavigateAfterOnboardingAsync(IServiceProvider services)
     {
         await NavigateThenPreloadDashboardAsync(services, preloadRemaining: false);
-        await NavigateToAsync(nameof(ProfileWorkoutPreferencesPage));
+        services.GetRequiredService<INavigationContextService>()
+            .TryTake<int[]>(ProfileWorkoutPreferencesViewModel.OnboardingWeekdaysContextKey, out _);
+        await NavigateToAsync(nameof(StrengthPlanGenerationPage));
     }
 
     private static Task NavigateAfterLoginAsync(IServiceProvider services)

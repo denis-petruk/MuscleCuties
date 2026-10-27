@@ -7,11 +7,13 @@ using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Quiz;
@@ -378,6 +380,7 @@ public sealed class ServerRouteParityTests
         public static async Task<ServerFixture> StartAsync(bool emptyQuiz = false, bool profileThrows = false)
         {
             var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Testing" });
+            builder.Logging.ClearProviders();
             builder.WebHost.UseTestServer();
             builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -391,6 +394,7 @@ public sealed class ServerRouteParityTests
             var authentication = new StubAuthentication();
             var app = ApiApplication.Build(builder, services =>
             {
+                services.AddDataProtection().UseEphemeralDataProtectionProvider();
                 services.RemoveAll<ICompleteAccountRegistrationStore>();
                 services.AddSingleton<ICompleteAccountRegistrationStore>(new StubRegistrationStore(emptyQuiz));
                 services.RemoveAll<IServerProfileDataStore>();

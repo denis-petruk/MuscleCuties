@@ -26,7 +26,8 @@ internal static class StrengthPlanPreviewMapperV020
         request.AcknowledgedSubstitutionPairKeys,
         request.WarmupMinutes,
         request.CooldownMinutes,
-        request.AvailableWeekdays);
+        request.AvailableWeekdays,
+        request.AllowMovementOmissionsForDuration);
 
     public static StrengthPlanPreviewData ToData(StrengthPlanPreviewSourceV020 source) => new(
         source.Goal,
@@ -96,7 +97,10 @@ internal static class StrengthPlanPreviewMapperV020
         EffectiveActivityTypeId: result.EffectiveActivity.HasValue ? (int)result.EffectiveActivity.Value : null,
         FallbackSource: result.FallbackSource,
         FallbackReasonCode: result.FallbackReasonCode,
-        RequiresReducedVolumeAcknowledgment: result.RequiresReducedVolumeAcknowledgment);
+        RequiresReducedVolumeAcknowledgment: result.RequiresReducedVolumeAcknowledgment)
+    {
+        MinimumRequiredSessionMinutes = result.MinimumRequiredSessionMinutes
+    };
 
     public static MixedActivityScheduleV020 ToMixedSchedule(MixedActivityWeekScheduleResult result) => new(
         WorkoutSessionOrderingRule.Assign(result.Sessions).Select(session => new MixedActivityScheduleSessionV020(
@@ -139,7 +143,7 @@ internal static class StrengthPlanPreviewMapperV020
 
         // When strength sessions cannot fit or have no safe exercises, but safe non-strength activities exist,
         // allow a safe non-strength-only plan with explanation. An empty plan remains blocked.
-        var isStrengthExhausted = !hasStrengthDays && response.LimitationCodes.Length == 0 &&
+        var isStrengthExhausted = !hasStrengthDays && response.LimitationCodes.Count == 0 &&
             (response.Sessions.Count == 0 || schedule.StrengthAssignments is { Count: 0 });
         var allowNonStrengthOnlyPlan = isStrengthExhausted && hasSafeNonStrengthSessions && totalScheduledSessions > 0;
 

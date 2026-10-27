@@ -607,19 +607,19 @@ public partial class QuizViewModel : ObservableObject
                     $"[Performance][Quiz] Answers and profile saved in {totalStopwatch.ElapsedMilliseconds} ms.");
             }
 
-            // Finish the quiz overlay layout before opening signed-in Activity preferences.
+            // Finish the quiz overlay layout before opening first-plan setup.
             IsPreparingWorkoutPreferences = false;
             await Task.Delay(50);
-            Trace.WriteLine("[Performance][Quiz] Workout preferences navigation starting.");
+            Trace.WriteLine("[Performance][Quiz] First-plan navigation starting.");
             await _navigateToDashboardAsync();
             Trace.WriteLine(
-                $"[Performance][Quiz] Workout preferences navigation completed; " +
+                $"[Performance][Quiz] First-plan navigation completed; " +
                 $"total={totalStopwatch.ElapsedMilliseconds} ms.");
         }
         catch (Exception ex)
         {
             ErrorMessage = _quizCommitted
-                ? "Your answers were saved. Tap Finish to open workout preferences."
+                ? "Your answers were saved. Tap Finish to set up your workout plan."
                 : "We could not save your answers. Please try again.";
             Trace.WriteLine($"[ERROR][Quiz] SaveAnswersAsync failed ({ex.GetType().Name}).");
         }

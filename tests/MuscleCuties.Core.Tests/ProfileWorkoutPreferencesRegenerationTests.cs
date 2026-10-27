@@ -72,10 +72,11 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
     public async Task SavingNormalizedPreferencesRemovesLegacyOtherWithoutMutatingLoadedSnapshot()
     {
         var saved = new WorkoutPreferencesDto(
-            [(int)WorkoutActivityType.Yoga, (int)WorkoutActivityType.Other],
+            [(int)WorkoutActivityType.GeneralStrength, (int)WorkoutActivityType.Yoga, (int)WorkoutActivityType.Other],
             [(int)DayOfWeek.Monday, (int)DayOfWeek.Wednesday],
             new Dictionary<int, int>
             {
+                [(int)WorkoutActivityType.GeneralStrength] = WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes,
                 [(int)WorkoutActivityType.Yoga] = ActivitySessionDurationRule.GentleYogaDefaultMinutes,
                 [(int)WorkoutActivityType.Other] = LegacyOtherDurationMinutes
             },
@@ -94,10 +95,11 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
 
         Assert.True(result.Succeeded);
         Assert.NotSame(saved, store.SavedPreferences);
-        Assert.Equal([(int)WorkoutActivityType.Yoga], store.SavedPreferences!.ActivityTypes);
+        Assert.Equal([(int)WorkoutActivityType.GeneralStrength, (int)WorkoutActivityType.Yoga], store.SavedPreferences!.ActivityTypes);
         Assert.Equal(
             new Dictionary<int, int>
             {
+                [(int)WorkoutActivityType.GeneralStrength] = WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes,
                 [(int)WorkoutActivityType.Yoga] = ActivitySessionDurationRule.GentleYogaDefaultMinutes
             },
             store.SavedPreferences.ActivitySessionDurationsMinutes);

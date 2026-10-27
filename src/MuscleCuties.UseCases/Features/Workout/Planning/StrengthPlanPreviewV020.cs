@@ -20,6 +20,7 @@ public sealed record StrengthPlanPreviewRequestV020(
     int? CooldownMinutes = null)
 {
     public WorkoutPreferencesDto? DraftPreferences { get; init; }
+    public bool AllowMovementOmissionsForDuration { get; init; }
     public WorkoutActivityDto? ExplicitStrengthStyleChoice { get; init; }
     /// <summary>Saved user activity choices used to build the mixed weekly schedule.</summary>
     public HashSet<int>? SelectedActivityTypes { get; init; }

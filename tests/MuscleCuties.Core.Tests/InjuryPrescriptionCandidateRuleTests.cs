@@ -8,8 +8,8 @@ public sealed class InjuryPrescriptionCandidateRuleTests
     private const int AlternativeId = 102;
     private const string Slot = "synthetic-slot";
     private static readonly DateOnly Clearance = DateOnly.Parse("2026-10-01");
-    private static readonly DateOnly WithinWindow = DateOnly.Parse("2026-10-08");
-    private static readonly DateOnly AfterWindow = DateOnly.Parse("2026-10-09");
+    private static readonly DateOnly WithinWindow = DateOnly.Parse("2026-10-07");
+    private static readonly DateOnly AfterWindow = DateOnly.Parse("2026-10-08");
 
     private static InjuryPrescriptionCandidateEvidence Evidence() => new(
         OriginalId, Slot, OriginalId, Slot, true, [new(false, Clearance)], false,

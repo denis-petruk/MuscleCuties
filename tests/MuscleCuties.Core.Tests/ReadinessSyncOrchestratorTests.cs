@@ -156,7 +156,7 @@ public sealed class ReadinessSyncOrchestratorTests
         var status = await healthSync.GetStatusAsync(55);
 
         Assert.True(result.IsConnected);
-        Assert.Contains("8,400 avg steps", status.SummaryText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains($"{provider.Summary.AverageSteps:N0} avg steps", status.SummaryText, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("sleep", status.SummaryText, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("RHR", status.SummaryText, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("active", status.SummaryText, StringComparison.OrdinalIgnoreCase);

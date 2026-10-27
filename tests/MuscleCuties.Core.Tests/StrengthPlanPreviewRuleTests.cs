@@ -10,6 +10,8 @@ public sealed class StrengthPlanPreviewRuleTests
     private const int DurationSufficientMinutes = DurationTooShortMinutes +
         WorkoutPreferencesRule.ActivitySessionDurationIncrementMinutes;
     private const int SlowExerciseSecondsPerRep = 17;
+    private const int ExcessiveExerciseSecondsPerRep = 100;
+    private const int OneWorkingSet = 1;
     private const int NoWarmupOrCooldownMinutes = 0;
     private const int FirstExerciseId = 101;
     private const int FirstGoalAccessoryExerciseId = 201;
@@ -29,19 +31,56 @@ public sealed class StrengthPlanPreviewRuleTests
     private static readonly DateOnly LocalDate = new(LocalYear, LocalMonth, LocalDay);
 
     [Fact]
-    public void SelectedStrengthActivityDurationLimitsItsProposal()
+    public void ShortSessionCanReduceToAvailableMovementFloorsWithoutCatalogFloorEvidence()
     {
-        var tooShort = StrengthPlanPreviewRule.Evaluate(Choices(), Data(
+        var reduced = StrengthPlanPreviewRule.Evaluate(Choices(), Data(
             new Dictionary<WorkoutActivityType, int>
             {
                 [WorkoutActivityType.GeneralStrength] = DurationTooShortMinutes,
                 [WorkoutActivityType.Walking] = WorkoutPreferencesRule.MaximumActivitySessionDurationMinutes
             }, SlowExerciseSecondsPerRep));
 
+        Assert.Equal(StrengthPlanPreviewStatus.Feasible, reduced.Status);
+        Assert.Contains(StrengthPlanPreviewRule.ReducedVolumeNotice, reduced.AdvisoryCodes);
+        Assert.All(reduced.Sessions.SelectMany(session => session.Slots).Where(slot => slot.IsRequired),
+            slot => Assert.True(slot.Sets >= OneWorkingSet));
+    }
+
+    [Fact]
+    public void RequiredMovementWorkThatCannotFitAtOneSetIsLimited()
+    {
+        var tooShort = StrengthPlanPreviewRule.Evaluate(Choices(), Data(
+            new Dictionary<WorkoutActivityType, int>
+            {
+                [WorkoutActivityType.GeneralStrength] = DurationTooShortMinutes
+            }, ExcessiveExerciseSecondsPerRep));
+
         Assert.Equal(StrengthPlanPreviewStatus.Limited, tooShort.Status);
         Assert.Contains("RequiredMovementWorkExceedsSessionDurationOrTimingMissing",
             tooShort.LimitationCodes);
+        Assert.True(tooShort.MinimumRequiredSessionMinutes > DurationTooShortMinutes);
         Assert.All(tooShort.Sessions, session => Assert.Null(session.EstimatedMinutes));
+    }
+
+    [Fact]
+    public void ExplicitShorterPlanOmitsUpperMovementsBeforeLowerAndKeepsSafeWork()
+    {
+        var data = Data(new Dictionary<WorkoutActivityType, int>
+        {
+            [WorkoutActivityType.GeneralStrength] = DurationTooShortMinutes
+        }, ExcessiveExerciseSecondsPerRep);
+        var result = StrengthPlanPreviewRule.Evaluate(Choices() with { AllowMovementOmissionsForDuration = true }, data);
+
+        Assert.Equal(StrengthPlanPreviewStatus.Feasible, result.Status);
+        Assert.True(result.MinimumRequiredSessionMinutes > DurationTooShortMinutes);
+        Assert.Contains(result.AdvisoryCodes, code => code.StartsWith(
+            StrengthPlanPreviewRule.MovementOmittedForDurationCode + ":", StringComparison.Ordinal));
+        Assert.All(result.Sessions, session =>
+        {
+            Assert.NotEmpty(session.Slots);
+            Assert.Equal(StrengthTemplateSlotId.KneeDominant, session.Slots[0].MovementSlot);
+            Assert.InRange(session.EstimatedMinutes!.Value, 0m, DurationTooShortMinutes);
+        });
     }
 
     [Fact]
@@ -97,6 +136,8 @@ public sealed class StrengthPlanPreviewRuleTests
             ReviewedAllowedExerciseIdsByTemplateSlot = allowedIdsBySlot,
             SecondsPerRepByExerciseId = secondsPerRepByExerciseId,
             PrimaryMuscleByExerciseId = primaryMuscleByExerciseId,
+            MuscleGroupsByExerciseId = catalog.ToDictionary(entry => entry.Candidate.ExerciseId,
+                entry => (IReadOnlySet<string>)new HashSet<string> { entry.Candidate.Pattern.ToString() }),
             GoalPriorityByExerciseId = new Dictionary<int, int>
             {
                 [FirstGoalAccessoryExerciseId] = TierAScore,
