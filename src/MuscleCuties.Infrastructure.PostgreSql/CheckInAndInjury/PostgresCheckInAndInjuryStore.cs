@@ -247,7 +247,9 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 .ConfigureAwait(false);
 
             var wasAlreadyCleared = row is not null && string.Equals(row.Status, ClearedStatus, StringComparison.OrdinalIgnoreCase);
-            var originalClearanceDate = wasAlreadyCleared ? row!.ClearedDate : request.Date;
+            DateOnly? originalClearanceDate = isClearing
+                ? wasAlreadyCleared ? row!.ClearedDate : await AccountLocalDateAsync(request.UserId, cancellationToken).ConfigureAwait(false)
+                : null;
 
             row ??= new WorkoutInjuryLogRecord
             {
@@ -346,15 +348,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             .Where(plan => plan.UserId == userId && plan.IsActive).Select(plan => (Guid?)plan.Id)
             .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         if (activePlanId is null) return;
-        var zoneId = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
-            .Where(state => state.UserId == userId).Select(state => state.TimeZoneId)
-            .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-        if (zoneId is null) throw new InvalidOperationException("Establish the account timezone before recording this injury.");
-        TimeZoneInfo zone;
-        try { zone = TimeZoneInfo.FindSystemTimeZoneById(zoneId); }
-        catch (TimeZoneNotFoundException) { throw new InvalidOperationException("Establish the account timezone before recording this injury."); }
-        catch (InvalidTimeZoneException) { throw new InvalidOperationException("Establish the account timezone before recording this injury."); }
-        var today = WorkoutAccountCalendarRule.LocalDate(timeProvider.GetUtcNow(), zone);
+        var today = await AccountLocalDateAsync(userId, cancellationToken).ConfigureAwait(false);
         var days = await dbContext.WorkoutDays.Where(day => day.UserId == userId && day.WorkoutPlanId == activePlanId &&
                 day.Date >= today && day.WorkoutType == nameof(WorkoutType.Strength) &&
                 !dbContext.WorkoutCompletionDayCredits.Any(credit => credit.UserId == userId &&
@@ -367,6 +361,27 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         {
             day.IsRemovedBySafety = true;
             day.SafetyInjuryId ??= injuryId;
+        }
+    }
+
+    private async Task<DateOnly> AccountLocalDateAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var zoneId = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
+            .Where(state => state.UserId == userId).Select(state => state.TimeZoneId)
+            .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(zoneId))
+            throw new InvalidOperationException("Establish the account timezone before changing an injury.");
+        try
+        {
+            return WorkoutAccountCalendarRule.LocalDate(timeProvider.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById(zoneId));
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            throw new InvalidOperationException("Establish the account timezone before changing an injury.");
+        }
+        catch (InvalidTimeZoneException)
+        {
+            throw new InvalidOperationException("Establish the account timezone before changing an injury.");
         }
     }
 
