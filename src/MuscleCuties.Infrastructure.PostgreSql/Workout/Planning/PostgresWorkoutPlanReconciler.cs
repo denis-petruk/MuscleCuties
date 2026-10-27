@@ -11,7 +11,7 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
 /// <summary>Applies eligible promotion revisions under the caller-owned tenant transaction and account lock.</summary>
-public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : IWorkoutPlanReconciler
+public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context)
 {
     private const int RequiredCurrentStrengthStyleCount = 1;
     private const string FeasibleStatus = "Feasible";

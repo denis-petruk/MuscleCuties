@@ -18,9 +18,7 @@ using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 
-public sealed class PostgresWorkoutPlanAndSessionStore(
-    PostgresDbContext dbContext,
-    IWorkoutPlanReconciler? reconciler = null)
+public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbContext)
 {
     private const int OverviewScheduleWeeks = 4;
     private const int CompletedWorkoutPercent = 100;
@@ -56,11 +54,6 @@ public sealed class PostgresWorkoutPlanAndSessionStore(
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
-            if (reconciler is not null)
-            {
-                await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
-                await reconciler.ReconcileAsync(userId, cancellationToken).ConfigureAwait(false);
-            }
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var phase = await ResolveCyclePhaseAsync(userId, today, cancellationToken).ConfigureAwait(false);

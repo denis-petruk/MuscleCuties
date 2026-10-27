@@ -23,6 +23,9 @@ public sealed class AutomaticPlanningPersistenceTests
     private const int InitialVersion = 1;
     private const long InitialFence = 1;
     private const int SingleOwnerPage = 1;
+    private const int NextDayOffset = 1;
+    private const int FollowingDayOffset = 2;
+    private const string SyntheticCardio = "Cardio";
 
     [Xunit.Fact]
     public async Task DiscoveryRolePagesOnlyPendingOwnersWithoutDirectTableAccess()
@@ -132,6 +135,74 @@ public sealed class AutomaticPlanningPersistenceTests
         Xunit.Assert.Equal(ProposedStatus, (await database.WorkoutPlanProposalsV02.AsNoTracking()
             .SingleAsync(row => row.Id == proposal.Id)).Status);
         Xunit.Assert.False(await database.WorkoutPlans.AnyAsync(row => row.UserId == userId));
+        await transaction.RollbackAsync();
+    }
+
+    [Xunit.Fact]
+    public async Task ActiveSessionKeepsBothAutomaticUpdatesPending()
+    {
+        await using var database = CreateContext();
+        await using var transaction = await database.Database.BeginTransactionAsync();
+        var userId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        await SyntheticTenantSession.SetAsync(database, userId);
+        AddSyntheticUser(database, userId);
+        database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+        {
+            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = UtcTimeZone,
+            PromotionPending = true, SafetyRegenerationPending = true
+        });
+        database.WorkoutPlans.Add(new WorkoutPlanRecord
+        {
+            Id = Guid.NewGuid(), UserId = userId, Name = "Synthetic plan", IsActive = true,
+            CyclePhaseTarget = "Follicular", CreatedAt = now
+        });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+        {
+            Id = Guid.NewGuid(), UserId = userId, WorkoutName = "Synthetic active session",
+            StartedAt = now, CreatedAt = now, UpdatedAt = now
+        });
+        await database.SaveChangesAsync();
+
+        await new PostgresWorkoutPlanReconciler(database).ReconcileAsync(userId);
+        database.ChangeTracker.Clear();
+        var state = await database.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == userId);
+        Xunit.Assert.True(state.PromotionPending);
+        Xunit.Assert.True(state.SafetyRegenerationPending);
+        Xunit.Assert.False(await database.WorkoutPlanProposalsV02.AnyAsync(row => row.UserId == userId));
+        Xunit.Assert.False(await database.WorkoutPlanRevisionsV02.AnyAsync(row => row.UserId == userId));
+        await transaction.RollbackAsync();
+    }
+
+    [Xunit.Fact]
+    public async Task NextScheduledDateUsesTodayOnlyWhenNoActivityCompletedAndSkipsSuppressedDays()
+    {
+        await using var database = CreateContext();
+        await using var transaction = await database.Database.BeginTransactionAsync();
+        var userId = Guid.NewGuid();
+        var planId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        var today = new DateOnly(2026, 12, 31);
+        var tomorrow = today.AddDays(NextDayOffset);
+        var following = today.AddDays(FollowingDayOffset);
+        await SyntheticTenantSession.SetAsync(database, userId);
+        AddSyntheticUser(database, userId);
+        database.WorkoutPlans.Add(new WorkoutPlanRecord
+        {
+            Id = planId, UserId = userId, Name = "Synthetic plan", IsActive = true,
+            CyclePhaseTarget = "Follicular", CreatedAt = now
+        });
+        foreach (var date in new[] { today, tomorrow, following })
+            database.WorkoutDays.Add(new WorkoutDayRecord
+            {
+                Id = Guid.NewGuid(), UserId = userId, WorkoutPlanId = planId,
+                Date = date, DayOfWeek = (int)date.DayOfWeek, WorkoutType = SyntheticCardio,
+                Name = "Synthetic activity", IsRemovedBySafety = date == tomorrow
+            });
+        await database.SaveChangesAsync();
+        var store = new PostgresAcceptStrengthPlanProposalStoreV020(database);
+        Xunit.Assert.Equal(today, await store.FindNextScheduledDateAsync(userId, planId, today, false, CancellationToken.None));
+        Xunit.Assert.Equal(following, await store.FindNextScheduledDateAsync(userId, planId, today, true, CancellationToken.None));
         await transaction.RollbackAsync();
     }
 
