@@ -54,7 +54,7 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
                     l.Since))
                 .ToList();
 
-            var blockedActivities = FourWeekPlanRule.GetBlockedActivities(injuries)
+            var blockedActivities = InjuryActivityRestrictionRule.GetBlockedActivities(injuries)
                 .Select(a => a.ToString())
                 .OrderBy(a => a)
                 .ToList();
