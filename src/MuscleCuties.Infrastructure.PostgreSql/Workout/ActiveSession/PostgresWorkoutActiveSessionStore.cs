@@ -222,7 +222,10 @@ public sealed class PostgresWorkoutActiveSessionStore(
                         .OrderBy(row => row.Id).ToListAsync(ct).ConfigureAwait(false);
                     plannedPrescriptionJson = new PlannedPrescriptionSnapshot(plannedDay.Id, plannedDay.Name,
                         plannedDay.WorkoutType, plannedDay.ActivityTypeId, plannedDay.PlannedMainDurationMinutes,
-                        plannedExercises.Select(PlannedExerciseSnapshot.FromRecord).ToArray()).Serialize();
+                        plannedExercises.Select(PlannedExerciseSnapshot.FromRecord).ToArray())
+                    {
+                        ActivityPrescriptionJson = plannedDay.PlannedActivityPrescriptionJson
+                    }.Serialize();
                 }
 
                 if (plannedDay?.ActivityTypeId == (int)WorkoutActivityType.Hiit || command.UnplannedActivity == WorkoutActivityDto.Hiit)

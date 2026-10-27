@@ -49,6 +49,8 @@ public partial class WorkoutSessionViewModel : ObservableObject
     private ObservableCollection<WorkoutActivitySectionItem> _activityCards = [];
 
     [ObservableProperty] private string _activityIntroIntensity = string.Empty;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasNoActivityPrescription))]
+    private string _activityPrescriptionText = string.Empty;
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasCelebration))]
     private CelebrationType _celebration;
@@ -139,6 +141,8 @@ public partial class WorkoutSessionViewModel : ObservableObject
     private bool _appSuspended;
     private sealed record PendingTimingCheckpoint(Guid OperationId, Guid IntervalId, int MeasuredSeconds, bool Pause);
     [ObservableProperty] private bool _isTimedActivityRunning;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanStartActivity))]
+    private bool _isActivityUnsafe;
 
     public WorkoutSessionViewModel(
         IWorkoutSessionActionUseCase session,
@@ -161,7 +165,9 @@ public partial class WorkoutSessionViewModel : ObservableObject
     public bool IsActivityIntro => CurrentScreen == SessionScreen.ActivityIntro;
     public bool IsExerciseFlow => CurrentScreen == SessionScreen.ExerciseFlow;
     public bool IsActivitySummary => CurrentScreen == SessionScreen.ActivitySummary;
-    public bool CanAbandonPlannedSession => _plannedSessionId.HasValue && !IsBusy && _pendingCompletionAtUtc is null;
+    public bool CanAbandonPlannedSession => _sessionCreated && _plannedSessionId.HasValue && !IsBusy && _pendingCompletionAtUtc is null;
+    public bool CanStartActivity => !IsActivityUnsafe;
+    public bool HasNoActivityPrescription => string.IsNullOrEmpty(ActivityPrescriptionText);
     public bool CanInteract => !IsBusy;
 
     public async Task SaveOptionalExerciseAsync(WorkoutExerciseItem item)
@@ -330,6 +336,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
             _isRestDay = detail.IsRestDay;
             _plannedSessionId = existingSession is { IsCompleted: false, IsCanceled: false } ? existingSession.SessionId : null;
             _sessionCreated = _plannedSessionId.HasValue;
+            IsActivityUnsafe = false;
             _confirmedActiveSeconds = existingSession?.ConfirmedActiveSeconds ?? 0;
             _timingIntervalId = null;
             _pendingResumeOperationId = null;
@@ -409,6 +416,38 @@ public partial class WorkoutSessionViewModel : ObservableObject
         ActivityIntroIntensity = rpe.Success ? $"Target RPE {rpe.Groups[1].Value}" :
             targets.Contains("steady", StringComparison.OrdinalIgnoreCase) ? "Steady effort" :
             "Follow the targets at a comfortable effort";
+        ActivityPrescriptionText = FormatPrescription(SelectedActivity.Prescription);
+    }
+
+    private static string FormatPrescription(ActivitySessionPrescriptionOutputV020? prescription)
+    {
+        if (prescription is null) return string.Empty;
+        var lines = new List<string>();
+        void AddValue(string key, decimal? value)
+        {
+            if (value is not null)
+                lines.Add(string.Format(System.Globalization.CultureInfo.CurrentCulture, UiTextCatalog.Get(key), value));
+        }
+        AddValue("Workout_Session_PrescriptionWarmup", prescription.WarmupMinutes);
+        AddValue("Workout_Session_PrescriptionMain", prescription.MainMinutes);
+        AddValue("Workout_Session_PrescriptionCooldown", prescription.CooldownMinutes);
+        var intensityKey = prescription.Intensity switch
+        {
+            "Easy" => "Workout_Session_PrescriptionEasy",
+            "Moderate" => "Workout_Session_PrescriptionModerate",
+            "Vigorous" => "Workout_Session_PrescriptionVigorous",
+            _ => null
+        };
+        if (intensityKey is not null) lines.Add(UiTextCatalog.Get(intensityKey));
+        if (prescription.IntervalWorkCount is not null && prescription.IntervalWorkSeconds is not null)
+            lines.Add(string.Format(System.Globalization.CultureInfo.CurrentCulture,
+                UiTextCatalog.Get("Workout_Session_PrescriptionWorkIntervals"),
+                prescription.IntervalWorkCount, prescription.IntervalWorkSeconds));
+        if (prescription.IntervalRecoveryCount is not null && prescription.IntervalRecoverySeconds is not null)
+            lines.Add(string.Format(System.Globalization.CultureInfo.CurrentCulture,
+                UiTextCatalog.Get("Workout_Session_PrescriptionRecoveryIntervals"),
+                prescription.IntervalRecoveryCount, prescription.IntervalRecoverySeconds));
+        return string.Join(Environment.NewLine, lines);
     }
 
     [RelayCommand]
@@ -419,7 +458,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
             ErrorText = "Workout_Session_ConnectionRetry";
             return;
         }
-        if (IsBusy || !IsActivityIntro || SelectedActivity is null || _isRestDay) return;
+        if (IsBusy || IsActivityUnsafe || !IsActivityIntro || SelectedActivity is null || _isRestDay) return;
         _appSuspended = false;
         IsBusy = true;
         try
@@ -441,6 +480,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         }
         catch (WorkoutActivityNoLongerSafeException)
         {
+            IsActivityUnsafe = true;
             ErrorText = "Workout_Session_ActivityNoLongerSafe";
             return;
         }
@@ -1129,6 +1169,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
                 SummaryText = $"{activity.Exercises.Count(exercise => exercise.IsLogged)} of {count} logged" +
                               (skipped > 0 ? $" · {skipped} skipped" : string.Empty),
                 ActivityBackground = activity.ActivityBackground,
+                Prescription = activity.Prescription,
                 ActivityTextColor = activity.ActivityTextColor,
                 Exercises = activity.Exercises
             };

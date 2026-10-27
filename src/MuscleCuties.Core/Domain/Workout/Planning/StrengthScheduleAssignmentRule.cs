@@ -20,14 +20,18 @@ public static class StrengthScheduleAssignmentRule
         var existing = schedule.Sessions.Where(session => session.Activity == strengthActivity).ToArray();
         if (existing.Length == 0) return schedule;
         var other = schedule.Sessions.Where(session => session.Activity != strengthActivity).ToArray();
+        var originals = schedule.Activities.Where(decision => decision.Prescription is not null)
+            .GroupBy(decision => decision.EffectiveActivity ?? decision.Activity)
+            .ToDictionary(group => group.Key, group => group.First().Prescription);
         var otherValidation = other.Select(session => new WorkoutScheduleValidationSession(
-            session.Day, session.Activity, session.IsHardSession)).ToArray();
+            session.Day, session.Activity, session.IsHardSession, null, session.DurationMinutes,
+            originals.GetValueOrDefault(session.Activity), session.OccurrencePrescription)).ToArray();
         var assignment = Assign(muscles, availableDays, otherValidation, strengthActivity,
-            existing[0].IsHardSession, existing.Length);
+            existing[0].IsHardSession, existing.Length, originals.GetValueOrDefault(strengthActivity), existing[0].DurationMinutes);
         if (assignment.Limitations.Contains(WorkoutScheduleValidationRule.StrengthMuscleMetadataMissing))
             return schedule with { InputReasons = schedule.InputReasons.Concat(assignment.Limitations).Distinct().ToArray() };
-        var sessions = other.Concat(assignment.Assignments.Select(item =>
-            existing[0] with { Day = item.Day })).ToArray();
+        var sessions = MixedActivityWeekScheduleRule.ApplyOccurrenceAdjustments(other.Concat(assignment.Assignments.Select(item =>
+            existing[0] with { Day = item.Day })), originals);
         var activities = schedule.Activities.Select(decision => decision.Activity == strengthActivity
             ? decision with
             {
@@ -44,7 +48,9 @@ public static class StrengthScheduleAssignmentRule
         IReadOnlyList<WorkoutScheduleValidationSession> otherSessions,
         WorkoutActivityType strengthActivity,
         bool isHard,
-        int maximumSessions)
+        int maximumSessions,
+        ActivitySessionPrescription? strengthPrescription = null,
+        decimal? strengthDuration = null)
     {
         if (muscles.Any(groups => groups is null || groups.Count == 0 || groups.Any(string.IsNullOrWhiteSpace)))
             return new([], [WorkoutScheduleValidationRule.StrengthMuscleMetadataMissing]);
@@ -67,15 +73,36 @@ public static class StrengthScheduleAssignmentRule
             {
                 if (current.Any(item => item.Day == day)) continue;
                 var candidate = otherSessions.Concat(current.Select(item =>
-                    new WorkoutScheduleValidationSession(item.Day, strengthActivity, isHard, muscles[item.SessionIndex])))
-                    .Append(new WorkoutScheduleValidationSession(day, strengthActivity, isHard, muscles[index]))
+                    new WorkoutScheduleValidationSession(item.Day, strengthActivity, isHard, muscles[item.SessionIndex], strengthDuration, strengthPrescription)))
+                    .Append(new WorkoutScheduleValidationSession(day, strengthActivity, isHard, muscles[index], strengthDuration, strengthPrescription))
                     .ToArray();
-                if (WorkoutScheduleValidationRule.Validate(candidate).Count != 0) continue;
+                if (WorkoutScheduleValidationRule.Validate(AdjustCandidate(candidate)).Count != 0) continue;
                 current.Add(new(index, day));
                 Search(index + 1);
                 current.RemoveAt(current.Count - 1);
             }
             Search(index + 1);
         }
+    }
+
+    private static WorkoutScheduleValidationSession[] AdjustCandidate(WorkoutScheduleValidationSession[] source)
+    {
+        var result = source.Select(session => session with { OccurrencePrescription = null }).ToArray();
+        foreach (var day in result.Where(session => session.IsHard).GroupBy(session => session.Day))
+        {
+            if (day.Count() != MixedActivityWeekScheduleRule.MaximumSessionsPerDay) continue;
+            foreach (var session in day)
+            {
+                var adjusted = SameDayDemandAdjustmentRule.Adjust(session.OriginalPrescription);
+                if (adjusted is null) continue;
+                result[Array.IndexOf(result, session)] = session with
+                {
+                    OccurrencePrescription = adjusted,
+                    DurationMinutes = SameDayDemandAdjustmentRule.TotalMinutes(adjusted)
+                };
+                break;
+            }
+        }
+        return result;
     }
 }

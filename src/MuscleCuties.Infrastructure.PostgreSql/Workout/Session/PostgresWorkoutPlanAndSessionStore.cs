@@ -262,6 +262,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 day.WorkoutType = prescription.WorkoutType;
                 day.ActivityTypeId = prescription.ActivityTypeId;
                 day.PlannedMainDurationMinutes = prescription.PlannedMainDurationMinutes;
+                day.PlannedActivityPrescriptionJson = prescription.ActivityPrescriptionJson;
             }
             var orderedExercises = prescription is not null
                 ? prescription.Exercises.Select(exercise => exercise.ToRecord(userId, day.Id)).ToList()
@@ -1345,7 +1346,10 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             var tag = BuildPrimaryTag(day, orderedExercises, exercisesById);
             return [new WorkoutActivityDetailDto(1, 1, tag, day.Name, BuildSectionSubtitle(tag),
                 day.PlannedMainDurationMinutes is { } duration ? $"{duration:0.#} min" : string.Empty,
-                string.Empty, [])];
+                string.Empty, [])
+            {
+                Prescription = ActivityOccurrencePrescription.Deserialize(day.PlannedActivityPrescriptionJson)
+            }];
         }
         if (tags.Count == 0 && exerciseDtos.Count > 0)
             tags.Add(BuildPrimaryTag(day, orderedExercises, exercisesById));

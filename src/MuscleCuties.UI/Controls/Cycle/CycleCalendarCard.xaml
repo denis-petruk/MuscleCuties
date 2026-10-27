@@ -80,7 +80,6 @@
                     Text="{Binding PhaseLogActionText, Converter={StaticResource LocalizedStringConverter}}"
                     Command="{Binding AdvancePhaseCommand}"
                     VerticalOptions="Center"
-                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                     SemanticProperties.Description="{Binding PhaseLogActionText, Converter={StaticResource LocalizedStringConverter}}" />
             </Grid>
 

@@ -108,7 +108,8 @@ internal static class StrengthPlanPreviewMapperV020
             session.Day,
             session.DurationMinutes,
             session.IsHardSession,
-            session.DayOrder)).ToArray(),
+            session.DayOrder,
+            ToOccurrencePrescription(session.OccurrencePrescription))).ToArray(),
         result.Activities.Select(activity => new MixedActivityScheduleDecisionV020(
             (int)activity.Activity,
             activity.Disposition.ToString(),
@@ -120,8 +121,19 @@ internal static class StrengthPlanPreviewMapperV020
             activity.Prescription?.Modality.ToString(),
             activity.EffectiveActivity.HasValue ? (int)activity.EffectiveActivity.Value : null,
             activity.FallbackReasonCode,
-            activity.MaxSessionsPerWeek)).ToArray(),
+            activity.MaxSessionsPerWeek,
+            ToOccurrencePrescription(activity.Prescription))).ToArray(),
         result.InputReasons);
+
+    private static ActivitySessionPrescriptionOutputV020? ToOccurrencePrescription(
+        ActivitySessionPrescription? prescription) => prescription is null ? null : new(
+        (int)prescription.Activity, prescription.Purpose.ToString(), prescription.Modality.ToString(),
+        prescription.Intensity.ToString(), prescription.TrainingStyle.ToString(), prescription.FrequencyPerWeek,
+        prescription.WarmupMinutes, prescription.MainMinutes, prescription.CooldownMinutes, prescription.Sets,
+        prescription.MinimumRepetitions, prescription.MaximumRepetitions, prescription.RepetitionsInReserve,
+        prescription.RestSeconds, prescription.IntervalWorkCount, prescription.IntervalWorkSeconds,
+        prescription.IntervalRecoveryCount, prescription.IntervalRecoverySeconds,
+        prescription.RequiresUserConfirmation, prescription.Reasons);
 
     public static StrengthPlanPreviewResponseV020 AttachMixedSchedule(
         StrengthPlanPreviewResponseV020 response,

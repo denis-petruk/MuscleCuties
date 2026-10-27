@@ -75,4 +75,19 @@ public sealed class InjuryPrescriptionCandidateRuleTests
         Assert.Equal(InjuryPrescriptionCandidateDisposition.Blocked,
             InjuryPrescriptionCandidateRule.Evaluate(evidence with { ProposedSlotId = "different-slot" }));
     }
+
+    [Fact]
+    public void ClearanceDayStartsOptionalWindowAndAnActiveOverlapStillBlocksOriginal()
+    {
+        var evidence = Evidence() with { EffectiveDate = Clearance };
+        Assert.Equal(InjuryPrescriptionCandidateDisposition.OriginalOptional, InjuryPrescriptionCandidateRule.Evaluate(evidence));
+        Assert.Equal(InjuryPrescriptionCandidateDisposition.Blocked,
+            InjuryPrescriptionCandidateRule.Evaluate(evidence with { Episodes = [new(false, Clearance), new(true, null)] }));
+        Assert.Equal(InjuryPrescriptionCandidateDisposition.Alternative,
+            InjuryPrescriptionCandidateRule.Evaluate(evidence with
+            {
+                ProposedExerciseId = AlternativeId,
+                Episodes = [new(false, Clearance), new(true, null)]
+            }));
+    }
 }

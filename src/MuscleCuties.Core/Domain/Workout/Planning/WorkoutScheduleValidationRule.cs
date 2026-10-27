@@ -6,7 +6,10 @@ public sealed record WorkoutScheduleValidationSession(
     DayOfWeek Day,
     WorkoutActivityType Activity,
     bool IsHard,
-    IReadOnlySet<string>? StrengthMuscleGroups = null);
+    IReadOnlySet<string>? StrengthMuscleGroups = null,
+    decimal? DurationMinutes = null,
+    ActivitySessionPrescription? OriginalPrescription = null,
+    ActivitySessionPrescription? OccurrencePrescription = null);
 
 /// <summary>Checks a proposed repeating week, including its Sunday-to-Monday boundary.</summary>
 public static class WorkoutScheduleValidationRule
@@ -48,14 +51,19 @@ public static class WorkoutScheduleValidationRule
             if (day.Count(session => IsStrength(session.Activity)) > MaximumStrengthSessionsPerDay)
                 reasons.Add(MultipleStrengthSessions);
 
-            if (day.Count(session => session.IsHard) > MaximumHardSessionsPerDay)
+            var hard = day.Where(session => session.IsHard).ToArray();
+            var hasValidatedAdjustment = hard.Any(session =>
+                session.Activity == session.OriginalPrescription?.Activity &&
+                SameDayDemandAdjustmentRule.IsValid(session.OriginalPrescription,
+                    session.OccurrencePrescription, session.DurationMinutes));
+            if (hard.Length > MaximumHardSessionsPerDay && !hasValidatedAdjustment)
                 reasons.Add(MultipleHardSessions);
 
             var hasHiit = day.Any(session => session.Activity == WorkoutActivityType.Hiit);
             var hasStrengthOrClimbing = day.Any(session =>
                 IsStrength(session.Activity) || session.Activity == WorkoutActivityType.RockClimbing);
 
-            if (hasHiit && hasStrengthOrClimbing)
+            if (hasHiit && hasStrengthOrClimbing && !hasValidatedAdjustment)
                 reasons.Add(HiitConflict);
         }
 

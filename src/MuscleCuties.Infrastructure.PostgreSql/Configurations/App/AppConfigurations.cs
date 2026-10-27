@@ -452,6 +452,7 @@ public sealed class WorkoutDayConfiguration : IEntityTypeConfiguration<WorkoutDa
     public void Configure(EntityTypeBuilder<WorkoutDayRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_days");
+        builder.Property(x => x.PlannedActivityPrescriptionJson).HasColumnType("jsonb");
         builder.Property(x => x.IsOptional).HasDefaultValue(false);
         builder.Property(x => x.IsEasierAlternative).HasDefaultValue(false);
         builder.Property(x => x.IsRemovedByReadiness).HasDefaultValue(false);

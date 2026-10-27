@@ -84,7 +84,16 @@ public sealed record MixedActivityScheduleSessionV020(
     DayOfWeek Weekday,
     decimal DurationMinutes,
     bool IsHardSession,
-    int? DayOrder = null);
+    int? DayOrder = null,
+    ActivitySessionPrescriptionOutputV020? OccurrencePrescription = null);
+
+public sealed record ActivitySessionPrescriptionOutputV020(
+    int ActivityTypeId, string Purpose, string Modality, string Intensity, string TrainingStyle,
+    int FrequencyPerWeek, decimal? WarmupMinutes, decimal? MainMinutes, decimal? CooldownMinutes,
+    int? Sets, int? MinimumRepetitions, int? MaximumRepetitions, int? RepetitionsInReserve,
+    int? RestSeconds, int? IntervalWorkCount, decimal? IntervalWorkSeconds,
+    int? IntervalRecoveryCount, decimal? IntervalRecoverySeconds, bool RequiresUserConfirmation,
+    IReadOnlyList<string> Reasons);
 
 public sealed record MixedActivityScheduleDecisionV020(
     int ActivityTypeId,
@@ -97,7 +106,8 @@ public sealed record MixedActivityScheduleDecisionV020(
     string? Modality = null,
     int? EffectiveActivityTypeId = null,
     string? FallbackReasonCode = null,
-    int? MaxSessionsPerWeek = null);
+    int? MaxSessionsPerWeek = null,
+    ActivitySessionPrescriptionOutputV020? OriginalPrescription = null);
 
 public sealed record MixedActivityScheduleV020(
     IReadOnlyList<MixedActivityScheduleSessionV020> Sessions,

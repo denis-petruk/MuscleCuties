@@ -39,6 +39,7 @@ internal static class WorkoutSessionPresentationMapper
             Subtitle = activity.Subtitle,
             MetricText = activity.MetricText,
             SummaryText = activity.SummaryText,
+            Prescription = activity.Prescription,
             ActivityBackground = WorkoutPresentationPalette.Background(activity.Tag),
             ActivityTextColor = WorkoutPresentationPalette.Text(activity.Tag),
             Exercises = new ObservableCollection<WorkoutExerciseItem>(

@@ -103,7 +103,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         : "No active injuries";
 
     public string EmptyStateDetail => ClearedInjuries.Count == 0
-        ? "Your plan has no injury restrictions"
+        ? "No active injuries are recorded."
         : "Cleared injuries are saved in History below.";
 
     public bool HasError => !string.IsNullOrEmpty(ErrorText);

@@ -178,8 +178,7 @@
 
                 <!-- Empty state -->
                 <Border Grid.Row="4" IsVisible="{Binding ShowEmptyState}"
-                        Style="{StaticResource CardAccent}"
-                        Padding="{StaticResource UiInsets20}">
+                        Style="{StaticResource CardAccent}">
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                         <Image Grid.Row="0" Source="injury_free.png" WidthRequest="{StaticResource UiDimension64}" HeightRequest="{StaticResource UiDimension64}"
                                HorizontalOptions="Center"
