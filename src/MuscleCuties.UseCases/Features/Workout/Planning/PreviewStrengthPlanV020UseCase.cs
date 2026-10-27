@@ -11,6 +11,21 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         StrengthPlanPreviewRequestV020 request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (userId == Guid.Empty || (request.DraftPreferences is { } draft &&
+            (!WorkoutPreferencesRule.IsValid(draft.ActivityTypes, draft.AvailableWeekdays,
+                draft.ActivitySessionDurationsMinutes, draft.RequestedSessionsPerWeek) ||
+             !WorkoutPreferencesRule.IsValidEquipmentLevel(draft.EquipmentLevel))))
+            return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null));
+
+        var sourceData = await source.LoadAsync(userId, cancellationToken).ConfigureAwait(false);
+        return EvaluateLoadedSource(userId, request, sourceData);
+    }
+
+    /// <summary>Evaluates the canonical preview using source data loaded by the caller.</summary>
+    public static StrengthPlanPreviewResponseV020 EvaluateLoadedSource(Guid userId,
+        StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewSourceV020? sourceData)
+    {
+        ArgumentNullException.ThrowIfNull(request);
         if (request.DraftPreferences is { } draft)
         {
             if (!WorkoutPreferencesRule.IsValid(draft.ActivityTypes, draft.AvailableWeekdays,
@@ -30,7 +45,7 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
             return StrengthPlanPreviewMapperV020.ToResponse(
                 StrengthPlanPreviewRule.Evaluate(null, null));
 
-        var sourceData = await source.LoadAsync(userId, cancellationToken).ConfigureAwait(false);
+
         if (sourceData is not null)
         {
             if (sourceData.SavedAnswers is { } savedAnswers)
