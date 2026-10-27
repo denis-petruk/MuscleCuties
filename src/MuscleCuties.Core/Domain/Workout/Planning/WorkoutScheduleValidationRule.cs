@@ -66,7 +66,8 @@ public static class WorkoutScheduleValidationRule
         }
 
         if (requireStrengthMuscles && sessions.Any(session => IsStrength(session.Activity) &&
-            (session.StrengthMuscleGroups is null || session.StrengthMuscleGroups.Count < MinimumMuscleCount)))
+            (session.StrengthMuscleGroups is null || session.StrengthMuscleGroups.Count < MinimumMuscleCount ||
+             session.StrengthMuscleGroups.Any(string.IsNullOrWhiteSpace))))
         {
             reasons.Add(StrengthMuscleMetadataMissing);
         }

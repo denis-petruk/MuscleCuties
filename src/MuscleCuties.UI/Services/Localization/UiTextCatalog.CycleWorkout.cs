@@ -14,6 +14,14 @@ public static partial class UiTextCatalog
         English["Injury_Log_ActiveWorkoutPreventsInjury"] = "End or abandon the active workout before recording an injury. Your logged sets will be preserved.";
         English["Workout_Session_FinishTimedActivity"] = "Finish activity";
         English["Workout_Session_AbandonActivity"] = "Abandon activity";
+        English["Workout_Overview_InProgressTitle"] = "Workout in progress";
+        English["Workout_Overview_ResumeWorkout"] = "Resume workout";
+        English["Workout_Session_ConnectionRetry"] = "Connection error. Please try again.";
+        English["Workout_Session_StartFailed"] = "This activity could not be started. Please try again.";
+        English["Workout_Session_FinishFailed"] = "This activity could not be finished. Your saved entries are unchanged.";
+        English["Workout_Session_AbandonFailed"] = "This activity could not be abandoned. Please try again.";
+        English["Workout_Session_TimingFailed"] = "Activity time could not be saved. Please try again.";
+        English["Workout_Session_ActivityNoLongerSafe"] = "This activity is no longer safe to continue. Abandon it to keep your logged sets.";
         English["Injury_Log_PlanRefreshFailed"] = "Your injury change was saved, but the workout plan couldn't refresh. Try again before training.";
         English["Injury_Log_PageRefreshFailed"] = "Your injury change was saved, but Today couldn't refresh. Try again.";
         English["Cycle_Guidance_PhaseContext"] = "A cycle phase is context, not a measurement of hormone levels or today's exercise capacity.";

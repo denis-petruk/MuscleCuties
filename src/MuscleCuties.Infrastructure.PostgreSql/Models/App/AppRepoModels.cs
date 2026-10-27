@@ -365,6 +365,11 @@ public sealed class WorkoutSessionLogRecord : ITenantRecord
     public string? PlannedTimeZoneId { get; set; }
     public long? PlannedTimeZoneVersion { get; set; }
     public DateOnly? PlannedLocalDate { get; set; }
+    public int ConfirmedActiveSeconds { get; set; }
+    public Guid? TimingIntervalId { get; set; }
+    public DateTime? TimingIntervalStartedAtUtc { get; set; }
+    public int TimingIntervalConfirmedSeconds { get; set; }
+    public string? PlannedPrescriptionSnapshotJson { get; set; }
     public string WorkoutName { get; set; } = string.Empty;
     public DateTime StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
@@ -402,6 +407,7 @@ public sealed class WorkoutLogRecord : ITenantRecord
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public Guid WorkoutDayId { get; set; }
+    public Guid? PlannedSessionId { get; set; }
     public DateOnly Date { get; set; }
     public int CompletionPercent { get; set; }
     public string? Notes { get; set; }
