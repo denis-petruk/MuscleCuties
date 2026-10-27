@@ -105,6 +105,7 @@
                                     VerticalOptions="Center"
                                     SemanticProperties.Description="{loc:LocalizedText Workout_Generation_HiitUnderlyingActivityTitle}" />
                         </Border>
+                        <Label Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingHiitUnderlyingActivity}" Style="{StaticResource ErrorLabel}" />
                     </VerticalStackLayout>
 
                     <!-- Cardio History Fields -->
@@ -126,6 +127,7 @@
                                            VerticalOptions="Center"
                                            SemanticProperties.Description="{loc:LocalizedText Workout_Generation_HiitCardioConsistentWeeks}" />
                                 </Border>
+                                <Label Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding HiitEvidenceCapture.InvalidConsistentWeeks}" Style="{StaticResource ErrorLabel}" />
                             </VerticalStackLayout>
                             <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing6}">
                                 <Label Text="{loc:LocalizedText Workout_Generation_HiitCardioAverageSessions}"
@@ -137,6 +139,7 @@
                                            VerticalOptions="Center"
                                            SemanticProperties.Description="{loc:LocalizedText Workout_Generation_HiitCardioAverageSessions}" />
                                 </Border>
+                                <Label Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding HiitEvidenceCapture.InvalidAverageSessions}" Style="{StaticResource ErrorLabel}" />
                             </VerticalStackLayout>
                         </Grid>
 
@@ -150,6 +153,7 @@
                                        VerticalOptions="Center"
                                        SemanticProperties.Description="{loc:LocalizedText Workout_Generation_HiitCardioDaysSinceLastSession}" />
                             </Border>
+                            <Label Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding HiitEvidenceCapture.InvalidDaysSinceLastSession}" Style="{StaticResource ErrorLabel}" />
                         </VerticalStackLayout>
                     </VerticalStackLayout>
 
@@ -163,7 +167,7 @@
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="vm:HiitAerobicWeekEvidenceCapture">
                                     <Border Style="{StaticResource CardAccent}">
-                                        <Grid ColumnDefinitions="*,100" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,100" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                             <Label Text="{Binding WeekLabel}"
                                                    Style="{StaticResource FormFieldLabel}"
                                                    VerticalOptions="Center" />
@@ -174,6 +178,7 @@
                                                        VerticalOptions="Center"
                                                        SemanticProperties.Description="{Binding SessionCountAccessibilityDescription}" />
                                             </Border>
+                                            <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding InvalidSessionCount}" Style="{StaticResource ErrorLabel}" />
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -195,6 +200,7 @@
                                     VerticalOptions="Center"
                                     SemanticProperties.Description="{loc:LocalizedText Workout_Generation_HiitClearanceConfirmation}" />
                         </Border>
+                        <Label Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding HiitEvidenceCapture.MissingClearance}" Style="{StaticResource ErrorLabel}" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
