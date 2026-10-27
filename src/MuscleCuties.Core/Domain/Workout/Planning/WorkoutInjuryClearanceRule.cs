@@ -22,4 +22,24 @@ public static class WorkoutInjuryClearanceRule
 
     public static bool IsRestoredExerciseOptional(DateOnly originalClearanceDate, DateOnly effectiveDate) =>
         RequiredFromLocalDate(originalClearanceDate) is not { } requiredFrom || effectiveDate < requiredFrom;
+
+    /// <summary>Each injury affecting the original exercise must have an explicit clearance.
+    /// The latest clearance controls the window; delayed reconciliation never moves it.</summary>
+    public static DateOnly? RequiredFromForAllClearances(IEnumerable<DateOnly?> clearanceDates)
+    {
+        ArgumentNullException.ThrowIfNull(clearanceDates);
+        var dates = clearanceDates.ToArray();
+        if (dates.Length == 0 || dates.Any(date => !date.HasValue)) return null;
+        return RequiredFromLocalDate(dates.Max(date => date!.Value));
+    }
+
+    public static bool CanRestoreForAllClearances(IEnumerable<DateOnly?> clearanceDates,
+        bool allCurrentConstraintsPermit, DateOnly effectiveDate)
+    {
+        ArgumentNullException.ThrowIfNull(clearanceDates);
+        var dates = clearanceDates.ToArray();
+        return allCurrentConstraintsPermit && dates.Length > 0 &&
+            dates.All(date => date.HasValue && date.Value <= effectiveDate) &&
+            RequiredFromForAllClearances(dates).HasValue;
+    }
 }
