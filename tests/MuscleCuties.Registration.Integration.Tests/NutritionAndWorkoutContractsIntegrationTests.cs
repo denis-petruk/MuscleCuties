@@ -40,6 +40,73 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
     private const string ExpiredStatus = "Expired";
 
     [Xunit.Fact]
+    public async Task HiitCaptureRetriesExactRequestAndRollsBackRejectedConsumption()
+    {
+        var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(RequireLocalTestConnectionString()).Options;
+        await using var database = new PostgresDbContext(options);
+        var userId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        await SyntheticTenantSession.SetAsync(database, userId);
+        database.Users.Add(new UserRecord { Id = userId, Email = $"capture-{userId:N}@example.invalid",
+            Username = $"cap_{userId.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
+            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
+        database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+        { Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id });
+        await database.SaveChangesAsync();
+        try
+        {
+            var captureStore = new PostgresHiitEvidenceCaptureStore(database, TimeProvider.System);
+            var challenge = await captureStore.IssueAsync(userId, CancellationToken.None);
+            var swimming = new ActivityEligibilityInputV020(MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Swimming);
+            var weeks = Enumerable.Range(1, ActivityPrescriptionRule.HiitRequiredPriorWeeks)
+                .Select(offset => new HiitAerobicWeekInputV020(offset, ActivityPrescriptionRule.HiitRequiredAerobicSessionsPerWeek)).ToArray();
+            var request = new SaveActivityAnswersRequest(0, [swimming, swimming], new HiitEligibilityEvidenceInputV020(PreviousFourWeeksAerobicEvidence: weeks))
+            { HiitUnderlyingCardioActivity = MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Cycling,
+              HiitCaptureChallengeId = challenge.ChallengeId };
+            var store = new PostgresStrengthPlanProposalStoreV020(database);
+            var activeStore = new PostgresWorkoutActiveSessionStore(database, new PostgresIdempotencyExecutor(), TimeProvider.System);
+            var sessionId = Guid.NewGuid();
+            var start = new StartWorkoutSessionCommand(sessionId.ToString("N"), sessionId, "Synthetic HIIT", now,
+                UnplannedActivity: MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Hiit);
+            await Xunit.Assert.ThrowsAsync<WorkoutActivityNoLongerSafeException>(() =>
+                activeStore.StartSessionAsync(userId, start, CancellationToken.None));
+            await Xunit.Assert.ThrowsAsync<InvalidOperationException>(() => store.SaveAnswersAsync(userId, request, CancellationToken.None));
+            database.ChangeTracker.Clear();
+            Xunit.Assert.Null(await database.HiitEvidenceCaptureChallenges.AsNoTracking()
+                .Where(row => row.Id == challenge.ChallengeId).Select(row => row.ConsumedAtUtc).SingleAsync());
+            request = request with { ActivityEligibilityEvidence = [swimming] };
+            var saved = await store.SaveAnswersAsync(userId, request, CancellationToken.None);
+            var replay = await store.SaveAnswersAsync(userId, request, CancellationToken.None);
+            Xunit.Assert.Equal(JsonSerializer.Serialize(saved), JsonSerializer.Serialize(replay));
+            await Xunit.Assert.ThrowsAsync<WorkoutPlanningInputsChangedException>(() => store.SaveAnswersAsync(userId,
+                request with { ActivityEligibilityEvidence = [] }, CancellationToken.None));
+            await Xunit.Assert.ThrowsAsync<WorkoutActivityNoLongerSafeException>(() =>
+                activeStore.StartSessionAsync(userId, start, CancellationToken.None));
+            var planId = Guid.NewGuid();
+            var dayId = Guid.NewGuid();
+            var today = DateOnly.FromDateTime(now);
+            database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic plan",
+                IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
+            database.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
+                Date = today, DayOfWeek = (int)today.DayOfWeek, WorkoutType = "Cardio", Name = "Synthetic HIIT",
+                ActivityTypeId = (int)WorkoutActivityType.Hiit });
+            await database.SaveChangesAsync();
+            var plannedStart = start with { UnplannedActivity = null,
+                PlannedWorkoutDayId = PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(dayId) };
+            await activeStore.StartSessionAsync(userId, plannedStart, CancellationToken.None);
+            await database.WorkoutAccountPlanningStates.Where(row => row.UserId == userId)
+                .ExecuteUpdateAsync(update => update.SetProperty(row => row.TimeZoneVersion, row => row.TimeZoneVersion + 1));
+            var laterId = Guid.NewGuid();
+            await Xunit.Assert.ThrowsAsync<WorkoutHiitHistoryConfirmationRequiredException>(() =>
+                activeStore.StartSessionAsync(userId, plannedStart with { SessionId = laterId, IdempotencyKey = laterId.ToString("N") }, CancellationToken.None));
+        }
+        finally
+        {
+            await database.Users.Where(user => user.Id == userId).ExecuteDeleteAsync();
+        }
+    }
+
+    [Xunit.Fact]
     public async Task PendingRevisionDoesNotCreateFirstPlanAndDefersToLivePreview()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(RequireLocalTestConnectionString()).Options;

@@ -630,7 +630,14 @@
                             </Border>
                         </VerticalStackLayout>
 
+                        <VerticalStackLayout IsVisible="{Binding HasDurationChoice}" Spacing="{StaticResource UiSpaceTight}">
+                            <Label Text="{loc:LocalizedText Workout_Generation_DurationChoices}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                            <Button Text="{Binding LongerDurationText}" Command="{Binding UseLongerDurationCommand}" IsVisible="{Binding CanUseLongerDuration}" Style="{StaticResource ButtonSecondary}" />
+                            <Button Text="{loc:LocalizedText Workout_Generation_UseShorterDuration}" Command="{Binding UseShorterDurationCommand}" Style="{StaticResource ButtonSecondary}" />
+                        </VerticalStackLayout>
+
                         <Label Text="{loc:LocalizedText Workout_Generation_MovementOmitted}" IsVisible="{Binding HasOmittedMovements}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                        <Label Text="{Binding DurationOmissionsText}" IsVisible="{Binding HasDurationOmissions}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                         <toolkit:Expander IsVisible="{Binding HasStrengthPreviewSessions}">
   <toolkit:Expander.Header>
     <Grid ColumnDefinitions="*,Auto" Style="{StaticResource DisclosureHeader}">

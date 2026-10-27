@@ -11,7 +11,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
 /// <summary>Stores immutable v0.2 strength proposals under the authenticated tenant context.</summary>
-public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbContext)
+public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbContext, TimeProvider? timeProvider = null)
     : IStrengthPlanProposalStoreV020
 {
     private const string ProposedStatus = "Proposed";
@@ -209,6 +209,22 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             !WorkoutPlanningConstants.IsSupportedHiitUnderlyingCardioActivity(underlying))
             throw new WorkoutPlanningInputsChangedException();
         var previous = DeserializeAnswers(state.AnswersJson);
+        MuscleCuties.Infrastructure.PostgreSql.Models.App.HiitEvidenceCaptureChallengeRecord? consumedChallenge = null;
+        var requestHash = request.HiitCaptureChallengeId is null ? null : PlanningInputFingerprint.Hash(request);
+        if (request.HiitCaptureChallengeId is { } replayId)
+        {
+            var existing = await dbContext.HiitEvidenceCaptureChallenges.SingleOrDefaultAsync(
+                row => row.UserId == userId && row.Id == replayId, cancellationToken).ConfigureAwait(false);
+            if (existing?.ConsumedAtUtc is not null)
+            {
+                if (existing.ConsumedRequestHash != requestHash || existing.ResultAnswerVersion != state.AnswerVersion ||
+                    existing.ResultSafetyPlanChanged is null)
+                    throw new WorkoutPlanningInputsChangedException();
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return previous with { Version = state.AnswerVersion, SafetyPlanChanged = existing.ResultSafetyPlanChanged.Value };
+            }
+            consumedChallenge = existing;
+        }
         var sameHiitEvidence = JsonSerializer.Serialize(previous.HiitEligibilityEvidence, JsonOptions) ==
             JsonSerializer.Serialize(request.HiitEligibilityEvidence, JsonOptions) &&
             previous.HiitUnderlyingCardioActivity == request.HiitUnderlyingCardioActivity;
@@ -218,7 +234,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             if (state.AnswerVersion != request.ExpectedVersion || request.HiitEligibilityEvidence is null ||
                 request.HiitUnderlyingCardioActivity is null)
                 throw new WorkoutPlanningInputsChangedException();
-            capture = await new PostgresHiitEvidenceCaptureStore(dbContext, TimeProvider.System)
+            capture = await new PostgresHiitEvidenceCaptureStore(dbContext, timeProvider ?? TimeProvider.System)
                 .ConsumeInCurrentTransactionAsync(userId, challengeId, cancellationToken).ConfigureAwait(false)
                 ?? throw new WorkoutPlanningInputsChangedException();
         }
@@ -295,7 +311,12 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
 
         }
         if (request.HiitCaptureChallengeId is not null)
+        {
+            consumedChallenge!.ConsumedRequestHash = requestHash;
+            consumedChallenge.ResultAnswerVersion = state.AnswerVersion;
+            consumedChallenge.ResultSafetyPlanChanged = safetyPlanChanged;
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return answers with { Version = state.AnswerVersion, SafetyPlanChanged = safetyPlanChanged };
     }).ConfigureAwait(false);

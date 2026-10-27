@@ -63,6 +63,7 @@ public sealed record StrengthPlanPreviewResponseV020(
     string? FallbackReasonCode = null,
     bool RequiresReducedVolumeAcknowledgment = false)
 {
+    public decimal? MinimumRequiredSessionMinutes { get; init; }
     public int? SourceProfileVersion { get; init; }
     public string? SourceInjuryFingerprint { get; init; }
     public Guid? SourceActivePlanId { get; init; }

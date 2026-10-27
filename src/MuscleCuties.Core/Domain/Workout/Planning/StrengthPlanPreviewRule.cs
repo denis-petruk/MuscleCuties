@@ -22,7 +22,8 @@ public sealed record StrengthPlanPreviewChoices(
     IReadOnlySet<string>? AcknowledgedSubstitutionPairKeys = null,
     int? WarmupMinutes = null,
     int? CooldownMinutes = null,
-    IReadOnlySet<DayOfWeek>? RequestedAvailableWeekdays = null);
+    IReadOnlySet<DayOfWeek>? RequestedAvailableWeekdays = null,
+    bool AllowMovementOmissionsForDuration = false);
 
 /// <summary>Trusted server profile, activity preferences, and reviewed catalog snapshot used by the planner.</summary>
 public sealed record StrengthPlanPreviewData(
@@ -80,7 +81,8 @@ public sealed record StrengthPlanPreviewResult(
     int? StrengthSessionLimitMinutes = null,
     bool RequiresReducedVolumeAcknowledgment = false,
     int? OriginalPlannedWorkingSets = null,
-    int? ActualWorkingSets = null);
+    int? ActualWorkingSets = null,
+    decimal? MinimumRequiredSessionMinutes = null);
 
 /// <summary>
 /// Evaluates a strength proposal as one Core decision using activity policy, reviewed templates,
@@ -107,6 +109,7 @@ public static class StrengthPlanPreviewRule
     public const string SymptomsNeedReviewCode = "RestrictionOrSymptomRequiresReview";
     public const string MissingWarmupOrCooldownCode = "StrengthWarmupOrCooldownDurationMissing";
     public const string ReducedVolumeNotice = "StrengthVolumeReducedToFitDurationOrSchedule";
+    public const string MovementOmittedForDurationCode = "MovementOmittedForDuration";
 
     private const int NoMinutes = 0;
     private const int FirstPositiveIdentifier = 1;
@@ -223,11 +226,11 @@ public static class StrengthPlanPreviewRule
         var anyVolumeReduced = false;
         var totalOriginalWorkingSets = 0;
         var totalActualWorkingSets = 0;
+        decimal? minimumRequiredSessionMinutes = null;
 
         foreach (var originalTemplate in templates)
         {
             var template = originalTemplate;
-            var floor = TemplateVolumeFloorRule.GetReviewedFloor(template.TemplateId, data.TemplateVolumeFloors);
             var selectionInput = new StrengthTemplateSelectionInput(template, activity, data.Goal,
                     prescriptionContext, data.Catalog!, eligibilityContext,
                     data.PreferredExerciseByOriginalId!,
@@ -252,7 +255,6 @@ public static class StrengthPlanPreviewRule
                     if (alternativeResolution.Status != "Resolved") continue;
                     template = alternative;
                     resolution = alternativeResolution;
-                    floor = TemplateVolumeFloorRule.GetReviewedFloor(template.TemplateId, data.TemplateVolumeFloors);
                     break;
                 }
             }
@@ -280,8 +282,14 @@ public static class StrengthPlanPreviewRule
             totalOriginalWorkingSets += originalWorkingSetsInSession;
 
             var selected = resolution.Slots.Where(slot => slot.ExerciseId.HasValue).ToList();
+            var floor = TemplateVolumeFloorRule.ForAvailableSlots(template.TemplateId, selected);
             var estimatedMinutes = EstimateAndTrimOptional(selected, data, sessionMinutes,
-                choices.WarmupMinutes!.Value, choices.CooldownMinutes!.Value, floor);
+                choices.WarmupMinutes!.Value, choices.CooldownMinutes!.Value, floor,
+                choices.AllowMovementOmissionsForDuration, template.TemplateId, movementOmissions,
+                out var completeMinimumMinutes);
+            if (completeMinimumMinutes is { } completeMinimum)
+                minimumRequiredSessionMinutes = Math.Max(minimumRequiredSessionMinutes ?? completeMinimum, completeMinimum);
+            floor = TemplateVolumeFloorRule.ForAvailableSlots(template.TemplateId, selected);
 
             var applyDirectSetCeiling = activity == WorkoutActivityType.HighVolumeStrength ||
                 activity == WorkoutActivityType.GeneralStrength &&
@@ -321,7 +329,12 @@ public static class StrengthPlanPreviewRule
                 }
 
                 estimatedMinutes = EstimateAndTrimOptional(selected, data, sessionMinutes,
-                    choices.WarmupMinutes.Value, choices.CooldownMinutes.Value, floor);
+                    choices.WarmupMinutes.Value, choices.CooldownMinutes.Value, floor,
+                    choices.AllowMovementOmissionsForDuration, template.TemplateId, movementOmissions,
+                    out var laterMinimumMinutes);
+                if (laterMinimumMinutes is { } laterMinimum)
+                    minimumRequiredSessionMinutes = Math.Max(minimumRequiredSessionMinutes ?? laterMinimum, laterMinimum);
+                floor = TemplateVolumeFloorRule.ForAvailableSlots(template.TemplateId, selected);
                 if (estimatedMinutes.HasValue)
                     foreach (var slot in selected)
                     {
@@ -339,17 +352,12 @@ public static class StrengthPlanPreviewRule
             if (actualWorkingSetsInSession < originalWorkingSetsInSession)
             {
                 anyVolumeReduced = true;
-                if (floor is null)
-                    limitations.Add($"{TemplateVolumeFloorRule.TemplateVolumeFloorReviewMissing}:{template.TemplateId}");
             }
 
-            if (floor is not null)
-            {
-                var floorEvaluation = TemplateVolumeFloorRule.EvaluateSelections(template.TemplateId,
-                    selected, data.TemplateVolumeFloors);
-                if (!floorEvaluation.IsAllowed)
-                    limitations.Add(floorEvaluation.LimitationCode ?? TemplateVolumeFloorRule.VolumeBelowTemplateFloor);
-            }
+            var floorEvaluation = TemplateVolumeFloorRule.EvaluateSelections(template.TemplateId,
+                selected, new Dictionary<string, TemplateVolumeFloor> { [template.TemplateId] = floor });
+            if (!floorEvaluation.IsAllowed)
+                limitations.Add(floorEvaluation.LimitationCode ?? TemplateVolumeFloorRule.VolumeBelowTemplateFloor);
 
             IReadOnlyList<string> sessionLimitations = estimatedMinutes.HasValue
                 ? NoCodes
@@ -357,8 +365,6 @@ public static class StrengthPlanPreviewRule
             if (!estimatedMinutes.HasValue)
             {
                 limitations.AddRange(sessionLimitations);
-                if (floor is null)
-                    limitations.Add($"{TemplateVolumeFloorRule.TemplateVolumeFloorReviewMissing}:{template.TemplateId}");
             }
             sessions.Add(new StrengthPlanPreviewSession(template.TemplateId, template.Version,
                 template.SessionIndex, estimatedMinutes, selected, sessionLimitations,
@@ -436,7 +442,8 @@ public static class StrengthPlanPreviewRule
             activity, StrengthSessionLimitMinutes: sessionMinutes,
             RequiresReducedVolumeAcknowledgment: requiresReducedVolumeAcknowledgment,
             OriginalPlannedWorkingSets: totalOriginalWorkingSets,
-            ActualWorkingSets: totalActualWorkingSets);
+            ActualWorkingSets: totalActualWorkingSets,
+            MinimumRequiredSessionMinutes: minimumRequiredSessionMinutes);
     }
 
     private static bool ValidChoices(StrengthPlanPreviewChoices? choices) =>
@@ -548,7 +555,8 @@ public static class StrengthPlanPreviewRule
 
     private static decimal? EstimateAndTrimOptional(List<StrengthSlotSelection> selected,
         StrengthPlanPreviewData data, int availableMinutes, int warmupMinutes, int cooldownMinutes,
-        TemplateVolumeFloor? floor = null)
+        TemplateVolumeFloor floor, bool allowMovementOmissions, string templateId,
+        List<string> movementOmissions, out decimal? completeMinimumMinutes)
     {
         decimal? Estimate()
         {
@@ -577,15 +585,16 @@ public static class StrengthPlanPreviewRule
             return totalMinutes;
         }
 
+        completeMinimumMinutes = null;
         var estimate = Estimate();
-        while (floor is not null && (estimate is null || estimate > availableMinutes) &&
+        while ((estimate is null || estimate > availableMinutes) &&
                selected.LastOrDefault(slot => !slot.IsRequired) is { } optional)
         {
             selected.Remove(optional);
             estimate = Estimate();
         }
 
-        if ((estimate is null || estimate > availableMinutes) && floor is not null)
+        if (estimate is null || estimate > availableMinutes)
         {
             const int SingleSetDecrement = 1;
             bool canReduceFurther;
@@ -595,11 +604,12 @@ public static class StrengthPlanPreviewRule
                 for (var i = selected.Count - 1; i >= 0; i--)
                 {
                     var slot = selected[i];
+                    if (slot.Sets is not { } currentSets) continue;
                     var floorMin = floor.MinimumSetsBySlotId.GetValueOrDefault(
-                        slot.SlotId, slot.Sets.Value);
-                    if (slot.Sets.HasValue && slot.Sets.Value > floorMin)
+                        slot.SlotId, currentSets);
+                    if (currentSets > floorMin)
                     {
-                        var newSets = slot.Sets.Value - SingleSetDecrement;
+                        var newSets = currentSets - SingleSetDecrement;
                         selected[i] = slot with { Sets = newSets };
                         canReduceFurther = true;
                         estimate = Estimate();
@@ -610,6 +620,18 @@ public static class StrengthPlanPreviewRule
             } while (canReduceFurther && (estimate is null || estimate > availableMinutes));
         }
 
+        if (estimate is > NoMinutes && estimate > availableMinutes)
+        {
+            completeMinimumMinutes = estimate;
+            while (allowMovementOmissions && estimate > availableMinutes && selected.Count > OneSession)
+            {
+                var omitted = selected[^1];
+                selected.RemoveAt(selected.Count - OneSession);
+                movementOmissions.Add($"{MovementOmittedForDurationCode}:{templateId}:{omitted.SlotId}");
+                estimate = Estimate();
+                if (estimate is null) break;
+            }
+        }
         return estimate is > NoMinutes && estimate <= availableMinutes ? estimate : null;
     }
 

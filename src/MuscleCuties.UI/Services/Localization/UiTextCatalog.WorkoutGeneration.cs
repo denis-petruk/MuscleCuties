@@ -4,6 +4,11 @@ public static partial class UiTextCatalog
 {
     static partial void RegisterWorkoutGenerationStrings()
     {
+        English["Workout_Generation_AnswersRefreshedReview"] = "Your saved answers were refreshed after an interrupted or conflicting save. Review your answers, then try again.";
+        English["Workout_Generation_DurationChoices"] = "Your selected time cannot fit all required movements. Choose a longer session or keep the shorter time and review the movements omitted to fit it.";
+        English["Workout_Generation_UseLongerDuration"] = "Use {0} minutes";
+        English["Workout_Generation_UseShorterDuration"] = "Keep shorter time and review omissions";
+        English["Workout_Generation_DurationMovementOmitted"] = "To fit your selected session time: {0}.";
         English["Workout_Generation_PlanSetupBadge"] = "PLAN SETUP";
         English["Workout_Generation_TimingBadge"] = "SESSION TIMING";
         English["Workout_Generation_RecentHistoryBadge"] = "RECENT HISTORY";

@@ -7,6 +7,16 @@ namespace MuscleCuties.Core.Tests;
 public sealed class CloudPlannedWorkoutSessionErrorTests
 {
     [Fact]
+    public async Task ExpiredHiitHistoryRequiresConfirmationInsteadOfGenericFailure()
+    {
+        var store = new CloudWorkoutSessionActionStore(new SessionApi(BackendApiStatus.Conflict,
+            WorkoutHiitHistoryConfirmationRequiredException.ErrorCode));
+
+        await Assert.ThrowsAsync<WorkoutHiitHistoryConfirmationRequiredException>(() =>
+            store.StartPlannedSessionAsync(1, Guid.NewGuid(), DateTime.UnixEpoch, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task OfflineStartIsAConnectionFailure()
     {
         var store = new CloudWorkoutSessionActionStore(new SessionApi(BackendApiStatus.OfflineRejected));

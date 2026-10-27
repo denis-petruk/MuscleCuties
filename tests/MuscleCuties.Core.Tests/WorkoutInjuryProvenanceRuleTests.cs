@@ -10,7 +10,7 @@ public sealed class WorkoutInjuryProvenanceRuleTests
     {
         var first = new DateOnly(2026, 2, 1);
         var second = new DateOnly(2026, 2, 4);
-        var requiredFrom = new DateOnly(2026, 2, 12);
+        var requiredFrom = new DateOnly(2026, 2, 11);
         DateOnly?[] clearances = [first, second];
 
         Assert.Equal(requiredFrom, WorkoutInjuryClearanceRule.RequiredFromForAllClearances(clearances));

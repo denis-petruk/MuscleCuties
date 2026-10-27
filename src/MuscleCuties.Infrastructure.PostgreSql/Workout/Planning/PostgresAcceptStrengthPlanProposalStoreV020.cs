@@ -77,7 +77,8 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
 
     // Caller owns the tenant transaction and account/catalog locks and commits the result.
     internal async Task<AcceptStrengthPlanProposalResultV020> AcceptInCurrentTransactionAsync(Guid userId,
-        AcceptStrengthPlanProposalRequestV020 request, AcceptanceOrigin origin, CancellationToken cancellationToken)
+        AcceptStrengthPlanProposalRequestV020 request, AcceptanceOrigin origin, CancellationToken cancellationToken,
+        bool injuryProvenanceValidated = false)
     {
         if (dbContext.Database.CurrentTransaction is null)
             throw new InvalidOperationException("The active planning transaction is required.");
@@ -138,9 +139,8 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         if (origin == AcceptanceOrigin.Automatic &&
             (planningState is null || (!planningState.PromotionPending && !planningState.SafetyRegenerationPending)))
             return new(StaleStatus, proposal.PlanId, null, PlanningInputsChangedSinceProposalCode);
-        // Automatic publication cannot yet carry injury causality into the new plan.
-        // Keep the caller's transaction untouched until that provenance can be preserved.
-        if (origin == AcceptanceOrigin.Automatic && planningState!.SafetyRegenerationPending &&
+        // Injury publication requires the reconciler's preflight and savepoint-owned lineage transfer.
+        if (origin == AcceptanceOrigin.Automatic && planningState!.SafetyRegenerationPending && !injuryProvenanceValidated &&
             (currentInjuries.Count > 0 || await dbContext.WorkoutInjuryEpisodes.AsNoTracking()
                 .AnyAsync(row => row.UserId == userId, cancellationToken).ConfigureAwait(false)))
             return new(StaleStatus, proposal.PlanId, null, PlanningInputsChangedSinceProposalCode);

@@ -75,7 +75,7 @@ public static class StrengthStyleSelectionRule
 
         // Selected strength styles: strictly from data.SelectedActivities (or choices.Activity if selected).
         // Never evaluate or fall back to an unselected style.
-        var selectedStyles = (data.SelectedActivities ?? Array.Empty<WorkoutActivityType>())
+        var selectedStyles = (data.SelectedActivities ?? new HashSet<WorkoutActivityType>())
             .Where(IsStrengthStyle)
             .Distinct()
             .ToArray();

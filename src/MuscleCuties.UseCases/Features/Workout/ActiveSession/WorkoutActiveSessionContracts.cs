@@ -2,6 +2,14 @@ using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Workout.ActiveSession;
 
+public sealed class WorkoutHiitHistoryConfirmationRequiredException : Exception
+{
+    public const string ErrorCode = "WorkoutHiitHistoryConfirmationRequired";
+
+    public WorkoutHiitHistoryConfirmationRequiredException()
+        : base("Confirm or update your HIIT history before starting this activity.") { }
+}
+
 public sealed class WorkoutActivityNoLongerSafeException : Exception
 {
     public WorkoutActivityNoLongerSafeException() : base("The activity is no longer safe to continue.") { }
