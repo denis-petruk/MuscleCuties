@@ -142,6 +142,10 @@ public static class CheckInAndInjuryEndpointMappings
             {
                 return Results.Conflict(new { code = "ActiveWorkoutPreventsInjury", message = exception.Message });
             }
+            catch (InvalidOperationException exception)
+            {
+                return Results.Conflict(new { code = "InjuryUpdateUnavailable", message = exception.Message });
+            }
             catch (ArgumentOutOfRangeException)
             {
                 return Results.BadRequest();

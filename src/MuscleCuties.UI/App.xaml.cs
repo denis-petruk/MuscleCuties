@@ -15,6 +15,9 @@ using MuscleCuties.UI.Services.Notifications;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Security;
 using MuscleCuties.UI.Services.Workout;
+using MuscleCuties.UI.Services.Navigation;
+using MuscleCuties.UI.ViewModels.Profile;
+using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 
 namespace MuscleCuties.UI;
 
@@ -29,6 +32,7 @@ public partial class App : Application
     private DateTime _lastDashboardRefreshDate = DateTime.MinValue;
     private bool _isForeground;
     private CancellationTokenSource? _foregroundCancellation;
+    internal event EventHandler? WorkoutTimingSuspending;
 
     public App(IServiceProvider services)
     {
@@ -196,6 +200,9 @@ public partial class App : Application
         Justification = "Exposed as an application navigation operation to page coordinators.")]
     internal async Task ActivateRootAsync(string route)
     {
+        if (route == "LoginPage")
+            _services.GetRequiredService<INavigationContextService>()
+                .TryTake<WorkoutPreferencesDto>(ProfileWorkoutPreferencesViewModel.DraftPreferencesContextKey, out _);
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
             var shell = Shell.Current as AppShell
@@ -255,6 +262,7 @@ public partial class App : Application
     {
         _isForeground = false;
         _foregroundCancellation?.Cancel();
+        WorkoutTimingSuspending?.Invoke(this, EventArgs.Empty);
     }
 
     private async Task UpdateForegroundCalendarAsync()

@@ -136,6 +136,8 @@ public static partial class UiTextCatalog
         English["Workout_Generation_MixedScheduleExplanation"] = "This schedule places your selected activities across the available weekdays.";
         English["Workout_Generation_ScheduleEmpty"] = "No activity sessions could be placed on the saved available weekdays.";
         English["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";
+        English["Workout_Generation_OrderedActivityFormat"] = "{0}. {1}";
+        English["Workout_Generation_ActivityOrderNote"] = "Numbers show the recommended order for activities on the same day.";
         English["Workout_Generation_MixedSessionDurationFormat"] = "{0} min";
         English["Workout_Generation_MixedSessionDetailsFormat"] = "{0} · {1}";
         English["Workout_Generation_HigherEffortSession"] = "Higher-effort session";
@@ -228,7 +230,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_AcceptUnavailable"] = "Create and review a feasible proposal before accepting it.";
         English["Workout_Generation_SessionDayTitleFormat"] = "{0} session";
         English["Workout_Generation_PreviewReady"] = "Review the plan preview before applying it.";
-        English["Workout_Generation_OptionalActivitiesSkipped"] = "Some selected activities did not fit. You can still apply the strength plan.";
+        English["Workout_Generation_OptionalActivitiesSkipped"] = "Some activities or movements were omitted. You can still apply the remaining plan.";
         English["Workout_Generation_PreviewNotSaved"] = "This draft is not available to apply. Review the information and try again.";
         English["Workout_Generation_CreateFailed"] = "The plan preview could not be created. Try again.";
         English["Workout_Generation_ConnectionError"] = "Connection error. Please try again.";
@@ -238,6 +240,16 @@ public static partial class UiTextCatalog
         English["Workout_Generation_ActivePreviewElsewhere"] = "A plan preview is already open. Take over to create a new preview here.";
         English["Workout_Generation_TakeOverPreview"] = "Take over preview";
         English["Workout_Generation_SafetyPlanChanged"] = "An activity was removed from upcoming workouts because of your safety answers.";
+        English["Workout_Generation_MovementOmitted"] = "Some strength movements were omitted because no safe exercise was available.";
+        English["Workout_Generation_MovementUnavailable"] = "Movement omitted";
+        English["Workout_Generation_MovementKneeOmitted"] = "Knee-dominant movement omitted";
+        English["Workout_Generation_MovementHipOmitted"] = "Hip-dominant movement omitted";
+        English["Workout_Generation_MovementUpperPushOmitted"] = "Upper-body pushing movement omitted";
+        English["Workout_Generation_MovementUpperPullOmitted"] = "Upper-body pulling movement omitted";
+        English["Workout_Generation_MovementTrunkOmitted"] = "Core movement omitted";
+        English["Workout_Generation_MovementAccessoryOmitted"] = "Accessory movement omitted";
+        English["Workout_Generation_MovementOmittedReason"] = "No safe exercise was available for this movement.";
+        English["Workout_Generation_ChosenStrengthSummary"] = "{0}: {1} strength sessions per week";
         English["Workout_Generation_PlanChanged"] = "Your current plan changed. Create a fresh preview before applying it.";
         English["Workout_Generation_AcceptFailed"] = "The plan was not applied. Your current plan is unchanged.";
         English["Workout_Generation_AppliedTrainNavigationFailed"] = "Your plan was applied, but Train could not open. Try again.";

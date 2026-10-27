@@ -361,6 +361,7 @@ public sealed class WorkoutDayRecord : ITenantRecord
     public Guid? SafetyInjuryId { get; set; }
     public int? SafetyActivityTypeId { get; set; }
     public int? ActivityTypeId { get; set; }
+    public int? DayOrder { get; set; }
     public decimal? PlannedMainDurationMinutes { get; set; }
 }
 
@@ -377,6 +378,8 @@ public sealed class WorkoutDayExerciseRecord : ITenantRecord
     // Null for legacy or non-injury prescriptions; never infer provenance from a replacement.
     public int? InjuryOriginalExerciseId { get; set; }
     public DateOnly? InjuryRestorationRequiredFromDate { get; set; }
+    public string? PlanningSlotId { get; set; }
+    public Guid? OriginWorkoutDayExerciseId { get; set; }
     public int Sets { get; set; }
     public int OptionalSets { get; set; }
     public int Reps { get; set; }
@@ -390,9 +393,19 @@ public sealed class WorkoutSessionLogRecord : ITenantRecord
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public Guid? PlannedWorkoutDayId { get; set; }
+    public int? UnplannedActivityType { get; set; }
+    public DateOnly? UnplannedCompletionLocalDate { get; set; }
+    public string? UnplannedCompletionTimeZoneId { get; set; }
+    public long? UnplannedCompletionTimeZoneVersion { get; set; }
     public string? PlannedTimeZoneId { get; set; }
     public long? PlannedTimeZoneVersion { get; set; }
     public DateOnly? PlannedLocalDate { get; set; }
+    public int ConfirmedActiveSeconds { get; set; }
+    public Guid? TimingIntervalId { get; set; }
+    public DateTime? TimingIntervalStartedAtUtc { get; set; }
+    public DateTime? TimingIntervalLastConfirmedAtUtc { get; set; }
+    public int TimingIntervalConfirmedSeconds { get; set; }
+    public string? PlannedPrescriptionSnapshotJson { get; set; }
     public string WorkoutName { get; set; } = string.Empty;
     public DateTime StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
@@ -430,6 +443,7 @@ public sealed class WorkoutLogRecord : ITenantRecord
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public Guid WorkoutDayId { get; set; }
+    public Guid? PlannedSessionId { get; set; }
     public DateOnly Date { get; set; }
     public int CompletionPercent { get; set; }
     public string? Notes { get; set; }

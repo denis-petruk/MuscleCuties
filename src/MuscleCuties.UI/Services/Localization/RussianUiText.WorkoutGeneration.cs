@@ -136,6 +136,8 @@ internal static partial class RussianUiText
         Values["Workout_Generation_MixedScheduleExplanation"] = "Выбранные активности распределяются по доступным дням недели.";
         Values["Workout_Generation_ScheduleEmpty"] = "Не удалось разместить занятия в сохранённые доступные дни недели.";
         Values["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";
+        Values["Workout_Generation_OrderedActivityFormat"] = "{0}. {1}";
+        Values["Workout_Generation_ActivityOrderNote"] = "Числа показывают рекомендуемый порядок активностей в течение дня.";
         Values["Workout_Generation_MixedSessionDurationFormat"] = "{0} мин";
         Values["Workout_Generation_MixedSessionDetailsFormat"] = "{0} · {1}";
         Values["Workout_Generation_HigherEffortSession"] = "Тренировка с повышенной нагрузкой";
@@ -228,7 +230,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_AcceptUnavailable"] = "Сначала создайте и проверьте подходящее предложение.";
         Values["Workout_Generation_SessionDayTitleFormat"] = "Тренировка: {0}";
         Values["Workout_Generation_PreviewReady"] = "Проверьте предварительный план перед применением.";
-        Values["Workout_Generation_OptionalActivitiesSkipped"] = "Некоторые выбранные активности не поместились. Силовой план всё равно можно применить.";
+        Values["Workout_Generation_OptionalActivitiesSkipped"] = "Некоторые активности или движения исключены. Остальную часть плана можно применить.";
         Values["Workout_Generation_PreviewNotSaved"] = "Этот черновик нельзя применить. Проверьте данные и попробуйте ещё раз.";
         Values["Workout_Generation_CreateFailed"] = "Не удалось составить предварительный план. Попробуйте ещё раз.";
         Values["Workout_Generation_ConnectionError"] = "Ошибка соединения. Попробуйте ещё раз.";
@@ -238,6 +240,16 @@ internal static partial class RussianUiText
         Values["Workout_Generation_ActivePreviewElsewhere"] = "Предпросмотр плана открыт на другом устройстве. Перехватите его, чтобы создать новый здесь.";
         Values["Workout_Generation_TakeOverPreview"] = "Перехватить предпросмотр";
         Values["Workout_Generation_SafetyPlanChanged"] = "Активность удалена из предстоящих тренировок на основании ваших ответов о безопасности.";
+        Values["Workout_Generation_MovementOmitted"] = "Некоторые силовые движения исключены, потому что безопасное упражнение недоступно.";
+        Values["Workout_Generation_MovementUnavailable"] = "Движение исключено";
+        Values["Workout_Generation_MovementKneeOmitted"] = "Движение с акцентом на колени исключено";
+        Values["Workout_Generation_MovementHipOmitted"] = "Движение с акцентом на таз исключено";
+        Values["Workout_Generation_MovementUpperPushOmitted"] = "Жимовое движение исключено";
+        Values["Workout_Generation_MovementUpperPullOmitted"] = "Тяговое движение исключено";
+        Values["Workout_Generation_MovementTrunkOmitted"] = "Движение для корпуса исключено";
+        Values["Workout_Generation_MovementAccessoryOmitted"] = "Дополнительное движение исключено";
+        Values["Workout_Generation_MovementOmittedReason"] = "Для этого движения нет безопасного упражнения.";
+        Values["Workout_Generation_ChosenStrengthSummary"] = "{0}: силовых тренировок в неделю — {1}";
         Values["Workout_Generation_PlanChanged"] = "Текущий план изменился. Составьте новый черновик перед применением.";
         Values["Workout_Generation_AcceptFailed"] = "План не применён. Текущий план не изменён.";
         Values["Workout_Generation_AppliedTrainNavigationFailed"] = "План применён, но раздел «Тренировки» не открылся. Попробуйте ещё раз.";
