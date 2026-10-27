@@ -117,7 +117,11 @@ public sealed class PostgresWorkoutProgressStore(PostgresDbContext context, IWor
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         var days = await context.WorkoutCompletionDayCredits.CountAsync(row => row.UserId == userId, cancellationToken)
             .ConfigureAwait(false);
-        var promoted = WorkoutExperiencePromotionRule.Resolve(state.BaselineExperience, days);
+        // Effective experience is durable: incomplete historical credits must not
+        // demote a previously earned level while reconciliation is pending.
+        var durableLevel = state.EffectiveExperience == TrainingExperienceLevel.Unknown
+            ? state.BaselineExperience : state.EffectiveExperience;
+        var promoted = WorkoutExperiencePromotionRule.Resolve(durableLevel, days);
         if (promoted != state.EffectiveExperience)
         {
             state.EffectiveExperience = promoted;
