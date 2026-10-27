@@ -23,7 +23,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_HeavyMainAssignmentFormat"] = "Used as a heavy main in: {0}";
         English["Workout_Generation_HiitUnderlyingActivityTitle"] = "Choose HIIT's underlying cardio activity";
         English["Workout_Generation_HiitUnderlyingActivityHelp"] = "Choose a continuous cardio activity saved in your preferences. HIIT will replace one session of that activity. Enter its actual history and each prior week's aerobic sessions below, then confirm the required screening or clearance.";
-        English["Workout_Generation_HiitEvidenceTitle"] = "Evidence for HIIT";
+        English["Workout_Generation_HiitEvidenceTitle"] = "HIIT activity details";
         English["Workout_Generation_HiitEvidenceHelp"] = "HIIT is considered only when your selected cardio history is established, all four prior weeks meet the aerobic target, you confirm the required screening or clearance, and no current symptom or injury needs review.";
         English["Workout_Generation_HiitConfirmCurrentWeeks"] = "I confirm these counts describe the four weeks before today.";
         English["Workout_Generation_HiitCardioHistoryTitle"] = "Underlying cardio experience";
@@ -51,7 +51,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_RopeCompetence"] = "Are you competent with rope climbing systems?";
         English["Workout_Generation_ClimbingInstructionAvailable"] = "Will suitable instruction or supervision be available?";
         English["Workout_Generation_YogaEvidenceTitle"] = "Yoga details";
-        English["Workout_Generation_YogaEvidenceHelp"] = "Gentle yoga is selected by default. Choose demanding if the class is vigorous.";
+        English["Workout_Generation_YogaEvidenceHelp"] = "Choose gentle or demanding based on the class you plan to attend.";
         English["Workout_Generation_YogaContentClassification"] = "How demanding is the yoga content?";
         English["Workout_Generation_YogaDurationLabel"] = "Yoga session length (minutes)";
         English["Workout_Generation_YogaDurationPlaceholder"] = "Choose a class first";
@@ -95,7 +95,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_Required"] = "Required";
         English["Workout_Generation_LimitationTiming"] = "The saved activity length or warm-up and cool-down details do not fit this plan.";
         English["Workout_Generation_LimitationExperience"] = "More strength history is needed to choose an eligible template.";
-        English["Workout_Generation_LimitationReview"] = "A reviewed exercise or movement detail is missing for this proposal.";
+        English["Workout_Generation_LimitationReview"] = "An exercise or movement detail is missing from this plan.";
         English["Workout_Generation_LimitationStrengthWeekdays"] = "Choose at least two different available weekdays for strength sessions.";
         English["Workout_Generation_Reason_ScheduleIncomplete"] = "Some selected sessions could not be placed on the available days.";
         English["Workout_Generation_LimitationGeneral"] = "This proposal needs more information. Review the activity decisions and edit your details.";
@@ -207,8 +207,8 @@ public static partial class UiTextCatalog
         English["Workout_Generation_Reason_EstablishedHistory"] = "Your history supports an established activity level.";
         English["Workout_Generation_Reason_HistoryBelowThreshold"] = "Your activity history is below the established training threshold.";
         English["Workout_Generation_Reason_StrengthHistory"] = "This strength option needs established resistance-training history and familiarity.";
-        English["Workout_Generation_Reason_HighIntensityExerciseEvidence"] = "A reviewed safe exercise is not available for this high-intensity session.";
-        English["Workout_Generation_Reason_HighIntensityEvidenceMissing"] = "A required heavy lift does not have enough trusted recorded exposure or manageable-load evidence. The preview cannot ask for confirmation until an eligible candidate is available.";
+        English["Workout_Generation_Reason_HighIntensityExerciseEvidence"] = "A suitable exercise is not available for this high-intensity session.";
+        English["Workout_Generation_Reason_HighIntensityEvidenceMissing"] = "There is not enough recorded experience with a suitable heavy lift for this session.";
         English["Workout_Generation_Reason_TrainingLimits"] = "The plan follows limits for exercise count, set volume, and effort.";
         English["Workout_Generation_Reason_HighVolumeConservativeStart"] =
             "Start with a manageable weight that leaves about four reps in reserve. The plan begins with fewer sets and can progress as you log sessions.";
@@ -226,7 +226,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_Reason_YogaContent"] = "Classify yoga by its actual content before choosing duration.";
         English["Workout_Generation_Reason_ChooseActivityDuration"] = "Choose an allowed duration from the catalog or your preferences.";
         English["Workout_Generation_Reason_YogaClassifiedByContent"] = "Yoga effort is based on the actual class content.";
-        English["Workout_Generation_Reason_ReviewedMovements"] = "Strength movements must come from the reviewed exercise catalog.";
+        English["Workout_Generation_Reason_ReviewedMovements"] = "A suitable strength movement is unavailable for this plan.";
         English["Workout_Generation_Reason_General"] = "This activity needs more information or a planning rule needs review.";
         English["Workout_Generation_AcceptUnavailable"] = "Create and review a feasible proposal before accepting it.";
         English["Workout_Generation_SessionDayTitleFormat"] = "{0} session";

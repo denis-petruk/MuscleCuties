@@ -63,174 +63,28 @@ public sealed class PostgresReadinessAdjustmentStore(PostgresDbContext dbContext
         DecideReadinessAdjustmentRequest request, bool apply, CancellationToken ct = default) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-            if (apply && !TodayPlanningDecisionRule.ReadinessSuggestionsEnabled)
+            if (apply)
                 return new ReadinessAdjustmentDecisionDto(false, true,
-                    "Your check-in is saved. Training suggestions based on this check-in are not available yet.");
+                    "Training suggestions cannot be applied until a safe plan revision is available.");
 
             dbContext.ChangeTracker.Clear();
             await using var tx = await dbContext.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, ct).ConfigureAwait(false);
-            if (apply)
-            {
-                await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, ct).ConfigureAwait(false);
-                if (await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, userId, DateTime.UtcNow, ct).ConfigureAwait(false))
-                    return new ReadinessAdjustmentDecisionDto(false, true, "Close the workout plan preview before editing the plan.");
-            }
             var proposal = await dbContext.WorkoutPlanProposalsV02.SingleOrDefaultAsync(
-                p => p.UserId == userId && p.Id == request.ProposalId, ct).ConfigureAwait(false)
+                p => p.UserId == userId && p.Id == request.ProposalId &&
+                    p.RulesetVersion == TodayCheckInScoreRule.RulesetVersion, ct).ConfigureAwait(false)
                           ?? throw new KeyNotFoundException("Readiness proposal was not found.");
             if (proposal.Status != "Proposed")
             {
                 await tx.CommitAsync(ct).ConfigureAwait(false);
                 return new ReadinessAdjustmentDecisionDto(false, true, "This suggestion is no longer available. Review today’s readiness again.");
             }
-
-            if (!apply)
-            {
-                proposal.Status = "Rejected";
-                proposal.DecidedAtUtc = DateTime.UtcNow;
-                proposal.ConcurrencyVersion++;
-                await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                await tx.CommitAsync(ct).ConfigureAwait(false);
-                return new ReadinessAdjustmentDecisionDto(false, false, "Your plan is unchanged.");
-            }
-
-            var state = await BuildStateAsync(userId,
-                new ReviewReadinessAdjustmentRequest(request.LocalDate, request.TimeZoneId), ct).ConfigureAwait(false);
-            var actionsJson = state.Error is null ? JsonSerializer.Serialize(state.Actions, JsonOptions) : string.Empty;
-            var snapshotJson = state.Error is null ? JsonSerializer.Serialize(state.Snapshot, JsonOptions) : string.Empty;
-            var latestRevisionId = await dbContext.WorkoutPlanRevisionsV02.AsNoTracking()
-                .Where(r => r.UserId == userId && r.PlanId == proposal.PlanId)
-                .OrderByDescending(r => r.RevisionNumber).Select(r => (Guid?)r.Id).FirstOrDefaultAsync(ct)
-                .ConfigureAwait(false) ?? Guid.Empty;
-            if (state.Error is not null || state.Actions.Count == 0 || state.PlanId != proposal.PlanId ||
-                proposal.ExpectedRevisionId != latestRevisionId || proposal.InputSnapshotJson != snapshotJson ||
-                proposal.ProposalJson != actionsJson || proposal.RulesetVersion != TodayCheckInScoreRule.RulesetVersion ||
-                proposal.TrainingPolicyVersion != StrengthPlanPreviewRule.Version ||
-                proposal.ReasonsJson != JsonSerializer.Serialize(new[] { state.Band }, JsonOptions))
-            {
-                proposal.Status = "Expired";
-                proposal.DecidedAtUtc = DateTime.UtcNow;
-                proposal.ConcurrencyVersion++;
-                await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-                await tx.CommitAsync(ct).ConfigureAwait(false);
-                return new ReadinessAdjustmentDecisionDto(false, true,
-                    state.Error ?? "Today’s check-in or workout changed. Review a fresh suggestion before applying changes.");
-            }
-
-            var actions = JsonSerializer.Deserialize<List<ReadinessAction>>(proposal.ProposalJson, JsonOptions) ?? [];
-            foreach (var action in actions)
-            {
-                switch (action.Kind)
-                {
-                    case "TrimOptionalSets":
-                    {
-                        var exercise = await dbContext.WorkoutDayExercises.SingleAsync(
-                            e => e.UserId == userId && e.Id == action.ExerciseId, ct).ConfigureAwait(false);
-                        exercise.Sets = action.AfterSets!.Value;
-                        exercise.OptionalSets = 0;
-                        break;
-                    }
-                    case "RemoveOptionalExercise":
-                    {
-                        var exercise = await dbContext.WorkoutDayExercises.SingleAsync(
-                            e => e.UserId == userId && e.Id == action.ExerciseId, ct).ConfigureAwait(false);
-                        exercise.IsRemovedByReadiness = true;
-                        break;
-                    }
-                    case "RemoveOptionalSession":
-                    {
-                        var day = await dbContext.WorkoutDays.SingleAsync(
-                            d => d.UserId == userId && d.Id == action.WorkoutDayId, ct).ConfigureAwait(false);
-                        day.IsRemovedByReadiness = true;
-                        break;
-                    }
-                    case "ChooseEasierAlternative":
-                    {
-                        var primary = await dbContext.WorkoutDays.SingleAsync(
-                            d => d.UserId == userId && d.Id == action.WorkoutDayId, ct).ConfigureAwait(false);
-                        var alternate = await dbContext.WorkoutDays.SingleAsync(
-                            d => d.UserId == userId && d.Id == action.AlternateDayId, ct).ConfigureAwait(false);
-                        primary.IsRemovedByReadiness = true;
-                        if (alternate.Date == state.Snapshot.LocalDate ||
-                            alternate.Date is null && alternate.DayOfWeek == (int)state.Snapshot.LocalDate.DayOfWeek)
-                        {
-                            alternate.IsOptional = false;
-                            alternate.IsEasierAlternative = false;
-                        }
-                        else
-                        {
-                            var replacement = new WorkoutDayRecord
-                            {
-                                Id = Guid.CreateVersion7(),
-                                UserId = userId,
-                                WorkoutPlanId = alternate.WorkoutPlanId,
-                                DayOfWeek = (int)state.Snapshot.LocalDate.DayOfWeek,
-                                WorkoutType = alternate.WorkoutType,
-                                Name = alternate.Name,
-                                WeekIndex = alternate.WeekIndex,
-                                Date = state.Snapshot.LocalDate,
-                                IsOptional = false,
-                                IsEasierAlternative = false
-                            };
-                            dbContext.WorkoutDays.Add(replacement);
-                            var alternateExercises = await dbContext.WorkoutDayExercises.AsNoTracking()
-                                .Where(e => e.UserId == userId && e.WorkoutDayId == alternate.Id && !e.IsRemovedByReadiness)
-                                .ToListAsync(ct).ConfigureAwait(false);
-                            dbContext.WorkoutDayExercises.AddRange(alternateExercises.Select(e => new WorkoutDayExerciseRecord
-                            {
-                                Id = Guid.CreateVersion7(),
-                                UserId = userId,
-                                WorkoutDayId = replacement.Id,
-                                ExerciseId = e.ExerciseId,
-                                Sets = e.Sets,
-                                OptionalSets = 0,
-                                Reps = e.Reps,
-                                DurationSeconds = e.DurationSeconds,
-                                IsOptional = false,
-                                IsRemovedByReadiness = false
-                            }));
-                        }
-                        break;
-                    }
-                    default:
-                        throw new InvalidOperationException("Readiness proposal contains an unsupported change.");
-                }
-            }
-
-            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-
-            var planDays = await dbContext.WorkoutDays.AsNoTracking()
-                .Where(d => d.UserId == userId && d.WorkoutPlanId == proposal.PlanId)
-                .OrderBy(d => d.Date).ThenBy(d => d.Id).ToListAsync(ct).ConfigureAwait(false);
-            var planDayIds = planDays.Select(d => d.Id).ToArray();
-            var planExercises = await dbContext.WorkoutDayExercises.AsNoTracking()
-                .Where(e => e.UserId == userId && planDayIds.Contains(e.WorkoutDayId))
-                .OrderBy(e => e.Id).ToListAsync(ct).ConfigureAwait(false);
-            var priorNumber = await dbContext.WorkoutPlanRevisionsV02
-                .Where(r => r.UserId == userId && r.PlanId == proposal.PlanId)
-                .Select(r => (long?)r.RevisionNumber).MaxAsync(ct).ConfigureAwait(false) ?? 0L;
-            var revision = new WorkoutPlanRevisionV02Record
-            {
-                Id = Guid.CreateVersion7(),
-                UserId = userId,
-                PlanId = proposal.PlanId,
-                RevisionNumber = checked(priorNumber + 1),
-                SourceProposalId = proposal.Id,
-                RulesetVersion = proposal.RulesetVersion,
-                TrainingPolicyVersion = proposal.TrainingPolicyVersion,
-                PlanJson = JsonSerializer.Serialize(new { Days = planDays, Exercises = planExercises }, JsonOptions),
-                InputSnapshotJson = proposal.InputSnapshotJson,
-                AcceptedAtUtc = DateTime.UtcNow
-            };
-            dbContext.WorkoutPlanRevisionsV02.Add(revision);
-            proposal.Status = "Accepted";
-            proposal.DecidedAtUtc = revision.AcceptedAtUtc;
-            proposal.AcceptedRevisionId = revision.Id;
+            proposal.Status = "Rejected";
+            proposal.DecidedAtUtc = DateTime.UtcNow;
             proposal.ConcurrencyVersion++;
             await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
             await tx.CommitAsync(ct).ConfigureAwait(false);
-            return new ReadinessAdjustmentDecisionDto(true, false, "Suggested changes applied to today’s plan.");
+            return new ReadinessAdjustmentDecisionDto(false, false, "Your plan is unchanged.");
         }).ConfigureAwait(false);
 
     private async Task<ReadinessState> BuildStateAsync(Guid userId,

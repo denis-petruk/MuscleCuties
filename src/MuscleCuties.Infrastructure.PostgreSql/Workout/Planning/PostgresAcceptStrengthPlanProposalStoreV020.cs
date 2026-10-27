@@ -6,6 +6,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
@@ -286,16 +287,17 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         if (origin == AcceptanceOrigin.Automatic)
         {
             if (activePlanId is null || inputSnapshot.AutomaticStartDate is null ||
-                await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, userId, nowUtc, cancellationToken).ConfigureAwait(false) ||
-                await dbContext.WorkoutSessionLogs.AnyAsync(session => session.UserId == userId &&
-                    !session.IsDeleted && session.CompletedAt == null, cancellationToken).ConfigureAwait(false))
+                await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, userId, nowUtc, cancellationToken).ConfigureAwait(false))
+                return new(StaleStatus, proposal.PlanId, null, PlanningInputsChangedSinceProposalCode);
+            var activeSessions = await InspectPromotionActiveSessionsAsync(userId, activePlanId.Value, cancellationToken).ConfigureAwait(false);
+            if (!activeSessions.Proven || (activeSessions.Any && (planningState.SafetyRegenerationPending || !planningState.PromotionPending)))
                 return new(StaleStatus, proposal.PlanId, null, PlanningInputsChangedSinceProposalCode);
             if (planningState.PromotionPending && !planningState.SafetyRegenerationPending &&
-                completedToday && !manualCompletedToday)
+                (completedToday || activeSessions.Any) && !manualCompletedToday)
                 sameDayStartOrder = await FindProvenSameDayPromotionOrderAsync(userId, activePlanId.Value,
                     today, scheduleSessions, cancellationToken).ConfigureAwait(false);
             var earliestScheduled = await FindNextScheduledDateAsync(userId, activePlanId.Value,
-                today, (completedToday && sameDayStartOrder is null) || manualCompletedToday, cancellationToken).ConfigureAwait(false);
+                today, ((completedToday || activeSessions.Any) && sameDayStartOrder is null) || manualCompletedToday, cancellationToken).ConfigureAwait(false);
             var expectedStart = planningState.SafetyRegenerationPending ? firstDate : earliestScheduled ?? firstDate;
             if (expectedStart is null || (manualCompletedToday && expectedStart == today) ||
                 inputSnapshot.AutomaticStartDate != expectedStart ||
@@ -428,6 +430,37 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         proposal.ConcurrencyVersion++;
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return new AcceptStrengthPlanProposalResultV020(AcceptedStatus, plan.Id, revisionId, null);
+    }
+
+    internal async Task<(bool Any, bool Proven)> InspectPromotionActiveSessionsAsync(Guid userId, Guid activePlanId,
+        CancellationToken cancellationToken)
+    {
+        var sessions = await dbContext.WorkoutSessionLogs.AsNoTracking().Where(session => session.UserId == userId &&
+            !session.IsDeleted && session.CompletedAt == null).ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (sessions.Count == 0) return (false, true);
+        if (sessions.Count != 1 || sessions[0].PlannedWorkoutDayId is not { } dayId) return (true, false);
+        var day = await dbContext.WorkoutDays.AsNoTracking().SingleOrDefaultAsync(row => row.UserId == userId &&
+            row.Id == dayId && row.WorkoutPlanId == activePlanId, cancellationToken).ConfigureAwait(false);
+        var snapshot = PlannedPrescriptionSnapshot.Deserialize(sessions[0].PlannedPrescriptionSnapshotJson);
+        if (day is null || day.IsRemovedBySafety || day.IsRemovedByReadiness || day.IsRemovedByUserAdjustment ||
+            snapshot is null || snapshot.DayId != dayId || snapshot.Exercises is null ||
+            snapshot.WorkoutType != day.WorkoutType || snapshot.ActivityTypeId != day.ActivityTypeId ||
+            snapshot.ActivityTypeId is not { } activity || !Enum.IsDefined(typeof(WorkoutActivityType), activity) ||
+            !IsPersistableActivity((WorkoutActivityType)activity) ||
+            (IsStrengthActivity((WorkoutActivityType)activity) && snapshot.Exercises.Count == 0) ||
+            snapshot.Exercises.Any(exercise => exercise is null || exercise.Id == Guid.Empty || exercise.ExerciseId <= 0 ||
+                exercise.Sets <= 0 || exercise.Reps < 0 ||
+                (exercise.Reps == 0 && (IsStrengthActivity((WorkoutActivityType)activity) || exercise.DurationSeconds is null)) ||
+                exercise.OptionalSets < 0 ||
+                exercise.OptionalSets >= exercise.Sets || exercise.DurationSeconds is <= 0) ||
+            snapshot.Exercises.Select(exercise => exercise.Id).Distinct().Count() != snapshot.Exercises.Count)
+            return (true, false);
+        var ids = snapshot.Exercises.Select(exercise => exercise.Id).ToArray();
+        var originalRows = await dbContext.WorkoutDayExercises.AsNoTracking().Where(exercise =>
+            exercise.UserId == userId && exercise.WorkoutDayId == dayId && ids.Contains(exercise.Id))
+            .Select(exercise => new { exercise.Id, exercise.ExerciseId }).ToListAsync(cancellationToken).ConfigureAwait(false);
+        return (true, originalRows.Count == ids.Length && snapshot.Exercises.All(exercise =>
+            originalRows.Any(row => row.Id == exercise.Id && row.ExerciseId == exercise.ExerciseId)));
     }
 
     internal async Task<int?> FindProvenSameDayPromotionOrderAsync(Guid userId, Guid activePlanId,

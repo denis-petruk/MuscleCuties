@@ -2,6 +2,8 @@ namespace MuscleCuties.UseCases.Features.Workout.ActiveSession;
 
 public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store)
 {
+    public Task<IReadOnlyList<PlannedWorkoutSessionHistoryEntry>> GetPlannedSessionHistoryAsync(Guid userId, int workoutDayId, CancellationToken cancellationToken = default) =>
+        store.GetPlannedSessionHistoryAsync(userId, workoutDayId, cancellationToken);
     public Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(Guid userId, int workoutDayId, CancellationToken cancellationToken = default) =>
         store.GetPlannedSessionAsync(userId, workoutDayId, cancellationToken);
     private const int MaximumIdempotencyKeyLength = 128;

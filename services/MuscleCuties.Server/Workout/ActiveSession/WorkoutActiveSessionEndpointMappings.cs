@@ -14,6 +14,14 @@ public static class WorkoutActiveSessionEndpointMappings
     {
         var group = endpoints.MapGroup(SessionsRoute).RequireAuthorization();
 
+        group.MapGet("/planned/{workoutDayId:int}/history", async (int workoutDayId, ClaimsPrincipal principal,
+            [FromServices] WorkoutActiveSessionUseCase useCase, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            try { return Results.Ok(await useCase.GetPlannedSessionHistoryAsync(userId, workoutDayId, cancellationToken).ConfigureAwait(false)); }
+            catch (InvalidOperationException) { return Results.Conflict(); }
+        });
+
         group.MapGet("/planned/{workoutDayId:int}", async (int workoutDayId, ClaimsPrincipal principal,
             [FromServices] WorkoutActiveSessionUseCase useCase, CancellationToken cancellationToken) =>
         {

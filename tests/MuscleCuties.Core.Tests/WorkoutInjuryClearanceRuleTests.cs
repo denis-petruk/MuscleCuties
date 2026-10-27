@@ -72,4 +72,15 @@ public sealed class WorkoutInjuryClearanceRuleTests
                 [new(false, ClearanceDate.AddDays(LaterClearanceOffset))], ClearanceDate));
     }
 
+    [Fact]
+    public void ActiveAndRecentlyClearedRestrictionsAreNotDropped()
+    {
+        Assert.True(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(false, ClearanceDate, DelayedRestorationDate));
+        Assert.True(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, ClearanceDate, LastOptionalDate));
+        Assert.False(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, ClearanceDate, RequiredDate));
+        Assert.True(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, null, RequiredDate));
+        Assert.True(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, ClearanceDate, null));
+        Assert.True(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, RequiredDate, ClearanceDate));
+    }
+
 }

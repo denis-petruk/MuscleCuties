@@ -248,6 +248,10 @@ public static partial class UiTextCatalog
         English["Workout_Session_TimeFormat"] = "Time: {0}";
         English["Workout_Session_TimeLabel"] = "Time";
         English["Workout_Session_ActivitiesTitle"] = "Session activities";
+        English["Workout_Session_HistoryTitle"] = "Session history";
+        English["Workout_Session_HistoryExplanation"] = "These are recorded sessions for this workout. An earlier interrupted request may have an unknown outcome.";
+        English["Workout_Session_HistoryCompletedFormat"] = "Started {0} · completed {1} · ID {2}";
+        English["Workout_Session_HistoryActiveFormat"] = "Started {0} · active · ID {2}";
         English["Workout_Session_ChooseActivityToStart"] = "Choose an activity to continue to its exercise screen.";
         English["Workout_Session_NoActivitiesAvailable"] = "No activities were found for this session.";
         English["Workout_Session_ToggleTipsAccessibility"] = "Show or hide exercise tips and technique cues";

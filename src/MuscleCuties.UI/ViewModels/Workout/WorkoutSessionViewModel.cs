@@ -8,6 +8,7 @@ using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensi
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Workout;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Workout.Session;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
@@ -60,6 +61,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
 
     [ObservableProperty] private string _cyclePhaseNote = string.Empty;
     [ObservableProperty] private string _dayTitle = "Workout";
+    [ObservableProperty] private ObservableCollection<string> _sessionHistory = [];
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError), nameof(HasNoActivities),
         nameof(HasActivityChoices))]
@@ -289,6 +291,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         ExerciseProgress = [];
         ExercisePreviewNames = [];
         DayTitle = "Workout";
+        SessionHistory = [];
         CyclePhaseNote = string.Empty;
         _skippedIds.Clear();
         _prIds.Clear();
@@ -306,7 +309,13 @@ public partial class WorkoutSessionViewModel : ObservableObject
 
             var detail = await _session.GetDetailAsync(workoutDayId);
             var existingSession = await _session.GetPlannedSessionAsync(workoutDayId);
+            var history = await _session.GetPlannedSessionHistoryAsync(workoutDayId);
             if (version != _loadVersion) return;
+            SessionHistory = new ObservableCollection<string>(history.Select(entry => string.Format(
+                UiTextCatalog.Get(entry.CompletedAtUtc.HasValue
+                    ? "Workout_Session_HistoryCompletedFormat" : "Workout_Session_HistoryActiveFormat"),
+                entry.StartedAtUtc.ToLocalTime().ToString("g"),
+                entry.CompletedAtUtc?.ToLocalTime().ToString("g") ?? string.Empty, entry.SessionId)));
             _isRestDay = detail.IsRestDay;
             _plannedSessionId = existingSession is { IsCompleted: false, IsCanceled: false } ? existingSession.SessionId : null;
             _sessionCreated = _plannedSessionId.HasValue;

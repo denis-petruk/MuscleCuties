@@ -8,7 +8,7 @@ namespace MuscleCuties.Core.Tests;
 /// Asserts:
 /// 1. Every Controls/**/*.xaml file in src/MuscleCuties.UI/Controls is referenced by at least one Page, Control, or C# file.
 /// 2. Every route registered in AppShell.xaml.cs points to an existing Page file in src/MuscleCuties.UI/Pages.
-/// 3. PhaseAdjustmentReviewPageV010 is registered in both AppShell.xaml.cs and MauiProgram.cs.
+/// 3. The retired phase-adjustment review is not registered for navigation or dependency injection.
 /// 4. Retired controls and pages (DashboardCalendarCard, InjuryLogPage, ScoreToColorConverter, DashboardMonthGrid) do not exist.
 /// </summary>
 public class UiCleanlinessAndReachabilityTests
@@ -110,18 +110,19 @@ public class UiCleanlinessAndReachabilityTests
     }
 
     [Fact]
-    public void PhaseAdjustmentReviewPageV010_is_registered_in_AppShell_and_MauiProgram()
+    public void RetiredPhaseAdjustmentReview_is_not_reachable_through_navigation_or_dependency_injection()
     {
         var appShellPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "AppShell.xaml.cs");
         var appShellContent = File.ReadAllText(appShellPath);
-        Assert.Contains(
+        Assert.DoesNotContain(
             "Routing.RegisterRoute(nameof(PhaseAdjustmentReviewPageV010), typeof(PhaseAdjustmentReviewPageV010));",
             appShellContent);
 
         var mauiProgramPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "MauiProgram.cs");
         var mauiContent = File.ReadAllText(mauiProgramPath);
-        Assert.Contains("services.AddTransient<PhaseAdjustmentReviewPageV010>();", mauiContent);
-        Assert.Contains("services.AddTransient<PhaseAdjustmentReviewViewModelV010>", mauiContent);
+        Assert.DoesNotContain("services.AddTransient<PhaseAdjustmentReviewPageV010>();", mauiContent);
+        Assert.DoesNotContain("services.AddTransient<PhaseAdjustmentReviewViewModelV010>", mauiContent);
+        Assert.DoesNotContain("services.AddSingleton<IPhaseAdjustmentProposalClientV010", mauiContent);
     }
 
     [Fact]

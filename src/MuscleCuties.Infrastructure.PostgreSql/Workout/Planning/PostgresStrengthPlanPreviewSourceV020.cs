@@ -73,6 +73,8 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
         var injuries = await dbContext.WorkoutInjuryLogs.AsNoTracking()
             .Where(row => row.UserId == userId)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
+        var episodes = await dbContext.WorkoutInjuryEpisodes.AsNoTracking()
+            .Where(row => row.UserId == userId).ToListAsync(cancellationToken).ConfigureAwait(false);
         DateOnly? today = null;
         if (planningState?.TimeZoneId is { } zoneId)
         {
@@ -80,9 +82,15 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             catch (TimeZoneNotFoundException) { }
             catch (InvalidTimeZoneException) { }
         }
-        var relevantInjuries = injuries.Where(injury => !string.Equals(injury.Status, "Cleared", StringComparison.OrdinalIgnoreCase) ||
-            injury.ClearedDate is null || today is null || injury.ClearedDate > today ||
-            WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(injury.ClearedDate.Value, today.Value)).ToArray();
+        var relevantInjuries = injuries.Where(injury =>
+            !string.Equals(injury.Status, "Cleared", StringComparison.OrdinalIgnoreCase) || today is null ||
+            injury.ClearedDate is null || injury.ClearedDate > today ||
+            !episodes.Any(episode => episode.InjuryLogId == injury.Id && !episode.SourceDeleted &&
+                episode.ClearedOn == injury.ClearedDate && !string.IsNullOrWhiteSpace(episode.ClearanceTimeZoneId) &&
+                episode.ClearanceTimeZoneVersion is not null) ||
+            episodes.Any(episode => episode.InjuryLogId == injury.Id && (episode.SourceDeleted ||
+                episode.ClearedOn is null || episode.ClearedOn > today ||
+                string.IsNullOrWhiteSpace(episode.ClearanceTimeZoneId) || episode.ClearanceTimeZoneVersion is null))).ToArray();
         var logs = await dbContext.WorkoutExerciseLogs.AsNoTracking()
             .Where(row => row.UserId == userId && row.CompletedSets > 0 && row.CompletedReps > 0)
             .Select(row => new { row.ExerciseId, row.WorkoutLogId, row.WeightKg })

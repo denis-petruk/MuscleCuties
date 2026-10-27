@@ -6,6 +6,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
 using Npgsql;
+using System.Text.Json;
 
 namespace MuscleCuties.Registration.Integration.Tests;
 
@@ -32,6 +33,7 @@ public sealed class InjuryPlanningTransactionTests
         var day = Guid.NewGuid();
         var exercise = Guid.NewGuid();
         var proposal = Guid.NewGuid();
+        var acceptedProposal = Guid.NewGuid();
         var firstInjury = Guid.NewGuid();
         var secondInjury = Guid.NewGuid();
         var now = DateTime.UtcNow;
@@ -58,6 +60,14 @@ public sealed class InjuryPlanningTransactionTests
             db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record { Id = proposal, UserId = user,
                 PlanId = Guid.NewGuid(), Status = "Proposed", RulesetVersion = "synthetic", TrainingPolicyVersion = "synthetic",
                 CreatedAtUtc = now, LeaseId = Guid.NewGuid(), LeaseFence = 1, LeaseExpiresAtUtc = now.AddMinutes(5) });
+            db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record { Id = acceptedProposal, UserId = user,
+                PlanId = plan, Status = "Accepted", RulesetVersion = "synthetic", TrainingPolicyVersion = "synthetic", CreatedAtUtc = now });
+            db.WorkoutPlanRevisionsV02.Add(new WorkoutPlanRevisionV02Record { Id = Guid.NewGuid(), UserId = user,
+                PlanId = plan, SourceProposalId = acceptedProposal, RevisionNumber = 1, RulesetVersion = "synthetic",
+                TrainingPolicyVersion = "synthetic", AcceptedAtUtc = now,
+                PlanJson = JsonSerializer.Serialize(new { proposal = new { sessions = new[] { new { sessionIndex = 0,
+                    slots = new[] { new { exerciseId } } } } }, weekdayAssignments = new[] { new { sessionIndex = 0,
+                    weekday = (int)today.AddDays(1).DayOfWeek } } }) });
             await db.SaveChangesAsync();
             var store = new PostgresCheckInAndInjuryStore(db, clock);
             var first = new SaveInjuryObservationRequest(user, firstInjury, (int)InjuryFlag.Knee, "Acute", today, 3, today);
@@ -68,7 +78,9 @@ public sealed class InjuryPlanningTransactionTests
             await store.SaveInjuryAsync(new SaveInjuryObservationRequest(user, secondInjury, (int)InjuryFlag.Shoulder,
                 "Acute", today, 2, today), CancellationToken.None);
             var associations = await db.WorkoutInjuryPrescriptions.AsNoTracking().Where(row => row.UserId == user).ToListAsync();
-            Xunit.Assert.Equal(2, associations.Count);
+            // Without reviewed injury-to-exercise linkage the second episode must not
+            // acquire invented lineage; reconciliation stays pending for review.
+            Xunit.Assert.Single(associations);
             Xunit.Assert.All(associations, row => { Xunit.Assert.Equal(exercise, row.OriginalWorkoutDayExerciseId);
                 Xunit.Assert.Equal(SyntheticOptionalSets, row.OriginalOptionalSets); Xunit.Assert.Equal("synthetic-slot", row.OriginalPlanningSlotId); });
             clock.UtcNow = now.AddDays(2);

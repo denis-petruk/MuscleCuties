@@ -503,7 +503,6 @@ public static class MauiProgram
         services.AddSingleton<IWorkoutOverviewUseCase, WorkoutOverviewUseCase>();
         services.AddSingleton<IStrengthPlanProposalClientV020, CloudStrengthPlanProposalStoreV020>();
         services.AddSingleton<IWorkoutAccountCalendarClient, WorkoutAccountCalendarClient>();
-        services.AddSingleton<IPhaseAdjustmentProposalClientV010, CloudPhaseAdjustmentProposalClientV010>();
         services.AddScoped<IWorkoutSessionActionStore, CloudWorkoutSessionActionStore>();
         services.AddScoped<IWorkoutSessionActionUseCase, WorkoutSessionActionUseCase>();
     }
@@ -622,9 +621,6 @@ public static class MauiProgram
             sp.GetRequiredService<IWorkoutAccountCalendarClient>(),
             overview: sp.GetRequiredService<IWorkoutOverviewUseCase>()));
 
-        services.AddTransient<PhaseAdjustmentReviewViewModelV010>(sp => new PhaseAdjustmentReviewViewModelV010(
-            sp.GetRequiredService<IPhaseAdjustmentProposalClientV010>(),
-            () => NavigateToAsync("..")));
 
         services.AddTransient<WorkoutSessionViewModel>(sp => new WorkoutSessionViewModel(
             sp.GetRequiredService<IWorkoutSessionActionUseCase>(),
@@ -733,7 +729,6 @@ public static class MauiProgram
         services.AddTransient<ProfileUnitsDisplayPage>();
         services.AddTransient<ProfileFeedbackPage>();
         services.AddTransient<ProfilePrivacyPage>();
-        services.AddTransient<PhaseAdjustmentReviewPageV010>();
         services.AddTransient<FoodLogPage>();
         services.AddTransient<WorkoutHistoryPage>();
         services.AddTransient<PhotoJourneyVaultPage>();
