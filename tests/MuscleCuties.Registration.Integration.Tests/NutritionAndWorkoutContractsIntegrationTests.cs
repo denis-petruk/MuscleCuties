@@ -12,6 +12,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 using Npgsql;
 
@@ -294,6 +295,86 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         finally
         {
             await database.Users.Where(u => u.Id == userId).ExecuteDeleteAsync();
+        }
+    }
+
+    [Xunit.Fact]
+    public async Task UnsafeAnswerSuppressesUnfinishedHundredPercentLogButKeepsFinishedSession()
+    {
+        var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(RequireLocalTestConnectionString()).Options;
+        await using var database = new PostgresDbContext(options);
+        var userId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        var today = DateOnly.FromDateTime(now);
+        await SyntheticTenantSession.SetAsync(database, userId);
+        database.Users.Add(new UserRecord { Id = userId, Email = $"safety-{userId:N}@example.invalid",
+            Username = $"saf_{userId.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
+            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
+        var planId = Guid.NewGuid();
+        var unfinishedDayId = Guid.NewGuid();
+        var completedDayId = Guid.NewGuid();
+        var logId = Guid.NewGuid();
+        var finishedSessionId = Guid.NewGuid();
+        var unfinishedSessionId = Guid.NewGuid();
+        var setId = Guid.NewGuid();
+        database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+        {
+            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id,
+            BaselineExperience = TrainingExperienceLevel.Beginner, EffectiveExperience = TrainingExperienceLevel.Beginner
+        });
+        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic plan",
+            IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
+        foreach (var dayId in new[] { unfinishedDayId, completedDayId })
+            database.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
+                DayOfWeek = (int)today.DayOfWeek, WeekIndex = 0, Date = today, WorkoutType = "Cardio",
+                ActivityTypeId = (int)WorkoutActivityType.Swimming, Name = "Synthetic swimming" });
+        database.WorkoutLogs.Add(new WorkoutLogRecord { Id = logId, UserId = userId, WorkoutDayId = unfinishedDayId,
+            Date = today, CompletionPercent = 100, CreatedAt = now });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = finishedSessionId, UserId = userId,
+            PlannedWorkoutDayId = completedDayId, WorkoutName = "Synthetic finished", StartedAt = now,
+            CompletedAt = now, CreatedAt = now, UpdatedAt = now });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = unfinishedSessionId, UserId = userId,
+            PlannedWorkoutDayId = unfinishedDayId, WorkoutName = "Synthetic unfinished", StartedAt = now,
+            CreatedAt = now, UpdatedAt = now });
+        database.ExerciseSetLogs.Add(new ExerciseSetLogRecord { Id = setId, UserId = userId,
+            WorkoutSessionLogId = unfinishedSessionId, ExerciseName = "Synthetic set", SetNumber = 1,
+            RepsCompleted = SyntheticStrengthRepetitions, CreatedAt = now, UpdatedAt = now });
+        await database.SaveChangesAsync();
+        try
+        {
+            var store = new PostgresStrengthPlanProposalStoreV020(database);
+            await store.SaveAnswersAsync(userId, new SaveActivityAnswersRequest(0,
+                [new(MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Swimming,
+                    HasSwimmingFacilityAccess: false)], null), CancellationToken.None);
+            var days = await database.WorkoutDays.AsNoTracking().Where(day => day.UserId == userId)
+                .ToDictionaryAsync(day => day.Id);
+            Xunit.Assert.True(days[unfinishedDayId].IsRemovedBySafety);
+            Xunit.Assert.False(days[completedDayId].IsRemovedBySafety);
+            Xunit.Assert.True(await database.WorkoutLogs.AsNoTracking().AnyAsync(log => log.Id == logId));
+            Xunit.Assert.True(await database.ExerciseSetLogs.AsNoTracking().AnyAsync(set => set.Id == setId));
+
+            var safeSwimming = new MuscleCuties.UseCases.Features.Workout.Planning.ActivityEligibilityInputV020(
+                MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Swimming,
+                HasSwimmingFacilityAccess: true, CanSwimIndependently: true);
+            await store.SaveAnswersAsync(userId, new SaveActivityAnswersRequest(1, [safeSwimming], null), CancellationToken.None);
+            // Model a separately applied safe plan before withdrawing the safety evidence.
+            await database.WorkoutDays.Where(day => day.Id == unfinishedDayId)
+                .ExecuteUpdateAsync(update => update.SetProperty(day => day.IsRemovedBySafety, false));
+            await store.SaveAnswersAsync(userId, new SaveActivityAnswersRequest(2,
+                [safeSwimming with { CanSwimIndependently = null }], null), CancellationToken.None);
+            Xunit.Assert.True(await database.WorkoutDays.AsNoTracking().Where(day => day.Id == unfinishedDayId)
+                .Select(day => day.IsRemovedBySafety).SingleAsync());
+
+            await store.SaveAnswersAsync(userId, new SaveActivityAnswersRequest(3, [safeSwimming], null), CancellationToken.None);
+            await database.WorkoutDays.Where(day => day.Id == unfinishedDayId)
+                .ExecuteUpdateAsync(update => update.SetProperty(day => day.IsRemovedBySafety, false));
+            await store.SaveAnswersAsync(userId, new SaveActivityAnswersRequest(4, [], null), CancellationToken.None);
+            Xunit.Assert.True(await database.WorkoutDays.AsNoTracking().Where(day => day.Id == unfinishedDayId)
+                .Select(day => day.IsRemovedBySafety).SingleAsync());
+        }
+        finally
+        {
+            await database.Users.Where(user => user.Id == userId).ExecuteDeleteAsync();
         }
     }
 

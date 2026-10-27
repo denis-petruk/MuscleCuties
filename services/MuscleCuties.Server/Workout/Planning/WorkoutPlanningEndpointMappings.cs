@@ -32,6 +32,9 @@ public static class WorkoutPlanningEndpointMappings
     private const string ErrorCodeWorkoutPreviewOpen = "WorkoutPreviewOpen";
     private const string ErrorCodeWorkoutPlanningInputsChanged = "WorkoutPlanningInputsChanged";
     private const string ErrorCodeWorkoutAnswersUnavailable = "WorkoutAnswersUnavailable";
+    private const string ErrorCodeWorkoutPreferencesRequireProposal = "WorkoutPreferencesRequireProposal";
+    private const string ErrorMessageWorkoutPreferencesRequireProposal =
+        "Upgrade the app and submit workout preferences with the proposal.";
     private const string ErrorCodeLegacyPlanBypassDisabled = "LegacyPlanBypassDisabled";
     private const string ErrorMessageLegacyPlanBypassDisabled =
         "Direct plan generation is retired. All plans must be created via strength proposals and accepted through canonical lifecycle.";
@@ -46,7 +49,7 @@ public static class WorkoutPlanningEndpointMappings
             Results.Ok(await catalog.ExecuteAsync(cancellationToken).ConfigureAwait(false)))
             .RequireAuthorization();
 
-        // Legacy plan route rejects direct generation/activation bypasses and delegates to canonical lifecycle.
+        // Legacy direct generation is rejected; clients must use the proposal lifecycle.
         endpoints.MapPost(LegacyPlanRoute, () =>
             Results.Conflict(new
             {
@@ -98,6 +101,13 @@ public static class WorkoutPlanningEndpointMappings
             {
                 if (!TryGetUserId(principal, out var ownerUserId))
                     return Results.Unauthorized();
+
+                if (request.DraftPreferences is null)
+                    return Results.Conflict(new
+                    {
+                        code = ErrorCodeWorkoutPreferencesRequireProposal,
+                        message = ErrorMessageWorkoutPreferencesRequireProposal
+                    });
 
                 try
                 {

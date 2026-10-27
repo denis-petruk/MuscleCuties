@@ -237,7 +237,7 @@ public sealed class ServerRouteParityTests
     }
 
     [Fact]
-    public async Task WorkoutPreferencesAcceptAllActivitiesAndWeekdaysAsAValidSelection()
+    public async Task LegacyWorkoutPreferencesCannotChangeAppliedPreferences()
     {
         await using var fixture = await ServerFixture.StartAsync();
         fixture.SetBearer(Guid.NewGuid());
@@ -267,9 +267,24 @@ public sealed class ServerRouteParityTests
             ExcludedExerciseIds = new HashSet<int>()
         });
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(activities, fixture.Profile.LastWorkoutPreferences?.ActivityTypes);
-        Assert.Equal(weekdays, fixture.Profile.LastWorkoutPreferences?.AvailableWeekdays);
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Null(fixture.Profile.LastWorkoutPreferences);
+    }
+
+    [Fact]
+    public async Task ProposalWithoutPreferenceDraftIsRejected()
+    {
+        await using var fixture = await ServerFixture.StartAsync();
+        fixture.SetBearer(Guid.NewGuid());
+
+        var response = await fixture.Client.PostAsJsonAsync("/api/v1/workouts/plan/strength-proposals", new
+        {
+            Activity = (int)WorkoutActivityType.GeneralStrength,
+            LocalDate = DateOnly.MinValue,
+            ActivityHistory = (object?)null
+        });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
     [Fact]

@@ -100,6 +100,10 @@ public static class ApiApplication
     private const string AuthenticationRoute = "/api/v1/auth";
     private const string EmailChallengeRoute = "/api/v1/email-challenges";
     private const string ProfileUnitsRoute = "/api/v1/profile/units";
+    private const string LegacyWorkoutPreferencesRoute = "/api/v1/profile/workout-preferences";
+    private const string WorkoutPreferencesRequireProposalCode = "WorkoutPreferencesRequireProposal";
+    private const string WorkoutPreferencesRequireProposalMessage =
+        "Change workout preferences through a workout plan proposal.";
 
     public static WebApplication Build(
         WebApplicationBuilder builder,
@@ -228,7 +232,6 @@ public static class ApiApplication
         builder.Services.AddScoped<IWorkoutPlanReconciler, PostgresWorkoutPlanReconciler>();
         builder.Services.AddScoped<IWorkoutProgressStore, PostgresWorkoutProgressStore>();
         builder.Services.AddScoped<GetWorkoutPlanningCatalogUseCase>();
-        builder.Services.AddScoped<IWorkoutPlanningReferenceDataSource, PostgresWorkoutPlanningReferenceDataSource>();
         builder.Services.AddScoped<IStrengthPlanPreviewSourceV020, PostgresStrengthPlanPreviewSourceV020>();
         builder.Services.AddScoped<IReviewedExerciseExclusionCatalogV020Store,
             PostgresReviewedExerciseExclusionCatalogV020Store>();
@@ -239,7 +242,6 @@ public static class ApiApplication
             PostgresAcceptStrengthPlanProposalStoreV020>();
         builder.Services.AddScoped<CreateStrengthPlanProposalV020UseCase>();
         builder.Services.AddScoped<AcceptStrengthPlanProposalV020UseCase>();
-        builder.Services.AddScoped<GenerateDeterministicWeeklyPlanUseCase>();
         builder.Services.AddScoped<IWorkoutActiveSessionStore, PostgresWorkoutActiveSessionStore>();
         builder.Services.AddScoped<WorkoutActiveSessionUseCase>();
         builder.Services.AddScoped<IServerWorkoutArchiveStore, PostgresWorkoutArchiveStore>();
@@ -532,15 +534,13 @@ public static class ApiApplication
             return MapProfileWrite(await profile.UpdateNutritionPreferencesAsync(new UpdateServerNutritionPreferencesRequest(
                 userId, request.ExpectedVersion, request.Goal, request.WeightGoalPace, request.DietaryTags), cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
-        app.MapPut("/api/v1/profile/workout-preferences", async (
-            UpdateServerWorkoutPreferencesBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
+        // Older clients must upgrade: a standalone write would change applied preferences
+        // without atomically replacing the plan through the proposal lifecycle.
+        app.MapPut(LegacyWorkoutPreferencesRoute, () => Results.Conflict(new
         {
-            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
-            return MapProfileWrite(await profile.UpdateWorkoutPreferencesAsync(new UpdateServerWorkoutPreferencesRequest(
-                userId, request.ExpectedVersion, request.ActivityTypes, request.AvailableWeekdays,
-                request.ActivitySessionDurationsMinutes, request.EquipmentLevel,
-                request.RequestedSessionsPerWeek, request.ExcludedExerciseIds), cancellationToken).ConfigureAwait(false));
-        }).RequireAuthorization();
+            code = WorkoutPreferencesRequireProposalCode,
+            message = WorkoutPreferencesRequireProposalMessage
+        })).RequireAuthorization();
         app.MapPut("/api/v1/profile/nutrition-targets", async (
             UpdateServerNutritionTargetsBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
         {

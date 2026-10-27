@@ -22,7 +22,6 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
     private const int SleepWindowLookbackDays = 2;
     private const int StepsWindowLookbackDays = 6;
     private const string ClearedStatus = "Cleared";
-    private const int CompletedWorkoutPercent = 100;
 
     public async Task<IReadOnlyList<DailyCheckInRecord>> LoadCheckInsAsync(
         Guid userId,
@@ -269,6 +268,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             if (!isClearing)
                 await SuppressFutureStrengthForInjuryAsync(request.UserId, request.Id, cancellationToken).ConfigureAwait(false);
 
+            await MarkSafetyRegenerationPendingAsync(request.UserId, cancellationToken).ConfigureAwait(false);
             await InvalidatePlanningPreviewsAsync(request.UserId, cancellationToken).ConfigureAwait(false);
 
             try
@@ -307,6 +307,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             }
 
             dbContext.WorkoutInjuryLogs.Remove(row);
+            await MarkSafetyRegenerationPendingAsync(userId, cancellationToken).ConfigureAwait(false);
             await InvalidatePlanningPreviewsAsync(userId, cancellationToken).ConfigureAwait(false);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -328,6 +329,17 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         }
     }
 
+    private async Task MarkSafetyRegenerationPendingAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        if (!await dbContext.WorkoutPlans.AnyAsync(plan => plan.UserId == userId && plan.IsActive, cancellationToken)
+                .ConfigureAwait(false))
+            return;
+        var state = await dbContext.WorkoutAccountPlanningStates.SingleOrDefaultAsync(item => item.UserId == userId,
+            cancellationToken).ConfigureAwait(false)
+            ?? throw new InvalidOperationException("Establish the account timezone before changing an injury.");
+        state.SafetyRegenerationPending = true;
+    }
+
     private async Task SuppressFutureStrengthForInjuryAsync(Guid userId, Guid injuryId, CancellationToken cancellationToken)
     {
         var activePlanId = await dbContext.WorkoutPlans.AsNoTracking()
@@ -345,8 +357,11 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         var today = WorkoutAccountCalendarRule.LocalDate(timeProvider.GetUtcNow(), zone);
         var days = await dbContext.WorkoutDays.Where(day => day.UserId == userId && day.WorkoutPlanId == activePlanId &&
                 day.Date >= today && day.WorkoutType == nameof(WorkoutType.Strength) &&
-                !dbContext.WorkoutLogs.Any(log => log.UserId == userId && log.WorkoutDayId == day.Id &&
-                    log.CompletionPercent >= CompletedWorkoutPercent))
+                !dbContext.WorkoutCompletionDayCredits.Any(credit => credit.UserId == userId &&
+                    credit.SourceWorkoutLogId != null && dbContext.WorkoutLogs.Any(log =>
+                        log.UserId == userId && log.Id == credit.SourceWorkoutLogId && log.WorkoutDayId == day.Id)) &&
+                !dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId &&
+                    session.PlannedWorkoutDayId == day.Id && session.CompletedAt != null))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (var day in days)
         {
