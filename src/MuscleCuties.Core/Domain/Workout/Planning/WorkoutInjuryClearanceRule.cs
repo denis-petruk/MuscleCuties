@@ -1,7 +1,7 @@
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
 public sealed record InjuryRestorationEpisode(bool IsActive, DateOnly? ClearedOn);
-public enum InjuryRestorationDisposition { Blocked, RestoreOptional, RestoreRequired }
+public enum InjuryClearanceRestorationDisposition { Blocked, RestoreOptional, RestoreRequired }
 
 /// <summary>Restoration never resets the window anchored to the original clearance date.</summary>
 public static class WorkoutInjuryClearanceRule
@@ -10,16 +10,16 @@ public static class WorkoutInjuryClearanceRule
     public const int FollowingMidnightOffsetDays = FullCalendarDaysAfterClearance + 1;
 
     /// <summary>All related episodes and current eligibility must be known before restoration.</summary>
-    public static InjuryRestorationDisposition EvaluateRestoration(bool originalWasOptional,
+    public static InjuryClearanceRestorationDisposition EvaluateRestoration(bool originalWasOptional,
         bool currentEligibilityConfirmed, IReadOnlyCollection<InjuryRestorationEpisode>? episodes,
         DateOnly effectiveDate)
     {
         if (!currentEligibilityConfirmed || episodes is null || episodes.Count == 0 ||
             episodes.Any(episode => episode.IsActive || !CanRestore(true, episode.ClearedOn, effectiveDate)))
-            return InjuryRestorationDisposition.Blocked;
+            return InjuryClearanceRestorationDisposition.Blocked;
         if (originalWasOptional || episodes.Any(episode => IsRestoredExerciseOptional(episode.ClearedOn!.Value, effectiveDate)))
-            return InjuryRestorationDisposition.RestoreOptional;
-        return InjuryRestorationDisposition.RestoreRequired;
+            return InjuryClearanceRestorationDisposition.RestoreOptional;
+        return InjuryClearanceRestorationDisposition.RestoreRequired;
     }
 
     public static DateOnly? RequiredFromLocalDate(DateOnly? originalClearanceDate)

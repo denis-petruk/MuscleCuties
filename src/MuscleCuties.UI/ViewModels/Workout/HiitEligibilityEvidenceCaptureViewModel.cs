@@ -10,6 +10,7 @@ namespace MuscleCuties.UI.ViewModels.Workout;
 
 public sealed partial class HiitEligibilityEvidenceCaptureViewModel : ObservableObject
 {
+    [ObservableProperty] private bool _confirmCurrentWeeks;
     private const int FirstPriorWeekOffset = 1;
     private const int NoElapsedDays = 0;
     private const decimal MinimumAverageSessionsPerWeek = 0m;
@@ -101,6 +102,7 @@ public sealed partial class HiitEligibilityEvidenceCaptureViewModel : Observable
 
     public void Reset()
     {
+        ConfirmCurrentWeeks = false;
         _showErrors = false;
         UnderlyingCardioConsistentWeeks = string.Empty;
         UnderlyingCardioAverageSessionsPerWeek = string.Empty;

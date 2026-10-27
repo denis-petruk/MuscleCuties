@@ -311,17 +311,13 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         _availableWeekdays.Length is >= WorkoutPreferencesConstraints.MinimumAvailableWeekdays and
             <= WorkoutPreferencesConstraints.MaximumAvailableWeekdays;
 
-    private bool HasMissingRequiredAnswers() => MissingRequirements().Count > NoPolicyReasons;
+    private bool HasMissingRequiredAnswers() => MissingRequirements().Count > NoPolicyReasons ||
+        (ShouldShowHiitUnderlyingCardioChoice &&
+         !HiitEvidenceCapture.IsComplete(DateOnly.FromDateTime(DateTime.Now),
+             SelectedHiitUnderlyingCardioActivity?.Activity));
 
     private bool IsRequiredAnswerMissing(string code) => _showMissingAnswers && MissingRequirements().Contains(code);
 
-        if (IsYogaSelected && IsDemandingYogaContent is null)
-            return true;
-
-        if (ShouldShowHiitUnderlyingCardioChoice &&
-            !HiitEvidenceCapture.IsComplete(DateOnly.FromDateTime(DateTime.Now),
-                SelectedHiitUnderlyingCardioActivity?.Activity))
-            return true;
     private IReadOnlyList<string> MissingRequirements(bool ignoreClimbingInstruction = false) =>
         WorkoutActivityRequirements.Missing(_selectedProfileActivities,
             CurrentActivityEvidence(ignoreClimbingInstruction), DateOnly.FromDateTime(DateTime.Now));
@@ -636,12 +632,20 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             var savedEvidence = (_savedAnswers?.ActivityEligibilityEvidence ?? [])
                 .Where(answer => currentEvidence.All(current => current.Activity != answer.Activity))
                 .Concat(currentEvidence).ToArray();
+            Guid? hiitChallengeId = null;
+            if (_selectedProfileActivities.Contains(WorkoutActivityDto.Hiit) && HiitEvidenceCapture.ConfirmCurrentWeeks &&
+                request.HiitEligibilityEvidence is not null && request.HiitUnderlyingCardioActivity is not null)
+            {
+                hiitChallengeId = (await _proposalClient.IssueHiitCaptureChallengeAsync()).ChallengeId;
+                HiitEvidenceCapture.ConfirmCurrentWeeks = false;
+            }
             _savedAnswers = await _proposalClient.SaveAnswersAsync(new SaveActivityAnswersRequest(
                 _savedAnswers?.Version ?? InitialAnswersVersion, savedEvidence,
                 _selectedProfileActivities.Contains(WorkoutActivityDto.Hiit) ? request.HiitEligibilityEvidence : _savedAnswers?.HiitEligibilityEvidence)
             {
                 HiitUnderlyingCardioActivity = _selectedProfileActivities.Contains(WorkoutActivityDto.Hiit)
-                    ? request.HiitUnderlyingCardioActivity : _savedAnswers?.HiitUnderlyingCardioActivity
+                    ? request.HiitUnderlyingCardioActivity : _savedAnswers?.HiitUnderlyingCardioActivity,
+                HiitCaptureChallengeId = hiitChallengeId
             });
             _safetyPlanChanged |= _savedAnswers.SafetyPlanChanged;
             if (_safetyPlanChanged)

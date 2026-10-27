@@ -34,6 +34,9 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
     internal async Task<StrengthPlanPreviewSourceV020?> LoadInCurrentTransactionAsync(Guid userId,
         CancellationToken cancellationToken)
     {
+        if (dbContext.Database.CurrentTransaction is null)
+            throw new InvalidOperationException("A planning transaction is required.");
+
         var profile = await dbContext.UserProfiles.AsNoTracking()
             .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken)
             .ConfigureAwait(false);
@@ -47,32 +50,6 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             Enum.IsDefined(parsedEquipment)
             ? parsedEquipment
             : Equipment.FullGym;
-            var result = await LoadWithinTransactionAsync(userId, cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-            return result;
-        });
-
-    /// <summary>Loads a planning snapshot within the caller's tenant transaction and account/catalog locks.</summary>
-    internal async Task<StrengthPlanPreviewSourceV020?> LoadWithinTransactionAsync(Guid userId,
-        CancellationToken cancellationToken)
-    {
-            if (dbContext.Database.CurrentTransaction is null)
-                throw new InvalidOperationException("A planning transaction is required.");
-
-            var profile = await dbContext.UserProfiles.AsNoTracking()
-                .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken)
-                .ConfigureAwait(false);
-            var planningState = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
-                .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken).ConfigureAwait(false);
-            var goal = Enum.TryParse<UserGoal>(profile?.Goal, true, out var parsedGoal) &&
-                Enum.IsDefined(parsedGoal)
-                ? parsedGoal
-                : UserGoal.MuscleTone;
-            var equipment = Enum.TryParse<Equipment>(profile?.EquipmentLevel, true, out var parsedEquipment) &&
-                Enum.IsDefined(parsedEquipment)
-                ? parsedEquipment
-                : Equipment.FullGym;
-
         var definitions = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
             .Include(row => row.MuscleContributions)
             .ThenInclude(row => row.MuscleGroup)
@@ -104,7 +81,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             catch (InvalidTimeZoneException) { }
         }
         var relevantInjuries = injuries.Where(injury => !string.Equals(injury.Status, "Cleared", StringComparison.OrdinalIgnoreCase) ||
-            injury.ClearedDate is null || today is null ||
+            injury.ClearedDate is null || today is null || injury.ClearedDate > today ||
             WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(injury.ClearedDate.Value, today.Value)).ToArray();
         var logs = await dbContext.WorkoutExerciseLogs.AsNoTracking()
             .Where(row => row.UserId == userId && row.CompletedSets > 0 && row.CompletedReps > 0)
@@ -132,123 +109,6 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                 .Select(row => row.ExerciseId).ToListAsync(cancellationToken).ConfigureAwait(false))
                 .ToHashSet();
         }
-            var definitions = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
-                .Include(row => row.MuscleContributions)
-                .ThenInclude(row => row.MuscleGroup)
-                .OrderBy(row => row.Id).ToListAsync(cancellationToken).ConfigureAwait(false);
-            var goalTierWeights = await dbContext.GoalTierWeights.AsNoTracking()
-                .OrderBy(row => row.MuscleGroupId).ThenBy(row => row.Id)
-                .ToListAsync(cancellationToken).ConfigureAwait(false);
-            var goalPriorityByExerciseId = GoalSpecificAccessoryPriorityRule.Resolve(
-                goal,
-                definitions.SelectMany(definition => definition.MuscleContributions.Select(contribution =>
-                    new PlanningMuscleContribution(contribution.Id, definition.Id,
-                        contribution.MuscleGroupId, (double)contribution.Fraction))).ToArray(),
-                goalTierWeights.Where(weight => weight.Goal == goal).Select(weight => new PlanningGoalTierWeight(
-                    weight.Id, weight.Goal, weight.MuscleGroupId, weight.Tier)).ToArray());
-            var reviewedSlots = ReviewedExerciseCatalogV020ReviewMap.MapSlots(definitions);
-            var preferences = await dbContext.UserExercisePreferences.AsNoTracking()
-                .Where(row => row.UserId == userId)
-                .OrderBy(row => row.CreatedAt).ThenBy(row => row.Id)
-                .ToListAsync(cancellationToken).ConfigureAwait(false);
-            var injuries = await dbContext.WorkoutInjuryLogs.AsNoTracking()
-                .Where(row => row.UserId == userId)
-                .ToListAsync(cancellationToken).ConfigureAwait(false);
-            DateOnly? today = null;
-            if (planningState?.TimeZoneId is { } zoneId)
-            {
-                try { today = WorkoutAccountCalendarRule.LocalDate(DateTimeOffset.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(zoneId)); }
-                catch (TimeZoneNotFoundException) { }
-                catch (InvalidTimeZoneException) { }
-            }
-            // Until cleared-load progression is evaluated against reviewed evidence,
-            // recent and unknown clearances remain restrictive in ordinary previews.
-            var activeInjuries = injuries.Where(injury => !string.Equals(injury.Status, "Cleared", StringComparison.OrdinalIgnoreCase) ||
-                injury.ClearedDate is null || today is null || injury.ClearedDate > today ||
-                WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(injury.ClearedDate.Value, today.Value)).ToArray();
-            var logs = await dbContext.WorkoutExerciseLogs.AsNoTracking()
-                .Where(row => row.UserId == userId && row.CompletedSets > 0 && row.CompletedReps > 0)
-                .Select(row => new { row.ExerciseId, row.WorkoutLogId, row.WeightKg })
-                .OrderBy(row => row.WorkoutLogId).ThenBy(row => row.ExerciseId).ThenBy(row => row.WeightKg)
-                .ToListAsync(cancellationToken).ConfigureAwait(false);
-            var activePlanId = await dbContext.WorkoutPlans.AsNoTracking()
-                .Where(row => row.UserId == userId && row.IsActive)
-                .OrderByDescending(row => row.CreatedAt)
-                .Select(row => (Guid?)row.Id)
-                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-            var acceptedExerciseIds = new HashSet<int>();
-            Guid? activeRevisionId = null;
-            if (activePlanId is { } planId)
-            {
-                activeRevisionId = await dbContext.WorkoutPlanRevisionsV02.AsNoTracking()
-                    .Where(row => row.UserId == userId && row.PlanId == planId)
-                    .OrderByDescending(row => row.RevisionNumber).Select(row => (Guid?)row.Id)
-                    .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-                var dayIds = await dbContext.WorkoutDays.AsNoTracking()
-                    .Where(row => row.UserId == userId && row.WorkoutPlanId == planId)
-                    .Select(row => row.Id).ToArrayAsync(cancellationToken).ConfigureAwait(false);
-                acceptedExerciseIds = (await dbContext.WorkoutDayExercises.AsNoTracking()
-                    .Where(row => row.UserId == userId && dayIds.Contains(row.WorkoutDayId))
-                    .Select(row => row.ExerciseId).ToListAsync(cancellationToken).ConfigureAwait(false))
-                    .ToHashSet();
-            }
-
-            return new StrengthPlanPreviewSourceV020(
-                goal, equipment,
-                activeInjuries.Aggregate(InjuryFlag.None, (flags, injury) =>
-                    flags | (InjuryFlag)injury.SiteFlag),
-                activeInjuries.Any(injury => injury.Pain > 0),
-                definitions.Select(WorkoutExerciseV020CatalogMapper.Map).ToArray(),
-                preferences.GroupBy(row => row.OriginalExerciseId)
-                    .ToDictionary(group => group.Key, group => group.Last().PreferredExerciseId),
-                acceptedExerciseIds,
-                logs.GroupBy(row => row.ExerciseId)
-                    .ToDictionary(group => group.Key,
-                        group => group.Select(row => row.WorkoutLogId).Distinct().Count()),
-                logs.Where(row => row.WeightKg is > 0)
-                    .Select(row => row.ExerciseId).ToHashSet(),
-                definitions.ToDictionary(row => row.Id, row => (int)row.SecondsPerRep),
-                definitions.Where(row => row.MuscleContributions.Any())
-                    .ToDictionary(row => row.Id, row => row.MuscleContributions
-                        .OrderByDescending(contribution => contribution.Fraction)
-                        .ThenBy(contribution => contribution.MuscleGroupId)
-                        .First().MuscleGroup?.Name ?? string.Empty),
-                reviewedSlots.AllowedIds,
-                reviewedSlots.Conditions)
-            {
-                SelectedActivityTypes = ParseActivityTypes(profile?.PreferredWorkoutActivityTypes),
-                ExcludedExerciseIds = ParseExcludedExerciseIds(profile?.ExcludedStrengthExerciseIdsJson),
-                AvailableWeekdays = ParseAvailableWeekdays(profile?.AvailableWorkoutWeekdaysJson),
-                ActivitySessionDurationsMinutes = ParseActivityDurations(profile?.ActivitySessionDurationsJson),
-                RequestedSessionsPerWeek = ParseActivityFrequencies(
-                    profile?.RequestedActivitySessionsPerWeekJson),
-                ProfileTrainingExperience = planningState?.EffectiveExperience ?? (Enum.TryParse<TrainingExperienceLevel>(
-                    profile?.TrainingExperienceLevel, true, out var trainingExperience) &&
-                    Enum.IsDefined(trainingExperience) ? trainingExperience : null),
-                MuscleGroupsByExerciseId = definitions
-                    .Where(row => row.MuscleContributions.Any(contribution => contribution.Fraction > 0) &&
-                        row.MuscleContributions.Where(contribution => contribution.Fraction > 0)
-                            .All(contribution => !string.IsNullOrWhiteSpace(contribution.MuscleGroup?.Name)))
-                    .ToDictionary(row => row.Id, row => (IReadOnlySet<string>)row.MuscleContributions
-                        .Where(contribution => contribution.Fraction > 0)
-                        .Select(contribution => contribution.MuscleGroup!.Name)
-                        .ToHashSet(StringComparer.OrdinalIgnoreCase)),
-                GoalPriorityByExerciseId = goalPriorityByExerciseId,
-                ProfileVersion = profile?.ConcurrencyVersion,
-                CatalogFingerprint = PlanningCatalogFingerprint.FromInputs(definitions, goalTierWeights, preferences),
-                InjuryFingerprint = PlanningInputFingerprint.Injuries(injuries),
-                ActivePlanId = activePlanId,
-                ActiveRevisionId = activeRevisionId,
-                HistoryFingerprint = PlanningInputFingerprint.Hash(logs),
-                TimeZoneVersion = planningState?.TimeZoneVersion ?? WorkoutAccountCalendarRule.InitialTimeZoneVersion,
-                ExperienceVersion = planningState?.ExperienceVersion ?? 0,
-                AnswerVersion = planningState?.AnswerVersion ?? 0,
-                SavedAnswers = string.IsNullOrWhiteSpace(planningState?.AnswersJson)
-                    ? new SavedActivityAnswersDto(0, [], null)
-                    : JsonSerializer.Deserialize<SavedActivityAnswersDto>(planningState.AnswersJson,
-                        new JsonSerializerOptions(JsonSerializerDefaults.Web))
-            };
-    }
         return new StrengthPlanPreviewSourceV020(
             goal, equipment,
             relevantInjuries.Aggregate(InjuryFlag.None, (flags, injury) =>
@@ -298,6 +158,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             ActiveRevisionId = activeRevisionId,
             HistoryFingerprint = PlanningInputFingerprint.Hash(logs),
             TimeZoneVersion = planningState?.TimeZoneVersion ?? WorkoutAccountCalendarRule.InitialTimeZoneVersion,
+            CurrentAccountLocalDate = today,
             ExperienceVersion = planningState?.ExperienceVersion ?? 0,
             AnswerVersion = planningState?.AnswerVersion ?? 0,
             SavedAnswers = string.IsNullOrWhiteSpace(planningState?.AnswersJson)

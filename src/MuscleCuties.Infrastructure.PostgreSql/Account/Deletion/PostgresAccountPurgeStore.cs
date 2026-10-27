@@ -24,10 +24,11 @@ public sealed class PostgresAccountPurgeStore(
         typeof(CyclePhaseLogRecord),
         typeof(SymptomLogRecord),
         typeof(DailyReadinessLogRecord),
+        typeof(HiitEvidenceCaptureChallengeRecord),
         typeof(WorkoutInjuryLogRecord), typeof(WorkoutInjuryEpisodeRecord), typeof(WorkoutInjuryPrescriptionRecord),
         typeof(WorkoutAccountPlanningStateRecord), typeof(WorkoutCompletionDayCreditRecord),
         typeof(WorkoutPlanRecord), typeof(WorkoutPlanProposalV02Record),
-        typeof(WorkoutInjuryLogRecord), typeof(WorkoutInjuryEpisodeRecord), typeof(WorkoutInjuryPrescriptionLinkRecord), typeof(WorkoutPlanRecord), typeof(WorkoutPlanProposalV02Record),
+        typeof(WorkoutInjuryPrescriptionLinkRecord),
         typeof(WorkoutPlanRevisionV02Record),
         typeof(WorkoutDayRecord),
         typeof(WorkoutDayExerciseRecord),
@@ -143,7 +144,11 @@ public sealed class PostgresAccountPurgeStore(
                 .ConfigureAwait(false);
 
             // 3. Readiness and Injury Logs
+            purgedCount += await dbContext.HiitEvidenceCaptureChallenges.Where(x => x.UserId == userId)
+                .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
             purgedCount += await dbContext.WorkoutInjuryPrescriptions.Where(x => x.UserId == userId)
+                .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+            purgedCount += await dbContext.WorkoutInjuryPrescriptionLinks.Where(x => x.UserId == userId)
                 .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
             purgedCount += await dbContext.WorkoutInjuryEpisodes.Where(x => x.UserId == userId)
                 .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
@@ -183,10 +188,6 @@ public sealed class PostgresAccountPurgeStore(
                 .ConfigureAwait(false);
 
             // 5. Workout Plans and Days
-            purgedCount += await dbContext.WorkoutInjuryPrescriptionLinks.Where(x => x.UserId == userId)
-                .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
-            purgedCount += await dbContext.WorkoutInjuryEpisodes.Where(x => x.UserId == userId)
-                .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
             purgedCount += await dbContext.WorkoutDayExercises
                 .Where(x => x.UserId == userId)
                 .ExecuteDeleteAsync(cancellationToken)
@@ -373,8 +374,8 @@ public sealed class PostgresAccountPurgeStore(
             || await dbContext.DailyReadinessLogs.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutInjuryLogs.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutInjuryEpisodes.AnyAsync(x => x.UserId == userId, cancellationToken)
+            || await dbContext.HiitEvidenceCaptureChallenges.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutInjuryPrescriptionLinks.AnyAsync(x => x.UserId == userId, cancellationToken)
-            || await dbContext.WorkoutInjuryEpisodes.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutInjuryPrescriptions.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutPlans.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutCompletionDayCredits.AnyAsync(x => x.UserId == userId, cancellationToken)

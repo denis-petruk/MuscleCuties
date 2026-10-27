@@ -17,4 +17,3 @@ public interface IWorkoutPlanReconciler
 }
 
 public enum WorkoutReconciliationOutcome { Completed, Deferred, NeedsReview }
-

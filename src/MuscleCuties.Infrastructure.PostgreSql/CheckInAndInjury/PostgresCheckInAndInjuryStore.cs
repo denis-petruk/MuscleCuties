@@ -252,13 +252,12 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             if (isClearing && row is null)
                 throw new InvalidOperationException("The injury must exist before it can be cleared.");
             var originalClearanceDate = wasAlreadyCleared ? row!.ClearedDate :
-                isClearing ? await GetAccountLocalDateAsync(request.UserId, cancellationToken).ConfigureAwait(false) : null;
+                isClearing ? await AccountLocalDateAsync(request.UserId, cancellationToken).ConfigureAwait(false) : null;
 
             var episode = await dbContext.WorkoutInjuryEpisodes.SingleOrDefaultAsync(item => item.UserId == request.UserId &&
-                item.InjuryLogId == request.Id && item.ClearedOn == null, cancellationToken).ConfigureAwait(false);
-            if (!isClearing && (isNewInjury || wasAlreadyCleared))
+                item.InjuryLogId == request.Id && item.ClearedOn == null && !item.SourceDeleted, cancellationToken).ConfigureAwait(false);
+            if (!isClearing && episode is null && (isNewInjury || wasAlreadyCleared))
             {
-                if (episode is not null) throw new InvalidOperationException("The previous injury episode is still active.");
                 episode = new WorkoutInjuryEpisodeRecord
                 {
                     Id = Guid.CreateVersion7(), UserId = request.UserId, InjuryLogId = request.Id,
@@ -266,8 +265,8 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 };
                 dbContext.WorkoutInjuryEpisodes.Add(episode);
             }
-            else if ((episode is not null && episode.SiteFlag != request.SiteFlag) ||
-                     (isClearing && row is not null && row.SiteFlag != request.SiteFlag))
+            if ((episode is not null && episode.SiteFlag != request.SiteFlag) ||
+                     (row is not null && row.SiteFlag != request.SiteFlag))
                 throw new InvalidOperationException("Record a separate injury for a different site.");
             if (isClearing && !wasAlreadyCleared && episode is not null)
             {
@@ -277,32 +276,6 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 episode.ClearanceTimeZoneId = calendar.TimeZoneId;
                 episode.ClearanceTimeZoneVersion = calendar.TimeZoneVersion;
             }
-            DateOnly? originalClearanceDate = isClearing
-                ? wasAlreadyCleared ? row!.ClearedDate : await AccountLocalDateAsync(request.UserId, cancellationToken).ConfigureAwait(false)
-                : null;
-
-            var openEpisodes = await dbContext.WorkoutInjuryEpisodes.Where(episode =>
-                    episode.UserId == request.UserId && episode.SourceInjuryId == request.Id &&
-                    episode.ClearedDate == null && !episode.SourceDeleted)
-                .ToListAsync(cancellationToken).ConfigureAwait(false);
-            if (isClearing)
-            {
-                foreach (var episode in openEpisodes)
-                    episode.ClearedDate = originalClearanceDate;
-            }
-            else
-            {
-                // A site change cannot retroactively clear the previous episode.
-                foreach (var episode in openEpisodes.Where(episode => episode.SiteFlag != request.SiteFlag))
-                    episode.SourceDeleted = true;
-                if (!openEpisodes.Any(episode => episode.SiteFlag == request.SiteFlag))
-                    dbContext.WorkoutInjuryEpisodes.Add(new WorkoutInjuryEpisodeRecord
-                    {
-                        Id = Guid.NewGuid(), UserId = request.UserId, SourceInjuryId = request.Id,
-                        SiteFlag = request.SiteFlag, RecordedAtUtc = timeProvider.GetUtcNow().UtcDateTime
-                    });
-            }
-
             row ??= new WorkoutInjuryLogRecord
             {
                 Id = request.Id,
@@ -361,7 +334,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             }
 
             var episodes = await dbContext.WorkoutInjuryEpisodes.Where(episode => episode.UserId == userId &&
-                    episode.SourceInjuryId == injuryId && !episode.SourceDeleted)
+                    episode.InjuryLogId == injuryId && !episode.SourceDeleted)
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
             foreach (var episode in episodes) episode.SourceDeleted = true;
             dbContext.WorkoutInjuryLogs.Remove(row);
@@ -423,18 +396,60 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             var alreadyCaptured = await dbContext.WorkoutInjuryPrescriptions.AsNoTracking()
                 .Where(item => item.UserId == userId && item.EpisodeId == observedEpisodeId)
                 .Select(item => item.OriginalWorkoutDayExerciseId).ToListAsync(cancellationToken).ConfigureAwait(false);
+            var exerciseIds = prescriptions.Select(item => item.Id).ToArray();
+            var priorSnapshots = await dbContext.WorkoutInjuryPrescriptions.AsNoTracking()
+                .Where(item => item.UserId == userId && exerciseIds.Contains(item.OriginalWorkoutDayExerciseId))
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            var priorLinks = await dbContext.WorkoutInjuryPrescriptionLinks.AsNoTracking()
+                .Where(item => item.UserId == userId && exerciseIds.Contains(item.WorkoutDayExerciseId))
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            var planSnapshot = await dbContext.WorkoutPlanRevisionsV02.AsNoTracking()
+                .Where(item => item.UserId == userId && item.PlanId == activePlanId.Value)
+                .OrderBy(item => item.RevisionNumber).Select(item => item.PlanJson)
+                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            var canonicalOriginals = ReadUnambiguousOriginals(planSnapshot);
+            var daysById = days.ToDictionary(day => day.Id);
             var known = alreadyCaptured.ToHashSet();
             foreach (var original in prescriptions.Where(item => !known.Contains(item.Id)))
+            {
+                var prior = priorSnapshots.Where(item => item.OriginalWorkoutDayExerciseId == original.Id).ToArray();
+                var links = priorLinks.Where(item => item.WorkoutDayExerciseId == original.Id).ToArray();
+                WorkoutInjuryPrescriptionRecord? source = null;
+                if (!canonicalOriginals.Contains(((DayOfWeek)daysById[original.WorkoutDayId].DayOfWeek,
+                    original.InjuryOriginalExerciseId ?? original.ExerciseId)))
+                    continue;
+                // A replacement or inherited identity requires a linked, consistent original snapshot.
+                if (prior.Length > 0 || original.InjuryOriginalExerciseId is not null ||
+                    original.OriginWorkoutDayExerciseId is not null || links.Length > 0)
+                {
+                    if (original.InjuryOriginalExerciseId is not { } originalId || links.Length == 0 ||
+                        links.Any(link => link.OriginalExerciseId != originalId) ||
+                        prior.Any(item => item.OriginalExerciseId != originalId) ||
+                        !prior.Any(item => links.Any(link => link.InjuryEpisodeId == item.EpisodeId)))
+                        continue;
+                    source = prior[0];
+                    if (prior.Any(item => item.OriginalSets != source.OriginalSets ||
+                        item.OriginalOptionalSets != source.OriginalOptionalSets || item.OriginalReps != source.OriginalReps ||
+                        item.OriginalDurationSeconds != source.OriginalDurationSeconds ||
+                        item.OriginalIsOptional != source.OriginalIsOptional ||
+                        item.OriginalIsRemovedByReadiness != source.OriginalIsRemovedByReadiness ||
+                        item.OriginalPlanningSlotId != source.OriginalPlanningSlotId ||
+                        item.OriginalOriginWorkoutDayExerciseId != source.OriginalOriginWorkoutDayExerciseId))
+                        continue;
+                }
                 dbContext.WorkoutInjuryPrescriptions.Add(new WorkoutInjuryPrescriptionRecord
                 {
                     Id = Guid.CreateVersion7(), UserId = userId, EpisodeId = observedEpisodeId,
                     WorkoutDayId = original.WorkoutDayId, OriginalWorkoutDayExerciseId = original.Id,
-                    OriginalExerciseId = original.ExerciseId, OriginalPlanningSlotId = original.PlanningSlotId,
-                    OriginalOriginWorkoutDayExerciseId = original.OriginWorkoutDayExerciseId,
-                    OriginalSets = original.Sets, OriginalOptionalSets = original.OptionalSets,
-                    OriginalReps = original.Reps, OriginalDurationSeconds = original.DurationSeconds,
-                    OriginalIsOptional = original.IsOptional, OriginalIsRemovedByReadiness = original.IsRemovedByReadiness
+                    OriginalExerciseId = source?.OriginalExerciseId ?? original.ExerciseId,
+                    OriginalPlanningSlotId = source is null ? original.PlanningSlotId : source.OriginalPlanningSlotId,
+                    OriginalOriginWorkoutDayExerciseId = source is null ? original.OriginWorkoutDayExerciseId : source.OriginalOriginWorkoutDayExerciseId,
+                    OriginalSets = source?.OriginalSets ?? original.Sets, OriginalOptionalSets = source?.OriginalOptionalSets ?? original.OptionalSets,
+                    OriginalReps = source?.OriginalReps ?? original.Reps, OriginalDurationSeconds = source is null ? original.DurationSeconds : source.OriginalDurationSeconds,
+                    OriginalIsOptional = source?.OriginalIsOptional ?? original.IsOptional,
+                    OriginalIsRemovedByReadiness = source?.OriginalIsRemovedByReadiness ?? original.IsRemovedByReadiness
                 });
+            }
         }
         foreach (var day in days)
         {
@@ -478,14 +493,14 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         var reviewed = definitions.Where(definition => WorkoutExerciseV020CatalogMapper.Map(definition).MetadataGaps.Count == 0)
             .ToDictionary(definition => definition.Id);
         var episodes = await dbContext.WorkoutInjuryEpisodes.Where(episode => episode.UserId == userId &&
-                episode.ClearedDate == null && !episode.SourceDeleted)
+                episode.ClearedOn == null && !episode.SourceDeleted)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         episodes.AddRange(dbContext.ChangeTracker.Entries<WorkoutInjuryEpisodeRecord>()
             .Where(entry => entry.State == EntityState.Added && entry.Entity.UserId == userId)
             .Select(entry => entry.Entity));
-        episodes = episodes.Where(episode => !episode.SourceDeleted && episode.ClearedDate is null)
+        episodes = episodes.Where(episode => !episode.SourceDeleted && episode.ClearedOn is null)
             .DistinctBy(episode => episode.Id).ToList();
-        var ambiguousSources = episodes.GroupBy(episode => episode.SourceInjuryId)
+        var ambiguousSources = episodes.GroupBy(episode => episode.InjuryLogId)
             .Where(group => group.Count() != 1).Select(group => group.Key).ToHashSet();
         var exerciseIds = exercises.Select(exercise => exercise.Id).ToArray();
         var existingLinks = await dbContext.WorkoutInjuryPrescriptionLinks.AsNoTracking()
@@ -499,7 +514,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 exercises.Count(other => other.WorkoutDayId == day.Id &&
                     (other.InjuryOriginalExerciseId ?? other.ExerciseId) == originalId) != 1 ||
                 !reviewed.TryGetValue(originalId, out var definition)) continue;
-            foreach (var episode in episodes.Where(episode => !ambiguousSources.Contains(episode.SourceInjuryId) &&
+            foreach (var episode in episodes.Where(episode => !ambiguousSources.Contains(episode.InjuryLogId) &&
                 (definition.Contraindications & (InjuryFlag)episode.SiteFlag) != InjuryFlag.None))
             {
                 if (existingLinks.Any(link => link.WorkoutDayExerciseId == exercise.Id && link.InjuryEpisodeId == episode.Id)) continue;
@@ -581,17 +596,6 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         {
             throw new InvalidOperationException("Establish the account timezone before changing an injury.");
         }
-    }
-
-    private async Task<DateOnly> GetAccountLocalDateAsync(Guid userId, CancellationToken cancellationToken)
-    {
-        var zoneId = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
-            .Where(state => state.UserId == userId).Select(state => state.TimeZoneId)
-            .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-        if (zoneId is null) throw new InvalidOperationException("Establish the account timezone before clearing this injury.");
-        try { return WorkoutAccountCalendarRule.LocalDate(timeProvider.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById(zoneId)); }
-        catch (TimeZoneNotFoundException) { throw new InvalidOperationException("Establish the account timezone before clearing this injury."); }
-        catch (InvalidTimeZoneException) { throw new InvalidOperationException("Establish the account timezone before clearing this injury."); }
     }
 
     private static DailyCheckInRecord MapCheckIn(DailyReadinessLogRecord row) =>

@@ -157,8 +157,12 @@ internal static class MixedActivityScheduleMapperV020
                 histories.GetValueOrDefault(selectedUnderlyingActivity), request.LocalDate).Experience
             : ActivityExperience.Unknown;
         var hiitInput = request.HiitEligibilityEvidence;
+        // Only server-stamped saved answers establish a rolling window, never request-supplied stamps.
         HiitAerobicWeekEvidence[] weeks = [];
-        if (hiitInput?.PreviousFourWeeksAerobicEvidence is { } inputWeeks &&
+        if (source.SavedAnswers?.HiitCapture is { } capture &&
+            HiitEvidenceCaptureRule.IsCaptureCurrent(capture.LocalDate, capture.TimeZoneVersion,
+                source.CurrentAccountLocalDate, source.TimeZoneVersion) &&
+            source.SavedAnswers.HiitEligibilityEvidence?.PreviousFourWeeksAerobicEvidence is { } inputWeeks &&
             inputWeeks.All(week => week is not null))
             weeks = inputWeeks.Select(week => new HiitAerobicWeekEvidence(week.WeekOffsetFromCurrent,
                 week.QualifyingManageableAerobicSessionCount)).ToArray();

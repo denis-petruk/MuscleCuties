@@ -47,7 +47,7 @@ public sealed class PostgresWorkoutReconciliationDispatcher(
                     await using var transaction = await context.Database.BeginTransactionAsync(attemptToken).ConfigureAwait(false);
                     await PostgresTenantContext.SetForCurrentTransactionAsync(context, owner, attemptToken).ConfigureAwait(false);
                     await WorkoutSessionAccountLock.AcquireAsync(context, owner, attemptToken).ConfigureAwait(false);
-                    await new PostgresWorkoutPlanReconciler(context).ReconcileAsync(owner, attemptToken).ConfigureAwait(false);
+                    await new PostgresWorkoutPlanReconciler(context).ReconcileInCurrentTransactionAsync(owner, attemptToken).ConfigureAwait(false);
                     await transaction.CommitAsync(attemptToken).ConfigureAwait(false);
                 }).ConfigureAwait(false);
             }

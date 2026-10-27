@@ -98,6 +98,7 @@ public sealed record StrengthPlanPreviewSourceV020(
     public string? HistoryFingerprint { get; init; }
     public string? CatalogFingerprint { get; init; }
     public long TimeZoneVersion { get; init; }
+    public DateOnly? CurrentAccountLocalDate { get; init; }
     public long ExperienceVersion { get; init; }
     public long AnswerVersion { get; init; }
     public SavedActivityAnswersDto? SavedAnswers { get; init; }

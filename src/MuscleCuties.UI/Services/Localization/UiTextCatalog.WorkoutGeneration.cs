@@ -25,6 +25,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_HiitUnderlyingActivityHelp"] = "Choose a continuous cardio activity saved in your preferences. HIIT will replace one session of that activity. Enter its actual history and each prior week's aerobic sessions below, then confirm the required screening or clearance.";
         English["Workout_Generation_HiitEvidenceTitle"] = "Evidence for HIIT";
         English["Workout_Generation_HiitEvidenceHelp"] = "HIIT is considered only when your selected cardio history is established, all four prior weeks meet the aerobic target, you confirm the required screening or clearance, and no current symptom or injury needs review.";
+        English["Workout_Generation_HiitConfirmCurrentWeeks"] = "I confirm these counts describe the four weeks before today.";
         English["Workout_Generation_HiitCardioHistoryTitle"] = "Underlying cardio experience";
         English["Workout_Generation_HiitCardioHistoryHelp"] = "Enter your actual history for the selected activity. Established experience requires at least {0} consistent weeks, averaging at least {1} sessions per week recently, with fewer than {2} days since your last session.";
         English["Workout_Generation_HiitCardioConsistentWeeks"] = "Consistent weeks in this activity";

@@ -19,12 +19,16 @@ public sealed record SavedActivityAnswersDto(long Version, IReadOnlyList<Activit
     HiitEligibilityEvidenceInputV020? HiitEligibilityEvidence, bool SafetyPlanChanged = false)
 {
     public WorkoutActivityDto? HiitUnderlyingCardioActivity { get; init; }
+    public HiitEvidenceCaptureStamp? HiitCapture { get; init; }
 }
 public sealed record SaveActivityAnswersRequest(long ExpectedVersion, IReadOnlyList<ActivityEligibilityInputV020> ActivityEligibilityEvidence,
     HiitEligibilityEvidenceInputV020? HiitEligibilityEvidence)
 {
     public WorkoutActivityDto? HiitUnderlyingCardioActivity { get; init; }
+    public Guid? HiitCaptureChallengeId { get; init; }
 }
+
+public sealed record HiitEvidenceCaptureStamp(DateOnly LocalDate, long TimeZoneVersion);
 
 public sealed class WorkoutPreviewAlreadyOpenException : InvalidOperationException
 {
@@ -60,6 +64,7 @@ public sealed record AcceptStrengthPlanProposalResultV020(
 
 public interface IStrengthPlanProposalClientV020
 {
+    Task<HiitEvidenceCaptureChallengeDto> IssueHiitCaptureChallengeAsync(CancellationToken cancellationToken = default);
     Task<StrengthPlanProposalCreatedV020> CreateAsync(StrengthPlanPreviewRequestV020 request,
         CancellationToken cancellationToken = default);
 

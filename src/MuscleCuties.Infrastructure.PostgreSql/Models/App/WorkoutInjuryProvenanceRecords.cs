@@ -11,6 +11,7 @@ public sealed class WorkoutInjuryEpisodeRecord : ITenantRecord
     public DateOnly? ClearedOn { get; set; }
     public string? ClearanceTimeZoneId { get; set; }
     public long? ClearanceTimeZoneVersion { get; set; }
+    public bool SourceDeleted { get; set; }
 }
 
 /// <summary>Original prescription captured when an injury suppresses an upcoming workout.</summary>

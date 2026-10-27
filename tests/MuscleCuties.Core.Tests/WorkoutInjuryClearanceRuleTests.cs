@@ -50,24 +50,24 @@ public sealed class WorkoutInjuryClearanceRuleTests
     {
         var laterClearance = ClearanceDate.AddDays(LaterClearanceOffset);
         var episodes = new[] { new InjuryRestorationEpisode(false, ClearanceDate), new InjuryRestorationEpisode(false, laterClearance) };
-        Assert.Equal(InjuryRestorationDisposition.RestoreOptional,
+        Assert.Equal(InjuryClearanceRestorationDisposition.RestoreOptional,
             WorkoutInjuryClearanceRule.EvaluateRestoration(false, true, episodes, RequiredDate));
-        Assert.Equal(InjuryRestorationDisposition.RestoreRequired,
+        Assert.Equal(InjuryClearanceRestorationDisposition.RestoreRequired,
             WorkoutInjuryClearanceRule.EvaluateRestoration(false, true, episodes, laterClearance.AddDays(WorkoutInjuryClearanceRule.FollowingMidnightOffsetDays)));
-        Assert.Equal(InjuryRestorationDisposition.RestoreOptional,
+        Assert.Equal(InjuryClearanceRestorationDisposition.RestoreOptional,
             WorkoutInjuryClearanceRule.EvaluateRestoration(true, true, episodes, DelayedRestorationDate));
-        Assert.Equal(InjuryRestorationDisposition.Blocked,
+        Assert.Equal(InjuryClearanceRestorationDisposition.Blocked,
             WorkoutInjuryClearanceRule.EvaluateRestoration(false, true, [new(true, null)], DelayedRestorationDate));
-        Assert.Equal(InjuryRestorationDisposition.Blocked,
+        Assert.Equal(InjuryClearanceRestorationDisposition.Blocked,
             WorkoutInjuryClearanceRule.EvaluateRestoration(false, false, episodes, DelayedRestorationDate));
     }
 
     [Fact]
     public void UnknownOrFutureClearanceNeverRestores()
     {
-        Assert.Equal(InjuryRestorationDisposition.Blocked,
+        Assert.Equal(InjuryClearanceRestorationDisposition.Blocked,
             WorkoutInjuryClearanceRule.EvaluateRestoration(false, true, [new(false, null)], ClearanceDate));
-        Assert.Equal(InjuryRestorationDisposition.Blocked,
+        Assert.Equal(InjuryClearanceRestorationDisposition.Blocked,
             WorkoutInjuryClearanceRule.EvaluateRestoration(false, true,
                 [new(false, ClearanceDate.AddDays(LaterClearanceOffset))], ClearanceDate));
     }
