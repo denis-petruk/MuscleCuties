@@ -25,7 +25,8 @@ public sealed record MixedActivityScheduledSession(
     WorkoutActivityType Activity,
     DayOfWeek Day,
     decimal DurationMinutes,
-    bool IsHardSession);
+    bool IsHardSession,
+    int? DayOrder = null);
 
 public sealed record MixedActivityScheduleDecision(
     WorkoutActivityType Activity,

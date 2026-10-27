@@ -229,6 +229,8 @@ public static class ApiApplication
         builder.Services.AddScoped<INutritionOverviewStore>(sp => sp.GetRequiredService<PostgresNutritionOverviewStore>());
         builder.Services.AddScoped<ServerNutritionOverviewUseCase>();
         builder.Services.AddScoped<IWorkoutPlanningCatalogStore, PostgresWorkoutPlanningCatalogStore>();
+        builder.Services.AddScoped<IWorkoutPlanReconciler, PostgresWorkoutPlanReconciler>();
+        builder.Services.AddScoped<WorkoutPendingRevisionJobHandler>();
         builder.Services.AddScoped<IWorkoutProgressStore, PostgresWorkoutProgressStore>();
         builder.Services.AddScoped<GetWorkoutPlanningCatalogUseCase>();
         builder.Services.AddScoped<IStrengthPlanPreviewSourceV020, PostgresStrengthPlanPreviewSourceV020>();

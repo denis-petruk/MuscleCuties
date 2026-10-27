@@ -47,6 +47,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         WorkoutOverviewRequest request,
         CancellationToken cancellationToken = default)
     {
+
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             dbContext.ChangeTracker.Clear();
@@ -71,6 +72,21 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     .ThenBy(d => d.Id)
                     .ToListAsync(cancellationToken)
                     .ConfigureAwait(false);
+
+            // A revision can retire the plan while a previously started workout is still open.
+            // Keep that exact day discoverable so the user can resume or abandon it.
+            var inProgressDayId = await dbContext.WorkoutSessionLogs.AsNoTracking()
+                .Where(session => session.UserId == userId && !session.IsDeleted && session.CompletedAt == null &&
+                    session.PlannedWorkoutDayId != null)
+                .OrderByDescending(session => session.StartedAt)
+                .Select(session => session.PlannedWorkoutDayId).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            var activeScheduledDayIds = workoutDays.Select(day => day.Id).ToHashSet();
+            if (inProgressDayId is { } dayId && workoutDays.All(day => day.Id != dayId))
+            {
+                var inProgressDay = await dbContext.WorkoutDays.AsNoTracking().SingleOrDefaultAsync(
+                    day => day.UserId == userId && day.Id == dayId, cancellationToken).ConfigureAwait(false);
+                if (inProgressDay is not null) workoutDays.Add(inProgressDay);
+            }
 
             var dayIds = workoutDays.Select(d => d.Id).ToHashSet();
             var dayExercises = dayIds.Count == 0
@@ -106,8 +122,9 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
-            var workouts = BuildWorkoutListEntries(workoutDays, exercisesByDayId, exercisesById, workoutLogs);
-            var schedule = BuildScheduleEntries(startMonday, today, workoutDays, exercisesByDayId, exercisesById, workoutLogs);
+            var scheduledDays = workoutDays.Where(day => activeScheduledDayIds.Contains(day.Id)).ToList();
+            var workouts = BuildWorkoutListEntries(scheduledDays, exercisesByDayId, exercisesById, workoutLogs);
+            var schedule = BuildScheduleEntries(startMonday, today, scheduledDays, exercisesByDayId, exercisesById, workoutLogs);
             var previews = workoutDays.Select(day =>
             {
                 var exList = exercisesByDayId.GetValueOrDefault(day.Id, []);
@@ -126,12 +143,17 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 return new WorkoutDayExercisePreview(ToStableWorkoutIntId(day.Id), names, tags);
             }).ToArray();
 
+            var inProgressWorkout = inProgressDayId is { } currentId
+                ? BuildWorkoutListEntries(workoutDays.Where(day => day.Id == currentId).ToArray(),
+                    exercisesByDayId, exercisesById, workoutLogs)
+                    .FirstOrDefault(entry => entry.WorkoutDayId == ToStableWorkoutIntId(currentId))
+                : null;
             return new WorkoutOverviewResponse(
                 activePlan?.Name,
                 phase.ToString(),
                 workouts,
                 schedule,
-                previews);
+                previews) { InProgressWorkout = inProgressWorkout is null ? null : inProgressWorkout with { IsInProgress = true } };
         }).ConfigureAwait(false);
 
     public async Task RescheduleAsync(
@@ -226,11 +248,25 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     []);
             }
 
-            var orderedExercises = await dbContext.WorkoutDayExercises.AsNoTracking()
-                .Where(e => e.UserId == userId && e.WorkoutDayId == day.Id && !e.IsRemovedByReadiness)
-                .OrderBy(e => e.Id)
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
+            var activeSession = await dbContext.WorkoutSessionLogs.AsNoTracking().FirstOrDefaultAsync(
+                session => session.UserId == userId && session.PlannedWorkoutDayId == day.Id &&
+                    !session.IsDeleted && session.CompletedAt == null, cancellationToken).ConfigureAwait(false);
+            var prescription = PlannedPrescriptionSnapshot.Deserialize(activeSession?.PlannedPrescriptionSnapshotJson);
+            if (activeSession?.PlannedPrescriptionSnapshotJson is not null &&
+                (prescription is null || prescription.DayId != day.Id || prescription.Exercises is null))
+                throw new InvalidOperationException("The active workout prescription is unavailable.");
+            if (prescription is not null)
+            {
+                day.Name = prescription.Name;
+                day.WorkoutType = prescription.WorkoutType;
+                day.ActivityTypeId = prescription.ActivityTypeId;
+                day.PlannedMainDurationMinutes = prescription.PlannedMainDurationMinutes;
+            }
+            var orderedExercises = prescription is not null
+                ? prescription.Exercises.Select(exercise => exercise.ToRecord(userId, day.Id)).ToList()
+                : await dbContext.WorkoutDayExercises.AsNoTracking()
+                    .Where(e => e.UserId == userId && e.WorkoutDayId == day.Id && !e.IsRemovedByReadiness)
+                    .OrderBy(e => e.Id).ToListAsync(cancellationToken).ConfigureAwait(false);
 
             var exerciseIds = orderedExercises.Select(e => e.ExerciseId).Distinct().ToArray();
             var exercisesById = exerciseIds.Length == 0
@@ -240,8 +276,12 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     .ToDictionaryAsync(e => e.Id, cancellationToken)
                     .ConfigureAwait(false);
 
-            var currentLog = await dbContext.WorkoutLogs.AsNoTracking()
-                .Where(l => l.UserId == userId && l.WorkoutDayId == day.Id && l.Date == today)
+            var currentLogs = dbContext.WorkoutLogs.AsNoTracking()
+                .Where(l => l.UserId == userId && l.WorkoutDayId == day.Id);
+            currentLogs = activeSession is null
+                ? currentLogs.Where(log => log.Date == today)
+                : currentLogs.Where(log => log.PlannedSessionId == activeSession.Id);
+            var currentLog = await currentLogs
                 .OrderByDescending(l => l.CreatedAt)
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -374,16 +414,22 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
 
             WorkoutDayRecord? day;
+            PlannedPrescriptionSnapshot? sessionPrescription = null;
             if (request.PlannedSessionId is { } plannedSessionId)
             {
-                var plannedDayId = await dbContext.WorkoutSessionLogs.AsNoTracking()
+                var plannedSession = await dbContext.WorkoutSessionLogs.AsNoTracking()
                     .Where(session => session.UserId == userId && session.Id == plannedSessionId &&
                         !session.IsDeleted && session.CompletedAt == null)
-                    .Select(session => session.PlannedWorkoutDayId).SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+                    .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+                var plannedDayId = plannedSession?.PlannedWorkoutDayId;
                 day = plannedDayId is { } id ? await dbContext.WorkoutDays.AsNoTracking()
                     .SingleOrDefaultAsync(item => item.UserId == userId && item.Id == id, cancellationToken).ConfigureAwait(false) : null;
                 if (day is null || ToStableWorkoutIntId(day.Id) != request.WorkoutDayId)
                     throw new InvalidOperationException("The planned workout session is unavailable.");
+                sessionPrescription = PlannedPrescriptionSnapshot.Deserialize(plannedSession?.PlannedPrescriptionSnapshotJson);
+                if (plannedSession?.PlannedPrescriptionSnapshotJson is not null &&
+                    (sessionPrescription is null || sessionPrescription.DayId != day.Id || sessionPrescription.Exercises is null))
+                    throw new InvalidOperationException("The active workout prescription is unavailable.");
             }
             else day = await ResolveWorkoutDayAsync(userId, request.WorkoutDayId, cancellationToken).ConfigureAwait(false);
             if (day is null) throw new KeyNotFoundException("Workout session was not found.");
@@ -420,10 +466,11 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 return;
             }
 
-            var dayExercises = await dbContext.WorkoutDayExercises.AsNoTracking()
-                .Where(e => e.UserId == userId && e.WorkoutDayId == day.Id)
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
+            var dayExercises = sessionPrescription is not null
+                ? sessionPrescription.Exercises.Select(exercise => exercise.ToRecord(userId, day.Id)).ToList()
+                : await dbContext.WorkoutDayExercises.AsNoTracking()
+                    .Where(e => e.UserId == userId && e.WorkoutDayId == day.Id)
+                    .ToListAsync(cancellationToken).ConfigureAwait(false);
 
             var byStableId = dayExercises.ToDictionary(e => ToStableWorkoutIntId(e.Id));
             var byExerciseId = dayExercises.GroupBy(e => e.ExerciseId).ToDictionary(g => g.Key, g => g.First());
@@ -463,7 +510,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             }
 
             var primaryLog = await dbContext.WorkoutLogs
-                .Where(l => l.UserId == userId && l.WorkoutDayId == day.Id && l.Date == request.Date)
+                .Where(l => l.UserId == userId && l.WorkoutDayId == day.Id && l.Date == request.Date &&
+                            l.PlannedSessionId == request.PlannedSessionId)
                 .OrderByDescending(l => l.CreatedAt)
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -475,6 +523,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     Id = Guid.CreateVersion7(),
                     UserId = userId,
                     WorkoutDayId = day.Id,
+                    PlannedSessionId = request.PlannedSessionId,
                     Date = request.Date,
                     CompletionPercent = 0,
                     CreatedAt = nowUtc
@@ -804,7 +853,9 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         CancellationToken cancellationToken)
     {
         var allDays = await dbContext.WorkoutDays.AsNoTracking()
-            .Where(d => d.UserId == userId && !d.IsRemovedByReadiness && !d.IsRemovedBySafety)
+            .Where(d => d.UserId == userId && ((!d.IsRemovedByReadiness && !d.IsRemovedBySafety) ||
+                dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId &&
+                    session.PlannedWorkoutDayId == d.Id && !session.IsDeleted && session.CompletedAt == null)))
             .OrderByDescending(d => d.Date)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -1029,7 +1080,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             var activeDays = scheduledDays
                 .Where(d => !string.Equals(d.WorkoutType, nameof(WorkoutType.Rest), StringComparison.OrdinalIgnoreCase))
                 .ToList();
-            var visibleDays = activeDays.Count > 0 ? activeDays : [scheduledDays[0]];
+            var visibleDays = activeDays.Count > 0 ? activeDays.OrderBy(day => day.DayOrder).ToList() : [scheduledDays[0]];
             foreach (var day in visibleDays)
             {
                 var latestLog = latestLogByDayId.GetValueOrDefault(day.Id);
@@ -1063,7 +1114,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     false,
                     latestLog?.CompletionPercent >= 100,
                     exList.Count,
-                    activityCount) { IsOptional = day.IsOptional, IsEasierAlternative = day.IsEasierAlternative });
+                    activityCount) { IsOptional = day.IsOptional, IsEasierAlternative = day.IsEasierAlternative, DayOrder = day.DayOrder });
             }
         }
 

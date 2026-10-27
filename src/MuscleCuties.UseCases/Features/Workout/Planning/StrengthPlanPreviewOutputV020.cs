@@ -1,5 +1,15 @@
 namespace MuscleCuties.UseCases.Features.Workout.Planning;
 
+public enum StrengthMovementSlotDto
+{
+    KneeDominant = 0,
+    HipDominant = 1,
+    UpperPush = 2,
+    UpperPull = 3,
+    Trunk = 4,
+    GoalSpecificAccessory = 5
+}
+
 /// <summary>Transport representation of a selected workout slot, without Core domain types.</summary>
 public sealed record StrengthPlanSlotOutputV020(
     string SlotId,
@@ -72,7 +82,8 @@ public sealed record MixedActivityScheduleSessionV020(
     int ActivityTypeId,
     DayOfWeek Weekday,
     decimal DurationMinutes,
-    bool IsHardSession);
+    bool IsHardSession,
+    int? DayOrder = null);
 
 public sealed record MixedActivityScheduleDecisionV020(
     int ActivityTypeId,

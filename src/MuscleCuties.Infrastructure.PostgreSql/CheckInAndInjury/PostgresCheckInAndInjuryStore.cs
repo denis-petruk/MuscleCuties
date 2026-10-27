@@ -247,7 +247,36 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                     cancellationToken)
                 .ConfigureAwait(false);
 
+            var isNewInjury = row is null;
             var wasAlreadyCleared = row is not null && string.Equals(row.Status, ClearedStatus, StringComparison.OrdinalIgnoreCase);
+            if (isClearing && row is null)
+                throw new InvalidOperationException("The injury must exist before it can be cleared.");
+            var originalClearanceDate = wasAlreadyCleared ? row!.ClearedDate :
+                isClearing ? await GetAccountLocalDateAsync(request.UserId, cancellationToken).ConfigureAwait(false) : null;
+
+            var episode = await dbContext.WorkoutInjuryEpisodes.SingleOrDefaultAsync(item => item.UserId == request.UserId &&
+                item.InjuryLogId == request.Id && item.ClearedOn == null, cancellationToken).ConfigureAwait(false);
+            if (!isClearing && (isNewInjury || wasAlreadyCleared))
+            {
+                if (episode is not null) throw new InvalidOperationException("The previous injury episode is still active.");
+                episode = new WorkoutInjuryEpisodeRecord
+                {
+                    Id = Guid.CreateVersion7(), UserId = request.UserId, InjuryLogId = request.Id,
+                    SiteFlag = request.SiteFlag, StartedOn = request.Since
+                };
+                dbContext.WorkoutInjuryEpisodes.Add(episode);
+            }
+            else if ((episode is not null && episode.SiteFlag != request.SiteFlag) ||
+                     (isClearing && row is not null && row.SiteFlag != request.SiteFlag))
+                throw new InvalidOperationException("Record a separate injury for a different site.");
+            if (isClearing && !wasAlreadyCleared && episode is not null)
+            {
+                var calendar = await dbContext.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(
+                    state => state.UserId == request.UserId, cancellationToken).ConfigureAwait(false);
+                episode.ClearedOn = originalClearanceDate;
+                episode.ClearanceTimeZoneId = calendar.TimeZoneId;
+                episode.ClearanceTimeZoneVersion = calendar.TimeZoneVersion;
+            }
             DateOnly? originalClearanceDate = isClearing
                 ? wasAlreadyCleared ? row!.ClearedDate : await AccountLocalDateAsync(request.UserId, cancellationToken).ConfigureAwait(false)
                 : null;
@@ -291,7 +320,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 dbContext.WorkoutInjuryLogs.Add(row);
 
             if (!isClearing)
-                await SuppressFutureStrengthForInjuryAsync(request.UserId, request.Id, cancellationToken).ConfigureAwait(false);
+                await SuppressFutureStrengthForInjuryAsync(request.UserId, request.Id, episode?.Id, cancellationToken).ConfigureAwait(false);
 
             await MarkSafetyRegenerationPendingAsync(request.UserId, cancellationToken).ConfigureAwait(false);
             await InvalidatePlanningPreviewsAsync(request.UserId, cancellationToken).ConfigureAwait(false);
@@ -369,7 +398,8 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         state.SafetyRegenerationPending = true;
     }
 
-    private async Task SuppressFutureStrengthForInjuryAsync(Guid userId, Guid injuryId, CancellationToken cancellationToken)
+    private async Task SuppressFutureStrengthForInjuryAsync(Guid userId, Guid injuryId, Guid? episodeId,
+        CancellationToken cancellationToken)
     {
         var activePlanId = await dbContext.WorkoutPlans.AsNoTracking()
             .Where(plan => plan.UserId == userId && plan.IsActive).Select(plan => (Guid?)plan.Id)
@@ -384,6 +414,28 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 !dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId &&
                     session.PlannedWorkoutDayId == day.Id && session.CompletedAt != null))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (episodeId is { } observedEpisodeId && days.Count > 0)
+        {
+            var dayIds = days.Select(day => day.Id).ToArray();
+            var prescriptions = await dbContext.WorkoutDayExercises.AsNoTracking()
+                .Where(exercise => exercise.UserId == userId && dayIds.Contains(exercise.WorkoutDayId))
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            var alreadyCaptured = await dbContext.WorkoutInjuryPrescriptions.AsNoTracking()
+                .Where(item => item.UserId == userId && item.EpisodeId == observedEpisodeId)
+                .Select(item => item.OriginalWorkoutDayExerciseId).ToListAsync(cancellationToken).ConfigureAwait(false);
+            var known = alreadyCaptured.ToHashSet();
+            foreach (var original in prescriptions.Where(item => !known.Contains(item.Id)))
+                dbContext.WorkoutInjuryPrescriptions.Add(new WorkoutInjuryPrescriptionRecord
+                {
+                    Id = Guid.CreateVersion7(), UserId = userId, EpisodeId = observedEpisodeId,
+                    WorkoutDayId = original.WorkoutDayId, OriginalWorkoutDayExerciseId = original.Id,
+                    OriginalExerciseId = original.ExerciseId, OriginalPlanningSlotId = original.PlanningSlotId,
+                    OriginalOriginWorkoutDayExerciseId = original.OriginWorkoutDayExerciseId,
+                    OriginalSets = original.Sets, OriginalOptionalSets = original.OptionalSets,
+                    OriginalReps = original.Reps, OriginalDurationSeconds = original.DurationSeconds,
+                    OriginalIsOptional = original.IsOptional, OriginalIsRemovedByReadiness = original.IsRemovedByReadiness
+                });
+        }
         foreach (var day in days)
         {
             day.IsRemovedBySafety = true;
@@ -529,6 +581,17 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         {
             throw new InvalidOperationException("Establish the account timezone before changing an injury.");
         }
+    }
+
+    private async Task<DateOnly> GetAccountLocalDateAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var zoneId = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
+            .Where(state => state.UserId == userId).Select(state => state.TimeZoneId)
+            .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        if (zoneId is null) throw new InvalidOperationException("Establish the account timezone before clearing this injury.");
+        try { return WorkoutAccountCalendarRule.LocalDate(timeProvider.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById(zoneId)); }
+        catch (TimeZoneNotFoundException) { throw new InvalidOperationException("Establish the account timezone before clearing this injury."); }
+        catch (InvalidTimeZoneException) { throw new InvalidOperationException("Establish the account timezone before clearing this injury."); }
     }
 
     private static DailyCheckInRecord MapCheckIn(DailyReadinessLogRecord row) =>

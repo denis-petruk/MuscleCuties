@@ -99,11 +99,12 @@ internal static class StrengthPlanPreviewMapperV020
         RequiresReducedVolumeAcknowledgment: result.RequiresReducedVolumeAcknowledgment);
 
     public static MixedActivityScheduleV020 ToMixedSchedule(MixedActivityWeekScheduleResult result) => new(
-        result.Sessions.Select(session => new MixedActivityScheduleSessionV020(
+        WorkoutSessionOrderingRule.Assign(result.Sessions).Select(session => new MixedActivityScheduleSessionV020(
             (int)session.Activity,
             session.Day,
             session.DurationMinutes,
-            session.IsHardSession)).ToArray(),
+            session.IsHardSession,
+            session.DayOrder)).ToArray(),
         result.Activities.Select(activity => new MixedActivityScheduleDecisionV020(
             (int)activity.Activity,
             activity.Disposition.ToString(),

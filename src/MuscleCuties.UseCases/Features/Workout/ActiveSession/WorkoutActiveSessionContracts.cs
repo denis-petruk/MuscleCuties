@@ -1,4 +1,16 @@
+using MuscleCuties.UseCases.Features.Workout.Contracts;
+
 namespace MuscleCuties.UseCases.Features.Workout.ActiveSession;
+
+public sealed class WorkoutActivityNoLongerSafeException : Exception
+{
+    public WorkoutActivityNoLongerSafeException() : base("The activity is no longer safe to continue.") { }
+}
+
+public sealed class WorkoutTimingIntervalExpiredException : Exception
+{
+    public WorkoutTimingIntervalExpiredException() : base("The active interval expired; resume to continue.") { }
+}
 
 public sealed record ActiveExerciseSetInput(
     Guid SetId,
@@ -36,7 +48,16 @@ public sealed record ActiveWorkoutSessionSnapshot(
     bool IsCanceled,
     IReadOnlyList<ActiveExerciseSetSnapshot> Sets,
     bool Replayed = false,
-    int? PlannedWorkoutDayId = null);
+    int? PlannedWorkoutDayId = null)
+{
+    public int ConfirmedActiveSeconds { get; init; }
+    public Guid? TimingIntervalId { get; init; }
+    public int TimingIntervalConfirmedSeconds { get; init; }
+}
+
+public sealed record ResumeWorkoutTimingCommand(string IdempotencyKey, Guid SessionId);
+public sealed record CheckpointWorkoutTimingCommand(string IdempotencyKey, Guid SessionId, Guid IntervalId,
+    int MeasuredSeconds, bool Pause);
 
 public sealed record StartWorkoutSessionCommand(
     string IdempotencyKey,
@@ -44,7 +65,8 @@ public sealed record StartWorkoutSessionCommand(
     string WorkoutName,
     DateTime StartedAtUtc,
     string? Notes = null,
-    int? PlannedWorkoutDayId = null);
+    int? PlannedWorkoutDayId = null,
+    WorkoutActivityDto? UnplannedActivity = null);
 
 public sealed record UpsertWorkoutSessionSetCommand(
     string IdempotencyKey,
@@ -66,6 +88,8 @@ public sealed record CancelWorkoutSessionCommand(
 
 public interface IWorkoutActiveSessionStore
 {
+    Task<ActiveWorkoutSessionSnapshot?> ResumeTimingAsync(Guid userId, ResumeWorkoutTimingCommand command, CancellationToken cancellationToken);
+    Task<ActiveWorkoutSessionSnapshot?> CheckpointTimingAsync(Guid userId, CheckpointWorkoutTimingCommand command, CancellationToken cancellationToken);
     Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(Guid userId, int workoutDayId, CancellationToken cancellationToken);
     Task<ActiveWorkoutSessionSnapshot?> GetSessionAsync(
         Guid userId,

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 
@@ -21,6 +22,6 @@ internal static class WorkoutSessionAccountLock
     {
         await AcquireAsync(context, userId, cancellationToken).ConfigureAwait(false);
         if (await HasActivePreviewAsync(context, userId, DateTime.UtcNow, cancellationToken).ConfigureAwait(false))
-            throw new InvalidOperationException("Close the workout plan preview before editing the plan.");
+            throw new WorkoutPreviewAlreadyOpenException();
     }
 }

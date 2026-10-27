@@ -18,6 +18,8 @@ public sealed record WorkoutListEntry(
 {
     public bool IsOptional { get; init; }
     public bool IsEasierAlternative { get; init; }
+    public bool IsInProgress { get; init; }
+    public int? DayOrder { get; init; }
 }
 
 public sealed record WorkoutScheduleEntry(
@@ -50,4 +52,7 @@ public sealed record WorkoutOverviewResponse(
     string PhaseName,
     IReadOnlyList<WorkoutListEntry> Workouts,
     IReadOnlyList<WorkoutScheduleEntry> Schedule,
-    IReadOnlyList<WorkoutDayExercisePreview> ExercisePreviews);
+    IReadOnlyList<WorkoutDayExercisePreview> ExercisePreviews)
+{
+    public WorkoutListEntry? InProgressWorkout { get; init; }
+}

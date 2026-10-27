@@ -34,6 +34,11 @@ public partial class WorkoutSessionPage : ContentPage
 
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        if (Application.Current is App app)
+        {
+            app.WorkoutTimingSuspending -= OnWorkoutTimingSuspending;
+            app.WorkoutTimingSuspending += OnWorkoutTimingSuspending;
+        }
 
         if (_navigationContext.TryTake<int>("workoutDayId", out var workoutDayId))
             _workoutDayId = workoutDayId;
@@ -50,10 +55,16 @@ public partial class WorkoutSessionPage : ContentPage
 
     protected override void OnNavigatingFrom(NavigatingFromEventArgs args)
     {
+        _ = _viewModel.SuspendTimingAsync();
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        if (Application.Current is App app)
+            app.WorkoutTimingSuspending -= OnWorkoutTimingSuspending;
         _workoutViewModel.Invalidate();
         base.OnNavigatingFrom(args);
     }
+
+    private void OnWorkoutTimingSuspending(object? sender, EventArgs e) =>
+        _ = _viewModel.SuspendForAppBackgroundAsync();
 
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
