@@ -9,9 +9,6 @@ namespace MuscleCuties.Infrastructure.Cloud;
 
 internal static class CloudWorkoutPreferencesSnapshotMapper
 {
-    private static readonly int[] DefaultAvailableWeekdays =
-        [(int)DayOfWeek.Monday, (int)DayOfWeek.Wednesday, (int)DayOfWeek.Friday];
-
     public static WorkoutPreferencesDto ToPreferences(ServerProfileSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -20,9 +17,6 @@ internal static class CloudWorkoutPreferencesSnapshotMapper
             .Select(activity => (int)activity)
             .ToArray();
         var weekdays = ParseAvailableWeekdays(snapshot.AvailableWorkoutWeekdaysJson);
-        if (weekdays.Length is < WorkoutPreferencesRule.MinimumDaysPerWeek or
-            > WorkoutPreferencesRule.MaximumDaysPerWeek)
-            weekdays = [.. DefaultAvailableWeekdays];
 
         var durations = ParseActivityDurations(snapshot.ActivitySessionDurationsJson);
         var selectedActivities = activities.ToHashSet();

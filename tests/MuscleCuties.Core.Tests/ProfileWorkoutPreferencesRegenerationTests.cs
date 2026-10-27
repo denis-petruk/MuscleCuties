@@ -28,6 +28,15 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
         Assert.Equal(expected, WorkoutPreferencesRule.IsValidEquipmentLevel(equipmentLevel));
 
     [Fact]
+    public void ProfileUpdateCannotChangeAppliedWorkoutEquipment()
+    {
+        var applied = Equipment.FullGym.ToString();
+        Assert.True(WorkoutPreferencesRule.PreservesAppliedEquipment(null, applied));
+        Assert.True(WorkoutPreferencesRule.PreservesAppliedEquipment(applied.ToLowerInvariant(), applied));
+        Assert.False(WorkoutPreferencesRule.PreservesAppliedEquipment(Equipment.Bodyweight.ToString(), applied));
+    }
+
+    [Fact]
     public async Task LoadingPreferencesDoesNotSaveOrReplacePlan()
     {
         var saved = new WorkoutPreferencesDto(
@@ -143,6 +152,19 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
         var noFrequencyPreferences = CloudWorkoutPreferencesSnapshotMapper.ToPreferences(noFrequencySnapshot);
 
         Assert.Empty(noFrequencyPreferences.RequestedSessionsPerWeek!);
+    }
+
+    [Fact]
+    public void CloudPreferenceSnapshotDoesNotInventMissingWeekdays()
+    {
+        var snapshot = ProfileSnapshot("{}", "GeneralStrength", "{}") with
+        {
+            AvailableWorkoutWeekdaysJson = "[]"
+        };
+
+        var preferences = CloudWorkoutPreferencesSnapshotMapper.ToPreferences(snapshot);
+
+        Assert.Empty(preferences.AvailableWeekdays);
     }
 
     [Fact]

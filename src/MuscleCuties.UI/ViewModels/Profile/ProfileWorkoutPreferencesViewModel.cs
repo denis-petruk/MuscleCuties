@@ -17,6 +17,7 @@ namespace MuscleCuties.UI.ViewModels.Profile;
 
 public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPageLoadAware
 {
+    public const string OnboardingWeekdaysContextKey = "onboarding-workout-weekdays";
     private const string FullGymEquipmentValue = "FullGym";
     private const string HomeDumbbellsBandsEquipmentValue = "HomeDumbbellsBands";
     private const string BodyweightEquipmentValue = "Bodyweight";
@@ -142,6 +143,9 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                                    .Where(value => Enum.IsDefined(typeof(DayOfWeek), value))
                                    .Select(value => (DayOfWeek)value).ToHashSet()
                                ?? new HashSet<DayOfWeek>();
+            if (_navigationContext?.TryTake<int[]>(OnboardingWeekdaysContextKey, out var onboardingDays) == true)
+                selectedDays = onboardingDays.Where(value => Enum.IsDefined(typeof(DayOfWeek), value))
+                    .Select(value => (DayOfWeek)value).ToHashSet();
             AvailableWeekdays = new ObservableCollection<WorkoutWeekdayOptionItem>(CreateWeekdays()
                 .Select(day => new WorkoutWeekdayOptionItem(day)
                 {

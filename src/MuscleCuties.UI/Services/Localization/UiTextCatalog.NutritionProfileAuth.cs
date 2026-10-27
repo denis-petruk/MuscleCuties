@@ -410,6 +410,7 @@ public static partial class UiTextCatalog
         English["Onboarding_Quiz_DoubleTapToReloadTheQuiz"] = "Double tap to reload the quiz questions";
         English["Onboarding_Quiz_DoubleTapToSelectThisAnswer"] = "Double tap to select this answer";
         English["Onboarding_Quiz_AvailableWeekdaysMinimum"] = "Choose 2 to 7 days when you are available to train.";
+        English["Onboarding_Quiz_WeekdayCatalogUnavailable"] = "Workout days are unavailable. Please try again later.";
         English["Onboarding_Quiz_GoBackToProfile"] = "Go back";
         English["Onboarding_Quiz_GoBackToProfileConfirmationTitle"] = "Go back to your profile?";
         English["Onboarding_Quiz_GoBackToProfileConfirmationBody"] = "Your quiz answers will reset when you go back.";

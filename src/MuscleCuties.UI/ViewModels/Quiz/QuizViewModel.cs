@@ -13,10 +13,12 @@ public partial class QuizViewModel : ObservableObject
 {
     private const int MinimumAvailableWeekdaySelections = 2;
     private const int MaximumAvailableWeekdaySelections = 7;
+    private const string WeekdayCatalogUnavailableKey = "Onboarding_Quiz_WeekdayCatalogUnavailable";
     private readonly Func<Task> _navigateToDashboardAsync;
     private readonly Func<Task>? _navigateToLoginAsync;
     private readonly Func<Task> _navigateToProfileAsync;
     private readonly Action? _onAccountCreatedNeedsLogin;
+    private readonly Action<int[]>? _onWeekdaysCommitted;
     private bool _quizCommitted;
     private readonly List<(int QuestionId, int AnswerId)> _selectedAnswers = new();
     private readonly IOnboardingQuizUseCase _useCase;
@@ -57,13 +59,15 @@ public partial class QuizViewModel : ObservableObject
         Func<Task> navigateToDashboardAsync,
         Func<Task>? navigateToLoginAsync,
         Func<Task> navigateToProfileAsync,
-        Action? onAccountCreatedNeedsLogin = null)
+        Action? onAccountCreatedNeedsLogin = null,
+        Action<int[]>? onWeekdaysCommitted = null)
     {
         _useCase = useCase;
         _navigateToDashboardAsync = navigateToDashboardAsync;
         _navigateToLoginAsync = navigateToLoginAsync;
         _navigateToProfileAsync = navigateToProfileAsync;
         _onAccountCreatedNeedsLogin = onAccountCreatedNeedsLogin;
+        _onWeekdaysCommitted = onWeekdaysCommitted;
 
         LoadQuestionsCommand = new AsyncRelayCommand(LoadQuestionsAsync);
         RetryLoadQuestionsCommand = new AsyncRelayCommand(RetryLoadQuestionsAsync);
@@ -300,12 +304,23 @@ public partial class QuizViewModel : ObservableObject
         var allLoaded = loadedQuestions
             .Where(question => question.Answers.Count > 0)
             .ToList();
-        var hasAvailableWeekdays = allLoaded.Any(
-            question => question.QuestionType == QuizQuestionType.AvailableWeekdays);
+        var hasAvailableWeekdays = allLoaded.Any(question =>
+            question.QuestionType == QuizQuestionType.AvailableWeekdays &&
+            question.Answers.Count == MaximumAvailableWeekdaySelections &&
+            question.Answers.Select(answer => answer.MappedValue).Distinct().Count() ==
+            MaximumAvailableWeekdaySelections &&
+            question.Answers.All(answer => Enum.IsDefined(typeof(DayOfWeek), answer.MappedValue)));
+
+        if (!hasAvailableWeekdays)
+        {
+            ClearQuestionState();
+            ErrorMessage = WeekdayCatalogUnavailableKey;
+            ShowEmptyState(false);
+            return;
+        }
 
         Questions = allLoaded
-            .Where(question => question.QuestionType.IsAvailableInCurrentOnboarding() ||
-                               (!hasAvailableWeekdays && question.QuestionType == QuizQuestionType.WorkoutDaysPerWeek))
+            .Where(question => question.QuestionType.IsAvailableInCurrentOnboarding())
             .OrderBy(question => question.OrderIndex)
             .ThenBy(question => question.Id)
             .ToList();
@@ -566,6 +581,19 @@ public partial class QuizViewModel : ObservableObject
                     return;
                 }
 
+                var weekdayQuestion = Questions.FirstOrDefault(question =>
+                    question.QuestionType == QuizQuestionType.AvailableWeekdays);
+                if (weekdayQuestion is not null)
+                {
+                    var selectedIds = _selectedAnswers.Where(selection => selection.QuestionId == weekdayQuestion.Id)
+                        .Select(selection => selection.AnswerId).ToHashSet();
+                    var weekdays = weekdayQuestion.Answers.Where(answer => selectedIds.Contains(answer.Id))
+                        .Select(answer => answer.MappedValue)
+                        .Where(day => Enum.IsDefined(typeof(DayOfWeek), day)).Distinct().ToArray();
+                    if (weekdays.Length >= MinimumAvailableWeekdaySelections)
+                        _onWeekdaysCommitted?.Invoke(weekdays);
+                }
+
                 if (commitResult.AccountCreatedNeedsLogin)
                 {
                     _onAccountCreatedNeedsLogin?.Invoke();
@@ -582,16 +610,16 @@ public partial class QuizViewModel : ObservableObject
             // Finish the quiz overlay layout before opening signed-in Activity preferences.
             IsPreparingWorkoutPreferences = false;
             await Task.Delay(50);
-            Trace.WriteLine("[Performance][Quiz] Dashboard navigation starting.");
+            Trace.WriteLine("[Performance][Quiz] Workout preferences navigation starting.");
             await _navigateToDashboardAsync();
             Trace.WriteLine(
-                $"[Performance][Quiz] Dashboard navigation completed; " +
+                $"[Performance][Quiz] Workout preferences navigation completed; " +
                 $"total={totalStopwatch.ElapsedMilliseconds} ms.");
         }
         catch (Exception ex)
         {
             ErrorMessage = _quizCommitted
-                ? "Your answers were saved. Tap Finish to open your dashboard."
+                ? "Your answers were saved. Tap Finish to open workout preferences."
                 : "We could not save your answers. Please try again.";
             Trace.WriteLine($"[ERROR][Quiz] SaveAnswersAsync failed ({ex.GetType().Name}).");
         }

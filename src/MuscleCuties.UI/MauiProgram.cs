@@ -504,7 +504,6 @@ public static class MauiProgram
         services.AddSingleton<IStrengthPlanProposalClientV020, CloudStrengthPlanProposalStoreV020>();
         services.AddSingleton<IWorkoutAccountCalendarClient, WorkoutAccountCalendarClient>();
         services.AddSingleton<IPhaseAdjustmentProposalClientV010, CloudPhaseAdjustmentProposalClientV010>();
-        services.AddSingleton<GenerateDeterministicWeeklyPlanUseCase>();
         services.AddScoped<IWorkoutSessionActionStore, CloudWorkoutSessionActionStore>();
         services.AddScoped<IWorkoutSessionActionUseCase, WorkoutSessionActionUseCase>();
     }
@@ -552,7 +551,9 @@ public static class MauiProgram
             () => NavigateToAsync("//LoginPage"),
             () => NavigateToAsync($"//{nameof(ProfileSetupPage)}"),
             () => sp.GetRequiredService<INavigationContextService>()
-                .Set(WorkoutPreferencesAfterOnboardingContextKey, true)));
+                .Set(WorkoutPreferencesAfterOnboardingContextKey, true),
+            weekdays => sp.GetRequiredService<INavigationContextService>()
+                .Set(ProfileWorkoutPreferencesViewModel.OnboardingWeekdaysContextKey, weekdays)));
 
         services.AddTransient<ProfileSetupViewModel>(sp => new ProfileSetupViewModel(
             sp.GetRequiredService<IProfileSetupUseCase>(),

@@ -105,7 +105,6 @@ public sealed class PostgresProfileDataStore(
             if (request.WeightGoalPace is not null) profile.WeightGoalPace = request.WeightGoalPace;
             if (request.CycleLength is not null) profile.CycleLength = request.CycleLength.Value;
             if (request.DietaryTags is not null) profile.DietaryTags = request.DietaryTags;
-            if (request.EquipmentLevel is not null) profile.EquipmentLevel = request.EquipmentLevel;
             if (request.ReproductiveContextJson is not null)
             {
                 var parsed = ReproductiveContextCodec.Parse(request.ReproductiveContextJson);
@@ -114,9 +113,11 @@ public sealed class PostgresProfileDataStore(
             if (request.ProfileImagePath is not null)
                 profile.ProfileImagePath = request.ProfileImagePath;
         }, cancellationToken,
-        profile => request.TrainingExperienceLevel is null ||
-                   string.Equals(request.TrainingExperienceLevel, profile.TrainingExperienceLevel,
-                       StringComparison.OrdinalIgnoreCase), request.EquipmentLevel is not null);
+        profile => (request.TrainingExperienceLevel is null ||
+                    string.Equals(request.TrainingExperienceLevel, profile.TrainingExperienceLevel,
+                        StringComparison.OrdinalIgnoreCase)) &&
+                   WorkoutPreferencesRule.PreservesAppliedEquipment(request.EquipmentLevel,
+                       profile.EquipmentLevel), request.EquipmentLevel is not null);
 
     public async Task<ServerProfileWriteResult> CorrectQuizResponseAsync(
         CorrectServerQuizResponseRequest request,
