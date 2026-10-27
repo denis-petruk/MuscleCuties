@@ -607,7 +607,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 .Concat(currentEvidence).ToArray();
             _savedAnswers = await _proposalClient.SaveAnswersAsync(new SaveActivityAnswersRequest(
                 _savedAnswers?.Version ?? InitialAnswersVersion, savedEvidence,
-                request.HiitEligibilityEvidence ?? _savedAnswers?.HiitEligibilityEvidence));
+                _selectedProfileActivities.Contains(WorkoutActivityDto.Hiit) ? request.HiitEligibilityEvidence : _savedAnswers?.HiitEligibilityEvidence)
+            {
+                HiitUnderlyingCardioActivity = _selectedProfileActivities.Contains(WorkoutActivityDto.Hiit)
+                    ? request.HiitUnderlyingCardioActivity : _savedAnswers?.HiitUnderlyingCardioActivity
+            });
             _safetyPlanChanged |= _savedAnswers.SafetyPlanChanged;
             if (_safetyPlanChanged)
             {
@@ -1120,6 +1124,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         SelectedRopeClimbingCompetenceChoice = EvidenceYesNoChoices.FirstOrDefault(choice => choice.Value == climbing?.HasRopeClimbingCompetence);
         SelectedClimbingInstructionChoice = EvidenceYesNoChoices.FirstOrDefault(choice => choice.Value == climbing?.AppropriateClimbingInstructionAvailable);
         SelectedYogaContentChoice = YogaContentChoices.FirstOrDefault(choice => choice.Value == yoga?.IsDemandingYogaContent);
+        SelectedHiitUnderlyingCardioActivity = HiitUnderlyingCardioActivities
+            .FirstOrDefault(choice => choice.Activity == saved.HiitUnderlyingCardioActivity);
     }
 
     private void NotifyMissingAnswers()

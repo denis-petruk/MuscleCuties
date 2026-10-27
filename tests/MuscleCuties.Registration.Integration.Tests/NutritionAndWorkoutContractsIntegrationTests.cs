@@ -379,6 +379,19 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             await store.SaveAnswersAsync(userId, new SaveActivityAnswersRequest(4, [], null), CancellationToken.None);
             Xunit.Assert.True(await database.WorkoutDays.AsNoTracking().Where(day => day.Id == unfinishedDayId)
                 .Select(day => day.IsRemovedBySafety).SingleAsync());
+
+            var hiitDayId = Guid.NewGuid();
+            database.WorkoutDays.Add(new WorkoutDayRecord { Id = hiitDayId, UserId = userId, WorkoutPlanId = planId,
+                DayOfWeek = (int)today.DayOfWeek, WeekIndex = 0, Date = today, WorkoutType = "Cardio",
+                ActivityTypeId = (int)WorkoutActivityType.Hiit, Name = "Synthetic HIIT" });
+            await database.SaveChangesAsync();
+            var choice = new SaveActivityAnswersRequest(5, [], null)
+                { HiitUnderlyingCardioActivity = MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Cycling };
+            await store.SaveAnswersAsync(userId, choice, CancellationToken.None);
+            Xunit.Assert.True(await database.WorkoutDays.AsNoTracking().Where(day => day.Id == hiitDayId)
+                .Select(day => day.IsRemovedBySafety).SingleAsync());
+            Xunit.Assert.Equal(choice.HiitUnderlyingCardioActivity,
+                (await store.ReadAnswersAsync(userId, CancellationToken.None)).HiitUnderlyingCardioActivity);
         }
         finally
         {

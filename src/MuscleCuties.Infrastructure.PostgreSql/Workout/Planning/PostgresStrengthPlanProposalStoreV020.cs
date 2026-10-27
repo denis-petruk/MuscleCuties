@@ -182,8 +182,11 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             cancellationToken).ConfigureAwait(false) ?? throw new InvalidOperationException("Establish the account timezone first.");
         if (request.ActivityEligibilityEvidence is null)
             throw new WorkoutPlanningInputsChangedException();
+        if (request.HiitUnderlyingCardioActivity is { } underlying &&
+            !WorkoutPlanningConstants.IsSupportedHiitUnderlyingCardioActivity(underlying))
+            throw new WorkoutPlanningInputsChangedException();
         var answers = new SavedActivityAnswersDto(state.AnswerVersion, request.ActivityEligibilityEvidence,
-            request.HiitEligibilityEvidence);
+            request.HiitEligibilityEvidence) { HiitUnderlyingCardioActivity = request.HiitUnderlyingCardioActivity };
         var json = JsonSerializer.Serialize(answers, JsonOptions);
         var previous = DeserializeAnswers(state.AnswersJson);
         var previousComparable = JsonSerializer.Serialize(previous with
@@ -212,11 +215,11 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             var newlySafe = answers.ActivityEligibilityEvidence.Any(item =>
                 Classify(item) == ActivitySafetyAnswerState.Safe &&
                 Classify(priorByActivity.GetValueOrDefault(item.Activity)) != ActivitySafetyAnswerState.Safe);
-            // The saved answer contract does not retain the selected underlying HIIT activity.
-            // Without it, the Core eligibility rule cannot establish safety, even when the
-            // submitted weeks and history look sufficient. Suppress until canonical regeneration.
+            // A choice or evidence change does not by itself establish current eligibility.
+            // Suppress until canonical regeneration has checked all restrictions and history.
             var hiitEvidenceChanged = JsonSerializer.Serialize(previous.HiitEligibilityEvidence, JsonOptions) !=
                 JsonSerializer.Serialize(answers.HiitEligibilityEvidence, JsonOptions) ||
+                previous.HiitUnderlyingCardioActivity != answers.HiitUnderlyingCardioActivity ||
                 SerializeUnderlyingHistories(previous.ActivityEligibilityEvidence) !=
                 SerializeUnderlyingHistories(answers.ActivityEligibilityEvidence);
             var activePlanId = await dbContext.WorkoutPlans.AsNoTracking().Where(row => row.UserId == userId && row.IsActive)
