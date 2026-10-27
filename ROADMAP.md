@@ -1,5 +1,7 @@
 # Roadmap — MuscleCuties
 
+- **Workout-planning migration checkpoint (2026-10-27):** Fetched the configured GitLab branch, already current at `3581187`. Continuation changes preserve a durable earned experience level when historical workout-day credits are incomplete, add field-level required HIIT evidence validation, and remove the unreferenced deterministic weekly-plan UseCase/contracts. Keep its Core generator and scenario tests until canonical preview has equivalent integrated progression/deload coverage. Automatic reconciliation and injury restoration remain unimplemented; saved four-week HIIT evidence still lacks reliable capture dates. Synthetic PostgreSQL coverage was added but not executed. No builds, tests, migrations or backfills were run and this checkpoint has not been pushed. See [migration inventory](docs/WORKOUT_PLANNING_MIGRATION_INVENTORY.md).
+
 - **Workout planning continuation (2026-10-26):** Removed the retired direct planner; added safe strength-session spacing, catalog fingerprint fencing migration definition, safety pending signals and immutable completion-date handling. High-intensity safer prescriptions still need review. Automatic injury/safety/promotion regeneration and legacy-client rollout remain incomplete; see [migration inventory](docs/WORKOUT_PLANNING_MIGRATION_INVENTORY.md). No tests, builds, migrations or backfills were run.
 
 
