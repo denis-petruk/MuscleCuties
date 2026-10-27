@@ -251,6 +251,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool MissingClimbingCompetence => _showMissingAnswers && IsRockClimbingSelected && HasRopeClimbingCompetence is null;
     public bool MissingClimbingInstruction => _showMissingAnswers && ShouldAskClimbingInstruction && AppropriateClimbingInstructionAvailable is null;
     public bool MissingYogaType => _showMissingAnswers && IsYogaSelected && IsDemandingYogaContent is null;
+    public bool MissingHiitUnderlyingActivity => _showMissingAnswers && ShouldShowHiitUnderlyingCardioChoice &&
+        SelectedHiitUnderlyingCardioActivity is null;
     public bool CanOfferExploreOtherFeatures =>
         !HasExistingPlan && IsBeforePreview &&
         (IsSwimmingSelected || IsRockClimbingSelected || IsYogaSelected ||
@@ -321,6 +323,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
 
         if (IsYogaSelected && IsDemandingYogaContent is null)
+            return true;
+
+        if (ShouldShowHiitUnderlyingCardioChoice &&
+            !HiitEvidenceCapture.IsComplete(DateOnly.FromDateTime(DateTime.Now),
+                SelectedHiitUnderlyingCardioActivity?.Activity))
             return true;
 
         return false;
@@ -600,6 +607,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             var request = BuildPreviewRequest(selectedActivity.Activity, preferences, history, warmup, cooldown);
 
             _showMissingAnswers = true;
+            if (ShouldShowHiitUnderlyingCardioChoice)
+                HiitEvidenceCapture.ShowValidationErrors(request.LocalDate);
             NotifyMissingAnswers();
             var currentEvidence = request.ActivityEligibilityEvidence ?? [];
             var savedEvidence = (_savedAnswers?.ActivityEligibilityEvidence ?? [])
@@ -619,8 +628,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 StatusMessage = UiTextCatalog.Get("Workout_Generation_SafetyPlanChanged");
             }
 
-            if (MissingSwimmingFacility || MissingSwimmingAbility || MissingSwimmingStyle ||
-                MissingClimbingCompetence || MissingClimbingInstruction || MissingYogaType)
+            if (HasMissingRequiredAnswers())
             {
                 StatusMessage = RequiredAnswersMessage();
                 return;
@@ -1136,6 +1144,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(MissingClimbingCompetence));
         OnPropertyChanged(nameof(MissingClimbingInstruction));
         OnPropertyChanged(nameof(MissingYogaType));
+        OnPropertyChanged(nameof(MissingHiitUnderlyingActivity));
     }
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -1334,7 +1343,13 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     }
 
     partial void OnSelectedHiitUnderlyingCardioActivityChanged(
-        StrengthPlanActivityChoice? value) => HiitEvidenceCapture.Reset();
+        StrengthPlanActivityChoice? value)
+    {
+        HiitEvidenceCapture.Reset();
+        if (_showMissingAnswers && ShouldShowHiitUnderlyingCardioChoice)
+            HiitEvidenceCapture.ShowValidationErrors(DateOnly.FromDateTime(DateTime.Now));
+        NotifyMissingAnswers();
+    }
 
     partial void OnHasSwimmingFacilityAccessChanged(bool? value)
     {
