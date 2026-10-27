@@ -213,16 +213,12 @@ public static class OnboardingValidationRule
         IReadOnlyList<QuizQuestionObservation> questions,
         Dictionary<int, List<QuizResponseObservation>> responsesByQuestion)
     {
-        var scheduleQuestionType = questions.Any(x => x.QuestionType == QuizQuestionType.AvailableWeekdays)
-            ? QuizQuestionType.AvailableWeekdays
-            : QuizQuestionType.WorkoutDaysPerWeek;
-
         ReadOnlySpan<QuizQuestionType> requiredTypes =
         [
             QuizQuestionType.CurrentCyclePhase,
             QuizQuestionType.Goal,
             QuizQuestionType.ExperienceLevel,
-            scheduleQuestionType,
+            QuizQuestionType.AvailableWeekdays,
             QuizQuestionType.DietaryPreference,
             QuizQuestionType.SessionDuration,
             QuizQuestionType.Equipment,

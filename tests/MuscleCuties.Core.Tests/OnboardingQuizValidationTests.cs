@@ -46,7 +46,7 @@ public sealed class OnboardingQuizValidationTests
     }
 
     [Xunit.Fact]
-    public void LegacyWorkoutDaysPerWeekCatalogIsValidWhenAvailableWeekdaysNotYetSeeded()
+    public void LegacyWorkoutDaysPerWeekCatalogCannotSubstituteForSelectedWeekdays()
     {
         var (questions, responses) = BuildQuiz(CyclePhase.Follicular, includePhaseRatings: true);
         var legacyQuestions = questions
@@ -63,7 +63,7 @@ public sealed class OnboardingQuizValidationTests
 
         var result = OnboardingValidationRule.ValidateQuizResponses(legacyResponses, legacyQuestions);
 
-        Xunit.Assert.True(result.IsValid, result.ErrorMessage);
+        Xunit.Assert.False(result.IsValid);
     }
 
     private static (IReadOnlyList<QuizQuestionObservation> Questions,
