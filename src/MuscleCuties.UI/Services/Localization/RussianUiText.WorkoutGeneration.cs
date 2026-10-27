@@ -18,9 +18,8 @@ internal static partial class RussianUiText
         Values["Workout_Generation_StrengthPlanType"] = "Тип силового плана";
         Values["Workout_Generation_GeneralStrengthDescription"] = "Меньший тренировочный объём и постепенный прогресс в общей силе.";
         Values["Workout_Generation_HighVolumeStrengthDescription"] = "Больше силовой работы; нужен достаточный недавний тренировочный опыт.";
-        Values["Workout_Generation_HighIntensityStrengthDescription"] = "Более тяжёлые основные упражнения; могут потребоваться подтверждения знакомства и переносимости нагрузки.";
+        Values["Workout_Generation_HighIntensityStrengthDescription"] = "Силовые тренировки с более тяжёлыми основными упражнениями.";
         Values["Workout_Generation_StrengthPlanChoiceHint"] = "Выберите этот тип силового плана.";
-        Values["Workout_Generation_HighIntensityEvidenceHelp"] = "Тяжёлое упражнение появится в предложении, только если записи тренировок и проверенные данные о нагрузке соответствуют требованиям. В ограниченном предварительном плане для каждого такого упражнения нужно отдельно подтвердить знакомство с движением и переносимость нагрузки.";
         Values["Workout_Generation_HeavyMainAssignmentFormat"] = "Используется как тяжёлое основное упражнение: {0}";
         Values["Workout_Generation_HiitUnderlyingActivityTitle"] = "Выберите кардиоактивность для HIIT";
         Values["Workout_Generation_HiitUnderlyingActivityHelp"] = "Выберите непрерывную кардиоактивность, сохранённую в предпочтениях. HIIT заменит одно занятие этой активности. Ниже укажите её фактическую историю и занятия за каждую предыдущую неделю, затем подтвердите прохождение необходимого скрининга или наличие допуска.";
@@ -194,6 +193,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_Reason_FrequencyPreference"] = "Укажите допустимую частоту этой активности в неделю в предпочтениях тренировок.";
         Values["Workout_Generation_Reason_FrequencyLimited"] = "Частота в неделю уменьшена с учётом доступных дней.";
         Values["Workout_Generation_Reason_HardDayLimit"] = "Достигнут недельный лимит дней с повышенной нагрузкой.";
+        Values["Workout_Generation_Reason_StrengthRecoverySpacing"] = "Силовых тренировок стало меньше, чтобы мышцы успевали восстанавливаться между днями.";
         Values["Workout_Generation_Reason_NoSafeDay"] = "Для этой тренировки не осталось подходящего доступного дня.";
         Values["Workout_Generation_Reason_HiitEligibility"] = "HIIT остаётся заблокированным, если опыт выбранной кардиоактивности не подтверждён, в любой из предыдущих недель не достигнут аэробный порог, вы не подтвердили необходимый скрининг или допуск либо текущие симптомы или травмы требуют проверки.";
         Values["Workout_Generation_Reason_HiitUnderlyingCardioUnsupported"] = "Выберите поддерживаемую непрерывную кардиоактивность, сохранённую в предпочтениях.";
@@ -204,7 +204,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_Reason_EstablishedHistory"] = "История подтверждает устойчивый уровень активности.";
         Values["Workout_Generation_Reason_HistoryBelowThreshold"] = "История активности ниже порога для устойчивого тренировочного уровня.";
         Values["Workout_Generation_Reason_StrengthHistory"] = "Для этой силовой программы нужны устойчивый опыт силовых тренировок и знакомство с упражнениями.";
-        Values["Workout_Generation_Reason_HighIntensityExerciseEvidence"] = "Для каждого обязательного основного упражнения высокой интенсивности нужны четыре зарегистрированных выполнения, известная допустимая нагрузка и ваши отдельные подтверждения знакомства с движением и переносимости нагрузки. Подтвердите каждое показанное упражнение ниже. Если упражнений нет, не хватает проверенных данных о нагрузке или выполнениях.";
+        Values["Workout_Generation_Reason_HighIntensityExerciseEvidence"] = "Для этой высокоинтенсивной тренировки нет проверенного безопасного упражнения.";
         Values["Workout_Generation_Reason_HighIntensityEvidenceMissing"] = "Для обязательного тяжёлого упражнения не хватает проверенных данных о выполнениях или допустимой нагрузке. Подтверждение можно запросить только для подходящего варианта, поэтому в черновике такого упражнения пока нет.";
         Values["Workout_Generation_Reason_TrainingLimits"] = "План соблюдает ограничения по числу упражнений, объёму подходов и усилию.";
         Values["Workout_Generation_Reason_HighVolumeConservativeStart"] =

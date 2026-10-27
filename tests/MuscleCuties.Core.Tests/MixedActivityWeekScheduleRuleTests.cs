@@ -260,7 +260,7 @@ public sealed class MixedActivityWeekScheduleRuleTests
         Assert.Equal(MixedActivityWeekScheduleRule.MaximumHardDaysPerWeek,
             result.Sessions.Select(session => session.Day).Distinct().Count());
         Assert.All(result.Sessions, session => Assert.True(session.IsHardSession));
-        Assert.Contains(MixedActivityWeekScheduleRule.HardDayLimitReached,
+        Assert.Contains(ActivityPrescriptionRule.HighIntensitySaferAlternativeReviewMissing,
             Decision(result, WorkoutActivityType.StrengthHighIntensity).Reasons);
     }
 

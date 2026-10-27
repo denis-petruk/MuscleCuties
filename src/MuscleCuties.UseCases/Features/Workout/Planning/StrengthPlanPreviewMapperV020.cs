@@ -135,16 +135,17 @@ internal static class StrengthPlanPreviewMapperV020
 
         // When strength sessions cannot fit or have no safe exercises, but safe non-strength activities exist,
         // allow a safe non-strength-only plan with explanation. An empty plan remains blocked.
-        var isStrengthExhausted = !hasStrengthDays && (response.Sessions.Count == 0 || response.LimitationCodes.Length > 0);
+        var isStrengthExhausted = !hasStrengthDays && response.LimitationCodes.Length == 0 &&
+            (response.Sessions.Count == 0 || schedule.StrengthAssignments is { Count: 0 });
         var allowNonStrengthOnlyPlan = isStrengthExhausted && hasSafeNonStrengthSessions && totalScheduledSessions > 0;
 
         // When strength sessions are scheduled, fit volume to the placed days with their planned weekdays.
         // If no strength sessions could be placed, retain original sessions with unassigned weekdays.
         var alignedStrengthSessions = hasStrengthDays
-            ? response.Sessions
-                .Take(effectiveCount)
-                .Select((session, index) => session with { PlannedWeekday = strengthDays[index] })
-                .ToArray()
+            ? schedule.StrengthAssignments is { } assignments
+                ? assignments.Select(item => response.Sessions[item.SessionIndex] with { PlannedWeekday = item.Day }).ToArray()
+                : response.Sessions.Take(effectiveCount)
+                    .Select((session, index) => session with { PlannedWeekday = strengthDays[index] }).ToArray()
             : allowNonStrengthOnlyPlan
                 ? Array.Empty<StrengthPlanPreviewSessionV020>()
                 : response.Sessions

@@ -15,8 +15,6 @@ public sealed class StrengthPlanPreviewV020Tests
     private const int SelectedDemandingYogaDurationMinutes = 35;
     private const int SelectedFallbackStrengthMinutes = 60;
     private const int StaleGeneralStrengthMinutes = 90;
-    private const int HighIntensitySessionsPerWeek =
-        ActivityPrescriptionRule.StrengthHighIntensityMaximumSessionsPerWeekInitially;
     private const int ExpectedSavedProposalCount = 1;
     private const string MixedScheduleIncompleteReason = "MixedActivityScheduleIncomplete";
     private static readonly DateOnly LocalDate = new(2026, 10, 23);
@@ -546,7 +544,7 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
-    public async Task High_Intensity_Uses_Its_Two_Session_Activity_Policy()
+    public async Task High_Intensity_Is_Limited_Until_Safer_Prescription_Is_Reviewed()
     {
         var useCase = new PreviewStrengthPlanV020UseCase(new Source(Profile()));
 
@@ -556,7 +554,8 @@ public sealed class StrengthPlanPreviewV020Tests
             ActivityHistory = HistoryFor(WorkoutActivityType.StrengthHighIntensity)
         });
 
-        Assert.Equal(HighIntensitySessionsPerWeek, result.Sessions.Count);
+        Assert.Equal("Limited", result.Status);
+        Assert.Empty(result.Sessions.SelectMany(session => session.Slots));
     }
 
     [Fact]
@@ -900,6 +899,41 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Contains(WorkoutScheduleValidationRule.StrengthMuscleMetadataMissing, preview.LimitationCodes);
     }
 
+    [Fact]
+    public async Task MissingMuscleReviewCannotBecomeAFeasibleNonStrengthRemainder()
+    {
+        var source = AddSelectedActivity(Profile(), WorkoutActivityType.Yoga) with
+        {
+            MuscleGroupsByExerciseId = null
+        };
+        var request = Request() with
+        {
+            ActivityEligibilityEvidence =
+            [new ActivityEligibilityInputV020(WorkoutActivityDto.Yoga, IsDemandingYogaContent: false)]
+        };
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(source))
+            .ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.NotEqual("Feasible", preview.Status);
+        Assert.Contains(WorkoutScheduleValidationRule.StrengthMuscleMetadataMissing, preview.LimitationCodes);
+    }
+    [Fact]
+    public async Task ConsecutiveDaysPreviewPersistsOnlyTheSafeStrengthSession()
+    {
+        var days = new HashSet<DayOfWeek> { DayOfWeek.Sunday, DayOfWeek.Monday };
+        var source = Profile() with { AvailableWeekdays = days };
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(source))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = days });
+
+        Assert.Equal("Feasible", preview.Status);
+        var strength = Assert.Single(preview.Sessions);
+        var scheduled = Assert.Single(preview.MixedActivitySchedule!.Sessions,
+            session => session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength);
+        Assert.Equal(strength.PlannedWeekday, scheduled.Weekday);
+        var decision = Assert.Single(preview.MixedActivitySchedule.Activities,
+            item => item.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength);
+        Assert.Contains(StrengthScheduleAssignmentRule.SessionsReducedForMuscleRecovery, decision.ReasonCodes);
+    }
     private static StrengthPlanPreviewSourceV020 Profile()
     {
         var catalog = new[]
@@ -923,6 +957,8 @@ public sealed class StrengthPlanPreviewV020Tests
                 entry => entry.Candidate.Pattern.ToString()),
             allowed, conditions)
         {
+            MuscleGroupsByExerciseId = catalog.ToDictionary(entry => entry.Candidate.ExerciseId,
+                _ => (IReadOnlySet<string>)new HashSet<string> { "synthetic-muscle" }),
             AvailableWeekdays = new HashSet<DayOfWeek>
             {
                 DayOfWeek.Monday,

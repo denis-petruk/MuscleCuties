@@ -252,7 +252,9 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool MissingClimbingInstruction => _showMissingAnswers && ShouldAskClimbingInstruction && AppropriateClimbingInstructionAvailable is null;
     public bool MissingYogaType => _showMissingAnswers && IsYogaSelected && IsDemandingYogaContent is null;
     public bool CanOfferExploreOtherFeatures =>
-        !HasExistingPlan && IsBeforePreview && (IsSwimmingSelected || IsRockClimbingSelected || IsYogaSelected);
+        !HasExistingPlan && IsBeforePreview &&
+        (IsSwimmingSelected || IsRockClimbingSelected || IsYogaSelected ||
+         ShouldShowHiitUnderlyingCardioChoice || HasFittingStrengthStyleChoices);
     public bool HasExistingPlan => _hasExistingPlan || (_proposal?.ReplacesExistingPlan == true);
     public bool HasActiveOtherPreview => _activeOtherProposalId.HasValue;
     public bool HasFittingStrengthStyleChoices => FittingStrengthStyleChoices.Count > NoPolicyReasons;
@@ -279,8 +281,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 : "Explore other features";
         }
     }
-    public bool IsHighIntensityStrengthSelected =>
-        SelectedActivity?.Activity == WorkoutActivityDto.StrengthHighIntensity;
     public bool CanChooseSwimmingStyle => HasSwimmingFacilityAccess is true && CanSwimIndependently is true;
     public bool ShouldAskClimbingInstruction => IsRockClimbingSelected && HasRopeClimbingCompetence is true;
     public bool HasSavedAvailability => HasValidSavedAvailability;
@@ -453,6 +453,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             IsLoadError = true;
             StatusMessage = UiTextCatalog.Get(ConnectionErrorKey);
         }
+        catch (TaskCanceledException)
+        {
+            IsLoadError = true;
+            StatusMessage = UiTextCatalog.Get(ConnectionErrorKey);
+        }
         catch (Exception)
         {
             IsLoadError = true;
@@ -594,6 +599,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
 
             var request = BuildPreviewRequest(selectedActivity.Activity, preferences, history, warmup, cooldown);
 
+            _showMissingAnswers = true;
+            NotifyMissingAnswers();
             var currentEvidence = request.ActivityEligibilityEvidence ?? [];
             var savedEvidence = (_savedAnswers?.ActivityEligibilityEvidence ?? [])
                 .Where(answer => currentEvidence.All(current => current.Activity != answer.Activity))
@@ -608,8 +615,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 StatusMessage = UiTextCatalog.Get("Workout_Generation_SafetyPlanChanged");
             }
 
-            _showMissingAnswers = true;
-            NotifyMissingAnswers();
             if (MissingSwimmingFacility || MissingSwimmingAbility || MissingSwimmingStyle ||
                 MissingClimbingCompetence || MissingClimbingInstruction || MissingYogaType)
             {
@@ -715,7 +720,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             WarmupMinutes: warmupMinutes,
             CooldownMinutes: cooldownMinutes)
         {
-            DraftPreferences = _draftPreferences,
+            DraftPreferences = preferences,
             ExplicitStrengthStyleChoice = SelectedFittingStrengthStyle?.Activity,
             SelectedActivityTypes = preferences.ActivityTypes.ToHashSet(),
             AvailableWeekdays = _availableWeekdays.ToHashSet(),
@@ -807,6 +812,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                     StrengthPlanGenerationDisplayMapper.ActivityLabel(activity))));
         SelectedFittingStrengthStyle = null;
         OnPropertyChanged(nameof(HasFittingStrengthStyleChoices));
+        OnPropertyChanged(nameof(CanOfferExploreOtherFeatures));
+        ExploreOtherFeaturesCommand.NotifyCanExecuteChanged();
         StatusMessage = _safetyPlanChanged
             ? $"{UiTextCatalog.Get("Workout_Generation_SafetyPlanChanged")}{Environment.NewLine}{UiTextCatalog.Get("Workout_Generation_ChooseFittingStrengthStyle")}"
             : UiTextCatalog.Get("Workout_Generation_ChooseFittingStrengthStyle");
@@ -1019,7 +1026,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     partial void OnSelectedActivityChanged(StrengthPlanActivityChoice? value)
     {
         OnPropertyChanged(nameof(HasSavedStrengthActivity));
-        OnPropertyChanged(nameof(IsHighIntensityStrengthSelected));
         if (_historyActivity == value?.Activity)
             return;
 

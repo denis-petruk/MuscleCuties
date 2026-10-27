@@ -153,6 +153,7 @@ internal static class StrengthPlanGenerationDisplayMapper
             "Workout_Generation_Reason_FrequencyPreference",
         "ActivityFrequencyLimitedByAvailableWeekdays" => "Workout_Generation_Reason_FrequencyLimited",
         "HardDayLimitReached" => "Workout_Generation_Reason_HardDayLimit",
+        "StrengthSessionsReducedForMuscleRecovery" => "Workout_Generation_Reason_StrengthRecoverySpacing",
         "NoSafeDayAvailable" or "NotOnStrengthOrClimbingDay" => "Workout_Generation_Reason_NoSafeDay",
         "HiitUnderlyingCardioActivityUnsupported" => "Workout_Generation_Reason_HiitUnderlyingCardioUnsupported",
         "HiitUnderlyingCardioActivityMissing" or "HiitRequiresSelectedEstablishedCardio" or
@@ -178,6 +179,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         "HighIntensityMainNeedsFourExposuresKnownManageableLoad" or
         "HighIntensitySelectedMainPrerequisiteMissing" =>
             "Workout_Generation_Reason_HighIntensityEvidenceMissing",
+        "HighIntensitySaferAlternativePrescriptionReviewMissing" or
         "HighIntensityMainRequiresExplicitUserConfirmation" or
         "EveryRequiredHighIntensityMainNeedsFourExposuresKnownLoadAndFamiliarity" =>
             "Workout_Generation_Reason_HighIntensityExerciseEvidence",
@@ -215,8 +217,11 @@ internal static class StrengthPlanGenerationDisplayMapper
         if (preview is null)
             return NoStatusMessage;
 
-        var reasons = preview.LimitationCodes.Concat(
-            preview.Sessions.SelectMany(session => session.LimitationCodes)).ToHashSet(StringComparer.Ordinal);
+        var reasons = preview.LimitationCodes
+            .Concat(preview.Sessions.SelectMany(session => session.LimitationCodes))
+            .Concat(preview.Sessions.SelectMany(session => session.Slots)
+                .SelectMany(slot => slot.LimitationCodes))
+            .ToHashSet(StringComparer.Ordinal);
 
         if (preview.Status == "Feasible" &&
             preview.FallbackReasonCode is "BeginnerProfileRequiresGeneralStrength" or
@@ -261,7 +266,8 @@ internal static class StrengthPlanGenerationDisplayMapper
             reasons.Contains("HighIntensitySelectedMainPrerequisiteMissing"))
             return UiTextCatalog.Get("Workout_Generation_Reason_HighIntensityEvidenceMissing");
 
-        if (reasons.Contains("HighIntensityMainRequiresExplicitUserConfirmation") ||
+        if (reasons.Contains("HighIntensitySaferAlternativePrescriptionReviewMissing") ||
+            reasons.Contains("HighIntensityMainRequiresExplicitUserConfirmation") ||
             reasons.Contains("EveryRequiredHighIntensityMainNeedsFourExposuresKnownLoadAndFamiliarity"))
             return UiTextCatalog.Get("Workout_Generation_Reason_HighIntensityExerciseEvidence");
 

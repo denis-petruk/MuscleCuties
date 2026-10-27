@@ -30,6 +30,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private readonly IWorkoutOverviewUseCase _overview;
 
     [ObservableProperty] private string? _activePlanName;
+    private bool _hasLoadedOverview;
     private List<WorkoutItem> _allWorkouts = new();
     [ObservableProperty] private ObservableCollection<string> _blockedCardioNames = new();
     [ObservableProperty] private ObservableCollection<string> _blockedExerciseNames = new();
@@ -138,6 +139,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         _injuries, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
 
     public bool HasNoPlan => string.IsNullOrEmpty(ActivePlanName);
+    public bool ShowNoPlanPrompt => _hasLoadedOverview && !IsBusy && !IsLoadError && HasNoPlan;
     public bool HasWorkouts => !IsBusy && Workouts.Count > 0;
     public bool HasNoWorkouts => !IsBusy && !IsLoadError && Workouts.Count == 0;
     public string ActivePlanTitle => ActivePlanName ?? "No active plan";
@@ -277,6 +279,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         {
             var summary = await _overview.LoadAsync(new WorkoutOverviewRequest(
                 DateOnly.FromDateTime(DateTime.Today)));
+            _hasLoadedOverview = true;
             WriteLoadStage("overview", loadStarted);
             CurrentPhaseName = summary.PhaseName;
             ActivePlanName = summary.PlanName;
@@ -649,6 +652,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private void NotifyWorkoutStateProperties()
     {
         OnPropertyChanged(nameof(HasNoPlan));
+        OnPropertyChanged(nameof(ShowNoPlanPrompt));
         OnPropertyChanged(nameof(HasWorkouts));
         OnPropertyChanged(nameof(HasNoWorkouts));
         OnPropertyChanged(nameof(ActivePlanTitle));

@@ -58,6 +58,7 @@ public sealed record StrengthPlanPreviewResponseV020(
     public Guid? SourceActivePlanId { get; init; }
     public Guid? SourceActiveRevisionId { get; init; }
     public string? SourceHistoryFingerprint { get; init; }
+    public string? SourceCatalogFingerprint { get; init; }
     public long SourceTimeZoneVersion { get; init; }
     public long SourceExperienceVersion { get; init; }
     public long SourceAnswerVersion { get; init; }

@@ -73,13 +73,6 @@
                                LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
 
-                    <!-- High Intensity Notice -->
-                    <Border Style="{StaticResource CardAccent}"
-                            IsVisible="{Binding IsHighIntensityStrengthSelected}">
-                        <Label Text="{loc:LocalizedText Workout_Generation_HighIntensityEvidenceHelp}"
-                               Style="{StaticResource MutedLabel}"
-                               LineBreakMode="WordWrap" />
-                    </Border>
                 </VerticalStackLayout>
             </Border>
 

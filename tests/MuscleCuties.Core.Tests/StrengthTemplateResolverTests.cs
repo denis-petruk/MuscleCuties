@@ -135,152 +135,28 @@ public sealed class StrengthTemplateResolverTests
     }
 
     [Fact]
-    public void High_Intensity_Uses_Only_Qualified_Heavy_Mains_And_At_Most_Four_Exercises()
-    {
-        var input = Input(Catalog(
-                Candidate(11, MovementPattern.SquatPattern),
-                Candidate(21, MovementPattern.HipHinge),
-                Candidate(31, MovementPattern.HorizontalPush),
-                Candidate(41, MovementPattern.HorizontalPull)),
-            activity: WorkoutActivityType.StrengthHighIntensity,
-            experience: ActivityExperience.Established,
-            establishedResistance: true) with
-        {
-            CompletedExerciseExposureCounts = new Dictionary<int, int> { [11] = 4, [21] = 4 },
-            KnownManageableLoadExerciseIds = new HashSet<int> { 11, 21 },
-            UserConfirmedFamiliarityExerciseIds = new HashSet<int> { 11, 21 },
-            UserConfirmedManageableLoadExerciseIds = new HashSet<int> { 11, 21 }
-        };
-
-        var result = StrengthTemplateResolver.Resolve(input, maximumWorkingExercises: 8);
-        var selected = result.Slots.Where(slot => slot.ExerciseId.HasValue).ToArray();
-        var heavy = selected.Where(slot => slot.IsHeavyMain).ToArray();
-        var accessories = selected.Where(slot => !slot.IsHeavyMain).ToArray();
-
-        Assert.Equal("Resolved", result.Status);
-        Assert.Equal(4, selected.Length);
-        Assert.Equal(2, heavy.Length);
-        Assert.All(heavy, slot =>
-        {
-            Assert.Equal(StrengthPrescriptionRole.Main, slot.PrescriptionRole);
-            Assert.Equal(3, slot.Sets);
-            Assert.Equal(4, slot.InitialRepetitionTarget);
-            Assert.Equal(180, slot.RestSeconds);
-        });
-        Assert.All(accessories, slot =>
-        {
-            Assert.Equal(StrengthPrescriptionRole.Accessory, slot.PrescriptionRole);
-            Assert.Equal(2, slot.Sets);
-            Assert.Equal(10, slot.InitialRepetitionTarget);
-            Assert.Equal(90, slot.RestSeconds);
-        });
-    }
-
-    [Fact]
-    public void High_Intensity_Preview_Offers_Only_Trusted_Heavy_Candidates_Until_Confirmed()
-    {
-        var result = StrengthTemplateResolver.Resolve(HighIntensityInput(), maximumWorkingExercises: 8);
-        var heavy = result.Slots.Where(slot => slot.IsHeavyMain).ToArray();
-
-        Assert.Equal("NeedsUserConfirmation", result.Status);
-        Assert.Equal(new[] { 11, 21 }, heavy.Select(slot => slot.ExerciseId!.Value).OrderBy(id => id));
-        Assert.Contains(StrengthHighIntensityExerciseEvidenceRule.UserConfirmationRequired,
-            result.LimitationCodes);
-        Assert.All(heavy, slot => Assert.Null(slot.Sets));
-    }
-
-    [Fact]
-    public void High_Intensity_Resolves_When_Each_Trusted_Candidate_Is_Explicitly_Confirmed()
+    public void HighIntensityCannotBeEnabledByExerciseConfirmations()
     {
         var input = HighIntensityInput() with
         {
             UserConfirmedFamiliarityExerciseIds = new HashSet<int> { 11, 21 },
             UserConfirmedManageableLoadExerciseIds = new HashSet<int> { 11, 21 }
         };
-
         var result = StrengthTemplateResolver.Resolve(input, maximumWorkingExercises: 8);
-        var heavy = result.Slots.Where(slot => slot.IsHeavyMain).ToArray();
-
-        Assert.Equal("Resolved", result.Status);
-        Assert.Equal(new[] { 11, 21 }, heavy.Select(slot => slot.ExerciseId!.Value).OrderBy(id => id));
-        Assert.All(heavy, slot => Assert.NotNull(slot.Sets));
+        Assert.Equal("Unsupported", result.Status);
+        Assert.Empty(result.Slots);
+        Assert.Contains(ActivityPrescriptionRule.HighIntensitySaferAlternativeReviewMissing, result.LimitationCodes);
     }
 
     [Fact]
-    public void High_Intensity_Does_Not_Offer_Candidates_Without_Required_Exposure_Count()
+    public void HighIntensityWithoutConfirmationsAlsoRequiresReview()
     {
-        var input = HighIntensityInput() with
-        {
-            CompletedExerciseExposureCounts = new Dictionary<int, int> { [11] = 3, [21] = 4 },
-            UserConfirmedFamiliarityExerciseIds = new HashSet<int> { 11, 21 },
-            UserConfirmedManageableLoadExerciseIds = new HashSet<int> { 11, 21 }
-        };
-
-        var result = StrengthTemplateResolver.Resolve(input, maximumWorkingExercises: 8);
-
-        Assert.NotEqual("Resolved", result.Status);
-        Assert.Null(result.Slots.Single(slot => slot.SlotId == "knee-dominant").ExerciseId);
-        Assert.Equal(21, result.Slots.Single(slot => slot.SlotId == "hip-dominant").ExerciseId);
-        Assert.Contains(StrengthHighIntensityExerciseEvidenceRule.TrustedEvidenceMissing,
-            result.LimitationCodes);
+        var result = StrengthTemplateResolver.Resolve(HighIntensityInput(excludedIds: new HashSet<int> { 11 }),
+            maximumWorkingExercises: 8);
+        Assert.Equal("Unsupported", result.Status);
+        Assert.Empty(result.Slots);
+        Assert.Contains(ActivityPrescriptionRule.HighIntensitySaferAlternativeReviewMissing, result.LimitationCodes);
     }
-
-    [Fact]
-    public void High_Intensity_Does_Not_Offer_Candidates_Without_Trusted_Manageable_Load()
-    {
-        var input = HighIntensityInput() with
-        {
-            KnownManageableLoadExerciseIds = new HashSet<int> { 11 },
-            UserConfirmedFamiliarityExerciseIds = new HashSet<int> { 11, 21 },
-            UserConfirmedManageableLoadExerciseIds = new HashSet<int> { 11, 21 }
-        };
-
-        var result = StrengthTemplateResolver.Resolve(input, maximumWorkingExercises: 8);
-
-        Assert.NotEqual("Resolved", result.Status);
-        Assert.Equal(11, result.Slots.Single(slot => slot.SlotId == "knee-dominant").ExerciseId);
-        Assert.Null(result.Slots.Single(slot => slot.SlotId == "hip-dominant").ExerciseId);
-        Assert.Contains(StrengthHighIntensityExerciseEvidenceRule.TrustedEvidenceMissing,
-            result.LimitationCodes);
-    }
-
-    [Fact]
-    public void High_Intensity_Confirmation_For_Another_Candidate_Does_Not_Unblock_A_Rejected_Candidate()
-    {
-        var input = HighIntensityInput() with
-        {
-            UserConfirmedFamiliarityExerciseIds = new HashSet<int> { 11, 21 },
-            UserConfirmedManageableLoadExerciseIds = new HashSet<int> { 11 }
-        };
-
-        var result = StrengthTemplateResolver.Resolve(input, maximumWorkingExercises: 8);
-        var rejectedCandidate = result.Slots.Single(slot => slot.SlotId == "hip-dominant");
-
-        Assert.Equal("NeedsUserConfirmation", result.Status);
-        Assert.Equal(21, rejectedCandidate.ExerciseId);
-        Assert.Null(rejectedCandidate.Sets);
-        Assert.Contains(StrengthHighIntensityExerciseEvidenceRule.UserConfirmationRequired,
-            result.LimitationCodes);
-    }
-
-    [Fact]
-    public void High_Intensity_Explicitly_Excluded_Candidate_Remains_Blocked_Even_When_Confirmed()
-    {
-        var input = HighIntensityInput(excludedIds: new HashSet<int> { 11 }) with
-        {
-            UserConfirmedFamiliarityExerciseIds = new HashSet<int> { 11, 21 },
-            UserConfirmedManageableLoadExerciseIds = new HashSet<int> { 11, 21 }
-        };
-
-        var result = StrengthTemplateResolver.Resolve(input, maximumWorkingExercises: 8);
-
-        Assert.NotEqual("Resolved", result.Status);
-        Assert.Null(result.Slots.Single(slot => slot.SlotId == "knee-dominant").ExerciseId);
-        Assert.Equal(21, result.Slots.Single(slot => slot.SlotId == "hip-dominant").ExerciseId);
-        Assert.Contains(StrengthHighIntensityExerciseEvidenceRule.TrustedEvidenceMissing,
-            result.LimitationCodes);
-    }
-
     private static StrengthTemplateSelectionInput HighIntensityInput(
         IReadOnlySet<int>? excludedIds = null) => Input(Catalog(
             Candidate(11, MovementPattern.SquatPattern),

@@ -353,19 +353,10 @@ public static class StrengthPlanPreviewRule
 
             if (floor is not null)
             {
-                if (actualWorkingSetsInSession < floor.MinimumWorkingSets)
-                {
-                    limitations.Add(TemplateVolumeFloorRule.VolumeBelowTemplateFloor);
-                }
-
-                foreach (var slot in selected)
-                {
-                    var floorMin = floor.MinimumSetsBySlotId.GetValueOrDefault(slot.SlotId, 0);
-                    if (slot.Sets.GetValueOrDefault() < floorMin)
-                    {
-                        limitations.Add(TemplateVolumeFloorRule.VolumeBelowTemplateFloor);
-                    }
-                }
+                var floorEvaluation = TemplateVolumeFloorRule.EvaluateSelections(template.TemplateId,
+                    selected, data.TemplateVolumeFloors);
+                if (!floorEvaluation.IsAllowed)
+                    limitations.Add(floorEvaluation.LimitationCode ?? TemplateVolumeFloorRule.VolumeBelowTemplateFloor);
             }
 
             IReadOnlyList<string> sessionLimitations = estimatedMinutes.HasValue
@@ -384,6 +375,12 @@ public static class StrengthPlanPreviewRule
                 ActualWorkingSets: actualWorkingSetsInSession));
         }
 
+        // Review data must remain a hard prerequisite even when an initial weekday assignment fails.
+        if (sessions.SelectMany(session => session.Slots).Where(slot => slot.ExerciseId.HasValue)
+            .Any(slot => data.MuscleGroupsByExerciseId is null ||
+                !data.MuscleGroupsByExerciseId.TryGetValue(slot.ExerciseId!.Value, out var groups) ||
+                groups.Count == 0 || groups.Any(string.IsNullOrWhiteSpace)))
+            limitations.Add(WorkoutScheduleValidationRule.StrengthMuscleMetadataMissing);
         var assignments = StrengthWeekdayAssignmentRule.Assign(sessions.Count, weekdays!);
         if (assignments.Status != StrengthWeekdayAssignmentStatus.Assigned)
             limitations.Add(assignments.LimitationCode ?? "StrengthWeekdayAssignmentUnavailable");
@@ -414,7 +411,8 @@ public static class StrengthPlanPreviewRule
                 return new WorkoutScheduleValidationSession(session.PlannedWeekday!.Value, activity, true,
                     missingMuscle ? null : muscles);
             }).ToArray();
-            limitations.AddRange(WorkoutScheduleValidationRule.Validate(validationSessions));
+            limitations.AddRange(WorkoutScheduleValidationRule.Validate(validationSessions)
+                .Where(code => code != WorkoutScheduleValidationRule.ConsecutiveStrengthMuscleGroups));
         }
 
         var limitationCodes = limitations.Distinct(StringComparer.Ordinal)

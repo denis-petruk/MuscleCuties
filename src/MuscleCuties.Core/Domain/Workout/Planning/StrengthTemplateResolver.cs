@@ -86,33 +86,11 @@ public static class StrengthTemplateResolver
         if (input.PrescriptionContext.Activity != input.Activity ||
             input.PrescriptionContext.Experience != input.EligibilityContext.Experience)
             return Failure("ActivityExperienceInputMismatch");
-        ActivityPrescriptionResult? activityPrescription = null;
-        if (input.Activity != WorkoutActivityType.StrengthHighIntensity)
-        {
-            activityPrescription = ActivityPrescriptionRule.Evaluate(input.PrescriptionContext);
-            if (activityPrescription.Status != ActivityPrescriptionStatus.Eligible ||
-                activityPrescription.Sessions.Count == 0)
-                return new StrengthTemplateResolution(input.Template.TemplateId, input.Template.Version,
-                    activityPrescription.Status.ToString(), [], activityPrescription.Reasons);
-        }
-        else if (!input.PrescriptionContext.IsExplicitlySelected ||
-                 input.PrescriptionContext.HasCurrentRestrictionOrSymptom)
-        {
+        var activityPrescription = ActivityPrescriptionRule.Evaluate(input.PrescriptionContext);
+        if (activityPrescription.Status != ActivityPrescriptionStatus.Eligible ||
+            activityPrescription.Sessions.Count == 0)
             return new StrengthTemplateResolution(input.Template.TemplateId, input.Template.Version,
-                input.PrescriptionContext.HasCurrentRestrictionOrSymptom
-                    ? ActivityPrescriptionStatus.BlockedByRestriction.ToString()
-                    : ActivityPrescriptionStatus.NotSelected.ToString(), [],
-                [input.PrescriptionContext.HasCurrentRestrictionOrSymptom
-                    ? "RestrictionOrSymptomRequiresReview" : "ActivityNotSelected"]);
-        }
-        else if (input.PrescriptionContext.Experience != ActivityExperience.Established ||
-                 !input.PrescriptionContext.IsEstablishedResistanceHistory)
-        {
-            return new StrengthTemplateResolution(input.Template.TemplateId, input.Template.Version,
-                ActivityPrescriptionStatus.OfferGeneralStrength.ToString(), [],
-                ["HeavyStrengthRequiresEstablishedResistanceHistory"]);
-        }
-
+                activityPrescription.Status.ToString(), [], activityPrescription.Reasons);
         var policyExerciseMaximum = input.Activity switch
         {
             WorkoutActivityType.HighVolumeStrength => ActivityPrescriptionRule.HighVolumeMaximumWorkingExercisesPerSession,
@@ -186,25 +164,10 @@ public static class StrengthTemplateResolver
                 .Select(pair => pair.Value).ToHashSet();
             var existingSelections = input.ExistingAcceptedExerciseIds ?? new HashSet<int>();
             var goalPriorities = input.GoalPriorityByExerciseId ?? new Dictionary<int, int>();
-            var exposures = input.CompletedExerciseExposureCounts ?? new Dictionary<int, int>();
-            var manageableLoads = input.KnownManageableLoadExerciseIds ?? new HashSet<int>();
-            var confirmedFamiliarity = input.UserConfirmedFamiliarityExerciseIds ?? new HashSet<int>();
-            var confirmedManageableLoads = input.UserConfirmedManageableLoadExerciseIds ?? new HashSet<int>();
             var selection = matched
                 .Where(entry => candidateIds.Contains(entry.Candidate.ExerciseId))
                 .Where(entry => chosen.All(previous => previous.ExerciseId != entry.Candidate.ExerciseId))
-                .Where(entry => !IsHeavyMain(slot, input.Activity) ||
-                    StrengthHighIntensityExerciseEvidenceRule.IsConfirmableCandidate(
-                        entry.Candidate.ExerciseId, exposures, manageableLoads))
-                .OrderByDescending(entry => IsHeavyMain(slot, input.Activity) &&
-                    StrengthHighIntensityExerciseEvidenceRule.Evaluate(
-                        entry.Candidate.ExerciseId,
-                        exposures.GetValueOrDefault(entry.Candidate.ExerciseId),
-                        manageableLoads.Contains(entry.Candidate.ExerciseId),
-                        confirmedFamiliarity.Contains(entry.Candidate.ExerciseId),
-                        confirmedManageableLoads.Contains(entry.Candidate.ExerciseId)) ==
-                    StrengthHighIntensityExerciseEvidenceStatus.Confirmed)
-                .ThenByDescending(entry => existingSelections.Contains(entry.Candidate.ExerciseId))
+                .OrderByDescending(entry => existingSelections.Contains(entry.Candidate.ExerciseId))
                 .ThenByDescending(entry => input.FamiliarExerciseIds.Contains(entry.Candidate.ExerciseId) &&
                                            input.UsablePerformanceHistoryExerciseIds.Contains(entry.Candidate.ExerciseId))
                 .ThenByDescending(entry => input.UsablePerformanceHistoryExerciseIds.Contains(entry.Candidate.ExerciseId))
@@ -227,8 +190,6 @@ public static class StrengthTemplateResolver
                     : eligibilityCodes.Length > 0 ? eligibilityCodes : [NoEligibleCandidate];
                 if (slot.IsRequired)
                     unresolved.Add(RequiredSlotUnresolved);
-                if (IsHeavyMain(slot, input.Activity))
-                    codes = codes.Append(StrengthHighIntensityExerciseEvidenceRule.TrustedEvidenceMissing).ToArray();
                 var prescription = activityPrescription?.Sessions.Count > 0
                     ? SlotPrescription(activityPrescription.Sessions[0], slot, input.Activity)
                     : new StrengthSlotPrescription(null, null, null, null, null);
@@ -257,62 +218,6 @@ public static class StrengthTemplateResolver
                 PrescriptionRule(input.Activity, slot), selectedPrescription.Sets,
                 selectedPrescription.MinimumRepetitions, selectedPrescription.MaximumRepetitions,
                 selectedPrescription.RepetitionsInReserve, selectedPrescription.RestSeconds, []));
-        }
-
-        if (input.Activity == WorkoutActivityType.StrengthHighIntensity)
-        {
-            var selectedHeavyExerciseIds = chosen.Where(slot => slot.IsHeavyMain && slot.ExerciseId.HasValue)
-                .Select(slot => slot.ExerciseId!.Value).ToArray();
-            var requiredHeavyMainCount = input.Template.Slots.Count(slot => slot.IsRequired &&
-                IsHeavyMain(slot, input.Activity));
-            if (selectedHeavyExerciseIds.Length != requiredHeavyMainCount)
-                return new StrengthTemplateResolution(input.Template.TemplateId, input.Template.Version,
-                    ActivityPrescriptionStatus.OfferGeneralStrength.ToString(),
-                    Array.AsReadOnly(chosen.ToArray()),
-                    [StrengthHighIntensityExerciseEvidenceRule.TrustedEvidenceMissing]);
-            var exposures = input.CompletedExerciseExposureCounts ?? new Dictionary<int, int>();
-            var manageableLoads = input.KnownManageableLoadExerciseIds ?? new HashSet<int>();
-            var confirmedFamiliarity = input.UserConfirmedFamiliarityExerciseIds ?? new HashSet<int>();
-            var confirmedManageableLoads = input.UserConfirmedManageableLoadExerciseIds ?? new HashSet<int>();
-            var readiness = selectedHeavyExerciseIds.Select(id =>
-                StrengthHighIntensityExerciseEvidenceRule.Evaluate(id,
-                    exposures.GetValueOrDefault(id), manageableLoads.Contains(id),
-                    confirmedFamiliarity.Contains(id), confirmedManageableLoads.Contains(id))).ToArray();
-            if (readiness.Any(status => status != StrengthHighIntensityExerciseEvidenceStatus.Confirmed))
-                return new StrengthTemplateResolution(input.Template.TemplateId, input.Template.Version,
-                    "NeedsUserConfirmation", Array.AsReadOnly(chosen.ToArray()),
-                    [StrengthHighIntensityExerciseEvidenceRule.UserConfirmationRequired]);
-            var minExposures = selectedHeavyExerciseIds.Length == 0 ? 0 :
-                selectedHeavyExerciseIds.Min(id => exposures.GetValueOrDefault(id));
-            var context = input.PrescriptionContext with
-            {
-                CompletedMainExerciseExposures = minExposures,
-                HasKnownManageableLoad = selectedHeavyExerciseIds.Length > 0 &&
-                    selectedHeavyExerciseIds.All(id => manageableLoads.Contains(id) &&
-                                                       confirmedManageableLoads.Contains(id)),
-                UserConfirmedCurrentFamiliarity = selectedHeavyExerciseIds.Length > 0 &&
-                    selectedHeavyExerciseIds.All(confirmedFamiliarity.Contains)
-            };
-            activityPrescription = ActivityPrescriptionRule.Evaluate(context);
-            if (activityPrescription.Status != ActivityPrescriptionStatus.Eligible ||
-                activityPrescription.Sessions.Count == 0)
-                return new StrengthTemplateResolution(input.Template.TemplateId, input.Template.Version,
-                    activityPrescription.Status.ToString(), Array.AsReadOnly(chosen.ToArray()),
-                    activityPrescription.Reasons.Append("HighIntensitySelectedMainPrerequisiteMissing").ToArray());
-
-            chosen = chosen.Select(slot =>
-            {
-                var definition = input.Template.Slots.Single(definition => definition.SlotId == slot.SlotId);
-                var prescription = SlotPrescription(activityPrescription.Sessions[0], definition, input.Activity);
-                return slot with
-                {
-                    Sets = prescription.Sets,
-                    MinimumRepetitions = prescription.MinimumRepetitions,
-                    MaximumRepetitions = prescription.MaximumRepetitions,
-                    RepetitionsInReserve = prescription.RepetitionsInReserve,
-                    RestSeconds = prescription.RestSeconds
-                };
-            }).ToList();
         }
 
         var status = unresolved.Count > 0 ? "Limited" : "Resolved";
