@@ -186,6 +186,8 @@ public static class WorkoutPlanningEndpointMappings
         {
             if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try { return Results.Ok(await store.SaveAnswersAsync(userId, request, cancellationToken).ConfigureAwait(false)); }
+            catch (WorkoutPreviewAlreadyOpenException exception)
+            { return Results.Conflict(new { code = ErrorCodeWorkoutPreviewOpen, message = exception.Message }); }
             catch (WorkoutPlanningInputsChangedException exception)
             { return Results.Conflict(new { code = ErrorCodeWorkoutPlanningInputsChanged, message = exception.Message }); }
             catch (InvalidOperationException exception)

@@ -27,7 +27,7 @@ public sealed class PostgresDbContext(DbContextOptions<PostgresDbContext> option
     public DbSet<DailyReadinessLogRecord> DailyReadinessLogs => Set<DailyReadinessLogRecord>();
     public DbSet<WorkoutInjuryLogRecord> WorkoutInjuryLogs => Set<WorkoutInjuryLogRecord>();
     public DbSet<WorkoutInjuryEpisodeRecord> WorkoutInjuryEpisodes => Set<WorkoutInjuryEpisodeRecord>();
-    public DbSet<WorkoutInjuryPrescriptionLinkRecord> WorkoutInjuryPrescriptionLinks => Set<WorkoutInjuryPrescriptionLinkRecord>();
+    public DbSet<WorkoutInjuryPrescriptionRecord> WorkoutInjuryPrescriptions => Set<WorkoutInjuryPrescriptionRecord>();
     public DbSet<WorkoutPlanRecord> WorkoutPlans => Set<WorkoutPlanRecord>();
     public DbSet<WorkoutAccountPlanningStateRecord> WorkoutAccountPlanningStates => Set<WorkoutAccountPlanningStateRecord>();
     public DbSet<WorkoutCompletionDayCreditRecord> WorkoutCompletionDayCredits => Set<WorkoutCompletionDayCreditRecord>();

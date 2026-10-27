@@ -40,6 +40,80 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
     private const string ExpiredStatus = "Expired";
 
     [Xunit.Fact]
+    public async Task PendingRevisionDoesNotCreateFirstPlanAndDefersToLivePreview()
+    {
+        var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(RequireLocalTestConnectionString()).Options;
+        await using var database = new PostgresDbContext(options);
+        var userId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        await SyntheticTenantSession.SetAsync(database, userId);
+        database.Users.Add(new UserRecord { Id = userId, Email = $"revision-{userId:N}@example.invalid",
+            Username = $"rev_{userId.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
+            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
+        database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+        {
+            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id,
+            BaselineExperience = TrainingExperienceLevel.Beginner, EffectiveExperience = TrainingExperienceLevel.Intermediate,
+            PromotionPending = true
+        });
+        await database.SaveChangesAsync();
+        try
+        {
+            var worker = new PostgresWorkoutPlanReconciler(database);
+            Xunit.Assert.Equal(WorkoutReconciliationOutcome.NeedsReview, await worker.ReconcileAsync(userId));
+            Xunit.Assert.False(await database.WorkoutPlans.AsNoTracking().AnyAsync(row => row.UserId == userId));
+            Xunit.Assert.True((await database.WorkoutAccountPlanningStates.AsNoTracking()
+                .SingleAsync(row => row.UserId == userId)).PromotionPending);
+
+            database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = Guid.NewGuid(), UserId = userId,
+                Name = "Synthetic current plan", IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
+            database.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record
+            {
+                Id = Guid.NewGuid(), UserId = userId, PlanId = Guid.NewGuid(), Status = "Proposed",
+                RulesetVersion = StrengthPlanPreviewRule.RulesetVersion,
+                TrainingPolicyVersion = StrengthPlanPreviewRule.Version,
+                CreatedAtUtc = now, LeaseId = Guid.NewGuid(), LeaseFence = 1,
+                LeaseExpiresAtUtc = now.Add(PlanningLifecycleRule.FiveMinuteLeaseDuration)
+            });
+            await database.SaveChangesAsync();
+            Xunit.Assert.Equal(WorkoutReconciliationOutcome.Deferred, await worker.ReconcileAsync(userId));
+            Xunit.Assert.Equal(WorkoutReconciliationOutcome.Deferred, await worker.ReconcileAsync(userId));
+            Xunit.Assert.Single(await database.WorkoutPlans.AsNoTracking().Where(row => row.UserId == userId).ToListAsync());
+            Xunit.Assert.True((await database.WorkoutAccountPlanningStates.AsNoTracking()
+                .SingleAsync(row => row.UserId == userId)).PromotionPending);
+
+            // Concurrent reconciliation and a second device takeover must leave the
+            // durable revision pending while either device holds the live lease.
+            var openId = await database.WorkoutPlanProposalsV02.AsNoTracking()
+                .Where(row => row.UserId == userId).Select(row => row.Id).SingleAsync();
+            await using var workerDb = new PostgresDbContext(options);
+            await using var takeoverDb = new PostgresDbContext(options);
+            var reconcileTask = new PostgresWorkoutPlanReconciler(workerDb).ReconcileAsync(userId);
+            var takeoverTask = new PostgresStrengthPlanProposalStoreV020(takeoverDb)
+                .TakeoverAsync(userId, openId, CancellationToken.None);
+            await Task.WhenAll(reconcileTask, takeoverTask);
+            Xunit.Assert.Equal(WorkoutReconciliationOutcome.Deferred, await reconcileTask);
+            Xunit.Assert.Equal("Active", (await takeoverTask).Status);
+            Xunit.Assert.True((await database.WorkoutAccountPlanningStates.AsNoTracking()
+                .SingleAsync(row => row.UserId == userId)).PromotionPending);
+
+            var openProposal = await database.WorkoutPlanProposalsV02.SingleAsync(row => row.UserId == userId);
+            openProposal.Status = "Expired";
+            openProposal.DecidedAtUtc = now;
+            await database.SaveChangesAsync();
+            // Missing accepted revision means no trusted inputs: never clear the pending work.
+            Xunit.Assert.Equal(WorkoutReconciliationOutcome.NeedsReview, await worker.ReconcileAsync(userId));
+            Xunit.Assert.Single(await database.WorkoutPlans.AsNoTracking().Where(row => row.UserId == userId).ToListAsync());
+            Xunit.Assert.True((await database.WorkoutAccountPlanningStates.AsNoTracking()
+                .SingleAsync(row => row.UserId == userId)).PromotionPending);
+        }
+        finally
+        {
+            await database.Users.Where(row => row.Id == userId).ExecuteDeleteAsync();
+        }
+    }
+
+    [Xunit.Fact]
     public async Task GroupedMealsAndCustomFoodsRoundTripAgainstPostgreSql()
     {
         var connectionString = RequireLocalTestConnectionString();
@@ -280,6 +354,24 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
                     CancellationToken.None);
             }
 
+            var beforeStart = await workoutStore.GetDetailAsync(userId, activeWorkout.WorkoutDayId, CancellationToken.None);
+            var sessionId = Guid.NewGuid();
+            var activeStore = new PostgresWorkoutActiveSessionStore(database, new PostgresIdempotencyExecutor(), TimeProvider.System);
+            await activeStore.StartSessionAsync(userId, new StartWorkoutSessionCommand(sessionId.ToString("N"),
+                sessionId, "Synthetic workout", nowUtc, PlannedWorkoutDayId: activeWorkout.WorkoutDayId), CancellationToken.None);
+            var prescriptionRow = await database.WorkoutDayExercises.SingleAsync(row => row.UserId == userId && row.WorkoutDayId == existingDayId);
+            prescriptionRow.IsRemovedByReadiness = true;
+            prescriptionRow.Reps += 1;
+            await database.SaveChangesAsync();
+            var resumed = await workoutStore.GetDetailAsync(userId, activeWorkout.WorkoutDayId, CancellationToken.None);
+            Xunit.Assert.Equal(beforeStart.Exercises.Select(item => item.ExerciseId), resumed.Exercises.Select(item => item.ExerciseId));
+            Xunit.Assert.Equal(beforeStart.Exercises.Select(item => item.TargetText), resumed.Exercises.Select(item => item.TargetText));
+            prescriptionRow = await database.WorkoutDayExercises.SingleAsync(row => row.UserId == userId && row.WorkoutDayId == existingDayId);
+            prescriptionRow.IsRemovedByReadiness = false;
+            prescriptionRow.Reps -= 1;
+            await database.SaveChangesAsync();
+            await activeStore.CancelSessionAsync(userId, new CancelWorkoutSessionCommand(sessionId.ToString("N"), sessionId), CancellationToken.None);
+
             await workoutStore.LogAsync(
                 userId,
                 new LogWorkoutSessionRequest(
@@ -295,12 +387,9 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
 
             var archiveHistory = await archiveStore.GetWorkoutHistoryAsync(userId, 10, 0, CancellationToken.None);
             Xunit.Assert.NotEmpty(archiveHistory);
-            var earnedCredit = await database.WorkoutCompletionDayCredits.AsNoTracking()
-                .SingleAsync(credit => credit.UserId == userId && credit.LocalDate == today);
-            Xunit.Assert.Equal(TimeZoneInfo.Utc.Id, earnedCredit.TimeZoneId);
-            await database.WorkoutLogs.Where(log => log.UserId == userId).ExecuteDeleteAsync();
-            Xunit.Assert.True(await database.WorkoutCompletionDayCredits.AsNoTracking()
-                .AnyAsync(credit => credit.UserId == userId && credit.Id == earnedCredit.Id));
+            // A legacy unlinked log does not prove that an app session was finished.
+            Xunit.Assert.False(await database.WorkoutCompletionDayCredits.AsNoTracking()
+                .AnyAsync(credit => credit.UserId == userId && credit.LocalDate == today));
         }
         finally
         {

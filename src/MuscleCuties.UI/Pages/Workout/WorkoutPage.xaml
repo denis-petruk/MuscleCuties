@@ -79,6 +79,15 @@
                     HorizontalOptions="Fill"
                     MaximumWidthRequest="{StaticResource UiDimension640}">
 
+                    <Border Style="{StaticResource CardAccent}" IsVisible="{Binding HasInProgressWorkout}">
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Label Text="{loc:LocalizedText Workout_Overview_InProgressTitle}" Style="{StaticResource BodyStrong}" />
+                            <Label Text="{loc:LocalizedText Workout_Overview_InProgressExplanation}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                            <Label Text="{Binding InProgressWorkout.Title}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                            <Button Text="{loc:LocalizedText Workout_Overview_ResumeWorkout}" Command="{Binding ResumeInProgressWorkoutCommand}" Style="{StaticResource ButtonPrimary}" />
+                        </VerticalStackLayout>
+                    </Border>
+
                     <Border Style="{StaticResource CardAccent}"
                             IsVisible="{Binding HasActiveInjuries}"
                             SemanticProperties.Description="{loc:LocalizedText Workout_Page_InjuryAdjustmentsActive}"

@@ -502,7 +502,7 @@ public sealed class CloudWorkoutSessionActionStore(
         var request = new StartWorkoutSessionCommand(sessionId.ToString("N"), sessionId, "Workout", startedAtUtc, PlannedWorkoutDayId: workoutDayId);
         var response = await apiClient.SendMutationAsync<StartWorkoutSessionCommand, ActiveWorkoutSessionSnapshot>(
             HttpMethod.Post, "/api/v1/workouts/sessions/start", request, idempotencyKey: sessionId.ToString("N"), cancellationToken).ConfigureAwait(false);
-        return CloudStoreResponse.RequireData(response, "start planned workout session");
+        return RequirePlannedSession(response, "start planned workout session");
     }
 
     public async Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, CancellationToken cancellationToken)
@@ -510,7 +510,7 @@ public sealed class CloudWorkoutSessionActionStore(
         var request = new FinishWorkoutSessionCommand(sessionId.ToString("N"), sessionId, completedAtUtc, totalDurationSeconds, null, null);
         var response = await apiClient.SendMutationAsync<FinishWorkoutSessionCommand, ActiveWorkoutSessionSnapshot>(
             HttpMethod.Post, $"/api/v1/workouts/sessions/{sessionId:D}/finish", request, idempotencyKey: sessionId.ToString("N"), cancellationToken).ConfigureAwait(false);
-        return CloudStoreResponse.RequireData(response, "finish planned workout session");
+        return RequirePlannedSession(response, "finish planned workout session");
     }
 
     public async Task AbandonPlannedSessionAsync(Guid sessionId, CancellationToken cancellationToken)
@@ -518,7 +518,40 @@ public sealed class CloudWorkoutSessionActionStore(
         var request = new CancelWorkoutSessionCommand(sessionId.ToString("N"), sessionId);
         var response = await apiClient.SendMutationAsync<CancelWorkoutSessionCommand, ActiveWorkoutSessionSnapshot>(
             HttpMethod.Post, $"/api/v1/workouts/sessions/{sessionId:D}/cancel", request, idempotencyKey: sessionId.ToString("N"), cancellationToken).ConfigureAwait(false);
-        CloudStoreResponse.RequireData(response, "abandon planned workout session");
+        RequirePlannedSession(response, "abandon planned workout session");
+    }
+
+    public async Task<ActiveWorkoutSessionSnapshot> ResumePlannedTimingAsync(Guid sessionId, Guid operationId,
+        CancellationToken cancellationToken)
+    {
+        var key = operationId.ToString("N");
+        var response = await apiClient.SendMutationAsync<ResumeWorkoutTimingCommand, ActiveWorkoutSessionSnapshot>(
+            HttpMethod.Post, $"/api/v1/workouts/sessions/{sessionId:D}/timing/resume",
+            new ResumeWorkoutTimingCommand(key, sessionId), idempotencyKey: key, cancellationToken).ConfigureAwait(false);
+        if (response.Status == BackendApiStatus.Conflict && response.ErrorCode == "WorkoutActivityNoLongerSafe")
+            throw new WorkoutActivityNoLongerSafeException();
+        return RequirePlannedSession(response, "resume workout timing");
+    }
+
+    public async Task<ActiveWorkoutSessionSnapshot> CheckpointPlannedTimingAsync(Guid sessionId, Guid operationId,
+        Guid intervalId, int measuredSeconds, bool pause, CancellationToken cancellationToken)
+    {
+        var key = operationId.ToString("N");
+        var response = await apiClient.SendMutationAsync<CheckpointWorkoutTimingCommand, ActiveWorkoutSessionSnapshot>(
+            HttpMethod.Post, $"/api/v1/workouts/sessions/{sessionId:D}/timing/checkpoint",
+            new CheckpointWorkoutTimingCommand(key, sessionId, intervalId, measuredSeconds, pause),
+            idempotencyKey: key, cancellationToken).ConfigureAwait(false);
+        if (response.Status == BackendApiStatus.Conflict && response.ErrorCode == "WorkoutTimingIntervalExpired")
+            throw new WorkoutTimingIntervalExpiredException();
+        return RequirePlannedSession(response, "checkpoint workout timing");
+    }
+
+    private static ActiveWorkoutSessionSnapshot RequirePlannedSession(
+        BackendApiResponse<ActiveWorkoutSessionSnapshot> response, string operation)
+    {
+        if (response.Status == BackendApiStatus.OfflineRejected)
+            throw new HttpRequestException("Workout session requires a connection.");
+        return CloudStoreResponse.RequireData(response, operation);
     }
     public async Task<WorkoutSessionDetailDto> GetDetailAsync(int workoutDayId, CancellationToken cancellationToken) =>
         CloudStoreResponse.RequireData(await apiClient.GetAsync<WorkoutSessionDetailDto>(

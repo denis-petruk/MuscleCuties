@@ -536,11 +536,13 @@
 
                         <!-- Mixed Schedule Sub-Section -->
                         <VerticalStackLayout IsVisible="{Binding HasMixedSchedule}" Spacing="{StaticResource UiSpacing10}">
+                            <Label Text="{Binding ChosenStrengthSummary}" IsVisible="{Binding HasChosenStrengthSummary}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
                             <Label Text="{loc:LocalizedText Workout_Generation_MixedScheduleTitle}"
                                    Style="{StaticResource SectionTitle}"
                                    FontSize="{StaticResource UiFontSize17}"
                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                    SemanticProperties.HeadingLevel="Level3" />
+                            <Label Text="{loc:LocalizedText Workout_Generation_ActivityOrderNote}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                             <Label Text="{loc:LocalizedText Workout_Generation_ScheduleEmpty}"
                                    IsVisible="{Binding HasNoMixedActivitySessions}"
                                    Style="{StaticResource MutedLabel}"
@@ -624,6 +626,7 @@
                             </Border>
                         </VerticalStackLayout>
 
+                        <Label Text="{loc:LocalizedText Workout_Generation_MovementOmitted}" IsVisible="{Binding HasOmittedMovements}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                         <toolkit:Expander IsVisible="{Binding HasStrengthPreviewSessions}">
   <toolkit:Expander.Header>
     <Grid ColumnDefinitions="*,Auto" Style="{StaticResource DisclosureHeader}">

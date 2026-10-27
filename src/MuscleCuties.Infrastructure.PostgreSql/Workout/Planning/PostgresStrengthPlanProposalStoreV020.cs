@@ -38,6 +38,42 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             await PlanningCatalogFingerprint.LockCatalogAsync(dbContext, cancellationToken).ConfigureAwait(false);
 
+            var result = await SaveWithinTransactionAsync(userId, request, preview, cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return result;
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>Persists a proposal under the caller's tenant transaction and account/catalog locks.</summary>
+    internal async Task<StrengthPlanProposalCreatedV020> SaveWithinTransactionAsync(Guid userId,
+        StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewResponseV020 preview, CancellationToken cancellationToken)
+    {
+            if (dbContext.Database.CurrentTransaction is null)
+                throw new InvalidOperationException("A planning transaction is required.");
+            ArgumentNullException.ThrowIfNull(request);
+            ArgumentNullException.ThrowIfNull(preview);
+            if (userId == Guid.Empty || request.DraftPreferences is null ||
+                !string.Equals(preview.Status, FeasibleStatus, StringComparison.Ordinal) ||
+                preview.MixedActivitySchedule?.Sessions is not { Count: > 0 } ||
+                preview.PolicyId != StrengthPlanPreviewRule.PolicyId ||
+                preview.PolicyVersion != StrengthPlanPreviewRule.Version ||
+                preview.RulesetVersion != StrengthPlanPreviewRule.RulesetVersion)
+                throw new ArgumentException("Only a feasible proposal from the active training policy can be saved.");
+
+            var now = DateTime.UtcNow;
+            var prior = await dbContext.WorkoutPlanProposalsV02
+                .Where(item => item.UserId == userId && item.LeaseId != null)
+                .OrderByDescending(item => item.LeaseFence).ToListAsync(cancellationToken).ConfigureAwait(false);
+            if (prior.Any(item => item.Status == "Proposed" && item.LeaseExpiresAtUtc > now))
+                throw new WorkoutPreviewAlreadyOpenException();
+            foreach (var expired in prior.Where(item => item.Status == "Proposed"))
+            {
+                expired.Status = "Expired";
+                expired.DecidedAtUtc = now;
+                expired.ConcurrencyVersion++;
+            }
+            var fence = PlanningLifecycleRule.NextFence(prior.FirstOrDefault()?.LeaseFence ?? 0)
+                ?? throw new InvalidOperationException("Workout planning fence exhausted.");
             var result = await SaveInCurrentTransactionAsync(userId, request, preview, cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return result;
@@ -154,6 +190,32 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             preview.RulesetVersion != StrengthPlanPreviewRule.RulesetVersion)
             throw new ArgumentException("Only a feasible proposal from the active training policy can be saved.");
 
+            var snapshotJson = JsonSerializer.Serialize(
+                new ProposalInputSnapshot(request, profileVersion.Value, activePlanId, activeRevisionId), JsonOptions);
+            var previewJson = JsonSerializer.Serialize(preview, JsonOptions);
+            var record = new WorkoutPlanProposalV02Record
+            {
+                Id = Guid.CreateVersion7(),
+                UserId = userId,
+                PlanId = Guid.CreateVersion7(),
+                ExpectedRevisionId = Guid.Empty,
+                RulesetVersion = preview.RulesetVersion,
+                TrainingPolicyVersion = preview.PolicyVersion,
+                Status = "Proposed",
+                InputSnapshotJson = snapshotJson,
+                ProposalJson = previewJson,
+                ReasonsJson = JsonSerializer.Serialize(
+                    preview.LimitationCodes.Concat(preview.AdvisoryCodes).Distinct(StringComparer.Ordinal),
+                    JsonOptions),
+                CreatedAtUtc = now,
+                LeaseId = Guid.CreateVersion7(),
+                LeaseFence = fence,
+                LeaseExpiresAtUtc = now.Add(PlanningLifecycleRule.FiveMinuteLeaseDuration)
+            };
+            dbContext.WorkoutPlanProposalsV02.Add(record);
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return new StrengthPlanProposalCreatedV020(record.Id, preview, true,
+                ToLease(record), record.ConcurrencyVersion, activePlanId is not null);
     }
 
     public Task<PlanningLeaseResult> RenewAsync(Guid userId, PlanningLeaseRequest request, CancellationToken cancellationToken) =>

@@ -10,3 +10,11 @@ public interface IWorkoutProgressStore
     Task<WorkoutProgressResponse> AcceptForegroundTimeZoneAsync(Guid userId, WorkoutForegroundTimeZoneRequest request,
         CancellationToken cancellationToken);
 }
+
+public interface IWorkoutPlanReconciler
+{
+    Task<WorkoutReconciliationOutcome> ReconcileAsync(Guid userId, CancellationToken cancellationToken = default);
+}
+
+public enum WorkoutReconciliationOutcome { Completed, Deferred, NeedsReview }
+
