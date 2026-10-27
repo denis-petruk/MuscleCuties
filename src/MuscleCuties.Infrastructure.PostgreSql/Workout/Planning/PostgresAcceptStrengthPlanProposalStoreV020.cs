@@ -133,7 +133,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         var planningState = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
             .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken).ConfigureAwait(false);
         if (origin == AcceptanceOrigin.Automatic &&
-            (planningState is null || !planningState.PromotionPending || planningState.SafetyRegenerationPending))
+            (planningState is null || (!planningState.PromotionPending && !planningState.SafetyRegenerationPending)))
             return new(StaleStatus, proposal.PlanId, null, PlanningInputsChangedSinceProposalCode);
         if (planningState?.TimeZoneId is not { } zoneId)
             return new(LimitedStatus, null, null, CalendarNotEstablishedCode);
@@ -261,7 +261,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                 return new(StaleStatus, proposal.PlanId, null, PlanningInputsChangedSinceProposalCode);
             var earliestScheduled = await FindNextScheduledDateAsync(userId, activePlanId.Value,
                 today, completedToday, cancellationToken).ConfigureAwait(false);
-            var expectedStart = earliestScheduled ?? firstDate;
+            var expectedStart = planningState.SafetyRegenerationPending ? firstDate : earliestScheduled ?? firstDate;
             if (expectedStart is null || inputSnapshot.AutomaticStartDate != expectedStart ||
                 !availableWeekdays.Contains(expectedStart.Value.DayOfWeek))
                 return new(StaleStatus, proposal.PlanId, null, PlanningDateChangedCode);

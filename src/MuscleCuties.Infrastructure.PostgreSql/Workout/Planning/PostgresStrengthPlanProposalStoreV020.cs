@@ -270,6 +270,9 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             state.AnswersJson = JsonSerializer.Serialize(answers with
                 { Version = state.AnswerVersion, SafetyPlanChanged = safetyPlanChanged }, JsonOptions);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            if (state.SafetyRegenerationPending)
+                await new PostgresWorkoutPlanReconciler(dbContext).ReconcileAsync(userId, cancellationToken)
+                    .ConfigureAwait(false);
 
         }
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -310,7 +313,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
                     credit.SourceWorkoutLogId != null && dbContext.WorkoutLogs.Any(log =>
                         log.UserId == userId && log.Id == credit.SourceWorkoutLogId && log.WorkoutDayId == day.Id)) &&
                 !dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId &&
-                    session.PlannedWorkoutDayId == day.Id && session.CompletedAt != null))
+                    session.PlannedWorkoutDayId == day.Id && (session.CompletedAt != null || !session.IsDeleted)))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         var changed = days.Any(day => !day.IsRemovedBySafety);
         foreach (var day in days)

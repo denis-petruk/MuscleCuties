@@ -23,7 +23,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
     {
         var state = await context.WorkoutAccountPlanningStates.SingleOrDefaultAsync(row => row.UserId == userId,
             cancellationToken).ConfigureAwait(false);
-        if (state is null || !state.PromotionPending || state.SafetyRegenerationPending || state.TimeZoneId is null)
+        if (state is null || (!state.PromotionPending && !state.SafetyRegenerationPending) || state.TimeZoneId is null)
             return;
         var now = DateTimeOffset.UtcNow;
         if (await WorkoutSessionAccountLock.HasActivePreviewAsync(context, userId, now.UtcDateTime, cancellationToken).ConfigureAwait(false) ||
@@ -37,6 +37,8 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
         var today = WorkoutAccountCalendarRule.LocalDate(now, zone);
         var injuries = await context.WorkoutInjuryLogs.AsNoTracking().Where(row => row.UserId == userId)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
+        // Injury revisions require restoration provenance; do not consume the shared pending flag here.
+        if (state.SafetyRegenerationPending && injuries.Count > 0) return;
         if (injuries.Any(injury => !string.Equals(injury.Status, "Cleared", StringComparison.OrdinalIgnoreCase) ||
             injury.ClearedDate is null || WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(injury.ClearedDate.Value, today)))
             return;
@@ -81,9 +83,11 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
         var completedToday = await context.WorkoutCompletionDayCredits.AsNoTracking()
             .AnyAsync(row => row.UserId == userId && row.LocalDate == today, cancellationToken).ConfigureAwait(false);
         var acceptance = new PostgresAcceptStrengthPlanProposalStoreV020(context);
-        var start = await acceptance.FindNextScheduledDateAsync(userId, activePlanId.Value, today, completedToday,
-            cancellationToken).ConfigureAwait(false) ?? WorkoutPlanStartDateRule.FindNextEligibleDate(now, zone,
-                source.AvailableWeekdays, completedToday);
+        var eligibleStart = WorkoutPlanStartDateRule.FindNextEligibleDate(now, zone,
+            source.AvailableWeekdays, completedToday);
+        var start = state.SafetyRegenerationPending ? eligibleStart :
+            await acceptance.FindNextScheduledDateAsync(userId, activePlanId.Value, today, completedToday,
+                cancellationToken).ConfigureAwait(false) ?? eligibleStart;
         if (start is null || !source.AvailableWeekdays.Contains(start.Value.DayOfWeek)) return;
         var styleDto = WorkoutActivityContractMapper.ToDto(style);
         var request = new StrengthPlanPreviewRequestV020(styleDto, today, previous.ActivityHistory,
@@ -114,6 +118,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
             return;
         }
         state.PromotionPending = false;
+        state.SafetyRegenerationPending = false;
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
