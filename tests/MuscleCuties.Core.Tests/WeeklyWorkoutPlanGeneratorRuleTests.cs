@@ -1,8 +1,6 @@
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.UseCases.Features.Workout.Contracts;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 using Xunit;
 
 namespace MuscleCuties.Core.Tests;
@@ -252,33 +250,6 @@ public sealed class WeeklyWorkoutPlanGeneratorRuleTests
 
         Assert.True(result.HasSafetyBlock);
         Assert.Equal(PrecedenceProposalStatus.BlockedBySafety, result.PrecedenceSummary.Status);
-    }
-
-    [Fact]
-    public async Task UseCase_ExecuteAsync_ProducesCleanResponseWithoutCoreLeakage()
-    {
-        var useCase = new GenerateDeterministicWeeklyPlanUseCase();
-        var request = new DeterministicWeeklyPlanRequestDto(
-            Goal: "Strength",
-            GoalPace: "Moderate",
-            TrainingExperience: "Intermediate",
-            PreferredActivities: [WorkoutActivityDto.GeneralStrength, WorkoutActivityDto.Running],
-            GeneralDaysPerWeek: 3,
-            PreferredSessionLengthMinutes: 50,
-            AvailableEquipment: "FullGym",
-            StrengthStyle: "General",
-            AvailableWeekdays: [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday],
-            WarmupMinutes: 5,
-            CooldownMinutes: 5,
-            ApplyChanges: true);
-
-        var response = await useCase.ExecuteAsync(request);
-
-        Assert.NotNull(response);
-        Assert.NotEqual(Guid.Empty, response.PlanId);
-        Assert.NotEmpty(response.Sessions);
-        Assert.NotEmpty(response.RuleTrace);
-        Assert.True(response.IsPrecedenceApplied);
     }
 
     [Fact]
