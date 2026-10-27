@@ -22,7 +22,7 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
             return response.Data;
         if (response.Status == BackendApiStatus.Conflict && response.Data is not null)
             return response.Data;
-        return CloudStoreResponse.RequireData(response, "create strength plan proposal");
+        return RequirePlanningData(response, "create strength plan proposal");
     }
 
     public async Task<AcceptStrengthPlanProposalResultV020> AcceptAsync(
@@ -40,7 +40,7 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
                 "Conflict", null, null, response.ErrorCode);
         if (response.Status == BackendApiStatus.ValidationFailed && response.Data is not null)
             return response.Data;
-        return CloudStoreResponse.RequireData(response, "accept strength plan proposal");
+        return RequirePlanningData(response, "accept strength plan proposal");
     }
 
     public Task<PlanningLeaseResult> RenewAsync(PlanningLeaseRequest request, CancellationToken cancellationToken = default) =>
@@ -55,13 +55,13 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
     public async Task<ActivePlanningPreviewDto> GetActivePreviewAsync(CancellationToken cancellationToken = default)
     {
         var response = await apiClient.GetAsync<ActivePlanningPreviewDto>("/api/v1/workouts/plan/lease/active", cancellationToken).ConfigureAwait(false);
-        return CloudStoreResponse.RequireData(response, "read active workout preview");
+        return RequirePlanningData(response, "read active workout preview");
     }
 
     public async Task<SavedActivityAnswersDto> ReadAnswersAsync(CancellationToken cancellationToken = default)
     {
         var response = await apiClient.GetAsync<SavedActivityAnswersDto>(AnswersRoute, cancellationToken).ConfigureAwait(false);
-        return CloudStoreResponse.RequireData(response, "read workout activity answers");
+        return RequirePlanningData(response, "read workout activity answers");
     }
 
     public async Task<SavedActivityAnswersDto> SaveAnswersAsync(SaveActivityAnswersRequest request,
@@ -71,7 +71,7 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
             HttpMethod.Put, AnswersRoute, request, Guid.NewGuid().ToString("N"), cancellationToken).ConfigureAwait(false);
         if (response.Status == BackendApiStatus.Conflict && response.Data is not null)
             return response.Data;
-        return CloudStoreResponse.RequireData(response, "save workout activity answers");
+        return RequirePlanningData(response, "save workout activity answers");
     }
 
     private async Task<PlanningLeaseResult> LeaseAsync(string action, PlanningLeaseRequest request, CancellationToken cancellationToken)
@@ -81,6 +81,13 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
             idempotencyKey: Guid.NewGuid().ToString("N"), cancellationToken).ConfigureAwait(false);
         if (response.Status is BackendApiStatus.Conflict or BackendApiStatus.NotFound)
             return response.Data ?? new PlanningLeaseResult("Stale", null);
-        return CloudStoreResponse.RequireData(response, "update workout preview lease");
+        return RequirePlanningData(response, "update workout preview lease");
+    }
+
+    private static T RequirePlanningData<T>(BackendApiResponse<T> response, string operation) where T : class
+    {
+        if (response.Status is BackendApiStatus.ServerError or BackendApiStatus.OfflineRejected)
+            throw new HttpRequestException($"Cloud {operation} is temporarily unavailable.");
+        return CloudStoreResponse.RequireData(response, operation);
     }
 }
