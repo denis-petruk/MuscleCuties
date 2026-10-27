@@ -80,7 +80,6 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         SelectSiteCommand = new RelayCommand<InjuryFlagOption>(SelectSite);
         SelectStatusCommand = new RelayCommand<InjuryStatusOption>(SelectStatus);
         ToggleHistoryCommand = new RelayCommand(() => IsHistoryExpanded = !IsHistoryExpanded);
-        RetryPlanRefreshCommand = new AsyncRelayCommand(RetryPlanRefreshAsync, () => !IsBusy);
         RetryPageRefreshCommand = new AsyncRelayCommand(RetryPageRefreshAsync, () => !IsBusy);
     }
 
@@ -130,7 +129,6 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     public RelayCommand<InjuryFlagOption> SelectSiteCommand { get; }
     public RelayCommand<InjuryStatusOption> SelectStatusCommand { get; }
     public RelayCommand ToggleHistoryCommand { get; }
-    public AsyncRelayCommand RetryPlanRefreshCommand { get; }
     public AsyncRelayCommand RetryPageRefreshCommand { get; }
 
     public bool IsPageLoading => IsBusy;
@@ -148,7 +146,6 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         DeleteInjuryCommand.NotifyCanExecuteChanged();
         MarkClearedCommand.NotifyCanExecuteChanged();
         EditInjuryCommand.NotifyCanExecuteChanged();
-        RetryPlanRefreshCommand.NotifyCanExecuteChanged();
         RetryPageRefreshCommand.NotifyCanExecuteChanged();
     }
 
@@ -451,19 +448,6 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         if (!IsPlanRefreshError && !IsPageRefreshError)
             _pendingChangeRefresh = false;
-    }
-
-    private async Task RetryPlanRefreshAsync()
-    {
-        IsBusy = true;
-        try
-        {
-            await RefreshAfterChangeAsync();
-        }
-        finally
-        {
-            IsBusy = false;
-        }
     }
 
     private async Task RetryPageRefreshAsync()

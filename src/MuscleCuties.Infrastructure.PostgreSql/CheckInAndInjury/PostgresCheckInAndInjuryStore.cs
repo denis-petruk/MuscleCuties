@@ -1,4 +1,5 @@
 using System.Data;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Workout;
@@ -276,6 +277,31 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 episode.ClearanceTimeZoneId = calendar.TimeZoneId;
                 episode.ClearanceTimeZoneVersion = calendar.TimeZoneVersion;
             }
+            DateOnly? originalClearanceDate = isClearing
+                ? wasAlreadyCleared ? row!.ClearedDate : await AccountLocalDateAsync(request.UserId, cancellationToken).ConfigureAwait(false)
+                : null;
+
+            var openEpisodes = await dbContext.WorkoutInjuryEpisodes.Where(episode =>
+                    episode.UserId == request.UserId && episode.SourceInjuryId == request.Id &&
+                    episode.ClearedDate == null && !episode.SourceDeleted)
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            if (isClearing)
+            {
+                foreach (var episode in openEpisodes)
+                    episode.ClearedDate = originalClearanceDate;
+            }
+            else
+            {
+                // A site change cannot retroactively clear the previous episode.
+                foreach (var episode in openEpisodes.Where(episode => episode.SiteFlag != request.SiteFlag))
+                    episode.SourceDeleted = true;
+                if (!openEpisodes.Any(episode => episode.SiteFlag == request.SiteFlag))
+                    dbContext.WorkoutInjuryEpisodes.Add(new WorkoutInjuryEpisodeRecord
+                    {
+                        Id = Guid.NewGuid(), UserId = request.UserId, SourceInjuryId = request.Id,
+                        SiteFlag = request.SiteFlag, RecordedAtUtc = timeProvider.GetUtcNow().UtcDateTime
+                    });
+            }
 
             row ??= new WorkoutInjuryLogRecord
             {
@@ -334,6 +360,10 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 return false;
             }
 
+            var episodes = await dbContext.WorkoutInjuryEpisodes.Where(episode => episode.UserId == userId &&
+                    episode.SourceInjuryId == injuryId && !episode.SourceDeleted)
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            foreach (var episode in episodes) episode.SourceDeleted = true;
             dbContext.WorkoutInjuryLogs.Remove(row);
             await MarkSafetyRegenerationPendingAsync(userId, cancellationToken).ConfigureAwait(false);
             await InvalidatePlanningPreviewsAsync(userId, cancellationToken).ConfigureAwait(false);
@@ -375,15 +405,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             .Where(plan => plan.UserId == userId && plan.IsActive).Select(plan => (Guid?)plan.Id)
             .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         if (activePlanId is null) return;
-        var zoneId = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
-            .Where(state => state.UserId == userId).Select(state => state.TimeZoneId)
-            .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-        if (zoneId is null) throw new InvalidOperationException("Establish the account timezone before recording this injury.");
-        TimeZoneInfo zone;
-        try { zone = TimeZoneInfo.FindSystemTimeZoneById(zoneId); }
-        catch (TimeZoneNotFoundException) { throw new InvalidOperationException("Establish the account timezone before recording this injury."); }
-        catch (InvalidTimeZoneException) { throw new InvalidOperationException("Establish the account timezone before recording this injury."); }
-        var today = WorkoutAccountCalendarRule.LocalDate(timeProvider.GetUtcNow(), zone);
+        var today = await AccountLocalDateAsync(userId, cancellationToken).ConfigureAwait(false);
         var days = await dbContext.WorkoutDays.Where(day => day.UserId == userId && day.WorkoutPlanId == activePlanId &&
                 day.Date >= today && day.WorkoutType == nameof(WorkoutType.Strength) &&
                 !dbContext.WorkoutCompletionDayCredits.Any(credit => credit.UserId == userId &&
@@ -418,6 +440,146 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         {
             day.IsRemovedBySafety = true;
             day.SafetyInjuryId ??= injuryId;
+        }
+        await LinkKnownAffectedPrescriptionsAsync(userId, activePlanId.Value, days, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private async Task LinkKnownAffectedPrescriptionsAsync(Guid userId, Guid planId,
+        IReadOnlyList<WorkoutDayRecord> suppressedDays, CancellationToken cancellationToken)
+    {
+        var snapshot = await dbContext.WorkoutPlanRevisionsV02.AsNoTracking()
+            .Where(revision => revision.UserId == userId && revision.PlanId == planId)
+            .OrderBy(revision => revision.RevisionNumber).Select(revision => revision.PlanJson)
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        var originals = ReadUnambiguousOriginals(snapshot);
+        if (originals.Count == 0) return;
+        var dayIds = suppressedDays.Select(day => day.Id).ToArray();
+        var protectedDayIds = (await dbContext.WorkoutLogs.AsNoTracking()
+            .Where(log => log.UserId == userId && dayIds.Contains(log.WorkoutDayId))
+            .Select(log => log.WorkoutDayId).ToArrayAsync(cancellationToken).ConfigureAwait(false))
+            .Concat(await dbContext.WorkoutSessionLogs.AsNoTracking()
+                .Where(session => session.UserId == userId && session.PlannedWorkoutDayId != null &&
+                    dayIds.Contains(session.PlannedWorkoutDayId.Value))
+                .Select(session => session.PlannedWorkoutDayId!.Value).ToArrayAsync(cancellationToken).ConfigureAwait(false))
+            .ToHashSet();
+        var daysById = suppressedDays.Where(day => !protectedDayIds.Contains(day.Id)).ToDictionary(day => day.Id);
+        var unloggedDayIds = daysById.Keys.ToArray();
+        var exercises = await dbContext.WorkoutDayExercises.Where(exercise => exercise.UserId == userId &&
+                unloggedDayIds.Contains(exercise.WorkoutDayId) &&
+                !dbContext.WorkoutExerciseLogs.Any(log => log.UserId == userId && log.WorkoutDayExerciseId == exercise.Id))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (exercises.Count == 0) return;
+        var definitionIds = exercises.Select(exercise => exercise.InjuryOriginalExerciseId ?? exercise.ExerciseId).Distinct().ToArray();
+        // The caller already holds the account lock; retain the catalog lock until commit.
+        await PlanningCatalogFingerprint.LockCatalogAsync(dbContext, cancellationToken).ConfigureAwait(false);
+        var definitions = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
+            .Where(definition => definitionIds.Contains(definition.Id)).ToListAsync(cancellationToken).ConfigureAwait(false);
+        var reviewed = definitions.Where(definition => WorkoutExerciseV020CatalogMapper.Map(definition).MetadataGaps.Count == 0)
+            .ToDictionary(definition => definition.Id);
+        var episodes = await dbContext.WorkoutInjuryEpisodes.Where(episode => episode.UserId == userId &&
+                episode.ClearedDate == null && !episode.SourceDeleted)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        episodes.AddRange(dbContext.ChangeTracker.Entries<WorkoutInjuryEpisodeRecord>()
+            .Where(entry => entry.State == EntityState.Added && entry.Entity.UserId == userId)
+            .Select(entry => entry.Entity));
+        episodes = episodes.Where(episode => !episode.SourceDeleted && episode.ClearedDate is null)
+            .DistinctBy(episode => episode.Id).ToList();
+        var ambiguousSources = episodes.GroupBy(episode => episode.SourceInjuryId)
+            .Where(group => group.Count() != 1).Select(group => group.Key).ToHashSet();
+        var exerciseIds = exercises.Select(exercise => exercise.Id).ToArray();
+        var existingLinks = await dbContext.WorkoutInjuryPrescriptionLinks.AsNoTracking()
+            .Where(link => link.UserId == userId && exerciseIds.Contains(link.WorkoutDayExerciseId))
+            .Select(link => new { link.WorkoutDayExerciseId, link.InjuryEpisodeId }).ToListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var exercise in exercises)
+        {
+            var originalId = exercise.InjuryOriginalExerciseId ?? exercise.ExerciseId;
+            var day = daysById[exercise.WorkoutDayId];
+            if (!originals.Contains(((DayOfWeek)day.DayOfWeek, originalId)) ||
+                exercises.Count(other => other.WorkoutDayId == day.Id &&
+                    (other.InjuryOriginalExerciseId ?? other.ExerciseId) == originalId) != 1 ||
+                !reviewed.TryGetValue(originalId, out var definition)) continue;
+            foreach (var episode in episodes.Where(episode => !ambiguousSources.Contains(episode.SourceInjuryId) &&
+                (definition.Contraindications & (InjuryFlag)episode.SiteFlag) != InjuryFlag.None))
+            {
+                if (existingLinks.Any(link => link.WorkoutDayExerciseId == exercise.Id && link.InjuryEpisodeId == episode.Id)) continue;
+                exercise.InjuryOriginalExerciseId = originalId;
+                dbContext.WorkoutInjuryPrescriptionLinks.Add(new WorkoutInjuryPrescriptionLinkRecord
+                {
+                    Id = Guid.NewGuid(), UserId = userId, WorkoutDayExerciseId = exercise.Id,
+                    InjuryEpisodeId = episode.Id, OriginalExerciseId = originalId
+                });
+            }
+        }
+    }
+
+    private static HashSet<(DayOfWeek Weekday, int ExerciseId)> ReadUnambiguousOriginals(string? json)
+    {
+        var result = new HashSet<(DayOfWeek, int)>();
+        if (string.IsNullOrWhiteSpace(json)) return result;
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            if (!document.RootElement.TryGetProperty("proposal", out var proposal) ||
+                !proposal.TryGetProperty("sessions", out var sessions) || sessions.ValueKind != JsonValueKind.Array ||
+                !document.RootElement.TryGetProperty("weekdayAssignments", out var assignments) ||
+                assignments.ValueKind != JsonValueKind.Array) return result;
+            var assignmentList = new List<(int Session, DayOfWeek Weekday)>();
+            foreach (var assignment in assignments.EnumerateArray())
+            {
+                if (!assignment.TryGetProperty("sessionIndex", out var index) || index.ValueKind != JsonValueKind.Number || !index.TryGetInt32(out var session) ||
+                    !assignment.TryGetProperty("weekday", out var weekday) || weekday.ValueKind != JsonValueKind.Number || !weekday.TryGetInt32(out var day) ||
+                    !Enum.IsDefined(typeof(DayOfWeek), day)) return [];
+                assignmentList.Add((session, (DayOfWeek)day));
+            }
+            foreach (var session in sessions.EnumerateArray())
+            {
+                if (session.ValueKind != JsonValueKind.Object || !session.TryGetProperty("sessionIndex", out var index) ||
+                    index.ValueKind != JsonValueKind.Number || !index.TryGetInt32(out _) ||
+                    !session.TryGetProperty("slots", out var slots) || slots.ValueKind != JsonValueKind.Array) return [];
+                foreach (var slot in slots.EnumerateArray())
+                    if (slot.ValueKind != JsonValueKind.Object || !slot.TryGetProperty("exerciseId", out var id) ||
+                        (id.ValueKind != JsonValueKind.Null &&
+                         (id.ValueKind != JsonValueKind.Number || !id.TryGetInt32(out _)))) return [];
+            }
+            foreach (var assignment in assignmentList)
+            {
+                if (assignmentList.Count(item => item.Session == assignment.Session || item.Weekday == assignment.Weekday) != 1) continue;
+                var matchingSessions = sessions.EnumerateArray().Where(session =>
+                    session.ValueKind == JsonValueKind.Object && session.TryGetProperty("sessionIndex", out var index) && index.ValueKind == JsonValueKind.Number && index.TryGetInt32(out var value) &&
+                    value == assignment.Session).ToArray();
+                if (matchingSessions.Length != 1 || !matchingSessions[0].TryGetProperty("slots", out var slots) ||
+                    slots.ValueKind != JsonValueKind.Array) continue;
+                var ids = new List<int>();
+                foreach (var slot in slots.EnumerateArray())
+                    if (slot.ValueKind == JsonValueKind.Object && slot.TryGetProperty("exerciseId", out var id) && id.ValueKind == JsonValueKind.Number && id.TryGetInt32(out var value)) ids.Add(value);
+                foreach (var id in ids.Where(id => ids.Count(candidate => candidate == id) == 1))
+                    result.Add((assignment.Weekday, id));
+            }
+        }
+        catch (JsonException) { return []; }
+        catch (InvalidOperationException) { return []; }
+        return result;
+    }
+
+    private async Task<DateOnly> AccountLocalDateAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var zoneId = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
+            .Where(state => state.UserId == userId).Select(state => state.TimeZoneId)
+            .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(zoneId))
+            throw new InvalidOperationException("Establish the account timezone before changing an injury.");
+        try
+        {
+            return WorkoutAccountCalendarRule.LocalDate(timeProvider.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById(zoneId));
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            throw new InvalidOperationException("Establish the account timezone before changing an injury.");
+        }
+        catch (InvalidTimeZoneException)
+        {
+            throw new InvalidOperationException("Establish the account timezone before changing an injury.");
         }
     }
 

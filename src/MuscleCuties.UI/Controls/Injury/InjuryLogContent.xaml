@@ -72,9 +72,6 @@
                     <Button Grid.Row="1" Text="{loc:LocalizedText Common_TryAgain}"
                             Style="{StaticResource ButtonSecondary}"
                             Command="{Binding LoadCommand}" IsVisible="{Binding IsLoadError}" />
-                    <Button Grid.Row="2" Text="{loc:LocalizedText Injury_LogContent_RefreshPlan}"
-                            Style="{StaticResource ButtonSecondary}"
-                            Command="{Binding RetryPlanRefreshCommand}" IsVisible="{Binding IsPlanRefreshError}" />
                     <Button Grid.Row="3" Text="{loc:LocalizedText Injury_LogContent_RefreshPage}"
                             Style="{StaticResource ButtonSecondary}"
                             Command="{Binding RetryPageRefreshCommand}" IsVisible="{Binding IsPageRefreshError}" />

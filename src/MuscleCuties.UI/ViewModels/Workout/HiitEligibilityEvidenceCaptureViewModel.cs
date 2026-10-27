@@ -18,6 +18,8 @@ public sealed partial class HiitEligibilityEvidenceCaptureViewModel : Observable
     [ObservableProperty] private string _underlyingCardioAverageSessionsPerWeek = string.Empty;
     [ObservableProperty] private string _underlyingCardioDaysSinceLastSession = string.Empty;
     [ObservableProperty] private ActivityEvidenceAnswerChoice? _selectedClearanceScreeningChoice;
+    private bool _showErrors;
+    private DateOnly _validationDate;
 
     public HiitEligibilityEvidenceCaptureViewModel()
     {
@@ -50,6 +52,46 @@ public sealed partial class HiitEligibilityEvidenceCaptureViewModel : Observable
 
     public string AerobicSessionThresholdHelp { get; }
 
+    public bool InvalidConsistentWeeks => _showErrors && !ValidNonNegativeInteger(UnderlyingCardioConsistentWeeks);
+    public bool InvalidAverageSessions => _showErrors && !ValidAverage(UnderlyingCardioAverageSessionsPerWeek);
+    public bool InvalidDaysSinceLastSession => _showErrors &&
+        (!int.TryParse(UnderlyingCardioDaysSinceLastSession, NumberStyles.None, CultureInfo.InvariantCulture,
+            out var days) || days < NoElapsedDays || days > _validationDate.DayNumber);
+    public bool MissingClearance => _showErrors && SelectedClearanceScreeningChoice is null;
+
+    public bool IsComplete(DateOnly localDate, WorkoutActivityDto? activity) =>
+        activity is { } selected && TryReadUnderlyingCardioHistory(localDate, selected) is not null &&
+        TryReadWeeklyEvidence() is not null && SelectedClearanceScreeningChoice is not null;
+
+    public void ShowValidationErrors(DateOnly localDate)
+    {
+        _validationDate = localDate;
+        _showErrors = true;
+        NotifyValidation();
+        foreach (var week in PreviousFourWeeksAerobicEvidence)
+            week.ShowValidationError();
+    }
+
+    private static bool ValidNonNegativeInteger(string value) =>
+        int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed) && parsed >= NoElapsedDays;
+
+    private static bool ValidAverage(string value) =>
+        decimal.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var parsed) &&
+        parsed >= MinimumAverageSessionsPerWeek;
+
+    private void NotifyValidation()
+    {
+        OnPropertyChanged(nameof(InvalidConsistentWeeks));
+        OnPropertyChanged(nameof(InvalidAverageSessions));
+        OnPropertyChanged(nameof(InvalidDaysSinceLastSession));
+        OnPropertyChanged(nameof(MissingClearance));
+    }
+
+    partial void OnUnderlyingCardioConsistentWeeksChanged(string value) => NotifyValidation();
+    partial void OnUnderlyingCardioAverageSessionsPerWeekChanged(string value) => NotifyValidation();
+    partial void OnUnderlyingCardioDaysSinceLastSessionChanged(string value) => NotifyValidation();
+    partial void OnSelectedClearanceScreeningChoiceChanged(ActivityEvidenceAnswerChoice? value) => NotifyValidation();
+
     public HiitEligibilityEvidenceInputV020 ToRequestInput(
         DateOnly localDate,
         WorkoutActivityDto underlyingCardioActivity) => new(
@@ -59,12 +101,14 @@ public sealed partial class HiitEligibilityEvidenceCaptureViewModel : Observable
 
     public void Reset()
     {
+        _showErrors = false;
         UnderlyingCardioConsistentWeeks = string.Empty;
         UnderlyingCardioAverageSessionsPerWeek = string.Empty;
         UnderlyingCardioDaysSinceLastSession = string.Empty;
         SelectedClearanceScreeningChoice = null;
         foreach (var week in PreviousFourWeeksAerobicEvidence)
-            week.QualifyingManageableSessionCount = string.Empty;
+            week.Reset();
+        NotifyValidation();
     }
 
     public void Prefill(HiitEligibilityEvidenceInputV020? saved, DateOnly localDate)
@@ -127,6 +171,8 @@ public sealed partial class HiitEligibilityEvidenceCaptureViewModel : Observable
 
 public sealed partial class HiitAerobicWeekEvidenceCapture : ObservableObject
 {
+    private const int MinimumSessionCount = 0;
+    private bool _showError;
     [ObservableProperty] private string _qualifyingManageableSessionCount = string.Empty;
 
     public HiitAerobicWeekEvidenceCapture(int weekOffsetFromCurrent)
@@ -147,4 +193,24 @@ public sealed partial class HiitAerobicWeekEvidenceCapture : ObservableObject
     public string WeekLabel { get; }
 
     public string SessionCountAccessibilityDescription { get; }
+
+    public bool InvalidSessionCount => _showError &&
+        (!int.TryParse(QualifyingManageableSessionCount, NumberStyles.None, CultureInfo.InvariantCulture,
+            out var count) || count < MinimumSessionCount);
+
+    public void ShowValidationError()
+    {
+        _showError = true;
+        OnPropertyChanged(nameof(InvalidSessionCount));
+    }
+
+    public void Reset()
+    {
+        _showError = false;
+        QualifyingManageableSessionCount = string.Empty;
+        OnPropertyChanged(nameof(InvalidSessionCount));
+    }
+
+    partial void OnQualifyingManageableSessionCountChanged(string value) =>
+        OnPropertyChanged(nameof(InvalidSessionCount));
 }

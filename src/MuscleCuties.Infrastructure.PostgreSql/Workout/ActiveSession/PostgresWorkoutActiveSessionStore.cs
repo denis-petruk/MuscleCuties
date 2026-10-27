@@ -336,7 +336,8 @@ public sealed class PostgresWorkoutActiveSessionStore(
                                 row.CreatedAt >= session.StartedAt)
                             .OrderByDescending(row => row.CreatedAt).FirstOrDefaultAsync(ct).ConfigureAwait(false);
                         if (log is null) throw new InvalidOperationException("Complete the planned exercises before finishing the session.");
-                        await PostgresWorkoutProgressStore.CreditPlannedSessionAsync(context, userId, session, nowUtc, ct).ConfigureAwait(false);
+                        if (plannedDay.WorkoutType != nameof(WorkoutType.Rest))
+                            await PostgresWorkoutProgressStore.CreditPlannedSessionAsync(context, userId, session, nowUtc, ct).ConfigureAwait(false);
                     }
                 }
                 foreach (var set in command.FinalSets ?? [])

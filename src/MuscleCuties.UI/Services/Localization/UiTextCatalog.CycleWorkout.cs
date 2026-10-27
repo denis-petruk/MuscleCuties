@@ -26,6 +26,7 @@ public static partial class UiTextCatalog
         English["Workout_Session_ActivityNoLongerSafe"] = "This activity is no longer safe to continue. Abandon it to keep your logged sets.";
         English["Workout_Session_TimingExpired"] = "Your timing session expired. Resume to continue; previously confirmed time is saved.";
         English["Injury_Log_PlanRefreshFailed"] = "Your injury change was saved, but the workout plan couldn't refresh. Try again before training.";
+        English["Injury_Log_PlanRefreshFailed"] = "Your injury change was saved, but automatic workout plan updates are not available. Review your plan before training.";
         English["Injury_Log_PageRefreshFailed"] = "Your injury change was saved, but Today couldn't refresh. Try again.";
         English["Cycle_Guidance_PhaseContext"] = "A cycle phase is context, not a measurement of hormone levels or today's exercise capacity.";
         English["Cycle_Guidance_CheckIn"] = "Notice how you feel today and record any symptoms that matter to you.";

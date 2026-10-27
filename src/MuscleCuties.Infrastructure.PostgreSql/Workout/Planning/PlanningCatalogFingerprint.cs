@@ -13,7 +13,8 @@ internal static class PlanningCatalogFingerprint
         context.Database.ExecuteSqlRawAsync("SELECT app.lock_workout_planning_catalog()", cancellationToken);
 
     internal static string FromInputs(IEnumerable<WorkoutExerciseDefinition> definitions,
-        IEnumerable<GoalTierWeight> weights, IEnumerable<UserExercisePreferenceRecord> preferences) =>
+        IEnumerable<GoalTierWeight> weights, IEnumerable<UserExercisePreferenceRecord> preferences,
+        IEnumerable<ReviewedTemplateFloorRow> floors) =>
         PlanningInputFingerprint.Hash(new
         {
             Definitions = definitions.OrderBy(row => row.Id).Select(row => new
@@ -34,6 +35,7 @@ internal static class PlanningCatalogFingerprint
             }).ToArray(),
             Weights = weights.OrderBy(row => row.Id).Select(row => new
                 { row.Id, row.Goal, row.MuscleGroupId, row.Tier }).ToArray(),
+            Floors = floors.OrderBy(row => row.TemplateId).ToArray(),
             Preferences = preferences.OrderBy(row => row.CreatedAt).ThenBy(row => row.Id).Select(row => new
                 { row.Id, row.OriginalExerciseId, row.PreferredExerciseId, row.CreatedAt }).ToArray()
         });
@@ -48,6 +50,7 @@ internal static class PlanningCatalogFingerprint
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         var preferences = await context.UserExercisePreferences.AsNoTracking().Where(row => row.UserId == userId)
             .OrderBy(row => row.CreatedAt).ThenBy(row => row.Id).ToListAsync(cancellationToken).ConfigureAwait(false);
-        return FromInputs(definitions, weights, preferences);
+        var floors = await ReviewedTemplateFloorSource.LoadAsync(context, cancellationToken).ConfigureAwait(false);
+        return FromInputs(definitions, weights, preferences, floors);
     }
 }
