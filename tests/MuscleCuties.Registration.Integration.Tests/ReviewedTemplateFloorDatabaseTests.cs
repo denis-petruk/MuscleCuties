@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using Npgsql;
@@ -14,6 +16,21 @@ public sealed class ReviewedTemplateFloorDatabaseTests
     private const int UpdatedMinimum = 2;
     private const int Sha256HexLength = 64;
     private static readonly DateOnly SyntheticReviewDate = new(2026, 1, 1);
+
+    [Xunit.Fact]
+    public void ExplicitSyntheticFloorNeedsCompleteVersionedSlotsButNoAttribution()
+    {
+        var template = StrengthTemplateCatalog.Templates.First();
+        var row = new ReviewedTemplateFloorRow { TemplateId = template.TemplateId, TemplateVersion = template.Version,
+            MinimumWorkingSets = InitialMinimum, MinimumExercises = InitialMinimum,
+            SlotFloorsJson = JsonSerializer.Serialize(template.Slots.ToDictionary(slot => slot.SlotId, _ => 0)) };
+        Xunit.Assert.True(ReviewedTemplateFloorSource.Map([row]).ContainsKey(template.TemplateId));
+        row.TemplateVersion = "synthetic-wrong-version";
+        Xunit.Assert.Empty(ReviewedTemplateFloorSource.Map([row]));
+        row.TemplateVersion = template.Version;
+        row.SlotFloorsJson = "{}";
+        Xunit.Assert.Empty(ReviewedTemplateFloorSource.Map([row]));
+    }
 
     [Xunit.Fact]
     public async Task FloorLoadChangesFingerprintAndAppRoleCannotWrite()

@@ -20,6 +20,7 @@ public sealed class TemplateVolumeFloorRuleTests
             var result = TemplateVolumeFloorRule.Evaluate(template.TemplateId, SyntheticFloorSets);
             Assert.False(result.IsAllowed);
             Assert.Equal(TemplateVolumeFloorRule.TemplateVolumeFloorReviewMissing, result.LimitationCode);
+            Assert.DoesNotContain("clinical", result.ReasonDetail!, StringComparison.OrdinalIgnoreCase);
         }
     }
 
