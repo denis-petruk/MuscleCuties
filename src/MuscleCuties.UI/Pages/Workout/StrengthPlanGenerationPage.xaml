@@ -536,6 +536,7 @@
                                    FontSize="{StaticResource UiFontSize17}"
                                    FontAttributes="{StaticResource UiFontAttributesBold}"
                                    SemanticProperties.HeadingLevel="Level3" />
+                            <Label Text="{loc:LocalizedText Workout_Generation_ActivityOrderNote}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                             <Label Text="{loc:LocalizedText Workout_Generation_ScheduleEmpty}"
                                    IsVisible="{Binding HasNoMixedActivitySessions}"
                                    Style="{StaticResource MutedLabel}"

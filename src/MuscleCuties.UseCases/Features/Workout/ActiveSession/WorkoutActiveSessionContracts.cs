@@ -1,8 +1,15 @@
+using MuscleCuties.UseCases.Features.Workout.Contracts;
+
 namespace MuscleCuties.UseCases.Features.Workout.ActiveSession;
 
 public sealed class WorkoutActivityNoLongerSafeException : Exception
 {
     public WorkoutActivityNoLongerSafeException() : base("The activity is no longer safe to continue.") { }
+}
+
+public sealed class WorkoutTimingIntervalExpiredException : Exception
+{
+    public WorkoutTimingIntervalExpiredException() : base("The active interval expired; resume to continue.") { }
 }
 
 public sealed record ActiveExerciseSetInput(
@@ -58,7 +65,8 @@ public sealed record StartWorkoutSessionCommand(
     string WorkoutName,
     DateTime StartedAtUtc,
     string? Notes = null,
-    int? PlannedWorkoutDayId = null);
+    int? PlannedWorkoutDayId = null,
+    WorkoutActivityDto? UnplannedActivity = null);
 
 public sealed record UpsertWorkoutSessionSetCommand(
     string IdempotencyKey,

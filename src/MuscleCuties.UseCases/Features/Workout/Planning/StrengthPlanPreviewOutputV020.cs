@@ -81,7 +81,8 @@ public sealed record MixedActivityScheduleSessionV020(
     int ActivityTypeId,
     DayOfWeek Weekday,
     decimal DurationMinutes,
-    bool IsHardSession);
+    bool IsHardSession,
+    int? DayOrder = null);
 
 public sealed record MixedActivityScheduleDecisionV020(
     int ActivityTypeId,
