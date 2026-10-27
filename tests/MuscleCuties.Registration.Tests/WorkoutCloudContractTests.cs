@@ -135,7 +135,6 @@ public sealed class WorkoutCloudContractTests
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddAuthorization();
         builder.Services.AddScoped<GetWorkoutPlanningCatalogUseCase>();
-        builder.Services.AddScoped<GenerateWorkoutPlanUseCase>();
         builder.Services.AddScoped<PostgresWorkoutPlanAndSessionStore>();
         builder.Services.AddScoped<WorkoutActiveSessionUseCase>();
         builder.Services.AddScoped<ServerWorkoutArchiveUseCase>();
