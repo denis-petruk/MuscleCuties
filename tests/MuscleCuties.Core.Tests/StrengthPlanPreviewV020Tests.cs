@@ -61,6 +61,36 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
+    public void Automatic_Preview_Retains_Selected_Current_Style_Without_Asking_For_Choice()
+    {
+        var style = WorkoutActivityDto.HighVolumeStrength;
+        var selected = new HashSet<int>
+        {
+            (int)WorkoutActivityType.GeneralStrength,
+            (int)WorkoutActivityType.HighVolumeStrength
+        };
+        var request = Request() with { SelectedActivityTypes = selected };
+        var source = Profile() with { SelectedActivityTypes = selected };
+
+        var result = PreviewStrengthPlanV020UseCase.EvaluateAutomaticLoadedSource(Guid.NewGuid(),
+            request, source, style);
+
+        Assert.Equal("Feasible", result.Status);
+        Assert.Equal((int)WorkoutActivityType.HighVolumeStrength, result.EffectiveActivityTypeId);
+        Assert.False(result.StrengthStyleChoiceRequired);
+    }
+
+    [Fact]
+    public void Automatic_Preview_Rejects_A_NonStrength_Retained_Style()
+    {
+        var result = PreviewStrengthPlanV020UseCase.EvaluateAutomaticLoadedSource(Guid.NewGuid(),
+            Request(), Profile(), WorkoutActivityDto.Yoga);
+
+        Assert.NotEqual("Feasible", result.Status);
+        Assert.Empty(result.Sessions);
+    }
+
+    [Fact]
     public async Task Preview_Does_Not_Reinsert_A_Strength_Activity_The_User_Removed()
     {
         var request = Request() with { SelectedActivityTypes = [] };
