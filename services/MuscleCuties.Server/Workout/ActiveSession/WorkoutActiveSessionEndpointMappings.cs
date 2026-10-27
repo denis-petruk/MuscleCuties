@@ -13,6 +13,14 @@ public static class WorkoutActiveSessionEndpointMappings
     {
         var group = endpoints.MapGroup(SessionsRoute).RequireAuthorization();
 
+        group.MapGet("/planned/{workoutDayId:int}", async (int workoutDayId, ClaimsPrincipal principal,
+            [FromServices] WorkoutActiveSessionUseCase useCase, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            var snapshot = await useCase.GetPlannedSessionAsync(userId, workoutDayId, cancellationToken).ConfigureAwait(false);
+            return snapshot is null ? Results.NotFound() : Results.Ok(snapshot);
+        });
+
         group.MapGet("/{sessionId:guid}", async (
             Guid sessionId,
             ClaimsPrincipal principal,
@@ -43,7 +51,8 @@ public static class WorkoutActiveSessionEndpointMappings
                         body.SessionId,
                         body.WorkoutName,
                         body.StartedAtUtc,
-                        body.Notes),
+                        body.Notes,
+                        body.PlannedWorkoutDayId),
                     cancellationToken).ConfigureAwait(false);
                 return Results.Ok(snapshot);
             }
@@ -175,7 +184,8 @@ public static class WorkoutActiveSessionEndpointMappings
         Guid SessionId,
         string WorkoutName,
         DateTime StartedAtUtc,
-        string? Notes = null);
+        string? Notes = null,
+        int? PlannedWorkoutDayId = null);
 
     public sealed record UpsertWorkoutSessionSetBody(
         string? IdempotencyKey,

@@ -41,7 +41,8 @@
                             Text="{loc:LocalizedText Cycle_DailyTips_TrainingFocusTitle}"
                             FontSize="{StaticResource UiFontSize11}"
                             FontAttributes="{StaticResource UiFontAttributesBold}"
-                            TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                            LineBreakMode="WordWrap" />
                         <Label
                             Text="{Binding DailyTrainingTipText, Converter={StaticResource LocalizedStringConverter}}"
                             FontSize="{StaticResource UiFontSize13}"
@@ -80,7 +81,8 @@
                             Text="{loc:LocalizedText Cycle_DailyTips_NutritionFocusTitle}"
                             FontSize="{StaticResource UiFontSize11}"
                             FontAttributes="{StaticResource UiFontAttributesBold}"
-                            TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                            TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                            LineBreakMode="WordWrap" />
                         <Label
                             Text="{Binding DailyNutritionTipText, Converter={StaticResource LocalizedStringConverter}}"
                             FontSize="{StaticResource UiFontSize13}"

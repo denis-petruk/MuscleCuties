@@ -19,7 +19,7 @@
         </BoxView>
         <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" VerticalOptions="End">
             <Grid RowDefinitions="Auto,Auto,*">
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{StaticResource UiInsets20_16_16_12}">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{StaticResource PresentationModalHeaderPadding}">
                     <Label Text="{loc:LocalizedText Injury_LogTitle}" Style="{StaticResource ModalTitle}"
                            VerticalOptions="Center" />
                     <Button Grid.Column="1" Text="{loc:LocalizedText Common_Add}"

@@ -19,8 +19,8 @@
             <Label
                 Text="{loc:LocalizedText Cycle_PhaseExplorer_SectionTitle}"
                 Style="{StaticResource SectionTitle}"
-                FontSize="{StaticResource UiFontSize17}"
-                FontAttributes="{StaticResource UiFontAttributesBold}" />
+                LineBreakMode="WordWrap"
+                SemanticProperties.HeadingLevel="Level2" />
         </Grid>
 
         <!-- Four phase rows -->
@@ -58,7 +58,8 @@
                                             Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
                                             FontSize="{StaticResource UiFontSize15}"
                                             FontAttributes="{StaticResource UiFontAttributesBold}"
-                                            TextColor="{Binding TextColor}" />
+                                            TextColor="{Binding TextColor}"
+                                            LineBreakMode="WordWrap" />
                                         <Border
                                             Grid.Column="1"
                                             IsVisible="{Binding IsActivePhase}"
@@ -70,7 +71,8 @@
                                                 Text="{loc:LocalizedText Cycle_PhaseExplorer_NowBadge}"
                                                 FontSize="{StaticResource UiFontSize11}"
                                                 FontAttributes="{StaticResource UiFontAttributesBold}"
-                                                TextColor="{StaticResource White}" />
+                                                TextColor="{StaticResource White}"
+                                                LineBreakMode="WordWrap" />
                                         </Border>
                                 </Grid>
                             </Grid>

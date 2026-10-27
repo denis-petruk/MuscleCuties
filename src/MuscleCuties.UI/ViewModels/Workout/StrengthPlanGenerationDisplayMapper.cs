@@ -252,6 +252,11 @@ internal static class StrengthPlanGenerationDisplayMapper
             return UiTextCatalog.Get("Workout_Generation_DirectBeginnerGeneralStrength");
         }
 
+        if (reasons.Contains(StrengthPlanPreviewMapperV020.NoSafeStrengthContentRemainingCode))
+        {
+            return UiTextCatalog.Get("Workout_Generation_Reason_NoSafeStrengthContentRemaining");
+        }
+
         if (reasons.Contains("HighIntensityMainNeedsFourExposuresKnownManageableLoad") ||
             reasons.Contains("HighIntensitySelectedMainPrerequisiteMissing"))
             return UiTextCatalog.Get("Workout_Generation_Reason_HighIntensityEvidenceMissing");

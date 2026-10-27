@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
@@ -100,10 +101,12 @@ public sealed class PostgresPhaseAdjustmentProposalStoreV010(
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             dbContext.ChangeTracker.Clear();
-            await using var transaction = await dbContext.Database.BeginTransactionAsync(
-                System.Data.IsolationLevel.Serializable, cancellationToken).ConfigureAwait(false);
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            if (await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, userId, DateTime.UtcNow, cancellationToken).ConfigureAwait(false))
+                return new DecidePhaseAdjustmentProposalResultV010(ConflictStatus, false, "WorkoutPreviewOpen");
 
             var proposal = await dbContext.WorkoutPlanProposalsV02.SingleOrDefaultAsync(
                 item => item.UserId == userId && item.Id == command.ProposalId,

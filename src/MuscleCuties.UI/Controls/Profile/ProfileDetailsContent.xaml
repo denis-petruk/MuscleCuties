@@ -26,10 +26,9 @@
                                 HeightRequest="{StaticResource UiDimension22}"
                                 VerticalOptions="Center" />
                             <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
-                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                       TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" Style="{StaticResource BodyStrong}" />
                                 <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_StoredLocallyOnThisDevice}"
-                                       Style="{StaticResource CaptionSmall}" />
+                                       Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                             </Grid>
                             <Border
                                 Grid.Column="2"
@@ -46,7 +45,7 @@
                         <!-- Tap-to-Reveal Privacy Blur Preview Box -->
                         <Border
                             Grid.Row="1"
-                            HeightRequest="{StaticResource UiDimension110}"
+                            MinimumHeightRequest="{StaticResource UiDimension110}"
                             StrokeShape="{StaticResource UiRoundRectangleRadius14}"
                             StrokeThickness="{StaticResource UiStrokeWidth0}"
                             Stroke="{StaticResource Transparent}"
@@ -67,7 +66,7 @@
                                             <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Details_LatestProgressPhoto}"
                                                    FontAttributes="{StaticResource UiFontAttributesBold}" FontSize="{StaticResource UiFontSize13}" />
                                             <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToOpenFullPhotoJourney}"
-                                                   Style="{StaticResource CaptionSmall}" />
+                                                   Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                             <Button
                                                 Grid.Row="2"
                                                 Text="{loc:LocalizedText Profile_Details_HidePreview}"
@@ -86,7 +85,7 @@
                                         <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Details_NoPhotosStoredYet}"
                                                FontAttributes="{StaticResource UiFontAttributesBold}" FontSize="{StaticResource UiFontSize15}" HorizontalTextAlignment="Center" />
                                         <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToOpenVaultAndAdd}"
-                                               Style="{StaticResource CaptionSmallCentered}" />
+                                               Style="{StaticResource CaptionSmallCentered}" LineBreakMode="WordWrap" />
                                     </Grid>
                                 </Grid>
 
@@ -109,7 +108,7 @@
                                             <Label Text="{loc:LocalizedText Profile_Details_PreviewHiddenForPrivacy}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                                    FontSize="{StaticResource UiFontSize13}" />
                                             <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToRevealPreview}"
-                                                   Style="{StaticResource CaptionSmall}" />
+                                                   Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                         </Grid>
                                         <Button
                                             Grid.Column="2"
@@ -143,10 +142,9 @@
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_AppleHealth}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                    <Label Text="{loc:LocalizedText Profile_Details_AppleHealth}" Style="{StaticResource BodyStrong}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_SleepStepsEnergyHeartRate}"
-                                           Style="{StaticResource CaptionSmall}" />
+                                           Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>
                                 <Border
                                     Grid.Column="2"
@@ -184,11 +182,10 @@
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_WorkoutAvailability}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                    <Label Text="{loc:LocalizedText Profile_Details_WorkoutAvailability}" Style="{StaticResource BodyStrong}" />
                                     <Label Grid.Row="1"
                                            Text="{Binding AvailableWeekdaysText, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource CaptionSmall}" />
+                                           Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="3"
@@ -215,11 +212,10 @@
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_Nutrition}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                    <Label Text="{loc:LocalizedText Profile_Details_Nutrition}" Style="{StaticResource BodyStrong}" />
                                     <Label Grid.Row="1"
                                            Text="{Binding NutritionPacingText, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource CaptionSmall}" />
+                                           Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="3"
@@ -252,10 +248,9 @@
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_PersonalInfo}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                    <Label Text="{loc:LocalizedText Profile_Details_PersonalInfo}" Style="{StaticResource BodyStrong}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_NameEmailPasswordCycleBaselines}"
-                                           Style="{StaticResource CaptionSmall}" />
+                                           Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="2"
@@ -282,11 +277,10 @@
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_UnitsDisplay}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                    <Label Text="{loc:LocalizedText Profile_Details_UnitsDisplay}" Style="{StaticResource BodyStrong}" />
                                     <Label Grid.Row="1"
                                            Text="{Binding UnitsDisplayText, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource CaptionSmall}" />
+                                           Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="3"
@@ -313,10 +307,9 @@
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Privacy_Policy}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                    <Label Text="{loc:LocalizedText Profile_Privacy_Policy}" Style="{StaticResource BodyStrong}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_HealthRecordsStayOnThisDevice}"
-                                           Style="{StaticResource CaptionSmall}" />
+                                           Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="2"
@@ -343,10 +336,9 @@
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_SendFeedback}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                    <Label Text="{loc:LocalizedText Profile_Details_SendFeedback}" Style="{StaticResource BodyStrong}" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_ReportAnIssueOrSuggestA}"
-                                           Style="{StaticResource CaptionSmall}" />
+                                           Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>
                                 <mi:MauiIcon
                                     Grid.Column="2"

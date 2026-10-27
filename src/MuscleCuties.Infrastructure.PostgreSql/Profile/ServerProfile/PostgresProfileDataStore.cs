@@ -8,6 +8,7 @@ using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 
@@ -102,7 +103,6 @@ public sealed class PostgresProfileDataStore(
             if (request.Weight is not null) profile.Weight = request.Weight.Value;
             if (request.Goal is not null) profile.Goal = request.Goal;
             if (request.WeightGoalPace is not null) profile.WeightGoalPace = request.WeightGoalPace;
-            if (request.TrainingExperienceLevel is not null) profile.TrainingExperienceLevel = request.TrainingExperienceLevel;
             if (request.CycleLength is not null) profile.CycleLength = request.CycleLength.Value;
             if (request.DietaryTags is not null) profile.DietaryTags = request.DietaryTags;
             if (request.EquipmentLevel is not null) profile.EquipmentLevel = request.EquipmentLevel;
@@ -113,7 +113,10 @@ public sealed class PostgresProfileDataStore(
             }
             if (request.ProfileImagePath is not null)
                 profile.ProfileImagePath = request.ProfileImagePath;
-        }, cancellationToken);
+        }, cancellationToken,
+        profile => request.TrainingExperienceLevel is null ||
+                   string.Equals(request.TrainingExperienceLevel, profile.TrainingExperienceLevel,
+                       StringComparison.OrdinalIgnoreCase), request.EquipmentLevel is not null);
 
     public async Task<ServerProfileWriteResult> CorrectQuizResponseAsync(
         CorrectServerQuizResponseRequest request,
@@ -125,6 +128,9 @@ public sealed class PostgresProfileDataStore(
 
         return await ExecuteTenantTransactionAsync(request.UserId, cancellationToken, async (transaction, token) =>
         {
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, request.UserId, token).ConfigureAwait(false);
+            if (await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, request.UserId,
+                    timeProvider.GetUtcNow().UtcDateTime, token).ConfigureAwait(false)) return Conflict(request.ExpectedVersion);
             var profile = await dbContext.UserProfiles.SingleOrDefaultAsync(
                 item => item.UserId == request.UserId, token).ConfigureAwait(false);
             if (profile is null) return Missing();
@@ -184,6 +190,9 @@ public sealed class PostgresProfileDataStore(
                 new HashSet<int>()).OrderBy(exerciseId => exerciseId).ToArray());
         return await ExecuteTenantTransactionAsync(request.UserId, cancellationToken, async (transaction, token) =>
         {
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, request.UserId, token).ConfigureAwait(false);
+            if (await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, request.UserId,
+                    timeProvider.GetUtcNow().UtcDateTime, token).ConfigureAwait(false)) return Conflict(request.ExpectedVersion);
             var profile = await dbContext.UserProfiles.SingleOrDefaultAsync(
                 item => item.UserId == request.UserId, token).ConfigureAwait(false);
             if (profile is null) return Missing();
@@ -217,17 +226,26 @@ public sealed class PostgresProfileDataStore(
         int expectedVersion,
         string reason,
         Action<UserProfileRecord, DateTime> apply,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Func<UserProfileRecord, bool>? validate = null,
+        bool guardPlanning = false)
     {
         if (!ValidVersionRequest(userId, expectedVersion))
             return Invalid();
 
         return await ExecuteTenantTransactionAsync(userId, cancellationToken, async (transaction, token) =>
         {
+            if (guardPlanning)
+            {
+                await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, token).ConfigureAwait(false);
+                if (await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, userId,
+                        timeProvider.GetUtcNow().UtcDateTime, token).ConfigureAwait(false)) return Conflict(expectedVersion);
+            }
             var profile = await dbContext.UserProfiles.SingleOrDefaultAsync(
                 item => item.UserId == userId, token).ConfigureAwait(false);
             if (profile is null) return Missing();
             if (profile.ConcurrencyVersion != expectedVersion) return Conflict(profile.ConcurrencyVersion);
+            if (validate is not null && !validate(profile)) return Invalid();
             var now = timeProvider.GetUtcNow().UtcDateTime;
             AddSnapshot(userId, reason, profile, now);
             apply(profile, now);

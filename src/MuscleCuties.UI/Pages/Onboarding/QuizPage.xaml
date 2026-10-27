@@ -41,7 +41,8 @@
                 <Label
                     Grid.Row="2"
                     Text="{loc:LocalizedText Onboarding_Quiz_PreparingWorkoutPreferencesText}"
-                    Style="{StaticResource MutedCentered}" />
+                    Style="{StaticResource MutedCentered}"
+                    LineBreakMode="WordWrap" />
             </Grid>
         </Grid>
 
@@ -62,7 +63,8 @@
                 <Label
                     Grid.Row="1"
                     Text="{loc:LocalizedText Onboarding_Quiz_GettingQuestionsReady}"
-                    Style="{StaticResource MutedCentered}" />
+                    Style="{StaticResource MutedCentered}"
+                    LineBreakMode="WordWrap" />
             </Grid>
         </Grid>
 
@@ -80,12 +82,14 @@
                     Grid.Row="0"
                     Text="{Binding QuestionsStateTitle, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource SectionTitle}"
+                    LineBreakMode="WordWrap"
                     HorizontalTextAlignment="Center"
                     SemanticProperties.HeadingLevel="Level1" />
                 <Label
                     Grid.Row="1"
                     Text="{Binding QuestionsStateMessage, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource MutedCentered}"
+                    LineBreakMode="WordWrap"
                     SemanticProperties.Description="{Binding QuestionsStateMessage, Converter={StaticResource LocalizedStringConverter}}" />
                 <Button Style="{StaticResource ButtonPrimary}"
                     Grid.Row="2"
@@ -106,7 +110,7 @@
 
             <Grid
                 Grid.Row="0"
-                Padding="{StaticResource UiInsets24_32_24_16}"
+                Padding="{StaticResource PresentationAuthSecondaryPagePadding}"
                 RowDefinitions="Auto,Auto"
                 RowSpacing="{StaticResource UiSpaceControl}"
                 MaximumWidthRequest="{StaticResource UiDimension640}"
@@ -119,6 +123,7 @@
                             <Label
                                 Text="{loc:LocalizedText Onboarding_Quiz_StepTwoOfTwo}"
                                 Style="{StaticResource EyebrowLabel}"
+                                LineBreakMode="WordWrap"
                                 VerticalOptions="Center"
                                 SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_StepTwoOfTwoPersonalizedQuestions}" />
                         </Border>
@@ -144,6 +149,7 @@
                             <Label
                                 Text="{Binding ProgressText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource AccentLabel}"
+                                LineBreakMode="WordWrap"
                                 VerticalOptions="Center"
                                 SemanticProperties.Description="{Binding ProgressText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_QuestionValue}" />
                         </Border>
@@ -152,8 +158,8 @@
 
                 <Grid Grid.Row="1" ColumnDefinitions="40,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
                     <Border
-                        WidthRequest="{StaticResource UiDimension40}"
-                        HeightRequest="{StaticResource UiDimension40}"
+                        WidthRequest="{StaticResource PresentationDecorativeIconSize}"
+                        HeightRequest="{StaticResource PresentationDecorativeIconSize}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource CardSurfaceDark}}"
                         StrokeThickness="{StaticResource UiStrokeWidth0}"
                         StrokeShape="{StaticResource UiRoundRectangleRadius12}"
@@ -170,6 +176,7 @@
                         Grid.Column="1"
                         Text="{Binding CurrentQuestionText, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource SubHeadline}"
+                        LineBreakMode="WordWrap"
                         VerticalOptions="Center"
                         SemanticProperties.HeadingLevel="Level1" />
                 </Grid>
@@ -224,6 +231,7 @@
                                         Grid.Column="1"
                                         Text="{Binding Answer.Text, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource AccentLabel}"
+                                        LineBreakMode="WordWrap"
                                         VerticalOptions="Center" />
 
                                     <Border Style="{StaticResource SelectionRadioRing}"
@@ -246,6 +254,7 @@
                     <Label
                         Text="{Binding SelectedWeekdayCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_SelectedWeekdaysFormat}"
                         Style="{StaticResource MutedCentered}"
+                        LineBreakMode="WordWrap"
                         IsVisible="{Binding IsCurrentQuestionAvailableWeekdays}" />
                 </VerticalStackLayout>
             </ScrollView>
@@ -262,11 +271,13 @@
                         <Label
                             Text="{loc:LocalizedText Onboarding_Quiz_Discomfort}"
                             Style="{StaticResource CardTitle}"
+                            LineBreakMode="WordWrap"
                             SemanticProperties.HeadingLevel="Level2" />
                         <Label
                             Grid.Column="1"
                             Text="{Binding PainSliderLabel, Converter={StaticResource LocalizedStringConverter}}"
-                            Style="{StaticResource AccentLabel}" />
+                            Style="{StaticResource AccentLabel}"
+                            LineBreakMode="WordWrap" />
                     </Grid>
                     <Slider
                         Grid.Row="1"
@@ -276,13 +287,13 @@
                         MinimumTrackColor="{StaticResource Primary}"
                         MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                         ThumbColor="{StaticResource Primary}"
-                        MinimumHeightRequest="{StaticResource UiDimension44}"
+                        MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                         SemanticProperties.Description="{Binding PainSliderLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_DiscomfortLevelValue}"
                         SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_OneIsSevereFiveIsNone}" />
                     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto">
-                        <Label Text="{loc:LocalizedText Onboarding_Quiz_Severe}" Style="{StaticResource CaptionLabel}" />
+                        <Label Text="{loc:LocalizedText Onboarding_Quiz_Severe}" Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap" />
                         <Label Grid.Column="2" Text="{loc:LocalizedText Onboarding_Quiz_None}"
-                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" />
+                               Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap" HorizontalTextAlignment="End" />
                     </Grid>
 
                     <BoxView
@@ -296,11 +307,13 @@
                         <Label
                             Text="{loc:LocalizedText Onboarding_Quiz_TrainingEnergy}"
                             Style="{StaticResource CardTitle}"
+                            LineBreakMode="WordWrap"
                             SemanticProperties.HeadingLevel="Level2" />
                         <Label
                             Grid.Column="1"
                             Text="{Binding EnergySliderLabel, Converter={StaticResource LocalizedStringConverter}}"
-                            Style="{StaticResource AccentLabel}" />
+                            Style="{StaticResource AccentLabel}"
+                            LineBreakMode="WordWrap" />
                     </Grid>
                     <Slider
                         Grid.Row="5"
@@ -310,13 +323,13 @@
                         MinimumTrackColor="{StaticResource Primary}"
                         MaximumTrackColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
                         ThumbColor="{StaticResource Primary}"
-                        MinimumHeightRequest="{StaticResource UiDimension44}"
+                        MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                         SemanticProperties.Description="{Binding EnergySliderLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_TrainingEnergyLevelValue}"
                         SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_OneIsVeryLowFiveIs}" />
                     <Grid Grid.Row="6" ColumnDefinitions="Auto,*,Auto">
-                        <Label Text="{loc:LocalizedText Onboarding_Quiz_VeryLow}" Style="{StaticResource CaptionLabel}" />
+                        <Label Text="{loc:LocalizedText Onboarding_Quiz_VeryLow}" Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap" />
                         <Label Grid.Column="2" Text="{loc:LocalizedText Onboarding_Quiz_Peak}"
-                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" />
+                               Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap" HorizontalTextAlignment="End" />
                     </Grid>
                 </Grid>
             </ScrollView>
@@ -324,7 +337,7 @@
             <!-- Bottom navigation bar -->
             <Grid
                 Grid.Row="2"
-                Padding="{StaticResource UiInsets24_16_24_32}"
+                Padding="{StaticResource PresentationActionFooterPadding}"
                 MaximumWidthRequest="{StaticResource UiDimension640}"
                 HorizontalOptions="Fill"
                 RowDefinitions="Auto,Auto,Auto,Auto"
@@ -336,6 +349,7 @@
                     Grid.ColumnSpan="2"
                     Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource ErrorLabel}"
+                    LineBreakMode="WordWrap"
                     IsVisible="{Binding HasError}"
                     Margin="{StaticResource UiInsets0_0_0_10}"
                     SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
@@ -363,10 +377,10 @@
                     Grid.Column="0"
                     Style="{StaticResource CardAccent}"
                     IsVisible="{Binding ShowQuizBackButton}"
-                    WidthRequest="{StaticResource UiDimension56}"
-                    HeightRequest="{StaticResource UiDimension56}"
-                    MinimumWidthRequest="{StaticResource UiDimension44}"
-                    MinimumHeightRequest="{StaticResource UiDimension44}"
+                    WidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                    HeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                    MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                     SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_GoToPreviousQuestion}"
                     SemanticProperties.Hint="{loc:LocalizedText Onboarding_Quiz_DoubleTapToGoBack}">
                     <Border.GestureRecognizers>

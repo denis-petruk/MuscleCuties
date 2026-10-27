@@ -75,8 +75,7 @@
                         Text="{Binding WorkoutTitle, Source={x:Reference Root}}"
                         Style="{StaticResource SectionTitle}"
                         FontSize="{StaticResource UiFontSize18}"
-                        LineBreakMode="TailTruncation"
-                        MaxLines="1" />
+                        LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
 
                 <!-- Status Pill on the Right -->
@@ -195,7 +194,7 @@
                                     VerticalOptions="Center" />
                                 <Label Grid.Column="1" Text="7-9h Sleep" FontSize="{StaticResource UiFontSize11}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                                       MaxLines="{StaticResource RecoveryTipMaxLines}" LineBreakMode="TailTruncation"
+                                       LineBreakMode="WordWrap"
                                        VerticalOptions="Center" />
                             </Grid>
                         </Border>
@@ -216,7 +215,7 @@
                                     VerticalOptions="Center" />
                                 <Label Grid.Column="1" Text="Hydration" FontSize="{StaticResource UiFontSize11}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                        TextColor="{AppThemeBinding Light={StaticResource RecoveryTextLight}, Dark={StaticResource RecoveryTextDark}}"
-                                       MaxLines="{StaticResource RecoveryTipMaxLines}" LineBreakMode="TailTruncation"
+                                       LineBreakMode="WordWrap"
                                        VerticalOptions="Center" />
                             </Grid>
                         </Border>
@@ -319,6 +318,7 @@
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource CardSurfaceDark}}"
                 Padding="{StaticResource UiInsets12_8}"
                 Margin="{StaticResource UiInsets0_2_0_2}"
+                MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                 IsVisible="{Binding HasExercisePreviews, Source={x:Reference Root}}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding TogglePreviewCommand, Source={x:Reference Root}}" />
@@ -357,6 +357,7 @@
                                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                                     <Label Text="{Binding Name}" FontSize="{StaticResource UiFontSize14}" FontAttributes="{StaticResource UiFontAttributesBold}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                           LineBreakMode="WordWrap"
                                            VerticalOptions="Center" />
                                     <Border Grid.Column="1" StrokeShape="{StaticResource UiRoundRectangleRadius6}" StrokeThickness="{StaticResource UiStrokeWidth0}"
                                             BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray800}}"
@@ -372,7 +373,8 @@
                                 <Label Grid.Row="1"
                                        Text="{Binding MuscleGroups, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Featured_TargetFormat}"
                                        FontSize="{StaticResource UiFontSize12}"
-                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                       LineBreakMode="WordWrap" />
 
                                 <!-- Tempo Guidance -->
                                 <HorizontalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpacing6}"
@@ -403,7 +405,8 @@
                                     <Label
                                         Text="{Binding WarmUpNote, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Featured_WarmupFormat}"
                                         FontSize="{StaticResource UiFontSize11}"
-                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                        LineBreakMode="WordWrap" />
                                 </Border>
 
                                 <!-- Unavailable Guidance Honest State -->

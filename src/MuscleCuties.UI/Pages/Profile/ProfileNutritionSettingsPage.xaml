@@ -10,11 +10,12 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileNutritionSettingsViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="{StaticResource UiInsets20_12_20_32}"
+            Padding="{StaticResource PresentationFormPagePadding}"
             Spacing="{StaticResource UiSpaceControl}"
             HorizontalOptions="Fill"
             MaximumWidthRequest="{StaticResource UiDimension640}">
@@ -56,7 +57,9 @@
                     </Grid>
 
                     <!-- Divider between goal and dietary prefs -->
-                    <BoxView />
+                    <BoxView HeightRequest="{StaticResource UiDimension1}"
+                             Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                             Opacity="{StaticResource UiOpacitySubtle}" />
 
                     <!-- Dietary preferences (SelectableCard styling) -->
                     <Label
@@ -486,6 +489,7 @@
             <Label
                 Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource CaptionLabel}"
+                LineBreakMode="WordWrap"
                 IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
 
             <Button

@@ -17,7 +17,8 @@
                            Style="{StaticResource SectionTitle}"
                            FontSize="{StaticResource UiFontSize17}" />
                     <Label Text="{Binding ReadinessSubtitleText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionSmall}" />
+                           Style="{StaticResource CaptionSmall}"
+                           LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
                 <Border Grid.Column="1"
                         Style="{StaticResource PillBadge}"

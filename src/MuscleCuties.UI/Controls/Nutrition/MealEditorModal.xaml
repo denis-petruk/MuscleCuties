@@ -19,7 +19,7 @@
         </BoxView>
         <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" VerticalOptions="End">
             <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
-                <Grid Padding="{StaticResource UiInsets16_12}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                <Grid Padding="{StaticResource PresentationModalHeaderPadding}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                     <Border Style="{StaticResource ModalIconButton}"
                             IsVisible="{Binding IsFoodFinderVisible}"
                             SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_BackToMeal}">
@@ -98,9 +98,9 @@
                                     Command="{Binding OpenFoodFinderCommand}" Style="{StaticResource ButtonSecondary}" />
                         </Grid>
                     <CollectionView Grid.Row="1" ItemsSource="{Binding MealIngredients}"
-                                    ItemSizingStrategy="MeasureFirstItem" SelectionMode="None">
+                                    ItemSizingStrategy="MeasureAllItems" SelectionMode="None">
                     <CollectionView.EmptyView>
-                        <Label Text="{loc:LocalizedText Nutrition_MealEditor_AddAFoodToBuildThis}" Style="{StaticResource MutedCentered}" Margin="{StaticResource UiInsets0_16}" />
+                        <Label Text="{loc:LocalizedText Nutrition_MealEditor_AddAFoodToBuildThis}" Style="{StaticResource MutedCentered}" LineBreakMode="WordWrap" Margin="{StaticResource UiInsets0_16}" />
                     </CollectionView.EmptyView>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:MealIngredientItem">
@@ -149,11 +149,11 @@
                                 Command="{Binding SearchFoodCommand}" Clicked="OnSearchSubmitted" />
                     </Grid>
                     <CollectionView Grid.Row="2" ItemsSource="{Binding FoodSearchResults}"
-                                    ItemSizingStrategy="MeasureFirstItem"
+                                    ItemSizingStrategy="MeasureAllItems"
                                     SelectionMode="None">
                         <CollectionView.EmptyView>
                             <Label Text="{loc:LocalizedText Nutrition_MealEditor_NoMatchYetTryAnotherName}"
-                                   Style="{StaticResource MutedCentered}" Margin="{StaticResource UiInsets0_16}" />
+                                   Style="{StaticResource MutedCentered}" LineBreakMode="WordWrap" Margin="{StaticResource UiInsets0_16}" />
                         </CollectionView.EmptyView>
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="models:FoodSearchResultItem">
@@ -196,7 +196,7 @@
                 </Grid>
 
                 <ScrollView Grid.Row="2" IsVisible="{Binding IsSelectedFoodEditorVisible}">
-                    <VerticalStackLayout Padding="{StaticResource UiInsets20_24}" Spacing="{StaticResource UiSpaceControl}">
+                    <VerticalStackLayout Padding="{StaticResource PresentationModalPagePadding}" Spacing="{StaticResource UiSpaceControl}">
                         <Label Text="{Binding SelectedFoodText}" Style="{StaticResource CardTitle}"
                                LineBreakMode="WordWrap" />
                         <Label
@@ -219,12 +219,13 @@
                         </Grid>
                         <Label
                             Text="{Binding SelectedFoodAmountText, Converter={StaticResource LocalizedStringConverter}}"
-                            Style="{StaticResource BodyLabel}" />
+                            Style="{StaticResource BodyLabel}"
+                            LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                 </ScrollView>
 
                 <ScrollView Grid.Row="2" IsVisible="{Binding IsCustomFoodPanelVisible}">
-                    <VerticalStackLayout Padding="{StaticResource UiInsets20_20}" Spacing="{StaticResource UiSpaceCompact}">
+                    <VerticalStackLayout Padding="{StaticResource PresentationModalPagePadding}" Spacing="{StaticResource UiSpaceCompact}">
                         <Label Text="{loc:LocalizedText Nutrition_CustomFood_General}" Style="{StaticResource SectionTitle}" />
                         <Label Text="{loc:LocalizedText Nutrition_MealEditor_FoodName}" Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">
@@ -294,9 +295,9 @@
                     </VerticalStackLayout>
                 </ScrollView>
 
-                <VerticalStackLayout Grid.Row="3" Padding="{StaticResource UiInsets20_12_20_20}" Spacing="{StaticResource UiSpaceTight}">
+                <VerticalStackLayout Grid.Row="3" Padding="{StaticResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}">
                     <Label Text="{Binding AddFoodMessage, Converter={StaticResource LocalizedStringConverter}}"
-                           IsVisible="{Binding HasAddFoodMessage}" Style="{StaticResource BodyMedium}" />
+                           IsVisible="{Binding HasAddFoodMessage}" Style="{StaticResource BodyMedium}" LineBreakMode="WordWrap" />
                     <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                                        Color="{StaticResource Primary}"
                                        SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_SavingMealChanges}" />

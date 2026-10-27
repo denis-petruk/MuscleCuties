@@ -12,10 +12,10 @@
 
     <Grid
         x:Name="StartupRoot"
-        Padding="{StaticResource UiInsets28}"
+        Padding="{StaticResource PresentationAuthPagePadding}"
         BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
         <VerticalStackLayout
-            Spacing="{StaticResource UiSpacing18}"
+            Spacing="{StaticResource PresentationFormSpacing}"
             HorizontalOptions="Center"
             VerticalOptions="Center"
             MaximumWidthRequest="{StaticResource UiDimension400}">
@@ -38,12 +38,14 @@
                 x:Name="StartupStatusLabel"
                 Text="{loc:LocalizedText Dashboard_Startup_GettingReady}"
                 Style="{StaticResource MutedCentered}"
+                LineBreakMode="WordWrap"
                 SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_LoadingStatusA11y}" />
             <Label
                 x:Name="StartupErrorLabel"
                 IsVisible="False"
                 Text="{loc:LocalizedText Dashboard_Startup_UnlockFailedTitle}"
                 Style="{StaticResource SectionTitle}"
+                LineBreakMode="WordWrap"
                 HorizontalTextAlignment="Center"
                 SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_UnlockFailedA11y}"
                 SemanticProperties.HeadingLevel="Level2" />
@@ -51,7 +53,8 @@
                 x:Name="StartupRecoveryLabel"
                 IsVisible="False"
                 Text="{loc:LocalizedText Dashboard_Startup_UnlockFailedMessage}"
-                Style="{StaticResource MutedCentered}" />
+                Style="{StaticResource MutedCentered}"
+                LineBreakMode="WordWrap" />
             <Button Style="{StaticResource ButtonPrimary}"
                 x:Name="RetryButton"
                 IsVisible="False"
@@ -65,7 +68,9 @@
                 Text="Reset Local Database"
                 Clicked="OnResetClicked"
                 Style="{StaticResource ButtonSecondary}"
-                SemanticProperties.Description="Reset Local Database" />
+                MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                SemanticProperties.Description="Reset Local Database"
+                SemanticProperties.Hint="Double tap to reset the local database and restart." />
         </VerticalStackLayout>
     </Grid>
 </ContentPage>

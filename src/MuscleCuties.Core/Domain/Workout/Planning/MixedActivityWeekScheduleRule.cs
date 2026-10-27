@@ -48,7 +48,7 @@ public sealed record MixedActivityWeekScheduleResult(
 /// <summary>Places selected activities over available weekdays under activity and hard-day safety rules.</summary>
 public static class MixedActivityWeekScheduleRule
 {
-    public const int MinimumAvailableWeekdays = 1;
+    public const int MinimumAvailableWeekdays = 2;
     public const int MaximumAvailableWeekdays = 7;
     public const int MaximumHardDaysPerWeek = 3;
     public const int MaximumRequestedSessionsPerWeek = MaximumAvailableWeekdays;
@@ -203,6 +203,10 @@ public static class MixedActivityWeekScheduleRule
             .ThenBy(session => ActivityOrder(session.Activity))
             .ToArray();
 
+        inputReasons.AddRange(WorkoutScheduleValidationRule.Validate(
+            sessions.Select(session => new WorkoutScheduleValidationSession(
+                session.Day, session.Activity, session.IsHardSession)).ToArray(),
+            requireStrengthMuscles: false));
         return new MixedActivityWeekScheduleResult(sessions,
             decisions.Select(decision => decision.ToDecision()).ToArray(), inputReasons);
     }
@@ -558,13 +562,13 @@ public static class MixedActivityWeekScheduleRule
                 if (state.Activities.Contains(decision.Activity)) return false;
                 if (isHard && state.HasHardSession) return false;
                 if (decision.Activity == WorkoutActivityType.Hiit &&
-                    state.Activities.Any(a => a is WorkoutActivityType.GeneralStrength or
-                                                  WorkoutActivityType.HighVolumeStrength or
-                                                  WorkoutActivityType.StrengthHighIntensity or
-                                                  WorkoutActivityType.RockClimbing))
+                    state.Activities.Any(a => IsStrengthChoice(a) || a == WorkoutActivityType.RockClimbing))
+                    return false;
+                if ((IsStrengthChoice(decision.Activity) || decision.Activity == WorkoutActivityType.RockClimbing) &&
+                    state.Activities.Contains(WorkoutActivityType.Hiit))
                     return false;
                 return state.Activities.Count == NoSessionsScheduled ||
-                       CanShareStrengthDay(state, decision, isHard);
+                       CanShareDay(state, decision, isHard);
             }).ToArray();
 
             if (candidates.Length == NoSessionsScheduled)
@@ -684,23 +688,25 @@ public static class MixedActivityWeekScheduleRule
         (IsStrengthChoice(firstActivity) && firstIsHard && IsStrengthCompanion(secondActivity, secondIsHard)) ||
         (IsStrengthChoice(secondActivity) && secondIsHard && IsStrengthCompanion(firstActivity, firstIsHard));
 
-    private static bool CanShareStrengthDay(
+    private static bool CanShareDay(
         ScheduledDayState dayState,
         ActivityDecisionBuilder decision,
         bool isHard)
     {
-        if (dayState.Activities.Count != MaximumStrengthSessionsPerDay || !dayState.HasHardSession)
+        if (dayState.Activities.Count != MaximumStrengthSessionsPerDay ||
+            dayState.HasHardSession && isHard)
             return false;
 
-        return IsSupportedSameDayStrengthCompanion(
-            dayState.Activities.Single(),
-            dayState.HasHardSession,
-            decision.EffectiveActivity ?? decision.Activity,
-            isHard);
+        var existing = dayState.Activities.Single();
+        var incoming = decision.EffectiveActivity ?? decision.Activity;
+        return existing != incoming &&
+               !(IsStrengthChoice(existing) && IsStrengthChoice(incoming)) &&
+               !(existing == WorkoutActivityType.Hiit && (IsStrengthChoice(incoming) || incoming == WorkoutActivityType.RockClimbing)) &&
+               !(incoming == WorkoutActivityType.Hiit && (IsStrengthChoice(existing) || existing == WorkoutActivityType.RockClimbing));
     }
 
     private static bool IsStrengthCompanion(WorkoutActivityType activity, bool isHard) =>
-        !isHard && (activity is WorkoutActivityType.Cycling or WorkoutActivityType.Yoga);
+        !isHard && !IsStrengthChoice(activity) && activity != WorkoutActivityType.RestDay;
 
     public static string GetHardDayConflictReason(WorkoutActivityType activity) => activity switch
     {

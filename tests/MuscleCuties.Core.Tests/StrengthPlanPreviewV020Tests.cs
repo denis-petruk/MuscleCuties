@@ -272,19 +272,19 @@ public sealed class StrengthPlanPreviewV020Tests
             new PreviewStrengthPlanV020UseCase(new Source(profile with
             {
                 SelectedActivityTypes = selected,
-                AvailableWeekdays = new HashSet<DayOfWeek>
+                MuscleGroupsByExerciseId = catalog.ToDictionary(entry => entry.Candidate.ExerciseId,
+                entry => (IReadOnlySet<string>)new HashSet<string> { entry.Candidate.Pattern.ToString() }),
+            AvailableWeekdays = new HashSet<DayOfWeek>
                 {
                     DayOfWeek.Monday
                 }
             })), store);
         var oneDayProposal = await oneDay.ExecuteAsync(Guid.NewGuid(), request with { AvailableWeekdays = null });
 
-        Assert.True(oneDayProposal.IsPersisted);
-        Assert.Equal("Feasible", oneDayProposal.Preview.Status);
-        Assert.DoesNotContain(MixedScheduleIncompleteReason, oneDayProposal.Preview.LimitationCodes);
-        Assert.Single(oneDayProposal.Preview.Sessions);
-        Assert.Equal(DayOfWeek.Monday, oneDayProposal.Preview.Sessions[0].PlannedWeekday);
-        Assert.Equal(ExpectedSavedProposalCount + 1, store.SaveCount);
+        Assert.False(oneDayProposal.IsPersisted);
+        Assert.NotEqual("Feasible", oneDayProposal.Preview.Status);
+        Assert.Empty(oneDayProposal.Preview.Sessions);
+        Assert.Equal(ExpectedSavedProposalCount, store.SaveCount);
     }
 
     [Fact]
@@ -812,6 +812,35 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Equal(1, store.SaveCount);
     }
 
+    [Fact]
+    public async Task ExhaustedStrengthCanLeaveSafeCyclingRemainder()
+    {
+        var profile = AddSelectedActivity(Profile(), WorkoutActivityType.Cycling) with
+        {
+            SelectedActivityTypes = new HashSet<int> { (int)WorkoutActivityType.GeneralStrength, (int)WorkoutActivityType.Cycling }
+        };
+        var request = Request() with { ExcludedExerciseIds = new HashSet<int> { 101, 102, 103, 104 } };
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(profile)).ExecuteAsync(Guid.NewGuid(), request);
+        Assert.Equal("Feasible", preview.Status);
+        Assert.Empty(preview.Sessions);
+        Assert.NotNull(preview.MixedActivitySchedule);
+        Assert.Contains(preview.MixedActivitySchedule!.Sessions, session => session.ActivityTypeId == (int)WorkoutActivityType.Cycling);
+        Assert.Contains(preview.MixedActivitySchedule.Activities, activity => activity.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength && activity.Disposition == "Omitted");
+    }
+
+    [Fact]
+    public async Task ExhaustedStrengthWithoutOtherActivitiesDoesNotCreateEmptyPlan()
+    {
+        var profile = Profile() with { SelectedActivityTypes = new HashSet<int> { (int)WorkoutActivityType.GeneralStrength } };
+        var request = Request() with { ExcludedExerciseIds = new HashSet<int> { 101, 102, 103, 104 } };
+        var store = new ProposalStore();
+        var proposal = await new CreateStrengthPlanProposalV020UseCase(new PreviewStrengthPlanV020UseCase(new Source(profile)), store)
+            .ExecuteAsync(Guid.NewGuid(), request);
+        Assert.False(proposal.IsPersisted);
+        Assert.NotEqual("Feasible", proposal.Preview.Status);
+        Assert.Equal(0, store.SaveCount);
+    }
+
     private static StrengthPlanPreviewRequestV020 Request() => new(
         WorkoutActivityDto.GeneralStrength, LocalDate,
         HistoryFor(WorkoutActivityType.GeneralStrength),
@@ -859,6 +888,17 @@ public sealed class StrengthPlanPreviewV020Tests
             .Select(weekOffset => new HiitAerobicWeekInputV020(weekOffset,
                 ActivityPrescriptionRule.HiitRequiredAerobicSessionsPerWeek)).ToArray(),
         ExistingClearanceScreeningSatisfied: true);
+
+    [Fact]
+    public async Task MissingCompleteMuscleMetadataMakesPreviewLimited()
+    {
+        var source = Profile() with { MuscleGroupsByExerciseId = null };
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(source))
+            .ExecuteAsync(Guid.NewGuid(), Request());
+
+        Assert.Equal("Limited", preview.Status);
+        Assert.Contains(WorkoutScheduleValidationRule.StrengthMuscleMetadataMissing, preview.LimitationCodes);
+    }
 
     private static StrengthPlanPreviewSourceV020 Profile()
     {
@@ -922,11 +962,30 @@ public sealed class StrengthPlanPreviewV020Tests
     {
         public int SaveCount { get; private set; }
 
-        public Task<Guid> SaveAsync(Guid userId, StrengthPlanPreviewRequestV020 request,
+        public Task<StrengthPlanProposalCreatedV020> SaveAsync(Guid userId, StrengthPlanPreviewRequestV020 request,
             StrengthPlanPreviewResponseV020 preview, CancellationToken cancellationToken)
         {
             SaveCount++;
-            return Task.FromResult(Guid.NewGuid());
+            return Task.FromResult(new StrengthPlanProposalCreatedV020(Guid.NewGuid(), preview, true));
         }
+
+        public Task<PlanningLeaseResult> RenewAsync(Guid userId, PlanningLeaseRequest request,
+            CancellationToken cancellationToken) => Task.FromResult(new PlanningLeaseResult("Stale", null));
+
+        public Task<PlanningLeaseResult> CloseAsync(Guid userId, PlanningLeaseRequest request,
+            CancellationToken cancellationToken) => Task.FromResult(new PlanningLeaseResult("Stale", null));
+
+        public Task<PlanningLeaseResult> TakeoverAsync(Guid userId, Guid proposalId,
+            CancellationToken cancellationToken) => Task.FromResult(new PlanningLeaseResult("Stale", null));
+
+        public Task<ActivePlanningPreviewDto> GetActivePreviewAsync(Guid userId, CancellationToken cancellationToken) =>
+            Task.FromResult(new ActivePlanningPreviewDto(null, null));
+
+        public Task<SavedActivityAnswersDto> ReadAnswersAsync(Guid userId, CancellationToken cancellationToken) =>
+            Task.FromResult(new SavedActivityAnswersDto(0, [], null));
+
+        public Task<SavedActivityAnswersDto> SaveAnswersAsync(Guid userId, SaveActivityAnswersRequest request,
+            CancellationToken cancellationToken) => Task.FromResult(new SavedActivityAnswersDto(
+                request.ExpectedVersion, request.ActivityEligibilityEvidence, request.HiitEligibilityEvidence));
     }
 }

@@ -21,7 +21,6 @@ public class WorkoutService : IWorkoutService
     private readonly AppDatabase _db;
     private readonly IWorkoutInjuryRepository _injuryRepository;
     private readonly IUserRepository _userRepository;
-    private readonly IWorkoutPlanGenerator _workoutPlanGenerator;
     private readonly IWorkoutPlanner _workoutPlanner;
     private readonly IWorkoutRepository _workoutRepository;
     private readonly IWorkoutScheduleService _workoutScheduleService;
@@ -32,7 +31,6 @@ public class WorkoutService : IWorkoutService
         IWorkoutRepository workoutRepository,
         IUserRepository userRepository,
         IWorkoutInjuryRepository injuryRepository,
-        IWorkoutPlanGenerator workoutPlanGenerator,
         IWorkoutPlanner workoutPlanner,
         IWorkoutScheduleService? workoutScheduleService = null)
     {
@@ -41,15 +39,13 @@ public class WorkoutService : IWorkoutService
         _workoutRepository = workoutRepository;
         _userRepository = userRepository;
         _injuryRepository = injuryRepository;
-        _workoutPlanGenerator = workoutPlanGenerator;
         _workoutPlanner = workoutPlanner;
-        _workoutScheduleService = workoutScheduleService ?? new WorkoutScheduleService(db, workoutRepository,
-            userRepository, injuryRepository, workoutPlanGenerator);
+        _workoutScheduleService = workoutScheduleService ?? new WorkoutScheduleService(db, workoutRepository);
     }
 
     public async Task<WorkoutPlanSummary> GetPlanSummaryAsync(int userId, CyclePhase phase)
     {
-        var activePlan = await EnsureGeneratedPlanAsync(userId, phase);
+        var activePlan = await _workoutRepository.GetActivePlanAsync(userId);
         if (activePlan is null)
             return new WorkoutPlanSummary(null, [], []);
 
@@ -73,7 +69,7 @@ public class WorkoutService : IWorkoutService
         CyclePhase phase,
         DateTime date)
     {
-        var activePlan = await EnsureGeneratedPlanAsync(userId, phase);
+        var activePlan = await _workoutRepository.GetActivePlanAsync(userId);
         if (activePlan is null)
             return TodaysWorkoutSummary.RestDay;
 
@@ -81,12 +77,6 @@ public class WorkoutService : IWorkoutService
         var workoutLogs = await _workoutRepository.GetWorkoutLogsByDateAsync(userId, date);
 
         return _workoutPlanner.BuildTodaysSummary(activePlan, workoutDays, workoutLogs, phase, date);
-    }
-
-    public async Task RegenerateActivePlanAsync(int userId, CyclePhase phase)
-    {
-        if (await BuildAndReplaceGeneratedPlanAsync(userId, phase).ConfigureAwait(false) is null)
-            throw new WorkoutPlanningFailureException("The workout plan could not be regenerated.");
     }
 
     public async Task<WorkoutSessionDetail> GetWorkoutSessionDetailAsync(int userId, int workoutDayId)
@@ -503,47 +493,6 @@ public class WorkoutService : IWorkoutService
             throw new KeyNotFoundException("Workout exercise was not found or does not belong to the user.");
 
         await SetMovementNotesAsync(userId, wde.ExerciseId, notes).ConfigureAwait(false);
-    }
-
-    private async Task<WorkoutPlan?> EnsureGeneratedPlanAsync(
-        int userId,
-        CyclePhase phase)
-    {
-        var activePlan = await _workoutRepository.GetActivePlanAsync(userId);
-        var profile = await _userRepository.GetProfileAsync(userId);
-        if (profile is null)
-            return activePlan;
-
-        var activePlanDays = activePlan is null
-            ? []
-            : await _workoutRepository.GetWorkoutDaysByPlanAsync(activePlan.Id);
-        var activeInjuries = await _injuryRepository.GetActiveAsync(userId);
-        if (!_workoutPlanGenerator.ShouldRegenerate(activePlan, activePlanDays, profile, phase, activeInjuries))
-            return activePlan;
-
-        return await BuildAndReplaceGeneratedPlanAsync(userId, phase) ?? activePlan;
-    }
-
-    private async Task<WorkoutPlan?> BuildAndReplaceGeneratedPlanAsync(int userId, CyclePhase phase)
-    {
-        var profile = await _userRepository.GetProfileAsync(userId).ConfigureAwait(false);
-        if (profile is null)
-            return null;
-
-        try
-        {
-            var generatedPlan = await _workoutPlanGenerator.GenerateAsync(
-                profile,
-                phase,
-                DateTime.UtcNow).ConfigureAwait(false);
-            return await WorkoutScheduleService
-                .ReplacePlanPreservingCompletedLogsAsync(_db, _workoutRepository, userId, generatedPlan, profile)
-                .ConfigureAwait(false);
-        }
-        catch (WorkoutPlanningFailureException)
-        {
-            return null;
-        }
     }
 
     private static WorkoutExerciseItem BuildExerciseItem(

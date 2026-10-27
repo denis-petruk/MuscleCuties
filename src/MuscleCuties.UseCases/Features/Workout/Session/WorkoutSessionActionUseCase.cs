@@ -1,10 +1,15 @@
 using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 
 namespace MuscleCuties.UseCases.Features.Workout.Session;
 
 public interface IWorkoutSessionActionUseCase
 {
+    Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(int workoutDayId, CancellationToken cancellationToken = default);
+    Task<ActiveWorkoutSessionSnapshot> StartPlannedSessionAsync(int workoutDayId, Guid sessionId, DateTime startedAtUtc, CancellationToken cancellationToken = default);
+    Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, CancellationToken cancellationToken = default);
+    Task AbandonPlannedSessionAsync(Guid sessionId, CancellationToken cancellationToken = default);
     Task<WorkoutSessionDetailDto> GetDetailAsync(int workoutDayId, CancellationToken cancellationToken = default);
     Task LogAsync(LogWorkoutSessionRequest request, CancellationToken cancellationToken = default);
 
@@ -22,6 +27,10 @@ public interface IWorkoutSessionActionUseCase
 
 public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store) : IWorkoutSessionActionUseCase
 {
+    public Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(int workoutDayId, CancellationToken cancellationToken = default) => store.GetPlannedSessionAsync(workoutDayId, cancellationToken);
+    public Task<ActiveWorkoutSessionSnapshot> StartPlannedSessionAsync(int workoutDayId, Guid sessionId, DateTime startedAtUtc, CancellationToken cancellationToken = default) => store.StartPlannedSessionAsync(workoutDayId, sessionId, startedAtUtc, cancellationToken);
+    public Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, CancellationToken cancellationToken = default) => store.FinishPlannedSessionAsync(sessionId, completedAtUtc, totalDurationSeconds, cancellationToken);
+    public Task AbandonPlannedSessionAsync(Guid sessionId, CancellationToken cancellationToken = default) => store.AbandonPlannedSessionAsync(sessionId, cancellationToken);
     public Task<WorkoutSessionDetailDto> GetDetailAsync(int workoutDayId, CancellationToken cancellationToken = default)
     {
         if (!WorkoutSessionActionRule.IsValidIdentifier(workoutDayId))

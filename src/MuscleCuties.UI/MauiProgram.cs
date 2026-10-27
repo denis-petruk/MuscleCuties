@@ -58,6 +58,7 @@ using MuscleCuties.UI.Pages.Workout;
 using MuscleCuties.UI.Services;
 using MuscleCuties.UI.Services.Auth;
 using MuscleCuties.UI.Services.Localization;
+using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.Services.Notifications;
 using MuscleCuties.UI.Services.Nutrition;
@@ -321,7 +322,6 @@ public static class MauiProgram
         services.AddScoped<ICyclePredictionPlanner, CyclePredictionPlanner>();
         services.AddScoped<IDashboardPlanner, DashboardPlanner>();
         services.AddScoped<IWorkoutPlanner, WorkoutPlanner>();
-        services.AddScoped<IWorkoutPlanGenerator, WorkoutPlanGenerator>();
         services.AddScoped<IWorkoutScheduleService, WorkoutScheduleService>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IAuthService, CloudAuthService>();
@@ -502,6 +502,7 @@ public static class MauiProgram
         services.AddSingleton<IWorkoutOverviewStore, CloudWorkoutOverviewStore>();
         services.AddSingleton<IWorkoutOverviewUseCase, WorkoutOverviewUseCase>();
         services.AddSingleton<IStrengthPlanProposalClientV020, CloudStrengthPlanProposalStoreV020>();
+        services.AddSingleton<IWorkoutAccountCalendarClient, WorkoutAccountCalendarClient>();
         services.AddSingleton<IPhaseAdjustmentProposalClientV010, CloudPhaseAdjustmentProposalClientV010>();
         services.AddSingleton<GenerateDeterministicWeeklyPlanUseCase>();
         services.AddScoped<IWorkoutSessionActionStore, CloudWorkoutSessionActionStore>();
@@ -610,7 +611,15 @@ public static class MauiProgram
             sp.GetRequiredService<IWorkoutArchiveUseCase>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
             () => NavigateToAsync(".."),
-            () => NavigateToAsync("//WorkoutPage")));
+            () => NavigateToAsync("//WorkoutPage"),
+            sp.GetRequiredService<INavigationContextService>(),
+            summary => MainThread.InvokeOnMainThreadAsync(() => Shell.Current.DisplayAlertAsync(
+                UiTextCatalog.Get("Workout_Generation_ReplacementTitle"), summary,
+                UiTextCatalog.Get("Workout_Generation_ApplyPlan"),
+                UiTextCatalog.Get("Workout_Generation_ReplacementCancel"))),
+            () => NavigateToAsync("//DashboardPage"),
+            sp.GetRequiredService<IWorkoutAccountCalendarClient>(),
+            overview: sp.GetRequiredService<IWorkoutOverviewUseCase>()));
 
         services.AddTransient<PhaseAdjustmentReviewViewModelV010>(sp => new PhaseAdjustmentReviewViewModelV010(
             sp.GetRequiredService<IPhaseAdjustmentProposalClientV010>(),
@@ -666,7 +675,8 @@ public static class MauiProgram
             sp.GetRequiredService<GetReviewedExerciseExclusionCatalogV020UseCase>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
             () => NavigateToAsync(".."),
-            () => NavigateToAsync(nameof(StrengthPlanGenerationPage))));
+            () => NavigateToAsync(nameof(StrengthPlanGenerationPage)),
+            sp.GetRequiredService<INavigationContextService>()));
 
         services.AddTransient<ProfileHealthSyncViewModel>(sp => new ProfileHealthSyncViewModel(
             sp.GetRequiredService<IProfileHealthSyncUseCase>(),

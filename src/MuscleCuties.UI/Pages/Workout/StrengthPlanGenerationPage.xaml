@@ -21,10 +21,10 @@
           IsVisible="{Binding IsBeforePreview}">
     <ScrollView Grid.Row="0">
         <VerticalStackLayout
-            Padding="{StaticResource UiInsets20_16_20_32}"
+            Padding="{StaticResource PresentationPageContentPadding}"
             Spacing="{StaticResource UiSpaceControl}"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="{StaticResource UiDimension720}">
+            MaximumWidthRequest="{StaticResource UiDimension640}">
 
             <sharedControls:PageHeader
                 Title="{loc:LocalizedText Workout_Generation_Title}"
@@ -230,6 +230,7 @@
                                     VerticalOptions="Center"
                                     SemanticProperties.Description="{loc:LocalizedText Workout_Generation_SwimmingFacilityAccess}" />
                         </Border>
+                        <Label Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingSwimmingFacility}" Style="{StaticResource ErrorLabel}" />
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
@@ -244,6 +245,7 @@
                                     VerticalOptions="Center"
                                     SemanticProperties.Description="{loc:LocalizedText Workout_Generation_IndependentSwimming}" />
                         </Border>
+                        <Label Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingSwimmingAbility}" Style="{StaticResource ErrorLabel}" />
                     </VerticalStackLayout>
 
                     <VerticalStackLayout IsVisible="{Binding CanChooseSwimmingStyle}" Spacing="{StaticResource UiSpaceTight}">
@@ -258,6 +260,7 @@
                                     VerticalOptions="Center"
                                     SemanticProperties.Description="{loc:LocalizedText Workout_Generation_SwimmingStyle}" />
                         </Border>
+                        <Label Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingSwimmingStyle}" Style="{StaticResource ErrorLabel}" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
@@ -286,6 +289,7 @@
                                     VerticalOptions="Center"
                                     SemanticProperties.Description="{loc:LocalizedText Workout_Generation_RopeCompetence}" />
                         </Border>
+                        <Label Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingClimbingCompetence}" Style="{StaticResource ErrorLabel}" />
                     </VerticalStackLayout>
 
                     <VerticalStackLayout IsVisible="{Binding ShouldAskClimbingInstruction}" Spacing="{StaticResource UiSpaceTight}">
@@ -300,6 +304,7 @@
                                     VerticalOptions="Center"
                                     SemanticProperties.Description="{loc:LocalizedText Workout_Generation_ClimbingInstructionAvailable}" />
                         </Border>
+                        <Label Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingClimbingInstruction}" Style="{StaticResource ErrorLabel}" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
@@ -328,6 +333,7 @@
                                     VerticalOptions="Center"
                                     SemanticProperties.Description="{loc:LocalizedText Workout_Generation_YogaContentClassification}" />
                         </Border>
+                        <Label Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingYogaType}" Style="{StaticResource ErrorLabel}" />
                     </VerticalStackLayout>
 
                 </VerticalStackLayout>
@@ -447,6 +453,7 @@
             <!-- Bottom Keep Current Plan Button -->
             <Button Text="{loc:LocalizedText Workout_Generation_KeepCurrentPlan}"
                     Command="{Binding KeepCurrentPlanCommand}"
+                    IsVisible="{Binding CanKeepCurrentPlan}"
                     Style="{StaticResource ButtonSecondary}" />
         </VerticalStackLayout>
     </ScrollView>
@@ -469,10 +476,24 @@
             <ActivityIndicator IsRunning="{Binding IsBusy}"
                                IsVisible="{Binding IsBusy}"
                                HorizontalOptions="Center" />
+            <Label Text="{loc:LocalizedText Workout_Generation_ChooseFittingStrengthStyle}" IsVisible="{Binding HasFittingStrengthStyleChoices}" Style="{StaticResource FormFieldLabel}" />
+            <Border Style="{StaticResource PickerContainer}" IsVisible="{Binding HasFittingStrengthStyleChoices}">
+                <Picker ItemsSource="{Binding FittingStrengthStyleChoices}"
+                        SelectedItem="{Binding SelectedFittingStrengthStyle}"
+                        ItemDisplayBinding="{Binding Label}"
+                        IsEnabled="{Binding CanEditInputs}"
+                        VerticalOptions="Center" />
+            </Border>
+            <Label Text="{loc:LocalizedText Workout_Generation_ActivePreviewElsewhere}" IsVisible="{Binding HasActiveOtherPreview}" Style="{StaticResource MutedLabel}" />
+            <Button Text="{loc:LocalizedText Workout_Generation_TakeOverPreview}" Command="{Binding TakeOverPreviewCommand}" IsVisible="{Binding HasActiveOtherPreview}" Style="{StaticResource ButtonSecondary}" />
             <Button Text="{loc:LocalizedText Workout_Generation_CreatePreview}"
                     Command="{Binding CreateProposalCommand}"
                     IsVisible="{Binding IsTrainNavigationPending, Converter={StaticResource InvertedBoolConverter}}"
                     Style="{StaticResource ButtonPrimary}" />
+            <Button Text="{Binding ExploreOtherFeaturesButtonText}"
+                    Command="{Binding ExploreOtherFeaturesCommand}"
+                    IsVisible="{Binding CanOfferExploreOtherFeatures}"
+                    Style="{StaticResource ButtonSecondary}" />
             <Button Text="{loc:LocalizedText Workout_Generation_OpenTrainAfterApply}"
                     Command="{Binding OpenTrainCommand}"
                     IsVisible="{Binding IsTrainNavigationPending}"
@@ -504,6 +525,16 @@
                 </Grid>
                 <ScrollView Grid.Row="1">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+                        <!-- Reduced Volume Notice Sub-Section -->
+                        <Border IsVisible="{Binding RequiresReducedVolumeAcknowledgment}"
+                                Style="{StaticResource CardAccent}">
+                            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                <Label Text="{Binding ReducedVolumeNoticeText}"
+                                       Style="{StaticResource BodyStrong}"
+                                       LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Border>
+
                         <!-- Mixed Schedule Sub-Section -->
                         <VerticalStackLayout IsVisible="{Binding HasMixedSchedule}" Spacing="{StaticResource UiSpacing10}">
                             <Label Text="{loc:LocalizedText Workout_Generation_MixedScheduleTitle}"
@@ -647,65 +678,7 @@
 
   </toolkit:Expander.Content>
 </toolkit:Expander>
-<!-- High Intensity Confirmation Candidates Sub-Section -->
-                        <VerticalStackLayout IsVisible="{Binding HasHighIntensityCandidates}"
-                                             IsEnabled="{Binding CanAnswerHighIntensityCandidates}"
-                                             Spacing="{StaticResource UiSpaceCompact}">
-                            <Label Text="{loc:LocalizedText Workout_Generation_HighIntensityConfirmationTitle}"
-                                   Style="{StaticResource SectionTitle}"
-                                   FontSize="{StaticResource UiFontSize17}"
-                                   FontAttributes="{StaticResource UiFontAttributesBold}"
-                                   SemanticProperties.HeadingLevel="Level3" />
-                            <Label Text="{loc:LocalizedText Workout_Generation_HighIntensityConfirmationHelp}"
-                                   Style="{StaticResource MutedLabel}"
-                                   LineBreakMode="WordWrap" />
-                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding HighIntensityCandidates}"
-                                                 Spacing="{StaticResource UiSpacing10}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:StrengthPlanHighIntensityCandidateDisplay">
-                                        <Border Style="{StaticResource CardAccent}">
-                                            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-                                                <Label Text="{Binding Name}"
-                                                       Style="{StaticResource FormFieldLabel}" />
-                                                <Label Text="{Binding Assignments}"
-                                                       Style="{StaticResource MutedLabel}"
-                                                       LineBreakMode="WordWrap" />
 
-                                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                                    <Label Text="{loc:LocalizedText Workout_Generation_FamiliarityQuestion}"
-                                                           Style="{StaticResource FormFieldLabel}" />
-                                                    <Border Style="{StaticResource PickerContainer}">
-                                                        <Picker ItemsSource="{Binding AnswerChoices}"
-                                                                SelectedItem="{Binding FamiliarityChoice}"
-                                                                ItemDisplayBinding="{Binding Label}"
-                                                                Title="{loc:LocalizedText Workout_Generation_ChooseEvidence}"
-                                                                VerticalOptions="Center"
-                                                                SemanticProperties.Description="{loc:LocalizedText Workout_Generation_FamiliarityQuestion}" />
-                                                    </Border>
-                                                </VerticalStackLayout>
-
-                                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                                    <Label Text="{loc:LocalizedText Workout_Generation_ManageableLoadQuestion}"
-                                                           Style="{StaticResource FormFieldLabel}" />
-                                                    <Border Style="{StaticResource PickerContainer}">
-                                                        <Picker ItemsSource="{Binding AnswerChoices}"
-                                                                SelectedItem="{Binding ManageableLoadChoice}"
-                                                                ItemDisplayBinding="{Binding Label}"
-                                                                Title="{loc:LocalizedText Workout_Generation_ChooseEvidence}"
-                                                                VerticalOptions="Center"
-                                                                SemanticProperties.Description="{loc:LocalizedText Workout_Generation_ManageableLoadQuestion}" />
-                                                    </Border>
-                                                </VerticalStackLayout>
-                                            </VerticalStackLayout>
-                                        </Border>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
-                            </VerticalStackLayout>
-                            <Button Text="{loc:LocalizedText Workout_Generation_ConfirmHighIntensityExercises}"
-                                    Command="{Binding ConfirmHighIntensityExercisesCommand}"
-                                    IsEnabled="{Binding CanSubmitHighIntensityConfirmations}"
-                                    Style="{StaticResource ButtonPrimary}" />
-                        </VerticalStackLayout>
 
                         <!-- Limitations Sub-Section -->
                         <VerticalStackLayout IsVisible="{Binding HasLimitation}" Spacing="{StaticResource UiSpacing10}">

@@ -11,7 +11,8 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <Grid
         BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
@@ -19,7 +20,7 @@
             <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" Padding="{StaticResource UiInsets0_0_0_32}">
 
                 <!-- Header / Profile Info -->
-                <Grid Padding="{StaticResource UiInsets20_36_20_12}" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceControl}">
+                <Grid Padding="{StaticResource PresentationPageHeaderPadding}" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceControl}">
                     <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Page_You}" Style="{StaticResource Headline}" />
 
                     <!-- Avatar + Name + Membership Tenure -->
