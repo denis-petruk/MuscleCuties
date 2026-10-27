@@ -66,6 +66,20 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             await PlanningCatalogFingerprint.LockCatalogAsync(dbContext, cancellationToken).ConfigureAwait(false);
 
+            var result = await AcceptWithinTransactionAsync(userId, request, transaction, false, cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return result;
+        }).ConfigureAwait(false);
+
+    /// <summary>Applies a proposal inside the caller's tenant transaction and account/catalog locks.</summary>
+    internal async Task<AcceptStrengthPlanProposalResultV020> AcceptWithinTransactionAsync(Guid userId,
+        AcceptStrengthPlanProposalRequestV020 request,
+        Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction,
+        bool automaticRevision, CancellationToken cancellationToken)
+    {
+            if (dbContext.Database.CurrentTransaction != transaction)
+                throw new InvalidOperationException("The active planning transaction is required.");
+
             var proposal = await dbContext.WorkoutPlanProposalsV02.SingleOrDefaultAsync(
                     item => item.UserId == userId && item.Id == request.ProposalId,
                     cancellationToken)
@@ -148,11 +162,11 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                     ActivePlanChangedSinceProposalCode), cancellationToken).ConfigureAwait(false);
             }
 
-            if (proposalSnapshot.RequiresReducedVolumeAcknowledgment && !request.ReducedVolumeAcknowledged)
+            if (!automaticRevision && proposalSnapshot.RequiresReducedVolumeAcknowledgment && !request.ReducedVolumeAcknowledged)
                 return await FinishAsync(transaction, new(ConflictStatus, proposal.PlanId, null,
                     ReducedVolumeAcknowledgmentRequiredCode), cancellationToken).ConfigureAwait(false);
 
-            if (activePlanId is not null && !request.ReplacementConfirmed)
+            if (!automaticRevision && activePlanId is not null && !request.ReplacementConfirmed)
                 return await FinishAsync(transaction, new(ConflictStatus, proposal.PlanId, null,
                     ReplacementConfirmationRequiredCode), cancellationToken).ConfigureAwait(false);
 
@@ -229,10 +243,15 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             var completedToday = await dbContext.WorkoutCompletionDayCredits.AsNoTracking()
                 .AnyAsync(row => row.UserId == userId && row.LocalDate == today, cancellationToken)
                 .ConfigureAwait(false);
-            var firstDate = WorkoutPlanStartDateRule.FindNextEligibleDate(now, zone, availableWeekdays, completedToday);
+            var deferCurrentDayForPromotion = automaticRevision && planningState.PromotionPending &&
+                await dbContext.WorkoutSessionLogs.AsNoTracking().AnyAsync(row => row.UserId == userId &&
+                    !row.IsDeleted && row.CompletedAt == null && row.PlannedWorkoutDayId != null,
+                    cancellationToken).ConfigureAwait(false);
+            var firstDate = WorkoutPlanStartDateRule.FindNextEligibleDate(now, zone, availableWeekdays,
+                completedToday || deferCurrentDayForPromotion);
             if (firstDate is null)
                 return await FinishAsync(transaction, new(LimitedStatus, null, null, NoEligibleWorkoutDayCode), cancellationToken).ConfigureAwait(false);
-            if (draft is not null)
+            if (draft is not null && !automaticRevision)
             {
                 var profile = await dbContext.UserProfiles.SingleAsync(
                     item => item.UserId == userId, cancellationToken).ConfigureAwait(false);
@@ -363,16 +382,14 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             proposal.AcceptedRevisionId = revisionId;
             proposal.ConcurrencyVersion++;
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return new AcceptStrengthPlanProposalResultV020(AcceptedStatus, plan.Id, revisionId, null);
-        }).ConfigureAwait(false);
+    }
 
-    private static async Task<AcceptStrengthPlanProposalResultV020> FinishAsync(
+    private static Task<AcceptStrengthPlanProposalResultV020> FinishAsync(
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction,
         AcceptStrengthPlanProposalResultV020 result, CancellationToken cancellationToken)
     {
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        return result;
+        return Task.FromResult(result);
     }
 
     private static T? Deserialize<T>(string json)

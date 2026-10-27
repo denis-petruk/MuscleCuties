@@ -13,6 +13,8 @@ public interface IWorkoutProgressStore
 
 public interface IWorkoutPlanReconciler
 {
-    Task ReconcileAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<WorkoutReconciliationOutcome> ReconcileAsync(Guid userId, CancellationToken cancellationToken = default);
 }
+
+public enum WorkoutReconciliationOutcome { Completed, Deferred, NeedsReview }
 

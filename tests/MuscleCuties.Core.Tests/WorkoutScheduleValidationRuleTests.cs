@@ -57,4 +57,13 @@ public sealed class WorkoutScheduleValidationRuleTests
             WorkoutScheduleValidationRule.Validate(sessions));
     }
 
+    [Fact]
+    public void BlankMuscleGroupIsMissingMetadata()
+    {
+        var session = new WorkoutScheduleValidationSession(DayOfWeek.Monday,
+            WorkoutActivityType.GeneralStrength, true, new HashSet<string> { " " });
+        Assert.Contains(WorkoutScheduleValidationRule.StrengthMuscleMetadataMissing,
+            WorkoutScheduleValidationRule.Validate([session]));
+    }
+
 }

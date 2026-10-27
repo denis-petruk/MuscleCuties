@@ -67,6 +67,28 @@ public sealed partial class HiitEligibilityEvidenceCaptureViewModel : Observable
             week.QualifyingManageableSessionCount = string.Empty;
     }
 
+    public void Prefill(HiitEligibilityEvidenceInputV020? saved, DateOnly localDate)
+    {
+        Reset();
+        if (saved is null)
+            return;
+
+        var history = saved.UnderlyingCardioHistory;
+        UnderlyingCardioConsistentWeeks = history?.ConsistentParticipationWeeks?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+        UnderlyingCardioAverageSessionsPerWeek = history?.AverageSessionsPerWeekInRecentFourWeeks?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+        if (history?.LastCompletedSessionDate is { } lastDate && lastDate <= localDate)
+            UnderlyingCardioDaysSinceLastSession = (localDate.DayNumber - lastDate.DayNumber).ToString(CultureInfo.InvariantCulture);
+        SelectedClearanceScreeningChoice = ClearanceScreeningChoices
+            .FirstOrDefault(choice => choice.Value == saved.ExistingClearanceScreeningSatisfied);
+        foreach (var week in PreviousFourWeeksAerobicEvidence)
+        {
+            var recorded = saved.PreviousFourWeeksAerobicEvidence?
+                .FirstOrDefault(value => value.WeekOffsetFromCurrent == week.WeekOffsetFromCurrent);
+            week.QualifyingManageableSessionCount = recorded?.QualifyingManageableAerobicSessionCount
+                .ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+        }
+    }
+
     private ActivityTrainingHistoryInputV020? TryReadUnderlyingCardioHistory(
         DateOnly localDate,
         WorkoutActivityDto underlyingCardioActivity)

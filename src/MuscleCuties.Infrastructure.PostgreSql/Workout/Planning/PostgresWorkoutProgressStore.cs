@@ -8,7 +8,7 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
-public sealed class PostgresWorkoutProgressStore(PostgresDbContext context, IWorkoutPlanReconciler reconciler) : IWorkoutProgressStore
+public sealed class PostgresWorkoutProgressStore(PostgresDbContext context) : IWorkoutProgressStore
 {
     private const string ReadyStatus = "Ready";
     private const string UninitializedStatus = "CalendarNotEstablished";
@@ -20,7 +20,6 @@ public sealed class PostgresWorkoutProgressStore(PostgresDbContext context, IWor
     public Task<WorkoutProgressResponse> ReadAsync(Guid userId, CancellationToken cancellationToken) =>
         InTransactionAsync(userId, async () =>
         {
-            await reconciler.ReconcileAsync(userId, cancellationToken).ConfigureAwait(false);
             return await SnapshotAsync(userId, ReadyStatus, cancellationToken).ConfigureAwait(false);
         }, cancellationToken);
 

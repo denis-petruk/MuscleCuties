@@ -1,5 +1,7 @@
 # Roadmap — MuscleCuties
 
+- **2026-10-27 workout continuation:** Implement the canonical pending-event revision worker and complete session provenance, full-version/race review, reviewed catalog and floor coverage. See [persistence checkpoint](docs/workout-migration-checkpoints/persistence.md). Migration `20261027010000` is definition only and has not been executed.
+
 - **Workout planning continuation (2026-10-26):** Removed the retired direct planner; added safe strength-session spacing, catalog fingerprint fencing migration definition, safety pending signals and immutable completion-date handling. High-intensity safer prescriptions still need review. Automatic injury/safety/promotion regeneration and legacy-client rollout remain incomplete; see [migration inventory](docs/WORKOUT_PLANNING_MIGRATION_INVENTORY.md). No tests, builds, migrations or backfills were run.
 
 

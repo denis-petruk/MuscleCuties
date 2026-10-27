@@ -1,5 +1,7 @@
 # Status — MuscleCuties
 
+- **2026-10-27 workout persistence continuation:** GitLab branch fast-forwarded to `11ffad7f`. Planned completion now requires exercise logs linked to its verified session and records the server completion instant; migration `20261027010000` is defined but unexecuted. Automatic revisions and the other release gates remain open; see [persistence checkpoint](docs/workout-migration-checkpoints/persistence.md). No tests, builds, migrations or backfills were run in this continuation.
+
 - **Workout planning continuation (2026-10-26):** Removed the retired direct planner; added safe strength-session spacing, catalog fingerprint fencing migration definition, safety pending signals and immutable completion-date handling. High-intensity safer prescriptions still need review. Automatic injury/safety/promotion regeneration and legacy-client rollout remain incomplete; see [migration inventory](docs/WORKOUT_PLANNING_MIGRATION_INVENTORY.md). No tests, builds, migrations or backfills were run.
 
 
