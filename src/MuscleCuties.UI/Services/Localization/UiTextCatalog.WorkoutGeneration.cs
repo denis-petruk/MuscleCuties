@@ -18,9 +18,8 @@ public static partial class UiTextCatalog
         English["Workout_Generation_StrengthPlanType"] = "Strength plan type";
         English["Workout_Generation_GeneralStrengthDescription"] = "Lower training volume with steady general-strength progress.";
         English["Workout_Generation_HighVolumeStrengthDescription"] = "More total strength work; requires enough recent training history.";
-        English["Workout_Generation_HighIntensityStrengthDescription"] = "Heavier main lifts; exercise familiarity and load evidence may be required.";
+        English["Workout_Generation_HighIntensityStrengthDescription"] = "Strength training with heavier main lifts.";
         English["Workout_Generation_StrengthPlanChoiceHint"] = "Select this strength plan type.";
-        English["Workout_Generation_HighIntensityEvidenceHelp"] = "The planner surfaces a heavy lift only when recorded history and trusted load data meet its requirements. A limited preview may ask you to confirm familiarity and manageable load for each surfaced exercise.";
         English["Workout_Generation_HeavyMainAssignmentFormat"] = "Used as a heavy main in: {0}";
         English["Workout_Generation_HiitUnderlyingActivityTitle"] = "Choose HIIT's underlying cardio activity";
         English["Workout_Generation_HiitUnderlyingActivityHelp"] = "Choose a continuous cardio activity saved in your preferences. HIIT will replace one session of that activity. Enter its actual history and each prior week's aerobic sessions below, then confirm the required screening or clearance.";
@@ -194,6 +193,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_Reason_FrequencyPreference"] = "Set a valid weekly frequency for this activity in workout preferences.";
         English["Workout_Generation_Reason_FrequencyLimited"] = "The requested weekly frequency was reduced to fit your available weekdays.";
         English["Workout_Generation_Reason_HardDayLimit"] = "The weekly limit for higher-effort days was reached.";
+        English["Workout_Generation_Reason_StrengthRecoverySpacing"] = "Fewer strength sessions are scheduled to allow muscle recovery between days.";
         English["Workout_Generation_Reason_NoSafeDay"] = "No suitable available weekday remained for this session.";
         English["Workout_Generation_Reason_HiitEligibility"] = "HIIT stays blocked unless your selected cardio history is established, each prior week meets the manageable aerobic session target, you confirm the required screening or clearance, and no current symptom or injury needs review.";
         English["Workout_Generation_Reason_HiitUnderlyingCardioUnsupported"] = "Choose a supported continuous cardio activity that is saved in your preferences.";
@@ -204,7 +204,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_Reason_EstablishedHistory"] = "Your history supports an established activity level.";
         English["Workout_Generation_Reason_HistoryBelowThreshold"] = "Your activity history is below the established training threshold.";
         English["Workout_Generation_Reason_StrengthHistory"] = "This strength option needs established resistance-training history and familiarity.";
-        English["Workout_Generation_Reason_HighIntensityExerciseEvidence"] = "Each required high-intensity main lift needs four recorded exposures and an existing manageable load, plus your separate confirmations of familiarity and current load. Confirm each surfaced lift below. If none is listed, trusted evidence is missing.";
+        English["Workout_Generation_Reason_HighIntensityExerciseEvidence"] = "A reviewed safe exercise is not available for this high-intensity session.";
         English["Workout_Generation_Reason_HighIntensityEvidenceMissing"] = "A required heavy lift does not have enough trusted recorded exposure or manageable-load evidence. The preview cannot ask for confirmation until an eligible candidate is available.";
         English["Workout_Generation_Reason_TrainingLimits"] = "The plan follows limits for exercise count, set volume, and effort.";
         English["Workout_Generation_Reason_HighVolumeConservativeStart"] =

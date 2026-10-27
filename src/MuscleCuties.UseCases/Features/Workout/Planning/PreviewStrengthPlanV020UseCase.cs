@@ -199,6 +199,7 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
                         SourceActivePlanId = sourceData.ActivePlanId,
                         SourceActiveRevisionId = sourceData.ActiveRevisionId,
                         SourceHistoryFingerprint = sourceData.HistoryFingerprint,
+                        SourceCatalogFingerprint = sourceData.CatalogFingerprint,
                         SourceTimeZoneVersion = sourceData.TimeZoneVersion,
                         SourceExperienceVersion = sourceData.ExperienceVersion,
                         SourceAnswerVersion = sourceData.AnswerVersion,
@@ -229,6 +230,23 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
 
         var mixedContext = MixedActivityScheduleMapperV020.ToContext(request, sourceData, result);
         var mixedSchedule = MixedActivityWeekScheduleRule.Evaluate(mixedContext);
+        var muscles = result.Sessions.Select(session =>
+        {
+            var groups = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var exercises = session.Slots.Where(slot => slot.ExerciseId.HasValue).ToArray();
+            if (exercises.Length == 0) return (IReadOnlySet<string>?)null;
+            foreach (var slot in exercises)
+            {
+                if (sourceData.MuscleGroupsByExerciseId is null ||
+                    !sourceData.MuscleGroupsByExerciseId.TryGetValue(slot.ExerciseId!.Value, out var values) ||
+                    values.Count == 0 || values.Any(string.IsNullOrWhiteSpace))
+                    return null;
+                groups.UnionWith(values);
+            }
+            return groups;
+        }).ToArray();
+        mixedSchedule = StrengthScheduleAssignmentRule.Reconcile(mixedSchedule, muscles,
+            mixedContext.AvailableWeekdays ?? [], result.EffectiveActivity ?? WorkoutActivityContractMapper.ToCore(chosenStrengthActivity));
         return StrengthPlanPreviewMapperV020.AttachMixedSchedule(response, mixedSchedule, chosenStrengthActivity) with
         {
             SourceProfileVersion = sourceData.ProfileVersion,
@@ -236,6 +254,7 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
             SourceActivePlanId = sourceData.ActivePlanId,
             SourceActiveRevisionId = sourceData.ActiveRevisionId,
             SourceHistoryFingerprint = sourceData.HistoryFingerprint,
+            SourceCatalogFingerprint = sourceData.CatalogFingerprint,
             SourceTimeZoneVersion = sourceData.TimeZoneVersion,
             SourceExperienceVersion = sourceData.ExperienceVersion,
             SourceAnswerVersion = sourceData.AnswerVersion,

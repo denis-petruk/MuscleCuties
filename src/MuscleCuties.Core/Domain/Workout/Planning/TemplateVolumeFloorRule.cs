@@ -1,5 +1,3 @@
-using System.Collections.Frozen;
-
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
 public sealed record TemplateVolumeFloor(
@@ -17,7 +15,7 @@ public sealed record TemplateVolumeFloorEvaluationResult(
     int? ActualWorkingSets);
 
 /// <summary>
-/// Clinically reviewed volume floors for strength templates.
+/// Applies explicitly supplied reviewed volume floors for strength templates.
 /// Prohibits arbitrary exercise-dose limits and enforces reviewed template-specific set floors.
 /// </summary>
 public static class TemplateVolumeFloorRule
@@ -48,83 +46,8 @@ public static class TemplateVolumeFloorRule
     public const string UpperLower4DayUpper2TemplateId = "MC-UL-4D-UPPER-B";
     public const string UpperLower4DayLower2TemplateId = "MC-UL-4D-LOWER-B";
 
-    // Clinical Threshold Constants
-    public const int FullBodyMinimumWorkingSets = 6;
-    public const int FullBodyMinimumExercises = 3;
-    public const int FullBodyMainSlotMinimumSets = 1;
-
-    public const int UpperLowerMinimumWorkingSets = 4;
-    public const int UpperLowerMinimumExercises = 2;
-    public const int UpperLowerMainSlotMinimumSets = 2;
-
-    public const int OptionalSlotMinimumSets = 0;
-
-    public static readonly FrozenDictionary<string, TemplateVolumeFloor> StandardReviewedFloors =
-        BuildStandardReviewedFloors();
-
-    private static FrozenDictionary<string, TemplateVolumeFloor> BuildStandardReviewedFloors()
-    {
-        var floors = new Dictionary<string, TemplateVolumeFloor>(StringComparer.Ordinal)
-        {
-            [FullBody1DayTemplateId] = CreateFullBodyFloor(FullBody1DayTemplateId),
-            [FullBody2DaySession1TemplateId] = CreateFullBodyFloor(FullBody2DaySession1TemplateId),
-            [FullBody2DaySession2TemplateId] = CreateFullBodyFloor(FullBody2DaySession2TemplateId),
-            [FullBody3DaySession1TemplateId] = CreateFullBodyFloor(FullBody3DaySession1TemplateId),
-            [FullBody3DaySession2TemplateId] = CreateFullBodyFloor(FullBody3DaySession2TemplateId),
-            [FullBody3DaySession3TemplateId] = CreateFullBodyFloor(FullBody3DaySession3TemplateId),
-            [UpperLower4DayUpper1TemplateId] = CreateUpperFloor(UpperLower4DayUpper1TemplateId),
-            [UpperLower4DayLower1TemplateId] = CreateLowerFloor(UpperLower4DayLower1TemplateId),
-            [UpperLower4DayUpper2TemplateId] = CreateUpperFloor(UpperLower4DayUpper2TemplateId),
-            [UpperLower4DayLower2TemplateId] = CreateLowerFloor(UpperLower4DayLower2TemplateId)
-        };
-        return floors.ToFrozenDictionary(StringComparer.Ordinal);
-    }
-
-    private static TemplateVolumeFloor CreateFullBodyFloor(string templateId) =>
-        new(
-            templateId,
-            MinimumWorkingSets: FullBodyMinimumWorkingSets,
-            MinimumExercises: FullBodyMinimumExercises,
-            MinimumSetsBySlotId: new Dictionary<string, int>(StringComparer.Ordinal)
-            {
-                [KneeDominantSlotId] = FullBodyMainSlotMinimumSets,
-                [HipDominantSlotId] = FullBodyMainSlotMinimumSets,
-                [UpperPushSlotId] = FullBodyMainSlotMinimumSets,
-                [UpperPullSlotId] = FullBodyMainSlotMinimumSets,
-                [TrunkSlotId] = OptionalSlotMinimumSets,
-                [GoalSpecificAccessorySlotId] = OptionalSlotMinimumSets
-            }.ToFrozenDictionary(StringComparer.Ordinal),
-            ReviewStatus: ReviewedStatus);
-
-    private static TemplateVolumeFloor CreateUpperFloor(string templateId) =>
-        new(
-            templateId,
-            MinimumWorkingSets: UpperLowerMinimumWorkingSets,
-            MinimumExercises: UpperLowerMinimumExercises,
-            MinimumSetsBySlotId: new Dictionary<string, int>(StringComparer.Ordinal)
-            {
-                [UpperPushSlotId] = UpperLowerMainSlotMinimumSets,
-                [UpperPullSlotId] = UpperLowerMainSlotMinimumSets,
-                [TrunkSlotId] = OptionalSlotMinimumSets,
-                [GoalSpecificAccessorySlotId] = OptionalSlotMinimumSets
-            }.ToFrozenDictionary(StringComparer.Ordinal),
-            ReviewStatus: ReviewedStatus);
-
-    private static TemplateVolumeFloor CreateLowerFloor(string templateId) =>
-        new(
-            templateId,
-            MinimumWorkingSets: UpperLowerMinimumWorkingSets,
-            MinimumExercises: UpperLowerMinimumExercises,
-            MinimumSetsBySlotId: new Dictionary<string, int>(StringComparer.Ordinal)
-            {
-                [KneeDominantSlotId] = UpperLowerMainSlotMinimumSets,
-                [HipDominantSlotId] = UpperLowerMainSlotMinimumSets,
-                [TrunkSlotId] = OptionalSlotMinimumSets,
-                [GoalSpecificAccessorySlotId] = OptionalSlotMinimumSets
-            }.ToFrozenDictionary(StringComparer.Ordinal),
-            ReviewStatus: ReviewedStatus);
-
     private const int ZeroThreshold = 0;
+    private const int OptionalSlotMinimumSets = 0;
 
     public static TemplateVolumeFloor? GetReviewedFloor(
         string? templateId,
@@ -135,17 +58,17 @@ public static class TemplateVolumeFloorRule
 
         if (customFloors is not null && customFloors.TryGetValue(templateId, out var customFloor))
         {
-            return customFloor.TemplateId == templateId &&
+            return customFloor is not null && customFloor.TemplateId == templateId &&
                    customFloor.ReviewStatus == ReviewedStatus &&
                    customFloor.MinimumWorkingSets > ZeroThreshold &&
                    customFloor.MinimumExercises > ZeroThreshold &&
-                   customFloor.MinimumSetsBySlotId.Count > ZeroThreshold &&
-                   customFloor.MinimumSetsBySlotId.All(pair => pair.Value >= ZeroThreshold)
+                   customFloor.MinimumSetsBySlotId is not null && customFloor.MinimumSetsBySlotId.Count > ZeroThreshold &&
+                   customFloor.MinimumSetsBySlotId.All(pair => !string.IsNullOrWhiteSpace(pair.Key) && pair.Value >= ZeroThreshold)
                 ? customFloor
                 : null;
         }
 
-        return StandardReviewedFloors.GetValueOrDefault(templateId);
+        return null;
     }
 
     public static bool HasReviewedFloor(
@@ -153,6 +76,34 @@ public static class TemplateVolumeFloorRule
         IReadOnlyDictionary<string, TemplateVolumeFloor>? customFloors = null) =>
         GetReviewedFloor(templateId, customFloors) is not null;
 
+    public static TemplateVolumeFloorEvaluationResult EvaluateSelections(
+        string templateId,
+        IReadOnlyCollection<StrengthSlotSelection>? selections,
+        IReadOnlyDictionary<string, TemplateVolumeFloor>? customFloors = null)
+    {
+        var floor = GetReviewedFloor(templateId, customFloors);
+        if (floor is null)
+            return Evaluate(templateId, ZeroThreshold, customFloors: customFloors);
+
+        if (selections is null || selections.Any(slot => slot is null ||
+                string.IsNullOrWhiteSpace(slot.SlotId) || slot.Sets.GetValueOrDefault() < ZeroThreshold) ||
+            selections.Select(slot => slot.SlotId).Distinct(StringComparer.Ordinal).Count() != selections.Count)
+            return new TemplateVolumeFloorEvaluationResult(false, VolumeBelowTemplateFloor,
+                "Invalid or duplicate slot metadata.", floor.MinimumWorkingSets, null);
+
+        var active = selections.Where(slot => slot.ExerciseId.HasValue && slot.Sets.GetValueOrDefault() > ZeroThreshold).ToArray();
+        var setsBySlot = active.ToDictionary(slot => slot.SlotId, slot => slot.Sets.GetValueOrDefault(), StringComparer.Ordinal);
+        var totalSetsLong = active.Sum(slot => (long)slot.Sets.GetValueOrDefault());
+        if (totalSetsLong > int.MaxValue)
+            return new TemplateVolumeFloorEvaluationResult(false, VolumeBelowTemplateFloor,
+                "Working set total exceeds supported range.", floor.MinimumWorkingSets, null);
+        var totalSets = (int)totalSetsLong;
+        var result = Evaluate(templateId, totalSets, setsBySlot, customFloors);
+        return result.IsAllowed && active.Length < floor.MinimumExercises
+            ? new TemplateVolumeFloorEvaluationResult(false, VolumeBelowTemplateFloor,
+                "Exercise count is below the reviewed template floor.", floor.MinimumWorkingSets, totalSets)
+            : result;
+    }
     public static TemplateVolumeFloorEvaluationResult Evaluate(
         string templateId,
         int actualWorkingSets,
