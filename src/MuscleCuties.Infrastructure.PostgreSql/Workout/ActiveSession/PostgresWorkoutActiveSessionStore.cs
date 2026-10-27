@@ -19,6 +19,28 @@ public sealed class PostgresWorkoutActiveSessionStore(
     TimeProvider timeProvider) : IWorkoutActiveSessionStore
 {
     private const int CompletedWorkoutPercent = 100;
+    private const int MaximumPlannedSessionHistoryEntries = 20;
+    public async Task<IReadOnlyList<PlannedWorkoutSessionHistoryEntry>> GetPlannedSessionHistoryAsync(Guid userId,
+        int workoutDayId, CancellationToken cancellationToken) =>
+        await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+            await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            var days = await dbContext.WorkoutDays.AsNoTracking().Where(day => day.UserId == userId)
+                .Select(day => day.Id).ToListAsync(cancellationToken).ConfigureAwait(false);
+            var matches = days.Where(id => PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(id) == workoutDayId).ToArray();
+            if (matches.Length > 1) throw new InvalidOperationException("The workout day identifier is ambiguous.");
+            if (matches.Length == 0) return (IReadOnlyList<PlannedWorkoutSessionHistoryEntry>)[];
+            var dayId = matches[0];
+            var result = await dbContext.WorkoutSessionLogs.AsNoTracking().Where(session => session.UserId == userId &&
+                    !session.IsDeleted && session.PlannedWorkoutDayId == dayId)
+                .OrderByDescending(session => session.StartedAt).ThenByDescending(session => session.Id)
+                .Take(MaximumPlannedSessionHistoryEntries)
+                .Select(session => new PlannedWorkoutSessionHistoryEntry(session.Id, session.StartedAt, session.CompletedAt))
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return (IReadOnlyList<PlannedWorkoutSessionHistoryEntry>)result;
+        }).ConfigureAwait(false);
     public async Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(Guid userId, int workoutDayId, CancellationToken cancellationToken) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {

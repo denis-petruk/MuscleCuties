@@ -628,8 +628,7 @@ public static class StrengthPlanPreviewRule
                 template.TemplateId + "|", StringComparison.Ordinal)))
             .SelectMany(pair => pair.Value).ToHashSet();
         return data.Catalog!
-            .Where(entry => relevantIds.Contains(entry.Candidate.ExerciseId) &&
-                            entry.Candidate.ReviewEvidencePresent)
+            .Where(entry => relevantIds.Contains(entry.Candidate.ExerciseId))
             .OrderBy(entry => entry.Candidate.ExerciseId)
             .Select(entry => new StrengthExerciseReviewCondition(entry.Candidate.ExerciseId,
                 entry.Name, entry.Candidate.ExperienceConditions ?? string.Empty,

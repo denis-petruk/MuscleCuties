@@ -248,6 +248,10 @@ internal static partial class RussianUiText
         Values["Workout_Session_TimeFormat"] = "Время: {0}";
         Values["Workout_Session_TimeLabel"] = "Время";
         Values["Workout_Session_ActivitiesTitle"] = "Активности тренировки";
+        Values["Workout_Session_HistoryTitle"] = "История тренировок";
+        Values["Workout_Session_HistoryExplanation"] = "Записанные сессии этой тренировки. Результат ранее прерванного запроса может быть неизвестен.";
+        Values["Workout_Session_HistoryCompletedFormat"] = "Начало: {0} · завершено: {1} · ID {2}";
+        Values["Workout_Session_HistoryActiveFormat"] = "Начало: {0} · продолжается · ID {2}";
         Values["Workout_Session_ChooseActivityToStart"] = "Выберите активность, чтобы перейти к упражнениям.";
         Values["Workout_Session_NoActivitiesAvailable"] = "Для этой тренировки не найдены активности.";
         Values["Workout_Session_ToggleTipsAccessibility"] = "Показать или скрыть подсказки упражнений и техники";

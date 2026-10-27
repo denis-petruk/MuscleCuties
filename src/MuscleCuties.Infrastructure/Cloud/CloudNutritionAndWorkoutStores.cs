@@ -491,6 +491,9 @@ public sealed class CloudWorkoutOverviewStore(
 public sealed class CloudWorkoutSessionActionStore(
     IMuscleCutiesBackendApiClient apiClient) : IWorkoutSessionActionStore
 {
+    public async Task<IReadOnlyList<PlannedWorkoutSessionHistoryEntry>> GetPlannedSessionHistoryAsync(int workoutDayId, CancellationToken cancellationToken) =>
+        CloudStoreResponse.RequireData(await apiClient.GetAsync<List<PlannedWorkoutSessionHistoryEntry>>(
+            $"/api/v1/workouts/sessions/planned/{workoutDayId}/history", cancellationToken).ConfigureAwait(false), "read workout session history");
     public async Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(int workoutDayId, CancellationToken cancellationToken)
     {
         var response = await apiClient.GetAsync<ActiveWorkoutSessionSnapshot>($"/api/v1/workouts/sessions/planned/{workoutDayId}", cancellationToken).ConfigureAwait(false);

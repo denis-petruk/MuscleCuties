@@ -22,6 +22,11 @@ public static class WorkoutInjuryClearanceRule
         return InjuryClearanceRestorationDisposition.RestoreRequired;
     }
 
+    /// <summary>Keep restriction when clearance or the effective local date is not proven.</summary>
+    public static bool RequiresConservativeRestriction(bool isCleared, DateOnly? clearedOn, DateOnly? effectiveDate) =>
+        !isCleared || clearedOn is null || effectiveDate is null || clearedOn > effectiveDate ||
+        IsRestoredExerciseOptional(clearedOn.Value, effectiveDate.Value);
+
     public static DateOnly? RequiredFromLocalDate(DateOnly? originalClearanceDate)
     {
         if (originalClearanceDate is not { } clearance ||

@@ -73,7 +73,6 @@ public static class WorkoutExerciseV020CatalogMapper
     {
         if (string.IsNullOrWhiteSpace(json))
         {
-            gaps.Add("ReviewEvidenceMissing");
             return (null, null, false, null);
         }
         try
@@ -89,7 +88,6 @@ public static class WorkoutExerciseV020CatalogMapper
                 string.IsNullOrWhiteSpace(experience.GetString()) ||
                 string.IsNullOrWhiteSpace(general.GetString()))
             {
-                gaps.Add("ReviewConditionsMissing");
                 return (null, null, false, null);
             }
             var directed = new List<DirectedSubstitutionReview>();
@@ -102,7 +100,6 @@ public static class WorkoutExerciseV020CatalogMapper
                         out var parsed) || !Enum.IsDefined(parsed) || target.GetInt32() <= 0 ||
                     string.IsNullOrWhiteSpace(pairConditions.GetString()))
                 {
-                    gaps.Add("DirectedSubstitutionReviewInvalid");
                     return (null, null, false, null);
                 }
                 directed.Add(new DirectedSubstitutionReview(target.GetInt32(), parsed,
@@ -112,7 +109,6 @@ public static class WorkoutExerciseV020CatalogMapper
         }
         catch (Exception exception) when (exception is JsonException or InvalidOperationException or FormatException)
         {
-            gaps.Add("ReviewEvidenceInvalid");
             return (null, null, false, null);
         }
     }

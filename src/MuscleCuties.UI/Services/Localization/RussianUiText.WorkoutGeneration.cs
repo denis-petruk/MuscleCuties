@@ -51,7 +51,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_RopeCompetence"] = "Умеете ли вы уверенно работать с верёвочной страховкой?";
         Values["Workout_Generation_ClimbingInstructionAvailable"] = "Будут ли доступны подходящее обучение или наблюдение инструктора?";
         Values["Workout_Generation_YogaEvidenceTitle"] = "Сведения о йоге";
-        Values["Workout_Generation_YogaEvidenceHelp"] = "По умолчанию выбрана мягкая йога. Для интенсивной практики выберите соответствующий вариант.";
+        Values["Workout_Generation_YogaEvidenceHelp"] = "Выберите мягкую или интенсивную йогу в соответствии с вашим занятием.";
         Values["Workout_Generation_YogaContentClassification"] = "Насколько интенсивна эта практика йоги?";
         Values["Workout_Generation_YogaDurationLabel"] = "Длительность занятия йогой (минуты)";
         Values["Workout_Generation_YogaDurationPlaceholder"] = "Сначала выберите формат практики";
@@ -95,7 +95,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_Required"] = "Обязательно";
         Values["Workout_Generation_LimitationTiming"] = "Сохранённая длительность занятия или параметры разминки и заминки не подходят этому плану.";
         Values["Workout_Generation_LimitationExperience"] = "Недостаточно истории силовых тренировок для выбора подходящего шаблона.";
-        Values["Workout_Generation_LimitationReview"] = "Для предложения не хватает проверенных данных об упражнении или движении.";
+        Values["Workout_Generation_LimitationReview"] = "Для плана не хватает сведений об упражнении или движении.";
         Values["Workout_Generation_LimitationStrengthWeekdays"] = "Выберите как минимум два разных доступных дня для силовых тренировок.";
         Values["Workout_Generation_Reason_ScheduleIncomplete"] = "Не все выбранные тренировки удалось разместить в доступные дни.";
         Values["Workout_Generation_LimitationGeneral"] = "Для этого плана нужны дополнительные данные. Проверьте решения по видам активности и измените данные.";
@@ -207,8 +207,8 @@ internal static partial class RussianUiText
         Values["Workout_Generation_Reason_EstablishedHistory"] = "История подтверждает устойчивый уровень активности.";
         Values["Workout_Generation_Reason_HistoryBelowThreshold"] = "История активности ниже порога для устойчивого тренировочного уровня.";
         Values["Workout_Generation_Reason_StrengthHistory"] = "Для этой силовой программы нужны устойчивый опыт силовых тренировок и знакомство с упражнениями.";
-        Values["Workout_Generation_Reason_HighIntensityExerciseEvidence"] = "Для этой высокоинтенсивной тренировки нет проверенного безопасного упражнения.";
-        Values["Workout_Generation_Reason_HighIntensityEvidenceMissing"] = "Для обязательного тяжёлого упражнения не хватает проверенных данных о выполнениях или допустимой нагрузке. Подтверждение можно запросить только для подходящего варианта, поэтому в черновике такого упражнения пока нет.";
+        Values["Workout_Generation_Reason_HighIntensityExerciseEvidence"] = "Для этой высокоинтенсивной тренировки нет подходящего упражнения.";
+        Values["Workout_Generation_Reason_HighIntensityEvidenceMissing"] = "Для подходящего тяжёлого упражнения в этой тренировке недостаточно записанного опыта.";
         Values["Workout_Generation_Reason_TrainingLimits"] = "План соблюдает ограничения по числу упражнений, объёму подходов и усилию.";
         Values["Workout_Generation_Reason_HighVolumeConservativeStart"] =
             "Начните с посильного веса, оставляя запас примерно в четыре повтора. Сначала план назначает меньше подходов и может повышать нагрузку по мере записи тренировок.";
@@ -226,7 +226,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_Reason_YogaContent"] = "Перед выбором длительности определите фактический формат йоги.";
         Values["Workout_Generation_Reason_ChooseActivityDuration"] = "Выберите допустимую длительность из каталога или предпочтений.";
         Values["Workout_Generation_Reason_YogaClassifiedByContent"] = "Нагрузка йоги определяется фактическим содержанием занятия.";
-        Values["Workout_Generation_Reason_ReviewedMovements"] = "Силовые упражнения должны быть из проверенного каталога.";
+        Values["Workout_Generation_Reason_ReviewedMovements"] = "Для этого плана нет подходящего силового упражнения.";
         Values["Workout_Generation_Reason_General"] = "Для активности нужны дополнительные сведения или проверка правила планирования.";
         Values["Workout_Generation_AcceptUnavailable"] = "Сначала создайте и проверьте подходящее предложение.";
         Values["Workout_Generation_SessionDayTitleFormat"] = "Тренировка: {0}";

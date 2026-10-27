@@ -12,6 +12,14 @@ public sealed class ExerciseEligibilityRuleTests
     private const decimal SetupMinutes = 1m;
 
     [Fact]
+    public void CompleteSafetyMetadataDoesNotRequireSeparateEvidenceReference()
+    {
+        var result = ExerciseEligibilityRule.Filter(
+            [Candidate(FirstExerciseId) with { ReviewEvidencePresent = false }], Context());
+        Assert.Equal(ExerciseEligibilityStatus.Eligible, result.Status);
+    }
+
+    [Fact]
     public void Reviewed_Eligible_Candidates_Use_Stable_Id_Order()
     {
         var result = ExerciseEligibilityRule.Filter(
@@ -157,6 +165,19 @@ public sealed class ExerciseEligibilityRuleTests
         Assert.Equal(ExerciseEligibilityStatus.Blocked, conflict.Status);
         Assert.Contains(ExerciseEligibilityReason.ExplicitRestrictionConflict,
             conflict.Decisions.Single().Reasons);
+    }
+
+    [Fact]
+    public void RecentlyClearedSiteStillBlocksContraindicatedExercise()
+    {
+        var cleared = DateOnly.Parse("2026-10-01");
+        var duringWindow = DateOnly.Parse("2026-10-08");
+        var injury = InjuryFlag.Knee;
+        var restrict = WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, cleared, duringWindow);
+        var context = Context() with { ActiveInjuryFlags = restrict ? injury : InjuryFlag.None };
+        var result = ExerciseEligibilityRule.Filter([Candidate(FirstExerciseId) with { Contraindications = injury }], context);
+        Assert.Equal(ExerciseEligibilityStatus.Blocked, result.Status);
+        Assert.Contains(ExerciseEligibilityReason.ExplicitRestrictionConflict, result.Decisions.Single().Reasons);
     }
 
     [Fact]

@@ -176,7 +176,7 @@ public static class ExerciseEligibilityRule
                 [ExerciseEligibilityReason.MissingCatalogMetadata]);
 
         var reasons = new List<ExerciseEligibilityReason>();
-        var metadataMissing = !candidate.ReviewEvidencePresent || candidate.ExerciseId <= 0 ||
+        var metadataMissing = candidate.ExerciseId <= 0 ||
             string.IsNullOrWhiteSpace(candidate.CatalogVersion) ||
             !Enum.IsDefined(candidate.Pattern) ||
             candidate.RequiredEquipment is null || candidate.RequiredEquipment.Count == 0 ||
