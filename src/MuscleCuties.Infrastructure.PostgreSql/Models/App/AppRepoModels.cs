@@ -370,6 +370,10 @@ public sealed class WorkoutDayExerciseRecord : ITenantRecord
     public Guid UserId { get; set; }
     public Guid WorkoutDayId { get; set; }
     public int ExerciseId { get; set; }
+    public string? PlanningTemplateId { get; set; }
+    public string? PlanningTemplateVersion { get; set; }
+    public string? PlanningSlotId { get; set; }
+    public int? PlanningSessionIndex { get; set; }
     // Null for legacy or non-injury prescriptions; never infer provenance from a replacement.
     public int? InjuryOriginalExerciseId { get; set; }
     public DateOnly? InjuryRestorationRequiredFromDate { get; set; }
