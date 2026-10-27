@@ -14,12 +14,12 @@ public sealed class PlanningCatalogFingerprintTests
     {
         var exercise = new WorkoutExerciseDefinition { Id = FirstExerciseId, SeedCode = "synthetic", Name = "Synthetic" };
         var preference = new UserExercisePreferenceRecord { Id = Guid.NewGuid(), OriginalExerciseId = FirstExerciseId, PreferredExerciseId = FirstExerciseId };
-        var initial = PlanningCatalogFingerprint.FromInputs([exercise], [], [preference]);
+        var initial = PlanningCatalogFingerprint.FromInputs([exercise], [], [preference], []);
 
         exercise.RestrictionMappingsReviewedV020 = true;
-        var safetyChanged = PlanningCatalogFingerprint.FromInputs([exercise], [], [preference]);
+        var safetyChanged = PlanningCatalogFingerprint.FromInputs([exercise], [], [preference], []);
         preference.PreferredExerciseId = SecondExerciseId;
-        var preferenceChanged = PlanningCatalogFingerprint.FromInputs([exercise], [], [preference]);
+        var preferenceChanged = PlanningCatalogFingerprint.FromInputs([exercise], [], [preference], []);
 
         Assert.NotEqual(initial, safetyChanged);
         Assert.NotEqual(safetyChanged, preferenceChanged);
@@ -30,7 +30,29 @@ public sealed class PlanningCatalogFingerprintTests
     {
         var first = new WorkoutExerciseDefinition { Id = FirstExerciseId, SeedCode = "first" };
         var second = new WorkoutExerciseDefinition { Id = SecondExerciseId, SeedCode = "second" };
-        Assert.Equal(PlanningCatalogFingerprint.FromInputs([first, second], [], []),
-            PlanningCatalogFingerprint.FromInputs([second, first], [], []));
+        Assert.Equal(PlanningCatalogFingerprint.FromInputs([first, second], [], [], []),
+            PlanningCatalogFingerprint.FromInputs([second, first], [], [], []));
+    }
+    [Fact]
+    public void FloorValuesAndReviewEvidenceInvalidateFingerprint()
+    {
+        const int originalFloor = 4;
+        const int revisedFloor = 5;
+        var floor = new ReviewedTemplateFloorRow
+        {
+            TemplateId = "synthetic-template",
+            TemplateVersion = "synthetic-version",
+            MinimumWorkingSets = originalFloor,
+            EvidenceReference = "synthetic-evidence-a"
+        };
+        var initial = PlanningCatalogFingerprint.FromInputs([], [], [], [floor]);
+        floor.MinimumWorkingSets = revisedFloor;
+        var doseChanged = PlanningCatalogFingerprint.FromInputs([], [], [], [floor]);
+        floor.EvidenceReference = "synthetic-evidence-b";
+        var evidenceChanged = PlanningCatalogFingerprint.FromInputs([], [], [], [floor]);
+
+        Assert.NotEqual(initial, doseChanged);
+        Assert.NotEqual(doseChanged, evidenceChanged);
+        Assert.NotEqual(initial, PlanningCatalogFingerprint.FromInputs([], [], [], []));
     }
 }

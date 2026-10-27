@@ -30,6 +30,14 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
     private const int TestWorkoutDaysPerWeek = 3;
     private const int TestCycleLengthDays = 28;
     private const int TestStrengthSessionDurationMinutes = WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes;
+    private const int SyntheticSessionDurationSeconds = 60;
+    private const int SyntheticElapsedSessionMinutes = 2;
+    private const long ExistingExperienceVersion = 7;
+    private const long StaleAnswerVersion = 1;
+    private const int InitialProposalVersion = 1;
+    private const long InitialLeaseFence = 1;
+    private const string ProposedStatus = "Proposed";
+    private const string ExpiredStatus = "Expired";
 
     [Xunit.Fact]
     public async Task PendingRevisionDoesNotCreateFirstPlanAndDefersToLivePreview()
@@ -390,7 +398,7 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
     }
 
     [Xunit.Fact]
-    public async Task UnsafeAnswerSuppressesUnfinishedHundredPercentLogButKeepsFinishedSession()
+    public async Task UnsafeAnswerSuppressesAbandonedWorkoutButPreservesActiveAndCompletedSessions()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
@@ -404,10 +412,13 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         var planId = Guid.NewGuid();
         var unfinishedDayId = Guid.NewGuid();
         var completedDayId = Guid.NewGuid();
+        var activeDayId = Guid.NewGuid();
         var logId = Guid.NewGuid();
         var finishedSessionId = Guid.NewGuid();
         var unfinishedSessionId = Guid.NewGuid();
+        var activeSessionId = Guid.NewGuid();
         var setId = Guid.NewGuid();
+        var previewId = Guid.NewGuid();
         database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
             Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id,
@@ -415,7 +426,15 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         });
         database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic plan",
             IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
-        foreach (var dayId in new[] { unfinishedDayId, completedDayId })
+        database.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record
+        {
+            Id = previewId, UserId = userId, PlanId = planId, ExpectedRevisionId = Guid.NewGuid(),
+            RulesetVersion = "synthetic-ruleset", TrainingPolicyVersion = "synthetic-policy",
+            Status = ProposedStatus, CreatedAtUtc = now, LeaseId = Guid.NewGuid(),
+            LeaseFence = InitialLeaseFence, ConcurrencyVersion = InitialProposalVersion,
+            LeaseExpiresAtUtc = now.Add(PlanningLifecycleRule.FiveMinuteLeaseDuration)
+        });
+        foreach (var dayId in new[] { unfinishedDayId, completedDayId, activeDayId })
             database.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
                 DayOfWeek = (int)today.DayOfWeek, WeekIndex = 0, Date = today, WorkoutType = "Cardio",
                 ActivityTypeId = (int)WorkoutActivityType.Swimming, Name = "Synthetic swimming" });
@@ -425,7 +444,10 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             PlannedWorkoutDayId = completedDayId, WorkoutName = "Synthetic finished", StartedAt = now,
             CompletedAt = now, CreatedAt = now, UpdatedAt = now });
         database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = unfinishedSessionId, UserId = userId,
-            PlannedWorkoutDayId = unfinishedDayId, WorkoutName = "Synthetic unfinished", StartedAt = now,
+            PlannedWorkoutDayId = unfinishedDayId, WorkoutName = "Synthetic abandoned", StartedAt = now,
+            IsDeleted = true, DeletedAt = now, CreatedAt = now, UpdatedAt = now });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = activeSessionId, UserId = userId,
+            PlannedWorkoutDayId = activeDayId, WorkoutName = "Synthetic active", StartedAt = now,
             CreatedAt = now, UpdatedAt = now });
         database.ExerciseSetLogs.Add(new ExerciseSetLogRecord { Id = setId, UserId = userId,
             WorkoutSessionLogId = unfinishedSessionId, ExerciseName = "Synthetic set", SetNumber = 1,
@@ -437,7 +459,18 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             var unsafeAnswer = new SaveActivityAnswersRequest(0,
                 [new(MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Swimming,
                     HasSwimmingFacilityAccess: false)], null);
+            await Xunit.Assert.ThrowsAsync<WorkoutPlanningInputsChangedException>(() => store.SaveAnswersAsync(userId,
+                unsafeAnswer with { ExpectedVersion = StaleAnswerVersion }, CancellationToken.None));
+            Xunit.Assert.False(await database.WorkoutDays.AsNoTracking().Where(day => day.Id == unfinishedDayId)
+                .Select(day => day.IsRemovedBySafety).SingleAsync());
+            Xunit.Assert.Equal(ProposedStatus, await database.WorkoutPlanProposalsV02.AsNoTracking()
+                .Where(proposal => proposal.Id == previewId).Select(proposal => proposal.Status).SingleAsync());
+            Xunit.Assert.Equal(0, (await store.ReadAnswersAsync(userId, CancellationToken.None)).Version);
             var saved = await store.SaveAnswersAsync(userId, unsafeAnswer, CancellationToken.None);
+            Xunit.Assert.Equal(ExpiredStatus, await database.WorkoutPlanProposalsV02.AsNoTracking()
+                .Where(proposal => proposal.Id == previewId).Select(proposal => proposal.Status).SingleAsync());
+            Xunit.Assert.True(await database.WorkoutAccountPlanningStates.AsNoTracking()
+                .Where(state => state.UserId == userId).Select(state => state.SafetyRegenerationPending).SingleAsync());
             var retried = await store.SaveAnswersAsync(userId, unsafeAnswer, CancellationToken.None);
             Xunit.Assert.True(saved.SafetyPlanChanged);
             Xunit.Assert.True(retried.SafetyPlanChanged);
@@ -449,6 +482,9 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
                 .ToDictionaryAsync(day => day.Id);
             Xunit.Assert.True(days[unfinishedDayId].IsRemovedBySafety);
             Xunit.Assert.False(days[completedDayId].IsRemovedBySafety);
+            Xunit.Assert.False(days[activeDayId].IsRemovedBySafety);
+            Xunit.Assert.True(await database.WorkoutSessionLogs.AsNoTracking()
+                .AnyAsync(session => session.Id == activeSessionId && !session.IsDeleted && session.CompletedAt == null));
             Xunit.Assert.True(await database.WorkoutLogs.AsNoTracking().AnyAsync(log => log.Id == logId));
             Xunit.Assert.True(await database.ExerciseSetLogs.AsNoTracking().AnyAsync(set => set.Id == setId));
 
@@ -483,6 +519,105 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
                 .Select(day => day.IsRemovedBySafety).SingleAsync());
             Xunit.Assert.Equal(choice.HiitUnderlyingCardioActivity,
                 (await store.ReadAnswersAsync(userId, CancellationToken.None)).HiitUnderlyingCardioActivity);
+        }
+        finally
+        {
+            await database.Users.Where(user => user.Id == userId).ExecuteDeleteAsync();
+        }
+    }
+
+    [Xunit.Fact]
+    public async Task CompletingPlannedSessionDoesNotDemoteDurableExperienceWithIncompleteCredits()
+    {
+        var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(RequireLocalTestConnectionString()).Options;
+        await using var database = new PostgresDbContext(options);
+        var userId = Guid.NewGuid();
+        var planId = Guid.NewGuid();
+        var dayId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        var today = DateOnly.FromDateTime(now);
+        await SyntheticTenantSession.SetAsync(database, userId);
+        database.Users.Add(new UserRecord { Id = userId, Email = $"progress-{userId:N}@example.invalid",
+            Username = $"pro_{userId.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
+            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
+        database.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = userId, Name = "Synthetic progress",
+            Height = 170m, Weight = 64m, Goal = "BuildMuscle", WeightGoalPace = "Maintain",
+            TrainingExperienceLevel = nameof(TrainingExperienceLevel.Advanced), WorkoutDaysPerWeek = TestWorkoutDaysPerWeek,
+            CycleLength = TestCycleLengthDays, EquipmentLevel = "FullGym", UpdatedAt = now });
+        database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord { Id = Guid.NewGuid(), UserId = userId,
+            TimeZoneId = TimeZoneInfo.Utc.Id, BaselineExperience = TrainingExperienceLevel.Beginner,
+            EffectiveExperience = TrainingExperienceLevel.Advanced, ExperienceVersion = ExistingExperienceVersion,
+            PromotionPending = true });
+        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic plan",
+            IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
+        database.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
+            DayOfWeek = (int)today.DayOfWeek, WeekIndex = 0, Date = today, WorkoutType = "Cardio", Name = "Synthetic cardio" });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = sessionId, UserId = userId,
+            PlannedWorkoutDayId = dayId, WorkoutName = "Synthetic cardio", StartedAt = now.AddMinutes(-SyntheticElapsedSessionMinutes),
+            CreatedAt = now, UpdatedAt = now });
+        await database.SaveChangesAsync();
+        try
+        {
+            var store = new PostgresWorkoutActiveSessionStore(database, new PostgresIdempotencyExecutor(), TimeProvider.System);
+            await store.FinishSessionAsync(userId, new FinishWorkoutSessionCommand("synthetic-finish", sessionId, now,
+                SyntheticSessionDurationSeconds, null, null), CancellationToken.None);
+            var state = await database.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == userId);
+            Xunit.Assert.Equal(TrainingExperienceLevel.Advanced, state.EffectiveExperience);
+            Xunit.Assert.Equal(ExistingExperienceVersion, state.ExperienceVersion);
+            Xunit.Assert.True(state.PromotionPending);
+            Xunit.Assert.Single(await database.WorkoutCompletionDayCredits.AsNoTracking().Where(row => row.UserId == userId).ToListAsync());
+        }
+        finally
+        {
+            await database.Users.Where(user => user.Id == userId).ExecuteDeleteAsync();
+        }
+    }
+
+    [Xunit.Fact]
+    public async Task FinishingRestDayWithExerciseRowsDoesNotEarnExperienceCredit()
+    {
+        const int completedPercent = 100;
+        var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(RequireLocalTestConnectionString()).Options;
+        await using var database = new PostgresDbContext(options);
+        var userId = Guid.NewGuid();
+        var planId = Guid.NewGuid();
+        var dayId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        var today = DateOnly.FromDateTime(now);
+        await SyntheticTenantSession.SetAsync(database, userId);
+        database.Users.Add(new UserRecord { Id = userId, Email = $"rest-{userId:N}@example.invalid",
+            Username = $"rest_{userId.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
+            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
+        database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord { Id = Guid.NewGuid(), UserId = userId,
+            TimeZoneId = TimeZoneInfo.Utc.Id, BaselineExperience = TrainingExperienceLevel.Beginner,
+            EffectiveExperience = TrainingExperienceLevel.Beginner });
+        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic plan",
+            IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
+        database.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
+            DayOfWeek = (int)today.DayOfWeek, WeekIndex = 0, Date = today, WorkoutType = "Rest", Name = "Synthetic rest" });
+        var exerciseId = await database.Exercises.AsNoTracking().OrderBy(exercise => exercise.Id)
+            .Select(exercise => exercise.Id).FirstAsync();
+        database.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = userId,
+            WorkoutDayId = dayId, ExerciseId = exerciseId, Sets = SyntheticStrengthSets, Reps = SyntheticStrengthRepetitions });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = sessionId, UserId = userId,
+            PlannedWorkoutDayId = dayId, WorkoutName = "Synthetic rest", StartedAt = now.AddMinutes(-SyntheticElapsedSessionMinutes),
+            CreatedAt = now, UpdatedAt = now });
+        database.WorkoutLogs.Add(new WorkoutLogRecord { Id = Guid.NewGuid(), UserId = userId, WorkoutDayId = dayId,
+            Date = today, CompletionPercent = completedPercent, CreatedAt = now });
+        await database.SaveChangesAsync();
+        try
+        {
+            var store = new PostgresWorkoutActiveSessionStore(database, new PostgresIdempotencyExecutor(), TimeProvider.System);
+            var result = await store.FinishSessionAsync(userId, new FinishWorkoutSessionCommand("synthetic-rest-finish", sessionId, now,
+                SyntheticSessionDurationSeconds, null, null), CancellationToken.None);
+            Xunit.Assert.NotNull(result);
+            Xunit.Assert.NotNull(result.CompletedAtUtc);
+            Xunit.Assert.False(await database.WorkoutCompletionDayCredits.AsNoTracking().AnyAsync(row => row.UserId == userId));
+            var state = await database.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == userId);
+            Xunit.Assert.Equal(TrainingExperienceLevel.Beginner, state.EffectiveExperience);
+            Xunit.Assert.False(state.PromotionPending);
         }
         finally
         {

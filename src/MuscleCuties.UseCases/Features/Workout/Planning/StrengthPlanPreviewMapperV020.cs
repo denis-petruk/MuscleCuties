@@ -50,6 +50,9 @@ internal static class StrengthPlanPreviewMapperV020
         source.TemplateSlotReviewConditions)
     {
         GoalPriorityByExerciseId = source.GoalPriorityByExerciseId,
+        TemplateVolumeFloors = source.TemplateVolumeFloors?.ToDictionary(pair => pair.Key, pair =>
+            new TemplateVolumeFloor(pair.Value.TemplateId, pair.Value.MinimumWorkingSets, pair.Value.MinimumExercises,
+                pair.Value.MinimumSetsBySlotId, TemplateVolumeFloorRule.ReviewedStatus)),
         MuscleGroupsByExerciseId = source.MuscleGroupsByExerciseId
     };
 

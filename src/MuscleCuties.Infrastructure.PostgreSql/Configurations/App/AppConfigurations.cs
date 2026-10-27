@@ -383,6 +383,31 @@ public sealed class WorkoutInjuryLogConfiguration : IEntityTypeConfiguration<Wor
     public void Configure(EntityTypeBuilder<WorkoutInjuryLogRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "workout_injury_logs");
 }
 
+public sealed class WorkoutInjuryEpisodeConfiguration : IEntityTypeConfiguration<WorkoutInjuryEpisodeRecord>
+{
+    public void Configure(EntityTypeBuilder<WorkoutInjuryEpisodeRecord> builder)
+    {
+        AppModelConfiguration.ConfigureTenant(builder, "workout_injury_episodes");
+        builder.HasIndex(x => new { x.UserId, x.SourceInjuryId, x.ClearedDate, x.SourceDeleted })
+            .HasDatabaseName("ix_injury_episodes_source_state");
+    }
+}
+
+public sealed class WorkoutInjuryPrescriptionLinkConfiguration : IEntityTypeConfiguration<WorkoutInjuryPrescriptionLinkRecord>
+{
+    public void Configure(EntityTypeBuilder<WorkoutInjuryPrescriptionLinkRecord> builder)
+    {
+        AppModelConfiguration.ConfigureTenant(builder, "workout_injury_prescription_links");
+        builder.HasIndex(x => new { x.UserId, x.WorkoutDayExerciseId, x.InjuryEpisodeId }).IsUnique()
+            .HasDatabaseName("ux_injury_links_prescription_episode");
+        builder.HasIndex(x => new { x.UserId, x.InjuryEpisodeId }).HasDatabaseName("ix_injury_links_episode");
+        builder.HasOne<WorkoutDayExerciseRecord>().WithMany().HasForeignKey(x => new { x.UserId, x.WorkoutDayExerciseId })
+            .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<WorkoutInjuryEpisodeRecord>().WithMany().HasForeignKey(x => new { x.UserId, x.InjuryEpisodeId })
+            .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
 public sealed class WorkoutPlanConfiguration : IEntityTypeConfiguration<WorkoutPlanRecord>
 {
     public void Configure(EntityTypeBuilder<WorkoutPlanRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "workout_plans");

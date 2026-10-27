@@ -26,6 +26,8 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
     public async Task<StrengthPlanProposalCreatedV020> SaveAsync(Guid userId, StrengthPlanPreviewRequestV020 request,
         StrengthPlanPreviewResponseV020 preview, CancellationToken cancellationToken)
     {
+        ValidateProposalInput(userId, request, preview);
+
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             dbContext.ChangeTracker.Clear();
@@ -72,50 +74,121 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             }
             var fence = PlanningLifecycleRule.NextFence(prior.FirstOrDefault()?.LeaseFence ?? 0)
                 ?? throw new InvalidOperationException("Workout planning fence exhausted.");
+            var result = await SaveInCurrentTransactionAsync(userId, request, preview, cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return result;
+        }).ConfigureAwait(false);
+    }
 
-            var activePlanId = await dbContext.WorkoutPlans.AsNoTracking()
-                .Where(plan => plan.UserId == userId && plan.IsActive)
-                .OrderByDescending(plan => plan.CreatedAt)
-                .Select(plan => (Guid?)plan.Id)
-                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-            var profileVersion = await dbContext.UserProfiles.AsNoTracking()
-                .Where(profile => profile.UserId == userId)
-                .Select(profile => (int?)profile.ConcurrencyVersion)
-                .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-            if (profileVersion is null)
-                throw new InvalidOperationException("A planning profile is required to persist a proposal.");
-            if (preview.SourceProfileVersion != profileVersion)
-                throw new WorkoutPlanningInputsChangedException();
-            if (string.IsNullOrWhiteSpace(preview.SourceCatalogFingerprint) ||
-                preview.SourceCatalogFingerprint != await PlanningCatalogFingerprint.LoadAsync(dbContext, userId, cancellationToken).ConfigureAwait(false))
-                throw new WorkoutPlanningInputsChangedException();
-            var injuries = await dbContext.WorkoutInjuryLogs.AsNoTracking()
-                .Where(row => row.UserId == userId)
-                .ToListAsync(cancellationToken).ConfigureAwait(false);
-            if (preview.SourceInjuryFingerprint != PlanningInputFingerprint.Injuries(injuries))
-                throw new WorkoutPlanningInputsChangedException();
-            var logs = await dbContext.WorkoutExerciseLogs.AsNoTracking()
-                .Where(row => row.UserId == userId && row.CompletedSets > 0 && row.CompletedReps > 0)
-                .Select(row => new { row.ExerciseId, row.WorkoutLogId, row.WeightKg })
-                .OrderBy(row => row.WorkoutLogId).ThenBy(row => row.ExerciseId).ThenBy(row => row.WeightKg)
-                .ToListAsync(cancellationToken).ConfigureAwait(false);
-            if (preview.SourceHistoryFingerprint != PlanningInputFingerprint.Hash(logs))
-                throw new WorkoutPlanningInputsChangedException();
-            var planningState = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
-                .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken).ConfigureAwait(false);
-            if (preview.SourceTimeZoneVersion != (planningState?.TimeZoneVersion ?? WorkoutAccountCalendarRule.InitialTimeZoneVersion) ||
-                preview.SourceExperienceVersion != (planningState?.ExperienceVersion ?? 0) ||
-                preview.SourceAnswerVersion != (planningState?.AnswerVersion ?? 0))
-                throw new WorkoutPlanningInputsChangedException();
-            var activeRevisionId = activePlanId is { } planId
-                ? await dbContext.WorkoutPlanRevisionsV02.AsNoTracking()
-                    .Where(revision => revision.UserId == userId && revision.PlanId == planId)
-                    .OrderByDescending(revision => revision.RevisionNumber)
-                    .Select(revision => (Guid?)revision.Id)
-                    .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
-                : null;
-            if (preview.SourceActivePlanId != activePlanId || preview.SourceActiveRevisionId != activeRevisionId)
-                throw new WorkoutPlanningInputsChangedException();
+    // Caller owns the tenant transaction and account/catalog locks and commits the result.
+    internal async Task<StrengthPlanProposalCreatedV020> SaveInCurrentTransactionAsync(Guid userId,
+        StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewResponseV020 preview,
+        CancellationToken cancellationToken, bool automaticOrigin = false, DateOnly? automaticStartDate = null)
+    {
+        ValidateProposalInput(userId, request, preview);
+        if (!automaticOrigin && automaticStartDate is not null)
+            throw new ArgumentException("A user proposal cannot specify an automatic start date.");
+
+        var now = DateTime.UtcNow;
+        var prior = await dbContext.WorkoutPlanProposalsV02
+            .Where(item => item.UserId == userId && item.LeaseId != null)
+            .OrderByDescending(item => item.LeaseFence).ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (prior.Any(item => item.Status == "Proposed" && item.LeaseExpiresAtUtc > now))
+            throw new WorkoutPreviewAlreadyOpenException();
+        foreach (var expired in prior.Where(item => item.Status == "Proposed"))
+        {
+            expired.Status = "Expired";
+            expired.DecidedAtUtc = now;
+            expired.ConcurrencyVersion++;
+        }
+        var fence = PlanningLifecycleRule.NextFence(prior.FirstOrDefault()?.LeaseFence ?? 0)
+            ?? throw new InvalidOperationException("Workout planning fence exhausted.");
+
+        var activePlanId = await dbContext.WorkoutPlans.AsNoTracking()
+            .Where(plan => plan.UserId == userId && plan.IsActive)
+            .OrderByDescending(plan => plan.CreatedAt)
+            .Select(plan => (Guid?)plan.Id)
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        var profileVersion = await dbContext.UserProfiles.AsNoTracking()
+            .Where(profile => profile.UserId == userId)
+            .Select(profile => (int?)profile.ConcurrencyVersion)
+            .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        if (profileVersion is null)
+            throw new InvalidOperationException("A planning profile is required to persist a proposal.");
+        if (preview.SourceProfileVersion != profileVersion)
+            throw new WorkoutPlanningInputsChangedException();
+        if (string.IsNullOrWhiteSpace(preview.SourceCatalogFingerprint) ||
+            preview.SourceCatalogFingerprint != await PlanningCatalogFingerprint.LoadAsync(dbContext, userId, cancellationToken).ConfigureAwait(false))
+            throw new WorkoutPlanningInputsChangedException();
+        var injuries = await dbContext.WorkoutInjuryLogs.AsNoTracking()
+            .Where(row => row.UserId == userId)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (preview.SourceInjuryFingerprint != PlanningInputFingerprint.Injuries(injuries))
+            throw new WorkoutPlanningInputsChangedException();
+        var logs = await dbContext.WorkoutExerciseLogs.AsNoTracking()
+            .Where(row => row.UserId == userId && row.CompletedSets > 0 && row.CompletedReps > 0)
+            .Select(row => new { row.ExerciseId, row.WorkoutLogId, row.WeightKg })
+            .OrderBy(row => row.WorkoutLogId).ThenBy(row => row.ExerciseId).ThenBy(row => row.WeightKg)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (preview.SourceHistoryFingerprint != PlanningInputFingerprint.Hash(logs))
+            throw new WorkoutPlanningInputsChangedException();
+        var planningState = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
+            .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken).ConfigureAwait(false);
+        if (preview.SourceTimeZoneVersion != (planningState?.TimeZoneVersion ?? WorkoutAccountCalendarRule.InitialTimeZoneVersion) ||
+            preview.SourceExperienceVersion != (planningState?.ExperienceVersion ?? 0) ||
+            preview.SourceAnswerVersion != (planningState?.AnswerVersion ?? 0))
+            throw new WorkoutPlanningInputsChangedException();
+        var activeRevisionId = activePlanId is { } planId
+            ? await dbContext.WorkoutPlanRevisionsV02.AsNoTracking()
+                .Where(revision => revision.UserId == userId && revision.PlanId == planId)
+                .OrderByDescending(revision => revision.RevisionNumber)
+                .Select(revision => (Guid?)revision.Id)
+                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
+            : null;
+        if (preview.SourceActivePlanId != activePlanId || preview.SourceActiveRevisionId != activeRevisionId)
+            throw new WorkoutPlanningInputsChangedException();
+
+        var snapshotJson = JsonSerializer.Serialize(
+            new ProposalInputSnapshot(request, profileVersion.Value, activePlanId, activeRevisionId,
+                automaticOrigin, automaticStartDate), JsonOptions);
+        var previewJson = JsonSerializer.Serialize(preview, JsonOptions);
+        var record = new WorkoutPlanProposalV02Record
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            PlanId = Guid.CreateVersion7(),
+            ExpectedRevisionId = Guid.Empty,
+            RulesetVersion = preview.RulesetVersion,
+            TrainingPolicyVersion = preview.PolicyVersion,
+            Status = "Proposed",
+            InputSnapshotJson = snapshotJson,
+            ProposalJson = previewJson,
+            ReasonsJson = JsonSerializer.Serialize(
+                preview.LimitationCodes.Concat(preview.AdvisoryCodes).Distinct(StringComparer.Ordinal),
+                JsonOptions),
+            CreatedAtUtc = now,
+            LeaseId = automaticOrigin ? null : Guid.CreateVersion7(),
+            LeaseFence = fence,
+            LeaseExpiresAtUtc = automaticOrigin ? null : now.Add(PlanningLifecycleRule.FiveMinuteLeaseDuration)
+        };
+        dbContext.WorkoutPlanProposalsV02.Add(record);
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return new StrengthPlanProposalCreatedV020(record.Id, preview, true,
+            automaticOrigin ? null : ToLease(record), record.ConcurrencyVersion, activePlanId is not null);
+    }
+
+    private static void ValidateProposalInput(Guid userId, StrengthPlanPreviewRequestV020 request,
+        StrengthPlanPreviewResponseV020 preview)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(preview);
+        if (userId == Guid.Empty || request.DraftPreferences is null ||
+            !string.Equals(preview.Status, "Feasible", StringComparison.Ordinal) ||
+            preview.MixedActivitySchedule?.Sessions is not { Count: > 0 } ||
+            preview.PolicyId != StrengthPlanPreviewRule.PolicyId ||
+            preview.PolicyVersion != StrengthPlanPreviewRule.Version ||
+            preview.RulesetVersion != StrengthPlanPreviewRule.RulesetVersion)
+            throw new ArgumentException("Only a feasible proposal from the active training policy can be saved.");
 
             var snapshotJson = JsonSerializer.Serialize(
                 new ProposalInputSnapshot(request, profileVersion.Value, activePlanId, activeRevisionId), JsonOptions);
@@ -259,6 +332,9 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             state.AnswersJson = JsonSerializer.Serialize(answers with
                 { Version = state.AnswerVersion, SafetyPlanChanged = safetyPlanChanged }, JsonOptions);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            if (state.SafetyRegenerationPending)
+                await new PostgresWorkoutPlanReconciler(dbContext).ReconcileAsync(userId, cancellationToken)
+                    .ConfigureAwait(false);
 
         }
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -299,7 +375,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
                     credit.SourceWorkoutLogId != null && dbContext.WorkoutLogs.Any(log =>
                         log.UserId == userId && log.Id == credit.SourceWorkoutLogId && log.WorkoutDayId == day.Id)) &&
                 !dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId &&
-                    session.PlannedWorkoutDayId == day.Id && session.CompletedAt != null))
+                    session.PlannedWorkoutDayId == day.Id && (session.CompletedAt != null || !session.IsDeleted)))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         var changed = days.Any(day => !day.IsRemovedBySafety);
         foreach (var day in days)
@@ -352,5 +428,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
         StrengthPlanPreviewRequestV020 Request,
         int ProfileVersion,
         Guid? BaselineActivePlanId,
-        Guid? BaselineRevisionId);
+        Guid? BaselineRevisionId,
+        bool AutomaticOrigin = false,
+        DateOnly? AutomaticStartDate = null);
 }
