@@ -45,6 +45,7 @@
                     Text="{loc:LocalizedText Dashboard_Targets_HydrationEstimate}"
                     FontSize="{StaticResource UiFontSize13}"
                     FontAttributes="{StaticResource UiFontAttributesBold}"
+                    LineBreakMode="WordWrap"
                     TextColor="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}" />
                 <Label
                     Grid.Row="1"
@@ -102,6 +103,7 @@
                     Text="{loc:LocalizedText Dashboard_Targets_SleepEstimate}"
                     FontSize="{StaticResource UiFontSize13}"
                     FontAttributes="{StaticResource UiFontAttributesBold}"
+                    LineBreakMode="WordWrap"
                     TextColor="{AppThemeBinding Light={StaticResource SleepLight}, Dark={StaticResource SleepDark}}" />
                 <Label
                     Grid.Row="1"

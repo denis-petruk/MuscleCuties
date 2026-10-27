@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
@@ -67,9 +68,14 @@ public sealed class PostgresReadinessAdjustmentStore(PostgresDbContext dbContext
                     "Your check-in is saved. Training suggestions based on this check-in are not available yet.");
 
             dbContext.ChangeTracker.Clear();
-            await using var tx = await dbContext.Database.BeginTransactionAsync(
-                System.Data.IsolationLevel.Serializable, ct).ConfigureAwait(false);
+            await using var tx = await dbContext.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, ct).ConfigureAwait(false);
+            if (apply)
+            {
+                await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, ct).ConfigureAwait(false);
+                if (await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, userId, DateTime.UtcNow, ct).ConfigureAwait(false))
+                    return new ReadinessAdjustmentDecisionDto(false, true, "Close the workout plan preview before editing the plan.");
+            }
             var proposal = await dbContext.WorkoutPlanProposalsV02.SingleOrDefaultAsync(
                 p => p.UserId == userId && p.Id == request.ProposalId, ct).ConfigureAwait(false)
                           ?? throw new KeyNotFoundException("Readiness proposal was not found.");
@@ -297,12 +303,12 @@ public sealed class PostgresReadinessAdjustmentStore(PostgresDbContext dbContext
             .ConfigureAwait(false) ?? Guid.Empty;
         var dayOfWeek = (int)localToday.DayOfWeek;
         var days = await dbContext.WorkoutDays.AsNoTracking()
-            .Where(d => d.UserId == userId && d.WorkoutPlanId == plan.Id && !d.IsRemovedByReadiness &&
+            .Where(d => d.UserId == userId && d.WorkoutPlanId == plan.Id && !d.IsRemovedByReadiness && !d.IsRemovedBySafety &&
                         (d.Date == localToday || d.Date == null && d.DayOfWeek == dayOfWeek))
             .OrderBy(d => d.Id).ToListAsync(ct).ConfigureAwait(false);
         var easierAlternatives = score.Band == CheckInScoreBand.ConsiderEasierDay
             ? await dbContext.WorkoutDays.AsNoTracking()
-                .Where(d => d.UserId == userId && d.WorkoutPlanId == plan.Id && !d.IsRemovedByReadiness &&
+                .Where(d => d.UserId == userId && d.WorkoutPlanId == plan.Id && !d.IsRemovedByReadiness && !d.IsRemovedBySafety &&
                             d.IsOptional && d.IsEasierAlternative && d.WorkoutType != nameof(WorkoutType.Rest))
                 .OrderBy(d => d.Id).ToListAsync(ct).ConfigureAwait(false)
             : [];

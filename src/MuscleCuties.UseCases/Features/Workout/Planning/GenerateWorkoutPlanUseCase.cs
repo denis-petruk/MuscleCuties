@@ -5,7 +5,12 @@ using MuscleCuties.UseCases.Features.Workout.Planning.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Workout.Planning;
 
-/// <summary>Executes the persistence-neutral four-week workout planner on the server using the reference data port.</summary>
+/// <summary>
+/// Superseded legacy four-week workout planner.
+/// Direct plan generation cannot be used to activate plans or bypass the canonical
+/// preview, proposal, and acceptance lifecycle (PreviewStrengthPlanV020UseCase / AcceptStrengthPlanProposalV020UseCase).
+/// </summary>
+[Obsolete("Direct workout plan generation is superseded by the canonical preview and proposal lifecycle (PreviewStrengthPlanV020UseCase / AcceptStrengthPlanProposalV020UseCase). It cannot activate plans or bypass lifecycle rules.", false)]
 public sealed class GenerateWorkoutPlanUseCase(IWorkoutPlanningReferenceDataSource referenceDataSource)
 {
     private const int DefaultDaysPerWeek = 3;

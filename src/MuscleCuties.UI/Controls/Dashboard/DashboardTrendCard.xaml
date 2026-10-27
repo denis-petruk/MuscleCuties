@@ -66,7 +66,8 @@
                     <Label Text="{Binding WeeklyCaloriesText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource SectionTitle}" />
                     <Label Text="{loc:LocalizedText Dashboard_Trend_MacroShareDescription}"
-                           Style="{StaticResource CaptionLabel}" />
+                           Style="{StaticResource CaptionLabel}"
+                           LineBreakMode="WordWrap" />
                     <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                         <Label Text="{loc:LocalizedText Dashboard_Trend_Protein}" Style="{StaticResource MutedLabel}" />
                         <Label Grid.Column="1" Text="{Binding WeeklyProteinText}" Style="{StaticResource BodyLabel}" />
@@ -115,7 +116,8 @@
                 <Label Text="{loc:LocalizedText Dashboard_Trend_WorkoutHighlightsTitle}"
                        Style="{StaticResource CardTitle}" />
                 <Label Text="{loc:LocalizedText Dashboard_Trend_WorkoutHighlightsDescription}"
-                       Style="{StaticResource CaptionLabel}" />
+                       Style="{StaticResource CaptionLabel}"
+                       LineBreakMode="WordWrap" />
                 <Label Text="{loc:LocalizedText Dashboard_Trend_WorkoutHighlightsEmpty}"
                        Style="{StaticResource MutedLabel}"
                        IsVisible="{Binding HasWorkoutProgress, Converter={StaticResource InvertedBoolConverter}}" />
@@ -128,7 +130,7 @@
                         <Label Text="{Binding HeaviestLiftExerciseName}"
                                Style="{StaticResource CaptionLabel}"
                                IsVisible="{Binding HasHeaviestLiftExerciseName}"
-                               LineBreakMode="TailTruncation" />
+                               LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                     <Label Grid.Column="1" Text="{Binding HeaviestLiftText}" Style="{StaticResource BodyLabel}" />
                     <Label Grid.Row="1" Text="{loc:LocalizedText Dashboard_Trend_HighestVolume}" Style="{StaticResource MutedLabel}" />

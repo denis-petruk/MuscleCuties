@@ -13,16 +13,18 @@
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     x:DataType="vm:DashboardViewModel"
     Shell.NavBarIsVisible="False"
-    Shell.TabBarIsVisible="{Binding IsInjuryModalVisible, Converter={StaticResource InvertedBoolConverter}}">
+    Shell.TabBarIsVisible="{Binding IsInjuryModalVisible, Converter={StaticResource InvertedBoolConverter}}"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
 
     <Grid RowDefinitions="Auto,*">
-        <Grid Padding="{StaticResource UiInsets20_36_20_12}" MaximumWidthRequest="{StaticResource UiDimension640}"
+        <Grid Padding="{StaticResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource UiDimension640}"
               RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}" HorizontalOptions="Fill">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpacing2}">
                     <Label Text="{Binding Greetings, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource SubHeadline}" />
+                           Style="{StaticResource SubHeadline}"
+                           LineBreakMode="WordWrap" />
                     <Label
                         Text="{Binding DashboardPhaseHeaderText, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource MutedLabel}" />
@@ -114,7 +116,7 @@
                      RefreshColor="{StaticResource Primary}">
             <ScrollView>
                 <Grid
-                    Padding="{StaticResource UiInsets20_8_20_32}"
+                    Padding="{StaticResource PresentationPageContentPadding}"
                     HorizontalOptions="Fill"
                     MaximumWidthRequest="{StaticResource UiDimension640}"
                     RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
@@ -161,8 +163,7 @@
                             SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_PhotoCheckInA11y}">
                         <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                             <Border
-                                Style="{StaticResource ModalIconButton}"
-                                WidthRequest="{StaticResource UiDimension40}" HeightRequest="{StaticResource UiDimension40}" VerticalOptions="Center">
+                                Style="{StaticResource DecorativeIconSurface}" VerticalOptions="Center">
                                 <Path Data="M3 7h4l2-3h6l2 3h4v13H3z M12 10a4 4 0 1 0 0 8a4 4 0 0 0 0-8z"
                                       Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                       StrokeThickness="{StaticResource UiStrokeWidth1_7}" StrokeLineCap="Round" StrokeLineJoin="Round"
@@ -170,10 +171,11 @@
                                       HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
                             <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
-                                <Label Text="{loc:LocalizedText Dashboard_Page_ProgressPhotoTitle}" Style="{StaticResource CardTitle}" />
+                                <Label Text="{loc:LocalizedText Dashboard_Page_ProgressPhotoTitle}" Style="{StaticResource CardTitle}" LineBreakMode="WordWrap" />
                                 <Label
                                     Text="{Binding PhotoCheckInText, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource CaptionSmall}" />
+                                    Style="{StaticResource CaptionSmall}"
+                                    LineBreakMode="WordWrap" />
                             </VerticalStackLayout>
                             <Button Grid.Column="2"
                                     Text="{Binding PhotoButtonText, Converter={StaticResource LocalizedStringConverter}}"

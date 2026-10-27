@@ -616,7 +616,8 @@ public static partial class UiTextCatalog
         English["Profile_WorkoutPrefs_SaveConflict"] = "Your profile changed while saving. Reload workout preferences, then try again.";
         English["Profile_WorkoutPrefs_SaveCatalogChanged"] = "The exercise list changed. Reload workout preferences and review your exclusions.";
         English["Profile_WorkoutPrefs_PlanSetupCouldNotOpen"] = "Your preferences were saved, but plan setup could not open. Open plan setup from Train to continue.";
-        English["Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"] = "At least one strength activity is required for your plan.";
+        English["Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"] = "Pick at least one strength activity";
+        English["Profile_WorkoutPrefs_PickAtLeastTwoDays"] = "Pick at least 2 days";
         English["Profile_WorkoutPrefs_SaveWorkoutPreferences"] = "Save workout preferences";
         English["Profile_WorkoutPrefs_SavingPreferences"] = "Saving preferences";
         English["Profile_WorkoutPrefs_AvailableEquipment"] = "Available equipment";

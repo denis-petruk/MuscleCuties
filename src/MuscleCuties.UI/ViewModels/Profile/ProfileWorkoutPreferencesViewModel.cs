@@ -7,6 +7,7 @@ using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Localization;
+using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
@@ -23,6 +24,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     private readonly Func<Task> _navigateAfterSaveAsync;
     private readonly IProfileRefreshNotifier _refreshNotifier;
     private readonly IProfileWorkoutPreferencesUseCase _useCase;
+    private readonly INavigationContextService? _navigationContext;
+    internal const string DraftPreferencesContextKey = "workout-planning-draft-preferences";
     private readonly GetReviewedExerciseExclusionCatalogV020UseCase _exerciseExclusionCatalog;
     private Dictionary<int, int> _savedActivitySessionDurationsMinutes = new();
     private int _strengthSessionDurationMinutes =
@@ -49,9 +52,11 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         GetReviewedExerciseExclusionCatalogV020UseCase exerciseExclusionCatalog,
         IProfileRefreshNotifier refreshNotifier,
         Func<Task> navigateBackAsync,
-        Func<Task> navigateAfterSaveAsync)
+        Func<Task> navigateAfterSaveAsync,
+        INavigationContextService? navigationContext = null)
     {
         _useCase = useCase;
+        _navigationContext = navigationContext;
         _exerciseExclusionCatalog = exerciseExclusionCatalog;
         _refreshNotifier = refreshNotifier;
         _navigateAfterSaveAsync = navigateAfterSaveAsync;
@@ -111,7 +116,10 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         StatusMessage = string.Empty;
         try
         {
-            var preferences = await _useCase.LoadAsync();
+            WorkoutPreferencesDto? preferences = null;
+            if (_navigationContext?.TryTake<WorkoutPreferencesDto>(DraftPreferencesContextKey, out var draft) == true)
+                preferences = draft;
+            preferences ??= await _useCase.LoadAsync();
             var selectedTypes = preferences?.ActivityTypes
                                    .Where(value => Enum.IsDefined(typeof(WorkoutActivityDto), value))
                                    .Select(value => (WorkoutActivityDto)value).ToHashSet()
@@ -177,7 +185,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
             Trace.WriteLine($"[ProfileWorkoutPreferencesViewModel] Catalog load failed ({exception.GetType().Name}).");
             IsExerciseExclusionCatalogLoaded = false;
             IsLoadError = true;
-            StatusMessage = "Profile_WorkoutPrefs_ExerciseCatalogUnavailable";
+            StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_ExerciseCatalogUnavailable");
         }
         finally
         {
@@ -206,39 +214,33 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
 
             if (!IsExerciseExclusionCatalogLoaded)
             {
-                StatusMessage = "Profile_WorkoutPrefs_ExerciseCatalogUnavailable";
+                StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_ExerciseCatalogUnavailable");
                 return;
             }
 
             var selectedActivities = WorkoutActivityOptions.Where(option => option.IsSelected).ToArray();
             var availableWeekdays = AvailableWeekdays.Where(day => day.IsSelected)
                 .Select(day => (int)day.DayOfWeek).ToArray();
-            if (selectedActivities.Length == 0)
-            {
-                StatusMessage = "Choose at least one workout activity.";
-                return;
-            }
-
             if (!selectedActivities.Any(option => WorkoutPlanningConstants.IsStrengthActivity(option.ActivityType)))
             {
-                StatusMessage = "Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs";
+                StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs");
                 return;
             }
 
             if (availableWeekdays.Length is < WorkoutPreferencesConstraints.MinimumAvailableWeekdays or >
                 WorkoutPreferencesConstraints.MaximumAvailableWeekdays)
             {
-                StatusMessage = "Choose between 2 and 7 available weekdays.";
+                StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_PickAtLeastTwoDays");
                 return;
             }
 
             if (SelectedEquipmentOption is null)
             {
-                StatusMessage = "Profile_WorkoutPrefs_ChooseEquipment";
+                StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_ChooseEquipment");
                 return;
             }
 
-            var result = await _useCase.SaveAsync(new WorkoutPreferencesDto(
+            var draftPreferences = new WorkoutPreferencesDto(
                 selectedActivities.Select(option => (int)option.ActivityType).ToArray(),
                 availableWeekdays,
                 selectedActivities
@@ -254,52 +256,22 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                         option => WorkoutPreferencesConstraints.DefaultWeeklyFrequency(
                             option.ActivityType, availableWeekdays.Length)!.Value),
                 ExerciseExclusionOptions.Where(option => option.IsSelected)
-                    .Select(option => option.ExerciseId).ToHashSet()));
-            if (result.Error == WorkoutPreferencesError.ProfileMissing)
-            {
-                StatusMessage = "Complete personal info before workout preferences.";
-                return;
-            }
-
-            if (result.Error == WorkoutPreferencesError.InvalidPreferences)
-            {
-                StatusMessage = "Profile_WorkoutPrefs_InvalidPreferences";
-                return;
-            }
-
-            if (result.Error == WorkoutPreferencesError.SaveFailed)
-            {
-                StatusMessage = "Profile_WorkoutPrefs_SaveFailed";
-                return;
-            }
-
-            if (result.Error != WorkoutPreferencesError.None)
-            {
-                StatusMessage = result.Error switch
-                {
-                    WorkoutPreferencesError.Offline => "Profile_WorkoutPrefs_SaveOffline",
-                    WorkoutPreferencesError.SignInRequired => "Profile_WorkoutPrefs_SaveSignInRequired",
-                    WorkoutPreferencesError.ServerUnavailable => "Profile_WorkoutPrefs_SaveServerUnavailable",
-                    WorkoutPreferencesError.ConcurrentUpdate => "Profile_WorkoutPrefs_SaveConflict",
-                    WorkoutPreferencesError.ExerciseCatalogChanged => "Profile_WorkoutPrefs_SaveCatalogChanged",
-                    _ => "Profile_WorkoutPrefs_SaveFailed"
-                };
-                return;
-            }
-
+                    .Select(option => option.ExerciseId).ToHashSet());
+            if (_navigationContext is null)
+                throw new InvalidOperationException("Workout planning draft context is unavailable.");
+            _navigationContext.Set(DraftPreferencesContextKey, draftPreferences);
             settingsSaved = true;
             _savedPreferencesSnapshot = CapturePreferencesSnapshot();
             OnPropertyChanged(nameof(HasUnsavedChanges));
-            _refreshNotifier.InvalidateWorkoutAndDashboard();
-            StatusMessage = "Workout preferences saved.";
             await OpenPlanSetupAsync();
+            return;
         }
         catch (Exception ex)
         {
             Trace.WriteLine($"[ProfileWorkoutPreferencesViewModel] Save failed ({ex.GetType().Name}).");
             StatusMessage = !settingsSaved
-                ? "Workout preferences could not be saved. Please try again."
-                : "Profile_WorkoutPrefs_PlanSetupCouldNotOpen";
+                ? UiTextCatalog.Get("Profile_WorkoutPrefs_SaveFailed")
+                : UiTextCatalog.Get("Profile_WorkoutPrefs_PlanSetupCouldNotOpen");
         }
         finally
         {
@@ -327,7 +299,12 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         if (item is null)
             return;
 
-        StatusMessage = ProfileWorkoutActivityOptions.ToggleSelection(WorkoutActivityOptions, item);
+        var toggleResult = ProfileWorkoutActivityOptions.ToggleSelection(WorkoutActivityOptions, item);
+        StatusMessage = toggleResult == "At least one strength activity is required for your plan."
+            ? UiTextCatalog.Get("Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs")
+            : toggleResult == "Choose at least one activity."
+                ? UiTextCatalog.Get("Onboarding_ProfileSetup_StrengthActivityRequired")
+                : toggleResult;
         OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
         OnPropertyChanged(nameof(HasUnsavedChanges));
     }

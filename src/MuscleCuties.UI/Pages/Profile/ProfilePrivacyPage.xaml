@@ -7,11 +7,12 @@
     xmlns:local="clr-namespace:MuscleCuties.UI.Pages.Profile"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     x:DataType="local:ProfilePrivacyPage"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
 
     <ScrollView>
-        <Grid Padding="{StaticResource UiInsets20_12_20_32}"
+        <Grid Padding="{StaticResource PresentationFormPagePadding}"
               RowSpacing="{StaticResource UiSpaceControl}"
               MaximumWidthRequest="{StaticResource UiDimension640}"
               RowDefinitions="Auto,Auto,Auto,Auto">

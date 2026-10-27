@@ -17,7 +17,8 @@ public sealed record WorkoutExerciseLogDto(
 public sealed record LogWorkoutSessionRequest(
     int WorkoutDayId,
     DateOnly Date,
-    IReadOnlyList<WorkoutExerciseLogDto> Exercises);
+    IReadOnlyList<WorkoutExerciseLogDto> Exercises,
+    Guid? PlannedSessionId = null);
 
 public sealed record SwapWorkoutExerciseRequest(
     int WorkoutDayExerciseId,

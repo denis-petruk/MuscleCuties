@@ -38,13 +38,13 @@ public sealed class SevenDayWorkoutPreferenceTests
     }
 
     [Fact]
-    public void RestDayPreferenceDoesNotRequireOrAcceptAWorkoutDuration()
+    public void RestDayAloneIsNotAValidWorkoutPreference()
     {
         var availableWeekdays = new[] { (int)DayOfWeek.Monday, (int)DayOfWeek.Wednesday };
         var noDurations = new Dictionary<int, int>();
         var restDay = new[] { (int)WorkoutActivityType.RestDay };
 
-        Assert.True(WorkoutPreferencesRule.IsValid(restDay, availableWeekdays, noDurations));
+        Assert.False(WorkoutPreferencesRule.IsValid(restDay, availableWeekdays, noDurations));
         Assert.False(WorkoutPreferencesRule.IsValid(restDay, availableWeekdays,
             new Dictionary<int, int>
             {

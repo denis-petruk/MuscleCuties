@@ -12,7 +12,7 @@
 
     <ScrollView>
         <Grid
-            Padding="{StaticResource UiInsets24_36_24_32}"
+            Padding="{StaticResource PresentationAuthSecondaryPagePadding}"
             HorizontalOptions="Fill"
             MaximumWidthRequest="{StaticResource UiDimension520}"
             RowSpacing="{StaticResource UiSpacing0}"
@@ -30,6 +30,7 @@
                 Grid.Row="1"
                 Text="{loc:LocalizedText Auth_Otp_VerifyYourEmail}"
                 Style="{StaticResource Headline}"
+                LineBreakMode="WordWrap"
                 Margin="{StaticResource UiInsets0_20_0_8}"
                 SemanticProperties.HeadingLevel="Level1" />
 
@@ -37,21 +38,23 @@
                 Grid.Row="2"
                 Text="{loc:LocalizedText Auth_Otp_WeSentASixDigitConfirmation}"
                 Style="{StaticResource MutedLabel}"
+                LineBreakMode="WordWrap"
                 Margin="{StaticResource UiInsets0_0_0_4}" />
 
             <Label
                 Grid.Row="3"
                 Text="{Binding Email}"
                 Style="{StaticResource AccentLabel}"
+                LineBreakMode="WordWrap"
                 FontAttributes="{StaticResource UiFontAttributesBold}"
                 Margin="{StaticResource UiInsets0_0_0_24}" />
 
             <Grid
                 Grid.Row="4"
                 RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
-                RowSpacing="{StaticResource UiSpacing18}">
-                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
-                    <Label Text="{loc:LocalizedText Auth_Otp_SixDigitVerificationCodeLabel}" Style="{StaticResource FormFieldLabel}" />
+                RowSpacing="{StaticResource PresentationFormSpacing}">
+                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                    <Label Text="{loc:LocalizedText Auth_Otp_SixDigitVerificationCodeLabel}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                         <Entry
                             x:Name="OtpEntry"
@@ -71,6 +74,7 @@
                     Grid.Row="1"
                     Text="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource AccentLabel}"
+                    LineBreakMode="WordWrap"
                     IsVisible="{Binding InfoMessage, Converter={StaticResource StringToBoolConverter}}"
                     SemanticProperties.Description="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}" />
 
@@ -78,6 +82,7 @@
                     Grid.Row="2"
                     Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource ErrorLabel}"
+                    LineBreakMode="WordWrap"
                     IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
                     SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     SemanticProperties.HeadingLevel="Level3" />
@@ -121,6 +126,7 @@
                         Text="{Binding ResendButtonText, Converter={StaticResource LocalizedStringConverter}}"
                         IsVisible="{Binding CanResend, Converter={StaticResource InvertedBoolConverter}}"
                         Style="{StaticResource MutedLabel}"
+                        LineBreakMode="WordWrap"
                         SemanticProperties.Description="{Binding ResendButtonText, Converter={StaticResource LocalizedStringConverter}}" />
                 </Grid>
             </Grid>

@@ -18,7 +18,7 @@
         <!-- Top Navigation Bar -->
         <Grid
             Grid.Row="0"
-            Padding="{StaticResource UiInsets20_36_20_12}"
+            Padding="{StaticResource PresentationPageHeaderPadding}"
             ColumnDefinitions="Auto,*,Auto"
             ColumnSpacing="{StaticResource UiSpaceCompact}"
             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
@@ -74,7 +74,7 @@
         <CollectionView
             Grid.Row="1"
             ItemsSource="{Binding Sessions}"
-            ItemSizingStrategy="MeasureFirstItem"
+            ItemSizingStrategy="MeasureAllItems"
             RemainingItemsThreshold="4"
             RemainingItemsThresholdReachedCommand="{Binding LoadNextPageCommand}"
             SelectionMode="None">
@@ -83,7 +83,10 @@
             </CollectionView.ItemsLayout>
 
             <CollectionView.Header>
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing14}" Padding="{StaticResource UiInsets16_6_16_10}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing14}"
+                      Padding="{StaticResource PresentationPageContentPadding}"
+                      MaximumWidthRequest="{StaticResource UiDimension640}"
+                      HorizontalOptions="Center">
                     <!-- Lifetime Stat Badges Card -->
                     <Border
                         Grid.Row="0"
@@ -149,6 +152,7 @@
                     <Border
                         Grid.Row="2"
                         IsVisible="{Binding HasNoSessions}"
+                        MaximumWidthRequest="{StaticResource UiDimension640}"
                         Style="{StaticResource CardPrimary}">
                         <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
                             <Label Grid.Row="0" Text="{loc:LocalizedText Workout_History_EmptyStateTitle}"
@@ -172,7 +176,8 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="workout:WorkoutSessionSummaryDto">
                     <Border
-                        Margin="{StaticResource UiInsets16_0}"
+                        Margin="{StaticResource UiInsets20_0_20_12}"
+                        MaximumWidthRequest="{StaticResource UiDimension640}"
                         Style="{StaticResource CardPrimary}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer
@@ -308,7 +313,7 @@
 
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Modal Header -->
-                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="{StaticResource UiInsets20_18_20_14}">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="{StaticResource PresentationModalHeaderPadding}">
                         <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
                             <Label
                                 Grid.Row="0"
@@ -323,12 +328,13 @@
                                    Style="{StaticResource CaptionLabel}" />
                         </Grid>
 
-                        <Button
-                            Grid.Column="1"
-                            Text="✕"
-                            Command="{Binding CloseSessionDetailCommand}"
-                            Style="{StaticResource ButtonSecondary}"
-                            WidthRequest="{StaticResource UiDimension36}" />
+                        <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
+                                SemanticProperties.Description="{loc:LocalizedText Common_Close}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding CloseSessionDetailCommand}" />
+                            </Border.GestureRecognizers>
+                            <Path Style="{StaticResource ModalCloseIcon}" />
+                        </Border>
                     </Grid>
 
                     <!-- Session content scrolls while the header and save action stay visible. -->
@@ -390,7 +396,7 @@
                                             </Grid>
 
                                             <!-- Sets Table Header -->
-                                            <Grid Grid.Row="1" ColumnDefinitions="32,*,68,54,34" ColumnSpacing="{StaticResource UiSpacing6}"
+                                            <Grid Grid.Row="1" ColumnDefinitions="32,*,68,54,44" ColumnSpacing="{StaticResource UiSpacing6}"
                                                   Margin="{StaticResource UiInsets0_4_0_0}">
                                                 <Label Text="{loc:LocalizedText Workout_History_SetHeader}" FontSize="{StaticResource UiFontSize11}"
                                                        FontAttributes="{StaticResource UiFontAttributesBold}"
@@ -419,7 +425,7 @@
                                                                  BindableLayout.ItemsSource="{Binding EditableSets}">
                                                 <BindableLayout.ItemTemplate>
                                                     <DataTemplate x:DataType="uiModels:EditableExerciseSetItem">
-                                                        <Grid ColumnDefinitions="32,*,68,54,34" ColumnSpacing="{StaticResource UiSpacing6}"
+                                                        <Grid ColumnDefinitions="32,*,68,54,44" ColumnSpacing="{StaticResource UiSpacing6}"
                                                               Padding="{StaticResource UiInsets0_2}">
                                                             <Label Text="{Binding SetNumber, StringFormat='#{0}'}"
                                                                    FontSize="{StaticResource UiFontSize12}" FontAttributes="{StaticResource UiFontAttributesBold}"
@@ -442,7 +448,11 @@
                                                                        VerticalOptions="Center" />
                                                             </Border>
                                                             <Button Style="{StaticResource ButtonSecondary}" Grid.Column="4" Text="✓"
-                                                                    WidthRequest="{StaticResource UiDimension36}"
+                                                                    WidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                                                                    HeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                                                    MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                                                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                                                    Padding="{StaticResource UiInsets0}"
                                                                     Command="{Binding SaveSetEditCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutHistoryViewModel}}, x:DataType=vm:WorkoutHistoryViewModel}"
                                                                     CommandParameter="{Binding .}"
                                                                     SemanticProperties.Description="{loc:LocalizedText Workout_History_SaveSetEditAccessibility}" />
@@ -482,11 +492,11 @@
                         </Grid>
                     </ScrollView>
 
-                    <Button Style="{StaticResource ButtonSecondary}"
-                        Grid.Row="2"
-                        Margin="{StaticResource UiInsets20_8_20_20}"
-                        Text="{loc:LocalizedText Workout_History_SaveNotesAndRpeButton}"
-                        Command="{Binding SaveSessionNotesCommand}" />
+                    <Grid Grid.Row="2" Padding="{StaticResource PresentationActionFooterPadding}">
+                        <Button Style="{StaticResource ButtonSecondary}"
+                                Text="{loc:LocalizedText Workout_History_SaveNotesAndRpeButton}"
+                                Command="{Binding SaveSessionNotesCommand}" />
+                    </Grid>
                 </Grid>
             </Border>
         </Grid>

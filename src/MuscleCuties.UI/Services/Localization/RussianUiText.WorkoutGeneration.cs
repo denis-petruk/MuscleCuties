@@ -21,12 +21,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_HighIntensityStrengthDescription"] = "Более тяжёлые основные упражнения; могут потребоваться подтверждения знакомства и переносимости нагрузки.";
         Values["Workout_Generation_StrengthPlanChoiceHint"] = "Выберите этот тип силового плана.";
         Values["Workout_Generation_HighIntensityEvidenceHelp"] = "Тяжёлое упражнение появится в предложении, только если записи тренировок и проверенные данные о нагрузке соответствуют требованиям. В ограниченном предварительном плане для каждого такого упражнения нужно отдельно подтвердить знакомство с движением и переносимость нагрузки.";
-        Values["Workout_Generation_HighIntensityConfirmationTitle"] = "Подтвердите каждое основное упражнение высокой интенсивности";
-        Values["Workout_Generation_HighIntensityConfirmationHelp"] = "Для этих упражнений есть достаточно проверенных записей и допустимая нагрузка. Числовое значение нагрузки не отображается. Ответьте на оба вопроса для каждого упражнения. Выбирайте «Да», только если движение вам знакомо и записанная нагрузка по-прежнему подходит. Если сомневаетесь, выберите «Нет». Затем план будет проверен повторно.";
         Values["Workout_Generation_HeavyMainAssignmentFormat"] = "Используется как тяжёлое основное упражнение: {0}";
-        Values["Workout_Generation_FamiliarityQuestion"] = "Знакомо ли вам это движение?";
-        Values["Workout_Generation_ManageableLoadQuestion"] = "Считаете ли вы записанную для этого упражнения нагрузку по-прежнему переносимой?";
-        Values["Workout_Generation_ConfirmHighIntensityExercises"] = "Проверить план с этими подтверждениями";
         Values["Workout_Generation_HiitUnderlyingActivityTitle"] = "Выберите кардиоактивность для HIIT";
         Values["Workout_Generation_HiitUnderlyingActivityHelp"] = "Выберите непрерывную кардиоактивность, сохранённую в предпочтениях. HIIT заменит одно занятие этой активности. Ниже укажите её фактическую историю и занятия за каждую предыдущую неделю, затем подтвердите прохождение необходимого скрининга или наличие допуска.";
         Values["Workout_Generation_HiitEvidenceTitle"] = "Данные для HIIT";
@@ -124,6 +119,9 @@ internal static partial class RussianUiText
             "Для высокообъёмных силовых тренировок нужен более длительный подтверждённый опыт.";
         Values["Workout_Generation_Activity_ReplacedWithGeneralStrength"] = "В плане используются базовые силовые тренировки.";
         Values["Workout_Generation_ApplyPlan"] = "Применить план";
+        Values["Workout_Generation_ReplacementTitle"] = "Заменить текущий план?";
+        Values["Workout_Generation_ReplacementSummary"] = "Ваш текущий план будет заменён этим расписанием:";
+        Values["Workout_Generation_ReplacementCancel"] = "Отмена";
         Values["Workout_Generation_KeepCurrentPlan"] = "Оставить текущий план";
         Values["Workout_Generation_EditDetails"] = "Изменить данные и попробовать снова";
         Values["Workout_Generation_Loading"] = "Загрузка предпочтений тренировок";
@@ -135,6 +133,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_MixedScheduleTitle"] = "Расписание активностей на неделю";
         Values["Workout_Generation_PlannedRestDay"] = "Отдых · тренировка не запланирована";
         Values["Workout_Generation_Reason_YogaInconsistent"] = "Описание указывает на интенсивную йогу. Выберите интенсивную практику или исправьте описание.";
+        Values["Workout_Generation_Reason_NoSafeStrengthContentRemaining"] = "Для выбранных силовых активностей не осталось безопасных упражнений. Доступен план с вашими безопасными несиловыми активностями.";
         Values["Workout_Generation_MixedScheduleExplanation"] = "Выбранные активности распределяются по доступным дням недели.";
         Values["Workout_Generation_ScheduleEmpty"] = "Не удалось разместить занятия в сохранённые доступные дни недели.";
         Values["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";
@@ -232,6 +231,13 @@ internal static partial class RussianUiText
         Values["Workout_Generation_OptionalActivitiesSkipped"] = "Некоторые выбранные активности не поместились. Силовой план всё равно можно применить.";
         Values["Workout_Generation_PreviewNotSaved"] = "Этот черновик нельзя применить. Проверьте данные и попробуйте ещё раз.";
         Values["Workout_Generation_CreateFailed"] = "Не удалось составить предварительный план. Попробуйте ещё раз.";
+        Values["Workout_Generation_ConnectionError"] = "Ошибка соединения. Попробуйте ещё раз.";
+        Values["Workout_Generation_RequiredAnswers"] = "Заполните обязательные ответы перед просмотром плана.";
+        Values["Workout_Generation_RequiredAnswer"] = "Выберите ответ.";
+        Values["Workout_Generation_ChooseFittingStrengthStyle"] = "Выберите силовой стиль для этого плана.";
+        Values["Workout_Generation_ActivePreviewElsewhere"] = "Предпросмотр плана открыт на другом устройстве. Перехватите его, чтобы создать новый здесь.";
+        Values["Workout_Generation_TakeOverPreview"] = "Перехватить предпросмотр";
+        Values["Workout_Generation_SafetyPlanChanged"] = "Активность удалена из предстоящих тренировок на основании ваших ответов о безопасности.";
         Values["Workout_Generation_PlanChanged"] = "Текущий план изменился. Составьте новый черновик перед применением.";
         Values["Workout_Generation_AcceptFailed"] = "План не применён. Текущий план не изменён.";
         Values["Workout_Generation_AppliedTrainNavigationFailed"] = "План применён, но раздел «Тренировки» не открылся. Попробуйте ещё раз.";
@@ -256,5 +262,8 @@ internal static partial class RussianUiText
         Values["Workout_Generation_GeneralStrength"] = "Общая силовая (малый объём)";
         Values["Workout_Generation_HighVolumeStrength"] = "Силовая с большим объёмом";
         Values["Workout_Generation_HighIntensityStrength"] = "Силовая высокой интенсивности";
+        Values["Workout_Generation_PromptNoPlanTitle"] = "Нет активного плана тренировок";
+        Values["Workout_Generation_PromptNoPlanSubtitle"] = "Настройте параметры тренировок и создайте персональный план силовых тренировок.";
+        Values["Workout_Generation_PromptGeneratePlanButton"] = "Создать план";
     }
 }

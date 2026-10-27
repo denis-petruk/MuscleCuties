@@ -271,6 +271,7 @@ public sealed class WorkoutInjuryLogRecord : ITenantRecord
     public DateOnly Since { get; set; }
     public int Pain { get; set; }
     public DateOnly Date { get; set; }
+    public DateOnly? ClearedDate { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -301,6 +302,9 @@ public sealed class WorkoutPlanProposalV02Record : ITenantRecord
     public DateTime? DecidedAtUtc { get; set; }
     public Guid? AcceptedRevisionId { get; set; }
     public int ConcurrencyVersion { get; set; } = 1;
+    public Guid? LeaseId { get; set; }
+    public long LeaseFence { get; set; }
+    public DateTime? LeaseExpiresAtUtc { get; set; }
 }
 
 /// <summary>Append-only accepted v0.2 plan revision; prior revisions remain queryable.</summary>
@@ -332,6 +336,10 @@ public sealed class WorkoutDayRecord : ITenantRecord
     public bool IsEasierAlternative { get; set; }
     public bool IsRemovedByReadiness { get; set; }
     public bool IsRemovedByUserAdjustment { get; set; }
+    public bool IsRemovedBySafety { get; set; }
+    public Guid? SafetyInjuryId { get; set; }
+    public int? SafetyActivityTypeId { get; set; }
+    public int? ActivityTypeId { get; set; }
     public decimal? PlannedMainDurationMinutes { get; set; }
 }
 
@@ -353,6 +361,10 @@ public sealed class WorkoutSessionLogRecord : ITenantRecord
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
+    public Guid? PlannedWorkoutDayId { get; set; }
+    public string? PlannedTimeZoneId { get; set; }
+    public long? PlannedTimeZoneVersion { get; set; }
+    public DateOnly? PlannedLocalDate { get; set; }
     public string WorkoutName { get; set; } = string.Empty;
     public DateTime StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }

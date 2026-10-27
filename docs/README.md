@@ -1,11 +1,12 @@
 # MuscleCuties documentation
 
-- [iOS submission readiness](SUBMISSION_READINESS.md): start here for the 2026-10-21 review, open gates, and separate TestFlight/App Store checklists. The expanded candidate is **not ready for submission**.
-- [TestFlight and Resend operator guide](OPERATOR_ACTION_MANUAL.md): current release gates, secure environment settings, email delivery, database maintenance, and device acceptance.
-- [Registration email deliverability](EMAIL_DELIVERABILITY.md): public DNS findings, the DMARC correction, sender mailbox setup, and inbox-placement checks.
-- [Roadmap](v1/ROADMAP.md): delivered foundations and open P01–P06 scope.
-- [Workout planning roadmap](WORKOUT_PLANNING_ROADMAP.md): Clean Architecture inspection and `WB01`–`WB06` gap-closure roadmap for the complete deterministic workout planning specification.
-- [UI dead-code and organization plan](UI_CLEANUP_AND_ORGANIZATION_PLAN.md): audit and cleanup of dead controls, unreachable routes (`InjuryLogPage`), covered elements, and test automation (`UIC01`–`UIC05`).
-- [Status](v1/STATUS.md): candidate state and verification evidence.
+- [Workout generation rules audit](WORKOUT_GENERATION_RULES_AUDIT.md): Agreed product rules and outstanding implementation and verification gaps.
+
+- [iOS submission readiness](SUBMISSION_READINESS.md): Start here for the release gates, blocking issues, pending UI changes, and separate TestFlight/App Store checklists. The expanded candidate is **not ready for submission**.
+- [TestFlight and Resend operator guide](OPERATOR_ACTION_MANUAL.md): Current release gates, secure environment settings, email delivery, database maintenance, and device acceptance.
+- [Registration email deliverability](EMAIL_DELIVERABILITY.md): Public DNS findings, DMARC correction, sender mailbox setup, and inbox-placement checks.
+- [Roadmap](v1/ROADMAP.md): Delivered foundations, completed architecture milestones, and active scope.
+- [Workout flow](v1/WORKOUT_FLOW.md): Complete deterministic workout planning specification, progression rules, and state machine lifecycle.
+- [Status](v1/STATUS.md): Candidate state, verification evidence, and operational observations.
 
 The previous TestFlight `1.0 (2)` record does not verify the expanded candidate. Use the operator guide for the next release.

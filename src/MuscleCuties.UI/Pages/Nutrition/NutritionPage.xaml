@@ -12,12 +12,13 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Nutrition"
     x:DataType="vm:NutritionViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <Grid>
         <CollectionView
             ItemsSource="{Binding Meals}"
-            ItemSizingStrategy="MeasureFirstItem"
+            ItemSizingStrategy="MeasureAllItems"
             MaximumWidthRequest="{StaticResource UiDimension640}"
             SelectionMode="None">
             <CollectionView.ItemsLayout>
@@ -25,7 +26,7 @@
             </CollectionView.ItemsLayout>
 
             <CollectionView.Header>
-                <VerticalStackLayout Padding="{StaticResource UiInsets20_36_20_12}" Spacing="{StaticResource UiSpaceControl}">
+                <VerticalStackLayout Padding="{StaticResource PresentationPageHeaderPadding}" Spacing="{StaticResource UiSpaceControl}">
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}" VerticalOptions="Center">
                         <Label Text="{loc:LocalizedText Nutrition_Page_Nutrition}" Style="{StaticResource Headline}"
                                VerticalOptions="Center" />
@@ -104,6 +105,7 @@
                                 Grid.Column="1"
                                 Text="{loc:LocalizedText Nutrition_Page_NoMealsLoggedYet}"
                                 Style="{StaticResource CardTitle}"
+                                LineBreakMode="WordWrap"
                                 VerticalOptions="Center" />
                         </Grid>
                     </Border>
@@ -163,7 +165,7 @@
             </CollectionView.ItemTemplate>
 
             <CollectionView.Footer>
-                <BoxView HeightRequest="{StaticResource UiDimension24}" BackgroundColor="{StaticResource Transparent}" />
+                <BoxView HeightRequest="{StaticResource UiDimension32}" BackgroundColor="{StaticResource Transparent}" />
             </CollectionView.Footer>
         </CollectionView>
 

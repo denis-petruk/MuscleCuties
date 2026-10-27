@@ -20,6 +20,7 @@ using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using DiaryMealType = MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts.MealType;
 using DiaryContracts = MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts;
 
@@ -490,6 +491,35 @@ public sealed class CloudWorkoutOverviewStore(
 public sealed class CloudWorkoutSessionActionStore(
     IMuscleCutiesBackendApiClient apiClient) : IWorkoutSessionActionStore
 {
+    public async Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(int workoutDayId, CancellationToken cancellationToken)
+    {
+        var response = await apiClient.GetAsync<ActiveWorkoutSessionSnapshot>($"/api/v1/workouts/sessions/planned/{workoutDayId}", cancellationToken).ConfigureAwait(false);
+        return response.Status == BackendApiStatus.NotFound ? null : CloudStoreResponse.RequireData(response, "read planned workout session");
+    }
+
+    public async Task<ActiveWorkoutSessionSnapshot> StartPlannedSessionAsync(int workoutDayId, Guid sessionId, DateTime startedAtUtc, CancellationToken cancellationToken)
+    {
+        var request = new StartWorkoutSessionCommand(sessionId.ToString("N"), sessionId, "Workout", startedAtUtc, PlannedWorkoutDayId: workoutDayId);
+        var response = await apiClient.SendMutationAsync<StartWorkoutSessionCommand, ActiveWorkoutSessionSnapshot>(
+            HttpMethod.Post, "/api/v1/workouts/sessions/start", request, idempotencyKey: sessionId.ToString("N"), cancellationToken).ConfigureAwait(false);
+        return CloudStoreResponse.RequireData(response, "start planned workout session");
+    }
+
+    public async Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, CancellationToken cancellationToken)
+    {
+        var request = new FinishWorkoutSessionCommand(sessionId.ToString("N"), sessionId, completedAtUtc, totalDurationSeconds, null, null);
+        var response = await apiClient.SendMutationAsync<FinishWorkoutSessionCommand, ActiveWorkoutSessionSnapshot>(
+            HttpMethod.Post, $"/api/v1/workouts/sessions/{sessionId:D}/finish", request, idempotencyKey: sessionId.ToString("N"), cancellationToken).ConfigureAwait(false);
+        return CloudStoreResponse.RequireData(response, "finish planned workout session");
+    }
+
+    public async Task AbandonPlannedSessionAsync(Guid sessionId, CancellationToken cancellationToken)
+    {
+        var request = new CancelWorkoutSessionCommand(sessionId.ToString("N"), sessionId);
+        var response = await apiClient.SendMutationAsync<CancelWorkoutSessionCommand, ActiveWorkoutSessionSnapshot>(
+            HttpMethod.Post, $"/api/v1/workouts/sessions/{sessionId:D}/cancel", request, idempotencyKey: sessionId.ToString("N"), cancellationToken).ConfigureAwait(false);
+        CloudStoreResponse.RequireData(response, "abandon planned workout session");
+    }
     public async Task<WorkoutSessionDetailDto> GetDetailAsync(int workoutDayId, CancellationToken cancellationToken) =>
         CloudStoreResponse.RequireData(await apiClient.GetAsync<WorkoutSessionDetailDto>(
             $"/api/v1/workouts/day-sessions/{workoutDayId}", cancellationToken).ConfigureAwait(false), "workout session detail");

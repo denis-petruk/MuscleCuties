@@ -138,6 +138,10 @@ public static class CheckInAndInjuryEndpointMappings
             {
                 return Results.Conflict();
             }
+            catch (ActiveWorkoutPreventsInjuryException exception)
+            {
+                return Results.Conflict(new { code = "ActiveWorkoutPreventsInjury", message = exception.Message });
+            }
             catch (ArgumentOutOfRangeException)
             {
                 return Results.BadRequest();

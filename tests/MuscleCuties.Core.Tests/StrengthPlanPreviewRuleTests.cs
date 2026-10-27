@@ -279,7 +279,11 @@ public sealed class StrengthPlanPreviewRuleTests
             catalog.ToDictionary(entry => entry.Candidate.ExerciseId,
                 entry => entry.Candidate.Pattern.ToString()),
             reviewedSlots,
-            reviewedSlots.Keys.ToDictionary(key => key, _ => "Reviewed slot conditions"));
+            reviewedSlots.Keys.ToDictionary(key => key, _ => "Reviewed slot conditions"))
+        {
+            MuscleGroupsByExerciseId = catalog.ToDictionary(entry => entry.Candidate.ExerciseId,
+                entry => (IReadOnlySet<string>)new HashSet<string> { entry.Candidate.Pattern.ToString() })
+        };
     }
 
     private static int SessionsPerWeekFor(WorkoutActivityType activity) => activity switch

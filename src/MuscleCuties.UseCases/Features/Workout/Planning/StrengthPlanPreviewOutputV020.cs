@@ -50,7 +50,21 @@ public sealed record StrengthPlanPreviewResponseV020(
     MixedActivityScheduleV020? MixedActivitySchedule = null,
     int? EffectiveActivityTypeId = null,
     string? FallbackSource = null,
-    string? FallbackReasonCode = null);
+    string? FallbackReasonCode = null,
+    bool RequiresReducedVolumeAcknowledgment = false)
+{
+    public int? SourceProfileVersion { get; init; }
+    public string? SourceInjuryFingerprint { get; init; }
+    public Guid? SourceActivePlanId { get; init; }
+    public Guid? SourceActiveRevisionId { get; init; }
+    public string? SourceHistoryFingerprint { get; init; }
+    public long SourceTimeZoneVersion { get; init; }
+    public long SourceExperienceVersion { get; init; }
+    public long SourceAnswerVersion { get; init; }
+    public IReadOnlyDictionary<int, string[]>? SourceMuscleGroupsByExerciseId { get; init; }
+    public IReadOnlyList<int> FittingStrengthStyleIds { get; init; } = [];
+    public bool StrengthStyleChoiceRequired { get; init; }
+}
 
 public sealed record MixedActivityScheduleSessionV020(
     int ActivityTypeId,

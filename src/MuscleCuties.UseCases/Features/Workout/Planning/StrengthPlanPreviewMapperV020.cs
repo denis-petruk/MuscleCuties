@@ -8,6 +8,7 @@ namespace MuscleCuties.UseCases.Features.Workout.Planning;
 internal static class StrengthPlanPreviewMapperV020
 {
     public const string MixedActivityScheduleIncompleteCode = "MixedActivityScheduleIncomplete";
+    public const string NoSafeStrengthContentRemainingCode = "NoSafeStrengthContentRemaining";
 
     public static StrengthPlanPreviewChoices ToChoices(StrengthPlanPreviewRequestV020 request) => new(
         WorkoutActivityContractMapper.ToCore(request.Activity),
@@ -48,7 +49,8 @@ internal static class StrengthPlanPreviewMapperV020
         source.ReviewedAllowedExerciseIdsByTemplateSlot,
         source.TemplateSlotReviewConditions)
     {
-        GoalPriorityByExerciseId = source.GoalPriorityByExerciseId
+        GoalPriorityByExerciseId = source.GoalPriorityByExerciseId,
+        MuscleGroupsByExerciseId = source.MuscleGroupsByExerciseId
     };
 
     public static StrengthPlanPreviewResponseV020 ToResponse(StrengthPlanPreviewResult result) => new(
@@ -90,7 +92,8 @@ internal static class StrengthPlanPreviewMapperV020
         result.AdvisoryCodes,
         EffectiveActivityTypeId: result.EffectiveActivity.HasValue ? (int)result.EffectiveActivity.Value : null,
         FallbackSource: result.FallbackSource,
-        FallbackReasonCode: result.FallbackReasonCode);
+        FallbackReasonCode: result.FallbackReasonCode,
+        RequiresReducedVolumeAcknowledgment: result.RequiresReducedVolumeAcknowledgment);
 
     public static MixedActivityScheduleV020 ToMixedSchedule(MixedActivityWeekScheduleResult result) => new(
         result.Sessions.Select(session => new MixedActivityScheduleSessionV020(
@@ -125,19 +128,33 @@ internal static class StrengthPlanPreviewMapperV020
             .ToArray();
         var effectiveCount = Math.Min(response.Sessions.Count, strengthDays.Length);
 
+        var hasStrengthDays = strengthDays.Length > 0;
+        var totalScheduledSessions = schedule.Sessions.Count;
+        var hasSafeNonStrengthSessions = schedule.Sessions.Any(session =>
+            !StrengthStyleSelectionRule.IsStrengthStyle(session.Activity));
+
+        // When strength sessions cannot fit or have no safe exercises, but safe non-strength activities exist,
+        // allow a safe non-strength-only plan with explanation. An empty plan remains blocked.
+        var isStrengthExhausted = !hasStrengthDays && (response.Sessions.Count == 0 || response.LimitationCodes.Length > 0);
+        var allowNonStrengthOnlyPlan = isStrengthExhausted && hasSafeNonStrengthSessions && totalScheduledSessions > 0;
+
         // When strength sessions are scheduled, fit volume to the placed days with their planned weekdays.
         // If no strength sessions could be placed, retain original sessions with unassigned weekdays.
-        var alignedStrengthSessions = strengthDays.Length > 0
+        var alignedStrengthSessions = hasStrengthDays
             ? response.Sessions
                 .Take(effectiveCount)
                 .Select((session, index) => session with { PlannedWeekday = strengthDays[index] })
                 .ToArray()
-            : response.Sessions
-                .Select(session => session with { PlannedWeekday = null })
-                .ToArray();
+            : allowNonStrengthOnlyPlan
+                ? Array.Empty<StrengthPlanPreviewSessionV020>()
+                : response.Sessions
+                    .Select(session => session with { PlannedWeekday = null })
+                    .ToArray();
 
+        var isVolumeReduced = hasStrengthDays && effectiveCount < response.Sessions.Count;
         var isIncomplete = schedule.InputReasons.Count > 0 ||
-                           (response.Sessions.Count > 0 && strengthDays.Length == 0);
+                           (!allowNonStrengthOnlyPlan && response.Sessions.Count > 0 && !hasStrengthDays) ||
+                           totalScheduledSessions == 0;
 
         // Placed strength sessions satisfy availability, clearing template-overflow limitation codes.
         var limitationCodes = isIncomplete
@@ -145,18 +162,21 @@ internal static class StrengthPlanPreviewMapperV020
                 .Append(MixedActivityScheduleIncompleteCode)
                 .Distinct(StringComparer.Ordinal)
                 .ToArray()
-            : response.LimitationCodes
-                .Where(code => code is not "StrengthSessionsExceedAvailableWeekdays" and not MixedActivityScheduleIncompleteCode)
-                .ToArray();
+            : allowNonStrengthOnlyPlan
+                ? new[] { NoSafeStrengthContentRemainingCode }
+                : response.LimitationCodes
+                    .Where(code => code is not "StrengthSessionsExceedAvailableWeekdays" and not MixedActivityScheduleIncompleteCode)
+                    .ToArray();
 
         var isFeasible = !isIncomplete &&
-                         limitationCodes.Length == 0 &&
-                         alignedStrengthSessions.Length > 0 &&
+                         (limitationCodes.Length == 0 || allowNonStrengthOnlyPlan) &&
+                         (alignedStrengthSessions.Length > 0 || allowNonStrengthOnlyPlan) &&
+                         totalScheduledSessions > 0 &&
                          response.Status != nameof(StrengthPlanPreviewStatus.InvalidInput);
 
         var status = isFeasible
             ? nameof(StrengthPlanPreviewStatus.Feasible)
-            : isIncomplete
+            : isIncomplete || totalScheduledSessions == 0
                 ? nameof(StrengthPlanPreviewStatus.Limited)
                 : response.Status;
 
@@ -165,7 +185,8 @@ internal static class StrengthPlanPreviewMapperV020
             Status = status,
             Sessions = alignedStrengthSessions,
             LimitationCodes = limitationCodes,
-            MixedActivitySchedule = ToMixedSchedule(schedule)
+            MixedActivitySchedule = ToMixedSchedule(schedule),
+            RequiresReducedVolumeAcknowledgment = isVolumeReduced || response.RequiresReducedVolumeAcknowledgment
         };
     }
 }

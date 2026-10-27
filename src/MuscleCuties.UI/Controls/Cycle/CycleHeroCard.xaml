@@ -30,6 +30,7 @@
                         Style="{StaticResource CaptionStrong}"
                         TextColor="{StaticResource Primary}"
                         VerticalOptions="Center"
+                        LineBreakMode="WordWrap"
                         SemanticProperties.HeadingLevel="Level2" />
                 </HorizontalStackLayout>
 
@@ -42,11 +43,13 @@
                         Text="{Binding PhaseLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_Hero_PhaseFormat}"
                         Style="{StaticResource SectionTitle}"
                         FontSize="{StaticResource UiFontSize24}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}" />
+                        FontAttributes="{StaticResource UiFontAttributesBold}"
+                        LineBreakMode="WordWrap" />
                     <Label
                         Text="{Binding CycleDaySummary, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource CaptionStrong}"
-                        TextColor="{StaticResource Primary}" />
+                        TextColor="{StaticResource Primary}"
+                        LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
 
                 <!-- Vector artwork container -->
@@ -83,7 +86,9 @@
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                 StrokeShape="{StaticResource UiRoundRectangleRadius12}"
                 StrokeThickness="{StaticResource UiStrokeWidth0}"
-                Padding="{StaticResource UiInsets12_10}">
+                Padding="{StaticResource UiInsets12_10}"
+                MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                SemanticProperties.Description="{loc:LocalizedText Cycle_Hero_LogActionAccessibility}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding OpenQuickLogCommand}" />
                 </Border.GestureRecognizers>
@@ -111,7 +116,8 @@
                         Text="{loc:LocalizedText Cycle_Hero_LogActionAccessibility}"
                         FontSize="{StaticResource UiFontSize13}"
                         FontAttributes="{StaticResource UiFontAttributesBold}"
-                        VerticalOptions="Center" />
+                        VerticalOptions="Center"
+                        LineBreakMode="WordWrap" />
                     <Path
                         Grid.Column="2"
                         Data="M9 18l6-6-6-6"

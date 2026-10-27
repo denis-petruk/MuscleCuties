@@ -103,7 +103,7 @@ public sealed class PostgresActivePlanPhaseAdjustmentSourceV010(
 
         var planDays = await dbContext.WorkoutDays.AsNoTracking()
             .Where(day => day.UserId == userId && day.WorkoutPlanId == activePlan.Id &&
-                          !day.IsRemovedByReadiness && !day.IsRemovedByUserAdjustment &&
+                          !day.IsRemovedByReadiness && !day.IsRemovedByUserAdjustment && !day.IsRemovedBySafety &&
                           day.Date != null && day.Date >= localToday)
             .OrderBy(day => day.Date)
             .ThenBy(day => day.Id)

@@ -75,6 +75,12 @@ public sealed class CheckInAndInjuryIdConflictException : Exception
     }
 }
 
+public sealed class ActiveWorkoutPreventsInjuryException : Exception
+{
+    public ActiveWorkoutPreventsInjuryException()
+        : base("End or abandon the active workout before recording an injury.") { }
+}
+
 public sealed class CheckInAndInjuryDateConflictException : Exception
 {
     public CheckInAndInjuryDateConflictException()

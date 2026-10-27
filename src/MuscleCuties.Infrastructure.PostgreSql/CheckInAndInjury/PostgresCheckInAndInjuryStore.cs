@@ -2,12 +2,16 @@ using System.Data;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Workout;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 using Npgsql;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.CheckInAndInjury;
@@ -18,6 +22,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
     private const int SleepWindowLookbackDays = 2;
     private const int StepsWindowLookbackDays = 6;
     private const string ClearedStatus = "Cleared";
+    private const int CompletedWorkoutPercent = 100;
 
     public async Task<IReadOnlyList<DailyCheckInRecord>> LoadCheckInsAsync(
         Guid userId,
@@ -224,16 +229,27 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         {
             dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database
-                .BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken)
+                .BeginTransactionAsync(cancellationToken)
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, request.UserId, cancellationToken)
                 .ConfigureAwait(false);
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, request.UserId, cancellationToken)
+                .ConfigureAwait(false);
+            var isClearing = string.Equals(request.Status, ClearedStatus, StringComparison.OrdinalIgnoreCase);
+            if (!isClearing && await dbContext.WorkoutSessionLogs.AnyAsync(
+                    session => session.UserId == request.UserId && !session.IsDeleted && session.CompletedAt == null,
+                    cancellationToken).ConfigureAwait(false))
+                throw new ActiveWorkoutPreventsInjuryException();
             await LockRecordIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
 
             var row = await dbContext.WorkoutInjuryLogs.SingleOrDefaultAsync(
                     item => item.UserId == request.UserId && item.Id == request.Id,
                     cancellationToken)
                 .ConfigureAwait(false);
+
+            var wasAlreadyCleared = row is not null && string.Equals(row.Status, ClearedStatus, StringComparison.OrdinalIgnoreCase);
+            var originalClearanceDate = wasAlreadyCleared ? row!.ClearedDate : request.Date;
+
             row ??= new WorkoutInjuryLogRecord
             {
                 Id = request.Id,
@@ -245,9 +261,15 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             row.Since = request.Since;
             row.Pain = request.Pain;
             row.Date = request.Date;
+            row.ClearedDate = isClearing ? originalClearanceDate : null;
 
             if (dbContext.Entry(row).State == EntityState.Detached)
                 dbContext.WorkoutInjuryLogs.Add(row);
+
+            if (!isClearing)
+                await SuppressFutureStrengthForInjuryAsync(request.UserId, request.Id, cancellationToken).ConfigureAwait(false);
+
+            await InvalidatePlanningPreviewsAsync(request.UserId, cancellationToken).ConfigureAwait(false);
 
             try
             {
@@ -273,6 +295,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             var row = await dbContext.WorkoutInjuryLogs.SingleOrDefaultAsync(
                     item => item.UserId == userId && item.Id == injuryId,
                     cancellationToken)
@@ -284,10 +307,53 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             }
 
             dbContext.WorkoutInjuryLogs.Remove(row);
+            await InvalidatePlanningPreviewsAsync(userId, cancellationToken).ConfigureAwait(false);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return true;
         }).ConfigureAwait(false);
+
+    private async Task InvalidatePlanningPreviewsAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var proposals = await dbContext.WorkoutPlanProposalsV02
+            .Where(item => item.UserId == userId && item.Status == "Proposed" && item.LeaseId != null)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+        foreach (var proposal in proposals)
+        {
+            proposal.Status = "Expired";
+            proposal.DecidedAtUtc = now;
+            proposal.LeaseExpiresAtUtc = now;
+            proposal.ConcurrencyVersion++;
+        }
+    }
+
+    private async Task SuppressFutureStrengthForInjuryAsync(Guid userId, Guid injuryId, CancellationToken cancellationToken)
+    {
+        var activePlanId = await dbContext.WorkoutPlans.AsNoTracking()
+            .Where(plan => plan.UserId == userId && plan.IsActive).Select(plan => (Guid?)plan.Id)
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        if (activePlanId is null) return;
+        var zoneId = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
+            .Where(state => state.UserId == userId).Select(state => state.TimeZoneId)
+            .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        if (zoneId is null) throw new InvalidOperationException("Establish the account timezone before recording this injury.");
+        TimeZoneInfo zone;
+        try { zone = TimeZoneInfo.FindSystemTimeZoneById(zoneId); }
+        catch (TimeZoneNotFoundException) { throw new InvalidOperationException("Establish the account timezone before recording this injury."); }
+        catch (InvalidTimeZoneException) { throw new InvalidOperationException("Establish the account timezone before recording this injury."); }
+        var today = WorkoutAccountCalendarRule.LocalDate(timeProvider.GetUtcNow(), zone);
+        var days = await dbContext.WorkoutDays.Where(day => day.UserId == userId && day.WorkoutPlanId == activePlanId &&
+                day.Date >= today && day.WorkoutType == nameof(WorkoutType.Strength) &&
+                !dbContext.WorkoutLogs.Any(log => log.UserId == userId && log.WorkoutDayId == day.Id &&
+                    log.CompletionPercent >= CompletedWorkoutPercent))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var day in days)
+        {
+            day.IsRemovedBySafety = true;
+            day.SafetyInjuryId ??= injuryId;
+        }
+    }
 
     private static DailyCheckInRecord MapCheckIn(DailyReadinessLogRecord row) =>
         new(

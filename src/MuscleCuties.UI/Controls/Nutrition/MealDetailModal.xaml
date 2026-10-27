@@ -23,7 +23,7 @@
 
                 <!-- Header: flattened from Grid+VerticalStackLayout into single Grid -->
                 <Grid
-                    Padding="{StaticResource UiInsets20_18_20_12}"
+                    Padding="{StaticResource PresentationModalHeaderPadding}"
                     RowDefinitions="Auto,Auto"
                     ColumnDefinitions="Auto,*,Auto"
                     ColumnSpacing="{StaticResource UiSpaceCompact}"
@@ -78,7 +78,7 @@
 
                 <!-- Scrollable content -->
                 <ScrollView Grid.Row="2">
-                    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" Padding="{StaticResource UiInsets20_16_20_20}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" Padding="{StaticResource PresentationModalPagePadding}">
 
                         <!-- Macro summary card: flattened from Grid+HorizontalStackLayouts into single Grid -->
                         <Border
@@ -132,15 +132,18 @@
                                 Text="{Binding MealFillPercentText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource MutedLabel}"
                                 FontAttributes="{StaticResource UiFontAttributesBold}"
-                                FontSize="{StaticResource UiFontSize14}" />
+                                FontSize="{StaticResource UiFontSize14}"
+                                LineBreakMode="WordWrap" />
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding DailyProgressText, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource MutedMedium}" />
+                                Style="{StaticResource MutedMedium}"
+                                LineBreakMode="WordWrap" />
                             <Label
                                 Grid.Row="2"
                                 Text="{Binding DailyMacroRemainingText, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource MutedMedium}" />
+                                Style="{StaticResource MutedMedium}"
+                                LineBreakMode="WordWrap" />
                         </Grid>
 
                         <!-- Ingredients by group -->
@@ -170,11 +173,13 @@
                                                 Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}"
                                                 Style="{StaticResource CardTitle}"
                                                 FontSize="{StaticResource UiFontSize15}"
+                                                LineBreakMode="WordWrap"
                                                 VerticalOptions="Center" />
                                             <Label
                                                 Grid.Column="2"
                                                 Text="{Binding TotalText, Converter={StaticResource LocalizedStringConverter}}"
                                                 Style="{StaticResource MutedMedium}"
+                                                LineBreakMode="WordWrap"
                                                 VerticalOptions="Center" />
 
                                             <VerticalStackLayout
@@ -197,6 +202,7 @@
                                                                 Grid.Row="1"
                                                                 Text="{Binding DetailText, Converter={StaticResource LocalizedStringConverter}}"
                                                                 Style="{StaticResource MutedMedium}"
+                                                                LineBreakMode="WordWrap"
                                                                 VerticalOptions="Center" />
                                                         </Grid>
                                                     </DataTemplate>
@@ -269,14 +275,15 @@
                                 Text="{Binding DetailDirectionsText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource BodyLabel}"
                                 FontSize="{StaticResource UiFontSize15}"
-                                LineHeight="{StaticResource UiLineHeightLongForm}" />
+                                LineHeight="{StaticResource UiLineHeightLongForm}"
+                                LineBreakMode="WordWrap" />
                         </Grid>
 
                     </VerticalStackLayout>
                 </ScrollView>
 
                 <!-- Action buttons -->
-                <Grid Grid.Row="3" Padding="{StaticResource UiInsets20_8_20_16}" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpacing10}">
+                <Grid Grid.Row="3" Padding="{StaticResource PresentationActionFooterPadding}" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpacing10}">
                     <Button
                         Text="{loc:LocalizedText Common_Back}"
                         Command="{Binding CloseMealDetailCommand}"
