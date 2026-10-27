@@ -62,6 +62,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                     contribution.MuscleGroupId, (double)contribution.Fraction))).ToArray(),
             goalTierWeights.Where(weight => weight.Goal == goal).Select(weight => new PlanningGoalTierWeight(
                 weight.Id, weight.Goal, weight.MuscleGroupId, weight.Tier)).ToArray());
+        var floorRows = await ReviewedTemplateFloorSource.LoadAsync(dbContext, cancellationToken).ConfigureAwait(false);
         var reviewedSlots = ReviewedExerciseCatalogV020ReviewMap.MapSlots(definitions);
         var preferences = await dbContext.UserExercisePreferences.AsNoTracking()
             .Where(row => row.UserId == userId)
@@ -148,8 +149,9 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                     .Select(contribution => contribution.MuscleGroup!.Name)
                     .ToHashSet(StringComparer.OrdinalIgnoreCase)),
             GoalPriorityByExerciseId = goalPriorityByExerciseId,
+            TemplateVolumeFloors = ReviewedTemplateFloorSource.Map(floorRows),
             ProfileVersion = profile?.ConcurrencyVersion,
-            CatalogFingerprint = PlanningCatalogFingerprint.FromInputs(definitions, goalTierWeights, preferences),
+            CatalogFingerprint = PlanningCatalogFingerprint.FromInputs(definitions, goalTierWeights, preferences, floorRows),
             InjuryFingerprint = PlanningInputFingerprint.Injuries(injuries),
             ActivePlanId = activePlanId,
             ActiveRevisionId = activeRevisionId,
