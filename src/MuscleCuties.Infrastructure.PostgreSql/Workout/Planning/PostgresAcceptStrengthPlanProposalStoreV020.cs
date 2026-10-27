@@ -38,6 +38,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
 
     private const string ProposalNotFoundCode = "ProposalNotFound";
     private const string ProposalAlreadyDecidedCode = "ProposalAlreadyDecided";
+    private const string AutomaticProposalNotUserAcceptableCode = "AutomaticProposalNotUserAcceptable";
     private const string PreviewLeaseExpiredOrInvalidCode = "PreviewLeaseExpiredOrInvalid";
     private const string ProposalSnapshotInvalidCode = "ProposalSnapshotInvalid";
     private const string PlanningInputsChangedSinceProposalCode = "PlanningInputsChangedSinceProposal";
@@ -51,6 +52,8 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
     private const string ProposalScheduleSafetyInvalidCode = "ProposalScheduleSafetyInvalid";
     private const string PlanningDateChangedCode = "PlanningDateChanged";
     private const string NoEligibleWorkoutDayCode = "NoEligibleWorkoutDay";
+
+    internal enum AcceptanceOrigin { User, Automatic }
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -100,137 +103,177 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                 proposal.LeaseExpiresAtUtc <= DateTime.UtcNow)
                 return await FinishAsync(transaction, new(StaleStatus, proposal.PlanId, null,
                     PreviewLeaseExpiredOrInvalidCode), cancellationToken).ConfigureAwait(false);
+            var result = await AcceptInCurrentTransactionAsync(userId, request, AcceptanceOrigin.User, cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return result;
+        }).ConfigureAwait(false);
 
-            var proposalSnapshot = Deserialize<ProposalSnapshot>(proposal.ProposalJson);
-            var inputSnapshot = Deserialize<ProposalInputSnapshot>(proposal.InputSnapshotJson);
-            if (proposalSnapshot is null || inputSnapshot is null ||
-                proposalSnapshot.Status != FeasibleStatus || proposalSnapshot.Sessions is null ||
-                proposalSnapshot.PolicyId != StrengthPlanPreviewRule.PolicyId ||
-                proposalSnapshot.PolicyVersion != StrengthPlanPreviewRule.Version ||
-                proposalSnapshot.RulesetVersion != StrengthPlanPreviewRule.RulesetVersion)
-                return await FinishAsync(transaction, new(InvalidProposalStatus, null, null,
-                    ProposalSnapshotInvalidCode), cancellationToken).ConfigureAwait(false);
+    // Caller owns the tenant transaction and account/catalog locks and commits the result.
+    internal async Task<AcceptStrengthPlanProposalResultV020> AcceptInCurrentTransactionAsync(Guid userId,
+        AcceptStrengthPlanProposalRequestV020 request, AcceptanceOrigin origin, CancellationToken cancellationToken)
+    {
+        if (origin is not AcceptanceOrigin.User and not AcceptanceOrigin.Automatic)
+            return new(InvalidProposalStatus, null, null, ProposalSnapshotInvalidCode);
+        var proposal = await dbContext.WorkoutPlanProposalsV02.SingleOrDefaultAsync(
+                item => item.UserId == userId && item.Id == request.ProposalId,
+                cancellationToken)
+            .ConfigureAwait(false);
+        if (proposal is null)
+            return new(NotFoundStatus, null, null, ProposalNotFoundCode);
+        var inputSnapshot = Deserialize<ProposalInputSnapshot>(proposal.InputSnapshotJson);
+        if (inputSnapshot is not null && inputSnapshot.AutomaticOrigin != (origin == AcceptanceOrigin.Automatic))
+            return new(InvalidProposalStatus, null, null, AutomaticProposalNotUserAcceptableCode);
+        if (origin == AcceptanceOrigin.Automatic && (inputSnapshot is null ||
+            proposal.LeaseId is not null || proposal.LeaseExpiresAtUtc is not null ||
+            request.LeaseId != Guid.Empty || request.Fence != 0 || request.ProposalVersion != 0 ||
+            request.ReplacementConfirmed || request.ReducedVolumeAcknowledged))
+            return new(InvalidProposalStatus, null, null, ProposalSnapshotInvalidCode);
+        // A response can be lost after commit. Replaying the same accepted proposal
+        // returns its original result without creating another plan or revision.
+        if (proposal.Status == AcceptedStatus && proposal.AcceptedRevisionId is { } acceptedRevisionId)
+            return new(AcceptedStatus, proposal.PlanId, acceptedRevisionId, null);
+        if (proposal.Status != ProposedStatus)
+            return new(ConflictStatus, proposal.PlanId, null,
+                ProposalAlreadyDecidedCode);
+        if (origin == AcceptanceOrigin.User && (proposal.LeaseId != request.LeaseId || proposal.LeaseFence != request.Fence ||
+            proposal.ConcurrencyVersion != request.ProposalVersion || proposal.LeaseExpiresAtUtc is null ||
+            proposal.LeaseExpiresAtUtc <= DateTime.UtcNow))
+            return new(StaleStatus, proposal.PlanId, null,
+                PreviewLeaseExpiredOrInvalidCode);
 
-            var currentLogs = await dbContext.WorkoutExerciseLogs.AsNoTracking()
-                .Where(row => row.UserId == userId && row.CompletedSets > 0 && row.CompletedReps > 0)
-                .Select(row => new { row.ExerciseId, row.WorkoutLogId, row.WeightKg })
-                .OrderBy(row => row.WorkoutLogId).ThenBy(row => row.ExerciseId).ThenBy(row => row.WeightKg)
-                .ToListAsync(cancellationToken).ConfigureAwait(false);
-            var currentInjuries = await dbContext.WorkoutInjuryLogs.AsNoTracking()
-                .Where(row => row.UserId == userId)
-                .ToListAsync(cancellationToken).ConfigureAwait(false);
-            if (proposalSnapshot.SourceHistoryFingerprint != PlanningInputFingerprint.Hash(currentLogs) ||
-                proposalSnapshot.SourceInjuryFingerprint != PlanningInputFingerprint.Injuries(currentInjuries) ||
-                string.IsNullOrWhiteSpace(proposalSnapshot.SourceCatalogFingerprint) ||
-                proposalSnapshot.SourceCatalogFingerprint != await PlanningCatalogFingerprint.LoadAsync(dbContext, userId, cancellationToken).ConfigureAwait(false))
-                return await FinishAsync(transaction, new(StaleStatus, proposal.PlanId, null,
-                    PlanningInputsChangedSinceProposalCode), cancellationToken).ConfigureAwait(false);
-            var planningState = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
-                .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken).ConfigureAwait(false);
-            if (planningState?.TimeZoneId is not { } zoneId)
-                return await FinishAsync(transaction, new(LimitedStatus, null, null, CalendarNotEstablishedCode), cancellationToken).ConfigureAwait(false);
-            if (proposalSnapshot.SourceTimeZoneVersion != planningState.TimeZoneVersion ||
-                proposalSnapshot.SourceExperienceVersion != planningState.ExperienceVersion ||
-                proposalSnapshot.SourceAnswerVersion != planningState.AnswerVersion)
-                return await FinishAsync(transaction, new(StaleStatus, proposal.PlanId, null,
-                    PlanningInputsChangedSinceProposalCode), cancellationToken).ConfigureAwait(false);
-            TimeZoneInfo zone;
-            try { zone = TimeZoneInfo.FindSystemTimeZoneById(zoneId); }
-            catch (TimeZoneNotFoundException) { return await FinishAsync(transaction, new(LimitedStatus, null, null, CalendarNotEstablishedCode), cancellationToken).ConfigureAwait(false); }
-            catch (InvalidTimeZoneException) { return await FinishAsync(transaction, new(LimitedStatus, null, null, CalendarNotEstablishedCode), cancellationToken).ConfigureAwait(false); }
+        var proposalSnapshot = Deserialize<ProposalSnapshot>(proposal.ProposalJson);
+        if (proposalSnapshot is null || inputSnapshot is null ||
+            proposalSnapshot.Status != FeasibleStatus || proposalSnapshot.Sessions is null ||
+            proposalSnapshot.PolicyId != StrengthPlanPreviewRule.PolicyId ||
+            proposalSnapshot.PolicyVersion != StrengthPlanPreviewRule.Version ||
+            proposalSnapshot.RulesetVersion != StrengthPlanPreviewRule.RulesetVersion)
+            return new(InvalidProposalStatus, null, null,
+                ProposalSnapshotInvalidCode);
 
-            var activePlanId = await dbContext.WorkoutPlans.AsNoTracking()
-                .Where(plan => plan.UserId == userId && plan.IsActive)
-                .OrderByDescending(plan => plan.CreatedAt)
-                .Select(plan => (Guid?)plan.Id)
-                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-            var activeRevisionId = activePlanId is { } existingPlanId
-                ? await dbContext.WorkoutPlanRevisionsV02.AsNoTracking()
-                    .Where(revision => revision.UserId == userId && revision.PlanId == existingPlanId)
-                    .OrderByDescending(revision => revision.RevisionNumber)
-                    .Select(revision => (Guid?)revision.Id)
-                    .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
-                : null;
-            if (activePlanId != inputSnapshot.BaselineActivePlanId ||
-                activeRevisionId != inputSnapshot.BaselineRevisionId)
-            {
-                proposal.Status = ExpiredStatus;
-                proposal.DecidedAtUtc = DateTime.UtcNow;
-                proposal.ConcurrencyVersion++;
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                return await FinishAsync(transaction, new(StaleStatus, proposal.PlanId, null,
-                    ActivePlanChangedSinceProposalCode), cancellationToken).ConfigureAwait(false);
-            }
+        var currentLogs = await dbContext.WorkoutExerciseLogs.AsNoTracking()
+            .Where(row => row.UserId == userId && row.CompletedSets > 0 && row.CompletedReps > 0)
+            .Select(row => new { row.ExerciseId, row.WorkoutLogId, row.WeightKg })
+            .OrderBy(row => row.WorkoutLogId).ThenBy(row => row.ExerciseId).ThenBy(row => row.WeightKg)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        var currentInjuries = await dbContext.WorkoutInjuryLogs.AsNoTracking()
+            .Where(row => row.UserId == userId)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (proposalSnapshot.SourceHistoryFingerprint != PlanningInputFingerprint.Hash(currentLogs) ||
+            proposalSnapshot.SourceInjuryFingerprint != PlanningInputFingerprint.Injuries(currentInjuries) ||
+            string.IsNullOrWhiteSpace(proposalSnapshot.SourceCatalogFingerprint) ||
+            proposalSnapshot.SourceCatalogFingerprint != await PlanningCatalogFingerprint.LoadAsync(dbContext, userId, cancellationToken).ConfigureAwait(false))
+            return new(StaleStatus, proposal.PlanId, null,
+                PlanningInputsChangedSinceProposalCode);
+        var planningState = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
+            .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken).ConfigureAwait(false);
+        if (origin == AcceptanceOrigin.Automatic &&
+            (planningState is null || (!planningState.PromotionPending && !planningState.SafetyRegenerationPending)))
+            return new(StaleStatus, proposal.PlanId, null, PlanningInputsChangedSinceProposalCode);
+        if (planningState?.TimeZoneId is not { } zoneId)
+            return new(LimitedStatus, null, null, CalendarNotEstablishedCode);
+        if (proposalSnapshot.SourceTimeZoneVersion != planningState.TimeZoneVersion ||
+            proposalSnapshot.SourceExperienceVersion != planningState.ExperienceVersion ||
+            proposalSnapshot.SourceAnswerVersion != planningState.AnswerVersion)
+            return new(StaleStatus, proposal.PlanId, null,
+                PlanningInputsChangedSinceProposalCode);
+        TimeZoneInfo zone;
+        try { zone = TimeZoneInfo.FindSystemTimeZoneById(zoneId); }
+        catch (TimeZoneNotFoundException) { return new(LimitedStatus, null, null, CalendarNotEstablishedCode); }
+        catch (InvalidTimeZoneException) { return new(LimitedStatus, null, null, CalendarNotEstablishedCode); }
 
-            if (!automaticRevision && proposalSnapshot.RequiresReducedVolumeAcknowledgment && !request.ReducedVolumeAcknowledged)
-                return await FinishAsync(transaction, new(ConflictStatus, proposal.PlanId, null,
-                    ReducedVolumeAcknowledgmentRequiredCode), cancellationToken).ConfigureAwait(false);
+        var activePlanId = await dbContext.WorkoutPlans.AsNoTracking()
+            .Where(plan => plan.UserId == userId && plan.IsActive)
+            .OrderByDescending(plan => plan.CreatedAt)
+            .Select(plan => (Guid?)plan.Id)
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        var activeRevisionId = activePlanId is { } existingPlanId
+            ? await dbContext.WorkoutPlanRevisionsV02.AsNoTracking()
+                .Where(revision => revision.UserId == userId && revision.PlanId == existingPlanId)
+                .OrderByDescending(revision => revision.RevisionNumber)
+                .Select(revision => (Guid?)revision.Id)
+                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
+            : null;
+        if (activePlanId != inputSnapshot.BaselineActivePlanId ||
+            activeRevisionId != inputSnapshot.BaselineRevisionId)
+        {
+            proposal.Status = ExpiredStatus;
+            proposal.DecidedAtUtc = DateTime.UtcNow;
+            proposal.ConcurrencyVersion++;
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return new(StaleStatus, proposal.PlanId, null,
+                ActivePlanChangedSinceProposalCode);
+        }
 
-            if (!automaticRevision && activePlanId is not null && !request.ReplacementConfirmed)
-                return await FinishAsync(transaction, new(ConflictStatus, proposal.PlanId, null,
-                    ReplacementConfirmationRequiredCode), cancellationToken).ConfigureAwait(false);
 
-            var currentProfile = await dbContext.UserProfiles.AsNoTracking()
-                .Where(profile => profile.UserId == userId)
-                .Select(profile => new { profile.ConcurrencyVersion, profile.AvailableWorkoutWeekdaysJson })
-                .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-            if (currentProfile is null || currentProfile.ConcurrencyVersion != inputSnapshot.ProfileVersion)
-            {
-                proposal.Status = ExpiredStatus;
-                proposal.DecidedAtUtc = DateTime.UtcNow;
-                proposal.ConcurrencyVersion++;
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                return await FinishAsync(transaction, new(StaleStatus, proposal.PlanId, null,
-                    WorkoutPreferencesChangedSinceProposalCode), cancellationToken).ConfigureAwait(false);
-            }
-            var draft = inputSnapshot.Request.DraftPreferences;
-            if (draft is null || !WorkoutPreferencesRule.IsValid(draft.ActivityTypes, draft.AvailableWeekdays,
-                    draft.ActivitySessionDurationsMinutes, draft.RequestedSessionsPerWeek) ||
-                !WorkoutPreferencesRule.IsValidEquipmentLevel(draft.EquipmentLevel))
-                return await FinishAsync(transaction, new(InvalidProposalStatus, null, null,
-                    DraftPreferencesInvalidCode), cancellationToken).ConfigureAwait(false);
-            var availableWeekdays = draft.AvailableWeekdays.Select(value => (DayOfWeek)value).ToHashSet();
+        if (origin == AcceptanceOrigin.User && proposalSnapshot.RequiresReducedVolumeAcknowledgment && !request.ReducedVolumeAcknowledged)
+            return new(ConflictStatus, proposal.PlanId, null,
+                ReducedVolumeAcknowledgmentRequiredCode);
 
-            if (!TryGetMixedSchedule(proposalSnapshot, availableWeekdays, out var scheduleSessions) ||
-                !TryGetStrengthSessions(proposalSnapshot.Sessions, scheduleSessions, availableWeekdays,
-                    out var strengthSessions, out var assignments))
-            {
-                var reasonCode = ContainsUnrepresentableOtherActivity(proposalSnapshot)
-                    ? UnsupportedOtherActivityCode
-                    : MixedScheduleInvalidCode;
-                return await FinishAsync(transaction, new(LimitedStatus, null, null,
-                    reasonCode), cancellationToken).ConfigureAwait(false);
-            }
+        if (origin == AcceptanceOrigin.User && activePlanId is not null && !request.ReplacementConfirmed)
+            return new(ConflictStatus, proposal.PlanId, null,
+                ReplacementConfirmationRequiredCode);
 
-            var exerciseIds = strengthSessions.Values.SelectMany(session => session.Slots)
-                .Where(slot => slot.ExerciseId.HasValue).Select(slot => slot.ExerciseId!.Value).Distinct().ToArray();
-            var definitions = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
-                .Include(row => row.MuscleContributions).ThenInclude(row => row.MuscleGroup)
-                .Where(row => exerciseIds.Contains(row.Id)).ToListAsync(cancellationToken).ConfigureAwait(false);
-            var currentGroups = definitions.Where(row => row.MuscleContributions.Any(item => item.Fraction > 0) &&
-                    row.MuscleContributions.Where(item => item.Fraction > 0).All(item => !string.IsNullOrWhiteSpace(item.MuscleGroup?.Name)))
-                .ToDictionary(row => row.Id, row => row.MuscleContributions.Where(item => item.Fraction > 0)
-                    .Select(item => item.MuscleGroup!.Name).ToHashSet(StringComparer.OrdinalIgnoreCase));
-            if (exerciseIds.Length > 0 && (proposalSnapshot.SourceMuscleGroupsByExerciseId is null || exerciseIds.Any(id =>
-                    !currentGroups.TryGetValue(id, out var current) ||
-                    !proposalSnapshot.SourceMuscleGroupsByExerciseId.TryGetValue(id, out var original) ||
-                    !current.SetEquals(original))))
-                return await FinishAsync(transaction, new(StaleStatus, proposal.PlanId, null,
-                    ExerciseMuscleMetadataChangedCode), cancellationToken).ConfigureAwait(false);
-            var validationSessions = scheduleSessions.Select(session =>
-            {
-                IReadOnlySet<string>? groups = null;
-                if (IsStrengthActivity((WorkoutActivityType)session.ActivityTypeId) &&
-                    strengthSessions.TryGetValue(session.Weekday, out var strength))
-                    groups = strength.Slots.Where(slot => slot.ExerciseId.HasValue)
-                        .SelectMany(slot => currentGroups[slot.ExerciseId!.Value])
-                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
-                return new WorkoutScheduleValidationSession(session.Weekday,
-                    (WorkoutActivityType)session.ActivityTypeId, session.IsHardSession, groups);
-            }).ToArray();
-            if (WorkoutScheduleValidationRule.Validate(validationSessions).Count != 0)
-                return await FinishAsync(transaction, new(LimitedStatus, null, null,
-                    ProposalScheduleSafetyInvalidCode), cancellationToken).ConfigureAwait(false);
+        var currentProfile = await dbContext.UserProfiles.AsNoTracking()
+            .Where(profile => profile.UserId == userId)
+            .Select(profile => new { profile.ConcurrencyVersion, profile.AvailableWorkoutWeekdaysJson })
+            .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        if (currentProfile is null || currentProfile.ConcurrencyVersion != inputSnapshot.ProfileVersion)
+        {
+            proposal.Status = ExpiredStatus;
+            proposal.DecidedAtUtc = DateTime.UtcNow;
+            proposal.ConcurrencyVersion++;
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return new(StaleStatus, proposal.PlanId, null,
+                WorkoutPreferencesChangedSinceProposalCode);
+        }
+        var draft = inputSnapshot.Request.DraftPreferences;
+        if (draft is null || !WorkoutPreferencesRule.IsValid(draft.ActivityTypes, draft.AvailableWeekdays,
+                draft.ActivitySessionDurationsMinutes, draft.RequestedSessionsPerWeek) ||
+            !WorkoutPreferencesRule.IsValidEquipmentLevel(draft.EquipmentLevel))
+            return new(InvalidProposalStatus, null, null,
+                DraftPreferencesInvalidCode);
+        var availableWeekdays = draft.AvailableWeekdays.Select(value => (DayOfWeek)value).ToHashSet();
+
+        if (!TryGetMixedSchedule(proposalSnapshot, availableWeekdays, out var scheduleSessions) ||
+            !TryGetStrengthSessions(proposalSnapshot.Sessions, scheduleSessions, availableWeekdays,
+                out var strengthSessions, out var assignments))
+        {
+            var reasonCode = ContainsUnrepresentableOtherActivity(proposalSnapshot)
+                ? UnsupportedOtherActivityCode
+                : MixedScheduleInvalidCode;
+            return new(LimitedStatus, null, null,
+                reasonCode);
+        }
+
+        var exerciseIds = strengthSessions.Values.SelectMany(session => session.Slots)
+            .Where(slot => slot.ExerciseId.HasValue).Select(slot => slot.ExerciseId!.Value).Distinct().ToArray();
+        var definitions = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
+            .Include(row => row.MuscleContributions).ThenInclude(row => row.MuscleGroup)
+            .Where(row => exerciseIds.Contains(row.Id)).ToListAsync(cancellationToken).ConfigureAwait(false);
+        var currentGroups = definitions.Where(row => row.MuscleContributions.Any(item => item.Fraction > 0) &&
+                row.MuscleContributions.Where(item => item.Fraction > 0).All(item => !string.IsNullOrWhiteSpace(item.MuscleGroup?.Name)))
+            .ToDictionary(row => row.Id, row => row.MuscleContributions.Where(item => item.Fraction > 0)
+                .Select(item => item.MuscleGroup!.Name).ToHashSet(StringComparer.OrdinalIgnoreCase));
+        if (exerciseIds.Length > 0 && (proposalSnapshot.SourceMuscleGroupsByExerciseId is null || exerciseIds.Any(id =>
+                !currentGroups.TryGetValue(id, out var current) ||
+                !proposalSnapshot.SourceMuscleGroupsByExerciseId.TryGetValue(id, out var original) ||
+                !current.SetEquals(original))))
+            return new(StaleStatus, proposal.PlanId, null,
+                ExerciseMuscleMetadataChangedCode);
+        var validationSessions = scheduleSessions.Select(session =>
+        {
+            IReadOnlySet<string>? groups = null;
+            if (IsStrengthActivity((WorkoutActivityType)session.ActivityTypeId) &&
+                strengthSessions.TryGetValue(session.Weekday, out var strength))
+                groups = strength.Slots.Where(slot => slot.ExerciseId.HasValue)
+                    .SelectMany(slot => currentGroups[slot.ExerciseId!.Value])
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            return new WorkoutScheduleValidationSession(session.Weekday,
+                (WorkoutActivityType)session.ActivityTypeId, session.IsHardSession, groups);
+        }).ToArray();
+        if (WorkoutScheduleValidationRule.Validate(validationSessions).Count != 0)
+            return new(LimitedStatus, null, null,
+                ProposalScheduleSafetyInvalidCode);
 
             var nowUtc = DateTime.UtcNow;
             var now = new DateTimeOffset(nowUtc);
@@ -308,7 +351,104 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                 previous.IsActive = false;
             }
             dbContext.WorkoutPlans.Add(plan);
+        var nowUtc = DateTime.UtcNow;
+        var now = new DateTimeOffset(nowUtc);
+        var today = WorkoutAccountCalendarRule.LocalDate(now, zone);
+        if (inputSnapshot.Request.LocalDate != today)
+            return new(StaleStatus, proposal.PlanId, null, PlanningDateChangedCode);
+        // Exercise logs can reach 100% before FinishSession, and legacy session
+        // completion timestamps can be client supplied. Credits are committed with
+        // verified completion and preserve the calendar date earned at that time.
+        var completedToday = await dbContext.WorkoutCompletionDayCredits.AsNoTracking()
+            .AnyAsync(row => row.UserId == userId && row.LocalDate == today, cancellationToken)
+            .ConfigureAwait(false);
+        var firstDate = WorkoutPlanStartDateRule.FindNextEligibleDate(now, zone, availableWeekdays, completedToday);
+        if (origin == AcceptanceOrigin.Automatic)
+        {
+            if (activePlanId is null || inputSnapshot.AutomaticStartDate is null ||
+                await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, userId, nowUtc, cancellationToken).ConfigureAwait(false) ||
+                await dbContext.WorkoutSessionLogs.AnyAsync(session => session.UserId == userId &&
+                    !session.IsDeleted && session.CompletedAt == null, cancellationToken).ConfigureAwait(false))
+                return new(StaleStatus, proposal.PlanId, null, PlanningInputsChangedSinceProposalCode);
+            var earliestScheduled = await FindNextScheduledDateAsync(userId, activePlanId.Value,
+                today, completedToday, cancellationToken).ConfigureAwait(false);
+            var expectedStart = planningState.SafetyRegenerationPending ? firstDate : earliestScheduled ?? firstDate;
+            if (expectedStart is null || inputSnapshot.AutomaticStartDate != expectedStart ||
+                !availableWeekdays.Contains(expectedStart.Value.DayOfWeek))
+                return new(StaleStatus, proposal.PlanId, null, PlanningDateChangedCode);
+            firstDate = expectedStart;
+        }
+        if (firstDate is null)
+            return new(LimitedStatus, null, null, NoEligibleWorkoutDayCode);
+        if (origin == AcceptanceOrigin.User && draft is not null)
+        {
+            var profile = await dbContext.UserProfiles.SingleAsync(
+                item => item.UserId == userId, cancellationToken).ConfigureAwait(false);
+            dbContext.UserProfileSnapshots.Add(new UserProfileSnapshotRecord
+            {
+                Id = Guid.CreateVersion7(), UserId = userId, SnapshotReason = "WorkoutPreferencesApply",
+                ProfileJson = JsonSerializer.Serialize(profile), CreatedAt = nowUtc
+            });
+            profile.PreferredWorkoutActivityTypes = string.Join(',', draft.ActivityTypes
+                .Select(value => ((WorkoutActivityType)value).ToString()).OrderBy(value => value, StringComparer.Ordinal));
+            profile.AvailableWorkoutWeekdaysJson = JsonSerializer.Serialize(draft.AvailableWeekdays
+                .Select(value => ((DayOfWeek)value).ToString()).OrderBy(value => value, StringComparer.Ordinal));
+            profile.ActivitySessionDurationsJson = JsonSerializer.Serialize(draft.ActivitySessionDurationsMinutes
+                .ToDictionary(pair => ((WorkoutActivityType)pair.Key).ToString(), pair => pair.Value, StringComparer.Ordinal));
+            profile.RequestedActivitySessionsPerWeekJson = JsonSerializer.Serialize((draft.RequestedSessionsPerWeek ??
+                new Dictionary<int, int>()).ToDictionary(pair => ((WorkoutActivityType)pair.Key).ToString(),
+                    pair => pair.Value, StringComparer.Ordinal));
+            profile.ExcludedStrengthExerciseIdsJson = JsonSerializer.Serialize((draft.ExcludedExerciseIds ??
+                new HashSet<int>()).OrderBy(value => value).ToArray());
+            if (draft.EquipmentLevel is not null) profile.EquipmentLevel = draft.EquipmentLevel;
+            profile.UpdatedAt = nowUtc;
+        }
+        var revisionId = Guid.CreateVersion7();
+        var plan = new WorkoutPlanRecord
+        {
+            Id = proposal.PlanId,
+            UserId = userId,
+            Name = MixedActivityPlanName,
+            IsActive = true,
+            CreatedAt = nowUtc
+        };
+        if (activePlanId is { } priorPlanId)
+        {
+            var previous = await dbContext.WorkoutPlans.SingleAsync(
+                item => item.UserId == userId && item.Id == priorPlanId, cancellationToken)
+                .ConfigureAwait(false);
+            previous.IsActive = false;
+        }
+        dbContext.WorkoutPlans.Add(plan);
 
+        var sessionsByWeekday = scheduleSessions
+            .GroupBy(session => session.Weekday)
+            .ToDictionary(group => group.Key,
+                group => group.OrderBy(session => session.ActivityTypeId).ToArray());
+        var weekStart = MondayOf(firstDate.Value);
+        var planDays = new List<WorkoutDayRecord>(OverviewScheduleWeeks *
+            (DaysPerWeek + scheduleSessions.Length));
+        var exercises = new List<WorkoutDayExerciseRecord>();
+        for (var weekIndex = 0; weekIndex < OverviewScheduleWeeks; weekIndex++)
+        for (var dayOffset = 0; dayOffset < DaysPerWeek; dayOffset++)
+        {
+            var date = weekStart.AddDays(weekIndex * DaysPerWeek + dayOffset);
+            if (date < firstDate.Value) continue;
+            var weekday = date.DayOfWeek;
+            if (!sessionsByWeekday.TryGetValue(weekday, out var sessionsForDay))
+            {
+                planDays.Add(new WorkoutDayRecord
+                {
+                    Id = Guid.CreateVersion7(),
+                    UserId = userId,
+                    WorkoutPlanId = plan.Id,
+                    DayOfWeek = (int)weekday,
+                    WorkoutType = nameof(WorkoutType.Rest),
+                    Name = RestDayName,
+                    WeekIndex = weekIndex,
+                    Date = date
+                });
+                continue;
             var sessionsByWeekday = scheduleSessions
                 .GroupBy(session => session.Weekday)
                 .ToDictionary(group => group.Key,
@@ -338,7 +478,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                     });
                     continue;
 
-                }
+            }
 
                 foreach (var scheduledSession in sessionsForDay)
                 {
@@ -360,10 +500,27 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                         Date = date,
                         PlannedMainDurationMinutes = scheduledSession.DurationMinutes
                     });
+            foreach (var scheduledSession in sessionsForDay)
+            {
+                var activity = (WorkoutActivityType)scheduledSession.ActivityTypeId;
+                var dayId = Guid.CreateVersion7();
+                planDays.Add(new WorkoutDayRecord
+                {
+                    Id = dayId,
+                    UserId = userId,
+                    WorkoutPlanId = plan.Id,
+                    DayOfWeek = (int)weekday,
+                    WorkoutType = ToWorkoutType(activity),
+                    ActivityTypeId = scheduledSession.ActivityTypeId,
+                    Name = ActivityName(activity),
+                    WeekIndex = weekIndex,
+                    Date = date,
+                    PlannedMainDurationMinutes = scheduledSession.DurationMinutes
+                });
 
-                    if (!IsStrengthActivity(activity) ||
-                        !strengthSessions.TryGetValue(weekday, out var strengthSession))
-                        continue;
+                if (!IsStrengthActivity(activity) ||
+                    !strengthSessions.TryGetValue(weekday, out var strengthSession))
+                    continue;
 
                     foreach (var slot in strengthSession.Slots.Where(slot => slot.ExerciseId.HasValue &&
                                                                       slot.Sets is >= MinimumExerciseSetCount &&
@@ -381,29 +538,48 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                         });
                 }
             }
+                foreach (var slot in strengthSession.Slots.Where(slot => slot.ExerciseId.HasValue &&
+                                                                  slot.Sets is >= MinimumExerciseSetCount &&
+                                                                  slot.MinimumRepetitions is >= MinimumRepetitionCount))
+                    exercises.Add(new WorkoutDayExerciseRecord
+                    {
+                        Id = Guid.CreateVersion7(),
+                        UserId = userId,
+                        WorkoutDayId = dayId,
+                        ExerciseId = slot.ExerciseId!.Value,
+                        PlanningTemplateId = strengthSession.TemplateId,
+                        PlanningTemplateVersion = strengthSession.TemplateVersion,
+                        PlanningSlotId = slot.SlotId,
+                        PlanningSessionIndex = strengthSession.SessionIndex,
+                        Sets = slot.Sets!.Value,
+                        Reps = slot.MinimumRepetitions!.Value,
+                        IsOptional = !slot.IsRequired
+                    });
+            }
+        }
 
-            dbContext.WorkoutDays.AddRange(planDays);
-            dbContext.WorkoutDayExercises.AddRange(exercises);
-            dbContext.WorkoutPlanRevisionsV02.Add(new WorkoutPlanRevisionV02Record
-            {
-                Id = revisionId,
-                UserId = userId,
-                PlanId = plan.Id,
-                RevisionNumber = InitialRevisionNumber,
-                SourceProposalId = proposal.Id,
-                RulesetVersion = proposal.RulesetVersion,
-                TrainingPolicyVersion = proposal.TrainingPolicyVersion,
-                PlanJson = JsonSerializer.Serialize(new AcceptedPlanSnapshot(
-                    proposalSnapshot, assignments, scheduleSessions, OverviewScheduleWeeks), JsonOptions),
-                InputSnapshotJson = proposal.InputSnapshotJson,
-                AcceptedAtUtc = nowUtc
-            });
-            proposal.Status = AcceptedStatus;
-            proposal.DecidedAtUtc = nowUtc;
-            proposal.AcceptedRevisionId = revisionId;
-            proposal.ConcurrencyVersion++;
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            return new AcceptStrengthPlanProposalResultV020(AcceptedStatus, plan.Id, revisionId, null);
+        dbContext.WorkoutDays.AddRange(planDays);
+        dbContext.WorkoutDayExercises.AddRange(exercises);
+        dbContext.WorkoutPlanRevisionsV02.Add(new WorkoutPlanRevisionV02Record
+        {
+            Id = revisionId,
+            UserId = userId,
+            PlanId = plan.Id,
+            RevisionNumber = InitialRevisionNumber,
+            SourceProposalId = proposal.Id,
+            RulesetVersion = proposal.RulesetVersion,
+            TrainingPolicyVersion = proposal.TrainingPolicyVersion,
+            PlanJson = JsonSerializer.Serialize(new AcceptedPlanSnapshot(
+                proposalSnapshot, assignments, scheduleSessions, OverviewScheduleWeeks), JsonOptions),
+            InputSnapshotJson = proposal.InputSnapshotJson,
+            AcceptedAtUtc = nowUtc
+        });
+        proposal.Status = AcceptedStatus;
+        proposal.DecidedAtUtc = nowUtc;
+        proposal.AcceptedRevisionId = revisionId;
+        proposal.ConcurrencyVersion++;
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return new AcceptStrengthPlanProposalResultV020(AcceptedStatus, plan.Id, revisionId, null);
     }
 
     private async Task<int?> FindProvenSameDayPromotionOrderAsync(Guid userId, Guid activePlanId,
@@ -443,7 +619,20 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
     private static Task<AcceptStrengthPlanProposalResultV020> FinishAsync(
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction,
         AcceptStrengthPlanProposalResultV020 result, CancellationToken cancellationToken)
+    internal async Task<DateOnly?> FindNextScheduledDateAsync(Guid userId, Guid activePlanId,
+        DateOnly today, bool completedToday, CancellationToken cancellationToken)
     {
+        return await dbContext.WorkoutDays.AsNoTracking()
+                .Where(day => day.UserId == userId && day.WorkoutPlanId == activePlanId &&
+                    day.Date != null && day.Date >= today && day.WorkoutType != nameof(WorkoutType.Rest) &&
+                    !day.IsRemovedByReadiness && !day.IsRemovedByUserAdjustment && !day.IsRemovedBySafety &&
+                    !(completedToday && day.Date == today) &&
+                    !dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId &&
+                        session.PlannedWorkoutDayId == day.Id && session.CompletedAt != null) &&
+                    !dbContext.WorkoutCompletionDayCredits.Any(credit => credit.UserId == userId &&
+                        credit.SourceWorkoutLogId != null && dbContext.WorkoutLogs.Any(log =>
+                            log.UserId == userId && log.Id == credit.SourceWorkoutLogId && log.WorkoutDayId == day.Id)))
+                .OrderBy(day => day.Date).Select(day => day.Date).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         return Task.FromResult(result);
     }
 
@@ -605,7 +794,9 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         StrengthPlanPreviewRequestV020 Request,
         int ProfileVersion,
         Guid? BaselineActivePlanId,
-        Guid? BaselineRevisionId);
+        Guid? BaselineRevisionId,
+        bool AutomaticOrigin = false,
+        DateOnly? AutomaticStartDate = null);
 
     private sealed record ProposalSnapshot(
         string PolicyId,

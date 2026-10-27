@@ -45,6 +45,43 @@ public sealed class CloudStrengthPlanProposalResponseTests
         Assert.Contains(TimingLimitation, result.Preview.LimitationCodes);
     }
 
+    [Fact]
+    public async Task ApplyServerFailureIsReportedAsConnectionFailure()
+    {
+        using var httpClient = new HttpClient(new ServerFailureHandler())
+        {
+            BaseAddress = new Uri(ApiBaseAddress)
+        };
+        var apiClient = new MuscleCutiesBackendApiClient(
+            httpClient, new EmptyTokenStore(), null!, new OnlineAuthorityGate());
+        var store = new CloudStrengthPlanProposalStoreV020(apiClient);
+        var request = new AcceptStrengthPlanProposalRequestV020(Guid.NewGuid());
+
+        await Assert.ThrowsAsync<HttpRequestException>(() => store.AcceptAsync(request, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task OfflineApplyIsReportedAsConnectionFailure()
+    {
+        using var httpClient = new HttpClient(new ServerFailureHandler())
+        {
+            BaseAddress = new Uri(ApiBaseAddress)
+        };
+        var apiClient = new MuscleCutiesBackendApiClient(
+            httpClient, new EmptyTokenStore(), null!, new OfflineAuthorityGate());
+        var store = new CloudStrengthPlanProposalStoreV020(apiClient);
+        var request = new AcceptStrengthPlanProposalRequestV020(Guid.NewGuid());
+
+        await Assert.ThrowsAsync<HttpRequestException>(() => store.AcceptAsync(request, CancellationToken.None));
+    }
+
+    private sealed class ServerFailureHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+    }
+
     private sealed class StaticResponseHandler(string responseBody) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(
@@ -74,5 +111,15 @@ public sealed class CloudStrengthPlanProposalResponseTests
         public void SetAuthorityMode(CloudAuthorityMode mode) { }
         public void SetNetworkOnline(bool isOnline) { }
         public OfflineWriteCheckResult EvaluateWriteAllowed(string operationName) => new(true, null, null);
+    }
+
+    private sealed class OfflineAuthorityGate : ICloudAuthorityGate
+    {
+        public int AuthorityVersion => 1;
+        public CloudAuthorityMode CurrentMode => CloudAuthorityMode.ServerAuthoritativeCutover;
+        public bool IsNetworkOnline => false;
+        public void SetAuthorityMode(CloudAuthorityMode mode) { }
+        public void SetNetworkOnline(bool isOnline) { }
+        public OfflineWriteCheckResult EvaluateWriteAllowed(string operationName) => new(false, null, null);
     }
 }

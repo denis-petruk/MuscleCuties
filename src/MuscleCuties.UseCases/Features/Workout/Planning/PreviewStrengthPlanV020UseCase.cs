@@ -11,6 +11,31 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         StrengthPlanPreviewRequestV020 request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (userId == Guid.Empty || (request.DraftPreferences is { } draft &&
+            (!WorkoutPreferencesRule.IsValid(draft.ActivityTypes, draft.AvailableWeekdays,
+                draft.ActivitySessionDurationsMinutes, draft.RequestedSessionsPerWeek) ||
+             !WorkoutPreferencesRule.IsValidEquipmentLevel(draft.EquipmentLevel))))
+            return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null));
+
+        var sourceData = await source.LoadAsync(userId, cancellationToken).ConfigureAwait(false);
+        return EvaluateLoadedSource(userId, request, sourceData);
+    }
+
+    /// <summary>Evaluates the canonical preview using source data loaded by the caller.</summary>
+    public static StrengthPlanPreviewResponseV020 EvaluateLoadedSource(Guid userId,
+        StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewSourceV020? sourceData) =>
+        EvaluateLoadedSourceCore(userId, request, sourceData, null);
+
+    /// <summary>Evaluates an automatic revision while retaining its verified applied strength style.</summary>
+    public static StrengthPlanPreviewResponseV020 EvaluateAutomaticLoadedSource(Guid userId,
+        StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewSourceV020? sourceData,
+        WorkoutActivityDto currentStyle) => EvaluateLoadedSourceCore(userId, request, sourceData, currentStyle);
+
+    private static StrengthPlanPreviewResponseV020 EvaluateLoadedSourceCore(Guid userId,
+        StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewSourceV020? sourceData,
+        WorkoutActivityDto? automaticStyle)
+    {
+        ArgumentNullException.ThrowIfNull(request);
         if (userId == Guid.Empty)
             return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null));
         var sourceData = await source.LoadAsync(userId, cancellationToken).ConfigureAwait(false);
@@ -37,6 +62,11 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
                 ExcludedExerciseIds = draft.ExcludedExerciseIds?.ToHashSet()
             };
         }
+        if (userId == Guid.Empty)
+            return StrengthPlanPreviewMapperV020.ToResponse(
+                StrengthPlanPreviewRule.Evaluate(null, null));
+
+
         if (sourceData is not null)
         {
             if (sourceData.SavedAnswers is { } savedAnswers)
@@ -99,7 +129,18 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         var requiresReducedVolume = false;
         var multipleStylesIdentified = false;
 
-        if (selectedStrengthStyles.Length > 1)
+        if (automaticStyle is { } retainedStyle)
+        {
+            var coreStyle = WorkoutActivityContractMapper.ToCore(retainedStyle);
+            if (!StrengthStyleSelectionRule.IsStrengthStyle(coreStyle) || !selectedStrengthStyles.Contains(coreStyle))
+                return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null));
+            chosenStrengthActivity = retainedStyle;
+            choices = choices with { Activity = coreStyle };
+            request = request with { Activity = retainedStyle };
+            result = StrengthPlanPreviewRule.EvaluateDirect(choices, planningData);
+            requiresReducedVolume = result.RequiresReducedVolumeAcknowledgment;
+        }
+        else if (selectedStrengthStyles.Length > 1)
         {
             var selectionResult = StrengthStyleSelectionRule.Select(choices, planningData);
             if (selectionResult.RequiresUserChoice)

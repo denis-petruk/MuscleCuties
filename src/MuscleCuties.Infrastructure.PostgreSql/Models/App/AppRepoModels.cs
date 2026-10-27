@@ -275,6 +275,27 @@ public sealed class WorkoutInjuryLogRecord : ITenantRecord
     public DateTime CreatedAt { get; set; }
 }
 
+// An episode keeps its identity across clearance and survives deletion of its source log.
+public sealed class WorkoutInjuryEpisodeRecord : ITenantRecord
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public Guid SourceInjuryId { get; set; }
+    public int SiteFlag { get; set; }
+    public DateTime RecordedAtUtc { get; set; }
+    public DateOnly? ClearedDate { get; set; }
+    public bool SourceDeleted { get; set; }
+}
+
+public sealed class WorkoutInjuryPrescriptionLinkRecord : ITenantRecord
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public Guid WorkoutDayExerciseId { get; set; }
+    public Guid InjuryEpisodeId { get; set; }
+    public int OriginalExerciseId { get; set; }
+}
+
 public sealed class WorkoutPlanRecord : ITenantRecord
 {
     public Guid Id { get; set; }
@@ -350,6 +371,13 @@ public sealed class WorkoutDayExerciseRecord : ITenantRecord
     public Guid UserId { get; set; }
     public Guid WorkoutDayId { get; set; }
     public int ExerciseId { get; set; }
+    public string? PlanningTemplateId { get; set; }
+    public string? PlanningTemplateVersion { get; set; }
+    public string? PlanningSlotId { get; set; }
+    public int? PlanningSessionIndex { get; set; }
+    // Null for legacy or non-injury prescriptions; never infer provenance from a replacement.
+    public int? InjuryOriginalExerciseId { get; set; }
+    public DateOnly? InjuryRestorationRequiredFromDate { get; set; }
     public string? PlanningSlotId { get; set; }
     public Guid? OriginWorkoutDayExerciseId { get; set; }
     public int Sets { get; set; }
