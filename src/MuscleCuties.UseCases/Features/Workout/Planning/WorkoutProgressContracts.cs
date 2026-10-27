@@ -10,9 +10,3 @@ public interface IWorkoutProgressStore
     Task<WorkoutProgressResponse> AcceptForegroundTimeZoneAsync(Guid userId, WorkoutForegroundTimeZoneRequest request,
         CancellationToken cancellationToken);
 }
-
-public interface IWorkoutPlanReconciler
-{
-    Task ReconcileAsync(Guid userId, CancellationToken cancellationToken = default);
-}
-

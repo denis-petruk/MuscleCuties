@@ -1,0 +1,7 @@
+# Workout reconciliation host
+
+This executable handles one page per invocation; it does not schedule itself. Deploy and invoke it only after separately authorized migration, credential provisioning and scheduler configuration. Set `MUSCLECUTIES_WORKOUT_DISCOVERY_CONNECTION` to a login inheriting only the restricted `musclecuties_workout_dispatch` role and `MUSCLECUTIES_WORKOUT_TENANT_CONNECTION` to a separate tenant-scoped application login. Both must connect to the same database with `SslMode=VerifyFull`; the discovery pool needs at least two connections. Supply secrets through the deployment's secret mechanism, not command-line arguments or source files.
+
+Invoke the compiled executable on a recurring schedule. A cursor row lock serializes overlapping invocations. Each successful page advances the durable cursor; a crash before commit causes safe replay. Account failures return a nonzero exit code for alerting but advance the cursor, and pending accounts are retried on the next complete scan. The scheduler must continue invoking after failures. A permanently deferred account remains pending and is revisited; it must not block other accounts.
+
+The credential checks are defense in depth, not a replacement for role grants and isolation review. Verify actual role membership, privileges, TLS, concurrent execution, rollback, retries and tenant isolation against PostgreSQL before enabling the scheduler. Do not run migrations automatically from this host.
