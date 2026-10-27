@@ -195,7 +195,10 @@ public static class StrengthTemplateResolver
                     : new StrengthSlotPrescription(null, null, null, null, null);
                 var completeReview = hasReviewedSlot && reviewedSlotExerciseIds is { Count: > 0 } &&
                     reviewedSlotExerciseIds.All(id => matched.Any(entry => entry.Candidate.ExerciseId == id &&
-                        entry.MetadataGaps is { Count: 0 } && entry.Candidate.SupportedTimingMethods is { Count: > 0 }));
+                        entry.MetadataGaps is { Count: 0 } && entry.Candidate.SupportedTimingMethods is { Count: > 0 })) &&
+                    eligibility.Decisions.All(decision => !decision.Reasons.Any(reason =>
+                        reason is ExerciseEligibilityReason.MissingCatalogMetadata or
+                            ExerciseEligibilityReason.UnreviewedCatalogMetadata));
                 chosen.Add(new StrengthSlotSelection(slot.SlotId, slot.MovementSlot, slot.IsRequired,
                     RoleFor(slot, input.Activity), IsHeavyMain(slot, input.Activity), null, null, null,
                     PrescriptionRule(input.Activity, slot), prescription.Sets,

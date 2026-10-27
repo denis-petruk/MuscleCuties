@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
@@ -10,6 +11,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 
@@ -184,6 +186,9 @@ public sealed class PostgresWorkoutActiveSessionStore(
                 if (command.UnplannedActivity is { } unplanned &&
                     (!Enum.IsDefined(unplanned) || unplanned == WorkoutActivityDto.RestDay || command.PlannedWorkoutDayId is not null))
                     throw new InvalidOperationException("The unplanned activity is invalid.");
+                // An unplanned HIIT request has no canonical prescription proving eligibility.
+                if (command.UnplannedActivity == WorkoutActivityDto.Hiit)
+                    throw new WorkoutActivityNoLongerSafeException();
                 WorkoutAccountPlanningStateRecord? planningState = null;
                 DateOnly? localDate = null;
                 string? plannedPrescriptionJson = null;
@@ -200,13 +205,18 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     planningState = await context.WorkoutAccountPlanningStates.AsNoTracking()
                         .SingleOrDefaultAsync(row => row.UserId == userId, ct).ConfigureAwait(false);
                     if (planningState?.TimeZoneId is not { } zoneId)
+                    {
+                        if (plannedDay.ActivityTypeId == (int)WorkoutActivityType.Hiit)
+                            throw new WorkoutHiitHistoryConfirmationRequiredException();
                         throw new InvalidOperationException("Establish the account timezone before starting a workout.");
-                    localDate = WorkoutAccountCalendarRule.LocalDate(timeProvider.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById(zoneId));
+                    }
+                    try { localDate = WorkoutAccountCalendarRule.LocalDate(timeProvider.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById(zoneId)); }
+                    catch (TimeZoneNotFoundException) when (plannedDay.ActivityTypeId == (int)WorkoutActivityType.Hiit)
+                    { throw new WorkoutHiitHistoryConfirmationRequiredException(); }
+                    catch (InvalidTimeZoneException) when (plannedDay.ActivityTypeId == (int)WorkoutActivityType.Hiit)
+                    { throw new WorkoutHiitHistoryConfirmationRequiredException(); }
                     if (plannedDay.Date != localDate)
                         throw new InvalidOperationException("The planned workout is not scheduled for today.");
-                    if (await context.WorkoutSessionLogs.AnyAsync(row => row.UserId == userId && !row.IsDeleted &&
-                        row.CompletedAt == null && row.PlannedWorkoutDayId != null, ct).ConfigureAwait(false))
-                        throw new InvalidOperationException("An active workout is already in progress.");
                     var plannedExercises = await context.WorkoutDayExercises.AsNoTracking()
                         .Where(row => row.UserId == userId && row.WorkoutDayId == plannedDay.Id && !row.IsRemovedByReadiness)
                         .OrderBy(row => row.Id).ToListAsync(ct).ConfigureAwait(false);
@@ -215,6 +225,38 @@ public sealed class PostgresWorkoutActiveSessionStore(
                         plannedExercises.Select(PlannedExerciseSnapshot.FromRecord).ToArray()).Serialize();
                 }
 
+                if (plannedDay?.ActivityTypeId == (int)WorkoutActivityType.Hiit || command.UnplannedActivity == WorkoutActivityDto.Hiit)
+                {
+                    planningState ??= await context.WorkoutAccountPlanningStates.AsNoTracking()
+                        .SingleOrDefaultAsync(row => row.UserId == userId, ct).ConfigureAwait(false);
+                    SavedActivityAnswersDto? answers = null;
+                    try
+                    {
+                        if (!string.IsNullOrWhiteSpace(planningState?.AnswersJson))
+                            answers = JsonSerializer.Deserialize<SavedActivityAnswersDto>(planningState.AnswersJson,
+                                new JsonSerializerOptions(JsonSerializerDefaults.Web));
+                        if (planningState?.TimeZoneId is not { } currentZone || answers?.HiitCapture is not { } capture ||
+                            answers.HiitEligibilityEvidence?.PreviousFourWeeksAerobicEvidence is not { } weeks ||
+                            weeks.Count != ActivityPrescriptionRule.HiitRequiredPriorWeeks ||
+                            weeks.Any(week => week is null || week.QualifyingManageableAerobicSessionCount <
+                                ActivityPrescriptionRule.HiitRequiredAerobicSessionsPerWeek) ||
+                            !Enumerable.Range(1, ActivityPrescriptionRule.HiitRequiredPriorWeeks)
+                                .All(offset => weeks.Count(week => week.WeekOffsetFromCurrent == offset) == 1) ||
+                            answers.HiitUnderlyingCardioActivity is null ||
+                            !HiitEvidenceCaptureRule.IsCaptureCurrent(capture.LocalDate, capture.TimeZoneVersion,
+                                WorkoutAccountCalendarRule.LocalDate(timeProvider.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById(currentZone)),
+                                planningState.TimeZoneVersion))
+                            throw new WorkoutHiitHistoryConfirmationRequiredException();
+                    }
+                    catch (JsonException) { throw new WorkoutHiitHistoryConfirmationRequiredException(); }
+                    catch (TimeZoneNotFoundException) { throw new WorkoutHiitHistoryConfirmationRequiredException(); }
+                    catch (InvalidTimeZoneException) { throw new WorkoutHiitHistoryConfirmationRequiredException(); }
+                }
+
+                if (plannedDay is not null && await context.WorkoutSessionLogs.AnyAsync(row => row.UserId == userId && !row.IsDeleted &&
+                    row.CompletedAt == null && row.PlannedWorkoutDayId != null, ct).ConfigureAwait(false))
+                    throw new InvalidOperationException("An active workout is already in progress.");
+
                 session = new WorkoutSessionLogRecord
                 {
                     Id = command.SessionId,
@@ -222,8 +264,8 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     WorkoutName = plannedDay?.Name ?? command.WorkoutName,
                     PlannedWorkoutDayId = plannedDay?.Id,
                     UnplannedActivityType = command.UnplannedActivity is { } activity ? (int)activity : null,
-                    PlannedTimeZoneId = planningState?.TimeZoneId,
-                    PlannedTimeZoneVersion = planningState?.TimeZoneVersion,
+                    PlannedTimeZoneId = plannedDay is null ? null : planningState?.TimeZoneId,
+                    PlannedTimeZoneVersion = plannedDay is null ? null : planningState?.TimeZoneVersion,
                     PlannedLocalDate = localDate,
                     PlannedPrescriptionSnapshotJson = plannedPrescriptionJson,
                     StartedAt = plannedDay is null ? DateTime.SpecifyKind(command.StartedAtUtc, DateTimeKind.Utc) : nowUtc,

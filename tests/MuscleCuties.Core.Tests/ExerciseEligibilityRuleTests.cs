@@ -171,7 +171,7 @@ public sealed class ExerciseEligibilityRuleTests
     public void RecentlyClearedSiteStillBlocksContraindicatedExercise()
     {
         var cleared = DateOnly.Parse("2026-10-01");
-        var duringWindow = DateOnly.Parse("2026-10-08");
+        var duringWindow = DateOnly.Parse("2026-10-07");
         var injury = InjuryFlag.Knee;
         var restrict = WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, cleared, duringWindow);
         var context = Context() with { ActiveInjuryFlags = restrict ? injury : InjuryFlag.None };

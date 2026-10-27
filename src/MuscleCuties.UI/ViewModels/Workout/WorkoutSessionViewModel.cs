@@ -13,12 +13,14 @@ using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Workout.Session;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
 public enum SessionScreen { DayOverview, ActivityIntro, ExerciseFlow, ActivitySummary }
 
 public enum CelebrationType { None, SmallCheckmark, MediumFirstTime, BigPR }
+public enum HiitConfirmationChoice { Cancel, Confirm, Update }
 
 public sealed record SessionExerciseProgress(int Index, string Name, bool IsLogged, bool IsCurrent, bool IsSkipped)
 {
@@ -38,6 +40,9 @@ public partial class WorkoutSessionViewModel : ObservableObject
     private readonly HashSet<int> _prIds = [];
     private readonly Dictionary<int, WorkoutExerciseLogDto> _savedLogs = [];
     private readonly IWorkoutSessionActionUseCase _session;
+    private readonly IStrengthPlanProposalClientV020? _planning;
+    private readonly Func<SavedActivityAnswersDto, Task<HiitConfirmationChoice>>? _confirmHiitAsync;
+    private readonly Func<Task>? _updateHiitAsync;
     private readonly HashSet<int> _skippedIds = [];
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasNoActivities), nameof(HasActivityChoices))]
@@ -138,11 +143,17 @@ public partial class WorkoutSessionViewModel : ObservableObject
     public WorkoutSessionViewModel(
         IWorkoutSessionActionUseCase session,
         ICycleOverviewUseCase cycleOverview,
-        Func<string, Task> navigateAsync)
+        Func<string, Task> navigateAsync,
+        IStrengthPlanProposalClientV020? planning = null,
+        Func<SavedActivityAnswersDto, Task<HiitConfirmationChoice>>? confirmHiitAsync = null,
+        Func<Task>? updateHiitAsync = null)
     {
         _session = session;
         _cycleOverview = cycleOverview;
         _navigateAsync = navigateAsync;
+        _planning = planning;
+        _confirmHiitAsync = confirmHiitAsync;
+        _updateHiitAsync = updateHiitAsync;
     }
 
     public bool IsDayOverview => CurrentScreen == SessionScreen.DayOverview;
@@ -433,6 +444,11 @@ public partial class WorkoutSessionViewModel : ObservableObject
             ErrorText = "Workout_Session_ActivityNoLongerSafe";
             return;
         }
+        catch (WorkoutHiitHistoryConfirmationRequiredException)
+        {
+            await ConfirmHiitHistoryAsync();
+            return;
+        }
         catch (WorkoutTimingIntervalExpiredException)
         {
             ErrorText = "Workout_Session_TimingExpired";
@@ -459,6 +475,48 @@ public partial class WorkoutSessionViewModel : ObservableObject
         }
         CurrentScreen = SessionScreen.ExerciseFlow;
         SetCurrentExercise(0);
+    }
+
+    private async Task ConfirmHiitHistoryAsync()
+    {
+        try
+        {
+            if (_planning is null || _confirmHiitAsync is null)
+            {
+                ErrorText = "Workout_Session_HiitConfirmationRequired";
+                return;
+            }
+            var saved = await _planning.ReadAnswersAsync();
+            var choice = await _confirmHiitAsync(saved);
+            if (choice == HiitConfirmationChoice.Update)
+            {
+                if (_updateHiitAsync is not null) await _updateHiitAsync();
+                return;
+            }
+            if (choice != HiitConfirmationChoice.Confirm || saved.HiitEligibilityEvidence is null ||
+                saved.HiitUnderlyingCardioActivity is null)
+                return;
+            var challenge = await _planning.IssueHiitCaptureChallengeAsync();
+            await _planning.SaveAnswersAsync(new SaveActivityAnswersRequest(saved.Version,
+                saved.ActivityEligibilityEvidence, saved.HiitEligibilityEvidence)
+            {
+                HiitUnderlyingCardioActivity = saved.HiitUnderlyingCardioActivity,
+                HiitCaptureChallengeId = challenge.ChallengeId
+            });
+            ErrorText = "Workout_Session_HiitConfirmedRetry";
+        }
+        catch (WorkoutPreviewAlreadyOpenException)
+        {
+            ErrorText = "Workout_Session_HiitPreviewOpen";
+        }
+        catch (WorkoutPlanningInputsChangedException)
+        {
+            ErrorText = "Workout_Session_HiitAnswersChanged";
+        }
+        catch (Exception)
+        {
+            ErrorText = "Workout_Session_ConnectionRetry";
+        }
     }
 
     [RelayCommand]

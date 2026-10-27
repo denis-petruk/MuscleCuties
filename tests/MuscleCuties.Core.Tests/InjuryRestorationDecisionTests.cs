@@ -11,7 +11,7 @@ public sealed class InjuryRestorationDecisionTests
         var first = Guid.NewGuid();
         var second = Guid.NewGuid();
         var latestClearance = new DateOnly(2026, 2, 4);
-        var requiredFrom = new DateOnly(2026, 2, 12);
+        var requiredFrom = new DateOnly(2026, 2, 11);
         var input = new InjuryRestorationInput(latestClearance, true, true, true, true,
             [first, second], [new(first, new DateOnly(2026, 2, 1)), new(second, latestClearance)]);
         var optional = InjuryRestorationRule.Decide(input);

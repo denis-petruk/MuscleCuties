@@ -116,6 +116,24 @@ public sealed class DeloadTriggerRuleTests
     }
 
     [Fact]
+    public void Evaluate_MissingOrDuplicateWeek_DoesNotTreatRecordsAsConsecutive()
+    {
+        foreach (var previousWeek in new[] { 1, 3 })
+        {
+            var history = new List<WeeklyPerformanceAndRecoveryRecord>
+            {
+                new(previousWeek, CompoundUnderperformed: true, ExplicitPoorRecovery: true),
+                new(3, CompoundUnderperformed: true, ExplicitPoorRecovery: true)
+            };
+
+            var result = DeloadTriggerRule.Evaluate(history);
+
+            Assert.False(result.IsDeloadTriggered);
+            Assert.Equal(1, result.ConsecutiveTriggerWeeks);
+        }
+    }
+
+    [Fact]
     public void CalculateDeloadSets_ReducesWorkingSetsClampedToMinimumOne()
     {
         Assert.Equal(6, DeloadTriggerRule.CalculateDeloadSets(10, 0.40m));

@@ -8,12 +8,12 @@ public sealed class WorkoutInjuryClearanceRuleTests
     private const int LastDayBeforeRequiredOffset = -1;
     private const int LaterClearanceOffset = 2;
     private static readonly DateOnly ClearanceDate = DateOnly.Parse("2026-10-01");
-    private static readonly DateOnly LastOptionalDate = DateOnly.Parse("2026-10-08");
-    private static readonly DateOnly RequiredDate = DateOnly.Parse("2026-10-09");
+    private static readonly DateOnly LastOptionalDate = DateOnly.Parse("2026-10-07");
+    private static readonly DateOnly RequiredDate = DateOnly.Parse("2026-10-08");
     private static readonly DateOnly DelayedRestorationDate = DateOnly.Parse("2026-10-20");
 
     [Fact]
-    public void ClearanceDayAndSevenFullFollowingDaysAreOptional()
+    public void ClearanceDayThroughDaySevenAreOptionalAndDayEightIsRequired()
     {
         Assert.Equal(RequiredDate, WorkoutInjuryClearanceRule.RequiredFromLocalDate(ClearanceDate));
         Assert.True(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(ClearanceDate, ClearanceDate));
@@ -39,7 +39,7 @@ public sealed class WorkoutInjuryClearanceRuleTests
     public void CalendarWindowCrossesLeapDayWithoutRestarting()
     {
         var cleared = DateOnly.Parse("2028-02-26");
-        var requiredFrom = DateOnly.Parse("2028-03-05");
+        var requiredFrom = DateOnly.Parse("2028-03-04");
         Assert.Equal(requiredFrom, WorkoutInjuryClearanceRule.RequiredFromLocalDate(cleared));
         Assert.True(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(cleared, requiredFrom.AddDays(LastDayBeforeRequiredOffset)));
         Assert.False(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(cleared, requiredFrom));
@@ -53,7 +53,7 @@ public sealed class WorkoutInjuryClearanceRuleTests
         Assert.Equal(InjuryClearanceRestorationDisposition.RestoreOptional,
             WorkoutInjuryClearanceRule.EvaluateRestoration(false, true, episodes, RequiredDate));
         Assert.Equal(InjuryClearanceRestorationDisposition.RestoreRequired,
-            WorkoutInjuryClearanceRule.EvaluateRestoration(false, true, episodes, laterClearance.AddDays(WorkoutInjuryClearanceRule.FollowingMidnightOffsetDays)));
+            WorkoutInjuryClearanceRule.EvaluateRestoration(false, true, episodes, laterClearance.AddDays(WorkoutInjuryClearanceRule.OptionalCalendarDaysIncludingClearance)));
         Assert.Equal(InjuryClearanceRestorationDisposition.RestoreOptional,
             WorkoutInjuryClearanceRule.EvaluateRestoration(true, true, episodes, DelayedRestorationDate));
         Assert.Equal(InjuryClearanceRestorationDisposition.Blocked,

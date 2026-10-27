@@ -19,6 +19,16 @@ public static partial class UiTextCatalog
         English["Workout_Overview_OrderedTitleFormat"] = "Order {0} · {1}";
         English["Workout_Overview_InProgressExplanation"] = "This workout was already started. Your current plan is shown below.";
         English["Workout_Session_ConnectionRetry"] = "Connection error. Please try again.";
+        English["Workout_Session_HiitConfirmationRequired"] = "Review your HIIT history before starting.";
+        English["Workout_Session_HiitConfirmedRetry"] = "History confirmed. Tap start again.";
+        English["Workout_Session_HiitConfirmationSummary"] = "Confirm these answers still apply to the four weeks before today: {0}; consistent weeks: {1}; average sessions per week: {2}; last session: {3}; weekly counts: {4}; screening or clearance: {5}.";
+        English["Workout_Session_HiitAnswerYes"] = "Yes";
+        English["Workout_Session_HiitAnswerNo"] = "No";
+        English["Workout_Session_HiitConfirm"] = "Confirm answers";
+        English["Workout_Session_HiitUpdate"] = "Update answers";
+        English["Workout_Session_HiitCancel"] = "Cancel";
+        English["Workout_Session_HiitPreviewOpen"] = "A plan preview is open. Close it or take it over in plan setup, then retry HIIT.";
+        English["Workout_Session_HiitAnswersChanged"] = "Your workout answers changed. Review them in plan setup, then retry HIIT.";
         English["Workout_Session_StartFailed"] = "This activity could not be started. Please try again.";
         English["Workout_Session_FinishFailed"] = "This activity could not be finished. Your saved entries are unchanged.";
         English["Workout_Session_AbandonFailed"] = "This activity could not be abandoned. Please try again.";

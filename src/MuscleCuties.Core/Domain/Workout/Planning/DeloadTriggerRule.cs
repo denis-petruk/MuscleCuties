@@ -8,6 +8,7 @@ namespace MuscleCuties.Core.Domain.Workout.Planning;
 public static class DeloadTriggerRule
 {
     public const int MinimumConsecutiveWeeksForDeload = 2;
+    public const int ConsecutiveWeekIndexDifference = 1;
     public const decimal MinDeloadSetReductionFraction = 0.30m;
     public const decimal MaxDeloadSetReductionFraction = 0.50m;
     public const decimal DefaultDeloadSetReductionFraction = 0.40m;
@@ -39,12 +40,15 @@ public static class DeloadTriggerRule
         }
 
         var trailingConsecutiveCount = ZeroConsecutiveWeeks;
+        int? laterWeekIndex = null;
         for (var index = history.Count - 1; index >= 0; index--)
         {
             var record = history[index];
-            if (record is not null && record.CompoundUnderperformed && record.HasPoorRecovery)
+            if (record is not null && record.CompoundUnderperformed && record.HasPoorRecovery &&
+                (laterWeekIndex is null || (long)record.WeekIndex + ConsecutiveWeekIndexDifference == laterWeekIndex.Value))
             {
                 trailingConsecutiveCount++;
+                laterWeekIndex = record.WeekIndex;
             }
             else
             {

@@ -11,6 +11,21 @@ public sealed class TemplateVolumeFloorRuleTests
     private const int EmptySets = 0;
 
     [Fact]
+    public void AvailableSlotFloor_AllowsOneSetPerSafeRequiredMovementAndOmittedAccessory()
+    {
+        var templateId = TemplateVolumeFloorRule.FullBody1DayTemplateId;
+        var knee = Slot(TemplateVolumeFloorRule.KneeDominantSlotId, SyntheticSlotFloor);
+        var push = Slot(TemplateVolumeFloorRule.UpperPushSlotId, SyntheticSlotFloor);
+        var unavailableHip = Slot(TemplateVolumeFloorRule.HipDominantSlotId, SyntheticSlotFloor) with { ExerciseId = null };
+        var accessory = Slot(TemplateVolumeFloorRule.TrunkSlotId, SyntheticSlotFloor) with { IsRequired = false };
+        var floor = TemplateVolumeFloorRule.ForAvailableSlots(templateId, [knee, push, unavailableHip, accessory]);
+        var floors = new Dictionary<string, TemplateVolumeFloor> { [templateId] = floor };
+
+        Assert.True(TemplateVolumeFloorRule.EvaluateSelections(templateId, [knee, push], floors).IsAllowed);
+        Assert.False(TemplateVolumeFloorRule.EvaluateSelections(templateId, [knee], floors).IsAllowed);
+    }
+
+    [Fact]
     public void CanonicalTemplates_WithoutReviewEvidence_FailClosed()
     {
         Assert.NotEmpty(StrengthTemplateCatalog.Templates);

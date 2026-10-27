@@ -19,6 +19,16 @@ internal static partial class RussianUiText
         Values["Workout_Overview_OrderedTitleFormat"] = "Порядок {0} · {1}";
         Values["Workout_Overview_InProgressExplanation"] = "Эта тренировка уже начата. Текущий план показан ниже.";
         Values["Workout_Session_ConnectionRetry"] = "Ошибка соединения. Попробуйте ещё раз.";
+        Values["Workout_Session_HiitConfirmationRequired"] = "Проверьте историю HIIT перед началом.";
+        Values["Workout_Session_HiitConfirmedRetry"] = "История подтверждена. Нажмите «Начать» ещё раз.";
+        Values["Workout_Session_HiitConfirmationSummary"] = "Подтвердите, что ответы относятся к четырём неделям до сегодняшнего дня: {0}; недель регулярных занятий: {1}; среднее число занятий в неделю: {2}; последнее занятие: {3}; число занятий по неделям: {4}; обследование или допуск: {5}.";
+        Values["Workout_Session_HiitAnswerYes"] = "Да";
+        Values["Workout_Session_HiitAnswerNo"] = "Нет";
+        Values["Workout_Session_HiitConfirm"] = "Подтвердить ответы";
+        Values["Workout_Session_HiitUpdate"] = "Изменить ответы";
+        Values["Workout_Session_HiitCancel"] = "Отмена";
+        Values["Workout_Session_HiitPreviewOpen"] = "Открыт предварительный просмотр плана. Закройте его или перехватите в настройке плана, затем повторите попытку.";
+        Values["Workout_Session_HiitAnswersChanged"] = "Ответы о тренировках изменились. Проверьте их в настройке плана и повторите попытку.";
         Values["Workout_Session_StartFailed"] = "Не удалось начать активность. Попробуйте ещё раз.";
         Values["Workout_Session_FinishFailed"] = "Не удалось завершить активность. Сохранённые записи не изменены.";
         Values["Workout_Session_AbandonFailed"] = "Не удалось прервать активность. Попробуйте ещё раз.";

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -32,6 +33,8 @@ public sealed class PostgresWorkoutReconciliationDispatcher(
         }
 
         var failed = 0;
+        var deferred = 0;
+        var needsReview = 0;
         foreach (var owner in owners)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -41,22 +44,26 @@ public sealed class PostgresWorkoutReconciliationDispatcher(
             try
             {
                 await using var context = await tenantContexts.CreateDbContextAsync(attemptToken).ConfigureAwait(false);
+                var outcome = WorkoutReconciliationOutcome.Deferred;
                 await context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
                 {
                     context.ChangeTracker.Clear();
                     await using var transaction = await context.Database.BeginTransactionAsync(attemptToken).ConfigureAwait(false);
                     await PostgresTenantContext.SetForCurrentTransactionAsync(context, owner, attemptToken).ConfigureAwait(false);
                     await WorkoutSessionAccountLock.AcquireAsync(context, owner, attemptToken).ConfigureAwait(false);
-                    await new PostgresWorkoutPlanReconciler(context).ReconcileInCurrentTransactionAsync(owner, attemptToken).ConfigureAwait(false);
+                    outcome = await new PostgresWorkoutPlanReconciler(context).ReconcileInCurrentTransactionAsync(owner, attemptToken).ConfigureAwait(false);
                     await transaction.CommitAsync(attemptToken).ConfigureAwait(false);
                 }).ConfigureAwait(false);
+                if (outcome == WorkoutReconciliationOutcome.Deferred) deferred++;
+                else if (outcome == WorkoutReconciliationOutcome.NeedsReview) needsReview++;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
             catch { failed++; }
         }
         return new WorkoutReconciliationPage(owners.Count, failed,
-            owners.Count < pageSize ? null : owners[^1]);
+            owners.Count < pageSize ? null : owners[^1], deferred, needsReview);
     }
 }
 
-public sealed record WorkoutReconciliationPage(int VisitedAccounts, int FailedAccounts, Guid? NextCursor);
+public sealed record WorkoutReconciliationPage(int VisitedAccounts, int FailedAccounts, Guid? NextCursor,
+    int DeferredAccounts = 0, int NeedsReviewAccounts = 0);

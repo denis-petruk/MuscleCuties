@@ -314,9 +314,7 @@ public sealed class StrengthPlanPreviewV020Tests
             new PreviewStrengthPlanV020UseCase(new Source(profile with
             {
                 SelectedActivityTypes = selected,
-                MuscleGroupsByExerciseId = catalog.ToDictionary(entry => entry.Candidate.ExerciseId,
-                entry => (IReadOnlySet<string>)new HashSet<string> { entry.Candidate.Pattern.ToString() }),
-            AvailableWeekdays = new HashSet<DayOfWeek>
+                AvailableWeekdays = new HashSet<DayOfWeek>
                 {
                     DayOfWeek.Monday
                 }
@@ -372,7 +370,7 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
-    public async Task Optional_Activity_Without_A_Safe_Day_Does_Not_Block_The_Strength_Plan()
+    public async Task Mobility_Can_Share_Strength_Day_Without_Blocking_The_Plan()
     {
         var twoDays = new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Thursday };
         var profile = AddSelectedActivity(Profile(), WorkoutActivityType.Mobility) with
@@ -390,11 +388,11 @@ public sealed class StrengthPlanPreviewV020Tests
         var schedule = result.Preview.MixedActivitySchedule!;
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
             schedule.Sessions.Count(session => session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength));
-        Assert.DoesNotContain(schedule.Sessions,
+        Assert.Contains(schedule.Sessions,
             session => session.ActivityTypeId == (int)WorkoutActivityType.Mobility);
         Assert.Contains(schedule.Activities, decision =>
             decision.ActivityTypeId == (int)WorkoutActivityType.Mobility &&
-            decision.ScheduledSessionsPerWeek == 0);
+            decision.ScheduledSessionsPerWeek > 0);
         Assert.Equal(ExpectedSavedProposalCount, store.SaveCount);
     }
 
@@ -483,17 +481,14 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
-    public async Task Selected_Yoga_Without_Additional_Answers_Uses_Gentle_Default()
+    public async Task Selected_Yoga_Requires_Preferred_Type_Before_Preview()
     {
         var profile = AddSelectedActivity(Profile(), WorkoutActivityType.Yoga);
         var result = await new PreviewStrengthPlanV020UseCase(new Source(profile))
             .ExecuteAsync(Guid.NewGuid(), Request());
 
-        Assert.Equal("Feasible", result.Status);
-        Assert.Contains(result.MixedActivitySchedule!.Sessions, session =>
-            session.ActivityTypeId == (int)WorkoutActivityType.Yoga &&
-            session.DurationMinutes == ActivitySessionDurationRule.GentleYogaDefaultMinutes &&
-            !session.IsHardSession);
+        Assert.Equal("RequiredAnswersMissing", result.Status);
+        Assert.NotEmpty(result.LimitationCodes);
     }
 
     [Fact]
@@ -544,7 +539,7 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
-    public async Task Server_Stamped_Hiit_Evidence_Is_Valid_Only_On_Its_Account_Date()
+    public async Task Server_Stamped_Hiit_Evidence_Is_Valid_For_Thirty_Calendar_Days()
     {
         var evidence = CompleteHiitEvidence(WorkoutActivityType.Cycling);
         var answers = new SavedActivityAnswersDto(1, [], evidence)
@@ -557,9 +552,13 @@ public sealed class StrengthPlanPreviewV020Tests
             SavedAnswers = answers, TimeZoneVersion = 1, CurrentAccountLocalDate = LocalDate
         };
         var fresh = await new PreviewStrengthPlanV020UseCase(new Source(source)).ExecuteAsync(Guid.NewGuid(), Request());
+        var lastValid = await new PreviewStrengthPlanV020UseCase(new Source(source with
+            { CurrentAccountLocalDate = LocalDate.AddDays(HiitEvidenceCaptureRule.EvidenceValidityCalendarDays - 1) })).ExecuteAsync(Guid.NewGuid(), Request());
         var expired = await new PreviewStrengthPlanV020UseCase(new Source(source with
-            { CurrentAccountLocalDate = LocalDate.AddDays(1) })).ExecuteAsync(Guid.NewGuid(), Request());
+            { CurrentAccountLocalDate = LocalDate.AddDays(HiitEvidenceCaptureRule.EvidenceValidityCalendarDays) })).ExecuteAsync(Guid.NewGuid(), Request());
         Assert.Equal("Scheduled", Assert.Single(fresh.MixedActivitySchedule!.Activities,
+            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
+        Assert.Equal("Scheduled", Assert.Single(lastValid.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
         Assert.Equal("Blocked", Assert.Single(expired.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
@@ -585,12 +584,16 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Contains("HiitEligibilityNotEstablishedByRequiredEvidence", hiitDecision.ReasonCodes);
     }
 
-    [Fact]
-    public async Task Missing_Restriction_Review_Leaves_Only_Affected_Strength_Preview_Limited()
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public async Task Missing_Required_Safety_Metadata_Cannot_Be_Treated_As_A_Safe_Omission(
+        bool demandTagsReviewed, bool restrictionsReviewed)
     {
-        var profile = Profile();
+        var profile = Profile() with { SelectedActivityTypes = new HashSet<int> { (int)WorkoutActivityType.GeneralStrength } };
         var catalog = profile.Catalog.Select(entry => entry.Candidate.ExerciseId == 101
-            ? entry with { Candidate = entry.Candidate with { RestrictionMappingsReviewed = false } }
+            ? entry with { Candidate = entry.Candidate with
+                { DemandTagsReviewed = demandTagsReviewed, RestrictionMappingsReviewed = restrictionsReviewed } }
             : entry).ToArray();
         var useCase = new PreviewStrengthPlanV020UseCase(new Source(profile with { Catalog = catalog }));
 
@@ -604,11 +607,13 @@ public sealed class StrengthPlanPreviewV020Tests
     [Fact]
     public async Task High_Intensity_Is_Limited_Until_Safer_Prescription_Is_Reviewed()
     {
-        var useCase = new PreviewStrengthPlanV020UseCase(new Source(Profile()));
+        var useCase = new PreviewStrengthPlanV020UseCase(new Source(Profile() with
+            { SelectedActivityTypes = new HashSet<int> { (int)WorkoutActivityType.StrengthHighIntensity } }));
 
         var result = await useCase.ExecuteAsync(Guid.NewGuid(), Request() with
         {
             Activity = WorkoutActivityDto.StrengthHighIntensity,
+            ExplicitStrengthStyleChoice = WorkoutActivityDto.StrengthHighIntensity,
             ActivityHistory = HistoryFor(WorkoutActivityType.StrengthHighIntensity)
         });
 
@@ -623,6 +628,7 @@ public sealed class StrengthPlanPreviewV020Tests
         var request = Request() with
         {
             Activity = WorkoutActivityDto.HighVolumeStrength,
+            ExplicitStrengthStyleChoice = WorkoutActivityDto.HighVolumeStrength,
             ActivityHistory = new ActivityTrainingHistoryInputV020(
                 WorkoutActivityType.HighVolumeStrength.ToString(),
                 HistoryConsistentWeeks,
@@ -665,6 +671,7 @@ public sealed class StrengthPlanPreviewV020Tests
         var request = Request() with
         {
             Activity = WorkoutActivityDto.HighVolumeStrength,
+            ExplicitStrengthStyleChoice = WorkoutActivityDto.HighVolumeStrength,
             ActivityHistory = new ActivityTrainingHistoryInputV020(
                 WorkoutActivityType.HighVolumeStrength.ToString(), HistoryConsistentWeeks,
                 HistoryAverageSessions, LocalDate.AddDays(-PreviousSessionDays), true)
@@ -689,6 +696,7 @@ public sealed class StrengthPlanPreviewV020Tests
         var request = Request() with
         {
             Activity = WorkoutActivityDto.HighVolumeStrength,
+            ExplicitStrengthStyleChoice = WorkoutActivityDto.HighVolumeStrength,
             ActivityHistory = new ActivityTrainingHistoryInputV020(
                 WorkoutActivityType.HighVolumeStrength.ToString(), HistoryConsistentWeeks,
                 HistoryAverageSessions, LocalDate.AddDays(-PreviousSessionDays), true),
@@ -698,7 +706,8 @@ public sealed class StrengthPlanPreviewV020Tests
             }
         };
 
-        var result = await new PreviewStrengthPlanV020UseCase(new Source(Profile()))
+        var result = await new PreviewStrengthPlanV020UseCase(new Source(Profile() with
+            { SelectedActivityTypes = new HashSet<int> { (int)WorkoutActivityType.HighVolumeStrength } }))
             .ExecuteAsync(Guid.NewGuid(), request);
 
         Assert.Equal("Limited", result.Status);
@@ -712,6 +721,7 @@ public sealed class StrengthPlanPreviewV020Tests
         var request = Request() with
         {
             Activity = WorkoutActivityDto.HighVolumeStrength,
+            ExplicitStrengthStyleChoice = WorkoutActivityDto.HighVolumeStrength,
             ActivityHistory = new ActivityTrainingHistoryInputV020(
                 WorkoutActivityType.HighVolumeStrength.ToString(),
                 HistoryConsistentWeeks,
@@ -816,7 +826,7 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
-    public async Task Preview_Cuts_Volume_When_Available_Days_Are_Fewer_Than_Template_Sessions_And_Enables_Apply()
+    public async Task Preview_Rejects_A_Single_Available_Day()
     {
         var profile = Profile() with
         {
@@ -831,12 +841,10 @@ public sealed class StrengthPlanPreviewV020Tests
             AvailableWeekdays = new HashSet<DayOfWeek> { DayOfWeek.Tuesday }
         });
 
-        Assert.True(proposal.IsPersisted);
-        Assert.Equal("Feasible", proposal.Preview.Status);
-        Assert.Single(proposal.Preview.Sessions);
-        Assert.Equal(DayOfWeek.Tuesday, proposal.Preview.Sessions[0].PlannedWeekday);
-        Assert.DoesNotContain(MixedScheduleIncompleteReason, proposal.Preview.LimitationCodes);
-        Assert.Equal(1, store.SaveCount);
+        Assert.False(proposal.IsPersisted);
+        Assert.NotEqual("Feasible", proposal.Preview.Status);
+        Assert.Empty(proposal.Preview.Sessions);
+        Assert.Equal(0, store.SaveCount);
     }
 
     [Fact]
@@ -903,6 +911,7 @@ public sealed class StrengthPlanPreviewV020Tests
         HistoryFor(WorkoutActivityType.GeneralStrength),
         WarmupMinutes: NoWarmupOrCooldownMinutes, CooldownMinutes: NoWarmupOrCooldownMinutes)
     {
+        ExplicitStrengthStyleChoice = WorkoutActivityDto.GeneralStrength,
         AvailableWeekdays = new HashSet<DayOfWeek>
         {
             DayOfWeek.Monday,

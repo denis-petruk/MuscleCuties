@@ -5,11 +5,11 @@ namespace MuscleCuties.Core.Tests;
 public sealed class InjuryProgressionPhaseRuleTests
 {
     private static readonly DateOnly Clearance = new(2024, 2, 28);
-    private static readonly DateOnly LastOptionalDate = new(2024, 3, 6);
-    private static readonly DateOnly FirstRequiredDate = new(2024, 3, 7);
+    private static readonly DateOnly LastOptionalDate = new(2024, 3, 5);
+    private static readonly DateOnly FirstRequiredDate = new(2024, 3, 6);
 
     [Fact]
-    public void SevenFullDatesAfterClearanceRemainInOptionalWindow()
+    public void SevenDatesIncludingClearanceRemainInOptionalWindow()
     {
         var episode = new InjuryRestorationEpisode(false, Clearance);
         Assert.Equal(InjuryProgressionPhase.ClearedOptionalWindow, InjuryProgressionPhaseRule.Classify(episode, Clearance));

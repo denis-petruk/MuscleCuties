@@ -101,6 +101,18 @@ public static class WorkoutActiveSessionEndpointMappings
                     cancellationToken).ConfigureAwait(false);
                 return Results.Ok(snapshot);
             }
+            catch (WorkoutHiitHistoryConfirmationRequiredException exception)
+            {
+                return Results.Conflict(new
+                {
+                    code = WorkoutHiitHistoryConfirmationRequiredException.ErrorCode,
+                    message = exception.Message
+                });
+            }
+            catch (WorkoutActivityNoLongerSafeException exception)
+            {
+                return Results.Conflict(new { code = "WorkoutActivityNoLongerSafe", message = exception.Message });
+            }
             catch (PostgresIdempotencyConflictException)
             {
                 return Results.Conflict();

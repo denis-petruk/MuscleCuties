@@ -21,8 +21,11 @@ namespace MuscleCuties.UI.ViewModels.Workout;
 
 public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLoadAware
 {
+    internal const string EditHiitAnswersContextKey = "edit-hiit-answers";
     private const int NoPolicyReasons = 0;
     private const string MovementOmittedAdvisoryPrefix = "MovementOmitted:";
+    private const string MovementOmittedForDurationAdvisoryPrefix = "MovementOmittedForDuration:";
+    private bool _allowMovementOmissionsForDuration;
     private const long InitialAnswersVersion = 0;
     private const string NoStatusMessage = "";
     private const int RecentWorkoutArchiveLimit = 100;
@@ -93,6 +96,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private readonly Func<Task<bool>>? _confirmReducedVolumeAsync;
     private WorkoutPreferencesDto? _draftPreferences;
     private SavedActivityAnswersDto? _savedAnswers;
+    private ActivityAnswersPendingSave? _pendingAnswerSave;
     private bool _safetyPlanChanged;
     private HashSet<WorkoutActivityDto> _selectedProfileActivities = [];
     private DayOfWeek[] _availableWeekdays = [];
@@ -200,6 +204,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OpenTrainCommand = new AsyncRelayCommand(OpenTrainAsync, CanOpenTrain);
         ExploreOtherFeaturesCommand = new AsyncRelayCommand(ExploreOtherFeaturesAsync, CanExploreOtherFeatures);
         TakeOverPreviewCommand = new AsyncRelayCommand(TakeOverPreviewAsync, () => !IsBusy && HasActiveOtherPreview);
+        UseLongerDurationCommand = new AsyncRelayCommand(() => RebuildForDurationAsync(false), () => !IsBusy && CanUseLongerDuration);
+        UseShorterDurationCommand = new AsyncRelayCommand(() => RebuildForDurationAsync(true), () => !IsBusy && HasDurationChoice);
     }
 
     public AsyncRelayCommand LoadCommand { get; }
@@ -213,6 +219,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public AsyncRelayCommand OpenTrainCommand { get; }
     public AsyncRelayCommand ExploreOtherFeaturesCommand { get; }
     public AsyncRelayCommand TakeOverPreviewCommand { get; }
+    public AsyncRelayCommand UseLongerDurationCommand { get; }
+    public AsyncRelayCommand UseShorterDurationCommand { get; }
     public AsyncRelayCommand LoadDataCommand => LoadCommand;
 
     public bool HasPreview => Preview is not null;
@@ -227,7 +235,35 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool HasActivityDecisions => ActivityDecisions.Count > NoPolicyReasons;
     public bool HasOmittedMovements => Preview?.AdvisoryCodes.Any(code =>
         code.StartsWith(MovementOmittedAdvisoryPrefix, StringComparison.Ordinal)) == true;
-    public bool HasOptionalOmissions => HasOmittedMovements || Preview?.MixedActivitySchedule?.Activities.Any(
+    public bool HasDurationOmissions => Preview?.AdvisoryCodes.Any(code =>
+        code.StartsWith(MovementOmittedForDurationAdvisoryPrefix, StringComparison.Ordinal)) == true;
+    public string DurationOmissionsText => StrengthPlanGenerationDisplayMapper.FormatLocalized(
+        "Workout_Generation_DurationMovementOmitted", string.Join(", ",
+            (Preview?.AdvisoryCodes ?? []).Where(code => code.StartsWith(MovementOmittedForDurationAdvisoryPrefix, StringComparison.Ordinal))
+                .Select(code => DurationOmittedMovementLabel(code[(code.LastIndexOf(':') + 1)..]))
+                .Distinct()));
+    private static string DurationOmittedMovementLabel(string slot) => UiTextCatalog.Get(slot switch
+    {
+        "knee-dominant" => "Workout_Generation_MovementKneeOmitted",
+        "hip-dominant" => "Workout_Generation_MovementHipOmitted",
+        "upper-push" => "Workout_Generation_MovementUpperPushOmitted",
+        "upper-pull" => "Workout_Generation_MovementUpperPullOmitted",
+        "trunk" => "Workout_Generation_MovementTrunkOmitted",
+        "goal-specific-accessory" => "Workout_Generation_MovementAccessoryOmitted",
+        _ => "Workout_Generation_MovementUnavailable"
+    });
+    public bool HasDurationChoice => HasLimitation && Preview?.MinimumRequiredSessionMinutes is not null;
+    private int? LongerDurationMinutes => Preview?.MinimumRequiredSessionMinutes is { } minimum
+        ? (int)(Math.Ceiling((minimum - WorkoutPreferencesConstraints.MinimumActivitySessionDurationMinutes) /
+            WorkoutPreferencesConstraints.ActivitySessionDurationIncrementMinutes) *
+            WorkoutPreferencesConstraints.ActivitySessionDurationIncrementMinutes +
+            WorkoutPreferencesConstraints.MinimumActivitySessionDurationMinutes)
+        : null;
+    public bool CanUseLongerDuration => HasDurationChoice && LongerDurationMinutes is { } minutes &&
+        minutes <= WorkoutPreferencesConstraints.MaximumActivitySessionDurationMinutes;
+    public string LongerDurationText => StrengthPlanGenerationDisplayMapper.FormatLocalized(
+        "Workout_Generation_UseLongerDuration", (LongerDurationMinutes ?? WorkoutPreferencesConstraints.MinimumActivitySessionDurationMinutes).ToString(CultureInfo.CurrentCulture));
+    public bool HasOptionalOmissions => HasOmittedMovements || HasDurationOmissions || Preview?.MixedActivitySchedule?.Activities.Any(
         decision => decision.ActivityTypeId != (int)WorkoutActivityDto.RestDay &&
                     decision.ScheduledSessionsPerWeek == NoPolicyReasons &&
                     !decision.ReasonCodes.Contains("StrengthAlternativeNotChosen") &&
@@ -424,6 +460,10 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             UpdateSelectedProfileActivities(initialActivities.ToList());
             _savedAnswers = await _proposalClient.ReadAnswersAsync();
             PrefillActivityAnswers(_savedAnswers);
+            var editHiitAnswers = false;
+            if (_navigationContext is not null &&
+                _navigationContext.TryTake<bool>(EditHiitAnswersContextKey, out var requestedEdit))
+                editHiitAnswers = requestedEdit;
             NotifyAvailabilityChanged();
             var savedStrengthActivity = preferences.ActivityTypes
                 .Select(activity => (WorkoutActivityDto)activity)
@@ -447,7 +487,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 StatusMessage = UiTextCatalog.Get(StrengthPreferenceRequiredKey);
             else if (!HasValidSavedAvailability)
                 StatusMessage = UiTextCatalog.Get(AvailableDaysMissingKey);
-            else if (!HasActiveOtherPreview && !HasMissingRequiredAnswers())
+            else if (!HasActiveOtherPreview && !HasMissingRequiredAnswers() && !editHiitAnswers)
             {
                 await InitializePlanPreviewOrAutoApplyAsync();
             }
@@ -572,6 +612,36 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
 
     private Task CreateProposalAsync() => CreatePreviewAsync();
 
+    private async Task RebuildForDurationAsync(bool allowOmissions)
+    {
+        if (IsBusy || !HasDurationChoice || (!allowOmissions && !CanUseLongerDuration)) return;
+        var duration = LongerDurationMinutes;
+        var style = SelectedFittingStrengthStyle;
+        IsBusy = true;
+        try
+        {
+            var preferences = _draftPreferences ?? await _preferences.LoadAsync();
+            if (preferences is null) return;
+            if (!allowOmissions && duration is { } minutes)
+            {
+                var durations = preferences.ActivitySessionDurationsMinutes.ToDictionary(entry => entry.Key, entry => entry.Value);
+                foreach (var activity in preferences.ActivityTypes.Where(value => StrengthActivities.Contains((WorkoutActivityDto)value)))
+                    durations[activity] = minutes;
+                _draftPreferences = preferences with { ActivitySessionDurationsMinutes = durations };
+            }
+            await ClosePreviewAsync();
+            SelectedFittingStrengthStyle = style;
+            _allowMovementOmissionsForDuration = allowOmissions;
+            IsBusy = false;
+            await CreatePreviewAsync();
+        }
+        catch (Exception)
+        {
+            StatusMessage = UiTextCatalog.Get(ConnectionErrorKey);
+        }
+        finally { IsBusy = false; }
+    }
+
     private async Task CreatePreviewAsync()
     {
         StatusMessage = NoStatusMessage;
@@ -632,21 +702,32 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             var savedEvidence = (_savedAnswers?.ActivityEligibilityEvidence ?? [])
                 .Where(answer => currentEvidence.All(current => current.Activity != answer.Activity))
                 .Concat(currentEvidence).ToArray();
-            Guid? hiitChallengeId = null;
-            if (_selectedProfileActivities.Contains(WorkoutActivityDto.Hiit) && HiitEvidenceCapture.ConfirmCurrentWeeks &&
-                request.HiitEligibilityEvidence is not null && request.HiitUnderlyingCardioActivity is not null)
-            {
-                hiitChallengeId = (await _proposalClient.IssueHiitCaptureChallengeAsync()).ChallengeId;
-                HiitEvidenceCapture.ConfirmCurrentWeeks = false;
-            }
-            _savedAnswers = await _proposalClient.SaveAnswersAsync(new SaveActivityAnswersRequest(
+            var candidate = new SaveActivityAnswersRequest(
                 _savedAnswers?.Version ?? InitialAnswersVersion, savedEvidence,
                 _selectedProfileActivities.Contains(WorkoutActivityDto.Hiit) ? request.HiitEligibilityEvidence : _savedAnswers?.HiitEligibilityEvidence)
             {
                 HiitUnderlyingCardioActivity = _selectedProfileActivities.Contains(WorkoutActivityDto.Hiit)
-                    ? request.HiitUnderlyingCardioActivity : _savedAnswers?.HiitUnderlyingCardioActivity,
-                HiitCaptureChallengeId = hiitChallengeId
-            });
+                    ? request.HiitUnderlyingCardioActivity : _savedAnswers?.HiitUnderlyingCardioActivity
+            };
+            var confirmCurrentWeeks = _selectedProfileActivities.Contains(WorkoutActivityDto.Hiit) && HiitEvidenceCapture.ConfirmCurrentWeeks;
+            if (_pendingAnswerSave is not null && !_pendingAnswerSave.Matches(candidate, confirmCurrentWeeks))
+            {
+                _savedAnswers = await _proposalClient.ReadAnswersAsync();
+                _pendingAnswerSave = null;
+                StatusMessage = UiTextCatalog.Get("Workout_Generation_AnswersRefreshedReview");
+                return;
+            }
+            if (_pendingAnswerSave is null)
+            {
+                if (confirmCurrentWeeks && candidate.HiitEligibilityEvidence is not null && candidate.HiitUnderlyingCardioActivity is not null)
+                    candidate = candidate with { HiitCaptureChallengeId = (await _proposalClient.IssueHiitCaptureChallengeAsync()).ChallengeId };
+                _pendingAnswerSave = new ActivityAnswersPendingSave(candidate, confirmCurrentWeeks);
+            }
+            var submitted = _pendingAnswerSave.Request;
+            _savedAnswers = await _proposalClient.SaveAnswersAsync(submitted);
+            _pendingAnswerSave = null;
+            if (submitted.HiitCaptureChallengeId is not null)
+                HiitEvidenceCapture.ConfirmCurrentWeeks = false;
             _safetyPlanChanged |= _savedAnswers.SafetyPlanChanged;
             if (_safetyPlanChanged)
             {
@@ -688,6 +769,21 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
         catch (WorkoutPlanningInputsChangedException)
         {
+            if (_pendingAnswerSave is not null)
+            {
+                try
+                {
+                    _savedAnswers = await _proposalClient.ReadAnswersAsync();
+                    _pendingAnswerSave = null;
+                    StatusMessage = WithSafetyNotice(UiTextCatalog.Get("Workout_Generation_AnswersRefreshedReview"));
+                    return;
+                }
+                catch (Exception)
+                {
+                    StatusMessage = WithSafetyNotice(UiTextCatalog.Get(ConnectionErrorKey));
+                    return;
+                }
+            }
             StatusMessage = WithSafetyNotice(UiTextCatalog.Get(PlanChangedKey));
         }
         catch (HttpRequestException)
@@ -777,6 +873,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             CooldownMinutes: cooldownMinutes)
         {
             DraftPreferences = preferences,
+            AllowMovementOmissionsForDuration = _allowMovementOmissionsForDuration,
             ExplicitStrengthStyleChoice = SelectedFittingStrengthStyle?.Activity,
             SelectedActivityTypes = preferences.ActivityTypes.ToHashSet(),
             AvailableWeekdays = _availableWeekdays.ToHashSet(),
@@ -924,6 +1021,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
 
     private async Task ClosePreviewAsync()
     {
+        _allowMovementOmissionsForDuration = false;
         _leaseRenewalCancellation?.Cancel();
         if (_proposal?.Lease is { } lease)
         {
@@ -1156,6 +1254,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         var lines = activities.Prepend(UiTextCatalog.Get(ReplacementSummaryKey));
         if (HasOmittedMovements)
             lines = lines.Append(UiTextCatalog.Get("Workout_Generation_MovementOmitted"));
+        if (HasDurationOmissions)
+            lines = lines.Append(DurationOmissionsText);
         return string.Join(Environment.NewLine, lines);
     }
 
@@ -1285,12 +1385,19 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(CanEditDetailsFromPreview));
         OnPropertyChanged(nameof(HasFeasiblePreview));
         OnPropertyChanged(nameof(HasLimitation));
+        OnPropertyChanged(nameof(HasDurationChoice));
+        OnPropertyChanged(nameof(CanUseLongerDuration));
+        OnPropertyChanged(nameof(LongerDurationText));
+        UseLongerDurationCommand.NotifyCanExecuteChanged();
+        UseShorterDurationCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(HasMixedSchedule));
         OnPropertyChanged(nameof(HasMixedActivitySessions));
         OnPropertyChanged(nameof(HasNoMixedActivitySessions));
         OnPropertyChanged(nameof(HasActivityDecisions));
         OnPropertyChanged(nameof(HasOptionalOmissions));
         OnPropertyChanged(nameof(HasOmittedMovements));
+        OnPropertyChanged(nameof(HasDurationOmissions));
+        OnPropertyChanged(nameof(DurationOmissionsText));
         OnPropertyChanged(nameof(ExpandActivityDecisions));
         OnPropertyChanged(nameof(HasScheduleInputReasons));
         OnPropertyChanged(nameof(HasStrengthPreviewSessions));
@@ -1334,13 +1441,16 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
         if (!IsYogaSelected)
             SelectedYogaContentChoice = null;
-        HiitUnderlyingCardioActivities = new ObservableCollection<StrengthPlanActivityChoice>(
-            WorkoutPlanningConstants.SupportedHiitUnderlyingCardioActivities
-                .Where(_selectedProfileActivities.Contains)
-                .Select(activity => new StrengthPlanActivityChoice(activity,
+        var supportedHiitActivities = WorkoutPlanningConstants.SupportedHiitUnderlyingCardioActivities
+            .Where(_selectedProfileActivities.Contains).ToArray();
+        if (!HiitUnderlyingCardioActivities.Select(choice => choice.Activity).SequenceEqual(supportedHiitActivities))
+        {
+            HiitUnderlyingCardioActivities = new ObservableCollection<StrengthPlanActivityChoice>(
+                supportedHiitActivities.Select(activity => new StrengthPlanActivityChoice(activity,
                     StrengthPlanGenerationDisplayMapper.ActivityLabel(activity))));
-        SelectedHiitUnderlyingCardioActivity = HiitUnderlyingCardioActivities
-            .FirstOrDefault(choice => choice.Activity == previousUnderlyingActivity);
+            SelectedHiitUnderlyingCardioActivity = HiitUnderlyingCardioActivities
+                .FirstOrDefault(choice => choice.Activity == previousUnderlyingActivity);
+        }
 
         OnPropertyChanged(nameof(ShouldShowHiitUnderlyingCardioChoice));
         OnPropertyChanged(nameof(IsSwimmingSelected));
@@ -1440,6 +1550,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OpenTrainCommand.NotifyCanExecuteChanged();
         ExploreOtherFeaturesCommand.NotifyCanExecuteChanged();
         TakeOverPreviewCommand.NotifyCanExecuteChanged();
+        UseLongerDurationCommand.NotifyCanExecuteChanged();
+        UseShorterDurationCommand.NotifyCanExecuteChanged();
     }
 
     private static DayOfWeek[] NormalizeWeekdays(IReadOnlyList<int>? values) =>

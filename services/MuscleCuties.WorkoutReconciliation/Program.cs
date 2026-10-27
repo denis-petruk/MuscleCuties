@@ -65,6 +65,11 @@ if (page.FailedAccounts > 0)
     Console.Error.WriteLine("Workout reconciliation encountered account failures; pending accounts will be retried.");
     return 1;
 }
+if (page.NeedsReviewAccounts > 0)
+{
+    Console.Error.WriteLine("Workout reconciliation has pending accounts requiring review.");
+    return 1;
+}
 return 0;
 
 sealed class TenantContextFactory(DbContextOptions<PostgresDbContext> options) : IDbContextFactory<PostgresDbContext>

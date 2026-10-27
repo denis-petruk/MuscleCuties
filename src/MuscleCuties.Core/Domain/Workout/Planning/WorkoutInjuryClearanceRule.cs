@@ -6,8 +6,7 @@ public enum InjuryClearanceRestorationDisposition { Blocked, RestoreOptional, Re
 /// <summary>Restoration never resets the window anchored to the original clearance date.</summary>
 public static class WorkoutInjuryClearanceRule
 {
-    public const int FullCalendarDaysAfterClearance = 7;
-    public const int FollowingMidnightOffsetDays = FullCalendarDaysAfterClearance + 1;
+    public const int OptionalCalendarDaysIncludingClearance = 7;
 
     /// <summary>All related episodes and current eligibility must be known before restoration.</summary>
     public static InjuryClearanceRestorationDisposition EvaluateRestoration(bool originalWasOptional,
@@ -30,9 +29,9 @@ public static class WorkoutInjuryClearanceRule
     public static DateOnly? RequiredFromLocalDate(DateOnly? originalClearanceDate)
     {
         if (originalClearanceDate is not { } clearance ||
-            clearance.DayNumber > DateOnly.MaxValue.DayNumber - FollowingMidnightOffsetDays)
+            clearance.DayNumber > DateOnly.MaxValue.DayNumber - OptionalCalendarDaysIncludingClearance)
             return null;
-        return clearance.AddDays(FollowingMidnightOffsetDays);
+        return clearance.AddDays(OptionalCalendarDaysIncludingClearance);
     }
 
     /// <summary>Unknown clearance provenance blocks restoration rather than inventing a deadline.</summary>

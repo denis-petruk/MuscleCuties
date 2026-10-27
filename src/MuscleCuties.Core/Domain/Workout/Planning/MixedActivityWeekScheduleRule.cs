@@ -484,23 +484,14 @@ public static class MixedActivityWeekScheduleRule
             IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription)).ToArray();
         ReduceTargets(hardCandidates, Math.Min(MaximumHardDaysPerWeek, availableDayCount));
 
+        // Every non-hard activity can share a day with another distinct activity.
+        // Placement still enforces the per-day and duplicate-activity constraints.
         var hardSessionCount = hardCandidates.Sum(GetTargetSessions);
-        var occupiedHardDayCount = Math.Min(hardSessionCount, availableDayCount);
-        var emptyDaySlots = availableDayCount - occupiedHardDayCount;
-        var standaloneSoftCandidates = candidates.Where(decision =>
-                !IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription) &&
-                !CanBeStrengthCompanion(decision))
-            .ToArray();
-        ReduceTargets(standaloneSoftCandidates, emptyDaySlots);
-
-        var requestedStandaloneSessions = standaloneSoftCandidates.Sum(GetTargetSessions);
-        var remainingEmptyDaySlots = Math.Max(NoSessionsScheduled, emptyDaySlots - requestedStandaloneSessions);
-        var strengthSessionCount = candidates
-            .Where(decision => IsStrengthChoice(decision.EffectiveActivity ?? decision.Activity))
-            .Sum(GetTargetSessions);
-        var strengthCompanionSlots = Math.Min(strengthSessionCount, availableDayCount);
-        var strengthCompanionCandidates = candidates.Where(CanBeStrengthCompanion).ToArray();
-        ReduceTargets(strengthCompanionCandidates, remainingEmptyDaySlots + strengthCompanionSlots);
+        var softCandidates = candidates.Where(decision =>
+            !IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription)).ToArray();
+        var remainingSlots = Math.Max(NoSessionsScheduled,
+            availableDayCount * MaximumSessionsPerDay - hardSessionCount);
+        ReduceTargets(softCandidates, remainingSlots);
     }
 
     private static int GetTargetSessions(ActivityDecisionBuilder decision) =>

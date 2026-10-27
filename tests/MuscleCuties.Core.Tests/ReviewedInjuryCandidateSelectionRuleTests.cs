@@ -10,7 +10,7 @@ public sealed class ReviewedInjuryCandidateSelectionRuleTests
     private const int Sets = 3;
     private const int Repetitions = 8;
     private static readonly DateOnly Clearance = new(2026, 10, 1);
-    private static readonly DateOnly Effective = new(2026, 10, 8);
+    private static readonly DateOnly Effective = new(2026, 10, 7);
     private static readonly InjuryReviewScope Scope = new("catalog", "policy", "template", "version", 0, "slot", Site, "phase");
     private static ReviewedInjurySelectionInput Input() => new(Original, false, Effective, [new(false, Clearance)], true, true,
         [Scope], "universe", [Original, Alternative],

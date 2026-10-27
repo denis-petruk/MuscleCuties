@@ -47,6 +47,20 @@ public static class TemplateVolumeFloorRule
 
     private const int ZeroThreshold = 0;
     private const int OptionalSlotMinimumSets = 0;
+    private const int RequiredSlotMinimumSets = 1;
+    private const int MinimumRemainingExercises = 1;
+
+    /// <summary>Builds the product minimum from safe, available slots; unavailable movements are explained separately.</summary>
+    public static TemplateVolumeFloor ForAvailableSlots(string templateId,
+        IReadOnlyCollection<StrengthSlotSelection> selections)
+    {
+        var available = selections.Where(slot => slot.ExerciseId.HasValue).ToArray();
+        var minimums = available.ToDictionary(slot => slot.SlotId,
+            slot => slot.IsRequired ? RequiredSlotMinimumSets : OptionalSlotMinimumSets, StringComparer.Ordinal);
+        var requiredCount = available.Count(slot => slot.IsRequired);
+        return new TemplateVolumeFloor(templateId, Math.Max(requiredCount, MinimumRemainingExercises),
+            Math.Max(requiredCount, MinimumRemainingExercises), minimums, ReviewedStatus);
+    }
 
     public static TemplateVolumeFloor? GetReviewedFloor(
         string? templateId,
