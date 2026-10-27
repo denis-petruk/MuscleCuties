@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Workout.Planning;
 
@@ -15,9 +16,15 @@ public sealed record PlanningLeaseRequest(Guid ProposalId, Guid LeaseId, long Fe
 public sealed record PlanningLeaseResult(string Status, PlanningLeaseDto? Lease);
 public sealed record ActivePlanningPreviewDto(Guid? ProposalId, DateTimeOffset? ExpiresAtUtc);
 public sealed record SavedActivityAnswersDto(long Version, IReadOnlyList<ActivityEligibilityInputV020> ActivityEligibilityEvidence,
-    HiitEligibilityEvidenceInputV020? HiitEligibilityEvidence, bool SafetyPlanChanged = false);
+    HiitEligibilityEvidenceInputV020? HiitEligibilityEvidence, bool SafetyPlanChanged = false)
+{
+    public WorkoutActivityDto? HiitUnderlyingCardioActivity { get; init; }
+}
 public sealed record SaveActivityAnswersRequest(long ExpectedVersion, IReadOnlyList<ActivityEligibilityInputV020> ActivityEligibilityEvidence,
-    HiitEligibilityEvidenceInputV020? HiitEligibilityEvidence);
+    HiitEligibilityEvidenceInputV020? HiitEligibilityEvidence)
+{
+    public WorkoutActivityDto? HiitUnderlyingCardioActivity { get; init; }
+}
 
 public sealed class WorkoutPreviewAlreadyOpenException : Exception
 {

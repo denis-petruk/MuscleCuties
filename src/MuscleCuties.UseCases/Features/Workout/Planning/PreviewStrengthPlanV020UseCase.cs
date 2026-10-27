@@ -37,7 +37,8 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
                 request = request with
                 {
                     ActivityEligibilityEvidence = savedAnswers.ActivityEligibilityEvidence,
-                    HiitEligibilityEvidence = savedAnswers.HiitEligibilityEvidence
+                    HiitEligibilityEvidence = savedAnswers.HiitEligibilityEvidence,
+                    HiitUnderlyingCardioActivity = savedAnswers.HiitUnderlyingCardioActivity
                 };
             var selectedActivities = request.SelectedActivityTypes?.ToHashSet() ??
                                      sourceData.SelectedActivityTypes?.ToHashSet() ?? new HashSet<int>();

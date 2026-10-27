@@ -265,6 +265,19 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     // =========================================================================
 
     [Fact]
+    public void SavedHiitChoice_RoundTrips_AndOldAnswersRemainUnknown()
+    {
+        var old = System.Text.Json.JsonSerializer.Deserialize<SavedActivityAnswersDto>(
+            "{\"Version\":1,\"ActivityEligibilityEvidence\":[],\"HiitEligibilityEvidence\":null}");
+        Assert.NotNull(old);
+        Assert.Null(old.HiitUnderlyingCardioActivity);
+        var saved = old with { HiitUnderlyingCardioActivity = WorkoutActivityDto.Cycling };
+        var restored = System.Text.Json.JsonSerializer.Deserialize<SavedActivityAnswersDto>(
+            System.Text.Json.JsonSerializer.Serialize(saved));
+        Assert.Equal(WorkoutActivityDto.Cycling, restored!.HiitUnderlyingCardioActivity);
+    }
+
+    [Fact]
     public void ActivityAnswers_CanBeMaintainedIndependentlyPerActivity()
     {
         var swimmingAnswers = new ActivityEligibilityInputV020(
