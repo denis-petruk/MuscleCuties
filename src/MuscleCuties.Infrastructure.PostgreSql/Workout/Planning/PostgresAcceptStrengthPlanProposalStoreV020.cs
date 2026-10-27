@@ -590,7 +590,8 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         long SourceExperienceVersion = 0,
         long SourceAnswerVersion = 0,
         IReadOnlyDictionary<int, string[]>? SourceMuscleGroupsByExerciseId = null,
-        bool RequiresReducedVolumeAcknowledgment = false);
+        bool RequiresReducedVolumeAcknowledgment = false,
+        string? InjuryProvenanceFingerprint = null);
 
     private sealed record AcceptedPlanSnapshot(
         ProposalSnapshot Proposal,

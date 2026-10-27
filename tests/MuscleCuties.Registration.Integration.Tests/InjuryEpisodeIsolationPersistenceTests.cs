@@ -91,6 +91,28 @@ public sealed class InjuryEpisodeIsolationPersistenceTests
             db.ChangeTracker.Clear();
         }
         await db.Database.ExecuteSqlRawAsync("SET LOCAL ROLE musclecuties_app");
+        var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        await using (var permissions = new NpgsqlCommand("""
+            SELECT has_table_privilege(current_user, 'app.workout_injury_episodes', 'SELECT') AND
+                   has_table_privilege(current_user, 'app.workout_injury_episodes', 'INSERT') AND
+                   has_table_privilege(current_user, 'app.workout_injury_episodes', 'UPDATE') AND
+                   has_table_privilege(current_user, 'app.workout_injury_episodes', 'DELETE'),
+                   has_table_privilege(current_user, 'app.workout_injury_prescription_links', 'SELECT') AND
+                   has_table_privilege(current_user, 'app.workout_injury_prescription_links', 'INSERT') AND
+                   has_table_privilege(current_user, 'app.workout_injury_prescription_links', 'DELETE'),
+                   has_table_privilege(current_user, 'app.workout_injury_prescription_links', 'UPDATE'),
+                   has_table_privilege(current_user, 'app.workout_injury_episodes', 'TRUNCATE'),
+                   has_table_privilege(current_user, 'app.workout_injury_prescription_links', 'TRUNCATE')
+            """, connection))
+        await using (var permissionReader = await permissions.ExecuteReaderAsync())
+        {
+            Xunit.Assert.True(await permissionReader.ReadAsync());
+            Xunit.Assert.True(permissionReader.GetBoolean(0));
+            Xunit.Assert.True(permissionReader.GetBoolean(1));
+            Xunit.Assert.False(permissionReader.GetBoolean(2));
+            Xunit.Assert.False(permissionReader.GetBoolean(3));
+            Xunit.Assert.False(permissionReader.GetBoolean(4));
+        }
         await SyntheticTenantSession.SetAsync(db, owners[0]);
         Xunit.Assert.Equal(new[] { episodes[0] }, await db.WorkoutInjuryEpisodes.AsNoTracking()
             .Select(row => row.Id).ToArrayAsync());
