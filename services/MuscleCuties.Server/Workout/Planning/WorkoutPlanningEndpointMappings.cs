@@ -16,6 +16,7 @@ public static class WorkoutPlanningEndpointMappings
         "/api/v1/workouts/plan/strength-proposals/{proposalId:guid}/accept";
     private const string LeaseActionRoute = "/api/v1/workouts/plan/lease/{action}";
     private const string AnswersRoute = "/api/v1/workouts/plan/answers";
+    private const string HiitCaptureChallengeRoute = "/api/v1/workouts/plan/hiit-evidence-challenge";
 
     private const string StatusAccepted = "Accepted";
     private const string StatusInvalidInput = "InvalidInput";
@@ -173,6 +174,13 @@ public static class WorkoutPlanningEndpointMappings
                 };
                 return result is null ? Results.NotFound() : Results.Ok(result);
             }).RequireAuthorization();
+
+        endpoints.MapPost(HiitCaptureChallengeRoute, async (ClaimsPrincipal principal,
+            [FromServices] IHiitEvidenceCaptureStore store, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            return Results.Ok(await store.IssueAsync(userId, cancellationToken).ConfigureAwait(false));
+        }).RequireAuthorization();
 
         endpoints.MapGet(AnswersRoute, async (ClaimsPrincipal principal,
             [FromServices] IStrengthPlanProposalStoreV020 store, CancellationToken cancellationToken) =>

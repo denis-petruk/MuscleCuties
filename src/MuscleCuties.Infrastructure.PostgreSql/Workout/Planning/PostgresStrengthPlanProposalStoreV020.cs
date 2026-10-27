@@ -38,42 +38,6 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             await PlanningCatalogFingerprint.LockCatalogAsync(dbContext, cancellationToken).ConfigureAwait(false);
 
-            var result = await SaveWithinTransactionAsync(userId, request, preview, cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-            return result;
-        }).ConfigureAwait(false);
-    }
-
-    /// <summary>Persists a proposal under the caller's tenant transaction and account/catalog locks.</summary>
-    internal async Task<StrengthPlanProposalCreatedV020> SaveWithinTransactionAsync(Guid userId,
-        StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewResponseV020 preview, CancellationToken cancellationToken)
-    {
-            if (dbContext.Database.CurrentTransaction is null)
-                throw new InvalidOperationException("A planning transaction is required.");
-            ArgumentNullException.ThrowIfNull(request);
-            ArgumentNullException.ThrowIfNull(preview);
-            if (userId == Guid.Empty || request.DraftPreferences is null ||
-                !string.Equals(preview.Status, FeasibleStatus, StringComparison.Ordinal) ||
-                preview.MixedActivitySchedule?.Sessions is not { Count: > 0 } ||
-                preview.PolicyId != StrengthPlanPreviewRule.PolicyId ||
-                preview.PolicyVersion != StrengthPlanPreviewRule.Version ||
-                preview.RulesetVersion != StrengthPlanPreviewRule.RulesetVersion)
-                throw new ArgumentException("Only a feasible proposal from the active training policy can be saved.");
-
-            var now = DateTime.UtcNow;
-            var prior = await dbContext.WorkoutPlanProposalsV02
-                .Where(item => item.UserId == userId && item.LeaseId != null)
-                .OrderByDescending(item => item.LeaseFence).ToListAsync(cancellationToken).ConfigureAwait(false);
-            if (prior.Any(item => item.Status == "Proposed" && item.LeaseExpiresAtUtc > now))
-                throw new WorkoutPreviewAlreadyOpenException();
-            foreach (var expired in prior.Where(item => item.Status == "Proposed"))
-            {
-                expired.Status = "Expired";
-                expired.DecidedAtUtc = now;
-                expired.ConcurrencyVersion++;
-            }
-            var fence = PlanningLifecycleRule.NextFence(prior.FirstOrDefault()?.LeaseFence ?? 0)
-                ?? throw new InvalidOperationException("Workout planning fence exhausted.");
             var result = await SaveInCurrentTransactionAsync(userId, request, preview, cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return result;
@@ -85,6 +49,8 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
         StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewResponseV020 preview,
         CancellationToken cancellationToken, bool automaticOrigin = false, DateOnly? automaticStartDate = null)
     {
+        if (dbContext.Database.CurrentTransaction is null)
+            throw new InvalidOperationException("A planning transaction is required.");
         ValidateProposalInput(userId, request, preview);
         if (!automaticOrigin && automaticStartDate is not null)
             throw new ArgumentException("A user proposal cannot specify an automatic start date.");
@@ -190,32 +156,6 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             preview.RulesetVersion != StrengthPlanPreviewRule.RulesetVersion)
             throw new ArgumentException("Only a feasible proposal from the active training policy can be saved.");
 
-            var snapshotJson = JsonSerializer.Serialize(
-                new ProposalInputSnapshot(request, profileVersion.Value, activePlanId, activeRevisionId), JsonOptions);
-            var previewJson = JsonSerializer.Serialize(preview, JsonOptions);
-            var record = new WorkoutPlanProposalV02Record
-            {
-                Id = Guid.CreateVersion7(),
-                UserId = userId,
-                PlanId = Guid.CreateVersion7(),
-                ExpectedRevisionId = Guid.Empty,
-                RulesetVersion = preview.RulesetVersion,
-                TrainingPolicyVersion = preview.PolicyVersion,
-                Status = "Proposed",
-                InputSnapshotJson = snapshotJson,
-                ProposalJson = previewJson,
-                ReasonsJson = JsonSerializer.Serialize(
-                    preview.LimitationCodes.Concat(preview.AdvisoryCodes).Distinct(StringComparer.Ordinal),
-                    JsonOptions),
-                CreatedAtUtc = now,
-                LeaseId = Guid.CreateVersion7(),
-                LeaseFence = fence,
-                LeaseExpiresAtUtc = now.Add(PlanningLifecycleRule.FiveMinuteLeaseDuration)
-            };
-            dbContext.WorkoutPlanProposalsV02.Add(record);
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            return new StrengthPlanProposalCreatedV020(record.Id, preview, true,
-                ToLease(record), record.ConcurrencyVersion, activePlanId is not null);
     }
 
     public Task<PlanningLeaseResult> RenewAsync(Guid userId, PlanningLeaseRequest request, CancellationToken cancellationToken) =>
@@ -268,10 +208,27 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
         if (request.HiitUnderlyingCardioActivity is { } underlying &&
             !WorkoutPlanningConstants.IsSupportedHiitUnderlyingCardioActivity(underlying))
             throw new WorkoutPlanningInputsChangedException();
-        var answers = new SavedActivityAnswersDto(state.AnswerVersion, request.ActivityEligibilityEvidence,
-            request.HiitEligibilityEvidence) { HiitUnderlyingCardioActivity = request.HiitUnderlyingCardioActivity };
-        var json = JsonSerializer.Serialize(answers, JsonOptions);
         var previous = DeserializeAnswers(state.AnswersJson);
+        var sameHiitEvidence = JsonSerializer.Serialize(previous.HiitEligibilityEvidence, JsonOptions) ==
+            JsonSerializer.Serialize(request.HiitEligibilityEvidence, JsonOptions) &&
+            previous.HiitUnderlyingCardioActivity == request.HiitUnderlyingCardioActivity;
+        HiitEvidenceCaptureStamp? capture = sameHiitEvidence ? previous.HiitCapture : null;
+        if (request.HiitCaptureChallengeId is { } challengeId)
+        {
+            if (state.AnswerVersion != request.ExpectedVersion || request.HiitEligibilityEvidence is null ||
+                request.HiitUnderlyingCardioActivity is null)
+                throw new WorkoutPlanningInputsChangedException();
+            capture = await new PostgresHiitEvidenceCaptureStore(dbContext, TimeProvider.System)
+                .ConsumeInCurrentTransactionAsync(userId, challengeId, cancellationToken).ConfigureAwait(false)
+                ?? throw new WorkoutPlanningInputsChangedException();
+        }
+        var answers = new SavedActivityAnswersDto(state.AnswerVersion, request.ActivityEligibilityEvidence,
+            request.HiitEligibilityEvidence)
+        {
+            HiitUnderlyingCardioActivity = request.HiitUnderlyingCardioActivity,
+            HiitCapture = capture
+        };
+        var json = JsonSerializer.Serialize(answers, JsonOptions);
         var previousComparable = JsonSerializer.Serialize(previous with
             { Version = state.AnswerVersion, SafetyPlanChanged = false }, JsonOptions);
         var safetyPlanChanged = false;
@@ -333,10 +290,12 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
                 { Version = state.AnswerVersion, SafetyPlanChanged = safetyPlanChanged }, JsonOptions);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             if (state.SafetyRegenerationPending)
-                await new PostgresWorkoutPlanReconciler(dbContext).ReconcileAsync(userId, cancellationToken)
+                await new PostgresWorkoutPlanReconciler(dbContext).ReconcileInCurrentTransactionAsync(userId, cancellationToken)
                     .ConfigureAwait(false);
 
         }
+        if (request.HiitCaptureChallengeId is not null)
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return answers with { Version = state.AnswerVersion, SafetyPlanChanged = safetyPlanChanged };
     }).ConfigureAwait(false);

@@ -383,16 +383,6 @@ public sealed class WorkoutInjuryLogConfiguration : IEntityTypeConfiguration<Wor
     public void Configure(EntityTypeBuilder<WorkoutInjuryLogRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "workout_injury_logs");
 }
 
-public sealed class WorkoutInjuryEpisodeConfiguration : IEntityTypeConfiguration<WorkoutInjuryEpisodeRecord>
-{
-    public void Configure(EntityTypeBuilder<WorkoutInjuryEpisodeRecord> builder)
-    {
-        AppModelConfiguration.ConfigureTenant(builder, "workout_injury_episodes");
-        builder.HasIndex(x => new { x.UserId, x.SourceInjuryId, x.ClearedDate, x.SourceDeleted })
-            .HasDatabaseName("ix_injury_episodes_source_state");
-    }
-}
-
 public sealed class WorkoutInjuryPrescriptionLinkConfiguration : IEntityTypeConfiguration<WorkoutInjuryPrescriptionLinkRecord>
 {
     public void Configure(EntityTypeBuilder<WorkoutInjuryPrescriptionLinkRecord> builder)

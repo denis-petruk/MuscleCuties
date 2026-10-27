@@ -42,8 +42,8 @@ public sealed class InjuryEpisodeIsolationPersistenceTests
         });
         db.WorkoutInjuryEpisodes.Add(new WorkoutInjuryEpisodeRecord
         {
-            Id = Guid.NewGuid(), UserId = owner, SourceInjuryId = injury, SiteFlag = SyntheticSite,
-            RecordedAtUtc = now, SourceDeleted = true
+            Id = Guid.NewGuid(), UserId = owner, InjuryLogId = injury, SiteFlag = SyntheticSite,
+            StartedOn = DateOnly.FromDateTime(now), SourceDeleted = true
         });
         await db.SaveChangesAsync();
         await db.WorkoutInjuryLogs.Where(row => row.Id == injury).ExecuteDeleteAsync();
@@ -84,7 +84,7 @@ public sealed class InjuryEpisodeIsolationPersistenceTests
             db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = prescription, UserId = owner,
                 WorkoutDayId = day, ExerciseId = exerciseId, Sets = SyntheticSets, Reps = SyntheticRepetitions });
             db.WorkoutInjuryEpisodes.Add(new WorkoutInjuryEpisodeRecord { Id = episode, UserId = owner,
-                SourceInjuryId = Guid.NewGuid(), SiteFlag = SyntheticSite, RecordedAtUtc = now });
+                InjuryLogId = Guid.NewGuid(), SiteFlag = SyntheticSite, StartedOn = DateOnly.FromDateTime(now) });
             db.WorkoutInjuryPrescriptionLinks.Add(new WorkoutInjuryPrescriptionLinkRecord { Id = Guid.NewGuid(),
                 UserId = owner, WorkoutDayExerciseId = prescription, InjuryEpisodeId = episode, OriginalExerciseId = exerciseId });
             await db.SaveChangesAsync();

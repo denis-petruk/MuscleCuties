@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
@@ -206,6 +207,56 @@ public sealed class AutomaticPlanningPersistenceTests
         await transaction.RollbackAsync();
     }
 
+    [Xunit.Fact]
+    public async Task SameDayPromotionRequiresMatchingOrderedCurrentPlanSessions()
+    {
+        await using var database = CreateContext();
+        await using var transaction = await database.Database.BeginTransactionAsync();
+        var userId = Guid.NewGuid();
+        var planId = Guid.NewGuid();
+        var firstDayId = Guid.NewGuid();
+        var secondDayId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var today = new DateOnly(2026, 12, 31);
+        var now = DateTime.UtcNow;
+        await SyntheticTenantSession.SetAsync(database, userId);
+        AddSyntheticUser(database, userId);
+        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId,
+            Name = "Synthetic plan", IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
+        var firstOrder = WorkoutSessionOrderingRule.FirstSessionOrder;
+        var secondOrder = firstOrder + 1;
+        database.WorkoutDays.AddRange(
+            new WorkoutDayRecord { Id = firstDayId, UserId = userId, WorkoutPlanId = planId,
+                Date = today, DayOfWeek = (int)today.DayOfWeek, DayOrder = firstOrder,
+                ActivityTypeId = (int)WorkoutActivityType.GeneralStrength, WorkoutType = "Strength", Name = "First" },
+            new WorkoutDayRecord { Id = secondDayId, UserId = userId, WorkoutPlanId = planId,
+                Date = today, DayOfWeek = (int)today.DayOfWeek, DayOrder = secondOrder,
+                ActivityTypeId = (int)WorkoutActivityType.Yoga, WorkoutType = SyntheticCardio, Name = "Second" });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = sessionId, UserId = userId,
+            PlannedWorkoutDayId = firstDayId, WorkoutName = "First", StartedAt = now, CompletedAt = now,
+            CreatedAt = now, UpdatedAt = now });
+        await database.SaveChangesAsync();
+        var store = new PostgresAcceptStrengthPlanProposalStoreV020(database);
+        MixedActivityScheduleSessionV020[] proposed =
+        [new((int)WorkoutActivityType.GeneralStrength, today.DayOfWeek, 30, false, firstOrder),
+         new((int)WorkoutActivityType.Yoga, today.DayOfWeek, 30, false, secondOrder)];
+        Xunit.Assert.Equal(secondOrder, await store.FindProvenSameDayPromotionOrderAsync(userId, planId, today,
+            proposed, CancellationToken.None));
+        var conflictingLogId = Guid.NewGuid();
+        database.WorkoutLogs.Add(new WorkoutLogRecord { Id = conflictingLogId, UserId = userId,
+            WorkoutDayId = secondDayId, Date = today, CreatedAt = now });
+        database.WorkoutCompletionDayCredits.Add(new WorkoutCompletionDayCreditRecord { Id = Guid.NewGuid(),
+            UserId = userId, LocalDate = today, SourceSessionId = sessionId, SourceWorkoutLogId = conflictingLogId,
+            AcceptedAtUtc = now, TimeZoneId = TimeZoneInfo.Utc.Id });
+        await database.SaveChangesAsync();
+        Xunit.Assert.Null(await store.FindProvenSameDayPromotionOrderAsync(userId, planId, today,
+            proposed, CancellationToken.None));
+        await database.WorkoutCompletionDayCredits.Where(credit => credit.UserId == userId).ExecuteDeleteAsync();
+        proposed[1] = proposed[1] with { DayOrder = null };
+        Xunit.Assert.Null(await store.FindProvenSameDayPromotionOrderAsync(userId, planId, today,
+            proposed, CancellationToken.None));
+        await transaction.RollbackAsync();
+    }
     private static PostgresDbContext CreateContext()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);

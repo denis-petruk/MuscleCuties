@@ -11,7 +11,7 @@ public sealed class WorkoutInjuryEpisodeConfiguration : IEntityTypeConfiguration
         AppModelConfiguration.ConfigureTenant(builder, "workout_injury_episodes");
         builder.HasIndex(row => new { row.UserId, row.InjuryLogId, row.ClearedOn });
         builder.HasIndex(row => new { row.UserId, row.InjuryLogId }).IsUnique()
-            .HasFilter("cleared_on IS NULL");
+            .HasFilter("cleared_on IS NULL AND NOT source_deleted");
     }
 }
 

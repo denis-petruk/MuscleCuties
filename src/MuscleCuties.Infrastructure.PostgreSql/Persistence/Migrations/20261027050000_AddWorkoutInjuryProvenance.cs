@@ -12,13 +12,14 @@ public sealed class AddWorkoutInjuryProvenance : Migration
             id uuid PRIMARY KEY, user_id uuid NOT NULL REFERENCES app.users(id) ON DELETE CASCADE,
             injury_log_id uuid NOT NULL, site_flag integer NOT NULL, started_on date NOT NULL,
             cleared_on date NULL, clearance_time_zone_id text NULL, clearance_time_zone_version bigint NULL,
+            source_deleted boolean NOT NULL,
             CONSTRAINT uq_workout_injury_episodes_user_id_id UNIQUE (user_id, id)
         );
         CREATE INDEX ix_workout_injury_episodes_user_id ON app.workout_injury_episodes(user_id);
         CREATE INDEX ix_workout_injury_episodes_user_id_injury_log_id_cleared_on
             ON app.workout_injury_episodes(user_id, injury_log_id, cleared_on);
         CREATE UNIQUE INDEX ix_workout_injury_episodes_user_id_injury_log_id
-            ON app.workout_injury_episodes(user_id, injury_log_id) WHERE cleared_on IS NULL;
+            ON app.workout_injury_episodes(user_id, injury_log_id) WHERE cleared_on IS NULL AND NOT source_deleted;
         CREATE TABLE app.workout_injury_prescriptions (
             id uuid PRIMARY KEY, user_id uuid NOT NULL REFERENCES app.users(id) ON DELETE CASCADE,
             episode_id uuid NOT NULL, workout_day_id uuid NOT NULL, original_workout_day_exercise_id uuid NOT NULL,
