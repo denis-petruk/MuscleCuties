@@ -10,6 +10,8 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
     private const string AcceptRouteFormat = "/api/v1/workouts/plan/strength-proposals/{0:D}/accept";
     private const string AnswersRoute = "/api/v1/workouts/plan/answers";
     private const long InitialLeaseFence = 0;
+    private const string PreviewAlreadyOpenCode = "WorkoutPreviewOpen";
+    private const string PlanningInputsChangedCode = "WorkoutPlanningInputsChanged";
 
     public async Task<StrengthPlanProposalCreatedV020> CreateAsync(
         StrengthPlanPreviewRequestV020 request, CancellationToken cancellationToken)
@@ -20,6 +22,10 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
             idempotencyKey: Guid.NewGuid().ToString("N"), cancellationToken).ConfigureAwait(false);
         if (response.Status == BackendApiStatus.ValidationFailed && response.Data?.Preview is not null)
             return response.Data;
+        if (response.Status == BackendApiStatus.Conflict && response.ErrorCode == PreviewAlreadyOpenCode)
+            throw new WorkoutPreviewAlreadyOpenException();
+        if (response.Status == BackendApiStatus.Conflict && response.ErrorCode == PlanningInputsChangedCode)
+            throw new WorkoutPlanningInputsChangedException();
         if (response.Status == BackendApiStatus.Conflict && response.Data is not null)
             return response.Data;
         return CloudStoreResponse.RequireData(response, "create strength plan proposal");
@@ -69,6 +75,10 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
     {
         var response = await apiClient.SendMutationAsync<SaveActivityAnswersRequest, SavedActivityAnswersDto>(
             HttpMethod.Put, AnswersRoute, request, Guid.NewGuid().ToString("N"), cancellationToken).ConfigureAwait(false);
+        if (response.Status == BackendApiStatus.Conflict && response.ErrorCode == PreviewAlreadyOpenCode)
+            throw new WorkoutPreviewAlreadyOpenException();
+        if (response.Status == BackendApiStatus.Conflict && response.ErrorCode == PlanningInputsChangedCode)
+            throw new WorkoutPlanningInputsChangedException();
         if (response.Status == BackendApiStatus.Conflict && response.Data is not null)
             return response.Data;
         return CloudStoreResponse.RequireData(response, "save workout activity answers");

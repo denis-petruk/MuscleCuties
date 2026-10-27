@@ -26,16 +26,6 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
     public async Task<StrengthPlanProposalCreatedV020> SaveAsync(Guid userId, StrengthPlanPreviewRequestV020 request,
         StrengthPlanPreviewResponseV020 preview, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(preview);
-        if (userId == Guid.Empty || request.DraftPreferences is null ||
-            !string.Equals(preview.Status, "Feasible", StringComparison.Ordinal) ||
-            preview.MixedActivitySchedule?.Sessions is not { Count: > 0 } ||
-            preview.PolicyId != StrengthPlanPreviewRule.PolicyId ||
-            preview.PolicyVersion != StrengthPlanPreviewRule.Version ||
-            preview.RulesetVersion != StrengthPlanPreviewRule.RulesetVersion)
-            throw new ArgumentException("Only a feasible proposal from the active training policy can be saved.");
-
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             dbContext.ChangeTracker.Clear();
@@ -45,6 +35,28 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
                 .ConfigureAwait(false);
             await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             await PlanningCatalogFingerprint.LockCatalogAsync(dbContext, cancellationToken).ConfigureAwait(false);
+
+            var result = await SaveWithinTransactionAsync(userId, request, preview, cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return result;
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>Persists a proposal under the caller's tenant transaction and account/catalog locks.</summary>
+    internal async Task<StrengthPlanProposalCreatedV020> SaveWithinTransactionAsync(Guid userId,
+        StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewResponseV020 preview, CancellationToken cancellationToken)
+    {
+            if (dbContext.Database.CurrentTransaction is null)
+                throw new InvalidOperationException("A planning transaction is required.");
+            ArgumentNullException.ThrowIfNull(request);
+            ArgumentNullException.ThrowIfNull(preview);
+            if (userId == Guid.Empty || request.DraftPreferences is null ||
+                !string.Equals(preview.Status, FeasibleStatus, StringComparison.Ordinal) ||
+                preview.MixedActivitySchedule?.Sessions is not { Count: > 0 } ||
+                preview.PolicyId != StrengthPlanPreviewRule.PolicyId ||
+                preview.PolicyVersion != StrengthPlanPreviewRule.Version ||
+                preview.RulesetVersion != StrengthPlanPreviewRule.RulesetVersion)
+                throw new ArgumentException("Only a feasible proposal from the active training policy can be saved.");
 
             var now = DateTime.UtcNow;
             var prior = await dbContext.WorkoutPlanProposalsV02
@@ -129,10 +141,8 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             };
             dbContext.WorkoutPlanProposalsV02.Add(record);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return new StrengthPlanProposalCreatedV020(record.Id, preview, true,
                 ToLease(record), record.ConcurrencyVersion, activePlanId is not null);
-        }).ConfigureAwait(false);
     }
 
     public Task<PlanningLeaseResult> RenewAsync(Guid userId, PlanningLeaseRequest request, CancellationToken cancellationToken) =>

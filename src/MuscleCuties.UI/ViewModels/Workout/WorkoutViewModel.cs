@@ -30,6 +30,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private readonly IWorkoutOverviewUseCase _overview;
 
     [ObservableProperty] private string? _activePlanName;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasInProgressWorkout))]
+    private WorkoutListEntry? _inProgressWorkout;
     private bool _hasLoadedOverview;
     private List<WorkoutItem> _allWorkouts = new();
     [ObservableProperty] private ObservableCollection<string> _blockedCardioNames = new();
@@ -98,6 +100,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         EmptyWorkoutsActionCommand = new AsyncRelayCommand(HandleEmptyWorkoutsActionAsync, CanUseEmptyWorkoutsAction);
         GeneratePlanCommand = new AsyncRelayCommand(GeneratePlanAsync, () => !IsBusy);
+        ResumeInProgressWorkoutCommand = new AsyncRelayCommand(ResumeInProgressWorkoutAsync);
         OpenWorkoutCommand = new AsyncRelayCommand<WorkoutItem>(OpenWorkoutAsync);
         ToggleSessionOptionalCommand = new AsyncRelayCommand<WorkoutItem>(ToggleSessionOptionalAsync);
         ToggleEasierAlternativeCommand = new AsyncRelayCommand<WorkoutItem>(ToggleEasierAlternativeAsync);
@@ -139,6 +142,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         _injuries, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
 
     public bool HasNoPlan => string.IsNullOrEmpty(ActivePlanName);
+    public bool HasInProgressWorkout => InProgressWorkout is { IsInProgress: true, WorkoutDayId: > MissingWorkoutDayId };
     public bool ShowNoPlanPrompt => _hasLoadedOverview && !IsBusy && !IsLoadError && HasNoPlan;
     public bool HasWorkouts => !IsBusy && Workouts.Count > 0;
     public bool HasNoWorkouts => !IsBusy && !IsLoadError && Workouts.Count == 0;
@@ -203,6 +207,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private string SelectedFilterLabel => Filters.FirstOrDefault(f => f.IsSelected)?.Label ?? "All";
     public AsyncRelayCommand EmptyWorkoutsActionCommand { get; }
     public AsyncRelayCommand GeneratePlanCommand { get; }
+    public AsyncRelayCommand ResumeInProgressWorkoutCommand { get; }
     public AsyncRelayCommand<WorkoutItem> OpenWorkoutCommand { get; }
     public AsyncRelayCommand<WorkoutItem> ToggleSessionOptionalCommand { get; }
     public AsyncRelayCommand<WorkoutItem> ToggleEasierAlternativeCommand { get; }
@@ -283,6 +288,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             WriteLoadStage("overview", loadStarted);
             CurrentPhaseName = summary.PhaseName;
             ActivePlanName = summary.PlanName;
+            InProgressWorkout = summary.InProgressWorkout;
             _allWorkouts = summary.Workouts.Select(item => new WorkoutItem
             {
                 WorkoutDayId = item.WorkoutDayId,
@@ -558,6 +564,16 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     {
         if (_featuredWorkout is not null)
             await OpenWorkoutAsync(_featuredWorkout);
+    }
+
+    private async Task ResumeInProgressWorkoutAsync()
+    {
+        if (InProgressWorkout is not { IsInProgress: true, WorkoutDayId: > MissingWorkoutDayId } workout)
+            return;
+        if (SessionActivitiesRequested is { } handler)
+            await handler(workout.WorkoutDayId);
+        else
+            await _openWorkoutSessionAsync(workout.WorkoutDayId);
     }
 
     private async Task OpenWorkoutAsync(WorkoutItem? workout)

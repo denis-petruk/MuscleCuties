@@ -11,6 +11,17 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         StrengthPlanPreviewRequestV020 request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (userId == Guid.Empty)
+            return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null));
+        var sourceData = await source.LoadAsync(userId, cancellationToken).ConfigureAwait(false);
+        return EvaluateFromSnapshot(request, sourceData);
+    }
+
+    /// <summary>Evaluates a trusted snapshot supplied by a transaction-owning orchestration.</summary>
+    public static StrengthPlanPreviewResponseV020 EvaluateFromSnapshot(StrengthPlanPreviewRequestV020 request,
+        StrengthPlanPreviewSourceV020? sourceData)
+    {
+        ArgumentNullException.ThrowIfNull(request);
         if (request.DraftPreferences is { } draft)
         {
             if (!WorkoutPreferencesRule.IsValid(draft.ActivityTypes, draft.AvailableWeekdays,
@@ -26,11 +37,6 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
                 ExcludedExerciseIds = draft.ExcludedExerciseIds?.ToHashSet()
             };
         }
-        if (userId == Guid.Empty)
-            return StrengthPlanPreviewMapperV020.ToResponse(
-                StrengthPlanPreviewRule.Evaluate(null, null));
-
-        var sourceData = await source.LoadAsync(userId, cancellationToken).ConfigureAwait(false);
         if (sourceData is not null)
         {
             if (sourceData.SavedAnswers is { } savedAnswers)
@@ -60,18 +66,8 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
 
         if (sourceData is not null)
         {
-            var selected = sourceData.SelectedActivityTypes?.Select(value => (WorkoutActivityType)value).ToArray() ?? [];
-            var answers = (request.ActivityEligibilityEvidence ?? []).Select(answer => new ActivitySafetyAnswers(
-                WorkoutActivityContractMapper.ToCore(answer.Activity), answer.HasSwimmingFacilityAccess,
-                answer.CanSwimIndependently, answer.WantsContinuousSwimming, answer.HasRopeClimbingCompetence,
-                answer.AppropriateClimbingInstructionAvailable, answer.IsDemandingYogaContent,
-                answer.ActivityHistory is { } history
-                    ? ActivityExperienceRule.Classify(WorkoutActivityContractMapper.ToCore(answer.Activity).ToString(),
-                        new ActivityTrainingHistory(history.ActivityId, history.ConsistentParticipationWeeks,
-                            history.AverageSessionsPerWeekInRecentFourWeeks, history.LastCompletedSessionDate,
-                            history.IsSelfReported), request.LocalDate).Experience
-                    : ActivityExperience.Unknown)).ToArray();
-            var missing = ActivitySafetyAnswersRule.Missing(selected, answers);
+            var selected = sourceData.SelectedActivityTypes?.Select(value => (WorkoutActivityDto)value).ToArray() ?? [];
+            var missing = WorkoutActivityRequirements.Missing(selected, request.ActivityEligibilityEvidence ?? [], request.LocalDate);
             if (missing.Count > 0)
                 return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null)) with
                 {

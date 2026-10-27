@@ -25,6 +25,18 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             await PlanningCatalogFingerprint.LockCatalogAsync(dbContext, cancellationToken).ConfigureAwait(false);
 
+            var result = await LoadWithinTransactionAsync(userId, cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return result;
+        });
+
+    /// <summary>Loads a planning snapshot within the caller's tenant transaction and account/catalog locks.</summary>
+    internal async Task<StrengthPlanPreviewSourceV020?> LoadWithinTransactionAsync(Guid userId,
+        CancellationToken cancellationToken)
+    {
+            if (dbContext.Database.CurrentTransaction is null)
+                throw new InvalidOperationException("A planning transaction is required.");
+
             var profile = await dbContext.UserProfiles.AsNoTracking()
                 .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken)
                 .ConfigureAwait(false);
@@ -98,7 +110,6 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                     .ToHashSet();
             }
 
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return new StrengthPlanPreviewSourceV020(
                 goal, equipment,
                 relevantInjuries.Aggregate(InjuryFlag.None, (flags, injury) =>
@@ -154,7 +165,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                     : JsonSerializer.Deserialize<SavedActivityAnswersDto>(planningState.AnswersJson,
                         new JsonSerializerOptions(JsonSerializerDefaults.Web))
             };
-        });
+    }
 
     private static IReadOnlySet<int> ParseExcludedExerciseIds(string? json)
     {
