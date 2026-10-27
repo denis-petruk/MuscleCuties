@@ -114,6 +114,10 @@ public static class WorkoutPreferencesRule
                requestedSessionsPerWeek.All(pair => IsValidRequestedWeeklyFrequency(pair.Value));
     }
 
+    // Equipment is part of applied workout preferences and may only change with a plan.
+    public static bool PreservesAppliedEquipment(string? requested, string? applied) =>
+        requested is null || string.Equals(requested, applied, StringComparison.OrdinalIgnoreCase);
+
     public static bool IsValidEquipmentLevel(string? equipmentLevel) =>
         equipmentLevel is null ||
         Enum.TryParse<Equipment>(equipmentLevel, true, out var equipment) && Enum.IsDefined(equipment);

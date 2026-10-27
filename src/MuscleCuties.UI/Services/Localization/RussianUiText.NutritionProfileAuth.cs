@@ -410,6 +410,7 @@ internal static partial class RussianUiText
         Values["Onboarding_Quiz_DoubleTapToReloadTheQuiz"] = "Дважды нажмите, чтобы повторно загрузить вопросы опроса.";
         Values["Onboarding_Quiz_DoubleTapToSelectThisAnswer"] = "Дважды коснитесь, чтобы выбрать этот ответ";
         Values["Onboarding_Quiz_AvailableWeekdaysMinimum"] = "Выберите от 2 до 7 дней, когда вы можете тренироваться.";
+        Values["Onboarding_Quiz_WeekdayCatalogUnavailable"] = "Дни тренировок недоступны. Пожалуйста, попробуйте позже.";
         Values["Onboarding_Quiz_GoBackToProfile"] = "Назад";
         Values["Onboarding_Quiz_GoBackToProfileConfirmationTitle"] = "Вернуться к профилю?";
         Values["Onboarding_Quiz_GoBackToProfileConfirmationBody"] = "При возвращении ответы на вопросы будут сброшены.";
