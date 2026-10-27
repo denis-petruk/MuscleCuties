@@ -1,5 +1,7 @@
 # Status — MuscleCuties
 
+- **Workout planning continuation (2026-10-27):** After fetching the configured GitLab branch (already current at `3581187`), preserved durable earned experience when completion-day credits are incomplete, added required-answer validation feedback for HIIT evidence, and removed the unused deterministic weekly planner use case/contracts after reference and XAML checks. The Core generator remains pending equivalent canonical deload/progression coverage. Automatic plan regeneration, injury restoration/provenance, HIIT evidence age, catalog review and device/PostgreSQL verification remain open; see [migration inventory](docs/WORKOUT_PLANNING_MIGRATION_INVENTORY.md). Synthetic PostgreSQL coverage was added but not run. No tests, builds, migrations or backfills were run; these changes have not been pushed.
+
 - **Workout planning continuation (2026-10-26):** Removed the retired direct planner; added safe strength-session spacing, catalog fingerprint fencing migration definition, safety pending signals and immutable completion-date handling. High-intensity safer prescriptions still need review. Automatic injury/safety/promotion regeneration and legacy-client rollout remain incomplete; see [migration inventory](docs/WORKOUT_PLANNING_MIGRATION_INVENTORY.md). No tests, builds, migrations or backfills were run.
 
 
