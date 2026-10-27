@@ -6,6 +6,7 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 internal sealed record PlannedPrescriptionSnapshot(Guid DayId, string Name, string WorkoutType,
     int? ActivityTypeId, decimal? PlannedMainDurationMinutes, IReadOnlyList<PlannedExerciseSnapshot> Exercises)
 {
+    public string? ActivityPrescriptionJson { get; init; }
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     public string Serialize() => JsonSerializer.Serialize(this, JsonOptions);
     public static PlannedPrescriptionSnapshot? Deserialize(string? json)

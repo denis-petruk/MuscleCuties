@@ -449,10 +449,6 @@
                                                             </Border>
                                                             <Button Style="{StaticResource ButtonSecondary}" Grid.Column="4" Text="✓"
                                                                     WidthRequest="{StaticResource PresentationMinimumTouchSize}"
-                                                                    HeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                                                    MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
-                                                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                                                    Padding="{StaticResource UiInsets0}"
                                                                     Command="{Binding SaveSetEditCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutHistoryViewModel}}, x:DataType=vm:WorkoutHistoryViewModel}"
                                                                     CommandParameter="{Binding .}"
                                                                     SemanticProperties.Description="{loc:LocalizedText Workout_History_SaveSetEditAccessibility}" />

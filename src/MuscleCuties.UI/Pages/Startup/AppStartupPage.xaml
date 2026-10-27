@@ -68,7 +68,6 @@
                 Text="Reset Local Database"
                 Clicked="OnResetClicked"
                 Style="{StaticResource ButtonSecondary}"
-                MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                 SemanticProperties.Description="Reset Local Database"
                 SemanticProperties.Hint="Double tap to reset the local database and restart." />
         </VerticalStackLayout>

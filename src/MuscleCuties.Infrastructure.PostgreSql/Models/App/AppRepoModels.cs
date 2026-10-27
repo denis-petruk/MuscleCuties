@@ -352,6 +352,7 @@ public sealed class WorkoutDayRecord : ITenantRecord
     public int? ActivityTypeId { get; set; }
     public int? DayOrder { get; set; }
     public decimal? PlannedMainDurationMinutes { get; set; }
+    public string? PlannedActivityPrescriptionJson { get; set; }
 }
 
 public sealed class WorkoutDayExerciseRecord : ITenantRecord

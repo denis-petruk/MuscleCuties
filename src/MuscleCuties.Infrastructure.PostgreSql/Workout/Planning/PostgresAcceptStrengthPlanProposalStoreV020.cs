@@ -243,8 +243,9 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                 groups = strength.Slots.Where(slot => slot.ExerciseId.HasValue)
                     .SelectMany(slot => currentGroups[slot.ExerciseId!.Value])
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            return new WorkoutScheduleValidationSession(session.Weekday,
-                (WorkoutActivityType)session.ActivityTypeId, session.IsHardSession, groups);
+            return ActivityOccurrencePrescription.ValidationSession(session,
+                proposalSnapshot.MixedActivitySchedule!.Activities.Single(decision =>
+                    decision.ActivityTypeId == session.ActivityTypeId), groups);
         }).ToArray();
         if (WorkoutScheduleValidationRule.Validate(validationSessions).Count != 0)
             return new(LimitedStatus, null, null,
@@ -385,7 +386,9 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                     DayOfWeek = (int)weekday, WorkoutType = ToWorkoutType(activity),
                     ActivityTypeId = scheduledSession.ActivityTypeId, DayOrder = scheduledSession.DayOrder,
                     Name = ActivityName(activity), WeekIndex = weekIndex, Date = date,
-                    PlannedMainDurationMinutes = scheduledSession.DurationMinutes
+                    PlannedMainDurationMinutes = scheduledSession.DurationMinutes,
+                    PlannedActivityPrescriptionJson = ActivityOccurrencePrescription.Serialize(
+                        scheduledSession.OccurrencePrescription)
                 });
 
                 if (!IsStrengthActivity(activity) ||
@@ -582,12 +585,13 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                 !Enum.IsDefined(session.Weekday) || !availableWeekdays.Contains(session.Weekday) ||
                 session.DurationMinutes <= MinimumPlannedActivityDurationMinutes ||
                 !decisionByActivity.TryGetValue(session.ActivityTypeId, out var decision) ||
-                !IsScheduledDisposition(decision.Disposition)))
+                !IsScheduledDisposition(decision.Disposition) ||
+                !ActivityOccurrencePrescription.IsValid(session, decision)))
             return false;
 
         if (WorkoutScheduleValidationRule.Validate(scheduleSessions.Select(session =>
-                new WorkoutScheduleValidationSession(session.Weekday,
-                    (WorkoutActivityType)session.ActivityTypeId, session.IsHardSession)).ToArray(),
+                ActivityOccurrencePrescription.ValidationSession(session,
+                    decisionByActivity[session.ActivityTypeId])).ToArray(),
                 requireStrengthMuscles: false).Count != 0)
             return false;
 

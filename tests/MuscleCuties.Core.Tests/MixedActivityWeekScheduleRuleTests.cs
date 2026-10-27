@@ -513,6 +513,27 @@ public sealed class MixedActivityWeekScheduleRuleTests
     }
 
     [Fact]
+    public void SwimmingUsesBothAvailableStrengthDaysWhenItsFrequencyFits()
+    {
+        var result = Evaluate(
+            [WorkoutActivityType.GeneralStrength, WorkoutActivityType.Swimming],
+            [DayOfWeek.Monday, DayOfWeek.Thursday],
+            Durations((WorkoutActivityType.GeneralStrength, StrengthSessionMinutes),
+                (WorkoutActivityType.Swimming, SelectedCardioSessionMinutes)),
+            Evidence((WorkoutActivityType.GeneralStrength, EvidenceFor(WorkoutActivityType.GeneralStrength)),
+                (WorkoutActivityType.Swimming, EvidenceFor(WorkoutActivityType.Swimming,
+                    hasSwimmingFacilityAccess: true, canSwimIndependently: true,
+                    wantsContinuousSwimming: true))),
+            chosenStrengthActivity: WorkoutActivityType.GeneralStrength);
+
+        Assert.Equal(ActivityPrescriptionRule.BeginnerCardioSessionsPerWeek,
+            result.Sessions.Count(session => session.Activity == WorkoutActivityType.Swimming));
+        Assert.All(result.Sessions.GroupBy(session => session.Day), day =>
+            Assert.Equal(ActivitiesPerPackedDay, day.Count()));
+        Assert.Empty(result.InputReasons);
+    }
+
+    [Fact]
     public void AllowsSwimmingOnlyWithConfirmedFacilityAndIndependentAbilityAndUsesItsPolicyLimit()
     {
         var swimming = Evaluate(

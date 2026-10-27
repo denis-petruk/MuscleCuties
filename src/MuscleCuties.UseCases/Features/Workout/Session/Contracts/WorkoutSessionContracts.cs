@@ -98,7 +98,10 @@ public sealed record WorkoutActivityDetailDto(
     string Subtitle,
     string MetricText,
     string SummaryText,
-    IReadOnlyList<int> WorkoutDayExerciseIds);
+    IReadOnlyList<int> WorkoutDayExerciseIds)
+{
+    public MuscleCuties.UseCases.Features.Workout.Planning.ActivitySessionPrescriptionOutputV020? Prescription { get; init; }
+}
 
 public sealed record WorkoutSessionDetailDto(
     int WorkoutDayId,

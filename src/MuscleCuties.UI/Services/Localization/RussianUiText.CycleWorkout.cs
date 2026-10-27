@@ -4,6 +4,14 @@ internal static partial class RussianUiText
 {
     static partial void RegisterCycleWorkoutStrings()
     {
+        Values["Workout_Session_PrescriptionWarmup"] = "Разминка: {0} мин";
+        Values["Workout_Session_PrescriptionMain"] = "Основная часть: {0} мин";
+        Values["Workout_Session_PrescriptionCooldown"] = "Заминка: {0} мин";
+        Values["Workout_Session_PrescriptionEasy"] = "Интенсивность: лёгкая";
+        Values["Workout_Session_PrescriptionModerate"] = "Интенсивность: умеренная";
+        Values["Workout_Session_PrescriptionVigorous"] = "Интенсивность: высокая";
+        Values["Workout_Session_PrescriptionWorkIntervals"] = "Рабочие интервалы: {0} × {1} сек";
+        Values["Workout_Session_PrescriptionRecoveryIntervals"] = "Интервалы восстановления: {0} × {1} сек";
         Values["Workout_Page_ChooseActivities"] = "Выбрать виды активности";
         Values["Workout_Page_ChooseActivitiesSubtitle"] = "Выберите виды активности для своей тренировочной недели.";
         Values["Workout_Overview_Status_Completed"] = "Завершено";

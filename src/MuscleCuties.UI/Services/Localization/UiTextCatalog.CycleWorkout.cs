@@ -4,6 +4,14 @@ public static partial class UiTextCatalog
 {
     static partial void RegisterCycleWorkoutStrings()
     {
+        English["Workout_Session_PrescriptionWarmup"] = "Warm-up: {0} min";
+        English["Workout_Session_PrescriptionMain"] = "Main activity: {0} min";
+        English["Workout_Session_PrescriptionCooldown"] = "Cool-down: {0} min";
+        English["Workout_Session_PrescriptionEasy"] = "Intensity: easy";
+        English["Workout_Session_PrescriptionModerate"] = "Intensity: moderate";
+        English["Workout_Session_PrescriptionVigorous"] = "Intensity: vigorous";
+        English["Workout_Session_PrescriptionWorkIntervals"] = "Work intervals: {0} × {1} sec";
+        English["Workout_Session_PrescriptionRecoveryIntervals"] = "Recovery intervals: {0} × {1} sec";
         English["Workout_Page_ChooseActivities"] = "Choose activities";
         English["Workout_Page_ChooseActivitiesSubtitle"] = "Choose the activities you want included in your training week.";
         English["Workout_Overview_Status_Completed"] = "Completed";
