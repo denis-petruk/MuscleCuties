@@ -1,3 +1,5 @@
+- **Workout dispatcher foundation (2026-10-27):** Added a bounded, tenant-scoped reconciliation page processor and a definition-only restricted pending-owner discovery migration. A host, durable cursor/retry and external scheduler still need integration; permissions, contention and rollback require PostgreSQL verification. Added synthetic origin, preview deferral and discovery tests; none were run. See [migration inventory](docs/WORKOUT_PLANNING_MIGRATION_INVENTORY.md).
+
 - **Workout safety reconciliation (2026-10-27):** Answer changes can attempt canonical automatic regeneration within their save transaction, using applied preferences and the next eligible day. Active previews/sessions, injury history, and uncertain inputs defer processing; pending work clears only after acceptance. Reliable worker scheduling and injury provenance remain incomplete. PostgreSQL integration coverage and all builds/tests remain unexecuted. See [migration inventory](docs/WORKOUT_PLANNING_MIGRATION_INVENTORY.md).
 
 # Roadmap — MuscleCuties
