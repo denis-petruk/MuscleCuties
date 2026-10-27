@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
@@ -144,8 +143,6 @@ public sealed class CloudWorkoutInjuryStore(
 {
     private const string InjuriesRoute = "/api/v1/injuries";
     private const string InjuryImpactRoute = "/api/v1/workouts/injuries/impact";
-    private const string ProfileRoute = "/api/v1/profile";
-    private const string WorkoutPreferencesRoute = "/api/v1/profile/workout-preferences";
     private readonly Dictionary<Guid, int> _intIdByGuid = [];
     private readonly Dictionary<int, InjuryObservationRecord> _recordByIntId = [];
     private readonly object _identityLock = new();
@@ -260,31 +257,8 @@ public sealed class CloudWorkoutInjuryStore(
         }
     }
 
-    public async Task RefreshPlanAfterInjuryChangeAsync(CancellationToken ct = default)
-    {
-        var profileResponse = await apiClient.GetAsync<ServerProfileSnapshot>(ProfileRoute, ct).ConfigureAwait(false);
-        if (profileResponse.Status == BackendApiStatus.NotFound || profileResponse.Data is null)
-            return;
-
-        var profile = profileResponse.Data;
-        var preferences = CloudWorkoutPreferencesSnapshotMapper.ToPreferences(profile);
-
-        var response = await apiClient.SendMutationAsync<object, JsonElement>(
-            HttpMethod.Put,
-            WorkoutPreferencesRoute,
-            new
-            {
-                expectedVersion = profile.Version,
-                activityTypes = preferences.ActivityTypes,
-                availableWeekdays = preferences.AvailableWeekdays,
-                activitySessionDurationsMinutes = preferences.ActivitySessionDurationsMinutes,
-                requestedSessionsPerWeek = preferences.RequestedSessionsPerWeek,
-                equipmentLevel = preferences.EquipmentLevel
-            },
-            idempotencyKey: Guid.NewGuid().ToString("N"),
-            ct).ConfigureAwait(false);
-        CloudStoreResponse.RequireSuccess(response, "refresh workout plan after injury change");
-    }
+    public Task RefreshPlanAfterInjuryChangeAsync(CancellationToken ct = default)
+        => Task.FromException(new NotSupportedException("Injury plan reconciliation is not available."));
 
     private async Task<InjuryObservationRecord?> TryResolveRecordAsync(int injuryId, CancellationToken ct)
     {

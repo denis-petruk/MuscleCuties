@@ -14,7 +14,7 @@ public static partial class UiTextCatalog
         English["Injury_Log_ActiveWorkoutPreventsInjury"] = "End or abandon the active workout before recording an injury. Your logged sets will be preserved.";
         English["Workout_Session_FinishTimedActivity"] = "Finish activity";
         English["Workout_Session_AbandonActivity"] = "Abandon activity";
-        English["Injury_Log_PlanRefreshFailed"] = "Your injury change was saved, but the workout plan couldn't refresh. Try again before training.";
+        English["Injury_Log_PlanRefreshFailed"] = "Your injury change was saved, but automatic workout plan updates are not available. Review your plan before training.";
         English["Injury_Log_PageRefreshFailed"] = "Your injury change was saved, but Today couldn't refresh. Try again.";
         English["Cycle_Guidance_PhaseContext"] = "A cycle phase is context, not a measurement of hormone levels or today's exercise capacity.";
         English["Cycle_Guidance_CheckIn"] = "Notice how you feel today and record any symptoms that matter to you.";
