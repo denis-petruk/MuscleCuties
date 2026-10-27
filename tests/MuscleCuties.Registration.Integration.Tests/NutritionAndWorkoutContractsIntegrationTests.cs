@@ -343,9 +343,17 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         try
         {
             var store = new PostgresStrengthPlanProposalStoreV020(database);
-            await store.SaveAnswersAsync(userId, new SaveActivityAnswersRequest(0,
+            var unsafeAnswer = new SaveActivityAnswersRequest(0,
                 [new(MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Swimming,
-                    HasSwimmingFacilityAccess: false)], null), CancellationToken.None);
+                    HasSwimmingFacilityAccess: false)], null);
+            var saved = await store.SaveAnswersAsync(userId, unsafeAnswer, CancellationToken.None);
+            var retried = await store.SaveAnswersAsync(userId, unsafeAnswer, CancellationToken.None);
+            Xunit.Assert.True(saved.SafetyPlanChanged);
+            Xunit.Assert.True(retried.SafetyPlanChanged);
+            Xunit.Assert.Equal(saved.Version, retried.Version);
+            Xunit.Assert.False((await store.ReadAnswersAsync(userId, CancellationToken.None)).SafetyPlanChanged);
+            await Xunit.Assert.ThrowsAsync<WorkoutPlanningInputsChangedException>(() => store.SaveAnswersAsync(userId,
+                unsafeAnswer with { ActivityEligibilityEvidence = [] }, CancellationToken.None));
             var days = await database.WorkoutDays.AsNoTracking().Where(day => day.UserId == userId)
                 .ToDictionaryAsync(day => day.Id);
             Xunit.Assert.True(days[unfinishedDayId].IsRemovedBySafety);
