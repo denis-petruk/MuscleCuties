@@ -140,6 +140,49 @@ public sealed class AutomaticPlanningPersistenceTests
     }
 
     [Xunit.Fact]
+    public async Task PromotionRejectsMalformedLegacyAndRetiredActiveSessionsButAllowsFrozenCardio()
+    {
+        await using var database = CreateContext();
+        await using var transaction = await database.Database.BeginTransactionAsync();
+        var userId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        var planId = Guid.NewGuid();
+        var dayId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        await SyntheticTenantSession.SetAsync(database, userId);
+        AddSyntheticUser(database, userId);
+        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic plan",
+            IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
+        database.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
+            Date = DateOnly.FromDateTime(now), DayOfWeek = (int)now.DayOfWeek, WorkoutType = "Strength",
+            ActivityTypeId = (int)WorkoutActivityType.GeneralStrength, Name = "Synthetic strength" });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = sessionId, UserId = userId,
+            PlannedWorkoutDayId = dayId, WorkoutName = "Synthetic active", StartedAt = now, CreatedAt = now, UpdatedAt = now });
+        await database.SaveChangesAsync();
+        var store = new PostgresAcceptStrengthPlanProposalStoreV020(database);
+        Xunit.Assert.False((await store.InspectPromotionActiveSessionsAsync(userId, planId, CancellationToken.None)).Proven);
+        var session = await database.WorkoutSessionLogs.SingleAsync(row => row.Id == sessionId);
+        session.PlannedPrescriptionSnapshotJson = $$"""
+            {"dayId":"{{dayId}}","name":"Synthetic strength","workoutType":"Strength","activityTypeId":{{(int)WorkoutActivityType.GeneralStrength}},"exercises":[]}
+            """;
+        await database.SaveChangesAsync();
+        Xunit.Assert.False((await store.InspectPromotionActiveSessionsAsync(userId, planId, CancellationToken.None)).Proven);
+        var day = await database.WorkoutDays.SingleAsync(row => row.Id == dayId);
+        day.WorkoutType = SyntheticCardio;
+        day.ActivityTypeId = (int)WorkoutActivityType.Cycling;
+        session.PlannedPrescriptionSnapshotJson = $$"""
+            {"dayId":"{{dayId}}","name":"Synthetic cardio","workoutType":"Cardio","activityTypeId":{{(int)WorkoutActivityType.Cycling}},"exercises":[]}
+            """;
+        await database.SaveChangesAsync();
+        Xunit.Assert.True((await store.InspectPromotionActiveSessionsAsync(userId, planId, CancellationToken.None)).Proven);
+        day.IsRemovedBySafety = true;
+        await database.SaveChangesAsync();
+        Xunit.Assert.False((await store.InspectPromotionActiveSessionsAsync(userId, planId, CancellationToken.None)).Proven);
+        Xunit.Assert.False((await store.InspectPromotionActiveSessionsAsync(userId, Guid.NewGuid(), CancellationToken.None)).Proven);
+        await transaction.RollbackAsync();
+    }
+
+    [Xunit.Fact]
     public async Task ActiveSessionKeepsBothAutomaticUpdatesPending()
     {
         await using var database = CreateContext();

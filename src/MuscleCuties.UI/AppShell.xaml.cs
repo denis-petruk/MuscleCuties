@@ -59,7 +59,6 @@ public partial class AppShell : Shell
             Routing.RegisterRoute(nameof(ProfileUnitsDisplayPage), typeof(ProfileUnitsDisplayPage));
             Routing.RegisterRoute(nameof(ProfileFeedbackPage), typeof(ProfileFeedbackPage));
             Routing.RegisterRoute(nameof(ProfilePrivacyPage), typeof(ProfilePrivacyPage));
-            Routing.RegisterRoute(nameof(PhaseAdjustmentReviewPageV010), typeof(PhaseAdjustmentReviewPageV010));
             Routing.RegisterRoute(nameof(WorkoutSessionPage), typeof(WorkoutSessionPage));
             Routing.RegisterRoute(nameof(StrengthPlanGenerationPage), typeof(StrengthPlanGenerationPage));
             Routing.RegisterRoute(nameof(FoodLogPage), typeof(FoodLogPage));
@@ -328,7 +327,6 @@ public partial class AppShell : Shell
                ContainsRoute(route, "Cycle") ||
                ContainsRoute(route, "Workout") ||
                ContainsRoute(route, "StrengthPlanGeneration") ||
-               ContainsRoute(route, "PhaseAdjustmentReview") ||
                ContainsRoute(route, "Nutrition") ||
                ContainsRoute(route, "FoodLog") ||
                ContainsRoute(route, "Profile") ||

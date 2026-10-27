@@ -63,6 +63,15 @@
                                Style="{StaticResource ModalTitle}" SemanticProperties.HeadingLevel="Level1" />
                     <ScrollView Grid.Row="1">
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+                            <Label Text="{loc:LocalizedText Workout_Session_HistoryTitle}" Style="{StaticResource BodyStrong}" />
+                            <Label Text="{loc:LocalizedText Workout_Session_HistoryExplanation}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding SessionHistory}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Label Text="{Binding .}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
                             <Label Text="{loc:LocalizedText Workout_Session_NoActivitiesPlanned}"
                                    Style="{StaticResource BodyLabel}" IsVisible="{Binding HasNoActivities}" />
                             <VerticalStackLayout Spacing="{StaticResource UiSpacing10}" BindableLayout.ItemsSource="{Binding ActivityCards}">

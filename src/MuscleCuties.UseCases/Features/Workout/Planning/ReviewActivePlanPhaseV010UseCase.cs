@@ -137,15 +137,6 @@ public interface IPhaseAdjustmentProposalStoreV010
         PhaseAdjustmentProposalCommandV010 command, CancellationToken cancellationToken);
 }
 
-public interface IPhaseAdjustmentProposalClientV010
-{
-    Task<CreatePhaseAdjustmentProposalResultV010> CreateAsync(string? timeZoneId,
-        CancellationToken cancellationToken = default);
-
-    Task<DecidePhaseAdjustmentProposalResultV010> DecideAsync(
-        DecidePhaseAdjustmentProposalRequestV010 request, CancellationToken cancellationToken = default);
-}
-
 /// <summary>Stores an immutable preview before a user may apply it to future sessions.</summary>
 public sealed class CreatePhaseAdjustmentProposalV010UseCase(
     IActivePlanPhaseAdjustmentSourceV010 source,

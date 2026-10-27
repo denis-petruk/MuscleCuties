@@ -86,8 +86,11 @@ public sealed record CancelWorkoutSessionCommand(
     string IdempotencyKey,
     Guid SessionId);
 
+public sealed record PlannedWorkoutSessionHistoryEntry(Guid SessionId, DateTime StartedAtUtc, DateTime? CompletedAtUtc);
+
 public interface IWorkoutActiveSessionStore
 {
+    Task<IReadOnlyList<PlannedWorkoutSessionHistoryEntry>> GetPlannedSessionHistoryAsync(Guid userId, int workoutDayId, CancellationToken cancellationToken);
     Task<ActiveWorkoutSessionSnapshot?> ResumeTimingAsync(Guid userId, ResumeWorkoutTimingCommand command, CancellationToken cancellationToken);
     Task<ActiveWorkoutSessionSnapshot?> CheckpointTimingAsync(Guid userId, CheckpointWorkoutTimingCommand command, CancellationToken cancellationToken);
     Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(Guid userId, int workoutDayId, CancellationToken cancellationToken);

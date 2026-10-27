@@ -7,6 +7,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
@@ -123,6 +124,12 @@ public sealed class PlanningAcceptanceTransactionTests
             Xunit.Assert.False(await db.WorkoutCompletionDayCredits.AsNoTracking().AnyAsync(row => row.UserId == user));
             Xunit.Assert.Null((await db.WorkoutSessionLogs.AsNoTracking().SingleAsync(row => row.Id == session)).CompletedAt);
             Xunit.Assert.Equal(session, (await db.ExerciseSetLogs.AsNoTracking().SingleAsync(row => row.Id == setId)).WorkoutSessionLogId);
+            var history = await activeStore.GetPlannedSessionHistoryAsync(user,
+                PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(oldDay), CancellationToken.None);
+            Xunit.Assert.Contains(history, item => item.SessionId == session && item.CompletedAtUtc is null);
+            var otherHistory = await activeStore.GetPlannedSessionHistoryAsync(Guid.NewGuid(),
+                PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(oldDay), CancellationToken.None);
+            Xunit.Assert.Empty(otherHistory);
 
             var current = Xunit.Assert.IsType<StrengthPlanPreviewSourceV020>(await new PostgresStrengthPlanPreviewSourceV020(db)
                 .LoadAsync(user, CancellationToken.None));
