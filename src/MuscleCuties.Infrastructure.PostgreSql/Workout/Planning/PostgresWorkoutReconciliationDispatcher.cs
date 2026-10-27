@@ -12,6 +12,7 @@ public sealed class PostgresWorkoutReconciliationDispatcher(
 {
     private const int MinimumPageSize = 1;
     private const int MaximumPageSize = 100;
+    private static readonly TimeSpan AccountAttemptTimeout = TimeSpan.FromSeconds(20);
 
     // The host persists the returned cursor and restarts from null after the final page.
     public async Task<WorkoutReconciliationPage> ProcessPageAsync(Guid? afterOwnerId, int pageSize,
@@ -34,17 +35,20 @@ public sealed class PostgresWorkoutReconciliationDispatcher(
         foreach (var owner in owners)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            using var attempt = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            attempt.CancelAfter(AccountAttemptTimeout);
+            var attemptToken = attempt.Token;
             try
             {
-                await using var context = await tenantContexts.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+                await using var context = await tenantContexts.CreateDbContextAsync(attemptToken).ConfigureAwait(false);
                 await context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
                 {
                     context.ChangeTracker.Clear();
-                    await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-                    await PostgresTenantContext.SetForCurrentTransactionAsync(context, owner, cancellationToken).ConfigureAwait(false);
-                    await WorkoutSessionAccountLock.AcquireAsync(context, owner, cancellationToken).ConfigureAwait(false);
-                    await new PostgresWorkoutPlanReconciler(context).ReconcileAsync(owner, cancellationToken).ConfigureAwait(false);
-                    await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                    await using var transaction = await context.Database.BeginTransactionAsync(attemptToken).ConfigureAwait(false);
+                    await PostgresTenantContext.SetForCurrentTransactionAsync(context, owner, attemptToken).ConfigureAwait(false);
+                    await WorkoutSessionAccountLock.AcquireAsync(context, owner, attemptToken).ConfigureAwait(false);
+                    await new PostgresWorkoutPlanReconciler(context).ReconcileAsync(owner, attemptToken).ConfigureAwait(false);
+                    await transaction.CommitAsync(attemptToken).ConfigureAwait(false);
                 }).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
