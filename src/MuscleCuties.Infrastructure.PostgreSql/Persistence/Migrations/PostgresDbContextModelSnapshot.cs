@@ -2047,6 +2047,14 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("exercise_id");
 
+                    b.Property<int?>("InjuryOriginalExerciseId")
+                        .HasColumnType("integer")
+                        .HasColumnName("injury_original_exercise_id");
+
+                    b.Property<DateOnly?>("InjuryRestorationRequiredFromDate")
+                        .HasColumnType("date")
+                        .HasColumnName("injury_restoration_required_from_date");
+
                     b.Property<bool>("IsOptional")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
