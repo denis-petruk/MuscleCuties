@@ -760,7 +760,7 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
 
         Assert.Equal(StrengthPlanPreviewStatus.Feasible, result.Status);
         Assert.Equal(WorkoutActivityType.GeneralStrength, result.EffectiveActivity);
-        Assert.DoesNotContain("ExperienceHistoryMissing", result.LimitationCodes);
+        Assert.DoesNotContain(StrengthPlanPreviewRule.ExperienceHistoryMissingCode, result.LimitationCodes);
         Assert.DoesNotContain("BeginnerProfileRequiresGeneralStrength", result.LimitationCodes);
     }
 
@@ -970,7 +970,7 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         Assert.Equal(StrengthPlanPreviewStatus.Feasible, hvsDirect.Status);
         Assert.DoesNotContain("HighVolumeRequiresEstablishedResistanceHistory", hvsDirect.LimitationCodes);
 
-        // 2. Beginner requesting SHI is blocked
+        // 2. Beginner requesting SHI is blocked pending safer prescription review.
         var shiChoices = new StrengthPlanPreviewChoices(
             WorkoutActivityType.StrengthHighIntensity, ReferenceDate, null,
             WarmupMinutes: 0, CooldownMinutes: 0);
@@ -978,7 +978,25 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var shiResult = StrengthPlanPreviewRule.EvaluateDirect(shiChoices, shiData);
 
         Assert.Equal(StrengthPlanPreviewStatus.Limited, shiResult.Status);
-        Assert.Contains("BeginnerProfileRequiresGeneralStrength", shiResult.LimitationCodes);
+        Assert.Contains(ActivityPrescriptionRule.HighIntensitySaferAlternativeReviewMissing, shiResult.LimitationCodes);
+        Assert.DoesNotContain("BeginnerProfileRequiresGeneralStrength", shiResult.LimitationCodes);
+    }
+
+    [Fact]
+    public void HighIntensityWithoutHistoryRequiresReviewInsteadOfAnExperienceQuestion()
+    {
+        var choices = new StrengthPlanPreviewChoices(
+            WorkoutActivityType.StrengthHighIntensity, ReferenceDate, null,
+            WarmupMinutes: 0, CooldownMinutes: 0);
+        var data = CreatePreviewData(WorkoutActivityType.StrengthHighIntensity,
+            profileLevel: TrainingExperienceLevel.Advanced);
+
+        var result = StrengthPlanPreviewRule.EvaluateDirect(choices, data);
+
+        Assert.Equal(StrengthPlanPreviewStatus.Limited, result.Status);
+        Assert.Contains(ActivityPrescriptionRule.HighIntensitySaferAlternativeReviewMissing, result.LimitationCodes);
+        Assert.DoesNotContain(StrengthPlanPreviewRule.ExperienceHistoryMissingCode, result.LimitationCodes);
+        Assert.Empty(result.Sessions);
     }
 
     [Fact]

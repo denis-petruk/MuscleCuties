@@ -172,15 +172,12 @@ public static class StrengthPlanPreviewRule
             return Failure(StrengthPlanPreviewStatus.InvalidInput, ActivityExperience.Unknown,
                 SessionDurationInvalidCode);
 
+        if (activity == WorkoutActivityType.StrengthHighIntensity)
+            return Failure(StrengthPlanPreviewStatus.Limited, ActivityExperience.Unknown,
+                ActivityPrescriptionRule.HighIntensitySaferAlternativeReviewMissing);
+
         var experience = ActivityExperienceRule.Classify(activity.ToString(), choices.ActivityHistory,
             choices.LocalDate).Experience;
-
-        if (data.ProfileTrainingExperience == TrainingExperienceLevel.Beginner &&
-            activity == WorkoutActivityType.StrengthHighIntensity)
-        {
-            return Failure(StrengthPlanPreviewStatus.Limited, experience,
-                BeginnerProfileRequiresGeneralStrengthCode);
-        }
 
         if (activity != WorkoutActivityType.GeneralStrength &&
                  activity != WorkoutActivityType.HighVolumeStrength &&
@@ -202,11 +199,6 @@ public static class StrengthPlanPreviewRule
             if (experience == ActivityExperience.Unknown)
                 experience = ActivityExperience.Beginner;
         }
-
-        if (profileExperienceDecision.UsesConservativeProfileCap &&
-            activity == WorkoutActivityType.StrengthHighIntensity)
-            return Failure(StrengthPlanPreviewStatus.Limited, experience,
-                BeginnerProfileRequiresGeneralStrengthCode);
 
         var availableEquipment = EquipmentFor(data.Equipment);
         var eligibilityContext = new ExerciseEligibilityContext(availableEquipment, prescriptionExperience,
