@@ -13,6 +13,7 @@ internal static class StrengthPlanGenerationDisplayMapper
     private const int OneSessionPerWeek = 1;
     private const string NoStatusMessage = "";
     private const string MixedActivityScheduleIncompleteCode = "MixedActivityScheduleIncomplete";
+    private const string NoSafeStrengthContentRemainingCode = "NoSafeStrengthContentRemaining";
 
     public static MixedActivitySessionDisplay ToMixedActivitySessionDisplay(
         MixedActivityScheduleSessionV020 session)
@@ -32,7 +33,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         {
             Day = FullWeekdayLabel(session.Weekday),
             Activity = session.DayOrder is { } order
-                ? FormatLocalized("Workout_Generation_OrderedActivityFormat", order, ActivityLabel(session.ActivityTypeId))
+                ? FormatLocalized("Workout_Generation_OrderedActivityFormat", order.ToString(CultureInfo.CurrentCulture), ActivityLabel(session.ActivityTypeId))
                 : ActivityLabel(session.ActivityTypeId),
             Duration = duration
         };
@@ -272,7 +273,7 @@ internal static class StrengthPlanGenerationDisplayMapper
             return UiTextCatalog.Get("Workout_Generation_DirectBeginnerGeneralStrength");
         }
 
-        if (reasons.Contains(StrengthPlanPreviewMapperV020.NoSafeStrengthContentRemainingCode))
+        if (reasons.Contains(NoSafeStrengthContentRemainingCode))
         {
             return UiTextCatalog.Get("Workout_Generation_Reason_NoSafeStrengthContentRemaining");
         }
