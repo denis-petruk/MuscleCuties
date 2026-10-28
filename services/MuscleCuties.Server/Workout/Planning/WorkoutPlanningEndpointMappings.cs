@@ -44,6 +44,19 @@ public static class WorkoutPlanningEndpointMappings
 
     public static IEndpointRouteBuilder MapWorkoutPlanningEndpoints(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapGet("/api/v1/workouts/plan/style-offer", async (ClaimsPrincipal principal,
+            [FromServices] IStrengthStyleOfferStore store, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            return Results.Ok(new StrengthStyleOfferResponse(await store.GetCurrentAsync(userId, cancellationToken).ConfigureAwait(false)));
+        }).RequireAuthorization();
+
+        endpoints.MapPost("/api/v1/workouts/plan/style-offer/{offerId:guid}/dismiss", async (Guid offerId,
+            ClaimsPrincipal principal, [FromServices] IStrengthStyleOfferStore store, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            return Results.Ok(new StrengthStyleOfferDismissResult(await store.DismissAsync(userId, offerId, cancellationToken).ConfigureAwait(false)));
+        }).RequireAuthorization();
         endpoints.MapGet(CatalogRoute, async (
                 [FromServices] GetWorkoutPlanningCatalogUseCase catalog,
                 CancellationToken cancellationToken) =>
@@ -208,3 +221,4 @@ public static class WorkoutPlanningEndpointMappings
     private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId) =>
         Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 }
+
