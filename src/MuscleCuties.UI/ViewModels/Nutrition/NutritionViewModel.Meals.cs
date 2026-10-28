@@ -201,26 +201,77 @@ public partial class NutritionViewModel
         }
     }
 
+    private int _breakfastPreferenceVersion;
+    private bool _breakfastTargetsNeedRefresh;
+
     private async Task SetBreakfastPreferenceAsync(string? preference)
     {
-        if (string.IsNullOrWhiteSpace(preference))
+        if (!Enum.TryParse<BreakfastPreference>(preference, true, out var parsed) ||
+            !Enum.IsDefined(parsed))
             return;
 
-        BreakfastPreference = Enum.TryParse<BreakfastPreference>(preference, true, out var parsed)
-            ? parsed
-            : BreakfastPreference.Savoury;
+        BreakfastPreference = parsed;
 
         OnPropertyChanged(nameof(IsSavouryBreakfast));
         OnPropertyChanged(nameof(IsSweetBreakfast));
 
-        var targets = await _overviewUseCase.GetPlanTargetsAsync(BreakfastPreference.ToString());
-        _mealDistribution = targets.MealDistribution;
-        TargetCalories = targets.Calories;
-        TargetProtein = targets.Protein;
-        TargetCarbs = targets.Carbs;
-        TargetFats = targets.Fats;
-        NotifyDisplayProperties();
-        NotifyMealTargetProperties();
+        await RefreshBreakfastPreferenceAsync();
+    }
+
+    private async Task RefreshBreakfastPreferenceAsync()
+    {
+        var preferenceVersion = ++_breakfastPreferenceVersion;
+        var selectedPreference = BreakfastPreference;
+        var suggestionVersion = ++_suggestionLoadVersion;
+        _breakfastTargetsNeedRefresh = true;
+        var refreshModal = IsSuggestionModalVisible && (IsDayPlanMode || IsBreakfastSuggestion);
+        if (refreshModal)
+        {
+            IsLoadingSuggestions = true;
+            MealSuggestionError = string.Empty;
+            MealSuggestions.Clear();
+            DayPlanMeals.Clear();
+            NotifySuggestionProperties();
+        }
+
+        try
+        {
+            var targets = await _overviewUseCase.GetPlanTargetsAsync(selectedPreference.ToString());
+            if (preferenceVersion != _breakfastPreferenceVersion)
+                return;
+
+            _mealDistribution = targets.MealDistribution;
+            TargetCalories = targets.Calories;
+            TargetProtein = targets.Protein;
+            TargetCarbs = targets.Carbs;
+            TargetFats = targets.Fats;
+            NotifyDisplayProperties();
+            NotifyMealTargetProperties();
+            NotifySuggestionProperties();
+            _breakfastTargetsNeedRefresh = false;
+
+            if (suggestionVersion == _suggestionLoadVersion && IsSuggestionModalVisible)
+            {
+                if (IsDayPlanMode)
+                {
+                    await LoadDayPlanAsync();
+                }
+                else if (IsBreakfastSuggestion)
+                {
+                    await LoadSuggestionsAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Trace.WriteLine($"[NutritionViewModel] Breakfast targets failed ({ex.GetType().Name}).");
+            if (preferenceVersion == _breakfastPreferenceVersion && suggestionVersion == _suggestionLoadVersion && refreshModal)
+            {
+                MealSuggestionError = "Meal ideas could not refresh. Check your connection and try again.";
+                IsLoadingSuggestions = false;
+                NotifySuggestionProperties();
+            }
+        }
     }
 
     private void NotifyMealTargetProperties()

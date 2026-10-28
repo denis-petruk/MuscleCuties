@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Nutrition.Overview;
@@ -22,10 +23,8 @@ public sealed class PostgresNutritionOverviewStore(
     private const float GeneralDefaultCarbs = 200f;
     private const float GeneralDefaultFats = 60f;
 
-    private const float BreakfastCalorieRatio = 0.25f;
-    private const float LunchCalorieRatio = 0.35f;
-    private const float DinnerCalorieRatio = 0.30f;
-    private const float SnackCalorieRatio = 0.10f;
+    private const float ReferenceComponentGrams = 100f;
+    private const string OilIngredientName = "Oil";
 
     private static readonly (string Group, string Name, string Unit, float Goal)[] StandardMicronutrients =
     [
@@ -542,7 +541,9 @@ public sealed class PostgresNutritionOverviewStore(
         var entries = new List<LoggedMealEntryRecord>(ingredients.Count);
         foreach (var ingredient in ingredients)
         {
-            var matchedCustom = userCustomFoods.FirstOrDefault(f => ToStableCustomFoodIntId(f.Id) == ingredient.FoodItemId);
+            // Unlinked generated ingredients carry their own nutrient snapshot, not a catalog identity.
+            var isNutrientSnapshot = ingredient.FoodItemId == 0;
+            var matchedCustom = isNutrientSnapshot ? null : userCustomFoods.FirstOrDefault(f => ToStableCustomFoodIntId(f.Id) == ingredient.FoodItemId);
             if (matchedCustom is not null)
             {
                 entries.Add(new LoggedMealEntryRecord
@@ -556,8 +557,9 @@ public sealed class PostgresNutritionOverviewStore(
                 continue;
             }
 
-            var matchedCatalog = catalogFoods.FirstOrDefault(f => f.Id == ingredient.FoodItemId)
-                                 ?? catalogFoods.FirstOrDefault(f => string.Equals(f.Name, ingredient.Name, StringComparison.OrdinalIgnoreCase));
+            var matchedCatalog = isNutrientSnapshot ? null :
+                catalogFoods.FirstOrDefault(f => f.Id == ingredient.FoodItemId)
+                ?? catalogFoods.FirstOrDefault(f => string.Equals(f.Name, ingredient.Name, StringComparison.OrdinalIgnoreCase));
             if (matchedCatalog is not null)
             {
                 entries.Add(new LoggedMealEntryRecord
@@ -572,7 +574,10 @@ public sealed class PostgresNutritionOverviewStore(
             }
 
             var matchedCustomByName = userCustomFoods.FirstOrDefault(f =>
-                string.Equals(f.Name, ingredient.Name, StringComparison.OrdinalIgnoreCase));
+                string.Equals(f.Name, ingredient.Name, StringComparison.OrdinalIgnoreCase) &&
+                (isNutrientSnapshot
+                    ? f.DataType == GeneratedMealSnapshotMetadata.DataType && MatchesNutrientSnapshot(f, ingredient)
+                    : f.DataType != GeneratedMealSnapshotMetadata.DataType));
             if (matchedCustomByName is null)
             {
                 matchedCustomByName = new UserFoodItemRecord
@@ -584,7 +589,7 @@ public sealed class PostgresNutritionOverviewStore(
                     Protein = (decimal)Math.Max(0f, ingredient.Protein),
                     Carbs = (decimal)Math.Max(0f, ingredient.Carbs),
                     Fats = (decimal)Math.Max(0f, ingredient.Fats),
-                    DataType = "Custom",
+                    DataType = isNutrientSnapshot ? GeneratedMealSnapshotMetadata.DataType : "Custom",
                     ServingSize = 100m,
                     ServingSizeUnit = "g",
                     CreatedAt = nowUtc,
@@ -607,6 +612,10 @@ public sealed class PostgresNutritionOverviewStore(
         return entries;
     }
 
+    private static bool MatchesNutrientSnapshot(UserFoodItemRecord food, MealIngredientInputDto ingredient) =>
+        food.Calories == (decimal)ingredient.Calories && food.Protein == (decimal)ingredient.Protein &&
+        food.Carbs == (decimal)ingredient.Carbs && food.Fats == (decimal)ingredient.Fats;
+
     public async Task<NutritionTargetMacrosDto> GetPlanTargetsAsync(
         Guid userId,
         string breakfastPreference,
@@ -623,46 +632,47 @@ public sealed class PostgresNutritionOverviewStore(
         CancellationToken cancellationToken = default)
     {
         var target = await targetStore.LoadAsync(userId, date, cancellationToken).ConfigureAwait(false);
-        var totalCalories = target.Calories > 0 ? target.Calories : GeneralDefaultCalories;
-        var totalProtein = target.Protein > 0 ? target.Protein : GeneralDefaultProtein;
-        var totalCarbs = target.Carbs > 0 ? target.Carbs : GeneralDefaultCarbs;
-        var totalFats = target.Fats > 0 ? target.Fats : GeneralDefaultFats;
+        var totalCalories = float.IsFinite(target.Calories) && target.Calories > 0 ? target.Calories : GeneralDefaultCalories;
+        var totalProtein = float.IsFinite(target.Protein) && target.Protein >= 0 ? target.Protein : GeneralDefaultProtein;
+        var totalCarbs = float.IsFinite(target.Carbs) && target.Carbs >= 0 ? target.Carbs : GeneralDefaultCarbs;
+        var totalFats = float.IsFinite(target.Fats) && target.Fats >= 0 ? target.Fats : GeneralDefaultFats;
+        var shares = GetMealShares(breakfastPreference);
 
         var isSweet = string.Equals(breakfastPreference, "Sweet", StringComparison.OrdinalIgnoreCase);
 
         var breakfastItem = BuildDayMealPlanItem(
             "Breakfast",
-            totalCalories * BreakfastCalorieRatio,
-            totalProtein * BreakfastCalorieRatio,
-            totalCarbs * BreakfastCalorieRatio,
-            totalFats * BreakfastCalorieRatio,
+            totalCalories * shares.Breakfast,
+            totalProtein * shares.Breakfast,
+            totalCarbs * shares.Breakfast,
+            totalFats * shares.Breakfast,
             totalCalories,
             isSweet ? SweetBreakfastCatalog[0] : SavouryBreakfastCatalog[0]);
 
         var lunchItem = BuildDayMealPlanItem(
             "Lunch",
-            totalCalories * LunchCalorieRatio,
-            totalProtein * LunchCalorieRatio,
-            totalCarbs * LunchCalorieRatio,
-            totalFats * LunchCalorieRatio,
+            totalCalories * shares.Lunch,
+            totalProtein * shares.Lunch,
+            totalCarbs * shares.Lunch,
+            totalFats * shares.Lunch,
             totalCalories,
             LunchCatalog[0]);
 
         var dinnerItem = BuildDayMealPlanItem(
             "Dinner",
-            totalCalories * DinnerCalorieRatio,
-            totalProtein * DinnerCalorieRatio,
-            totalCarbs * DinnerCalorieRatio,
-            totalFats * DinnerCalorieRatio,
+            totalCalories * shares.Dinner,
+            totalProtein * shares.Dinner,
+            totalCarbs * shares.Dinner,
+            totalFats * shares.Dinner,
             totalCalories,
             DinnerCatalog[0]);
 
         var snackItem = BuildDayMealPlanItem(
             "Snack",
-            totalCalories * SnackCalorieRatio,
-            totalProtein * SnackCalorieRatio,
-            totalCarbs * SnackCalorieRatio,
-            totalFats * SnackCalorieRatio,
+            totalCalories * shares.Snack,
+            totalProtein * shares.Snack,
+            totalCarbs * shares.Snack,
+            totalFats * shares.Snack,
             totalCalories,
             SnackCatalog[0]);
 
@@ -695,31 +705,35 @@ public sealed class PostgresNutritionOverviewStore(
         return Task.FromResult(refreshed);
     }
 
-    public Task<IReadOnlyList<MealSuggestionDto>> GetMealSuggestionsAsync(
+    public async Task<IReadOnlyList<MealSuggestionDto>> GetMealSuggestionsAsync(
         Guid userId,
         string mealType,
         string breakfastPreference,
         IReadOnlySet<string>? excludeConceptNames = null,
         CancellationToken cancellationToken = default)
     {
+        var target = await targetStore.LoadAsync(userId, DateOnly.FromDateTime(DateTime.UtcNow), cancellationToken)
+            .ConfigureAwait(false);
+        var shares = GetMealShares(breakfastPreference);
         var catalog = GetCatalogForMealType(mealType, breakfastPreference);
         var targetRatio = mealType.ToLowerInvariant() switch
         {
-            "breakfast" => BreakfastCalorieRatio,
-            "lunch" => LunchCalorieRatio,
-            "dinner" => DinnerCalorieRatio,
-            "snack" => SnackCalorieRatio,
-            _ => LunchCalorieRatio
+            "breakfast" => shares.Breakfast,
+            "lunch" => shares.Lunch,
+            "dinner" => shares.Dinner,
+            "snack" => shares.Snack,
+            _ => shares.Lunch
         };
 
-        var targetCals = GeneralDefaultCalories * targetRatio;
+        var targetCals = target.Calories * targetRatio;
 
         var suggestions = catalog
             .Where(c => excludeConceptNames == null || !excludeConceptNames.Contains(c.Name))
-            .Select(c => MapConceptToSuggestion(c, targetCals))
+            .Select(c => MapConceptToSuggestion(c, targetCals,
+                target.Protein * targetRatio, target.Carbs * targetRatio, target.Fats * targetRatio))
             .ToList();
 
-        return Task.FromResult<IReadOnlyList<MealSuggestionDto>>(suggestions);
+        return suggestions;
     }
 
     public Task<NutritionOverviewResponse> GetOverviewAsync(
@@ -782,6 +796,12 @@ public sealed class PostgresNutritionOverviewStore(
         };
     }
 
+    private static MealDistributionShare GetMealShares(string breakfastPreference) =>
+        MealDistributionRule.GetShares(
+            string.Equals(breakfastPreference, nameof(BreakfastPreference.Sweet), StringComparison.OrdinalIgnoreCase)
+                ? BreakfastPreference.Sweet
+                : BreakfastPreference.Savoury);
+
     private static DayMealPlanItemDto BuildDayMealPlanItem(
         string mealType,
         float targetCalories,
@@ -791,7 +811,7 @@ public sealed class PostgresNutritionOverviewStore(
         float dailyTargetCalories,
         ReferenceConceptItem concept)
     {
-        var suggestion = MapConceptToSuggestion(concept, targetCalories);
+        var suggestion = MapConceptToSuggestion(concept, targetCalories, targetProtein, targetCarbs, targetFats);
         return new DayMealPlanItemDto(
             mealType,
             targetCalories,
@@ -805,28 +825,72 @@ public sealed class PostgresNutritionOverviewStore(
         );
     }
 
-    private static MealSuggestionDto MapConceptToSuggestion(ReferenceConceptItem concept, float targetCalories)
+    public const float MaxGeneratedOilGrams = PortionCalculationRule.MaxOilGrams;
+
+    private static bool IsOilIngredient(string name) =>
+        name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Contains(OilIngredientName, StringComparer.OrdinalIgnoreCase);
+
+    private static MealSuggestionDto MapConceptToSuggestion(
+        ReferenceConceptItem concept, float targetCalories, float targetProtein, float targetCarbs, float targetFats)
     {
         var baseCals = concept.BaseCalories > 0 ? concept.BaseCalories : 1f;
         var scale = targetCalories / baseCals;
         var scaledCalories = targetCalories;
-        var scaledProtein = concept.BaseProtein * scale;
-        var scaledCarbs = concept.BaseCarbs * scale;
-        var scaledFats = concept.BaseFats * scale;
+        var scaledProtein = targetProtein;
+        var scaledCarbs = targetCarbs;
+        var scaledFats = targetFats;
 
-        var components = concept.Ingredients.Select((ing, idx) =>
-            new MealSuggestionComponentDto(
-                idx + 1,
-                ing,
-                "Ingredient",
-                "Base",
-                100f * scale,
-                false,
-                scaledCalories / concept.Ingredients.Count,
-                scaledProtein / concept.Ingredients.Count,
-                scaledCarbs / concept.Ingredients.Count,
-                scaledFats / concept.Ingredients.Count
-            )).ToList();
+        var oilCount = concept.Ingredients.Count(IsOilIngredient);
+        var nonOilCount = concept.Ingredients.Count - oilCount;
+
+        var oilGrams = GeneratedOilPortionRule.CalculatePerIngredientGrams(scale, scaledCalories, scaledFats, oilCount);
+        var totalOilFats = oilGrams * oilCount;
+        var totalOilCalories = totalOilFats * GeneratedOilPortionRule.CaloriesPerGram;
+
+        var remainingCalories = Math.Max(0f, scaledCalories - totalOilCalories);
+        var remainingFats = Math.Max(0f, scaledFats - totalOilFats);
+        var divisor = Math.Max(1, nonOilCount);
+        var componentGrams = ReferenceComponentGrams * scale;
+        var componentDensityScale = componentGrams > 0f ? ReferenceComponentGrams / componentGrams : 0f;
+        var components = new List<MealSuggestionComponentDto>(concept.Ingredients.Count);
+        for (var idx = 0; idx < concept.Ingredients.Count; idx++)
+        {
+            var ing = concept.Ingredients[idx];
+            if (IsOilIngredient(ing))
+            {
+                if (oilGrams <= 0f)
+                    continue;
+
+                components.Add(new MealSuggestionComponentDto(
+                    0,
+                    ing,
+                    "Sauce",
+                    "SauceOnSide",
+                    oilGrams,
+                    false,
+                    ReferenceComponentGrams * GeneratedOilPortionRule.CaloriesPerGram,
+                    0f,
+                    0f,
+                    ReferenceComponentGrams
+                ));
+            }
+            else
+            {
+                components.Add(new MealSuggestionComponentDto(
+                    0,
+                    ing,
+                    "Ingredient",
+                    "Base",
+                    componentGrams,
+                    false,
+                    remainingCalories / divisor * componentDensityScale,
+                    scaledProtein / divisor * componentDensityScale,
+                    scaledCarbs / divisor * componentDensityScale,
+                    remainingFats / divisor * componentDensityScale
+                ));
+            }
+        }
 
         var group = new MealSuggestionComponentGroupDto("Ingredients", "Food24", components);
 

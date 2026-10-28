@@ -66,6 +66,10 @@ public partial class NutritionViewModel
     public string SuggestionPageTitle => IsDayPlanMode ? "Today's meal plan" : "Meal ideas";
     public string LoadingSuggestionText => IsDayPlanMode ? "Building today's meal plan" : "Finding a good fit";
 
+    public bool IsBreakfastSuggestion => SuggestionMealType == MealType.Breakfast;
+    public bool ShowBreakfastPreferenceToggle =>
+        (!IsDayPlanMode && IsBreakfastSuggestion) || IsDayPlanMode;
+
     public string SuggestionMealTypeCaloriesText => GetMealTypeCaloriesText(SuggestionMealType);
 
     public string BreakfastCaloriesHint => GetMealTypeCaloriesText(MealType.Breakfast);
@@ -135,6 +139,12 @@ public partial class NutritionViewModel
 
     private void RefreshSuggestions()
     {
+        if (_breakfastTargetsNeedRefresh && (IsDayPlanMode || IsBreakfastSuggestion))
+        {
+            _ = RefreshBreakfastPreferenceAsync();
+            return;
+        }
+
         if (IsDayPlanMode)
         {
             _ = LoadDayPlanAsync();
@@ -175,6 +185,12 @@ public partial class NutritionViewModel
 
     private async Task LoadSuggestionsAsync(IReadOnlySet<string>? excludeConceptNames = null)
     {
+        if (_breakfastTargetsNeedRefresh && IsBreakfastSuggestion)
+        {
+            await RefreshBreakfastPreferenceAsync();
+            return;
+        }
+
         var loadVersion = ++_suggestionLoadVersion;
         IsLoadingSuggestions = true;
         MealSuggestions.Clear();
@@ -360,6 +376,12 @@ public partial class NutritionViewModel
 
     private async Task LoadDayPlanAsync()
     {
+        if (_breakfastTargetsNeedRefresh)
+        {
+            await RefreshBreakfastPreferenceAsync();
+            return;
+        }
+
         var loadVersion = ++_suggestionLoadVersion;
         IsLoadingSuggestions = true;
         DayPlanMeals.Clear();
@@ -500,6 +522,10 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(LunchCaloriesHint));
         OnPropertyChanged(nameof(DinnerCaloriesHint));
         OnPropertyChanged(nameof(SnackCaloriesHint));
+        OnPropertyChanged(nameof(IsBreakfastSuggestion));
+        OnPropertyChanged(nameof(ShowBreakfastPreferenceToggle));
+        OnPropertyChanged(nameof(IsSavouryBreakfast));
+        OnPropertyChanged(nameof(IsSweetBreakfast));
     }
 
     private void NotifyDetailProperties()

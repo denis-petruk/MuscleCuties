@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Models.Entities.Nutrition;
+using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
@@ -551,7 +552,7 @@ public sealed class SuggestedMealService : ISuggestedMealService
             ids.Add(ingredient.Food.Id);
     }
 
-    private static PortionSolution? SolveMultiIngredient(
+    internal static PortionSolution? SolveMultiIngredient(
         MealNutritionTarget target,
         SlotFoodMap slotFoods,
         UserGoal goal,
@@ -567,17 +568,18 @@ public sealed class SuggestedMealService : ISuggestedMealService
         if (baseSolution is null)
             return null;
 
+        var remainingOilGrams = target.Fats > 0f ? PortionCalculationRule.MaxOilGrams : 0f;
         var proteinComponent = DistributeGrams(
-            MealConceptSlotType.ProteinBase, slotFoods.Protein, baseSolution.ProteinComponent.TotalGrams);
+            MealConceptSlotType.ProteinBase, slotFoods.Protein, baseSolution.ProteinComponent.TotalGrams, ref remainingOilGrams);
         var carbComponent = DistributeGrams(
-            MealConceptSlotType.CarbBase, slotFoods.Carb, baseSolution.CarbComponent.TotalGrams);
+            MealConceptSlotType.CarbBase, slotFoods.Carb, baseSolution.CarbComponent.TotalGrams, ref remainingOilGrams);
         var vitaminComponent = DistributeGrams(
-            MealConceptSlotType.VitaminBase, slotFoods.Vitamin, baseSolution.VitaminComponent.TotalGrams);
+            MealConceptSlotType.VitaminBase, slotFoods.Vitamin, baseSolution.VitaminComponent.TotalGrams, ref remainingOilGrams);
 
         MealComponent? sauceComponent = null;
         if (slotFoods.Sauce is { Count: > 0 } && baseSolution.SauceComponent is not null)
             sauceComponent = DistributeGrams(
-                MealConceptSlotType.Sauce, slotFoods.Sauce, baseSolution.SauceComponent.TotalGrams);
+                MealConceptSlotType.Sauce, slotFoods.Sauce, baseSolution.SauceComponent.TotalGrams, ref remainingOilGrams);
 
         var allMacros = new List<MacroNutrients>
         {
@@ -596,11 +598,12 @@ public sealed class SuggestedMealService : ISuggestedMealService
     private static MealComponent DistributeGrams(
         MealConceptSlotType slotType,
         IReadOnlyList<ResolvedIngredientEntry> entries,
-        float totalGrams)
+        float totalGrams,
+        ref float remainingOilGrams)
     {
         if (entries.Count == 1)
         {
-            var grams = PortionSolver.SnapToServing(entries[0].Food, totalGrams);
+            var grams = SnapWithinOilBudget(entries[0].Food, totalGrams, ref remainingOilGrams);
             var ingredient = new Ingredient(entries[0].Food, grams);
             return new MealComponent(slotType, [ingredient]);
         }
@@ -612,18 +615,29 @@ public sealed class SuggestedMealService : ISuggestedMealService
         {
             var share = totalShare > 0f ? entry.PortionShare / totalShare : 1f / entries.Count;
             var rawGrams = totalGrams * share;
-            var grams = PortionSolver.SnapToServing(entry.Food, rawGrams);
+            var grams = SnapWithinOilBudget(entry.Food, rawGrams, ref remainingOilGrams);
             if (grams > 0f)
                 ingredients.Add(new Ingredient(entry.Food, grams));
         }
 
         if (ingredients.Count == 0)
         {
-            var grams = PortionSolver.SnapToServing(entries[0].Food, totalGrams);
+            var grams = SnapWithinOilBudget(entries[0].Food, totalGrams, ref remainingOilGrams);
             ingredients.Add(new Ingredient(entries[0].Food, grams));
         }
 
         return new MealComponent(slotType, ingredients);
+    }
+
+    private static float SnapWithinOilBudget(FoodItem food, float targetGrams, ref float remainingOilGrams)
+    {
+        var grams = PortionSolver.SnapToServing(food, targetGrams);
+        if (!PortionSolver.IsOil(food))
+            return grams;
+
+        grams = MathF.Min(grams, remainingOilGrams);
+        remainingOilGrams -= grams;
+        return grams;
     }
 
     private async Task<IReadOnlyDictionary<int, int>> BuildUsageMapAsync(int userId, DateTime date)
