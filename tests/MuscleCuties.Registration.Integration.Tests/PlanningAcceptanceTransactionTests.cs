@@ -20,6 +20,7 @@ public sealed class PlanningAcceptanceTransactionTests
 {
     private const string ConnectionVariable = "MC_REGISTRATION_WRITE_TEST_POSTGRES";
     private const int SyntheticDurationMinutes = 30;
+    private static readonly DateOnly SyntheticBirthDate = new(1990, 1, 1);
 
     // This exercises persistence with a deliberately synthetic no-strength remainder;
     // it does not claim catalog or clinical review of a real workout.
@@ -47,6 +48,7 @@ public sealed class PlanningAcceptanceTransactionTests
             Username = $"plan_{user.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
             CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
         db.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = user, Name = "Synthetic",
+            DateOfBirth = SyntheticBirthDate,
             Goal = "MuscleTone", TrainingExperienceLevel = "Beginner", EquipmentLevel = "FullGym",
             Height = 168m, Weight = 62m, WorkoutDaysPerWeek = 3, CycleLength = 28, UpdatedAt = now });
         db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord { Id = Guid.NewGuid(), UserId = user,

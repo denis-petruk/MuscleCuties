@@ -23,6 +23,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
     private const int SleepWindowLookbackDays = 2;
     private const int StepsWindowLookbackDays = 6;
     private const string ClearedStatus = "Cleared";
+    private const int NoReportedPain = 0;
 
     public async Task<IReadOnlyList<DailyCheckInRecord>> LoadCheckInsAsync(
         Guid userId,
@@ -58,6 +59,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, request.UserId, cancellationToken)
                 .ConfigureAwait(false);
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, request.UserId, cancellationToken).ConfigureAwait(false);
             await LockRecordIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
 
             var row = await dbContext.DailyReadinessLogs.SingleOrDefaultAsync(
@@ -126,6 +128,23 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 effectivePhase,
                 WorkoutPlanningConfig.CreateDefault());
 
+            if (row is not null && row.Date == request.Date && row.SleepHours == request.SleepHours &&
+                row.Sleep3dAvg == sleep3dAvg && row.StepsYesterday == request.StepsYesterday &&
+                row.Steps7dAvg == steps7dAvg && row.Energy == request.Energy && row.Pain == request.Pain &&
+                row.Bloating == request.Bloating && row.WeightKg == request.WeightKg &&
+                row.SleepQuality == request.SleepQuality && row.Soreness == request.Soreness &&
+                row.PlanningSleepQuality == request.PlanningSleepQuality && row.PlanningSoreness == request.PlanningSoreness &&
+                row.PlanningStress == request.PlanningStress && row.PlanningTimeZoneId == request.PlanningTimeZoneId &&
+                row.PreviousDayLoad == request.PreviousDayLoad && row.ReadinessScore == readiness.Score &&
+                row.ReadinessTier == readiness.Tier && row.Phase == effectivePhase.ToString())
+            {
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return MapCheckIn(row);
+            }
+
+            var changedPainNeedsReview = row is not null && row.Date == request.Date && request.Pain is > NoReportedPain &&
+                (row.Pain is null || request.Pain > row.Pain);
+
             row ??= new DailyReadinessLogRecord
             {
                 Id = request.Id,
@@ -157,6 +176,16 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             if (dbContext.Entry(row).State == EntityState.Detached)
                 dbContext.DailyReadinessLogs.Add(row);
 
+            await PostgresCycleReadinessReconciler.MarkPendingAsync(dbContext, request.UserId, cancellationToken).ConfigureAwait(false);
+            var planningState = await dbContext.WorkoutAccountPlanningStates.SingleOrDefaultAsync(
+                item => item.UserId == request.UserId, cancellationToken).ConfigureAwait(false);
+            if (planningState is not null)
+            {
+                if (changedPainNeedsReview) planningState.CycleReadinessPainReviewDate = request.Date;
+                else if (request.Pain == NoReportedPain && planningState.CycleReadinessPainReviewDate == request.Date)
+                    planningState.CycleReadinessPainReviewDate = null;
+            }
+
             try
             {
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -181,6 +210,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             var row = await dbContext.DailyReadinessLogs.SingleOrDefaultAsync(
                     item => item.UserId == userId && item.Id == checkInId,
                     cancellationToken)
@@ -192,6 +222,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             }
 
             dbContext.DailyReadinessLogs.Remove(row);
+            await PostgresCycleReadinessReconciler.MarkPendingAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return true;

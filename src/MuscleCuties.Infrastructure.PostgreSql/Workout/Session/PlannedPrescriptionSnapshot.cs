@@ -11,6 +11,7 @@ internal sealed record PlannedPrescriptionSnapshot(Guid DayId, string Name, stri
     public string? DoseAdjustmentPolicyVersion { get; init; }
     public long? DoseAdjustmentCheckInRevision { get; init; }
     public string? DoseAdjustmentCyclePhase { get; init; }
+    public string? DoseAdjustmentConfidence { get; init; }
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     public string Serialize() => JsonSerializer.Serialize(this, JsonOptions);
     public static PlannedPrescriptionSnapshot? Deserialize(string? json)
@@ -25,14 +26,16 @@ internal sealed record PlannedExerciseSnapshot(Guid Id, int ExerciseId, int Sets
     int? DurationSeconds, bool IsOptional)
 {
     public int? TargetRepetitionsInReserve { get; init; }
+    public string? PlanningSlotId { get; init; }
     public static PlannedExerciseSnapshot FromRecord(WorkoutDayExerciseRecord exercise) =>
         new(exercise.Id, exercise.ExerciseId, exercise.Sets, exercise.OptionalSets, exercise.Reps,
-            exercise.DurationSeconds, exercise.IsOptional) { TargetRepetitionsInReserve = exercise.TargetRepetitionsInReserve };
+            exercise.DurationSeconds, exercise.IsOptional) { TargetRepetitionsInReserve = exercise.TargetRepetitionsInReserve,
+                PlanningSlotId = exercise.PlanningSlotId };
 
     public WorkoutDayExerciseRecord ToRecord(Guid userId, Guid dayId) => new()
     {
         Id = Id, UserId = userId, WorkoutDayId = dayId, ExerciseId = ExerciseId, Sets = Sets,
         OptionalSets = OptionalSets, Reps = Reps, DurationSeconds = DurationSeconds, IsOptional = IsOptional,
-        TargetRepetitionsInReserve = TargetRepetitionsInReserve
+        TargetRepetitionsInReserve = TargetRepetitionsInReserve, PlanningSlotId = PlanningSlotId
     };
 }

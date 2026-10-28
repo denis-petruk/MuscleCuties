@@ -16,10 +16,22 @@ public sealed class WorkoutAccountPlanningStateRecord : ITenantRecord
     public DateOnly? DeloadEndExclusive { get; set; }
     public bool PromotionPending { get; set; }
     public bool SafetyRegenerationPending { get; set; }
+    public bool CycleReadinessPending { get; set; }
+    public DateOnly? CycleReadinessPainReviewDate { get; set; }
     public long AnswerVersion { get; set; }
     public string? AnswersJson { get; set; }
-    public Guid? StyleOfferRevisionId { get; set; }
-    public string? StyleOfferJson { get; set; }
+}
+
+/// <summary>Persisted same-day dose overlay; the accepted plan remains the baseline.</summary>
+public sealed class WorkoutCycleReadinessOccurrenceRecord : ITenantRecord
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public Guid WorkoutDayId { get; set; }
+    public DateOnly LocalDate { get; set; }
+    public string InputFingerprint { get; set; } = string.Empty;
+    public string PrescriptionJson { get; set; } = "{}";
+    public DateTime UpdatedAtUtc { get; set; }
 }
 
 /// <summary>Independent of mutable workout/history rows: deletion cannot revoke an earned day.</summary>

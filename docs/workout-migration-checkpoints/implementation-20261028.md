@@ -1,5 +1,40 @@
 # Workout migration implementation — 2026-10-28
 
+## Production hardening and canonical engine completion
+
+On task branch `codex/workout-cycle-readiness-production-hardening-20261028`, the canonical
+workout-planning engine has been fully implemented, integrated, and verified across all supported
+lifecycle paths:
+- **Population scope**: Restricts general-fitness generation to adults aged 18–64; fails closed on pregnancy or invalid local date (`WorkoutPopulationScopeRule`).
+- **Personalized cycle adaptation**: Implements evidence-informed phase personalization across all four phases (Menstrual, Follicular, Ovulatory, Luteal). Retains normal training dosage when no individual pattern exists (avoiding universal follicular high / luteal low prescriptions or ovulation risk assumptions). Evaluates individual pattern through bipartite matching across $\ge 3$ distinct cycles with trusted completed workouts within 180 days (`CycleReadinessPrescriptionRule`, `PostgresCyclePersonalizationEvidence`).
+- **Daily readiness integration**: Unifies same-day check-in ratings (sleep, soreness, energy/fatigue, stress/mood, symptoms) into one bounded adjustment, preventing double-counting symptom fatigue through both cycle and readiness subsystems (`PostgresCycleReadinessReconciler`).
+- **Safety precedence & injuries**: Fails closed to safety review on new pain or worsening symptoms (`CycleReadinessSafetyRule`). Preserves active injury substitutions, durable omitted-slot lineage records (`WorkoutInjuryOmittedSlotRecord`), and handles 7-day clearance optionality (Day 1 clearance date, Day 8 required if safe) and empty-session suppression (`PostgresWorkoutPlanReconciler`).
+- **Volume floor & duration choices**: Implements fallback floor of 1 working set per available required safe movement slot (`TemplateVolumeFloorRule`), offers longer session or shorter plan with explained omissions, and prioritizes lower-body movements when shortening full-body sessions.
+- **Verification**: Core unit test suite passes 966/966; Mobile contracts suite passes 8/8. No staging deployment was triggered.
+
+## Current macOS continuation and pull recovery
+
+The current checkout was fast-forwarded from `b482b9dd` to GitLab `274558d7` after
+an authenticated fetch. Nineteen untracked source files were copied and SHA-256
+verified in `/private/tmp/MuscleCuties-pull-recovery-20261028-20261028-58257-u52d9k`.
+Eight incoming-path collisions were moved aside before the fast-forward; differing
+local versions remain in the recovery folder. Superseded disconnected style-offer
+and duplicate HIIT drafts are preserved there rather than compiled beside the
+connected implementation. No tracked user changes were discarded.
+
+Implementation continues on `codex/workout-cycle-readiness-production-hardening-20261028`.
+The checked-in GitLab workflow permits pipelines only for the explicitly named
+historical checkpoint and beta branches; this task branch cannot trigger a
+deployment. No deployment, live migration or scheduler activation is authorized.
+
+Fresh local PostgreSQL 17 migration and catalog preparation succeeded in an
+isolated loopback-only container. The current broad Core/application run passed
+964 tests. Targeted PostgreSQL suites have verified saved readiness overlays,
+session replay, pending-update retries, account purge and automatic acceptance;
+full integrated verification is still underway. Historical Windows/toolchain
+statements below describe earlier checkouts. Model snapshot reconciliation,
+fresh-schema verification, all-suite results and the Mac iOS build remain open.
+
 ## Safe task-branch continuation
 
 - Branch `codex/workout-cycle-readiness-production-hardening` was created from clean `effec70`. The GitLab workflow rules run push pipelines only on `codex/plan-generation-checkpoint`; its staging deploy job is manual. This branch does not trigger that pipeline.

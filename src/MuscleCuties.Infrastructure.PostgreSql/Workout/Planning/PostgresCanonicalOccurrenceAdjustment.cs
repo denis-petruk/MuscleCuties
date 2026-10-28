@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Workout.Planning;
@@ -12,7 +13,7 @@ internal static class PostgresCanonicalOccurrenceAdjustment
     internal static async Task ApplyAsync(PostgresDbContext context, Guid userId, Guid? previousPlanId,
         DateOnly today, DateOnly firstDate, TimeZoneInfo zone,
         IReadOnlyList<StrengthPlanPreviewSessionV020> previewSessions,
-        IReadOnlyList<WorkoutDayRecord> days, IReadOnlyList<WorkoutDayExerciseRecord> exercises,
+        List<WorkoutDayRecord> days, IReadOnlyList<WorkoutDayExerciseRecord> exercises,
         CancellationToken cancellationToken)
     {
         // A safe non-strength remainder must not consume a deload window.
@@ -55,5 +56,10 @@ internal static class PostgresCanonicalOccurrenceAdjustment
             exercise.TargetRepetitionsInReserve = adjusted.TargetRir;
             exercise.OptionalSets = Math.Min(exercise.OptionalSets, exercise.Sets - 1);
         }
+        var strengthDates = exercises.Select(exercise => dates[exercise.WorkoutDayId]).ToHashSet();
+        days.RemoveAll(day => day.Date is { } date && day.ActivityTypeId is { } activity &&
+            CanonicalOccurrenceAdjustmentRule.RemoveOptionalHardCompanion(day.IsOptional,
+                (WorkoutActivityType)activity, strengthDates.Contains(date), date, start, end) &&
+            !exercises.Any(exercise => exercise.WorkoutDayId == day.Id));
     }
 }

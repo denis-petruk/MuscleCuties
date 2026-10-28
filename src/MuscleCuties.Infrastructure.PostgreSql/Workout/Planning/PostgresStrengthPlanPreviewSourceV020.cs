@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Workout.Planning;
@@ -160,6 +161,8 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             GoalPriorityByExerciseId = goalPriorityByExerciseId,
             TemplateVolumeFloors = ReviewedTemplateFloorSource.Map(floorRows),
             ProfileVersion = profile?.ConcurrencyVersion,
+            PopulationLimitationCode = WorkoutPopulationScopeRule.Limitation(profile?.DateOfBirth, today,
+                ReproductiveContextCodec.Parse(profile?.ReproductiveContextJson).Pregnancy),
             CatalogFingerprint = PlanningCatalogFingerprint.FromInputs(definitions, goalTierWeights, preferences, floorRows),
             InjuryFingerprint = PlanningInputFingerprint.Injuries(injuries),
             ActivePlanId = activePlanId,

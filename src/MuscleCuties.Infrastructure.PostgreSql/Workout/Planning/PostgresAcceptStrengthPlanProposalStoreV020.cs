@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
@@ -190,7 +191,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
 
         var currentProfile = await dbContext.UserProfiles.AsNoTracking()
             .Where(profile => profile.UserId == userId)
-            .Select(profile => new { profile.ConcurrencyVersion, profile.AvailableWorkoutWeekdaysJson })
+            .Select(profile => new { profile.ConcurrencyVersion, profile.AvailableWorkoutWeekdaysJson, profile.DateOfBirth, profile.ReproductiveContextJson })
             .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         if (currentProfile is null || currentProfile.ConcurrencyVersion != inputSnapshot.ProfileVersion)
         {
@@ -201,6 +202,11 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             return new(StaleStatus, proposal.PlanId, null,
                 WorkoutPreferencesChangedSinceProposalCode);
         }
+        var accountToday = WorkoutAccountCalendarRule.LocalDate(DateTimeOffset.UtcNow, zone);
+        var populationLimitation = WorkoutPopulationScopeRule.Limitation(currentProfile.DateOfBirth, accountToday,
+            ReproductiveContextCodec.Parse(currentProfile.ReproductiveContextJson).Pregnancy);
+        if (populationLimitation is not null)
+            return new(LimitedStatus, proposal.PlanId, null, populationLimitation);
         var draft = inputSnapshot.Request.DraftPreferences;
         if (draft is null || !WorkoutPreferencesRule.IsValid(draft.ActivityTypes, draft.AvailableWeekdays,
                 draft.ActivitySessionDurationsMinutes, draft.RequestedSessionsPerWeek) ||
