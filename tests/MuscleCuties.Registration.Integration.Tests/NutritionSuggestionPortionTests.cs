@@ -23,6 +23,11 @@ public sealed class NutritionSuggestionPortionTests
     private const float DailyFats = 70f;
     private const float Tolerance = 0.001f;
     private const float NutrientReferenceGrams = 100f;
+    private const float GroundTurkeyCaloriesPer100Grams = 149f;
+    private const float BlackBeansCaloriesPer100Grams = 132f;
+    private const float TomatoesCaloriesPer100Grams = 18f;
+    private const float BrownRiceCaloriesPer100Grams = 123f;
+    private const float OilCaloriesPer100Grams = 884f;
 
     [Theory]
     [InlineData("Breakfast", SmallMealCalories)]
@@ -79,6 +84,41 @@ public sealed class NutritionSuggestionPortionTests
                 DailyCarbs * shares.Dinner, DailyFats * shares.Dinner, dailyCalories, false, suggestion));
     }
 
+    [Fact]
+    public async Task TurkeyChiliUsesIngredientSpecificPortionsAndNutrients()
+    {
+        var suggestions = await CreateStore().GetMealSuggestionsAsync(Guid.NewGuid(), "Dinner", "Savoury");
+        var chili = Assert.Single(suggestions, suggestion => suggestion.ConceptName == "Lean Turkey Chili");
+        var components = chili.Components.ToDictionary(component => component.Name);
+
+        Assert.Equal(GroundTurkeyCaloriesPer100Grams, components["Ground Turkey"].Calories);
+        Assert.Equal(BlackBeansCaloriesPer100Grams, components["Black Beans"].Calories);
+        Assert.Equal(TomatoesCaloriesPer100Grams, components["Tomatoes"].Calories);
+        Assert.Equal(BrownRiceCaloriesPer100Grams, components["Brown Rice"].Calories);
+        Assert.NotEqual(components["Ground Turkey"].Grams, components["Black Beans"].Grams);
+        Assert.NotEqual(components["Black Beans"].Grams, components["Tomatoes"].Grams);
+        Assert.NotEqual(components["Tomatoes"].Grams, components["Brown Rice"].Grams);
+        AssertClose(chili.Calories, chili.Components.Sum(component => ForPortion(component.Calories, component.Grams)));
+    }
+
+    [Theory]
+    [InlineData("Breakfast", "Sweet")]
+    [InlineData("Breakfast", "Savoury")]
+    [InlineData("Lunch", "Savoury")]
+    [InlineData("Dinner", "Savoury")]
+    [InlineData("Snack", "Savoury")]
+    public async Task EveryGeneratedConceptHasResolvedIngredientProfiles(string mealType, string preference)
+    {
+        var suggestions = await CreateStore().GetMealSuggestionsAsync(Guid.NewGuid(), mealType, preference);
+        Assert.NotEmpty(suggestions);
+        Assert.All(suggestions, suggestion =>
+        {
+            Assert.NotEmpty(suggestion.Components);
+            AssertClose(suggestion.Calories,
+                suggestion.Components.Sum(component => ForPortion(component.Calories, component.Grams)));
+        });
+    }
+
     [Theory]
     [InlineData("Sweet", "Berry Protein Oatmeal", "Greek Yogurt Parfait")]
     [InlineData("Savoury", "Scrambled Eggs with Toast", "Tofu Scramble with Vegetables")]
@@ -117,9 +157,6 @@ public sealed class NutritionSuggestionPortionTests
         var suggestion = Assert.IsType<MealSuggestionDto>(item.Suggestion);
         Assert.NotEmpty(suggestion.Components);
         AssertClose(item.TargetCalories, suggestion.Calories);
-        AssertClose(item.TargetProtein, suggestion.Protein);
-        AssertClose(item.TargetCarbs, suggestion.Carbs);
-        AssertClose(item.TargetFats, suggestion.Fats);
         AssertClose(suggestion.Calories, suggestion.Components.Sum(component => ForPortion(component.Calories, component.Grams)));
         AssertClose(suggestion.Protein, suggestion.Components.Sum(component => ForPortion(component.Protein, component.Grams)));
         AssertClose(suggestion.Carbs, suggestion.Components.Sum(component => ForPortion(component.Carbs, component.Grams)));
@@ -138,7 +175,9 @@ public sealed class NutritionSuggestionPortionTests
             Assert.Equal(0f, oil.Protein);
             Assert.Equal(0f, oil.Carbs);
             AssertClose(oil.Grams, ForPortion(oil.Fats, oil.Grams));
-            AssertClose(oil.Grams * GeneratedOilPortionRule.CaloriesPerGram, ForPortion(oil.Calories, oil.Grams));
+            Assert.Equal(OilCaloriesPer100Grams, oil.Calories);
+            AssertClose(OilCaloriesPer100Grams * oil.Grams / NutrientReferenceGrams,
+                ForPortion(oil.Calories, oil.Grams));
         });
     }
 
