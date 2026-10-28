@@ -42,6 +42,7 @@ DESIGN.md
 
 # Rider/ReSharper
 .idea/
+.vs/
 .run/
 riderModule.iml
 /_ReSharper.Caches/
