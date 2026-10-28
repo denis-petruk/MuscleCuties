@@ -55,6 +55,7 @@ public sealed record MealSummaryDto(
     IReadOnlyList<DailyMicronutrientDto> Micronutrients
 );
 
+/// <summary>Ingredient amount in grams and nutrient densities per 100 grams.</summary>
 public sealed record MealSuggestionComponentDto(
     int FoodItemId,
     string Name,

@@ -133,7 +133,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         EditIngredientCommand = new RelayCommand<MealIngredientItem>(EditIngredient);
         MealEditorBackCommand = new RelayCommand(GoBackInMealEditor);
         LogMealCommand = new AsyncRelayCommand(LogMealAsync, CanLogMeal);
-        SetBreakfastPreferenceCommand = new AsyncRelayCommand<string>(SetBreakfastPreferenceAsync);
+        SetBreakfastPreferenceCommand = new AsyncRelayCommand<string>(SetBreakfastPreferenceAsync, AsyncRelayCommandOptions.AllowConcurrentExecutions);
         ToggleCustomFoodPanelCommand = new RelayCommand(ToggleCustomFoodPanel);
         CreateCustomFoodCommand = new AsyncRelayCommand(CreateCustomFoodAsync, () => !IsBusy);
         OpenMicronutrientsModalCommand = new RelayCommand(OpenDailyBreakdown);

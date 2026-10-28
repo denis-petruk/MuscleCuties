@@ -291,6 +291,9 @@ internal static partial class RussianUiText
         Values["Nutrition_MealSuggestion_ViewMealDetails"] = "Детали приёма пищи";
         Values["Nutrition_MealSuggestion_YourLoggedMealsHaveUsedToday"] = "Ваши зарегистрированные приемы пищи использовали сегодняшние запланированные калории.";
         Values["Nutrition_MealType_Breakfast"] = "Завтрак";
+        Values["Nutrition_Breakfast_Savoury"] = "Сытный";
+        Values["Nutrition_Breakfast_Sweet"] = "Сладкий";
+        Values["Nutrition_BreakfastPreference_Title"] = "Стиль завтрака";
         Values["Nutrition_MealType_Dinner"] = "Ужин";
         Values["Nutrition_MealType_Lunch"] = "Обед";
         Values["Nutrition_MealType_Snack"] = "Перекус";

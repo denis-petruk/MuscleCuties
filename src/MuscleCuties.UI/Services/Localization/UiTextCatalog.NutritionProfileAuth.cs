@@ -291,6 +291,9 @@ public static partial class UiTextCatalog
         English["Nutrition_MealSuggestion_ViewMealDetails"] = "View meal details";
         English["Nutrition_MealSuggestion_YourLoggedMealsHaveUsedToday"] = "Your logged meals have used today's planned calories.";
         English["Nutrition_MealType_Breakfast"] = "Breakfast";
+        English["Nutrition_Breakfast_Savoury"] = "Savoury";
+        English["Nutrition_Breakfast_Sweet"] = "Sweet";
+        English["Nutrition_BreakfastPreference_Title"] = "Breakfast style";
         English["Nutrition_MealType_Dinner"] = "Dinner";
         English["Nutrition_MealType_Lunch"] = "Lunch";
         English["Nutrition_MealType_Snack"] = "Snack";
