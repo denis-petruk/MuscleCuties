@@ -1,5 +1,7 @@
 # Status — MuscleCuties
 
+**Current checkout (2026-10-28, macOS):** GitLab pull obstruction resolved without discarding local files; HEAD advanced to `274558d7` before the dedicated non-deploying task branch was created. A fresh disposable PostgreSQL schema/catalog and 964 Core/application tests passed. Integrated implementation and verification continue; see the [current checkpoint](docs/workout-migration-checkpoints/implementation-20261028.md).
+
 **Workout migration (2026-10-28):** Source merge reconciled; overlapping active-injury preflight and the first-plan no-safe Explore path improved. Core/application 931, Server 82, Registration 41, Mobile contracts 9 and nine database-independent integration tests pass. PostgreSQL transaction tests and the iOS build remain blocked by missing local infrastructure. Omitted-slot lineage, canonical deload/progression, catalog coverage and deployment remain open. See the [current checkpoint](docs/workout-migration-checkpoints/implementation-20261028.md). No deployment occurred.
 
 **Workout migration continuation (2026-10-27, macOS):** Fetched GitLab and verified continuation through `c0afe720`. Previous Windows blockers are historical. Reconstruction of missing referenced source, disposable PostgreSQL verification and iOS verification are in progress. CI staging deployment requires an explicit manual action before further implementation pushes. See [current checkpoint](docs/workout-migration-checkpoints/implementation-20261027.md).
