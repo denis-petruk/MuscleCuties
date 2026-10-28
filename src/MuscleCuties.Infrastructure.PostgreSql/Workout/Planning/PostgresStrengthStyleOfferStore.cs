@@ -16,7 +16,6 @@ public sealed class PostgresStrengthStyleOfferStore(PostgresDbContext context) :
     {
         var styles = fittingStyleIds.Distinct().Where(id => Enum.IsDefined((WorkoutActivityType)id) &&
             StrengthStyleSelectionRule.IsStrengthStyle((WorkoutActivityType)id)).ToArray();
-        if (!styles.Contains(currentStyleId)) return;
         var alternatives = styles.Where(id => id != currentStyleId).ToArray();
         if (alternatives.Length == 0) return;
         if (await context.Set<StrengthStyleOfferRecord>().AnyAsync(row => row.UserId == userId && row.RevisionId == revisionId,

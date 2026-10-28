@@ -736,6 +736,10 @@
                             Command="{Binding EditDetailsCommand}"
                             IsVisible="{Binding CanReviewPreview}"
                             Style="{StaticResource ButtonSecondary}" />
+                    <Button Text="{Binding ExploreOtherFeaturesButtonText}"
+                            Command="{Binding ExploreOtherFeaturesCommand}"
+                            IsVisible="{Binding CanOfferExploreOtherFeatures}"
+                            Style="{StaticResource ButtonSecondary}" />
                     <Button Text="{loc:LocalizedText Workout_Generation_OpenTrainAfterApply}"
                             Command="{Binding OpenTrainCommand}"
                             IsVisible="{Binding IsTrainNavigationPending}"

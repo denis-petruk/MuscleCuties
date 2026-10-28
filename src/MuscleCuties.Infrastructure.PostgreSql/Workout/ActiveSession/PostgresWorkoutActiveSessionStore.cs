@@ -87,11 +87,12 @@ public sealed class PostgresWorkoutActiveSessionStore(
                 if (session.IsDeleted || session.CompletedAt is not null || session.PlannedWorkoutDayId is null)
                     throw new InvalidOperationException("An active planned workout is required.");
                 var now = timeProvider.GetUtcNow().UtcDateTime;
+                if ((checkpoint is null || !checkpoint.Pause) &&
+                    await context.WorkoutDays.AsNoTracking().AnyAsync(day => day.UserId == userId &&
+                        day.Id == session.PlannedWorkoutDayId && day.IsRemovedBySafety, ct).ConfigureAwait(false))
+                    throw new WorkoutActivityNoLongerSafeException();
                 if (checkpoint is null)
                 {
-                    if (await context.WorkoutDays.AsNoTracking().AnyAsync(day => day.UserId == userId &&
-                            day.Id == session.PlannedWorkoutDayId && day.IsRemovedBySafety, ct).ConfigureAwait(false))
-                        throw new WorkoutActivityNoLongerSafeException();
                     // Discard unacknowledged time from any interrupted interval.
                     session.TimingIntervalId = Guid.CreateVersion7();
                     session.TimingIntervalStartedAtUtc = now;
@@ -315,6 +316,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
             requestHash,
             async (context, ct) =>
             {
+                await WorkoutSessionAccountLock.AcquireAsync(context, userId, ct).ConfigureAwait(false);
                 await LockSessionAsync(context, command.SessionId, ct).ConfigureAwait(false);
                 var session = await context.WorkoutSessionLogs.SingleOrDefaultAsync(
                         row => row.UserId == userId && row.Id == command.SessionId,
@@ -324,6 +326,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     return null;
                 if (session.IsDeleted || session.CompletedAt is not null)
                     throw new InvalidOperationException("Cannot modify sets on a completed or canceled workout session.");
+                await RequireSafeSessionAsync(context, userId, session, ct).ConfigureAwait(false);
 
                 var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
                 await ApplySetUpsertAsync(context, userId, session.Id, command.Set, nowUtc, ct).ConfigureAwait(false);
@@ -375,6 +378,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     throw new InvalidOperationException("Cannot finish a canceled workout session.");
                 if (session.CompletedAt is not null)
                     return await LoadSessionSnapshotAsync(context, userId, command.SessionId, ct).ConfigureAwait(false);
+                await RequireSafeSessionAsync(context, userId, session, ct).ConfigureAwait(false);
 
                 var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
                 if (session.PlannedWorkoutDayId is { } plannedDayId)
@@ -485,6 +489,15 @@ public sealed class PostgresWorkoutActiveSessionStore(
         return execution.Replayed && execution.Response is not null
             ? execution.Response with { Replayed = true }
             : execution.Response;
+    }
+
+    private static async Task RequireSafeSessionAsync(PostgresDbContext context, Guid userId,
+        WorkoutSessionLogRecord session, CancellationToken cancellationToken)
+    {
+        if (session.PlannedWorkoutDayId is { } dayId && await context.WorkoutDays.AsNoTracking()
+            .AnyAsync(day => day.UserId == userId && day.Id == dayId && day.IsRemovedBySafety, cancellationToken)
+            .ConfigureAwait(false))
+            throw new WorkoutActivityNoLongerSafeException();
     }
 
     private static async Task ApplySetUpsertAsync(

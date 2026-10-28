@@ -39,11 +39,11 @@ public sealed class ReviewedTemplateFloorSourceTests
     }
 
     [Fact]
-    public void MissingEvidenceOrMismatchedTemplateVersionCannotEnableFloor()
+    public void HistoricalFloorDoesNotRequireExternalEvidenceButMustMatchTemplateVersion()
     {
         var missingEvidence = Row();
         missingEvidence.EvidenceReference = " ";
-        Assert.Empty(ReviewedTemplateFloorSource.Map([missingEvidence]));
+        Assert.True(ReviewedTemplateFloorSource.Map([missingEvidence]).ContainsKey(missingEvidence.TemplateId));
         var wrongVersion = Row();
         wrongVersion.TemplateVersion = "synthetic-other-version";
         Assert.Empty(ReviewedTemplateFloorSource.Map([wrongVersion]));

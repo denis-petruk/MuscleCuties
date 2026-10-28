@@ -20,6 +20,10 @@ public static partial class UiTextCatalog
         English["Workout_Overview_Status_Upcoming"] = "Upcoming";
         English["Injury_Log_ReloadAfterChangeFailed"] = "Your change was saved, but the injury log couldn't reload. Try again before training.";
         English["Injury_Log_ActiveWorkoutPreventsInjury"] = "End or abandon the active workout before recording an injury. Your logged sets will be preserved.";
+        English["Workout_StyleOffer_Title"] = "Another strength option";
+        English["Workout_StyleOffer_Message"] = "Your updated plan can also use {0}. Review that option?";
+        English["Workout_StyleOffer_Review"] = "Review option";
+        English["Workout_StyleOffer_Keep"] = "Keep current plan";
         English["Workout_Session_FinishTimedActivity"] = "Finish activity";
         English["Workout_Session_AbandonActivity"] = "Abandon activity";
         English["Workout_Overview_InProgressTitle"] = "Workout in progress";
@@ -44,7 +48,6 @@ public static partial class UiTextCatalog
         English["Workout_Session_ActivityNoLongerSafe"] = "This activity is no longer safe to continue. Abandon it to keep your logged sets.";
         English["Workout_Session_TimingExpired"] = "Your timing session expired. Resume to continue; previously confirmed time is saved.";
         English["Injury_Log_PlanRefreshFailed"] = "Your injury change was saved, but the workout plan couldn't refresh. Try again before training.";
-        English["Injury_Log_PlanRefreshFailed"] = "Your injury change was saved, but automatic workout plan updates are not available. Review your plan before training.";
         English["Injury_Log_PageRefreshFailed"] = "Your injury change was saved, but Today couldn't refresh. Try again.";
         English["Cycle_Guidance_PhaseContext"] = "A cycle phase is context, not a measurement of hormone levels or today's exercise capacity.";
         English["Cycle_Guidance_CheckIn"] = "Notice how you feel today and record any symptoms that matter to you.";

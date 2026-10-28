@@ -11,7 +11,7 @@ namespace MuscleCuties.Registration.Integration.Tests;
 public sealed class ActivityOccurrencePrescriptionTests
 {
     private const int OneWeeklySession = 1;
-    private const decimal OriginalMinutes = ActivitySessionDurationRule.DemandingYogaDurationMinutesDefault;
+    private const decimal OriginalMinutes = ActivitySessionDurationRule.DemandingYogaMaximumMinutes;
     private const decimal ReducedMinutes = ActivitySessionDurationRule.DemandingYogaMinimumMinutes;
 
     [Fact]

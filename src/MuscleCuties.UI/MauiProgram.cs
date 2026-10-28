@@ -110,6 +110,7 @@ using MuscleCuties.UseCases.Features.Workout.Archive;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Planning;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 #if IOS || MACCATALYST
@@ -605,7 +606,25 @@ public static class MauiProgram
             sp.GetRequiredService<IWorkoutInjuryUseCase>(),
             NavigateToAsync,
             workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId),
-            sp.GetRequiredService<IStrengthStyleOfferClient>()));
+            sp.GetRequiredService<IStrengthStyleOfferClient>(),
+            async offer =>
+            {
+                var alternatives = offer.AlternativeStyleIds
+                    .Select(id => (WorkoutActivityDto)id)
+                    .Where(WorkoutPlanningConstants.StrengthActivities.Contains)
+                    .Distinct()
+                    .ToArray();
+                if (alternatives.Length == 0) return null;
+                if (alternatives.Length == 1) return alternatives[0];
+                var labels = alternatives.ToDictionary(
+                    style => StrengthPlanGenerationDisplayMapper.ActivityLabel(style), style => style);
+                var selected = await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.DisplayActionSheetAsync(
+                    UiTextCatalog.Get("Workout_StyleOffer_Title"),
+                    UiTextCatalog.Get("Workout_StyleOffer_Keep"), null, labels.Keys.ToArray()));
+                return selected is not null && labels.TryGetValue(selected, out var style) ? style : null;
+            },
+            style => NavigateWithContextAsync(sp, nameof(StrengthPlanGenerationPage),
+                StrengthPlanGenerationViewModel.OfferedStrengthStyleContextKey, style)));
 
         services.AddTransient<StrengthPlanGenerationViewModel>(sp => new StrengthPlanGenerationViewModel(
             sp.GetRequiredService<IStrengthPlanProposalClientV020>(),

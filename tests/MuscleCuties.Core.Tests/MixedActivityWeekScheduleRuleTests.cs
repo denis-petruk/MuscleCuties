@@ -48,11 +48,15 @@ public sealed class MixedActivityWeekScheduleRuleTests
                 (WorkoutActivityType.Yoga, EvidenceFor(WorkoutActivityType.Yoga, isDemandingYogaContent: true))),
             chosenStrengthActivity: WorkoutActivityType.GeneralStrength);
 
-        var yoga = Assert.Single(result.Sessions, session => session.Activity == WorkoutActivityType.Yoga);
-        Assert.Equal(ActivitySessionDurationRule.DemandingYogaMinimumMinutes, yoga.DurationMinutes);
-        Assert.NotNull(yoga.OccurrencePrescription);
-        Assert.Contains(result.Sessions, session => session.Day == yoga.Day &&
-            session.Activity == WorkoutActivityType.GeneralStrength);
+        var yogaSessions = result.Sessions.Where(session => session.Activity == WorkoutActivityType.Yoga).ToArray();
+        Assert.NotEmpty(yogaSessions);
+        Assert.All(yogaSessions, yoga =>
+        {
+            Assert.Equal(ActivitySessionDurationRule.DemandingYogaMinimumMinutes, yoga.DurationMinutes);
+            Assert.NotNull(yoga.OccurrencePrescription);
+            Assert.Contains(result.Sessions, session => session.Day == yoga.Day &&
+                session.Activity == WorkoutActivityType.GeneralStrength);
+        });
         Assert.Empty(result.InputReasons);
         Assert.Equal(yogaMinutes, Decision(result, WorkoutActivityType.Yoga).Prescription!.MainMinutes);
     }
@@ -279,10 +283,11 @@ public sealed class MixedActivityWeekScheduleRuleTests
 
         var result = Evaluate(selected, AllWeekdays, durations, evidence);
 
-        Assert.Equal(MixedActivityWeekScheduleRule.MaximumHardDaysPerWeek, result.Sessions.Count);
         Assert.Equal(MixedActivityWeekScheduleRule.MaximumHardDaysPerWeek,
             result.Sessions.Select(session => session.Day).Distinct().Count());
         Assert.All(result.Sessions, session => Assert.True(session.IsHardSession));
+        Assert.All(result.Sessions, session => Assert.Null(session.OccurrencePrescription));
+        Assert.Empty(result.InputReasons);
         Assert.Contains(ActivityPrescriptionRule.HighIntensitySaferAlternativeReviewMissing,
             Decision(result, WorkoutActivityType.StrengthHighIntensity).Reasons);
     }

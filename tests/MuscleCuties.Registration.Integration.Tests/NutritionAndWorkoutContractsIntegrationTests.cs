@@ -465,13 +465,14 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
     }
 
     [Xunit.Fact]
-    public async Task UnsafeAnswerSuppressesAbandonedWorkoutButPreservesActiveAndCompletedSessions()
+    public async Task UnsafeAnswerStopsActiveWorkoutAndPreservesItsLogsAndCompletedSessions()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
         var userId = Guid.NewGuid();
         var now = DateTime.UtcNow;
         var today = DateOnly.FromDateTime(now);
+        var previousDay = today.AddDays(-1);
         await SyntheticTenantSession.SetAsync(database, userId);
         database.Users.Add(new UserRecord { Id = userId, Email = $"safety-{userId:N}@example.invalid",
             Username = $"saf_{userId.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
@@ -503,7 +504,8 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         });
         foreach (var dayId in new[] { unfinishedDayId, completedDayId, activeDayId })
             database.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
-                DayOfWeek = (int)today.DayOfWeek, WeekIndex = 0, Date = today, WorkoutType = "Cardio",
+                DayOfWeek = (int)(dayId == activeDayId ? previousDay.DayOfWeek : today.DayOfWeek), WeekIndex = 0,
+                Date = dayId == activeDayId ? previousDay : today, WorkoutType = "Cardio",
                 ActivityTypeId = (int)WorkoutActivityType.Swimming, Name = "Synthetic swimming" });
         database.WorkoutLogs.Add(new WorkoutLogRecord { Id = logId, UserId = userId, WorkoutDayId = unfinishedDayId,
             Date = today, CompletionPercent = 100, CreatedAt = now });
@@ -549,11 +551,21 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
                 .ToDictionaryAsync(day => day.Id);
             Xunit.Assert.True(days[unfinishedDayId].IsRemovedBySafety);
             Xunit.Assert.False(days[completedDayId].IsRemovedBySafety);
-            Xunit.Assert.False(days[activeDayId].IsRemovedBySafety);
+            Xunit.Assert.True(days[activeDayId].IsRemovedBySafety);
             Xunit.Assert.True(await database.WorkoutSessionLogs.AsNoTracking()
                 .AnyAsync(session => session.Id == activeSessionId && !session.IsDeleted && session.CompletedAt == null));
             Xunit.Assert.True(await database.WorkoutLogs.AsNoTracking().AnyAsync(log => log.Id == logId));
             Xunit.Assert.True(await database.ExerciseSetLogs.AsNoTracking().AnyAsync(set => set.Id == setId));
+            var activeStore = new PostgresWorkoutActiveSessionStore(database, new PostgresIdempotencyExecutor(), TimeProvider.System);
+            await Xunit.Assert.ThrowsAsync<WorkoutActivityNoLongerSafeException>(() => activeStore.ResumeTimingAsync(userId,
+                new ResumeWorkoutTimingCommand("unsafe-resume", activeSessionId), CancellationToken.None));
+            await Xunit.Assert.ThrowsAsync<WorkoutActivityNoLongerSafeException>(() => activeStore.UpsertSetAsync(userId,
+                new UpsertWorkoutSessionSetCommand("unsafe-set", activeSessionId,
+                    new ActiveExerciseSetInput(Guid.NewGuid(), null, "Synthetic set", 1, 0, SyntheticStrengthRepetitions, null, false, 0)),
+                CancellationToken.None));
+            await Xunit.Assert.ThrowsAsync<WorkoutActivityNoLongerSafeException>(() => activeStore.FinishSessionAsync(userId,
+                new FinishWorkoutSessionCommand("unsafe-finish", activeSessionId, now, SyntheticSessionDurationSeconds, null, null),
+                CancellationToken.None));
 
             var safeSwimming = new MuscleCuties.UseCases.Features.Workout.Planning.ActivityEligibilityInputV020(
                 MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Swimming,

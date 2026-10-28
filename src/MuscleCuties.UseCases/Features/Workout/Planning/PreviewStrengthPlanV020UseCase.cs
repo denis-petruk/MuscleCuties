@@ -198,6 +198,7 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
             var context = MixedActivityScheduleMapperV020.ToContext(request, sourceData, result);
             var nonStrength = context.SelectedActivities?.Where(activity =>
                 !StrengthStyleSelectionRule.IsStrengthStyle(activity)).ToArray() ?? [];
+            var noSafeActivities = nonStrength.Length == 0;
             if (nonStrength.Length > 0)
             {
                 var remainder = MixedActivityWeekScheduleRule.Evaluate(context with
@@ -205,6 +206,7 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
                     SelectedActivities = nonStrength,
                     ChosenStrengthActivity = null
                 });
+                noSafeActivities = remainder.InputReasons.Count == 0 && remainder.Sessions.Count == 0;
                 if (remainder.InputReasons.Count == 0 && remainder.Sessions.Count > 0)
                 {
                     var omission = new MixedActivityScheduleDecisionV020((int)choices.Activity,
@@ -232,6 +234,9 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
                     };
                 }
             }
+            if (noSafeActivities)
+                result = result with { LimitationCodes = result.LimitationCodes
+                    .Append(StrengthStyleSelectionRule.NoSafeStrengthStyleFitCode).Distinct(StringComparer.Ordinal).ToArray() };
         }
 
         var response = StrengthPlanPreviewMapperV020.ToResponse(result);
