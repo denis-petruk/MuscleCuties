@@ -1,5 +1,7 @@
 # Status — MuscleCuties
 
+**Git sync (2026-10-28, Windows):** The checked-out `codex/workout-cycle-readiness-production-hardening` branch fast-forwarded from `b8672f0` to GitLab commit `79eb8f04e793e1aed548ca755d10e8d1cc246eac` (nine commits). Its former upstream branch remains deleted; the local source checkpoint branch also points at `79eb8f0`.
+
 **Current checkout (2026-10-28, macOS):** GitLab pull obstruction resolved without discarding local files; HEAD advanced to `274558d7` before the dedicated non-deploying task branch was created. A fresh disposable PostgreSQL schema/catalog and 964 Core/application tests passed. Integrated implementation and verification continue; see the [current checkpoint](docs/workout-migration-checkpoints/implementation-20261028.md).
 
 **Workout migration (2026-10-28):** Source merge reconciled; overlapping active-injury preflight and the first-plan no-safe Explore path improved. Core/application 931, Server 82, Registration 41, Mobile contracts 9 and nine database-independent integration tests pass. PostgreSQL transaction tests and the iOS build remain blocked by missing local infrastructure. Omitted-slot lineage, canonical deload/progression, catalog coverage and deployment remain open. See the [current checkpoint](docs/workout-migration-checkpoints/implementation-20261028.md). No deployment occurred.
