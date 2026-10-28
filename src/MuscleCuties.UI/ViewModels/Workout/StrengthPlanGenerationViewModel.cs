@@ -347,6 +347,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool CanSubmitProposal => !_proposalInvalidated && !IsProposalAccepted && !IsTrainNavigationPending &&
         _proposal is { IsPersisted: true, Lease: not null } &&
         Preview?.Status == "Feasible";
+    public bool HasUnavailableApplyReason => CanReviewPreview && !IsBusy && !HasStatusMessage &&
+        !HasLimitation && !CanSubmitProposal;
+    public string UnavailableApplyReason => UiTextCatalog.Get(_proposalInvalidated
+        ? PlanChangedKey
+        : PreviewNotSavedKey);
 
     private bool HasValidSavedAvailability =>
         _availableWeekdays.Length is >= WorkoutPreferencesConstraints.MinimumAvailableWeekdays and
@@ -1209,7 +1214,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         ClearPreview();
     }
 
-    partial void OnStatusMessageChanged(string value) => OnPropertyChanged(nameof(HasStatusMessage));
+    partial void OnStatusMessageChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasStatusMessage));
+        OnPropertyChanged(nameof(HasUnavailableApplyReason));
+    }
 
     partial void OnIsTrainingDetailsExpandedChanged(bool value) =>
         OnPropertyChanged(nameof(TrainingDetailsToggleText));
@@ -1423,6 +1432,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(ChosenStrengthSummary));
         OnPropertyChanged(nameof(CanEditInputs));
         OnPropertyChanged(nameof(CanSubmitProposal));
+        OnPropertyChanged(nameof(HasUnavailableApplyReason));
+        OnPropertyChanged(nameof(UnavailableApplyReason));
         OnPropertyChanged(nameof(PreviewLimitationMessage));
         OnPropertyChanged(nameof(RequiresReducedVolumeAcknowledgment));
         OnPropertyChanged(nameof(ReducedVolumeNoticeText));
@@ -1551,6 +1562,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(CanEditInputs));
+        OnPropertyChanged(nameof(HasUnavailableApplyReason));
         NotifyCommandStates();
     }
 

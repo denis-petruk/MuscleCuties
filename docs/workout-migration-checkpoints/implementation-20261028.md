@@ -1,5 +1,12 @@
 # Workout migration implementation — 2026-10-28
 
+## Safe task-branch continuation
+
+- Branch `codex/workout-cycle-readiness-production-hardening` was created from clean `effec70`. The GitLab workflow rules run push pipelines only on `codex/plan-generation-checkpoint`; its staging deploy job is manual. This branch does not trigger that pipeline.
+- A feasible preview now shows a specific explanation when Apply is disabled because the proposal was not persisted or its lease became unavailable. A stale preview directs the user to make a fresh one. Existing Edit details remains available.
+- Mobile contracts: 9 passed. The edited generation XAML parses as XML. The iOS Release build was attempted and stopped at `NETSDK1147`: the `maui-ios` workload is absent from this Windows workload set. No PostgreSQL disposable connection is configured.
+- This is a narrow UI increment. The implementation and release gates below remain open.
+
 ## Checkout and ownership
 
 - Windows checkout on `codex/plan-generation-checkpoint`. An authenticated fetch reached GitLab. Local `be44260` and remote `b482b9d` diverged by two commits each; the existing merge was preserved and its four conflicts reconciled. The 2026-10-27 checkpoint retains both prior environment reports as historical records.
