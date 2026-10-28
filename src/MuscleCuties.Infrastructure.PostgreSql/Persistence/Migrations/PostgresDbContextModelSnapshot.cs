@@ -2276,6 +2276,26 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                     b.ToTable("workout_exercise_logs", "app");
                 });
 
+            modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutAccountPlanningStateRecord", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("uuid").HasColumnName("id");
+                    b.Property<Guid>("UserId").HasColumnType("uuid").HasColumnName("user_id");
+                    b.Property<string>("TimeZoneId").HasColumnType("text").HasColumnName("time_zone_id");
+                    b.Property<long>("TimeZoneVersion").HasColumnType("bigint").HasColumnName("time_zone_version");
+                    b.Property<int>("BaselineExperience").HasColumnType("integer").HasColumnName("baseline_experience");
+                    b.Property<int>("EffectiveExperience").HasColumnType("integer").HasColumnName("effective_experience");
+                    b.Property<long>("ExperienceVersion").HasColumnType("bigint").HasColumnName("experience_version");
+                    b.Property<bool>("PromotionPending").HasColumnType("boolean").HasColumnName("promotion_pending");
+                    b.Property<bool>("SafetyRegenerationPending").HasColumnType("boolean").HasColumnName("safety_regeneration_pending");
+                    b.Property<long>("AnswerVersion").HasColumnType("bigint").HasColumnName("answer_version");
+                    b.Property<string>("AnswersJson").HasColumnType("jsonb").HasColumnName("answers_json");
+                    b.Property<Guid?>("StyleOfferRevisionId").HasColumnType("uuid").HasColumnName("style_offer_revision_id");
+                    b.Property<string>("StyleOfferJson").HasColumnType("jsonb").HasColumnName("style_offer_json");
+                    b.HasKey("Id");
+                    b.HasAlternateKey("UserId", "Id").HasName("uq_workout_account_planning_states_user_id_id");
+                    b.HasIndex("UserId").IsUnique().HasDatabaseName("ix_workout_account_planning_states_user_id");
+                    b.ToTable("workout_account_planning_states", "app");
+                });
             modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.HiitEvidenceCaptureChallengeRecord", b =>
                 {
                     b.Property<Guid>("Id").HasColumnType("uuid").HasColumnName("id");
@@ -2285,6 +2305,9 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                     b.Property<DateOnly>("IssuedLocalDate").HasColumnType("date").HasColumnName("issued_local_date");
                     b.Property<long>("TimeZoneVersion").HasColumnType("bigint").HasColumnName("time_zone_version");
                     b.Property<DateTime?>("ConsumedAtUtc").HasColumnType("timestamp with time zone").HasColumnName("consumed_at_utc");
+                    b.Property<string>("ConsumedRequestHash").HasColumnType("text").HasColumnName("consumed_request_hash");
+                    b.Property<long?>("ResultAnswerVersion").HasColumnType("bigint").HasColumnName("result_answer_version");
+                    b.Property<bool?>("ResultSafetyPlanChanged").HasColumnType("boolean").HasColumnName("result_safety_plan_changed");
                     b.HasKey("Id");
                     b.HasAlternateKey("UserId", "Id").HasName("uq_hiit_evidence_capture_challenges_user_id_id");
                     b.HasIndex("UserId").HasDatabaseName("ix_hiit_evidence_capture_challenges_user_id");
@@ -3973,6 +3996,11 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutAccountPlanningStateRecord", b =>
+                {
+                    b.HasOne("MuscleCuties.Infrastructure.PostgreSql.Models.App.UserRecord", null)
+                        .WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                });
             modelBuilder.Entity("MuscleCuties.Infrastructure.PostgreSql.Models.App.HiitEvidenceCaptureChallengeRecord", b =>
                 {
                     b.HasOne("MuscleCuties.Infrastructure.PostgreSql.Models.App.UserRecord", null)

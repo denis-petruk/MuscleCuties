@@ -303,6 +303,10 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             _pendingChangeRefresh = true;
             await RefreshAfterChangeAsync();
         }
+        catch (ActiveWorkoutPreventsInjuryException)
+        {
+            ErrorText = UiTextCatalog.Get("Injury_Log_ActiveWorkoutPreventsInjury");
+        }
         catch (Exception ex)
         {
             ErrorText = errorMessage;

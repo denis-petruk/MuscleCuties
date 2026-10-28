@@ -293,11 +293,9 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
     }
 
     [Fact]
-    public void Hard_Day_Conflicts_Reduce_Actual_Scheduling_Without_False_Success()
+    public void Demanding_Yoga_At_Its_Minimum_Is_Omitted_When_Strength_Occupies_Both_Days()
     {
-        // 3 available days, but user also has 2 other hard activities (RockClimbing and Cycling established continuous)
-        // Hard cap: max 3 hard days/week. With Climbing and HVS fallback to GS:
-        var days = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday }; // Only 2 available days
+        var days = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday };
         var powerYogaEvidence = new ActivityPrescriptionContext(
             WorkoutActivityType.Yoga,
             ActivityExperience.Beginner,
@@ -327,12 +325,11 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         Assert.Equal(2, hvsDecision.TargetSessionsPerWeek);
         Assert.Equal(2, hvsDecision.ScheduledSessionsPerWeek);
 
-        // Power Yoga is reduced to one target, but both hard days are needed for strength.
-        Assert.Equal(1, yogaDecision.TargetSessionsPerWeek);
         Assert.Equal(0, yogaDecision.ScheduledSessionsPerWeek);
-        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
-            yogaDecision.Reasons);
+        Assert.Equal(MixedActivityScheduleDisposition.Omitted, yogaDecision.Disposition);
         Assert.Contains(MixedActivityWeekScheduleRule.HardDayLimitReached, yogaDecision.Reasons);
+        Assert.DoesNotContain(result.Sessions, session => session.Activity == WorkoutActivityType.Yoga);
+        Assert.Empty(result.InputReasons);
     }
 
     [Fact]
@@ -536,11 +533,12 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
 
         var result = MixedActivityWeekScheduleRule.Evaluate(context);
 
-        // Power yoga is hard, General Strength is hard -> cannot be scheduled on the same day (max 1 hard/day)
         var yogaSessionDays = result.Sessions.Where(s => s.Activity == WorkoutActivityType.Yoga).Select(s => s.Day).ToHashSet();
         var gsSessionDays = result.Sessions.Where(s => s.Activity == WorkoutActivityType.GeneralStrength).Select(s => s.Day).ToHashSet();
-
-        Assert.Empty(yogaSessionDays.Intersect(gsSessionDays));
+        Assert.NotEmpty(yogaSessionDays.Intersect(gsSessionDays));
+        Assert.All(result.Sessions.Where(s => s.Activity == WorkoutActivityType.Yoga && gsSessionDays.Contains(s.Day)),
+            session => Assert.NotNull(session.OccurrencePrescription));
+        Assert.Empty(result.InputReasons);
     }
 
     [Fact]

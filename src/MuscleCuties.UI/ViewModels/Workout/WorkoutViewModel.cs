@@ -13,6 +13,7 @@ using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
@@ -26,6 +27,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     private readonly IWorkoutInjuryUseCase _injuries;
     private readonly IStrengthStyleOfferClient? _styleOffers;
+    private readonly Func<StrengthStyleOfferDto, Task<WorkoutActivityDto?>>? _chooseStyleAsync;
+    private readonly Func<WorkoutActivityDto, Task>? _openStylePreviewAsync;
     private StrengthStyleOfferDto? _styleOffer;
     [ObservableProperty] private bool _hasStrengthStyleOffer;
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
@@ -96,11 +99,15 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         IWorkoutInjuryUseCase injuries,
         Func<string, Task>? navigateAsync = null,
         Func<int, Task>? openWorkoutSessionAsync = null,
-        IStrengthStyleOfferClient? styleOffers = null)
+        IStrengthStyleOfferClient? styleOffers = null,
+        Func<StrengthStyleOfferDto, Task<WorkoutActivityDto?>>? chooseStyleAsync = null,
+        Func<WorkoutActivityDto, Task>? openStylePreviewAsync = null)
     {
         _overview = overview;
         _injuries = injuries;
         _styleOffers = styleOffers;
+        _chooseStyleAsync = chooseStyleAsync;
+        _openStylePreviewAsync = openStylePreviewAsync;
         _navigateAsync = navigateAsync ?? (_ => Task.CompletedTask);
         _openWorkoutSessionAsync = openWorkoutSessionAsync ?? (_ => Task.CompletedTask);
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
@@ -554,7 +561,23 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     [RelayCommand]
     private async Task ExploreStrengthStyleAsync()
     {
-        await _navigateAsync("StrengthPlanGenerationPage");
+        if (_styleOffer is null || _styleOffers is null || _chooseStyleAsync is null ||
+            _openStylePreviewAsync is null)
+            return;
+        var offer = _styleOffer;
+        try
+        {
+            var chosenStyle = await _chooseStyleAsync(offer);
+            if (chosenStyle is null || !offer.AlternativeStyleIds.Contains((int)chosenStyle.Value))
+                return;
+            await _openStylePreviewAsync(chosenStyle.Value);
+            var result = await _styleOffers.DismissAsync(offer.Id);
+            if (result.Dismissed) { _styleOffer = null; HasStrengthStyleOffer = false; }
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Workout] Strength style offer unavailable ({ex.GetType().Name}).");
+        }
     }
 
     [RelayCommand]

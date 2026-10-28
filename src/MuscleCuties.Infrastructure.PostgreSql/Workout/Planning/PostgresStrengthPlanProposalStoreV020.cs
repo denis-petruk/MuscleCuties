@@ -349,13 +349,15 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
         catch (InvalidTimeZoneException) { throw new InvalidOperationException("Establish the account timezone first."); }
         var today = WorkoutAccountCalendarRule.LocalDate(DateTimeOffset.UtcNow, zone);
         var days = await dbContext.WorkoutDays.Where(day => day.UserId == userId && day.WorkoutPlanId == planId &&
-                day.Date >= today && day.WorkoutType != nameof(WorkoutType.Rest) &&
+                (day.Date >= today || dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId &&
+                    session.PlannedWorkoutDayId == day.Id && !session.IsDeleted && session.CompletedAt == null)) &&
+                day.WorkoutType != nameof(WorkoutType.Rest) &&
                 (day.ActivityTypeId == null || activityIds.Contains(day.ActivityTypeId.Value)) &&
                 !dbContext.WorkoutCompletionDayCredits.Any(credit => credit.UserId == userId &&
                     credit.SourceWorkoutLogId != null && dbContext.WorkoutLogs.Any(log =>
                         log.UserId == userId && log.Id == credit.SourceWorkoutLogId && log.WorkoutDayId == day.Id)) &&
                 !dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId &&
-                    session.PlannedWorkoutDayId == day.Id && (session.CompletedAt != null || !session.IsDeleted)))
+                    session.PlannedWorkoutDayId == day.Id && session.CompletedAt != null))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         var changed = days.Any(day => !day.IsRemovedBySafety);
         foreach (var day in days)

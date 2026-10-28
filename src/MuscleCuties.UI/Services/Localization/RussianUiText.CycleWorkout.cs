@@ -44,7 +44,10 @@ internal static partial class RussianUiText
         Values["Workout_Session_ActivityNoLongerSafe"] = "Продолжать эту активность небезопасно. Прервите её, чтобы сохранить записанные подходы.";
         Values["Workout_Session_TimingExpired"] = "Отсчёт времени истёк. Продолжите тренировку; подтверждённое время сохранено.";
         Values["Injury_Log_PlanRefreshFailed"] = "Изменение травмы сохранено, но план тренировок не обновился. Попробуйте снова перед тренировкой.";
-        Values["Injury_Log_PlanRefreshFailed"] = "Изменение травмы сохранено, но автоматическое обновление плана тренировок недоступно. Проверьте план перед тренировкой.";
+        Values["Workout_StyleOffer_Title"] = "Другой силовой вариант";
+        Values["Workout_StyleOffer_Message"] = "В обновлённом плане также можно использовать {0}. Посмотреть этот вариант?";
+        Values["Workout_StyleOffer_Review"] = "Посмотреть";
+        Values["Workout_StyleOffer_Keep"] = "Оставить текущий план";
         Values["Injury_Log_PageRefreshFailed"] = "Изменение травмы сохранено, но страница «Сегодня» не обновилась. Попробуйте снова.";
         Values["Cycle_Guidance_PhaseContext"] = "Фаза цикла даёт контекст, но не измеряет уровень гормонов или физические возможности сегодня.";
         Values["Cycle_Guidance_CheckIn"] = "Обратите внимание на самочувствие сегодня и запишите важные для вас симптомы.";
