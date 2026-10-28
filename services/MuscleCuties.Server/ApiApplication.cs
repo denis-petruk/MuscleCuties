@@ -240,6 +240,7 @@ public static class ApiApplication
         builder.Services.AddScoped<PreviewStrengthPlanV020UseCase>();
         builder.Services.AddScoped<IStrengthPlanProposalStoreV020, PostgresStrengthPlanProposalStoreV020>();
         builder.Services.AddScoped<IHiitEvidenceCaptureStore, PostgresHiitEvidenceCaptureStore>();
+        builder.Services.AddScoped<IStrengthStyleOfferStore, PostgresStrengthStyleOfferStore>();
         builder.Services.AddScoped<IAcceptStrengthPlanProposalStoreV020,
             PostgresAcceptStrengthPlanProposalStoreV020>();
         builder.Services.AddScoped<CreateStrengthPlanProposalV020UseCase>();
@@ -881,3 +882,4 @@ internal sealed class PostgreSqlReadinessCheck(PostgresDbContext dbContext) : Mi
         }
     }
 }
+

@@ -10,6 +10,7 @@ using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Workout.Injury;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 
@@ -24,6 +25,9 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private const int SingleActivityCount = 1;
 
     private readonly IWorkoutInjuryUseCase _injuries;
+    private readonly IStrengthStyleOfferClient? _styleOffers;
+    private StrengthStyleOfferDto? _styleOffer;
+    [ObservableProperty] private bool _hasStrengthStyleOffer;
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
     private readonly Func<string, Task> _navigateAsync;
     private readonly Func<int, Task> _openWorkoutSessionAsync;
@@ -91,10 +95,12 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         IWorkoutOverviewUseCase overview,
         IWorkoutInjuryUseCase injuries,
         Func<string, Task>? navigateAsync = null,
-        Func<int, Task>? openWorkoutSessionAsync = null)
+        Func<int, Task>? openWorkoutSessionAsync = null,
+        IStrengthStyleOfferClient? styleOffers = null)
     {
         _overview = overview;
         _injuries = injuries;
+        _styleOffers = styleOffers;
         _navigateAsync = navigateAsync ?? (_ => Task.CompletedTask);
         _openWorkoutSessionAsync = openWorkoutSessionAsync ?? (_ => Task.CompletedTask);
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
@@ -283,6 +289,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         var loadStarted = Stopwatch.GetTimestamp();
         try
         {
+            await LoadStrengthStyleOfferAsync();
             var summary = await _overview.LoadAsync(new WorkoutOverviewRequest(
                 DateOnly.FromDateTime(DateTime.Today)));
             _hasLoadedOverview = true;
@@ -529,6 +536,39 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             SelectFilter(allFilter);
     }
 
+    private async Task LoadStrengthStyleOfferAsync()
+    {
+        if (_styleOffers is null) return;
+        try
+        {
+            _styleOffer = (await _styleOffers.GetCurrentAsync()).Offer;
+            HasStrengthStyleOffer = _styleOffer is not null;
+        }
+        catch (Exception)
+        {
+            _styleOffer = null;
+            HasStrengthStyleOffer = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExploreStrengthStyleAsync()
+    {
+        await _navigateAsync("StrengthPlanGenerationPage");
+    }
+
+    [RelayCommand]
+    private async Task DismissStrengthStyleAsync()
+    {
+        if (_styleOffers is null || _styleOffer is null) return;
+        try
+        {
+            var result = await _styleOffers.DismissAsync(_styleOffer.Id);
+            if (result.Dismissed) { _styleOffer = null; HasStrengthStyleOffer = false; }
+            else await LoadStrengthStyleOfferAsync();
+        }
+        catch (Exception) { }
+    }
     private async Task GeneratePlanAsync()
     {
         await _navigateAsync("ProfileWorkoutPreferencesPage");
@@ -722,3 +762,4 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         OnPropertyChanged(nameof(HasBlockedCardio));
     }
 }
+

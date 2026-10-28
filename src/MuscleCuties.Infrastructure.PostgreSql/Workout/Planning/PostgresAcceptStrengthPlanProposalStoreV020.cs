@@ -388,7 +388,8 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                     Name = ActivityName(activity), WeekIndex = weekIndex, Date = date,
                     PlannedMainDurationMinutes = scheduledSession.DurationMinutes,
                     PlannedActivityPrescriptionJson = ActivityOccurrencePrescription.Serialize(
-                        scheduledSession.OccurrencePrescription)
+                        scheduledSession.OccurrencePrescription ?? proposalSnapshot.MixedActivitySchedule!.Activities
+                            .Single(decision => decision.ActivityTypeId == scheduledSession.ActivityTypeId).OriginalPrescription)
                 });
 
                 if (!IsStrengthActivity(activity) ||
