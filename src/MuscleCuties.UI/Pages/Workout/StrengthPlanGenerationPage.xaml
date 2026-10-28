@@ -728,6 +728,10 @@
                             <sharedControls:ScreenReaderStatusAnnouncementBehavior />
                         </Label.Behaviors>
                     </Label>
+                    <Label Text="{Binding UnavailableApplyReason}"
+                           IsVisible="{Binding HasUnavailableApplyReason}"
+                           Style="{StaticResource MutedLabel}"
+                           LineBreakMode="WordWrap" />
                     <Button Text="{loc:LocalizedText Workout_Generation_ApplyPlan}"
                             Command="{Binding AcceptProposalCommand}"
                             IsVisible="{Binding CanReviewPreview}"
