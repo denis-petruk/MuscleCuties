@@ -10,10 +10,13 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 internal static class PostgresCanonicalOccurrenceAdjustment
 {
     internal static async Task ApplyAsync(PostgresDbContext context, Guid userId, Guid? previousPlanId,
-        DateOnly today, DateOnly firstDate, TimeZoneInfo zone, StrengthPlanPreviewResponseV020 preview,
+        DateOnly today, DateOnly firstDate, TimeZoneInfo zone,
+        IReadOnlyList<StrengthPlanPreviewSessionV020> previewSessions,
         IReadOnlyList<WorkoutDayRecord> days, IReadOnlyList<WorkoutDayExerciseRecord> exercises,
         CancellationToken cancellationToken)
     {
+        // A safe non-strength remainder must not consume a deload window.
+        if (exercises.Count == 0) return;
         var state = await context.WorkoutAccountPlanningStates.SingleOrDefaultAsync(s => s.UserId == userId,
             cancellationToken).ConfigureAwait(false);
         if (state is null || state.TimeZoneId != zone.Id || previousPlanId is null) return;
@@ -36,7 +39,7 @@ internal static class PostgresCanonicalOccurrenceAdjustment
         {
             if (state.DeloadEvidenceThroughExclusive >= evidenceEnd) return;
             var evidence = await PostgresCanonicalRecoveryEvidence.EvaluateAsync(context, userId, previousPlanId.Value,
-                today, zone, preview, cancellationToken).ConfigureAwait(false);
+                today, zone, previewSessions, cancellationToken).ConfigureAwait(false);
             if (!evidence.IsDeloadTriggered) return;
             start = firstDate;
             end = start.AddDays(CanonicalOccurrenceAdjustmentRule.DeloadDurationDays);

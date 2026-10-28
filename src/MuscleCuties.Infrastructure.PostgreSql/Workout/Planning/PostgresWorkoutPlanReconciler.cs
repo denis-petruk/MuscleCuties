@@ -381,8 +381,13 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                 row.PlanningTemplateId == slot.Identity.TemplateId && row.PlanningTemplateVersion == slot.Identity.TemplateVersion &&
                 row.PlanningSessionIndex == slot.Identity.SessionIndex && row.PlanningSlotId == slot.Identity.SlotId &&
                 row.ExerciseId == slot.AlternativeExerciseId).ToArray();
+            // Canonical recovery adjustments may reduce the accepted set count
+            // after preview materialization. They must never raise the reviewed dose.
             if (matches.Length == 0 || matches.Length != matchingDays.Length ||
-                matches.Select(row => row.WorkoutDayId).Distinct().Count() != matches.Length) return false;
+                matches.Select(row => row.WorkoutDayId).Distinct().Count() != matches.Length ||
+                matches.Any(row => row.Sets <= 0 || row.Sets > slot.AlternativeSets || row.Reps != slot.AlternativeReps ||
+                    row.IsOptional != slot.AlternativeIsOptional || row.OptionalSets != 0 ||
+                    row.DurationSeconds is not null)) return false;
             foreach (var exercise in matches)
             {
                 var day = matchingDays.Single(value => value.Id == exercise.WorkoutDayId);

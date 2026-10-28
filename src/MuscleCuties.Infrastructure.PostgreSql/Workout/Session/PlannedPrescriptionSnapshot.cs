@@ -7,6 +7,10 @@ internal sealed record PlannedPrescriptionSnapshot(Guid DayId, string Name, stri
     int? ActivityTypeId, decimal? PlannedMainDurationMinutes, IReadOnlyList<PlannedExerciseSnapshot> Exercises)
 {
     public string? ActivityPrescriptionJson { get; init; }
+    public string? DoseAdjustmentReasonCode { get; init; }
+    public string? DoseAdjustmentPolicyVersion { get; init; }
+    public long? DoseAdjustmentCheckInRevision { get; init; }
+    public string? DoseAdjustmentCyclePhase { get; init; }
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     public string Serialize() => JsonSerializer.Serialize(this, JsonOptions);
     public static PlannedPrescriptionSnapshot? Deserialize(string? json)
