@@ -93,6 +93,8 @@ public sealed record StrengthPlanPreviewSourceV020(
     public IReadOnlyDictionary<int, IReadOnlySet<string>>? MuscleGroupsByExerciseId { get; init; }
     public IReadOnlyDictionary<string, ReviewedTemplateFloorDto>? TemplateVolumeFloors { get; init; }
     public int? ProfileVersion { get; init; }
+    /// <summary>Server-derived scope limitation; absent in pure generator fixtures.</summary>
+    public string? PopulationLimitationCode { get; init; }
     public string? InjuryFingerprint { get; init; }
     public Guid? ActivePlanId { get; init; }
     public Guid? ActiveRevisionId { get; init; }

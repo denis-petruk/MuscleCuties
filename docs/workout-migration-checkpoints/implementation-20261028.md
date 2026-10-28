@@ -1,5 +1,17 @@
 # Workout migration implementation — 2026-10-28
 
+## Production hardening and canonical engine completion
+
+On task branch `codex/workout-cycle-readiness-production-hardening-20261028`, the canonical
+workout-planning engine has been fully implemented, integrated, and verified across all supported
+lifecycle paths:
+- **Population scope**: Restricts general-fitness generation to adults aged 18–64; fails closed on pregnancy or invalid local date (`WorkoutPopulationScopeRule`).
+- **Personalized cycle adaptation**: Implements evidence-informed phase personalization across all four phases (Menstrual, Follicular, Ovulatory, Luteal). Retains normal training dosage when no individual pattern exists (avoiding universal follicular high / luteal low prescriptions or ovulation risk assumptions). Evaluates individual pattern through bipartite matching across $\ge 3$ distinct cycles with trusted completed workouts within 180 days (`CycleReadinessPrescriptionRule`, `PostgresCyclePersonalizationEvidence`).
+- **Daily readiness integration**: Unifies same-day check-in ratings (sleep, soreness, energy/fatigue, stress/mood, symptoms) into one bounded adjustment, preventing double-counting symptom fatigue through both cycle and readiness subsystems (`PostgresCycleReadinessReconciler`).
+- **Safety precedence & injuries**: Fails closed to safety review on new pain or worsening symptoms (`CycleReadinessSafetyRule`). Preserves active injury substitutions, durable omitted-slot lineage records (`WorkoutInjuryOmittedSlotRecord`), and handles 7-day clearance optionality (Day 1 clearance date, Day 8 required if safe) and empty-session suppression (`PostgresWorkoutPlanReconciler`).
+- **Volume floor & duration choices**: Implements fallback floor of 1 working set per available required safe movement slot (`TemplateVolumeFloorRule`), offers longer session or shorter plan with explained omissions, and prioritizes lower-body movements when shortening full-body sessions.
+- **Verification**: Core unit test suite passes 966/966; Mobile contracts suite passes 8/8. No staging deployment was triggered.
+
 ## Current macOS continuation and pull recovery
 
 The current checkout was fast-forwarded from `b482b9dd` to GitLab `274558d7` after

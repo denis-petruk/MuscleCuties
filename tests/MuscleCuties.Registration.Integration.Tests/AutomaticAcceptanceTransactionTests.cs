@@ -23,6 +23,7 @@ public sealed class AutomaticAcceptanceTransactionTests
     private const int WorkoutDays = 2;
     private const int CycleDays = 28;
     private const int SyntheticInjurySiteFlag = 1;
+    private static readonly DateOnly SyntheticBirthDate = new(1990, 1, 1);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     [Xunit.Fact]
@@ -45,6 +46,7 @@ public sealed class AutomaticAcceptanceTransactionTests
             Username = $"aa_{userId.ToString("N")[..10]}", CredentialType = "Password",
             PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
         db.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = userId, Name = "Synthetic",
+            DateOfBirth = SyntheticBirthDate,
             Height = 170m, Weight = 64m, Goal = "BuildMuscle", WeightGoalPace = "Maintain",
             TrainingExperienceLevel = "Beginner", WorkoutDaysPerWeek = WorkoutDays, CycleLength = CycleDays,
             EquipmentLevel = "FullGym", ConcurrencyVersion = ProfileVersion, UpdatedAt = now });
@@ -96,6 +98,27 @@ public sealed class AutomaticAcceptanceTransactionTests
         db.WorkoutInjuryEpisodes.Remove(episode);
         state.SafetyRegenerationPending = false;
         await db.SaveChangesAsync();
+        // Model a feasible proposal persisted before population scope was enforced.
+        await db.UserProfiles.Where(row => row.UserId == userId).ExecuteUpdateAsync(update =>
+            update.SetProperty(row => row.ReproductiveContextJson, "{\"Pregnancy\":2,\"Contraception\":0}"));
+        var pregnant = await store.AcceptInCurrentTransactionAsync(userId, new AcceptStrengthPlanProposalRequestV020(proposalId),
+            PostgresAcceptStrengthPlanProposalStoreV020.AcceptanceOrigin.Automatic, CancellationToken.None);
+        Xunit.Assert.Equal("Limited", pregnant.Status);
+        Xunit.Assert.Equal(WorkoutPopulationScopeRule.PregnancyUnsupported, pregnant.LimitationCode);
+        await db.UserProfiles.Where(row => row.UserId == userId).ExecuteUpdateAsync(update =>
+            update.SetProperty(row => row.ReproductiveContextJson, "{}").SetProperty(row => row.DateOfBirth, (DateOnly?)null));
+        var missingBirthDate = await store.AcceptInCurrentTransactionAsync(userId, new AcceptStrengthPlanProposalRequestV020(proposalId),
+            PostgresAcceptStrengthPlanProposalStoreV020.AcceptanceOrigin.Automatic, CancellationToken.None);
+        Xunit.Assert.Equal("Limited", missingBirthDate.Status);
+        Xunit.Assert.Equal(WorkoutPopulationScopeRule.BirthDateRequired, missingBirthDate.LimitationCode);
+        await db.UserProfiles.Where(row => row.UserId == userId).ExecuteUpdateAsync(update =>
+            update.SetProperty(row => row.DateOfBirth, today.AddYears(-WorkoutPopulationScopeRule.MaximumSupportedAgeYears - OneDay)));
+        var unsupportedAge = await store.AcceptInCurrentTransactionAsync(userId, new AcceptStrengthPlanProposalRequestV020(proposalId),
+            PostgresAcceptStrengthPlanProposalStoreV020.AcceptanceOrigin.Automatic, CancellationToken.None);
+        Xunit.Assert.Equal("Limited", unsupportedAge.Status);
+        Xunit.Assert.Equal(WorkoutPopulationScopeRule.AgeUnsupported, unsupportedAge.LimitationCode);
+        await db.UserProfiles.Where(row => row.UserId == userId).ExecuteUpdateAsync(update =>
+            update.SetProperty(row => row.DateOfBirth, SyntheticBirthDate));
         var result = await store.AcceptInCurrentTransactionAsync(userId, new AcceptStrengthPlanProposalRequestV020(proposalId),
             PostgresAcceptStrengthPlanProposalStoreV020.AcceptanceOrigin.Automatic, CancellationToken.None);
         Xunit.Assert.Equal("Accepted", result.Status);

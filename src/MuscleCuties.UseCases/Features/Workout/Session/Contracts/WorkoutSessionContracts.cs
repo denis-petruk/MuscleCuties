@@ -103,6 +103,9 @@ public sealed record WorkoutActivityDetailDto(
     public MuscleCuties.UseCases.Features.Workout.Planning.ActivitySessionPrescriptionOutputV020? Prescription { get; init; }
 }
 
+public enum WorkoutDoseAdjustmentReason { DailyReadiness, ProvisionalPhaseFeeling, RepeatedPhasePattern, SafetyReview }
+public enum WorkoutDoseAdjustmentConfidence { Provisional, Repeated, Current }
+
 public sealed record WorkoutSessionDetailDto(
     int WorkoutDayId,
     string Title,
@@ -114,4 +117,7 @@ public sealed record WorkoutSessionDetailDto(
 {
     public bool IsOptional { get; init; }
     public bool IsEasierAlternative { get; init; }
+    public WorkoutDoseAdjustmentReason? DoseAdjustmentReason { get; init; }
+    public WorkoutDoseAdjustmentConfidence? DoseAdjustmentConfidence { get; init; }
+    public string? DoseAdjustmentPolicyVersion { get; init; }
 }

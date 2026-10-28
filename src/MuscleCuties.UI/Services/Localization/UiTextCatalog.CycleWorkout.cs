@@ -4,6 +4,10 @@ public static partial class UiTextCatalog
 {
     static partial void RegisterCycleWorkoutStrings()
     {
+        English["Workout_Session_AdjustmentDaily"] = "Today’s check-in suggests one fewer optional set. Your main work stays the same.";
+        English["Workout_Session_AdjustmentPhase"] = "Based on how you usually feel in this phase, today has one fewer optional set.";
+        English["Workout_Session_AdjustmentPattern"] = "Your past check-ins and workouts suggest one fewer optional set today.";
+        English["Workout_Session_AdjustmentSafety"] = "Review today’s symptoms before starting this workout.";
         English["Workout_Session_PrescriptionWarmup"] = "Warm-up: {0} min";
         English["Workout_Session_PrescriptionMain"] = "Main activity: {0} min";
         English["Workout_Session_PrescriptionCooldown"] = "Cool-down: {0} min";

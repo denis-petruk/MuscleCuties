@@ -38,6 +38,13 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         ArgumentNullException.ThrowIfNull(request);
         if (userId == Guid.Empty)
             return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null));
+        if (sourceData?.PopulationLimitationCode is { } populationLimitation)
+            return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null)) with
+            {
+                Status = "Limited",
+                LimitationCodes = [populationLimitation],
+                SourceProfileVersion = sourceData.ProfileVersion
+            };
         if (request.DraftPreferences is { } draft)
         {
             if (!WorkoutPreferencesRule.IsValid(draft.ActivityTypes, draft.AvailableWeekdays,

@@ -50,6 +50,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private const string CreateFailedKey = "Workout_Generation_CreateFailed";
     private const string OptionalActivitiesSkippedKey = "Workout_Generation_OptionalActivitiesSkipped";
     private const string PreviewNotSavedKey = "Workout_Generation_PreviewNotSaved";
+    private const string PreviewLeaseUnavailableKey = "Workout_Generation_PreviewLeaseUnavailable";
     private const string ReplacementTitleKey = "Workout_Generation_ReplacementTitle";
     private const string ReplacementSummaryKey = "Workout_Generation_ReplacementSummary";
     private const string ReplacementCancelKey = "Workout_Generation_ReplacementCancel";
@@ -347,11 +348,13 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool CanSubmitProposal => !_proposalInvalidated && !IsProposalAccepted && !IsTrainNavigationPending &&
         _proposal is { IsPersisted: true, Lease: not null } &&
         Preview?.Status == "Feasible";
-    public bool HasUnavailableApplyReason => CanReviewPreview && !IsBusy && !HasStatusMessage &&
+    public bool HasUnavailableApplyReason => CanReviewPreview && !IsBusy &&
         !HasLimitation && !CanSubmitProposal;
     public string UnavailableApplyReason => UiTextCatalog.Get(_proposalInvalidated
         ? PlanChangedKey
-        : PreviewNotSavedKey);
+        : _proposal is { IsPersisted: true, Lease: null }
+            ? PreviewLeaseUnavailableKey
+            : PreviewNotSavedKey);
 
     private bool HasValidSavedAvailability =>
         _availableWeekdays.Length is >= WorkoutPreferencesConstraints.MinimumAvailableWeekdays and

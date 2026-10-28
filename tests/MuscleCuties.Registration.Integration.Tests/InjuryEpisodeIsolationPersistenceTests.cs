@@ -48,7 +48,7 @@ public sealed class InjuryEpisodeIsolationPersistenceTests
         await db.SaveChangesAsync();
         await db.WorkoutInjuryLogs.Where(row => row.Id == injury).ExecuteDeleteAsync();
         db.ChangeTracker.Clear();
-        await new PostgresWorkoutPlanReconciler(db).ReconcileAsync(owner);
+        await new PostgresWorkoutPlanReconciler(db).ReconcileInCurrentTransactionAsync(owner);
         Xunit.Assert.False(await db.WorkoutInjuryLogs.AnyAsync(row => row.UserId == owner));
         Xunit.Assert.True(await db.WorkoutInjuryEpisodes.AnyAsync(row => row.UserId == owner && row.SourceDeleted));
         Xunit.Assert.True(await db.WorkoutAccountPlanningStates.Where(row => row.UserId == owner)
