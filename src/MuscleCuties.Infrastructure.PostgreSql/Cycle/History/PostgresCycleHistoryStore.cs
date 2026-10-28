@@ -77,6 +77,8 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         await PostgresCycleReadinessReconciler.MarkPendingAsync(dbContext, request.UserId, cancellationToken).ConfigureAwait(false);
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(dbContext, request.UserId,
+            timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
         return new CycleObservation(row.Id, row.StartDate, row.EndDate, row.CycleLength);
         }).ConfigureAwait(false);
     }
@@ -101,6 +103,8 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         catch (DbUpdateException exception) when (IsUniqueIdCollision(exception))
         { throw new CycleHistoryIdConflictException(); }
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(dbContext, request.UserId,
+            timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
         return new CycleSymptom(row.Id, row.CycleLogId, row.Date, row.SymptomType, row.Severity, row.Notes);
         }).ConfigureAwait(false);
     }
@@ -117,7 +121,10 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         if (row is null) { await transaction.CommitAsync(cancellationToken).ConfigureAwait(false); return false; }
         await PostgresCycleReadinessReconciler.MarkPendingAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
         dbContext.SymptomLogs.Remove(row); await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false); return true;
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(dbContext, userId,
+            timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        return true;
         }).ConfigureAwait(false);
     }
 
@@ -139,6 +146,8 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
             await PostgresCycleReadinessReconciler.MarkPendingAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(dbContext, userId,
+                timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
             return true;
         }).ConfigureAwait(false);
     }

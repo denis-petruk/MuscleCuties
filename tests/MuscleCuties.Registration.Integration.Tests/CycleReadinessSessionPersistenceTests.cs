@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Health;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
@@ -28,8 +29,11 @@ public sealed class CycleReadinessSessionPersistenceTests
     private const int ChangedBaselineSets = 4;
     private const int Repetitions = 8;
     private const int CycleLengthDays = 28;
+    private const int HistoricalCycleCountForReliableEstimate = 3;
     private const int SyntheticUsernameIdentifierLength = 10;
     private const int PreviewMinutes = 5;
+    private const int FutureDateOffsetDays = 1;
+    private const int ExpectedCurrentAndFutureOccurrences = 2;
     private const int ReportedPain = 1;
     private const int NoPain = 0;
 
@@ -106,6 +110,13 @@ public sealed class CycleReadinessSessionPersistenceTests
                 WorkoutDayId = dayId, ExerciseId = exerciseId, PlanningSlotId = "synthetic-accessory",
                 Sets = OriginalSets, OptionalSets = OriginalOptionalSets, Reps = Repetitions, IsOptional = true });
             await db.SaveChangesAsync();
+            var immediatePhase = await new PostgresCyclePhaseLogStore(db, TimeProvider.System).UpsertAsync(
+                new SaveCyclePhaseLogInput(userId.ToString(), today, CyclePhaseDto.Menstrual), CancellationToken.None);
+            Assert.Equal(SaveCyclePhaseLogOutcomeKind.Saved, immediatePhase.Outcome);
+            var immediateOccurrence = await db.WorkoutCycleReadinessOccurrences.AsNoTracking()
+                .SingleAsync(row => row.UserId == userId && row.WorkoutDayId == dayId);
+            Assert.Equal(ReducedSets,
+                PlannedPrescriptionSnapshot.Deserialize(immediateOccurrence.PrescriptionJson)!.Exercises[0].Sets);
             var sessionId = Guid.NewGuid();
             var detail = await new PostgresWorkoutPlanAndSessionStore(db).GetDetailAsync(userId,
                 PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(dayId), CancellationToken.None);
@@ -175,6 +186,8 @@ public sealed class CycleReadinessSessionPersistenceTests
         var dayId = Guid.NewGuid();
         var now = DateTime.UtcNow;
         var date = DateOnly.FromDateTime(now);
+        var futureDate = date.AddDays(FutureDateOffsetDays);
+        var futureDayId = Guid.NewGuid();
         await SyntheticTenantSession.SetAsync(db, userId);
         db.Users.Add(new UserRecord { Id = userId, Email = $"cycle-{userId:N}@example.invalid",
             Username = $"cycle_{userId.ToString("N")[..SyntheticUsernameIdentifierLength]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
@@ -190,6 +203,8 @@ public sealed class CycleReadinessSessionPersistenceTests
         db.WorkoutAccountPlanningStates.Add(state);
         db.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
             Date = date, DayOfWeek = (int)date.DayOfWeek, WorkoutType = "Strength", Name = "Synthetic" });
+        db.WorkoutDays.Add(new WorkoutDayRecord { Id = futureDayId, UserId = userId, WorkoutPlanId = planId,
+            Date = futureDate, DayOfWeek = (int)futureDate.DayOfWeek, WorkoutType = "Strength", Name = "Future synthetic" });
         await db.SaveChangesAsync();
         var exerciseId = await db.WorkoutExerciseDefinitions.AsNoTracking().Select(row => row.Id).FirstAsync();
         var exercise = new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = userId,
@@ -198,6 +213,9 @@ public sealed class CycleReadinessSessionPersistenceTests
         var phase = new CyclePhaseLogRecord { Id = Guid.NewGuid(), UserId = userId, LocalDate = date,
             Phase = "Menstrual", LoggedAt = now, CreatedAt = now, Note = "Set from onboarding quiz" };
         db.WorkoutDayExercises.Add(exercise);
+        db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = userId,
+            WorkoutDayId = futureDayId, ExerciseId = exerciseId, PlanningSlotId = "future-synthetic-accessory",
+            Sets = OriginalSets, OptionalSets = OriginalOptionalSets, Reps = Repetitions, IsOptional = true });
         db.CyclePhaseLogs.Add(phase);
         await db.SaveChangesAsync();
         var snapshot = new PlannedPrescriptionSnapshot(dayId, "Synthetic", "Strength", null, null,
@@ -211,6 +229,18 @@ public sealed class CycleReadinessSessionPersistenceTests
         db.CycleLogs.Add(cycle);
         phase.CycleLogId = cycle.Id;
         phase.Note = null;
+        var historicalCycles = Enumerable.Range(1, HistoricalCycleCountForReliableEstimate)
+            .Select(index => new CycleLogRecord { Id = Guid.NewGuid(), UserId = userId,
+                StartDate = date.AddDays(-CycleLengthDays * index),
+                EndDate = date.AddDays(-CycleLengthDays * (index - 1)),
+                CycleLength = CycleLengthDays, CreatedAt = now }).ToArray();
+        var historicalAnchors = historicalCycles.Select(previous => new CyclePhaseLogRecord
+        {
+            Id = Guid.NewGuid(), UserId = userId, CycleLogId = previous.Id,
+            LocalDate = previous.StartDate, Phase = "Menstrual", LoggedAt = now, CreatedAt = now
+        }).ToArray();
+        db.CycleLogs.AddRange(historicalCycles);
+        db.CyclePhaseLogs.AddRange(historicalAnchors);
         await db.SaveChangesAsync();
         var confirmed = await PostgresCycleReadinessPrescription.ApplyAsync(db, userId, date, "UTC",
             new DateTimeOffset(now), snapshot, CancellationToken.None);
@@ -221,10 +251,25 @@ public sealed class CycleReadinessSessionPersistenceTests
         Assert.True(await PostgresCycleReadinessReconciler.ReconcileAsync(db, userId, new DateTimeOffset(now), CancellationToken.None));
         var occurrence = await db.WorkoutCycleReadinessOccurrences.SingleAsync(row => row.UserId == userId && row.WorkoutDayId == dayId);
         Assert.Equal(ReducedSets, PlannedPrescriptionSnapshot.Deserialize(occurrence.PrescriptionJson)!.Exercises[0].Sets);
+        var futureOccurrence = await db.WorkoutCycleReadinessOccurrences.SingleAsync(row => row.UserId == userId && row.WorkoutDayId == futureDayId);
+        Assert.Equal(futureDate, futureOccurrence.LocalDate);
+        Assert.Equal(ReducedSets, PlannedPrescriptionSnapshot.Deserialize(futureOccurrence.PrescriptionJson)!.Exercises[0].Sets);
+        Assert.Equal(nameof(PhaseReviewProvenance.Estimated),
+            PlannedPrescriptionSnapshot.Deserialize(futureOccurrence.PrescriptionJson)!.DoseAdjustmentPhaseProvenance);
         var firstUpdated = occurrence.UpdatedAtUtc;
+        var futureFirstUpdated = futureOccurrence.UpdatedAtUtc;
         Assert.True(await PostgresCycleReadinessReconciler.ReconcileAsync(db, userId, new DateTimeOffset(now).AddMinutes(1), CancellationToken.None));
         Assert.Equal(firstUpdated, occurrence.UpdatedAtUtc);
-        Assert.Single(await db.WorkoutCycleReadinessOccurrences.Where(row => row.UserId == userId).ToListAsync());
+        Assert.Equal(futureFirstUpdated, futureOccurrence.UpdatedAtUtc);
+        Assert.Equal(ExpectedCurrentAndFutureOccurrences,
+            await db.WorkoutCycleReadinessOccurrences.CountAsync(row => row.UserId == userId));
+
+        historicalAnchors[0].CycleLogId = null;
+        await PostgresCycleReadinessReconciler.MarkPendingAsync(db, userId, CancellationToken.None);
+        await db.SaveChangesAsync();
+        Assert.True(await PostgresCycleReadinessReconciler.ReconcileAsync(db, userId, new DateTimeOffset(now), CancellationToken.None));
+        Assert.Equal(OriginalSets, PlannedPrescriptionSnapshot.Deserialize(futureOccurrence.PrescriptionJson)!.Exercises[0].Sets);
+        Assert.Equal(ReducedSets, PlannedPrescriptionSnapshot.Deserialize(occurrence.PrescriptionJson)!.Exercises[0].Sets);
 
         state.CycleReadinessPending = true;
         var preview = new WorkoutPlanProposalV02Record { Id = Guid.NewGuid(), UserId = userId, PlanId = planId,
