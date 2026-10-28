@@ -57,6 +57,10 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
 
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            var cycleReadinessCurrent = await PostgresCycleReadinessReconciler.ReconcileAsync(
+                dbContext, userId, DateTimeOffset.UtcNow, cancellationToken).ConfigureAwait(false);
+
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var phase = await ResolveCyclePhaseAsync(userId, today, cancellationToken).ConfigureAwait(false);
             var activePlan = await dbContext.WorkoutPlans.AsNoTracking()
@@ -97,6 +101,27 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     .OrderBy(e => e.Id)
                     .ToListAsync(cancellationToken)
                     .ConfigureAwait(false);
+
+            if (cycleReadinessCurrent && dayIds.Count > 0)
+            {
+                var overlays = await dbContext.WorkoutCycleReadinessOccurrences.AsNoTracking()
+                    .Where(row => row.UserId == userId && dayIds.Contains(row.WorkoutDayId))
+                    .ToListAsync(cancellationToken).ConfigureAwait(false);
+                foreach (var overlay in overlays)
+                {
+                    var saved = PlannedPrescriptionSnapshot.Deserialize(overlay.PrescriptionJson);
+                    var day = workoutDays.SingleOrDefault(item => item.Id == overlay.WorkoutDayId);
+                    if (day is null || day.Date != overlay.LocalDate) continue;
+                    var baseline = new PlannedPrescriptionSnapshot(day.Id, day.Name, day.WorkoutType, day.ActivityTypeId,
+                        day.PlannedMainDurationMinutes, dayExercises.Where(item => item.WorkoutDayId == day.Id)
+                            .Select(PlannedExerciseSnapshot.FromRecord).ToArray()) { ActivityPrescriptionJson = day.PlannedActivityPrescriptionJson };
+                    if (!PostgresCycleReadinessReconciler.MatchesBaseline(baseline, saved)) continue;
+                    var doses = saved!.Exercises.ToDictionary(exercise => exercise.Id);
+                    foreach (var exercise in dayExercises.Where(item => item.WorkoutDayId == overlay.WorkoutDayId))
+                        if (doses.TryGetValue(exercise.Id, out var dose))
+                        { exercise.Sets = dose.Sets; exercise.OptionalSets = dose.OptionalSets; }
+                }
+            }
 
             var exerciseIds = dayExercises.Select(e => e.ExerciseId).Distinct().ToArray();
             var exercisesById = exerciseIds.Length == 0
@@ -230,6 +255,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var phase = await ResolveCyclePhaseAsync(userId, today, cancellationToken).ConfigureAwait(false);
@@ -253,8 +279,13 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             var activeSession = await dbContext.WorkoutSessionLogs.AsNoTracking().FirstOrDefaultAsync(
                 session => session.UserId == userId && session.PlannedWorkoutDayId == day.Id &&
                     !session.IsDeleted && session.CompletedAt == null, cancellationToken).ConfigureAwait(false);
-            var prescription = PlannedPrescriptionSnapshot.Deserialize(activeSession?.PlannedPrescriptionSnapshotJson);
-            if (activeSession?.PlannedPrescriptionSnapshotJson is not null &&
+            var recordedSession = activeSession ?? await dbContext.WorkoutSessionLogs.AsNoTracking()
+                .Where(session => session.UserId == userId && session.PlannedWorkoutDayId == day.Id &&
+                    !session.IsDeleted && session.CompletedAt != null)
+                .OrderByDescending(session => session.CompletedAt).ThenByDescending(session => session.Id)
+                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            var prescription = PlannedPrescriptionSnapshot.Deserialize(recordedSession?.PlannedPrescriptionSnapshotJson);
+            if (recordedSession?.PlannedPrescriptionSnapshotJson is not null &&
                 (prescription is null || prescription.DayId != day.Id || prescription.Exercises is null))
                 throw new InvalidOperationException("The active workout prescription is unavailable.");
             if (prescription is not null)
@@ -271,6 +302,25 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     .Where(e => e.UserId == userId && e.WorkoutDayId == day.Id && !e.IsRemovedByReadiness)
                     .OrderBy(e => e.Id).ToListAsync(cancellationToken).ConfigureAwait(false);
 
+            if (recordedSession is null)
+            {
+                if (await PostgresCycleReadinessReconciler.ReconcileAsync(dbContext, userId, DateTimeOffset.UtcNow, cancellationToken).ConfigureAwait(false))
+                {
+                    var overlay = await dbContext.WorkoutCycleReadinessOccurrences.AsNoTracking()
+                        .SingleOrDefaultAsync(row => row.UserId == userId && row.WorkoutDayId == day.Id && row.LocalDate == day.Date,
+                            cancellationToken).ConfigureAwait(false);
+                    var saved = PlannedPrescriptionSnapshot.Deserialize(overlay?.PrescriptionJson);
+                    var baseline = new PlannedPrescriptionSnapshot(day.Id, day.Name, day.WorkoutType, day.ActivityTypeId,
+                        day.PlannedMainDurationMinutes, orderedExercises.Select(PlannedExerciseSnapshot.FromRecord).ToArray())
+                        { ActivityPrescriptionJson = day.PlannedActivityPrescriptionJson };
+                    if (PostgresCycleReadinessReconciler.MatchesBaseline(baseline, saved))
+                    {
+                        prescription = saved;
+                        orderedExercises = saved!.Exercises.Select(exercise => exercise.ToRecord(userId, day.Id)).ToList();
+                    }
+                }
+            }
+
             var exerciseIds = orderedExercises.Select(e => e.ExerciseId).Distinct().ToArray();
             var exercisesById = exerciseIds.Length == 0
                 ? new Dictionary<int, Exercise>()
@@ -281,9 +331,9 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
 
             var currentLogs = dbContext.WorkoutLogs.AsNoTracking()
                 .Where(l => l.UserId == userId && l.WorkoutDayId == day.Id);
-            currentLogs = activeSession is null
-                ? currentLogs.Where(log => log.Date == today)
-                : currentLogs.Where(log => log.PlannedSessionId == activeSession.Id);
+            currentLogs = recordedSession is null
+                ? currentLogs.Where(log => log.Date == (day.Date ?? today))
+                : currentLogs.Where(log => log.PlannedSessionId == recordedSession.Id);
             var currentLog = await currentLogs
                 .OrderByDescending(l => l.CreatedAt)
                 .FirstOrDefaultAsync(cancellationToken)
@@ -344,7 +394,18 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 activities)
             {
                 IsOptional = day.IsOptional,
-                IsEasierAlternative = day.IsEasierAlternative
+                IsEasierAlternative = day.IsEasierAlternative,
+                DoseAdjustmentReason = prescription?.DoseAdjustmentReasonCode switch
+                {
+                    CycleReadinessPrescriptionRule.DailyReadinessAdjustment => WorkoutDoseAdjustmentReason.DailyReadiness,
+                    CycleReadinessPrescriptionRule.ProvisionalPhaseAdjustment => WorkoutDoseAdjustmentReason.ProvisionalPhaseFeeling,
+                    CycleReadinessPrescriptionRule.RepeatedPhaseAdjustment => WorkoutDoseAdjustmentReason.RepeatedPhasePattern,
+                    CycleReadinessPrescriptionRule.SafetyReviewRequired => WorkoutDoseAdjustmentReason.SafetyReview,
+                    _ => null
+                },
+                DoseAdjustmentConfidence = Enum.TryParse<WorkoutDoseAdjustmentConfidence>(prescription?.DoseAdjustmentConfidence, out var confidence)
+                    && Enum.IsDefined(confidence) ? confidence : null,
+                DoseAdjustmentPolicyVersion = prescription?.DoseAdjustmentPolicyVersion
             };
         }).ConfigureAwait(false);
 

@@ -34,6 +34,7 @@ public sealed class InjuryPlanningTransactionTests
         var exercise = Guid.NewGuid();
         var proposal = Guid.NewGuid();
         var acceptedProposal = Guid.NewGuid();
+        var acceptedRevision = Guid.NewGuid();
         var firstInjury = Guid.NewGuid();
         var secondInjury = Guid.NewGuid();
         var now = DateTime.UtcNow;
@@ -61,8 +62,9 @@ public sealed class InjuryPlanningTransactionTests
                 PlanId = Guid.NewGuid(), Status = "Proposed", RulesetVersion = "synthetic", TrainingPolicyVersion = "synthetic",
                 CreatedAtUtc = now, LeaseId = Guid.NewGuid(), LeaseFence = 1, LeaseExpiresAtUtc = now.AddMinutes(5) });
             db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record { Id = acceptedProposal, UserId = user,
-                PlanId = plan, Status = "Accepted", RulesetVersion = "synthetic", TrainingPolicyVersion = "synthetic", CreatedAtUtc = now });
-            db.WorkoutPlanRevisionsV02.Add(new WorkoutPlanRevisionV02Record { Id = Guid.NewGuid(), UserId = user,
+                PlanId = plan, Status = "Accepted", RulesetVersion = "synthetic", TrainingPolicyVersion = "synthetic", CreatedAtUtc = now,
+                DecidedAtUtc = now, AcceptedRevisionId = acceptedRevision });
+            db.WorkoutPlanRevisionsV02.Add(new WorkoutPlanRevisionV02Record { Id = acceptedRevision, UserId = user,
                 PlanId = plan, SourceProposalId = acceptedProposal, RevisionNumber = 1, RulesetVersion = "synthetic",
                 TrainingPolicyVersion = "synthetic", AcceptedAtUtc = now,
                 PlanJson = JsonSerializer.Serialize(new { proposal = new { sessions = new[] { new { sessionIndex = 0,

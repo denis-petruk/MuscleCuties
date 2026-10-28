@@ -218,6 +218,9 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     { throw new WorkoutHiitHistoryConfirmationRequiredException(); }
                     if (plannedDay.Date != localDate)
                         throw new InvalidOperationException("The planned workout is not scheduled for today.");
+                    if (planningState.SafetyRegenerationPending && (plannedDay.ActivityTypeId is not { } activityType ||
+                        !Enum.IsDefined((WorkoutActivityType)activityType) || !StrengthStyleSelectionRule.IsStrengthStyle((WorkoutActivityType)activityType)))
+                        throw new WorkoutActivityNoLongerSafeException();
                     var plannedExercises = await context.WorkoutDayExercises.AsNoTracking()
                         .Where(row => row.UserId == userId && row.WorkoutDayId == plannedDay.Id && !row.IsRemovedByReadiness)
                         .OrderBy(row => row.Id).ToListAsync(ct).ConfigureAwait(false);
@@ -227,9 +230,17 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     {
                         ActivityPrescriptionJson = plannedDay.PlannedActivityPrescriptionJson
                     };
-                    plannedPrescription = await PostgresCycleReadinessPrescription.ApplyAsync(
-                        context, userId, localDate.Value, zoneId, timeProvider.GetUtcNow(),
-                        plannedPrescription, ct).ConfigureAwait(false);
+                    if (!await PostgresCycleReadinessReconciler.ReconcileAsync(context, userId, timeProvider.GetUtcNow(), ct).ConfigureAwait(false))
+                        throw new InvalidOperationException("Finish the active workout or close the plan preview before starting this workout.");
+                    var occurrence = await context.WorkoutCycleReadinessOccurrences.AsNoTracking()
+                        .SingleOrDefaultAsync(row => row.UserId == userId && row.WorkoutDayId == plannedDay.Id && row.LocalDate == localDate, ct)
+                        .ConfigureAwait(false);
+                    var adjusted = PlannedPrescriptionSnapshot.Deserialize(occurrence?.PrescriptionJson);
+                    if (!PostgresCycleReadinessReconciler.MatchesBaseline(plannedPrescription, adjusted))
+                        throw new InvalidOperationException("The workout prescription changed. Refresh and try again.");
+                    if (adjusted!.DoseAdjustmentReasonCode == CycleReadinessPrescriptionRule.SafetyReviewRequired)
+                        throw new InvalidOperationException("Review your current symptoms or restrictions before starting this workout.");
+                    plannedPrescription = adjusted!;
                     plannedPrescriptionJson = plannedPrescription.Serialize();
                 }
 

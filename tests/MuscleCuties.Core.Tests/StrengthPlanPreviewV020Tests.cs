@@ -20,6 +20,20 @@ public sealed class StrengthPlanPreviewV020Tests
     private static readonly DateOnly LocalDate = new(2026, 10, 23);
 
     [Fact]
+    public async Task Server_population_limitation_blocks_manual_and_automatic_previews()
+    {
+        var source = Profile() with { PopulationLimitationCode = WorkoutPopulationScopeRule.BirthDateRequired };
+        var manual = await new PreviewStrengthPlanV020UseCase(new Source(source)).ExecuteAsync(Guid.NewGuid(), Request());
+        var automatic = PreviewStrengthPlanV020UseCase.EvaluateAutomaticLoadedSource(Guid.NewGuid(),
+            Request(), source, WorkoutActivityDto.GeneralStrength);
+        Assert.Equal("Limited", manual.Status);
+        Assert.Equal([WorkoutPopulationScopeRule.BirthDateRequired], manual.LimitationCodes);
+        Assert.Empty(manual.Sessions);
+        Assert.Equal("Limited", automatic.Status);
+        Assert.Empty(automatic.Sessions);
+    }
+
+    [Fact]
     public async Task Reviewed_Required_Slots_Produce_Deterministic_Policy_Preview()
     {
         var source = new Source(Profile());

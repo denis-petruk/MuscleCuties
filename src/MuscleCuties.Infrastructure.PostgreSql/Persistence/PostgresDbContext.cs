@@ -30,8 +30,11 @@ public sealed class PostgresDbContext(DbContextOptions<PostgresDbContext> option
     public DbSet<WorkoutInjuryEpisodeRecord> WorkoutInjuryEpisodes => Set<WorkoutInjuryEpisodeRecord>();
     public DbSet<WorkoutInjuryPrescriptionRecord> WorkoutInjuryPrescriptions => Set<WorkoutInjuryPrescriptionRecord>();
     public DbSet<WorkoutInjuryPrescriptionLinkRecord> WorkoutInjuryPrescriptionLinks => Set<WorkoutInjuryPrescriptionLinkRecord>();
+    public DbSet<WorkoutInjuryOmittedSlotRecord> WorkoutInjuryOmittedSlots => Set<WorkoutInjuryOmittedSlotRecord>();
+    public DbSet<StrengthStyleOfferRecord> StrengthStyleOffers => Set<StrengthStyleOfferRecord>();
     public DbSet<WorkoutPlanRecord> WorkoutPlans => Set<WorkoutPlanRecord>();
     public DbSet<WorkoutAccountPlanningStateRecord> WorkoutAccountPlanningStates => Set<WorkoutAccountPlanningStateRecord>();
+    public DbSet<WorkoutCycleReadinessOccurrenceRecord> WorkoutCycleReadinessOccurrences => Set<WorkoutCycleReadinessOccurrenceRecord>();
     public DbSet<WorkoutCompletionDayCreditRecord> WorkoutCompletionDayCredits => Set<WorkoutCompletionDayCreditRecord>();
     public DbSet<WorkoutPlanProposalV02Record> WorkoutPlanProposalsV02 => Set<WorkoutPlanProposalV02Record>();
     public DbSet<WorkoutPlanRevisionV02Record> WorkoutPlanRevisionsV02 => Set<WorkoutPlanRevisionV02Record>();
