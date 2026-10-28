@@ -502,6 +502,7 @@ public static class MauiProgram
         services.AddSingleton<IWorkoutOverviewStore, CloudWorkoutOverviewStore>();
         services.AddSingleton<IWorkoutOverviewUseCase, WorkoutOverviewUseCase>();
         services.AddSingleton<IStrengthPlanProposalClientV020, CloudStrengthPlanProposalStoreV020>();
+        services.AddSingleton<IStrengthStyleOfferClient, CloudStrengthStyleOfferClient>();
         services.AddSingleton<IWorkoutAccountCalendarClient, WorkoutAccountCalendarClient>();
         services.AddScoped<IWorkoutSessionActionStore, CloudWorkoutSessionActionStore>();
         services.AddScoped<IWorkoutSessionActionUseCase, WorkoutSessionActionUseCase>();
@@ -603,7 +604,8 @@ public static class MauiProgram
             sp.GetRequiredService<IWorkoutOverviewUseCase>(),
             sp.GetRequiredService<IWorkoutInjuryUseCase>(),
             NavigateToAsync,
-            workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId)));
+            workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId),
+            sp.GetRequiredService<IStrengthStyleOfferClient>()));
 
         services.AddTransient<StrengthPlanGenerationViewModel>(sp => new StrengthPlanGenerationViewModel(
             sp.GetRequiredService<IStrengthPlanProposalClientV020>(),
@@ -899,3 +901,4 @@ public static class MauiProgram
         return queryIndex < 0 ? route : route[..queryIndex];
     }
 }
+

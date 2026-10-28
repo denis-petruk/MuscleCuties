@@ -11,6 +11,9 @@ public sealed class WorkoutAccountPlanningStateRecord : ITenantRecord
     public TrainingExperienceLevel BaselineExperience { get; set; }
     public TrainingExperienceLevel EffectiveExperience { get; set; }
     public long ExperienceVersion { get; set; }
+    public DateOnly? DeloadEvidenceThroughExclusive { get; set; }
+    public DateOnly? DeloadStartDate { get; set; }
+    public DateOnly? DeloadEndExclusive { get; set; }
     public bool PromotionPending { get; set; }
     public bool SafetyRegenerationPending { get; set; }
     public long AnswerVersion { get; set; }

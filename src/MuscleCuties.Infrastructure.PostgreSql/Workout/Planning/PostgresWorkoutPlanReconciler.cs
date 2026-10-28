@@ -182,7 +182,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
     }
 
     private sealed record ExactRestoration(DayOfWeek Weekday, string Template, string Version, int SessionIndex,
-        string Slot, int ExerciseId, int Sets, int Reps, bool OriginallyOptional, Guid OriginId,
+        string Slot, int ExerciseId, int Sets, int Reps, bool OriginallyOptional, IReadOnlyDictionary<DateOnly, Guid> OriginsByDate,
         IReadOnlyList<Guid> EpisodeIds, IReadOnlyList<InjuryRestorationEpisode> Episodes);
 
     // No lineage transfer is needed only when both old and proposed prescriptions
@@ -237,6 +237,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
         // of accepting an injury restoration.
         if (futureDays.Any(day => day.Date is null || day.SafetyActivityTypeId is not null ||
             (day.IsRemovedBySafety && day.SafetyInjuryId is null) ||
+            (day.IsRemovedBySafety && day.WorkoutType != nameof(WorkoutType.Strength)) ||
             (!day.IsRemovedBySafety && day.SafetyInjuryId is not null))) return null;
         var days = futureDays.Where(day => day.WorkoutType == nameof(WorkoutType.Strength)).ToList();
         if (days.Count == 0) return null;
@@ -272,6 +273,8 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
             episodes.Values.Any(episode => episode.SourceDeleted || episode.SiteFlag == (int)InjuryFlag.None ||
                 !Enum.IsDefined(typeof(InjuryFlag), episode.SiteFlag) || episode.ClearedOn is null || episode.ClearedOn > start ||
                 string.IsNullOrWhiteSpace(episode.ClearanceTimeZoneId) || episode.ClearanceTimeZoneVersion is null)) return null;
+        if (days.Any(day => day.IsRemovedBySafety && episodes.Values.All(episode => episode.InjuryLogId != day.SafetyInjuryId)))
+            return null;
         var result = new List<ExactRestoration>();
         foreach (var exercise in exercises)
         {
@@ -297,7 +300,6 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                 dayLinks.Select(link => link.InjuryEpisodeId).Distinct().Count() != dayLinks.Length ||
                 snapshots.Length != dayLinks.Length || snapshots.Select(snapshot => snapshot.EpisodeId).Distinct().Count() != snapshots.Length ||
                 dayLinks.Any(link => !episodes.ContainsKey(link.InjuryEpisodeId)) ||
-                (day.IsRemovedBySafety && !dayLinks.Any(link => episodes[link.InjuryEpisodeId].InjuryLogId == day.SafetyInjuryId)) ||
                 dayLinks.Any(link => episodes[link.InjuryEpisodeId].SourceDeleted || episodes[link.InjuryEpisodeId].ClearedOn is null ||
                     !snapshots.Any(snapshot => snapshot.EpisodeId == link.InjuryEpisodeId &&
                         snapshot.OriginalExerciseId == link.OriginalExerciseId))) return null;
@@ -327,17 +329,19 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                 return null;
             result.Add(new ExactRestoration(scheduledDate.DayOfWeek, exercise.PlanningTemplateId, exercise.PlanningTemplateVersion,
                 exercise.PlanningSessionIndex.Value, exercise.PlanningSlotId, original.OriginalExerciseId, original.OriginalSets,
-                original.OriginalReps, original.OriginalIsOptional, original.OriginalOriginWorkoutDayExerciseId ?? exercise.Id,
+                original.OriginalReps, original.OriginalIsOptional, new Dictionary<DateOnly, Guid> { [scheduledDate] = original.OriginalOriginWorkoutDayExerciseId ?? exercise.Id },
                 dayLinks.Select(link => link.InjuryEpisodeId).Order().ToArray(), episodeEvidence));
         }
         if (result.Count == 0) return null;
         // Repeated weekly occurrences must agree on origin and episode coverage.
         if (result.GroupBy(item => (item.Weekday, item.Template, item.Version, item.SessionIndex, item.Slot))
             .Any(group => group.Any(item => item.ExerciseId != group.First().ExerciseId || item.Sets != group.First().Sets ||
-                item.Reps != group.First().Reps || item.OriginallyOptional != group.First().OriginallyOptional || item.OriginId != group.First().OriginId ||
+                item.Reps != group.First().Reps || item.OriginallyOptional != group.First().OriginallyOptional ||
                 !item.EpisodeIds.SequenceEqual(group.First().EpisodeIds)))) return null;
-        return result.GroupBy(item => (item.Weekday, item.Template, item.Version, item.SessionIndex, item.Slot))
-            .Select(group => group.First()).ToList();
+        var groups = result.GroupBy(item => (item.Weekday, item.Template, item.Version, item.SessionIndex, item.Slot)).ToArray();
+        if (groups.Any(group => group.SelectMany(item => item.OriginsByDate.Keys).Distinct().Count() != group.Count())) return null;
+        return groups.Select(group => group.First() with
+            { OriginsByDate = group.SelectMany(item => item.OriginsByDate).ToDictionary(pair => pair.Key, pair => pair.Value) }).ToList();
     }
 
     private async Task<bool> ApplyActiveReplacementsAsync(Guid userId, Guid planId,
@@ -360,9 +364,15 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                 matches.Select(row => row.WorkoutDayId).Distinct().Count() != matches.Length) return false;
             foreach (var exercise in matches)
             {
+                var day = matchingDays.Single(value => value.Id == exercise.WorkoutDayId);
+                // A matching date retains its own origin. The final recurrence can
+                // extend beyond the old horizon; the preflight proved every source
+                // occurrence has the same original dose, slot and causal episodes.
+                var originId = slot.OriginsByDate.TryGetValue(day.Date!.Value, out var exactOrigin)
+                    ? exactOrigin : slot.OriginsByDate.OrderBy(pair => pair.Key).Last().Value;
                 if (exercise.InjuryOriginalExerciseId is not null || exercise.OriginWorkoutDayExerciseId is not null) return false;
                 exercise.InjuryOriginalExerciseId = slot.OriginalExerciseId;
-                exercise.OriginWorkoutDayExerciseId = slot.OriginId;
+                exercise.OriginWorkoutDayExerciseId = originId;
                 foreach (var episodeId in slot.EpisodeIds)
                 {
                     context.WorkoutInjuryPrescriptionLinks.Add(new MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutInjuryPrescriptionLinkRecord
@@ -371,7 +381,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                     {
                         Id = Guid.NewGuid(), UserId = userId, EpisodeId = episodeId, WorkoutDayId = exercise.WorkoutDayId,
                         OriginalWorkoutDayExerciseId = exercise.Id, OriginalExerciseId = slot.OriginalExerciseId,
-                        OriginalPlanningSlotId = slot.Identity.SlotId, OriginalOriginWorkoutDayExerciseId = slot.OriginId,
+                        OriginalPlanningSlotId = slot.Identity.SlotId, OriginalOriginWorkoutDayExerciseId = originId,
                         OriginalSets = slot.Sets, OriginalOptionalSets = slot.OptionalSets, OriginalReps = slot.Reps,
                         OriginalDurationSeconds = slot.DurationSeconds, OriginalIsOptional = slot.IsOptional,
                         OriginalIsRemovedByReadiness = slot.IsRemovedByReadiness,
@@ -406,6 +416,8 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
             foreach (var exercise in matches)
             {
                 var day = matchingDays.Single(value => value.Id == exercise.WorkoutDayId);
+                var originId = item.OriginsByDate.TryGetValue(day.Date!.Value, out var exactOrigin)
+                    ? exactOrigin : item.OriginsByDate.OrderBy(pair => pair.Key).Last().Value;
                 if (exercise.Sets != item.Sets || exercise.Reps != item.Reps) return false;
                 if (item.EpisodeIds.Any(id => !episodes.ContainsKey(id)) ||
                     WorkoutInjuryClearanceRule.EvaluateRestoration(item.OriginallyOptional, true,
@@ -416,9 +428,10 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                 if (disposition == InjuryClearanceRestorationDisposition.Blocked) return false;
                 exercise.IsOptional = disposition == InjuryClearanceRestorationDisposition.RestoreOptional;
                 exercise.InjuryOriginalExerciseId = item.ExerciseId;
-                exercise.OriginWorkoutDayExerciseId = item.OriginId;
-                exercise.InjuryRestorationRequiredFromDate = WorkoutInjuryClearanceRule.RequiredFromForAllClearances(
-                    item.Episodes.Select(episode => episode.ClearedOn).ToArray());
+                exercise.OriginWorkoutDayExerciseId = originId;
+                exercise.InjuryRestorationRequiredFromDate = item.OriginallyOptional ? null :
+                    WorkoutInjuryClearanceRule.RequiredFromForAllClearances(
+                        item.Episodes.Select(episode => episode.ClearedOn).ToArray());
                 foreach (var episodeId in item.EpisodeIds)
                 {
                     context.WorkoutInjuryPrescriptionLinks.Add(new MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutInjuryPrescriptionLinkRecord
@@ -427,7 +440,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                     {
                         Id = Guid.NewGuid(), UserId = userId, EpisodeId = episodeId, WorkoutDayId = exercise.WorkoutDayId,
                         OriginalWorkoutDayExerciseId = exercise.Id, OriginalExerciseId = item.ExerciseId,
-                        OriginalPlanningSlotId = item.Slot, OriginalOriginWorkoutDayExerciseId = item.OriginId,
+                        OriginalPlanningSlotId = item.Slot, OriginalOriginWorkoutDayExerciseId = originId,
                         OriginalSets = item.Sets, OriginalOptionalSets = 0, OriginalReps = item.Reps,
                         OriginalDurationSeconds = null, OriginalIsOptional = item.OriginallyOptional,
                         OriginalIsRemovedByReadiness = false

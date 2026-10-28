@@ -4,6 +4,10 @@ public static partial class UiTextCatalog
 {
     static partial void RegisterWorkoutGenerationStrings()
     {
+        English["Workout_StyleOffer_Title"] = "Explore another strength style";
+        English["Workout_StyleOffer_Explanation"] = "Your plan was updated. Another selected strength style may fit. Review a new plan before applying it, or keep your current style.";
+        English["Workout_StyleOffer_Explore"] = "Review styles";
+        English["Workout_StyleOffer_Keep"] = "Keep current style";
         English["Workout_Generation_AnswersRefreshedReview"] = "Your saved answers were refreshed after an interrupted or conflicting save. Review your answers, then try again.";
         English["Workout_Generation_DurationChoices"] = "Your selected time cannot fit all required movements. Choose a longer session or keep the shorter time and review the movements omitted to fit it.";
         English["Workout_Generation_UseLongerDuration"] = "Use {0} minutes";
@@ -285,3 +289,4 @@ public static partial class UiTextCatalog
         English["Workout_Generation_PromptGeneratePlanButton"] = "Generate plan";
     }
 }
+

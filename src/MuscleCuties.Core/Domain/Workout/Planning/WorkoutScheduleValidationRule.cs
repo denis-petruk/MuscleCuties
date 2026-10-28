@@ -19,6 +19,7 @@ public static class WorkoutScheduleValidationRule
     public const string DuplicateActivity = "ScheduleDuplicateActivityOnDay";
     public const string MultipleStrengthSessions = "ScheduleMultipleStrengthSessionsOnDay";
     public const string MultipleHardSessions = "ScheduleMultipleHardSessionsOnDay";
+    public const string InvalidOccurrenceAdjustment = "ScheduleInvalidOccurrenceAdjustment";
     public const string TooManyHardDays = "ScheduleTooManyHardDays";
     public const string StrengthMuscleMetadataMissing = "ScheduleStrengthMuscleMetadataMissing";
     public const string HiitConflict = "ScheduleHiitStrengthOrClimbingConflict";
@@ -52,10 +53,15 @@ public static class WorkoutScheduleValidationRule
                 reasons.Add(MultipleStrengthSessions);
 
             var hard = day.Where(session => session.IsHard).ToArray();
-            var hasValidatedAdjustment = hard.Any(session =>
+            var adjusted = day.Where(session => session.OccurrencePrescription is not null).ToArray();
+            var hasValidatedAdjustment = day.Count() == MaximumActivitiesPerDay &&
+                hard.Length == MaximumActivitiesPerDay && adjusted.Length == 1 && adjusted.Any(session =>
+                session.IsHard &&
                 session.Activity == session.OriginalPrescription?.Activity &&
                 SameDayDemandAdjustmentRule.IsValid(session.OriginalPrescription,
                     session.OccurrencePrescription, session.DurationMinutes));
+            if (adjusted.Length > 0 && !hasValidatedAdjustment)
+                reasons.Add(InvalidOccurrenceAdjustment);
             if (hard.Length > MaximumHardSessionsPerDay && !hasValidatedAdjustment)
                 reasons.Add(MultipleHardSessions);
 

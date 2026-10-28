@@ -35,6 +35,29 @@ public sealed class MixedActivityWeekScheduleRuleTests
         throw new InvalidOperationException("Gentle Yoga must have a default duration.");
 
     [Fact]
+    public void PacksDemandingYogaWithStrengthOnlyAfterReducingItsOccurrence()
+    {
+        var yogaMinutes = ActivitySessionDurationRule.DemandingYogaMinimumMinutes +
+            ActivitySessionDurationRule.GentleYogaIncrementMinutes;
+        var result = Evaluate(
+            [WorkoutActivityType.GeneralStrength, WorkoutActivityType.Yoga],
+            [DayOfWeek.Monday, DayOfWeek.Thursday],
+            Durations((WorkoutActivityType.GeneralStrength, StrengthSessionMinutes),
+                (WorkoutActivityType.Yoga, yogaMinutes)),
+            Evidence((WorkoutActivityType.GeneralStrength, EvidenceFor(WorkoutActivityType.GeneralStrength)),
+                (WorkoutActivityType.Yoga, EvidenceFor(WorkoutActivityType.Yoga, isDemandingYogaContent: true))),
+            chosenStrengthActivity: WorkoutActivityType.GeneralStrength);
+
+        var yoga = Assert.Single(result.Sessions, session => session.Activity == WorkoutActivityType.Yoga);
+        Assert.Equal(ActivitySessionDurationRule.DemandingYogaMinimumMinutes, yoga.DurationMinutes);
+        Assert.NotNull(yoga.OccurrencePrescription);
+        Assert.Contains(result.Sessions, session => session.Day == yoga.Day &&
+            session.Activity == WorkoutActivityType.GeneralStrength);
+        Assert.Empty(result.InputReasons);
+        Assert.Equal(yogaMinutes, Decision(result, WorkoutActivityType.Yoga).Prescription!.MainMinutes);
+    }
+
+    [Fact]
     public void SpreadsSelectedActivitiesAcrossAvailableWeekdays()
     {
         var result = Evaluate(

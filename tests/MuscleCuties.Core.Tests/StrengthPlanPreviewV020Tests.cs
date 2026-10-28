@@ -478,6 +478,12 @@ public sealed class StrengthPlanPreviewV020Tests
             session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga &&
                        session.DurationMinutes == duration &&
                        session.IsHardSession);
+        var yogaSession = Assert.Single(result.MixedActivitySchedule.Sessions,
+            session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+        Assert.Null(yogaSession.OccurrencePrescription);
+        var yogaDecision = Assert.Single(result.MixedActivitySchedule.Activities,
+            activity => activity.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+        Assert.Equal(duration, yogaDecision.OriginalPrescription!.MainMinutes);
     }
 
     [Fact]

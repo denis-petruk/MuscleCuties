@@ -87,7 +87,12 @@ public static class StrengthScheduleAssignmentRule
 
     private static WorkoutScheduleValidationSession[] AdjustCandidate(WorkoutScheduleValidationSession[] source)
     {
-        var result = source.Select(session => session with { OccurrencePrescription = null }).ToArray();
+        var result = source.Select(session => session with
+        {
+            DurationMinutes = session.OccurrencePrescription is not null && session.OriginalPrescription is not null
+                ? SameDayDemandAdjustmentRule.TotalMinutes(session.OriginalPrescription) : session.DurationMinutes,
+            OccurrencePrescription = null
+        }).ToArray();
         foreach (var day in result.Where(session => session.IsHard).GroupBy(session => session.Day))
         {
             if (day.Count() != MixedActivityWeekScheduleRule.MaximumSessionsPerDay) continue;

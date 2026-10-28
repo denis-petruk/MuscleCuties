@@ -372,6 +372,7 @@ public sealed class WorkoutDayExerciseRecord : ITenantRecord
     public int Sets { get; set; }
     public int OptionalSets { get; set; }
     public int Reps { get; set; }
+    public int? TargetRepetitionsInReserve { get; set; }
     public int? DurationSeconds { get; set; }
     public bool IsOptional { get; set; }
     public bool IsRemovedByReadiness { get; set; }

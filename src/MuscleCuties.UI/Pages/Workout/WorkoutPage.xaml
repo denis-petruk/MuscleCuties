@@ -79,6 +79,14 @@
                     HorizontalOptions="Fill"
                     MaximumWidthRequest="{StaticResource UiDimension640}">
 
+                    <Border Style="{StaticResource CardAccent}" IsVisible="{Binding HasStrengthStyleOffer}">
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Label Text="{loc:LocalizedText Workout_StyleOffer_Title}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
+                            <Label Text="{loc:LocalizedText Workout_StyleOffer_Explanation}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                            <Button Text="{loc:LocalizedText Workout_StyleOffer_Explore}" Command="{Binding ExploreStrengthStyleCommand}" Style="{StaticResource ButtonPrimary}" />
+                            <Button Text="{loc:LocalizedText Workout_StyleOffer_Keep}" Command="{Binding DismissStrengthStyleCommand}" Style="{StaticResource ButtonSecondary}" />
+                        </VerticalStackLayout>
+                    </Border>
                     <Border Style="{StaticResource CardAccent}" IsVisible="{Binding HasInProgressWorkout}">
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                             <Label Text="{loc:LocalizedText Workout_Overview_InProgressTitle}" Style="{StaticResource BodyStrong}" />
@@ -476,3 +484,4 @@
     </Grid>
 
 </ContentPage>
+

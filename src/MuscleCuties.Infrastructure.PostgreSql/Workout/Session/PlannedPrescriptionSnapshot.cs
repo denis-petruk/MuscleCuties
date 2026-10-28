@@ -20,13 +20,15 @@ internal sealed record PlannedPrescriptionSnapshot(Guid DayId, string Name, stri
 internal sealed record PlannedExerciseSnapshot(Guid Id, int ExerciseId, int Sets, int OptionalSets, int Reps,
     int? DurationSeconds, bool IsOptional)
 {
+    public int? TargetRepetitionsInReserve { get; init; }
     public static PlannedExerciseSnapshot FromRecord(WorkoutDayExerciseRecord exercise) =>
         new(exercise.Id, exercise.ExerciseId, exercise.Sets, exercise.OptionalSets, exercise.Reps,
-            exercise.DurationSeconds, exercise.IsOptional);
+            exercise.DurationSeconds, exercise.IsOptional) { TargetRepetitionsInReserve = exercise.TargetRepetitionsInReserve };
 
     public WorkoutDayExerciseRecord ToRecord(Guid userId, Guid dayId) => new()
     {
         Id = Id, UserId = userId, WorkoutDayId = dayId, ExerciseId = ExerciseId, Sets = Sets,
-        OptionalSets = OptionalSets, Reps = Reps, DurationSeconds = DurationSeconds, IsOptional = IsOptional
+        OptionalSets = OptionalSets, Reps = Reps, DurationSeconds = DurationSeconds, IsOptional = IsOptional,
+        TargetRepetitionsInReserve = TargetRepetitionsInReserve
     };
 }
