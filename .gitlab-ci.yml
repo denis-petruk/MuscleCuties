@@ -49,6 +49,7 @@ package_staging_lambda:
 
 deploy_staging_lambda:
   stage: backend_deploy
+  when: manual
   image:
     name: public.ecr.aws/aws-cli/aws-cli:latest
     entrypoint: [""]
@@ -80,7 +81,7 @@ verify_mobile_contracts:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
   needs:
-    - job: deploy_staging_lambda
+    - job: verify_plan_generation
       artifacts: false
   script:
     - dotnet test tests/MuscleCuties.Mobile.Contracts.Tests/MuscleCuties.Mobile.Contracts.Tests.csproj --configuration Release
