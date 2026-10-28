@@ -9,6 +9,8 @@ namespace MuscleCuties.Core.Services.Nutrition.Planning;
 
 public static class PortionSolver
 {
+    internal const float OilFatDensityThreshold = 80f;
+
     public static PortionSolution? Solve(
         MealNutritionTarget target,
         FoodItem protein,
@@ -60,9 +62,15 @@ public static class PortionSolver
 
     public static float SnapToServing(FoodItem food, float targetGrams)
     {
+        if (targetGrams <= 0f)
+            return 0f;
+
         var servingGrams = GetBaseServingGrams(food);
-        return PortionCalculationRule.SnapToServing(targetGrams, servingGrams);
+        var grams = PortionCalculationRule.SnapToServing(targetGrams, servingGrams);
+        return IsOil(food) ? MathF.Min(grams, PortionCalculationRule.MaxOilGrams) : grams;
     }
+
+    internal static bool IsOil(FoodItem food) => food.Fats >= OilFatDensityThreshold;
 
     private static float GetBaseServingGrams(FoodItem food)
     {

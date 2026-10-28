@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Nutrition;
+using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
@@ -61,7 +62,7 @@ public sealed class PostgresFoodCatalogStore(PostgresDbContext dbContext)
                 await PostgresTenantContext.SetForCurrentTransactionAsync(
                     dbContext, ownerUserId.Value, strategyCancellationToken).ConfigureAwait(false);
                 IQueryable<Models.App.UserFoodItemRecord> customFoods = dbContext.UserFoodItems.AsNoTracking()
-                    .Where(food => food.UserId == ownerUserId.Value);
+                    .Where(food => food.UserId == ownerUserId.Value && food.DataType != GeneratedMealSnapshotMetadata.DataType);
                 foreach (var token in tokens)
                 {
                     var pattern = $"%{EscapeLike(FoodCatalogRankingRule.SearchPrefilterStem(token))}%";
@@ -122,7 +123,8 @@ public sealed class PostgresFoodCatalogStore(PostgresDbContext dbContext)
                 await PostgresTenantContext.SetForCurrentTransactionAsync(
                     dbContext, ownerUserId.Value, strategyCancellationToken).ConfigureAwait(false);
                 var found = await dbContext.UserFoodItems.AsNoTracking()
-                    .Where(food => food.UserId == ownerUserId.Value && food.GtinUpc != null && values.Contains(food.GtinUpc))
+                    .Where(food => food.UserId == ownerUserId.Value && food.DataType != GeneratedMealSnapshotMetadata.DataType &&
+                        food.GtinUpc != null && values.Contains(food.GtinUpc))
                     .ToListAsync(strategyCancellationToken)
                     .ConfigureAwait(false);
                 await transaction.CommitAsync(strategyCancellationToken).ConfigureAwait(false);
