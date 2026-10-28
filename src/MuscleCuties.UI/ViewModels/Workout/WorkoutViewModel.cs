@@ -31,6 +31,9 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private readonly Func<WorkoutActivityDto, Task>? _openStylePreviewAsync;
     private StrengthStyleOfferDto? _styleOffer;
     [ObservableProperty] private bool _hasStrengthStyleOffer;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasStyleOfferMessage))]
+    private string? _styleOfferMessage;
+    public bool HasStyleOfferMessage => !string.IsNullOrWhiteSpace(StyleOfferMessage);
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
     private readonly Func<string, Task> _navigateAsync;
     private readonly Func<int, Task> _openWorkoutSessionAsync;
@@ -565,6 +568,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             _openStylePreviewAsync is null)
             return;
         var offer = _styleOffer;
+        StyleOfferMessage = null;
         try
         {
             var chosenStyle = await _chooseStyleAsync(offer);
@@ -577,6 +581,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         catch (Exception ex)
         {
             Trace.WriteLine($"[Workout] Strength style offer unavailable ({ex.GetType().Name}).");
+            StyleOfferMessage = UiTextCatalog.Get(ex is HttpRequestException or TaskCanceledException
+                ? "Workout_Generation_ConnectionError" : "Workout_StyleOffer_ActionFailed");
         }
     }
 
@@ -584,13 +590,18 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private async Task DismissStrengthStyleAsync()
     {
         if (_styleOffers is null || _styleOffer is null) return;
+        StyleOfferMessage = null;
         try
         {
             var result = await _styleOffers.DismissAsync(_styleOffer.Id);
             if (result.Dismissed) { _styleOffer = null; HasStrengthStyleOffer = false; }
             else await LoadStrengthStyleOfferAsync();
         }
-        catch (Exception) { }
+        catch (Exception ex)
+        {
+            StyleOfferMessage = UiTextCatalog.Get(ex is HttpRequestException or TaskCanceledException
+                ? "Workout_Generation_ConnectionError" : "Workout_StyleOffer_ActionFailed");
+        }
     }
     private async Task GeneratePlanAsync()
     {

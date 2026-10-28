@@ -8,6 +8,7 @@ internal static partial class RussianUiText
         Values["Workout_StyleOffer_Explanation"] = "Ваш план обновлён. Другой выбранный силовой стиль может подойти. Просмотрите новый план перед применением или сохраните текущий стиль.";
         Values["Workout_StyleOffer_Explore"] = "Посмотреть стили";
         Values["Workout_StyleOffer_Keep"] = "Сохранить текущий стиль";
+        Values["Workout_StyleOffer_ActionFailed"] = "Не удалось обновить предложение. Попробуйте ещё раз.";
         Values["Workout_Generation_AnswersRefreshedReview"] = "Сохранённые ответы обновлены после прерванного или конфликтующего сохранения. Проверьте ответы и повторите попытку.";
         Values["Workout_Generation_DurationChoices"] = "В выбранное время не помещаются все обязательные движения. Выберите более длительное занятие или оставьте короткое и проверьте пропущенные движения.";
         Values["Workout_Generation_UseLongerDuration"] = "Выбрать {0} мин";
