@@ -12,7 +12,7 @@ internal static class AutomaticInjuryProvenance
 {
     internal sealed record Slot(InjuryRestorationSlotIdentity Identity, int OriginalExerciseId, int AlternativeExerciseId,
         Guid[] EpisodeIds, IReadOnlyDictionary<DateOnly, Guid> OriginsByDate, int Sets, int OptionalSets, int Reps, int? DurationSeconds,
-        bool IsOptional, bool IsRemovedByReadiness);
+        bool IsOptional, bool IsRemovedByReadiness, int AlternativeSets, int AlternativeReps, bool AlternativeIsOptional);
     internal sealed record Evidence(string Fingerprint, IReadOnlyList<Slot> Slots);
 
     internal static async Task<Evidence?> LoadAsync(PostgresDbContext db, Guid userId, Guid planId,
@@ -125,7 +125,9 @@ internal static class AutomaticInjuryProvenance
                 session.TemplateId == group.Key.TemplateId && session.TemplateVersion == group.Key.TemplateVersion &&
                 session.SessionIndex == group.Key.SessionIndex).ToArray();
             var selected = sessions.Length == 1 ? sessions[0].Slots.Where(slot => slot.SlotId == group.Key.SlotId).ToArray() : [];
-            if (selected.Length != 1 || selected[0].ExerciseId is not { } alternative || alternative == match.OriginalExerciseId) return null;
+            if (selected.Length != 1 || selected[0].ExerciseId is not { } alternative || alternative == match.OriginalExerciseId ||
+                selected[0].Sets is not { } alternativeSets || alternativeSets <= 0 ||
+                selected[0].MinimumRepetitions is not { } alternativeReps || alternativeReps <= 0) return null;
             var candidates = source.Catalog.Where(entry => entry.Candidate.ExerciseId == alternative).ToArray();
             if (candidates.Length != 1 || candidates[0].MetadataGaps.Count != 0 ||
                 candidates[0].Candidate.Contraindications is not { } flags ||
@@ -139,7 +141,8 @@ internal static class AutomaticInjuryProvenance
                 row.Snapshot.OriginalIsRemovedByReadiness != first.Snapshot.OriginalIsRemovedByReadiness)) return null;
             slots.Add(new Slot(group.Key, match.OriginalExerciseId!.Value, alternative, match.CausalEpisodeIds.OrderBy(id => id).ToArray(),
                 group.ToDictionary(row => row.Date, row => row.Origin), first.Snapshot.OriginalSets, first.Snapshot.OriginalOptionalSets, first.Snapshot.OriginalReps,
-                first.Snapshot.OriginalDurationSeconds, first.Snapshot.OriginalIsOptional, first.Snapshot.OriginalIsRemovedByReadiness));
+                first.Snapshot.OriginalDurationSeconds, first.Snapshot.OriginalIsOptional, first.Snapshot.OriginalIsRemovedByReadiness,
+                alternativeSets, alternativeReps, !selected[0].IsRequired));
         }
         var sorted = slots.OrderBy(slot => slot.Identity.Weekday).ThenBy(slot => slot.Identity.TemplateId, StringComparer.Ordinal)
             .ThenBy(slot => slot.Identity.TemplateVersion, StringComparer.Ordinal).ThenBy(slot => slot.Identity.SessionIndex)
