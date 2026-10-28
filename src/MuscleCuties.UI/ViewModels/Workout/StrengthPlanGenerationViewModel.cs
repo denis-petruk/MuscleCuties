@@ -22,6 +22,7 @@ namespace MuscleCuties.UI.ViewModels.Workout;
 public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLoadAware
 {
     internal const string EditHiitAnswersContextKey = "edit-hiit-answers";
+    internal const string OfferedStrengthStyleContextKey = "offered-strength-style";
     private const int NoPolicyReasons = 0;
     private const string MovementOmittedAdvisoryPrefix = "MovementOmitted:";
     private const string MovementOmittedForDurationAdvisoryPrefix = "MovementOmittedForDuration:";
@@ -298,9 +299,13 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool MissingHiitUnderlyingActivity => _showMissingAnswers && ShouldShowHiitUnderlyingCardioChoice &&
         SelectedHiitUnderlyingCardioActivity is null;
     public bool CanOfferExploreOtherFeatures =>
-        !HasExistingPlan && IsBeforePreview &&
-        (IsSwimmingSelected || IsRockClimbingSelected || IsYogaSelected ||
-         ShouldShowHiitUnderlyingCardioChoice || HasFittingStrengthStyleChoices);
+        !HasExistingPlan && (IsBeforePreview
+            ? IsSwimmingSelected || IsRockClimbingSelected || IsYogaSelected ||
+              ShouldShowHiitUnderlyingCardioChoice || HasFittingStrengthStyleChoices
+            : HasNoSafeActivityPreview);
+    public bool HasNoSafeActivityPreview => Preview is { Status: not "Feasible" } preview &&
+        (preview.MixedActivitySchedule?.Sessions.Count ?? NoPolicyReasons) == NoPolicyReasons &&
+        preview.LimitationCodes.Concat(preview.AdvisoryCodes).Contains("NoSafeStrengthStyleFit");
     public bool HasExistingPlan => _hasExistingPlan || (_proposal?.ReplacesExistingPlan == true);
     public bool HasActiveOtherPreview => _activeOtherProposalId.HasValue;
     public bool HasFittingStrengthStyleChoices => FittingStrengthStyleChoices.Count > NoPolicyReasons;
@@ -475,6 +480,13 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                     StrengthPlanGenerationDisplayMapper.ActivityLabel(savedStrengthActivity),
                     StrengthPlanGenerationDisplayMapper.StrengthPlanDescription(savedStrengthActivity))
                 : null;
+
+            if (_navigationContext?.TryTake<WorkoutActivityDto>(OfferedStrengthStyleContextKey, out var offeredStyle) == true &&
+                StrengthActivities.Contains(offeredStyle) && preferences.ActivityTypes.Contains((int)offeredStyle))
+            {
+                SelectedFittingStrengthStyle = new StrengthPlanActivityChoice(offeredStyle,
+                    StrengthPlanGenerationDisplayMapper.ActivityLabel(offeredStyle));
+            }
 
             if (string.IsNullOrWhiteSpace(WarmupMinutes))
                 WarmupMinutes = DefaultSessionWarmupMinutes.ToString(CultureInfo.InvariantCulture);
@@ -844,7 +856,9 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 ? [PreviewLimitationMessage]
                 : []);
             StatusMessage = preview.Status == "Feasible" && (_proposal?.IsPersisted ?? false)
-            ? HasOptionalOmissions
+            ? preview.AdvisoryCodes.Contains("NoSafeStrengthStyleFit")
+                ? UiTextCatalog.Get("Workout_Generation_Reason_NoSafeStrengthContentRemaining")
+                : HasOptionalOmissions
                 ? UiTextCatalog.Get(OptionalActivitiesSkippedKey)
                 : NoStatusMessage
             : preview.Status == "Feasible"
@@ -899,6 +913,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         if (!CanExploreOtherFeatures())
             return;
 
+        if (Preview is not null)
+            await ClosePreviewAsync();
         if (_navigateToDashboardAsync is not null)
             await _navigateToDashboardAsync();
     }
@@ -956,11 +972,13 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
         if (!preview.StrengthStyleChoiceRequired)
             return false;
+        var previouslyChosenStyle = SelectedFittingStrengthStyle?.Activity;
         FittingStrengthStyleChoices = new ObservableCollection<StrengthPlanActivityChoice>(
             preview.FittingStrengthStyleIds.Select(id => (WorkoutActivityDto)id)
                 .Select(activity => new StrengthPlanActivityChoice(activity,
                     StrengthPlanGenerationDisplayMapper.ActivityLabel(activity))));
-        SelectedFittingStrengthStyle = null;
+        SelectedFittingStrengthStyle = FittingStrengthStyleChoices
+            .FirstOrDefault(choice => choice.Activity == previouslyChosenStyle);
         OnPropertyChanged(nameof(HasFittingStrengthStyleChoices));
         OnPropertyChanged(nameof(CanOfferExploreOtherFeatures));
         ExploreOtherFeaturesCommand.NotifyCanExecuteChanged();

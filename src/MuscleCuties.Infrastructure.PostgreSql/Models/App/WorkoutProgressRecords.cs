@@ -18,6 +18,8 @@ public sealed class WorkoutAccountPlanningStateRecord : ITenantRecord
     public bool SafetyRegenerationPending { get; set; }
     public long AnswerVersion { get; set; }
     public string? AnswersJson { get; set; }
+    public Guid? StyleOfferRevisionId { get; set; }
+    public string? StyleOfferJson { get; set; }
 }
 
 /// <summary>Independent of mutable workout/history rows: deletion cannot revoke an earned day.</summary>

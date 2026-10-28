@@ -1,7 +1,7 @@
 # MuscleCuties documentation
 
 - [Workout generation rules audit](WORKOUT_GENERATION_RULES_AUDIT.md): Agreed product rules and outstanding implementation and verification gaps.
-- [Workout migration implementation checkpoint](workout-migration-checkpoints/implementation-20261027.md): Current source changes, test results, unfinished integration, and Git/environment blockers.
+- [Workout migration implementation checkpoint](workout-migration-checkpoints/implementation-20261028.md): Current source, verification, and remaining release gates. The [2026-10-27 checkpoint](workout-migration-checkpoints/implementation-20261027.md) is historical.
 
 - [iOS submission readiness](SUBMISSION_READINESS.md): Start here for the release gates, blocking issues, pending UI changes, and separate TestFlight/App Store checklists. The expanded candidate is **not ready for submission**.
 - [TestFlight and Resend operator guide](OPERATOR_ACTION_MANUAL.md): Current release gates, secure environment settings, email delivery, database maintenance, and device acceptance.

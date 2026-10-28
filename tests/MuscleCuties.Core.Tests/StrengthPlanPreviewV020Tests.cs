@@ -260,9 +260,11 @@ public sealed class StrengthPlanPreviewV020Tests
         var result = await new PreviewStrengthPlanV020UseCase(source).ExecuteAsync(Guid.NewGuid(), request);
 
         Assert.Equal("Feasible", result.Status);
-        var yogaSession = Assert.Single(result.MixedActivitySchedule!.Sessions,
-            session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga);
-        Assert.Equal((decimal)SelectedDemandingYogaDurationMinutes, yogaSession.DurationMinutes);
+        var yogaDecision = Assert.Single(result.MixedActivitySchedule!.Activities,
+            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+        Assert.Equal((decimal)SelectedDemandingYogaDurationMinutes, yogaDecision.OriginalPrescription!.MainMinutes);
+        Assert.All(result.MixedActivitySchedule.Sessions.Where(session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga),
+            session => Assert.NotNull(session.OccurrencePrescription));
         Assert.All(result.MixedActivitySchedule.Sessions.Where(session =>
                 session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength),
             session => Assert.Equal(
@@ -359,11 +361,9 @@ public sealed class StrengthPlanPreviewV020Tests
             if (day.Count() > 1)
             {
                 var sessions = day.ToArray();
-                Assert.True(MixedActivityWeekScheduleRule.IsSupportedSameDayStrengthCompanion(
-                    (WorkoutActivityType)sessions[0].ActivityTypeId,
-                    sessions[0].IsHardSession,
-                    (WorkoutActivityType)sessions[1].ActivityTypeId,
-                    sessions[1].IsHardSession));
+                Assert.NotEqual(sessions[0].ActivityTypeId, sessions[1].ActivityTypeId);
+                if (sessions.Any(session => session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength))
+                    Assert.Equal((int)WorkoutActivityType.GeneralStrength, sessions.OrderBy(session => session.DayOrder).First().ActivityTypeId);
             }
         });
         Assert.Equal(ExpectedSavedProposalCount, store.SaveCount);
@@ -413,10 +413,15 @@ public sealed class StrengthPlanPreviewV020Tests
 
         var result = await new PreviewStrengthPlanV020UseCase(source).ExecuteAsync(Guid.NewGuid(), request);
 
-        var yoga = Assert.Single(result.MixedActivitySchedule!.Sessions,
-            session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga);
-        Assert.Equal(ActivitySessionDurationRule.DemandingYogaDurationMinutesDefault, yoga.DurationMinutes);
-        Assert.True(yoga.IsHardSession);
+        var yoga = Assert.Single(result.MixedActivitySchedule!.Activities,
+            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+        Assert.Equal(ActivitySessionDurationRule.DemandingYogaDurationMinutesDefault, yoga.OriginalPrescription!.MainMinutes);
+        Assert.All(result.MixedActivitySchedule.Sessions.Where(session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga),
+            session =>
+            {
+                Assert.True(session.IsHardSession);
+                Assert.Null(session.OccurrencePrescription);
+            });
     }
 
     [Fact]
@@ -443,9 +448,9 @@ public sealed class StrengthPlanPreviewV020Tests
         var result = await new PreviewStrengthPlanV020UseCase(source).ExecuteAsync(Guid.NewGuid(), request);
 
         Assert.Equal("Feasible", result.Status);
-        Assert.Contains(result.MixedActivitySchedule!.Sessions,
-            session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga &&
-                       session.DurationMinutes == ActivitySessionDurationRule.DemandingYogaDefaultMinutes);
+        var yoga = Assert.Single(result.MixedActivitySchedule!.Activities,
+            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+        Assert.Equal(ActivitySessionDurationRule.DemandingYogaDefaultMinutes, yoga.OriginalPrescription!.MainMinutes);
     }
 
     [Fact]
@@ -474,16 +479,17 @@ public sealed class StrengthPlanPreviewV020Tests
         var result = await new PreviewStrengthPlanV020UseCase(source).ExecuteAsync(Guid.NewGuid(), request);
 
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek, result.Sessions.Count);
-        Assert.Contains(result.MixedActivitySchedule!.Sessions,
-            session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga &&
-                       session.DurationMinutes == duration &&
-                       session.IsHardSession);
-        var yogaSession = Assert.Single(result.MixedActivitySchedule.Sessions,
-            session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga);
-        Assert.Null(yogaSession.OccurrencePrescription);
-        var yogaDecision = Assert.Single(result.MixedActivitySchedule.Activities,
-            activity => activity.ActivityTypeId == (int)WorkoutActivityType.Yoga);
-        Assert.Equal(duration, yogaDecision.OriginalPrescription!.MainMinutes);
+        var yoga = Assert.Single(result.MixedActivitySchedule!.Activities,
+            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Yoga);
+        Assert.Equal(duration, yoga.OriginalPrescription!.MainMinutes);
+        Assert.All(result.MixedActivitySchedule.Sessions.Where(session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga),
+            session =>
+            {
+                Assert.True(session.IsHardSession);
+                Assert.Equal(ActivitySessionDurationRule.DemandingYogaMinimumMinutes, session.DurationMinutes);
+                Assert.Equal(ActivitySessionDurationRule.DemandingYogaMinimumMinutes,
+                    session.OccurrencePrescription?.MainMinutes);
+            });
     }
 
     [Fact]
@@ -517,9 +523,7 @@ public sealed class StrengthPlanPreviewV020Tests
         var walkingDecision = Assert.Single(result.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Walking);
         Assert.Equal("Scheduled", walkingDecision.Disposition);
-        Assert.Equal(1, walkingDecision.ScheduledSessionsPerWeek);
-        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
-            walkingDecision.ReasonCodes);
+        Assert.Equal(walkingDecision.TargetSessionsPerWeek, walkingDecision.ScheduledSessionsPerWeek);
     }
 
     [Theory]
@@ -606,6 +610,7 @@ public sealed class StrengthPlanPreviewV020Tests
         var result = await useCase.ExecuteAsync(Guid.NewGuid(), Request());
 
         Assert.Equal("Limited", result.Status);
+        Assert.DoesNotContain(StrengthStyleSelectionRule.NoSafeStrengthStyleFitCode, result.LimitationCodes);
         Assert.Contains(result.Sessions[0].Slots,
             slot => slot.SlotId == "knee-dominant" && slot.ExerciseId is null);
     }
@@ -909,6 +914,28 @@ public sealed class StrengthPlanPreviewV020Tests
             .ExecuteAsync(Guid.NewGuid(), request);
         Assert.False(proposal.IsPersisted);
         Assert.NotEqual("Feasible", proposal.Preview.Status);
+        Assert.Contains(StrengthStyleSelectionRule.NoSafeStrengthStyleFitCode, proposal.Preview.LimitationCodes);
+        Assert.Equal(0, store.SaveCount);
+    }
+
+    [Fact]
+    public async Task ExhaustedStrengthWithBlockedOtherActivityDoesNotCreateEmptyPlan()
+    {
+        var profile = AddSelectedActivity(Profile(), WorkoutActivityType.RockClimbing);
+        var request = Request() with
+        {
+            ExcludedExerciseIds = new HashSet<int> { 101, 102, 103, 104 },
+            ActivityEligibilityEvidence =
+            [new ActivityEligibilityInputV020(WorkoutActivityDto.RockClimbing, HasRopeClimbingCompetence: false)]
+        };
+        var store = new ProposalStore();
+        var proposal = await new CreateStrengthPlanProposalV020UseCase(
+                new PreviewStrengthPlanV020UseCase(new Source(profile)), store)
+            .ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.False(proposal.IsPersisted);
+        Assert.NotEqual("Feasible", proposal.Preview.Status);
+        Assert.Contains(StrengthStyleSelectionRule.NoSafeStrengthStyleFitCode, proposal.Preview.LimitationCodes);
         Assert.Equal(0, store.SaveCount);
     }
 
