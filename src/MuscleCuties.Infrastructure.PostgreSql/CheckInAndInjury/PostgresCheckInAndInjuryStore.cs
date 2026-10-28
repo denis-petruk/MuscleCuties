@@ -196,6 +196,8 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             }
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(dbContext, request.UserId,
+                timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
             return MapCheckIn(row);
         }).ConfigureAwait(false);
 
@@ -225,6 +227,8 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             await PostgresCycleReadinessReconciler.MarkPendingAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(dbContext, userId,
+                timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
             return true;
         }).ConfigureAwait(false);
 
