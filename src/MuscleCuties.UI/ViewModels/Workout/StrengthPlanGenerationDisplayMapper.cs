@@ -225,6 +225,13 @@ internal static class StrengthPlanGenerationDisplayMapper
                 .SelectMany(slot => slot.LimitationCodes))
             .ToHashSet(StringComparer.Ordinal);
 
+        if (reasons.Contains("NoSafeStrengthStyleFit") &&
+            (preview.MixedActivitySchedule?.Sessions.Count ?? 0) == 0)
+            return UiTextCatalog.Get("Workout_Generation_Reason_NoSafeActivity");
+
+        if (preview.AdvisoryCodes.Contains("NoSafeStrengthStyleFit") && preview.Status == "Feasible")
+            return UiTextCatalog.Get("Workout_Generation_Reason_NoSafeStrengthContentRemaining");
+
         if (preview.Status == "Feasible" &&
             preview.FallbackReasonCode is "BeginnerProfileRequiresGeneralStrength" or
                 "HighVolumeRequiresEstablishedResistanceHistory")

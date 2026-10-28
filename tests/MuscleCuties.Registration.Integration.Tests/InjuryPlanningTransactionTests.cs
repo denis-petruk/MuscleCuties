@@ -78,11 +78,19 @@ public sealed class InjuryPlanningTransactionTests
             await store.SaveInjuryAsync(new SaveInjuryObservationRequest(user, secondInjury, (int)InjuryFlag.Shoulder,
                 "Acute", today, 2, today), CancellationToken.None);
             var associations = await db.WorkoutInjuryPrescriptions.AsNoTracking().Where(row => row.UserId == user).ToListAsync();
-            // Without reviewed injury-to-exercise linkage the second episode must not
-            // acquire invented lineage; reconciliation stays pending for review.
-            Xunit.Assert.Single(associations);
+            // An unchanged original can be captured for each episode without asserting
+            // that either injury affects it; associations are established separately.
+            Xunit.Assert.Equal(2, associations.Count);
+            Xunit.Assert.Equal(2, associations.Select(row => row.EpisodeId).Distinct().Count());
             Xunit.Assert.All(associations, row => { Xunit.Assert.Equal(exercise, row.OriginalWorkoutDayExerciseId);
                 Xunit.Assert.Equal(SyntheticOptionalSets, row.OriginalOptionalSets); Xunit.Assert.Equal("synthetic-slot", row.OriginalPlanningSlotId); });
+            await Xunit.Assert.ThrowsAsync<InvalidOperationException>(() => store.SaveInjuryAsync(
+                first with { SiteFlag = (int)InjuryFlag.Shoulder }, CancellationToken.None));
+            Xunit.Assert.Equal(2, await db.WorkoutInjuryEpisodes.AsNoTracking().CountAsync(row => row.UserId == user));
+            Xunit.Assert.Equal(2, await db.WorkoutInjuryPrescriptions.AsNoTracking().CountAsync(row => row.UserId == user));
+            Xunit.Assert.Equal((int)InjuryFlag.Knee, (await db.WorkoutInjuryLogs.AsNoTracking()
+                .SingleAsync(row => row.Id == firstInjury)).SiteFlag);
+            Xunit.Assert.True((await db.WorkoutDays.AsNoTracking().SingleAsync(row => row.Id == day)).IsRemovedBySafety);
             clock.UtcNow = now.AddDays(2);
             await store.SaveInjuryAsync(first with { Status = "Cleared", Date = today }, CancellationToken.None);
             var cleared = await db.WorkoutInjuryEpisodes.AsNoTracking().SingleAsync(row => row.InjuryLogId == firstInjury);
@@ -94,6 +102,13 @@ public sealed class InjuryPlanningTransactionTests
                 .SingleAsync(row => row.InjuryLogId == firstInjury)).ClearedOn);
             Xunit.Assert.Null((await db.WorkoutInjuryEpisodes.AsNoTracking().SingleAsync(row => row.InjuryLogId == secondInjury)).ClearedOn);
             Xunit.Assert.True(await db.WorkoutDayExercises.AsNoTracking().AnyAsync(row => row.Id == exercise));
+            await store.SaveInjuryAsync(first with { Status = "Acute", Date = DateOnly.FromDateTime(clock.UtcNow) }, CancellationToken.None);
+            var recurringEpisodes = await db.WorkoutInjuryEpisodes.AsNoTracking()
+                .Where(row => row.InjuryLogId == firstInjury).ToListAsync();
+            Xunit.Assert.Equal(2, recurringEpisodes.Count);
+            Xunit.Assert.Single(recurringEpisodes, episode => episode.ClearedOn == today.AddDays(2));
+            Xunit.Assert.Single(recurringEpisodes, episode => episode.ClearedOn is null);
+            Xunit.Assert.Equal(2, await db.WorkoutInjuryPrescriptions.AsNoTracking().CountAsync(row => row.UserId == user));
         }
         finally { await db.Users.Where(row => row.Id == user).ExecuteDeleteAsync(); }
     }

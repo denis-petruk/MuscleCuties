@@ -14,6 +14,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
@@ -435,6 +436,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             }
             else day = await ResolveWorkoutDayAsync(userId, request.WorkoutDayId, cancellationToken).ConfigureAwait(false);
             if (day is null) throw new KeyNotFoundException("Workout session was not found.");
+            if (day.IsRemovedBySafety) throw new WorkoutActivityNoLongerSafeException();
 
             var nowUtc = DateTime.UtcNow;
             if (string.Equals(day.WorkoutType, nameof(WorkoutType.Rest), StringComparison.OrdinalIgnoreCase))
@@ -705,6 +707,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
             await WorkoutSessionAccountLock.RequireNoPreviewAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            await PlanningCatalogFingerprint.LockCatalogAsync(dbContext, cancellationToken).ConfigureAwait(false);
 
             var dayExercise = await ResolveWorkoutDayExerciseAsync(userId, request.WorkoutDayExerciseId, cancellationToken, track: true)
                 .ConfigureAwait(false)
