@@ -52,6 +52,11 @@ public sealed class PostgresWorkoutReconciliationDispatcher(
                     await PostgresTenantContext.SetForCurrentTransactionAsync(context, owner, attemptToken).ConfigureAwait(false);
                     await WorkoutSessionAccountLock.AcquireAsync(context, owner, attemptToken).ConfigureAwait(false);
                     outcome = await new PostgresWorkoutPlanReconciler(context).ReconcileInCurrentTransactionAsync(owner, attemptToken).ConfigureAwait(false);
+                    var planning = await context.WorkoutAccountPlanningStates.AsNoTracking()
+                        .SingleOrDefaultAsync(row => row.UserId == owner, attemptToken).ConfigureAwait(false);
+                    if (planning?.CycleReadinessPending == true && !planning.SafetyRegenerationPending &&
+                        !await PostgresCycleReadinessReconciler.ReconcileAsync(context, owner, DateTimeOffset.UtcNow, attemptToken).ConfigureAwait(false))
+                        outcome = WorkoutReconciliationOutcome.Deferred;
                     await transaction.CommitAsync(attemptToken).ConfigureAwait(false);
                 }).ConfigureAwait(false);
                 if (outcome == WorkoutReconciliationOutcome.Deferred) deferred++;

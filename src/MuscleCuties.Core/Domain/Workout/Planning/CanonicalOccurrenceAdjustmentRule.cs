@@ -1,3 +1,5 @@
+using MuscleCuties.Core.Models.Enums.Workout;
+
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
 /// <summary>A deload only affects the bounded occurrence window; later prescriptions stay unchanged.</summary>
@@ -10,4 +12,9 @@ public static class CanonicalOccurrenceAdjustmentRule
 
     public static (int Sets, int TargetRir) Deload(int sets, int targetRir) =>
         (DeloadTriggerRule.CalculateDeloadSets(sets), DeloadTriggerRule.CalculateDeloadRir(targetRir));
+
+    public static bool RemoveOptionalHardCompanion(bool optional, WorkoutActivityType activity,
+        bool hasStrengthOnSameDay, DateOnly occurrence, DateOnly start, DateOnly endExclusive) =>
+        optional && activity == WorkoutActivityType.Hiit && hasStrengthOnSameDay &&
+        IsInDeloadWindow(occurrence, start, endExclusive);
 }

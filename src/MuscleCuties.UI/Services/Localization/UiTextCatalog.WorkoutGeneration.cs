@@ -4,6 +4,10 @@ public static partial class UiTextCatalog
 {
     static partial void RegisterWorkoutGenerationStrings()
     {
+        English["WorkoutPopulationBirthDateRequired"] = "Add your date of birth in your profile, then create a new preview.";
+        English["WorkoutPopulationDateUnavailable"] = "Confirm your account time zone, then create a new preview.";
+        English["WorkoutPopulationAgeUnsupported"] = "Workout planning currently supports adults aged 18–64. You can explore the other app features.";
+        English["WorkoutPopulationPregnancyUnsupported"] = "Pregnancy workout plans are not supported yet. You can explore the other app features.";
         English["Workout_StyleOffer_Title"] = "Explore another strength style";
         English["Workout_StyleOffer_Explanation"] = "Your plan was updated. Another selected strength style may fit. Review a new plan before applying it, or keep your current style.";
         English["Workout_StyleOffer_Explore"] = "Review styles";
@@ -244,6 +248,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_PreviewReady"] = "Review the plan preview before applying it.";
         English["Workout_Generation_OptionalActivitiesSkipped"] = "Some activities or movements were omitted. You can still apply the remaining plan.";
         English["Workout_Generation_PreviewNotSaved"] = "This draft is not available to apply. Review the information and try again.";
+        English["Workout_Generation_PreviewLeaseUnavailable"] = "This preview is no longer available to apply. Choose Edit details and create a new preview.";
         English["Workout_Generation_CreateFailed"] = "The plan preview could not be created. Try again.";
         English["Workout_Generation_ConnectionError"] = "Connection error. Please try again.";
         English["Workout_Generation_RequiredAnswers"] = "Fill in the required answers before previewing your plan.";

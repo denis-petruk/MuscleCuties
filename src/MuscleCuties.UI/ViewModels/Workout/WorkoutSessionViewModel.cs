@@ -67,6 +67,9 @@ public partial class WorkoutSessionViewModel : ObservableObject
     private SessionScreen _currentScreen;
 
     [ObservableProperty] private string _cyclePhaseNote = string.Empty;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasDoseAdjustmentNote))]
+    private string _doseAdjustmentNote = string.Empty;
+    public bool HasDoseAdjustmentNote => !string.IsNullOrWhiteSpace(DoseAdjustmentNote);
     [ObservableProperty] private string _dayTitle = "Workout";
     [ObservableProperty] private ObservableCollection<string> _sessionHistory = [];
 
@@ -360,6 +363,14 @@ public partial class WorkoutSessionViewModel : ObservableObject
 
             if (version != _loadVersion) return;
             DayTitle = detail.Title;
+            DoseAdjustmentNote = detail.DoseAdjustmentReason switch
+            {
+                WorkoutDoseAdjustmentReason.DailyReadiness => UiTextCatalog.Get("Workout_Session_AdjustmentDaily"),
+                WorkoutDoseAdjustmentReason.ProvisionalPhaseFeeling => UiTextCatalog.Get("Workout_Session_AdjustmentPhase"),
+                WorkoutDoseAdjustmentReason.RepeatedPhasePattern => UiTextCatalog.Get("Workout_Session_AdjustmentPattern"),
+                WorkoutDoseAdjustmentReason.SafetyReview => UiTextCatalog.Get("Workout_Session_AdjustmentSafety"),
+                _ => string.Empty
+            };
             ActivityCards = new ObservableCollection<WorkoutActivitySectionItem>(GetActivities(detail));
             foreach (var item in ActivityCards.SelectMany(activity => activity.Exercises).Where(item => item.IsLogged))
                 _savedLogs[item.WorkoutDayExerciseId] = BuildLogInput(item);

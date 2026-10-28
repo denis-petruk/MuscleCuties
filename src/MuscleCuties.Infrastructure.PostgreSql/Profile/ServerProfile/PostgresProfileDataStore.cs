@@ -26,6 +26,8 @@ public sealed class PostgresProfileDataStore(
     private const int MinimumQuizIdentifier = 1;
     private const int MinimumExpectedProfileVersion = 1;
     private const string ClearedInjuryStatus = "Cleared";
+    private const string ProposedWorkoutPreviewStatus = "Proposed";
+    private const string ExpiredWorkoutPreviewStatus = "Expired";
     private const int DefaultBaselineSteps = 8000;
 
     public async Task<ServerProfileSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken)
@@ -117,7 +119,8 @@ public sealed class PostgresProfileDataStore(
                     string.Equals(request.TrainingExperienceLevel, profile.TrainingExperienceLevel,
                         StringComparison.OrdinalIgnoreCase)) &&
                    WorkoutPreferencesRule.PreservesAppliedEquipment(request.EquipmentLevel,
-                       profile.EquipmentLevel), request.EquipmentLevel is not null);
+                       profile.EquipmentLevel), request.EquipmentLevel is not null,
+        request.SetDateOfBirth || request.ReproductiveContextJson is not null);
 
     public async Task<ServerProfileWriteResult> CorrectQuizResponseAsync(
         CorrectServerQuizResponseRequest request,
@@ -229,17 +232,18 @@ public sealed class PostgresProfileDataStore(
         Action<UserProfileRecord, DateTime> apply,
         CancellationToken cancellationToken,
         Func<UserProfileRecord, bool>? validate = null,
-        bool guardPlanning = false)
+        bool guardPlanning = false,
+        bool guardPopulation = false)
     {
         if (!ValidVersionRequest(userId, expectedVersion))
             return Invalid();
 
         return await ExecuteTenantTransactionAsync(userId, cancellationToken, async (transaction, token) =>
         {
-            if (guardPlanning)
+            if (guardPlanning || guardPopulation)
             {
                 await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, token).ConfigureAwait(false);
-                if (await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, userId,
+                if (guardPlanning && !guardPopulation && await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, userId,
                         timeProvider.GetUtcNow().UtcDateTime, token).ConfigureAwait(false)) return Conflict(expectedVersion);
             }
             var profile = await dbContext.UserProfiles.SingleOrDefaultAsync(
@@ -251,8 +255,47 @@ public sealed class PostgresProfileDataStore(
             AddSnapshot(userId, reason, profile, now);
             apply(profile, now);
             profile.UpdatedAt = now;
+            if (guardPopulation)
+                await ApplyPopulationSafetyAsync(userId, profile, now, token).ConfigureAwait(false);
             return await SaveVersionedAsync(transaction, profile, token).ConfigureAwait(false);
         }).ConfigureAwait(false);
+    }
+
+    private async Task ApplyPopulationSafetyAsync(Guid userId, UserProfileRecord profile, DateTime nowUtc,
+        CancellationToken cancellationToken)
+    {
+        var state = await dbContext.WorkoutAccountPlanningStates.SingleOrDefaultAsync(row => row.UserId == userId,
+            cancellationToken).ConfigureAwait(false);
+        DateOnly? today = null;
+        if (state?.TimeZoneId is { } zoneId)
+        {
+            try { today = WorkoutAccountCalendarRule.LocalDate(new DateTimeOffset(nowUtc, TimeSpan.Zero), TimeZoneInfo.FindSystemTimeZoneById(zoneId)); }
+            catch (TimeZoneNotFoundException) { }
+            catch (InvalidTimeZoneException) { }
+        }
+        if (state is not null) state.CycleReadinessPending = true;
+        if (WorkoutPopulationScopeRule.Limitation(profile.DateOfBirth, today,
+                ReproductiveContextCodec.Parse(profile.ReproductiveContextJson).Pregnancy) is null) return;
+        var activePlanIds = await dbContext.WorkoutPlans.AsNoTracking().Where(row => row.UserId == userId && row.IsActive)
+            .Select(row => row.Id).ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        if (activePlanIds.Length > 0 && state is not null) state.SafetyRegenerationPending = true;
+        var days = await dbContext.WorkoutDays.Where(day => day.UserId == userId && activePlanIds.Contains(day.WorkoutPlanId) &&
+            day.WorkoutType != nameof(WorkoutType.Rest) && (today == null || day.Date >= today ||
+                dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId && session.PlannedWorkoutDayId == day.Id &&
+                    !session.IsDeleted && session.CompletedAt == null)) &&
+            (!dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId && session.PlannedWorkoutDayId == day.Id &&
+                !session.IsDeleted && session.CompletedAt != null) || dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId &&
+                    session.PlannedWorkoutDayId == day.Id && !session.IsDeleted && session.CompletedAt == null)))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var day in days) day.IsRemovedBySafety = true;
+        var previews = await dbContext.WorkoutPlanProposalsV02.Where(row => row.UserId == userId && row.Status == ProposedWorkoutPreviewStatus && row.LeaseId != null)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var preview in previews)
+        {
+            preview.Status = ExpiredWorkoutPreviewStatus;
+            preview.DecidedAtUtc = nowUtc;
+            preview.ConcurrencyVersion++;
+        }
     }
 
     private async Task<ServerProfileWriteResult> SaveVersionedAsync(

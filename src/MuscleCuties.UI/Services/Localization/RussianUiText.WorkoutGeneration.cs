@@ -4,6 +4,10 @@ internal static partial class RussianUiText
 {
     static partial void RegisterWorkoutGenerationStrings()
     {
+        Values["WorkoutPopulationBirthDateRequired"] = "Добавьте дату рождения в профиле и создайте новый план для просмотра.";
+        Values["WorkoutPopulationDateUnavailable"] = "Подтвердите часовой пояс аккаунта и создайте новый план для просмотра.";
+        Values["WorkoutPopulationAgeUnsupported"] = "Планирование тренировок доступно для взрослых от 18 до 64 лет. Вы можете пользоваться другими возможностями приложения.";
+        Values["WorkoutPopulationPregnancyUnsupported"] = "Планы тренировок во время беременности пока не поддерживаются. Вы можете пользоваться другими возможностями приложения.";
         Values["Workout_StyleOffer_Title"] = "Другой силовой стиль";
         Values["Workout_StyleOffer_Explanation"] = "Ваш план обновлён. Другой выбранный силовой стиль может подойти. Просмотрите новый план перед применением или сохраните текущий стиль.";
         Values["Workout_StyleOffer_Explore"] = "Посмотреть стили";
@@ -244,6 +248,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_PreviewReady"] = "Проверьте предварительный план перед применением.";
         Values["Workout_Generation_OptionalActivitiesSkipped"] = "Некоторые активности или движения исключены. Остальную часть плана можно применить.";
         Values["Workout_Generation_PreviewNotSaved"] = "Этот черновик нельзя применить. Проверьте данные и попробуйте ещё раз.";
+        Values["Workout_Generation_PreviewLeaseUnavailable"] = "Этот предпросмотр больше нельзя применить. Выберите «Изменить детали» и создайте новый предпросмотр.";
         Values["Workout_Generation_CreateFailed"] = "Не удалось составить предварительный план. Попробуйте ещё раз.";
         Values["Workout_Generation_ConnectionError"] = "Ошибка соединения. Попробуйте ещё раз.";
         Values["Workout_Generation_RequiredAnswers"] = "Заполните обязательные ответы перед просмотром плана.";

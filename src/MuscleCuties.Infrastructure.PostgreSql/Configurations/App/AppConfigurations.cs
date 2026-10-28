@@ -58,6 +58,17 @@ internal static class AppModelConfiguration
 
 }
 
+public sealed class WorkoutCycleReadinessOccurrenceConfiguration : IEntityTypeConfiguration<WorkoutCycleReadinessOccurrenceRecord>
+{
+    public void Configure(EntityTypeBuilder<WorkoutCycleReadinessOccurrenceRecord> builder)
+    {
+        AppModelConfiguration.ConfigureTenant(builder, "workout_cycle_readiness_occurrences");
+        builder.HasIndex(row => new { row.UserId, row.WorkoutDayId }).IsUnique();
+        builder.HasOne<WorkoutDayRecord>().WithMany().HasForeignKey(row => new { row.UserId, row.WorkoutDayId })
+            .HasPrincipalKey(row => new { row.UserId, row.Id }).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 public sealed class UserConfiguration : IEntityTypeConfiguration<UserRecord>
 {
     public void Configure(EntityTypeBuilder<UserRecord> builder)

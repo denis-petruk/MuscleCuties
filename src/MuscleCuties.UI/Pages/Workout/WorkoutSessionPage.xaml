@@ -63,6 +63,8 @@
                                Style="{StaticResource ModalTitle}" SemanticProperties.HeadingLevel="Level1" />
                     <ScrollView Grid.Row="1">
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+                            <Label Text="{Binding DoseAdjustmentNote}" IsVisible="{Binding HasDoseAdjustmentNote}"
+                                   Style="{StaticResource BodyLabel}" LineBreakMode="WordWrap" />
                             <Label Text="{loc:LocalizedText Workout_Session_HistoryTitle}" Style="{StaticResource BodyStrong}" />
                             <Label Text="{loc:LocalizedText Workout_Session_HistoryExplanation}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                             <VerticalStackLayout BindableLayout.ItemsSource="{Binding SessionHistory}">

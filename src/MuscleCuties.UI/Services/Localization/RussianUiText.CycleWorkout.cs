@@ -4,6 +4,10 @@ internal static partial class RussianUiText
 {
     static partial void RegisterCycleWorkoutStrings()
     {
+        Values["Workout_Session_AdjustmentDaily"] = "По отметке за сегодня добавочный подход сокращён на один. Основная нагрузка сохранена.";
+        Values["Workout_Session_AdjustmentPhase"] = "С учётом вашего обычного самочувствия в этой фазе сегодня на один дополнительный подход меньше.";
+        Values["Workout_Session_AdjustmentPattern"] = "Ваши прошлые отметки и тренировки указывают, что сегодня стоит убрать один дополнительный подход.";
+        Values["Workout_Session_AdjustmentSafety"] = "Перед началом тренировки проверьте сегодняшние симптомы.";
         Values["Workout_Session_PrescriptionWarmup"] = "Разминка: {0} мин";
         Values["Workout_Session_PrescriptionMain"] = "Основная часть: {0} мин";
         Values["Workout_Session_PrescriptionCooldown"] = "Заминка: {0} мин";
