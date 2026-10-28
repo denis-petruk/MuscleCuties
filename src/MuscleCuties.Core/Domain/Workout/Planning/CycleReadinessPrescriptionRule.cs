@@ -22,7 +22,8 @@ public sealed record CycleReadinessPrescriptionInput(
     IReadOnlyList<CycleReadinessPatternObservation>? PatternObservations = null,
     DateOnly? EvaluationDate = null,
     decimal? SleepHours = null,
-    bool RoutineSymptoms = false);
+    bool RoutineSymptoms = false,
+    bool PhaseEstimateReliable = false);
 
 public sealed record CycleReadinessPrescriptionDecision(
     Guid? AdjustedPrescriptionId,
@@ -34,7 +35,7 @@ public sealed record CycleReadinessPrescriptionDecision(
 
 /// <summary>
 /// Makes one bounded reduction to optional strength work. A phase is useful only
-/// when explicitly confirmed; provisional onboarding feelings do not establish
+/// when explicitly confirmed or supported by recorded-cycle agreement; provisional onboarding feelings do not establish
 /// a repeated pattern. Repeated low readiness requires trusted completed workouts across
 /// distinct cycles and check-ins. Current evidence is never counted twice.
 /// </summary>
@@ -66,13 +67,14 @@ public static class CycleReadinessPrescriptionRule
         var shortSleep = input.SleepHours is >= 0m and < ShortSleepThresholdHours;
         var dailyReduction = currentCheckIn && (shortSleep ||
             score!.Band is CheckInScoreBand.ConsiderLighterSession or CheckInScoreBand.ConsiderEasierDay);
-        var confirmedPhase = (input.Phase is CyclePhase.Menstrual or CyclePhase.Follicular or
+        var reliablePhase = (input.Phase is CyclePhase.Menstrual or CyclePhase.Follicular or
             CyclePhase.Ovulatory or CyclePhase.Luteal) &&
-            input.PhaseProvenance == PhaseReviewProvenance.UserConfirmed;
-        var phaseFeeling = confirmedPhase && input.ProvisionalPhaseFeeling is { } baseline &&
+            (input.PhaseProvenance == PhaseReviewProvenance.UserConfirmed ||
+             input.PhaseProvenance == PhaseReviewProvenance.Estimated && input.PhaseEstimateReliable);
+        var phaseFeeling = reliablePhase && input.ProvisionalPhaseFeeling is { } baseline &&
             PhaseAdjustmentRule.SelectTier(baseline, PhaseBaselineScale.QuizMappedOneToFive) is
                 PhaseAdjustmentTier.Lighter or PhaseAdjustmentTier.EasierDay;
-        var repeatedFeeling = confirmedPhase && HasRepeatedPattern(input);
+        var repeatedFeeling = reliablePhase && HasRepeatedPattern(input);
         var checkInFeelingReady = currentCheckIn && score!.Band == CheckInScoreBand.FeelingReady;
         var shouldReduce = dailyReduction || input.RoutineSymptoms || (phaseFeeling || repeatedFeeling) && !checkInFeelingReady;
         var reason = dailyReduction || input.RoutineSymptoms ? DailyReadinessAdjustment : repeatedFeeling ? RepeatedPhaseAdjustment : ProvisionalPhaseAdjustment;
@@ -80,7 +82,7 @@ public static class CycleReadinessPrescriptionRule
             ? CycleReadinessConfidence.Repeated : CycleReadinessConfidence.Provisional;
         if (!shouldReduce)
             return new(null, null, NoAdjustment,
-                confirmedPhase ? input.Phase : null,
+                reliablePhase ? input.Phase : null,
                 currentCheckIn ? score!.Observation!.Revision : null);
 
         var candidate = input.Exercises.FirstOrDefault(exercise =>
@@ -88,10 +90,10 @@ public static class CycleReadinessPrescriptionRule
             exercise.Sets > MinimumWorkingSets);
         return candidate is null
             ? new(null, null, NoAdjustment,
-                confirmedPhase ? input.Phase : null,
+                reliablePhase ? input.Phase : null,
                 currentCheckIn ? score!.Observation!.Revision : null)
             : new(candidate.PrescriptionId, candidate.Sets - PhaseAdjustmentRule.OptionalAccessorySetReduction,
-                reason, confirmedPhase ? input.Phase : null,
+                reason, reliablePhase ? input.Phase : null,
                 currentCheckIn ? score!.Observation!.Revision : null, confidence);
     }
 

@@ -178,6 +178,36 @@ public sealed class CycleReadinessPrescriptionRuleTests
     }
 
     [Fact]
+    public void Reliable_estimated_phase_can_use_repeated_personal_pattern()
+    {
+        var decision = CycleReadinessPrescriptionRule.Evaluate(Input(CyclePhase.Luteal,
+            PhaseReviewProvenance.Estimated, null) with
+        {
+            PhaseEstimateReliable = true,
+            EvaluationDate = Today,
+            PatternObservations = [Pattern("cycle-a", "check-a"), Pattern("cycle-b", "check-b"), Pattern("cycle-c", "check-c")]
+        });
+        Assert.Equal(CycleReadinessPrescriptionRule.RepeatedPhaseAdjustment, decision.ReasonCode);
+        Assert.Equal(CycleReadinessConfidence.Repeated, decision.Confidence);
+    }
+
+    [Theory]
+    [InlineData(CyclePhase.Menstrual)]
+    [InlineData(CyclePhase.Follicular)]
+    [InlineData(CyclePhase.Ovulatory)]
+    [InlineData(CyclePhase.Luteal)]
+    public void Reliable_estimate_can_use_relevant_provisional_feeling(CyclePhase phase)
+    {
+        var decision = CycleReadinessPrescriptionRule.Evaluate(Input(phase,
+            PhaseReviewProvenance.Estimated, new PhaseBaseline(RelevantDiscomfort, LowEnergy)) with
+        {
+            PhaseEstimateReliable = true
+        });
+        Assert.Equal(CycleReadinessPrescriptionRule.ProvisionalPhaseAdjustment, decision.ReasonCode);
+        Assert.Equal(phase, decision.EvidencedPhase);
+    }
+
+    [Fact]
     public void Old_pattern_observations_expire()
     {
         var decision = CycleReadinessPrescriptionRule.Evaluate(Input(CyclePhase.Luteal,

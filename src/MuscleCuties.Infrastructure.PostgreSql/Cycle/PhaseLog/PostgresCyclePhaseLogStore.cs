@@ -110,6 +110,8 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
                 await PostgresCycleReadinessReconciler.MarkPendingAsync(db, ownerId, cancellationToken).ConfigureAwait(false);
                 await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(db, ownerId,
+                    timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
                 return new SaveCyclePhaseLogOutput(SaveCyclePhaseLogOutcomeKind.Saved);
             }
             catch (DbUpdateException exception) when (IsUniqueViolation(exception) || exception.InnerException is PostgresException)
