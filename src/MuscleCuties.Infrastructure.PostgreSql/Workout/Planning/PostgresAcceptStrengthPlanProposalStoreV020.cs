@@ -407,11 +407,15 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                         PlanningSlotId = slot.SlotId,
                         PlanningSessionIndex = strengthSession.SessionIndex,
                         Sets = slot.Sets!.Value, Reps = slot.MinimumRepetitions!.Value,
+                        TargetRepetitionsInReserve = slot.RepetitionsInReserve,
                         IsOptional = !slot.IsRequired
                     });
             }
         }
 
+        await PostgresCanonicalOccurrenceAdjustment.ApplyAsync(dbContext, userId, activePlanId,
+            today, firstDate.Value, zone, proposalSnapshot.Sessions, planDays, exercises,
+            cancellationToken).ConfigureAwait(false);
         dbContext.WorkoutDays.AddRange(planDays);
         dbContext.WorkoutDayExercises.AddRange(exercises);
         dbContext.WorkoutPlanRevisionsV02.Add(new WorkoutPlanRevisionV02Record
