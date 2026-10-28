@@ -1,5 +1,28 @@
 # Workout migration implementation — 2026-10-28
 
+## Current macOS continuation and pull recovery
+
+The current checkout was fast-forwarded from `b482b9dd` to GitLab `274558d7` after
+an authenticated fetch. Nineteen untracked source files were copied and SHA-256
+verified in `/private/tmp/MuscleCuties-pull-recovery-20261028-20261028-58257-u52d9k`.
+Eight incoming-path collisions were moved aside before the fast-forward; differing
+local versions remain in the recovery folder. Superseded disconnected style-offer
+and duplicate HIIT drafts are preserved there rather than compiled beside the
+connected implementation. No tracked user changes were discarded.
+
+Implementation continues on `codex/workout-cycle-readiness-production-hardening-20261028`.
+The checked-in GitLab workflow permits pipelines only for the explicitly named
+historical checkpoint and beta branches; this task branch cannot trigger a
+deployment. No deployment, live migration or scheduler activation is authorized.
+
+Fresh local PostgreSQL 17 migration and catalog preparation succeeded in an
+isolated loopback-only container. The current broad Core/application run passed
+964 tests. Targeted PostgreSQL suites have verified saved readiness overlays,
+session replay, pending-update retries, account purge and automatic acceptance;
+full integrated verification is still underway. Historical Windows/toolchain
+statements below describe earlier checkouts. Model snapshot reconciliation,
+fresh-schema verification, all-suite results and the Mac iOS build remain open.
+
 ## Safe task-branch continuation
 
 - Branch `codex/workout-cycle-readiness-production-hardening` was created from clean `effec70`. The GitLab workflow rules run push pipelines only on `codex/plan-generation-checkpoint`; its staging deploy job is manual. This branch does not trigger that pipeline.
