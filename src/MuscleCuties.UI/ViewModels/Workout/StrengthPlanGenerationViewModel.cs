@@ -303,9 +303,9 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             ? IsSwimmingSelected || IsRockClimbingSelected || IsYogaSelected ||
               ShouldShowHiitUnderlyingCardioChoice || HasFittingStrengthStyleChoices
             : HasNoSafeActivityPreview);
-    public bool HasNoSafeActivityPreview => Preview is { Status: not "Feasible" } preview &&
-        (preview.MixedActivitySchedule?.Sessions.Count ?? NoPolicyReasons) == NoPolicyReasons &&
-        preview.LimitationCodes.Concat(preview.AdvisoryCodes).Contains("NoSafeStrengthStyleFit");
+    public bool HasNoSafeActivityPreview => Preview is { Status: not "Feasible" and not "RequiredAnswersMissing" and
+        not "StrengthStyleChoiceRequired" } preview &&
+        (preview.MixedActivitySchedule?.Sessions.Count ?? NoPolicyReasons) == NoPolicyReasons;
     public bool HasExistingPlan => _hasExistingPlan || (_proposal?.ReplacesExistingPlan == true);
     public bool HasActiveOtherPreview => _activeOtherProposalId.HasValue;
     public bool HasFittingStrengthStyleChoices => FittingStrengthStyleChoices.Count > NoPolicyReasons;
