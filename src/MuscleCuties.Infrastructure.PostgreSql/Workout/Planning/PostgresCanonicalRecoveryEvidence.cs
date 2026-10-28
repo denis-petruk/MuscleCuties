@@ -13,7 +13,8 @@ internal static class PostgresCanonicalRecoveryEvidence
     private const int RequiredRevision = 1;
 
     internal static async Task<DeloadPrescription> EvaluateAsync(PostgresDbContext context, Guid userId,
-        Guid activePlanId, DateOnly today, TimeZoneInfo zone, StrengthPlanPreviewResponseV020 preview,
+        Guid activePlanId, DateOnly today, TimeZoneInfo zone,
+        IReadOnlyList<StrengthPlanPreviewSessionV020> previewSessions,
         CancellationToken cancellationToken)
     {
         var offset = ((int)today.DayOfWeek + CanonicalRecoveryEvidenceRule.DaysPerWeek - (int)DayOfWeek.Monday)
@@ -56,7 +57,7 @@ internal static class PostgresCanonicalRecoveryEvidence
                     e.ExerciseId == prescribed.ExerciseId && e.PlanningTemplateVersion == StrengthTemplateCatalog.Version).ToArray();
                 if (metadata.Length != 1) continue;
                 var item = metadata[0];
-                var matchingSlots = preview.Sessions.Where(s => s.TemplateId == item.PlanningTemplateId &&
+                var matchingSlots = previewSessions.Where(s => s.TemplateId == item.PlanningTemplateId &&
                     s.TemplateVersion == item.PlanningTemplateVersion && s.SessionIndex == item.PlanningSessionIndex)
                     .SelectMany(s => s.Slots).Where(s => s.SlotId == item.PlanningSlotId && s.ExerciseId == prescribed.ExerciseId &&
                         s.PrescriptionRole == (int)StrengthPrescriptionRole.Main && s.IsRequired).ToArray();
