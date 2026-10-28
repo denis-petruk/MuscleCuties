@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Workout.Planning;
@@ -240,6 +241,7 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
             await WorkoutSessionAccountLock.RequireNoPreviewAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            await PlanningCatalogFingerprint.LockCatalogAsync(dbContext, cancellationToken).ConfigureAwait(false);
 
             var dayExercise = await dbContext.WorkoutDayExercises
                 .SingleOrDefaultAsync(e => e.UserId == userId && e.Id == workoutDayExerciseId, cancellationToken)

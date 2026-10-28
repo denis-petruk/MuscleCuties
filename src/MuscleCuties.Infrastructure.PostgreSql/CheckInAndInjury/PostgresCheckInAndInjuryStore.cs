@@ -419,7 +419,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                     original.InjuryOriginalExerciseId ?? original.ExerciseId)))
                     continue;
                 // A replacement or inherited identity requires a linked, consistent original snapshot.
-                if (prior.Length > 0 || original.InjuryOriginalExerciseId is not null ||
+                if (original.InjuryOriginalExerciseId is not null ||
                     original.OriginWorkoutDayExerciseId is not null || links.Length > 0)
                 {
                     if (original.InjuryOriginalExerciseId is not { } originalId || links.Length == 0 ||

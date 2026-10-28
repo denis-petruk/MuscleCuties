@@ -1,3 +1,5 @@
+using MuscleCuties.Core.Models.Enums.Workout;
+
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
 /// <summary>Records the proposed sequence as part of each new plan; it does not infer legacy order.</summary>
@@ -9,7 +11,8 @@ public static class WorkoutSessionOrderingRule
         IReadOnlyList<MixedActivityScheduledSession> sessions)
     {
         var nextByDay = new Dictionary<DayOfWeek, int>();
-        return sessions.Select(session =>
+        return sessions.OrderBy(session => session.Day)
+            .ThenBy(session => IsStrength(session.Activity) ? 0 : 1).Select(session =>
         {
             var next = nextByDay.GetValueOrDefault(session.Day, FirstSessionOrder);
             nextByDay[session.Day] = checked(next + 1);
@@ -21,4 +24,7 @@ public static class WorkoutSessionOrderingRule
         sessions.GroupBy(session => session.Day).All(day =>
             day.Select(session => session.DayOrder).OrderBy(order => order)
                 .SequenceEqual(Enumerable.Range(FirstSessionOrder, day.Count()).Select(order => (int?)order)));
+
+    private static bool IsStrength(WorkoutActivityType activity) => activity is
+        WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or WorkoutActivityType.StrengthHighIntensity;
 }

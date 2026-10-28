@@ -11,7 +11,7 @@ public sealed class AddWorkoutPrescriptionSlotIdentity : Migration
     {
         migrationBuilder.AddColumn<string>("planning_template_id", "workout_day_exercises", schema: "app", nullable: true);
         migrationBuilder.AddColumn<string>("planning_template_version", "workout_day_exercises", schema: "app", nullable: true);
-        migrationBuilder.AddColumn<string>("planning_slot_id", "workout_day_exercises", schema: "app", nullable: true);
+        // planning_slot_id was introduced by AddWorkoutExercisePlanningLineage.
         migrationBuilder.AddColumn<int>("planning_session_index", "workout_day_exercises", schema: "app", nullable: true);
     }
 
@@ -19,7 +19,6 @@ public sealed class AddWorkoutPrescriptionSlotIdentity : Migration
     {
         migrationBuilder.DropColumn("planning_template_id", "workout_day_exercises", "app");
         migrationBuilder.DropColumn("planning_template_version", "workout_day_exercises", "app");
-        migrationBuilder.DropColumn("planning_slot_id", "workout_day_exercises", "app");
         migrationBuilder.DropColumn("planning_session_index", "workout_day_exercises", "app");
     }
 }

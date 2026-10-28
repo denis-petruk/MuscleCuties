@@ -110,6 +110,7 @@ using MuscleCuties.UseCases.Features.Workout.Archive;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Planning;
+using MuscleCuties.UseCases.Features.Workout.StyleOffers;
 using MuscleCuties.UseCases.Features.Workout.Session;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 #if IOS || MACCATALYST
@@ -502,6 +503,7 @@ public static class MauiProgram
         services.AddSingleton<IWorkoutOverviewStore, CloudWorkoutOverviewStore>();
         services.AddSingleton<IWorkoutOverviewUseCase, WorkoutOverviewUseCase>();
         services.AddSingleton<IStrengthPlanProposalClientV020, CloudStrengthPlanProposalStoreV020>();
+        services.AddSingleton<IWorkoutStyleOfferClient, CloudWorkoutStyleOfferClient>();
         services.AddSingleton<IWorkoutAccountCalendarClient, WorkoutAccountCalendarClient>();
         services.AddScoped<IWorkoutSessionActionStore, CloudWorkoutSessionActionStore>();
         services.AddScoped<IWorkoutSessionActionUseCase, WorkoutSessionActionUseCase>();
@@ -603,7 +605,22 @@ public static class MauiProgram
             sp.GetRequiredService<IWorkoutOverviewUseCase>(),
             sp.GetRequiredService<IWorkoutInjuryUseCase>(),
             NavigateToAsync,
-            workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId)));
+            workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId),
+            sp.GetRequiredService<IWorkoutStyleOfferClient>(),
+            async offer =>
+            {
+                var alternative = offer.AlternativeStyles.First();
+                var accepted = await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.DisplayAlertAsync(
+                    UiTextCatalog.Get("Workout_StyleOffer_Title"),
+                    string.Format(System.Globalization.CultureInfo.CurrentCulture,
+                        UiTextCatalog.Get("Workout_StyleOffer_Message"),
+                        StrengthPlanGenerationDisplayMapper.ActivityLabel(alternative)),
+                    UiTextCatalog.Get("Workout_StyleOffer_Review"),
+                    UiTextCatalog.Get("Workout_StyleOffer_Keep")));
+                return accepted ? alternative : null;
+            },
+            style => NavigateWithContextAsync(sp, nameof(StrengthPlanGenerationPage),
+                StrengthPlanGenerationViewModel.OfferedStrengthStyleContextKey, style)));
 
         services.AddTransient<StrengthPlanGenerationViewModel>(sp => new StrengthPlanGenerationViewModel(
             sp.GetRequiredService<IStrengthPlanProposalClientV020>(),

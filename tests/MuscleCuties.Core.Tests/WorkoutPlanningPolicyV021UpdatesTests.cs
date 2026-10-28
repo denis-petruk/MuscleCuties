@@ -327,12 +327,10 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         Assert.Equal(2, hvsDecision.TargetSessionsPerWeek);
         Assert.Equal(2, hvsDecision.ScheduledSessionsPerWeek);
 
-        // Power Yoga is reduced to one target, but both hard days are needed for strength.
-        Assert.Equal(1, yogaDecision.TargetSessionsPerWeek);
-        Assert.Equal(0, yogaDecision.ScheduledSessionsPerWeek);
-        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
-            yogaDecision.Reasons);
-        Assert.Contains(MixedActivityWeekScheduleRule.HardDayLimitReached, yogaDecision.Reasons);
+        Assert.Equal(yogaDecision.TargetSessionsPerWeek, yogaDecision.ScheduledSessionsPerWeek);
+        Assert.All(result.Sessions.Where(s => s.Activity == WorkoutActivityType.Yoga),
+            session => Assert.NotNull(session.OccurrencePrescription));
+        Assert.Empty(result.InputReasons);
     }
 
     [Fact]
@@ -536,11 +534,12 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
 
         var result = MixedActivityWeekScheduleRule.Evaluate(context);
 
-        // Power yoga is hard, General Strength is hard -> cannot be scheduled on the same day (max 1 hard/day)
         var yogaSessionDays = result.Sessions.Where(s => s.Activity == WorkoutActivityType.Yoga).Select(s => s.Day).ToHashSet();
         var gsSessionDays = result.Sessions.Where(s => s.Activity == WorkoutActivityType.GeneralStrength).Select(s => s.Day).ToHashSet();
-
-        Assert.Empty(yogaSessionDays.Intersect(gsSessionDays));
+        Assert.NotEmpty(yogaSessionDays.Intersect(gsSessionDays));
+        Assert.All(result.Sessions.Where(s => s.Activity == WorkoutActivityType.Yoga && gsSessionDays.Contains(s.Day)),
+            session => Assert.NotNull(session.OccurrencePrescription));
+        Assert.Empty(result.InputReasons);
     }
 
     [Fact]

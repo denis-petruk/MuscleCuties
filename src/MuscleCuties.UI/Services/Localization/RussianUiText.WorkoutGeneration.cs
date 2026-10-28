@@ -139,6 +139,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_PlannedRestDay"] = "Отдых · тренировка не запланирована";
         Values["Workout_Generation_Reason_YogaInconsistent"] = "Описание указывает на интенсивную йогу. Выберите интенсивную практику или исправьте описание.";
         Values["Workout_Generation_Reason_NoSafeStrengthContentRemaining"] = "Для выбранных силовых активностей не осталось безопасных упражнений. Доступен план с вашими безопасными несиловыми активностями.";
+        Values["Workout_Generation_Reason_NoSafeActivity"] = "В план не удалось включить безопасные активности. Измените данные или изучите другие возможности.";
         Values["Workout_Generation_MixedScheduleExplanation"] = "Выбранные активности распределяются по доступным дням недели.";
         Values["Workout_Generation_ScheduleEmpty"] = "Не удалось разместить занятия в сохранённые доступные дни недели.";
         Values["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";
