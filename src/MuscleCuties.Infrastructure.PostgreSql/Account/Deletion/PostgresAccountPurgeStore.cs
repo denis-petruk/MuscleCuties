@@ -26,9 +26,9 @@ public sealed class PostgresAccountPurgeStore(
         typeof(DailyReadinessLogRecord),
         typeof(HiitEvidenceCaptureChallengeRecord),
         typeof(WorkoutInjuryLogRecord), typeof(WorkoutInjuryEpisodeRecord), typeof(WorkoutInjuryPrescriptionRecord),
-        typeof(WorkoutAccountPlanningStateRecord), typeof(WorkoutCompletionDayCreditRecord),
+        typeof(WorkoutAccountPlanningStateRecord), typeof(WorkoutCompletionDayCreditRecord), typeof(WorkoutCycleReadinessOccurrenceRecord),
         typeof(WorkoutPlanRecord), typeof(WorkoutPlanProposalV02Record),
-        typeof(WorkoutInjuryPrescriptionLinkRecord),
+        typeof(WorkoutInjuryPrescriptionLinkRecord), typeof(WorkoutInjuryOmittedSlotRecord), typeof(StrengthStyleOfferRecord),
         typeof(WorkoutPlanRevisionV02Record),
         typeof(WorkoutDayRecord),
         typeof(WorkoutDayExerciseRecord),
@@ -163,6 +163,12 @@ public sealed class PostgresAccountPurgeStore(
                 .ConfigureAwait(false);
 
             // 4. Workout Sessions and Exercise Logs
+            purgedCount += await dbContext.Set<WorkoutInjuryOmittedSlotRecord>().Where(x => x.UserId == userId)
+                .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+            purgedCount += await dbContext.Set<StrengthStyleOfferRecord>().Where(x => x.UserId == userId)
+                .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+            purgedCount += await dbContext.WorkoutCycleReadinessOccurrences.Where(x => x.UserId == userId)
+                .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
             purgedCount += await dbContext.WorkoutCompletionDayCredits.Where(x => x.UserId == userId)
                 .ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
             purgedCount += await dbContext.WorkoutAccountPlanningStates.Where(x => x.UserId == userId)
@@ -380,6 +386,9 @@ public sealed class PostgresAccountPurgeStore(
             || await dbContext.WorkoutPlans.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutCompletionDayCredits.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutAccountPlanningStates.AnyAsync(x => x.UserId == userId, cancellationToken)
+            || await dbContext.Set<WorkoutInjuryOmittedSlotRecord>().AnyAsync(x => x.UserId == userId, cancellationToken)
+            || await dbContext.Set<StrengthStyleOfferRecord>().AnyAsync(x => x.UserId == userId, cancellationToken)
+            || await dbContext.WorkoutCycleReadinessOccurrences.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutPlanProposalsV02.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutPlanRevisionsV02.AnyAsync(x => x.UserId == userId, cancellationToken)
             || await dbContext.WorkoutDays.AnyAsync(x => x.UserId == userId, cancellationToken)

@@ -5,6 +5,12 @@
         </PropertyGroup>
     </Target>
 
+    <Target Name="RemoveMissingAnalyzers" BeforeTargets="CoreCompile">
+        <ItemGroup>
+            <Analyzer Remove="@(Analyzer)" Condition="!Exists('%(FullPath)')" />
+        </ItemGroup>
+    </Target>
+
     <Target Name="CopyTestDependencies" AfterTargets="Build" Condition="'$(IsTestProject)' == 'true'">
         <Copy SourceFiles="$(NuGetPackageRoot)microsoft.codecoverage/17.14.1/lib/net8.0/Microsoft.VisualStudio.CodeCoverage.Shim.dll"
               DestinationFolder="$(TargetDir)"
