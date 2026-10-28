@@ -29,6 +29,7 @@ public sealed record SaveActivityAnswersRequest(long ExpectedVersion, IReadOnlyL
 }
 
 public sealed record HiitEvidenceCaptureStamp(DateOnly LocalDate, long TimeZoneVersion);
+public sealed record HiitEvidenceCaptureChallengeDto(Guid ChallengeId);
 
 public sealed class WorkoutPreviewAlreadyOpenException : InvalidOperationException
 {

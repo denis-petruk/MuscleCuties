@@ -12,6 +12,8 @@ using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
+using MuscleCuties.UseCases.Features.Workout.StyleOffers;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
@@ -29,6 +31,10 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private readonly Func<int, Task> _openWorkoutSessionAsync;
     public event Func<int, Task>? SessionActivitiesRequested;
     private readonly IWorkoutOverviewUseCase _overview;
+    private readonly IWorkoutStyleOfferClient? _styleOffers;
+    private readonly Func<WorkoutStyleOfferDto, Task<WorkoutActivityDto?>>? _chooseStyleAsync;
+    private readonly Func<WorkoutActivityDto, Task>? _openStylePreviewAsync;
+    private bool _showingStyleOffer;
 
     [ObservableProperty] private string? _activePlanName;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasInProgressWorkout))]
@@ -91,12 +97,18 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         IWorkoutOverviewUseCase overview,
         IWorkoutInjuryUseCase injuries,
         Func<string, Task>? navigateAsync = null,
-        Func<int, Task>? openWorkoutSessionAsync = null)
+        Func<int, Task>? openWorkoutSessionAsync = null,
+        IWorkoutStyleOfferClient? styleOffers = null,
+        Func<WorkoutStyleOfferDto, Task<WorkoutActivityDto?>>? chooseStyleAsync = null,
+        Func<WorkoutActivityDto, Task>? openStylePreviewAsync = null)
     {
         _overview = overview;
         _injuries = injuries;
         _navigateAsync = navigateAsync ?? (_ => Task.CompletedTask);
         _openWorkoutSessionAsync = openWorkoutSessionAsync ?? (_ => Task.CompletedTask);
+        _styleOffers = styleOffers;
+        _chooseStyleAsync = chooseStyleAsync;
+        _openStylePreviewAsync = openStylePreviewAsync;
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         EmptyWorkoutsActionCommand = new AsyncRelayCommand(HandleEmptyWorkoutsActionAsync, CanUseEmptyWorkoutsAction);
@@ -527,6 +539,28 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         var allFilter = Filters.FirstOrDefault(f => f.Label == "All");
         if (allFilter is not null)
             SelectFilter(allFilter);
+        await ShowStyleOfferAsync();
+    }
+
+    private async Task ShowStyleOfferAsync()
+    {
+        if (_showingStyleOffer || _styleOffers is null || _chooseStyleAsync is null || _openStylePreviewAsync is null)
+            return;
+        _showingStyleOffer = true;
+        try
+        {
+            var offer = await _styleOffers.GetAsync();
+            if (offer is null || offer.AlternativeStyles.Count == 0) return;
+            var selected = await _chooseStyleAsync(offer);
+            if (!await _styleOffers.DismissAsync(offer.OfferId)) return;
+            if (selected is { } style && offer.AlternativeStyles.Contains(style))
+                await _openStylePreviewAsync(style);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Workout] Style offer unavailable ({ex.GetType().Name}).");
+        }
+        finally { _showingStyleOffer = false; }
     }
 
     private async Task GeneratePlanAsync()

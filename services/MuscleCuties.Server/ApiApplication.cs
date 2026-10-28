@@ -230,6 +230,7 @@ public static class ApiApplication
         builder.Services.AddScoped<ServerNutritionOverviewUseCase>();
         builder.Services.AddScoped<IWorkoutPlanningCatalogStore, PostgresWorkoutPlanningCatalogStore>();
         builder.Services.AddScoped<IWorkoutPlanReconciler, PostgresWorkoutPlanReconciler>();
+        builder.Services.AddScoped<MuscleCuties.UseCases.Features.Workout.StyleOffers.IWorkoutStyleOfferStore, PostgresWorkoutStyleOfferStore>();
         builder.Services.AddScoped<WorkoutPendingRevisionJobHandler>();
         builder.Services.AddScoped<IWorkoutProgressStore, PostgresWorkoutProgressStore>();
         builder.Services.AddScoped<GetWorkoutPlanningCatalogUseCase>();
@@ -758,6 +759,7 @@ public static class ApiApplication
         app.MapRecipeEndpoints();
         app.MapWorkoutPlanningEndpoints();
         app.MapWorkoutProgressEndpoints();
+        app.MapWorkoutStyleOfferEndpoints();
         app.MapWorkoutActiveSessionEndpoints();
         app.MapWorkoutArchiveEndpoints();
         app.MapWorkoutInjuryEndpoints();
