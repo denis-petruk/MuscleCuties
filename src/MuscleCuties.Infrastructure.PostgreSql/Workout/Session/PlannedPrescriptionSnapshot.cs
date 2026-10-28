@@ -11,6 +11,7 @@ internal sealed record PlannedPrescriptionSnapshot(Guid DayId, string Name, stri
     public string? DoseAdjustmentPolicyVersion { get; init; }
     public long? DoseAdjustmentCheckInRevision { get; init; }
     public string? DoseAdjustmentCyclePhase { get; init; }
+    public string? DoseAdjustmentPhaseProvenance { get; init; }
     public string? DoseAdjustmentConfidence { get; init; }
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     public string Serialize() => JsonSerializer.Serialize(this, JsonOptions);

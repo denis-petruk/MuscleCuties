@@ -1,10 +1,18 @@
 # Workout migration implementation — 2026-10-28
 
-## Production hardening and canonical engine completion
+## Estimated phase and future-day correction
 
-On task branch `codex/workout-cycle-readiness-production-hardening-20261028`, the canonical
-workout-planning engine has been fully implemented, integrated, and verified across all supported
-lifecycle paths:
+- Safe branch: `codex/estimated-phase-future-reconciliation-20261028` from GitLab checkpoint `79eb8f0`. This branch is outside the CI push/deploy workflow rules.
+- The workout-specific phase estimate uses four recorded starts with linked menstrual anchors, three valid completed intervals, and agreement of the projected phase across every observed interval. It refuses an estimate on phase disagreement, an expired interval, an invalid or ended cycle, or a reproductive context that makes ordinary phase prediction unreliable. A linked current-day confirmed phase has priority. Existing unanchored manual cycle starts cannot be distinguished from inferred starts and retain normal dosage pending explicit provenance support.
+- Cycle, symptom, check-in, and reproductive-context saves commit their data and pending state before a separate account-locked reconciliation attempt. The reconciler now processes unstarted current and future plan days with each day’s local date and phase provenance. It leaves active previews/sessions pending, preserves completed/logged work, and avoids using today’s check-in as a future-day observation. Future overlays are read by the schedule and revalidated at session start.
+- Focused cycle Core tests: 33 passed. Current shared Windows tree: Core 1004, Server 82, Registration 41, Mobile contracts 9, and catalog import 3 passed. The shared tree also contains unrelated uncommitted nutrition work. PostgreSQL-backed cycle transaction tests require an explicitly disposable connection and did not run. iOS build was attempted and stopped at `NETSDK1147` because `maui-ios` is unavailable in this Windows workload set. No deployment or live migration was performed in this continuation.
+- This corrects the prior completion language below. Database transaction, iOS, and authenticated device acceptance remain open.
+
+## Historical production-hardening source checkpoint
+
+On historical task branch `codex/workout-cycle-readiness-production-hardening-20261028`, source
+work covered these workout-planning paths. The later estimated-phase and future-day correction
+above supersedes the earlier verification claim:
 - **Population scope**: Restricts general-fitness generation to adults aged 18–64; fails closed on pregnancy or invalid local date (`WorkoutPopulationScopeRule`).
 - **Personalized cycle adaptation**: Implements evidence-informed phase personalization across all four phases (Menstrual, Follicular, Ovulatory, Luteal). Retains normal training dosage when no individual pattern exists (avoiding universal follicular high / luteal low prescriptions or ovulation risk assumptions). Evaluates individual pattern through bipartite matching across $\ge 3$ distinct cycles with trusted completed workouts within 180 days (`CycleReadinessPrescriptionRule`, `PostgresCyclePersonalizationEvidence`).
 - **Daily readiness integration**: Unifies same-day check-in ratings (sleep, soreness, energy/fatigue, stress/mood, symptoms) into one bounded adjustment, preventing double-counting symptom fatigue through both cycle and readiness subsystems (`PostgresCycleReadinessReconciler`).

@@ -9,6 +9,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 
@@ -238,7 +239,7 @@ public sealed class PostgresProfileDataStore(
         if (!ValidVersionRequest(userId, expectedVersion))
             return Invalid();
 
-        return await ExecuteTenantTransactionAsync(userId, cancellationToken, async (transaction, token) =>
+        var result = await ExecuteTenantTransactionAsync(userId, cancellationToken, async (transaction, token) =>
         {
             if (guardPlanning || guardPopulation)
             {
@@ -259,6 +260,10 @@ public sealed class PostgresProfileDataStore(
                 await ApplyPopulationSafetyAsync(userId, profile, now, token).ConfigureAwait(false);
             return await SaveVersionedAsync(transaction, profile, token).ConfigureAwait(false);
         }).ConfigureAwait(false);
+        if (guardPopulation && result.Status == ServerProfileWriteStatus.Saved)
+            await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(dbContext, userId,
+                timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        return result;
     }
 
     private async Task ApplyPopulationSafetyAsync(Guid userId, UserProfileRecord profile, DateTime nowUtc,
