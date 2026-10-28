@@ -6,7 +6,8 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
-// Only active, explicitly recorded episodes are supported. Clearance and legacy histories stay blocked.
+// Active episodes may coexist with unrelated cleared history. A cleared episode
+// affecting a selected original still needs the separate restoration path.
 internal static class AutomaticInjuryProvenance
 {
     internal sealed record Slot(InjuryRestorationSlotIdentity Identity, int OriginalExerciseId, int AlternativeExerciseId,
@@ -20,12 +21,23 @@ internal static class AutomaticInjuryProvenance
     {
         var logs = await db.WorkoutInjuryLogs.AsNoTracking().Where(row => row.UserId == userId).ToListAsync(ct).ConfigureAwait(false);
         var episodes = await db.WorkoutInjuryEpisodes.AsNoTracking().Where(row => row.UserId == userId).ToListAsync(ct).ConfigureAwait(false);
-        if (logs.Count == 0 || episodes.Count == 0 || episodes.Any(row => row.SourceDeleted || row.ClearedOn != null ||
-                row.StartedOn > today || row.SiteFlag == (int)InjuryFlag.None || !Enum.IsDefined(typeof(InjuryFlag), row.SiteFlag)) ||
-            logs.Any(row => !string.Equals(row.Status, "Acute", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(row.Status, "Recovering", StringComparison.OrdinalIgnoreCase)) ||
-            logs.Any(log => episodes.Count(episode => episode.InjuryLogId == log.Id && episode.SiteFlag == log.SiteFlag) != 1) ||
-            episodes.Any(episode => logs.Count(log => log.Id == episode.InjuryLogId && log.SiteFlag == episode.SiteFlag) != 1)) return null;
+        var activeEpisodes = episodes.Where(row => row.ClearedOn is null).ToArray();
+        if (logs.Count == 0 || activeEpisodes.Length == 0 || episodes.Any(row => row.SourceDeleted ||
+                row.StartedOn > today || row.ClearedOn > today || row.ClearedOn < row.StartedOn ||
+                (row.ClearedOn is not null && (string.IsNullOrWhiteSpace(row.ClearanceTimeZoneId) ||
+                    row.ClearanceTimeZoneVersion is null)) || row.SiteFlag == (int)InjuryFlag.None ||
+                !Enum.IsDefined(typeof(InjuryFlag), row.SiteFlag)) ||
+            logs.Any(log =>
+                (string.Equals(log.Status, "Acute", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(log.Status, "Recovering", StringComparison.OrdinalIgnoreCase))
+                    ? episodes.Count(episode => episode.InjuryLogId == log.Id && episode.SiteFlag == log.SiteFlag &&
+                        episode.ClearedOn is null) != 1
+                    : !string.Equals(log.Status, "Cleared", StringComparison.OrdinalIgnoreCase) ||
+                      log.ClearedDate is null || episodes.Count(episode => episode.InjuryLogId == log.Id &&
+                          episode.SiteFlag == log.SiteFlag && episode.ClearedOn == log.ClearedDate) != 1 ||
+                      episodes.Any(episode => episode.InjuryLogId == log.Id && episode.ClearedOn is null)) ||
+            episodes.Any(episode => logs.Count(log => log.Id == episode.InjuryLogId &&
+                log.SiteFlag == episode.SiteFlag) != 1)) return null;
 
         var futureDays = await db.WorkoutDays.AsNoTracking().Where(day => day.UserId == userId && day.WorkoutPlanId == planId &&
             (day.Date == null || day.Date >= today)).ToListAsync(ct).ConfigureAwait(false);
@@ -61,28 +73,33 @@ internal static class AutomaticInjuryProvenance
                 exercise.PlanningSessionIndex is null || !dayMap.TryGetValue(exercise.WorkoutDayId, out var day)) return null;
             var original = exercise.InjuryOriginalExerciseId ?? exercise.ExerciseId;
             var definition = definitions.Single(row => row.Id == original);
-            var expected = episodes.Where(episode => (definition.Contraindications & (InjuryFlag)episode.SiteFlag) != InjuryFlag.None)
+            if (episodes.Any(episode => episode.ClearedOn is not null &&
+                (definition.Contraindications & (InjuryFlag)episode.SiteFlag) != InjuryFlag.None)) return null;
+            var expected = activeEpisodes.Where(episode => (definition.Contraindications & (InjuryFlag)episode.SiteFlag) != InjuryFlag.None)
                 .Select(episode => episode.Id).OrderBy(id => id).ToArray();
             var actual = links.Where(link => link.WorkoutDayExerciseId == exercise.Id).ToArray();
             if (actual.Any(link => link.OriginalExerciseId != original) || !expected.SequenceEqual(actual.Select(link => link.InjuryEpisodeId).OrderBy(id => id)) ||
                 (expected.Length > 0 && exercise.InjuryOriginalExerciseId is null)) return null;
-            var captured = snapshots.Where(row => row.OriginalWorkoutDayExerciseId == exercise.Id).ToArray();
+            var captured = snapshots.Where(row => row.OriginalWorkoutDayExerciseId == exercise.Id &&
+                activeEpisodes.Any(episode => episode.Id == row.EpisodeId)).ToArray();
+            if (captured.Length != activeEpisodes.Length || activeEpisodes.Any(episode =>
+                captured.Count(row => row.EpisodeId == episode.Id && row.WorkoutDayId == day.Id &&
+                    row.OriginalExerciseId == original && row.OriginalPlanningSlotId == exercise.PlanningSlotId) != 1)) return null;
+            var first = captured[0];
+            if (captured.Any(row => row.OriginalSets != first.OriginalSets ||
+                    row.OriginalOptionalSets != first.OriginalOptionalSets || row.OriginalReps != first.OriginalReps ||
+                    row.OriginalDurationSeconds != first.OriginalDurationSeconds || row.OriginalIsOptional != first.OriginalIsOptional ||
+                    row.OriginalIsRemovedByReadiness != first.OriginalIsRemovedByReadiness ||
+                    row.OriginalOriginWorkoutDayExerciseId != first.OriginalOriginWorkoutDayExerciseId)) return null;
             if (expected.Length == 0)
             {
-                if (captured.Length != 0 || exercise.InjuryOriginalExerciseId is not null || exercise.OriginWorkoutDayExerciseId is not null) return null;
+                if (exercise.InjuryOriginalExerciseId is not null || exercise.OriginWorkoutDayExerciseId is not null ||
+                    first.OriginalSets != exercise.Sets || first.OriginalOptionalSets != exercise.OptionalSets ||
+                    first.OriginalReps != exercise.Reps || first.OriginalDurationSeconds != exercise.DurationSeconds ||
+                    first.OriginalIsOptional != exercise.IsOptional ||
+                    first.OriginalIsRemovedByReadiness != exercise.IsRemovedByReadiness) return null;
                 continue;
             }
-            if (captured.Length != expected.Length || expected.Any(id => captured.Count(row => row.EpisodeId == id && row.OriginalExerciseId == original &&
-                    row.WorkoutDayId == day.Id && row.OriginalPlanningSlotId == exercise.PlanningSlotId) != 1))
-                return null;
-            var first = captured.First(row => row.EpisodeId == expected[0]);
-            if (captured.Where(row => expected.Contains(row.EpisodeId)).Any(row =>
-                    row.OriginalSets != first.OriginalSets || row.OriginalOptionalSets != first.OriginalOptionalSets ||
-                    row.OriginalReps != first.OriginalReps || row.OriginalDurationSeconds != first.OriginalDurationSeconds ||
-                    row.OriginalIsOptional != first.OriginalIsOptional ||
-                    row.OriginalIsRemovedByReadiness != first.OriginalIsRemovedByReadiness ||
-                    row.OriginalOriginWorkoutDayExerciseId != first.OriginalOriginWorkoutDayExerciseId))
-                return null;
             var identity = new InjuryRestorationSlotIdentity((DayOfWeek)day.DayOfWeek, exercise.PlanningTemplateId,
                 exercise.PlanningTemplateVersion, exercise.PlanningSessionIndex.Value, exercise.PlanningSlotId);
             rows.Add((identity, day.Date!.Value, original, expected, first, first.OriginalOriginWorkoutDayExerciseId ?? exercise.Id));

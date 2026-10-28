@@ -20,6 +20,15 @@
 - `net10.0-ios` build was attempted and stopped at `NETSDK1147`: the `maui-ios` workload is absent. App/XAML compilation and signed-in device behavior remain unverified. No other platform build was run.
 - `git diff --check` passed. The resolved conflict files have no conflict markers. No secrets or unrelated untracked files were included in the reviewed diff.
 
+## Follow-up source pass
+
+- Merge commit `ce138fd` was pushed to `origin/codex/plan-generation-checkpoint` successfully. The source changes below are a subsequent update.
+- Injury preflight now accepts a complete snapshot for every active episode, including unaffected exercise rows and overlapping active episodes. Unrelated cleared history may coexist; an episode affecting a selected original still defers for restoration. Incomplete or conflicting lineage remains blocked.
+- A first-plan preview with no safe scheduled session offers Explore other features alongside Edit. Required-answer and strength-style-choice preflight remain on their questionnaire paths. Style-offer actions display a retry message on failure.
+- A durable omitted-slot lineage record is still needed because the present record requires an exercise row. A safe addition needs tenant isolation, a scheduled-date/template/session/slot identity, original dose and causal episode IDs, transactional acceptance/transfer, and PostgreSQL rollback and concurrency verification. No speculative migration was added.
+- The catalog import snapshot tests pass, but its review manifest disables automatic substitutions. Canonical logs lack observed RIR, technique outcome and validated weekly underperformance evidence required by the retained legacy load progression and deload rules. Those behaviors remain gated.
+- After this pass: Core/application **931**, Server **82**, Registration **41**, Mobile contracts **9**, and nine database-independent integration tests passed. The integration project compiles. Three selected injury database cases could not run because the disposable PostgreSQL connection is absent. `WorkoutPage.xaml` parses as XML; iOS compilation remains blocked by the missing workload.
+
 ## Remaining source and release gates
 
 1. Implement active-injury safe replacement and omission lineage, empty unsafe-session handling, mixed injury histories and safe restoration for ambiguous legacy rows without inventing metadata or losing logged work.

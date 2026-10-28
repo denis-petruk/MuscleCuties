@@ -83,6 +83,7 @@
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                             <Label Text="{loc:LocalizedText Workout_StyleOffer_Title}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
                             <Label Text="{loc:LocalizedText Workout_StyleOffer_Explanation}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                            <Label Text="{Binding StyleOfferMessage}" IsVisible="{Binding HasStyleOfferMessage}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                             <Button Text="{loc:LocalizedText Workout_StyleOffer_Explore}" Command="{Binding ExploreStrengthStyleCommand}" Style="{StaticResource ButtonPrimary}" />
                             <Button Text="{loc:LocalizedText Workout_StyleOffer_Keep}" Command="{Binding DismissStrengthStyleCommand}" Style="{StaticResource ButtonSecondary}" />
                         </VerticalStackLayout>
