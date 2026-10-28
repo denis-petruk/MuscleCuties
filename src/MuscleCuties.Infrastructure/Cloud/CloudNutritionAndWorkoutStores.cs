@@ -68,7 +68,10 @@ public sealed class CloudNutritionOverviewStore(
             $"/api/v1/nutrition/suggestions?mealType={Uri.EscapeDataString(mealType)}&breakfastPreference={Uri.EscapeDataString(breakfastPreference)}",
             cancellationToken).ConfigureAwait(false);
         var suggestions = CloudStoreResponse.RequireData(response, "meal suggestions");
-        return excludeConceptNames is null ? suggestions : suggestions.Where(item => !excludeConceptNames.Contains(item.ConceptName)).ToArray();
+        return suggestions
+            .Where(item => excludeConceptNames is null || !excludeConceptNames.Contains(item.ConceptName))
+            .Select(item => GeneratedMealResponseRepair.Repair(item, item.Calories, item.Fats))
+            .ToArray();
     }
 
     public async Task<IReadOnlyList<DayMealPlanItemDto>> GetDayMealPlanAsync(string breakfastPreference, CancellationToken cancellationToken = default)
@@ -76,7 +79,12 @@ public sealed class CloudNutritionOverviewStore(
         var response = await apiClient.GetAsync<List<DayMealPlanItemDto>>(
             $"/api/v1/nutrition/meal-plan?date={DateOnly.FromDateTime(DateTime.Now):yyyy-MM-dd}&breakfastPreference={Uri.EscapeDataString(breakfastPreference)}",
             cancellationToken).ConfigureAwait(false);
-        return CloudStoreResponse.RequireData(response, "day meal plan");
+        return CloudStoreResponse.RequireData(response, "day meal plan")
+            .Select(item => item.Suggestion is null ? item : item with
+            {
+                Suggestion = GeneratedMealResponseRepair.Repair(
+                    item.Suggestion, item.TargetCalories, item.TargetFats)
+            }).ToArray();
     }
 
     public async Task<DayMealPlanItemDto> RefreshDayMealAsync(DayMealPlanItemDto item, string breakfastPreference, CancellationToken cancellationToken = default)
@@ -85,7 +93,12 @@ public sealed class CloudNutritionOverviewStore(
             HttpMethod.Post,
             $"/api/v1/nutrition/meal-plan/refresh?breakfastPreference={Uri.EscapeDataString(breakfastPreference)}",
             item, cancellationToken: cancellationToken).ConfigureAwait(false);
-        return CloudStoreResponse.RequireData(response, "refresh day meal");
+        var refreshed = CloudStoreResponse.RequireData(response, "refresh day meal");
+        return refreshed.Suggestion is null ? refreshed : refreshed with
+        {
+            Suggestion = GeneratedMealResponseRepair.Repair(
+                refreshed.Suggestion, refreshed.TargetCalories, refreshed.TargetFats)
+        };
     }
 
     public async Task EnsureReferenceDataReadyAsync(CancellationToken cancellationToken = default)

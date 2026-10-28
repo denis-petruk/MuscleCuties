@@ -29,6 +29,76 @@ public sealed class CloudNutritionAndWorkoutContractsTests
 {
     private const int InitialProfileVersion = 1;
     private const int RefreshedProfileVersion = 2;
+    private const float LegacyIngredientGrams = 120f;
+    private const float LegacyIngredientCaloriesPer100Grams = 107.5f;
+    private const float LegacyIngredientProteinPer100Grams = 6.1f;
+    private const float LegacyIngredientCarbsPer100Grams = 18.2f;
+    private const float LegacyIngredientFatsPer100Grams = 1.2f;
+    private const float LegacyOilGrams = 12f;
+    private const float LegacyOilCaloriesPer100Grams = 900f;
+    private const float MealTargetCalories = 600f;
+    private const float MealTargetFats = 20f;
+    private const float MealTargetProtein = 40f;
+    private const float MealTargetCarbs = 70f;
+    private const float DailyTargetCalories = 2000f;
+    private const float MacroTolerance = 0.001f;
+    private const float NutrientReferenceGrams = 100f;
+    private const float ReferenceOilCaloriesPer100Grams = 884f;
+
+    [Xunit.Fact]
+    public async Task CloudGeneratedMealsRepairLegacyEqualSplitAcrossEveryResponseRoute()
+    {
+        var legacyComponents = new[] { "Tofu", "Edamame", "Broccoli", "Jasmine Rice" }
+            .Select(name => new MealSuggestionComponentDto(0, name, "Ingredient", "Base",
+                LegacyIngredientGrams, false,
+                LegacyIngredientCaloriesPer100Grams,
+                LegacyIngredientProteinPer100Grams,
+                LegacyIngredientCarbsPer100Grams,
+                LegacyIngredientFatsPer100Grams))
+            .Append(new MealSuggestionComponentDto(0, "Sesame Oil", "Sauce", "SauceOnSide",
+                LegacyOilGrams, false, LegacyOilCaloriesPer100Grams, 0f, 0f, 100f))
+            .ToArray();
+        var legacy = new MealSuggestionDto("Tofu Stir-Fry with Edamame", string.Empty, [],
+            legacyComponents,
+            [new MealSuggestionComponentGroupDto("Ingredients", "Food24", legacyComponents)],
+            MealTargetCalories, MealTargetProtein, MealTargetCarbs, MealTargetFats,
+            1f, "Balanced", "Food24", string.Empty);
+        var legacyPlan = new DayMealPlanItemDto("Dinner", MealTargetCalories, MealTargetProtein,
+            MealTargetCarbs, MealTargetFats, DailyTargetCalories, false, legacy);
+        var apiClient = new RecordingApiClient(path => path switch
+        {
+            var value when value.StartsWith("/api/v1/nutrition/suggestions?", StringComparison.Ordinal) =>
+                new List<MealSuggestionDto> { legacy },
+            var value when value.StartsWith("/api/v1/nutrition/meal-plan?", StringComparison.Ordinal) =>
+                new List<DayMealPlanItemDto> { legacyPlan },
+            _ => legacyPlan
+        });
+        var store = new CloudNutritionOverviewStore(apiClient);
+
+        var suggestion = Xunit.Assert.Single(await store.GetMealSuggestionsAsync("Dinner", "Savoury", null));
+        var planned = Xunit.Assert.Single(await store.GetDayMealPlanAsync("Savoury"));
+        var refreshed = await store.RefreshDayMealAsync(legacyPlan, "Savoury");
+
+        AssertRepaired(suggestion);
+        AssertRepaired(Xunit.Assert.IsType<MealSuggestionDto>(planned.Suggestion));
+        AssertRepaired(Xunit.Assert.IsType<MealSuggestionDto>(refreshed.Suggestion));
+    }
+
+    private static void AssertRepaired(MealSuggestionDto suggestion)
+    {
+        var components = suggestion.Components.ToDictionary(component => component.Name);
+        Xunit.Assert.NotEqual(components["Tofu"].Grams, components["Edamame"].Grams);
+        Xunit.Assert.NotEqual(components["Edamame"].Grams, components["Broccoli"].Grams);
+        Xunit.Assert.NotEqual(components["Broccoli"].Calories, components["Jasmine Rice"].Calories);
+        Xunit.Assert.Equal(ReferenceOilCaloriesPer100Grams, components["Sesame Oil"].Calories);
+        Xunit.Assert.Equal(components["Tofu"].Grams,
+            suggestion.ComponentGroups[0].Items.Single(item => item.Name == "Tofu").Grams);
+        Xunit.Assert.InRange(suggestion.Calories,
+            MealTargetCalories - MacroTolerance, MealTargetCalories + MacroTolerance);
+        Xunit.Assert.InRange(suggestion.Protein - suggestion.Components.Sum(component =>
+                component.Protein * component.Grams / NutrientReferenceGrams),
+            -MacroTolerance, MacroTolerance);
+    }
 
     [Xunit.Fact]
     public async Task CloudNutritionOverviewStoreCallsGroupedMealAndCustomFoodRoutes()
