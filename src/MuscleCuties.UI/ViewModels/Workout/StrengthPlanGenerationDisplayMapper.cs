@@ -225,6 +225,12 @@ internal static class StrengthPlanGenerationDisplayMapper
                 .SelectMany(slot => slot.LimitationCodes))
             .ToHashSet(StringComparer.Ordinal);
 
+        foreach (var scopeCode in new[] { "WorkoutPopulationBirthDateRequired",
+                     "WorkoutPopulationDateUnavailable", "WorkoutPopulationAgeUnsupported",
+                     "WorkoutPopulationPregnancyUnsupported" })
+            if (reasons.Contains(scopeCode))
+                return UiTextCatalog.Get(scopeCode);
+
         if (reasons.Contains("NoSafeStrengthStyleFit") &&
             (preview.MixedActivitySchedule?.Sessions.Count ?? 0) == 0)
             return UiTextCatalog.Get("Workout_Generation_Reason_NoSafeActivity");

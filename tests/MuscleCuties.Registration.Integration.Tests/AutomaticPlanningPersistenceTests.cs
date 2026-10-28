@@ -128,7 +128,7 @@ public sealed class AutomaticPlanningPersistenceTests
         proposal.LeaseExpiresAtUtc = DateTime.UtcNow.Add(PlanningLifecycleRule.FiveMinuteLeaseDuration);
         await database.SaveChangesAsync();
 
-        await new PostgresWorkoutPlanReconciler(database).ReconcileAsync(userId);
+        await new PostgresWorkoutPlanReconciler(database).ReconcileInCurrentTransactionAsync(userId);
         database.ChangeTracker.Clear();
         var persisted = await database.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == userId);
         Xunit.Assert.True(persisted.PromotionPending);
@@ -208,7 +208,7 @@ public sealed class AutomaticPlanningPersistenceTests
         });
         await database.SaveChangesAsync();
 
-        await new PostgresWorkoutPlanReconciler(database).ReconcileAsync(userId);
+        await new PostgresWorkoutPlanReconciler(database).ReconcileInCurrentTransactionAsync(userId);
         database.ChangeTracker.Clear();
         var state = await database.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == userId);
         Xunit.Assert.True(state.PromotionPending);

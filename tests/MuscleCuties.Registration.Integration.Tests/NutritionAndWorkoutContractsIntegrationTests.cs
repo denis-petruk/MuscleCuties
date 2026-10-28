@@ -94,6 +94,7 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             var plannedStart = start with { UnplannedActivity = null,
                 PlannedWorkoutDayId = PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(dayId) };
             await activeStore.StartSessionAsync(userId, plannedStart, CancellationToken.None);
+            await activeStore.CancelSessionAsync(userId, new CancelWorkoutSessionCommand("synthetic-cancel", sessionId), CancellationToken.None);
             await database.WorkoutAccountPlanningStates.Where(row => row.UserId == userId)
                 .ExecuteUpdateAsync(update => update.SetProperty(row => row.TimeZoneVersion, row => row.TimeZoneVersion + 1));
             var laterId = Guid.NewGuid();
@@ -638,7 +639,9 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         await database.SaveChangesAsync();
         try
         {
-            var store = new PostgresWorkoutActiveSessionStore(database, new PostgresIdempotencyExecutor(), TimeProvider.System);
+            var timeProvider = new SyntheticTimeProvider(now);
+            var store = new PostgresWorkoutActiveSessionStore(database, new PostgresIdempotencyExecutor(), timeProvider);
+            await CompleteSyntheticTimingAsync(store, timeProvider, userId, sessionId);
             await store.FinishSessionAsync(userId, new FinishWorkoutSessionCommand("synthetic-finish", sessionId, now,
                 SyntheticSessionDurationSeconds, null, null), CancellationToken.None);
             var state = await database.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == userId);
@@ -684,11 +687,13 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             PlannedWorkoutDayId = dayId, WorkoutName = "Synthetic rest", StartedAt = now.AddMinutes(-SyntheticElapsedSessionMinutes),
             CreatedAt = now, UpdatedAt = now });
         database.WorkoutLogs.Add(new WorkoutLogRecord { Id = Guid.NewGuid(), UserId = userId, WorkoutDayId = dayId,
-            Date = today, CompletionPercent = completedPercent, CreatedAt = now });
+            PlannedSessionId = sessionId, Date = today, CompletionPercent = completedPercent, CreatedAt = now });
         await database.SaveChangesAsync();
         try
         {
-            var store = new PostgresWorkoutActiveSessionStore(database, new PostgresIdempotencyExecutor(), TimeProvider.System);
+            var timeProvider = new SyntheticTimeProvider(now);
+            var store = new PostgresWorkoutActiveSessionStore(database, new PostgresIdempotencyExecutor(), timeProvider);
+            await CompleteSyntheticTimingAsync(store, timeProvider, userId, sessionId);
             var result = await store.FinishSessionAsync(userId, new FinishWorkoutSessionCommand("synthetic-rest-finish", sessionId, now,
                 SyntheticSessionDurationSeconds, null, null), CancellationToken.None);
             Xunit.Assert.NotNull(result);
@@ -702,6 +707,23 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         {
             await database.Users.Where(user => user.Id == userId).ExecuteDeleteAsync();
         }
+    }
+
+    private static async Task CompleteSyntheticTimingAsync(PostgresWorkoutActiveSessionStore store,
+        SyntheticTimeProvider clock, Guid userId, Guid sessionId)
+    {
+        var running = await store.ResumeTimingAsync(userId, new ResumeWorkoutTimingCommand("synthetic-resume", sessionId), CancellationToken.None);
+        Xunit.Assert.NotNull(running?.TimingIntervalId);
+        clock.Advance(TimeSpan.FromSeconds(SyntheticSessionDurationSeconds));
+        await store.CheckpointTimingAsync(userId, new CheckpointWorkoutTimingCommand("synthetic-complete", sessionId,
+            running!.TimingIntervalId!.Value, SyntheticSessionDurationSeconds, true), CancellationToken.None);
+    }
+
+    private sealed class SyntheticTimeProvider(DateTime utc) : TimeProvider
+    {
+        private DateTimeOffset _now = new(utc, TimeSpan.Zero);
+        public override DateTimeOffset GetUtcNow() => _now;
+        public void Advance(TimeSpan elapsed) => _now += elapsed;
     }
 
     private static string RequireLocalTestConnectionString()

@@ -93,6 +93,18 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         await SyntheticTenantSession.SetAsync(database, ownerId);
         database.Users.Add(CreateSyntheticUser(ownerId, nowUtc));
         AddSyntheticWorkoutProposalAndRevision(database, ownerId, nowUtc);
+        var ownerPlanId = Guid.NewGuid();
+        var ownerDayId = Guid.NewGuid();
+        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = ownerPlanId, UserId = ownerId,
+            Name = "Synthetic", IsActive = true, CreatedAt = nowUtc });
+        database.WorkoutDays.Add(new WorkoutDayRecord { Id = ownerDayId, UserId = ownerId, WorkoutPlanId = ownerPlanId,
+            Name = "Synthetic", WorkoutType = "Strength", Date = DateOnly.FromDateTime(nowUtc) });
+        database.WorkoutCycleReadinessOccurrences.Add(new WorkoutCycleReadinessOccurrenceRecord
+        {
+            Id = Guid.NewGuid(), UserId = ownerId, WorkoutDayId = ownerDayId,
+            LocalDate = DateOnly.FromDateTime(nowUtc), InputFingerprint = "synthetic",
+            PrescriptionJson = "{}", UpdatedAtUtc = nowUtc
+        });
         database.PhotoJourneyEntries.Add(new PhotoJourneyEntryRecord
         {
             Id = ownerPhotoId,
@@ -129,6 +141,8 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
             Xunit.Assert.False(await database.WorkoutPlanProposalsV02.AsNoTracking()
                 .AnyAsync(row => row.UserId == ownerId));
             Xunit.Assert.False(await database.WorkoutPlanRevisionsV02.AsNoTracking()
+                .AnyAsync(row => row.UserId == ownerId));
+            Xunit.Assert.False(await database.WorkoutCycleReadinessOccurrences.AsNoTracking()
                 .AnyAsync(row => row.UserId == ownerId));
 
             // Durable reconciliation targets survive account deletion.

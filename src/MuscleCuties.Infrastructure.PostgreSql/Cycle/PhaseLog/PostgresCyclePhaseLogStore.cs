@@ -4,6 +4,8 @@ using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
 using MuscleCuties.UseCases.Features.Cycle.Contracts;
 using Npgsql;
@@ -56,6 +58,7 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
             await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken)
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(db, ownerId, cancellationToken).ConfigureAwait(false);
+            await WorkoutSessionAccountLock.AcquireAsync(db, ownerId, cancellationToken).ConfigureAwait(false);
             await LockOwnerEditAsync(ownerId, cancellationToken).ConfigureAwait(false);
 
             try
@@ -104,6 +107,7 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
                     row.FlowIntensity = flowIntensity.Value.ToString();
                 row.Note = normalizedNote;
                 row.CreatedAt = timeProvider.GetUtcNow().UtcDateTime;
+                await PostgresCycleReadinessReconciler.MarkPendingAsync(db, ownerId, cancellationToken).ConfigureAwait(false);
                 await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
                 return new SaveCyclePhaseLogOutput(SaveCyclePhaseLogOutcomeKind.Saved);
