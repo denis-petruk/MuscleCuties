@@ -114,7 +114,7 @@ public sealed class InjuryCanonicalReconciliationTests
                 CompletedSets = CompletedSets, CompletedReps = CompletedRepetitions, CreatedAt = now });
             await db.SaveChangesAsync();
             var injuryId = Guid.NewGuid();
-            var injuryStore = new PostgresCheckInAndInjuryStore(db);
+            var injuryStore = new PostgresCheckInAndInjuryStore(db, TimeProvider.System);
             var injury = new SaveInjuryObservationRequest(user, injuryId, (int)site, "Acute", today, PainLevel, today);
             await injuryStore.SaveInjuryAsync(injury, CancellationToken.None);
             Assert.Equal(WorkoutReconciliationOutcome.Completed, await new PostgresWorkoutPlanReconciler(db).ReconcileAsync(user));
