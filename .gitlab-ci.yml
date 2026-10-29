@@ -1,87 +1,253 @@
 workflow:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
-    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
-    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "test-flight-beta"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH'
     - when: never
 
 stages:
+  - source_verify
   - backend_verify
-  - backend_package
-  - backend_deploy
   - client_verify
+  - backend_package
+  - artifact_validate
+  - artifact_upload
+  - backend_deploy
 
 variables:
   DOTNET_NOLOGO: "true"
   DOTNET_CLI_TELEMETRY_OPTOUT: "true"
   AWS_REGION: "us-east-2"
 
-verify_plan_generation:
-  stage: backend_verify
+# All admitted pipeline sources get the same mandatory validation jobs.
+.dotnet_job:
   image: mcr.microsoft.com/dotnet/sdk:10.0.403
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
   before_script:
-    - apt-get update && apt-get install -y --no-install-recommends libfontconfig1
+    - apt-get update && apt-get install -y --no-install-recommends libfontconfig1 python3
+    - |
+      check_trx() {
+        python3 - "$1" <<'PY'
+      import sys, xml.etree.ElementTree as ET
+      root = ET.parse(sys.argv[1]).getroot()
+      counters = root.find('.//{*}Counters')
+      if counters is None or int(counters.get('total', '0')) < 1 or int(counters.get('executed', '0')) < 1 or int(counters.get('failed', '0')) != 0:
+          raise SystemExit('Missing, empty, or failed test evidence: ' + sys.argv[1])
+      PY
+      }
+      run_tests() {
+        name="$1"; project="$2"; shift 2
+        mkdir -p "test-results/$name"
+        dotnet test "$project" --configuration Release --logger "trx;LogFileName=$name.trx" --results-directory "test-results/$name" "$@"
+        check_trx "test-results/$name/$name.trx"
+      }
+  artifacts:
+    when: always
+    paths:
+      - test-results/
+    expire_in: 30 days
+
+verify_source:
+  extends: .dotnet_job
+  stage: source_verify
   script:
-    - dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj --configuration Release
-    - dotnet test tests/MuscleCuties.Server.Tests/MuscleCuties.Server.Tests.csproj --configuration Release
-    - dotnet test tests/MuscleCuties.Registration.Tests/MuscleCuties.Registration.Tests.csproj --configuration Release
-    - dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj --configuration Release --filter FullyQualifiedName~ReviewedExerciseCatalogV020ImportTests
+    - test "$(dotnet --version)" = "10.0.403"
+    - test "$(git rev-parse HEAD)" = "$CI_COMMIT_SHA"
+    - dotnet restore services/MuscleCuties.Server/MuscleCuties.Server.csproj
+    - dotnet build services/MuscleCuties.Server/MuscleCuties.Server.csproj --configuration Release --no-restore
+
+verify_plan_generation:
+  extends: .dotnet_job
+  stage: backend_verify
+  script:
+    - apt-get update && apt-get install -y --no-install-recommends jq
+    - python3 tests/MuscleCuties.Deployment.Tests/test_package_upload.py
+    - bash tests/MuscleCuties.Deployment.Tests/release-fail-closed.sh
+    - PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_release_engine.py'
+    - run_tests core tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj
+    - run_tests server tests/MuscleCuties.Server.Tests/MuscleCuties.Server.Tests.csproj
+    - run_tests registration tests/MuscleCuties.Registration.Tests/MuscleCuties.Registration.Tests.csproj
+    - run_tests model_catalog tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj --filter 'FullyQualifiedName~WorkoutModelSnapshotTests|FullyQualifiedName~ReviewedExerciseCatalogV020ImportTests'
+
+verify_postgres_compatibility:
+  extends: .dotnet_job
+  stage: backend_verify
+  script:
+    # Install a fresh local server; fixture connection strings are fixed here, never inherited from protected variables.
+    - apt-get update && apt-get install -y --no-install-recommends postgresql postgresql-client
+    - pg_ctlcluster "$(ls /etc/postgresql | sort -V | tail -1)" main start
+    - runuser -u postgres -- psql -v ON_ERROR_STOP=1 -c "ALTER USER postgres PASSWORD 'ci_disposable_only'"
+    - runuser -u postgres -- createdb mc_test_ci
+    - runuser -u postgres -- createdb mc_retry_disposable
+    - export MC_REGISTRATION_WRITE_TEST_POSTGRES='Host=127.0.0.1;Database=mc_test_ci;Username=postgres;Password=ci_disposable_only'
+    - export MC_REGISTRATION_TEST_POSTGRES="$MC_REGISTRATION_WRITE_TEST_POSTGRES"
+    - export MC_RETRY_TEST_POSTGRES='Host=127.0.0.1;Database=mc_retry_disposable;Username=postgres;Password=ci_disposable_only'
+    - export MC_PG09_LOAD_POSTGRES='Host=127.0.0.1;Database=mc_pg09_disposable;Username=mc_ci_migrator;Password=ci_disposable_only'
+    - |
+      python3 - <<'PY'
+      import os
+      expected = {'MC_REGISTRATION_WRITE_TEST_POSTGRES': ('mc_test_ci', 'postgres'), 'MC_REGISTRATION_TEST_POSTGRES': ('mc_test_ci', 'postgres'), 'MC_RETRY_TEST_POSTGRES': ('mc_retry_disposable', 'postgres'), 'MC_PG09_LOAD_POSTGRES': ('mc_pg09_disposable', 'mc_ci_migrator')}
+      for name, (database, user) in expected.items():
+          parts = dict(part.split('=', 1) for part in os.environ[name].split(';'))
+          if parts != {'Host': '127.0.0.1', 'Database': database, 'Username': user, 'Password': 'ci_disposable_only'}:
+              raise SystemExit('Unsafe disposable fixture: ' + name)
+      PY
+    - export MC_PREPARE_DISPOSABLE_WORKOUT_DATABASE=True
+    - run_tests fixture_setup tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj --filter FullyQualifiedName~DisposableWorkoutDatabaseSetupTests
+    - unset MC_PREPARE_DISPOSABLE_WORKOUT_DATABASE
+    - runuser -u postgres -- psql -v ON_ERROR_STOP=1 -c "CREATE ROLE mc_ci_migrator LOGIN PASSWORD 'ci_disposable_only' NOSUPERUSER NOBYPASSRLS CREATEROLE"
+    - runuser -u postgres -- createdb -T mc_test_ci -O mc_ci_migrator mc_pg09_disposable
+    - runuser -u postgres -- psql -v ON_ERROR_STOP=1 -d mc_pg09_disposable -c 'GRANT USAGE ON SCHEMA catalog TO mc_ci_migrator; GRANT SELECT ON ALL TABLES IN SCHEMA catalog TO mc_ci_migrator'
+    - run_tests postgres tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj
+    # A fresh database alone does not prove the observed 31-to-59 upgrade or compatibility checks.
+    - test -f tests/MuscleCuties.Registration.Integration.Tests/DatabaseSchemaCompatibilityTests.cs
+    - test -f tests/MuscleCuties.Registration.Integration.Tests/SchemaReconciliationTests.cs
+    - run_tests schema_compatibility tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj --filter 'FullyQualifiedName~DatabaseSchemaCompatibilityTests|FullyQualifiedName~SchemaReconciliationTests'
+
+verify_mobile_contracts:
+  extends: .dotnet_job
+  stage: client_verify
+  script:
+    - run_tests mobile_contracts tests/MuscleCuties.Mobile.Contracts.Tests/MuscleCuties.Mobile.Contracts.Tests.csproj
 
 package_staging_lambda:
+  extends: .dotnet_job
   stage: backend_package
-  image: mcr.microsoft.com/dotnet/sdk:10.0.403
-  before_script:
-    - apt-get update && apt-get install -y --no-install-recommends zip
   needs:
+    - job: verify_source
+      artifacts: false
     - job: verify_plan_generation
       artifacts: false
-      optional: true
+    - job: verify_postgres_compatibility
+      artifacts: false
+    - job: verify_mobile_contracts
+      artifacts: false
   script:
+    - apt-get update && apt-get install -y --no-install-recommends zip
     - dotnet tool install Amazon.Lambda.Tools --version 7.0.0 --tool-path .tools
     - mkdir -p artifacts
     - ./.tools/dotnet-lambda package --project-location services/MuscleCuties.Server --configuration Release --framework net10.0 --function-architecture arm64 --output-package artifacts/MuscleCuties.Server.zip
+    - export CI_COMMIT_TREE_SHA="$(git rev-parse "$CI_COMMIT_SHA^{tree}")"
+    - bash tools/deployment/validate-package.sh artifacts/MuscleCuties.Server.zip artifacts/build-manifest.json
   artifacts:
+    when: on_success
     paths:
       - artifacts/MuscleCuties.Server.zip
-    expire_in: 1 day
+    expire_in: 30 days
 
-deploy_staging_lambda:
-  stage: backend_deploy
-  when: manual
-  image:
-    name: public.ecr.aws/aws-cli/aws-cli:latest
-    entrypoint: [""]
+validate_lambda_artifact:
+  extends: .dotnet_job
+  stage: artifact_validate
   needs:
     - job: package_staging_lambda
+      artifacts: true
+  script:
+    - dotnet tool install Amazon.Lambda.Tools --version 7.0.0 --tool-path .tools
+    - export CI_COMMIT_TREE_SHA="$(git rev-parse "$CI_COMMIT_SHA^{tree}")"
+    - bash tools/deployment/validate-package.sh artifacts/MuscleCuties.Server.zip artifacts/build-manifest.json
+  artifacts:
+    when: on_success
+    paths:
+      - artifacts/
+    expire_in: 30 days
+
+verify_lambda_arm64:
+  image: mcr.microsoft.com/dotnet/sdk:10.0.403
+  stage: artifact_validate
+  tags:
+    - saas-linux-small-arm64
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends python3
+  needs:
+    - job: validate_lambda_artifact
+      artifacts: true
+  script:
+    - test "$(uname -m)" = "aarch64"
+    # The harness must execute representative startup and native media paths.
+    - test -x tools/deployment/verify-arm64-package.sh
+    - tools/deployment/verify-arm64-package.sh artifacts/MuscleCuties.Server.zip
+
+upload_lambda_artifact:
+  image: mcr.microsoft.com/dotnet/sdk:10.0.403
+  stage: artifact_upload
+  needs:
+    - job: validate_lambda_artifact
+      artifacts: true
+    - job: verify_lambda_arm64
+      artifacts: false
+  id_tokens:
+    AWS_OIDC_TOKEN:
+      aud: sts.amazonaws.com
+  allow_failure: false
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends awscli jq python3
+    - 'case "${CI_DEBUG_TRACE:-false}" in [Tt][Rr][Uu][Ee]) exit 1;; esac'
+    - |
+      : "${AWS_RELEASE_ROLE_ARN:?Protected release role is required}" "${AWS_OIDC_TOKEN:?OIDC token is required}"
+      umask 077
+      AWS_WEB_IDENTITY_TOKEN_FILE="$(mktemp)"
+      trap 'rm -f "$AWS_WEB_IDENTITY_TOKEN_FILE"' EXIT
+      printf '%s' "$AWS_OIDC_TOKEN" > "$AWS_WEB_IDENTITY_TOKEN_FILE"
+      unset AWS_OIDC_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+      export AWS_WEB_IDENTITY_TOKEN_FILE AWS_ROLE_SESSION_NAME="gitlab-${CI_PROJECT_ID}-${CI_PIPELINE_ID}" AWS_ROLE_ARN="$AWS_RELEASE_ROLE_ARN" AWS_EC2_METADATA_DISABLED=true
+  script:
+    - ': "${AWS_RELEASE_BUCKET:?Protected release bucket is required}"'
+    - bash tools/deployment/upload-artifact.sh artifacts/MuscleCuties.Server.zip artifacts/build-manifest.json artifacts/release-object.json
+  artifacts:
+    when: on_success
+    paths:
+      - artifacts/
+    expire_in: 90 days
+  rules:
+    - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_DEBUG_TRACE !~ /(?i)^true$/ && $CI_PIPELINE_SOURCE == "web" && ($CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint" || $CI_COMMIT_BRANCH == "test-flight-beta")'
+      when: manual
+    - when: never
+
+.release_job:
+  image: mcr.microsoft.com/dotnet/sdk:10.0.403
+  stage: backend_deploy
+  needs:
+    - job: upload_lambda_artifact
       artifacts: true
   id_tokens:
     AWS_OIDC_TOKEN:
       aud: sts.amazonaws.com
+  resource_group: lambda-shared-target
+  allow_failure: false
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends awscli jq python3
+    - dotnet restore src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj
+    - dotnet build src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj --configuration Release --no-restore
+    - 'case "${CI_DEBUG_TRACE:-false}" in [Tt][Rr][Uu][Ee]) exit 1;; esac'
+    - |
+      : "${AWS_ROLE_ARN:?Protected deployment role is required}" "${AWS_OIDC_TOKEN:?OIDC token is required}"
+      umask 077
+      AWS_WEB_IDENTITY_TOKEN_FILE="$(mktemp)"
+      trap 'rm -f "$AWS_WEB_IDENTITY_TOKEN_FILE"' EXIT
+      printf '%s' "$AWS_OIDC_TOKEN" > "$AWS_WEB_IDENTITY_TOKEN_FILE"
+      unset AWS_OIDC_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+      export AWS_WEB_IDENTITY_TOKEN_FILE AWS_ROLE_SESSION_NAME="gitlab-${CI_PROJECT_ID}-${CI_PIPELINE_ID}" AWS_EC2_METADATA_DISABLED=true
   script:
-    - ': "${AWS_ROLE_ARN:?Set the protected AWS_ROLE_ARN GitLab CI variable}"'
-    - ': "${AWS_LAMBDA_FUNCTION_NAME:?Set the protected AWS_LAMBDA_FUNCTION_NAME GitLab CI variable}"'
-    - credentials="$(aws sts assume-role-with-web-identity --role-arn "$AWS_ROLE_ARN" --role-session-name "gitlab-${CI_PROJECT_ID}-${CI_PIPELINE_ID}" --web-identity-token "$AWS_OIDC_TOKEN" --duration-seconds 3600 --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" --output text)"
-    - set -- $credentials
-    - export AWS_ACCESS_KEY_ID="$1" AWS_SECRET_ACCESS_KEY="$2" AWS_SESSION_TOKEN="$3"
-    - unset credentials AWS_OIDC_TOKEN
-    - aws lambda update-function-code --function-name "$AWS_LAMBDA_FUNCTION_NAME" --zip-file "fileb://${CI_PROJECT_DIR}/artifacts/MuscleCuties.Server.zip" --region "$AWS_REGION"
-    - aws lambda wait function-updated --function-name "$AWS_LAMBDA_FUNCTION_NAME" --region "$AWS_REGION"
-    - test "$(aws lambda get-function-configuration --function-name "$AWS_LAMBDA_FUNCTION_NAME" --query LastUpdateStatus --output text --region "$AWS_REGION")" = "Successful"
-    - echo "Staging Lambda update completed for pipeline ${CI_PIPELINE_ID}."
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
-    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
-    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "test-flight-beta"'
+    - export CI_COMMIT_TREE_SHA="$(git rev-parse "$CI_COMMIT_SHA^{tree}")"
+    - bash tools/deployment/release.sh
+  artifacts:
+    when: always
+    paths:
+      - artifacts/deployment-report.json
+    expire_in: 90 days
 
-verify_mobile_contracts:
-  stage: client_verify
-  image: mcr.microsoft.com/dotnet/sdk:10.0.403
+deploy_staging_lambda:
+  extends: .release_job
+  environment:
+    name: staging
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint"'
-  needs:
-    - job: verify_plan_generation
-      artifacts: false
-  script:
-    - dotnet test tests/MuscleCuties.Mobile.Contracts.Tests/MuscleCuties.Mobile.Contracts.Tests.csproj --configuration Release
+    - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_DEBUG_TRACE !~ /(?i)^true$/ && $CI_COMMIT_BRANCH == "codex/plan-generation-checkpoint" && $CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - when: never
+
+deploy_production_lambda:
+  extends: .release_job
+  environment:
+    name: production
+  # Enable only after protected-environment approvals and release contracts are verified.
+  rules:
+    - when: never

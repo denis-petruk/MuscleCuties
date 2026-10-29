@@ -1,5 +1,7 @@
 # MuscleCuties documentation
 
+- [Lambda release engineering checkpoint](infra/checkpoints/lambda-release-orchestrator.md): CI, package, artifact and rollout implementation evidence, integration contracts, and remaining live release blockers.
+- [AWS Lambda and PostgreSQL implementation plan](infra/AWS_LAMBDA_POSTGRES_IMPLEMENTATION_PLAN.md): Authoritative 2026-10-29 audit and staged release requirements.
 - [Beta execution checkpoint](BETA_EXECUTION_CHECKPOINT.md): Current gate register, verification, ownership and signed-in loading investigation; earlier handoff notes are historical.
 - [First beta production-readiness audit](BETA_PRODUCTION_READINESS_AUDIT_20261029.md): Current branch verification and remaining gates B1–B6 for the first production-connected TestFlight candidate.
 - [Beta orchestrator prompt](BETA_ORCHESTRATOR_PROMPT.md): Resumable, checkpoint-driven instructions to close those gates.
