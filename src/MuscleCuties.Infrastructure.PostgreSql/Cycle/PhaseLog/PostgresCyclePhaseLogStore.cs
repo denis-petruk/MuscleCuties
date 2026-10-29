@@ -158,8 +158,7 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
         var latestCycleLength = cycles.OrderByDescending(row => row.StartDate).Select(row => row.CycleLength).FirstOrDefault();
         var predictedLength = CyclePhaseRule.NormalizeCycleLength(
             profile?.CycleLength is > 0 ? profile.CycleLength : latestCycleLength is > 0 ? latestCycleLength : DefaultCycleLength);
-        var anchorDay = CyclePhaseRule.GetPhaseAnchorDay(phase, predictedLength);
-        var inferredStart = localDate.AddDays(-(anchorDay - 1));
+        var inferredStart = CyclePhaseRule.GetImpliedCycleStart(phase, localDate, predictedLength);
         if (!IsSupportedDate(inferredStart))
             return null;
         var next = cycles.Where(row => row.StartDate > localDate).OrderBy(row => row.StartDate).FirstOrDefault();

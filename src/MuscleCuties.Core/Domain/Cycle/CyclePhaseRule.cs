@@ -95,6 +95,20 @@ public static class CyclePhaseRule
         };
     }
 
+    /// <summary>
+    /// Derives the cycle start implied by a single phase observation on a local calendar date.
+    /// The observation is the first captured phase (for example from the onboarding quiz), so the
+    /// returned start is the day that makes the observed date land on that phase's anchor day.
+    /// </summary>
+    public static DateOnly GetImpliedCycleStart(CyclePhase phase, DateOnly loggedLocalDate, int cycleLength)
+    {
+        if (phase is CyclePhase.Unknown || !Enum.IsDefined(phase))
+            return loggedLocalDate;
+
+        var anchorDay = GetPhaseAnchorDay(phase, cycleLength);
+        return loggedLocalDate.AddDays(FirstCycleDay - anchorDay);
+    }
+
     public static CyclePhase GetNextPhase(CyclePhase phase)
     {
         return phase switch

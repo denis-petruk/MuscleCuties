@@ -1,6 +1,7 @@
 namespace MuscleCuties.UseCases.Features.Cycle.History;
 
 using MuscleCuties.Core.Domain.Cycle;
+using CoreCycleObservation = MuscleCuties.Core.Domain.Cycle.CycleObservation;
 
 public sealed class CycleHistoryUseCase(ICycleHistoryStore store)
 {
@@ -22,13 +23,6 @@ public sealed class CycleHistoryUseCase(ICycleHistoryStore store)
             throw new ArgumentOutOfRangeException(nameof(today), "A valid owner and supported local date are required.");
 
         var inputs = await store.LoadPredictionInputsAsync(userId, today, cancellationToken).ConfigureAwait(false);
-        var orderedCycles = inputs.Cycles.OrderBy(cycle => cycle.StartDate).ToList();
-        var history = orderedCycles.Select(cycle => ToCoreObservation(cycle, cycle.CycleLength)).ToList();
-        var latest = inputs.Cycles.OrderByDescending(cycle => cycle.StartDate).FirstOrDefault();
-        var latestIndex = latest is null ? -1 : orderedCycles.FindLastIndex(cycle => cycle.StartDate == latest.StartDate);
-        var activeCycle = latest is not null && (latest.EndDate is null || latest.EndDate > today)
-            ? history[latestIndex]
-            : null;
         var todayDateTime = today.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
         MuscleCuties.Core.Domain.Cycle.CyclePhaseObservation? manualPhaseLog = null;
         if (inputs.ManualPhaseLog is { } loggedPhase &&
@@ -38,6 +32,30 @@ public sealed class CycleHistoryUseCase(ICycleHistoryStore store)
         {
             manualPhaseLog = new(phase, loggedPhase.LocalDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified));
         }
+
+        var history = inputs.Cycles
+            .OrderBy(cycle => cycle.StartDate)
+            .Select(cycle => ToCoreObservation(cycle, cycle.CycleLength))
+            .ToList();
+        if (manualPhaseLog is { } anchor && history.Count == 0)
+        {
+            // The onboarding quiz phase is a captured observation, not a floating label: with no cycle
+            // start recorded yet it anchors the first cycle so day counting begins on the selected phase.
+            var impliedStart = CyclePhaseRule.GetImpliedCycleStart(
+                anchor.Phase,
+                DateOnly.FromDateTime(anchor.LoggedAt),
+                inputs.ProfileCycleLength ?? CycleLengthLimits.Default);
+            history.Add(new CoreCycleObservation(
+                impliedStart.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified),
+                null,
+                UnknownCycleLength));
+        }
+
+        var latestCycle = history.LastOrDefault();
+        var activeCycle = latestCycle is not null &&
+                          (latestCycle.EndDate is null || latestCycle.EndDate > todayDateTime)
+            ? latestCycle
+            : null;
         var estimate = CyclePredictionDomainRule.CreatePrediction(activeCycle, history, inputs.ProfileCycleLength, todayDateTime, manualPhaseLog);
         return new CyclePredictionProjection(
             today,
