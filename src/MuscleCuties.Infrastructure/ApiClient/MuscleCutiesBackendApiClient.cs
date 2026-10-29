@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using MuscleCuties.UseCases.Features.Caching;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
@@ -18,6 +19,20 @@ public interface IBackendSessionTokenStore
     Task<BackendSessionTokens?> ReadTokensAsync(CancellationToken cancellationToken = default);
     Task WriteTokensAsync(BackendSessionTokens tokens, CancellationToken cancellationToken = default);
     Task ClearTokensAsync(CancellationToken cancellationToken = default);
+}
+
+internal static class BackendSessionLocks
+{
+    private const int SingleSessionChange = 1;
+    internal sealed class State
+    {
+        public SemaphoreSlim Semaphore { get; } = new(SingleSessionChange, SingleSessionChange);
+        private long version;
+        public long Version => Interlocked.Read(ref version);
+        public void Invalidate() => Interlocked.Increment(ref version);
+    }
+    private static readonly ConditionalWeakTable<IBackendSessionTokenStore, State> Locks = new();
+    public static State For(IBackendSessionTokenStore store) => Locks.GetValue(store, _ => new State());
 }
 
 public enum BackendApiStatus
@@ -149,6 +164,8 @@ public sealed class MuscleCutiesBackendApiClient(
         Func<HttpRequestMessage> requestFactory,
         CancellationToken cancellationToken)
     {
+        var sessionState = BackendSessionLocks.For(tokenStore);
+        var requestVersion = sessionState.Version;
         var tokens = await tokenStore.ReadTokensAsync(cancellationToken).ConfigureAwait(false);
         using var initialRequest = requestFactory();
         if (tokens is not null && !string.IsNullOrWhiteSpace(tokens.AccessToken))
@@ -159,17 +176,36 @@ public sealed class MuscleCutiesBackendApiClient(
             return response;
 
         response.Dispose();
-        var (refreshed, failureStatus) = await TryRefreshSessionAsync(tokens, cancellationToken).ConfigureAwait(false);
-        if (refreshed is null)
+        var refreshLock = sessionState.Semaphore;
+        await refreshLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        BackendSessionTokens? refreshed;
+        try
         {
-            if (failureStatus is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            {
-                await tokenStore.ClearTokensAsync(cancellationToken).ConfigureAwait(false);
-                await snapshotCache.ClearAsync(cancellationToken).ConfigureAwait(false);
-            }
+            var current = await tokenStore.ReadTokensAsync(cancellationToken).ConfigureAwait(false);
+            if (requestVersion != sessionState.Version || current is null || current.AccountId != tokens.AccountId)
+                return new HttpResponseMessage(HttpStatusCode.Unauthorized);
 
-            return new HttpResponseMessage(failureStatus);
+            if (current.RefreshToken != tokens.RefreshToken)
+                refreshed = current;
+            else
+            {
+                var version = sessionState.Version;
+                var (updated, failureStatus) = await TryRefreshSessionAsync(current, sessionState, version, CancellationToken.None).ConfigureAwait(false);
+                if (version != sessionState.Version)
+                    return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+                if (updated is null)
+                {
+                    if (failureStatus is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+                    {
+                        await tokenStore.ClearTokensAsync(cancellationToken).ConfigureAwait(false);
+                        await snapshotCache.ClearAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                    return new HttpResponseMessage(failureStatus);
+                }
+                refreshed = updated;
+            }
         }
+        finally { refreshLock.Release(); }
 
         using var retryRequest = requestFactory();
         retryRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", refreshed.AccessToken);
@@ -178,6 +214,8 @@ public sealed class MuscleCutiesBackendApiClient(
 
     private async Task<(BackendSessionTokens? Tokens, HttpStatusCode FailureStatus)> TryRefreshSessionAsync(
         BackendSessionTokens existing,
+        BackendSessionLocks.State sessionState,
+        long version,
         CancellationToken cancellationToken)
     {
         using var refreshRequest = new HttpRequestMessage(HttpMethod.Post, RefreshRoute)
@@ -206,9 +244,11 @@ public sealed class MuscleCutiesBackendApiClient(
             payload.UserId != Guid.Empty ? payload.UserId : existing.AccountId,
             payload.AccessToken,
             payload.RefreshToken,
-            payload.AccessTokenExpiresAtUtc);
-        await tokenStore.WriteTokensAsync(updated, cancellationToken).ConfigureAwait(false);
-        await snapshotCache.ActivateAccountAsync(updated.AccountId, cancellationToken).ConfigureAwait(false);
+            payload.AccessExpiresAtUtc);
+        if (version != sessionState.Version)
+            return (null, HttpStatusCode.Unauthorized);
+        await tokenStore.WriteTokensAsync(updated, CancellationToken.None).ConfigureAwait(false);
+        await snapshotCache.ActivateAccountAsync(updated.AccountId, CancellationToken.None).ConfigureAwait(false);
         return (updated, HttpStatusCode.OK);
     }
 
@@ -290,7 +330,7 @@ public sealed class MuscleCutiesBackendApiClient(
         Guid UserId,
         string AccessToken,
         string RefreshToken,
-        DateTimeOffset AccessTokenExpiresAtUtc);
+        DateTimeOffset AccessExpiresAtUtc);
 }
 
 /// <summary>
@@ -617,8 +657,16 @@ public sealed class MobileJourneyCloudGateway(
                     "invalidSessionResponse");
 
             var tokens = new BackendSessionTokens(userId, accessToken, refreshToken, expires);
-            await tokenStore.WriteTokensAsync(tokens, cancellationToken).ConfigureAwait(false);
-            await snapshotCache.ActivateAccountAsync(tokens.AccountId, cancellationToken).ConfigureAwait(false);
+            var sessionState = BackendSessionLocks.For(tokenStore);
+            var sessionLock = sessionState.Semaphore;
+            await sessionLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                sessionState.Invalidate();
+                await tokenStore.WriteTokensAsync(tokens, CancellationToken.None).ConfigureAwait(false);
+                await snapshotCache.ActivateAccountAsync(tokens.AccountId, CancellationToken.None).ConfigureAwait(false);
+            }
+            finally { sessionLock.Release(); }
             return new BackendApiResponse<BackendSessionTokens>(BackendApiStatus.Success, tokens);
         }
 
@@ -678,9 +726,12 @@ public sealed class MobileJourneyCloudGateway(
 
     public async Task LogoutAndPurgeLocalStateAsync(CancellationToken cancellationToken = default)
     {
+        var sessionState = BackendSessionLocks.For(tokenStore);
+        sessionState.Invalidate();
+        var logoutVersion = sessionState.Version;
+        var tokens = await tokenStore.ReadTokensAsync(CancellationToken.None).ConfigureAwait(false);
         try
         {
-            var tokens = await tokenStore.ReadTokensAsync(cancellationToken).ConfigureAwait(false);
             if (tokens is not null && !string.IsNullOrWhiteSpace(tokens.RefreshToken))
             {
                 await apiClient.SendMutationAsync<object, object>(
@@ -693,8 +744,18 @@ public sealed class MobileJourneyCloudGateway(
         }
         finally
         {
-            await tokenStore.ClearTokensAsync(cancellationToken).ConfigureAwait(false);
-            await snapshotCache.ClearAsync(cancellationToken).ConfigureAwait(false);
+            var sessionLock = sessionState.Semaphore;
+            await sessionLock.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+            try
+            {
+                var current = await tokenStore.ReadTokensAsync(CancellationToken.None).ConfigureAwait(false);
+                if (sessionState.Version == logoutVersion && current?.AccountId == tokens?.AccountId)
+                {
+                    await tokenStore.ClearTokensAsync(CancellationToken.None).ConfigureAwait(false);
+                    await snapshotCache.ClearAsync(CancellationToken.None).ConfigureAwait(false);
+                }
+            }
+            finally { sessionLock.Release(); }
         }
     }
 }

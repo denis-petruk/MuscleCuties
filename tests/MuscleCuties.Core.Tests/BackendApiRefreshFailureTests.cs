@@ -12,9 +12,72 @@ public sealed class BackendApiRefreshFailureTests
     private const string RefreshRoute = "/api/v1/auth/refresh";
     private const string SyntheticAccessToken = "synthetic-access";
     private const string SyntheticRefreshToken = "synthetic-refresh";
+    private const string RotatedAccessToken = "synthetic-rotated-access";
+    private const string RotatedRefreshToken = "synthetic-rotated-refresh";
     private static readonly BackendSessionTokens Tokens = new(
         Guid.Parse("11111111-1111-1111-1111-111111111111"), SyntheticAccessToken,
         SyntheticRefreshToken, DateTimeOffset.UnixEpoch);
+
+    [Fact]
+    public async Task ConcurrentClientsShareOneRefreshAndRetainServerExpiration()
+    {
+        using var handler = new ConcurrentRefreshHandler();
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri(ApiBaseAddress) };
+        var tokenStore = new RecordingTokenStore(Tokens);
+        var cache = new RecordingCache();
+        var first = new MuscleCutiesBackendApiClient(httpClient, tokenStore, cache, new OnlineAuthorityGate());
+        var second = new MuscleCutiesBackendApiClient(httpClient, tokenStore, cache, new OnlineAuthorityGate());
+
+        var results = await Task.WhenAll(first.GetAsync<object>(ProtectedRoute), second.GetAsync<object>(ProtectedRoute));
+
+        Assert.All(results, result => Assert.Equal(BackendApiStatus.Success, result.Status));
+        Assert.Equal(1, handler.RefreshCount);
+        Assert.Equal(RotatedRefreshToken, tokenStore.Tokens?.RefreshToken);
+        Assert.Equal(ConcurrentRefreshHandler.Expiration, tokenStore.Tokens?.AccessTokenExpiresAtUtc);
+        Assert.False(tokenStore.Cleared);
+        Assert.False(cache.Cleared);
+    }
+
+    [Fact]
+    public async Task LogoutDuringRefreshDoesNotRestoreSession()
+    {
+        using var handler = new PausedRefreshHandler();
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri(ApiBaseAddress) };
+        var store = new RecordingTokenStore(Tokens);
+        var cache = new RecordingCache();
+        var client = new MuscleCutiesBackendApiClient(httpClient, store, cache, new OnlineAuthorityGate());
+        var gateway = new MobileJourneyCloudGateway(client, store, cache, TimeProvider.System);
+
+        var request = client.GetAsync<object>(ProtectedRoute);
+        await handler.RefreshStarted.Task;
+        var logout = gateway.LogoutAndPurgeLocalStateAsync();
+        handler.FinishRefresh.TrySetResult();
+        await Task.WhenAll(request, logout);
+
+        Assert.Null(store.Tokens);
+        Assert.True(cache.Cleared);
+    }
+
+    [Fact]
+    public async Task LogoutDoesNotClearSubsequentLoginForSameAccount()
+    {
+        using var handler = new PausedLogoutHandler();
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri(ApiBaseAddress) };
+        var store = new RecordingTokenStore(Tokens);
+        var cache = new RecordingCache();
+        var client = new MuscleCutiesBackendApiClient(httpClient, store, cache, new OnlineAuthorityGate());
+        var gateway = new MobileJourneyCloudGateway(client, store, cache, TimeProvider.System);
+
+        var logout = gateway.LogoutAndPurgeLocalStateAsync();
+        await handler.LogoutStarted.Task;
+        var login = await gateway.SignInWithPasswordAsync("synthetic", "synthetic");
+        handler.FinishLogout.TrySetResult();
+        await logout;
+
+        Assert.Equal(BackendApiStatus.Success, login.Status);
+        Assert.Equal(RotatedRefreshToken, store.Tokens?.RefreshToken);
+        Assert.False(cache.Cleared);
+    }
 
     [Theory]
     [InlineData(HttpStatusCode.ServiceUnavailable, BackendApiStatus.ServerError, false)]
@@ -74,6 +137,71 @@ public sealed class BackendApiRefreshFailureTests
 
         Assert.Equal(Tokens, tokenStore.Tokens);
         Assert.False(cache.Cleared);
+    }
+
+    private static HttpResponseMessage RotatedSessionResponse() => new(HttpStatusCode.OK)
+    {
+        Content = new StringContent($$"""{"userId":"{{Tokens.AccountId}}","accessToken":"{{RotatedAccessToken}}","refreshToken":"{{RotatedRefreshToken}}","accessExpiresAtUtc":"{{ConcurrentRefreshHandler.Expiration:O}}"}""")
+    };
+
+    private sealed class PausedRefreshHandler : HttpMessageHandler
+    {
+        public TaskCompletionSource RefreshStarted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource FinishRefresh { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (request.RequestUri?.AbsolutePath == RefreshRoute)
+            {
+                RefreshStarted.TrySetResult();
+                await FinishRefresh.Task.WaitAsync(cancellationToken);
+                return RotatedSessionResponse();
+            }
+            return new HttpResponseMessage(request.RequestUri?.AbsolutePath == ProtectedRoute
+                ? HttpStatusCode.Unauthorized : HttpStatusCode.NoContent);
+        }
+    }
+
+    private sealed class PausedLogoutHandler : HttpMessageHandler
+    {
+        public TaskCompletionSource LogoutStarted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource FinishLogout { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (request.RequestUri?.AbsolutePath == "/api/v1/auth/revoke")
+            {
+                LogoutStarted.TrySetResult();
+                await FinishLogout.Task.WaitAsync(cancellationToken);
+                return new HttpResponseMessage(HttpStatusCode.NoContent);
+            }
+            return RotatedSessionResponse();
+        }
+    }
+
+    private sealed class ConcurrentRefreshHandler : HttpMessageHandler
+    {
+        public static readonly DateTimeOffset Expiration = DateTimeOffset.Parse("2030-01-01T00:00:00Z");
+        private readonly TaskCompletionSource bothInitialRequests = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int initialCount;
+        private int refreshCount;
+        public int RefreshCount => refreshCount;
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (request.RequestUri?.AbsolutePath == RefreshRoute)
+            {
+                Interlocked.Increment(ref refreshCount);
+                return RotatedSessionResponse();
+            }
+
+            if (request.Headers.Authorization?.Parameter == SyntheticAccessToken)
+            {
+                if (Interlocked.Increment(ref initialCount) == 2)
+                    bothInitialRequests.TrySetResult();
+                await bothInitialRequests.Task.WaitAsync(cancellationToken);
+                return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+            }
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") };
+        }
     }
 
     private sealed class RefreshFaultHandler(bool malformed, bool timeout = false) : HttpMessageHandler
