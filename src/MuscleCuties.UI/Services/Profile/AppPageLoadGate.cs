@@ -50,14 +50,16 @@ internal sealed class AppPageLoadGate : IDisposable
                 catch (Exception ex)
                 {
                     page.IsLoadError = true;
-                    Trace.WriteLine($"[PageLoad] {page.GetType().Name} marked failed ({ex.GetType().Name}).");
+                    Trace.WriteLine(
+                        $"[PageLoad] {page.GetType().Name} marked failed ({ex.GetType().Name}): {ex.Message}");
                     throw;
                 }
             }, force || page.IsLoadError);
         }
         catch (Exception exception)
         {
-            Trace.WriteLine($"[PageLoad] {page.GetType().Name} failed ({exception.GetType().Name}).");
+            Trace.WriteLine(
+                $"[PageLoad] {page.GetType().Name} failed ({exception.GetType().Name}): {exception.Message}");
         }
     }
 
@@ -83,7 +85,7 @@ internal sealed class AppPageLoadGate : IDisposable
             // A failed refresh must not leave an old success marked fresh.
             HasLoaded = false;
             _lastLoadedAtUtc = DateTime.MinValue;
-            Trace.WriteLine($"[PageLoad] Refresh invalidated ({ex.GetType().Name}).");
+            Trace.WriteLine($"[PageLoad] Refresh invalidated ({ex.GetType().Name}): {ex.Message}");
             throw;
         }
         finally
