@@ -62,4 +62,4 @@ __pycache__/
 .wrangler
 CLAUDE.md
 AGENTS.md
-.temp-db-reset
+.temp-db-resets
