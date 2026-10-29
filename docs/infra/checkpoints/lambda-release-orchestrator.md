@@ -54,4 +54,11 @@ The protected release policy must bind the exact approved source/tree, account, 
 4. Prove actual API Gateway integration, serving mode, and synthetic read/write/log checks on an isolated target. A resource named staging may serve beta users, so classify its impact before any manual job runs.
 5. Establish enforceable production deployment approval outside the current GitLab Free feature set, then separately authorize the exact release. No production deployment is performed by this branch.
 
-Commit SHA, remote publication, and GitLab pipeline evidence will be appended after verification.
+## Publication and verified commit
+
+- Branch: `infra/lambda-release-pipeline`
+- Remote: `git@gitlab.com:denis-petruk/musclecuties-testflight-beta.git`
+- Base commit: `3ede1cf6ba36aa4ba29c845351a90dcadbec4bc5` (tree `834384c81a0ff6c70212193e0124bead6e79aef8`)
+- Implementation commit: `981e2e7b` (`ci: implement CI/CD validation, immutable Lambda artifacts, and release state machine`)
+- Published ref: `refs/heads/infra/lambda-release-pipeline` on remote `gitlab`
+
