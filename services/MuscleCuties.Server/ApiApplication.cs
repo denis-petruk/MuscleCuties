@@ -421,7 +421,11 @@ public static class ApiApplication
             {
                 Status = StatusCodes.Status500InternalServerError,
                 Title = "An unexpected server error occurred.",
-                Extensions = { ["requestId"] = context.TraceIdentifier }
+                Extensions =
+                {
+                    ["requestId"] = context.TraceIdentifier,
+                    ["code"] = ApiFailureClassifier.Classify(exceptionFeature.Error)
+                }
             }, options: (JsonSerializerOptions?)null, contentType: "application/problem+json");
         }));
         app.Use(async (context, next) =>
@@ -881,5 +885,36 @@ internal sealed class PostgreSqlReadinessCheck(PostgresDbContext dbContext) : Mi
             return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy();
         }
     }
+}
+
+/// <summary>
+/// Maps a server failure to a stable, non-sensitive code. The code names the failure class only:
+/// no SQL text, table or column names and no user data, so it is safe to return to the client.
+/// </summary>
+internal static class ApiFailureClassifier
+{
+    private const string MissingTableSqlState = "42P01";
+    private const string MissingColumnSqlState = "42703";
+    private const string PermissionDeniedSqlState = "42501";
+    private const string DatabaseMissingTableCode = "databaseMissingTable";
+    private const string DatabaseMissingColumnCode = "databaseMissingColumn";
+    private const string DatabasePermissionDeniedCode = "databasePermissionDenied";
+    private const string DatabaseErrorCode = "databaseError";
+    private const string DatabaseUnavailableCode = "databaseUnavailable";
+    private const string RequestTimeoutCode = "requestTimeout";
+    private const string RequestCancelledCode = "requestCancelled";
+    private const string InternalErrorCode = "internalError";
+
+    public static string Classify(Exception exception) => exception switch
+    {
+        Npgsql.PostgresException { SqlState: MissingTableSqlState } => DatabaseMissingTableCode,
+        Npgsql.PostgresException { SqlState: MissingColumnSqlState } => DatabaseMissingColumnCode,
+        Npgsql.PostgresException { SqlState: PermissionDeniedSqlState } => DatabasePermissionDeniedCode,
+        Npgsql.PostgresException => DatabaseErrorCode,
+        Npgsql.NpgsqlException => DatabaseUnavailableCode,
+        TimeoutException => RequestTimeoutCode,
+        OperationCanceledException => RequestCancelledCode,
+        _ => InternalErrorCode
+    };
 }
 
