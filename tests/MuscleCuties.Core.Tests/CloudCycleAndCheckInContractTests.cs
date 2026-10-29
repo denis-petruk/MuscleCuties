@@ -187,7 +187,7 @@ public sealed class CloudCycleAndCheckInContractTests
             }))
         };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<MuscleCuties.UseCases.Features.Cycle.CycleSymptomsNeedActiveCycleIssue>(() =>
             new CloudCycleDailyLogStore(api).SaveAsync(
                 new CycleDailyLogRequest(SampleDateTime, false, false, null, [SymptomType.Cramps]),
                 CancellationToken.None));

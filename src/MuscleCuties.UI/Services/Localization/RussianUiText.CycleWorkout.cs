@@ -151,6 +151,7 @@ internal static partial class RussianUiText
         Values["Cycle_QuickLog_FlowIntensitySectionTitle"] = "ИНТЕНСИВНОСТЬ ВЫДЕЛЕНИЙ";
         Values["Cycle_QuickLog_HeaderTitle"] = "Быстрая запись";
         Values["Cycle_QuickLog_LoadingSavedEntry"] = "Загрузка сохраненного входа…";
+        Values["Cycle_QuickLog_LogPeriodStartAction"] = "Отметить начало менструации";
         Values["Cycle_QuickLog_PeriodEnded"] = "Менструация закончилась";
         Values["Cycle_QuickLog_PeriodStarted"] = "Менструация началась";
         Values["Cycle_QuickLog_PeriodStatusSectionTitle"] = "СТАТУС МЕНСТРУАЦИИ";

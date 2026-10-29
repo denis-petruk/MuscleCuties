@@ -435,7 +435,8 @@ public sealed class CloudCycleDailyLogStore(
         var requestedSymptoms = (request.Symptoms ?? []).Distinct().ToArray();
 
         if (requestedSymptoms.Length > 0 && activeCycle is null)
-            throw new InvalidOperationException("Record a period start before adding symptoms without a known cycle phase.");
+            throw new CycleSymptomsNeedActiveCycleIssue(
+                "Record a period start before adding symptoms without a known cycle phase.");
 
         var requestedNames = requestedSymptoms.Select(symptom => symptom.ToString()).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var existing in existingDaySymptoms)
