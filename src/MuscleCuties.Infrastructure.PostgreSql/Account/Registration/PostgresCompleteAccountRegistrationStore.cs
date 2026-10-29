@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Domain.Onboarding;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
@@ -37,6 +38,8 @@ public sealed class PostgresCompleteAccountRegistrationStore(
     private const int DefaultNutritionActivityDaysPerWeek = 3;
     private const int RegistrationEmailChallengePurpose = 1;
     private const int MaximumPrivacyNoticeVersionCharacters = 64;
+    private const int UnknownCycleLength = 0;
+    private static readonly DateOnly MinimumSupportedCycleDate = new(1970, 1, 1);
 
     public async Task<RegistrationPrivacyConsent?> GetPendingPrivacyConsentAsync(
         string emailReceiptId,
@@ -215,15 +218,35 @@ public sealed class PostgresCompleteAccountRegistrationStore(
             if (Enum.TryParse<CyclePhase>(profile.CurrentCyclePhase, true, out var onboardingPhase) &&
                 Enum.IsDefined(onboardingPhase) && onboardingPhase != CyclePhase.Unknown)
             {
-                dbContext.CyclePhaseLogs.Add(new CyclePhaseLogRecord
+                // The quiz phase is the first captured observation, so it also anchors the first cycle.
+                // Without the anchor the account has a phase log but no active cycle to count days from.
+                var onboardingLocalDate = DateOnly.FromDateTime(now.UtcDateTime);
+                var onboardingCycleStart = CyclePhaseRule.GetImpliedCycleStart(
+                    onboardingPhase, onboardingLocalDate, profile.CycleLength);
+                if (onboardingCycleStart >= MinimumSupportedCycleDate)
                 {
-                    Id = Guid.CreateVersion7(),
-                    UserId = userId,
-                    Phase = profile.CurrentCyclePhase,
-                    LoggedAt = now.UtcDateTime,
-                    Note = OnboardingPhaseNote,
-                    CreatedAt = now.UtcDateTime
-                });
+                    var onboardingCycle = new CycleLogRecord
+                    {
+                        Id = Guid.CreateVersion7(),
+                        UserId = userId,
+                        StartDate = onboardingCycleStart,
+                        EndDate = null,
+                        CycleLength = UnknownCycleLength,
+                        CreatedAt = now.UtcDateTime
+                    };
+                    dbContext.CycleLogs.Add(onboardingCycle);
+                    dbContext.CyclePhaseLogs.Add(new CyclePhaseLogRecord
+                    {
+                        Id = Guid.CreateVersion7(),
+                        UserId = userId,
+                        CycleLogId = onboardingCycle.Id,
+                        Phase = onboardingPhase.ToString(),
+                        LocalDate = onboardingLocalDate,
+                        LoggedAt = UtcMidnight(onboardingLocalDate),
+                        Note = OnboardingPhaseNote,
+                        CreatedAt = now.UtcDateTime
+                    });
+                }
             }
 
             user.IsOnboardingComplete = true;
@@ -376,6 +399,9 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         };
         return JsonSerializer.Serialize(baselines);
     }
+
+    private static DateTime UtcMidnight(DateOnly date) =>
+        DateTime.SpecifyKind(date.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
 
     private static bool TryMapEquipment(int answer, out string equipment)
     {

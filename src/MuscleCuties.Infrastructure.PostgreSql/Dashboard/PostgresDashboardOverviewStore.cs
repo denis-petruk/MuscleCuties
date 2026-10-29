@@ -21,6 +21,7 @@ public sealed class PostgresDashboardOverviewStore(
     TimeProvider timeProvider) : IServerDashboardOverviewStore
 {
     private const int DefaultCycleLengthDays = 28;
+    private const int UnknownCycleLength = 0;
     private const int DefaultWorkoutDaysPerWeek = 3;
     private const int TrendWindowDays = 13;
     private const int WeeklyWeightLookbackDays = 84;
@@ -95,6 +96,21 @@ public sealed class PostgresDashboardOverviewStore(
             }
 
             var cycleLength = profile?.CycleLength > 0 ? profile.CycleLength : DefaultCycleLengthDays;
+            if (activeCycle is null && coreHistory.Length == 0 && manualPhaseLog is { } onboardingAnchor)
+            {
+                // The onboarding quiz phase is the first captured observation: it anchors the first
+                // cycle so the dashboard counts days from the phase the user selected.
+                var impliedStart = CyclePhaseRule.GetImpliedCycleStart(
+                    onboardingAnchor.Phase,
+                    DateOnly.FromDateTime(onboardingAnchor.LoggedAt),
+                    cycleLength);
+                activeCycle = new CycleObservation(
+                    impliedStart.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified),
+                    null,
+                    UnknownCycleLength);
+                coreHistory = [activeCycle];
+            }
+
             var cycleEstimate = CyclePredictionDomainRule.CreatePrediction(
                 activeCycle,
                 coreHistory,
@@ -110,7 +126,9 @@ public sealed class PostgresDashboardOverviewStore(
                                   currentPhase != CyclePhase.Unknown;
             var predictionSource = hasProfilePhase ? "profile phase" : cycleEstimate.PredictionSource;
             var hasActiveCycle = activeCycle is not null;
-            var currentCycleStartDate = latestCycle?.StartDate;
+            var currentCycleStartDate = activeCycle?.StartDate is { } activeStart
+                ? DateOnly.FromDateTime(activeStart)
+                : latestCycle?.StartDate;
             var currentCycleDay = cycleEstimate.CurrentDay;
             var predictedCycleLength = cycleEstimate.PredictedCycleLength;
             var daysUntilPeriod = cycleEstimate.DaysUntilPeriod;
