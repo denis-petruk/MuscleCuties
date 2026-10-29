@@ -614,6 +614,17 @@ public sealed class CloudProfileOverviewStore(
     private const string CycleOverviewRoute = "/api/v1/cycle/overview";
     private const int DefaultCycleLengthDays = 28;
 
+#if DEBUG
+    private static async Task<BackendApiResponse<T>> TraceProfileResponseAsync<T>(
+        Task<BackendApiResponse<T>> responseTask, string operation)
+    {
+        var response = await responseTask.ConfigureAwait(false);
+        if (response.Status != BackendApiStatus.Success)
+            System.Diagnostics.Trace.WriteLine($"[ProfileOverview] {operation}: {response.Status}");
+        return response;
+    }
+#endif
+
     public async Task<ProfileOverviewSource> LoadAsync(CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
@@ -626,6 +637,14 @@ public sealed class CloudProfileOverviewStore(
         var injuriesTask = apiClient.GetAsync<InjuryObservationRecord[]>(ActiveInjuriesRoute, cancellationToken);
         var photosTask = apiClient.GetAsync<PhotoHistoryResponse>(PhotosLatestRoute, cancellationToken);
 
+#if DEBUG
+        profileTask = TraceProfileResponseAsync(profileTask, "Profile");
+        dashboardTask = TraceProfileResponseAsync(dashboardTask, "Dashboard");
+        cycleTask = TraceProfileResponseAsync(cycleTask, "Cycle");
+        workoutCountTask = TraceProfileResponseAsync(workoutCountTask, "WorkoutCount");
+        injuriesTask = TraceProfileResponseAsync(injuriesTask, "Injuries");
+        photosTask = TraceProfileResponseAsync(photosTask, "Photos");
+#endif
         await Task.WhenAll(profileTask, dashboardTask, cycleTask, workoutCountTask, injuriesTask, photosTask).ConfigureAwait(false);
 
         var profile = CloudStoreResponse.RequireData(await profileTask.ConfigureAwait(false), "profile overview profile");
