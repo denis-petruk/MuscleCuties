@@ -4,17 +4,27 @@
 - Owner: Orchestrator 2 (database compatibility, migration rehearsal, safe reconciliation)
 - Branch: `infra/postgres-schema-compatibility`
 - Implementation: `READY_FOR_INTEGRATION`
-- Terminal status: `BLOCKED_EXTERNAL_DEPENDENCY` (no GitLab remote in this cloud checkout; live parity not refreshed)
+- Terminal status: `BLOCKED_OWNER_APPROVAL` (live reconciliation, history policy, target fingerprint and
+  runtime-principal cutover await owner approval; live parity refresh awaits authorized access)
+- Local checkout: worktree on branch `infra/postgres-schema-compatibility`, not yet pushed
 
 ## 1. Baseline
 
-- Source commit: `276bbd319267730d4a495eea97a08b163655f3e1`
-- Source tree: `46b0311bcb09eb8dfba8d3f3eddaa07b0a2964d4`
-- Implementation commit: `b49f9a6fc0bc59db3cb5ffd817a9165c9c9dddc7`
+- Delivered baseline: `3ede1cf6ba36aa4ba29c845351a90dcadbec4bc5` (`docs: verify live PostgreSQL schema drift`)
+- Delivered baseline tree: `834384c81a0ff6c70212193e0124bead6e79aef8`
+- Implementation commit: `c48dd7fa` (original cloud commit `b49f9a6f` replayed onto the plan baseline)
+- Checkpoint commit: the commit containing this file (see `git log`)
 - Contract manifest SHA-256: `7eefa46a13a27cd5f4effefab8e878e9c7a27639b34dd390a8de2aa410249acc`
 - Contract version: `1.0.0`
 
-The cloud checkout contained neither the `infra/aws-lambda-postgres` ref nor
+The manifest's `generatedFrom.sourceReference` records `276bbd319267730d4a495eea97a08b163655f3e1`,
+the commit the contract was originally derived from. The delivered baseline moved to the published
+plan commit `3ede1cf6`, but the compiled `Migrations` tree is byte-identical between the two
+(`git diff 276bbd31 3ede1cf6 -- src/MuscleCuties.Infrastructure.PostgreSql/Migrations` is empty), so
+the provenance statement remains accurate.
+
+Original implementation evidence was captured in a cloud checkout that contained neither the
+`infra/aws-lambda-postgres` ref nor
 `docs/infra/AWS_LAMBDA_POSTGRES_IMPLEMENTATION_PLAN.md`. The observed 31-migration baseline and the
 28 pending IDs were reconstructed from the 59 compiled `[Migration]` classes plus the Appendix A
 list carried in this task. Live parity is therefore **unverified**, not inferred.
@@ -102,6 +112,10 @@ Executed against a local, unprivileged PostgreSQL **17.11** instance (`127.0.0.1
 - Raw chain result: `incompatible` with exactly one failure class, `SCHEMA_GRANT_MISMATCH`, on two tables.
 - Applying the reviewed additive grant candidate yields `compatible`; repeated migration remains a no-op.
 
+Re-verified in the delivered worktree (macOS) against a disposable PostgreSQL 17.11 container on
+`127.0.0.1:55433`: build clean, **33/33 passed** in 10 s, `schema-preflight` exit `0` on a compatible
+target and exit `1` with `TARGET_IDENTITY_MISMATCH` on a non-target database.
+
 Focused suites: **33/33 passed** (compatibility mutations, reconciliation safety, rehearsal).
 Reproduce:
 
@@ -186,8 +200,8 @@ cached fingerprint check and never expose schema details in HTTP responses.
 - Pre-change snapshot, restore drill and maintenance-window approval.
 - Approval-gated runtime principal cutover from `mc_admin` to `musclecuties_app`.
 - Authorized live read-only parity refresh; not available in this workspace.
-- **Push blocker:** this cloud checkout has no GitLab remote (`git remote -v` is empty), so commits
-  could not be pushed to `infra/postgres-schema-compatibility`. The branch and commits are local.
+- **Push outstanding:** the branch and both commits exist only in the local worktree on
+  `infra/postgres-schema-compatibility`; no push to the `gitlab` remote has been performed.
 
 `ROADMAP.md` and `STATUS.md` were left untouched because they already contained unrelated uncommitted
 user changes.
