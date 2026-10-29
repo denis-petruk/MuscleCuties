@@ -2,6 +2,8 @@
 
 Audit date: 2026-10-29 (America/Toronto). Status: **planning complete; implementation and production release blocked pending the evidence and approvals below**.
 
+Read-only follow-up after planning commit `0d5f9136`: **live database access resolved; unapplied schema changes confirmed**. The initial AWS connector denial affected its own identity. The existing local `musclecuties-operator` profile successfully accessed AWS and the exact Lambda-configured PostgreSQL database without changing permissions, networking or credentials. See the live evidence below and Appendix B.
+
 This document is the only repository content change authorized in this phase. No backend, CI configuration, AWS resource, deployment package, database schema, migration history, or user data was changed. Four bounded read-only investigations covered CI/CD, persistence, AWS/Lambda, and reliability/security. The orchestrator reconciled their findings with GitLab UI evidence. Commands in implementation sections are specifications for later approved work, not a record of execution.
 
 ## 1. Executive summary
@@ -10,14 +12,17 @@ The current GitLab pipeline successfully tested, packaged, and manually deployed
 
 The principal confirmed source defect is that deployment can replace Lambda code without checking PostgreSQL schema compatibility. `/health/ready` tests connectivity only. The existing migrations are extensive and automatic cold-start migration is deliberately forbidden. A successful control-plane update can therefore leave a healthy-looking, schema-incompatible application.
 
-Pre-existing local investigation notes report PostgreSQL `42703` for `app.workout_injury_logs.cleared_date` and `app.workout_session_logs.confirmed_active_seconds` in the deployed server. The source contains both defining migrations. Those notes are useful incident evidence, but this audit did not independently retrieve the CloudWatch events or the actual database catalog/history. **Missing migration files are not the established cause.** Whether changes were unapplied, a different database was selected, history differs from physical objects, or an older migration variant was used remains unresolved.
+Live metadata now confirms the root cause: the Lambda-configured `musclecuties_staging` database on RDS `musclecuties-staging-db` records **31 applied migrations through `20261024200000_AddWorkoutExerciseExclusionsV010`**, while the audited backend source contains **59**, leaving **28 unapplied source migrations**. Both `app.workout_injury_logs.cleared_date` and `app.workout_session_logs.confirmed_active_seconds` are physically absent. All new objects introduced by the pending chain are absent in the scoped comparison: 11 tables, 43 ADD COLUMN effects (33 on existing tables, 10 on missing parent tables), 19 explicit indexes, two functions and two workout discovery roles. No partial application of that pending chain was found. Earlier applied migrations and existing grants were not exhaustively audited.
+
+The live function's `CodeSha256` matches the archived GitLab deployment. The connection host matches the described RDS endpoint and the configured database matches its DBName. This confirms code was deployed ahead of database changes; missing migration files and a mere search-path problem do not explain the observed failures. The audit did not independently retrieve the original CloudWatch incident events or inspect application records.
 
 Additional release blockers:
 
 - Admitted web pipelines omit the push-only test job; packaging declares that dependency optional.
 - There is no ZIP content validation, package/source manifest, S3 release artifact handling, version/alias rollout, authenticated smoke test, or schema gate.
 - The deployment job prints the unfiltered Lambda response. The inspected job output includes an `Environment` configuration object with secret-bearing key names. No secret values are reproduced here. Restrict output and assess exposure/rotation before another release.
-- The AWS MCP identity can authenticate but cannot read the relevant Lambda, API Gateway, RDS, S3, or CloudWatch resources. Current database schema, migration ledger, backups, IAM trust, actual network rules, and live deployed hash remain unverified. An AWS console fallback did not yield usable resource details.
+- AWS connector reads remain denied to `macbook-genai-dev`, but existing local operator access resolved Lambda/RDS/schema/history inspection. IAM trust, release bucket, API alias integration, complete network rules, snapshot completion and restore capability remain unverified.
+- The live runtime connection uses the RDS master login `mc_admin`, which has CREATEROLE/CREATEDB and owns application tables. This violates the intended runtime/migrator separation. A separately reviewed least-privilege cutover is required; do not switch credentials blindly without authentication-function/tenant/grant validation.
 - A direct-SQL-only repair leaves EF migration IDs pending; existing maintenance seed/apply commands reject pending migrations. This lifecycle conflict must be resolved before approving manual reconciliation.
 
 Recommended direction: preserve the existing .NET 10 ARM64 packaging, operational job names, and GitLab OIDC; add mandatory tests and artifact checks; introduce an immutable S3 release identity; inspect the exact target; perform only approved expand-first reconciliation before incompatible code cutover; verify actual runtime/database behavior; retain auditable recovery evidence. Do not rebuild or drop the database, reset history, add a new migration framework, or migrate during Lambda initialization.
@@ -37,7 +42,7 @@ Recommended direction: preserve the existing .NET 10 ARM64 packaging, operationa
 | Target branch | `infra/aws-lambda-postgres` |
 | Isolated worktree | `/Users/denispetruk/Documents/ChatGPT/MuscleCuties/aws-lambda-postgres` |
 | Initial branch verification | HEAD equaled the full baseline SHA; HEAD tree equaled the source tree; `git diff --name-status <baseline>` was empty; clean branch status |
-| Original checkout preserved | `/Users/denispetruk/RiderProjects/MuscleCuties`, local HEAD `276bbd31`, ahead of GitLab by one documentation commit; uncommitted `ROADMAP.md` and `STATUS.md` retained |
+| Original checkout preserved | `/Users/denispetruk/RiderProjects/MuscleCuties`, local HEAD `276bbd31`, ahead of the selected GitLab baseline by one local commit including UI/test edits; uncommitted `ROADMAP.md` and `STATUS.md` retained |
 
 Actions completed: inspected `AGENTS.md`, `docs/README.md`, indexed deployment documentation, source, Git history, and CI; fetched `gitlab --prune`; created the new branch from the exact SHA with `git worktree add -b infra/aws-lambda-postgres ... ce3f62c4beaadd03c2784f6cef146381fd10e452`. No merge, cherry-pick, conflict resolution, or history rewrite was performed. The explicit plan-only constraint takes precedence over AGENTS.md's general instruction to update ROADMAP/STATUS; those files are intentionally excluded from this commit.
 
@@ -52,6 +57,7 @@ Evidence labels used below:
 - **S — source verified:** inspected at the baseline SHA.
 - **G — GitLab observed:** authenticated GitLab UI, including archived job output/settings.
 - **H — historical/local notes:** documentation or preserved uncommitted owner notes; not a new live AWS/SQL finding.
+- **L — live read-only verified:** follow-up AWS SDK calls using the existing operator profile and PostgreSQL catalog/history queries under an explicitly read-only transaction.
 - **U — unknown:** inaccessible or not inspected; must not be promoted to verified by inference.
 
 ### Current flow
@@ -117,12 +123,18 @@ Job 17588691562 checked out `ce3f62c4` and recorded this UpdateFunctionCode resp
 
 Function and role names are masked in that job. Separate H operator notes identify `musclecuties-backend-api` and API `y2ejsgrc6l` in `us-east-2`; do not equate a masked CI target with that function until the allowlisted ARN is checked securely. The job recorded environment key names for database connection, JWT, email keys, Resend, Apple credentials, storage and Lambda pooling; values were not copied into this audit.
 
-AWS MCP STS succeeded for account `028417007003`, IAM user `macbook-genai-dev`. Relevant reads returned AccessDenied: Lambda GetFunction/GetFunctionConfiguration/ListAliases/ListVersionsByFunction/GetPolicy, API Gateway GetIntegrations, RDS DescribeDBInstances/DescribeDBProxies, S3 ListAllMyBuckets, Logs DescribeLogGroups. A separate local operator profile is mentioned in uncommitted notes, but it was not used as a substitute credential source. No DB connection/records were opened. Live resource settings, API alias targeting, RDS engine/version/identifier, SG rules/routes, IAM policy, backup/PITR, release bucket, migration history and current deployed hash are **U**.
+The initial AWS MCP identity was account `028417007003`, IAM user `macbook-genai-dev`; relevant Lambda/API/RDS/S3/Logs reads were denied. This was an access-path limitation, not proof no authorized database access existed. The follow-up used the already-authenticated `musclecuties-operator` SDK profile, identifying `arn:aws:iam::028417007003:user/denis.operator`. No new sign-in, role grant, network rule, password or credential configuration was required. Connection values remained in process memory; no passwords or application rows were output or saved.
+
+Live GetFunctionConfiguration now verifies function `arn:aws:lambda:us-east-2:028417007003:function:musclecuties-backend-api`, runtime `dotnet10`, ARM64, handler `MuscleCuties.Server`, 1024 MB, 27-second timeout, Active/Successful, execution role `musclecuties-backend-api-role-oot9kwhk`, and the same VPC/subnet/SG IDs recorded above. Current RevisionId is `fd813561-e054-4973-a11a-013b7b3f25a6`; LastModified remains `2026-10-29T20:09:05.000+0000`; code hash remains `gS2dwDP9vlJ+p9xMwqEZkvlfL0tCOPKouzp2SOIf508=`. A changed RevisionId alone is not a different artifact.
+
+Live RDS DescribeDBInstances identifies `musclecuties-staging-db`, PostgreSQL **17.5**, available, encrypted storage, DBName `musclecuties_staging`, port 5432, the same VPC, SG `sg-0921332c15883d1d9`, `PubliclyAccessible=true`, and IAM DB authentication disabled. Backup retention is **one day**; latest restorable time observed was `2026-10-29T20:56:05Z`. This is backup metadata, not evidence of a successful restore. Public accessibility does not establish open security-group ingress; those rules remain uninspected.
+
+The Lambda-configured host directly equals that RDS endpoint, confirming direct RDS connectivity for this function rather than a Proxy endpoint. The metadata connection used AWS's public CA bundle, hostname verification (`verify-full`) and TLSv1.3 (`TLS_AES_256_GCM_SHA384`, 256 bits). The session had `default_transaction_read_only=on`, explicit `REPEATABLE READ READ ONLY`, 10-second statement and 1-second lock timeouts, and ended with ROLLBACK. The query confirmed `transaction_read_only=on`. Only catalog/role/migration-history metadata was read: 62 tables, 594 columns, 204 constraints, 236 valid/ready indexes, 41 policies, four function metadata records and nine relevant role records. API/alias integration, full IAM policies, release bucket, network rules and completed snapshot/restore evidence remain **U**.
 
 Reconciled documentation contradictions:
 
 - `docs/OPERATOR_ACTION_MANUAL.md:31,37` implies deployment on push. Current YAML is manual since commit `4e1f57f1`; preserve the functioning manual behavior.
-- Lambda defaults description claims RDS Proxy; operator guide :45 says direct RDS/no Proxy. Neither establishes current networking. Do not add a Proxy merely to match a comment.
+- Lambda defaults description claims RDS Proxy; operator guide :45 says direct RDS/no Proxy. Live configured host now confirms this function connects directly to the described RDS instance. Do not add a Proxy merely to match a comment.
 - Historical notes about a duplicate `planning_slot_id` addition are stale: `20261027060000` owns it; `20261027235000` now explicitly leaves it alone. Deployed older variants remain a history question.
 - `docs/ci-injury-clock-20261028.md` records `CS7036` at old `e305858a` from missing `TimeProvider`; this is historical, not a failure of the newly observed passed pipeline. The current pipeline list/failure traces were not exhaustively audited.
 
@@ -130,25 +142,25 @@ Reconciled documentation contradictions:
 
 The expected schema is the current model **plus** source migrations for RLS/grants/functions/data conversions that a model snapshot alone cannot represent. There are **59 migration classes** at this baseline. Exclude only `*.Designer.cs` and the exact `PostgresDbContextModelSnapshot.cs` when inventorying; a valid migration is named `AddWorkoutSessionPrescriptionSnapshot`.
 
-No row below claims a newly observed live database absence. Severity is the impact **if missing/incompatible**. H incidents establish two reported runtime mismatches; remaining rows are source requirements awaiting catalog comparison. All paths in the defining-source column are under `src/MuscleCuties.Infrastructure.PostgreSql/Persistence/Migrations/`.
+The matrix now incorporates **L** catalog and migration-history evidence. All post-October-24 object families below were checked against the collected physical catalog; their required new objects are absent. Existing pre-October-24 objects/security/data were not comprehensively proven correct. All paths in the defining-source column are under `src/MuscleCuties.Infrastructure.PostgreSql/Persistence/Migrations/`. Appendix B enumerates exact live absences.
 
 | Expected object/definition | Actual accessible evidence | Severity/confidence | Required correction after proof |
 | --- | --- | --- | --- |
-| `app.workout_injury_logs.cleared_date`, `date NULL` | H uncommitted STATUS incident at 20:13:02 UTC reports `42703`; S `20261026220000_AddWorkoutSafetySuppression.cs:16`; model `Models/App/AppRepoModels.cs:274` | Critical; reported runtime absence, live catalog U | Add only if absent; assert exact existing definition otherwise; no inferred clearance-date backfill |
-| `app.workout_session_logs.confirmed_active_seconds`, `integer NOT NULL DEFAULT 0` | H dashboard incident at 20:13:02.983 UTC reports `42703`; S `20261027020000_AddWorkoutActiveIntervals.cs:12` | Critical; reported runtime absence, live catalog U | Reconcile complete active-interval family, not just first failing selection |
-| Same table: `timing_interval_id uuid NULL`, started/last-confirmed UTC timestamps nullable, `timing_interval_confirmed_seconds integer NOT NULL DEFAULT 0` | S same migration :13–16; live U | Critical/high; S expected | Assert PostgreSQL timestamptz mapping against generated/reference schema; zero means existing unknown active time, not reconstructed duration |
-| Safety family on `app.workout_days`: `is_removed_by_safety bool NOT NULL DEFAULT false`, nullable `safety_injury_id uuid`, `safety_activity_type_id integer`, `activity_type_id integer`; session planned day UUID, timezone text/version bigint/date; planning-state `safety_regeneration_pending bool NOT NULL DEFAULT false` | S `20261026220000:12–21`; live U | High; S | Parent planning-state table first; preserve null/false semantics and tenant boundaries |
-| `app.workout_account_planning_states`, `app.workout_completion_day_credits`, owner/date indexes and RLS | S `20261026200000:13–49`; live U | Critical/high; S | Parent keys/tables before dependents; **no fabricated historical completion-credit backfill** (:51) |
-| Proposal lease ID/fence/expiry; account `answer_version`, `answers_json` JSONB | S `20261026190000_AddWorkoutProposalLeases`, `20261026210000_AddWorkoutActivityAnswers`, `20261027040000_AlignWorkoutAnswersJsonType`; live U | High; S | Validate current types and conversion viability; text→JSONB cast may fail or rewrite/lock |
-| Session origin/lineage, `planned_prescription_snapshot_json jsonb NULL`, day order, unplanned-completion provenance | S `20261027010000`, `27030000`, `27070000`, `27080000`; live U | High; S | Preserve provenance; deterministic defaults only, do not invent clinical/session history |
-| Injury episodes/prescriptions, active-episode partial unique index, tenant RLS; restoration metadata, episode links and composite owner FKs | S `20261027050000_AddWorkoutInjuryProvenance`, `20261027230000_AddWorkoutInjuryExerciseProvenance`, `20261027233000_AddWorkoutInjuryEpisodes`, `20261028000000_GrantWorkoutInjuryEpisodeAccess`; live U | Critical/high; S | Audit existing duplicates/orphans by counts, then ordered constraints/indexes/grants; no record dumps |
-| Exercise `planning_slot_id` / origin lineage; template ID/version/session index | S `20261027060000_AddWorkoutExercisePlanningLineage:11–14`, `20261027235000_AddWorkoutPrescriptionSlotIdentity:12–15`; live U | High; S | No duplicate-source fix needed; compare actual column definitions and older migration variants |
-| Restricted reconciliation-discovery roles/function/policy and singleton cursor | S `20261027231000_AddWorkoutReconciliationDiscovery:11–55`, `27232000_AddWorkoutReconciliationCursor`; live U | High/security; S | Preserve security-definer search path, owner, role membership and execute grants; table parity alone insufficient |
-| Reviewed template volume floors, catalog lock function and owner | S `20261026230000_LockWorkoutPlanningCatalog`, `27234000_AddReviewedTemplateVolumeFloors`, `27234500_OwnReviewedTemplateVolumeFloors`, `28000000_RemoveTemplateFloorAttributionRequirement`; live U | High/security; S | Check lock function/ownership and intended constraint removal, not only table existence |
-| Canonical deload state, HIIT challenge capture, JSON activity occurrence prescriptions, strength-style offers, omitted injury slots, cycle-readiness occurrences/state | S `20261028010000`, `28100000`, `28110000`, `28120000`, `28140000`, `28190000`; live U | High; S | Compare all fields, composite tenant keys/FKs, indexes, RLS and grants; cycle discovery function updated by `28190000:38–47` |
-| Earlier registration/catalog/workout requirements and seed provenance | S migrations `20261017*`–`20261024200000`; H guide records 31 applied through `20261024200000_AddWorkoutExerciseExclusionsV010` on Oct 24; live U | High; H historical baseline only | Verify the entire chain rather than assuming the historical count still applies |
-| Migration ledger and physical catalog agreement | DbMaintenance can read Applied/Pending; no target output available | Release blocker; U | Compare full IDs with both deployed artifact and candidate; do not reset or fabricate history |
-| Runtime DB selection and privilege parity | Explicit `app` mappings; connection target/role U | Release blocker; U | Securely compare host/database/schema/role identity with intended environment; inspect runtime-role grants independently of owner catalog reads |
+| `app.workout_injury_logs.cleared_date`, `date NULL` | **L physically absent**; defining ID absent from ledger; S `20261026220000_AddWorkoutSafetySuppression.cs:16`; model `Models/App/AppRepoModels.cs:274` | Critical; L + S | Reconcile approved missing column with complete chain; no inferred clearance-date backfill |
+| `app.workout_session_logs.confirmed_active_seconds`, `integer NOT NULL DEFAULT 0` | **L physically absent**; defining ID absent from ledger; S `20261027020000_AddWorkoutActiveIntervals.cs:12` | Critical; L + S | Reconcile complete active-interval family, not just first failing selection |
+| Same table: `timing_interval_id uuid NULL`, started/last-confirmed UTC timestamps nullable, `timing_interval_confirmed_seconds integer NOT NULL DEFAULT 0` | **L all absent**; S same migration :13–16 | Critical/high; L + S | Use exact timestamptz mapping; zero means existing unknown active time, not reconstructed duration |
+| Safety family on `app.workout_days`: `is_removed_by_safety bool NOT NULL DEFAULT false`, nullable `safety_injury_id uuid`, `safety_activity_type_id integer`, `activity_type_id integer`; session planned day UUID, timezone text/version bigint/date; planning-state `safety_regeneration_pending bool NOT NULL DEFAULT false` | S `20261026220000:12–21`; **L fields absent; planning-state parent absent** | High; L + S | Parent planning-state table first; preserve null/false semantics and tenant boundaries |
+| `app.workout_account_planning_states`, `app.workout_completion_day_credits`, owner/date indexes and RLS | S `20261026200000:13–49`; **L both tables/indexes/policies absent** | Critical/high; L + S | Parent keys/tables before dependents; **no fabricated historical completion-credit backfill** (:51) |
+| Proposal lease ID/fence/expiry; account `answer_version`, `answers_json` JSONB | S `20261026190000_AddWorkoutProposalLeases`, `20261026210000_AddWorkoutActivityAnswers`, `20261027040000_AlignWorkoutAnswersJsonType`; **L lease fields and planning-state parent absent** | High; L + S | No current planning-state answers exist to convert on this observed target; preserve safe conversion handling for interrupted/other environments |
+| Session origin/lineage, `planned_prescription_snapshot_json jsonb NULL`, day order, unplanned-completion provenance | S `20261027010000`, `27030000`, `27070000`, `27080000`; **L all added fields absent** | High; L + S | Preserve provenance; deterministic defaults only, do not invent clinical/session history |
+| Injury episodes/prescriptions, active-episode partial unique index, tenant RLS; restoration metadata, episode links and composite owner FKs | S `20261027050000_AddWorkoutInjuryProvenance`, `20261027230000_AddWorkoutInjuryExerciseProvenance`, `20261027233000_AddWorkoutInjuryEpisodes`, `20261028000000_GrantWorkoutInjuryEpisodeAccess`; **L tables/fields/indexes/policies absent** | Critical/high; L + S | Reconcile new parents before links/security; no existing episode rows to backfill without provenance; no record dumps |
+| Exercise `planning_slot_id` / origin lineage; template ID/version/session index | S `20261027060000_AddWorkoutExercisePlanningLineage:11–14`, `20261027235000_AddWorkoutPrescriptionSlotIdentity:12–15`; **L all absent** | High; L + S | No duplicate-source fix needed; create once in correct dependency order |
+| Restricted reconciliation-discovery roles/function/policy and singleton cursor | S `20261027231000_AddWorkoutReconciliationDiscovery:11–55`, `27232000_AddWorkoutReconciliationCursor`; **L roles/function/policy/cursor table absent** | High/security; L + S | Establish restricted ownership/execute grants and singleton initialization without enabling scheduler |
+| Reviewed template volume floors, catalog lock function and owner | S `20261026230000_LockWorkoutPlanningCatalog`, `27234000_AddReviewedTemplateVolumeFloors`, `27234500_OwnReviewedTemplateVolumeFloors`, `28000000_RemoveTemplateFloorAttributionRequirement`; **L table and lock function absent** | High/security; L + S | Create final reviewed table/function/ownership/grants; physical repair must account for later attribution relaxation and untouched EF history |
+| Canonical deload state, HIIT challenge capture, JSON activity occurrence prescriptions, strength-style offers, omitted injury slots, cycle-readiness occurrences/state | S `20261028010000`, `28100000`, `28110000`, `28120000`, `28140000`, `28190000`; **L all added fields/new tables/indexes/policies absent** | High; L + S | Include composite tenant keys/FKs, RLS, grants and final cycle-discovery predicate |
+| Earlier registration/catalog/workout requirements and seed provenance | S migrations `20261017*`–`20261024200000`; **L all 31 IDs recorded**, but their complete effects/seed data were not audited | High; history L, full baseline parity U | Rehearse from observed 31-ID starting shape and compare earlier security/catalog definitions before release |
+| Migration ledger and physical catalog agreement | **L 31 applied, 28 source IDs absent, no unknown applied IDs; all pending-chain object effects absent in scoped comparison** | Confirmed unapplied chain; L + S | Review complete 28-change reconciliation, preserve history, no blanket run or fabricated ledger rows |
+| Runtime DB selection and privilege parity | **L exact Lambda connection targets described RDS DB; runtime uses master `mc_admin`, CREATEROLE/CREATEDB/table owner** | Target verified; privilege separation high risk, L | Separately design/test least-privilege runtime login and grants; do not replace it blindly or assume RLS behavior proven |
 
 Full IDs matter: two `20261023160000_*` and two `20261028000000_*` classes have distinct names. Timestamp prefixes alone are not duplicate IDs.
 
@@ -157,16 +169,16 @@ Full IDs matter: two `20261023160000_*` and two `20261028000000_*` classes have 
 | Candidate cause | Conclusion and evidence |
 | --- | --- |
 | Code released without a schema compatibility gate | **Confirmed S**, and G demonstrates a successful deployment using that path. Current CI never runs schema status/reconciliation or authenticated route checks. |
-| Backend expects columns absent from its connected DB | **Reported H with precise incident fields**, consistent with S EF materialization; not independently verified against current catalog here. Dashboard's full session entity selection can fail before deciding whether a session exists. |
+| Backend expects columns absent from its connected DB | **Confirmed L + S** for both incident columns and the complete pending-chain object scope. Dashboard's full session entity selection can fail before deciding whether a session exists. |
 | Missing migration files | **Not supported.** Both reported columns and 59 migration classes exist in source. |
-| Unapplied changes / environment drift | **Strong hypothesis**, supported by H Oct 24 schema state versus later source changes. Exact pending set unknown. |
-| Wrong database/schema/role | **Open.** Explicit schema qualification reduces search-path ambiguity, but wrong database or connection target remains possible. Missing-column SQLSTATE is not normally a permission-denied error. Privileges must still be checked. |
+| Unapplied changes / environment drift | **Confirmed L + S:** database history ends at the October 24 ID; all 28 later source IDs and their new-object effects are absent. No partial application of this pending chain found; earlier baseline drift remains unassessed. |
+| Wrong database/schema/role | The audited connection is **the exact live Lambda target**, directly matching the RDS endpoint/DBName. Objects are physically absent from explicit `app`/`catalog` namespaces, not merely hidden by information_schema grants. Owner intent for staging versus production remains a separate approval. Runtime master-account use is an additional confirmed security concern. |
 | False-positive readiness | **Confirmed S.** Connectivity can pass without required columns/constraints/functions. |
 | Source duplicate planning column | **Resolved in baseline S.** Do not modify old migrations based on stale documentation. |
 | Obsolete initializer failed to run | Runtime initialization intentionally does not migrate. This is an operational sequencing issue, not justification to enable initialization DDL. |
-| Incomplete EF model/snapshot or deployment artifact mismatch | **Open.** Existing snapshot parity test is omitted by CI; deployed ZIP was not independently downloaded/inspected and Lambda current SHA cannot be read. |
+| Incomplete EF model/snapshot or deployment artifact mismatch | Live function hash **matches the archived GitLab build/deploy hash**, resolving deployed-byte identity for this diagnosis. ZIP content/source model snapshot parity and all earlier schema effects were not independently validated. |
 
-The defensible diagnosis is a **verified missing deployment compatibility gate plus reported application/schema mismatch**, with the exact live schema/history root cause blocked on metadata. Do not present “run all pending migrations” or “add just two columns” as a verified repair.
+The verified diagnosis is **application code deployed ahead of 28 unapplied database changes, enabled by a pipeline with no schema compatibility gate**. The ledger and physical catalog agree for the pending-chain scope; this is not an absent-files or search-path-only issue. The exact reviewed repair remains an approval/rehearsal task: neither “run everything blindly” nor “add just two columns” is safe. No schema changes were executed.
 
 ## 6. Target architecture and deployment sequence
 
@@ -307,7 +319,7 @@ Proposed starting limits for rehearsal: `lock_timeout=5s`, `statement_timeout=60
 
 ### Backup, recovery and irreversible changes
 
-H documentation names snapshot `musclecuties-pre-workout-quiz-20261024`; it is not evidence of current recovery capability. Before approval, verify current DB identifier/engine, snapshot completion/encryption/KMS restore access, automated retention and latest restorable time/PITR, maintenance window, RPO/RTO, and a successful isolated restore drill with network/role/config verification. Take an approved pre-change snapshot and capture the catalog/history fingerprint. Snapshot creation/restore is future separately approved work.
+H documentation names snapshot `musclecuties-pre-workout-quiz-20261024`; it is not evidence of current recovery capability. L now verifies the actual DB identifier/engine, encrypted storage, one-day backup retention and latest restorable time `2026-10-29T20:56:05Z`. Before approval, still verify snapshot completion/KMS restore access, acceptable retention, maintenance window, RPO/RTO, and a successful isolated restore drill with network/role/config verification. Take an approved pre-change snapshot and capture the catalog/history fingerprint. Snapshot creation/restore is future separately approved work.
 
 RDS snapshot/PITR recovery restores to a **new instance/endpoint**, not an in-place undo. An emergency recovery may therefore require an approved restored instance despite the normal in-place preference; without that contingency, data-loss recovery is incomplete. Quiesce writes and reconcile post-snapshot transactions before an endpoint cutover. Do not automatically restore over user activity. See [RDS snapshot restoration](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_RestoreFromSnapshot.html).
 
@@ -363,6 +375,8 @@ OIDC assessment: keep existing STS web-identity approach. The guide documents a 
 Securely record actual function ARN, runtime/architecture/package, execution role/trust, configuration revision, aliases/versions, API integration ARN/stage, log group/retention, VPC/subnet routes/NACLs/SGs, RDS identifier/engine/version/database and role identity, TLS certificates, connection capacity, backups, and approved release S3 bucket. Mask secrets and user identifiers. Compare network metadata observed in the archived deployment job with current resources; an old VPC ID is not proof of routing or DB access.
 
 DB access requires a protected network-authorized runner. IAM permission to describe RDS does not grant SQL connectivity or schema privileges. Check DB port/SG source references and TLS hostname verification, and external egress for required application services. Keep the application role unable to apply schema changes. Max pool 5 times concurrent execution environments must fit the DB connection budget; assess actual concurrency before proposing Proxy/pool changes.
+
+The follow-up proved an existing direct TLS-verified network path from this Mac; no firewall opening or new IAM grant is needed for this metadata audit. This does not prove a future GitLab runner has the same path. Runtime currently connects as the RDS master `mc_admin`; define a separate least-privilege login and validate required role memberships, authentication lookup function ownership/execute grants, tenant behavior and maintenance separation before a separately approved credential cutover. This is a configuration/security remediation, not an explanation for the physically missing columns; do not test it by modifying the live role during this phase.
 
 Minimum reviewed IAM additions, scoped to discovered ARNs/prefixes:
 
@@ -485,6 +499,8 @@ The following phases are a proposed execution order **after explicit approval**.
 
 ### Phase 0 — Close target, access, incident and history decisions (P0)
 
+Follow-up progress: AWS/Lambda/RDS identity, direct DB target, live code hash, all 28 pending source IDs and their new-object absences are now verified. No IAM/network change was necessary. Remaining Phase 0 work includes earlier-baseline/grant review, environment ownership classification, approved history mode, least-privilege cutover design, log-exposure decisions, and snapshot/restore proof.
+
 - **Objective:** establish exact serving resource/artifact/database and choose supported reconciliation mode.
 - **Files:** this plan; future operator-manual evidence updates only. No implementation yet.
 - **Changes:** record allowlisted ARNs/environment boundaries, live hash/revision/API integration, RDS/catalog/history/backup metadata; assess secret-bearing job-log access and rotation scope; approve existing-chain versus explicit SQL mode.
@@ -542,12 +558,12 @@ The following phases are a proposed execution order **after explicit approval**.
 
 | Blocker/decision | Owner evidence/approval required |
 | --- | --- |
-| Live Lambda/RDS/API/S3/IAM/log access denied to MCP | Provide an existing appropriately scoped read-only path or privately supplied sanitized metadata; do not grant broad write access as a workaround |
-| Actual DB catalog/history and serving-package requirements unknown | Network-authorized read-only preflight for exact runtime DB and secure deployed artifact identity |
-| Reported two missing columns not independently rechecked | Catalog/role comparison and sanitized runtime error metadata; no user records needed |
+| Earlier schema/security parity not exhaustively audited | Verify effects/grants/ownership of the 31 recorded migrations, role memberships, seed/reference provenance and both old/new application compatibility; pending-chain diagnosis is already confirmed |
+| Remaining API/S3/IAM/log metadata not inspected through operator access | Use the now-proven existing operator path for targeted read-only queries when needed; connector identity remains restricted, no broad access grant required |
+| Runtime database uses master login with CREATEROLE/CREATEDB/table ownership | Approve and test separate least-privilege runtime login/grants/authentication/tenant behavior before credential cutover; no live role/config changes in this audit |
 | Environment names may conceal production beta target | Explicit staging/production resource/data boundary and protected variable scope approval |
 | Secret-bearing environment output in existing job log | Restrict future output, private exposure review and separately approved rotation/revocation; no secret values in plan |
-| Current backups/PITR/restore unverified | Completed backup evidence, recovery access, isolated restore drill, accepted RPO/RTO |
+| Backup metadata verified, recovery capability not proven | One-day retention/latest restorable time observed; still require completed snapshot evidence, KMS/recovery access, isolated restore drill and accepted RPO/RTO |
 | SQL-only repair conflicts with pending EF maintenance gate | Choose existing-chain path or approve explicit physical-compatibility/maintenance policy; never reset history |
 | Type/backfill/destructive operations may exist in pending chain | Approve exact operations, rehearsal, lock/transaction budgets and irreversible recovery separately |
 | Deployment release bucket not identified | Reuse suitable bucket after inspection or approve minimal new infrastructure; media bucket reuse not assumed |
@@ -582,7 +598,7 @@ Approving this document alone does not authorize AWS mutation, package upload, s
 
 ## Appendix A. Exact source change chain after the historical October 24 state
 
-These **28 existing files** are later than the historically documented `20261024200000_AddWorkoutExerciseExclusionsV010`. They are not a verified live pending list. All reside under `src/MuscleCuties.Infrastructure.PostgreSql/Persistence/Migrations/`. Compare their complete Up effects, including security/data operations, rather than equating a present column with a completed migration.
+These **28 existing files** are later than `20261024200000_AddWorkoutExerciseExclusionsV010` and are **now the verified live pending source-ID list**. All reside under `src/MuscleCuties.Infrastructure.PostgreSql/Persistence/Migrations/`. Their new-object effects were compared to the live catalog and found absent. Compare complete Up effects, including security/data operations, rather than equating a present column with a completed migration.
 
 | Filename | Objects/operations to compare; reconciliation cautions |
 | --- | --- |
@@ -616,3 +632,99 @@ These **28 existing files** are later than the historically documented `20261024
 | `20261028190000_AddWorkoutCycleReadinessOccurrences.cs` | Planning-state required pending boolean default false and nullable pain-review date; `app.workout_cycle_readiness_occurrences` with fingerprint/JSONB/timestamp, composite owner/day FK, owner/day uniqueness, FORCE RLS, grants and discovery-function pending predicate. |
 
 These post-October-24 Up methods do not drop user tables/columns, but they include conversion, ownership changes, constraint relaxation and operational cursor initialization. That does not make the chain automatically safe. If the actual target predates the historical state, the earlier profile-field transformation/removal and all prior dependencies must be included in review. This plan intentionally contains no executable production DDL.
+
+## Appendix B. Verified live database follow-up
+
+Metadata captured **2026-10-29 17:01:15 EDT / 21:01:15 UTC**. Access used the existing `musclecuties-operator` local SDK profile; no IAM/network/credential changes were made. The previous denied connector identity remains separate. This audit used temporary local diagnostic tooling, not new application code, a Lambda invocation, a production migration or a new migration framework.
+
+Connection values came from the live function configuration and remained in memory. The host was checked against RDS DescribeDBInstances before connection. AWS CA/hostname verification, TLSv1.3 and an explicitly read-only repeatable-read transaction were verified. Queries read only catalog, role and migration-history metadata; no application/user records, backfill eligibility or account behavior were queried. The session ended with ROLLBACK and closed.
+
+### Evidence and limits
+
+| Observation | Verified result |
+| --- | --- |
+| Runtime/database binding | `musclecuties-backend-api` → direct endpoint of `musclecuties-staging-db` → configured/current database `musclecuties_staging` |
+| Serving artifact identity | Live CodeSha256 exactly matches job 17588691562: `gS2dwDP9vlJ+p9xMwqEZkvlfL0tCOPKouzp2SOIf508=` |
+| Engine/TLS/session | PostgreSQL 17.5; TLSv1.3; VerifyFull; `transaction_read_only=on` |
+| History location | `public."__EFMigrationsHistory"` |
+| Applied source IDs | 31; highest `20261024200000_AddWorkoutExerciseExclusionsV010`; recorded ProductVersion `10.0.4`; zero unknown applied IDs |
+| Pending source IDs | Exactly the 28 full IDs in Appendix A; no corresponding new-object partial application found in expected schemas |
+| Missing incident columns | `app.workout_injury_logs.cleared_date`; `app.workout_session_logs.confirmed_active_seconds` |
+| Catalog collected | 62 tables, 594 columns, 204 constraints, 236 indexes, 41 policies, four function metadata entries, nine relevant role records |
+| Index health in captured set | No invalid/not-ready indexes found; this does not establish missing expected indexes exist |
+| Runtime principal | `mc_admin`, matches RDS MasterUsername; CREATEROLE and CREATEDB true, table owner; declared rolsuper/rolbypassrls false. Effective inherited permissions and complete memberships were not collected; no claim that tenant isolation is proven. |
+| Local sanitized metadata SHA-256 | `3eb6a8f8a41219db66ee7f78d5d89951bc4ada6f6f3db555fbc82be57059be40` |
+| Local sanitized summary SHA-256 | `bbb5089b9d910c53a7773aea19ad1fbeae600c2277b53a033775304b45043a1a` |
+
+The sanitized metadata/summary were retained temporarily under `/private/tmp/musclecuties-postgres-readonly-metadata.json` and `/private/tmp/musclecuties-postgres-readonly-summary.json`; neither contains connection strings/passwords/application rows or is added to Git. Queries/procedure are described in section 8 so evidence can be refreshed. Fingerprints establish this snapshot's identity, not a guarantee against later drift.
+
+### Physically absent parent tables — 11
+
+| Schema | Missing table |
+| --- | --- |
+| `app` | `workout_account_planning_states` |
+| `app` | `workout_completion_day_credits` |
+| `app` | `workout_injury_episodes` |
+| `app` | `workout_injury_prescriptions` |
+| `app` | `workout_reconciliation_cursor` |
+| `app` | `workout_injury_prescription_links` |
+| `catalog` | `workout_template_volume_floors` |
+| `app` | `hiit_evidence_capture_challenges` |
+| `app` | `strength_style_offers` |
+| `app` | `workout_injury_omitted_slots` |
+| `app` | `workout_cycle_readiness_occurrences` |
+
+Their PKs, unique/check/FK constraints, target ownership/grants and RLS policies cannot exist on absent tables. Final definitions/dependencies remain those in Appendix A; do not create empty shells and declare compatibility.
+
+### Physically absent later ADD COLUMN effects — 43
+
+| Parent | Missing columns |
+| --- | --- |
+| Existing `app.workout_plan_proposals_v02` | `lease_id`, `lease_fence`, `lease_expires_at_utc` |
+| Existing `app.workout_days` | `is_removed_by_safety`, `safety_injury_id`, `safety_activity_type_id`, `activity_type_id`, `day_order`, `planned_activity_prescription_json` |
+| Existing `app.workout_injury_logs` | `cleared_date` |
+| Existing `app.workout_session_logs` | `planned_workout_day_id`, `planned_time_zone_id`, `planned_time_zone_version`, `planned_local_date`, `confirmed_active_seconds`, `timing_interval_id`, `timing_interval_started_at_utc`, `timing_interval_last_confirmed_at_utc`, `timing_interval_confirmed_seconds`, `planned_prescription_snapshot_json`, `unplanned_activity_type`, `unplanned_completion_local_date`, `unplanned_completion_time_zone_id`, `unplanned_completion_time_zone_version` |
+| Existing `app.workout_logs` | `planned_session_id` |
+| Existing `app.workout_day_exercises` | `planning_slot_id`, `origin_workout_day_exercise_id`, `injury_original_exercise_id`, `injury_restoration_required_from_date`, `planning_template_id`, `planning_template_version`, `planning_session_index`, `target_repetitions_in_reserve` |
+| Absent `app.workout_account_planning_states` | `answer_version`, `answers_json`, `safety_regeneration_pending`, `deload_evidence_through_exclusive`, `deload_start_date`, `deload_end_exclusive`, `cycle_readiness_pending`, `cycle_readiness_pain_review_date` |
+| Absent `app.workout_injury_prescriptions` | `original_planning_slot_id`, `original_origin_workout_day_exercise_id` |
+
+The first six rows total 33 additions on existing tables; the last two total ten effects on missing new parents. This count excludes columns originally declared inside the 11 CREATE TABLE bodies. Since planning-state is absent, there is **no existing `answers_json` on this target to convert**; text→JSONB rewrite/invalid-existing-JSON concerns remain relevant to other or partially applied environments, not this observed starting state. Likewise the earlier destructive profile migration is already recorded in the 31-ID ledger; do not replay it as a pending change.
+
+### Missing explicit indexes — 19
+
+These source-defined names are absent; implicit PK/unique-constraint indexes are additional dependent effects, not included in this count:
+
+```text
+ix_workout_account_planning_states_user_id
+ix_workout_completion_day_credits_user_id
+ix_workout_completion_day_credits_user_id_local_date
+ix_workout_injury_episodes_user_id
+ix_workout_injury_episodes_user_id_injury_log_id_cleared_on
+ix_workout_injury_episodes_user_id_injury_log_id
+ix_workout_injury_prescriptions_user_id
+ix_workout_injury_prescriptions_user_id_episode_id_original_workout_day_exercise_id
+ix_workout_injury_prescription_links_user_id
+ix_injury_links_episode
+ux_injury_links_prescription_episode
+ix_hiit_evidence_capture_challenges_user_id
+ix_hiit_evidence_capture_challenges_user_id_expires_at_utc
+ix_strength_style_offers_user_id
+ix_strength_style_offers_user_id_revision_id
+ix_workout_injury_omitted_slots_user_id
+ix_workout_injury_omitted_slot_identity
+ix_workout_cycle_readiness_occurrences_user_id
+ix_workout_cycle_readiness_occurrences_user_id_workout_day_id
+```
+
+### Missing functions, roles and policies
+
+- `app.lock_workout_planning_catalog()` and `app.discover_pending_workout_owners(uuid, integer)` are absent.
+- Roles `musclecuties_workout_discovery_owner` and `musclecuties_workout_dispatch` are absent.
+- Nine new tenant-table `tenant_isolation` policies and planning-state `workout_pending_discovery` are absent with their parents, as is ENABLE/FORCE RLS for those tables.
+- Required grants on those absent tables/functions cannot be effective. Existing table ACLs, all role memberships and earlier function source parity remain to be audited; four existing function fingerprints alone do not prove matching definitions.
+- Cursor initialization, floor ownership transfer and floor-attribution relaxation have no live parent target. Preserve idempotent semantics when creating the reviewed final state; never fabricate historical user provenance.
+
+### Consequence for the implementation decision
+
+The access blocker is closed without changing infrastructure. The incident is verified code/schema deployment drift across the 28-change chain, not merely two missing columns. The safest next planning decision is to rehearse **that exact observed 31→59 source change set**, then approve either existing migrations or equivalent explicit reconciliation with a supported history policy. No DDL/DML, seed, role mutation, package upload, deployment, Lambda invocation or live smoke write occurred in this follow-up. Execution remains stopped pending explicit implementation/repair approval.
