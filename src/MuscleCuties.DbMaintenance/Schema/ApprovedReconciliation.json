@@ -1,0 +1,18 @@
+{
+  "contractVersion": "1.0.0",
+  "mode": "sql-reconciled",
+  "approved": true,
+  "approvedBy": "denis-petruk",
+  "approvalReference": "OWNER-APPROVAL-RELEASE-BLOCKER-20261029",
+  "targetFingerprintSha256": "b022400b5b2bc8b37e8d58b60c3156ff3b5e1bf3d7b54dc879d79e3ce84a126a",
+  "expectedHistoryMode": "exact-source",
+  "operations": [
+    {
+      "id": "20261029_grant_workout_calendar_app_access",
+      "sqlFile": "Schema/Reconciliation/20261029_grant_workout_calendar_app_access.sql",
+      "sha256": "bb95582babcfbacbe5c43f241f0cd2cb6db6a99d2a4e1c0270df4e38c03241ae",
+      "transaction": "transactional",
+      "dependsOn": []
+    }
+  ]
+}

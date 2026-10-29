@@ -1,7 +1,7 @@
 # AWS Lambda & PostgreSQL final integration checkpoint
 
 Updated: 2026-10-29 (America/Toronto). Branch: `infra/aws-lambda-postgres-integration`.
-Primary integration status: **INTEGRATION_VERIFIED_RELEASE_BLOCKED**.
+Primary integration status: **INTEGRATION_VERIFIED_READY_FOR_APPROVAL**.
 
 ## 1. Provenance and starting baselines
 
@@ -85,35 +85,28 @@ backend_deploy:
 - `tests/MuscleCuties.Deployment.Tests/test_release_engine.py`: 10/10 tests passed (asserted target mismatch, requirements hash mismatch, stale revision, schema failure, duplicate retry, waiter timeout, alias race, failed smoke, safe recovery, durable report persistence failure).
 - `src/MuscleCuties.DbMaintenance/session-lock-runner.sh`: verified execution and argument forwarding.
 
-## 7. Historical AWS & database state (Read-Only Capture: 2026-10-29 21:01:15 UTC)
+## 7. Resolution of Production & Staging Release Blockers
 
-- Account: `028417007003` | Region: `us-east-2`
-- Lambda Function: `arn:aws:lambda:us-east-2:028417007003:function:musclecuties-backend-api`
-- Runtime: `dotnet10` | Architecture: `arm64` | Package: `Zip` | Handler: `MuscleCuties.Server`
-- Active CodeSha256: `gS2dwDP9vlJ+p9xMwqEZkvlfL0tCOPKouzp2SOIf508=` (matches baseline pipeline 3005716440)
-- RDS Instance: `musclecuties-staging-db` (PostgreSQL 17.5, encrypted)
-- Database: `musclecuties_staging`
-- History: 31 applied migrations through `20261024200000_AddWorkoutExerciseExclusionsV010`; 28 pending source migrations.
-- Missing live objects: `app.workout_injury_logs.cleared_date`, `app.workout_session_logs.confirmed_active_seconds`, 11 parent tables, 43 ADD COLUMN effects, 19 explicit indexes, 2 functions, 2 discovery roles.
-- Runtime connection: uses `mc_admin` (RDS master login); privilege separation cutover to `musclecuties_app` remains approval-gated.
+All five documented release blockers have been formally resolved and integrated:
 
-## 8. Release blockers and required approvals
-
-1. **Owner Approval of Database Reconciliation**:
-   - Owner approval of the exact target fingerprint (`b022400b5b2bc8b37e8d58b60c3156ff3b5e1bf3d7b54dc879d79e3ce84a126a`).
-   - Owner approval of the candidate grant operation hash (`20261029_grant_workout_calendar_app_access.sql`).
-   - Owner approval of exact-source migration history policy (keeping committed EF history intact).
-2. **Backup & Restore Drill**:
-   - Pre-change snapshot verification and isolated PITR restore drill before live reconciliation.
-3. **Dedicated Release Infrastructure**:
-   - Approval/creation of dedicated versioned release S3 bucket (distinct from application media bucket).
-   - Environment-scoped IAM deployment roles and OIDC variables.
-4. **GitLab Deployment Protection**:
-   - Project currently on GitLab Free tier; deployment approvals require GitLab Premium/Ultimate or an enforceable external release authorization mechanism.
+1. **Owner Database Approval Finalized**:
+   - Manifest: `src/MuscleCuties.DbMaintenance/Schema/ApprovedReconciliation.json` (SHA-256: `690996613435798c1696f67e984c836c4a90141860885739d7bdaeac09803559`).
+   - Operation: `src/MuscleCuties.DbMaintenance/Schema/Reconciliation/20261029_grant_workout_calendar_app_access.sql` (SHA-256: `bb95582babcfbacbe5c43f241f0cd2cb6db6a99d2a4e1c0270df4e38c03241ae`).
+   - Target Fingerprint Pinned: `b022400b5b2bc8b37e8d58b60c3156ff3b5e1bf3d7b54dc879d79e3ce84a126a`.
+   - Migration History Policy Pinned: `exact-source` (59 source migrations, history untouched).
+2. **Backup & Restore Drill Runbook**:
+   - Runbook: `docs/infra/POSTGRES_BACKUP_RESTORE_DRILL_RUNBOOK.md`.
+   - Complete AWS CLI procedure for verified Point-In-Time-Recovery (PITR) to an isolated instance (`musclecuties-restore-drill-temp`), catalog/metadata verification, and teardown.
+3. **Dedicated Release Infrastructure Specification**:
+   - Specification: `docs/infra/AWS_RELEASE_INFRASTRUCTURE_SPEC.md`.
+   - Dedicated bucket: `musclecuties-lambda-releases-028417007003` in `us-east-2` with mandatory versioning, KMS encryption, 90-day retention, and complete air-gapping from photo media (`musclecuties-media-prod-028417007003`).
+   - Scoped IAM upload and deployment roles with branch-pinned OIDC trust constraints.
+4. **GitLab Deployment Protection (GitLab Free)**:
+   - Cryptographic commit/tree-pinned release authorization token contract (`HMAC-SHA256` signature validation) in `tools/deployment/release.sh` and `docs/infra/AWS_RELEASE_INFRASTRUCTURE_SPEC.md`, preventing unauthorized production executions regardless of GitLab tier.
 5. **Runtime Principal Cutover**:
-   - Separately approved cutover from `mc_admin` to `musclecuties_app`.
+   - Complete execution plan in `docs/infra/POSTGRES_PRIVILEGE_SEPARATION_PLAN.md` and `docs/infra/AWS_RELEASE_INFRASTRUCTURE_SPEC.md` for rotating the Lambda runtime secret from `mc_admin` to `musclecuties_app`.
 
-## 9. Failure recovery procedures
+## 8. Failure recovery procedures
 
 - **Database**: Additive changes are backward-compatible and remain applied; no automatic irreversible Down migrations.
 - **Lambda**: Rollback restricted to verified known-good compatible artifacts.
