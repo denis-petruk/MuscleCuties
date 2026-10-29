@@ -160,7 +160,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     public bool HasNoPlan => string.IsNullOrEmpty(ActivePlanName);
     public bool HasInProgressWorkout => InProgressWorkout is { IsInProgress: true, WorkoutDayId: > MissingWorkoutDayId };
-    public bool ShowNoPlanPrompt => _hasLoadedOverview && !IsBusy && !IsLoadError && HasNoPlan;
+    public bool ShowNoPlanPrompt => _hasLoadedOverview && HasNoPlan && HasNoWorkouts;
     public bool HasWorkouts => !IsBusy && Workouts.Count > 0;
     public bool HasNoWorkouts => !IsBusy && !IsLoadError && Workouts.Count == 0;
     public string ActivePlanTitle => ActivePlanName ?? "No active plan";
@@ -345,9 +345,10 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                 AccentColor = WorkoutPresentationPalette.Background(day.Tag),
                 AccentTextColor = WorkoutPresentationPalette.Text(day.Tag)
             }).ToArray();
+            // Publish the plan before any advisory call so a secondary failure cannot hide it.
+            SelectWeek(weekToRestore);
             await LoadInjuryBannerAsync();
             WriteLoadStage("injury banner", loadStarted);
-            SelectWeek(weekToRestore);
             WriteLoadStage("view state", loadStarted);
             // NotifyWorkoutStateProperties() is called by OnWorkoutsChanged (via ApplyFilter)
             // and by OnActivePlanChanged. No explicit call needed here.
@@ -780,12 +781,26 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     private async Task LoadInjuryBannerAsync()
     {
-        var impact = await _injuries.GetImpactAsync();
-        HasActiveInjuries = impact.HasActiveInjuries;
-        InjuryBannerSummary = impact.Summary;
-        BlockedExerciseNames = new ObservableCollection<string>(impact.BlockedExercises);
-        RehabExerciseNames = new ObservableCollection<string>(impact.RehabExercises);
-        BlockedCardioNames = new ObservableCollection<string>(impact.BlockedActivities);
+        // The safety banner is advisory. A failure here must never hide an otherwise usable plan.
+        try
+        {
+            var impact = await _injuries.GetImpactAsync();
+            HasActiveInjuries = impact.HasActiveInjuries;
+            InjuryBannerSummary = impact.Summary;
+            BlockedExerciseNames = new ObservableCollection<string>(impact.BlockedExercises);
+            RehabExerciseNames = new ObservableCollection<string>(impact.RehabExercises);
+            BlockedCardioNames = new ObservableCollection<string>(impact.BlockedActivities);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Workout] Injury banner unavailable ({ex.GetType().Name}).");
+            HasActiveInjuries = false;
+            InjuryBannerSummary = string.Empty;
+            BlockedExerciseNames = new ObservableCollection<string>();
+            RehabExerciseNames = new ObservableCollection<string>();
+            BlockedCardioNames = new ObservableCollection<string>();
+        }
+
         NotifyInjuryBannerProperties();
     }
 
