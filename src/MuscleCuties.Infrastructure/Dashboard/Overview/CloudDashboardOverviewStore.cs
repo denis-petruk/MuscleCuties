@@ -11,7 +11,6 @@ namespace MuscleCuties.Infrastructure.Dashboard.Overview;
 
 public sealed class CloudDashboardOverviewStore(
     MobileJourneyCloudGateway cloudGateway,
-    LocalDashboardOverviewStore? localFallback = null,
     IHealthSyncService? healthSync = null,
     IServiceScopeFactory? scopeFactory = null) : IDashboardOverviewStore
 {
@@ -22,10 +21,6 @@ public sealed class CloudDashboardOverviewStore(
         var cloud = await cloudGateway.GetDashboardOverviewAsync(request.Today, request.TimeZoneId, ct).ConfigureAwait(false);
         if (cloud.Status == BackendApiStatus.Success && cloud.Data is not null)
             return await EnrichWithHealthKitIfNeededAsync(cloud.Data).ConfigureAwait(false);
-
-        if (localFallback is not null)
-            return await localFallback.LoadAsync(request, ct).ConfigureAwait(false);
-
         return CloudStoreResponse.RequireData(cloud, "dashboard overview");
     }
 
@@ -34,10 +29,6 @@ public sealed class CloudDashboardOverviewStore(
         var cloud = await cloudGateway.GetDashboardCalendarAsync(request.Year, request.Month, request.Today, ct).ConfigureAwait(false);
         if (cloud.Status == BackendApiStatus.Success && cloud.Data is not null)
             return cloud.Data;
-
-        if (localFallback is not null)
-            return await localFallback.LoadCalendarAsync(request, ct).ConfigureAwait(false);
-
         return CloudStoreResponse.RequireData(cloud, "dashboard calendar");
     }
 

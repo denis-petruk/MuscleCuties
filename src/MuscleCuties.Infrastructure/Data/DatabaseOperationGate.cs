@@ -1,9 +1,9 @@
 namespace MuscleCuties.Core.Data;
 
-// SQLite's async provider can do work synchronously. Page loads use this gate
+// The local storage provider can do work synchronously. Page loads use this gate
 // to keep that work off the UI thread and to serialize local database access.
 // External I/O may temporarily yield the gate; the same workflow reacquires it
-// before it can use its DbContext again.
+// before it can use its data store again.
 internal static class DatabaseOperationGate
 {
     private static readonly SemaphoreSlim Gate = new(1, 1);
