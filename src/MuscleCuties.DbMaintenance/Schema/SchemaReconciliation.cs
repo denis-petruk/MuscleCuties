@@ -322,7 +322,22 @@ public static class SchemaReconciliation
             !Regex.IsMatch(normalized, "^[A-Za-z0-9_./-]+$"))
             return false;
 
-        fullPath = Path.GetFullPath(Path.Combine(repositoryRoot, normalized));
+        var candidates = new[]
+        {
+            Path.GetFullPath(Path.Combine(repositoryRoot, normalized)),
+            Path.GetFullPath(Path.Combine(repositoryRoot, "src", "MuscleCuties.DbMaintenance", normalized))
+        };
+
+        foreach (var candidate in candidates)
+        {
+            if (File.Exists(candidate))
+            {
+                fullPath = candidate;
+                return true;
+            }
+        }
+
+        fullPath = candidates[0];
         var reconciliationRoot = Path.GetFullPath(Path.Combine(repositoryRoot, ReconciliationDirectory));
         return fullPath.StartsWith(reconciliationRoot + Path.DirectorySeparatorChar, StringComparison.Ordinal);
     }
