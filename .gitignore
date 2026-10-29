@@ -5,6 +5,7 @@ obj/
 
 # Local secrets, signing material, and machine-specific settings
 .env
+docs
 .env.*
 !.env.example
 /certs/
