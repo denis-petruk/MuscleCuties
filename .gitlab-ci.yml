@@ -82,10 +82,17 @@ verify_postgres_compatibility:
     - export MC_REGISTRATION_TEST_POSTGRES="$MC_REGISTRATION_WRITE_TEST_POSTGRES"
     - export MC_RETRY_TEST_POSTGRES='Host=127.0.0.1;Database=mc_retry_disposable;Username=postgres;Password=ci_disposable_only'
     - export MC_PG09_LOAD_POSTGRES='Host=127.0.0.1;Database=mc_pg09_disposable;Username=mc_ci_migrator;Password=ci_disposable_only'
+    - export MC_SCHEMA_COMPATIBILITY_POSTGRES='Host=127.0.0.1;Database=postgres;Username=postgres;Password=ci_disposable_only'
     - |
       python3 - <<'PY'
       import os
-      expected = {'MC_REGISTRATION_WRITE_TEST_POSTGRES': ('mc_test_ci', 'postgres'), 'MC_REGISTRATION_TEST_POSTGRES': ('mc_test_ci', 'postgres'), 'MC_RETRY_TEST_POSTGRES': ('mc_retry_disposable', 'postgres'), 'MC_PG09_LOAD_POSTGRES': ('mc_pg09_disposable', 'mc_ci_migrator')}
+      expected = {
+          'MC_REGISTRATION_WRITE_TEST_POSTGRES': ('mc_test_ci', 'postgres'),
+          'MC_REGISTRATION_TEST_POSTGRES': ('mc_test_ci', 'postgres'),
+          'MC_RETRY_TEST_POSTGRES': ('mc_retry_disposable', 'postgres'),
+          'MC_PG09_LOAD_POSTGRES': ('mc_pg09_disposable', 'mc_ci_migrator'),
+          'MC_SCHEMA_COMPATIBILITY_POSTGRES': ('postgres', 'postgres')
+      }
       for name, (database, user) in expected.items():
           parts = dict(part.split('=', 1) for part in os.environ[name].split(';'))
           if parts != {'Host': '127.0.0.1', 'Database': database, 'Username': user, 'Password': 'ci_disposable_only'}:
@@ -101,7 +108,8 @@ verify_postgres_compatibility:
     # A fresh database alone does not prove the observed 31-to-59 upgrade or compatibility checks.
     - test -f tests/MuscleCuties.Registration.Integration.Tests/DatabaseSchemaCompatibilityTests.cs
     - test -f tests/MuscleCuties.Registration.Integration.Tests/SchemaReconciliationTests.cs
-    - run_tests schema_compatibility tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj --filter 'FullyQualifiedName~DatabaseSchemaCompatibilityTests|FullyQualifiedName~SchemaReconciliationTests'
+    - test -f tests/MuscleCuties.Registration.Integration.Tests/MigrationChainRehearsalTests.cs
+    - run_tests schema_compatibility tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj --filter 'FullyQualifiedName~DatabaseSchemaCompatibilityTests|FullyQualifiedName~SchemaReconciliationTests|FullyQualifiedName~MigrationChainRehearsalTests'
 
 verify_mobile_contracts:
   extends: .dotnet_job
@@ -217,6 +225,8 @@ upload_lambda_artifact:
     - apt-get update && apt-get install -y --no-install-recommends awscli jq python3
     - dotnet restore src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj
     - dotnet build src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj --configuration Release --no-restore
+    - chmod +x src/MuscleCuties.DbMaintenance/session-lock-runner.sh
+    - export MC_DB_LOCK_RUNNER="${CI_PROJECT_DIR}/src/MuscleCuties.DbMaintenance/session-lock-runner.sh"
     - 'case "${CI_DEBUG_TRACE:-false}" in [Tt][Rr][Uu][Ee]) exit 1;; esac'
     - |
       : "${AWS_ROLE_ARN:?Protected deployment role is required}" "${AWS_OIDC_TOKEN:?OIDC token is required}"
