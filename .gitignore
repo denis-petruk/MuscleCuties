@@ -1,11 +1,22 @@
-# .NET and MAUI build outputs
+# ---------------------------------------------------------------------------
+# MuscleCuties — repository ignore rules
+# ---------------------------------------------------------------------------
+
+# Build output
 bin/
 obj/
 /packages/
+*.binlog
 
-# Local secrets, signing material, and machine-specific settings
+# Generated analysis output (local only; regenerate with the graph tool)
+graphify-out/
+
+# Throwaway database-reset helper (see its README; delete it when finished)
+temp-db-reset/
+.temp-db-reset
+
+# Local secrets, signing material and machine-specific settings
 .env
-docs
 .env.*
 !.env.example
 /certs/
@@ -20,7 +31,7 @@ appsettings.*.local.json
 *.mobileprovision
 *.user
 
-# Test results and code coverage
+# Test results and coverage
 [Tt]est[Rr]esults/
 *.trx
 *.log
@@ -32,7 +43,7 @@ coverage/
 _ReSharper*/
 /artifacts/
 
-# Local agent context and profiles are kept outside Git.
+# Local agent context and profiles stay outside Git
 .agents/
 .codex/
 **/.codex/
@@ -40,26 +51,39 @@ _ReSharper*/
 .impeccable/
 PRODUCT.md
 DESIGN.md
+CLAUDE.md
 
-# Rider/ReSharper
+# Rider / Visual Studio
 .idea/
 .vs/
 .run/
 riderModule.iml
 /_ReSharper.Caches/
 *.sln.iml
+*.suo
 
-# Generated helper-script bytecode
+# Xcode and iOS build products
+DerivedData/
+xcuserdata/
+*.xcarchive
+*.ipa
+
+# Cloudflare local state
+.wrangler/
+
+# Python helper bytecode
 __pycache__/
 *.pyc
 
 # macOS
 .DS_Store
 ._*
+Thumbs.db
 
-# Local, immutable implementation snapshots (never publish source archives)
+# Local, immutable implementation snapshots
 .foundation-baselines/
-.wrangler
-CLAUDE.md
-AGENTS.md
-.temp-db-reset
+
+# Patch residue
+*.orig
+*.rej
+*~
