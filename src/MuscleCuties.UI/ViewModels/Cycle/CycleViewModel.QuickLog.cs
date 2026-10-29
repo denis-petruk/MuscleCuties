@@ -21,6 +21,9 @@ public partial class CycleViewModel
     [ObservableProperty] private string _quickLogDateText = string.Empty;
     private int _quickLogLoadVersion;
     [ObservableProperty] private string _quickLogStatusText = string.Empty;
+
+    /// <summary>True when the last save was rejected because symptoms had no active cycle to attach to.</summary>
+    [ObservableProperty] private bool _isQuickLogPeriodStartNeeded;
     [ObservableProperty] private FlowIntensity? _selectedFlowIntensity;
     [ObservableProperty] private ObservableCollection<SymptomOptionItem> _symptomOptions = new();
 
@@ -28,6 +31,7 @@ public partial class CycleViewModel
     public RelayCommand CloseQuickLogSheetCommand { get; private set; } = null!;
     public RelayCommand TogglePeriodStartedCommand { get; private set; } = null!;
     public RelayCommand TogglePeriodEndedCommand { get; private set; } = null!;
+    public RelayCommand StartPeriodFromQuickLogCommand { get; private set; } = null!;
     public RelayCommand<FlowOptionItem> SelectFlowCommand { get; private set; } = null!;
     public RelayCommand<SymptomOptionItem> ToggleSymptomCommand { get; private set; } = null!;
     public AsyncRelayCommand SaveQuickLogCommand { get; private set; } = null!;
@@ -38,6 +42,7 @@ public partial class CycleViewModel
         CloseQuickLogSheetCommand = new RelayCommand(CloseQuickLogSheet);
         TogglePeriodStartedCommand = new RelayCommand(TogglePeriodStarted);
         TogglePeriodEndedCommand = new RelayCommand(TogglePeriodEnded);
+        StartPeriodFromQuickLogCommand = new RelayCommand(StartPeriodFromQuickLog);
         SelectFlowCommand = new RelayCommand<FlowOptionItem>(SelectFlow);
         ToggleSymptomCommand = new RelayCommand<SymptomOptionItem>(ToggleSymptom);
         SaveQuickLogCommand = new AsyncRelayCommand(SaveQuickLogCoreAsync, () => !IsQuickLogLoading && !IsBusy);
@@ -55,6 +60,7 @@ public partial class CycleViewModel
                            (day?.HasRecordedObservation == true ? " · Recorded" :
                                day?.IsPredictedFuture == true ? " · Predicted" : string.Empty);
         QuickLogStatusText = string.Empty;
+        IsQuickLogPeriodStartNeeded = false;
 
         // An estimated menstrual phase is not evidence that a period started.
         IsPeriodStarted = false;
@@ -107,8 +113,24 @@ public partial class CycleViewModel
     private void CloseQuickLogSheet()
     {
         IsQuickLogSheetVisible = false;
+        IsQuickLogPeriodStartNeeded = false;
         Interlocked.Increment(ref _quickLogLoadVersion);
         IsQuickLogLoading = false;
+    }
+
+    /// <summary>
+    /// Recovery action for the "symptoms without an active cycle" rejection: turn the visible period-start
+    /// toggle on for the selected day, so the next save creates the cycle the symptoms attach to.
+    /// </summary>
+    private void StartPeriodFromQuickLog()
+    {
+        if (IsQuickLogLoading) return;
+
+        if (!IsPeriodStarted)
+            TogglePeriodStarted();
+
+        IsQuickLogPeriodStartNeeded = false;
+        QuickLogStatusText = string.Empty;
     }
 
     private void TogglePeriodStarted()
@@ -192,19 +214,23 @@ public partial class CycleViewModel
             if (!await _dailyLog.SaveAsync(new CycleDailyLogRequest(
                     SelectedDate, IsPeriodStarted, IsPeriodEnded, flow,
                     selectedSymptoms)))
-                throw new InvalidOperationException("Active cycle account unavailable.");
+            {
+                QuickLogStatusText = "Active cycle account unavailable.";
+                return;
+            }
 
             IsQuickLogSheetVisible = false;
             await RefreshCycleDataAsync();
             NotifyCycleMutated();
         }
+        catch (CycleSymptomsNeedActiveCycleIssue)
+        {
+            IsQuickLogPeriodStartNeeded = true;
+            QuickLogStatusText = "Record a period start before adding symptoms without a known cycle phase.";
+        }
         catch (CyclePhaseOrderIssue ex)
         {
             QuickLogStatusText = $"This phase would skip a step. Log {ex.SuggestedPhase} first.";
-        }
-        catch (InvalidOperationException)
-        {
-            QuickLogStatusText = "Record a period start before adding symptoms without a known cycle phase.";
         }
         catch (Exception ex)
         {

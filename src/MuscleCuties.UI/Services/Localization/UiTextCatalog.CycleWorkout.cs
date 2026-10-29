@@ -151,6 +151,7 @@ public static partial class UiTextCatalog
         English["Cycle_QuickLog_FlowIntensitySectionTitle"] = "FLOW INTENSITY";
         English["Cycle_QuickLog_HeaderTitle"] = "Quick Log";
         English["Cycle_QuickLog_LoadingSavedEntry"] = "Loading saved entry…";
+        English["Cycle_QuickLog_LogPeriodStartAction"] = "Log period start";
         English["Cycle_QuickLog_PeriodEnded"] = "Period Ended";
         English["Cycle_QuickLog_PeriodStarted"] = "Period Started";
         English["Cycle_QuickLog_PeriodStatusSectionTitle"] = "PERIOD STATUS";
