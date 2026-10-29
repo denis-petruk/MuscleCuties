@@ -112,9 +112,10 @@ public sealed class CloudCycleAndCheckInContractTests
             MutationResponse = (_, _, _) => (BackendApiStatus.Success, responseJson)
         };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            new CloudCyclePhaseEditStore(api).SaveAsync(
-                new CyclePhaseEditRequest(SampleDateTime, CyclePhase.Menstrual, null), CancellationToken.None));
+        var result = await new CloudCyclePhaseEditStore(api).SaveAsync(
+            new CyclePhaseEditRequest(SampleDateTime, CyclePhase.Menstrual, null), CancellationToken.None);
+
+        Assert.Equal(CyclePhaseEditOutcome.Unavailable, result.Outcome);
 
         var mutation = Assert.Single(api.Mutations);
         Assert.Equal(PhaseRoute, mutation.Path);
