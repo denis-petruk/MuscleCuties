@@ -125,7 +125,7 @@ public partial class CycleViewModel
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Menstrual),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme, default),
+                    PhaseThemePalette.GetPhaseExplorerPillColor(CyclePhase.Menstrual, useDarkTheme, default),
                 TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, default),
                 AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, default),
                 IsActivePhase = currentPhase == CyclePhase.Menstrual
@@ -138,7 +138,7 @@ public partial class CycleViewModel
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Follicular),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme, default),
+                    PhaseThemePalette.GetPhaseExplorerPillColor(CyclePhase.Follicular, useDarkTheme, default),
                 TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, default),
                 AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, default),
                 IsActivePhase = currentPhase == CyclePhase.Follicular
@@ -151,7 +151,7 @@ public partial class CycleViewModel
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Ovulatory),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme, default),
+                    PhaseThemePalette.GetPhaseExplorerPillColor(CyclePhase.Ovulatory, useDarkTheme, default),
                 TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, default),
                 AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, default),
                 IsActivePhase = currentPhase == CyclePhase.Ovulatory
@@ -164,7 +164,7 @@ public partial class CycleViewModel
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Luteal),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme, default),
+                    PhaseThemePalette.GetPhaseExplorerPillColor(CyclePhase.Luteal, useDarkTheme, default),
                 TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, default),
                 AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, default),
                 IsActivePhase = currentPhase == CyclePhase.Luteal

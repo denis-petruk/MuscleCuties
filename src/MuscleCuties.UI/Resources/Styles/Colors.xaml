@@ -157,6 +157,11 @@
     <Color x:Key="PhaseThemeFollicularBackgroundDark">#243B27</Color>
     <Color x:Key="PhaseThemeOvulatoryBackgroundDark">#3E3218</Color>
     <Color x:Key="PhaseThemeLutealBackgroundDark">#362548</Color>
+    <!-- Explorer list rows: each phase hue at low strength over CardSurfaceDark, so four stacked rows stay calm instead of reading as saturated blocks. -->
+    <Color x:Key="PhaseThemeMenstrualPillDark">#51353E</Color>
+    <Color x:Key="PhaseThemeFollicularPillDark">#423E3B</Color>
+    <Color x:Key="PhaseThemeOvulatoryPillDark">#4F3A28</Color>
+    <Color x:Key="PhaseThemeLutealPillDark">#493549</Color>
     <Color x:Key="PhaseThemeMenstrualDividerLight">#E8B7BE</Color>
     <Color x:Key="PhaseThemeMenstrualDividerDark">#7A4A54</Color>
     <Color x:Key="PhaseThemeFollicularDividerLight">#B8D9B8</Color>

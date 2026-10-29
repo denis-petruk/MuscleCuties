@@ -20,6 +20,23 @@ internal static class PhaseThemePalette
         };
     }
 
+    /// <summary>
+    /// Fill for the stacked phase rows in the Cycle explorer. Dark theme uses a muted tint that sits close to
+    /// the card surface: the explorer shows all four phases at once, so full-strength phase fills compete with
+    /// the labels. Light theme reuses the existing pastel fills, which are already low contrast on white.
+    /// </summary>
+    public static Color GetPhaseExplorerPillColor(CyclePhase phase, bool useDarkTheme, Color? fallback = null)
+    {
+        return phase switch
+        {
+            CyclePhase.Menstrual => GetThemeColor(useDarkTheme, "CyclePhaseMenstrualLight", "PhaseThemeMenstrualPillDark", fallback),
+            CyclePhase.Follicular => GetThemeColor(useDarkTheme, "CyclePhaseFollicularLight", "PhaseThemeFollicularPillDark", fallback),
+            CyclePhase.Ovulatory => GetThemeColor(useDarkTheme, "CyclePhaseOvulatoryLight", "PhaseThemeOvulatoryPillDark", fallback),
+            CyclePhase.Luteal => GetThemeColor(useDarkTheme, "CyclePhaseLutealLight", "PhaseThemeLutealPillDark", fallback),
+            _ => fallback ?? GetNeutralCardBackgroundColor(useDarkTheme)
+        };
+    }
+
     public static Color GetPhaseTextColor(CyclePhase phase, bool useDarkTheme, Color? fallback = null)
     {
         return phase switch
