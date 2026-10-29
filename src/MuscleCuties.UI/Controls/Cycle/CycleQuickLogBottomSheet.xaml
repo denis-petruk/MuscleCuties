@@ -353,8 +353,19 @@
                 <!-- Footer Save Action -->
                 <Grid
                     Grid.Row="2"
-                    Padding="{StaticResource PresentationActionFooterPadding}">
-                    <Button Style="{StaticResource ButtonPrimary}"
+                    Padding="{StaticResource PresentationActionFooterPadding}"
+                    RowDefinitions="Auto, Auto"
+                    RowSpacing="{StaticResource UiSpacing10}">
+                    <!-- Recovery for symptoms logged without an active cycle: offers the missing step instead of a dead end. -->
+                    <Button
+                        Grid.Row="0"
+                        Style="{StaticResource ButtonSecondary}"
+                        Text="{loc:LocalizedText Cycle_QuickLog_LogPeriodStartAction}"
+                        Command="{Binding StartPeriodFromQuickLogCommand}"
+                        IsVisible="{Binding IsQuickLogPeriodStartNeeded}" />
+                    <Button
+                        Grid.Row="1"
+                        Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Cycle_QuickLog_SaveButton}"
                         Command="{Binding SaveQuickLogCommand}" />
                 </Grid>
