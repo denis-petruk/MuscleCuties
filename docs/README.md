@@ -1,5 +1,9 @@
 # MuscleCuties documentation
 
+- [Beta execution checkpoint](BETA_EXECUTION_CHECKPOINT.md): Current gate register, verification, ownership and signed-in loading investigation; earlier handoff notes are historical.
+- [First beta production-readiness audit](BETA_PRODUCTION_READINESS_AUDIT_20261029.md): Current branch verification and remaining gates B1–B6 for the first production-connected TestFlight candidate.
+- [Beta orchestrator prompt](BETA_ORCHESTRATOR_PROMPT.md): Resumable, checkpoint-driven instructions to close those gates.
+
 - [Breakfast preference and generated oil checkpoint](nutrition-breakfast-oil-cap-20261028.md): Implementation, test evidence and remaining device checks for the in-modal toggle and 14 g oil ceiling.
 
 - [Workout generation rules audit](WORKOUT_GENERATION_RULES_AUDIT.md): Agreed product rules and outstanding implementation and verification gaps.
