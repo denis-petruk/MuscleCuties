@@ -16,6 +16,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj" />
     <ProjectReference Include="../../src/MuscleCuties.Infrastructure.PostgreSql/MuscleCuties.Infrastructure.PostgreSql.csproj" />
     <ProjectReference Include="../../services/MuscleCuties.Server/MuscleCuties.Server.csproj" />
   </ItemGroup>
