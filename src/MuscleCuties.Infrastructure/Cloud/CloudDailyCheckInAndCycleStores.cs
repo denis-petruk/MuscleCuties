@@ -490,14 +490,22 @@ public sealed class CloudCycleDailyLogStore(
         return null;
     }
 
+    internal static bool TryParseSuggestedPhase(string? errorCode, out CyclePhaseDto suggestedPhase)
+    {
+        suggestedPhase = default;
+        if (string.IsNullOrWhiteSpace(errorCode) ||
+            !Enum.TryParse<CyclePhaseDto>(errorCode, true, out var parsed) ||
+            !Enum.IsDefined(parsed) || parsed == CyclePhaseDto.Unknown)
+            return false;
+
+        suggestedPhase = parsed;
+        return true;
+    }
+
     internal static void ThrowPhaseOrderOrConflict(string? errorCode)
     {
-        if (!string.IsNullOrWhiteSpace(errorCode) &&
-            Enum.TryParse<CyclePhaseDto>(errorCode, true, out var suggestedPhase) &&
-            Enum.IsDefined(suggestedPhase) && suggestedPhase != CyclePhaseDto.Unknown)
-        {
+        if (TryParseSuggestedPhase(errorCode, out var suggestedPhase))
             throw new CyclePhaseOrderIssue("This phase would skip a step.", suggestedPhase);
-        }
 
         throw new InvalidOperationException("Cycle phase update conflicted with existing cycle records.");
     }
@@ -522,8 +530,9 @@ public sealed class CloudCyclePhaseEditStore(
     IMuscleCutiesBackendApiClient apiClient) : ICyclePhaseEditStore
 {
     private const string CyclePhasesRoute = "/api/v1/cycle/history/phases";
+    private const string SavedOutcome = "Saved";
 
-    public async Task<bool> SaveAsync(CyclePhaseEditRequest request, CancellationToken cancellationToken)
+    public async Task<CyclePhaseEditResult> SaveAsync(CyclePhaseEditRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         var body = new
@@ -541,10 +550,15 @@ public sealed class CloudCyclePhaseEditStore(
             idempotencyKey: Guid.NewGuid().ToString("N"),
             cancellationToken).ConfigureAwait(false);
 
-        if (response.Status == BackendApiStatus.Conflict)
-            CloudCycleDailyLogStore.ThrowPhaseOrderOrConflict(response.ErrorCode);
-
-        CloudCycleDailyLogStore.RequireSavedPhaseLog(response);
-        return true;
+        return response.Status switch
+        {
+            BackendApiStatus.Success when string.Equals(response.Data?.Outcome, SavedOutcome, StringComparison.Ordinal)
+                => CyclePhaseEditResult.Saved,
+            BackendApiStatus.Conflict
+                when CloudCycleDailyLogStore.TryParseSuggestedPhase(response.ErrorCode, out var suggestedPhase)
+                => CyclePhaseEditResult.OrderConflict(suggestedPhase),
+            BackendApiStatus.ValidationFailed => CyclePhaseEditResult.InvalidInput,
+            _ => CyclePhaseEditResult.Unavailable
+        };
     }
 }

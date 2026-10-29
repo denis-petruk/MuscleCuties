@@ -97,7 +97,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         OpenCycleSettingsCommand = new AsyncRelayCommand(OpenCycleSettingsAsync);
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         AdvancePhaseCommand = new AsyncRelayCommand(AdvancePhaseAsync, CanAdvancePhase);
-        OpenCalendarDayCommand = new RelayCommand<CycleDayItem>(OpenCalendarDay);
         CloseDatePhaseModalCommand = new RelayCommand(CloseDatePhaseModal);
         SelectPhaseOptionCommand = new RelayCommand<CyclePhaseOptionItem>(SelectPhaseOption);
         SaveDatePhaseCommand = new AsyncRelayCommand(SaveDatePhaseAsync, CanSaveDatePhase);
@@ -145,7 +144,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     public int CycleDay => CurrentDay;
     public AsyncRelayCommand AdvancePhaseCommand { get; }
-    public RelayCommand<CycleDayItem> OpenCalendarDayCommand { get; }
     public RelayCommand CloseDatePhaseModalCommand { get; }
     public RelayCommand<CyclePhaseOptionItem> SelectPhaseOptionCommand { get; }
     public AsyncRelayCommand SaveDatePhaseCommand { get; }
@@ -155,6 +153,33 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     public AsyncRelayCommand UseCycleWarningSuggestedPhaseCommand { get; }
     public AsyncRelayCommand<PhaseItem> OpenPhaseDetailsCommand { get; }
     public AsyncRelayCommand OpenCycleSettingsCommand { get; }
+
+    private const string PhaseOrderConflictMessage =
+        "This phase would skip a step. Record the missing shift first.";
+    private const string PhaseEditUnavailableTitleKey = "Cycle_PhaseEdit_UnavailableTitle";
+    private const string PhaseEditUnavailableBodyKey = "Cycle_PhaseEdit_UnavailableBody";
+    private const string PhaseEditInvalidTitleKey = "Cycle_PhaseEdit_InvalidTitle";
+    private const string PhaseEditInvalidBodyKey = "Cycle_PhaseEdit_InvalidBody";
+
+    /// <summary>Maps a non-order outcome to localized copy; returns false when the edit saved.</summary>
+    private static bool TryGetPhaseEditFailureCopy(CyclePhaseEditResult result, out string titleKey, out string bodyKey)
+    {
+        switch (result.Outcome)
+        {
+            case CyclePhaseEditOutcome.InvalidInput:
+                titleKey = PhaseEditInvalidTitleKey;
+                bodyKey = PhaseEditInvalidBodyKey;
+                return true;
+            case CyclePhaseEditOutcome.Unavailable:
+                titleKey = PhaseEditUnavailableTitleKey;
+                bodyKey = PhaseEditUnavailableBodyKey;
+                return true;
+            default:
+                titleKey = string.Empty;
+                bodyKey = string.Empty;
+                return false;
+        }
+    }
 
     private DateTime CurrentDate => _currentDateProvider().Date;
 
@@ -322,25 +347,28 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             var nextPhase = HasActiveCycle
                 ? _phaseProjection.GetNextPhase(new NextCyclePhaseInputDto(CurrentPhase)).NextPhase
                 : CyclePhase.Menstrual;
-            var date = CurrentDate;
-            if (!await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(date, nextPhase,
-                    "Manual phase advance")))
-                throw new InvalidOperationException("Active cycle account unavailable.");
+            var result = await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(CurrentDate, nextPhase,
+                "Manual phase advance"));
+
+            if (result.Outcome == CyclePhaseEditOutcome.OrderConflict && result.SuggestedPhase is { } suggestedPhase)
+            {
+                ShowCycleOrderPopup(PhaseOrderConflictMessage, suggestedPhase);
+                return;
+            }
+
+            if (TryGetPhaseEditFailureCopy(result, out var titleKey, out var bodyKey))
+            {
+                ShowCycleWarningPopup(titleKey, bodyKey);
+                return;
+            }
+
             await RefreshCycleDataAsync();
             NotifyCycleMutated();
-        }
-        catch (CyclePhaseOrderIssue ex)
-        {
-            ShowCycleOrderPopup("This phase would skip a step. Record the missing shift first.", ex.SuggestedPhase);
-        }
-        catch (InvalidOperationException)
-        {
-            ShowCycleWarningPopup("Could not change phase yet", "Check the selected date and earlier cycle records.");
         }
         catch (Exception ex)
         {
             Trace.WriteLine($"[Cycle] Phase advance failed ({ex.GetType().Name}).");
-            ShowCycleWarningPopup("Could not save phase", "Please try again.");
+            ShowCycleWarningPopup(PhaseEditUnavailableTitleKey, PhaseEditUnavailableBodyKey);
         }
         finally
         {
@@ -460,26 +488,30 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         IsBusy = true;
         try
         {
-            if (!await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(date, phase, note)))
-                throw new InvalidOperationException("Active cycle account unavailable.");
+            var result = await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(date, phase, note));
+
+            if (result.Outcome == CyclePhaseEditOutcome.OrderConflict && result.SuggestedPhase is { } suggestedPhase)
+            {
+                ShowPhaseOrderWarning(PhaseOrderConflictMessage, suggestedPhase);
+                return;
+            }
+
+            if (TryGetPhaseEditFailureCopy(result, out var titleKey, out var bodyKey))
+            {
+                PhaseJumpWarningTitle = titleKey;
+                PhaseJumpWarningText = bodyKey;
+                HasPhaseJumpWarning = true;
+                return;
+            }
+
             CloseDatePhaseModal();
             await RefreshCycleDataAsync();
             NotifyCycleMutated();
         }
-        catch (CyclePhaseOrderIssue ex)
-        {
-            ShowPhaseOrderWarning("This phase would skip a step. Record the missing shift first.", ex.SuggestedPhase);
-        }
-        catch (InvalidOperationException)
-        {
-            PhaseJumpWarningTitle = "Let’s keep the cycle in order";
-            PhaseJumpWarningText = "Check the selected date and earlier cycle records.";
-            HasPhaseJumpWarning = true;
-        }
         catch (Exception ex)
         {
             Trace.WriteLine($"[Cycle] Phase date save failed ({ex.GetType().Name}).");
-            PhaseEditStatusText = "Could not save this phase. Please try again.";
+            PhaseEditStatusText = PhaseEditUnavailableBodyKey;
         }
         finally
         {
@@ -702,16 +734,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         IsCycleWarningPopupVisible = true;
     }
 
-    private void ShowCycleRepairPopup(string message)
-    {
-        _cycleWarningSuggestedPhase = null;
-        CycleWarningSuggestedActionText = "Use next phase";
-        OnPropertyChanged(nameof(HasCycleWarningSuggestedPhase));
-        ShowCycleWarningPopup(
-            "Fix the missed shift first",
-            $"{FormatCycleOrderWarningMessage(message)} Tap \"Forgot to log shift\" and choose when the phase really changed.");
-    }
-
     private void CloseCycleWarningPopup()
     {
         IsCycleWarningPopupVisible = false;
@@ -726,29 +748,29 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         try
         {
             var suggestedPhase = _cycleWarningSuggestedPhase.Value;
-            var date = CurrentDate;
-            if (!await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(date, suggestedPhase,
-                    "Manual phase correction")))
-                throw new InvalidOperationException("Active cycle account unavailable.");
+            var result = await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(CurrentDate, suggestedPhase,
+                "Manual phase correction"));
+
+            if (result.Outcome == CyclePhaseEditOutcome.OrderConflict && result.SuggestedPhase is { } nextSuggestion)
+            {
+                ShowCycleOrderPopup(PhaseOrderConflictMessage, nextSuggestion);
+                return;
+            }
+
+            if (TryGetPhaseEditFailureCopy(result, out var titleKey, out var bodyKey))
+            {
+                ShowCycleWarningPopup(titleKey, bodyKey);
+                return;
+            }
+
             CloseCycleWarningPopup();
             await RefreshCycleDataAsync();
             NotifyCycleMutated();
         }
-        catch (CyclePhaseOrderIssue)
-        {
-            ShowCycleRepairPopup("This phase would skip a step.");
-        }
-        catch (InvalidOperationException)
-        {
-            _cycleWarningSuggestedPhase = null;
-            CycleWarningSuggestedActionText = "Use next phase";
-            OnPropertyChanged(nameof(HasCycleWarningSuggestedPhase));
-            ShowCycleWarningPopup("Could not save that yet", "Check the selected date and earlier cycle records.");
-        }
         catch (Exception ex)
         {
             Trace.WriteLine($"[Cycle] Suggested phase save failed ({ex.GetType().Name}).");
-            ShowCycleWarningPopup("Could not save phase", "Please try again.");
+            ShowCycleWarningPopup(PhaseEditUnavailableTitleKey, PhaseEditUnavailableBodyKey);
         }
         finally
         {

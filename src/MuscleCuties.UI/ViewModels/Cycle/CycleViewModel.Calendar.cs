@@ -109,7 +109,7 @@ public partial class CycleViewModel
             RefreshCalendarStrip(CalendarDays, SelectedDate, CurrentDate, UseDarkTheme);
         }
 
-        OpenQuickLog(CalendarStripDays.FirstOrDefault(item => item.Date?.Date == SelectedDate.Date) ?? day);
+        OpenCalendarDay(CalendarStripDays.FirstOrDefault(item => item.Date?.Date == SelectedDate.Date) ?? day);
     }
 
     private void SyncCalendarSelection()

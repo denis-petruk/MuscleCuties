@@ -162,6 +162,10 @@ public static partial class UiTextCatalog
         English["Cycle_WarningPopup_DismissAccessibility"] = "Dismiss warning";
         English["Cycle_WarningPopup_ForgotShiftTitle"] = "Forgot to log shift";
         English["Cycle_WarningPopup_GotItButton"] = "Got it";
+        English["Cycle_PhaseEdit_UnavailableTitle"] = "Could not change phase yet";
+        English["Cycle_PhaseEdit_UnavailableBody"] = "Your cycle records could not be reached, so nothing was changed. Check your connection and try again.";
+        English["Cycle_PhaseEdit_InvalidTitle"] = "That date can't be used";
+        English["Cycle_PhaseEdit_InvalidBody"] = "Choose a date from 1970 onward and save again. Nothing was changed.";
         English["Workout_Activity_OpenWorkoutFormat"] = "Open workout: {0}";
         English["Workout_Readiness_OptionalSession"] = "Optional session";
         English["Workout_Readiness_RequiredSession"] = "Required session";
