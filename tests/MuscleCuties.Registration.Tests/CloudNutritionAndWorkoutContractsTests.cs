@@ -360,7 +360,7 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         var savedPhase = await phaseEditStore.SaveAsync(
             new CyclePhaseEditRequest(today.ToDateTime(TimeOnly.MinValue), CyclePhase.Ovulatory, "Calendar phase edit"),
             CancellationToken.None);
-        Xunit.Assert.True(savedPhase);
+        Xunit.Assert.Equal(CyclePhaseEditOutcome.Saved, savedPhase.Outcome);
         Xunit.Assert.Contains(("PUT", "/api/v1/cycle/history/phases"), apiClient.RecordedCalls);
     }
 

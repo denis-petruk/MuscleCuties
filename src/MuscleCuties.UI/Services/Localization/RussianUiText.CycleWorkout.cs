@@ -162,6 +162,10 @@ internal static partial class RussianUiText
         Values["Cycle_WarningPopup_DismissAccessibility"] = "Отклонить предупреждение";
         Values["Cycle_WarningPopup_ForgotShiftTitle"] = "Забыл зафиксировать смену";
         Values["Cycle_WarningPopup_GotItButton"] = "Понял";
+        Values["Cycle_PhaseEdit_UnavailableTitle"] = "Пока не удалось изменить фазу";
+        Values["Cycle_PhaseEdit_UnavailableBody"] = "Не удалось получить записи цикла, поэтому ничего не изменено. Проверьте подключение и повторите попытку.";
+        Values["Cycle_PhaseEdit_InvalidTitle"] = "Эту дату использовать нельзя";
+        Values["Cycle_PhaseEdit_InvalidBody"] = "Выберите дату не раньше 1970 года и сохраните снова. Ничего не изменено.";
         Values["Workout_Activity_OpenWorkoutFormat"] = "Открыть тренировку: {0}";
         Values["Workout_Readiness_OptionalSession"] = "Необязательная тренировка";
         Values["Workout_Readiness_RequiredSession"] = "Обязательная тренировка";
