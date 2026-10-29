@@ -58,3 +58,7 @@ __pycache__/
 
 # Local, immutable implementation snapshots (never publish source archives)
 .foundation-baselines/
+.wrangler
+CLAUDE.md
+AGENTS.md
+.temp-db-reset
