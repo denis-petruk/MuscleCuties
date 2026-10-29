@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +22,7 @@ public static class DatabaseMaintenance
     private const string SchemaPreflightCommand = "schema-preflight";
     private const string SchemaVerifyCommand = "schema-verify";
     private const string SchemaReconcileCommand = "schema-reconcile";
+    private const string SessionLockRunnerCommand = "session-lock-runner";
     private const string SeedCommand = "seed";
     private const string ReviewCatalogDryRunCommand = "review-catalog-dry-run";
     private const string ReviewCatalogApplyCommand = "review-catalog-apply";
@@ -44,9 +46,12 @@ public static class DatabaseMaintenance
     {
         if (!TryParse(args, out var command, out var manifestPath, out var expectedSha256))
         {
-            Console.Error.WriteLine("Usage: DbMaintenance migration-status | migrate --confirm | schema-preflight <requirements-path> <requirements-sha256> | schema-verify <requirements-path> <requirements-sha256> | schema-reconcile <approved-manifest-path> <manifest-sha256> --confirm | seed <manifest-path> <expected-sha256> --confirm | review-catalog-dry-run <manifest-path> <expected-sha256> | review-catalog-apply <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
+            Console.Error.WriteLine("Usage: DbMaintenance migration-status | migrate --confirm | schema-preflight <requirements-path> <requirements-sha256> | schema-verify <requirements-path> <requirements-sha256> | schema-reconcile <approved-manifest-path> <manifest-sha256> --confirm | session-lock-runner -- <child-command> [args...] | seed <manifest-path> <expected-sha256> --confirm | review-catalog-dry-run <manifest-path> <expected-sha256> | review-catalog-apply <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
             return InvalidUsageExitCode;
         }
+
+        if (command == SessionLockRunnerCommand)
+            return await RunSessionLockRunnerAsync(args);
 
         if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(LambdaFunctionEnvironmentVariable)))
         {
@@ -217,6 +222,16 @@ public static class DatabaseMaintenance
         command = null;
         manifestPath = null;
         expectedSha256 = null;
+
+        if (args.Length > 0 && args[0] == SessionLockRunnerCommand)
+        {
+            var dashIndex = Array.IndexOf(args, "--");
+            if (dashIndex != -1 && dashIndex + 1 < args.Length)
+            {
+                command = SessionLockRunnerCommand;
+                return true;
+            }
+        }
 
         if (args is [MigrationStatusCommand])
         {
@@ -421,6 +436,71 @@ public static class DatabaseMaintenance
             END $$;
             """;
         await context.Database.ExecuteSqlRawAsync(bootstrapRolesSql);
+    }
+
+    private static async Task<int> RunSessionLockRunnerAsync(string[] args)
+    {
+        var dashIndex = Array.IndexOf(args, "--");
+        var childCmd = args[dashIndex + 1];
+        var childArgs = args[(dashIndex + 2)..];
+
+        if (Environment.GetEnvironmentVariable("MC_RELEASE_OFFLINE_TEST") == "1")
+        {
+            return await ExecuteChildProcessAsync(childCmd, childArgs);
+        }
+
+        var connectionString = Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable);
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            Console.Error.WriteLine("ConnectionStrings__PostgreSql is required for session-lock-runner.");
+            return 1;
+        }
+
+        var connection = new NpgsqlConnectionStringBuilder(connectionString);
+        var isLoopback = connection.Host is "127.0.0.1" or "localhost";
+        if (!isLoopback && connection.SslMode != SslMode.VerifyFull)
+            throw new InvalidOperationException("session-lock-runner requires SSL Mode=VerifyFull.");
+
+        await using var npgsqlConnection = new NpgsqlConnection(connection.ConnectionString);
+        await npgsqlConnection.OpenAsync();
+
+        using var lockLease = await SchemaReconciliation.TryAcquireAdvisoryLockAsync(npgsqlConnection);
+        if (lockLease is null)
+        {
+            Console.Error.WriteLine("Failed to acquire deployment advisory lock (0x4D435343, 0x53434845) within 5 seconds.");
+            return 1;
+        }
+
+        return await ExecuteChildProcessAsync(childCmd, childArgs);
+    }
+
+    private static async Task<int> ExecuteChildProcessAsync(string childCmd, string[] childArgs)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = childCmd,
+            UseShellExecute = false
+        };
+        foreach (var arg in childArgs)
+            psi.ArgumentList.Add(arg);
+
+        using var process = Process.Start(psi)
+            ?? throw new InvalidOperationException($"Failed to start child command: {childCmd}");
+
+        ConsoleCancelEventHandler cancelHandler = (s, e) =>
+        {
+            try { if (!process.HasExited) process.Kill(true); } catch { }
+        };
+        Console.CancelKeyPress += cancelHandler;
+        try
+        {
+            await process.WaitForExitAsync();
+            return process.ExitCode;
+        }
+        finally
+        {
+            Console.CancelKeyPress -= cancelHandler;
+        }
     }
 }
 
