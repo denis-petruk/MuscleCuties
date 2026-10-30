@@ -1,0 +1,12 @@
+{
+  "contractVersion": 1,
+  "status": "HANDOFF_READY",
+  "branch": "release/musclecuties-testflight-beta-hardening",
+  "integratedThrough": "f404ba1c",
+  "owner": null,
+  "heartbeatUtc": null,
+  "leaseExpiresUtc": null,
+  "nextGate": "B1",
+  "productionReleaseAuthorized": false,
+  "testFlightDistributionAuthorized": false
+}

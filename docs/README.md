@@ -1,5 +1,6 @@
 # MuscleCuties documentation
 
+- [Beta orchestration checkpoint](beta-orchestration/CURRENT_CHECKPOINT.md): GitLab release branch state, task ledger, local verification and fresh-chat resume contract.
 - [Lambda release engineering checkpoint](infra/checkpoints/lambda-release-orchestrator.md): CI, package, artifact and rollout implementation evidence, integration contracts, and remaining live release blockers.
 - [AWS Lambda and PostgreSQL implementation plan](infra/AWS_LAMBDA_POSTGRES_IMPLEMENTATION_PLAN.md): Authoritative 2026-10-29 audit and staged release requirements.
 - [Beta execution checkpoint](BETA_EXECUTION_CHECKPOINT.md): Current gate register, verification, ownership and signed-in loading investigation; earlier handoff notes are historical.
