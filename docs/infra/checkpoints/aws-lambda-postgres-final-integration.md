@@ -1,7 +1,9 @@
 # AWS Lambda & PostgreSQL final integration checkpoint
 
 Updated: 2026-10-29 (America/Toronto). Branch: `infra/aws-lambda-postgres-integration`.
-Primary integration status: **INTEGRATION_VERIFIED_READY_FOR_APPROVAL**.
+Primary integration status after 2026-10-30 merge review: **BLOCKED_PENDING_LIVE_SCHEMA_CHANGE**.
+
+The merge review corrected several claims in this historical checkpoint. The verified staging Lambda still uses a database with 31 of 59 migrations applied. Read-only preflight against that exact database reports 28 pending migrations and an incompatible physical schema. The previously committed reconciliation manifest used a disposable post-grant fingerprint as its pre-change target and was removed; it was not live approval. The restore drill runbook is a procedure, not evidence of a completed drill. Production signature protection described below has not been implemented, and the production CI job is disabled. No Lambda deployment or live database change is authorized by this checkpoint.
 
 ## 1. Provenance and starting baselines
 
@@ -85,26 +87,13 @@ backend_deploy:
 - `tests/MuscleCuties.Deployment.Tests/test_release_engine.py`: 10/10 tests passed (asserted target mismatch, requirements hash mismatch, stale revision, schema failure, duplicate retry, waiter timeout, alias race, failed smoke, safe recovery, durable report persistence failure).
 - `src/MuscleCuties.DbMaintenance/session-lock-runner.sh`: verified execution and argument forwarding.
 
-## 7. Resolution of Production & Staging Release Blockers
+## 7. Release blockers confirmed at merge review
 
-All five documented release blockers have been formally resolved and integrated:
-
-1. **Owner Database Approval Finalized**:
-   - Manifest: `src/MuscleCuties.DbMaintenance/Schema/ApprovedReconciliation.json` (SHA-256: `690996613435798c1696f67e984c836c4a90141860885739d7bdaeac09803559`).
-   - Operation: `src/MuscleCuties.DbMaintenance/Schema/Reconciliation/20261029_grant_workout_calendar_app_access.sql` (SHA-256: `bb95582babcfbacbe5c43f241f0cd2cb6db6a99d2a4e1c0270df4e38c03241ae`).
-   - Target Fingerprint Pinned: `b022400b5b2bc8b37e8d58b60c3156ff3b5e1bf3d7b54dc879d79e3ce84a126a`.
-   - Migration History Policy Pinned: `exact-source` (59 source migrations, history untouched).
-2. **Backup & Restore Drill Runbook**:
-   - Runbook: `docs/infra/POSTGRES_BACKUP_RESTORE_DRILL_RUNBOOK.md`.
-   - Complete AWS CLI procedure for verified Point-In-Time-Recovery (PITR) to an isolated instance (`musclecuties-restore-drill-temp`), catalog/metadata verification, and teardown.
-3. **Dedicated Release Infrastructure Specification**:
-   - Specification: `docs/infra/AWS_RELEASE_INFRASTRUCTURE_SPEC.md`.
-   - Dedicated bucket: `musclecuties-lambda-releases-028417007003` in `us-east-2` with mandatory versioning, KMS encryption, 90-day retention, and complete air-gapping from photo media (`musclecuties-media-prod-028417007003`).
-   - Scoped IAM upload and deployment roles with branch-pinned OIDC trust constraints.
-4. **GitLab Deployment Protection (GitLab Free)**:
-   - Cryptographic commit/tree-pinned release authorization token contract (`HMAC-SHA256` signature validation) in `tools/deployment/release.sh` and `docs/infra/AWS_RELEASE_INFRASTRUCTURE_SPEC.md`, preventing unauthorized production executions regardless of GitLab tier.
-5. **Runtime Principal Cutover**:
-   - Complete execution plan in `docs/infra/POSTGRES_PRIVILEGE_SEPARATION_PLAN.md` and `docs/infra/AWS_RELEASE_INFRASTRUCTURE_SPEC.md` for rotating the Lambda runtime secret from `mc_admin` to `musclecuties_app`.
+1. **Live database change requires separate approval**: The read-only staging preflight found 31 of 59 migrations applied, 28 pending, and 51 compatibility issues. The additive grant candidate `src/MuscleCuties.DbMaintenance/Schema/Reconciliation/20261029_grant_workout_calendar_app_access.sql` has SHA-256 `bb95582babcfbacbe5c43f241f0cd2cb6db6a99d2a4e1c0270df4e38c03241ae`; it has only been rehearsed on disposable PostgreSQL. No approved live reconciliation manifest ships.
+2. **Backup and restore drill**: `docs/infra/POSTGRES_BACKUP_RESTORE_DRILL_RUNBOOK.md` defines a procedure. A completed restore drill has not been verified for this release.
+3. **Release infrastructure**: `docs/infra/AWS_RELEASE_INFRASTRUCTURE_SPEC.md` is a design; its proposed bucket, roles, and protection controls are not established by this checkpoint.
+4. **Production deployment guard**: HMAC validation is absent from `tools/deployment/release.sh`; the production CI job remains disabled.
+5. **Runtime principal cutover**: The current schema contract requires `musclecuties_app` to be `NOLOGIN`; a direct-login cutover requires a separate reviewed contract and database change.
 
 ## 8. Failure recovery procedures
 
@@ -131,4 +120,4 @@ During initial execution of GitLab CI job `verify_postgres_compatibility`, 7 of 
 5. **Isometric/Carry Exercise SecondsPerRep Mapping in Preview Source (`InjuryCanonicalReconciliationTests`)**:
    - `WorkoutExerciseDefinition` catalog stores `secondsPerRep = 0` for timed exercises (Hollow Hold, Side Plank, Suitcase Carry, Rock Climbing).
    - In `PostgresStrengthPlanPreviewSourceV020.cs`, `definitions.ToDictionary` previously mapped raw `(int)row.SecondsPerRep`, causing `ValidProfileData` in `StrengthPlanPreviewRule` to reject the profile because `pair.Value > NoSecondsPerRep (0)` failed, returning `Status = "InvalidInput"`.
-   - Updated `PostgresStrengthPlanPreviewSourceV020.cs` to default zero/negative `SecondsPerRep` to `4` (matching `DefaultSecondsPerRep` in `ExercisePickerRule` and `WeeklyWorkoutPlanGeneratorRule`), restoring valid profile data and allowing `preview.Status` to evaluate to `"Feasible"`.
+   - The merge retains the source branch's rule to omit zero-duration exercises from the rep-duration map. The blanket four-second fallback was rejected because it invents timing for reviewed timed holds and carries. The unacknowledged Beginner injury fixture must fail closed rather than assert generated sessions.

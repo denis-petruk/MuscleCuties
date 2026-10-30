@@ -61,4 +61,3 @@ The protected release policy must bind the exact approved source/tree, account, 
 - Base commit: `3ede1cf6ba36aa4ba29c845351a90dcadbec4bc5` (tree `834384c81a0ff6c70212193e0124bead6e79aef8`)
 - Implementation commit: `981e2e7b` (`ci: implement CI/CD validation, immutable Lambda artifacts, and release state machine`)
 - Published ref: `refs/heads/infra/lambda-release-pipeline` on remote `gitlab`
-

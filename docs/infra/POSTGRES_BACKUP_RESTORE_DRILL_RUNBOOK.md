@@ -96,7 +96,6 @@ aws rds delete-db-instance \
   --region us-east-2
 ```
 
-Record drill sign-off:
-- `restore_drill_completed_at`: `2026-10-29T23:45:00Z`
+Record the actual drill sign-off and evidence after performing the restore. No completed drill has been verified for this release.
 - `evidence_snapshot_id`: `$SNAPSHOT_ID`
 - `drill_status`: `VERIFIED_SUCCESSFUL`

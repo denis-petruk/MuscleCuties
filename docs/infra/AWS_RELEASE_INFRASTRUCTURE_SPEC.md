@@ -101,14 +101,14 @@ The existing bucket `musclecuties-media-prod-028417007003` is reserved exclusive
 
 ## 3. Production Deployment Protection on GitLab Free
 
-GitLab Free tier does not include protected environment approval rules. To prevent unauthorized or accidental production rollout, the deployment state machine enforces cryptographic authorization:
+GitLab Free tier does not include protected environment approval rules. The following cryptographic authorization is a proposed production control; it is not implemented in `tools/deployment/release.sh`. The production CI job remains disabled until this control is implemented and tested:
 
 1. **Authorization Token Contract**:
-   A production deployment job requires `PRODUCTION_RELEASE_AUTHORIZATION_KEY` and `PRODUCTION_RELEASE_SIGNATURE`.
+   A future production deployment job must require `PRODUCTION_RELEASE_AUTHORIZATION_KEY` and `PRODUCTION_RELEASE_SIGNATURE`.
 2. **Signature Formula**:
    `HMAC_SHA256(Key: PRODUCTION_RELEASE_AUTHORIZATION_KEY, Message: "${CI_COMMIT_SHA}:${CI_COMMIT_TREE_SHA}:production")`
 3. **Execution Guard**:
-   If the signature does not match the exact source commit and tree, `release.sh` aborts with `reason=unauthorized_production_signature` and records status `blocked`.
+   Before enabling production deployment, implement and test a fail-closed signature check against the exact source commit and tree, with a durable blocked report on mismatch.
 
 ---
 
@@ -140,9 +140,9 @@ Before any live DDL/DML on RDS:
 
 ## 5. Runtime Principal (`musclecuties_app`) Cutover Plan
 
-1. **Prerequisite**: Apply `src/MuscleCuties.DbMaintenance/Schema/ApprovedReconciliation.json` with `20261029_grant_workout_calendar_app_access.sql`.
-2. **Role Verification**: Confirm `musclecuties_app` has `LOGIN` and proper schema/table/function privileges, but `NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE`.
+1. **Prerequisite**: Obtain separate owner approval for exact live migration and reconciliation changes. The checked-in grant SQL is a rehearsed candidate, and no approved reconciliation manifest ships.
+2. **Role Verification**: The current schema contract requires `musclecuties_app` to be `NOLOGIN`. A direct-login cutover requires a separately reviewed contract and role change; verify the resulting privileges and `NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE` before changing runtime credentials.
 3. **Password Generation & Secret Rotation**:
-   Generate secure random credential for `musclecuties_app` and update Lambda environment variable `ConnectionStrings__PostgreSql` to:
+   After approval and contract update, generate a secure random credential for `musclecuties_app` and update Lambda environment variable `ConnectionStrings__PostgreSql` to:
    `Host=musclecuties-staging-db.cxm...us-east-2.rds.amazonaws.com;Database=musclecuties_staging;Username=musclecuties_app;Password=...;SSL Mode=VerifyFull;Root Certificate=/var/task/certs/global-bundle.pem`
 4. **Smoke Check**: Execute synthetic smoke test via `verify-runtime.sh` to confirm authenticated user actions and RLS enforcement.
