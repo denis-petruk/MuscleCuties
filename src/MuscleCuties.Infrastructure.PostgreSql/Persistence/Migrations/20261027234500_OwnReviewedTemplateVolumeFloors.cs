@@ -29,9 +29,15 @@ public sealed class OwnReviewedTemplateVolumeFloors : Migration
             END IF;
             IF floor_owner <> target_role THEN
                 IF NOT pg_has_role(current_user, floor_owner, 'MEMBER') OR
-                   NOT pg_has_role(current_user, target_role, 'MEMBER') OR
-                   NOT has_schema_privilege(target_role, 'catalog', 'CREATE') THEN
-                    RAISE EXCEPTION 'Migration executor must be able to assume both table owner and migrator roles; migrator requires catalog CREATE for ownership transfer';
+                   NOT pg_has_role(current_user, target_role, 'MEMBER') THEN
+                    RAISE EXCEPTION 'Migration executor must be able to assume both table owner and migrator roles';
+                END IF;
+                -- PostgreSQL requires the incoming owner to hold CREATE on the schema. A clean
+                -- database applies this chain before roles-and-grants.sql, so the same catalog
+                -- CREATE grant that file makes for the migration group is established here.
+                -- A runner without grant authority still fails closed with the provider error.
+                IF NOT has_schema_privilege(target_role, 'catalog', 'CREATE') THEN
+                    GRANT CREATE ON SCHEMA catalog TO musclecuties_migrator;
                 END IF;
                 ALTER TABLE catalog.workout_template_volume_floors OWNER TO musclecuties_migrator;
             END IF;
