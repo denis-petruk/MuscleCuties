@@ -391,3 +391,15 @@ only with unchanged catalog evidence; clearance integration passes and changed
 review conditions defer. Core 989, Server 112, related Release integration 25 PASS.
 Active injury remains blocked by activity-level restriction policy; B1/B2 OPEN,
 iOS workload missing. See docs/beta-orchestration/CURRENT_CHECKPOINT.md.
+
+**Combined local worktrees (2026-10-30):** The Rider project now has the current
+release worktree and its seven local injury-planning edits on
+`codex/combined-chatgpt-20261030` (`53535f50`). The HMAC, restore-drill, runtime
+principal, and migration-prerequisite changes from the other ChatGPT worktrees
+were already carried into the release line. Core 991/991, Mobile Contracts 9/9,
+and Server 112/112 passed; iOS Debug simulator compilation passed with 0 errors.
+Database integration tests need `MC_REGISTRATION_WRITE_TEST_POSTGRES` for a
+disposable database, and the local Registration suite restore is blocked by
+SkiaSharp native-asset compatibility under installed SDK 10.0.203. A Linux
+ARM64 server publish passed with the pinned SDK 10.0.403. No database backup,
+AWS upload, migration, or deployment was performed in this integration.
