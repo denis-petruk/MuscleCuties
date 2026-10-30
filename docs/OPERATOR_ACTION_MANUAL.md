@@ -49,7 +49,7 @@ The checked-in `appsettings.json` contains no secret values. ASP.NET Core maps d
 | `EmailReceipts__ActiveKeyId`, `EmailReceipts__PrivateKeyPem`, `EmailReceipts__PublicKeys__` plus that key ID, `EmailReceipts__Issuer`, `EmailReceipts__Audience` | Matching rotated RSA receipt signing and verification material and claims. Protect the private key within Lambda's 4 KB environment limit. |
 | `AppleSignIn__Audience`, `AppleSignIn__PublicKeys__` plus each key ID | Public Apple signing keys and the iOS bundle audience (`com.musclecuties.app`) are bundled in server `appsettings.json`. |
 | `AppleSignIn__TeamId`, `AppleSignIn__KeyId`, `AppleSignIn__PrivateKeyPem` | Apple Developer Team ID, Sign in with Apple Key ID, and ES256 `.p8` private key PEM used by [`AppleAccountTokenRevoker`](../src/MuscleCuties.Infrastructure.PostgreSql/Account/Deletion/AppleAccountTokenRevoker.cs) to exchange `AuthorizationCode` at `https://appleid.apple.com/auth/token` and revoke tokens at `https://appleid.apple.com/auth/revoke` during account deletion. |
-| `Storage__S3__BucketName`, `Storage__S3__Region` | Verify the private photo bucket (`musclecuties-media-prod-028417007003`), encryption, access policy, and region (`us-east-2`). |
+| `Storage__S3__BucketName`, `Storage__S3__Region` | Required at runtime; the server has no fallback bucket or region. Verify the private photo bucket (`musclecuties-media-prod-028417007003`), encryption, access policy, and region (`us-east-2`). |
 | `Resend__ApiKey`, `Resend__FromEmail` | Rotated domain-restricted sending key and exact verified sender (`MuscleCuties <noreply@musclecuties.app>`). |
 
 ## Database maintenance and disposable integration tests
