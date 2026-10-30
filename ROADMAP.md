@@ -26,6 +26,8 @@
 
 **Production release gate (2026-10-30):** The commit-bound HMAC guard is implemented and locally tested. Keep the production CI job disabled until the restore drill, `musclecuties_app` runtime-principal cutover, approved production policy and owner release authorization are verified.
 
+**Migration release prerequisite (2026-10-30):** Run `migration-prerequisites` with the exact production migration credential before approving migrations. Review any required deployment-login grant separately; the staging `mc_admin` grant is not production authorization. The command and `migrate --confirm` now fail closed before partial EF migration if the ownership migration cannot assume its required roles.
+
 **Runtime principal cutover gate (2026-10-30):** Keep the serving staging Lambda on its
 current credential until a separately approved dedicated API login is provisioned and
 `runtime-principal-preflight` passes. Resolve the shared tenant/auth context access model,

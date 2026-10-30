@@ -6,9 +6,17 @@
 preflight for a dedicated login that assumes the existing `musclecuties_app` NOLOGIN group.
 It checks effective role, elevated attributes, forbidden memberships, object ownership,
 DDL access, representative auth-table access and migration-ledger readability. Four focused
-policy tests pass with local SDK 10.0.203; the repository-pinned 10.0.403 SDK is not
-installed on this Mac. No candidate login, live role, grant or Lambda secret was changed.
-Catalog checks alone do not verify registration, login, tenant RLS or the cutover.
+policy tests and a disposable PostgreSQL catalog query pass with the repository-pinned
+SDK 10.0.403. This branch did not create a candidate login or change any live role,
+grant or Lambda secret. Catalog checks alone do not verify registration, login,
+tenant RLS or the cutover.
+
+**Migration role prerequisite (2026-10-30):** `migration-prerequisites` now checks the
+runner's role membership before the pending ownership migration, and `migrate --confirm`
+repeats that gate before any pending EF migration runs. The staging grant to `mc_admin`
+was already applied under `OWNER-APPROVAL-STAGING-SCHEMA-20261030`; production needs its
+own read-only check and reviewed deployment-login grant if missing. The local 31→59
+rehearsal plus migration and runtime-principal tests pass (9/9) on disposable PostgreSQL 17.
 
 **Repository hygiene (2026-10-29):** Removed generated output and machine-local state from version control: the `graphify-out/` analysis cache with its graph artifacts and AST cache, the `.wrangler/cache` state files, and the `temp-db-reset/` scratch project whose own README says to delete it when finished. Working copies stay on disk and all three paths are now ignored, so they cannot return. `.gitignore` lost a bare `docs` entry that had been silently ignoring the entire documentation tree, stopped ignoring the tracked `AGENTS.md`, and gained rules for Xcode build products, patch residue and binary logs. The tracked tree now contains no path its own ignore rules would exclude, and a root `README.md` documents the layers, projects, commands and document index.
 
