@@ -45,10 +45,9 @@ public sealed class InjuryCanonicalReconciliationTests
         var user = Guid.NewGuid();
         var now = DateTime.UtcNow;
         var today = DateOnly.FromDateTime(now);
-        var selectedDays = Enumerable.Range(0, WorkoutDays).Select(offset => (int)today.AddDays(offset).DayOfWeek).ToArray();
+        var selectedDays = new[] { (int)today.DayOfWeek, (int)today.AddDays(2).DayOfWeek, (int)today.AddDays(4).DayOfWeek };
         var strength = (int)WorkoutActivityType.GeneralStrength;
-        var walking = (int)WorkoutActivityType.Walking;
-        var draft = new WorkoutPreferencesDto([strength, walking], selectedDays,
+        var draft = new WorkoutPreferencesDto([strength], selectedDays,
             new Dictionary<int, int> { [strength] = StrengthMinutes }, "FullGym");
         await SyntheticTenantSession.SetAsync(db, user);
         try
@@ -62,7 +61,7 @@ public sealed class InjuryCanonicalReconciliationTests
                     DateOfBirth = BirthDate, Height = SyntheticHeight, Weight = SyntheticWeight, Goal = "BuildMuscle",
                     WeightGoalPace = "Maintain", TrainingExperienceLevel = "Beginner", WorkoutDaysPerWeek = WorkoutDays,
                     CycleLength = CycleLength, EquipmentLevel = "FullGym", ConcurrencyVersion = 1, UpdatedAt = now,
-                    PreferredWorkoutActivityTypes = "GeneralStrength,Walking", AvailableWorkoutWeekdaysJson = JsonSerializer.Serialize(selectedDays),
+                    PreferredWorkoutActivityTypes = "GeneralStrength", AvailableWorkoutWeekdaysJson = JsonSerializer.Serialize(selectedDays),
                     ActivitySessionDurationsJson = JsonSerializer.Serialize(new Dictionary<string, int> { ["GeneralStrength"] = StrengthMinutes }),
                     RequestedActivitySessionsPerWeekJson = "{}", ExcludedStrengthExerciseIdsJson = "[]" });
                 db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord { Id = Guid.NewGuid(), UserId = user,
