@@ -140,9 +140,21 @@ Before any live DDL/DML on RDS:
 
 ## 5. Runtime Principal (`musclecuties_app`) Cutover Plan
 
-1. **Prerequisite**: Obtain separate owner approval for exact live migration and reconciliation changes. The checked-in grant SQL is a rehearsed candidate, and no approved reconciliation manifest ships.
-2. **Role Verification**: The current schema contract requires `musclecuties_app` to be `NOLOGIN`. A direct-login cutover requires a separately reviewed contract and role change; verify the resulting privileges and `NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE` before changing runtime credentials.
-3. **Password Generation & Secret Rotation**:
-   After approval and contract update, generate a secure random credential for `musclecuties_app` and update Lambda environment variable `ConnectionStrings__PostgreSql` to:
-   `Host=musclecuties-staging-db.cxm...us-east-2.rds.amazonaws.com;Database=musclecuties_staging;Username=musclecuties_app;Password=...;SSL Mode=VerifyFull;Root Certificate=/var/task/certs/global-bundle.pem`
-4. **Smoke Check**: Execute synthetic smoke test via `verify-runtime.sh` to confirm authenticated user actions and RLS enforcement.
+1. **Prerequisite**: The staging schema upgrade and additive grant were applied and
+   verified on 2026-10-30. Runtime principal cutover remains separately approval-gated.
+2. **Role Verification**: Preserve `musclecuties_app` as the `NOLOGIN` group required by
+   the checked-in schema contract. Use a dedicated restricted API login that assumes
+   `musclecuties_app` for tenant connections. The login must have no elevated role
+   attributes, table ownership or migrator/dispatch membership.
+3. **Auth and Readiness Design**: The API currently uses the same PostgreSQL context for
+   tenant tables, global auth tables and migration-ledger readiness. Prove the needed
+   auth permissions and tenant isolation in a candidate environment before changing
+   the serving secret. `runtime-principal-preflight` checks catalog access but does not
+   replace authenticated flow tests.
+4. **Password Generation & Secret Rotation**: After separate approval, provision a
+   dedicated secret-bearing login in the approved store and supply a TLS-verified
+   connection with `Username=musclecuties_api_login` and
+   `Options=-c role=musclecuties_app`. Do not place the password in source or output.
+5. **Smoke Check**: Verify registration, login/reset, authenticated tenant read/write,
+   cross-tenant denial and readiness with the candidate login, then repeat after the
+   approved Lambda secret rotation.

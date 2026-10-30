@@ -1,8 +1,9 @@
 # PostgreSQL privilege separation plan
 
 Status: staging migration-runner membership was applied on 2026-10-30 under
-`OWNER-APPROVAL-STAGING-SCHEMA-20261030`. The runtime-principal cutover remains a
-separate proposal; no production role, grant, principal or connection setting was changed.
+`OWNER-APPROVAL-STAGING-SCHEMA-20261030`. The serving Lambda still authenticates as
+`mc_admin`; the runtime-principal cutover is not executed. No production role, grant,
+principal or connection setting was changed.
 
 ## Verified problem
 
@@ -15,7 +16,8 @@ migrations. Fixing the principal must not be presented as repairing the schema.
 
 | Principal | Purpose | Attributes |
 | --- | --- | --- |
-| `musclecuties_app` | Runtime application login | `LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE` |
+| `musclecuties_api_login` | Dedicated API login, granted only the required group roles | `LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE` |
+| `musclecuties_app` | Effective tenant application group role | `NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE` |
 | `musclecuties_migrator` | DDL, ownership transfer, catalog locking | `NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE` |
 | `musclecuties_workout_discovery_owner` | Owner of the discovery function and column-level reads | `NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE` |
 | `musclecuties_workout_dispatch` | Cursor read/update and function execute | `NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE` |
@@ -27,9 +29,11 @@ owner-approved cutover step.
 
 ## Required separation
 
-1. **Runtime application:** `musclecuties_app` only. It must own no tables, hold no DDL, and never be
-   a member of `musclecuties_migrator`, `musclecuties_workout_discovery_owner` or
-   `musclecuties_workout_dispatch`. The compatibility contract enforces these forbidden memberships.
+1. **Runtime application:** the dedicated login must assume `musclecuties_app` as its
+   effective role (`Options=-c role=musclecuties_app`). Neither role may own tables, hold
+   DDL, or inherit `musclecuties_migrator`, `musclecuties_workout_discovery_owner` or
+   `musclecuties_workout_dispatch`. The existing schema contract keeps the app group
+   `NOLOGIN`; changing it to `LOGIN` would contradict that contract.
 2. **Migration/reconciliation:** `musclecuties_migrator` or a dedicated deployment principal that can
    assume it. The `OwnReviewedTemplateVolumeFloors` migration explicitly requires the executor to be
    able to assume the floor owner and `musclecuties_migrator`, and the migrator needs `catalog CREATE`
@@ -59,16 +63,28 @@ owner-approved cutover step.
 
 ## Approval-gated cutover (not executed)
 
-1. Owner approves the runtime principal change and the exact role/grant set.
-2. Create the application login without superuser, bypass-RLS, createdb or createrole.
-3. Grant only the privileges the contract requires; verify no table ownership and no forbidden
-   memberships.
-4. Rotate the Lambda connection secret through the approved secret store; never write credentials to
-   a file, log, ticket or chat.
-5. Run `schema-preflight` with the inspector connection and record the fingerprint.
-6. Deploy the Lambda with the new secret; verify one authenticated request path and one tenant-scoped
-   read/write.
-7. Roll back the secret if compatibility or tenant isolation fails; do not roll back schema changes.
+1. Inventory every API operation on global authentication tables and user lookup before
+   approving grants. Current `PostgresDbContext` serves tenant routes **and** email
+   challenges, registration, password reset, login and migration-ledger readiness. The
+   existing `musclecuties_app` grants alone do not prove those paths work. Split the
+   auth context or approve a narrowly scoped auth role and prove it cannot bypass
+   tenant isolation. Do not grant the app group broad auth access as a shortcut.
+2. Owner approves the exact login, role memberships, auth design, grants and staged
+   secret rotation. Provision `musclecuties_api_login` with no elevated attributes;
+   retain `musclecuties_app` as `NOLOGIN` and prohibit migrator/dispatch memberships.
+3. In a protected runner, set `MC_RUNTIME_CANDIDATE_POSTGRES` to the candidate TLS
+   connection with `Username=musclecuties_api_login` and
+   `Options=-c role=musclecuties_app`, then run
+   `dotnet run --project src/MuscleCuties.DbMaintenance -- runtime-principal-preflight`.
+   This read-only check must report `catalog-compatible` with no failure codes. It
+   deliberately reports only catalog access; it does not certify runtime behavior.
+4. Run `schema-preflight` with the separate inspection connection, then exercise
+   synthetic registration, password login/reset, authenticated tenant read/write,
+   cross-tenant denial, and `/health/ready` against a candidate environment using the
+   new principal. Record the observed effective role and test evidence without secrets.
+5. Rotate the serving Lambda connection only after those checks and separate owner
+   approval. Verify the same routes after cutover. Restore the previous secret if
+   compatibility or isolation fails; keep the schema unchanged.
 
 ## Migration-runner prerequisite
 
