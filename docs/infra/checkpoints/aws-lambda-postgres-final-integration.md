@@ -111,3 +111,24 @@ All five documented release blockers have been formally resolved and integrated:
 - **Database**: Additive changes are backward-compatible and remain applied; no automatic irreversible Down migrations.
 - **Lambda**: Rollback restricted to verified known-good compatible artifacts.
 - **Critical Section**: Session-held advisory lock (`0x4D435343, 0x53434845`) and GitLab environment `resource_group: lambda-shared-target` serialize all operations, preventing concurrent interleaved releases or race conditions.
+
+## 9. Resolution of CI/CD Integration Test Failures
+
+During initial execution of GitLab CI job `verify_postgres_compatibility`, 7 of 122 tests failed due to environment, versioning, and timestamp precision differences. All have been systematically diagnosed and resolved:
+
+1. **Test Database Naming Contract (`GeneratedMealPostgresTests`)**:
+   - `GeneratedMealPostgresTests` requires the connection database name to begin with prefix `mc_test_nutrition_`.
+   - Updated `.gitlab-ci.yml` to create `mc_test_nutrition_ci` and updated fixture exports (`MC_REGISTRATION_WRITE_TEST_POSTGRES`, `MC_REGISTRATION_TEST_POSTGRES`) and safety assertion dictionary. This satisfies `GeneratedMealPostgresTests` (`mc_test_nutrition_`), `DisposableWorkoutDatabaseSetupTests` (`mc_test_`), and `RegistrationPersistenceTests` (`mc_`).
+2. **PostgreSQL 17 Target Engine in CI (`MigrationChainRehearsalTests` & `DatabaseSchemaCompatibilityTests`)**:
+   - `SchemaRequirements.json` pins `serverVersionMinimum: "17.0"`, matching the production RDS engine (PostgreSQL 17.5). Standard Ubuntu 24.04 packages defaulted to PostgreSQL 16.15.
+   - Updated `.gitlab-ci.yml` to configure the official PostgreSQL PGDG APT repository and install `postgresql-17` and `postgresql-client-17`, starting cluster 17 for all CI verification.
+3. **Sub-Microsecond Timestamp Precision in Planning Acceptance (`PlanningAcceptanceTransactionTests`)**:
+   - PostgreSQL `timestamptz` stores microsecond precision (6 decimal places), truncating .NET's 100ns 7th digit.
+   - Added `TimeSpan.FromMilliseconds(1)` precision tolerance to `Assert.Equal(rollbackLease.ExpiresAtUtc.UtcDateTime, unchangedProposal.LeaseExpiresAtUtc)` at line 190.
+4. **Sub-Microsecond Timestamp Precision in Privacy Consent Verification (`RegistrationPersistenceTests`)**:
+   - `PostgresCompleteAccountRegistrationStore.cs` previously compared in-memory `privacyConsent` against database-read `pendingConsent` using record equality (`!=`), which failed due to sub-microsecond truncation of `AcceptedAtUtc`.
+   - Updated store comparison to check `NoticeVersion`, `Accepted`, and timestamp within 1 second.
+5. **Isometric/Carry Exercise SecondsPerRep Mapping in Preview Source (`InjuryCanonicalReconciliationTests`)**:
+   - `WorkoutExerciseDefinition` catalog stores `secondsPerRep = 0` for timed exercises (Hollow Hold, Side Plank, Suitcase Carry, Rock Climbing).
+   - In `PostgresStrengthPlanPreviewSourceV020.cs`, `definitions.ToDictionary` previously mapped raw `(int)row.SecondsPerRep`, causing `ValidProfileData` in `StrengthPlanPreviewRule` to reject the profile because `pair.Value > NoSecondsPerRep (0)` failed, returning `Status = "InvalidInput"`.
+   - Updated `PostgresStrengthPlanPreviewSourceV020.cs` to default zero/negative `SecondsPerRep` to `4` (matching `DefaultSecondsPerRep` in `ExercisePickerRule` and `WeeklyWorkoutPlanGeneratorRule`), restoring valid profile data and allowing `preview.Status` to evaluate to `"Feasible"`.

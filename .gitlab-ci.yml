@@ -73,12 +73,16 @@ verify_postgres_compatibility:
   stage: backend_verify
   script:
     # Install a fresh local server; fixture connection strings are fixed here, never inherited from protected variables.
-    - apt-get update && apt-get install -y --no-install-recommends postgresql postgresql-client
-    - pg_ctlcluster "$(ls /etc/postgresql | sort -V | tail -1)" main start
+    - apt-get update && apt-get install -y --no-install-recommends curl ca-certificates gnupg lsb-release
+    - install -d /etc/apt/keyrings
+    - curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg
+    - echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+    - apt-get update && apt-get install -y --no-install-recommends postgresql-17 postgresql-client-17
+    - pg_ctlcluster 17 main start
     - runuser -u postgres -- psql -v ON_ERROR_STOP=1 -c "ALTER USER postgres PASSWORD 'ci_disposable_only'"
-    - runuser -u postgres -- createdb mc_test_ci
+    - runuser -u postgres -- createdb mc_test_nutrition_ci
     - runuser -u postgres -- createdb mc_retry_disposable
-    - export MC_REGISTRATION_WRITE_TEST_POSTGRES='Host=127.0.0.1;Database=mc_test_ci;Username=postgres;Password=ci_disposable_only'
+    - export MC_REGISTRATION_WRITE_TEST_POSTGRES='Host=127.0.0.1;Database=mc_test_nutrition_ci;Username=postgres;Password=ci_disposable_only'
     - export MC_REGISTRATION_TEST_POSTGRES="$MC_REGISTRATION_WRITE_TEST_POSTGRES"
     - export MC_RETRY_TEST_POSTGRES='Host=127.0.0.1;Database=mc_retry_disposable;Username=postgres;Password=ci_disposable_only'
     - export MC_PG09_LOAD_POSTGRES='Host=127.0.0.1;Database=mc_pg09_disposable;Username=mc_ci_migrator;Password=ci_disposable_only'
@@ -87,8 +91,8 @@ verify_postgres_compatibility:
       python3 - <<'PY'
       import os
       expected = {
-          'MC_REGISTRATION_WRITE_TEST_POSTGRES': ('mc_test_ci', 'postgres'),
-          'MC_REGISTRATION_TEST_POSTGRES': ('mc_test_ci', 'postgres'),
+          'MC_REGISTRATION_WRITE_TEST_POSTGRES': ('mc_test_nutrition_ci', 'postgres'),
+          'MC_REGISTRATION_TEST_POSTGRES': ('mc_test_nutrition_ci', 'postgres'),
           'MC_RETRY_TEST_POSTGRES': ('mc_retry_disposable', 'postgres'),
           'MC_PG09_LOAD_POSTGRES': ('mc_pg09_disposable', 'mc_ci_migrator'),
           'MC_SCHEMA_COMPATIBILITY_POSTGRES': ('postgres', 'postgres')
@@ -102,7 +106,7 @@ verify_postgres_compatibility:
     - run_tests fixture_setup tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj --filter FullyQualifiedName~DisposableWorkoutDatabaseSetupTests
     - unset MC_PREPARE_DISPOSABLE_WORKOUT_DATABASE
     - runuser -u postgres -- psql -v ON_ERROR_STOP=1 -c "CREATE ROLE mc_ci_migrator LOGIN PASSWORD 'ci_disposable_only' NOSUPERUSER NOBYPASSRLS CREATEROLE"
-    - runuser -u postgres -- createdb -T mc_test_ci -O mc_ci_migrator mc_pg09_disposable
+    - runuser -u postgres -- createdb -T mc_test_nutrition_ci -O mc_ci_migrator mc_pg09_disposable
     - runuser -u postgres -- psql -v ON_ERROR_STOP=1 -d mc_pg09_disposable -c 'GRANT USAGE ON SCHEMA catalog TO mc_ci_migrator; GRANT SELECT ON ALL TABLES IN SCHEMA catalog TO mc_ci_migrator'
     - run_tests postgres tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj
     # A fresh database alone does not prove the observed 31-to-59 upgrade or compatibility checks.
