@@ -24,6 +24,8 @@ public static class DatabaseMaintenance
     private const string SchemaPreflightCommand = "schema-preflight";
     private const string SchemaVerifyCommand = "schema-verify";
     private const string SchemaReconcileCommand = "schema-reconcile";
+    private const string RuntimePrincipalPreflightCommand = "runtime-principal-preflight";
+    private const string RuntimeCandidateConnectionStringEnvironmentVariable = "MC_RUNTIME_CANDIDATE_POSTGRES";
     private const string SessionLockRunnerCommand = "session-lock-runner";
     private const string SeedCommand = "seed";
     private const string ReviewCatalogDryRunCommand = "review-catalog-dry-run";
@@ -51,7 +53,7 @@ public static class DatabaseMaintenance
     {
         if (!TryParse(args, out var command, out var manifestPath, out var expectedSha256))
         {
-            Console.Error.WriteLine("Usage: DbMaintenance migration-status | migration-prerequisites | migrate --confirm | schema-preflight <requirements-path> <requirements-sha256> | schema-verify <requirements-path> <requirements-sha256> | schema-reconcile <approved-manifest-path> <manifest-sha256> --confirm | session-lock-runner -- <child-command> [args...] | seed <manifest-path> <expected-sha256> --confirm | review-catalog-dry-run <manifest-path> <expected-sha256> | review-catalog-apply <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
+            Console.Error.WriteLine("Usage: DbMaintenance migration-status | migration-prerequisites | migrate --confirm | schema-preflight <requirements-path> <requirements-sha256> | schema-verify <requirements-path> <requirements-sha256> | schema-reconcile <approved-manifest-path> <manifest-sha256> --confirm | runtime-principal-preflight | session-lock-runner -- <child-command> [args...] | seed <manifest-path> <expected-sha256> --confirm | review-catalog-dry-run <manifest-path> <expected-sha256> | review-catalog-apply <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
             return InvalidUsageExitCode;
         }
 
@@ -70,6 +72,24 @@ public static class DatabaseMaintenance
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
                 Console.Error.WriteLine($"Session lock runner failed ({exception.GetType().Name}).");
+                return 1;
+            }
+        }
+
+        if (command == RuntimePrincipalPreflightCommand)
+        {
+            try
+            {
+                var candidate = Environment.GetEnvironmentVariable(RuntimeCandidateConnectionStringEnvironmentVariable);
+                if (string.IsNullOrWhiteSpace(candidate))
+                    throw new InvalidOperationException("Candidate connection is required.");
+                var report = await RuntimePrincipalPreflight.EvaluateAsync(candidate);
+                WriteJson(report);
+                return report.CatalogCompatible ? 0 : 1;
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                Console.Error.WriteLine($"Runtime principal preflight failed ({exception.GetType().Name}).");
                 return 1;
             }
         }
@@ -270,6 +290,12 @@ public static class DatabaseMaintenance
         if (args is [MigrationPrerequisitesCommand])
         {
             command = MigrationPrerequisitesCommand;
+            return true;
+        }
+
+        if (args is [RuntimePrincipalPreflightCommand])
+        {
+            command = RuntimePrincipalPreflightCommand;
             return true;
         }
 
