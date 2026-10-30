@@ -132,7 +132,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                     group => group.Select(row => row.WorkoutLogId).Distinct().Count()),
             logs.Where(row => row.WeightKg is > 0)
                 .Select(row => row.ExerciseId).ToHashSet(),
-            definitions.ToDictionary(row => row.Id, row => (int)row.SecondsPerRep),
+            definitions.ToDictionary(row => row.Id, row => row.SecondsPerRep > 0 ? (int)row.SecondsPerRep : 4),
             definitions.Where(row => row.MuscleContributions.Any())
                 .ToDictionary(row => row.Id, row => row.MuscleContributions
                     .OrderByDescending(contribution => contribution.Fraction)

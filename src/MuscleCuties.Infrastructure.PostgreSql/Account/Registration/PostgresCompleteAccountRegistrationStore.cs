@@ -104,7 +104,10 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         var pendingConsent = await GetPendingPrivacyConsentAsync(
                 emailReceiptId, request.EmailChallengeId, normalizedEmail, cancellationToken)
             .ConfigureAwait(false);
-        if (pendingConsent is null || pendingConsent != privacyConsent)
+        if (pendingConsent is null ||
+            !string.Equals(pendingConsent.NoticeVersion, privacyConsent.NoticeVersion, StringComparison.Ordinal) ||
+            pendingConsent.Accepted != privacyConsent.Accepted ||
+            Math.Abs((pendingConsent.AcceptedAtUtc - privacyConsent.AcceptedAtUtc).TotalSeconds) >= 1)
             return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.PrivacyConsentRequired);
 
         var questions = await dbContext.QuizQuestions
