@@ -1,11 +1,15 @@
 {
   "contractVersion": 1,
-  "status": "HANDOFF_READY",
+  "status": "RUNNING",
   "branch": "release/musclecuties-testflight-beta-hardening",
   "integratedThrough": "e16b6d39",
-  "owner": null,
-  "heartbeatUtc": null,
-  "leaseExpiresUtc": null,
+  "owner": {
+    "runId": "3b39a12d-0a0d-40e6-bc52-7fb31d1f7ac0",
+    "threadId": "01a18cb8-8b08-72b1-b7fa-47daf941134c",
+    "acquiredUtc": "2026-10-30T12:11:35Z"
+  },
+  "heartbeatUtc": "2026-10-30T12:11:35Z",
+  "leaseExpiresUtc": "2026-10-30T13:41:35Z",
   "nextGate": "B1",
   "productionReleaseAuthorized": false,
   "testFlightDistributionAuthorized": false,
