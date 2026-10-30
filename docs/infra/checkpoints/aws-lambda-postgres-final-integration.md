@@ -1,7 +1,8 @@
 # AWS Lambda & PostgreSQL final integration checkpoint
 
-Updated: 2026-10-29 (America/Toronto). Branch: `infra/aws-lambda-postgres-integration`.
-Primary integration status after 2026-10-30 merge review: **BLOCKED_PENDING_LIVE_SCHEMA_CHANGE**.
+Updated: 2026-10-30 (America/Toronto). Branch: `infra/aws-lambda-postgres`.
+Primary integration status after 2026-10-30 merge and local verification:
+**BLOCKED_PENDING_LIVE_SCHEMA_CHANGE** — see `docs/infra/STAGING_SCHEMA_CHANGE_APPROVAL_20261030.md`.
 
 The merge review corrected several claims in this historical checkpoint. The verified staging Lambda still uses a database with 31 of 59 migrations applied. Read-only preflight against that exact database reports 28 pending migrations and an incompatible physical schema. The previously committed reconciliation manifest used a disposable post-grant fingerprint as its pre-change target and was removed; it was not live approval. The restore drill runbook is a procedure, not evidence of a completed drill. Production signature protection described below has not been implemented, and the production CI job is disabled. No Lambda deployment or live database change is authorized by this checkpoint.
 
@@ -121,3 +122,22 @@ During initial execution of GitLab CI job `verify_postgres_compatibility`, 7 of 
    - `WorkoutExerciseDefinition` catalog stores `secondsPerRep = 0` for timed exercises (Hollow Hold, Side Plank, Suitcase Carry, Rock Climbing).
    - In `PostgresStrengthPlanPreviewSourceV020.cs`, `definitions.ToDictionary` previously mapped raw `(int)row.SecondsPerRep`, causing `ValidProfileData` in `StrengthPlanPreviewRule` to reject the profile because `pair.Value > NoSecondsPerRep (0)` failed, returning `Status = "InvalidInput"`.
    - The merge retains the source branch's rule to omit zero-duration exercises from the rep-duration map. The blanket four-second fallback was rejected because it invents timing for reviewed timed holds and carries. The unacknowledged Beginner injury fixture must fail closed rather than assert generated sessions.
+
+## 10. 2026-10-30 merge, verification and push
+
+- Merge commit `a7aa96c7` (`Merge branch 'infra/aws-lambda-postgres-integration' into infra/aws-lambda-postgres`), parents `7df1c9e5` and `38ec316b`. No conflict markers remained; the user's unrelated work was preserved in `stash@{0}` and never committed.
+- Follow-up commits pushed to `gitlab/infra/aws-lambda-postgres` (fast-forward, verified remote `abb1802ec5a7203cfe27ccd199caafd0593b0177`):
+  - `42107ee1` verify the held advisory lock for the whole release child lifetime
+  - `1a20e59a` Lambda Tools version probe via `help`; reject offline release mode
+  - `0c26561c` assert the fail-closed injury reconciliation contract
+  - `abb1802e` correct release claims; remove the mis-pinned reconciliation manifest
+- Local verification (Release, SDK 10.0.403):
+  - Core 989, Server 112, Registration 42, Mobile contracts 9 — all passed.
+  - Disposable PostgreSQL 17.11: schema compatibility/reconciliation/rehearsal 33 passed; full registration integration project 123 passed.
+  - Deployment gates: `test_package_upload.py` 8 passed, `release-fail-closed.sh` passed, `test_release_engine.py` 10 passed.
+  - ARM64 package `artifacts/MuscleCuties.Server.zip` SHA-256 `0b0358e89d726d107b52b3440dc221d5804db39680beacd147b2915ab6d03e98` validated against source `abb1802e`.
+- Live read-only verification (profile `musclecuties-operator`, `us-east-2`, identity `arn:aws:iam::028417007003:user/denis.operator`):
+  - `musclecuties-backend-api`: dotnet10, arm64, `MuscleCuties.Server`, Active/Successful, code `gS2dwDP9vlJ+p9xMwqEZkvlfL0tCOPKouzp2SOIf508=`, no aliases, environment `Staging`, cold-start migrations disabled.
+  - Database `musclecuties_staging` (PostgreSQL 17.5): 31 of 59 migrations applied, head `20261024200000_AddWorkoutExerciseExclusionsV010`.
+  - `schema-preflight` exit 1, `status=incompatible`, fingerprint `d54fd8db…`, 51 issues across 6 failure codes. Every issue is attributable to the 28 pending migrations, except the single `SCHEMA_GRANT_MISMATCH` on `app.lock_workout_planning_catalog()` whose function does not exist yet.
+- No Lambda deployment, migration, reconciliation or other live change was performed. Deployment would break the function, so the reviewed change and approval request are recorded in `docs/infra/STAGING_SCHEMA_CHANGE_APPROVAL_20261030.md`.
