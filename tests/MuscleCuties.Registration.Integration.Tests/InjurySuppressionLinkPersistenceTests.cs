@@ -11,6 +11,7 @@ using Npgsql;
 
 namespace MuscleCuties.Registration.Integration.Tests;
 
+[Xunit.Collection(SharedCatalogMutationCollection.Name)]
 public sealed class InjurySuppressionLinkPersistenceTests
 {
     private const string ConnectionVariable = "MC_REGISTRATION_WRITE_TEST_POSTGRES";
