@@ -1,4 +1,5 @@
 using MuscleCuties.DbMaintenance.Schema;
+using Npgsql;
 using Xunit;
 
 namespace MuscleCuties.Registration.Integration.Tests;
@@ -75,6 +76,25 @@ public sealed class RuntimePrincipalPreflightTests
 
         Assert.False(result.CatalogCompatible);
         Assert.Contains("CANDIDATE_HAS_DDL_ACCESS", result.FailureCodes);
+        Assert.Contains("CANDIDATE_LOGIN_PRIVILEGED", result.FailureCodes);
+    }
+}
+
+[Collection(SchemaDatabaseCollection.Name)]
+public sealed class RuntimePrincipalDatabaseQueryTests(SchemaCompatibilityDatabaseFixture fixture)
+{
+    [Fact]
+    public async Task CatalogQueryRunsWithAppEffectiveRoleAndRejectsSuperuserLogin()
+    {
+        if (!fixture.Available) return;
+        var connection = new NpgsqlConnectionStringBuilder(fixture.TemplateConnectionString)
+        {
+            Options = "-c role=musclecuties_app"
+        };
+
+        var result = await RuntimePrincipalPreflight.EvaluateAsync(connection.ConnectionString);
+
+        Assert.False(result.CatalogCompatible);
         Assert.Contains("CANDIDATE_LOGIN_PRIVILEGED", result.FailureCodes);
     }
 }
