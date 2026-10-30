@@ -24,3 +24,9 @@ Server 112, Registration 42, Mobile Contracts 9 and full PostgreSQL integration
 Debug and Release. Successful automatic injury replacement/clearance remains OPEN;
 iOS compilation is still BLOCKED by missing ios workload. No release gate was
 closed by these source checks. See [run evidence](evidence/20261030-canonical-apply.md).
+
+2026-10-30 13:11 UTC run: accepted confirmation reuse fixed in `652c1f31` with
+catalog fingerprint invalidation. Clearance journey passes; active injury still
+requires review under current activity policy. Core 989, Server 112 and related
+Release integration 25/25 PASS; full suite/load not rerun. iOS attempt remains BLOCKED
+by missing workload. B1/B2 remain OPEN. See [evidence](evidence/20261030-accepted-confirmations.md).

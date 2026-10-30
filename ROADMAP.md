@@ -240,3 +240,9 @@ Verify the simplified Step 1 layout on an iPhone: measurements and activity type
 **Workout migration follow-up:** Implement canonical readiness revisions, injury restoration with complete episode and reviewed safety provenance, and automatic revision while preserving an in-progress session. Author and review successful automatic-commit race fixtures; configure trusted scheduler delivery only with separate authorization. Preserve the user's tracked swapfile deletion.
 
 **Canonical Apply repair (2026-10-30 beta automation):** Feasible canonical strength plans were rejected because an absent occurrence override was incorrectly filled with the original prescription for schedule validation. Keep the original and explicit override separate. Disposable setup now imports existing reviewed exercise metadata; canonical preview/Apply/replay and accepted revision lineage pass. Injury/clearance remain conservatively deferred because automatic reconstruction drops condition acknowledgments; successful replacement/restoration is still an open B1 gate. See [run evidence](docs/beta-orchestration/evidence/20261030-canonical-apply.md). iOS compilation remains blocked by the pinned SDK missing its ios workload. No live operations occurred.
+
+2026-10-30 beta continuation: `652c1f31` safely reuses accepted condition confirmations
+only with unchanged catalog evidence; clearance integration passes and changed
+review conditions defer. Core 989, Server 112, related Release integration 25 PASS.
+Active injury remains blocked by activity-level restriction policy; B1/B2 OPEN,
+iOS workload missing. See docs/beta-orchestration/CURRENT_CHECKPOINT.md.
