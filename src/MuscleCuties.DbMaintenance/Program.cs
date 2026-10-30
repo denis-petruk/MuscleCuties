@@ -41,6 +41,9 @@ public static class DatabaseMaintenance
     private const int CleanupLeaseMinutesArgumentIndex = 4;
     private const int MaximumCleanupLeaseMinutes = 1440;
     private const int InvalidUsageExitCode = 2;
+    private const int LockHealthPollIntervalSeconds = 1;
+    private const int LockHealthCommandTimeoutSeconds = 2;
+    private const int LockChildShutdownTimeoutSeconds = 10;
 
     public static async Task<int> RunAsync(string[] args)
     {
@@ -50,13 +53,23 @@ public static class DatabaseMaintenance
             return InvalidUsageExitCode;
         }
 
-        if (command == SessionLockRunnerCommand)
-            return await RunSessionLockRunnerAsync(args);
-
         if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(LambdaFunctionEnvironmentVariable)))
         {
             Console.Error.WriteLine("Database maintenance is forbidden in AWS Lambda.");
             return InvalidUsageExitCode;
+        }
+
+        if (command == SessionLockRunnerCommand)
+        {
+            try
+            {
+                return await RunSessionLockRunnerAsync(args);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                Console.Error.WriteLine($"Session lock runner failed ({exception.GetType().Name}).");
+                return 1;
+            }
         }
 
         var connectionString = Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable);
@@ -172,7 +185,7 @@ public static class DatabaseMaintenance
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             // Provider exceptions may include connection strings or object names. Keep runner logs secret-free.
-            Console.Error.WriteLine($"Database maintenance failed ({exception.GetType().Name}: {exception.Message}). Check the runner's connection, certificate, role, and manifest settings.");
+            Console.Error.WriteLine($"Database maintenance failed ({exception.GetType().Name}). Check the runner's connection, certificate, role, and manifest settings.");
             return 1;
         }
     }
@@ -471,10 +484,21 @@ public static class DatabaseMaintenance
             return 1;
         }
 
-        return await ExecuteChildProcessAsync(childCmd, childArgs);
+        var backendPid = npgsqlConnection.ProcessID;
+        if (!await HasSessionLockAsync(npgsqlConnection, backendPid))
+        {
+            Console.Error.WriteLine("Deployment advisory lock could not be verified before starting the child.");
+            return 1;
+        }
+
+        return await ExecuteChildProcessAsync(childCmd, childArgs, npgsqlConnection, backendPid);
     }
 
-    private static async Task<int> ExecuteChildProcessAsync(string childCmd, string[] childArgs)
+    private static async Task<int> ExecuteChildProcessAsync(
+        string childCmd,
+        string[] childArgs,
+        NpgsqlConnection? lockConnection = null,
+        int backendPid = 0)
     {
         var psi = new ProcessStartInfo
         {
@@ -494,12 +518,70 @@ public static class DatabaseMaintenance
         Console.CancelKeyPress += cancelHandler;
         try
         {
-            await process.WaitForExitAsync();
+            var childExit = process.WaitForExitAsync();
+            if (lockConnection is not null)
+            {
+                while (!childExit.IsCompleted)
+                {
+                    var completed = await Task.WhenAny(childExit,
+                        Task.Delay(TimeSpan.FromSeconds(LockHealthPollIntervalSeconds)));
+                    if (completed == childExit)
+                        break;
+
+                    if (!await HasSessionLockAsync(lockConnection, backendPid))
+                    {
+                        Console.Error.WriteLine("Deployment advisory lock session lost; terminating the child.");
+                        try { if (!process.HasExited) process.Kill(entireProcessTree: true); }
+                        catch (InvalidOperationException) { }
+                        try { await childExit.WaitAsync(TimeSpan.FromSeconds(LockChildShutdownTimeoutSeconds)); }
+                        catch (TimeoutException) { }
+                        return 1;
+                    }
+                }
+            }
+
+            await childExit;
+            if (lockConnection is not null && !await HasSessionLockAsync(lockConnection, backendPid))
+            {
+                Console.Error.WriteLine("Deployment advisory lock session lost before the child result was accepted.");
+                return 1;
+            }
             return process.ExitCode;
         }
         finally
         {
             Console.CancelKeyPress -= cancelHandler;
+        }
+    }
+
+    private static async Task<bool> HasSessionLockAsync(NpgsqlConnection connection, int backendPid)
+    {
+        try
+        {
+            await using var command = new NpgsqlCommand("""
+                SELECT pg_backend_pid() = @backend_pid
+                   AND EXISTS (
+                       SELECT 1 FROM pg_locks
+                       WHERE pid = pg_backend_pid()
+                         AND locktype = 'advisory'
+                         AND granted
+                         AND classid::bigint = @lock_class
+                         AND objid::bigint = @lock_key
+                         AND objsubid = 2
+                   )
+                """, connection)
+            {
+                CommandTimeout = LockHealthCommandTimeoutSeconds
+            };
+            command.Parameters.AddWithValue("backend_pid", backendPid);
+            command.Parameters.AddWithValue("lock_class", SchemaReconciliation.AdvisoryLockClass);
+            command.Parameters.AddWithValue("lock_key", SchemaReconciliation.AdvisoryLockKey);
+            return await command.ExecuteScalarAsync() is true;
+        }
+        catch (Exception)
+        {
+            // A failed or timed-out probe cannot establish continued lock ownership.
+            return false;
         }
     }
 }
