@@ -2,6 +2,7 @@
 
 import base64
 import hashlib
+import hmac
 import json
 import os
 from pathlib import Path
@@ -163,6 +164,26 @@ class ReleaseEngineTests(unittest.TestCase):
         self.assertNotEqual(self.run_engine().returncode, 0)
         self.assertEqual(self.report_data()['failure_code'], 'stale_lambda_revision')
         self.assertEqual(self.state_data()['updates'], 0)
+
+    def test_production_requires_exact_commit_and_tree_authorization(self):
+        policy = json.loads(self.policy.read_text())
+        policy.update(target_id='production', production_approval_contract='enforced')
+        self.policy.write_text(json.dumps(policy))
+        self.env.update(CI_ENVIRONMENT_NAME='production', CI_COMMIT_BRANCH='test-flight-beta')
+        key = 'synthetic-test-key-with-at-least-32-bytes'
+        self.assertNotEqual(self.run_engine().returncode, 0)
+        self.assertEqual(self.report_data()['failure_code'], 'production_authorization_invalid')
+        self.assertEqual(self.state_data()['updates'], 0)
+        signature = hmac.new(key.encode(),
+                             f'{self.source_sha}:{self.tree_sha}:production'.encode(),
+                             hashlib.sha256).hexdigest()
+        self.assertNotEqual(self.run_engine(PRODUCTION_RELEASE_AUTHORIZATION_KEY=key,
+                                           PRODUCTION_RELEASE_SIGNATURE='0'*64).returncode, 0)
+        self.assertEqual(self.report_data()['failure_code'], 'production_authorization_invalid')
+        self.assertEqual(self.state_data()['updates'], 0)
+        self.assertEqual(self.run_engine(PRODUCTION_RELEASE_AUTHORIZATION_KEY=key,
+                                         PRODUCTION_RELEASE_SIGNATURE=signature).returncode, 0)
+        self.assertEqual(self.report_data()['status'], 'verified')
 
     def test_object_mismatch_blocks_update(self):
         state = self.state_data(); state['bad_object'] = True; self.state.write_text(json.dumps(state))

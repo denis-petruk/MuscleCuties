@@ -101,14 +101,14 @@ The existing bucket `musclecuties-media-prod-028417007003` is reserved exclusive
 
 ## 3. Production Deployment Protection on GitLab Free
 
-GitLab Free tier does not include protected environment approval rules. The following cryptographic authorization is a proposed production control; it is not implemented in `tools/deployment/release.sh`. The production CI job remains disabled until this control is implemented and tested:
+GitLab Free tier does not include protected environment approval rules. The cryptographic authorization below is enforced by `tools/deployment/release.sh` before the lock owner or AWS is invoked and independently by `release-engine.py`. The production CI job remains disabled until the other production gates are verified and the owner approves that release:
 
 1. **Authorization Token Contract**:
-   A future production deployment job must require `PRODUCTION_RELEASE_AUTHORIZATION_KEY` and `PRODUCTION_RELEASE_SIGNATURE`.
+   The production deployment job requires `PRODUCTION_RELEASE_AUTHORIZATION_KEY` (at least 32 UTF-8 bytes) and `PRODUCTION_RELEASE_SIGNATURE` (64 hexadecimal characters). Store both as masked, protected, production-environment-scoped GitLab variables. Set the signature for the exact release commit and tree before the job is run. Do not supply either through manual pipeline inputs.
 2. **Signature Formula**:
    `HMAC_SHA256(Key: PRODUCTION_RELEASE_AUTHORIZATION_KEY, Message: "${CI_COMMIT_SHA}:${CI_COMMIT_TREE_SHA}:production")`
 3. **Execution Guard**:
-   Before enabling production deployment, implement and test a fail-closed signature check against the exact source commit and tree, with a durable blocked report on mismatch.
+   A missing or mismatched signature creates an `artifacts/deployment-report.json` blocked report with `production_authorization_invalid` and no deployment mutation. The engine repeats the check if it is invoked directly. The signature must be changed for every distinct source commit or tree. Keep the production CI job disabled until the restore drill, runtime-principal cutover and production release policy are reviewed.
 
 ---
 

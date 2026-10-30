@@ -1,3 +1,5 @@
+- **Production release gate (2026-10-30):** The commit-bound HMAC guard is implemented and locally tested. Keep the production CI job disabled until the restore drill, `musclecuties_app` runtime-principal cutover, approved production policy and owner release authorization are verified.
+
 - **Beta execution handoff (2026-10-29):** The [orchestrator prompt](docs/BETA_ORCHESTRATOR_PROMPT.md) specifies a fresh chat, compact checkpoint transfer, specialist ownership and B1–B6 execution. The beta remains open; see the [readiness audit](docs/BETA_PRODUCTION_READINESS_AUDIT_20261029.md).
 
 - **First production-connected beta audit (2026-10-29):** GitLab `codex/plan-generation-checkpoint` fast-forwarded to `29065ff`. Current Release tests pass Core 973, Server 82, Registration 42, Mobile contracts 9, and reviewed catalog import 3. Windows iOS Release build stops at `NETSDK1147` (`maui-ios` absent); disposable PostgreSQL and signed-device checks remain open. Complete source safety, database proof, deployed parity, authenticated service flows, policy/AASA/privacy, and a signed TestFlight candidate in [beta gates B1–B6](docs/BETA_PRODUCTION_READINESS_AUDIT_20261029.md). Use the [orchestrator prompt](docs/BETA_ORCHESTRATOR_PROMPT.md) for the implementation handoff. No deployment or upload was performed.
@@ -23,6 +25,8 @@
 - **Workout safety reconciliation (2026-10-27):** Answer changes can attempt canonical automatic regeneration within their save transaction, using applied preferences and the next eligible day. Active previews/sessions, injury history, and uncertain inputs defer processing; pending work clears only after acceptance. Reliable worker scheduling and injury provenance remain incomplete. PostgreSQL integration coverage and all builds/tests remain unexecuted. See [migration inventory](docs/WORKOUT_PLANNING_MIGRATION_INVENTORY.md).
 
 # Roadmap — MuscleCuties
+
+**Production release gate (2026-10-30):** The commit-bound HMAC guard is implemented and locally tested. Keep the production CI job disabled until the restore drill, `musclecuties_app` runtime-principal cutover, approved production policy and owner release authorization are verified.
 
 - **Current workout hardening (2026-10-28):** Pull recovery is complete. Finish integrated population, cycle/readiness, injury lineage and acceptance verification on the non-deploying task branch; synchronize EF metadata against fresh migrations, rerun suites and the Mac iOS build, and record exact pushed revisions. Deployment remains separate. [Current evidence](docs/workout-migration-checkpoints/implementation-20261028.md).
 
