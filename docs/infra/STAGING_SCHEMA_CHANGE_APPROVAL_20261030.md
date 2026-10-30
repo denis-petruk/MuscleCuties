@@ -1,12 +1,11 @@
 # Live staging schema change — reviewed change and approval request
 
 Date: 2026-10-30 (America/Toronto). Branch: `infra/aws-lambda-postgres`.
-Status: **APPROVAL REQUIRED before any live DDL/DML.**
+Status: **APPLIED AND VERIFIED 2026-10-30** (owner approval
+`OWNER-APPROVAL-STAGING-SCHEMA-20261030`). Execution record in section 7.
 
 This document is the complete, reviewed change needed to make the merged backend
-deployable. Nothing in it has been executed against the live database. The merged
-artifact is verified and pushed; it is deliberately **not** deployed because the live
-schema cannot support it.
+deployable against `musclecuties_staging`.
 
 ## 1. Verified target
 
@@ -152,12 +151,44 @@ the database name, so rehearsal fingerprints differ from the live
   small (staging) but the run should still be scheduled, not run during active tester
   use.
 
-## 6. Approval requested
+## 6. Approval
 
-Approval is requested specifically for: applying the 28 pending migrations and the
-single additive grant SQL above to `musclecuties_staging`, followed by deploying the
-verified artifact to `musclecuties-backend-api`.
+Approved by the owner on 2026-10-30 for: applying the pending migrations and the single
+additive grant SQL to `musclecuties_staging`, followed by deploying the verified
+artifact to `musclecuties-backend-api`.
 
-Until that approval is given, no live migration, reconciliation or deployment is
-performed. The local, rehearsal, packaging and deployment-gate checks are complete and
+The local, rehearsal, packaging and deployment-gate checks that preceded it are
 recorded in `docs/infra/checkpoints/aws-lambda-postgres-final-integration.md`.
+
+## 7. Execution record
+
+Pre-change snapshot: `musclecuties-staging-pre-schema-20261030` (`available`,
+encrypted, PostgreSQL 17.5), taken before any change.
+
+1. `migrate --confirm` failed closed at `20261027234500_OwnReviewedTemplateVolumeFloors`
+   after applying 18 migrations (31 → 49). The migration requires the runner to be able
+to assume both the table owner and `musclecuties_migrator`; `mc_admin` owns the table but
+   was not a member of the migrator role. Required prerequisite, applied explicitly:
+   `GRANT musclecuties_migrator TO mc_admin;`. This is a real privilege change for the
+   migration runner and is recorded here rather than hidden.
+2. `migrate --confirm` then completed: 59 of 59 applied, head
+   `20261028190000_AddWorkoutCycleReadinessOccurrences`.
+3. Pre-grant preflight: `status=incompatible`, `exact-source`, fingerprint
+   `dd82303fe0aa3caad5450711bce87df343e80fd04289e1d4fb9a9f9bf2100b2c`, exactly the two
+expected grant issues.
+4. Live-pinned manifest (SHA-256
+   `586808d8ca28c2b49f0f068fdeea7d56ebbac476e6b73efc859c999e70cc19ed`) applied through
+   `schema-reconcile --confirm`: `status=reconciled`, one transactional step committed,
+   no failure codes.
+5. Post-change preflight: `status=compatible`, `exact-source`, 59 of 59, zero issues,
+   fingerprint `c73f5afeb65f96d48581c54e517a90ff334c4a14d12cdc83031b577c212ed66f`.
+6. Artifact deployed: `CodeSha256` `CwNY6J1ybRB7UrNEDcIh1YBNs5aAvqzRR7KRWrbQPpg=`,
+   `CodeSize` 9136376, `LastUpdateStatus=Successful`, LastModified
+   `2026-10-30T09:54:53Z`, revision `a6319ae3-b4ea-4c5a-9db6-b2b480dc6188`.
+7. Post-deployment: `/health/live` 200, `/health/ready` 200 (`Healthy`), registration quiz
+   200 (5923 bytes), `/api/v1/hydration/presets` 401 without a token and 401 with an
+   invalid token, `/api/v1/workouts/plan` 401. No ERROR/Exception entries in the function
+   log for the 15 minutes around the release.
+
+The live manifest was intentionally not committed: it pins a live-only fingerprint and
+would be meaningless elsewhere. Its checksum and both fingerprints are recorded above.
