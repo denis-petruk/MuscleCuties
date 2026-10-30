@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
@@ -15,6 +16,7 @@ using Xunit;
 
 namespace MuscleCuties.Registration.Integration.Tests;
 
+[Collection(SharedCatalogMutationCollection.Name)]
 public sealed class InjuryCanonicalReconciliationTests
 {
     private const string ConnectionVariable = "MC_REGISTRATION_WRITE_TEST_POSTGRES";
@@ -34,8 +36,10 @@ public sealed class InjuryCanonicalReconciliationTests
     private const int UsernameSuffixLength = 10;
     private static readonly DateOnly BirthDate = new(1990, 1, 1);
 
-    [Fact]
-    public async Task AcknowledgedCanonicalApplySucceedsButInjuryReconciliationNeedsReview()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AcceptedConfirmationsPermitClearanceOnlyWithUnchangedCatalog(bool catalogChanged)
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);
         Assert.False(string.IsNullOrWhiteSpace(connection));
@@ -50,6 +54,8 @@ public sealed class InjuryCanonicalReconciliationTests
         var strength = (int)WorkoutActivityType.GeneralStrength;
         var draft = new WorkoutPreferencesDto([strength], selectedDays,
             new Dictionary<int, int> { [strength] = StrengthMinutes }, "FullGym");
+        int? changedExercise = null;
+        string? originalEvidence = null;
         await SyntheticTenantSession.SetAsync(db, user);
         try
         {
@@ -105,25 +111,57 @@ public sealed class InjuryCanonicalReconciliationTests
             var injury = new SaveInjuryObservationRequest(user, injuryId, (int)site, "Acute", today, PainLevel, today);
             await injuryStore.SaveInjuryAsync(injury, CancellationToken.None);
             var outcome = await new PostgresWorkoutPlanReconciler(db).ReconcileAsync(user);
-            // Automatic reconstruction currently loses the accepted condition acknowledgments.
-            // Preserve this safe deferral explicitly; successful replacement remains a beta gate.
+            // Current activity policy blocks all automatic strength planning during injury.
             Assert.Equal(WorkoutReconciliationOutcome.NeedsReview, outcome);
             Assert.True(await db.WorkoutDays.AsNoTracking().AnyAsync(row => row.UserId == user && row.IsRemovedBySafety));
-            Assert.NotEmpty(await db.Set<WorkoutInjuryPrescriptionRecord>().AsNoTracking()
-                .Where(row => row.UserId == user).ToListAsync());
+            var captured = await db.Set<WorkoutInjuryPrescriptionRecord>().AsNoTracking()
+                .Where(row => row.UserId == user).ToListAsync();
+            Assert.NotEmpty(captured);
+            var episode = await db.WorkoutInjuryEpisodes.AsNoTracking().SingleAsync(row => row.UserId == user);
+            Assert.Equal(injuryId, episode.InjuryLogId);
+            Assert.All(captured, item =>
+            {
+                Assert.Equal(episode.Id, item.EpisodeId);
+                var original = Assert.Single(prescribed, row => row.Id == item.OriginalWorkoutDayExerciseId);
+                Assert.Equal((original.ExerciseId, original.Sets, original.Reps),
+                    (item.OriginalExerciseId, item.OriginalSets, item.OriginalReps));
+            });
             var injuryPlan = await db.WorkoutPlans.AsNoTracking().SingleAsync(row => row.UserId == user && row.IsActive);
             Assert.Equal(initialPlan.Id, injuryPlan.Id);
             await injuryStore.SaveInjuryAsync(injury with { Status = "Cleared" }, CancellationToken.None);
-            Assert.Equal(WorkoutReconciliationOutcome.NeedsReview, await new PostgresWorkoutPlanReconciler(db).ReconcileAsync(user));
+            if (catalogChanged)
+            {
+                changedExercise = restricted.Id;
+                originalEvidence = restricted.ReviewEvidenceV020Json;
+                var changedEvidence = JsonNode.Parse(originalEvidence!)!;
+                changedEvidence["exercise"]!["conditionsAndExclusions"] = "Synthetic changed review condition; requires fresh confirmation.";
+                var changedJson = changedEvidence.ToJsonString();
+                await db.WorkoutExerciseDefinitions.Where(row => row.Id == restricted.Id)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(row => row.ReviewEvidenceV020Json, changedJson));
+            }
+            Assert.Equal(catalogChanged ? WorkoutReconciliationOutcome.NeedsReview : WorkoutReconciliationOutcome.Completed,
+                await new PostgresWorkoutPlanReconciler(db).ReconcileAsync(user));
             var clearedPlan = await db.WorkoutPlans.AsNoTracking().SingleAsync(row => row.UserId == user && row.IsActive);
-            Assert.Equal(injuryPlan.Id, clearedPlan.Id);
-            Assert.Single(await db.WorkoutPlanRevisionsV02.AsNoTracking().Where(row => row.UserId == user).ToListAsync());
-            var unchanged = await db.WorkoutDayExercises.AsNoTracking().Where(row => row.UserId == user).ToListAsync();
+            Assert.Equal(catalogChanged, injuryPlan.Id == clearedPlan.Id);
+            const int InitialRevisionCount = 1;
+            const int ClearedRevisionCount = 2;
+            Assert.Equal(catalogChanged ? InitialRevisionCount : ClearedRevisionCount,
+                await db.WorkoutPlanRevisionsV02.AsNoTracking().CountAsync(row => row.UserId == user));
+            var originalIds = prescribed.Select(item => item.Id).ToHashSet();
+            var unchanged = await db.WorkoutDayExercises.AsNoTracking()
+                .Where(row => row.UserId == user && originalIds.Contains(row.Id)).ToListAsync();
             Assert.Equal(prescribed.OrderBy(row => row.Id).Select(row => (row.Id, row.ExerciseId, row.Sets, row.Reps)),
                 unchanged.OrderBy(row => row.Id).Select(row => (row.Id, row.ExerciseId, row.Sets, row.Reps)));
-            Assert.True((await db.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == user)).SafetyRegenerationPending);
+            Assert.Equal(catalogChanged, (await db.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == user)).SafetyRegenerationPending);
         }
-        finally { db.ChangeTracker.Clear(); await db.Users.Where(row => row.Id == user).ExecuteDeleteAsync(); }
+        finally
+        {
+            db.ChangeTracker.Clear();
+            if (changedExercise is { } id)
+                await db.WorkoutExerciseDefinitions.Where(row => row.Id == id)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(row => row.ReviewEvidenceV020Json, originalEvidence));
+            await db.Users.Where(row => row.Id == user).ExecuteDeleteAsync();
+        }
     }
 
     [Fact]

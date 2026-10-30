@@ -111,11 +111,26 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
             source.RequestedSessionsPerWeek is null || source.ExcludedExerciseIds is null ||
             !source.SelectedActivityTypes.Contains((int)style) || !MatchesAppliedPreferences(draft, source, equipment))
             return WorkoutReconciliationOutcome.NeedsReview;
+        // Confirmations belong to the accepted catalog evidence, never to a newly loaded catalog.
+        // The full fingerprint deliberately invalidates reuse on any catalog/preference change.
+        var acceptedProposal = await context.WorkoutPlanProposalsV02.AsNoTracking()
+            .SingleOrDefaultAsync(row => row.UserId == userId && row.Id == revision.SourceProposalId &&
+                row.PlanId == activePlanId && row.Status == "Accepted", cancellationToken).ConfigureAwait(false);
+        if (acceptedProposal is null) return WorkoutReconciliationOutcome.NeedsReview;
+        AppliedCatalogEvidence? acceptedEvidence;
+        try { acceptedEvidence = JsonSerializer.Deserialize<AppliedCatalogEvidence>(acceptedProposal.ProposalJson, JsonOptions); }
+        catch (JsonException) { return WorkoutReconciliationOutcome.NeedsReview; }
+        if (string.IsNullOrWhiteSpace(acceptedEvidence?.SourceCatalogFingerprint) ||
+            acceptedEvidence.SourceCatalogFingerprint != source.CatalogFingerprint)
+            return WorkoutReconciliationOutcome.NeedsReview;
+
         var completedToday = await context.WorkoutCompletionDayCredits.AsNoTracking()
             .AnyAsync(row => row.UserId == userId && row.LocalDate == today, cancellationToken).ConfigureAwait(false);
 
         var styleDto = WorkoutActivityContractMapper.ToDto(style);
         var request = new StrengthPlanPreviewRequestV020(styleDto, today, previous.ActivityHistory,
+            AcknowledgedExerciseConditionIds: previous.AcknowledgedExerciseConditionIds,
+            AcknowledgedSubstitutionPairKeys: previous.AcknowledgedSubstitutionPairKeys,
             WarmupMinutes: previous.WarmupMinutes, CooldownMinutes: previous.CooldownMinutes)
         {
             DraftPreferences = draft,
@@ -710,6 +725,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
     private static bool EqualEntries(IReadOnlyDictionary<int, int> left, IReadOnlyDictionary<int, int> right) =>
         left.Count == right.Count && left.All(pair => right.TryGetValue(pair.Key, out var value) && value == pair.Value);
 
+    private sealed record AppliedCatalogEvidence(string? SourceCatalogFingerprint);
     private sealed record AppliedInput(StrengthPlanPreviewRequestV020 Request);
 
 }
