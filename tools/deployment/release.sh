@@ -81,6 +81,23 @@ if [ "$(git rev-parse HEAD 2>/dev/null)" != "$source_sha" ] ||
     exit 1
 fi
 
+phase=authorization
+case "${CI_COMMIT_BRANCH}" in
+    test-flight-beta)
+        if [ "${CI_ENVIRONMENT_NAME:-}" != production ] ||
+           ! python3 "$(dirname "$0")/production_authorization.py" "$source_sha" "$tree_sha"; then
+            reason=production_authorization_invalid
+            exit 1
+        fi
+        ;;
+    codex/plan-generation-checkpoint)
+        if [ "${CI_ENVIRONMENT_NAME:-}" != staging ]; then
+            reason=target_environment_mismatch
+            exit 1
+        fi
+        ;;
+esac
+
 phase=artifact
 manifest="${CI_PROJECT_DIR:-.}/artifacts/build-manifest.json"
 object="${CI_PROJECT_DIR:-.}/artifacts/release-object.json"

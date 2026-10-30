@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
+from production_authorization import authorized as production_authorized
 
 
 EXPECTED_PROJECT = "denis-petruk/musclecuties-testflight-beta"
@@ -163,6 +164,8 @@ class Release:
                 p.get("restore_drill_evidence_sha256") and
                 HASH.fullmatch(p["restore_drill_evidence_sha256"]), "release_approval_missing")
         if p["target_id"] == "production":
+            require(production_authorized(m.get("source_sha"), m.get("tree_sha")),
+                    "production_authorization_invalid")
             require(p.get("production_approval_contract") == "enforced", "production_approval_unavailable")
         require(p.get("reconciliation") in (None, "none"), "reconciliation_contract_unavailable")
 

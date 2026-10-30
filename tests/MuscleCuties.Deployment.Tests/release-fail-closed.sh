@@ -13,7 +13,7 @@ MOCK
 chmod +x "$tmp/bin/aws"
 export PATH="$tmp/bin:$PATH" MOCK_AWS_CALLED="$tmp/aws-called"
 export CI=true CI_COMMIT_REF_PROTECTED=true CI_PIPELINE_SOURCE=web
-export CI_COMMIT_BRANCH=test-flight-beta CI_PROJECT_DIR="$tmp"
+export CI_COMMIT_BRANCH=test-flight-beta CI_ENVIRONMENT_NAME=production CI_PROJECT_DIR="$tmp"
 export CI_COMMIT_SHA=$(git rev-parse HEAD) CI_COMMIT_TREE_SHA=$(git rev-parse 'HEAD^{tree}')
 sha=$(printf 'a%.0s' {1..64})
 b64=$(printf 'A%.0s' {1..43})=
@@ -29,6 +29,17 @@ check_blocked() {
     jq -e --arg reason "$expected" '.status == "blocked" and .failure_code == $reason and .mutation_attempted == false' "$tmp/artifacts/deployment-report.json" >/dev/null
     test ! -e "$MOCK_AWS_CALLED"
 }
+check_blocked production_authorization_invalid
+export PRODUCTION_RELEASE_AUTHORIZATION_KEY='synthetic-test-key-with-at-least-32-bytes'
+PRODUCTION_RELEASE_SIGNATURE=$(python3 - <<'PY'
+import hashlib, hmac, os
+message = f"{os.environ['CI_COMMIT_SHA']}:{os.environ['CI_COMMIT_TREE_SHA']}:production".encode()
+print(hmac.new(os.environ['PRODUCTION_RELEASE_AUTHORIZATION_KEY'].encode(), message, hashlib.sha256).hexdigest())
+PY
+)
+export PRODUCTION_RELEASE_SIGNATURE
+PRODUCTION_RELEASE_SIGNATURE="$(printf '0%.0s' {1..64})" check_blocked production_authorization_invalid
+CI_COMMIT_TREE_SHA="$(printf 'a%.0s' {1..40})" check_blocked source_identity_mismatch
 check_blocked database_session_lock_contract_unavailable
 check_blocked database_session_lock_contract_unavailable # retry cannot mutate either
 export MC_RELEASE_OFFLINE_TEST=1
