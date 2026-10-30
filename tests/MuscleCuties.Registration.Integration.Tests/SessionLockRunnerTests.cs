@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using MuscleCuties.DbMaintenance.Schema;
 using Npgsql;
 using Xunit;
@@ -22,10 +23,12 @@ public sealed class SessionLockRunnerTests(SchemaCompatibilityDatabaseFixture fi
         try
         {
             var root = FindRepositoryRoot();
-            var maintenanceDll = Path.Combine(root, "src", "MuscleCuties.DbMaintenance", "bin", "Release",
+            var configuration = typeof(SessionLockRunnerTests).Assembly
+                .GetCustomAttribute<AssemblyConfigurationAttribute>()!.Configuration;
+            var maintenanceDll = Path.Combine(root, "src", "MuscleCuties.DbMaintenance", "bin", configuration,
                 "net10.0", "MuscleCuties.DbMaintenance.dll");
             Assert.True(File.Exists(maintenanceDll), "Build the maintenance project before running this test.");
-            var start = new ProcessStartInfo("dotnet")
+            var start = new ProcessStartInfo(Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet")
             {
                 WorkingDirectory = root,
                 RedirectStandardOutput = true,
