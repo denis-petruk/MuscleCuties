@@ -31,6 +31,9 @@ check_blocked() {
 }
 check_blocked database_session_lock_contract_unavailable
 check_blocked database_session_lock_contract_unavailable # retry cannot mutate either
+export MC_RELEASE_OFFLINE_TEST=1
+check_blocked offline_test_mode_forbidden
+unset MC_RELEASE_OFFLINE_TEST
 CI_COMMIT_REF_PROTECTED=false check_blocked untrusted_pipeline
 CI_COMMIT_SHA=0000000000000000000000000000000000000000 check_blocked source_identity_mismatch
 jq '.version_id = "null"' "$tmp/artifacts/release-object.json" > "$tmp/changed"

@@ -70,7 +70,17 @@ class ValidationTests(unittest.TestCase):
         dotnet.write_text("#!/bin/sh\necho 10.0.403\n")
         dotnet.chmod(0o755)
         tool = self.root / '.tools/dotnet-lambda'
-        tool.write_text("#!/bin/sh\necho 7.0.0\n")
+        tool.write_text('''#!/bin/sh
+if [ "$1" = "help" ]; then
+  echo 'Amazon Lambda Tools for .NET Core applications (7.0.0)'
+  exit 0
+fi
+if [ "$1" = "--version" ]; then
+  echo 'Unknown command: --version' >&2
+  exit 255
+fi
+exit 2
+''')
         tool.chmod(0o755)
         self.env = dict(os.environ, PATH=str(self.root)+os.pathsep+os.environ['PATH'], CI_COMMIT_SHA='a'*40, CI_COMMIT_TREE_SHA='b'*40, CI_PIPELINE_ID='1', CI_JOB_ID='2')
     def run_validate(self, package):
@@ -83,6 +93,12 @@ class ValidationTests(unittest.TestCase):
         package = self.root / 'missing.zip'
         with zipfile.ZipFile(package, 'w') as archive: archive.writestr('MuscleCuties.Server.dll', 'fixture')
         self.assertIn('required root file missing', self.run_validate(package).stderr)
+    def test_unexpected_lambda_tools_version_fails(self):
+        tool = self.root / '.tools/dotnet-lambda'
+        tool.write_text("#!/bin/sh\necho 'Amazon Lambda Tools for .NET Core applications (7.0.1)'\n")
+        package = self.root / 'missing.zip'
+        with zipfile.ZipFile(package, 'w') as archive: archive.writestr('MuscleCuties.Server.dll', 'fixture')
+        self.assertIn('unexpected Lambda Tools version', self.run_validate(package).stderr)
     def test_corrupt_archive_fails(self):
         package = self.root / 'corrupt.zip'
         package.write_bytes(b'not a zip')

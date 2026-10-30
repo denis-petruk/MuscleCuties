@@ -53,6 +53,11 @@ finish() {
 }
 trap finish EXIT
 
+if [ "${MC_RELEASE_OFFLINE_TEST:-0}" = 1 ]; then
+    reason=offline_test_mode_forbidden
+    exit 1
+fi
+
 # Protected GitLab context is necessary but is not sufficient approval for a release.
 if [ "${CI:-}" != true ] || [ "${CI_COMMIT_REF_PROTECTED:-}" != true ] || \
    [ "${CI_PIPELINE_SOURCE:-}" != web ]; then
