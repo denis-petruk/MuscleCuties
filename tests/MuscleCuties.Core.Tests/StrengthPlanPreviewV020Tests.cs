@@ -801,6 +801,43 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
+    public async Task Reviewed_Injury_Restriction_Evidence_Replaces_The_Legacy_Symptom_Block()
+    {
+        // The server derives activity restrictions from the reviewed injury table. An empty set
+        // means no activity is restricted, so the legacy injury-pain flag cannot block planning;
+        // exercise-level contraindications and injury provenance still guard every prescription.
+        var useCase = new PreviewStrengthPlanV020UseCase(new Source(Profile() with
+        {
+            HasCurrentSymptoms = true,
+            RestrictedActivityTypes = new HashSet<int>()
+        }));
+
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), Request());
+
+        Assert.Equal("Feasible", result.Status);
+        Assert.DoesNotContain("RestrictionOrSymptomRequiresReview", result.LimitationCodes);
+    }
+
+    [Fact]
+    public async Task Reviewed_Injury_Restriction_Evidence_Still_Blocks_A_Restricted_Activity()
+    {
+        var useCase = new PreviewStrengthPlanV020UseCase(new Source(Profile() with
+        {
+            RestrictedActivityTypes = new HashSet<int>
+            {
+                (int)WorkoutActivityType.GeneralStrength,
+                (int)WorkoutActivityType.HighVolumeStrength,
+                (int)WorkoutActivityType.StrengthHighIntensity
+            }
+        }));
+
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), Request());
+
+        Assert.Equal("Limited", result.Status);
+        Assert.Contains("RestrictionOrSymptomRequiresReview", result.LimitationCodes);
+    }
+
+    [Fact]
     public async Task Saved_And_Request_Exercise_Exclusions_Are_Merged_As_Hard_Filters()
     {
         var profile = Profile() with { ExcludedExerciseIds = new HashSet<int> { 101 } };

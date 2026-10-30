@@ -54,7 +54,9 @@ internal static class StrengthPlanPreviewMapperV020
         TemplateVolumeFloors = source.TemplateVolumeFloors?.ToDictionary(pair => pair.Key, pair =>
             new TemplateVolumeFloor(pair.Value.TemplateId, pair.Value.MinimumWorkingSets, pair.Value.MinimumExercises,
                 pair.Value.MinimumSetsBySlotId, TemplateVolumeFloorRule.ReviewedStatus)),
-        MuscleGroupsByExerciseId = source.MuscleGroupsByExerciseId
+        MuscleGroupsByExerciseId = source.MuscleGroupsByExerciseId,
+        RestrictedActivities = source.RestrictedActivityTypes?
+            .Select(activity => (WorkoutActivityType)activity).ToHashSet()
     };
 
     public static StrengthPlanPreviewResponseV020 ToResponse(StrengthPlanPreviewResult result) => new(

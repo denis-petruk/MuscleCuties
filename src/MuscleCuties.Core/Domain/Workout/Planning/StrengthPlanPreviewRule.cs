@@ -48,6 +48,10 @@ public sealed record StrengthPlanPreviewData(
     public IReadOnlyDictionary<int, int>? GoalPriorityByExerciseId { get; init; }
     public IReadOnlyDictionary<int, IReadOnlySet<string>>? MuscleGroupsByExerciseId { get; init; }
     public IReadOnlyDictionary<string, TemplateVolumeFloor>? TemplateVolumeFloors { get; init; }
+    /// <summary>Server-derived activities an active injury blocks. Strength styles are never
+    /// activity-restricted: their safety is enforced per exercise by contraindication filtering
+    /// and injury provenance. Absent evidence falls back to the symptom flag.</summary>
+    public IReadOnlySet<WorkoutActivityType>? RestrictedActivities { get; init; }
 }
 
 public sealed record StrengthPlanPreviewSession(
@@ -211,8 +215,9 @@ public static class StrengthPlanPreviewRule
             choices.UnknownExperienceAssessmentCompleted, choices.AcknowledgedSubstitutionPairKeys);
         var isEstablishedResistanceHistory = GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(
             choices.ActivityHistory, choices.LocalDate);
+        var isActivityRestricted = data.RestrictedActivities?.Contains(activity) ?? data.HasCurrentSymptoms;
         var prescriptionContext = new ActivityPrescriptionContext(activity, prescriptionExperience, null,
-            data.HasCurrentSymptoms, true, isEstablishedResistanceHistory,
+            isActivityRestricted, true, isEstablishedResistanceHistory,
             NoCompletedExposures, false, false);
         var scheduledSessionsPerWeek = ScheduledSessionsPerWeekFor(activity, data, choices);
         var templates = StrengthTemplateCatalog.ForSchedule(scheduledSessionsPerWeek);

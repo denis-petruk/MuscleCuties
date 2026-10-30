@@ -115,14 +115,21 @@ internal static class MixedActivityScheduleMapperV020
         var hasEstablishedResistanceHistory = GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(
             activityHistory, request.LocalDate);
         var sourceHasRestrictions = source.HasCurrentSymptoms || source.ActiveInjuryFlags != InjuryFlag.None;
+        // Server-derived injury evidence decides activity-level restrictions. Strength styles are
+        // never restricted here: contraindicated exercises are filtered per exercise and injury
+        // provenance fails closed when a safe replacement cannot be proven.
+        var isActivityRestricted = source.RestrictedActivityTypes is { } restrictedActivityTypes
+            ? restrictedActivityTypes.Contains((int)activity)
+            : isChosenStrength
+                ? source.HasCurrentSymptoms
+                : activity != WorkoutActivityType.Hiit && sourceHasRestrictions;
         var hiitEvidence = CreateHiitEvidence(activity, request, source, histories);
 
         return new ActivityPrescriptionContext(
             activity,
             prescriptionExperience,
             null,
-            isChosenStrength ? source.HasCurrentSymptoms :
-                activity != WorkoutActivityType.Hiit && sourceHasRestrictions,
+            isActivityRestricted,
             source.SelectedActivityTypes?.Contains((int)activity) == true,
             hasEstablishedResistanceHistory,
             strengthPreviewIsFeasible && activity == WorkoutActivityType.StrengthHighIntensity

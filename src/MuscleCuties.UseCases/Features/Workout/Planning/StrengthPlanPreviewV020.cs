@@ -105,6 +105,9 @@ public sealed record StrengthPlanPreviewSourceV020(
     public long ExperienceVersion { get; init; }
     public long AnswerVersion { get; init; }
     public SavedActivityAnswersDto? SavedAnswers { get; init; }
+    /// <summary>Activities an active injury blocks under the reviewed site/status rules.
+    /// Strength styles are never listed; their safety is enforced per exercise.</summary>
+    public IReadOnlySet<int>? RestrictedActivityTypes { get; init; }
 }
 
 public sealed record ReviewedTemplateFloorDto(string TemplateId, int MinimumWorkingSets, int MinimumExercises,
