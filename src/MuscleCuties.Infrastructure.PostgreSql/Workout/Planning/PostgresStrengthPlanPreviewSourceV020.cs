@@ -92,6 +92,14 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             episodes.Any(episode => episode.InjuryLogId == injury.Id && (episode.SourceDeleted ||
                 episode.ClearedOn is null || episode.ClearedOn > today ||
                 string.IsNullOrWhiteSpace(episode.ClearanceTimeZoneId) || episode.ClearanceTimeZoneVersion is null))).ToArray();
+        // The reviewed site/status table is the only source of activity-level injury restriction.
+        // Unknown status fails closed as Acute; cleared injuries never restrict an activity.
+        var restrictedActivityTypes = InjuryActivityRestrictionRule.GetBlockedActivities(
+                relevantInjuries.Select(injury => new MuscleCuties.Core.Models.Workout.Planning.Injury(
+                    (InjuryFlag)injury.SiteFlag,
+                    Enum.TryParse<InjuryStatus>(injury.Status, true, out var status) ? status : InjuryStatus.Acute,
+                    injury.Since)))
+            .Select(activity => (int)activity).ToHashSet();
         var logs = await dbContext.WorkoutExerciseLogs.AsNoTracking()
             .Where(row => row.UserId == userId && row.CompletedSets > 0 && row.CompletedReps > 0)
             .Select(row => new { row.ExerciseId, row.WorkoutLogId, row.WeightKg })
@@ -166,6 +174,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                 ReproductiveContextCodec.Parse(profile?.ReproductiveContextJson).Pregnancy),
             CatalogFingerprint = PlanningCatalogFingerprint.FromInputs(definitions, goalTierWeights, preferences, floorRows),
             InjuryFingerprint = PlanningInputFingerprint.Injuries(injuries),
+            RestrictedActivityTypes = restrictedActivityTypes,
             ActivePlanId = activePlanId,
             ActiveRevisionId = activeRevisionId,
             HistoryFingerprint = PlanningInputFingerprint.Hash(logs),
