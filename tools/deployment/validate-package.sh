@@ -17,8 +17,9 @@ if command('git','rev-parse','HEAD') != commit or command('git','rev-parse',comm
 if command('git','status','--porcelain','--untracked-files=no'): fail('tracked source changes present')
 sdk = command('dotnet','--version')
 if sdk != '10.0.403': fail('unexpected SDK version')
-tools = command('./.tools/dotnet-lambda','--version')
-if not re.search(r'(?<!\d)7\.0\.0(?!\d)', tools): fail('unexpected Lambda Tools version')
+tools = command('./.tools/dotnet-lambda','help')
+if tools.splitlines()[:1] != ['Amazon Lambda Tools for .NET Core applications (7.0.0)']:
+    fail('unexpected Lambda Tools version')
 archive = pathlib.Path(sys.argv[1]); data = archive.read_bytes(); digest = hashlib.sha256(data).digest()
 files = []
 try:
