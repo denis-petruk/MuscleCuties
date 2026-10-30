@@ -362,7 +362,9 @@ public static class ApiApplication
             serviceProvider.GetRequiredService<TimeProvider>(),
             emailChallengeHmacKeys,
             builder.Configuration["EmailChallenges:ActiveHmacKeyId"] ?? string.Empty));
-        builder.Services.AddHealthChecks().AddCheck<PostgreSqlReadinessCheck>("postgresql");
+        builder.Services.AddHealthChecks()
+            .AddCheck<PostgreSqlReadinessCheck>("postgresql")
+            .AddCheck<PostgreSqlSchemaCompatibilityCheck>("postgresql-schema");
         builder.Services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -883,6 +885,33 @@ internal sealed class PostgreSqlReadinessCheck(PostgresDbContext dbContext) : Mi
         catch
         {
             return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy();
+        }
+    }
+}
+
+/// <summary>
+/// Deployment-order guard. Connectivity alone reported Healthy while dashboard and injuries returned
+/// HTTP 500 for a missing column, so readiness now also compares the database migration ledger with
+/// the migrations compiled into the deployed assembly. The description names no schema objects.
+/// </summary>
+internal sealed class PostgreSqlSchemaCompatibilityCheck(PostgresDbContext dbContext) : Microsoft.Extensions.Diagnostics.HealthChecks.IHealthCheck
+{
+    public async Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult> CheckHealthAsync(
+        Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext context,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var applied = await dbContext.Database.GetAppliedMigrationsAsync(cancellationToken).ConfigureAwait(false);
+            var compatibility = DatabaseSchemaCompatibility.Evaluate(applied, dbContext.Database.GetMigrations());
+            return compatibility.IsCompatible
+                ? Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(compatibility.Description)
+                : Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy(compatibility.Description);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy(
+                "Database migration ledger is unreadable.", exception);
         }
     }
 }
