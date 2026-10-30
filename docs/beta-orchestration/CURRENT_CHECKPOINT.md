@@ -2,43 +2,42 @@
 
 Date: 2026-10-30 (America/Toronto). Status: `HANDOFF_READY`.
 Integration branch: `release/musclecuties-testflight-beta-hardening`.
-Source validated through `e16b6d39`, based on verified remote `16fdba82`.
+Source validated through `41dbc89d`, based on verified GitLab `c45b6d0d`.
 
 ## Completed in this run
 
-- Acquired the GitLab lease by ordinary fast-forward push (`f6a23cc4`).
-- Reproduced intermittent Apply fixture failure: concurrent committed synthetic
-  catalog changes invalidated its preview fingerprint. Isolated catalog-writing
-  fixtures from parallel readers without changing production safety validation.
-- Fixed lock-runner test configuration and SDK host selection.
-- Current SDK 10.0.403 is available at `/Users/denispetruk/.dotnet/dotnet`;
-  the default PATH does not select it.
-- Preserved the Rider worktree's staged ROADMAP/STATUS changes and tracked deletion.
+Acquired lease `956a1712`. Fixed canonical Apply rejecting feasible strength plans:
+validation now distinguishes original prescriptions from explicit occurrence
+adjustments. Disposable test setup imports the existing repository review metadata.
+Added canonical preview/Apply/replay and accepted revision lineage coverage, followed
+by explicit injury/clearance safe-deferral and unchanged prescription checks.
+Preserved unrelated Rider worktree staged changes and deletion.
 
 ## Verification
 
-Core 989, Server 112, Registration 42, Mobile contracts 9 PASS. Fresh disposable
-PostgreSQL 17 setup reached 59 migrations. Post-fix integration excluding the
-unchanged load fixture: 130/130 PASS; focused changed checks: 7/7 PASS. The initial
-broad run's unchanged three-minute load fixture passed with 25,405 requests and
-zero errors. Its other two failures were fixed and covered by the post-fix run.
-These are split-run results, not a single fully green broad run.
+Core 989, Server 112, Registration 42, Mobile Contracts 9 PASS. PostgreSQL 17 has
+59 migrations; full integration 132/132 PASS in one final run, including restricted
+load: 180 seconds, 25,292 requests, zero errors, query p95 2.5 ms, maximum four
+pooled backends. Changed checks 5/5 PASS in Debug and Release. iOS Release build
+attempt remains BLOCKED NETSDK1147: missing ios workload in SDK 10.0.403 at
+`/Users/denispetruk/.dotnet/dotnet`. Default PATH chooses an older SDK.
 
-iOS Release compilation attempted and BLOCKED at NETSDK1147 (missing `ios`
-workload for the pinned SDK). GitLab candidate pipeline, signing, deployed parity,
-restore, runtime-principal cutover and physical-device acceptance remain unverified.
-See [exact evidence and remaining scope](evidence/20261030-b1-b2-validation.md).
+See [run evidence](evidence/20261030-canonical-apply.md), including initial fixture
+configuration failures and the exact remaining injury blocker. No GitLab pipeline,
+deployment, signed IPA, TestFlight or physical-device validation occurred.
 
 ## Next bounded task
 
-Acquire the shared lease, then continue B1: build an acknowledged, metadata-complete
-synthetic canonical preview/Apply/injury/clearance journey and verify accepted
-revision lineage and preserved history. Current injury reconciliation coverage
-proves safe deferral for unacknowledged beginner/legacy plans, not successful
-canonical replacement. Omitted-slot transfer, conservative recovery and suppression
-code exists; do not reimplement from stale historical checkpoint language.
+Acquire the shared lease and continue B1. Canonical Apply now succeeds with explicit
+condition acknowledgments and reviewed metadata. Injury reconciliation still returns
+NeedsReview: `PostgresWorkoutPlanReconciler` reconstructs a request without prior
+acknowledgments. Determine safe reuse of explicitly accepted confirmations when review
+evidence is unchanged, and invalidate them when catalog conditions change. Do not
+auto-acknowledge the current catalog or weaken contraindications/substitution policy.
+Then prove successful injury replacement/clearance, episode and original-dose lineage,
+and history preservation. Current regression deliberately records safe deferral.
 
-Audit canonical observed-set progression, supported catalog/high-intensity choices,
-and offline/reconnect/relaunch. B1/B2 remain OPEN. Keep production disabled and
-preserve the existing staging deployment. No live operation or TestFlight action
-was performed. No specialist assignment remains active.
+Observed-set progression, supported catalog/high-intensity choices and client
+reconnect/relaunch remain open. B1/B2 remain OPEN; local passing suites do not close
+the beta release gates. Keep production disabled and preserve existing staging.
+No specialist assignment remains active.
