@@ -1,6 +1,9 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using MuscleCuties.DbMaintenance.Schema;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
@@ -16,6 +19,10 @@ public static class DatabaseMaintenance
     private const string LambdaFunctionEnvironmentVariable = "AWS_LAMBDA_FUNCTION_NAME";
     private const string MigrateCommand = "migrate";
     private const string MigrationStatusCommand = "migration-status";
+    private const string SchemaPreflightCommand = "schema-preflight";
+    private const string SchemaVerifyCommand = "schema-verify";
+    private const string SchemaReconcileCommand = "schema-reconcile";
+    private const string SessionLockRunnerCommand = "session-lock-runner";
     private const string SeedCommand = "seed";
     private const string ReviewCatalogDryRunCommand = "review-catalog-dry-run";
     private const string ReviewCatalogApplyCommand = "review-catalog-apply";
@@ -39,9 +46,12 @@ public static class DatabaseMaintenance
     {
         if (!TryParse(args, out var command, out var manifestPath, out var expectedSha256))
         {
-            Console.Error.WriteLine("Usage: DbMaintenance migration-status | migrate --confirm | seed <manifest-path> <expected-sha256> --confirm | review-catalog-dry-run <manifest-path> <expected-sha256> | review-catalog-apply <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
+            Console.Error.WriteLine("Usage: DbMaintenance migration-status | migrate --confirm | schema-preflight <requirements-path> <requirements-sha256> | schema-verify <requirements-path> <requirements-sha256> | schema-reconcile <approved-manifest-path> <manifest-sha256> --confirm | session-lock-runner -- <child-command> [args...] | seed <manifest-path> <expected-sha256> --confirm | review-catalog-dry-run <manifest-path> <expected-sha256> | review-catalog-apply <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
             return InvalidUsageExitCode;
         }
+
+        if (command == SessionLockRunnerCommand)
+            return await RunSessionLockRunnerAsync(args);
 
         if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(LambdaFunctionEnvironmentVariable)))
         {
@@ -98,6 +108,10 @@ public static class DatabaseMaintenance
                     }
                 }
             }
+
+            if (command is SchemaPreflightCommand or SchemaVerifyCommand or SchemaReconcileCommand)
+                return await RunSchemaCommandAsync(command, manifestPath!, expectedSha256!, connection,
+                    args.Contains(ConfirmationSwitch));
 
             if (command is SeedCommand or ReviewCatalogDryRunCommand or ReviewCatalogApplyCommand)
             {
@@ -209,6 +223,16 @@ public static class DatabaseMaintenance
         manifestPath = null;
         expectedSha256 = null;
 
+        if (args.Length > 0 && args[0] == SessionLockRunnerCommand)
+        {
+            var dashIndex = Array.IndexOf(args, "--");
+            if (dashIndex != -1 && dashIndex + 1 < args.Length)
+            {
+                command = SessionLockRunnerCommand;
+                return true;
+            }
+        }
+
         if (args is [MigrationStatusCommand])
         {
             command = MigrationStatusCommand;
@@ -218,6 +242,24 @@ public static class DatabaseMaintenance
         if (args is [MigrateCommand, ConfirmationSwitch])
         {
             command = MigrateCommand;
+            return true;
+        }
+
+        if (args is [SchemaPreflightCommand or SchemaVerifyCommand, var schemaPath, var schemaChecksum] &&
+            !string.IsNullOrWhiteSpace(schemaPath) && IsSha256(schemaChecksum))
+        {
+            command = args[0];
+            manifestPath = schemaPath;
+            expectedSha256 = schemaChecksum;
+            return true;
+        }
+
+        if (args is [SchemaReconcileCommand, var reconcilePath, var reconcileChecksum, ConfirmationSwitch] &&
+            !string.IsNullOrWhiteSpace(reconcilePath) && IsSha256(reconcileChecksum))
+        {
+            command = SchemaReconcileCommand;
+            manifestPath = reconcilePath;
+            expectedSha256 = reconcileChecksum;
             return true;
         }
 
@@ -263,6 +305,89 @@ public static class DatabaseMaintenance
         expectedSha256 = checksum;
         return true;
     }
+
+    private static bool IsSha256(string value) =>
+        value.Length == Sha256HexLength && value.All(Uri.IsHexDigit);
+
+    private static async Task<int> RunSchemaCommandAsync(
+        string command,
+        string manifestPath,
+        string expectedSha256,
+        NpgsqlConnectionStringBuilder connection,
+        bool confirmed)
+    {
+        SchemaRequirements requirements;
+        try
+        {
+            if (command is SchemaPreflightCommand or SchemaVerifyCommand)
+            {
+                // The pipeline supplies the reviewed contract path and its exact checksum.
+                requirements = DatabaseSchemaCompatibility.LoadRequirements(ResolvePath(manifestPath), expectedSha256);
+            }
+            else
+            {
+                var requirementsPath = Path.Combine(ResolveRepositoryRoot(), "src", "MuscleCuties.DbMaintenance", "Schema", "SchemaRequirements.json");
+                var requirementsSha256 = DatabaseSchemaCompatibility.ComputeFileSha256(requirementsPath);
+                requirements = DatabaseSchemaCompatibility.LoadRequirements(requirementsPath, requirementsSha256);
+            }
+        }
+        catch (Exception exception) when (exception is SchemaRequirementsException or IOException or UnauthorizedAccessException)
+        {
+            var code = exception is SchemaRequirementsException requirementsException
+                ? requirementsException.Code
+                : SchemaFailureCodes.RequirementsInvalid;
+            var rejected = new SchemaRequirements
+            {
+                ContractVersion = DatabaseSchemaCompatibility.SupportedContractVersion,
+                SourceSha256 = expectedSha256
+            };
+            WriteJson(DatabaseSchemaCompatibility.CreateUnknownResult(rejected, code,
+                "The supplied schema requirements manifest could not be validated."));
+            return InvalidUsageExitCode;
+        }
+
+        var report = await DatabaseSchemaCompatibility.EvaluateAsync(connection.ConnectionString, requirements);
+        if (command is SchemaPreflightCommand or SchemaVerifyCommand)
+        {
+            WriteJson(report);
+            return report.ExitCode;
+        }
+
+        var outcome = await SchemaReconciliation.ExecuteAsync(
+            connection.ConnectionString,
+            ResolvePath(manifestPath),
+            expectedSha256,
+            requirements,
+            ResolveRepositoryRoot(),
+            confirmed);
+        WriteJson(new
+        {
+            contract_version = requirements.ContractVersion,
+            status = outcome.Status,
+            requirements_sha256 = expectedSha256,
+            db_fingerprint_sha256 = outcome.PostFingerprintSha256,
+            migration_history_mode = report.MigrationHistoryMode,
+            failure_codes = outcome.FailureCodes,
+            steps = outcome.Steps
+        });
+        return outcome.Status == SchemaReconciliation.StatusReconciled ? 0 : 1;
+    }
+
+    private static string ResolveRepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "AGENTS.md")))
+            directory = directory.Parent;
+        return directory?.FullName ?? Directory.GetCurrentDirectory();
+    }
+
+    private static readonly JsonSerializerOptions ResultJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+    };
+
+    private static void WriteJson<T>(T value) =>
+        Console.WriteLine(JsonSerializer.Serialize(value, ResultJsonOptions));
 
     private static string ResolvePath(string path)
     {
@@ -311,6 +436,71 @@ public static class DatabaseMaintenance
             END $$;
             """;
         await context.Database.ExecuteSqlRawAsync(bootstrapRolesSql);
+    }
+
+    private static async Task<int> RunSessionLockRunnerAsync(string[] args)
+    {
+        var dashIndex = Array.IndexOf(args, "--");
+        var childCmd = args[dashIndex + 1];
+        var childArgs = args[(dashIndex + 2)..];
+
+        if (Environment.GetEnvironmentVariable("MC_RELEASE_OFFLINE_TEST") == "1")
+        {
+            return await ExecuteChildProcessAsync(childCmd, childArgs);
+        }
+
+        var connectionString = Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable);
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            Console.Error.WriteLine("ConnectionStrings__PostgreSql is required for session-lock-runner.");
+            return 1;
+        }
+
+        var connection = new NpgsqlConnectionStringBuilder(connectionString);
+        var isLoopback = connection.Host is "127.0.0.1" or "localhost";
+        if (!isLoopback && connection.SslMode != SslMode.VerifyFull)
+            throw new InvalidOperationException("session-lock-runner requires SSL Mode=VerifyFull.");
+
+        await using var npgsqlConnection = new NpgsqlConnection(connection.ConnectionString);
+        await npgsqlConnection.OpenAsync();
+
+        using var lockLease = await SchemaReconciliation.TryAcquireAdvisoryLockAsync(npgsqlConnection);
+        if (lockLease is null)
+        {
+            Console.Error.WriteLine("Failed to acquire deployment advisory lock (0x4D435343, 0x53434845) within 5 seconds.");
+            return 1;
+        }
+
+        return await ExecuteChildProcessAsync(childCmd, childArgs);
+    }
+
+    private static async Task<int> ExecuteChildProcessAsync(string childCmd, string[] childArgs)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = childCmd,
+            UseShellExecute = false
+        };
+        foreach (var arg in childArgs)
+            psi.ArgumentList.Add(arg);
+
+        using var process = Process.Start(psi)
+            ?? throw new InvalidOperationException($"Failed to start child command: {childCmd}");
+
+        ConsoleCancelEventHandler cancelHandler = (s, e) =>
+        {
+            try { if (!process.HasExited) process.Kill(true); } catch { }
+        };
+        Console.CancelKeyPress += cancelHandler;
+        try
+        {
+            await process.WaitForExitAsync();
+            return process.ExitCode;
+        }
+        finally
+        {
+            Console.CancelKeyPress -= cancelHandler;
+        }
     }
 }
 
