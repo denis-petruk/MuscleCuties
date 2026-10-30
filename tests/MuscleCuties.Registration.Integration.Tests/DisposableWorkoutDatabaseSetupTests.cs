@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using Npgsql;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
 namespace MuscleCuties.Registration.Integration.Tests;
 
@@ -44,6 +45,12 @@ public sealed class DisposableWorkoutDatabaseSetupTests
         var summary = await PostgresCanonicalCatalogSeeder.IngestFromManifestAsync(db,
             Path.Combine(root, "src", "MuscleCuties.DbMaintenance", "Seed", "CanonicalCatalogManifest.json"));
         Xunit.Assert.True(summary.TotalManifestRows > 0);
+        var reviewPath = Path.Combine(root, "src", "MuscleCuties.Infrastructure.PostgreSql", "Workout",
+            "Planning", "ReviewData", "ReviewedExerciseCatalogV020.json");
+        var importer = new PostgresReviewedExerciseCatalogImporterV020(db);
+        var review = await importer.DryRunAsync(reviewPath);
+        Xunit.Assert.True(review.CanImport, string.Join("; ", review.Issues));
+        await importer.ApplyAsync(reviewPath);
     }
 
     private static string FindRoot()

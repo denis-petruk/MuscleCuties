@@ -55,9 +55,11 @@ internal static class ActivityOccurrencePrescription
             SameDayDemandAdjustmentRule.IsValid(original, occurrence, session.DurationMinutes);
     }
 
+    // Only an explicit occurrence override is an adjustment. The original prescription
+    // remains separate so unchanged sessions do not enter the same-day adjustment rule.
     internal static WorkoutScheduleValidationSession ValidationSession(MixedActivityScheduleSessionV020 session,
         MixedActivityScheduleDecisionV020 decision, IReadOnlySet<string>? muscles = null) =>
         new(session.Weekday, (WorkoutActivityType)session.ActivityTypeId, session.IsHardSession, muscles,
             session.DurationMinutes, ToDomain(decision.OriginalPrescription),
-            ToDomain(session.OccurrencePrescription ?? decision.OriginalPrescription));
+            ToDomain(session.OccurrencePrescription));
 }

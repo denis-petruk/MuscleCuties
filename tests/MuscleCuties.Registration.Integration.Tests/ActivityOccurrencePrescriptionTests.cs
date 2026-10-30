@@ -22,7 +22,9 @@ public sealed class ActivityOccurrencePrescriptionTests
         var decision = Decision(original);
         Assert.True(ActivityOccurrencePrescription.IsValid(session, decision));
         var validation = ActivityOccurrencePrescription.ValidationSession(session, decision);
-        Assert.Equal(OriginalMinutes, validation.OccurrencePrescription!.MainMinutes);
+        Assert.Equal(OriginalMinutes, validation.OriginalPrescription!.MainMinutes);
+        Assert.Null(validation.OccurrencePrescription);
+        Assert.Empty(WorkoutScheduleValidationRule.Validate([validation]));
 
         var snapshot = new PlannedPrescriptionSnapshot(Guid.NewGuid(), "Synthetic yoga", "Yoga",
             (int)WorkoutActivityType.Yoga, OriginalMinutes, [])
