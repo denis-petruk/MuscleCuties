@@ -66,6 +66,11 @@ public sealed class PlanningAcceptanceTransactionTests
         await db.SaveChangesAsync();
             var source = Xunit.Assert.IsType<StrengthPlanPreviewSourceV020>(await new PostgresStrengthPlanPreviewSourceV020(db)
                 .LoadAsync(user, CancellationToken.None));
+            var timedExerciseIds = await db.WorkoutExerciseDefinitions.AsNoTracking()
+                .Where(row => row.SecondsPerRep == 0).Select(row => row.Id).ToListAsync();
+            Xunit.Assert.NotEmpty(timedExerciseIds);
+            Xunit.Assert.DoesNotContain(timedExerciseIds, id => source.SecondsPerRepByExerciseId.ContainsKey(id));
+            Xunit.Assert.All(source.SecondsPerRepByExerciseId.Values, seconds => Xunit.Assert.True(seconds > 0));
             var cycling = (int)WorkoutActivityType.Cycling;
             var strength = (int)WorkoutActivityType.GeneralStrength;
             var weekdays = new[] { (int)today.DayOfWeek, (int)today.AddDays(2).DayOfWeek };
