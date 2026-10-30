@@ -32,6 +32,18 @@ dotnet run --project src/MuscleCuties.DbMaintenance -- \
   schema-verify "$REQUIREMENTS" "$REQUIREMENTS_SHA256"
 ```
 
+Before running migrations on an existing database, use the exact migration-runner connection:
+
+```bash
+dotnet run --project src/MuscleCuties.DbMaintenance -- migration-prerequisites
+```
+
+This read-only check returns `{"ready":true,"code":"ready"}` when the pending
+`OwnReviewedTemplateVolumeFloors` migration has the required role memberships. It returns
+`{"ready":true,"code":"not_pending"}` after that migration is already applied. A missing
+membership returns exit 1 with a specific code before `migrate --confirm` can apply any EF
+migrations. See `POSTGRES_PRIVILEGE_SEPARATION_PLAN.md` for the approval-gated remedy.
+
 Both commands resolve and hash the supplied path; a changed manifest is rejected before any database
 connection is opened. They run in a read-only transaction with `statement_timeout`, `lock_timeout`
 and `idle_in_transaction_session_timeout`, and select catalog metadata only.

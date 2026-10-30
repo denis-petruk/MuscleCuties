@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.DbMaintenance.Schema;
+using MuscleCuties.DbMaintenance;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
@@ -19,6 +20,7 @@ public static class DatabaseMaintenance
     private const string LambdaFunctionEnvironmentVariable = "AWS_LAMBDA_FUNCTION_NAME";
     private const string MigrateCommand = "migrate";
     private const string MigrationStatusCommand = "migration-status";
+    private const string MigrationPrerequisitesCommand = "migration-prerequisites";
     private const string SchemaPreflightCommand = "schema-preflight";
     private const string SchemaVerifyCommand = "schema-verify";
     private const string SchemaReconcileCommand = "schema-reconcile";
@@ -49,7 +51,7 @@ public static class DatabaseMaintenance
     {
         if (!TryParse(args, out var command, out var manifestPath, out var expectedSha256))
         {
-            Console.Error.WriteLine("Usage: DbMaintenance migration-status | migrate --confirm | schema-preflight <requirements-path> <requirements-sha256> | schema-verify <requirements-path> <requirements-sha256> | schema-reconcile <approved-manifest-path> <manifest-sha256> --confirm | session-lock-runner -- <child-command> [args...] | seed <manifest-path> <expected-sha256> --confirm | review-catalog-dry-run <manifest-path> <expected-sha256> | review-catalog-apply <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
+            Console.Error.WriteLine("Usage: DbMaintenance migration-status | migration-prerequisites | migrate --confirm | schema-preflight <requirements-path> <requirements-sha256> | schema-verify <requirements-path> <requirements-sha256> | schema-reconcile <approved-manifest-path> <manifest-sha256> --confirm | session-lock-runner -- <child-command> [args...] | seed <manifest-path> <expected-sha256> --confirm | review-catalog-dry-run <manifest-path> <expected-sha256> | review-catalog-apply <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
             return InvalidUsageExitCode;
         }
 
@@ -147,9 +149,22 @@ public static class DatabaseMaintenance
                 return 0;
             }
 
+            if (command == MigrationPrerequisitesCommand)
+            {
+                var result = await CheckMigrationPrerequisitesAsync(context, connection.ConnectionString);
+                WriteJson(result);
+                return result.Ready ? 0 : 1;
+            }
+
             if (command == MigrateCommand)
             {
                 await EnsureRolesExistAsync(context);
+                var prerequisites = await CheckMigrationPrerequisitesAsync(context, connection.ConnectionString);
+                if (!prerequisites.Ready)
+                {
+                    WriteJson(prerequisites);
+                    return 1;
+                }
                 await context.Database.MigrateAsync();
                 Console.WriteLine("Schema migration completed.");
                 return 0;
@@ -249,6 +264,12 @@ public static class DatabaseMaintenance
         if (args is [MigrationStatusCommand])
         {
             command = MigrationStatusCommand;
+            return true;
+        }
+
+        if (args is [MigrationPrerequisitesCommand])
+        {
+            command = MigrationPrerequisitesCommand;
             return true;
         }
 
@@ -449,6 +470,16 @@ public static class DatabaseMaintenance
             END $$;
             """;
         await context.Database.ExecuteSqlRawAsync(bootstrapRolesSql);
+    }
+
+    private static async Task<MigrationPrerequisiteResult> CheckMigrationPrerequisitesAsync(
+        PostgresDbContext context, string connectionString)
+    {
+        var pending = await context.Database.GetPendingMigrationsAsync();
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync();
+        return await MigrationPrerequisites.CheckAsync(connection,
+            pending.Contains(MigrationPrerequisites.OwnershipMigrationId, StringComparer.Ordinal));
     }
 
     private static async Task<int> RunSessionLockRunnerAsync(string[] args)

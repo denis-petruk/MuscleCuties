@@ -1,6 +1,8 @@
 # PostgreSQL privilege separation plan
 
-Status: **proposal only**. No live role, grant, principal or connection setting was changed.
+Status: staging migration-runner membership was applied on 2026-10-30 under
+`OWNER-APPROVAL-STAGING-SCHEMA-20261030`. The runtime-principal cutover remains a
+separate proposal; no production role, grant, principal or connection setting was changed.
 
 ## Verified problem
 
@@ -31,7 +33,11 @@ owner-approved cutover step.
 2. **Migration/reconciliation:** `musclecuties_migrator` or a dedicated deployment principal that can
    assume it. The `OwnReviewedTemplateVolumeFloors` migration explicitly requires the executor to be
    able to assume the floor owner and `musclecuties_migrator`, and the migrator needs `catalog CREATE`
-   for the ownership transfer.
+   for the ownership transfer. The staging upgrade revealed that `mc_admin` was not a member:
+   18 migrations applied before the ownership migration stopped. The approved staging remedy was
+   `GRANT musclecuties_migrator TO mc_admin;`, followed by a successful rerun. Production must
+   verify its own runner role before starting the migration chain; staging approval does not
+   authorize a production grant.
 3. **Discovery/dispatch:** no login, no inheritance from the app role. The discovery function is
    `SECURITY DEFINER` with `search_path = pg_catalog, app, pg_temp`, owned by the discovery owner, and
    executable only by dispatch. The catalog lock function is owned by the migrator and executable by
@@ -63,6 +69,21 @@ owner-approved cutover step.
 6. Deploy the Lambda with the new secret; verify one authenticated request path and one tenant-scoped
    read/write.
 7. Roll back the secret if compatibility or tenant isolation fails; do not roll back schema changes.
+
+## Migration-runner prerequisite
+
+Run `migration-prerequisites` with the exact connection that will execute `migrate --confirm`.
+It reads the migration history and PostgreSQL role catalog without changing either. Exit 0 means
+the pending ownership migration can assume `musclecuties_migrator` and, when the floor table
+already exists, its current owner. Exit 1 returns a stable code such as
+`runner_lacks_migrator_membership` or `runner_lacks_floor_owner_membership`. The `migrate`
+command repeats this check before applying pending EF migrations.
+
+If the migrator membership is missing, review the target database and migration login, then
+have an authorized database administrator grant `musclecuties_migrator` to that **deployment
+login only**. Do not grant it to `musclecuties_app` or the serving Lambda login. Re-run the
+read-only command and record its output before approving the migration. The staging `mc_admin`
+grant is an interim deployment credential arrangement, not the target runtime design.
 
 ## Evidence in this branch
 
