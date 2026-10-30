@@ -1,8 +1,9 @@
 # AWS Lambda & PostgreSQL final integration checkpoint
 
 Updated: 2026-10-30 (America/Toronto). Branch: `infra/aws-lambda-postgres`.
-Primary integration status after 2026-10-30 merge and local verification:
-**BLOCKED_PENDING_LIVE_SCHEMA_CHANGE** — see `docs/infra/STAGING_SCHEMA_CHANGE_APPROVAL_20261030.md`.
+Primary integration status after 2026-10-30 merge, owner-approved live change and
+deployment: **DEPLOYED_AND_VERIFIED** — see section 11 and
+`docs/infra/STAGING_SCHEMA_CHANGE_APPROVAL_20261030.md`.
 
 The merge review corrected several claims in this historical checkpoint. The verified staging Lambda still uses a database with 31 of 59 migrations applied. Read-only preflight against that exact database reports 28 pending migrations and an incompatible physical schema. The previously committed reconciliation manifest used a disposable post-grant fingerprint as its pre-change target and was removed; it was not live approval. The restore drill runbook is a procedure, not evidence of a completed drill. Production signature protection described below has not been implemented, and the production CI job is disabled. No Lambda deployment or live database change is authorized by this checkpoint.
 
@@ -141,3 +142,32 @@ During initial execution of GitLab CI job `verify_postgres_compatibility`, 7 of 
   - Database `musclecuties_staging` (PostgreSQL 17.5): 31 of 59 migrations applied, head `20261024200000_AddWorkoutExerciseExclusionsV010`.
   - `schema-preflight` exit 1, `status=incompatible`, fingerprint `d54fd8db…`, 51 issues across 6 failure codes. Every issue is attributable to the 28 pending migrations, except the single `SCHEMA_GRANT_MISMATCH` on `app.lock_workout_planning_catalog()` whose function does not exist yet.
 - No Lambda deployment, migration, reconciliation or other live change was performed. Deployment would break the function, so the reviewed change and approval request are recorded in `docs/infra/STAGING_SCHEMA_CHANGE_APPROVAL_20261030.md`.
+
+## 11. Owner-approved live change and deployment (2026-10-30)
+
+Approval `OWNER-APPROVAL-STAGING-SCHEMA-20261030` covered the pending migrations, the
+single additive grant and deployment of the verified artifact. Pre-change snapshot
+`musclecuties-staging-pre-schema-20261030` was taken and verified `available` first.
+
+- Migration prerequisite: `GRANT musclecuties_migrator TO mc_admin;` was required because
+  `20261027234500_OwnReviewedTemplateVolumeFloors` fails closed unless the runner can assume
+  both the table owner and the migrator role. The first `migrate --confirm` stopped at that
+  migration with 49 of 59 applied; after the grant the same command completed 59 of 59 with
+  head `20261028190000_AddWorkoutCycleReadinessOccurrences`. No migration was skipped or edited.
+- Pre-grant preflight: `incompatible`, `exact-source`, fingerprint `dd82303f…`, exactly the
+  two expected `musclecuties_app` grant gaps.
+- Live-pinned manifest (SHA-256 `586808d8ca28c2b49f0f068fdeea7d56ebbac476e6b73efc859c999e70cc19ed`)
+  applied with `schema-reconcile --confirm`: `reconciled`, zero failure codes.
+- Post-change preflight: `compatible`, `exact-source`, 59 of 59, zero issues, fingerprint
+  `c73f5afeb65f96d48581c54e517a90ff334c4a14d12cdc83031b577c212ed66f`.
+- Deployed `artifacts/MuscleCuties.Server.zip` (SHA-256 `0b0358e8…`, source `abb1802e`) to
+  `musclecuties-backend-api`: `LastUpdateStatus=Successful`, `CodeSha256`
+  `CwNY6J1ybRB7UrNEDcIh1YBNs5aAvqzRR7KRWrbQPpg=`, `CodeSize` 9136376, LastModified
+  `2026-10-30T09:54:53Z`, revision `a6319ae3-b4ea-4c5a-9db6-b2b480dc6188`.
+- Post-deployment checks: `/health/live` 200, `/health/ready` 200 `Healthy`, registration quiz
+  200, `/api/v1/hydration/presets` 401 without and with an invalid token,
+  `/api/v1/workouts/plan` 401, and no ERROR/Exception log entries for the release window.
+- Still outstanding for a production release: production HMAC release guard, a verified
+  restore drill, and the `musclecuties_app` runtime-principal cutover. The staging deployment
+  continues to authenticate as `mc_admin`, so the login-principal cutover remains a separate
+  reviewed change.
