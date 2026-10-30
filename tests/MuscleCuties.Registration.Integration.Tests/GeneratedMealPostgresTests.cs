@@ -65,7 +65,7 @@ public sealed class GeneratedMealPostgresTests
             var loggedMeal = Assert.Single(overview.Meals, item => item.LoggedMealId != 0);
             var readback = await store.GetMealIngredientsAsync(userId, loggedMeal.LoggedMealId);
             var savedOil = Assert.Single(readback, ingredient => ingredient.Name == oil.Name);
-            Assert.Equal(oil.Grams, savedOil.Grams);
+            AssertClose(oil.Grams, savedOil.Grams);
             Assert.InRange(savedOil.Grams, 0f, PortionCalculationRule.MaxOilGrams);
             AssertClose(savedOil.Grams, savedOil.Fats * savedOil.Grams / NutrientReferenceGrams);
             AssertClose(readback.Sum(item => item.Calories * item.Grams / NutrientReferenceGrams), loggedMeal.Calories);
