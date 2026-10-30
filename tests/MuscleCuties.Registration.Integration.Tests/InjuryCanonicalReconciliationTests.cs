@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.CheckInAndInjury;
@@ -34,7 +33,7 @@ public sealed class InjuryCanonicalReconciliationTests
     private static readonly DateOnly BirthDate = new(1990, 1, 1);
 
     [Fact]
-    public async Task CanonicalPlanInjuryAndClearancePreserveHistoryAndRestoreProvenSlot()
+    public async Task UnacknowledgedBeginnerInjuryDefersReconciliationAndPreservesHistory()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);
         Assert.False(string.IsNullOrWhiteSpace(connection));
@@ -72,88 +71,70 @@ public sealed class InjuryCanonicalReconciliationTests
                     WarmupMinutes: WarmupMinutes, CooldownMinutes: CooldownMinutes) { DraftPreferences = draft };
                 var source = await new PostgresStrengthPlanPreviewSourceV020(db).LoadInCurrentTransactionAsync(user, CancellationToken.None);
                 var preview = PreviewStrengthPlanV020UseCase.EvaluateLoadedSource(user, request, source);
-                Assert.Equal("Feasible", preview.Status);
-                Assert.NotEmpty(preview.Sessions);
-                var proposal = await new PostgresStrengthPlanProposalStoreV020(db).SaveInCurrentTransactionAsync(user, request, preview, CancellationToken.None);
-                Assert.True(proposal.IsPersisted);
-                Assert.NotNull(proposal.Lease);
-                var accepted = await new PostgresAcceptStrengthPlanProposalStoreV020(db).AcceptInCurrentTransactionAsync(user,
-                    new AcceptStrengthPlanProposalRequestV020(proposal.ProposalId, proposal.Lease.LeaseId, proposal.Lease.Fence,
-                        proposal.ProposalVersion, ReducedVolumeAcknowledged: true),
-                    PostgresAcceptStrengthPlanProposalStoreV020.AcceptanceOrigin.User, CancellationToken.None);
-                Assert.Equal("Accepted", accepted.Status);
-                Assert.NotNull(accepted.PlanId);
+                // Every reviewed catalog exercise has a user-specific condition. This synthetic
+                // beginner has acknowledged none, so a strength proposal must not be accepted.
+                Assert.NotEqual("Feasible", preview.Status);
+                Assert.DoesNotContain(preview.Sessions, session => session.Slots.Any(slot => slot.ExerciseId.HasValue));
                 await transaction.CommitAsync();
             }
             db.ChangeTracker.Clear();
-            var plan = await db.WorkoutPlans.AsNoTracking().SingleAsync(row => row.UserId == user && row.IsActive);
-            var days = await db.WorkoutDays.AsNoTracking().Where(row => row.UserId == user && row.WorkoutPlanId == plan.Id &&
-                row.WorkoutType == nameof(WorkoutType.Strength)).OrderBy(row => row.Date).ToListAsync();
-            Assert.NotEmpty(days);
-            var dayIds = days.Select(row => row.Id).ToArray();
-            var exercises = await db.WorkoutDayExercises.AsNoTracking().Where(row => row.UserId == user && dayIds.Contains(row.WorkoutDayId)).ToListAsync();
-            var definitions = await db.WorkoutExerciseDefinitions.AsNoTracking().Where(row => exercises.Select(e => e.ExerciseId).Contains(row.Id)).ToListAsync();
-            var affected = exercises.First(row => definitions.Any(definition => definition.Id == row.ExerciseId && definition.Contraindications != InjuryFlag.None));
-            var flags = definitions.Single(row => row.Id == affected.ExerciseId).Contraindications;
+            Assert.False(await db.WorkoutPlans.AsNoTracking().AnyAsync(row => row.UserId == user));
+            Assert.False(await db.WorkoutPlanProposalsV02.AsNoTracking().AnyAsync(row => row.UserId == user));
+
+            // A legacy plan without a verified revision can still have completed history. Injury
+            // handling must suppress future work and retain that history while review is pending.
+            var definition = (await db.WorkoutExerciseDefinitions.AsNoTracking().ToListAsync())
+                .First(row => row.Contraindications != InjuryFlag.None);
+            var flags = definition.Contraindications;
             var site = Enum.GetValues<InjuryFlag>().First(flag => flag != InjuryFlag.None && (flags & flag) == flag &&
                 ((int)flag & ((int)flag - 1)) == 0);
+            var planId = Guid.NewGuid();
+            var futureDay = Guid.NewGuid();
+            db.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = user, Name = "Synthetic legacy plan",
+                IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
+            db.WorkoutDays.Add(new WorkoutDayRecord { Id = futureDay, UserId = user, WorkoutPlanId = planId,
+                Date = today.AddDays(2), DayOfWeek = (int)today.AddDays(2).DayOfWeek,
+                WorkoutType = nameof(WorkoutType.Strength), Name = "Synthetic future strength" });
+            db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = user,
+                WorkoutDayId = futureDay, ExerciseId = definition.Id, Sets = CompletedSets, Reps = CompletedRepetitions });
             var completedDay = Guid.NewGuid();
             var logId = Guid.NewGuid();
             var completedExerciseId = Guid.NewGuid();
             var exerciseLogId = Guid.NewGuid();
-            db.WorkoutDays.Add(new WorkoutDayRecord { Id = completedDay, UserId = user, WorkoutPlanId = plan.Id,
+            db.WorkoutDays.Add(new WorkoutDayRecord { Id = completedDay, UserId = user, WorkoutPlanId = planId,
                 Date = today.AddDays(-1), DayOfWeek = (int)today.AddDays(-1).DayOfWeek,
                 WorkoutType = nameof(WorkoutType.Strength), Name = "Synthetic completed" });
             db.WorkoutLogs.Add(new WorkoutLogRecord { Id = logId, UserId = user, WorkoutDayId = completedDay,
                 Date = today.AddDays(-1), CompletionPercent = CompletePercent, CreatedAt = now });
             db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = completedExerciseId, UserId = user,
-                WorkoutDayId = completedDay, ExerciseId = affected.ExerciseId, Sets = CompletedSets, Reps = CompletedRepetitions });
+                WorkoutDayId = completedDay, ExerciseId = definition.Id, Sets = CompletedSets, Reps = CompletedRepetitions });
             db.WorkoutExerciseLogs.Add(new WorkoutExerciseLogRecord { Id = exerciseLogId, UserId = user, WorkoutLogId = logId,
-                WorkoutDayExerciseId = completedExerciseId, ExerciseId = affected.ExerciseId,
+                WorkoutDayExerciseId = completedExerciseId, ExerciseId = definition.Id,
                 CompletedSets = CompletedSets, CompletedReps = CompletedRepetitions, CreatedAt = now });
             await db.SaveChangesAsync();
             var injuryId = Guid.NewGuid();
             var injuryStore = new PostgresCheckInAndInjuryStore(db, TimeProvider.System);
             var injury = new SaveInjuryObservationRequest(user, injuryId, (int)site, "Acute", today, PainLevel, today);
             await injuryStore.SaveInjuryAsync(injury, CancellationToken.None);
-            Assert.Equal(WorkoutReconciliationOutcome.Completed, await new PostgresWorkoutPlanReconciler(db).ReconcileAsync(user));
-            Assert.True(await db.WorkoutLogs.AsNoTracking().AnyAsync(row => row.Id == logId && row.UserId == user));
-            Assert.True(await db.WorkoutExerciseLogs.AsNoTracking().AnyAsync(row => row.Id == exerciseLogId &&
-                row.CompletedSets == CompletedSets && row.CompletedReps == CompletedRepetitions));
-            var activePlan = await db.WorkoutPlans.AsNoTracking().SingleAsync(row => row.UserId == user && row.IsActive);
-            var omitted = await db.Set<WorkoutInjuryOmittedSlotRecord>().AsNoTracking().Where(row => row.UserId == user && row.PlanId == activePlan.Id).ToListAsync();
-            var links = await db.WorkoutInjuryPrescriptionLinks.AsNoTracking().Where(row => row.UserId == user).ToListAsync();
-            Assert.True(omitted.Count > 0 || links.Count > 0);
+            Assert.True((await db.WorkoutDays.AsNoTracking().SingleAsync(row => row.Id == futureDay)).IsRemovedBySafety);
+            Assert.True((await db.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == user)).SafetyRegenerationPending);
+            Assert.Equal(WorkoutReconciliationOutcome.NeedsReview, await new PostgresWorkoutPlanReconciler(db).ReconcileAsync(user));
+            await AssertHistoryAndPlanPreservedAsync();
             await injuryStore.SaveInjuryAsync(injury with { Status = "Cleared" }, CancellationToken.None);
-            Assert.Equal(WorkoutReconciliationOutcome.Completed, await new PostgresWorkoutPlanReconciler(db).ReconcileAsync(user));
-            Assert.True(await db.WorkoutLogs.AsNoTracking().AnyAsync(row => row.Id == logId && row.UserId == user));
-            Assert.True(await db.WorkoutExerciseLogs.AsNoTracking().AnyAsync(row => row.Id == exerciseLogId &&
-                row.CompletedSets == CompletedSets && row.CompletedReps == CompletedRepetitions));
-            var dayOnePlan = await db.WorkoutPlans.AsNoTracking().SingleAsync(row => row.UserId == user && row.IsActive);
-            var dayOneDayIds = await db.WorkoutDays.AsNoTracking().Where(row => row.UserId == user && row.WorkoutPlanId == dayOnePlan.Id &&
-                row.Date >= today && row.Date < today.AddDays(WorkoutInjuryClearanceRule.OptionalCalendarDaysIncludingClearance))
-                .Select(row => row.Id).ToArrayAsync();
-            Assert.Contains(await db.WorkoutDayExercises.AsNoTracking().Where(row => row.UserId == user &&
-                dayOneDayIds.Contains(row.WorkoutDayId) && row.InjuryOriginalExerciseId == affected.ExerciseId).ToListAsync(), row => row.IsOptional);
-            var episode = await db.WorkoutInjuryEpisodes.SingleAsync(row => row.UserId == user && row.InjuryLogId == injuryId);
-            var previousClearance = today.AddDays(-WorkoutInjuryClearanceRule.OptionalCalendarDaysIncludingClearance);
-            episode.StartedOn = previousClearance;
-            episode.ClearedOn = previousClearance;
-            var log = await db.WorkoutInjuryLogs.SingleAsync(row => row.UserId == user && row.Id == injuryId);
-            log.ClearedDate = previousClearance;
-            var state = await db.WorkoutAccountPlanningStates.SingleAsync(row => row.UserId == user);
-            state.SafetyRegenerationPending = true;
-            await db.SaveChangesAsync();
-            Assert.Equal(WorkoutReconciliationOutcome.Completed, await new PostgresWorkoutPlanReconciler(db).ReconcileAsync(user));
-            Assert.True(await db.WorkoutLogs.AsNoTracking().AnyAsync(row => row.Id == logId && row.UserId == user));
-            Assert.True(await db.WorkoutExerciseLogs.AsNoTracking().AnyAsync(row => row.Id == exerciseLogId &&
-                row.CompletedSets == CompletedSets && row.CompletedReps == CompletedRepetitions));
-            var dayEightPlan = await db.WorkoutPlans.AsNoTracking().SingleAsync(row => row.UserId == user && row.IsActive);
-            var dayEightIds = await db.WorkoutDays.AsNoTracking().Where(row => row.UserId == user && row.WorkoutPlanId == dayEightPlan.Id && row.Date >= today)
-                .Select(row => row.Id).ToArrayAsync();
-            Assert.Contains(await db.WorkoutDayExercises.AsNoTracking().Where(row => row.UserId == user &&
-                dayEightIds.Contains(row.WorkoutDayId) && row.InjuryOriginalExerciseId == affected.ExerciseId).ToListAsync(),
-                row => row.ExerciseId == affected.ExerciseId && !row.IsOptional);
+            Assert.Equal(WorkoutReconciliationOutcome.NeedsReview, await new PostgresWorkoutPlanReconciler(db).ReconcileAsync(user));
+            Assert.NotNull((await db.WorkoutInjuryLogs.AsNoTracking().SingleAsync(row => row.Id == injuryId)).ClearedDate);
+            await AssertHistoryAndPlanPreservedAsync();
+
+            async Task AssertHistoryAndPlanPreservedAsync()
+            {
+                Assert.True(await db.WorkoutLogs.AsNoTracking().AnyAsync(row => row.Id == logId && row.UserId == user));
+                Assert.True(await db.WorkoutExerciseLogs.AsNoTracking().AnyAsync(row => row.Id == exerciseLogId &&
+                    row.CompletedSets == CompletedSets && row.CompletedReps == CompletedRepetitions));
+                Assert.Equal(planId, (await db.WorkoutPlans.AsNoTracking().SingleAsync(row => row.UserId == user && row.IsActive)).Id);
+                Assert.False(await db.WorkoutPlanRevisionsV02.AsNoTracking().AnyAsync(row => row.UserId == user));
+                Assert.False(await db.Set<WorkoutInjuryOmittedSlotRecord>().AsNoTracking().AnyAsync(row => row.UserId == user));
+                Assert.True((await db.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == user)).SafetyRegenerationPending);
+            }
         }
         finally { db.ChangeTracker.Clear(); await db.Users.Where(row => row.Id == user).ExecuteDeleteAsync(); }
     }
