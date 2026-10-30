@@ -1,3 +1,5 @@
+**Beta validation (2026-10-30):** Current branch passes Core 989, Server 112, Registration 42, Mobile contracts 9 and 130 disposable PostgreSQL integration checks excluding the separately measured load case. Fixed cross-test catalog invalidation and Debug lock-runner setup. B1/B2 remain OPEN; iOS compilation is blocked by the pinned SDK missing its ios workload. See [validation evidence](docs/beta-orchestration/evidence/20261030-b1-b2-validation.md).
+
 # Status — MuscleCuties
 
 **Production release authorization (2026-10-30):** The deployment entry point and rollout engine now require a valid HMAC-SHA256 authorization bound to the exact source commit and tree for production. Missing or mismatched authorization blocks before an AWS call and records a blocked deployment report. Local failure-injection checks and all 11 rollout-engine tests pass. The production CI job remains disabled; the restore drill, runtime database-principal cutover, production policy and separate release approval remain open.

@@ -1,17 +1,13 @@
 {
   "contractVersion": 1,
-  "status": "RUNNING",
+  "status": "HANDOFF_READY",
   "branch": "release/musclecuties-testflight-beta-hardening",
-  "integratedThrough": "f404ba1c",
-  "owner": {
-    "runId": "beta-automation-20261030T111357Z-2103e7c5",
-    "automationId": "musclecuties-beta-completion-orchestrator",
-    "worktree": "/Users/denispetruk/Documents/ChatGPT/MuscleCuties/migration-role-prerequisite",
-    "acquiredUtc": "2026-10-30T11:13:57Z"
-  },
-  "heartbeatUtc": "2026-10-30T11:13:57Z",
-  "leaseExpiresUtc": "2026-10-30T12:43:57Z",
+  "integratedThrough": "e16b6d39",
+  "owner": null,
+  "heartbeatUtc": null,
+  "leaseExpiresUtc": null,
   "nextGate": "B1",
   "productionReleaseAuthorized": false,
-  "testFlightDistributionAuthorized": false
+  "testFlightDistributionAuthorized": false,
+  "lastRunCompletedUtc": "2026-10-30T11:18:47Z"
 }

@@ -1,43 +1,44 @@
 # Current beta checkpoint
 
-Date: 2026-10-30 (America/Toronto). Status: `HANDOFF_READY` after a bounded
-database and release-control integration. Integration branch:
-`release/musclecuties-testflight-beta-hardening`; source integrated through
-`f404ba1c`. The branch is based on GitLab `infra/aws-lambda-postgres` at
-`8cade1f87abff7753d0e9ffdf47fea90b5a00b0b`.
+Date: 2026-10-30 (America/Toronto). Status: `HANDOFF_READY`.
+Integration branch: `release/musclecuties-testflight-beta-hardening`.
+Source validated through `e16b6d39`, based on verified remote `16fdba82`.
 
-## Completed in this session
+## Completed in this run
 
-- Added a read-only migration-runner role prerequisite command and fail-closed gate
-  in `migrate --confirm`, preventing the observed 31→49 partial upgrade when the
-  owner-transfer role membership is missing.
-- Added and tested the production commit/tree HMAC release guard. The production
-  CI job remains disabled.
-- Corrected the PITR runbook to the current 59-migration staging state. No restore
-  was performed.
-- Added a read-only candidate runtime-principal preflight and documented the
-  unresolved tenant/auth role design. No live login, grant or Lambda secret changed.
-- Preserved the original `/Users/denispetruk/RiderProjects/MuscleCuties` dirty
-  `ROADMAP.md`, `STATUS.md` and tracked deletion without modification.
+- Acquired the GitLab lease by ordinary fast-forward push (`f6a23cc4`).
+- Reproduced intermittent Apply fixture failure: concurrent committed synthetic
+  catalog changes invalidated its preview fingerprint. Isolated catalog-writing
+  fixtures from parallel readers without changing production safety validation.
+- Fixed lock-runner test configuration and SDK host selection.
+- Current SDK 10.0.403 is available at `/Users/denispetruk/.dotnet/dotnet`;
+  the default PATH does not select it.
+- Preserved the Rider worktree's staged ROADMAP/STATUS changes and tracked deletion.
 
 ## Verification
 
-- Disposable PostgreSQL 17: migration prerequisite, 31→59 rehearsal and runtime
-  principal tests 9/9 PASS. The SQL catalog query ran with effective app role and
-  correctly rejected a privileged session login.
-- Rollout engine 11/11 PASS; release failure-injection checks PASS.
-- `git diff --check` PASS. Broader Core/Server/iOS suites, GitLab pipeline, signed
-  IPA, live restore and physical-device acceptance are NOT RUN in this session.
+Core 989, Server 112, Registration 42, Mobile contracts 9 PASS. Fresh disposable
+PostgreSQL 17 setup reached 59 migrations. Post-fix integration excluding the
+unchanged load fixture: 130/130 PASS; focused changed checks: 7/7 PASS. The initial
+broad run's unchanged three-minute load fixture passed with 25,405 requests and
+zero errors. Its other two failures were fixed and covered by the post-fix run.
+These are split-run results, not a single fully green broad run.
 
-## Next actions
+iOS Release compilation attempted and BLOCKED at NETSDK1147 (missing `ios`
+workload for the pinned SDK). GitLab candidate pipeline, signing, deployed parity,
+restore, runtime-principal cutover and physical-device acceptance remain unverified.
+See [exact evidence and remaining scope](evidence/20261030-b1-b2-validation.md).
 
-1. Fetch and verify the release branch remote tip and clean worktree; acquire the
-   shared lease described in `WORK_CONTRACT.md` before editing.
-2. Continue B1/B2 source and disposable-database validation using current code.
-3. Keep production disabled; the restore drill and runtime principal cutover remain
-   separate reviewed operations. Do not infer production approval from staging.
-4. Update this checkpoint and ledger after each verified milestone; commit, push,
-   confirm the remote SHA, and return the state to `HANDOFF_READY` when handing off.
+## Next bounded task
 
-No active specialist agent assignment remains. The current source lacks a verified
-full beta release candidate; see `RELEASE_READINESS.md`.
+Acquire the shared lease, then continue B1: build an acknowledged, metadata-complete
+synthetic canonical preview/Apply/injury/clearance journey and verify accepted
+revision lineage and preserved history. Current injury reconciliation coverage
+proves safe deferral for unacknowledged beginner/legacy plans, not successful
+canonical replacement. Omitted-slot transfer, conservative recovery and suppression
+code exists; do not reimplement from stale historical checkpoint language.
+
+Audit canonical observed-set progression, supported catalog/high-intensity choices,
+and offline/reconnect/relaunch. B1/B2 remain OPEN. Keep production disabled and
+preserve the existing staging deployment. No live operation or TestFlight action
+was performed. No specialist assignment remains active.
