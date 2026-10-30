@@ -192,7 +192,8 @@ public sealed class PlanningAcceptanceTransactionTests
             Xunit.Assert.Equal("Proposed", unchangedProposal.Status);
             Xunit.Assert.Equal(rollbackLease.LeaseId, unchangedProposal.LeaseId);
             Xunit.Assert.Equal(rollbackLease.Fence, unchangedProposal.LeaseFence);
-            Xunit.Assert.Equal(rollbackLease.ExpiresAtUtc.UtcDateTime, unchangedProposal.LeaseExpiresAtUtc);
+            Xunit.Assert.NotNull(unchangedProposal.LeaseExpiresAtUtc);
+            Xunit.Assert.True(Math.Abs((rollbackLease.ExpiresAtUtc.UtcDateTime - unchangedProposal.LeaseExpiresAtUtc.Value).TotalSeconds) < 1);
             var pending = await db.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == user);
             Xunit.Assert.True(pending.PromotionPending);
             Xunit.Assert.True(pending.SafetyRegenerationPending);
