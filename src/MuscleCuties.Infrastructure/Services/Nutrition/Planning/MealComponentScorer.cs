@@ -8,6 +8,30 @@ namespace MuscleCuties.Core.Services.Nutrition.Planning;
 
 public static class MealComponentScorer
 {
+    private const float IneligibleScore = -1f;
+    private const int SingleTermThreshold = 1;
+    private const int StyleTermThreshold = 2;
+    private const float StylePrimaryBonus = 3f;
+    private const float StyleSecondaryBonus = 2f;
+    private const float StyleSupportingBonus = 1f;
+    private const float PhaseScoreWeight = 30f;
+    private const float DefaultPhaseScore = 15f;
+    private const float MagnesiumWeight = 0.5f;
+    private const float FolateWeight = 0.01f;
+    private const float IronWeight = 0.01f;
+    private const float NutrientDensityDivisor = 20f;
+    private const float VarietyTotalScore = 25f;
+    private const float VarietyFullCreditDays = 7f;
+    private const float MacroFallbackScore = 12.5f;
+    private const float ProteinDensityScale = 100f;
+    private const float ProteinDensityTarget = 30f;
+    private const float FatLossDensityThreshold = 20f;
+    private const float FatLossDensityBonus = 0.2f;
+    private const float MacroFitTotalScore = 25f;
+    private const float CuisineBaseScore = 10f;
+    private const float CuisineMaxScore = 20f;
+    private const int CuisineMatchThreshold = 2;
+
     private static readonly string[] LatinTerms =
         ["quinoa", "bean", "avocado", "tortilla", "rice", "salsa"];
 
@@ -66,11 +90,11 @@ public static class MealComponentScorer
         var complexScore = names.Count(n => ContainsAny(n, StirFryTerms))
                            + names.Count(n => ContainsAny(n, CurryTerms));
 
-        if (hasSauce && complexScore >= 2)
+        if (hasSauce && complexScore >= StyleTermThreshold)
             return MealStyle.Complex;
-        if (bowlScore >= 2)
+        if (bowlScore >= StyleTermThreshold)
             return MealStyle.Bowl;
-        if (hasSauce && bowlScore >= 1)
+        if (hasSauce && bowlScore >= SingleTermThreshold)
             return MealStyle.Bowl;
 
 
@@ -94,7 +118,7 @@ public static class MealComponentScorer
             !PassesDietaryFilter(carb, dietaryTags) ||
             !PassesDietaryFilter(veg, dietaryTags) ||
             (sauce is not null && !PassesDietaryFilter(sauce, dietaryTags)))
-            return -1f;
+            return IneligibleScore;
 
         return ScorePhaseMicronutrients(protein, carb, veg, sauce, phase) +
                ScoreVariety(protein, carb, veg, sauce, daysSinceUsed) +
@@ -121,25 +145,25 @@ public static class MealComponentScorer
         switch (style)
         {
             case MealStyle.Bowl:
-                if (ContainsAny(carb.Name, BowlTerms)) bonus += 3f;
-                if (names.Any(n => ContainsAny(n, AsianTerms))) bonus += 2f;
+                if (ContainsAny(carb.Name, BowlTerms)) bonus += StylePrimaryBonus;
+                if (names.Any(n => ContainsAny(n, AsianTerms))) bonus += StyleSecondaryBonus;
                 break;
             case MealStyle.Complex:
-                if (sauce is not null) bonus += 3f;
+                if (sauce is not null) bonus += StylePrimaryBonus;
                 if (names.Any(n => ContainsAny(n, StirFryTerms) || ContainsAny(n, CurryTerms)))
-                    bonus += 2f;
+                    bonus += StyleSecondaryBonus;
                 break;
             case MealStyle.Handheld:
-                if (ContainsAny(carb.Name, HandheldTerms)) bonus += 3f;
-                if (ContainsAny(protein.Name, PlatedProteinTerms)) bonus += 2f;
+                if (ContainsAny(carb.Name, HandheldTerms)) bonus += StylePrimaryBonus;
+                if (ContainsAny(protein.Name, PlatedProteinTerms)) bonus += StyleSecondaryBonus;
                 break;
             case MealStyle.Wrapped:
-                if (ContainsAny(carb.Name, WrappedTerms)) bonus += 3f;
-                if (names.Any(n => ContainsAny(n, LatinTerms))) bonus += 2f;
+                if (ContainsAny(carb.Name, WrappedTerms)) bonus += StylePrimaryBonus;
+                if (names.Any(n => ContainsAny(n, LatinTerms))) bonus += StyleSecondaryBonus;
                 break;
             case MealStyle.Plated:
-                if (ContainsAny(protein.Name, PlatedProteinTerms)) bonus += 2f;
-                if (names.Any(n => ContainsAny(n, MediterraneanTerms))) bonus += 1f;
+                if (ContainsAny(protein.Name, PlatedProteinTerms)) bonus += StyleSecondaryBonus;
+                if (names.Any(n => ContainsAny(n, MediterraneanTerms))) bonus += StyleSupportingBonus;
                 break;
         }
 
@@ -156,18 +180,21 @@ public static class MealComponentScorer
 
         return phase switch
         {
-            CyclePhase.Menstrual => 30f * NutrientDensity(foods, f => f.Iron + f.VitaminC + f.Magnesium * 0.5f),
-            CyclePhase.Follicular => 30f * NutrientDensity(foods, f => f.VitaminB6 + f.Folate * 0.01f),
-            CyclePhase.Ovulatory => 30f * NutrientDensity(foods, f => f.Zinc + f.VitaminB12),
-            CyclePhase.Luteal => 30f * NutrientDensity(foods, f => f.Magnesium + f.Calcium + f.Iron * 0.01f),
-            _ => 15f
+            CyclePhase.Menstrual => PhaseScoreWeight * NutrientDensity(
+                foods, f => f.Iron + f.VitaminC + f.Magnesium * MagnesiumWeight),
+            CyclePhase.Follicular => PhaseScoreWeight * NutrientDensity(
+                foods, f => f.VitaminB6 + f.Folate * FolateWeight),
+            CyclePhase.Ovulatory => PhaseScoreWeight * NutrientDensity(foods, f => f.Zinc + f.VitaminB12),
+            CyclePhase.Luteal => PhaseScoreWeight * NutrientDensity(
+                foods, f => f.Magnesium + f.Calcium + f.Iron * IronWeight),
+            _ => DefaultPhaseScore
         };
     }
 
     private static float NutrientDensity(FoodItem[] foods, Func<FoodItem, float> selector)
     {
         var total = foods.Sum(selector);
-        return Math.Clamp(total / 20f, 0f, 1f);
+        return Math.Clamp(total / NutrientDensityDivisor, 0f, 1f);
     }
 
     private static float ScoreVariety(
@@ -182,7 +209,7 @@ public static class MealComponentScorer
             score += VarietyScore(sauce.Id, daysSinceUsed);
 
         var count = sauce is not null ? 4f : 3f;
-        return 25f * (score / count);
+        return VarietyTotalScore * (score / count);
     }
 
     private static float VarietyScore(int foodId, IReadOnlyDictionary<int, int> daysSinceUsed)
@@ -190,21 +217,23 @@ public static class MealComponentScorer
         if (!daysSinceUsed.TryGetValue(foodId, out var days))
             return 1f;
 
-        return Math.Clamp(days / 7f, 0f, 1f);
+        return Math.Clamp(days / VarietyFullCreditDays, 0f, 1f);
     }
 
     private static float ScoreMacroFitPotential(
         FoodItem protein, MealNutritionTarget target, UserGoal goal)
     {
         if (target.Protein <= 0f)
-            return 12.5f;
+            return MacroFallbackScore;
 
-        var densityRatio = protein.Protein / Math.Max(protein.Calories, 1f) * 100f;
-        var densityScore = Math.Clamp(densityRatio / 30f, 0f, 1f);
+        var densityRatio = protein.Protein / Math.Max(protein.Calories, 1f) * ProteinDensityScale;
+        var densityScore = Math.Clamp(densityRatio / ProteinDensityTarget, 0f, 1f);
 
-        var goalBonus = goal == UserGoal.FatLoss && densityRatio > 20f ? 0.2f : 0f;
+        var goalBonus = goal == UserGoal.FatLoss && densityRatio > FatLossDensityThreshold
+            ? FatLossDensityBonus
+            : 0f;
 
-        return 25f * Math.Clamp(densityScore + goalBonus, 0f, 1f);
+        return MacroFitTotalScore * Math.Clamp(densityScore + goalBonus, 0f, 1f);
     }
 
     private static float ScoreCuisineCoherence(
@@ -219,10 +248,10 @@ public static class MealComponentScorer
         var medCount = names.Count(n => ContainsAny(n, MediterraneanTerms));
 
         var maxMatch = Math.Max(latinCount, Math.Max(asianCount, medCount));
-        if (maxMatch < 2)
-            return 10f;
+        if (maxMatch < CuisineMatchThreshold)
+            return CuisineBaseScore;
 
-        return 20f * Math.Clamp(maxMatch / (float)names.Length, 0f, 1f);
+        return CuisineMaxScore * Math.Clamp(maxMatch / (float)names.Length, 0f, 1f);
     }
 
     private static bool ContainsAny(string value, string[] terms)

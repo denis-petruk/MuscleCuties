@@ -21,6 +21,59 @@ public class NutritionPlanner : INutritionPlanner
     private const float MaximumDailyCalories = 4000f;
     private const float CalorieRoundingIncrement = 10f;
 
+    private const float UsableMinimumHeightCm = 100f;
+    private const float UsableMaximumHeightCm = 300f;
+    private const float UsableMinimumWeightKg = 30f;
+    private const float UsableMaximumWeightKg = 500f;
+    private const int MinimumBirthYear = 1900;
+    private const int MinimumAge = 18;
+    private const int AgeFloor = 12;
+    private const int AgeCeiling = 100;
+
+    private const float BeginnerExperienceAdjustment = -0.025f;
+    private const float AdvancedExperienceAdjustment = 0.025f;
+    private const float MinimumActivityMultiplier = 1.2f;
+    private const float MaximumActivityMultiplier = 1.85f;
+
+    private const float AggressiveFatLossRate = 0.22f;
+    private const float StandardFatLossRate = 0.12f;
+    private const float AggressiveStrengthRate = 0.12f;
+    private const float StandardStrengthRate = 0.08f;
+    private const float AggressiveStrengthCapKcal = 400f;
+    private const float StandardStrengthCapKcal = 250f;
+    private const float MuscleToneSurplusRate = 0.04f;
+    private const float MuscleToneSurplusCapKcal = 150f;
+
+    private const float FatLossProteinPerKg = 2.0f;
+    private const float StrengthProteinPerKg = 1.9f;
+    private const float MuscleToneProteinPerKg = 1.8f;
+    private const float BalancedProteinPerKg = 1.6f;
+    private const float MenstrualFatShare = 0.30f;
+    private const float LutealFatShare = 0.30f;
+    private const float StandardFatShare = 0.25f;
+    private const float MinimumFatGramsPerKg = 0.7f;
+    private const float MinimumFatFloorGramsPerKg = 0.6f;
+    private const float MinimumCarbCalorieShare = 0.25f;
+    private const float CaloriesPerGramProtein = 4f;
+    private const float CaloriesPerGramCarb = 4f;
+    private const float CaloriesPerGramFat = 9f;
+    private const float WholeUnitRounding = 1f;
+
+    private const float MinimumFiberGrams = 25f;
+    private const float FiberGramsPerThousandKcal = 14f;
+    private const float LutealFiberBonusGrams = 3f;
+    private const float CaloriesPerThousand = 1000f;
+
+    private const float WaterLitersPerKg = 0.035f;
+    private const int MaximumWaterBonusTrainingDays = 7;
+    private const float WaterLitersPerTrainingDay = 0.1f;
+    private const float LutealAndOvulatoryWaterBonusLiters = 0.2f;
+    private const float MinimumWaterLiters = 1.8f;
+    private const float MaximumWaterLiters = 4.0f;
+    private const float WaterRoundingLiters = 0.1f;
+
+    private const float MealCalorieRoundingKcal = 10f;
+
     private readonly ICalorieCalculator _calorieCalculator;
 
     public NutritionPlanner(ICalorieCalculator calorieCalculator)
@@ -102,10 +155,10 @@ public class NutritionPlanner : INutritionPlanner
             macros.Fats,
             fiber,
             water,
-            RoundToNearest(bmr, 1f),
-            RoundToNearest(tdee, 1f),
+            RoundToNearest(bmr, WholeUnitRounding),
+            RoundToNearest(tdee, WholeUnitRounding),
             activityMultiplier,
-            RoundToNearest(goalAdjustment, 1f),
+            RoundToNearest(goalAdjustment, WholeUnitRounding),
             phaseAdjustment,
             targetPhase,
             GetPhaseFocus(targetPhase),
@@ -148,11 +201,11 @@ public class NutritionPlanner : INutritionPlanner
     {
         return float.IsFinite(profile.Height) &&
                float.IsFinite(profile.Weight) &&
-               profile.Height is >= 100f and <= 300f &&
-               profile.Weight is >= 30f and <= 500f &&
-               profile.DateOfBirth.Year > 1900 &&
+               profile.Height is >= UsableMinimumHeightCm and <= UsableMaximumHeightCm &&
+               profile.Weight is >= UsableMinimumWeightKg and <= UsableMaximumWeightKg &&
+               profile.DateOfBirth.Year > MinimumBirthYear &&
                profile.DateOfBirth.Date <= date.Date &&
-               CalculateAge(profile.DateOfBirth, date) >= 18;
+               CalculateAge(profile.DateOfBirth, date) >= MinimumAge;
     }
 
     public static int CalculateAge(DateTime dateOfBirth, DateTime date)
@@ -161,7 +214,7 @@ public class NutritionPlanner : INutritionPlanner
         if (dateOfBirth.Date > date.Date.AddYears(-age))
             age--;
 
-        return Math.Clamp(age, 12, 100);
+        return Math.Clamp(age, AgeFloor, AgeCeiling);
     }
 
     private static float CalculateActivityMultiplier(
@@ -172,12 +225,13 @@ public class NutritionPlanner : INutritionPlanner
 
         var experienceAdjustment = experienceLevel switch
         {
-            TrainingExperienceLevel.Beginner => -0.025f,
-            TrainingExperienceLevel.Advanced => 0.025f,
+            TrainingExperienceLevel.Beginner => BeginnerExperienceAdjustment,
+            TrainingExperienceLevel.Advanced => AdvancedExperienceAdjustment,
             _ => 0f
         };
 
-        return Math.Clamp(baseMultiplier + experienceAdjustment, 1.2f, 1.85f);
+        return Math.Clamp(baseMultiplier + experienceAdjustment, MinimumActivityMultiplier,
+            MaximumActivityMultiplier);
     }
 
     private static float CalculateGoalAdjustment(
@@ -189,9 +243,11 @@ public class NutritionPlanner : INutritionPlanner
 
         return goal switch
         {
-            UserGoal.FatLoss => -tdee * (isAggressive ? 0.22f : 0.12f),
-            UserGoal.Strength => MathF.Min(tdee * (isAggressive ? 0.12f : 0.08f), isAggressive ? 400f : 250f),
-            UserGoal.MuscleTone => MathF.Min(tdee * 0.04f, 150f),
+            UserGoal.FatLoss => -tdee * (isAggressive ? AggressiveFatLossRate : StandardFatLossRate),
+            UserGoal.Strength => MathF.Min(
+                tdee * (isAggressive ? AggressiveStrengthRate : StandardStrengthRate),
+                isAggressive ? AggressiveStrengthCapKcal : StandardStrengthCapKcal),
+            UserGoal.MuscleTone => MathF.Min(tdee * MuscleToneSurplusRate, MuscleToneSurplusCapKcal),
             _ => 0f
         };
     }
@@ -204,38 +260,41 @@ public class NutritionPlanner : INutritionPlanner
     {
         var proteinPerKg = goal switch
         {
-            UserGoal.FatLoss => 2.0f,
-            UserGoal.Strength => 1.9f,
-            UserGoal.MuscleTone => 1.8f,
-            _ => 1.6f
+            UserGoal.FatLoss => FatLossProteinPerKg,
+            UserGoal.Strength => StrengthProteinPerKg,
+            UserGoal.MuscleTone => MuscleToneProteinPerKg,
+            _ => BalancedProteinPerKg
         };
 
-        var protein = RoundToNearest(weightKg * proteinPerKg, 1f);
+        var protein = RoundToNearest(weightKg * proteinPerKg, WholeUnitRounding);
         var fatPercent = phase switch
         {
-            CyclePhase.Menstrual => 0.30f,
-            CyclePhase.Luteal => 0.30f,
-            _ => 0.25f
+            CyclePhase.Menstrual => MenstrualFatShare,
+            CyclePhase.Luteal => LutealFatShare,
+            _ => StandardFatShare
         };
 
-        var fats = MathF.Max(weightKg * 0.7f, calories * fatPercent / 9f);
-        var minimumCarbCalories = calories * 0.25f;
-        var caloriesAfterProtein = calories - protein * 4f;
+        var fats = MathF.Max(weightKg * MinimumFatGramsPerKg, calories * fatPercent / CaloriesPerGramFat);
+        var minimumCarbCalories = calories * MinimumCarbCalorieShare;
+        var caloriesAfterProtein = calories - protein * CaloriesPerGramProtein;
 
-        if (caloriesAfterProtein - fats * 9f < minimumCarbCalories)
-            fats = MathF.Max(weightKg * 0.6f, (caloriesAfterProtein - minimumCarbCalories) / 9f);
+        if (caloriesAfterProtein - fats * CaloriesPerGramFat < minimumCarbCalories)
+            fats = MathF.Max(weightKg * MinimumFatFloorGramsPerKg,
+                (caloriesAfterProtein - minimumCarbCalories) / CaloriesPerGramFat);
 
-        fats = RoundToNearest(MathF.Max(fats, 0f), 1f);
-        var carbs = RoundToNearest(MathF.Max((calories - protein * 4f - fats * 9f) / 4f, 0f), 1f);
+        fats = RoundToNearest(MathF.Max(fats, 0f), WholeUnitRounding);
+        var carbs = RoundToNearest(
+            MathF.Max((calories - protein * CaloriesPerGramProtein - fats * CaloriesPerGramFat) /
+                      CaloriesPerGramCarb, 0f), WholeUnitRounding);
 
         return (protein, carbs, fats);
     }
 
     private static float CalculateFiber(float calories, CyclePhase phase)
     {
-        var baseline = MathF.Max(25f, calories / 1000f * 14f);
-        var phaseBonus = phase is CyclePhase.Luteal ? 3f : 0f;
-        return RoundToNearest(baseline + phaseBonus, 1f);
+        var baseline = MathF.Max(MinimumFiberGrams, calories / CaloriesPerThousand * FiberGramsPerThousandKcal);
+        var phaseBonus = phase is CyclePhase.Luteal ? LutealFiberBonusGrams : 0f;
+        return RoundToNearest(baseline + phaseBonus, WholeUnitRounding);
     }
 
     private static float CalculateWaterLiters(
@@ -243,9 +302,14 @@ public class NutritionPlanner : INutritionPlanner
         int workoutDaysPerWeek,
         CyclePhase phase)
     {
-        var trainingBonus = Math.Clamp(workoutDaysPerWeek, 0, 7) * 0.1f;
-        var phaseBonus = phase is CyclePhase.Luteal or CyclePhase.Ovulatory ? 0.2f : 0f;
-        return RoundToNearest(Math.Clamp(weightKg * 0.035f + trainingBonus + phaseBonus, 1.8f, 4.0f), 0.1f);
+        var trainingBonus = Math.Clamp(workoutDaysPerWeek, 0, MaximumWaterBonusTrainingDays) *
+                            WaterLitersPerTrainingDay;
+        var phaseBonus = phase is CyclePhase.Luteal or CyclePhase.Ovulatory
+            ? LutealAndOvulatoryWaterBonusLiters
+            : 0f;
+        return RoundToNearest(
+            Math.Clamp(weightKg * WaterLitersPerKg + trainingBonus + phaseBonus,
+                MinimumWaterLiters, MaximumWaterLiters), WaterRoundingLiters);
     }
 
     private static string GetPhaseFocus(CyclePhase phase)
@@ -344,10 +408,10 @@ public class NutritionPlanner : INutritionPlanner
     {
         return new MealNutritionTarget(
             mealType,
-            RoundToNearest(calories * calorieShare, 10f),
-            RoundToNearest(protein * proteinShare, 1f),
-            RoundToNearest(carbs * calorieShare, 1f),
-            RoundToNearest(fats * calorieShare, 1f));
+            RoundToNearest(calories * calorieShare, MealCalorieRoundingKcal),
+            RoundToNearest(protein * proteinShare, WholeUnitRounding),
+            RoundToNearest(carbs * calorieShare, WholeUnitRounding),
+            RoundToNearest(fats * calorieShare, WholeUnitRounding));
     }
 
     public static MealNutritionTarget BuildMealTarget(
@@ -370,7 +434,7 @@ public class NutritionPlanner : INutritionPlanner
         float Breakfast,
         float Lunch,
         float Dinner,
-        float Snack = 0.10f)
+        float Snack)
     {
         public float MainMealTotal => Breakfast + Lunch + Dinner;
 

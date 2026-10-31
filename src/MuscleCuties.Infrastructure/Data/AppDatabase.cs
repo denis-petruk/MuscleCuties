@@ -230,6 +230,28 @@ public partial class AppDatabase : DbContext
         }
     }
 
+    private const int MaximumTrainingExperienceLevel = 3;
+    private const int MaximumCycleTrackingMode = 3;
+    private const int MaximumWorkoutDaysPerWeek = 7;
+    private const int MaximumCycleLengthDays = 60;
+    private const int MinimumSymptomSeverity = 1;
+    private const int MaximumSymptomSeverity = 5;
+    private const int LastDayOfWeekIndex = 6;
+    private const int MaximumWeekIndex = 3;
+    private const int MaximumMovementNoteLength = 2000;
+    private const int MaximumCompletionPercent = 100;
+    private const int MinimumEnergy = 1;
+    private const int MaximumEnergy = 5;
+    private const int MaximumPain = 3;
+    private const int MaximumReadinessScore = 100;
+    private const int MinimumSleepQuality = 1;
+    private const int MaximumSleepQuality = 5;
+    private const int MaximumSoreness = 3;
+    private const int MinimumEffortRating = 1;
+    private const int MaximumEffortRating = 10;
+    private const int MinimumRpe = 1;
+    private const int MaximumRpe = 10;
+
     private static void ValidateEntity(object entity)
     {
         switch (entity)
@@ -237,12 +259,14 @@ public partial class AppDatabase : DbContext
             case UserProfile profile:
                 Require(profile.Height >= 0, "Profile height cannot be negative.");
                 Require(profile.Weight >= 0, "Profile weight cannot be negative.");
-                Require((int)profile.TrainingExperienceLevel is >= 0 and <= 3,
+                Require((int)profile.TrainingExperienceLevel is >= 0 and <= MaximumTrainingExperienceLevel,
                     "Training experience is outside the supported range.");
-                Require((int)profile.CycleTrackingMode is >= 0 and <= 3,
+                Require((int)profile.CycleTrackingMode is >= 0 and <= MaximumCycleTrackingMode,
                     "Cycle tracking mode is outside the supported range.");
-                Require(profile.WorkoutDaysPerWeek is >= 0 and <= 7, "Workout days per week must be between 0 and 7.");
-                Require(profile.CycleLength is >= 0 and <= 60, "Cycle length must be between 0 and 60 days.");
+                Require(profile.WorkoutDaysPerWeek is >= 0 and <= MaximumWorkoutDaysPerWeek,
+                    $"Workout days per week must be between 0 and {MaximumWorkoutDaysPerWeek}.");
+                Require(profile.CycleLength is >= 0 and <= MaximumCycleLengthDays,
+                    $"Cycle length must be between 0 and {MaximumCycleLengthDays} days.");
                 break;
 
             case CycleLog cycleLog:
@@ -250,7 +274,8 @@ public partial class AppDatabase : DbContext
                 break;
 
             case SymptomLog symptomLog:
-                Require(symptomLog.Severity is >= 1 and <= 5, "Symptom severity must be between 1 and 5.");
+                Require(symptomLog.Severity is >= MinimumSymptomSeverity and <= MaximumSymptomSeverity,
+                    $"Symptom severity must be between {MinimumSymptomSeverity} and {MaximumSymptomSeverity}.");
                 Require(Enum.IsDefined(symptomLog.SymptomType),
                     "Symptom type is outside the supported range.");
                 break;
@@ -269,14 +294,17 @@ public partial class AppDatabase : DbContext
                 break;
 
             case WorkoutDay workoutDay:
-                Require(workoutDay.DayOfWeek is >= 0 and <= 6, "Workout day must be between 0 and 6.");
-                Require(workoutDay.WeekIndex is >= 0 and <= 3, "Workout day week index must be between 0 and 3.");
+                Require(workoutDay.DayOfWeek is >= 0 and <= LastDayOfWeekIndex,
+                    $"Workout day must be between 0 and {LastDayOfWeekIndex}.");
+                Require(workoutDay.WeekIndex is >= 0 and <= MaximumWeekIndex,
+                    $"Workout day week index must be between 0 and {MaximumWeekIndex}.");
                 break;
 
             case UserMovementNote movementNote:
                 Require(movementNote.UserId > 0, "User ID must be positive.");
                 Require(!string.IsNullOrWhiteSpace(movementNote.Notes), "Movement notes cannot be empty.");
-                Require(movementNote.Notes.Length <= 2000, "Movement notes cannot exceed 2000 characters.");
+                Require(movementNote.Notes.Length <= MaximumMovementNoteLength,
+                    $"Movement notes cannot exceed {MaximumMovementNoteLength} characters.");
                 break;
 
             case WorkoutDayExercise workoutDayExercise:
@@ -287,17 +315,21 @@ public partial class AppDatabase : DbContext
                 break;
 
             case WorkoutLog workoutLog:
-                Require(workoutLog.CompletionPercent is >= 0 and <= 100,
-                    "Workout completion must be between 0 and 100 percent.");
+                Require(workoutLog.CompletionPercent is >= 0 and <= MaximumCompletionPercent,
+                    $"Workout completion must be between 0 and {MaximumCompletionPercent} percent.");
                 break;
 
             case DailyReadinessLog readiness:
-                Require(readiness.Energy is >= 1 and <= 5, "Energy must be between 1 and 5.");
-                Require(readiness.Pain is >= 0 and <= 3, "Pain must be between 0 and 3.");
-                Require(readiness.ReadinessScore is >= 0 and <= 100, "Readiness score must be between 0 and 100.");
-                Require(readiness.SleepQuality is null or >= 1 and <= 5,
-                    "Sleep quality must be between 1 and 5 when present.");
-                Require(readiness.Soreness is null or >= 0 and <= 3, "Soreness must be between 0 and 3 when present.");
+                Require(readiness.Energy is >= MinimumEnergy and <= MaximumEnergy,
+                    $"Energy must be between {MinimumEnergy} and {MaximumEnergy}.");
+                Require(readiness.Pain is >= 0 and <= MaximumPain,
+                    $"Pain must be between 0 and {MaximumPain}.");
+                Require(readiness.ReadinessScore is >= 0 and <= MaximumReadinessScore,
+                    $"Readiness score must be between 0 and {MaximumReadinessScore}.");
+                Require(readiness.SleepQuality is null or >= MinimumSleepQuality and <= MaximumSleepQuality,
+                    $"Sleep quality must be between {MinimumSleepQuality} and {MaximumSleepQuality} when present.");
+                Require(readiness.Soreness is null or >= 0 and <= MaximumSoreness,
+                    $"Soreness must be between 0 and {MaximumSoreness} when present.");
                 Require(readiness.PreviousDayLoad is null or >= 0,
                     "Previous-day load must be non-negative when present.");
                 break;
@@ -312,7 +344,8 @@ public partial class AppDatabase : DbContext
                 Require(exerciseLog.PaceSecondsPerKm is null or >= 0, "Workout pace cannot be negative.");
                 Require(exerciseLog.PowerWatts is null or >= 0, "Workout power cannot be negative.");
                 Require(exerciseLog.CadenceRpm is null or >= 0, "Workout cadence cannot be negative.");
-                Require(exerciseLog.EffortRating is null or >= 1 and <= 10, "Effort rating must be between 1 and 10.");
+                Require(exerciseLog.EffortRating is null or >= MinimumEffortRating and <= MaximumEffortRating,
+                    $"Effort rating must be between {MinimumEffortRating} and {MaximumEffortRating}.");
                 break;
 
             case DailyNutritionLog nutritionLog:
@@ -335,7 +368,8 @@ public partial class AppDatabase : DbContext
                 Require(sessionLog.TotalDurationSeconds >= 0, "Total duration cannot be negative.");
                 Require(double.IsFinite(sessionLog.TotalVolumeKg) && sessionLog.TotalVolumeKg >= 0,
                     "Total volume cannot be negative.");
-                Require(sessionLog.RpeRating is null or >= 1 and <= 10, "RPE rating must be between 1 and 10.");
+                Require(sessionLog.RpeRating is null or >= MinimumRpe and <= MaximumRpe,
+                    $"RPE rating must be between {MinimumRpe} and {MaximumRpe}.");
                 break;
 
             case ExerciseSetLog setLog:
@@ -343,7 +377,8 @@ public partial class AppDatabase : DbContext
                 Require(double.IsFinite(setLog.WeightKg) && setLog.WeightKg >= 0, "Weight cannot be negative.");
                 Require(setLog.RepsCompleted >= 0, "Reps completed cannot be negative.");
                 Require(setLog.RestTimeSeconds >= 0, "Rest time cannot be negative.");
-                Require(setLog.Rpe is null or >= 1 and <= 10, "RPE must be between 1 and 10.");
+                Require(setLog.Rpe is null or >= MinimumRpe and <= MaximumRpe,
+                    $"RPE must be between {MinimumRpe} and {MaximumRpe}.");
                 break;
         }
     }
