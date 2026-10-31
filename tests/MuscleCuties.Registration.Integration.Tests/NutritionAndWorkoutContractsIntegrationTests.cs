@@ -229,8 +229,12 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
                         40f)).ToArray()),
                 CancellationToken.None);
 
-            var archiveHistory = await archiveStore.GetWorkoutHistoryAsync(userId, 10, 0, CancellationToken.None);
-            Xunit.Assert.NotEmpty(archiveHistory);
+            var totalSessions = await archiveStore.GetTotalSessionsCountAsync(userId, CancellationToken.None);
+            Xunit.Assert.Equal(1, totalSessions);
+
+            var monthSessions = await archiveStore.GetWorkoutHistoryCountByMonthAsync(
+                userId, today.Year, today.Month, CancellationToken.None);
+            Xunit.Assert.Equal(1, monthSessions);
         }
         finally
         {

@@ -502,46 +502,6 @@ public sealed class CloudWorkoutSessionActionStore(
             HttpMethod.Put, "/api/v1/workouts/day-exercises/movement-note", request, cancellationToken: cancellationToken).ConfigureAwait(false), "save workout movement note");
 }
 
-public sealed class CloudWorkoutArchiveStore(
-    IMuscleCutiesBackendApiClient apiClient) : IWorkoutArchiveStore
-{
-    private const string HistoryRoute = "/api/v1/workouts/history";
-
-    public async Task<IReadOnlyList<WorkoutArchiveSummaryDto>> GetWorkoutHistoryAsync(int limit, int offset, CancellationToken ct = default) =>
-        CloudStoreResponse.RequireData(await apiClient.GetAsync<List<WorkoutArchiveSummaryDto>>(
-            $"{HistoryRoute}?limit={limit}&offset={offset}", ct).ConfigureAwait(false), "workout history");
-
-    public async Task<WorkoutArchiveDetailDto> GetWorkoutSessionDetailAsync(Guid sessionId, CancellationToken ct = default) =>
-        CloudStoreResponse.RequireData(await apiClient.GetAsync<WorkoutArchiveDetailDto>(
-            $"{HistoryRoute}/sessions/{sessionId:D}", ct).ConfigureAwait(false), "workout session detail");
-
-    public async Task UpdateWorkoutSessionNotesAsync(Guid sessionId, string notes, int? rpe, CancellationToken ct = default) =>
-        CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<UpdateWorkoutSessionNotesRequest, object>(
-            HttpMethod.Put, $"{HistoryRoute}/sessions/{sessionId:D}/notes", new UpdateWorkoutSessionNotesRequest(notes, rpe),
-            cancellationToken: ct).ConfigureAwait(false), "update workout notes");
-
-    public async Task<IReadOnlyList<WorkoutArchiveSummaryDto>> GetWorkoutHistoryByMonthAsync(int year, int month, int limit = 100, int offset = 0, CancellationToken ct = default) =>
-        CloudStoreResponse.RequireData(await apiClient.GetAsync<List<WorkoutArchiveSummaryDto>>(
-            $"{HistoryRoute}/month/{year}/{month}?limit={limit}&offset={offset}", ct).ConfigureAwait(false), "monthly workout history");
-
-    public async Task UpdateExerciseSetAsync(Guid setId, double weightKg, int repsCompleted, CancellationToken ct = default) =>
-        CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<UpdateExerciseSetRequest, object>(
-            HttpMethod.Put, $"{HistoryRoute}/sets/{setId:D}", new UpdateExerciseSetRequest(weightKg, repsCompleted),
-            cancellationToken: ct).ConfigureAwait(false), "update workout set");
-
-    public async Task<int> GetTotalSessionsCountAsync(CancellationToken ct = default) =>
-        CloudStoreResponse.RequireData(await apiClient.GetAsync<WorkoutHistoryCountDto>(
-            $"{HistoryRoute}/count", ct).ConfigureAwait(false), "workout history count").Count;
-
-    public async Task<IReadOnlyList<HistoryMonthOptionDto>> GetAvailableHistoryMonthsAsync(CancellationToken ct = default) =>
-        CloudStoreResponse.RequireData(await apiClient.GetAsync<List<HistoryMonthOptionDto>>(
-            $"{HistoryRoute}/months", ct).ConfigureAwait(false), "workout history months");
-
-    public async Task<int> GetWorkoutHistoryCountByMonthAsync(int year, int month, CancellationToken ct = default) =>
-        CloudStoreResponse.RequireData(await apiClient.GetAsync<WorkoutHistoryCountDto>(
-            $"{HistoryRoute}/month/{year}/{month}/count", ct).ConfigureAwait(false), "monthly workout count").Count;
-}
-
 internal static class CloudStoreResponse
 {
     public static T RequireData<T>(BackendApiResponse<T> response, string operation) where T : class

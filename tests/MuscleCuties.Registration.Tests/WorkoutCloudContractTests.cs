@@ -22,8 +22,6 @@ namespace MuscleCuties.Registration.Tests;
 public sealed class WorkoutCloudContractTests
 {
     private static readonly DateOnly WorkoutDate = new(2026, 10, 19);
-    private static readonly Guid SessionId = Guid.Parse("11111111-1111-4111-8111-111111111111");
-    private static readonly Guid SetId = Guid.Parse("22222222-2222-4222-8222-222222222222");
 
     [Xunit.Fact]
     public async Task CloudStoresPreserveWorkoutRoutesIdsAndMutationBodies()
@@ -33,22 +31,12 @@ public sealed class WorkoutCloudContractTests
             : responseType == typeof(WorkoutSessionDetailDto)
                 ? new WorkoutSessionDetailDto(101, "Workout", "", "", false, [], [])
                 : responseType == typeof(List<WorkoutSwapCandidateDto>)
-                    ? new List<WorkoutSwapCandidateDto> { new(19, "Swap", "match", "Bodyweight", "Glutes") }
-                    : responseType == typeof(WorkoutMovementNoteDto)
-                        ? new WorkoutMovementNoteDto(501, "Note")
-                        : responseType == typeof(WorkoutArchiveDetailDto)
-                            ? new WorkoutArchiveDetailDto(SessionId, "Workout", DateTime.UnixEpoch, null, 0, 0, null, null, [])
-                            : responseType == typeof(WorkoutHistoryCountDto)
-                                ? new WorkoutHistoryCountDto(1)
-                                : responseType == typeof(List<HistoryMonthOptionDto>)
-                                    ? new List<HistoryMonthOptionDto> { new(2026, 10) }
-                                    : responseType == typeof(List<WorkoutArchiveSummaryDto>)
-                                        ? new List<WorkoutArchiveSummaryDto>()
-                                        : null);
+                    ? new List<WorkoutSwapCandidateDto> { new(19, "Swap", "match", "Bodyweight", "Glutes") }                        : responseType == typeof(WorkoutMovementNoteDto)
+                            ? new WorkoutMovementNoteDto(501, "Note")
+                            : null);
 
         var overview = new CloudWorkoutOverviewStore(api);
         var session = new CloudWorkoutSessionActionStore(api);
-        var archive = new CloudWorkoutArchiveStore(api);
         var reschedule = new RescheduleWorkoutDayRequest(101, WorkoutDate.AddDays(1));
         var log = new LogWorkoutSessionRequest(101, WorkoutDate, [new WorkoutExerciseLogDto(501, 12, 3, 10, 60f)]);
         var swap = new SwapWorkoutExerciseRequest(501, 19, true);
@@ -62,14 +50,6 @@ public sealed class WorkoutCloudContractTests
         await session.SwapAsync(swap, CancellationToken.None);
         await session.GetMovementNoteAsync(501, CancellationToken.None);
         await session.SaveMovementNoteAsync(note, CancellationToken.None);
-        await archive.GetWorkoutHistoryAsync(25, 5);
-        await archive.GetAvailableHistoryMonthsAsync();
-        await archive.GetWorkoutHistoryByMonthAsync(2026, 10, 25, 5);
-        await archive.GetTotalSessionsCountAsync();
-        await archive.GetWorkoutHistoryCountByMonthAsync(2026, 10);
-        await archive.GetWorkoutSessionDetailAsync(SessionId);
-        await archive.UpdateWorkoutSessionNotesAsync(SessionId, "Recovered", 7);
-        await archive.UpdateExerciseSetAsync(SetId, 62.5, 8);
 
         Xunit.Assert.Equal(new (string Method, string Path)[]
         {
@@ -80,22 +60,12 @@ public sealed class WorkoutCloudContractTests
             ("GET", "/api/v1/workouts/day-exercises/501/swaps"),
             ("POST", "/api/v1/workouts/day-exercises/swap"),
             ("GET", "/api/v1/workouts/day-exercises/501/movement-note"),
-            ("PUT", "/api/v1/workouts/day-exercises/movement-note"),
-            ("GET", "/api/v1/workouts/history?limit=25&offset=5"),
-            ("GET", "/api/v1/workouts/history/months"),
-            ("GET", "/api/v1/workouts/history/month/2026/10?limit=25&offset=5"),
-            ("GET", "/api/v1/workouts/history/count"),
-            ("GET", "/api/v1/workouts/history/month/2026/10/count"),
-            ("GET", $"/api/v1/workouts/history/sessions/{SessionId:D}"),
-            ("PUT", $"/api/v1/workouts/history/sessions/{SessionId:D}/notes"),
-            ("PUT", $"/api/v1/workouts/history/sets/{SetId:D}")
+            ("PUT", "/api/v1/workouts/day-exercises/movement-note")
         }, api.Calls.Select(call => (call.Method, call.Path)));
         Xunit.Assert.Same(reschedule, api.Calls[1].Body);
         Xunit.Assert.Same(log, api.Calls[3].Body);
         Xunit.Assert.Same(swap, api.Calls[5].Body);
         Xunit.Assert.Same(note, api.Calls[7].Body);
-        Xunit.Assert.Equal(new UpdateWorkoutSessionNotesRequest("Recovered", 7), api.Calls[14].Body);
-        Xunit.Assert.Equal(new UpdateExerciseSetRequest(62.5, 8), api.Calls[15].Body);
     }
 
     [Xunit.Theory]
@@ -152,14 +122,8 @@ public sealed class WorkoutCloudContractTests
             ("PUT", "/api/v1/workouts/sessions/{sessionId:guid}/sets"),
             ("POST", "/api/v1/workouts/sessions/{sessionId:guid}/finish"),
             ("POST", "/api/v1/workouts/sessions/{sessionId:guid}/cancel"),
-            ("GET", "/api/v1/workouts/history"), ("GET", "/api/v1/workouts/history/months"),
-            ("GET", "/api/v1/workouts/history/month/{year:int}/{month:int}"),
             ("GET", "/api/v1/workouts/history/count"),
             ("GET", "/api/v1/workouts/history/month/{year:int}/{month:int}/count"),
-            ("GET", "/api/v1/workouts/history/sessions/{sessionId:guid}"),
-            ("PUT", "/api/v1/workouts/history/sessions/{sessionId:guid}/notes"),
-            ("PUT", "/api/v1/workouts/history/sets/{setId:guid}"),
-            ("GET", "/api/v1/workouts/history/personal-records"),
             ("GET", "/api/v1/workouts/injuries/impact"),
             ("GET", "/api/v1/workouts/injuries/exercises/{exerciseDefinitionId:int}/contraindicated"),
             ("GET", "/api/v1/workouts/injuries/exercises/{exerciseDefinitionId:int}/swaps"),
@@ -172,14 +136,6 @@ public sealed class WorkoutCloudContractTests
 
         foreach (var route in new (string Method, string Path)[]
         {
-            ("GET", "/api/v1/workout/history"), ("GET", "/api/v1/workout/history/months"),
-            ("GET", "/api/v1/workout/history/month/{year:int}/{month:int}"),
-            ("GET", "/api/v1/workout/history/count"),
-            ("GET", "/api/v1/workout/history/month/{year:int}/{month:int}/count"),
-            ("GET", "/api/v1/workout/history/sessions/{sessionId:guid}"),
-            ("PUT", "/api/v1/workout/history/sessions/{sessionId:guid}/notes"),
-            ("PUT", "/api/v1/workout/history/sets/{setId:guid}"),
-            ("GET", "/api/v1/workout/history/personal-records"),
             ("GET", "/api/v1/workouts/injuries/contraindicated/{exerciseDefinitionId:int}"),
             ("GET", "/api/v1/workouts/injuries/swaps/{exerciseDefinitionId:int}"),
             ("GET", "/api/v1/workout/injuries/impact"),
