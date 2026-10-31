@@ -1,0 +1,29 @@
+.vs/
+
+# ── /graphify backend audit scope (2026-10-30) ────────────────────────────────
+# Deliberate exclusion list for the PostgreSQL/Core/wiring audit
+# (docs/audits/BACKEND_DB_CORE_WIRING_AUDIT_20261030.md). graphify merges
+# .gitignore first and this file last, so entries here can only ever exclude.
+# Delete this block to graph the whole repository again; nothing in it is a
+# permanent project rule.
+/src/MuscleCuties.UI/
+/src/MuscleCuties.Infrastructure/
+/src/MuscleCuties.UseCases/
+/src/MuscleCuties.App/
+/tests/
+/artifacts/
+/.tools/
+/.git/
+/.idea/
+/.run/
+/.agents/
+/.codex/
+/.freebuff/
+/.impeccable/
+/certs/
+/docs/beta-orchestration/
+/docs/v1/
+/docs/workout-migration-checkpoints/
+/docs/*/checkpoints/
+bin/
+obj/
