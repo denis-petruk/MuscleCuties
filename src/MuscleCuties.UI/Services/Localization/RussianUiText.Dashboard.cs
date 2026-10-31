@@ -16,9 +16,7 @@ internal static partial class RussianUiText
         Values["Dashboard_Calendar_Today"] = "Сегодня";
         Values["Dashboard_CheckIn_BloatingA11y"] = "Вздутие живота сегодня";
         Values["Dashboard_CheckIn_BloatingHint"] = "Включите, если вы испытываете вздутие живота";
-        Values["Dashboard_CheckIn_BloatingTitle"] = "Вздутие живота";
         Values["Dashboard_CheckIn_BloatingSectionTitle"] = "ВЗДУТИЕ ЖИВОТА";
-        Values["Dashboard_CheckIn_BodyWeightTitle"] = "Вес тела (необязательно)";
         Values["Dashboard_CheckIn_BodyWeightSectionTitle"] = "ВЕС ТЕЛА (НЕОБЯЗАТЕЛЬНО)";
         Values["Dashboard_CheckIn_Energy1A11y"] = "Энергия 1 из 5";
         Values["Dashboard_CheckIn_Energy1Hint"] = "Очень низкая энергия";
@@ -30,7 +28,6 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_Energy4Hint"] = "Высокая энергия";
         Values["Dashboard_CheckIn_Energy5A11y"] = "Энергия 5 из 5";
         Values["Dashboard_CheckIn_Energy5Hint"] = "Очень высокая энергия";
-        Values["Dashboard_CheckIn_EnergyTitle"] = "Энергия";
         Values["Dashboard_CheckIn_EnergySectionTitle"] = "ЭНЕРГИЯ";
         Values["Dashboard_CheckIn_EnergyVeryHighLabel"] = "Очень высокая";
         Values["Dashboard_CheckIn_EnergyVeryLowLabel"] = "Очень низкий";
@@ -52,7 +49,6 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_PainSevere"] = "Сильная";
         Values["Dashboard_CheckIn_PainSevereA11y"] = "Боль: Сильная";
         Values["Dashboard_CheckIn_PainSevereHint"] = "Сильная боль, рекомендуется отдых";
-        Values["Dashboard_CheckIn_PainTitle"] = "Боль";
         Values["Dashboard_CheckIn_PainSectionTitle"] = "БОЛЬ";
         Values["Dashboard_CheckIn_PrivateBadge"] = "Частное";
         Values["Dashboard_CheckIn_PrivateBadgeA11y"] = "Эти данные остаются приватными на вашем устройстве";
@@ -63,7 +59,6 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_SleepMaxLabel"] = "14ч";
         Values["Dashboard_CheckIn_SleepMinLabel"] = "0ч";
         Values["Dashboard_CheckIn_SleepSliderHint"] = "Перетащите, чтобы установить часы сна, от 0 до 14";
-        Values["Dashboard_CheckIn_SleepTitle"] = "Сон прошлой ночью";
         Values["Dashboard_CheckIn_SleepSectionTitle"] = "СОН ПРОШЛОЙ НОЧЬЮ";
         Values["Dashboard_CheckIn_StorageNotice"] = "Хранится в вашем аккаунте — не передается третьим лицам";
         Values["Dashboard_CheckIn_SubmitButton"] = "Сохранить отметку";
@@ -125,8 +120,6 @@ internal static partial class RussianUiText
         Values["Dashboard_Targets_SleepEstimate"] = "Оценка сна";
         Values["Dashboard_Targets_SleepFormat"] = "Оценка сна: {0}";
         Values["Dashboard_Targets_Title"] = "Плановые оценки";
-        Values["Dashboard_Phase_MissingHeader"] = "На этой неделе · Укажите фазу цикла";
-        Values["Dashboard_Phase_MissingStatus"] = "Укажите фазу цикла, чтобы начать";
         Values["Dashboard_Trend_ProgressTitle"] = "Ваш прогресс";
         Values["Dashboard_Trend_PreviousView"] = "Предыдущий вид прогресса";
         Values["Dashboard_Trend_NextView"] = "Следующий вид прогресса";
@@ -148,17 +141,7 @@ internal static partial class RussianUiText
         Values["Dashboard_Trend_LongestSession"] = "Самая длинная тренировка";
         Values["Dashboard_Trend_LongestDistance"] = "Самая длинная дистанция";
         Values["Dashboard_Trend_FastestPace"] = "Самый быстрый темп";
-        Values["Dashboard_Trend_RecordedReadiness"] = "Записанная готовность";
-        Values["Dashboard_Trend_SevenDayTrends"] = "Ваши 7-дневные тренды";
-        Values["Dashboard_Trend_SixDaysAgo"] = "6 дней назад";
-        Values["Dashboard_Trend_WeightDisclaimer"] = "Фаза цикла и изменение уровня жидкости могут влиять на ежедневный вес. Медиана сглаживает краткосрочные колебания; она не измеряет уровень гормонов.";
-        Values["Dashboard_Trend_WeightMedian"] = "Вес · скользящая медиана";
         Values["Dashboard_Workout_Duration"] = "Продолжительность";
-        Values["Dashboard_Workout_CountActivity"] = "Активность";
-        Values["Dashboard_Workout_CountSets"] = "Подходы";
-        Values["Dashboard_Workout_CountExercises"] = "Упражнения";
-        Values["Dashboard_Workout_CountRecovery"] = "Восстановление";
-        Values["Dashboard_Workout_ExerciseCountFormat"] = "{0} упражнения";
         Values["Dashboard_Workout_OpenTodayPlanA11y"] = "Открыть план на сегодня";
         Values["Dashboard_Workout_SemanticTodayPlan"] = "План на сегодня: {0}.";
         Values["Dashboard_Workout_StartWorkout"] = "Начать тренировку";

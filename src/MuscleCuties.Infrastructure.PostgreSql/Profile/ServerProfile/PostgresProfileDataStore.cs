@@ -22,13 +22,11 @@ public sealed class PostgresProfileDataStore(
     : IServerProfileDataStore
 {
     private const string ProfileUpdateReason = "ProfileUpdate";
-    private const string QuizCorrectionReason = "QuizResponseCorrection";
     private const string NutritionPreferencesReason = "NutritionPreferencesUpdate";
     private const string WorkoutPreferencesReason = "WorkoutPreferencesUpdate";
     private const string NutritionTargetsReason = "NutritionTargetsUpdate";
     private const string EmptyJsonObject = "{}";
     private const string StrengthStylePrefix = "StrengthStyle:";
-    private const int MinimumQuizIdentifier = 1;
     private const int MinimumExpectedProfileVersion = 1;
     private const string ClearedInjuryStatus = "Cleared";
     private const int DefaultBaselineSteps = 8000;
@@ -48,49 +46,6 @@ public sealed class PostgresProfileDataStore(
                     .SingleOrDefaultAsync(item => item.Id == userId, token).ConfigureAwait(false);
             await transaction.CommitAsync(token).ConfigureAwait(false);
             return profile is null ? null : ToSnapshot(profile, user);
-        }).ConfigureAwait(false);
-    }
-
-    public async Task<IReadOnlyList<ServerProfileHistoryEntry>> LoadHistoryAsync(
-        Guid userId,
-        CancellationToken cancellationToken)
-    {
-        if (userId == Guid.Empty)
-            return [];
-
-        return await ExecuteTenantTransactionAsync(userId, cancellationToken, async (transaction, token) =>
-        {
-            var rows = await dbContext.UserProfileSnapshots.AsNoTracking()
-                .Where(item => item.UserId == userId)
-                .OrderByDescending(item => item.CreatedAt)
-                .ThenByDescending(item => item.Id)
-                .Select(item => new ServerProfileHistoryEntry(item.Id, item.SnapshotReason, item.ProfileJson, item.CreatedAt))
-                .ToListAsync(token).ConfigureAwait(false);
-            await transaction.CommitAsync(token).ConfigureAwait(false);
-            return (IReadOnlyList<ServerProfileHistoryEntry>)rows.Select(SanitizeHistoryEntry).ToArray();
-        }).ConfigureAwait(false);
-    }
-
-    public async Task<IReadOnlyList<ServerQuizResponse>> LoadQuizResponsesAsync(
-        Guid userId,
-        CancellationToken cancellationToken)
-    {
-        if (userId == Guid.Empty)
-            return [];
-
-        return await ExecuteTenantTransactionAsync(userId, cancellationToken, async (transaction, token) =>
-        {
-            var rows = await dbContext.UserQuizResponses.AsNoTracking()
-                .Where(item => item.UserId == userId)
-                .OrderBy(item => item.QuizQuestionId)
-                .ThenByDescending(item => item.AnsweredAt)
-                .ThenByDescending(item => item.UserProfileSnapshotId)
-                .ThenByDescending(item => item.Id)
-                .Select(item => new ServerQuizResponse(item.QuizQuestionId, item.QuizAnswerId, item.AnsweredAt))
-                .ToListAsync(token).ConfigureAwait(false);
-            await transaction.CommitAsync(token).ConfigureAwait(false);
-            return (IReadOnlyList<ServerQuizResponse>)rows.GroupBy(item => item.QuestionId)
-                .Select(group => group.First()).OrderBy(item => item.QuestionId).ToArray();
         }).ConfigureAwait(false);
     }
 
@@ -123,35 +78,6 @@ public sealed class PostgresProfileDataStore(
             if (request.ProfileImagePath is not null)
                 profile.ProfileImagePath = request.ProfileImagePath;
         }, cancellationToken);
-
-    public async Task<ServerProfileWriteResult> CorrectQuizResponseAsync(
-        CorrectServerQuizResponseRequest request,
-        CancellationToken cancellationToken)
-    {
-        if (!ValidVersionRequest(request.UserId, request.ExpectedVersion) ||
-            request.QuestionId < MinimumQuizIdentifier || request.AnswerId < MinimumQuizIdentifier)
-            return Invalid();
-
-        return await ExecuteTenantTransactionAsync(request.UserId, cancellationToken, async (transaction, token) =>
-        {
-            var profile = await dbContext.UserProfiles.SingleOrDefaultAsync(
-                item => item.UserId == request.UserId, token).ConfigureAwait(false);
-            if (profile is null) return Missing();
-            if (profile.ConcurrencyVersion != request.ExpectedVersion) return Conflict(profile.ConcurrencyVersion);
-            var answerExists = await dbContext.QuizAnswers.AsNoTracking().AnyAsync(
-                answer => answer.Id == request.AnswerId && answer.QuestionId == request.QuestionId, token).ConfigureAwait(false);
-            if (!answerExists) return new ServerProfileWriteResult(ServerProfileWriteStatus.InvalidCatalogReference, profile.ConcurrencyVersion);
-            var now = timeProvider.GetUtcNow().UtcDateTime;
-            var snapshot = AddSnapshot(request.UserId, QuizCorrectionReason, profile, now);
-            dbContext.UserQuizResponses.Add(new UserQuizResponseRecord
-            {
-                Id = Guid.CreateVersion7(), UserId = request.UserId, QuizQuestionId = request.QuestionId,
-                QuizAnswerId = request.AnswerId, AnsweredAt = now, UserProfileSnapshotId = snapshot.Id
-            });
-            profile.UpdatedAt = now;
-            return await SaveVersionedAsync(transaction, profile, token).ConfigureAwait(false);
-        }).ConfigureAwait(false);
-    }
 
     public Task<ServerProfileWriteResult> UpdateNutritionPreferencesAsync(
         UpdateServerNutritionPreferencesRequest request,
@@ -243,23 +169,36 @@ public sealed class PostgresProfileDataStore(
             var planId = Guid.CreateVersion7();
             dbContext.WorkoutPlans.Add(new WorkoutPlanRecord
             {
-                Id = planId, UserId = request.UserId, Name = generated.Name,
-                IsActive = true, CyclePhaseTarget = generated.CyclePhaseTarget.ToString(), CreatedAt = now
+                Id = planId,
+                UserId = request.UserId,
+                Name = generated.Name,
+                IsActive = true,
+                CyclePhaseTarget = generated.CyclePhaseTarget.ToString(),
+                CreatedAt = now
             });
             foreach (var day in generated.WorkoutDays)
             {
                 var dayId = Guid.CreateVersion7();
                 dbContext.WorkoutDays.Add(new WorkoutDayRecord
                 {
-                    Id = dayId, UserId = request.UserId, WorkoutPlanId = planId,
-                    DayOfWeek = day.DayOfWeek, WeekIndex = day.WeekIndex,
-                    Date = DateOnly.FromDateTime(day.Date), WorkoutType = day.WorkoutType.ToString(), Name = day.Name
+                    Id = dayId,
+                    UserId = request.UserId,
+                    WorkoutPlanId = planId,
+                    DayOfWeek = day.DayOfWeek,
+                    WeekIndex = day.WeekIndex,
+                    Date = DateOnly.FromDateTime(day.Date),
+                    WorkoutType = day.WorkoutType.ToString(),
+                    Name = day.Name
                 });
                 foreach (var exercise in day.Exercises)
                     dbContext.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
                     {
-                        Id = Guid.CreateVersion7(), UserId = request.UserId, WorkoutDayId = dayId,
-                        ExerciseId = exercise.ExerciseId, Sets = exercise.Sets, Reps = exercise.Reps,
+                        Id = Guid.CreateVersion7(),
+                        UserId = request.UserId,
+                        WorkoutDayId = dayId,
+                        ExerciseId = exercise.ExerciseId,
+                        Sets = exercise.Sets,
+                        Reps = exercise.Reps,
                         DurationSeconds = exercise.DurationSeconds
                     });
             }
@@ -394,13 +333,6 @@ public sealed class PostgresProfileDataStore(
         foreach (var update in updates)
             targets[update.Key] = JsonNode.Parse(update.Value);
         return targets.ToJsonString();
-    }
-
-    private static ServerProfileHistoryEntry SanitizeHistoryEntry(ServerProfileHistoryEntry entry)
-    {
-        var profile = JsonNode.Parse(entry.ProfileJson) as JsonObject ?? new JsonObject();
-        profile.Remove(nameof(UserProfileRecord.ProfileImagePath));
-        return entry with { ProfileJson = profile.ToJsonString() };
     }
 
     private static bool ValidVersionRequest(Guid userId, int expectedVersion) =>
