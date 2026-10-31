@@ -25,7 +25,6 @@ using MuscleCuties.Core.Services.Notifications;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Nutrition.Planning;
 using MuscleCuties.Core.Services.Profile;
-using MuscleCuties.Core.Services.Progress;
 using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
@@ -104,7 +103,6 @@ using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Progress;
-using MuscleCuties.UseCases.Features.Workout.Archive;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Session;
@@ -304,7 +302,6 @@ public static class MauiProgram
         });
         services.AddSingleton<IExerciseMediaStore>(_ =>
             new LocalExerciseMediaStore(Path.Combine(FileSystem.AppDataDirectory, "exercises")));
-        services.AddScoped<IExerciseMediaSyncService, LocalExerciseMediaSyncService>();
         services.AddScoped<ICalorieCalculator, CalorieCalculator>();
         services.AddScoped<ICalorieDistributionService, CalorieDistributionService>();
         services.AddScoped<IFallbackMealProvider, FallbackMealProvider>();
@@ -312,23 +309,9 @@ public static class MauiProgram
         services.AddScoped<ICyclePhaseCalculator, CyclePhaseCalculator>();
         services.AddScoped<ICyclePredictionPlanner, CyclePredictionPlanner>();
         services.AddScoped<IDashboardPlanner, DashboardPlanner>();
-        services.AddScoped<IWorkoutPlanner, WorkoutPlanner>();
-        services.AddScoped<IWorkoutPlanGenerator, WorkoutPlanGenerator>();
-        services.AddScoped<IWorkoutScheduleService, WorkoutScheduleService>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IAuthService, CloudAuthService>();
         services.AddSingleton<IPendingRegistrationService, PendingRegistrationService>();
-        services.AddScoped<ICycleService, CycleService>();
-        services.AddScoped<ICycleAccountService, CycleAccountService>();
-        services.AddScoped<IDashboardCalendarDataService, DashboardCalendarDataService>();
-        services.AddScoped<ISuggestedMealService, SuggestedMealService>();
-        services.AddScoped<IFoodLookupService, FoodLookupService>();
-        services.AddScoped<INutritionService, NutritionService>();
-        services.AddScoped<IQuizService, QuizService>();
-        services.AddScoped<IWorkoutService, WorkoutService>();
-        services.AddScoped<IProfileSettingsService, ProfileSettingsService>();
-        services.AddScoped<IProfileAccountService, ProfileAccountService>();
-        services.AddScoped<IPhotoVaultService, PhotoVaultService>();
         services.AddSingleton<IAppAccountPurgeService>(sp => new AppAccountPurgeService(
             sp.GetRequiredService<IServiceScopeFactory>(),
             new Lazy<IAppPreloadService>(sp.GetRequiredService<IAppPreloadService>),
@@ -365,8 +348,11 @@ public static class MauiProgram
                     .GetCurrentUserIdAsync().ConfigureAwait(false);
             },
             sp.GetRequiredService<ILocalPhotoCacheService>()));
-        services.AddScoped<IProgressSummaryService, ProgressSummaryService>();
-        services.AddScoped<LocalProgressSummaryStore>();
+        services.AddScoped<LocalProgressSummaryStore>(sp => new LocalProgressSummaryStore(
+            sp.GetRequiredService<IAuthService>(),
+            db: null,
+            sp.GetRequiredService<IMuscleCutiesBackendApiClient>(),
+            sp.GetRequiredService<MobileJourneyCloudGateway>()));
         services.AddSingleton<IProgressSummaryStore,
             ScopedProgressSummaryStore>();
         services.AddSingleton<IProgressSummaryUseCase,
@@ -380,10 +366,7 @@ public static class MauiProgram
             DashboardOverviewUseCase>();
         services.AddSingleton<INutritionChangeNotifier>(_ =>
             new NutritionChangeNotifier(MainThread.BeginInvokeOnMainThread));
-        services.AddScoped<NutritionTrackingService>();
-        services.AddSingleton<INutritionTrackingService, ScopedNutritionTrackingService>();
         services.AddSingleton<IBarcodeScannerHardwareService, BarcodeScannerHardwareService>();
-        services.AddScoped<IWorkoutArchiveService, WorkoutArchiveService>();
     }
 
     private static void RegisterWorkoutPlanningServices(IServiceCollection services)
@@ -393,23 +376,10 @@ public static class MauiProgram
         services.AddSingleton<IReadinessEngine, DailyReadinessEngine>();
         services.AddSingleton<IGatingEngine, GatingEngine>();
 
-        services.AddScoped<IReadinessRepository, ReadinessRepository>();
-        services.AddScoped<IDailyCheckInDataService, DailyCheckInDataService>();
-        services.AddScoped<IReadinessService>(sp =>
-            (DailyCheckInDataService)sp.GetRequiredService<IDailyCheckInDataService>());
-        services.AddScoped<IWorkoutInjuryRepository, WorkoutInjuryRepository>();
-        services.AddScoped<IWorkoutInjuryService, WorkoutInjuryService>();
-        services.AddScoped<IReadinessSyncOrchestrator, ReadinessSyncOrchestrator>();
-        services.AddScoped<IHealthReadinessBridge, HealthReadinessBridge>();
         services.AddScoped<IDailyCheckInNotificationService>(sp =>
             new DailyCheckInNotificationService(
                 sp.GetRequiredService<ILocalNotificationService>(),
                 sp.GetRequiredService<IDailyCheckInStore>()));
-
-        services.AddScoped<IContributionLookup, ContributionLookup>();
-        services.AddScoped<IVolumeBudgetResolver, VolumeBudgetResolver>();
-        services.AddScoped<IWeekPlanGenerator, WeekPlanGenerator>();
-        services.AddScoped<IExercisePickerService, ExercisePickerService>();
     }
 
     private static void RegisterMigrationServices(IServiceCollection services)
@@ -480,8 +450,6 @@ public static class MauiProgram
         services.AddSingleton<ICreateRecipeUseCase, CreateRecipeUseCase>();
         services.AddSingleton<ISaveMealTemplateUseCase, SaveMealTemplateUseCase>();
         services.AddSingleton<IGetRecipesAndTemplatesUseCase, GetRecipesAndTemplatesUseCase>();
-        services.AddScoped<IWorkoutArchiveStore, CloudWorkoutArchiveStore>();
-        services.AddScoped<IWorkoutArchiveUseCase, WorkoutArchiveUseCase>();
         services.AddSingleton<IWorkoutInjuryStore, CloudWorkoutInjuryStore>();
         services.AddSingleton<IWorkoutInjuryUseCase, WorkoutInjuryUseCase>();
         services.AddSingleton<IWorkoutOverviewStore, CloudWorkoutOverviewStore>();
@@ -595,10 +563,6 @@ public static class MauiProgram
             sp.GetRequiredService<IGetRecipesAndTemplatesUseCase>(),
             sp.GetRequiredService<ICreateRecipeUseCase>()));
 
-        services.AddTransient<WorkoutHistoryViewModel>(sp => new WorkoutHistoryViewModel(
-            sp.GetRequiredService<IWorkoutArchiveUseCase>(),
-            () => NavigateToAsync("..")));
-
         services.AddSingleton<ProfileViewModel>(sp => new ProfileViewModel(
             sp.GetRequiredService<IProfileOverviewUseCase>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
@@ -684,7 +648,6 @@ public static class MauiProgram
         services.AddTransient<ProfilePrivacyPage>();
         services.AddTransient<InjuryLogPage>();
         services.AddTransient<FoodLogPage>();
-        services.AddTransient<WorkoutHistoryPage>();
         services.AddTransient<PhotoJourneyVaultPage>();
         services.AddTransient<PasswordRecoveryPage>();
 

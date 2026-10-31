@@ -62,7 +62,6 @@ public partial class AppShell : Shell
             Routing.RegisterRoute(nameof(InjuryLogPage), typeof(InjuryLogPage));
             Routing.RegisterRoute(nameof(WorkoutSessionPage), typeof(WorkoutSessionPage));
             Routing.RegisterRoute(nameof(FoodLogPage), typeof(FoodLogPage));
-            Routing.RegisterRoute(nameof(WorkoutHistoryPage), typeof(WorkoutHistoryPage));
             Routing.RegisterRoute(nameof(PhotoJourneyVaultPage), typeof(PhotoJourneyVaultPage));
             Routing.RegisterRoute(nameof(PasswordRecoveryPage), typeof(PasswordRecoveryPage));
             _routesRegistered = true;
