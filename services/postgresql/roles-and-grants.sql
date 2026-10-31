@@ -44,6 +44,8 @@ BEGIN
         FROM pg_class AS c
         JOIN pg_namespace AS n ON n.oid = c.relnamespace
         WHERE n.nspname IN ('app', 'catalog', 'ops') AND c.relkind IN ('r', 'p')
+          -- This table has a dedicated restricted owner established by its migration.
+          AND NOT (n.nspname = 'app' AND c.relname = 'photo_object_reconcile_targets')
     LOOP
         EXECUTE format('ALTER TABLE %I.%I OWNER TO musclecuties_migrator', table_row.schema_name, table_row.table_name);
     END LOOP;
@@ -94,6 +96,9 @@ ALTER DEFAULT PRIVILEGES FOR ROLE musclecuties_migrator IN SCHEMA catalog
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA app, catalog, ops TO musclecuties_migrator;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA app, catalog, ops TO musclecuties_migrator;
+
+-- The bootstrap CREATE grant is only needed to create EF's history table.
+REVOKE CREATE ON SCHEMA public FROM musclecuties_migrator;
 
 -- After creating login principals outside this file, an administrator may run:
 -- GRANT musclecuties_app TO musclecuties_api_login;
