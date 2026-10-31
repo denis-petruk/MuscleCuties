@@ -4,9 +4,9 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
@@ -103,13 +103,9 @@ public sealed class ServerRouteParityTests
     }
 
     [Theory]
-    [InlineData("/api/v1/session")]
     [InlineData(ProfileRoute)]
     [InlineData("/api/v1/profile/units")]
-    [InlineData("/api/v1/profile/history")]
-    [InlineData("/api/v1/profile/quiz-responses")]
     [InlineData("/api/v1/nutrition/catalog/search?query=synthetic")]
-    [InlineData("/api/v1/workouts/catalog")]
     [InlineData("/api/v1/cycle/history?from=2026-01-01&through=2026-01-31")]
     [InlineData("/api/v1/dashboard/overview?date=2026-01-01")]
     public async Task PrivateGetRoutesRejectAnonymousCallers(string route)
@@ -406,13 +402,7 @@ public sealed class ServerRouteParityTests
                     0, 0, "synthetic", 0, "synthetic", "synthetic", "synthetic", "synthetic", "synthetic",
                     "synthetic", "synthetic", "synthetic", "{}", 1));
 
-        public Task<IReadOnlyList<ServerProfileHistoryEntry>> LoadHistoryAsync(Guid userId, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-        public Task<IReadOnlyList<ServerQuizResponse>> LoadQuizResponsesAsync(Guid userId, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
         public Task<ServerProfileWriteResult> UpdateProfileAsync(UpdateServerProfileRequest request, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-        public Task<ServerProfileWriteResult> CorrectQuizResponseAsync(CorrectServerQuizResponseRequest request, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
         public Task<ServerProfileWriteResult> UpdateNutritionPreferencesAsync(UpdateServerNutritionPreferencesRequest request, CancellationToken cancellationToken) =>
             RecordNutritionPreferences(request);

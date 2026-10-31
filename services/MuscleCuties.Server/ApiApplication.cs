@@ -8,70 +8,67 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;
-using MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
-using MuscleCuties.Infrastructure.PostgreSql.Account.MigrationClaims;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
-using MuscleCuties.UseCases.Features.Account.Deletion;
-using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
+using MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
+using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
+using MuscleCuties.Infrastructure.PostgreSql.CheckInAndInjury;
 using MuscleCuties.Infrastructure.PostgreSql.Cycle.History;
 using MuscleCuties.Infrastructure.PostgreSql.Cycle.Overview;
-using MuscleCuties.Infrastructure.PostgreSql.CheckInAndInjury;
+using MuscleCuties.Infrastructure.PostgreSql.Cycle.PhaseLog;
+using MuscleCuties.Infrastructure.PostgreSql.Dashboard;
+using MuscleCuties.Infrastructure.PostgreSql.Nutrition.BatchAndCopy;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.CatalogSearch;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Diary;
-using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Targets;
-using MuscleCuties.Infrastructure.PostgreSql.Nutrition.BatchAndCopy;
-using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Recipes;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview;
-using MuscleCuties.Infrastructure.PostgreSql.Profile.UnitsDisplay;
-using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
+using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Recipes;
+using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Targets;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
-using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
+using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
+using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
+using MuscleCuties.Infrastructure.PostgreSql.Profile.UnitsDisplay;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Archive;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Injury;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
-using MuscleCuties.UseCases.Features.Account.Registration;
-using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
-using MuscleCuties.UseCases.Features.Account.Authentication;
-using MuscleCuties.UseCases.Features.Account.EmailChallenge;
-using MuscleCuties.UseCases.Features.Account.MigrationClaims;
-using MuscleCuties.UseCases.Features.Cycle.History;
-using MuscleCuties.UseCases.Features.Cycle.Overview;
-using MuscleCuties.UseCases.Features.CheckInAndInjury;
-using MuscleCuties.UseCases.Features.Nutrition.Barcode;
-using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
-using MuscleCuties.UseCases.Features.Nutrition.CustomFoods;
-using MuscleCuties.UseCases.Features.Nutrition.Diary;
-using MuscleCuties.UseCases.Features.Nutrition.Targets;
-using MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
-using MuscleCuties.UseCases.Features.Nutrition.Recipes;
-using MuscleCuties.UseCases.Features.Nutrition.Overview;
-using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
-using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
-using MuscleCuties.UseCases.Features.Profile.ServerProfile;
-using MuscleCuties.UseCases.Features.Workout.Planning;
-using MuscleCuties.UseCases.Features.Workout.ActiveSession;
-using MuscleCuties.UseCases.Features.Workout.Archive;
-using MuscleCuties.UseCases.Features.Workout.Injury;
-using MuscleCuties.Infrastructure.PostgreSql.Dashboard;
-using MuscleCuties.UseCases.Features.Dashboard.Overview;
+using MuscleCuties.Server.Account.Registration;
+using MuscleCuties.Server.CheckInAndInjury;
+using MuscleCuties.Server.Cycle;
 using MuscleCuties.Server.Dashboard;
 using MuscleCuties.Server.Nutrition;
-using MuscleCuties.Server.Cycle;
-using MuscleCuties.Infrastructure.PostgreSql.Cycle.PhaseLog;
-using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
-using MuscleCuties.Server.CheckInAndInjury;
-using MuscleCuties.Server.Workout.Planning;
+using MuscleCuties.Server.Profile.PhotoVault;
 using MuscleCuties.Server.Workout.ActiveSession;
 using MuscleCuties.Server.Workout.Archive;
 using MuscleCuties.Server.Workout.Injury;
 using MuscleCuties.Server.Workout.Session;
-using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
+using MuscleCuties.UseCases.Features.Account.Authentication;
+using MuscleCuties.UseCases.Features.Account.Deletion;
+using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
+using MuscleCuties.UseCases.Features.Account.EmailChallenge;
+using MuscleCuties.UseCases.Features.Account.Registration;
+using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
+using MuscleCuties.UseCases.Features.CheckInAndInjury;
+using MuscleCuties.UseCases.Features.Cycle.History;
+using MuscleCuties.UseCases.Features.Cycle.Overview;
+using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
+using MuscleCuties.UseCases.Features.Dashboard.Overview;
+using MuscleCuties.UseCases.Features.Nutrition.Barcode;
+using MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
+using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
+using MuscleCuties.UseCases.Features.Nutrition.CustomFoods;
+using MuscleCuties.UseCases.Features.Nutrition.Diary;
+using MuscleCuties.UseCases.Features.Nutrition.Overview;
+using MuscleCuties.UseCases.Features.Nutrition.Recipes;
+using MuscleCuties.UseCases.Features.Nutrition.Targets;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault;
-using MuscleCuties.Server.Profile.PhotoVault;
-using MuscleCuties.Server.Account.Registration;
+using MuscleCuties.UseCases.Features.Profile.ServerProfile;
+using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
+using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Archive;
+using MuscleCuties.UseCases.Features.Workout.Injury;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Server;
 
@@ -87,7 +84,6 @@ public static class ApiApplication
     private const int PasswordRecoveryEmailReceiptPurpose = 2;
     private const string ApiVersion = "v1";
     private const string RequestIdHeader = "X-Request-Id";
-    private const string SessionRoute = "/api/v1/session";
     private const string LiveRoute = "/health/live";
     private const string ReadyRoute = "/health/ready";
     private const string AuthenticationRoute = "/api/v1/auth";
@@ -165,8 +161,6 @@ public static class ApiApplication
             serviceProvider.GetRequiredService<IRegistrationPasswordHasher>(),
             serviceProvider.GetRequiredService<IAccountPasswordResetStore>(),
             serviceProvider.GetRequiredService<TimeProvider>()));
-        builder.Services.AddScoped<IAccountMigrationClaimStore, PostgresAccountMigrationClaimStore>();
-        builder.Services.AddScoped<IAccountMigrationClaimUseCase, AccountMigrationClaimUseCase>();
         builder.Services.AddScoped<IServerProfileUnitsStore, PostgresProfileUnitsStore>();
         builder.Services.AddScoped<ServerProfileUnitsUseCase>();
         builder.Services.AddScoped<IServerProfileDataStore, PostgresProfileDataStore>();
@@ -217,8 +211,6 @@ public static class ApiApplication
         builder.Services.AddScoped<IServerNutritionOverviewStore>(sp => sp.GetRequiredService<PostgresNutritionOverviewStore>());
         builder.Services.AddScoped<INutritionOverviewStore>(sp => sp.GetRequiredService<PostgresNutritionOverviewStore>());
         builder.Services.AddScoped<ServerNutritionOverviewUseCase>();
-        builder.Services.AddScoped<IWorkoutPlanningCatalogStore, PostgresWorkoutPlanningCatalogStore>();
-        builder.Services.AddScoped<GetWorkoutPlanningCatalogUseCase>();
         builder.Services.AddScoped<IWorkoutPlanningReferenceDataSource, PostgresWorkoutPlanningReferenceDataSource>();
         builder.Services.AddScoped<GenerateWorkoutPlanUseCase>();
         builder.Services.AddScoped<IWorkoutActiveSessionStore, PostgresWorkoutActiveSessionStore>();
@@ -392,11 +384,6 @@ public static class ApiApplication
         app.MapGet(LiveRoute, () => Results.Ok(new HealthResponse("live", ApiVersion)))
             .AllowAnonymous();
         app.MapHealthChecks(ReadyRoute).AllowAnonymous();
-        app.MapGet(SessionRoute, (HttpContext context) => Results.Ok(new SessionResponse(
-            IsAuthenticated: context.User.Identity?.IsAuthenticated == true,
-            UserId: context.User.FindFirst("sub")?.Value,
-            ApiVersion: ApiVersion)))
-            .RequireAuthorization();
         app.MapGet(ProfileUnitsRoute, async (
                 HttpContext context,
                 ServerProfileUnitsUseCase profileUnits,
@@ -454,25 +441,6 @@ public static class ApiApplication
                 request.CycleLength, request.DietaryTags, request.SessionDurationMinutes, request.EquipmentLevel,
                 request.ReproductiveContextJson, request.ProfileImagePath), cancellationToken).ConfigureAwait(false);
             return MapProfileWrite(result);
-        }).RequireAuthorization();
-        app.MapGet("/api/v1/profile/history", async (
-            HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
-        {
-            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
-            return Results.Ok(await profile.LoadHistoryAsync(userId, cancellationToken).ConfigureAwait(false));
-        }).RequireAuthorization();
-        app.MapGet("/api/v1/profile/quiz-responses", async (
-            HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
-        {
-            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
-            return Results.Ok(await profile.LoadQuizResponsesAsync(userId, cancellationToken).ConfigureAwait(false));
-        }).RequireAuthorization();
-        app.MapPut("/api/v1/profile/quiz-responses/{questionId:int}", async (
-            int questionId, CorrectServerQuizResponseBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
-        {
-            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
-            return MapProfileWrite(await profile.CorrectQuizResponseAsync(new CorrectServerQuizResponseRequest(
-                userId, request.ExpectedVersion, questionId, request.AnswerId), cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
         app.MapPut("/api/v1/profile/nutrition-preferences", async (
             UpdateServerNutritionPreferencesBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
@@ -622,36 +590,6 @@ public static class ApiApplication
                 CancellationToken cancellationToken) =>
             Results.Ok(await authentication.UsernameExistsAsync(username ?? string.Empty, cancellationToken).ConfigureAwait(false)))
             .AllowAnonymous();
-        app.MapPost("/api/v1/accounts/migration-claims", async (
-                CreateMigrationClaimRequest request,
-                HttpContext context,
-                IAccountMigrationClaimUseCase migrationClaims,
-                CancellationToken cancellationToken) =>
-            {
-                if (!TryGetAuthenticatedUserId(context, out var destinationUserId))
-                    return Results.Forbid();
-                var claim = await migrationClaims.CreateAsync(destinationUserId, request, cancellationToken)
-                    .ConfigureAwait(false);
-                return claim is null
-                    ? Results.BadRequest(new AccountRegistrationError("invalidMigrationClaim"))
-                    : Results.Ok(claim);
-            })
-            .RequireAuthorization();
-        app.MapPost("/api/v1/accounts/migration-claims/redeem", async (
-                RedeemMigrationClaimRequest request,
-                HttpContext context,
-                IAccountMigrationClaimUseCase migrationClaims,
-                CancellationToken cancellationToken) =>
-            {
-                if (!TryGetAuthenticatedUserId(context, out var destinationUserId))
-                    return Results.Forbid();
-                var result = await migrationClaims.RedeemAsync(destinationUserId, request, cancellationToken)
-                    .ConfigureAwait(false);
-                return result.Succeeded
-                    ? Results.Ok(result)
-                    : Results.Conflict(new AccountRegistrationError("migrationClaimConflict"));
-            })
-            .RequireAuthorization();
         app.MapDelete("/api/v1/accounts/me", async (
                 HttpContext context,
                 ServerAccountDeletionUseCase accountDeletion,
@@ -709,7 +647,6 @@ public static class ApiApplication
         app.MapNutritionDiaryEndpoints();
         app.MapNutritionBatchAndCopyEndpoints();
         app.MapRecipeEndpoints();
-        app.MapWorkoutPlanningEndpoints();
         app.MapWorkoutActiveSessionEndpoints();
         app.MapWorkoutArchiveEndpoints();
         app.MapWorkoutInjuryEndpoints();
@@ -737,7 +674,6 @@ public static class ApiApplication
         }
     }
 
-    private sealed record SessionResponse(bool IsAuthenticated, string? UserId, string ApiVersion);
     private sealed record ChangePasswordBody(string CurrentPassword, string NewPassword);
     private sealed record AccountRegistrationResponse(Guid UserId, bool OnboardingComplete);
     private sealed record AccountRegistrationError(string Code);
@@ -756,7 +692,6 @@ public static class ApiApplication
         string? Goal, string? WeightGoalPace, string? TrainingExperienceLevel, string? CycleTrackingMode,
         int? WorkoutDaysPerWeek, int? CycleLength, string? DietaryTags, int? SessionDurationMinutes, string? EquipmentLevel,
         string? ReproductiveContextJson = null, string? ProfileImagePath = null);
-    private sealed record CorrectServerQuizResponseBody(int ExpectedVersion, int AnswerId);
     private sealed record UpdateServerNutritionPreferencesBody(int ExpectedVersion, string Goal, string WeightGoalPace, string DietaryTags);
     private sealed record UpdateServerWorkoutPreferencesBody(int ExpectedVersion, IReadOnlyList<int> ActivityTypes,
         int StrengthStyle, int DaysPerWeek, string? EquipmentLevel = null);

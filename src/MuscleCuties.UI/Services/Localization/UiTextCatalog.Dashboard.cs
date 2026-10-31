@@ -16,9 +16,7 @@ public static partial class UiTextCatalog
         English["Dashboard_Calendar_Today"] = "Today";
         English["Dashboard_CheckIn_BloatingA11y"] = "Bloating today";
         English["Dashboard_CheckIn_BloatingHint"] = "Toggle on if you are experiencing bloating";
-        English["Dashboard_CheckIn_BloatingTitle"] = "Bloating";
         English["Dashboard_CheckIn_BloatingSectionTitle"] = "BLOATING";
-        English["Dashboard_CheckIn_BodyWeightTitle"] = "Body weight (optional)";
         English["Dashboard_CheckIn_BodyWeightSectionTitle"] = "BODY WEIGHT (OPTIONAL)";
         English["Dashboard_CheckIn_Energy1A11y"] = "Energy 1 of 5";
         English["Dashboard_CheckIn_Energy1Hint"] = "Very low energy";
@@ -30,7 +28,6 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_Energy4Hint"] = "High energy";
         English["Dashboard_CheckIn_Energy5A11y"] = "Energy 5 of 5";
         English["Dashboard_CheckIn_Energy5Hint"] = "Very high energy";
-        English["Dashboard_CheckIn_EnergyTitle"] = "Energy";
         English["Dashboard_CheckIn_EnergySectionTitle"] = "ENERGY";
         English["Dashboard_CheckIn_EnergyVeryHighLabel"] = "Very high";
         English["Dashboard_CheckIn_EnergyVeryLowLabel"] = "Very low";
@@ -52,7 +49,6 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_PainSevere"] = "Severe";
         English["Dashboard_CheckIn_PainSevereA11y"] = "Pain: Severe";
         English["Dashboard_CheckIn_PainSevereHint"] = "Severe pain, rest recommended";
-        English["Dashboard_CheckIn_PainTitle"] = "Pain";
         English["Dashboard_CheckIn_PainSectionTitle"] = "PAIN";
         English["Dashboard_CheckIn_PrivateBadge"] = "Private";
         English["Dashboard_CheckIn_PrivateBadgeA11y"] = "This data stays private on your device";
@@ -63,7 +59,6 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_SleepMaxLabel"] = "14h";
         English["Dashboard_CheckIn_SleepMinLabel"] = "0h";
         English["Dashboard_CheckIn_SleepSliderHint"] = "Drag to set hours of sleep, 0 to 14";
-        English["Dashboard_CheckIn_SleepTitle"] = "Sleep last night";
         English["Dashboard_CheckIn_SleepSectionTitle"] = "SLEEP LAST NIGHT";
         English["Dashboard_CheckIn_StorageNotice"] = "Stored in your private account -- never shared";
         English["Dashboard_CheckIn_SubmitButton"] = "Save check-in";
@@ -125,8 +120,6 @@ public static partial class UiTextCatalog
         English["Dashboard_Targets_SleepEstimate"] = "Sleep estimate";
         English["Dashboard_Targets_SleepFormat"] = "Sleep estimate: {0}";
         English["Dashboard_Targets_Title"] = "Planning estimates";
-        English["Dashboard_Phase_MissingHeader"] = "This week · Set your cycle phase";
-        English["Dashboard_Phase_MissingStatus"] = "Add a cycle phase to get started";
         English["Dashboard_Trend_ProgressTitle"] = "Your progress";
         English["Dashboard_Trend_PreviousView"] = "Previous progress view";
         English["Dashboard_Trend_NextView"] = "Next progress view";
@@ -148,17 +141,7 @@ public static partial class UiTextCatalog
         English["Dashboard_Trend_LongestSession"] = "Longest session";
         English["Dashboard_Trend_LongestDistance"] = "Longest distance";
         English["Dashboard_Trend_FastestPace"] = "Fastest pace";
-        English["Dashboard_Trend_RecordedReadiness"] = "Recorded readiness";
-        English["Dashboard_Trend_SevenDayTrends"] = "Your 7-day trends";
-        English["Dashboard_Trend_SixDaysAgo"] = "6 days ago";
-        English["Dashboard_Trend_WeightDisclaimer"] = "Cycle phase and fluid shifts can affect daily weight readings. This median softens short-term changes; it does not measure hormone levels.";
-        English["Dashboard_Trend_WeightMedian"] = "Weight · rolling median";
         English["Dashboard_Workout_Duration"] = "Duration";
-        English["Dashboard_Workout_CountActivity"] = "Activity";
-        English["Dashboard_Workout_CountSets"] = "Sets";
-        English["Dashboard_Workout_CountExercises"] = "Exercises";
-        English["Dashboard_Workout_CountRecovery"] = "Recovery";
-        English["Dashboard_Workout_ExerciseCountFormat"] = "{0} exercises";
         English["Dashboard_Workout_OpenTodayPlanA11y"] = "Open today's plan";
         English["Dashboard_Workout_SemanticTodayPlan"] = "Today's plan: {0}.";
         English["Dashboard_Workout_StartWorkout"] = "Start workout";
