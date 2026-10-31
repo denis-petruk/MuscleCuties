@@ -1,0 +1,26 @@
+path,layer,inline_literals,const_count,sample_lines,proposed_family,priority,notes
+src/MuscleCuties.Core/Domain/Dashboard/DashboardSupportRule.cs,domain,43,0,49;50;57;59;98;112,ReadinessPolicy (caps phase deltas nutrition bands step bands sleep bands),P1,Duplicated almost verbatim in DashboardPlanner; extract one shared policy type
+src/MuscleCuties.Infrastructure/Services/Dashboard/Planning/DashboardPlanner.cs,infrastructure,36,0,82;84;91;92,ReadinessPolicy,P1,Duplicate of DashboardSupportRule; delete the duplicate while extracting
+src/MuscleCuties.Core/Domain/Nutrition/PortionCalculationRule.cs,domain,40,6,51;53;95,PortionPolicy (anchor minimums multipliers),P2,Already has KcalTolerancePct and 5 more; finish the job
+src/MuscleCuties.Core/Domain/Nutrition/ProfileNutritionTargetsRule.cs,domain,26,2,42;43;44;63,NutritionTargetPolicy,P2,Has Minimum/MaximumUserEntered but inline minimums remain
+src/MuscleCuties.Core/Domain/Nutrition/NutritionEnergyRule.cs,domain,26,0,8;9;11;18,MifflinStJeorCoefficients and ActivityMultipliers,P2,Formula constants should carry units in their names
+src/MuscleCuties.Core/Models/Workout/Planning/WorkoutPlanningConfig.cs,domain,24,0,14;15;18;21,PlanningDefaults (scoring tables phase deltas),P2,Configuration defaults are still policy and must be named
+src/MuscleCuties.Core/Domain/Workout/ReadinessRule.cs,domain,23,0,39;68;105,ReadinessScoring,P2,Clamp bounds and soreness deltas
+src/MuscleCuties.Core/Domain/Nutrition/MealDistributionRule.cs,domain,22,0,35;36;46;47,MealDistributionShares,P2,Four meal share quadruples plus calorie clamp
+src/MuscleCuties.Core/Domain/Onboarding/OnboardingValidationRule.cs,domain,11,0,60;61,OnboardingBounds,P2,Height weight age bounds duplicated in ProfileSetupUseCase and NutritionPlanner
+src/MuscleCuties.Infrastructure/Services/Health/HealthEnergyAdjustment.cs,infrastructure,16,0,19;20;21,StepBandCalories,P2,Step bands and adjustment caps
+src/MuscleCuties.Infrastructure/Services/Nutrition/Planning/MealComponentScorer.cs,infrastructure,18,0,159;160;161,NutrientWeights,P3,Phase-specific nutrient weights
+src/MuscleCuties.Infrastructure/Services/Nutrition/Planning/NutritionPlanner.cs,infrastructure,41,0,151;152,ProfileBounds,P2,Duplicates onboarding bounds; share one rule
+src/MuscleCuties.Infrastructure/Services/Workout/WorkoutExercisePresentationMapper.cs,infrastructure,20,0,60;77,PresentationFormatting,P3,Seconds per minute effort range and format widths
+src/MuscleCuties.Infrastructure/Services/Nutrition/NutritionService.cs,infrastructure,19,0,84;92;98,PagingDefaults,P3,pageSize 15 clamp 1..50
+src/MuscleCuties.Infrastructure/Services/Nutrition/NutritionTrackingService.History.cs,infrastructure,10,0,16;44,HistoryWindow,P3,14-day window and per-100g ratio
+src/MuscleCuties.Infrastructure/Data/AppDatabase.cs,infrastructure,88,0,245,LocalValidationBounds,P2,Most hits are EF MaxLength configuration; only the Require bounds need constants
+src/MuscleCuties.Infrastructure/Services/Nutrition/Planning/FallbackMealProvider.cs,infrastructure,80,0,40,FallbackMealData,exempt,Data table of meals and macros; treat as seed content not policy
+src/MuscleCuties.Infrastructure/Services/Nutrition/Planning/SavouryMealCatalog.cs,infrastructure,52,0,22,CatalogData,exempt,Ingredient catalog data
+src/MuscleCuties.Infrastructure/Data/AppDatabaseNutritionSeed.cs,infrastructure,692,0,n/a,SeedData,exempt,Seed content
+src/MuscleCuties.Infrastructure/Data/AppDatabaseWorkoutPlanningSeed.cs,infrastructure,542,0,n/a,SeedData,exempt,Seed content
+src/MuscleCuties.Infrastructure/Services/Workout/WorkoutArchiveService.cs,infrastructure,15,0,n/a,Delete,P3,Dead with the history slice; delete instead of refactoring
+src/MuscleCuties.Infrastructure/Nutrition/Overview/LocalNutritionOverviewStore.cs,infrastructure,17,0,n/a,Delete,P3,Dead and unregistered; delete instead of refactoring
+src/MuscleCuties.UI/Pages/**/*.xaml,ui,not-counted,n/a,ProfileSetupPage.xaml:18,Per-page x:Double and Style resources,P2,Precedent already exists: ProfileSetupPage.xaml declares x:Double keys instead of inline numbers
+src/MuscleCuties.UI/**/*.cs,ui,not-counted,n/a,n/a,PresentationConstants,P2,Layout row indexes and column spans that are used in code-behind
+src/MuscleCuties.Server/**/*.cs and src/MuscleCuties.Infrastructure/**/*.cs,application,44+58 route literals,n/a,ApiApplication.cs:97;WorkoutArchiveEndpointMappings.cs:9,ApiRoutes,P2,Route strings are duplicated between client and server; one shared constants file removes a whole class of typos
