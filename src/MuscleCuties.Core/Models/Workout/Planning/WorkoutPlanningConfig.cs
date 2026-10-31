@@ -2,6 +2,23 @@ namespace MuscleCuties.Core.Models.Workout.Planning;
 
 public sealed class WorkoutPlanningConfig
 {
+    private const int GatingHiitMenstrualMinimumEnergy = 5;
+
+    private static readonly double[][] DefaultSleepLastNightBands =
+        [[7.5, 30], [6.5, 22], [5.5, 12], [0, 0]];
+
+    private static readonly double[][] DefaultSleep3dAvgBands =
+        [[7, 15], [6, 8], [0, 0]];
+
+    private static readonly Dictionary<string, int> DefaultPhasePriors = new()
+    {
+        ["Menstrual"] = -10,
+        ["Luteal"] = -5,
+        ["Follicular"] = 0,
+        ["Ovulatory"] = 0,
+        ["Unknown"] = 0
+    };
+
     public ReadinessConfig Readiness { get; set; } = new();
     public GatingConfig Gating { get; set; } = new();
 
@@ -11,62 +28,68 @@ public sealed class WorkoutPlanningConfig
         {
             Readiness = new ReadinessConfig
             {
-                SleepLastNight = [[7.5, 30], [6.5, 22], [5.5, 12], [0, 0]],
-                Sleep3dAvg = [[7, 15], [6, 8], [0, 0]],
-                StepsDeltaPct = new StepsDeltaConfig(),
-                EnergyMultiplier = 5,
-                Pain = [15, 10, 3, 0],
-                PhasePrior = new Dictionary<string, int>
-                {
-                    ["Menstrual"] = -10,
-                    ["Luteal"] = -5,
-                    ["Follicular"] = 0,
-                    ["Ovulatory"] = 0,
-                    ["Unknown"] = 0
-                },
-                HighTier = 75,
-                ModerateTier = 50
+                SleepLastNight = Clone(DefaultSleepLastNightBands),
+                Sleep3dAvg = Clone(DefaultSleep3dAvgBands),
+                PhasePrior = new Dictionary<string, int>(DefaultPhasePriors)
             },
             Gating = new GatingConfig
             {
-                HiitMinSleep = 6.5,
-                HiitMaxPain = 1,
-                HiitMenstrualMinEnergy = 5,
-                LowReadinessSetMultiplier = 0.7,
-                LowReadinessRpeCap = 7,
-                ConsecutiveLowDaysToRest = 2
+                HiitMenstrualMinEnergy = GatingHiitMenstrualMinimumEnergy
             }
         };
+    }
+
+    private static double[][] Clone(double[][] bands)
+    {
+        return bands.Select(band => band.ToArray()).ToArray();
     }
 }
 
 public sealed class ReadinessConfig
 {
+    private const int DefaultEnergyMultiplier = 5;
+    private const int DefaultHighTier = 75;
+    private const int DefaultModerateTier = 50;
+    private static readonly int[] DefaultPainScores = [15, 10, 3, 0];
+
     public double[][] SleepLastNight { get; set; } = [];
     public double[][] Sleep3dAvg { get; set; } = [];
     public StepsDeltaConfig StepsDeltaPct { get; set; } = new();
-    public int EnergyMultiplier { get; set; } = 5;
-    public int[] Pain { get; set; } = [15, 10, 3, 0];
+    public int EnergyMultiplier { get; set; } = DefaultEnergyMultiplier;
+    public int[] Pain { get; set; } = [.. DefaultPainScores];
     public Dictionary<string, int> PhasePrior { get; set; } = new();
-    public int HighTier { get; set; } = 75;
-    public int ModerateTier { get; set; } = 50;
+    public int HighTier { get; set; } = DefaultHighTier;
+    public int ModerateTier { get; set; } = DefaultModerateTier;
 }
 
 public sealed class StepsDeltaConfig
 {
-    public int Normal { get; set; } = 15;
-    public int Spike { get; set; } = 5;
-    public int Drop { get; set; } = 10;
-    public int SpikeThreshold { get; set; } = 40;
-    public int DropThreshold { get; set; } = -40;
+    private const int DefaultNormalScore = 15;
+    private const int DefaultSpikeScore = 5;
+    private const int DefaultDropScore = 10;
+    private const int DefaultSpikeThresholdPct = 40;
+    private const int DefaultDropThresholdPct = -40;
+
+    public int Normal { get; set; } = DefaultNormalScore;
+    public int Spike { get; set; } = DefaultSpikeScore;
+    public int Drop { get; set; } = DefaultDropScore;
+    public int SpikeThreshold { get; set; } = DefaultSpikeThresholdPct;
+    public int DropThreshold { get; set; } = DefaultDropThresholdPct;
 }
 
 public sealed class GatingConfig
 {
-    public double HiitMinSleep { get; set; } = 6.5;
-    public int HiitMaxPain { get; set; } = 1;
-    public int HiitMenstrualMinEnergy { get; set; } = 4;
-    public double LowReadinessSetMultiplier { get; set; } = 0.7;
-    public int LowReadinessRpeCap { get; set; } = 7;
-    public int ConsecutiveLowDaysToRest { get; set; } = 2;
+    private const double DefaultHiitMinimumSleepHours = 6.5;
+    private const int DefaultHiitMaximumPain = 1;
+    private const int DefaultHiitMenstrualMinimumEnergy = 4;
+    private const double DefaultLowReadinessSetMultiplier = 0.7;
+    private const int DefaultLowReadinessRpeCap = 7;
+    private const int DefaultConsecutiveLowDaysToRest = 2;
+
+    public double HiitMinSleep { get; set; } = DefaultHiitMinimumSleepHours;
+    public int HiitMaxPain { get; set; } = DefaultHiitMaximumPain;
+    public int HiitMenstrualMinEnergy { get; set; } = DefaultHiitMenstrualMinimumEnergy;
+    public double LowReadinessSetMultiplier { get; set; } = DefaultLowReadinessSetMultiplier;
+    public int LowReadinessRpeCap { get; set; } = DefaultLowReadinessRpeCap;
+    public int ConsecutiveLowDaysToRest { get; set; } = DefaultConsecutiveLowDaysToRest;
 }
