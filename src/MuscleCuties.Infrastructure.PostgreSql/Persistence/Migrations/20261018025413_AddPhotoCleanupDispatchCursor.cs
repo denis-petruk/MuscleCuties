@@ -27,14 +27,21 @@ public sealed class AddPhotoCleanupDispatchCursor : Migration
             after_owner_id uuid NULL
         );
         INSERT INTO app.photo_cleanup_dispatch_state (state_id, after_owner_id) VALUES (TRUE, NULL);
-        GRANT CREATE ON SCHEMA app TO musclecuties_migrator;
         DO $$
+        DECLARE had_create boolean;
         BEGIN
-            IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_migrator') THEN
+            IF current_user <> 'musclecuties_migrator'
+               AND EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_migrator') THEN
+                had_create := has_schema_privilege('musclecuties_migrator', 'app', 'CREATE');
+                IF NOT had_create THEN
+                    GRANT CREATE ON SCHEMA app TO musclecuties_migrator;
+                END IF;
                 ALTER TABLE app.photo_cleanup_dispatch_state OWNER TO musclecuties_migrator;
+                IF NOT had_create THEN
+                    REVOKE CREATE ON SCHEMA app FROM musclecuties_migrator;
+                END IF;
             END IF;
         END $$;
-        REVOKE CREATE ON SCHEMA app FROM musclecuties_migrator;
         ALTER TABLE app.photo_cleanup_dispatch_state ENABLE ROW LEVEL SECURITY;
         ALTER TABLE app.photo_cleanup_dispatch_state FORCE ROW LEVEL SECURITY;
         CREATE POLICY cleanup_dispatch_cursor_access ON app.photo_cleanup_dispatch_state

@@ -52,7 +52,8 @@ public sealed class AddPhotoObjectReconcileTargets : Migration
         GRANT USAGE ON SCHEMA app TO musclecuties_photo_reconcile;
         GRANT SELECT, INSERT, UPDATE ON app.photo_object_reconcile_targets TO musclecuties_photo_reconcile;
         DO $$ BEGIN
-            IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_migrator') THEN
+            IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_migrator')
+               AND NOT pg_has_role('musclecuties_migrator', 'musclecuties_photo_reconcile_owner', 'MEMBER') THEN
                 GRANT musclecuties_photo_reconcile_owner TO musclecuties_migrator;
             END IF;
             IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_app') THEN
