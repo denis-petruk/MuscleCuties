@@ -2,24 +2,69 @@ namespace MuscleCuties.Core.Domain.Nutrition;
 
 public static class NutritionEnergyRule
 {
+    private const float MinimumWeightKg = 30f;
+    private const float MaximumWeightKg = 500f;
+    private const float MinimumHeightCm = 100f;
+    private const float MaximumHeightCm = 300f;
+    private const int MinimumAge = 18;
+    private const int MaximumAge = 100;
+
+    private const float WeightCoefficientPerKg = 10f;
+    private const float HeightCoefficientPerCm = 6.25f;
+    private const float AgeCoefficientPerYear = 5f;
+    private const float FemaleBmrConstantKcal = 161f;
+
+    private const int ZeroWorkoutDays = 0;
+    private const int LightActivityMaxWorkoutDays = 2;
+    private const int ModerateActivityMaxWorkoutDays = 4;
+    private const int HighActivityMaxWorkoutDays = 6;
+    private const float SedentaryMultiplier = 1.2f;
+    private const float LightActivityMultiplier = 1.375f;
+    private const float ModerateActivityMultiplier = 1.55f;
+    private const float HighActivityMultiplier = 1.725f;
+    private const float VeryHighActivityMultiplier = 1.8f;
+
+    private const int AggressiveWeightGoalPace = 1;
+    private const float AggressiveGoalDeltaKcal = 500f;
+    private const float ModerateGoalDeltaKcal = 300f;
+    private const int FatLossGoal = 0;
+    private const int MuscleGainGoal = 2;
+
+    private const int MenstrualPhase = 0;
+    private const int OvulatoryPhase = 2;
+    private const int LutealPhase = 3;
+    private const float MenstrualCalorieAdjustmentKcal = -100f;
+    private const float OvulatoryCalorieAdjustmentKcal = 50f;
+    private const float LutealCalorieAdjustmentKcal = 150f;
+
+    private const float MinimumCalorieTargetKcal = 1200f;
+    private const float MaximumCalorieTargetKcal = 4000f;
+    private const float MaximumMacroCalorieTargetKcal = 10000f;
+    private const float ProteinGramsPerKg = 1.8f;
+    private const float FatCalorieShare = 0.25f;
+    private const float CaloriesPerGramProtein = 4f;
+    private const float CaloriesPerGramCarb = 4f;
+    private const float CaloriesPerGramFat = 9f;
+
     public static float CalculateBmr(float weightKg, float heightCm, int age)
     {
         if (!float.IsFinite(weightKg) || !float.IsFinite(heightCm) ||
-            weightKg is < 30f or > 500f || heightCm is < 100f or > 300f ||
-            age is < 18 or > 100)
+            weightKg is < MinimumWeightKg or > MaximumWeightKg ||
+            heightCm is < MinimumHeightCm or > MaximumHeightCm ||
+            age is < MinimumAge or > MaximumAge)
             return 0f;
-        return 10f * weightKg + 6.25f * heightCm - 5f * age - 161f;
+        return WeightCoefficientPerKg * weightKg + HeightCoefficientPerCm * heightCm - AgeCoefficientPerYear * age - FemaleBmrConstantKcal;
     }
 
     public static float GetActivityMultiplier(int workoutDaysPerWeek)
     {
         return workoutDaysPerWeek switch
         {
-            <= 0 => 1.2f,
-            <= 2 => 1.375f,
-            <= 4 => 1.55f,
-            <= 6 => 1.725f,
-            _ => 1.8f
+            <= ZeroWorkoutDays => SedentaryMultiplier,
+            <= LightActivityMaxWorkoutDays => LightActivityMultiplier,
+            <= ModerateActivityMaxWorkoutDays => ModerateActivityMultiplier,
+            <= HighActivityMaxWorkoutDays => HighActivityMultiplier,
+            _ => VeryHighActivityMultiplier
         };
     }
 
@@ -32,11 +77,13 @@ public static class NutritionEnergyRule
     {
         if (!float.IsFinite(tdee) || tdee <= 0f)
             return 0f;
-        var delta = weightGoalPace == 1 ? 500f : 300f;
+        var delta = weightGoalPace == AggressiveWeightGoalPace
+            ? AggressiveGoalDeltaKcal
+            : ModerateGoalDeltaKcal;
         return userGoal switch
         {
-            0 => tdee - delta,
-            2 => tdee + delta,
+            FatLossGoal => tdee - delta,
+            MuscleGainGoal => tdee + delta,
             _ => tdee
         };
     }
@@ -47,14 +94,14 @@ public static class NutritionEnergyRule
             return 0f;
         return calories + cyclePhase switch
         {
-            0 => -100f,
-            2 => +50f,
-            3 => +150f,
+            MenstrualPhase => MenstrualCalorieAdjustmentKcal,
+            OvulatoryPhase => OvulatoryCalorieAdjustmentKcal,
+            LutealPhase => LutealCalorieAdjustmentKcal,
             _ => 0f
         };
     }
 
-    public static float Clamp(float value, float min = 1200f, float max = 4000f)
+    public static float Clamp(float value, float min = MinimumCalorieTargetKcal, float max = MaximumCalorieTargetKcal)
     {
         if (!float.IsFinite(value) || !float.IsFinite(min) || !float.IsFinite(max) ||
             min <= 0f || max < min)
@@ -66,11 +113,13 @@ public static class NutritionEnergyRule
         float targetCalories, float weightKg)
     {
         if (!float.IsFinite(targetCalories) || !float.IsFinite(weightKg) ||
-            targetCalories is <= 0f or > 10000f || weightKg is < 30f or > 500f)
+            targetCalories is <= 0f or > MaximumMacroCalorieTargetKcal ||
+            weightKg is < MinimumWeightKg or > MaximumWeightKg)
             return (0f, 0f, 0f);
-        var protein = weightKg * 1.8f;
-        var fats = targetCalories * 0.25f / 9f;
-        var carbs = (targetCalories - protein * 4f - fats * 9f) / 4f;
+        var protein = weightKg * ProteinGramsPerKg;
+        var fats = targetCalories * FatCalorieShare / CaloriesPerGramFat;
+        var carbs = (targetCalories - protein * CaloriesPerGramProtein - fats * CaloriesPerGramFat) /
+                    CaloriesPerGramCarb;
         return (MathF.Max(protein, 0f), MathF.Max(carbs, 0f), MathF.Max(fats, 0f));
     }
 }
