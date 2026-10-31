@@ -13,6 +13,43 @@ public static class ProfileNutritionTargetsRule
     public const float MinimumUserEnteredCalories = 1200f;
     public const float MaximumUserEnteredTargetValue = 5000f;
 
+    private const float DefaultWeightKg = 55f;
+    private const float ProteinShareOfCaloriesCap = 0.45f;
+    private const float FatGramsPerKg = 0.5f;
+    private const float FatShareOfCaloriesFloor = 0.18f;
+    private const float FatShareOfCaloriesCap = 0.35f;
+
+    private const float CaloriesPerGramProtein = 4f;
+    private const float CaloriesPerGramCarb = 4f;
+    private const float CaloriesPerGramFat = 9f;
+    private const float MacroRoundingGrams = 1f;
+    private const float CalorieRoundingKcal = 10f;
+
+    private const float MinimumFiberGrams = 25f;
+    private const float FiberGramsPerThousandKcal = 14f;
+    private const float LutealFiberBonusGrams = 3f;
+    private const float CaloriesPerThousand = 1000f;
+
+    private const float FatLossProteinShare = 0.34f;
+    private const float FatLossCarbShare = 0.36f;
+    private const float FatLossFatShare = 0.30f;
+    private const float FatLossProteinPerKg = 1.8f;
+
+    private const float StrengthProteinShare = 0.25f;
+    private const float StrengthCarbShare = 0.50f;
+    private const float StrengthFatShare = 0.25f;
+    private const float StrengthProteinPerKg = 1.7f;
+
+    private const float MuscleToneProteinShare = 0.30f;
+    private const float MuscleToneCarbShare = 0.42f;
+    private const float MuscleToneFatShare = 0.28f;
+    private const float MuscleToneProteinPerKg = 1.5f;
+
+    private const float BalancedProteinShare = 0.25f;
+    private const float BalancedCarbShare = 0.45f;
+    private const float BalancedFatShare = 0.30f;
+    private const float BalancedProteinPerKg = 1.2f;
+
     public static bool IsValidUserEnteredTarget(string key, float value)
     {
         if (!float.IsFinite(value) || value < 0f || value > MaximumUserEnteredTargetValue)
@@ -39,19 +76,24 @@ public static class ProfileNutritionTargetsRule
             return null;
 
         var ratios = MacroRatios(calculated, goal);
-        var safeWeight = float.IsFinite(weight) ? Math.Max(weight, 55f) : 55f;
-        var minimumProtein = Math.Min(safeWeight * MinimumProteinPerKg(goal), calories * 0.45f / 4f);
-        var minimumFats = Math.Min(Math.Max(safeWeight * 0.5f, calories * 0.18f / 9f), calories * 0.35f / 9f);
-        var protein = Math.Max(calories * ratios.Protein / 4f, minimumProtein);
-        var fats = Math.Max(calories * ratios.Fats / 9f, minimumFats);
-        if (protein * 4f + fats * 9f > calories)
-            fats = Math.Max(0f, Math.Min(fats, (calories - protein * 4f) / 9f));
-        if (protein * 4f + fats * 9f > calories)
-            protein = Math.Max(0f, (calories - fats * 9f) / 4f);
-        var carbs = Math.Max((calories - protein * 4f - fats * 9f) / 4f, 0f);
+        var safeWeight = float.IsFinite(weight) ? Math.Max(weight, DefaultWeightKg) : DefaultWeightKg;
+        var minimumProtein = Math.Min(safeWeight * MinimumProteinPerKg(goal),
+            calories * ProteinShareOfCaloriesCap / CaloriesPerGramProtein);
+        var minimumFats = Math.Min(
+            Math.Max(safeWeight * FatGramsPerKg, calories * FatShareOfCaloriesFloor / CaloriesPerGramFat),
+            calories * FatShareOfCaloriesCap / CaloriesPerGramFat);
+        var protein = Math.Max(calories * ratios.Protein / CaloriesPerGramProtein, minimumProtein);
+        var fats = Math.Max(calories * ratios.Fats / CaloriesPerGramFat, minimumFats);
+        if (protein * CaloriesPerGramProtein + fats * CaloriesPerGramFat > calories)
+            fats = Math.Max(0f, Math.Min(fats,
+                (calories - protein * CaloriesPerGramProtein) / CaloriesPerGramFat));
+        if (protein * CaloriesPerGramProtein + fats * CaloriesPerGramFat > calories)
+            protein = Math.Max(0f, (calories - fats * CaloriesPerGramFat) / CaloriesPerGramProtein);
+        var carbs = Math.Max(
+            (calories - protein * CaloriesPerGramProtein - fats * CaloriesPerGramFat) / CaloriesPerGramCarb, 0f);
         return new NutritionMacroTargets(
-            RoundToNearest(protein, 1f), RoundToNearest(carbs, 1f),
-            RoundToNearest(fats, 1f), FiberTarget(calories, phase));
+            RoundToNearest(protein, MacroRoundingGrams), RoundToNearest(carbs, MacroRoundingGrams),
+            RoundToNearest(fats, MacroRoundingGrams), FiberTarget(calories, phase));
     }
 
     public static NutritionCaloriesTargets? CalculateCalories(
@@ -60,7 +102,9 @@ public static class ProfileNutritionTargetsRule
         if (!float.IsFinite(protein) || !float.IsFinite(carbs) || !float.IsFinite(fats) ||
             protein < 0f || carbs < 0f || fats < 0f)
             return null;
-        var calories = RoundToNearest(protein * 4f + carbs * 4f + fats * 9f, 10f);
+        var calories = RoundToNearest(
+            protein * CaloriesPerGramProtein + carbs * CaloriesPerGramCarb + fats * CaloriesPerGramFat,
+            CalorieRoundingKcal);
         return !float.IsFinite(calories) || calories < MinimumUserEnteredCalories || calories > MaximumUserEnteredTargetValue
             ? null
             : new NutritionCaloriesTargets(calories, FiberTarget(calories, phase));
@@ -76,9 +120,9 @@ public static class ProfileNutritionTargetsRule
             float.IsFinite(calories) && float.IsFinite(protein) &&
             float.IsFinite(carbs) && float.IsFinite(fats))
         {
-            var proteinShare = protein * 4f / calories;
-            var carbsShare = carbs * 4f / calories;
-            var fatsShare = fats * 9f / calories;
+            var proteinShare = protein * CaloriesPerGramProtein / calories;
+            var carbsShare = carbs * CaloriesPerGramCarb / calories;
+            var fatsShare = fats * CaloriesPerGramFat / calories;
             var total = proteinShare + carbsShare + fatsShare;
             if (float.IsFinite(total) && total > 0f)
                 return (proteinShare / total, carbsShare / total, fatsShare / total);
@@ -86,10 +130,10 @@ public static class ProfileNutritionTargetsRule
 
         return goal switch
         {
-            UserGoal.FatLoss => (0.34f, 0.36f, 0.30f),
-            UserGoal.Strength => (0.25f, 0.50f, 0.25f),
-            UserGoal.MuscleTone => (0.30f, 0.42f, 0.28f),
-            _ => (0.25f, 0.45f, 0.30f)
+            UserGoal.FatLoss => (FatLossProteinShare, FatLossCarbShare, FatLossFatShare),
+            UserGoal.Strength => (StrengthProteinShare, StrengthCarbShare, StrengthFatShare),
+            UserGoal.MuscleTone => (MuscleToneProteinShare, MuscleToneCarbShare, MuscleToneFatShare),
+            _ => (BalancedProteinShare, BalancedCarbShare, BalancedFatShare)
         };
     }
 
@@ -97,17 +141,19 @@ public static class ProfileNutritionTargetsRule
     {
         return goal switch
         {
-            UserGoal.FatLoss => 1.8f,
-            UserGoal.Strength => 1.7f,
-            UserGoal.MuscleTone => 1.5f,
-            _ => 1.2f
+            UserGoal.FatLoss => FatLossProteinPerKg,
+            UserGoal.Strength => StrengthProteinPerKg,
+            UserGoal.MuscleTone => MuscleToneProteinPerKg,
+            _ => BalancedProteinPerKg
         };
     }
 
     private static float FiberTarget(float calories, CyclePhase phase)
     {
-        return RoundToNearest(MathF.Max(25f, calories / 1000f * 14f) +
-                              (phase is CyclePhase.Luteal ? 3f : 0f), 1f);
+        return RoundToNearest(
+            MathF.Max(MinimumFiberGrams, calories / CaloriesPerThousand * FiberGramsPerThousandKcal) +
+            (phase is CyclePhase.Luteal ? LutealFiberBonusGrams : 0f),
+            MacroRoundingGrams);
     }
 
     private static float RoundToNearest(float value, float nearest)

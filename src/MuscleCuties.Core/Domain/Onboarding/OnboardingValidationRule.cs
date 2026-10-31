@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Domain.Cycle;
+using MuscleCuties.Core.Domain.Profile;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
 
@@ -57,17 +58,31 @@ public static class OnboardingValidationRule
             return OnboardingValidationResult.Failure(
                 "Please provide a valid date of birth (must be at least 18 years old).");
 
-        if (!float.IsFinite(staged.Height) || staged.Height < 50f || staged.Height > 280f)
-            return OnboardingValidationResult.Failure("Please provide a valid height between 50 cm and 280 cm.");
+        if (!float.IsFinite(staged.Height) ||
+            staged.Height < (float)ProfileUpdateValidationRule.MinimumHeightCm ||
+            staged.Height > (float)ProfileUpdateValidationRule.MaximumHeightCm)
+            return OnboardingValidationResult.Failure(
+                $"Please provide a valid height between {ProfileUpdateValidationRule.MinimumHeightCm} cm and " +
+                $"{ProfileUpdateValidationRule.MaximumHeightCm} cm.");
 
-        if (!float.IsFinite(staged.Weight) || staged.Weight < 20f || staged.Weight > 400f)
-            return OnboardingValidationResult.Failure("Please provide a valid weight between 20 kg and 400 kg.");
+        if (!float.IsFinite(staged.Weight) ||
+            staged.Weight < (float)ProfileUpdateValidationRule.MinimumWeightKg ||
+            staged.Weight > (float)ProfileUpdateValidationRule.MaximumWeightKg)
+            return OnboardingValidationResult.Failure(
+                $"Please provide a valid weight between {ProfileUpdateValidationRule.MinimumWeightKg} kg and " +
+                $"{ProfileUpdateValidationRule.MaximumWeightKg} kg.");
 
         if (staged.CycleLength < CycleLengthLimits.Minimum || staged.CycleLength > CycleLengthLimits.Maximum)
-            return OnboardingValidationResult.Failure("Please provide a valid cycle length between 18 and 60 days.");
+            return OnboardingValidationResult.Failure(
+                $"Please provide a valid cycle length between {CycleLengthLimits.Minimum} and " +
+                $"{CycleLengthLimits.Maximum} days.");
 
-        if (staged.WorkoutDaysPerWeek < 1 || staged.WorkoutDaysPerWeek > 7)
-            return OnboardingValidationResult.Failure("Please provide valid workout days per week between 1 and 7.");
+        if (staged.WorkoutDaysPerWeek < ProfileUpdateValidationRule.MinimumWorkoutDaysPerWeek ||
+            staged.WorkoutDaysPerWeek > ProfileUpdateValidationRule.MaximumWorkoutDaysPerWeek)
+            return OnboardingValidationResult.Failure(
+                $"Please provide valid workout days per week between " +
+                $"{ProfileUpdateValidationRule.MinimumWorkoutDaysPerWeek} and " +
+                $"{ProfileUpdateValidationRule.MaximumWorkoutDaysPerWeek}.");
 
         return OnboardingValidationResult.Success();
     }

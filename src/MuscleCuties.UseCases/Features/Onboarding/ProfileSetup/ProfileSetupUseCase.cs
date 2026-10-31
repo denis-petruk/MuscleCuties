@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Domain.Onboarding;
+using MuscleCuties.Core.Domain.Profile;
 
 namespace MuscleCuties.UseCases.Features.Onboarding.ProfileSetup;
 
@@ -22,8 +23,12 @@ public sealed class ProfileSetupUseCase(IProfileSetupStore store) : IProfileSetu
                 ? ProfileSetupError.Underage
                 : ProfileSetupError.InvalidBirthDate);
 
-        if (!float.IsFinite(draft.HeightCm) || draft.HeightCm < 50f || draft.HeightCm > 280f ||
-            !float.IsFinite(draft.WeightKg) || draft.WeightKg < 20f || draft.WeightKg > 400f)
+        if (!float.IsFinite(draft.HeightCm) ||
+            draft.HeightCm < (float)ProfileUpdateValidationRule.MinimumHeightCm ||
+            draft.HeightCm > (float)ProfileUpdateValidationRule.MaximumHeightCm ||
+            !float.IsFinite(draft.WeightKg) ||
+            draft.WeightKg < (float)ProfileUpdateValidationRule.MinimumWeightKg ||
+            draft.WeightKg > (float)ProfileUpdateValidationRule.MaximumWeightKg)
             return new ProfileSetupResult(ProfileSetupError.InvalidMeasurements);
 
         if (draft.SelectedActivityTypes is null || draft.SelectedActivityTypes.Count == 0)
