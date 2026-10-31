@@ -8,12 +8,11 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.Server.Workout.ActiveSession;
 using MuscleCuties.Server.Workout.Archive;
 using MuscleCuties.Server.Workout.Injury;
-using MuscleCuties.Server.Workout.Planning;
 using MuscleCuties.Server.Workout.Session;
-using MuscleCuties.UseCases.Features.Workout.Archive;
-using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Archive;
 using MuscleCuties.UseCases.Features.Workout.Injury;
+using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
@@ -31,7 +30,7 @@ public sealed class WorkoutCloudContractTests
             : responseType == typeof(WorkoutSessionDetailDto)
                 ? new WorkoutSessionDetailDto(101, "Workout", "", "", false, [], [])
                 : responseType == typeof(List<WorkoutSwapCandidateDto>)
-                    ? new List<WorkoutSwapCandidateDto> { new(19, "Swap", "match", "Bodyweight", "Glutes") }                        : responseType == typeof(WorkoutMovementNoteDto)
+                    ? new List<WorkoutSwapCandidateDto> { new(19, "Swap", "match", "Bodyweight", "Glutes") } : responseType == typeof(WorkoutMovementNoteDto)
                             ? new WorkoutMovementNoteDto(501, "Note")
                             : null);
 
@@ -88,14 +87,12 @@ public sealed class WorkoutCloudContractTests
     {
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddAuthorization();
-        builder.Services.AddScoped<GetWorkoutPlanningCatalogUseCase>();
         builder.Services.AddScoped<GenerateWorkoutPlanUseCase>();
         builder.Services.AddScoped<PostgresWorkoutPlanAndSessionStore>();
         builder.Services.AddScoped<WorkoutActiveSessionUseCase>();
         builder.Services.AddScoped<ServerWorkoutArchiveUseCase>();
         builder.Services.AddScoped<ServerWorkoutInjuryUseCase>();
         using var app = builder.Build();
-        app.MapWorkoutPlanningEndpoints();
         app.MapWorkoutPlanAndSessionEndpoints();
         app.MapWorkoutActiveSessionEndpoints();
         app.MapWorkoutArchiveEndpoints();
@@ -109,7 +106,6 @@ public sealed class WorkoutCloudContractTests
 
         foreach (var route in new (string Method, string Path)[]
         {
-            ("GET", "/api/v1/workouts/catalog"), ("POST", "/api/v1/workouts/plan"),
             ("GET", "/api/v1/workouts/overview"), ("POST", "/api/v1/workouts/reschedule"),
             ("GET", "/api/v1/workouts/day-sessions/{workoutDayId:int}"),
             ("POST", "/api/v1/workouts/day-sessions/log"),
@@ -138,18 +134,9 @@ public sealed class WorkoutCloudContractTests
         {
             ("GET", "/api/v1/workouts/injuries/contraindicated/{exerciseDefinitionId:int}"),
             ("GET", "/api/v1/workouts/injuries/swaps/{exerciseDefinitionId:int}"),
-            ("GET", "/api/v1/workout/injuries/impact"),
-            ("GET", "/api/v1/workout/injuries/exercises/{exerciseDefinitionId:int}/contraindicated"),
-            ("GET", "/api/v1/workout/injuries/contraindicated/{exerciseDefinitionId:int}"),
-            ("GET", "/api/v1/workout/injuries/exercises/{exerciseDefinitionId:int}/swaps"),
-            ("GET", "/api/v1/workout/injuries/swaps/{exerciseDefinitionId:int}"),
-            ("POST", "/api/v1/workout/injuries/swap"),
             ("GET", "/api/v1/workouts/exercises/{exerciseDefinitionId:int}/contraindicated"),
             ("GET", "/api/v1/workouts/exercises/{exerciseDefinitionId:int}/swaps"),
-            ("POST", "/api/v1/workouts/exercises/swap"),
-            ("GET", "/api/v1/workout/exercises/{exerciseDefinitionId:int}/contraindicated"),
-            ("GET", "/api/v1/workout/exercises/{exerciseDefinitionId:int}/swaps"),
-            ("POST", "/api/v1/workout/exercises/swap")
+            ("POST", "/api/v1/workouts/exercises/swap")
         })
         {
             Xunit.Assert.True(routes.TryGetValue(route, out var endpoint), $"Missing {route.Method} {route.Path}");

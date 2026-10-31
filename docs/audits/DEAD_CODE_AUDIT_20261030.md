@@ -5,6 +5,11 @@ approved plan. It records what this checkout actually contains, what is provably
 only *looks* unreachable, and what must be deleted, wired, or kept. No production file, migration,
 test, secret or environment was modified.
 
+> **Cleanup status (2026-10-31):** four follow-up slices have applied the delete decisions below.
+> F1–F11 and F13–F14 are closed with the evidence in §3.1; F12 is closed for every delete decision,
+> with one server route deliberately kept, and F15 (analyzers and CI gates) remains open. The kept
+> route is `/api/v1/profile/nutrition-settings`, because two behavior tests drive it.
+
 Checkout audited: `main` @ `97677ca4`, working tree dirty with five modified tracked files and several
 untracked paths (see §1.2). Date: 2026-10-30.
 
@@ -124,14 +129,28 @@ caller of any kind) or is marked `verify-at-delete` and requires the compiler pr
 | F5 | Legacy account/auth layer | Confirmed | 10 files + 6 result contracts | Delete |
 | F6 | Legacy repository layer | Confirmed dead concretes; consumers entangled | 17 files, 8 concrete classes | Delete with the services that host them |
 | F7 | Readiness/progress leftovers | Confirmed | 9 files | Delete |
-| F8 | V02 planning rules + their tests | Confirmed | 5 rules, 32 test cases | Delete rule + test together |
+| F8 | V02 planning rules + their tests | Confirmed | 5 rules, 27 test cases | Delete rule + test together |
 | F9 | Dead members | Confirmed | 3 private methods | Delete |
 | F10 | Orphan contracts | Confirmed (5 structural exceptions) | 11 types | Delete with their clusters |
-| F11 | UI content | Confirmed | 187 keys, 79 legacy entries, 1 image | Delete |
+| F11 | UI content | Confirmed | 135 dead keys, 88 legacy entries, 1 image | Delete |
 | F12 | Uncalled server surface | Confirmed | 14 route families | Wire or delete per §5 |
-| F13 | Unconstructable DI graph | Statically proven; runtime proof pending | 8 missing registrations | Fix before deleting anything else |
-| F14 | Magic numbers | Confirmed | 15 files above 20 inline literals | Whole-solution constant extraction |
+| F13 | Unconstructable DI graph | Closed by the registration slice | 8 missing registrations | Fixed in `cd1556d4` |
+| F14 | Magic numbers | Closed | 25 register rows | Extracted in the named-constant passes |
 | F15 | No gates | Confirmed | 0 analyzers, 0 pipelines | Add gates |
+
+### 3.1 Final status after slice 4
+
+| Finding | Final state | Evidence |
+| --- | --- | --- |
+| F1–F7 | Closed in slices 1–3 | History page/slice, fasting, hydration, measurements, legacy auth/repositories and readiness leftovers are absent; the history `.../count` routes remain live |
+| F8 | Closed in slice 4 | Five rule files and five test files deleted; 27 `[Fact]` cases removed. Core project 201 → 174 passed |
+| F9 | Closed in an earlier slice | The three private members are absent from `src/` |
+| F10 | Closed in earlier slices | All 11 contract types are absent; a word-search across `src/`, `services/` and `tests/` returns no declaration or reference |
+| F11 | Closed in slice 4, with corrected counts | 135 unreferenced semantic keys and their Russian twins deleted. 52 of the 187 originally reported are live through `ConverterParameter`, so they stayed. All 93 legacy entries were rechecked: only the five `Tab_*` keys are read, so 88 non-tab entries were removed. `injury_free.svg` deleted |
+| F12 | Closed for every delete decision | Singular workout aliases, legacy `/cycle/phases`, catalog/plan, profile history/quiz, migration claims and `/session` removed with their use cases and stores. `/profile/nutrition-settings` stays because two behavior tests exercise it; hydration, fasting and measurements were already removed in slice 2 |
+| F13 | Closed by `cd1556d4` | The missing registrations and the dead consumers that hid them were removed; the container no longer resolves an impossible graph |
+| F14 | Closed | Every code row in the register is extracted or explicitly exempt in §4 F14 |
+| F15 | Open | No analyzer or CI gate has been added |
 
 ---
 
@@ -256,9 +275,9 @@ also fixing the container. See F13.
 `LocalProgressSummaryStore`/`ScopedProgressSummaryStore` and `IProgressSummaryUseCase` are **live** via
 `LocalDashboardOverviewStore:41`; `ProgressStreakRule` must be kept.
 
-### F8. V02 planning rules and their tests
+### F8. V02 planning rules and their tests — closed in slice 4
 
-Five rules are referenced only by their own test file, never by production:
+Five rules were referenced only by their own test file, never by production:
 
 | Rule | File | Test file | Cases |
 | --- | --- | --- | --- |
@@ -268,13 +287,12 @@ Five rules are referenced only by their own test file, never by production:
 | `ProgressionReviewV02Rule` | `.../ProgressionReviewV02Rule.cs` | `ProgressionReviewV02RuleTests.cs` | 5 |
 | `TodayPlanningDecisionRule` | `.../TodayPlanningDecisionRule.cs` | `TodayPlanningDecisionRuleTests.cs` | 5 |
 
-`ReadinessSyncOrchestratorTests.cs` also references planning types; it is **not** in the deletion list
-until the orchestrator's fate is decided (F13). The rules' result records (`DailyCapacityResult`,
-`ExerciseEligibilityDecision`, `PlanChangeResult`, `ProgressionReviewDecision`, `TodayPlanningDecision`)
-die with them.
-
-Note: `FourWeekPlanRule`, `VolumeBudgetRule`, `InitialWorkoutPlanRule` and `ProgressStreakRule` are
-**live** and must not be deleted with this cluster.
+The five test files contained 27 `[Fact]` cases, not 32; the table above is the authoritative count.
+All five rule files, their result records (`DailyCapacityResult`, `ExerciseEligibilityDecision`,
+`PlanChangeResult`, `ProgressionReviewDecision`, `TodayPlanningDecision`) and the five test files are
+deleted. `ReadinessSyncOrchestratorTests.cs` was already removed with the orchestrator, so nothing else
+referenced the planning types. `FourWeekPlanRule`, `VolumeBudgetRule`, `InitialWorkoutPlanRule` and
+`ProgressStreakRule` remain live and untouched.
 
 ### F9. Dead private members
 
@@ -305,23 +323,31 @@ UseCases/Features/Cycle/ReadinessHistory/ReadinessHistoryUseCase.cs:3  Readiness
 `SaveFoodItemRequest` and `ReLogFoodRequest` are declared beside live daily-log contracts; confirm with
 the compiler before removing them (they may be target-typed in a request builder).
 
-### F11. UI content
+### F11. UI content — closed in slice 4
 
-- **187 semantic catalog keys** are defined and never referenced: 5 in `UiTextCatalog.cs`, 32 in
-  `UiTextCatalog.CycleWorkout.cs`, 24 in `UiTextCatalog.Dashboard.cs`, 126 in
-  `UiTextCatalog.NutritionProfileAuth.cs`.
+- **135 semantic catalog keys** were defined and never referenced: 5 in `UiTextCatalog.cs`, 42 in
+  `UiTextCatalog.CycleWorkout.cs`, 17 in `UiTextCatalog.Dashboard.cs`, 71 in
+  `UiTextCatalog.NutritionProfileAuth.cs`. Each key and its Russian twin was removed.
+- The original **187** figure overcounted. 52 of those keys are reached by
+  `ConverterParameter=<key>` on `LocalizedFormatConverter`, a form the Phase 1 grep did not cover;
+  they remain. A key was treated as live only when it appeared as a quoted C# literal,
+  `{loc:LocalizedText Key}`, or a converter parameter.
 - **1,397 hashed keys** are *not* dead: `UiTextCatalog.Translate(english)` reaches them from
   `LocalizedStringConverter` and 41 call sites.
-- **79 of 93 entries** in the legacy `LocalizationService.RuStrings`/`EnStrings` dictionaries are never
-  looked up; the service is consulted only for the five tab titles in `AppShell.xaml.cs:196-200`.
-- **1 unused image**: `src/MuscleCuties.UI/Resources/Images/injury_free.svg`.
-- **13 orphan view-model properties**: the 11 above (fasting 4, water 3, circumference 4) plus
-  `CopyOverwriteMode` (`FoodLogViewModel.cs:601`) and `EditingConsumptionTime`
-  (`FoodLogViewModel.cs:602`).
+- All **93 legacy entries** were rechecked. Only the five `Tab_*` keys are looked up
+  (`AppShell.xaml.cs`); 88 non-tab entries were removed from both `RuStrings` and `EnStrings`,
+  leaving five translations per language. The earlier 79 count undercounted because duplicate
+  catalog definitions made several common/auth keys look live.
+- **1 unused image** `src/MuscleCuties.UI/Resources/Images/injury_free.svg` was deleted; the
+  referenced `injury_free.png` remains.
+- **13 orphan view-model properties**: the fasting, water and circumference properties were
+  removed in slice 2. `CopyOverwriteMode` and `EditingConsumptionTime` were already absent before
+  slice 4, so no edit was needed.
 
-### F12. Server surface with no client caller
+### F12. Server surface with no client caller — closed for every delete decision
 
-Fourteen route families have no caller anywhere in `src/`:
+Fourteen route families had no caller anywhere in `src/`. The dispositions below were applied in
+slice 4; the hydration, fasting and measurement families had already been removed in slice 2.
 
 | Route family | Server location | Notes |
 | --- | --- | --- |
@@ -340,17 +366,27 @@ Fourteen route families have no caller anywhere in `src/`:
 | `/api/v1/accounts/migration-claims` (+ `/redeem`) | `ApiApplication.cs:656,671` | No UI for account migration |
 | `/api/v1/session` | `ApiApplication.cs:97,423` | Auth-state probe; no client call |
 
-The history list/detail routes also belong here; they are grouped under F1 because the client store
-exists but is unreachable. `ServerRouteParityTests` asserts authorization metadata for every mapped
-route, so these are "test-covered" only in the sense that mapping is covered, not usage.
+Deleted: the singular `/workout/injuries` and `/workout/exercises` aliases, legacy `/cycle/phases`,
+`/workouts/catalog`, `/workouts/plan`, `/profile/history`, `/profile/quiz-responses`,
+`/accounts/migration-claims` and `/session`. The catalog/plan family went with its use case, store
+port, contracts and PostgreSQL store; the profile history/quiz methods and migration-claim use case
+and store were removed rather than left behind as dead methods. `ServerRouteParityTests` lost four
+`InlineData` cases for the removed GET routes; no test method was removed there.
 
-Correction to a first-pass count: recipe and template routes **are** called, through interpolated
-`$"{NutritionRoute}/recipes"` and `$"{NutritionRoute}/templates/{id}"` in
-`CloudNutritionAndWorkoutStores.cs:406-455`. They must not be listed as uncalled.
+Kept: `/api/v1/profile/nutrition-settings`. It duplicates `/nutrition-preferences` for clients, but
+`NutritionSettingsAliasRequiresAuthorization` and `NutritionSettingsAliasWritesForBearerOwnerAndReturnsNextVersion`
+exercise its behavior, so it is not dead surface. Removing it would delete a tested API contract
+without a live-client replacement.
 
-### F13. Unconstructable registrations
+The history list/detail routes belonged to F1 and were removed with the page; the `.../count` routes
+remain live through `LocalProgressSummaryStore` and `CloudAccountAndProfileStores`. Recipe and template
+routes are called through interpolated paths in `CloudNutritionAndWorkoutStores.cs` and were not
+touched.
 
-Static proof, not a runtime observation:
+### F13. Unconstructable registrations — fixed in `cd1556d4`
+
+The table below is the historical static proof. The impossible registrations and the dead consumers
+that hid them were removed in the first cleanup slice; the graph no longer contains these services.
 
 | Registered service | Missing dependency | Consumer that resolves it |
 | --- | --- | --- |
@@ -367,8 +403,7 @@ orchestrator requires all of the above. This is the highest-risk item in the aud
 registrations are restored or the health-sync path is re-pointed, and a container-validation test must
 prove which.
 
-No build or test was run in this phase (report-only), so this is a static conclusion. It is falsifiable
-in one command, described in §7.
+This was a static conclusion in Phase 1; the resolution was build- and test-verified in `cd1556d4`.
 
 ### F14. Magic numbers
 
@@ -435,14 +470,20 @@ mechanical; the tests that call them must be updated in the same commit.
 
 | Test file | Cases | Action |
 | --- | --- | --- |
-| `Core.Tests/DailyActivityCapacityRuleTests.cs` | 6 | Delete with `DailyActivityCapacityRule` |
-| `Core.Tests/ExerciseEligibilityV02RuleTests.cs` | 6 | Delete with `ExerciseEligibilityV02Rule` |
-| `Core.Tests/PlanRevisionV02RuleTests.cs` | 5 | Delete with `PlanRevisionV02Rule` |
-| `Core.Tests/ProgressionReviewV02RuleTests.cs` | 5 | Delete with `ProgressionReviewV02Rule` |
-| `Core.Tests/TodayPlanningDecisionRuleTests.cs` | 5 | Delete with `TodayPlanningDecisionRule` |
-| `Core.Tests/ReadinessSyncOrchestratorTests.cs` | 5 | Keep until F13 is decided; then update |
-| `Server.Tests/ServerRouteParityTests.cs` | Route-set assertions (project total: 46) | Update the authorization route set when singular aliases are removed |
-| `Registration.Integration.Tests` | 2 | Keep; calls singular `/workout/exercises/swap` in one place, update if the alias is removed |
+| `Core.Tests/DailyActivityCapacityRuleTests.cs` | 6 | Deleted with `DailyActivityCapacityRule` |
+| `Core.Tests/ExerciseEligibilityV02RuleTests.cs` | 6 | Deleted with `ExerciseEligibilityV02Rule` |
+| `Core.Tests/PlanRevisionV02RuleTests.cs` | 5 | Deleted with `PlanRevisionV02Rule` |
+| `Core.Tests/ProgressionReviewV02RuleTests.cs` | 5 | Deleted with `ProgressionReviewV02Rule` |
+| `Core.Tests/TodayPlanningDecisionRuleTests.cs` | 5 | Deleted with `TodayPlanningDecisionRule` |
+| `Core.Tests/ReadinessSyncOrchestratorTests.cs` | — | Already absent with the orchestrator |
+| `Server.Tests/ServerRouteParityTests.cs` | 4 removed `InlineData` rows (project total: 73) | Authorization/route set updated for the removed GET routes |
+| `Registration.Tests/WorkoutCloudContractTests.cs` | Route-set assertions | Singular aliases and catalog/plan registrations removed |
+| `Registration.Integration.Tests` | — | No singular alias references remain |
+
+The slice-4 run is **301 passed / 17 environment-gated failed / 1 skipped**: Core 174,
+Mobile.Contracts 15, Registration 34, Server 73, Integration 5 passed with 17 failures and 1 skipped.
+The 31-case delta from the 332 baseline is 27 deleted `[Fact]` cases in the five V02 test files plus
+four removed route-parity `InlineData` rows. Every other test is unchanged.
 
 `Mobile.Contracts.Tests` is not empty: 14 test methods use fully-qualified `[Xunit.Fact]`/`[Xunit.Theory]`.
 No test references the legacy repositories, the legacy auth gateways or the history client slice, so

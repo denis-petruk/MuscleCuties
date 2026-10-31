@@ -8,7 +8,6 @@ namespace MuscleCuties.Server.Cycle;
 public static class PhaseLogEndpointMappings
 {
     private const string Route = "/api/v1/cycle/history/phases";
-    private const string LegacyRoute = "/api/v1/cycle/phases";
 
     public static IEndpointRouteBuilder MapCyclePhaseLogEndpoints(this IEndpointRouteBuilder endpoints)
     {
@@ -52,7 +51,6 @@ public static class PhaseLogEndpointMappings
         }
 
         endpoints.MapPut(Route, HandleSavePhaseLog).RequireAuthorization();
-        endpoints.MapPut(LegacyRoute, HandleSavePhaseLog).RequireAuthorization();
 
         return endpoints;
     }
