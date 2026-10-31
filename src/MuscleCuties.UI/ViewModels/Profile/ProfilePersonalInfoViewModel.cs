@@ -329,17 +329,4 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         if (!IsBusy)
             _birthDateWasExplicitlyChanged = true;
     }
-
-    // P05 Body Circumference Measurements (Metric cm / Imperial in, 1..500 cm bounds)
-    [ObservableProperty] private bool _useMetricCircumferenceUnits = true;
-    [ObservableProperty] private string _selectedCircumferenceSite = MuscleCuties.Core.Domain.Progress.BodyMeasurementCodes.Waist;
-    [ObservableProperty] private string _selectedCircumferenceSide = MuscleCuties.Core.Domain.Progress.BodyMeasurementCodes.NoSide;
-    [ObservableProperty] private string _circumferenceValueText = string.Empty;
-    public System.Collections.ObjectModel.ObservableCollection<MuscleCuties.UseCases.Features.Progress.BodyMeasurements.BodyMeasurementOutputDto> CircumferenceReadings { get; } = [];
-
-    // P06 Fasting Timer (Policy P06-01-v0 neutral elapsed-time record)
-    [ObservableProperty] private MuscleCuties.Core.Domain.Fasting.FastingEligibilityResponse _fastingEligibility = MuscleCuties.Core.Domain.Fasting.FastingEligibilityResponse.Unanswered;
-    [ObservableProperty] private MuscleCuties.UseCases.Features.Fasting.FastingSessionOutputDto? _activeFastingSession;
-    [ObservableProperty] private DateTimeOffset? _plannedFastingEndUtc;
-    [ObservableProperty] private bool _enablePlannedFastingEndReminder;
 }

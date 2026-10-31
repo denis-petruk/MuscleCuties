@@ -600,17 +600,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     [ObservableProperty] private DateOnly _copySourceDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-1));
     [ObservableProperty] private bool _copyOverwriteMode;
     [ObservableProperty] private TimeSpan _editingConsumptionTime = DateTime.Now.TimeOfDay;
-    [ObservableProperty] private bool _waterReminderOptedIn;
-    [ObservableProperty] private TimeOnly _waterReminderQuietStart = new(22, 0);
-    [ObservableProperty] private TimeOnly _waterReminderQuietEnd = new(7, 0);
-
-    public ObservableCollection<int> WaterPresetVolumesMl { get; } =
-    [
-        MuscleCuties.Core.Domain.Hydration.DefaultWaterPresets.SmallMillilitres,
-        MuscleCuties.Core.Domain.Hydration.DefaultWaterPresets.MediumMillilitres,
-        MuscleCuties.Core.Domain.Hydration.DefaultWaterPresets.LargeMillilitres
-    ];
-
     public ObservableCollection<FoodItemEntryDto> TimelineEntries { get; } = [];
     public Dictionary<MealType, double> PerMealCalorieTargets { get; } = new();
 
