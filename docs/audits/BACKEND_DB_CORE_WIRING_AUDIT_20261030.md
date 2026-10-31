@@ -468,9 +468,11 @@ excluded tree leaks in, which is how the `.graphifyignore` block is checked rath
 .tools/graphify-venv/bin/python tools/graphify/scope.py
 ```
 
-At audit time it reported **437 code + 49 documents, 397,150 words** — the run's corpus. On today's
-checkout the same command reports 439 code + 51 documents: the two audit Markdown files and the two
-scripts in `tools/graphify/` are new. The scope decision itself is the labelled, reversible block in
+At audit time it reported **437 code + 49 documents, 397,150 words** — the run's corpus. Every later
+run reports its own checkout, so the count differs by branch and grows as documents are added: on
+`audit/backend-db-core-wiring-20261030` it was 439 code + 51 documents once the two audit files and
+`tools/graphify/` existed, and `main` carries a smaller tree. The scope decision itself is the
+labelled, reversible block in
 [`.graphifyignore`](../../.graphifyignore); delete the block to graph the whole repository.
 
 **Finalisation** (verified). Given `graphify-out/graph.json` and `.graphify_analysis.json`,
