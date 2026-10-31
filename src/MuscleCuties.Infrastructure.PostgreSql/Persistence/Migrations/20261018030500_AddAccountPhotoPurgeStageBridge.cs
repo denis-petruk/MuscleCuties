@@ -35,7 +35,8 @@ public sealed class AddAccountPhotoPurgeStageBridge : Migration
             IF NOT pg_has_role(current_user, 'musclecuties_photo_purge_stage_owner', 'MEMBER') THEN
                 EXECUTE format('GRANT musclecuties_photo_purge_stage_owner TO %I', current_user);
             END IF;
-            IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_migrator') THEN
+            IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_migrator')
+               AND NOT pg_has_role('musclecuties_migrator', 'musclecuties_photo_purge_stage_owner', 'MEMBER') THEN
                 GRANT musclecuties_photo_purge_stage_owner TO musclecuties_migrator;
             END IF;
         END $$;
