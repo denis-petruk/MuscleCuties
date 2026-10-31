@@ -6,17 +6,13 @@ namespace MuscleCuties.Server.Workout.Injury;
 
 public static class WorkoutInjuryEndpointMappings
 {
-    private const string InjuriesRoutePlural = "/api/v1/workouts/injuries";
-    private const string InjuriesRouteSingular = "/api/v1/workout/injuries";
-    private const string ExercisesRoutePlural = "/api/v1/workouts/exercises";
-    private const string ExercisesRouteSingular = "/api/v1/workout/exercises";
+    private const string InjuriesRoute = "/api/v1/workouts/injuries";
+    private const string ExercisesRoute = "/api/v1/workouts/exercises";
 
     public static IEndpointRouteBuilder MapWorkoutInjuryEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        MapInjuryGroup(endpoints.MapGroup(InjuriesRoutePlural).RequireAuthorization());
-        MapInjuryGroup(endpoints.MapGroup(InjuriesRouteSingular).RequireAuthorization());
-        MapExerciseGroup(endpoints.MapGroup(ExercisesRoutePlural).RequireAuthorization());
-        MapExerciseGroup(endpoints.MapGroup(ExercisesRouteSingular).RequireAuthorization());
+        MapInjuryGroup(endpoints.MapGroup(InjuriesRoute).RequireAuthorization());
+        MapExerciseGroup(endpoints.MapGroup(ExercisesRoute).RequireAuthorization());
 
         return endpoints;
     }

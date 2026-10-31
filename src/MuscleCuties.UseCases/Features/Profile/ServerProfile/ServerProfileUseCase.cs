@@ -14,12 +14,6 @@ public sealed class ServerProfileUseCase(IServerProfileDataStore store, TimeProv
     public Task<ServerProfileSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken) =>
         store.LoadAsync(userId, cancellationToken);
 
-    public Task<IReadOnlyList<ServerProfileHistoryEntry>> LoadHistoryAsync(Guid userId, CancellationToken cancellationToken) =>
-        store.LoadHistoryAsync(userId, cancellationToken);
-
-    public Task<IReadOnlyList<ServerQuizResponse>> LoadQuizResponsesAsync(Guid userId, CancellationToken cancellationToken) =>
-        store.LoadQuizResponsesAsync(userId, cancellationToken);
-
     public Task<ServerProfileWriteResult> UpdateProfileAsync(UpdateServerProfileRequest request, CancellationToken cancellationToken) =>
         request.ExpectedVersion <= 0 || request.UserId == Guid.Empty
             ? Invalid()
@@ -34,11 +28,6 @@ public sealed class ServerProfileUseCase(IServerProfileDataStore store, TimeProv
                 DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime))
                 ? Invalid()
             : store.UpdateProfileAsync(request, cancellationToken);
-
-    public Task<ServerProfileWriteResult> CorrectQuizResponseAsync(CorrectServerQuizResponseRequest request, CancellationToken cancellationToken) =>
-        request.ExpectedVersion <= 0 || request.UserId == Guid.Empty || request.QuestionId <= 0 || request.AnswerId <= 0
-            ? Invalid()
-            : store.CorrectQuizResponseAsync(request, cancellationToken);
 
     public Task<ServerProfileWriteResult> UpdateNutritionPreferencesAsync(UpdateServerNutritionPreferencesRequest request, CancellationToken cancellationToken) =>
         request.ExpectedVersion <= 0 || request.UserId == Guid.Empty || string.IsNullOrWhiteSpace(request.Goal) ||
