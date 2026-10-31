@@ -764,15 +764,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         };
     }
 
-    private void RecalculateTotalsFromUi()
-    {
-        var allItems = MealSections.SelectMany(s => s.Items).ToList();
-        TotalCalories = Math.Round(allItems.Sum(i => i.Calories), 1);
-        TotalProtein = Math.Round(allItems.Sum(i => i.Protein), 1);
-        TotalCarbs = Math.Round(allItems.Sum(i => i.Carbs), 1);
-        TotalFat = Math.Round(allItems.Sum(i => i.Fat), 1);
-    }
-
     private void ShowStatus(string message)
     {
         StatusMessage = message;
