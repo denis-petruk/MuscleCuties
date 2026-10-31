@@ -104,7 +104,6 @@ using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Progress;
-using MuscleCuties.UseCases.Features.Workout.Archive;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Session;
@@ -383,7 +382,6 @@ public static class MauiProgram
         services.AddScoped<NutritionTrackingService>();
         services.AddSingleton<INutritionTrackingService, ScopedNutritionTrackingService>();
         services.AddSingleton<IBarcodeScannerHardwareService, BarcodeScannerHardwareService>();
-        services.AddScoped<IWorkoutArchiveService, WorkoutArchiveService>();
     }
 
     private static void RegisterWorkoutPlanningServices(IServiceCollection services)
@@ -480,8 +478,6 @@ public static class MauiProgram
         services.AddSingleton<ICreateRecipeUseCase, CreateRecipeUseCase>();
         services.AddSingleton<ISaveMealTemplateUseCase, SaveMealTemplateUseCase>();
         services.AddSingleton<IGetRecipesAndTemplatesUseCase, GetRecipesAndTemplatesUseCase>();
-        services.AddScoped<IWorkoutArchiveStore, CloudWorkoutArchiveStore>();
-        services.AddScoped<IWorkoutArchiveUseCase, WorkoutArchiveUseCase>();
         services.AddSingleton<IWorkoutInjuryStore, CloudWorkoutInjuryStore>();
         services.AddSingleton<IWorkoutInjuryUseCase, WorkoutInjuryUseCase>();
         services.AddSingleton<IWorkoutOverviewStore, CloudWorkoutOverviewStore>();
@@ -595,10 +591,6 @@ public static class MauiProgram
             sp.GetRequiredService<IGetRecipesAndTemplatesUseCase>(),
             sp.GetRequiredService<ICreateRecipeUseCase>()));
 
-        services.AddTransient<WorkoutHistoryViewModel>(sp => new WorkoutHistoryViewModel(
-            sp.GetRequiredService<IWorkoutArchiveUseCase>(),
-            () => NavigateToAsync("..")));
-
         services.AddSingleton<ProfileViewModel>(sp => new ProfileViewModel(
             sp.GetRequiredService<IProfileOverviewUseCase>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
@@ -684,7 +676,6 @@ public static class MauiProgram
         services.AddTransient<ProfilePrivacyPage>();
         services.AddTransient<InjuryLogPage>();
         services.AddTransient<FoodLogPage>();
-        services.AddTransient<WorkoutHistoryPage>();
         services.AddTransient<PhotoJourneyVaultPage>();
         services.AddTransient<PasswordRecoveryPage>();
 
