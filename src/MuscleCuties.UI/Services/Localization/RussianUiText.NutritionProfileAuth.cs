@@ -617,29 +617,5 @@ internal static partial class RussianUiText
         Values["Profile_WorkoutPrefs_EquipmentFullGym"] = "Полный тренажёрный зал";
         Values["Profile_WorkoutPrefs_EquipmentHome"] = "Гантели и эспандеры";
         Values["Profile_WorkoutPrefs_EquipmentBodyweight"] = "Только вес тела";
-        Values["Fasting_TimerTitle"] = "Таймер голодания";
-        Values["Fasting_Intro"] = "Отмечайте время, которое вы сами решили провести без еды. Таймер не рекомендует длительность и не определяет, подходит ли вам голодание.";
-        Values["Fasting_EligibilityTitle"] = "Перед использованием таймера";
-        Values["Fasting_EligibilityStatement"] = "Этот таймер предлагается только взрослым от 18 лет, которые не беременны и не кормят грудью, не имеют диабета или расстройства пищевого поведения сейчас или в прошлом, не принимают лекарства, для которых медицинский специалист дал указания по приёму пищи или времени еды, и которым медицинский специалист не советовал избегать голодания. Всё перечисленное относится к вам?";
-        Values["Fasting_EligibilityYes"] = "Да, всё относится ко мне";
-        Values["Fasting_EligibilityNo"] = "Нет";
-        Values["Fasting_EligibilityUnsure"] = "Не знаю";
-        Values["Fasting_EligibilityUnavailable"] = "С этим ответом таймер недоступен. Вы по-прежнему можете просмотреть и завершить ранее начатую запись.";
-        Values["Fasting_EligibilityConflict"] = "Ваши ответы не совпадают с данными профиля. Проверьте их, прежде чем начать новую запись.";
-        Values["Fasting_Start"] = "Начать запись";
-        Values["Fasting_StartedAt"] = "Начато в {0}";
-        Values["Fasting_Elapsed"] = "Прошло времени: {0}";
-        Values["Fasting_Pause"] = "Приостановить запись";
-        Values["Fasting_Paused"] = "Приостановлено в {0}";
-        Values["Fasting_Resume"] = "Возобновить запись";
-        Values["Fasting_End"] = "Завершить запись";
-        Values["Fasting_Ended"] = "Завершено в {0}";
-        Values["Fasting_PlannedEnd"] = "Выбранное вами время завершения: {0}";
-        Values["Fasting_PlannedEndReminder"] = "Уведомить меня в выбранное время завершения";
-        Values["Fasting_CorrectTimes"] = "Исправить время начала или завершения";
-        Values["Fasting_TimeUnavailable"] = "Время недоступно. Проверьте запись, прежде чем полагаться на её длительность.";
-        Values["Fasting_SavePending"] = "Ожидание сервера. Изменение ещё не сохранено.";
-        Values["Fasting_SaveConflict"] = "Эта запись была изменена в другом месте. Обновите её перед повторной попыткой.";
-        Values["Fasting_OfflineReadOnly"] = "Нет подключения. Можно просмотреть последнюю сохранённую запись; изменения недоступны.";
     }
 }

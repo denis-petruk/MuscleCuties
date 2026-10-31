@@ -617,29 +617,5 @@ public static partial class UiTextCatalog
         English["Profile_WorkoutPrefs_EquipmentFullGym"] = "Full gym";
         English["Profile_WorkoutPrefs_EquipmentHome"] = "Dumbbells and bands";
         English["Profile_WorkoutPrefs_EquipmentBodyweight"] = "Bodyweight only";
-        English["Fasting_TimerTitle"] = "Fasting timer";
-        English["Fasting_Intro"] = "Record time you choose to go without food. This timer does not recommend a duration or tell you whether fasting is right for you.";
-        English["Fasting_EligibilityTitle"] = "Before using the timer";
-        English["Fasting_EligibilityStatement"] = "This timer is proposed for adults 18 or older who are not pregnant or breastfeeding, do not have diabetes or a current or past eating disorder, do not take medicine for which a clinician has given food or meal-timing instructions, and have not been advised by a clinician to avoid fasting. Do all of these statements apply to you?";
-        English["Fasting_EligibilityYes"] = "Yes, all apply";
-        English["Fasting_EligibilityNo"] = "No";
-        English["Fasting_EligibilityUnsure"] = "Not sure";
-        English["Fasting_EligibilityUnavailable"] = "The timer is unavailable with this answer. You can still view and end a record you already started.";
-        English["Fasting_EligibilityConflict"] = "Your answers do not match your current profile. Review your information before starting a new record.";
-        English["Fasting_Start"] = "Start record";
-        English["Fasting_StartedAt"] = "Started at {0}";
-        English["Fasting_Elapsed"] = "Elapsed time: {0}";
-        English["Fasting_Pause"] = "Pause record";
-        English["Fasting_Paused"] = "Paused at {0}";
-        English["Fasting_Resume"] = "Resume record";
-        English["Fasting_End"] = "End record";
-        English["Fasting_Ended"] = "Ended at {0}";
-        English["Fasting_PlannedEnd"] = "Planned end set by you: {0}";
-        English["Fasting_PlannedEndReminder"] = "Notify me at my planned end time";
-        English["Fasting_CorrectTimes"] = "Correct start or end time";
-        English["Fasting_TimeUnavailable"] = "Time is unavailable. Review this record before relying on its duration.";
-        English["Fasting_SavePending"] = "Waiting for the server. This change is not saved yet.";
-        English["Fasting_SaveConflict"] = "This record changed elsewhere. Reload it before trying again.";
-        English["Fasting_OfflineReadOnly"] = "Offline. You can view the last saved record; changes are unavailable.";
     }
 }
