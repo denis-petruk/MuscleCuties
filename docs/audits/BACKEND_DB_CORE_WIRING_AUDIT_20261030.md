@@ -14,14 +14,16 @@ the structure itself creates risk.**
 | Artifact | What it answers | Size |
 | --- | --- | --- |
 | `graphify-out/graph.html` | Interactive symbol graph; click a community, search a class, follow an edge | 5,004 nodes · 11,507 edges · 364 communities · 8.0 MB |
-| `graphify-out/wiki/index.md` | Agent-crawlable wiki: index plus one article per community and per god node | 374 articles |
-| [`BACKEND_GRAPH_REPORT_20261030.md`](BACKEND_GRAPH_REPORT_20261030.md) | graphify's own report, committed: god nodes, cohesion, hyperedges, gaps, suggested questions | 1,394 lines |
+| `graphify-out/wiki/index.md` | Agent-crawlable wiki: `index.md` plus one article per community and per god node | 374 articles |
+| [`BACKEND_GRAPH_REPORT_20261030.md`](BACKEND_GRAPH_REPORT_20261030.md) | graphify's own report, committed: god nodes, cohesion, hyperedges, gaps, suggested questions | 1,395 lines |
 | `graphify-out/graph.json` | Raw graph for GraphRAG or Neo4j import | 5,004 nodes |
 | This document | The prose layer: anatomy, wiring, findings, handoff | — |
 
 `graphify-out/` is git-ignored (`.gitignore:12`), so `graph.html`, `wiki/` and `graph.json` exist only
-in the working copy that produced this audit. They are reproducible from the same commit with §8; the
-graph's own report is committed next to this file so the findings survive a fresh clone.
+in the working copy that produced this audit. Only part of that is reproducible from this commit: §8
+separates the stages that are scripted (`tools/graphify/`) from the stages that were hand-performed and
+cannot be replayed. The graph's own report is committed next to this file so the findings survive a
+fresh clone without the ignored directory.
 
 ### Corpus and method
 
@@ -248,28 +250,30 @@ and never set a tenant GUC, because they operate on global tables under the auth
 | 1 | `PostgresDbContext` | 242 | DbContext and Model Factory |
 | 2 | `WorkoutActivityType` | 128 | Activity Preference Rules |
 | 3 | `CyclePhase` | 70 | Cycle Phase Rule |
-| 4 | `SchemaRequirements` | 53 | Database Schema Compatibility |
-| 5 | `DatabaseSchemaCompatibility` | 51 | Database Schema Compatibility (2) |
-| 6 | `CatalogSnapshot` | 49 | Database Schema Compatibility (3) |
-| 7 | `ITenantRecord` | 46 | App Repo Models (7) |
-| 8 | `UserProfileRecord` | 46 | App Repo Models (3) |
-| 9 | `WorkoutDayExerciseRecord` | 45 | App Repo Models (8) |
-| 10 | `UserFoodItemRecord` | 44 | App Repo Models (2) — label also appears in Postgres Food Catalog Store |
+| 4 | `SchemaRequirements` | 53 | Database Schema Compatibility · Schema |
+| 5 | `DatabaseSchemaCompatibility` | 51 | Database Schema Compatibility · DatabaseSchemaCompatibility |
+| 6 | `CatalogSnapshot` | 49 | Database Schema Compatibility · CatalogSnapshot |
+| 7 | `UserProfileRecord` | 46 | App Repo Models · UserProfileRecord |
+| 8 | `ITenantRecord` | 46 | App Repo Models · Id (2) |
+| 9 | `WorkoutDayExerciseRecord` | 45 | App Repo Models · PlanningSlotId |
+| 10 | `UserFoodItemRecord` | 44 | App Repo Models · UserFoodItemRecord |
 
 Two readings matter:
 
 - `PostgresDbContext` at 242 edges is the single hub of the backend; nothing in the persistence layer is
   reachable without it. That is expected for EF, but it also means one type's lifetime decision (pooled
   vs keyed) governs every tenant and auth path.
-- The schema contract (`SchemaRequirements` + `CatalogSnapshot` + `DatabaseSchemaCompatibility`, 153
+- The schema contract (`SchemaRequirements` + `DatabaseSchemaCompatibility` + `CatalogSnapshot`, 153
   edges combined) is a **second structural model** of the database that exists in parallel to the EF
   model. The two are kept honest by `SCHEMA_MODEL_CONTRACT_MISMATCH`, but they are maintained
-  separately.
+  separately. Note that the three sit in *separate* communities (§4.2), so the graph itself reports the
+  contract as three loosely joined pieces rather than one subsystem.
 
 ### 4.2 Community structure
 
-364 communities; cohesion is low everywhere (largest community 0.02–0.05), which is normal for C#
-symbol graphs where DTO clusters connect loosely. The useful signal is the *shape*:
+364 communities; cohesion is low everywhere (0.023 for the largest community, 0.084 for the densest
+of the top six), which is normal for C# symbol graphs where DTO clusters connect loosely. The useful
+signal is the *shape*:
 
 | Community | Nodes | Interpretation |
 | --- | --- | --- |
@@ -281,26 +285,31 @@ symbol graphs where DTO clusters connect loosely. The useful signal is the *shap
 | EF Model Configuration | 49 | the 10 configuration files |
 | Schema Introspection Model | 45 | `CatalogSnapshot`, `PhysicalColumn`, `PhysicalConstraint` |
 
-The schema-contract family split into **three** communities (34 + 33 + 24 nodes) — the honest signature
-of one static class doing two jobs (catalog introspection and contract evaluation) while its record
-types drift into a third cluster.
+The schema-contract family carries a `Database Schema Compatibility · …` label in **19** communities
+holding 205 nodes in total, and 34 + 33 + 24 are only the three largest of them. The long tail is one
+record type per community (`ModelColumn`, `SchemaPolicyRequirement`, `PhysicalFunction`,
+`SchemaColumnRequirement`, `SchemaFailureCodes`, …), each of 1–20 nodes — the honest signature of one
+static class doing two jobs (catalog introspection and contract evaluation) while its record types
+fragment into clusters too small for the report to print.
 
 ### 4.3 Surprising connections
 
 The doc→code `rationale_for` edges are the only place where intent is stored next to implementation:
 
+- `docs/orchestration/01_DATABASE.md` → `DatabaseSchemaCompatibility` (the database worker's brief),
 - `docs/orchestration/02_SERVER_LAMBDA.md` → `PostgreSqlSchemaCompatibilityCheck` (the "make
   `/health/ready` tell the truth" requirement),
 - `docs/infra/AWS_LAMBDA_POSTGRES_IMPLEMENTATION_PLAN.md` → `LambdaHostingConfiguration`,
 - `docs/infra/POSTGRES_SCHEMA_COMPATIBILITY_RUNBOOK.md` → `DatabaseSchemaCompatibility`,
 - `docs/infra/C1_AUTH_CONTEXT_SPLIT_PLAN_20261030.md` → `PostgreSqlServiceCollectionExtensions`.
 
-All four are `INFERRED` (the docs describe the decision; no code comment links them). They are the
+All five are `INFERRED` (the docs describe the decision; no code comment links them). They are the
 reading order for anyone changing those files.
 
 ### 4.4 Knowledge gaps
 
-1,876 symbols have ≤ 1 connection. They are properties, enum members and constructor parameters that
+1,963 symbols have ≤ 1 connection (2,238 nodes once file, concept and rationale nodes are included).
+They are properties, enum members and constructor parameters that
 the AST extractor records but that no other symbol references directly. They do not indicate dead code;
 they cap community precision. For dead-code questions use the release inventory, not the graph.
 
@@ -311,7 +320,7 @@ path; the standing P0s are the migration-chain and artifact issues in `RELEASE_I
 
 ### 5.1 P1 — `DatabaseSchemaCompatibility` is a module, not a class
 
-1,899 lines, 51 edges, static, and split across two communities in the graph. It parses and validates
+1,899 lines, 51 edges, static, and spread across 19 communities in the graph (§4.2). It parses and validates
 the manifest, introspects `pg_catalog`, builds a `CatalogSnapshot`, evaluates 11 tables / 26 columns /
 19 indexes / 12 constraints / 46 RLS entries / 49 policies / 6 functions / 10 roles / 42 privileges,
 computes a deterministic fingerprint, formats issues, and maps exit codes. The graph shows no seam
@@ -401,6 +410,8 @@ come from.
 | Boundary imports | `rg` over Core and UseCases | 0 / 0 |
 | Migration count | `rg -l '\[Migration\('` | 61 |
 | Contract counts | parse `SchemaRequirements.json` | 11 tables / 26 cols / 19 idx / 12 constraints / 46 RLS / 49 policies / 6 functions / 10 roles / 42 privileges |
+| Graph regeneration | `PYTHONHASHSEED=0 … relabel.py --files 486 --words 397150` | committed graph report reproduced byte-for-byte; 5,004 nodes / 11,507 edges / 364 communities / 374 articles |
+| Corpus scope probe | `tools/graphify/scope.py` | 439 code + 51 documents today; zero files from an excluded tree |
 
 ### Limits
 
@@ -436,15 +447,60 @@ Three graph queries worth running first (`graphify query "…"`):
 
 ## 8. Regenerating the graph
 
+Only part of this graph is reproducible from this commit. The toolchain, the corpus boundary and the
+finalisation stage are scripted and were run to verify the commands below; the extraction stages that
+needed judgement were hand-performed and are listed as such instead of being implied away.
+
+**Toolchain** (verified: Python 3.11.15, graphifyy 0.9.99). A global `pipx` install of graphify also
+exists on this machine, so every command below calls the venv interpreter directly:
+
 ```bash
 uv venv .tools/graphify-venv --python /opt/homebrew/bin/python3.11
-uv pip install --python .tools/graphify-venv/bin/python "graphifyy[sql]"
-# the .graphifyignore block defines the backend slice; remove it to graph the whole repo
-graphify . --mode deep --wiki
+uv pip install --python .tools/graphify-venv/bin/python graphifyy
+.tools/graphify-venv/bin/python -c "import importlib.metadata as m, sys; print(sys.executable, m.version('graphifyy'))"
+# → .../.tools/graphify-venv/bin/python 0.9.99
 ```
 
-The symbol-level projection, community labels and doc extraction in this run were applied by three
-scripts inside the ignored output directory: `_semantic_extract.py`, `_label.py` and `_finalize.py`.
-They are untracked by design (they are run artefacts) but they document exactly how this graph differs
-from a default `graphify` run: file/namespace nodes removed, 364 communities labelled, 49 documents
-mapped to concepts inline.
+**Scope** (verified). `tools/graphify/scope.py` runs the same detection `graphify` uses and fails if an
+excluded tree leaks in, which is how the `.graphifyignore` block is checked rather than trusted:
+
+```bash
+.tools/graphify-venv/bin/python tools/graphify/scope.py
+```
+
+At audit time it reported **437 code + 49 documents, 397,150 words** — the run's corpus. On today's
+checkout the same command reports 439 code + 51 documents: the two audit Markdown files and the two
+scripts in `tools/graphify/` are new. The scope decision itself is the labelled, reversible block in
+[`.graphifyignore`](../../.graphifyignore); delete the block to graph the whole repository.
+
+**Finalisation** (verified). Given `graphify-out/graph.json` and `.graphify_analysis.json`,
+`tools/graphify/relabel.py` re-applies the 20 inspection-named communities, names the remaining 344
+from their dominant source, disambiguates duplicates by dominant type, writes the report, `graph.json`,
+`graph.html` at `GRAPHIFY_VIZ_NODE_LIMIT=6000` (the default guard would replace the graph with an
+aggregated community meta-graph above 5,000 nodes) and the 374-article wiki:
+
+```bash
+PYTHONHASHSEED=0 .tools/graphify-venv/bin/python tools/graphify/relabel.py --files 486 --words 397150
+```
+
+This reproduces the committed [`BACKEND_GRAPH_REPORT_20261030.md`](BACKEND_GRAPH_REPORT_20261030.md)
+byte-for-byte. After the first run has rewritten `graphify-out/graph.json`, consecutive runs are
+byte-identical including that file; the first run only changes its key order (verified by comparing the
+node, edge and community sets, which were unchanged). `PYTHONHASHSEED` pins graphify's equal-weight tie
+order; `--files/--words` pin the corpus header to this audit's snapshot instead of today's checkout.
+
+**Hand-performed, not reproducible.** Three stages were run as ad-hoc Python against graphify's API and
+left no tracked script, so a fresh clone cannot replay them:
+
+- the AST extraction over the 437 code files (5,504 symbol nodes, 15,986 edges) and its merge with the
+document layer;
+- the inline 49-document semantic pass (62 nodes, 79 edges, 4 hyperedges). Its intermediates
+  (`graphify-out/.graphify_chunk_*.json`) were removed with the rest of the scratch output, so
+  reproducing it means re-reading the docs with a model, not re-running a command;
+- the symbol projection (418 file + 74 namespace nodes removed before clustering) and the first
+  clustering pass.
+
+The nearest single command for those stages is `graphify . --mode deep`, which runs the full
+detect → extract → cluster pipeline over the corpus and yields a *different* graph: 5,504 nodes with file
+and namespace nodes kept and no inline document pass. It is a usable graph — and
+`tools/graphify/relabel.py` will label it — but it is not the one this audit read.
