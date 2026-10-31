@@ -535,15 +535,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         return daysLeft;
     }
 
-    private static string GetFirstName(string? fullName)
-    {
-        var trimmed = fullName?.Trim();
-        if (string.IsNullOrWhiteSpace(trimmed))
-            return string.Empty;
-
-        return trimmed.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
-    }
-
     private static string FirstPresent(params string[] values)
     {
         return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? string.Empty;

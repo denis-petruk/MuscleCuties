@@ -6,8 +6,7 @@ namespace MuscleCuties.Infrastructure.Cycle.Overview;
 
 public sealed class CloudCycleOverviewStore(
     IMuscleCutiesBackendApiClient apiClient,
-    MobileJourneyCloudGateway cloudGateway,
-    LocalCycleOverviewStore? localFallback = null) : ICycleOverviewStore
+    MobileJourneyCloudGateway cloudGateway) : ICycleOverviewStore
 {
     private const string CycleOverviewRoute = "/api/v1/cycle/overview";
 
@@ -62,9 +61,6 @@ public sealed class CloudCycleOverviewStore(
 
             return new CycleOverviewSnapshot(summary, [], [], []);
         }
-
-        if (localFallback is not null)
-            return await localFallback.LoadAsync(rangeStart, rangeEnd, cancellationToken).ConfigureAwait(false);
 
         return null;
     }

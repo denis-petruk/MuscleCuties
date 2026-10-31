@@ -15,12 +15,6 @@ public sealed record PhotoUploadIssueResponse(
     IReadOnlyDictionary<string, string> Fields,
     DateTime ExpiresAtUtc);
 
-public sealed record PhotoUploadUrlResponse(
-    Guid PhotoId,
-    string S3Key,
-    string PresignedUploadUrl,
-    DateTime ExpiresAtUtc);
-
 public sealed record CommitPhotoMetadataRequest(
     Guid PhotoId,
     DateOnly Date,
