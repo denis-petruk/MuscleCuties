@@ -72,13 +72,6 @@ using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault;
 using MuscleCuties.Server.Profile.PhotoVault;
 using MuscleCuties.Server.Account.Registration;
-using MuscleCuties.Infrastructure.PostgreSql.Hydration;
-using MuscleCuties.Infrastructure.PostgreSql.Progress;
-using MuscleCuties.Infrastructure.PostgreSql.Fasting;
-using MuscleCuties.UseCases.Features.Hydration;
-using MuscleCuties.UseCases.Features.Progress.BodyMeasurements;
-using MuscleCuties.UseCases.Features.Fasting;
-using MuscleCuties.Server.Hydration;
 
 namespace MuscleCuties.Server;
 
@@ -238,30 +231,6 @@ public static class ApiApplication
         builder.Services.AddScoped<IServerDashboardOverviewStore, PostgresDashboardOverviewStore>();
         builder.Services.AddScoped<ServerDashboardOverviewUseCase>();
         builder.Services.AddHttpContextAccessor();
-        builder.Services.AddScoped<PostgresHydrationStore>();
-        builder.Services.AddScoped<IWaterPresetInitializationStore>(sp => sp.GetRequiredService<PostgresHydrationStore>());
-        builder.Services.AddScoped<IWaterPresetStore>(sp => sp.GetRequiredService<PostgresHydrationStore>());
-        builder.Services.AddScoped<IWaterIntakeStore>(sp => sp.GetRequiredService<PostgresHydrationStore>());
-        builder.Services.AddScoped<IWaterReminderConfigurationStore>(sp => sp.GetRequiredService<PostgresHydrationStore>());
-        builder.Services.AddScoped<InitializeWaterPresetsUseCase>();
-        builder.Services.AddScoped<GetWaterPresetsUseCase>();
-        builder.Services.AddScoped<CreateWaterPresetUseCase>();
-        builder.Services.AddScoped<UpdateWaterPresetUseCase>();
-        builder.Services.AddScoped<DeleteWaterPresetUseCase>();
-        builder.Services.AddScoped<ReorderWaterPresetsUseCase>();
-        builder.Services.AddScoped<GetWaterIntakeUseCase>();
-        builder.Services.AddScoped<ChangeWaterIntakeUseCase>();
-        builder.Services.AddScoped<GetWaterReminderConfigurationUseCase>();
-        builder.Services.AddScoped<SaveWaterReminderConfigurationUseCase>();
-        builder.Services.AddScoped<PreviewWaterReminderUseCase>();
-        builder.Services.AddScoped<IBodyMeasurementSession, HttpContextBodyMeasurementSession>();
-        builder.Services.AddScoped<IBodyMeasurementStore, PostgresBodyMeasurementStore>();
-        builder.Services.AddScoped<CreateBodyMeasurementUseCase>();
-        builder.Services.AddScoped<CorrectBodyMeasurementUseCase>();
-        builder.Services.AddScoped<DeleteBodyMeasurementUseCase>();
-        builder.Services.AddScoped<ReadBodyMeasurementHistoryUseCase>();
-        builder.Services.AddScoped<IFastingSessionStore, PostgresFastingStore>();
-        builder.Services.AddScoped<FastingSessionUseCase>();
         builder.Services.AddSingleton<IS3PresignedUrlService, DefaultS3PresignedUrlService>();
         builder.Services.AddScoped<IPhotoUploadIntentStore, PostgresPhotoUploadIntentStore>();
         builder.Services.AddHttpClient<IS3PhotoObjectInspector, DefaultS3PhotoObjectInspector>();
@@ -751,7 +720,6 @@ public static class ApiApplication
         app.MapCheckInAndInjuryEndpoints();
         app.MapDashboardEndpoints();
         app.MapPhotoVaultEndpoints();
-        app.MapHydrationProgressAndFastingEndpoints();
 
         return app;
     }
