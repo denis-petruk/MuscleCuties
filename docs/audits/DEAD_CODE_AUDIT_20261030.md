@@ -372,38 +372,40 @@ in one command, described in §7.
 
 ### F14. Magic numbers
 
-Whole-solution policy, per the approved scope. Approximate inline literal counts outside `const`
-(seeds, catalog data and EF configuration excluded):
+Whole-solution policy, per the approved scope. Final state after the named-constant passes:
 
-| File | Inline literals | Named constants | Examples |
-| --- | --- | --- | --- |
-| `Core/Domain/Dashboard/DashboardSupportRule.cs` | 43 | 0 | `Math.Min(65`, `> 85`, `0.75f/1.15f`, `11000` |
-| `Core/Domain/Nutrition/PortionCalculationRule.cs` | 40 | 6 | already has `KcalTolerancePct`; `300f`, `12f`, `1.5f`, `1.3f` remain |
-| `Infrastructure/Services/Dashboard/Planning/DashboardPlanner.cs` | 36 | 0 | duplicates the `-10/+12/0.75/0.4` policy |
-| `Core/Domain/Nutrition/ProfileNutritionTargetsRule.cs` | 26 | 2 | `55f`, `0.45f/4f`, `0.5f`, `0.18f/9f` |
-| `Core/Domain/Nutrition/NutritionEnergyRule.cs` | 26 | 0 | Mifflin-St Jeor coefficients and activity multipliers |
-| `Core/Models/Workout/Planning/WorkoutPlanningConfig.cs` | 24 | 0 | default scoring tables |
-| `Core/Domain/Workout/ReadinessRule.cs` | 23 | 0 | `-10`, clamping bounds |
-| `Core/Domain/Nutrition/MealDistributionRule.cs` | 22 | 0 | meal share fractions, `800f/4000f` |
-| `Infrastructure/Services/Workout/WorkoutExercisePresentationMapper.cs` | 20 | 0 | presentation thresholds |
-| `Infrastructure/Services/Nutrition/NutritionService.cs` | 19 | 0 | target defaults |
-| `Infrastructure/Services/Nutrition/Planning/MealComponentScorer.cs` | 18 | 0 | scoring weights |
-| `Infrastructure/Services/Workout/WorkoutService.cs` | 17 | 0 | scheduling thresholds |
-| `Infrastructure/Nutrition/Overview/LocalNutritionOverviewStore.cs` | 17 | 0 | dead file; delete rather than refactor |
-| `Infrastructure/Services/Health/HealthEnergyAdjustment.cs` | 16 | 0 | adjustment caps |
-| `Infrastructure/Services/Workout/WorkoutArchiveService.cs` | 15 | 0 | dead file; delete rather than refactor |
+| Register row | Final state |
+| --- | --- |
+| `Core/Domain/Dashboard/DashboardSupportRule.cs` | Extracted: score bases, caps, phase/nutrition/training/movement/sleep/heart-rate/active-energy adjustments, hydration and sleep-goal policy are named on the rule |
+| `Infrastructure/Services/Dashboard/Planning/DashboardPlanner.cs` | Deleted: its copy of the readiness/recovery policy was unreachable after the earlier slices, leaving `DashboardSupportRule` as the single policy |
+| `Core/Domain/Nutrition/PortionCalculationRule.cs` | Extracted: tolerances, anchor protein, vegetable/carb/sauce bounds and serving snap are named |
+| `Core/Domain/Nutrition/ProfileNutritionTargetsRule.cs` | Extracted: default weight, protein/fat floors and caps, per-goal shares and protein targets, macro energies, fiber and rounding are named |
+| `Core/Domain/Nutrition/NutritionEnergyRule.cs` | Extracted: Mifflin-St Jeor coefficients (with units), activity multipliers, goal deltas, phase adjustments, clamps and macro ratios are named |
+| `Core/Models/Workout/Planning/WorkoutPlanningConfig.cs` | Extracted: scalar defaults are named; band tables and phase priors are named `static readonly` policy data and cloned by `CreateDefault` |
+| `Core/Domain/Workout/ReadinessRule.cs` | Extracted: score bounds, baseline steps, sleep/soreness/load/set/heart-rate/active-energy adjustments are named |
+| `Core/Domain/Nutrition/MealDistributionRule.cs` | Extracted: both share tables, calorie clamp, macro ratios and rounding steps are named |
+| `Core/Domain/Onboarding/OnboardingValidationRule.cs` | Extracted: height, weight and workout-day bounds reuse the existing public `ProfileUpdateValidationRule` constants; cycle bounds reuse `CycleLengthLimits` |
+| `Infrastructure/Services/Health/HealthEnergyAdjustment.cs` | Extracted: step baselines, age/phase factors, calorie conversion, clamps and rounding are named |
+| `Infrastructure/Services/Nutrition/Planning/MealComponentScorer.cs` | Extracted: style, phase, density, variety, macro-fit and cuisine weights and thresholds are named |
+| `Infrastructure/Services/Nutrition/Planning/NutritionPlanner.cs` | Extracted: usable-profile bounds, activity/goal/macro/water/fiber policy and rounding are named |
+| `Infrastructure/Services/Workout/WorkoutExercisePresentationMapper.cs` | Extracted: effort range, default sets, cadence guidance, load increments and rounding are named |
+| `Infrastructure/Services/Nutrition/NutritionService.cs` | File no longer exists; removed with an earlier slice, so there is nothing to extract |
+| `Infrastructure/Services/Nutrition/NutritionTrackingService.History.cs` | File no longer exists; removed with an earlier slice |
+| `Infrastructure/Data/AppDatabase.cs` | Extracted: the `Require` bounds are named. EF `HasMaxLength` values are schema configuration, not policy, and stay inline |
+| `Infrastructure/Services/Nutrition/Planning/FallbackMealProvider.cs` | Exempt: meal/macro data table |
+| `Infrastructure/Services/Nutrition/Planning/SavouryMealCatalog.cs` | Exempt: ingredient catalog data |
+| `Infrastructure/Data/AppDatabaseNutritionSeed.cs` | Exempt: seed content |
+| `Infrastructure/Data/AppDatabaseWorkoutPlanningSeed.cs` | Exempt: seed content |
+| `Infrastructure/Services/Workout/WorkoutArchiveService.cs` | Already deleted with the history slice |
+| `Infrastructure/Nutrition/Overview/LocalNutritionOverviewStore.cs` | Already deleted as dead and unregistered |
+| `UI/Pages/**/*.xaml` | Stays: visual values (`x:Double`, style resources) are presentation, not policy; extracting them would not change how a screen looks and was explicitly out of scope |
+| `UI/**/*.cs` code-behind | Stays: row indexes and column spans are visual structure tied to the XAML; changing them would change the layout |
+| Route literals in `Server/**` and `Infrastructure/**` | Stays in place: deduplicating client and server routes needs a new shared public route contract, and this pass forbids new public surface and a shared constants file. Per-type naming would not remove the duplication. This is the one open architectural follow-up |
 
-`DashboardSupportRule` and `DashboardPlanner` encode the **same** readiness policy twice, with the same
-literals. That is a correctness risk as well as a readability one: the two can drift. The extraction
-should produce one shared policy type.
+No policy value changed during the extraction. The suite stayed at 332 passed / 17 environment-gated
+failures / 1 skipped with zero test edits.
 
-**Resolved for five files (2026-10-31).** `DashboardPlanner`'s copy was unreachable: after the earlier
-slices, `BuildSupportSummary` was its only entry point, so the duplicate was deleted rather than merged.
-`DashboardSupportRule` is now the single readiness policy, and named constants also live in
-`NutritionEnergyRule`, `ReadinessRule`, `MealDistributionRule` and `WorkoutExercisePresentationMapper`.
-The table above records audit-time counts; the remaining rows are still open.
-
-Seed files (`AppDatabase*Seed`) and `*.json` manifests are exempt: those numbers are data.
+Seed files (`AppDatabase*Seed`) and `*.json` manifests remain exempt: those numbers are data.
 
 ### F15. No gates
 
