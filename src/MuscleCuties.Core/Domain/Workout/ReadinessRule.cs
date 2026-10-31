@@ -7,6 +7,51 @@ namespace MuscleCuties.Core.Domain.Workout;
 
 public static class ReadinessRule
 {
+    private const int MinimumEnergy = 1;
+    private const int MaximumEnergy = 5;
+    private const int MinimumScore = 0;
+    private const int MaximumScore = 100;
+    private const int MinimumPhaseScore = -10;
+    private const int MaximumPhaseScore = 20;
+    private const int NeutralBaselineEnergy = 3;
+    private const int NeutralBaselinePain = 1;
+    private const int MaximumBaselinePain = 3;
+    private const int PointsPerBaselineStep = 2;
+    private const double PercentScale = 100.0;
+
+    private const int VeryPoorSleepQualityAdjustment = -6;
+    private const int PoorSleepQualityAdjustment = -3;
+    private const int GoodSleepQualityAdjustment = 3;
+    private const int VeryGoodSleepQualityAdjustment = 5;
+
+    private const int MildSorenessAdjustment = -3;
+    private const int ModerateSorenessAdjustment = -6;
+    private const int SevereSorenessAdjustment = -10;
+
+    private const double HighLoadThreshold = 80d;
+    private const int HighLoadAdjustment = -6;
+    private const double ModerateLoadThreshold = 50d;
+    private const int ModerateLoadAdjustment = -4;
+    private const double LightLoadThreshold = 20d;
+    private const int LightLoadAdjustment = -2;
+
+    private const int HighSetCount = 20;
+    private const int HighSetCountAdjustment = -6;
+    private const int ModerateSetCount = 15;
+    private const int ModerateSetCountAdjustment = -4;
+    private const int LowSetCount = 10;
+    private const int LowSetCountAdjustment = -2;
+
+    private const int ElevatedRestingHeartRate = 100;
+    private const int ElevatedRestingHeartRateAdjustment = -6;
+    private const int HighRestingHeartRate = 90;
+    private const int HighRestingHeartRateAdjustment = -3;
+
+    private const double HighActiveEnergyKcal = 900d;
+    private const int HighActiveEnergyAdjustment = -3;
+    private const double ElevatedActiveEnergyKcal = 650d;
+    private const int ElevatedActiveEnergyAdjustment = -1;
+
     /// <summary>Missing check-in coverage cannot produce a positive readiness recommendation.</summary>
     public static Readiness ComputeForCheckInCoverage(
         DailyInputs? inputs, bool hasSleep, bool hasEnergy, bool hasPain,
@@ -35,10 +80,10 @@ public static class ReadinessRule
         var sleepScore = BandLookup(rc.SleepLastNight, safeSleep);
         var sleep3dScore = BandLookup(rc.Sleep3dAvg, safeSleep3d);
         var stepsScore = ComputeStepsScore(rc.StepsDeltaPct, inputs.StepsYesterday, inputs.Steps7dAvg);
-        var boundedEnergy = Math.Clamp(inputs.Energy, 1, 5);
-        var energyScore = (int)Math.Clamp((long)boundedEnergy * rc.EnergyMultiplier, 0L, 100L);
+        var boundedEnergy = Math.Clamp(inputs.Energy, MinimumEnergy, MaximumEnergy);
+        var energyScore = (int)Math.Clamp((long)boundedEnergy * rc.EnergyMultiplier, MinimumScore, MaximumScore);
         var painScore = rc.Pain is { Length: > 0 }
-            ? Math.Clamp(rc.Pain[Math.Clamp(inputs.Pain, 0, rc.Pain.Length - 1)], 0, 100)
+            ? Math.Clamp(rc.Pain[Math.Clamp(inputs.Pain, 0, rc.Pain.Length - 1)], MinimumScore, MaximumScore)
             : 0;
         var phaseScore = ComputePhaseScore(rc, effectivePhase, baselines);
         var healthAdjustment = ComputeHealthAdjustment(inputs);
@@ -65,7 +110,7 @@ public static class ReadinessRule
                        breakdown["energy"] + breakdown["pain"] + breakdown["phase"] +
                        breakdown["health"] + breakdown["sleepQuality"] + breakdown["soreness"] +
                        breakdown["load"];
-        var score = (int)Math.Clamp(rawScore, 0L, 100L);
+        var score = (int)Math.Clamp(rawScore, MinimumScore, MaximumScore);
 
         var tier = score >= rc.HighTier
             ? ReadinessTier.High
@@ -83,11 +128,11 @@ public static class ReadinessRule
 
         return sleepQuality.Value switch
         {
-            SleepQuality.VeryPoor => -6,
-            SleepQuality.Poor => -3,
+            SleepQuality.VeryPoor => VeryPoorSleepQualityAdjustment,
+            SleepQuality.Poor => PoorSleepQualityAdjustment,
             SleepQuality.Fair => 0,
-            SleepQuality.Good => 3,
-            SleepQuality.VeryGood => 5,
+            SleepQuality.Good => GoodSleepQualityAdjustment,
+            SleepQuality.VeryGood => VeryGoodSleepQualityAdjustment,
             _ => 0
         };
     }
@@ -100,9 +145,9 @@ public static class ReadinessRule
         return soreness.Value switch
         {
             SorenessLevel.None => 0,
-            SorenessLevel.Mild => -3,
-            SorenessLevel.Moderate => -6,
-            SorenessLevel.Severe => -10,
+            SorenessLevel.Mild => MildSorenessAdjustment,
+            SorenessLevel.Moderate => ModerateSorenessAdjustment,
+            SorenessLevel.Severe => SevereSorenessAdjustment,
             _ => 0
         };
     }
@@ -123,9 +168,9 @@ public static class ReadinessRule
 
             return scalar switch
             {
-                > 80 => -6,
-                > 50 => -4,
-                > 20 => -2,
+                > HighLoadThreshold => HighLoadAdjustment,
+                > ModerateLoadThreshold => ModerateLoadAdjustment,
+                > LightLoadThreshold => LightLoadAdjustment,
                 _ => 0
             };
         }
@@ -133,9 +178,9 @@ public static class ReadinessRule
         if (load.SetsCompleted > 0)
             return load.SetsCompleted switch
             {
-                >= 20 => -6,
-                >= 15 => -4,
-                >= 10 => -2,
+                >= HighSetCount => HighSetCountAdjustment,
+                >= ModerateSetCount => ModerateSetCountAdjustment,
+                >= LowSetCount => LowSetCountAdjustment,
                 _ => 0
             };
 
@@ -146,16 +191,16 @@ public static class ReadinessRule
     {
         var rhrAdjustment = inputs.RestingHeartRate switch
         {
-            > 100 => -6,
-            > 90 => -3,
+            > ElevatedRestingHeartRate => ElevatedRestingHeartRateAdjustment,
+            > HighRestingHeartRate => HighRestingHeartRateAdjustment,
             _ => 0
         };
 
         var activeEnergyAdjustment = inputs.AverageActiveEnergyKcal is { } kcal && double.IsFinite(kcal) && kcal > 0
             ? kcal switch
             {
-                > 900 => -3,
-                > 650 => -1,
+                > HighActiveEnergyKcal => HighActiveEnergyAdjustment,
+                > ElevatedActiveEnergyKcal => ElevatedActiveEnergyAdjustment,
                 _ => 0
             }
             : 0;
@@ -171,14 +216,17 @@ public static class ReadinessRule
         var baseScore = rc.PhasePrior?.TryGetValue(phase.ToString(), out var prior) == true ? prior : 0;
 
         if (baselines is null)
-            return Math.Clamp(baseScore, -10, 20);
+            return Math.Clamp(baseScore, MinimumPhaseScore, MaximumPhaseScore);
 
         var baseline = baselines.ForPhase(phase);
         if (baseline is null)
             return baseScore;
-        var energyAdjust = (Math.Clamp(baseline.Energy, 1, 5) - 3) * 2;
-        var painAdjust = Math.Max(Math.Clamp(baseline.Pain, 0, 3) - 1, 0) * 2;
-        return (int)Math.Clamp((long)baseScore + energyAdjust - painAdjust, -10L, 20L);
+        var energyAdjust = (Math.Clamp(baseline.Energy, MinimumEnergy, MaximumEnergy) - NeutralBaselineEnergy) *
+                           PointsPerBaselineStep;
+        var painAdjust = Math.Max(Math.Clamp(baseline.Pain, 0, MaximumBaselinePain) -
+                                  NeutralBaselinePain, 0) * PointsPerBaselineStep;
+        return (int)Math.Clamp((long)baseScore + energyAdjust - painAdjust, MinimumPhaseScore,
+            MaximumPhaseScore);
     }
 
     private static int ComputeStepsScore(StepsDeltaConfig? cfg, int stepsYesterday, int steps7dAvg)
@@ -186,15 +234,15 @@ public static class ReadinessRule
         if (cfg is null || stepsYesterday <= 0 || steps7dAvg <= 0)
             return 0;
 
-        var deltaPct = ((double)stepsYesterday - steps7dAvg) * 100.0 / steps7dAvg;
+        var deltaPct = ((double)stepsYesterday - steps7dAvg) * PercentScale / steps7dAvg;
 
         if (deltaPct > cfg.SpikeThreshold)
-            return Math.Clamp(cfg.Spike, 0, 100);
+            return Math.Clamp(cfg.Spike, MinimumScore, MaximumScore);
 
         if (deltaPct < cfg.DropThreshold)
-            return Math.Clamp(cfg.Drop, 0, 100);
+            return Math.Clamp(cfg.Drop, MinimumScore, MaximumScore);
 
-        return Math.Clamp(cfg.Normal, 0, 100);
+        return Math.Clamp(cfg.Normal, MinimumScore, MaximumScore);
     }
 
     private static int BandLookup(double[][]? bands, double value)
@@ -204,8 +252,8 @@ public static class ReadinessRule
 
         foreach (var band in bands)
             if (band is { Length: >= 2 } && double.IsFinite(band[0]) &&
-                double.IsFinite(band[1]) && band[0] >= 0 && band[1] is >= 0 and <= 100 &&
-                value >= band[0])
+                double.IsFinite(band[1]) && band[0] >= MinimumScore &&
+                band[1] is >= MinimumScore and <= MaximumScore && value >= band[0])
                 return (int)band[1];
 
         return 0;

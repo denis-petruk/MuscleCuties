@@ -397,6 +397,12 @@ Whole-solution policy, per the approved scope. Approximate inline literal counts
 literals. That is a correctness risk as well as a readability one: the two can drift. The extraction
 should produce one shared policy type.
 
+**Resolved for five files (2026-10-31).** `DashboardPlanner`'s copy was unreachable: after the earlier
+slices, `BuildSupportSummary` was its only entry point, so the duplicate was deleted rather than merged.
+`DashboardSupportRule` is now the single readiness policy, and named constants also live in
+`NutritionEnergyRule`, `ReadinessRule`, `MealDistributionRule` and `WorkoutExercisePresentationMapper`.
+The table above records audit-time counts; the remaining rows are still open.
+
 Seed files (`AppDatabase*Seed`) and `*.json` manifests are exempt: those numbers are data.
 
 ### F15. No gates

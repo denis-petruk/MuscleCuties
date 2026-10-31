@@ -32,6 +32,85 @@ public sealed record DashboardSupportResult(
 
 public static class DashboardSupportRule
 {
+    private const int MinimumScore = 0;
+    private const int MaximumScore = 100;
+    private const int DefaultReadinessCap = 65;
+    private const int DefaultRecoveryCap = 70;
+    private const int HighScoreThreshold = 85;
+    private const int SteadyScoreThreshold = 70;
+    private const int ModerateScoreThreshold = 55;
+
+    private const int ReadinessBaseline = 72;
+    private const int RecoveryBaseline = 78;
+
+    private const int MenstrualReadinessAdjustment = -10;
+    private const int FollicularReadinessAdjustment = 8;
+    private const int OvulatoryReadinessAdjustment = 12;
+    private const int LutealReadinessAdjustment = -4;
+
+    private const int MenstrualRecoveryAdjustment = -4;
+    private const int FollicularRecoveryAdjustment = 5;
+    private const int OvulatoryRecoveryAdjustment = 3;
+    private const int LutealRecoveryAdjustment = -2;
+
+    private const float BalancedNutritionMinimumProgress = 0.75f;
+    private const float BalancedNutritionMaximumProgress = 1.15f;
+    private const int BalancedNutritionReadinessAdjustment = 6;
+    private const int BalancedNutritionRecoveryAdjustment = 4;
+    private const float UnderEatingReadinessThreshold = 0.4f;
+    private const int UnderEatingReadinessAdjustment = -8;
+    private const float OverEatingReadinessThreshold = 1.35f;
+    private const int OverEatingReadinessAdjustment = -4;
+    private const float UnderEatingRecoveryThreshold = 0.45f;
+    private const int UnderEatingRecoveryAdjustment = -7;
+
+    private const int HighTrainingLoadDays = 5;
+    private const int HighTrainingLoadAdjustment = -3;
+    private const int ModerateTrainingLoadDays = 3;
+    private const int ModerateTrainingLoadAdjustment = 2;
+
+    private const int HighMovementSteps = 11000;
+    private const int HighMovementAdjustment = 3;
+    private const int ModerateMovementSteps = 8000;
+    private const int ModerateMovementAdjustment = 2;
+    private const int LowMovementSteps = 4000;
+    private const int LowMovementAdjustment = -4;
+
+    private const double SolidSleepHours = 8d;
+    private const double AdequateSleepHours = 7d;
+    private const double ShortSleepHours = 6d;
+    private const int ReadinessSolidSleepAdjustment = 5;
+    private const int ReadinessAdequateSleepAdjustment = 2;
+    private const int ReadinessShortSleepAdjustment = -8;
+    private const int RecoverySolidSleepAdjustment = 8;
+    private const int RecoveryAdequateSleepAdjustment = 4;
+    private const int RecoveryShortSleepAdjustment = -10;
+
+    private const int ElevatedRestingHeartRate = 100;
+    private const int ElevatedRestingHeartRateAdjustment = -6;
+    private const int HighRestingHeartRate = 90;
+    private const int HighRestingHeartRateAdjustment = -3;
+
+    private const double HighActiveEnergyKcal = 900d;
+    private const int HighActiveEnergyAdjustment = -3;
+    private const double ElevatedActiveEnergyKcal = 650d;
+    private const int ElevatedActiveEnergyAdjustment = -1;
+
+    private const int CompletedWorkoutRecoveryAdjustment = -8;
+    private const int IncompleteWorkoutRecoveryAdjustment = 4;
+
+    private const float HydrationLitersPerKg = 0.035f;
+    private const float MinimumHydrationLiters = 2f;
+    private const float MaximumHydrationLiters = 3.8f;
+    private const int HydrationStepBonusThreshold = 10000;
+    private const float HydrationStepBonusLiters = 0.2f;
+    private const float MaximumHydrationWithStepsLiters = 4.2f;
+
+    private const int HighWorkoutFrequencyDays = 4;
+    private const double HighFrequencySleepGoalHours = 8d;
+    private const double StandardSleepGoalHours = 7.5d;
+    private const double PhaseSleepGoalMinimumHours = 8d;
+
     public static DashboardSupportResult Build(
         DashboardCycleMetrics cycle,
         CyclePhase phase,
@@ -46,23 +125,23 @@ public static class DashboardSupportRule
         double? localAverageSleepHours = null)
     {
         var readinessScore = recordedReadinessScore is not null
-            ? Math.Clamp(recordedReadinessScore.Value, 0, 100)
-            : Math.Min(65,
+            ? Math.Clamp(recordedReadinessScore.Value, MinimumScore, MaximumScore)
+            : Math.Min(DefaultReadinessCap,
                 CalculateReadinessScore(phase, caloriesProgress, workoutDaysPerWeek, health, localSteps,
                     localAverageSleepHours));
 
         var recoveryScore = CalculateRecoveryScore(phase, caloriesProgress, workoutSessionProgressText, health,
             localAverageSleepHours);
         if (health is null && localAverageSleepHours is null)
-            recoveryScore = Math.Min(recoveryScore, 70);
+            recoveryScore = Math.Min(recoveryScore, DefaultRecoveryCap);
 
-        var readinessCapped = hasActiveInjury && readinessScore > 85;
-        var recoveryCapped = hasActiveInjury && recoveryScore > 85;
+        var readinessCapped = hasActiveInjury && readinessScore > HighScoreThreshold;
+        var recoveryCapped = hasActiveInjury && recoveryScore > HighScoreThreshold;
 
         if (hasActiveInjury)
         {
-            readinessScore = Math.Min(readinessScore, 85);
-            recoveryScore = Math.Min(recoveryScore, 85);
+            readinessScore = Math.Min(readinessScore, HighScoreThreshold);
+            recoveryScore = Math.Min(recoveryScore, HighScoreThreshold);
         }
 
         return new DashboardSupportResult(
@@ -86,22 +165,28 @@ public static class DashboardSupportRule
     {
         var phaseAdjustment = phase switch
         {
-            CyclePhase.Menstrual => -10,
-            CyclePhase.Follicular => 8,
-            CyclePhase.Ovulatory => 12,
-            CyclePhase.Luteal => -4,
+            CyclePhase.Menstrual => MenstrualReadinessAdjustment,
+            CyclePhase.Follicular => FollicularReadinessAdjustment,
+            CyclePhase.Ovulatory => OvulatoryReadinessAdjustment,
+            CyclePhase.Luteal => LutealReadinessAdjustment,
             _ => 0
         };
 
         var nutritionAdjustment = caloriesProgress switch
         {
-            >= 0.75f and <= 1.15f => 6,
-            < 0.4f => -8,
-            > 1.35f => -4,
+            >= BalancedNutritionMinimumProgress and <= BalancedNutritionMaximumProgress =>
+                BalancedNutritionReadinessAdjustment,
+            < UnderEatingReadinessThreshold => UnderEatingReadinessAdjustment,
+            > OverEatingReadinessThreshold => OverEatingReadinessAdjustment,
             _ => 0
         };
 
-        var trainingAdjustment = workoutDaysPerWeek >= 5 ? -3 : workoutDaysPerWeek >= 3 ? 2 : 0;
+        var trainingAdjustment = workoutDaysPerWeek switch
+        {
+            >= HighTrainingLoadDays => HighTrainingLoadAdjustment,
+            >= ModerateTrainingLoadDays => ModerateTrainingLoadAdjustment,
+            _ => 0
+        };
 
         var effectiveSteps = health?.HasMovementData == true
             ? health.AverageSteps
@@ -109,9 +194,9 @@ public static class DashboardSupportRule
 
         var movementAdjustment = effectiveSteps switch
         {
-            >= 11000 => 3,
-            >= 8000 => 2,
-            > 0 and < 4000 => -4,
+            >= HighMovementSteps => HighMovementAdjustment,
+            >= ModerateMovementSteps => ModerateMovementAdjustment,
+            > 0 and < LowMovementSteps => LowMovementAdjustment,
             _ => 0
         };
 
@@ -121,31 +206,31 @@ public static class DashboardSupportRule
 
         var sleepAdjustment = effectiveSleep switch
         {
-            >= 8 => 5,
-            >= 7 => 2,
-            > 0 and < 6 => -8,
+            >= SolidSleepHours => ReadinessSolidSleepAdjustment,
+            >= AdequateSleepHours => ReadinessAdequateSleepAdjustment,
+            > 0 and < ShortSleepHours => ReadinessShortSleepAdjustment,
             _ => 0
         };
 
         var heartAdjustment = health?.RestingHeartRate switch
         {
-            > 100 => -6,
-            > 90 => -3,
+            > ElevatedRestingHeartRate => ElevatedRestingHeartRateAdjustment,
+            > HighRestingHeartRate => HighRestingHeartRateAdjustment,
             _ => 0
         };
 
         var activeEnergyAdjustment = health?.AverageActiveEnergyKcal switch
         {
-            > 900 => -3,
-            > 650 => -1,
+            > HighActiveEnergyKcal => HighActiveEnergyAdjustment,
+            > ElevatedActiveEnergyKcal => ElevatedActiveEnergyAdjustment,
             _ => 0
         };
 
         return Math.Clamp(
-            72 + phaseAdjustment + nutritionAdjustment + trainingAdjustment + movementAdjustment + sleepAdjustment +
-            heartAdjustment + activeEnergyAdjustment,
-            0,
-            100);
+            ReadinessBaseline + phaseAdjustment + nutritionAdjustment + trainingAdjustment + movementAdjustment +
+            sleepAdjustment + heartAdjustment + activeEnergyAdjustment,
+            MinimumScore,
+            MaximumScore);
     }
 
     public static int CalculateRecoveryScore(
@@ -157,10 +242,10 @@ public static class DashboardSupportRule
     {
         var phaseAdjustment = phase switch
         {
-            CyclePhase.Menstrual => -4,
-            CyclePhase.Follicular => 5,
-            CyclePhase.Ovulatory => 3,
-            CyclePhase.Luteal => -2,
+            CyclePhase.Menstrual => MenstrualRecoveryAdjustment,
+            CyclePhase.Follicular => FollicularRecoveryAdjustment,
+            CyclePhase.Ovulatory => OvulatoryRecoveryAdjustment,
+            CyclePhase.Luteal => LutealRecoveryAdjustment,
             _ => 0
         };
 
@@ -168,13 +253,14 @@ public static class DashboardSupportRule
             workoutSessionProgressText,
             "Completed",
             StringComparison.OrdinalIgnoreCase)
-            ? -8
-            : 4;
+            ? CompletedWorkoutRecoveryAdjustment
+            : IncompleteWorkoutRecoveryAdjustment;
 
         var nutritionAdjustment = caloriesProgress switch
         {
-            >= 0.75f and <= 1.15f => 4,
-            < 0.45f => -7,
+            >= BalancedNutritionMinimumProgress and <= BalancedNutritionMaximumProgress =>
+                BalancedNutritionRecoveryAdjustment,
+            < UnderEatingRecoveryThreshold => UnderEatingRecoveryAdjustment,
             _ => 0
         };
 
@@ -184,25 +270,25 @@ public static class DashboardSupportRule
 
         var sleepAdjustment = effectiveSleep switch
         {
-            >= 8.0 => 8,
-            >= 7.0 => 4,
-            > 0 and < 6.0 => -10,
+            >= SolidSleepHours => RecoverySolidSleepAdjustment,
+            >= AdequateSleepHours => RecoveryAdequateSleepAdjustment,
+            > 0 and < ShortSleepHours => RecoveryShortSleepAdjustment,
             _ => 0
         };
 
         return Math.Clamp(
-            78 + phaseAdjustment + completedWorkoutLoad + nutritionAdjustment + sleepAdjustment,
-            0,
-            100);
+            RecoveryBaseline + phaseAdjustment + completedWorkoutLoad + nutritionAdjustment + sleepAdjustment,
+            MinimumScore,
+            MaximumScore);
     }
 
     public static string BuildReadinessLabel(int score)
     {
         return score switch
         {
-            >= 85 => "Strong training day",
-            >= 70 => "Steady energy",
-            >= 55 => "Keep it moderate",
+            >= HighScoreThreshold => "Strong training day",
+            >= SteadyScoreThreshold => "Steady energy",
+            >= ModerateScoreThreshold => "Keep it moderate",
             _ => "Prioritize gentle movement"
         };
     }
@@ -211,9 +297,9 @@ public static class DashboardSupportRule
     {
         return score switch
         {
-            >= 85 => "Well recovered",
-            >= 70 => "Mostly recovered",
-            >= 55 => "Needs care",
+            >= HighScoreThreshold => "Well recovered",
+            >= SteadyScoreThreshold => "Mostly recovered",
+            >= ModerateScoreThreshold => "Needs care",
             _ => "Rest comes first"
         };
     }
@@ -237,14 +323,16 @@ public static class DashboardSupportRule
     {
         if (weight is not > 0f || !float.IsFinite(weight.Value))
             return "Unavailable";
-        var liters = Math.Clamp(weight.Value * 0.035f, 2f, 3.8f);
+        var liters = Math.Clamp(weight.Value * HydrationLitersPerKg, MinimumHydrationLiters,
+            MaximumHydrationLiters);
 
         var effectiveSteps = health?.HasMovementData == true
             ? health.AverageSteps
             : localSteps.GetValueOrDefault();
 
-        if (effectiveSteps >= 10000)
-            liters = Math.Clamp(liters + 0.2f, 2f, 4.2f);
+        if (effectiveSteps >= HydrationStepBonusThreshold)
+            liters = Math.Clamp(liters + HydrationStepBonusLiters, MinimumHydrationLiters,
+                MaximumHydrationWithStepsLiters);
 
         return $"{liters:N1} L";
     }
@@ -256,9 +344,11 @@ public static class DashboardSupportRule
         double? localAverageSleepHours = null)
     {
         if (workoutDaysPerWeek < 0) return "Unavailable";
-        var goal = workoutDaysPerWeek >= 4 ? 8d : 7.5d;
+        var goal = workoutDaysPerWeek >= HighWorkoutFrequencyDays
+            ? HighFrequencySleepGoalHours
+            : StandardSleepGoalHours;
         if (phase is CyclePhase.Menstrual or CyclePhase.Luteal)
-            goal = Math.Max(goal, 8d);
+            goal = Math.Max(goal, PhaseSleepGoalMinimumHours);
 
         var avgSleep = health is { HasSleepData: true }
             ? health.AverageSleepHours
