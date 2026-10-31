@@ -1,5 +1,6 @@
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Domain.Health;
+using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Entities.Workout;
@@ -459,11 +460,11 @@ public sealed class WorkoutPlanGenerator : IWorkoutPlanGenerator
         (DaysInWeek + (int)day - (int)DayOfWeek.Monday) % DaysInWeek;
 
     private static DateTime ClampSafeDate(DateTime date) =>
-        WorkoutScheduleService.ClampSafeDate(date);
+        WorkoutScheduleMathRule.ClampSafeDate(date);
 
     private static DateTime GetSafeWeekStart(DateTime date) =>
-        WorkoutScheduleService.GetSafeWeekStart(date);
+        WorkoutScheduleMathRule.GetSafeWeekStart(date);
 
     private static DateTime SafeAddDays(DateTime baseDate, int days) =>
-        WorkoutScheduleService.SafeAddDays(baseDate, days);
+        WorkoutScheduleMathRule.SafeAddDays(baseDate, days);
 }

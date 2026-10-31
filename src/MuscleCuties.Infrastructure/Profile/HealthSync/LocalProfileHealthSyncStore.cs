@@ -26,11 +26,7 @@ public sealed class LocalProfileHealthSyncStore(IServiceScopeFactory scopeFactor
             return MapFromHealthSync(status, summary, available);
         }
 
-        var orchestrator = scope.ServiceProvider.GetRequiredService<IReadinessSyncOrchestrator>();
-        return userId <= 0
-            ? Unavailable(orchestrator.IsAppleHealthAvailable)
-            : Map(await orchestrator.GetProfileHealthSyncSummaryAsync(userId, cancellationToken)
-                .ConfigureAwait(false), orchestrator.IsAppleHealthAvailable);
+        return Unavailable(false);
     }
 
     public async Task<ProfileHealthConnectResult> ConnectAsync(CancellationToken cancellationToken)
@@ -59,22 +55,8 @@ public sealed class LocalProfileHealthSyncStore(IServiceScopeFactory scopeFactor
                 MapFromHealthSync(status, cached, available));
         }
 
-        var orchestrator = scope.ServiceProvider.GetRequiredService<IReadinessSyncOrchestrator>();
-        if (!orchestrator.IsAppleHealthAvailable)
-            return new ProfileHealthConnectResult(false, "Health import is unavailable in this release.",
-                Unavailable(false));
-
-        var userId = await scope.ServiceProvider.GetRequiredService<ICurrentProfileUserIdProvider>()
-            .GetCurrentUserIdAsync(cancellationToken).ConfigureAwait(false);
-        if (userId <= 0)
-            return new ProfileHealthConnectResult(false, "Active user session not found.", Unavailable(true));
-
-        var result = await orchestrator.SyncAsync(userId, HealthDataSource.AppleHealth, cancellationToken)
-            .ConfigureAwait(false);
-        var summary = await orchestrator.GetProfileHealthSyncSummaryAsync(userId, cancellationToken)
-            .ConfigureAwait(false);
-        return new ProfileHealthConnectResult(result.IsConnected, result.Message,
-            Map(summary, orchestrator.IsAppleHealthAvailable));
+        return new ProfileHealthConnectResult(false, "Health import is unavailable in this release.",
+            Unavailable(false));
     }
 
     public async Task<ProfileHealthDisconnectResult> DisconnectAsync(CancellationToken cancellationToken)
@@ -128,20 +110,37 @@ public sealed class LocalProfileHealthSyncStore(IServiceScopeFactory scopeFactor
             status.IsConnected ? "Refresh steps" : "Connect steps",
             lastSynced,
             readinessScore,
-            ReadinessSyncOrchestrator.BuildReadinessExplanation(status, summary),
+            BuildReadinessExplanation(status, summary),
             status.IsConnected);
     }
 
-    private static ProfileHealthSyncDto Map(ProfileHealthSyncSummary summary, bool available)
+    private static string BuildReadinessExplanation(
+        HealthSyncStatus status,
+        HealthWeeklySummary? healthSummary)
     {
-        return new ProfileHealthSyncDto(
-            available,
-            summary.StatusText,
-            summary.Status.IsConnected ? "Refresh steps" : "Connect steps",
-            summary.LastSyncedText,
-            Math.Max(0, summary.ReadinessScore),
-            summary.ReadinessExplanationText,
-            summary.Status.IsConnected);
+        if (!status.IsConnected)
+            return "Numerical guidance is unavailable pending qualified review.";
+
+        if (healthSummary is null)
+            return "Connected, waiting for weekly steps and sleep.";
+
+        if (status.SelectedSource == HealthDataSource.AppleHealth)
+            return healthSummary.HasMovementData
+                ? "Synced steps are included in activity context."
+                : "Connected, waiting for readable step counts.";
+
+        if (healthSummary.HasMovementData && healthSummary.HasSleepData)
+            return "Synced sleep, steps, and available heart and energy data shape today's plan.";
+
+        if (healthSummary.HasMovementData)
+            return "Synced steps are included; sleep is still estimated.";
+
+        if (healthSummary.HasSleepData)
+            return "Synced sleep is included; steps are still estimated.";
+
+        return healthSummary.RestingHeartRate > 0 || healthSummary.AverageActiveEnergyKcal is > 0
+            ? "Heart rate or active energy is included; sleep and steps are still estimated."
+            : "Connected, but still estimating until weekly data arrives.";
     }
 
     private static ProfileHealthSyncDto Unavailable(bool available)
