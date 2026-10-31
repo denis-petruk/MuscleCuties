@@ -83,16 +83,3 @@ public sealed record FastLookupFoodItemDto(
     double Fats,
     bool IsCustom
 );
-
-public sealed record SaveFoodItemRequest(
-    DateOnly Date,
-    LoggedFoodItemDto Item,
-    bool RequireExisting = false
-);
-
-public sealed record ReLogFoodRequest(
-    DateOnly Date,
-    MealType MealType,
-    QuickFoodItemSnapshot QuickItem,
-    LoggedFoodItemDto Draft
-);

@@ -5,7 +5,6 @@ namespace MuscleCuties.UI.Controls.Shared;
 
 public class PhaseVisualView : ContentView
 {
-    private const double FrameIntervalMilliseconds = 33;
     private const float FullTurn = MathF.PI * 2f;
 
     public static readonly BindableProperty SourceProperty = BindableProperty.Create(
@@ -21,8 +20,6 @@ public class PhaseVisualView : ContentView
     private readonly SKLottieView _lottieView;
 
     private readonly Image _staticImage;
-    private DateTime _animationStartedAt;
-    private IDispatcherTimer? _timer;
 
     public PhaseVisualView()
     {
@@ -99,52 +96,12 @@ public class PhaseVisualView : ContentView
             _lottieView.Source = new SKFileLottieImageSource { File = source };
             _lottieView.IsVisible = true;
             _animationView.IsVisible = false;
-            StopAnimation();
         }
         else
         {
             _lottieView.IsVisible = false;
             _animationView.IsVisible = false;
-            StopAnimation();
         }
-    }
-
-    private void StartAnimation()
-    {
-        _animationStartedAt = DateTime.UtcNow;
-
-        if (_timer is null)
-        {
-            _timer = Dispatcher.CreateTimer();
-            _timer.Interval = TimeSpan.FromMilliseconds(FrameIntervalMilliseconds);
-            _timer.Tick += OnAnimationTick;
-        }
-
-        if (!_timer.IsRunning)
-            _timer.Start();
-    }
-
-    private void StopAnimation()
-    {
-        if (_timer is null)
-            return;
-
-        _timer.Stop();
-        _timer.Tick -= OnAnimationTick;
-        _timer = null;
-    }
-
-    private void OnAnimationTick(object? sender, EventArgs e)
-    {
-        if (!_animationView.IsVisible || Handler is null)
-        {
-            StopAnimation();
-            return;
-        }
-
-        var elapsed = (DateTime.UtcNow - _animationStartedAt).TotalMilliseconds;
-        _drawable.Progress = (float)(elapsed % 1800d / 1800d);
-        _animationView.Invalidate();
     }
 
     private static bool IsAnimatedSource(string source)

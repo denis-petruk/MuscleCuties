@@ -7,11 +7,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Handlers;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Workout.Planning;
-using MuscleCuties.Core.Repositories.Cycle;
-using MuscleCuties.Core.Repositories.Nutrition;
-using MuscleCuties.Core.Repositories.Quiz;
-using MuscleCuties.Core.Repositories.Users;
-using MuscleCuties.Core.Repositories.Workout;
 using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
@@ -28,18 +23,13 @@ using MuscleCuties.Core.Services.Profile;
 using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
-using MuscleCuties.Infrastructure.Account.Otp;
-using MuscleCuties.Infrastructure.Account.Recovery;
-using MuscleCuties.Infrastructure.Account.Registration;
 using MuscleCuties.Infrastructure.Account.SignIn;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.Infrastructure.Caching;
 using MuscleCuties.UseCases.Features.Caching;
 using MuscleCuties.Infrastructure.Cycle.Overview;
-using MuscleCuties.Infrastructure.Dashboard.CheckIn;
 using MuscleCuties.Infrastructure.Dashboard.Overview;
 using MuscleCuties.Infrastructure.Nutrition.DailyLog;
-using MuscleCuties.Infrastructure.Nutrition.Overview;
 using MuscleCuties.Infrastructure.Profile.HealthSync;
 using MuscleCuties.Infrastructure.Progress;
 using MuscleCuties.Infrastructure.Workout.Media;
@@ -289,7 +279,6 @@ public static class MauiProgram
             })
             .ConfigurePrimaryHttpMessageHandler(CreateFdcHttpHandler)
             .AddHttpMessageHandler<FdcAirGapHandler>();
-        services.AddScoped<IFoodSyncService, FoodSyncService>();
         services.AddHttpClient<IWgerApiClient, WgerApiClient>(client =>
         {
             client.BaseAddress = WgerApiClient.BaseUri;
