@@ -270,6 +270,14 @@ public sealed class WorkoutInjuryLogRecord : ITenantRecord
     public string Status { get; set; } = string.Empty;
     public DateOnly Since { get; set; }
     public int Pain { get; set; }
+
+    /// <summary>Closed-set answer to which movements worsen the injury; stored by enum name.</summary>
+    public string WorseningTrigger { get; set; } =
+        nameof(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered);
+
+    /// <summary>Null when unanswered, so an unanswered question is never read as "no restriction".</summary>
+    public bool? ClinicianAdvisedAvoid { get; set; }
+
     public DateOnly Date { get; set; }
     public DateOnly? ClearedDate { get; set; }
     public DateTime CreatedAt { get; set; }

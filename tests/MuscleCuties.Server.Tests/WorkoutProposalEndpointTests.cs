@@ -17,6 +17,7 @@ public sealed class WorkoutProposalEndpointTests
     private const string Audience = "SyntheticClient";
 
     [Theory]
+    [InlineData("/api/v1/workouts/plan/reconcile")]
     [InlineData("/api/v1/workouts/plan/strength-proposals")]
     [InlineData("/api/v1/workouts/plan/strength-proposals/00000000-0000-0000-0000-000000000001/accept")]
     public async Task ProposalMutationRoutesRejectAnonymousCallers(string route)

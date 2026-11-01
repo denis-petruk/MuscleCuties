@@ -178,6 +178,29 @@ public sealed class StrengthPlanPreviewRuleTests
         }
     }
 
+    [Fact]
+    public void Blocked_worsening_pattern_is_omitted_and_every_session_keeps_strength_work()
+    {
+        var data = Data() with
+        {
+            BlockedMovementPatterns = new HashSet<MovementPattern> { MovementPattern.VerticalPush }
+        };
+        var result = StrengthPlanPreviewRule.Evaluate(Choices(), data);
+        var patternsByExerciseId = data.Catalog!.ToDictionary(
+            entry => entry.Candidate.ExerciseId, entry => entry.Candidate.Pattern);
+
+        Assert.Equal(StrengthPlanPreviewStatus.Feasible, result.Status);
+        Assert.All(result.Sessions, session =>
+        {
+            var selected = session.Slots.Where(slot => slot.ExerciseId.HasValue).ToArray();
+            Assert.NotEmpty(selected);
+            Assert.DoesNotContain(selected, slot =>
+                patternsByExerciseId[slot.ExerciseId!.Value] == MovementPattern.VerticalPush);
+        });
+        Assert.Contains(result.AdvisoryCodes,
+            code => code.StartsWith("MovementOmitted:", StringComparison.Ordinal));
+    }
+
     [Theory]
     [InlineData(WorkoutActivityType.GeneralStrength, ActivityPrescriptionRule.GeneralStrengthSessionsPerWeek)]
     [InlineData(WorkoutActivityType.HighVolumeStrength, ActivityPrescriptionRule.HighVolumeStrengthSessionsPerWeek)]

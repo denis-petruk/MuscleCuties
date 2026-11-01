@@ -1,13 +1,13 @@
 using System.Diagnostics;
 using System.Reflection;
-using MuscleCuties.DbMaintenance.Schema;
+using MuscleCuties.DbMaintenance;
 using Npgsql;
 using Xunit;
 
 namespace MuscleCuties.Registration.Integration.Tests;
 
-[Collection(SchemaDatabaseCollection.Name)]
-public sealed class SessionLockRunnerTests(SchemaCompatibilityDatabaseFixture fixture)
+[Collection(DisposableDatabaseCollection.Name)]
+public sealed class SessionLockRunnerTests(DisposableDatabaseFixture fixture)
 {
     private const int ChildSleepSeconds = 30;
     private const int LockWaitSeconds = 20;
@@ -89,8 +89,8 @@ public sealed class SessionLockRunnerTests(SchemaCompatibilityDatabaseFixture fi
                   AND pid <> pg_backend_pid()
                 LIMIT 1
                 """, observer);
-            command.Parameters.AddWithValue("lock_class", SchemaReconciliation.AdvisoryLockClass);
-            command.Parameters.AddWithValue("lock_key", SchemaReconciliation.AdvisoryLockKey);
+            command.Parameters.AddWithValue("lock_class", DeploymentAdvisoryLock.ClassId);
+            command.Parameters.AddWithValue("lock_key", DeploymentAdvisoryLock.KeyId);
             if (await command.ExecuteScalarAsync() is int backendPid)
                 return backendPid;
             await Task.Delay(TimeSpan.FromMilliseconds(LockPollMilliseconds));

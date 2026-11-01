@@ -35,7 +35,6 @@ public static partial class UiTextCatalog
         English["Workout_PhaseAdjustment_UnknownPhase"] = "A current cycle phase is not available.";
         English["Workout_PhaseAdjustment_ConfirmPhase"] = "Confirm your current cycle phase before reviewing phase-based workout changes.";
         English["Workout_PhaseAdjustment_MissingBaseline"] = "Add a phase baseline before reviewing phase-based workout changes.";
-        English["Workout_PhaseAdjustment_CurrentSafetyReviewRequired"] = "Your current check-in, symptoms, or restrictions take priority. Review those first; no phase-based workout changes were created.";
         English["Workout_PhaseAdjustment_AlreadyReviewed"] = "You have already reviewed this phase for the current plan.";
         English["Workout_PhaseAdjustment_NoEligibleSessions"] = "There are no eligible upcoming sessions to adjust.";
         English["Workout_PhaseAdjustment_NoActivePlan"] = "Create a workout plan before reviewing upcoming sessions.";

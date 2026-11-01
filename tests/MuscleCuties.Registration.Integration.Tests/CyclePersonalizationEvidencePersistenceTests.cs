@@ -24,6 +24,16 @@ public sealed class CyclePersonalizationEvidencePersistenceTests
     private const int IdentifierLength = 10;
     private const int SyntheticSets = 2;
     private const int SyntheticRepetitions = 8;
+    private static readonly PlanningReviewApproval TestApproval = new(
+        TodayCheckInScoreRule.RulesetVersion,
+        "MC-PLANNING-REVIEW-TEST",
+        new DateTimeOffset(2026, 10, 31, 0, 0, 0, TimeSpan.Zero),
+        new HashSet<PlanningReviewSection>
+        {
+            PlanningReviewSection.TrainingPrescriptions,
+            PlanningReviewSection.AutomatedProgression
+        },
+        CycleReadinessPrescriptionRule.PolicyVersion);
 
     [Fact]
     public async Task Loader_requires_distinct_explicit_cycles_and_check_in_before_completed_session()
@@ -86,7 +96,8 @@ public sealed class CyclePersonalizationEvidencePersistenceTests
         Assert.Equal(HistoricalCycleCount, result.Count);
         Assert.All(result, item => Assert.Equal(CyclePhase.Luteal, item.Phase));
         var decision = CycleReadinessPrescriptionRule.Evaluate(new(CyclePhase.Luteal, PhaseReviewProvenance.UserConfirmed,
-            null, null, false, [new CycleReadinessExercise(Guid.NewGuid(), SyntheticSets, 0, true, true)], result, today));
+            null, null, false, [new CycleReadinessExercise(Guid.NewGuid(), SyntheticSets, 0, true, true)], result, today,
+            Approval: TestApproval));
         Assert.Equal(CycleReadinessConfidence.Repeated, decision.Confidence);
         anchors[0].Phase = "Follicular";
         checks[1].PlanningRecordedAtUtc = checks[1].PlanningRecordedAtUtc!.Value.AddHours(CheckInLeadHours + InitialRevision);

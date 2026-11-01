@@ -56,7 +56,8 @@ internal static class StrengthPlanPreviewMapperV020
                 pair.Value.MinimumSetsBySlotId, TemplateVolumeFloorRule.ReviewedStatus)),
         MuscleGroupsByExerciseId = source.MuscleGroupsByExerciseId,
         RestrictedActivities = source.RestrictedActivityTypes?
-            .Select(activity => (WorkoutActivityType)activity).ToHashSet()
+            .Select(activity => (WorkoutActivityType)activity).ToHashSet(),
+        BlockedMovementPatterns = source.BlockedMovementPatterns
     };
 
     public static StrengthPlanPreviewResponseV020 ToResponse(StrengthPlanPreviewResult result) => new(
@@ -152,61 +153,58 @@ internal static class StrengthPlanPreviewMapperV020
 
         var hasStrengthDays = strengthDays.Length > 0;
         var totalScheduledSessions = schedule.Sessions.Count;
-        var hasSafeNonStrengthSessions = schedule.Sessions.Any(session =>
-            !StrengthStyleSelectionRule.IsStrengthStyle(session.Activity));
-
-        // When strength sessions cannot fit or have no safe exercises, but safe non-strength activities exist,
-        // allow a safe non-strength-only plan with explanation. An empty plan remains blocked.
-        var isStrengthExhausted = !hasStrengthDays && response.LimitationCodes.Count == 0 &&
-            (response.Sessions.Count == 0 || schedule.StrengthAssignments is { Count: 0 });
-        var allowNonStrengthOnlyPlan = isStrengthExhausted && hasSafeNonStrengthSessions && totalScheduledSessions > 0;
 
         // When strength sessions are scheduled, fit volume to the placed days with their planned weekdays.
-        // If no strength sessions could be placed, retain original sessions with unassigned weekdays.
+        // Strength content is mandatory: a non-strength-only schedule remains a limited preview.
         var alignedStrengthSessions = hasStrengthDays
             ? schedule.StrengthAssignments is { } assignments
                 ? assignments.Select(item => response.Sessions[item.SessionIndex] with { PlannedWeekday = item.Day }).ToArray()
                 : response.Sessions.Take(effectiveCount)
                     .Select((session, index) => session with { PlannedWeekday = strengthDays[index] }).ToArray()
-            : allowNonStrengthOnlyPlan
-                ? Array.Empty<StrengthPlanPreviewSessionV020>()
-                : response.Sessions
-                    .Select(session => session with { PlannedWeekday = null })
-                    .ToArray();
+            : response.Sessions
+                .Select(session => session with { PlannedWeekday = null })
+                .ToArray();
 
+        var hasStrengthContent = alignedStrengthSessions.Any(session =>
+            session.Slots.Any(slot => slot.ExerciseId.HasValue));
+        var hasStrengthInEverySession = alignedStrengthSessions.All(session =>
+            session.Slots.Any(slot => slot.ExerciseId.HasValue));
         var isVolumeReduced = hasStrengthDays && effectiveCount < response.Sessions.Count;
         var isIncomplete = schedule.InputReasons.Count > 0 ||
-                           (!allowNonStrengthOnlyPlan && response.Sessions.Count > 0 && !hasStrengthDays) ||
+                           !hasStrengthContent || !hasStrengthInEverySession ||
+                           (response.Sessions.Count > 0 && !hasStrengthDays) ||
                            totalScheduledSessions == 0;
 
         // Placed strength sessions satisfy availability, clearing template-overflow limitation codes.
         var limitationCodes = isIncomplete
             ? response.LimitationCodes
                 .Append(MixedActivityScheduleIncompleteCode)
+                .Concat(hasStrengthContent
+                    ? Array.Empty<string>()
+                    : new[] { NoSafeStrengthContentRemainingCode })
                 .Distinct(StringComparer.Ordinal)
                 .ToArray()
-            : allowNonStrengthOnlyPlan
-                ? new[] { NoSafeStrengthContentRemainingCode }
-                : response.LimitationCodes
-                    .Where(code => code is not "StrengthSessionsExceedAvailableWeekdays" and not MixedActivityScheduleIncompleteCode)
-                    .ToArray();
+            : response.LimitationCodes
+                .Where(code => code is not "StrengthSessionsExceedAvailableWeekdays" and not MixedActivityScheduleIncompleteCode)
+                .ToArray();
 
         var isFeasible = !isIncomplete &&
-                         (limitationCodes.Length == 0 || allowNonStrengthOnlyPlan) &&
-                         (alignedStrengthSessions.Length > 0 || allowNonStrengthOnlyPlan) &&
+                         limitationCodes.Length == 0 &&
+                         alignedStrengthSessions.Length > 0 &&
+                         hasStrengthContent && hasStrengthInEverySession &&
                          totalScheduledSessions > 0 &&
                          response.Status != nameof(StrengthPlanPreviewStatus.InvalidInput);
 
         var status = isFeasible
             ? nameof(StrengthPlanPreviewStatus.Feasible)
-            : isIncomplete || totalScheduledSessions == 0
+            : isIncomplete || totalScheduledSessions == 0 || !hasStrengthContent
                 ? nameof(StrengthPlanPreviewStatus.Limited)
                 : response.Status;
 
         return response with
         {
             Status = status,
-            Sessions = alignedStrengthSessions,
+            Sessions = hasStrengthContent ? alignedStrengthSessions : Array.Empty<StrengthPlanPreviewSessionV020>(),
             LimitationCodes = limitationCodes,
             MixedActivitySchedule = ToMixedSchedule(schedule),
             RequiresReducedVolumeAcknowledgment = isVolumeReduced || response.RequiresReducedVolumeAcknowledgment

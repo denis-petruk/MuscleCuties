@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('linux'))">net10.0-ios;net10.0-maccatalyst;net10.0-android</TargetFrameworks>
-        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('linux'))">net10.0-android</TargetFrameworks>
+        <!-- Owner rule (2026-11-01): iOS only. Android is never targeted, on any host OS. -->
+        <TargetFrameworks>net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
         <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
 
         <OutputType>Exe</OutputType>
@@ -23,7 +23,6 @@
 
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">18.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">18.0</SupportedOSPlatformVersion>
-        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">34.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
         <EnableAppleSignInEntitlements>true</EnableAppleSignInEntitlements>
@@ -40,9 +39,6 @@
 
     <ItemGroup>
         <Compile Remove="Platforms/**/*.cs" />
-    </ItemGroup>
-    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-        <Compile Include="Platforms/Android/**/*.cs" />
     </ItemGroup>
     <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
         <Compile Include="Platforms/iOS/**/*.cs" />
@@ -66,17 +62,6 @@
          removes dead code without breaking EF Core reflection. Verify in Release on the target
          Windows version before shipping. -->
     <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
-        <PublishTrimmed>true</PublishTrimmed>
-        <TrimMode>partial</TrimMode>
-        <PublishReadyToRun>true</PublishReadyToRun>
-    </PropertyGroup>
-
-    <!-- Android Release: R2R pre-jits managed code at publish time, reducing JIT warm-up on
-         the first run. Partial trimming retains reflection-based dependencies. The linker removes
-         debug scaffolding and unused SDK code.
-         Verify on a physical Android device in Release before shipping. -->
-    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-        <RunAOTCompilation>true</RunAOTCompilation>
         <PublishTrimmed>true</PublishTrimmed>
         <TrimMode>partial</TrimMode>
         <PublishReadyToRun>true</PublishReadyToRun>
@@ -112,7 +97,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <MauiIcon Include="Resources\AppIcon\appicon.png" Color="#FFF8FB" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios'"/>
+        <MauiIcon Include="Resources\AppIcon\appicon.png" Color="#FFF8FB" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios'"/>
         <MauiSplashScreen Include="Resources\Splash\splash.png" Color="#FFF8FB" BaseSize="320,180" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'maccatalyst'"/>
         <MauiImage Include="Resources\Images\*"/>
         <MauiImage Update="Resources\Images\musclecuties_logo_light.png" Resize="True" BaseSize="360,200"/>

@@ -176,6 +176,11 @@ public static class ExercisePickerRule
         if (picked.Count == 0)
             return null;
 
+        // Owner rule: rehab and mobility work are additive. A session whose only remaining work is
+        // rehab is withheld here instead of being presented as strength training.
+        if (!StrengthPlanContinuityRule.HasStrengthWork(picked))
+            return null;
+
         return new PrescribedSession
         {
             ArchetypeId = session.ArchetypeId,

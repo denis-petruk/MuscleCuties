@@ -7,6 +7,7 @@ namespace MuscleCuties.Core.Tests;
 
 public sealed class WeeklyWorkoutPlanGeneratorRuleTests
 {
+    private const int ExcludedExerciseIdUpperBound = 10_000;
     [Fact]
     public void Generate_NullInput_ProducesValidConservativePlanWithCompleteTrace()
     {
@@ -41,6 +42,28 @@ public sealed class WeeklyWorkoutPlanGeneratorRuleTests
         Assert.True(result.HasSafetyBlock);
         Assert.Empty(result.Sessions);
         Assert.False(result.PrecedenceSummary.IsApplied);
+    }
+
+    [Fact]
+    public void Generate_AllExercisesExcluded_BlocksPlanInsteadOfEmittingZeroStrengthSessions()
+    {
+        var input = new WeeklyPlanGeneratorInput(
+            Goal: UserGoal.Strength,
+            GoalPace: null,
+            ProfileExperience: TrainingExperienceLevel.Beginner,
+            PreferredActivities: [WorkoutActivityType.GeneralStrength],
+            GeneralDaysPerWeek: GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
+            PreferredSessionLengthMinutes: WeeklyWorkoutPlanGeneratorRule.DefaultPreferredSessionLengthMinutes,
+            AvailableEquipment: Equipment.FullGym,
+            StrengthStyle: SessionTrainingStyle.General,
+            AvailableWeekdays: [DayOfWeek.Monday, DayOfWeek.Wednesday],
+            ExcludedExerciseIds: new HashSet<int>(Enumerable.Range(1, ExcludedExerciseIdUpperBound)),
+            ApplyChanges: true);
+
+        var result = WeeklyWorkoutPlanGeneratorRule.Generate(input);
+
+        Assert.True(result.HasSafetyBlock);
+        Assert.Empty(result.Sessions);
     }
 
     [Fact]

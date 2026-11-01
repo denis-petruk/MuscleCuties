@@ -18,6 +18,10 @@
     <ProjectReference Include="../../src/MuscleCuties.Infrastructure/MuscleCuties.Infrastructure.csproj" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/AppPageLoadGate.cs" Link="Mobile/AppPageLoadGate.cs" />
     <Compile Include="../../src/MuscleCuties.UI/ViewModels/Common/IPageLoadAware.cs" Link="Mobile/IPageLoadAware.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/ViewModels/Workout/InjuryLogViewModel.cs" Link="Mobile/InjuryLogViewModel.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryLogItem.cs" Link="Mobile/InjuryLogItem.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryFlagOption.cs" Link="Mobile/InjuryFlagOption.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryStatusOption.cs" Link="Mobile/InjuryStatusOption.cs" />
     <Compile Include="../../src/MuscleCuties.UI/ViewModels/Workout/ActivityAnswersPendingSave.cs" Link="Mobile/ActivityAnswersPendingSave.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/AppAccountPurgeService.cs" Link="Mobile/AppAccountPurgeService.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/ILocalPhotoCacheService.cs" Link="Mobile/ILocalPhotoCacheService.cs" />

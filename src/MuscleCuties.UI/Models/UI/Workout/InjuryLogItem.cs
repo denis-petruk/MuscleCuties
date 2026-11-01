@@ -14,4 +14,10 @@ public sealed class InjuryLogItem
     public DateOnly Since { get; init; }
     public string SinceText { get; init; } = string.Empty;
     public bool IsActive { get; init; }
+
+    /// <summary>Closed-set answer to the worsening-movement question, as stored.</summary>
+    public MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger WorseningTrigger { get; init; }
+
+    /// <summary>True when a clinician advised avoiding the movement; null means not answered.</summary>
+    public bool? ClinicianAdvisedAvoid { get; init; }
 }

@@ -152,7 +152,7 @@ public sealed class InjuryCanonicalReconciliationTests
             // Suppression links the old prescriptions; only new-plan links prove a replacement.
             var injuryLinks = replacementLinks.Where(link =>
                 injuryExercises.Any(row => row.Id == link.WorkoutDayExerciseId)).ToArray();
-            if (replacementLinks.Count > 0)
+            if (injuryLinks.Length > 0)
             {
                 var replacements = injuryExercises.Where(row =>
                     injuryLinks.Any(link => link.WorkoutDayExerciseId == row.Id)).ToArray();

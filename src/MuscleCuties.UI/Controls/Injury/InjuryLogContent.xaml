@@ -168,12 +168,33 @@
                             HorizontalOptions="Fill"
                             MinimumTrackColor="{StaticResource Primary}" ThumbColor="{StaticResource Primary}"
                             SemanticProperties.Description="{loc:LocalizedText Injury_LogContent_PainLevelFromZeroToFive}" />
-                    <Grid Grid.Row="9" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
-                        <Button Text="{loc:LocalizedText Common_Cancel}" Command="{Binding CancelEditCommand}"
-                                Style="{StaticResource ButtonSecondary}" />
-                        <Button Style="{StaticResource ButtonPrimary}" Grid.Column="1" Text="{loc:LocalizedText Injury_LogContent_SaveInjury}"
-                                Command="{Binding SaveInjuryCommand}" />
-                    </Grid>
+                    <VerticalStackLayout Grid.Row="9" Spacing="{StaticResource UiSpaceTight}">
+                        <Label Text="{loc:LocalizedText Injury_Log_WorseningTrigger_Label}" Style="{StaticResource CaptionLabel}" />
+                        <Border Style="{StaticResource InputContainer}">
+                            <Picker ItemsSource="{Binding WorseningTriggerOptions}"
+                                    ItemDisplayBinding="{Binding Label, Converter={StaticResource LocalizedStringConverter}}"
+                                    SelectedItem="{Binding SelectedWorseningOption}"
+                                    SemanticProperties.Description="{loc:LocalizedText Injury_Log_WorseningTrigger_Label}" />
+                        </Border>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                            <Label Text="{loc:LocalizedText Injury_Log_ClinicianAdvisedAvoid_Label}"
+                                   Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
+                            <Switch Grid.Column="1" IsToggled="{Binding ClinicianAdvisedAvoid}"
+                                    SemanticProperties.Description="{loc:LocalizedText Injury_Log_ClinicianAdvisedAvoid_Label}" />
+                        </Grid>
+                        <Label Text="{loc:LocalizedText Injury_Log_Safety_StopAndSeekCare}"
+                               Style="{StaticResource CaptionLabel}"
+                               IsVisible="{Binding ShowsSafetyGuidance}" />
+                        <Label Text="{loc:LocalizedText Injury_Log_Safety_ClinicianRestriction}"
+                               Style="{StaticResource CaptionLabel}"
+                               IsVisible="{Binding ClinicianAdvisedAvoid}" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                            <Button Text="{loc:LocalizedText Common_Cancel}" Command="{Binding CancelEditCommand}"
+                                    Style="{StaticResource ButtonSecondary}" />
+                            <Button Style="{StaticResource ButtonPrimary}" Grid.Column="1" Text="{loc:LocalizedText Injury_LogContent_SaveInjury}"
+                                    Command="{Binding SaveInjuryCommand}" />
+                        </Grid>
+                    </VerticalStackLayout>
                 </Grid>
 
                 <!-- Empty state -->

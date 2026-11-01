@@ -17,8 +17,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
     private const int RequiredCurrentStrengthStyleCount = 1;
     private const string FeasibleStatus = "Feasible";
     private const string AcceptedStatus = "Accepted";
-    private const string NoSafeStrengthContentRemainingCode = "NoSafeStrengthContentRemaining";
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions JsonOptions = WorkoutPlanningJson.Create();
 
     public async Task<WorkoutReconciliationOutcome> ReconcileAsync(Guid userId, CancellationToken cancellationToken = default)
     {
@@ -137,11 +136,12 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
             ExplicitStrengthStyleChoice = styleDto
         };
         var preview = PreviewStrengthPlanV020UseCase.EvaluateAutomaticLoadedSource(userId, request, source, styleDto);
-        var strengthAbsent = preview.Sessions.Count == 0 &&
-            (preview.LimitationCodes.Contains(NoSafeStrengthContentRemainingCode) ||
-             preview.AdvisoryCodes.Contains(StrengthStyleSelectionRule.NoSafeStrengthStyleFitCode));
-        if (preview.Status != FeasibleStatus || (!strengthAbsent && preview.EffectiveActivityTypeId != (int)style) ||
-            preview.MixedActivitySchedule?.Sessions is not { Count: > 0 }) return WorkoutReconciliationOutcome.NeedsReview;
+        var hasStrengthContent = preview.Sessions.Count > 0 && preview.Sessions.All(session =>
+            session.Slots.Any(slot => slot.ExerciseId.HasValue));
+        if (preview.Status != FeasibleStatus || !hasStrengthContent ||
+            preview.EffectiveActivityTypeId != (int)style ||
+            preview.MixedActivitySchedule?.Sessions is not { Count: > 0 })
+            return WorkoutReconciliationOutcome.NeedsReview;
         var manualCompletedToday = await context.WorkoutLogs.AsNoTracking().AnyAsync(log =>
             log.UserId == userId && log.PlannedSessionId == null && log.Date == today &&
             log.CompletionPercent >= 100 && context.WorkoutDays.Any(day => day.UserId == userId &&
@@ -167,7 +167,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
         var activeInjuries = injuries.Any(injury => !string.Equals(injury.Status, "Cleared", StringComparison.OrdinalIgnoreCase));
         var replacement = hasInjuryHistory && activeInjuries
             ? await AutomaticInjuryProvenance.LoadAsync(context, userId, activePlanId.Value, start.Value,
-                preview.Sessions, source, strengthAbsent, cancellationToken).ConfigureAwait(false)
+                preview.Sessions, source, cancellationToken).ConfigureAwait(false)
             : null;
         if (activeInjuries && replacement is null) return WorkoutReconciliationOutcome.NeedsReview;
         var deferredOmissions = new List<WorkoutInjuryOmittedSlotRecord>();
@@ -465,13 +465,6 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                 session.TemplateId == first.TemplateId && session.TemplateVersion == first.TemplateVersion &&
                 session.SessionIndex == first.SessionIndex).ToArray();
             var slots = sessions.Length == 1 ? sessions[0].Slots.Where(slot => slot.SlotId == first.SlotId).ToArray() : [];
-            if (sessions.Length == 0 && preview.Sessions.Count == 0 &&
-                (preview.LimitationCodes.Contains(NoSafeStrengthContentRemainingCode) ||
-                 preview.AdvisoryCodes.Contains(StrengthStyleSelectionRule.NoSafeStrengthStyleFitCode)))
-            {
-                deferredOmissions.AddRange(group);
-                continue;
-            }
             if (slots.Length != 1) return null;
             if (slots[0].ExerciseId is null)
             {

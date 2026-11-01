@@ -1,10 +1,12 @@
+using Amazon.Lambda.Core;
+using Amazon.Lambda.RuntimeSupport;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using Npgsql;
 using NpgsqlTypes;
 
-// One bounded page per explicit invocation. The scheduler owns invocation and alerting.
+// One bounded page per scheduled invocation. The scheduler owns invocation and alerting.
 const int PageSize = 5;
 const int RequiredDiscoveryPoolSize = 2;
 const string DiscoveryVariable = "MUSCLECUTIES_WORKOUT_DISCOVERY_CONNECTION";
@@ -46,31 +48,32 @@ await tenantCheck.CloseAsync();
 
 var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(tenant).Options;
 var dispatcher = new PostgresWorkoutReconciliationDispatcher(discovery, new TenantContextFactory(options));
-await using var cursorConnection = await discovery.OpenConnectionAsync();
-await using var transaction = await cursorConnection.BeginTransactionAsync();
-await using var readCursor = new NpgsqlCommand(
-    "SELECT after_owner_id FROM app.workout_reconciliation_cursor WHERE singleton = true FOR UPDATE", cursorConnection, transaction);
-var cursorValue = await readCursor.ExecuteScalarAsync();
-if (cursorValue is null) throw new InvalidOperationException("Workout reconciliation cursor is missing.");
-var cursor = cursorValue is DBNull ? (Guid?)null : (Guid)cursorValue;
-var page = await dispatcher.ProcessPageAsync(cursor, PageSize);
-await using var saveCursor = new NpgsqlCommand(
-    "UPDATE app.workout_reconciliation_cursor SET after_owner_id = @cursor WHERE singleton = true", cursorConnection, transaction);
-saveCursor.Parameters.AddWithValue("cursor", NpgsqlDbType.Uuid, (object?)page.NextCursor ?? DBNull.Value);
-await saveCursor.ExecuteNonQueryAsync();
-await transaction.CommitAsync();
-// Failed accounts retain their pending flag and are retried on the next scan. Do not emit owner IDs.
-if (page.FailedAccounts > 0)
+
+async Task HandleAsync(ILambdaContext _)
 {
-    Console.Error.WriteLine("Workout reconciliation encountered account failures; pending accounts will be retried.");
-    return 1;
+    await using var cursorConnection = await discovery.OpenConnectionAsync();
+    await using var transaction = await cursorConnection.BeginTransactionAsync();
+    await using var readCursor = new NpgsqlCommand(
+        "SELECT after_owner_id FROM app.workout_reconciliation_cursor WHERE singleton = true FOR UPDATE", cursorConnection, transaction);
+    var cursorValue = await readCursor.ExecuteScalarAsync();
+    if (cursorValue is null) throw new InvalidOperationException("Workout reconciliation cursor is missing.");
+    var cursor = cursorValue is DBNull ? (Guid?)null : (Guid)cursorValue;
+    var page = await dispatcher.ProcessPageAsync(cursor, PageSize);
+    await using var saveCursor = new NpgsqlCommand(
+        "UPDATE app.workout_reconciliation_cursor SET after_owner_id = @cursor WHERE singleton = true", cursorConnection, transaction);
+    saveCursor.Parameters.AddWithValue("cursor", NpgsqlDbType.Uuid, (object?)page.NextCursor ?? DBNull.Value);
+    await saveCursor.ExecuteNonQueryAsync();
+    await transaction.CommitAsync();
+
+    // Failed accounts retain their pending flag and are retried on the next scan. Do not emit owner IDs.
+    if (page.FailedAccounts > 0)
+        throw new InvalidOperationException("Workout reconciliation account failures; pending accounts will be retried.");
+    // NeedsReview is a deliberate outcome, not an invocation failure. It remains pending and logged.
+    if (page.NeedsReviewAccounts > 0)
+        Console.Error.WriteLine("Workout reconciliation has pending accounts requiring review.");
 }
-if (page.NeedsReviewAccounts > 0)
-{
-    Console.Error.WriteLine("Workout reconciliation has pending accounts requiring review.");
-    return 1;
-}
-return 0;
+
+await LambdaBootstrapBuilder.Create(HandleAsync).Build().RunAsync();
 
 sealed class TenantContextFactory(DbContextOptions<PostgresDbContext> options) : IDbContextFactory<PostgresDbContext>
 {

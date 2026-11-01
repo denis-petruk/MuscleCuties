@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Models.UI.Workout;
@@ -10,6 +11,11 @@ using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
+
+/// <summary>One selectable answer to the worsening-movement question; the label is a localization key.</summary>
+public sealed record InjuryWorseningOption(
+    MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger Trigger,
+    string Label);
 
 public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 {
@@ -28,6 +34,8 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
     private bool _hasLoaded;
     private bool _pendingChangeRefresh;
+    private bool? _editingClinicianAdvisedAvoid;
+    private bool _clinicianAdvisedAvoidChanged;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isHistoryExpanded;
     [ObservableProperty] private bool _isLoadError;
@@ -39,6 +47,12 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private WorkoutInjuryStatus? _selectedStatus;
 
     [ObservableProperty] private bool _showAddForm;
+
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowsSafetyGuidance))]
+    private bool _clinicianAdvisedAvoid;
+
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowsSafetyGuidance))]
+    private InjuryWorseningOption? _selectedWorseningOption;
     [ObservableProperty] private DateTime _sinceDateValue = DateTime.Today;
 
     public InjuryLogViewModel(
@@ -68,6 +82,25 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             new() { Status = WorkoutInjuryStatus.Cleared, Label = "Cleared" }
         };
 
+        WorseningTriggerOptions = new List<InjuryWorseningOption>
+        {
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
+                "Injury_Log_WorseningTrigger_NotAnswered"),
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.None,
+                "Injury_Log_WorseningTrigger_None"),
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.OverheadReach,
+                "Injury_Log_WorseningTrigger_OverheadReach"),
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.DeepKneeFlexion,
+                "Injury_Log_WorseningTrigger_DeepKneeFlexion"),
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.SpinalLoading,
+                "Injury_Log_WorseningTrigger_SpinalLoading"),
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.ImpactAndGait,
+                "Injury_Log_WorseningTrigger_ImpactAndGait"),
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.GripAndWristLoad,
+                "Injury_Log_WorseningTrigger_GripAndWristLoad")
+        };
+        SelectedWorseningOption = WorseningTriggerOptions[0];
+
         LoadCommand = new AsyncRelayCommand(LoadAsync, () => !IsBusy);
         ToggleAddFormCommand = new RelayCommand(BeginAdd, () => !IsBusy);
         SaveInjuryCommand = new AsyncRelayCommand(SaveInjuryAsync, () => CanSaveInjury);
@@ -86,6 +119,18 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     public bool IsEditing => EditingInjuryId is not null;
     public string FormTitle => IsEditing ? "Edit injury" : "New injury";
     public string PainLabelText => PainLabelFor(NewPainLevel);
+
+    public IReadOnlyList<InjuryWorseningOption> WorseningTriggerOptions { get; }
+
+    /// <summary>
+    ///     Owner rule: recorded worsening symptoms or a clinician restriction are safety concerns.
+    ///     The stop-and-seek-care guidance appears whenever either answer is affirmative.
+    /// </summary>
+    public bool ShowsSafetyGuidance =>
+        MuscleCuties.Core.Domain.Workout.InjuryObservationRule.IndicatesSafetyConcern(
+            SelectedWorseningOption?.Trigger ??
+            MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
+            ClinicianAdvisedAvoid);
     public bool HasClearedInjuries => ClearedInjuries.Count > 0;
     public bool HasActiveInjuries => ActiveInjuries.Count > 0;
 
@@ -157,6 +202,11 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     partial void OnSelectedStatusChanged(WorkoutInjuryStatus? value)
     {
         RefreshSaveState();
+    }
+
+    partial void OnClinicianAdvisedAvoidChanged(bool value)
+    {
+        _clinicianAdvisedAvoidChanged = true;
     }
 
     partial void OnSinceDateValueChanged(DateTime value)
@@ -235,7 +285,9 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
                 PainLabel = PainLabelFor(log.Pain),
                 Since = log.Since,
                 SinceText = log.Since.ToString("d", CultureInfo.CurrentCulture),
-                IsActive = isActive
+                IsActive = isActive,
+                WorseningTrigger = log.WorseningTrigger,
+                ClinicianAdvisedAvoid = log.ClinicianAdvisedAvoid
             };
 
             if (isActive)
@@ -270,7 +322,12 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             await _injuries.SaveInjuryAsync(new SaveWorkoutInjuryInput(
                 EditingInjuryId ?? 0, SelectedSiteFlag,
                 status.Value, NewPainLevel,
-                DateOnly.FromDateTime(SinceDateValue)));
+                DateOnly.FromDateTime(SinceDateValue),
+                SelectedWorseningOption?.Trigger ??
+                    MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
+                !_clinicianAdvisedAvoidChanged
+                    ? _editingClinicianAdvisedAvoid
+                    : ClinicianAdvisedAvoid));
             CancelEdit();
             _pendingChangeRefresh = true;
             await RefreshAfterChangeAsync();
@@ -355,6 +412,16 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         NewPainLevel = item.Pain;
         SinceDateValue = item.Since.ToDateTime(TimeOnly.MinValue);
+
+        // Restore the safety answers so editing an injury never silently downgrades them to
+        // "not answered" while the user is only changing the pain level.
+        ClinicianAdvisedAvoid = item.ClinicianAdvisedAvoid ?? false;
+        _editingClinicianAdvisedAvoid = item.ClinicianAdvisedAvoid;
+        _clinicianAdvisedAvoidChanged = false;
+        SelectedWorseningOption =
+            WorseningTriggerOptions.FirstOrDefault(option => option.Trigger == item.WorseningTrigger)
+            ?? WorseningTriggerOptions[0];
+
         ShowAddForm = true;
     }
 
@@ -370,6 +437,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     private void CancelEdit()
     {
         EditingInjuryId = null;
+        _editingClinicianAdvisedAvoid = null;
 
         SelectedSiteFlag = default;
         foreach (var site in AvailableSites)
@@ -381,6 +449,9 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         NewPainLevel = 0;
         SinceDateValue = DateTime.Today;
+        ClinicianAdvisedAvoid = false;
+        _clinicianAdvisedAvoidChanged = false;
+        SelectedWorseningOption = WorseningTriggerOptions.Count > 0 ? WorseningTriggerOptions[0] : null;
 
         ShowAddForm = false;
     }

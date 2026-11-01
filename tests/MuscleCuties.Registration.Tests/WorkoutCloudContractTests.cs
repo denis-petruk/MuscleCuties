@@ -42,6 +42,22 @@ public sealed class WorkoutCloudContractTests
     }
 
     [Xunit.Fact]
+    public async Task CloudInjuryStoreRefreshPostsAuthenticatedReconcileRoute()
+    {
+        var api = new RecordingWorkoutApiClient((_, responseType) =>
+            responseType == typeof(WorkoutReconciliationResponse)
+                ? new WorkoutReconciliationResponse(nameof(WorkoutReconciliationOutcome.Deferred))
+                : null);
+        var store = new CloudWorkoutInjuryStore(api);
+
+        await store.RefreshPlanAfterInjuryChangeAsync(CancellationToken.None);
+
+        var call = Xunit.Assert.Single(api.Calls);
+        Xunit.Assert.Equal("POST", call.Method);
+        Xunit.Assert.Equal("/api/v1/workouts/plan/reconcile", call.Path);
+    }
+
+    [Xunit.Fact]
     public async Task CloudStoresPreserveWorkoutRoutesIdsAndMutationBodies()
     {
         var api = new RecordingWorkoutApiClient((path, responseType) => responseType == typeof(WorkoutOverviewResponse)
@@ -134,11 +150,15 @@ public sealed class WorkoutCloudContractTests
     {
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddAuthorization();
-        builder.Services.AddScoped<GetWorkoutPlanningCatalogUseCase>();
-        builder.Services.AddScoped<PostgresWorkoutPlanAndSessionStore>();
-        builder.Services.AddScoped<WorkoutActiveSessionUseCase>();
-        builder.Services.AddScoped<ServerWorkoutArchiveUseCase>();
-        builder.Services.AddScoped<ServerWorkoutInjuryUseCase>();
+        // This test inspects route metadata without invoking handlers or creating database services.
+        // Factories keep the service types registered for endpoint binding and fail if that changes.
+        const string metadataOnly = "Route metadata test must not resolve workout services.";
+        builder.Services.AddScoped<GetWorkoutPlanningCatalogUseCase>(_ => throw new InvalidOperationException(metadataOnly));
+        builder.Services.AddScoped<WorkoutPendingRevisionJobHandler>(_ => throw new InvalidOperationException(metadataOnly));
+        builder.Services.AddScoped<PostgresWorkoutPlanAndSessionStore>(_ => throw new InvalidOperationException(metadataOnly));
+        builder.Services.AddScoped<WorkoutActiveSessionUseCase>(_ => throw new InvalidOperationException(metadataOnly));
+        builder.Services.AddScoped<ServerWorkoutArchiveUseCase>(_ => throw new InvalidOperationException(metadataOnly));
+        builder.Services.AddScoped<ServerWorkoutInjuryUseCase>(_ => throw new InvalidOperationException(metadataOnly));
         using var app = builder.Build();
         app.MapWorkoutPlanningEndpoints();
         app.MapWorkoutPlanAndSessionEndpoints();
@@ -155,6 +175,7 @@ public sealed class WorkoutCloudContractTests
         foreach (var route in new (string Method, string Path)[]
         {
             ("GET", "/api/v1/workouts/catalog"), ("POST", "/api/v1/workouts/plan"),
+            ("POST", "/api/v1/workouts/plan/reconcile"),
             ("GET", "/api/v1/workouts/plan/exercise-exclusions"),
             ("GET", "/api/v1/workouts/overview"), ("POST", "/api/v1/workouts/reschedule"),
             ("GET", "/api/v1/workouts/day-sessions/{workoutDayId:int}"),

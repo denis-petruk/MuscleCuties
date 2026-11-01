@@ -97,6 +97,11 @@ public static class ApiApplication
     private const string SessionRoute = "/api/v1/session";
     private const string LiveRoute = "/health/live";
     private const string ReadyRoute = "/health/ready";
+    private const string HealthStatusContentType = "text/plain; charset=utf-8";
+    private const string HealthStatusNoStore = "no-store";
+    private const string HealthStatusHealthy = "Healthy";
+    private const string HealthStatusDegraded = "Degraded";
+    private const string HealthStatusUnhealthy = "Unhealthy";
     private const string AuthenticationRoute = "/api/v1/auth";
     private const string EmailChallengeRoute = "/api/v1/email-challenges";
     private const string ProfileUnitsRoute = "/api/v1/profile/units";
@@ -446,7 +451,29 @@ public static class ApiApplication
 
         app.MapGet(LiveRoute, () => Results.Ok(new HealthResponse("live", ApiVersion)))
             .AllowAnonymous();
-        app.MapHealthChecks(ReadyRoute).AllowAnonymous();
+        static Task WriteHealthStatusAsync(
+            HttpContext healthContext,
+            Microsoft.Extensions.Diagnostics.HealthChecks.HealthReport report)
+        {
+            // Status word only. Health entries, descriptions, exception objects and check data are never
+            // written: the probe is anonymous and must not disclose schema, identifiers or user data.
+            healthContext.Response.ContentType = HealthStatusContentType;
+            healthContext.Response.Headers.CacheControl = HealthStatusNoStore;
+            var body = report.Status switch
+            {
+                Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Healthy => HealthStatusHealthy,
+                Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded => HealthStatusDegraded,
+                _ => HealthStatusUnhealthy
+            };
+            return healthContext.Response.WriteAsync(body);
+        }
+
+        app.MapHealthChecks(ReadyRoute, new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+            {
+                ResponseWriter = WriteHealthStatusAsync,
+                AllowCachingResponses = false
+            })
+            .AllowAnonymous();
         app.MapGet(SessionRoute, (HttpContext context) => Results.Ok(new SessionResponse(
             IsAuthenticated: context.User.Identity?.IsAuthenticated == true,
             UserId: context.User.FindFirst("sub")?.Value,
@@ -891,27 +918,34 @@ internal sealed class PostgreSqlReadinessCheck(PostgresDbContext dbContext) : Mi
 
 /// <summary>
 /// Deployment-order guard. Connectivity alone reported Healthy while dashboard and injuries returned
-/// HTTP 500 for a missing column, so readiness now also compares the database migration ledger with
-/// the migrations compiled into the deployed assembly. The description names no schema objects.
+/// HTTP 500 for a missing column, so readiness now compares the deployed EF model with the schema the
+/// database was initialized from, and confirms the security script's objects are present. The
+/// description names no schema objects.
 /// </summary>
 internal sealed class PostgreSqlSchemaCompatibilityCheck(PostgresDbContext dbContext) : Microsoft.Extensions.Diagnostics.HealthChecks.IHealthCheck
 {
+    // Fixed descriptions only: no object names, identifiers, counts or user data may leave this check.
+    private const string CompatibleDescription = "Database schema matches the deployed model.";
+    private const string IncompatibleDescription = "Database schema does not match the deployed model.";
+    private const string UnreadableDescription = "Database schema is unreadable.";
+
     public async Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult> CheckHealthAsync(
         Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var applied = await dbContext.Database.GetAppliedMigrationsAsync(cancellationToken).ConfigureAwait(false);
-            var compatibility = DatabaseSchemaCompatibility.Evaluate(applied, dbContext.Database.GetMigrations());
-            return compatibility.IsCompatible
-                ? Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(compatibility.Description)
-                : Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy(compatibility.Description);
+            var report = await PostgresSchemaDriftInspector.InspectAsync(dbContext, cancellationToken)
+                .ConfigureAwait(false);
+            return report.IsCompatible
+                ? Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(CompatibleDescription)
+                : Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy(IncompatibleDescription);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy(
-                "Database migration ledger is unreadable.", exception);
+            // The exception is deliberately not attached: provider exceptions can carry connection strings,
+            // object names and SQL text, and health results are serialised and logged by hosting.
+            return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy(UnreadableDescription);
         }
     }
 }

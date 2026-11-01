@@ -19,6 +19,11 @@ public sealed class AutomaticAcceptanceTransactionTests
     private const int ProfileVersion = 1;
     private const int OneDay = 1;
     private const int StrengthMinutes = 60;
+    private const int SyntheticStrengthSets = 3;
+    private const int SyntheticStrengthMinimumReps = 8;
+    private const int SyntheticStrengthMaximumReps = 12;
+    private const int SyntheticStrengthRepsInReserve = 2;
+    private const int SyntheticStrengthRestSeconds = 90;
     private const decimal WalkingMinutes = 30m;
     private const int WorkoutDays = 2;
     private const int CycleDays = 28;
@@ -62,14 +67,35 @@ public sealed class AutomaticAcceptanceTransactionTests
             new Dictionary<int, int> { [strength] = StrengthMinutes }, "FullGym");
         var request = new StrengthPlanPreviewRequestV020(WorkoutActivityDto.GeneralStrength, today, null)
             { DraftPreferences = draft };
+        var strengthExercise = await db.WorkoutExerciseDefinitions.AsNoTracking()
+            .Include(row => row.MuscleContributions).ThenInclude(row => row.MuscleGroup)
+            .FirstAsync(row => row.MuscleContributions.Any(contribution =>
+                contribution.Fraction > 0 && contribution.MuscleGroup != null &&
+                !string.IsNullOrWhiteSpace(contribution.MuscleGroup.Name)));
+        var strengthMuscleGroups = strengthExercise.MuscleContributions
+            .Where(contribution => contribution.Fraction > 0 && contribution.MuscleGroup != null &&
+                !string.IsNullOrWhiteSpace(contribution.MuscleGroup.Name))
+            .Select(contribution => contribution.MuscleGroup!.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        var strengthSession = new StrengthPlanPreviewSessionV020(
+            "synthetic-template", "synthetic-version", 1, StrengthMinutes,
+            [new StrengthPlanSlotOutputV020("synthetic-slot", (int)StrengthMovementSlotDto.KneeDominant,
+                true, (int)StrengthPrescriptionRole.Main, false, strengthExercise.Id,
+                strengthExercise.Name, null, null, SyntheticStrengthSets,
+                SyntheticStrengthMinimumReps, SyntheticStrengthMaximumReps,
+                SyntheticStrengthRepsInReserve, SyntheticStrengthRestSeconds, [])],
+            [], new Dictionary<string, string>(), start.DayOfWeek);
         var input = new { Request = request, ProfileVersion, BaselineActivePlanId = priorPlanId,
             BaselineRevisionId = (Guid?)null, AutomaticOrigin = true, AutomaticStartDate = start };
         var schedule = new MixedActivityScheduleV020(
-            [new MixedActivityScheduleSessionV020(walking, start.DayOfWeek, WalkingMinutes, false)],
-            [new MixedActivityScheduleDecisionV020(walking, "Scheduled", null, null, null, 1, [])], []);
+            [new MixedActivityScheduleSessionV020(walking, start.DayOfWeek, WalkingMinutes, false),
+             new MixedActivityScheduleSessionV020(strength, start.DayOfWeek, StrengthMinutes, true)],
+            [new MixedActivityScheduleDecisionV020(walking, "Scheduled", null, null, null, 1, []),
+             new MixedActivityScheduleDecisionV020(strength, "Scheduled", null, null, null, 1, [])], []);
         var proposalSnapshot = new { PolicyId = StrengthPlanPreviewRule.PolicyId,
             PolicyVersion = StrengthPlanPreviewRule.Version, RulesetVersion = StrengthPlanPreviewRule.RulesetVersion,
-            Status = "Feasible", Sessions = Array.Empty<StrengthPlanPreviewSessionV020>(), MixedActivitySchedule = schedule,
+            Status = "Feasible", Sessions = new[] { strengthSession }, MixedActivitySchedule = schedule,
+            SourceMuscleGroupsByExerciseId = new Dictionary<int, string[]> { [strengthExercise.Id] = strengthMuscleGroups },
             SourceHistoryFingerprint = PlanningInputFingerprint.Hash(Array.Empty<object>()),
             SourceInjuryFingerprint = PlanningInputFingerprint.Injuries(Array.Empty<WorkoutInjuryLogRecord>()),
             SourceCatalogFingerprint = await PlanningCatalogFingerprint.LoadAsync(db, userId, CancellationToken.None),

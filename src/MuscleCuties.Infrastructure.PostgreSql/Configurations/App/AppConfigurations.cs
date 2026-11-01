@@ -137,6 +137,9 @@ public sealed class RefreshSessionConfiguration : IEntityTypeConfiguration<Refre
         builder.Property(x => x.ReplacedAtUtc).HasColumnName("replaced_at_utc");
         builder.HasIndex(x => x.TokenHash).IsUnique().HasDatabaseName("uq_refresh_sessions_token_hash");
         builder.HasIndex(x => new { x.FamilyId, x.RevokedAtUtc }).HasDatabaseName("ix_refresh_sessions_family_revoked");
+        builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.ToTable("refresh_sessions", "app", table =>
+            table.HasCheckConstraint("ck_refresh_sessions_expiry", "expires_at_utc > created_at_utc"));
     }
 }
 
@@ -151,6 +154,7 @@ public sealed class AppleSignInNonceConfiguration : IEntityTypeConfiguration<App
         builder.Property(x => x.ExpiresAtUtc).HasColumnName("expires_at_utc").IsRequired();
         builder.Property(x => x.RedeemedAtUtc).HasColumnName("redeemed_at_utc");
         builder.HasIndex(x => x.NonceHash).IsUnique().HasDatabaseName("uq_apple_sign_in_nonces_hash");
+        builder.HasIndex(x => x.ExpiresAtUtc).HasDatabaseName("ix_apple_sign_in_nonces_expiry");
     }
 }
 
@@ -167,6 +171,7 @@ public sealed class RevokedAccessTokenConfiguration : IEntityTypeConfiguration<R
         builder.Property(x => x.RevokedAtUtc).HasColumnName("revoked_at_utc").IsRequired();
         builder.HasIndex(x => x.TokenId).IsUnique().HasDatabaseName("uq_revoked_access_tokens_token_id");
         builder.HasIndex(x => x.ExpiresAtUtc).HasDatabaseName("ix_revoked_access_tokens_expiry");
+        builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
     }
 }
 
@@ -193,7 +198,9 @@ public sealed class EmailChallengeSessionConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.PrivacyNoticeAcceptedAtUtc).HasColumnName("privacy_notice_accepted_at_utc");
         builder.HasIndex(x => x.ReceiptId).IsUnique().HasFilter("receipt_id IS NOT NULL")
             .HasDatabaseName("uq_email_challenge_sessions_receipt_id");
-        builder.HasIndex(x => new { x.NormalizedEmail, x.CreatedAtUtc }).HasDatabaseName("ix_email_challenge_sessions_email_created");
+        builder.HasIndex(x => new { x.NormalizedEmail, x.CreatedAtUtc }).IsDescending(false, true)
+            .HasDatabaseName("ix_email_challenge_sessions_email_created");
+        builder.HasIndex(x => x.ExpiresAtUtc).HasDatabaseName("ix_email_challenge_sessions_expiry");
         builder.ToTable("email_challenge_sessions", "app", table =>
         {
             table.HasCheckConstraint("ck_email_challenge_session_attempts", "failed_attempts >= 0");
@@ -219,6 +226,7 @@ public sealed class SourceAccountClaimNonceConfiguration : IEntityTypeConfigurat
         builder.Property(x => x.RedeemedAtUtc).HasColumnName("redeemed_at_utc");
         builder.HasIndex(x => x.NonceHash).IsUnique().HasDatabaseName("uq_source_account_claim_nonces_hash");
         builder.HasIndex(x => x.ExpiresAtUtc).HasDatabaseName("ix_source_account_claim_nonces_expiry");
+        builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.DestinationUserId).OnDelete(DeleteBehavior.Cascade);
         builder.ToTable("source_account_claim_nonces", "app", table =>
             table.HasCheckConstraint("ck_source_account_claim_expiry", "expires_at_utc > created_at_utc"));
     }
@@ -240,6 +248,9 @@ public sealed class SourceAccountMappingConfiguration : IEntityTypeConfiguration
             .HasDatabaseName("uq_source_account_mappings_source");
         builder.HasIndex(x => x.ClaimId).IsUnique().HasDatabaseName("uq_source_account_mappings_claim_id");
         builder.HasIndex(x => x.DestinationUserId).HasDatabaseName("ix_source_account_mappings_destination_user_id");
+        builder.HasOne<SourceAccountClaimNonceRecord>().WithMany().HasForeignKey(x => x.ClaimId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.DestinationUserId).OnDelete(DeleteBehavior.Cascade);
     }
 }
 
@@ -391,7 +402,13 @@ public sealed class DailyReadinessLogConfiguration : IEntityTypeConfiguration<Da
 
 public sealed class WorkoutInjuryLogConfiguration : IEntityTypeConfiguration<WorkoutInjuryLogRecord>
 {
-    public void Configure(EntityTypeBuilder<WorkoutInjuryLogRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "workout_injury_logs");
+    private const int WorseningTriggerMaximumLength = 32;
+
+    public void Configure(EntityTypeBuilder<WorkoutInjuryLogRecord> builder)
+    {
+        AppModelConfiguration.ConfigureTenant(builder, "workout_injury_logs");
+        builder.Property(record => record.WorseningTrigger).HasMaxLength(WorseningTriggerMaximumLength);
+    }
 }
 
 public sealed class WorkoutInjuryPrescriptionLinkConfiguration : IEntityTypeConfiguration<WorkoutInjuryPrescriptionLinkRecord>

@@ -77,7 +77,7 @@ public sealed class ReviewedExerciseCatalogV020ImportTests
 
     private static IReadOnlyList<WorkoutExerciseDefinition> RepositoryDefinitions()
     {
-        using var canonical = ReadJson("src/MuscleCuties.DbMaintenance/Seed/CanonicalCatalogManifest.json");
+        using var canonical = ReadJson("src/MuscleCuties.Infrastructure.PostgreSql/Persistence/Seed/CanonicalCatalogManifest.json");
         var rows = canonical.RootElement.GetProperty("entityTypes").EnumerateArray()
             .Single(section => section.GetProperty("entityType").GetString() ==
                 "WorkoutExerciseDefinition")

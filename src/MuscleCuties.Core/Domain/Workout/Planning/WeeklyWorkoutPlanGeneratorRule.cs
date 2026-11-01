@@ -171,7 +171,8 @@ public static class WeeklyWorkoutPlanGeneratorRule
             availableWeekdays: sanitizedInput.AvailableWeekdays,
             excludedExerciseIds: sanitizedInput.ExcludedExerciseIds,
             workBudgetMinutes: workBudgetMinutes);
-        var hasSchedulingBlock = strengthSessions.Count < MinimumStrengthSessionsPerWeek;
+        var hasSchedulingBlock = strengthSessions.Count < MinimumStrengthSessionsPerWeek ||
+            strengthSessions.Any(session => session.Exercises.Count == 0);
 
         trace.Add(new RuleTraceEntry(
             StepNumber: Step3StrengthSessionConstruction,

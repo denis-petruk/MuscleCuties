@@ -253,6 +253,11 @@ internal static class StrengthPlanGenerationDisplayMapper
         if (reasons.Contains("StrengthSessionsExceedAvailableWeekdays"))
             return UiTextCatalog.Get("Workout_Generation_LimitationStrengthWeekdays");
 
+        if (reasons.Contains(NoSafeStrengthContentRemainingCode))
+        {
+            return UiTextCatalog.Get("Workout_Generation_Reason_NoSafeStrengthContentRemaining");
+        }
+
         if (reasons.Contains(MixedActivityScheduleIncompleteCode) &&
             preview.MixedActivitySchedule is { } schedule)
         {
@@ -271,11 +276,6 @@ internal static class StrengthPlanGenerationDisplayMapper
             preview.AdvisoryCodes.Contains("DirectBeginnerGeneralStrengthSettingsApplied"))
         {
             return UiTextCatalog.Get("Workout_Generation_DirectBeginnerGeneralStrength");
-        }
-
-        if (reasons.Contains(NoSafeStrengthContentRemainingCode))
-        {
-            return UiTextCatalog.Get("Workout_Generation_Reason_NoSafeStrengthContentRemaining");
         }
 
         if (reasons.Contains("HighIntensityMainNeedsFourExposuresKnownManageableLoad") ||

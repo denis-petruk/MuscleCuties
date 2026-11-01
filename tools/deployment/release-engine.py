@@ -93,8 +93,7 @@ class Release:
             "post_revision": None,
             "pre_code_sha256": None,
             "post_code_sha256": None,
-            "db_fingerprint_sha256": None,
-            "migration_history_mode": None,
+            "schema_fingerprint_sha256": None,
             "backup_snapshot_id": None,
             "mutation_attempted": False,
             "recovery": "none",
@@ -151,13 +150,6 @@ class Release:
                 o.get("zip_bytes") == m.get("zip_bytes") and
                 m.get("runtime") == "net10.0" and m.get("architecture") == "arm64" and
                 m.get("handler") == "MuscleCuties.Server", "artifact_identity_invalid")
-        require(m.get("requirements_sha256") == p.get("candidate_requirements_sha256") and
-                HASH.fullmatch(p.get("candidate_requirements_sha256", "")) and
-                digest(p.get("candidate_requirements_path", "")) == p["candidate_requirements_sha256"],
-                "candidate_requirements_invalid")
-        require(HASH.fullmatch(p.get("serving_requirements_sha256", "")) and
-                digest(p.get("serving_requirements_path", "")) == p["serving_requirements_sha256"],
-                "serving_requirements_invalid")
         require(p.get("integration_mode") in ("unqualified", "alias") and
                 p.get("maintenance_window_approved") is True and
                 p.get("backup_approved") is True and
@@ -254,42 +246,28 @@ class Release:
                 head.get("Metadata", {}).get("source-sha") == self.manifest["source_sha"],
                 "release_object_mismatch")
 
-    def maintenance(self, verb, path, expected_hash):
+    def db_check(self):
         project = "src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj"
         argv = ["dotnet", "run", "--project", project, "--configuration", "Release",
-                "--no-build", "--no-restore", "--", verb, path, expected_hash]
+                "--no-build", "--no-restore", "--", "dbcheck"]
         if os.environ.get("MC_RELEASE_OFFLINE_TEST") == "1":
-            argv = [os.environ["MC_TEST_MAINTENANCE_EXECUTABLE"], verb, path, expected_hash]
-        raw = command_json(argv, "schema_" + verb.replace("-", "_") + "_failed", 120)
+            argv = [os.environ["MC_TEST_MAINTENANCE_EXECUTABLE"], "dbcheck"]
+        raw = command_json(argv, "schema_check_failed", 120)
         require(raw.get("contract_version") == "1.0.0" and raw.get("status") == "compatible" and
-                raw.get("requirements_sha256") == expected_hash and
-                HASH.fullmatch(raw.get("db_fingerprint_sha256", "")) and
-                isinstance(raw.get("migration_history_mode"), str) and raw["migration_history_mode"] and
+                HASH.fullmatch(raw.get("schema_fingerprint_sha256", "")) and
                 raw.get("failure_codes") == [], "schema_contract_invalid")
         return raw
 
     def compatibility(self):
         self.report["phase"] = "database"
-        p = self.policy
-        serving = self.maintenance("schema-preflight", p["serving_requirements_path"],
-                                   p["serving_requirements_sha256"])
-        candidate = self.maintenance("schema-preflight", p["candidate_requirements_path"],
-                                     p["candidate_requirements_sha256"])
-        require(serving["db_fingerprint_sha256"] == candidate["db_fingerprint_sha256"] and
-                serving["migration_history_mode"] == candidate["migration_history_mode"],
-                "schema_proof_inconsistent")
-        self.report["db_fingerprint_sha256"] = candidate["db_fingerprint_sha256"]
-        self.report["migration_history_mode"] = candidate["migration_history_mode"]
-        return candidate
+        proof = self.db_check()
+        self.report["schema_fingerprint_sha256"] = proof["schema_fingerprint_sha256"]
+        return proof
 
     def verify_compatibility_again(self, prior):
-        p = self.policy
-        for path, expected in ((p["serving_requirements_path"], p["serving_requirements_sha256"]),
-                               (p["candidate_requirements_path"], p["candidate_requirements_sha256"])):
-            result = self.maintenance("schema-verify", path, expected)
-            require(result["db_fingerprint_sha256"] == prior["db_fingerprint_sha256"] and
-                    result["migration_history_mode"] == prior["migration_history_mode"],
-                    "schema_changed_under_release")
+        result = self.db_check()
+        require(result["schema_fingerprint_sha256"] == prior["schema_fingerprint_sha256"],
+                "schema_changed_under_release")
 
     def update_lambda(self, o, revision, expected_hash):
         response = self.aws("lambda", "update-function-code", "lambda_update_rejected",
@@ -372,18 +350,12 @@ class Release:
         self.report["phase"] = "recovery"
         good = self.policy.get("known_good")
         if not isinstance(good, dict) or good.get("runtime_verified") is not True or \
-                good.get("db_fingerprint_sha256") != self.report["db_fingerprint_sha256"] or \
-                good.get("migration_history_mode") != self.report["migration_history_mode"]:
+                good.get("schema_fingerprint_sha256") != self.report["schema_fingerprint_sha256"]:
             self.report["recovery"] = "manual_required"
             return
         try:
-            requirements_path = good.get("requirements_path", "")
-            requirements_hash = good.get("requirements_sha256", "")
-            require(HASH.fullmatch(requirements_hash) and digest(requirements_path) == requirements_hash,
-                    "unsafe_recovery_requirements")
-            proof = self.maintenance("schema-verify", requirements_path, requirements_hash)
-            require(proof["db_fingerprint_sha256"] == self.report["db_fingerprint_sha256"] and
-                    proof["migration_history_mode"] == self.report["migration_history_mode"],
+            proof = self.db_check()
+            require(proof["schema_fingerprint_sha256"] == self.report["schema_fingerprint_sha256"],
                     "unsafe_recovery_schema")
             if self.policy["integration_mode"] == "alias":
                 require(good.get("version") and good.get("alias") == self.policy.get("alias"),

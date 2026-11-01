@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Health;
+using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Workout.Planning;
@@ -124,7 +125,16 @@ internal static class PostgresCycleReadinessPrescription
             .Select(row => row.CycleReadinessPainReviewDate).SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         var safety = CycleReadinessSafetyRule.Evaluate(localDate, phase, phase != CyclePhase.Unknown,
             checkIn?.Pain, previousPain, symptoms);
-        var hasSafetyConcern = safety.RequiresReview || changedPainDate == localDate;
+        // Owner rule: recorded worsening symptoms or a clinician restriction are safety concerns.
+        // A concern withholds the session; it never becomes an automatic dose change.
+        var injurySafetyConcern = await db.WorkoutInjuryLogs.AsNoTracking()
+            .AnyAsync(row => row.UserId == userId &&
+                row.Status != InjuryObservationRule.ClearedStatus &&
+                (row.ClinicianAdvisedAvoid == true ||
+                 (row.WorseningTrigger != InjuryObservationRule.NotAnsweredStorage &&
+                  row.WorseningTrigger != InjuryObservationRule.NoWorseningStorage)),
+                cancellationToken).ConfigureAwait(false);
+        var hasSafetyConcern = safety.RequiresReview || changedPainDate == localDate || injurySafetyConcern;
         var exerciseRecords = await db.WorkoutDayExercises.AsNoTracking()
             .Where(row => row.UserId == userId && row.WorkoutDayId == prescription.DayId &&
                 !row.IsRemovedByReadiness)
@@ -139,7 +149,8 @@ internal static class PostgresCycleReadinessPrescription
             PatternObservations: phase == CyclePhase.Unknown ? null :
                 await PostgresCyclePersonalizationEvidence.LoadAsync(db, userId, localDate, timeZoneId, cancellationToken).ConfigureAwait(false),
             EvaluationDate: localDate, SleepHours: checkIn?.SleepHours, RoutineSymptoms: safety.RoutineSymptoms,
-            PhaseEstimateReliable: phaseProvenance == PhaseReviewProvenance.Estimated));
+            PhaseEstimateReliable: phaseProvenance == PhaseReviewProvenance.Estimated,
+            Approval: PlanningReleaseApproval.CycleReadinessPrescription));
         return prescription with
         {
             Exercises = prescription.Exercises.Select(exercise => exercise.Id == decision.AdjustedPrescriptionId &&

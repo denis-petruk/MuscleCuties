@@ -79,7 +79,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
-        await EnsureMigrationsAppliedAsync(database);
+        await EnsureSchemaInitializedAsync(database);
 
         var ownerId = Guid.CreateVersion7();
         var otherOwnerId = Guid.CreateVersion7();
@@ -181,7 +181,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
-        await EnsureMigrationsAppliedAsync(database);
+        await EnsureSchemaInitializedAsync(database);
 
         var ownerId = Guid.CreateVersion7();
         var photoId = Guid.CreateVersion7();
@@ -218,7 +218,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
-        await EnsureMigrationsAppliedAsync(database);
+        await EnsureSchemaInitializedAsync(database);
 
         var ownerId = Guid.CreateVersion7();
         var photoId = Guid.CreateVersion7();
@@ -266,7 +266,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
-        await EnsureMigrationsAppliedAsync(database);
+        await EnsureSchemaInitializedAsync(database);
 
         var activeOwnerId = Guid.CreateVersion7();
         var otherOwnerId = Guid.CreateVersion7();
@@ -313,7 +313,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
-        await EnsureMigrationsAppliedAsync(database);
+        await EnsureSchemaInitializedAsync(database);
 
         var ownerId = Guid.CreateVersion7();
         var photoId = Guid.CreateVersion7();
@@ -381,7 +381,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
-        await EnsureMigrationsAppliedAsync(database);
+        await EnsureSchemaInitializedAsync(database);
 
         var ownerId = Guid.CreateVersion7();
         var photoId = Guid.CreateVersion7();
@@ -412,7 +412,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
             .UseNpgsql(connectionString).Options;
 
         await using (var database = new PostgresDbContext(options))
-            await EnsureMigrationsAppliedAsync(database);
+            await EnsureSchemaInitializedAsync(database);
 
 
         await using var cmd = new NpgsqlCommand("""
@@ -450,10 +450,11 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         Xunit.Assert.False(reader.GetBoolean(reader.GetOrdinal("app_inherits_reconcile")));
     }
 
-    private static async Task EnsureMigrationsAppliedAsync(PostgresDbContext database)
+    private static async Task EnsureSchemaInitializedAsync(PostgresDbContext database)
     {
-        if ((await database.Database.GetPendingMigrationsAsync()).Any())
-            await database.Database.MigrateAsync();
+        var report = await PostgresSchemaDriftInspector.InspectAsync(database);
+        if (!report.IsCompatible)
+            await PostgresSchemaBootstrap.InitializeAsync(database, seed: true);
     }
 
     private static void AddSyntheticWorkoutProposalAndRevision(

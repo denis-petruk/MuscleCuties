@@ -11,17 +11,17 @@ Dependencies point inward only: `UI / Server → Infrastructure → UseCases →
 | `src/MuscleCuties.Core` | 1 | Domain entities, rules and deterministic math. No ORM, JSON, ASP.NET or MAUI references. |
 | `src/MuscleCuties.UseCases` | 2 | Single-purpose interactors (`ExecuteAsync(input) → output`). Orchestrates stores and delegates every rule to Core. |
 | `src/MuscleCuties.Infrastructure` | 3 | Client adapters: backend API client, encrypted snapshot cache, notifications, localization. |
-| `src/MuscleCuties.Infrastructure.PostgreSql` | 3 | Server persistence. `PostgresDbContext` is the sole schema and migration authority. |
+| `src/MuscleCuties.Infrastructure.PostgreSql` | 3 | Server persistence. `PostgresDbContext` is the sole schema authority; reviewed SQL lives under `Persistence/Schema`. |
 | `services/MuscleCuties.Server` | 4 | ASP.NET Core composition root and HTTP surface, deployed to AWS Lambda. |
-| `src/MuscleCuties.UI` | 4 | .NET MAUI client: iOS primary, with Mac Catalyst, Android and Windows targets. |
-| `src/MuscleCuties.DbMaintenance` | — | Operator CLI for migrations, seeding and catalog maintenance. |
-| `services/MuscleCuties.WorkoutReconciliation` | — | Recurring reconciliation host, invoked one page at a time. Read its README before deploying. |
+| `services/MuscleCuties.WorkoutReconciliation` | 4 | Scheduled ARM64 Lambda worker for pending workout revisions; uses separate discovery and tenant database logins. |
+| `src/MuscleCuties.UI` | 4 | .NET MAUI client, iOS-first; no Android target exists. |
+| `src/MuscleCuties.DbMaintenance` | — | Operator CLI for `dbinit`/`dbcheck`, seeding and catalog maintenance. |
 
 ## Layout
 
 ```
 src/                 Production libraries, the maintenance CLI and the MAUI client
-services/            Deployable hosts (Lambda API, reconciliation worker)
+services/            Lambda API and scheduled reconciliation worker, static site and local PostgreSQL tooling
 tests/               xUnit suites
 docs/                Delivery, migration and release documentation
 artifacts/           Local packaging output (ignored)
@@ -31,7 +31,7 @@ Directory.Build.*    Shared nullable/implicit-using settings, analyzers and test
 
 ## Build and test
 
-The SDK is pinned by `global.json`, which rolls forward to the latest installed 10.x.
+The SDK is pinned by `global.json`; install the pinned .NET 10 SDK before building.
 
 ```bash
 dotnet restore MuscleCuties.sln
@@ -53,7 +53,7 @@ The backend needs a PostgreSQL connection string and JWT signing settings from c
 dotnet run --project services/MuscleCuties.Server
 ```
 
-The MAUI client builds for iOS only on macOS with Xcode and the .NET iOS workload installed; on Linux the project targets Android.
+The MAUI client is iOS-first; no Android target exists. The agent must not build or run it. The owner verifies it on macOS with Xcode and the .NET iOS workload.
 
 ```bash
 dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -f net10.0-ios
@@ -73,6 +73,6 @@ GitLab CI runs the suites, packages the Lambda archive, and exposes deployment a
 ## Conventions
 
 - Every threshold, offset and dimension is a named constant; bare numeric literals are rejected in review.
-- Schema changes ship as migrations under `Infrastructure.PostgreSql`; applied migrations are never edited.
+- The schema is model-first: `PostgresDbContext` plus reviewed SQL under `Persistence/Schema`; there are no EF migrations. `DbMaintenance dbinit` creates, secures and seeds, and `dbcheck` detects drift.
 - User and health data stays in first-party PostgreSQL and private object storage. External APIs receive generic queries only.
 - Failed network or server operations surface a specific outcome to the user rather than a generic message.

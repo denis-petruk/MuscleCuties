@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Authorization;
@@ -18,12 +19,18 @@ using Microsoft.IdentityModel.Tokens;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Workout;
+using MuscleCuties.Infrastructure.ApiClient;
+using MuscleCuties.Infrastructure.Cloud;
 using MuscleCuties.Server;
 using MuscleCuties.UseCases.Features.Account.Authentication;
 using MuscleCuties.UseCases.Features.Account.EmailChallenge;
 using MuscleCuties.UseCases.Features.Account.Registration;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
+using MuscleCuties.UseCases.Features.CheckInAndInjury;
+using MuscleCuties.UseCases.Features.Caching;
+using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
+using MuscleCuties.UseCases.Features.Workout.Injury;
 using Xunit;
 
 namespace MuscleCuties.Server.Tests;
@@ -239,6 +246,74 @@ public sealed class ServerRouteParityTests
     }
 
     [Fact]
+    public async Task InjurySaveRejectsUnknownTriggerAndDefaultsAnOmittedAnswer()
+    {
+        await using var fixture = await ServerFixture.StartAsync();
+        fixture.SetBearer(Guid.NewGuid());
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var invalid = await fixture.Client.PutAsJsonAsync("/api/v1/injuries", new
+        {
+            SiteFlag = 2, Status = "Acute", Since = today, Pain = 3, Date = today,
+            WorseningTrigger = "unknown-trigger"
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+        Assert.Null(fixture.Injuries.LastSave);
+
+        var omitted = await fixture.Client.PutAsJsonAsync("/api/v1/injuries", new
+        {
+            SiteFlag = 2, Status = "Acute", Since = today, Pain = 3, Date = today
+        });
+
+        Assert.Equal(HttpStatusCode.OK, omitted.StatusCode);
+        Assert.NotNull(fixture.Injuries.LastSave);
+        Assert.Equal(InjuryWorseningTrigger.NotAnswered, fixture.Injuries.LastSave.WorseningTrigger);
+        Assert.Null(fixture.Injuries.LastSave.ClinicianAdvisedAvoid);
+    }
+
+    [Fact]
+    public async Task InjuryCloudStoreRoundTripsSafetyAnswersThroughHttp()
+    {
+        await using var fixture = await ServerFixture.StartAsync();
+        fixture.SetBearer(Guid.NewGuid());
+        using var handler = fixture.CreateRecordingHandler();
+        using var http = new HttpClient(handler) { BaseAddress = fixture.Client.BaseAddress };
+        http.DefaultRequestHeaders.Authorization = fixture.Client.DefaultRequestHeaders.Authorization;
+        var api = new MuscleCutiesBackendApiClient(http, new EmptyTokenStore(), new UnusedCache(), new OnlineGate());
+        var store = new CloudWorkoutInjuryStore(api);
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        await store.SaveInjuryAsync(new SaveWorkoutInjuryInput(
+            0, WorkoutInjurySite.Shoulder, WorkoutInjuryStatus.Acute, 3, today,
+            InjuryWorseningTrigger.OverheadReach, true));
+        Assert.NotNull(handler.LastBody);
+        using (var json = JsonDocument.Parse(handler.LastBody))
+        {
+            var body = json.RootElement;
+            Assert.Equal(new[] { "clinicianAdvisedAvoid", "date", "id", "pain", "since", "siteFlag", "status", "worseningTrigger" },
+                body.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+            Assert.Equal(nameof(InjuryWorseningTrigger.OverheadReach), body.GetProperty("worseningTrigger").GetString());
+            Assert.True(body.GetProperty("clinicianAdvisedAvoid").GetBoolean());
+        }
+
+        var loaded = Assert.Single(await store.GetAllInjuriesAsync());
+        Assert.Equal(InjuryWorseningTrigger.OverheadReach, loaded.WorseningTrigger);
+        Assert.True(loaded.ClinicianAdvisedAvoid);
+        await store.SaveInjuryAsync(new SaveWorkoutInjuryInput(loaded.Id, loaded.Site, loaded.Status,
+            5, loaded.Since, loaded.WorseningTrigger, loaded.ClinicianAdvisedAvoid));
+        var edited = Assert.Single(await store.GetAllInjuriesAsync());
+        Assert.Equal(loaded.Id, edited.Id);
+        Assert.Equal(5, edited.Pain);
+        Assert.Equal(InjuryWorseningTrigger.OverheadReach, edited.WorseningTrigger);
+        Assert.True(edited.ClinicianAdvisedAvoid);
+        await store.ClearInjuryAsync(edited.Id);
+        var cleared = Assert.Single(await store.GetAllInjuriesAsync());
+        Assert.Equal(WorkoutInjuryStatus.Cleared, cleared.Status);
+        Assert.Equal(InjuryWorseningTrigger.OverheadReach, cleared.WorseningTrigger);
+        Assert.True(cleared.ClinicianAdvisedAvoid);
+    }
+
+    [Fact]
     public async Task LegacyWorkoutPreferencesCannotChangeAppliedPreferences()
     {
         await using var fixture = await ServerFixture.StartAsync();
@@ -365,15 +440,18 @@ public sealed class ServerRouteParityTests
         public StubEmailChallenges Challenges { get; }
         public StubProfileStore Profile { get; }
         public StubAuthentication Authentication { get; }
+        public StubCheckInAndInjuryStore Injuries { get; }
         public EndpointDataSource Endpoints => app.Services.GetRequiredService<EndpointDataSource>();
+        public RecordingHandler CreateRecordingHandler() => new(app.GetTestServer().CreateHandler());
 
         private ServerFixture(WebApplication app, StubEmailChallenges challenges,
-            StubProfileStore profile, StubAuthentication authentication)
+            StubProfileStore profile, StubAuthentication authentication, StubCheckInAndInjuryStore injuries)
         {
             this.app = app;
             Challenges = challenges;
             Profile = profile;
             Authentication = authentication;
+            Injuries = injuries;
             Client = app.GetTestClient();
         }
 
@@ -392,6 +470,7 @@ public sealed class ServerRouteParityTests
             var challenges = new StubEmailChallenges();
             var profile = new StubProfileStore(profileThrows);
             var authentication = new StubAuthentication();
+            var injuries = new StubCheckInAndInjuryStore();
             var app = ApiApplication.Build(builder, services =>
             {
                 services.AddDataProtection().UseEphemeralDataProtectionProvider();
@@ -403,9 +482,11 @@ public sealed class ServerRouteParityTests
                 services.AddSingleton<IEmailChallengeUseCase>(challenges);
                 services.RemoveAll<IAccountAuthenticationUseCase>();
                 services.AddSingleton<IAccountAuthenticationUseCase>(authentication);
+                services.RemoveAll<ICheckInAndInjuryStore>();
+                services.AddSingleton<ICheckInAndInjuryStore>(injuries);
             });
             await app.StartAsync();
-            return new ServerFixture(app, challenges, profile, authentication);
+            return new ServerFixture(app, challenges, profile, authentication, injuries);
         }
 
         public void SetBearer(Guid owner, bool includeTokenId = true, bool includeSessionId = true)
@@ -431,6 +512,74 @@ public sealed class ServerRouteParityTests
             Client.Dispose();
             await app.DisposeAsync();
         }
+    }
+
+    private sealed class StubCheckInAndInjuryStore : ICheckInAndInjuryStore
+    {
+        public SaveInjuryObservationRequest? LastSave { get; private set; }
+        private InjuryObservationRecord? stored;
+
+        public Task<InjuryObservationRecord> SaveInjuryAsync(SaveInjuryObservationRequest request,
+            CancellationToken cancellationToken)
+        {
+            LastSave = request;
+            stored = new InjuryObservationRecord(request.Id, request.SiteFlag, request.Status,
+                request.Since, request.Pain, request.Date, request.Status != InjuryObservationRule.ClearedStatus,
+                request.WorseningTrigger, request.ClinicianAdvisedAvoid);
+            return Task.FromResult(stored);
+        }
+
+        public Task<IReadOnlyList<DailyCheckInRecord>> LoadCheckInsAsync(Guid userId, DateOnly from, DateOnly through,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<DailyCheckInRecord> SaveCheckInAsync(SaveDailyCheckInRequest request,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<bool> DeleteCheckInAsync(Guid userId, Guid checkInId,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<IReadOnlyList<InjuryObservationRecord>> LoadInjuriesAsync(Guid userId, bool activeOnly,
+            CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InjuryObservationRecord>>(
+                stored is null || (activeOnly && !stored.IsActive) ? [] : [stored]);
+        public Task<bool> DeleteInjuryAsync(Guid userId, Guid injuryId,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
+    }
+
+    private sealed class RecordingHandler(HttpMessageHandler inner) : DelegatingHandler(inner)
+    {
+        public string? LastBody { get; private set; }
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (request.Content is not null)
+                LastBody = await request.Content.ReadAsStringAsync(cancellationToken);
+            return await base.SendAsync(request, cancellationToken);
+        }
+    }
+
+    private sealed class EmptyTokenStore : IBackendSessionTokenStore
+    {
+        public Task<BackendSessionTokens?> ReadTokensAsync(CancellationToken cancellationToken = default) => Task.FromResult<BackendSessionTokens?>(null);
+        public Task WriteTokensAsync(BackendSessionTokens tokens, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task ClearTokensAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    }
+
+    private sealed class OnlineGate : ICloudAuthorityGate
+    {
+        public int AuthorityVersion => 1;
+        public CloudAuthorityMode CurrentMode => CloudAuthorityMode.ServerAuthoritativeCutover;
+        public bool IsNetworkOnline => true;
+        public void SetAuthorityMode(CloudAuthorityMode mode) => throw new NotSupportedException();
+        public void SetNetworkOnline(bool isOnline) => throw new NotSupportedException();
+        public OfflineWriteCheckResult EvaluateWriteAllowed(string operationName) => new(true, null, null);
+    }
+
+    private sealed class UnusedCache : ILocalCacheService
+    {
+        public Task ActivateAccountAsync(Guid accountId, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task SaveActiveWorkoutSnapshotAsync(Guid accountId, ActiveWorkoutSessionSnapshot snapshot, DateTimeOffset capturedAtUtc, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<CachedSnapshotEnvelope<ActiveWorkoutSessionSnapshot>?> LoadActiveWorkoutSnapshotAsync(Guid accountId, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task SaveCycleStateSnapshotAsync(Guid accountId, CycleStateSnapshot snapshot, DateTimeOffset capturedAtUtc, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<CachedSnapshotEnvelope<CycleStateSnapshot>?> LoadCycleStateSnapshotAsync(Guid accountId, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task SaveNutritionTargetsSnapshotAsync(Guid accountId, DailyNutritionTargetsSnapshot snapshot, DateTimeOffset capturedAtUtc, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<CachedSnapshotEnvelope<DailyNutritionTargetsSnapshot>?> LoadNutritionTargetsSnapshotAsync(Guid accountId, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task ClearAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
     }
 
     private sealed class StubRegistrationStore(bool emptyQuiz) : ICompleteAccountRegistrationStore

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
 
 namespace MuscleCuties.Server.CheckInAndInjury;
@@ -122,6 +123,13 @@ public static class CheckInAndInjuryEndpointMappings
                 }
                 var effectiveDate = body.Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
 
+                // An omitted answer keeps the closed-set default so an older client stays valid, but a
+                // supplied value outside the closed set is rejected rather than silently coerced.
+                var hasTriggerAnswer =
+                    InjuryObservationRule.TryNormalizeWorseningTrigger(body.WorseningTrigger, out var worseningTrigger);
+                if (!hasTriggerAnswer && !string.IsNullOrWhiteSpace(body.WorseningTrigger))
+                    return Results.BadRequest();
+
                 var record = await useCase.SaveInjuryAsync(
                     new SaveInjuryObservationRequest(
                         userId,
@@ -130,7 +138,9 @@ public static class CheckInAndInjuryEndpointMappings
                         body.Status,
                         body.Since,
                         body.Pain,
-                        effectiveDate),
+                        effectiveDate,
+                        worseningTrigger,
+                        body.ClinicianAdvisedAvoid),
                     cancellationToken).ConfigureAwait(false);
                 return Results.Ok(record);
             }
@@ -198,5 +208,7 @@ public static class CheckInAndInjuryEndpointMappings
         DateOnly Since,
         int Pain,
         DateOnly? Date = null,
-        string? Site = null);
+        string? Site = null,
+        string? WorseningTrigger = null,
+        bool? ClinicianAdvisedAvoid = null);
 }

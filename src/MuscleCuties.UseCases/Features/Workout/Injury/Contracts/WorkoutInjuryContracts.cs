@@ -27,14 +27,20 @@ public sealed record WorkoutInjuryLogDto(
     int Pain,
     DateOnly Since,
     DateOnly LoggedDate,
-    bool IsActive);
+    bool IsActive,
+    MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger WorseningTrigger =
+        MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
+    bool? ClinicianAdvisedAvoid = null);
 
 public sealed record SaveWorkoutInjuryInput(
     int Id,
     WorkoutInjurySite Site,
     WorkoutInjuryStatus Status,
     int Pain,
-    DateOnly Since);
+    DateOnly Since,
+    MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger WorseningTrigger =
+        MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
+    bool? ClinicianAdvisedAvoid = null);
 
 public sealed record WorkoutInjuryImpactDto(
     bool HasActiveInjuries,

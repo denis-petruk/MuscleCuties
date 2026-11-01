@@ -21,7 +21,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
     private const string ActiveStatus = "Active";
     private const string ClosedStatus = "Closed";
     private const int InitialAnswerVersion = 0;
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions JsonOptions = WorkoutPlanningJson.Create();
 
     public async Task<StrengthPlanProposalCreatedV020> SaveAsync(Guid userId, StrengthPlanPreviewRequestV020 request,
         StrengthPlanPreviewResponseV020 preview, CancellationToken cancellationToken)
@@ -150,6 +150,9 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
         ArgumentNullException.ThrowIfNull(preview);
         if (userId == Guid.Empty || request.DraftPreferences is null ||
             !string.Equals(preview.Status, "Feasible", StringComparison.Ordinal) ||
+            preview.Sessions is null || preview.Sessions.Count == 0 ||
+            preview.Sessions.Any(session => session is null || session.Slots is null ||
+                !session.Slots.Any(slot => slot.ExerciseId.HasValue)) ||
             preview.MixedActivitySchedule?.Sessions is not { Count: > 0 } ||
             preview.PolicyId != StrengthPlanPreviewRule.PolicyId ||
             preview.PolicyVersion != StrengthPlanPreviewRule.Version ||

@@ -111,7 +111,10 @@ public sealed class CreateStrengthPlanProposalV020UseCase(
         ArgumentNullException.ThrowIfNull(request);
         var preview = await previewUseCase.ExecuteAsync(userId, request, cancellationToken)
             .ConfigureAwait(false);
+        var hasStrengthContent = preview.Sessions.Count > 0 && preview.Sessions.All(session =>
+            session.Slots.Any(slot => slot.ExerciseId.HasValue));
         if (!string.Equals(preview.Status, "Feasible", StringComparison.Ordinal) ||
+            !hasStrengthContent ||
             preview.MixedActivitySchedule?.Sessions is not { Count: > 0 })
             return new StrengthPlanProposalCreatedV020(Guid.Empty, preview, false);
 

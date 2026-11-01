@@ -7,7 +7,7 @@ internal static partial class RussianUiText
         Values["Workout_Session_AdjustmentDaily"] = "По отметке за сегодня добавочный подход сокращён на один. Основная нагрузка сохранена.";
         Values["Workout_Session_AdjustmentPhase"] = "С учётом вашего обычного самочувствия в этой фазе сегодня на один дополнительный подход меньше.";
         Values["Workout_Session_AdjustmentPattern"] = "Ваши прошлые отметки и тренировки указывают, что сегодня стоит убрать один дополнительный подход.";
-        Values["Workout_Session_AdjustmentSafety"] = "Перед началом тренировки проверьте сегодняшние симптомы.";
+        Values["Workout_Session_AdjustmentSafety"] = "Перед началом тренировки проверьте сегодняшние симптомы. Это не медицинская рекомендация, и приложение не является медицинским консультантом; при усиливающейся или не проходящей боли обратитесь к квалифицированному специалисту.";
         Values["Workout_Session_PrescriptionWarmup"] = "Разминка: {0} мин";
         Values["Workout_Session_PrescriptionMain"] = "Основная часть: {0} мин";
         Values["Workout_Session_PrescriptionCooldown"] = "Заминка: {0} мин";
@@ -24,6 +24,17 @@ internal static partial class RussianUiText
         Values["Workout_Overview_Status_Upcoming"] = "Предстоит";
         Values["Injury_Log_ReloadAfterChangeFailed"] = "Изменение сохранено, но журнал травм не загрузился. Попробуйте снова перед тренировкой.";
         Values["Injury_Log_ActiveWorkoutPreventsInjury"] = "Завершите или прервите активную тренировку перед записью травмы. Записанные подходы сохранятся.";
+        Values["Injury_Log_WorseningTrigger_Label"] = "Какие движения усиливают боль?";
+        Values["Injury_Log_WorseningTrigger_NotAnswered"] = "Пока не знаю";
+        Values["Injury_Log_WorseningTrigger_None"] = "Нет";
+        Values["Injury_Log_WorseningTrigger_OverheadReach"] = "Движения руками вверх";
+        Values["Injury_Log_WorseningTrigger_DeepKneeFlexion"] = "Глубокое сгибание колена";
+        Values["Injury_Log_WorseningTrigger_SpinalLoading"] = "Наклоны и нагрузка на спину";
+        Values["Injury_Log_WorseningTrigger_ImpactAndGait"] = "Ударная нагрузка или ходьба";
+        Values["Injury_Log_WorseningTrigger_GripAndWristLoad"] = "Нагрузка на кисть или хват";
+        Values["Injury_Log_ClinicianAdvisedAvoid_Label"] = "Врач рекомендовал избегать этих движений";
+        Values["Injury_Log_Safety_StopAndSeekCare"] = "Остановитесь, если боль усиливается, и обратитесь к квалифицированному специалисту. Это не медицинская рекомендация, и приложение не является медицинским консультантом; силовой план при этом применяется с учётом изменённых движений.";
+        Values["Injury_Log_Safety_ClinicianRestriction"] = "Врач рекомендовал избегать этого движения. План сохраняет силовую нагрузку и заменяет движение; это не медицинская рекомендация, и приложение не является медицинским консультантом.";
         Values["Workout_Session_FinishTimedActivity"] = "Завершить активность";
         Values["Workout_Session_AbandonActivity"] = "Прервать активность";
         Values["Workout_Overview_InProgressTitle"] = "Тренировка продолжается";
@@ -117,7 +128,7 @@ internal static partial class RussianUiText
         Values["Cycle_Hero_HeaderTitle"] = "СЕГОДНЯ В ВАШЕЙ ФАЗЕ";
         Values["Cycle_Hero_LogActionAccessibility"] = "Записать сегодняшние симптомы и интенсивность выделений";
         Values["Cycle_Hero_PhaseFormat"] = "{0} фаза";
-        Values["Cycle_Page_MedicalDisclaimer"] = "Только рекомендации по самочувствию. Оценки цикла не помогают диагностировать заболевания или определять фертильные дни. При необычных симптомах обратитесь к врачу.";
+        Values["Cycle_Page_MedicalDisclaimer"] = "Не одобрено клинически. MuscleCuties не является медицинским консультантом, медицинской услугой или заменой профессиональной помощи. Рекомендации приложения не проверены и не одобрены врачом. Перед тем как полагаться на приложение, обсудите тренировки, свой цикл и любые травмы или боли с квалифицированным специалистом. Тренировки и планы при этом применяются с учётом того, что вы сообщили.";
         Values["Cycle_Page_OpenSettingsAccessibility"] = "Открыть цикл и личные настройки";
         Values["Cycle_Page_SettingsAccessibility"] = "Настройки цикла";
         Values["Cycle_Page_Title"] = "Ваш цикл";
