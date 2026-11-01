@@ -83,6 +83,9 @@ Thumbs.db
 # Local, immutable implementation snapshots
 .foundation-baselines/
 
+# Local scratch
+.scratch/
+
 # Patch residue
 *.orig
 *.rej

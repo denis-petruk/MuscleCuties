@@ -57,7 +57,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
 
     internal enum AcceptanceOrigin { User, Automatic }
 
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions JsonOptions = WorkoutPlanningJson.Create();
 
     public async Task<AcceptStrengthPlanProposalResultV020> AcceptAsync(Guid userId,
         AcceptStrengthPlanProposalRequestV020 request, CancellationToken cancellationToken) =>
@@ -627,7 +627,8 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
     {
         strengthSessions = new Dictionary<DayOfWeek, StrengthPlanPreviewSessionV020>();
         assignments = [];
-        if (proposalSessions.Any(session => session is null))
+        if (proposalSessions.Count == 0 || proposalSessions.Any(session => session is null ||
+            session.Slots is null || !session.Slots.Any(slot => slot.ExerciseId.HasValue)))
             return false;
 
         var orderedSessions = proposalSessions.OrderBy(session => session.SessionIndex).ToArray();

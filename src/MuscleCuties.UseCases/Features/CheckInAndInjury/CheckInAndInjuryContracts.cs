@@ -52,7 +52,10 @@ public sealed record InjuryObservationRecord(
     DateOnly Since,
     int Pain,
     DateOnly Date,
-    bool IsActive);
+    bool IsActive,
+    MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger WorseningTrigger =
+        MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
+    bool? ClinicianAdvisedAvoid = null);
 
 public sealed record SaveInjuryObservationRequest(
     Guid UserId,
@@ -61,7 +64,10 @@ public sealed record SaveInjuryObservationRequest(
     string Status,
     DateOnly Since,
     int Pain,
-    DateOnly Date);
+    DateOnly Date,
+    MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger WorseningTrigger =
+        MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
+    bool? ClinicianAdvisedAvoid = null);
 
 public sealed record CheckInAndInjuryHistorySnapshot(
     IReadOnlyList<DailyCheckInRecord> CheckIns,

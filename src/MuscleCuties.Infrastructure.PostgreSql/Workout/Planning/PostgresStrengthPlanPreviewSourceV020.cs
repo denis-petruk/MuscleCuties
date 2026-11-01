@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Models.Enums.Users;
@@ -92,6 +93,18 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             episodes.Any(episode => episode.InjuryLogId == injury.Id && (episode.SourceDeleted ||
                 episode.ClearedOn is null || episode.ClearedOn > today ||
                 string.IsNullOrWhiteSpace(episode.ClearanceTimeZoneId) || episode.ClearanceTimeZoneVersion is null))).ToArray();
+        // Safety answers drive exercise substitution, not only the cycle/readiness gate. The trigger
+        // mapping is closed; an explicit clinician restriction expands through reviewed catalog
+        // contraindications so it still applies when the trigger question was left unanswered.
+        var blockedMovementPatterns = InjuryWorseningMovementRule.BlockedPatterns(
+            relevantInjuries.Select(injury => new InjurySafetyAnswer(
+                InjuryObservationRule.TryNormalizeWorseningTrigger(injury.WorseningTrigger, out var worsening)
+                    ? worsening
+                    : InjuryWorseningTrigger.NotAnswered,
+                injury.ClinicianAdvisedAvoid,
+                (InjuryFlag)injury.SiteFlag)),
+            definitions.Select(definition => new ExerciseContraindicationPattern(
+                definition.Pattern, definition.Contraindications)));
         // The reviewed site/status table is the only source of activity-level injury restriction.
         // Unknown status fails closed as Acute; cleared injuries never restrict an activity.
         var restrictedActivityTypes = InjuryActivityRestrictionRule.GetBlockedActivities(
@@ -175,6 +188,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             CatalogFingerprint = PlanningCatalogFingerprint.FromInputs(definitions, goalTierWeights, preferences, floorRows),
             InjuryFingerprint = PlanningInputFingerprint.Injuries(injuries),
             RestrictedActivityTypes = restrictedActivityTypes,
+            BlockedMovementPatterns = blockedMovementPatterns,
             ActivePlanId = activePlanId,
             ActiveRevisionId = activeRevisionId,
             HistoryFingerprint = PlanningInputFingerprint.Hash(logs),

@@ -33,28 +33,16 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
     private const string ExpectedExerciseReviewVersion = "MC-EXERCISE-REVIEW-2026-10-23";
     private const string ExpectedSubstitutionReviewVersion = "MC-SUBSTITUTIONS-2026-10-23";
     private const string ExpectedCatalogSnapshot = "REPO-SEED-SNAPSHOT-2026-10-23";
-    private const string ReviewEvidenceMigration = "20261023160000_AddWorkoutExerciseReviewEvidenceV020";
+
 
     public async Task<ReviewedCatalogImportDryRunV020> DryRunAsync(string manifestPath,
         CancellationToken cancellationToken = default)
     {
         using var document = await ReadManifestAsync(manifestPath, cancellationToken).ConfigureAwait(false);
-        var pending = await context.Database.GetPendingMigrationsAsync(cancellationToken)
+        var definitions = await context.WorkoutExerciseDefinitions
+            .AsNoTracking()
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
-        var query = context.WorkoutExerciseDefinitions.AsNoTracking();
-        var definitions = pending.Contains(ReviewEvidenceMigration, StringComparer.Ordinal)
-            ? await query.Select(row => new WorkoutExerciseDefinition
-                {
-                    Id = row.Id,
-                    SeedCode = row.SeedCode,
-                    Name = row.Name,
-                    Pattern = row.Pattern,
-                    Required = row.Required,
-                    SetupSeconds = row.SetupSeconds,
-                    SecondsPerRep = row.SecondsPerRep,
-                    Contraindications = row.Contraindications
-                }).ToListAsync(cancellationToken).ConfigureAwait(false)
-            : await query.ToListAsync(cancellationToken).ConfigureAwait(false);
         return InspectSnapshot(document.RootElement, definitions);
     }
 

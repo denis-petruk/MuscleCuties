@@ -192,58 +192,19 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
             requiresReducedVolume = result.RequiresReducedVolumeAcknowledgment;
         }
 
-        // A valid remainder may still be scheduled when no selected strength option is safe.
-        // Invalid inputs remain failures rather than being reinterpreted as omissions.
-        if (sourceData is not null && result.Status == StrengthPlanPreviewStatus.Limited &&
-            selectedStrengthStyles.Length > 0 && result.Sessions.Count > 0 &&
-            result.Sessions.SelectMany(session => session.Slots).Any(slot =>
-                slot.IsRequired && slot.Outcome == StrengthSlotResolutionOutcome.NoSafeCandidate) &&
-            result.Sessions.SelectMany(session => session.Slots).Where(slot => slot.IsRequired).All(slot =>
-                slot.Outcome != StrengthSlotResolutionOutcome.MissingReviewData) &&
-            result.LimitationCodes.All(code => code == "RequiredMovementSlotUnresolved"))
+        // A plan must contain at least one safe strength exercise. A non-strength remainder
+        // remains a limited preview and can never be saved or accepted as a plan.
+        if (sourceData is not null && result.Status != StrengthPlanPreviewStatus.InvalidInput &&
+            !result.Sessions.Any(session => session.Slots.Any(slot => slot.ExerciseId.HasValue)))
         {
-            var context = MixedActivityScheduleMapperV020.ToContext(request, sourceData, result);
-            var nonStrength = context.SelectedActivities?.Where(activity =>
-                !StrengthStyleSelectionRule.IsStrengthStyle(activity)).ToArray() ?? [];
-            var noSafeActivities = nonStrength.Length == 0;
-            if (nonStrength.Length > 0)
+            result = result with
             {
-                var remainder = MixedActivityWeekScheduleRule.Evaluate(context with
-                {
-                    SelectedActivities = nonStrength,
-                    ChosenStrengthActivity = null
-                });
-                noSafeActivities = remainder.InputReasons.Count == 0 && remainder.Sessions.Count == 0;
-                if (remainder.InputReasons.Count == 0 && remainder.Sessions.Count > 0)
-                {
-                    var omission = new MixedActivityScheduleDecisionV020((int)choices.Activity,
-                        MixedActivityScheduleDisposition.Omitted.ToString(), null, null, null, 0,
-                        result.LimitationCodes.Count > 0 ? result.LimitationCodes : [StrengthStyleSelectionRule.NoSafeStrengthStyleFitCode]);
-                    var schedule = StrengthPlanPreviewMapperV020.ToMixedSchedule(remainder);
-                    return StrengthPlanPreviewMapperV020.ToResponse(result) with
-                    {
-                        Status = nameof(StrengthPlanPreviewStatus.Feasible),
-                        Sessions = [],
-                        LimitationCodes = [],
-                        AdvisoryCodes = result.AdvisoryCodes.Append(StrengthStyleSelectionRule.NoSafeStrengthStyleFitCode).ToArray(),
-                        MixedActivitySchedule = schedule with { Activities = schedule.Activities.Append(omission).ToArray() },
-                        SourceProfileVersion = sourceData.ProfileVersion,
-                        SourceInjuryFingerprint = sourceData.InjuryFingerprint,
-                        SourceActivePlanId = sourceData.ActivePlanId,
-                        SourceActiveRevisionId = sourceData.ActiveRevisionId,
-                        SourceHistoryFingerprint = sourceData.HistoryFingerprint,
-                        SourceCatalogFingerprint = sourceData.CatalogFingerprint,
-                        SourceTimeZoneVersion = sourceData.TimeZoneVersion,
-                        SourceExperienceVersion = sourceData.ExperienceVersion,
-                        SourceAnswerVersion = sourceData.AnswerVersion,
-                        SourceMuscleGroupsByExerciseId = sourceData.MuscleGroupsByExerciseId?.ToDictionary(
-                            pair => pair.Key, pair => pair.Value.OrderBy(value => value, StringComparer.Ordinal).ToArray())
-                    };
-                }
-            }
-            if (noSafeActivities)
-                result = result with { LimitationCodes = result.LimitationCodes
-                    .Append(StrengthStyleSelectionRule.NoSafeStrengthStyleFitCode).Distinct(StringComparer.Ordinal).ToArray() };
+                Status = StrengthPlanPreviewStatus.Limited,
+                LimitationCodes = result.LimitationCodes
+                    .Append(StrengthStyleSelectionRule.NoSafeStrengthStyleFitCode)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray()
+            };
         }
 
         var response = StrengthPlanPreviewMapperV020.ToResponse(result);

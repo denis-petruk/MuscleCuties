@@ -321,6 +321,8 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             row.Status = request.Status;
             row.Since = request.Since;
             row.Pain = request.Pain;
+            row.WorseningTrigger = request.WorseningTrigger.ToString();
+            row.ClinicianAdvisedAvoid = request.ClinicianAdvisedAvoid;
             row.Date = request.Date;
             row.ClearedDate = isClearing ? originalClearanceDate : null;
 
@@ -666,7 +668,11 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             row.Since,
             row.Pain,
             row.Date,
-            !string.Equals(row.Status, ClearedStatus, StringComparison.OrdinalIgnoreCase));
+            !string.Equals(row.Status, ClearedStatus, StringComparison.OrdinalIgnoreCase),
+            InjuryObservationRule.TryNormalizeWorseningTrigger(row.WorseningTrigger, out var worsening)
+                ? worsening
+                : InjuryWorseningTrigger.NotAnswered,
+            row.ClinicianAdvisedAvoid);
 
     private static CyclePhase TryParsePhase(string? phase) =>
         Enum.TryParse<CyclePhase>(phase, ignoreCase: true, out var parsed) && Enum.IsDefined(parsed)

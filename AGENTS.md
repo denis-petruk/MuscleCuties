@@ -4,7 +4,7 @@
 - **Language & Brevity:** Think, search, and code in English. Respond concisely without introductory filler or repeating the prompt.
 - **Index-First Navigation:** Identify the target project from the Directory Index below before exploring. Never scan the whole repository.
 - **Search-First & Frugal Reading:** Always use `rg` or `grep` to locate symbols, DTOs, or XAML bindings first. Read only narrow line ranges around matches—never load entire large files or logs into context.
-- **Deny Noise:** NEVER read `bin/`, `obj/`, `.vs/`, `Migrations/*.Designer.cs`, `*.g.cs`, `.env`, lockfiles, or binary assets.
+- **Deny Noise:** NEVER read `bin/`, `obj/`, `.vs/`, `*.g.cs`, `.env`, lockfiles, or binary assets.
 - **State Continuity:** After completing a task, update `ROADMAP.md` / `STATUS.md` so context is preserved across `/clear` sessions.
 
 ## 2. Project Directory Index & Architecture Boundaries
@@ -17,7 +17,8 @@ Dependencies point strictly INWARD: `Server / UI` -> `Infrastructure` -> `UseCas
   - Single-responsibility Lego blocks (`ExecuteAsync(InputDTO) -> Task<OutputDTO>`).
   - Orchestrates repositories and entities only. NEVER perform business/cycle math or validation here—delegate to Core Entities.
 - `src/MuscleCuties.Infrastructure.PostgreSql` (Layer 3: Adapters & Persistence)
-  - `PostgresDbContext` (sole schema/migration authority) and `RepoModels`. Maps pure Domain Entities to/from PostgreSQL.
+  - `PostgresDbContext` (sole schema authority) and `RepoModels`. Maps pure Domain Entities to/from PostgreSQL.
+  - Schema is model-first: there are NO EF migrations. `Persistence/Schema/security.sql` owns roles, grants, RLS policies and SECURITY DEFINER functions; `Persistence/Schema/schema_supplement.sql` owns the few objects EF cannot express. `DbMaintenance dbinit` creates/secures/seeds, `dbcheck` detects drift.
 - `services/MuscleCuties.Server` (Layer 4: Backend Host)
   - ASP.NET Core (.NET 10) + AWS Lambda (`Program.cs` composition root: never inject scoped services into singletons).
 - `src/MuscleCuties.UI` (Layer 4: Mobile Client)
@@ -35,9 +36,11 @@ Dependencies point strictly INWARD: `Server / UI` -> `Infrastructure` -> `UseCas
 - **Dormant Health Adapters:** NEVER wire `DisabledHealthSyncService` to live Apple Health / Google Health Connect without explicit user authorization (HealthKit is strictly read-only step count).
 - **Deterministic Math (`ReadinessEngine`, `CyclePrediction`):** Catch all edge cases (`DivideByZero`, empty history, negative durations) and return clinically conservative default records. Never hallucinate data or omit null checks.
 - **Zero Magic Numbers or Cryptic Keys:** Every numeric literal (thresholds, offsets, multipliers, UI dimensions—except trivial `0`/`1` loop counters) and localization/resource key MUST be a descriptive, human-readable constant (e.g., `DefaultLutealPhaseDays = 14`, `Nutrition_MedicalDisclaimer`).
+- **Always-Applicable Strength Plan (owner rule, 2026-11-01):** Every generated plan MUST be immediately performable — non-empty, equipment-satisfiable, no unmet prerequisite — and a session with an active injury MUST still contain strength training. Injury work is additive and dose-adjusted, never a replacement: rehab or mobility alone is not an acceptable session. When a contraindication removes an exercise, substitute a safe strength alternative (same slot → same pattern other equipment → same muscle group other pattern → minimum viable strength block); if no strength movement is permissible, withhold the session with an injury-review reason instead of silently converting it to rehab. Never emit a zero-strength session.
 
 ## 4. Pre-Commit Verification Gate
-- **Build Gate:** Run **iOS builds** and `dotnet test` only. Do NOT run Android, Mac Catalyst, or Windows builds unless requested.
+- **Build Gate (owner rule, 2026-11-01):** Test **backend only** — `dotnet build`/`dotnet test` on Core, UseCases, Infrastructure, DbMaintenance and Server. NEVER build, run or test the UI project: no iOS/Android/Mac Catalyst/Windows builds, no simulator runs, no screenshots. UI code must still be implemented fully and correctly; it simply is not verified by the agent. If a UI change needs checking, hand it to the owner instead of building it.
+- **No Android Target (owner rule, 2026-11-01):** The UI project targets **iOS only**. Never add, restore or re-enable `net10.0-android` in `TargetFrameworks`, never install Android workloads, and never introduce Android-only code paths (`#if ANDROID`, `Platforms/Android` additions). An Android target framework appearing in the build is a regression to be removed, not accommodated.
 - **Mandatory 6-Point Check before finalizing changes or deletions:**
   1. *Boundaries:* Zero outer imports in Core/UseCases; only DTOs cross into UI/Controllers; no `DbContext`/`IRepository` in ViewModels.
   2. *XAML Protection:* Before deleting/renaming any C# property, `[ObservableProperty]`, or `[RelayCommand]` with 0 C# references, `rg` all `.xaml` files to confirm zero runtime bindings.

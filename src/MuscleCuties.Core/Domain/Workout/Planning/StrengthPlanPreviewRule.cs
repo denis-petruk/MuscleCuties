@@ -52,6 +52,9 @@ public sealed record StrengthPlanPreviewData(
     /// activity-restricted: their safety is enforced per exercise by contraindication filtering
     /// and injury provenance. Absent evidence falls back to the symptom flag.</summary>
     public IReadOnlySet<WorkoutActivityType>? RestrictedActivities { get; init; }
+    /// <summary>Movement patterns blocked by recorded injury safety answers. Selecting an exercise
+    /// with one of these patterns is a safety failure, exactly like a site contraindication.</summary>
+    public IReadOnlySet<MovementPattern>? BlockedMovementPatterns { get; init; }
 }
 
 public sealed record StrengthPlanPreviewSession(
@@ -129,6 +132,7 @@ public static class StrengthPlanPreviewRule
     private const string MissingTemplateSlotReview = "Template slot review missing";
     private static readonly IReadOnlyList<string> NoCodes = Array.Empty<string>();
     private static readonly IReadOnlySet<int> EmptyIds = new HashSet<int>();
+    private static readonly IReadOnlySet<MovementPattern> EmptyMovementPatterns = new HashSet<MovementPattern>();
 
     public static StrengthPlanPreviewResult Evaluate(
         StrengthPlanPreviewChoices? choices,
@@ -209,7 +213,7 @@ public static class StrengthPlanPreviewRule
 
         var availableEquipment = EquipmentFor(data.Equipment);
         var eligibilityContext = new ExerciseEligibilityContext(availableEquipment, prescriptionExperience,
-            choices.ExcludedExerciseIds ?? EmptyIds, new HashSet<MovementPattern>(),
+            choices.ExcludedExerciseIds ?? EmptyIds, data.BlockedMovementPatterns ?? EmptyMovementPatterns,
             new HashSet<ActivityDemandTag>(), false, data.ActiveInjuryFlags,
             choices.AcknowledgedExerciseConditionIds,
             choices.UnknownExperienceAssessmentCompleted, choices.AcknowledgedSubstitutionPairKeys);
@@ -236,6 +240,7 @@ public static class StrengthPlanPreviewRule
         foreach (var originalTemplate in templates)
         {
             var template = originalTemplate;
+            IReadOnlyList<StrengthSlotSelection> preservedOmissions = [];
             var selectionInput = new StrengthTemplateSelectionInput(template, activity, data.Goal,
                     prescriptionContext, data.Catalog!, eligibilityContext,
                     data.PreferredExerciseByOriginalId!,
@@ -279,6 +284,7 @@ public static class StrengthPlanPreviewRule
                     continue;
                 }
                 movementOmissions.AddRange(unresolvedSlots.Select(slot => $"MovementOmitted:{template.TemplateId}:{slot.SlotId}"));
+                preservedOmissions = unresolvedSlots;
             }
 
             var originalWorkingSetsInSession = resolution.Slots
@@ -371,8 +377,14 @@ public static class StrengthPlanPreviewRule
             {
                 limitations.AddRange(sessionLimitations);
             }
+            var selectedIds = selected.Select(slot => slot.SlotId).ToHashSet(StringComparer.Ordinal);
+            var omittedIds = preservedOmissions.Select(slot => slot.SlotId).ToHashSet(StringComparer.Ordinal);
+            var sessionSlots = resolution.Slots
+                .Where(slot => selectedIds.Contains(slot.SlotId) || omittedIds.Contains(slot.SlotId))
+                .Select(slot => selected.FirstOrDefault(selectedSlot => selectedSlot.SlotId == slot.SlotId) ?? slot)
+                .ToArray();
             sessions.Add(new StrengthPlanPreviewSession(template.TemplateId, template.Version,
-                template.SessionIndex, estimatedMinutes, selected, sessionLimitations,
+                template.SessionIndex, estimatedMinutes, sessionSlots, sessionLimitations,
                 SlotConditions(template, data),
                 OriginalPlannedWorkingSets: originalWorkingSetsInSession,
                 ActualWorkingSets: actualWorkingSetsInSession));
@@ -475,6 +487,8 @@ public static class StrengthPlanPreviewRule
         (data.SelectedActivities is null || data.SelectedActivities.All(activity => Enum.IsDefined(activity))) &&
         data.Catalog is not null && data.Catalog.All(entry => entry is not null && entry.Candidate is not null) &&
         data.Catalog.Select(entry => entry.Candidate.ExerciseId).Distinct().Count() == data.Catalog.Count &&
+        (data.BlockedMovementPatterns is null ||
+         data.BlockedMovementPatterns.All(pattern => Enum.IsDefined(pattern))) &&
         data.PreferredExerciseByOriginalId is not null &&
         data.PreferredExerciseByOriginalId.All(pair => IsPositiveIdentifier(pair.Key) &&
                                                         IsPositiveIdentifier(pair.Value)) &&

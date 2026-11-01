@@ -16,6 +16,16 @@ public sealed class CycleReadinessPrescriptionRuleTests
     private static readonly Guid MainId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid AccessoryId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private static readonly DateOnly Today = new(2026, 10, 28);
+    private static readonly PlanningReviewApproval Approved = new(
+        TodayCheckInScoreRule.RulesetVersion,
+        "MC-PLANNING-REVIEW-TEST",
+        new DateTimeOffset(2026, 10, 31, 0, 0, 0, TimeSpan.Zero),
+        new HashSet<PlanningReviewSection>
+        {
+            PlanningReviewSection.TrainingPrescriptions,
+            PlanningReviewSection.AutomatedProgression
+        },
+        CycleReadinessPrescriptionRule.PolicyVersion);
 
     [Theory]
     [InlineData(CyclePhase.Menstrual)]
@@ -232,6 +242,89 @@ public sealed class CycleReadinessPrescriptionRuleTests
         Assert.Null(decision.AdjustedSets);
     }
 
+    [Fact]
+    public void Shipped_release_approval_covers_both_automated_dose_sections()
+    {
+        var approval = Assert.IsType<PlanningReviewApproval>(
+            PlanningReleaseApproval.CycleReadinessPrescription);
+
+        Assert.False(string.IsNullOrWhiteSpace(approval.ApprovalReference));
+        Assert.NotEqual(default(DateTimeOffset), approval.ApprovedAtUtc);
+        Assert.Equal(TodayCheckInScoreRule.RulesetVersion, approval.RulesetVersion);
+        Assert.Equal(CycleReadinessPrescriptionRule.PolicyVersion, approval.ReviewedTrainingPolicyVersion);
+        Assert.Contains(PlanningReviewSection.TrainingPrescriptions, approval.CoveredSections);
+        Assert.Contains(PlanningReviewSection.AutomatedProgression, approval.CoveredSections);
+    }
+
+    [Fact]
+    public void Shipped_release_approval_authorizes_the_automatic_reduction()
+    {
+        var decision = CycleReadinessPrescriptionRule.Evaluate(Input(CyclePhase.Luteal,
+            PhaseReviewProvenance.UserConfirmed, new PhaseBaseline(RelevantDiscomfort, LowEnergy)) with
+        {
+            Approval = PlanningReleaseApproval.CycleReadinessPrescription
+        });
+
+        Assert.Equal(AccessoryId, decision.AdjustedPrescriptionId);
+        Assert.Equal(CycleReadinessPrescriptionRule.ProvisionalPhaseAdjustment, decision.ReasonCode);
+    }
+
+    [Fact]
+    public void Missing_approval_withholds_the_adjustment()
+    {
+        var decision = CycleReadinessPrescriptionRule.Evaluate(Input(CyclePhase.Luteal,
+            PhaseReviewProvenance.UserConfirmed, new PhaseBaseline(RelevantDiscomfort, LowEnergy)) with
+        {
+            Approval = null
+        });
+
+        Assert.Null(decision.AdjustedSets);
+        Assert.Null(decision.AdjustedPrescriptionId);
+        Assert.Equal(CycleReadinessPrescriptionRule.PolicyReviewMissing, decision.ReasonCode);
+    }
+
+    [Fact]
+    public void Approval_without_progression_coverage_withholds_the_adjustment()
+    {
+        var partial = Approved with
+        {
+            CoveredSections = new HashSet<PlanningReviewSection> { PlanningReviewSection.TrainingPrescriptions }
+        };
+        var decision = CycleReadinessPrescriptionRule.Evaluate(Input(CyclePhase.Luteal,
+            PhaseReviewProvenance.UserConfirmed, new PhaseBaseline(RelevantDiscomfort, LowEnergy)) with
+        {
+            Approval = partial
+        });
+
+        Assert.Equal(CycleReadinessPrescriptionRule.PolicyReviewMissing, decision.ReasonCode);
+    }
+
+    [Fact]
+    public void Approval_for_another_policy_version_withholds_the_adjustment()
+    {
+        var stale = Approved with { ReviewedTrainingPolicyVersion = "MC-CYCLE-READINESS-0.1" };
+        var decision = CycleReadinessPrescriptionRule.Evaluate(Input(CyclePhase.Luteal,
+            PhaseReviewProvenance.UserConfirmed, new PhaseBaseline(RelevantDiscomfort, LowEnergy)) with
+        {
+            Approval = stale
+        });
+
+        Assert.Equal(CycleReadinessPrescriptionRule.PolicyReviewMissing, decision.ReasonCode);
+    }
+
+    [Fact]
+    public void Safety_concern_outranks_a_missing_approval()
+    {
+        var decision = CycleReadinessPrescriptionRule.Evaluate(Input(CyclePhase.Luteal,
+            PhaseReviewProvenance.UserConfirmed, new PhaseBaseline(RelevantDiscomfort, LowEnergy)) with
+        {
+            Approval = null,
+            HasNewPainOrSafetyConcern = true
+        });
+
+        Assert.Equal(CycleReadinessPrescriptionRule.SafetyReviewRequired, decision.ReasonCode);
+    }
+
     private static CycleReadinessPatternObservation Pattern(string cycle, string checkIn) =>
         new(CyclePhase.Luteal, cycle, checkIn, Today.AddDays(-OneOptionalSet), true, true);
 
@@ -244,5 +337,6 @@ public sealed class CycleReadinessPrescriptionRuleTests
                     DateTimeOffset.MinValue, OneOptionalSet, null, null, null, null)),
             false,
             [new CycleReadinessExercise(MainId, TwoSets, 0, false, false),
-                new CycleReadinessExercise(AccessoryId, TwoSets, 0, true, true)]);
+                new CycleReadinessExercise(AccessoryId, TwoSets, 0, true, true)],
+            Approval: Approved);
 }

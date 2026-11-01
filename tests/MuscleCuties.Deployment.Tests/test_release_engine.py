@@ -71,8 +71,7 @@ MAINTENANCE = r'''#!/usr/bin/env python3
 import json, os, sys
 if os.environ.get('MC_TEST_SCHEMA_FAIL') == '1': sys.exit(1)
 print(json.dumps({'contract_version':'1.0.0','status':'compatible',
-    'requirements_sha256':sys.argv[3],
-    'db_fingerprint_sha256':'f'*64,'migration_history_mode':'reviewed',
+    'schema_fingerprint_sha256':'f'*64,
     'failure_codes':[]}))
 '''
 RUNTIME = r'''#!/usr/bin/env python3
@@ -98,8 +97,6 @@ class ReleaseEngineTests(unittest.TestCase):
         self.good_source_sha = 'd' * 40
         self.function_arn = 'arn:aws:lambda:us-east-2:123456789012:function:mc-test'
         self.integration_uri = 'arn:aws:apigateway:us-east-2:lambda:path/2015-03-31/functions/' + self.function_arn + '/invocations'
-        self.req = self.dir / 'requirements.json'; self.req.write_text('{}')
-        self.req_hash = hashlib.sha256(b'{}').hexdigest()
         self.policy = self.dir / 'policy.json'
         self.manifest = self.dir / 'manifest.json'
         self.object = self.dir / 'object.json'
@@ -113,16 +110,13 @@ class ReleaseEngineTests(unittest.TestCase):
             'api_id':'api123','approved_integration_uri':self.integration_uri,'integration_mode':'unqualified',
             'maintenance_window_approved':True,'release_bucket':'release-test',
             'approved_source_sha':self.source_sha,'approved_tree_sha':self.tree_sha,
-            'candidate_requirements_path':str(self.req),'candidate_requirements_sha256':self.req_hash,
-            'serving_requirements_path':str(self.req),'serving_requirements_sha256':self.req_hash,
             'reconciliation':'none'
         }
         self.policy.write_text(json.dumps(policy))
         self.manifest.write_text(json.dumps({
             'source_sha':self.source_sha,'tree_sha':self.tree_sha,
             'zip_sha256':self.candidate_hex,'zip_sha256_base64':self.candidate_b64,
-            'zip_bytes':1,'runtime':'net10.0','architecture':'arm64','handler':'MuscleCuties.Server',
-            'requirements_sha256':self.req_hash}))
+            'zip_bytes':1,'runtime':'net10.0','architecture':'arm64','handler':'MuscleCuties.Server'}))
         self.object.write_text(json.dumps({
             'bucket':'release-test','key':f'lambda/MuscleCuties.Server/{self.source_sha}/{self.candidate_hex}/MuscleCuties.Server.zip',
             'version_id':'v1','zip_sha256':self.candidate_hex,'zip_sha256_base64':self.candidate_b64,'zip_bytes':1}))
@@ -193,7 +187,7 @@ class ReleaseEngineTests(unittest.TestCase):
 
     def test_schema_failure_blocks_update(self):
         self.assertNotEqual(self.run_engine(MC_TEST_SCHEMA_FAIL='1').returncode, 0)
-        self.assertEqual(self.report_data()['failure_code'], 'schema_schema_preflight_failed')
+        self.assertEqual(self.report_data()['failure_code'], 'schema_check_failed')
         self.assertEqual(self.state_data()['updates'], 0)
 
     def test_runtime_failure_needs_known_good(self):
@@ -229,8 +223,7 @@ class ReleaseEngineTests(unittest.TestCase):
     def test_verified_known_good_can_recover_failed_smoke(self):
         policy = json.loads(self.policy.read_text())
         policy['known_good'] = {
-            'runtime_verified':True,'db_fingerprint_sha256':'f'*64,'migration_history_mode':'reviewed',
-            'requirements_path':str(self.req),'requirements_sha256':self.req_hash,
+            'runtime_verified':True,'schema_fingerprint_sha256':'f'*64,
             'bucket':'release-test','key':'lambda/MuscleCuties.Server/known-good/'+self.good_hex+'/MuscleCuties.Server.zip',
             'version_id':'good-v1','code_sha256_base64':self.good_b64,
             'zip_sha256':self.good_hex,'source_sha':self.good_source_sha}

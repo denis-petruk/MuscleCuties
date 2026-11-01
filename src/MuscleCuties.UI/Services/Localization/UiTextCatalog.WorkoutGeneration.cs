@@ -147,7 +147,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_MixedScheduleTitle"] = "Weekly activity schedule";
         English["Workout_Generation_PlannedRestDay"] = "Rest · no workout planned";
         English["Workout_Generation_Reason_YogaInconsistent"] = "The yoga description indicates a demanding class. Choose demanding or correct the class details.";
-        English["Workout_Generation_Reason_NoSafeStrengthContentRemaining"] = "No safe exercises remain for your selected strength activities. A plan with your safe non-strength activities is available instead.";
+        English["Workout_Generation_Reason_NoSafeStrengthContentRemaining"] = "No safe strength exercises remain for your selected strength activities. Every plan needs at least one safe strength session, so adjust your restrictions or equipment and preview again.";
         English["Workout_Generation_Reason_NoSafeActivity"] = "No safe activity could be included in this plan. Edit your details or explore other features.";
         English["Workout_Generation_MixedScheduleExplanation"] = "This schedule places your selected activities across the available weekdays.";
         English["Workout_Generation_ScheduleEmpty"] = "No activity sessions could be placed on the saved available weekdays.";

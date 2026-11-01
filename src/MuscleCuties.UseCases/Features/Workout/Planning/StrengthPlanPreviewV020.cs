@@ -108,6 +108,10 @@ public sealed record StrengthPlanPreviewSourceV020(
     /// <summary>Activities an active injury blocks under the reviewed site/status rules.
     /// Strength styles are never listed; their safety is enforced per exercise.</summary>
     public IReadOnlySet<int>? RestrictedActivityTypes { get; init; }
+
+    /// <summary>Movement patterns blocked by recorded injury safety answers. Null means no
+    /// answer-driven evidence, not that no injury exists.</summary>
+    public IReadOnlySet<MovementPattern>? BlockedMovementPatterns { get; init; }
 }
 
 public sealed record ReviewedTemplateFloorDto(string TemplateId, int MinimumWorkingSets, int MinimumExercises,

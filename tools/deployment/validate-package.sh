@@ -50,7 +50,5 @@ try:
     if cert and (cert.startswith('/') or cert not in names): fail('configured certificate is absent from package')
 except (zipfile.BadZipFile, RuntimeError, KeyError, ValueError, OSError) as e: fail('invalid archive or metadata')
 manifest = {'schema_version': 1, 'source_sha': commit, 'tree_sha': tree, 'pipeline_id': os.environ['CI_PIPELINE_ID'], 'job_id': os.environ['CI_JOB_ID'], 'sdk_version': sdk, 'lambda_tools_version': '7.0.0', 'runtime': 'net10.0', 'architecture': 'arm64', 'handler': 'MuscleCuties.Server', 'zip_bytes': len(data), 'zip_sha256': digest.hex(), 'zip_sha256_base64': base64.b64encode(digest).decode(), 'files': files}
-requirements = pathlib.Path('src/MuscleCuties.DbMaintenance/Schema/SchemaRequirements.json')
-if requirements.is_file(): manifest['requirements_sha256'] = sha(requirements.read_bytes())
 pathlib.Path(sys.argv[2]).write_text(json.dumps(manifest, indent=2, sort_keys=True)+'\n')
 PY

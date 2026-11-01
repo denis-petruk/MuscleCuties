@@ -10,6 +10,7 @@ public static class WorkoutPlanningEndpointMappings
     private const string CatalogRoute = "/api/v1/workouts/catalog";
     private const string LegacyPlanRoute = "/api/v1/workouts/plan";
     private const string StrengthPreviewRoute = "/api/v1/workouts/plan/strength-preview";
+    private const string ReconcileRoute = "/api/v1/workouts/plan/reconcile";
     private const string ExerciseExclusionCatalogRoute = "/api/v1/workouts/plan/exercise-exclusions";
     private const string StrengthProposalsRoute = "/api/v1/workouts/plan/strength-proposals";
     private const string StrengthProposalAcceptRoute =
@@ -88,6 +89,18 @@ public static class WorkoutPlanningEndpointMappings
                 if (!TryGetUserId(principal, out _))
                     return Results.Unauthorized();
                 return Results.Ok(await catalog.ExecuteAsync(cancellationToken).ConfigureAwait(false));
+            })
+            .RequireAuthorization();
+
+        endpoints.MapPost(ReconcileRoute, async (
+                ClaimsPrincipal principal,
+                [FromServices] WorkoutPendingRevisionJobHandler handler,
+                CancellationToken cancellationToken) =>
+            {
+                if (!TryGetUserId(principal, out var userId))
+                    return Results.Unauthorized();
+                var outcome = await handler.ExecuteAsync(userId, cancellationToken).ConfigureAwait(false);
+                return Results.Ok(new WorkoutReconciliationResponse(outcome.ToString()));
             })
             .RequireAuthorization();
 

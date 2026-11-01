@@ -23,7 +23,8 @@ public sealed record CycleReadinessPrescriptionInput(
     DateOnly? EvaluationDate = null,
     decimal? SleepHours = null,
     bool RoutineSymptoms = false,
-    bool PhaseEstimateReliable = false);
+    bool PhaseEstimateReliable = false,
+    PlanningReviewApproval? Approval = null);
 
 public sealed record CycleReadinessPrescriptionDecision(
     Guid? AdjustedPrescriptionId,
@@ -38,6 +39,11 @@ public sealed record CycleReadinessPrescriptionDecision(
 /// when explicitly confirmed or supported by recorded-cycle agreement; provisional onboarding feelings do not establish
 /// a repeated pattern. Repeated low readiness requires trusted completed workouts across
 /// distinct cycles and check-ins. Current evidence is never counted twice.
+/// <para>
+/// Precedence is part of the contract: invalid input and safety concerns withhold the session first,
+/// then a missing or incomplete approval withholds the adjustment, and only then is evidence used.
+/// Safety therefore never reports a policy gap, and a policy gap never masks a safety stop.
+/// </para>
 /// </summary>
 public static class CycleReadinessPrescriptionRule
 {
@@ -47,6 +53,12 @@ public static class CycleReadinessPrescriptionRule
     public const string ProvisionalPhaseAdjustment = "ConfirmedPhaseProvisionalFeelingOptionalSetReduced";
     public const string RepeatedPhaseAdjustment = "ConfirmedPhaseRepeatedLowReadinessOptionalSetReduced";
     public const string SafetyReviewRequired = "CycleReadinessSafetyReviewRequired";
+
+    /// <summary>
+    /// Returned when no complete approval record covers automated prescription changes. The dose is
+    /// left untouched; this is the shipping state until a real review is recorded.
+    /// </summary>
+    public const string PolicyReviewMissing = "CycleReadinessPolicyReviewMissing";
     private const int MinimumWorkingSets = 1;
     public const int MinimumDistinctCyclesForPattern = 3;
     public const int PatternObservationWindowDays = 180;
@@ -59,6 +71,11 @@ public static class CycleReadinessPrescriptionRule
                 exercise.Sets < MinimumWorkingSets || exercise.OptionalSets < 0 ||
                 exercise.OptionalSets >= exercise.Sets))
             return new(null, null, SafetyReviewRequired, null, null);
+
+        // A dose change needs a real, complete approval record. Approval must cover both the
+        // prescribed training and automated progression; other sections are not dose authority.
+        if (!IsApproved(input.Approval))
+            return new(null, null, PolicyReviewMissing, null, null);
 
         var score = input.TodayCheckIn;
         var currentCheckIn = score is { Status: CheckInScoreStatus.Available,
@@ -96,6 +113,16 @@ public static class CycleReadinessPrescriptionRule
                 reason, reliablePhase ? input.Phase : null,
                 currentCheckIn ? score!.Observation!.Revision : null, confidence);
     }
+
+    private static bool IsApproved(PlanningReviewApproval? approval) =>
+        approval is not null &&
+        !string.IsNullOrWhiteSpace(approval.ApprovalReference) &&
+        approval.ApprovedAtUtc != default &&
+        string.Equals(approval.RulesetVersion, TodayCheckInScoreRule.RulesetVersion, StringComparison.Ordinal) &&
+        string.Equals(approval.ReviewedTrainingPolicyVersion, PolicyVersion, StringComparison.Ordinal) &&
+        approval.CoveredSections is not null &&
+        approval.CoveredSections.Contains(PlanningReviewSection.TrainingPrescriptions) &&
+        approval.CoveredSections.Contains(PlanningReviewSection.AutomatedProgression);
 
     private static bool HasRepeatedPattern(CycleReadinessPrescriptionInput input)
     {

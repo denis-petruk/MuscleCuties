@@ -20,10 +20,15 @@ public sealed class PlanningAcceptanceTransactionTests
 {
     private const string ConnectionVariable = "MC_REGISTRATION_WRITE_TEST_POSTGRES";
     private const int SyntheticDurationMinutes = 30;
+    private const int SyntheticStrengthSets = 3;
+    private const int SyntheticStrengthMinimumReps = 8;
+    private const int SyntheticStrengthMaximumReps = 12;
+    private const int SyntheticStrengthRepsInReserve = 2;
+    private const int SyntheticStrengthRestSeconds = 90;
     private static readonly DateOnly SyntheticBirthDate = new(1990, 1, 1);
 
-    // This exercises persistence with a deliberately synthetic no-strength remainder;
-    // it does not claim catalog or clinical review of a real workout.
+    // This exercises persistence with a synthetic strength session; it does not claim
+    // catalog or clinical review of a real workout.
     [Xunit.Fact]
     public async Task ApplyCommitsDraftAndRevisionOnceAndPreservesPriorSession()
     {
@@ -74,22 +79,36 @@ public sealed class PlanningAcceptanceTransactionTests
             var cycling = (int)WorkoutActivityType.Cycling;
             var strength = (int)WorkoutActivityType.GeneralStrength;
             var weekdays = new[] { (int)today.DayOfWeek, (int)today.AddDays(2).DayOfWeek };
+            var strengthExercise = source.Catalog.First(entry =>
+                source.MuscleGroupsByExerciseId?.ContainsKey(entry.Candidate.ExerciseId) == true);
+            var strengthSession = new StrengthPlanPreviewSessionV020(
+                "synthetic-template", "synthetic-version", 1, SyntheticDurationMinutes,
+                [new StrengthPlanSlotOutputV020("synthetic-slot", (int)StrengthMovementSlotDto.KneeDominant,
+                    true, (int)StrengthPrescriptionRole.Main, false, strengthExercise.Candidate.ExerciseId,
+                    strengthExercise.Name, null, null, SyntheticStrengthSets,
+                    SyntheticStrengthMinimumReps, SyntheticStrengthMaximumReps,
+                    SyntheticStrengthRepsInReserve, SyntheticStrengthRestSeconds, [])],
+                [], new Dictionary<string, string>(), today.AddDays(2).DayOfWeek);
             var draft = new WorkoutPreferencesDto([strength, cycling], weekdays,
                 new Dictionary<int, int> { [strength] = SyntheticDurationMinutes, [cycling] = SyntheticDurationMinutes }, "FullGym");
             var request = new StrengthPlanPreviewRequestV020(WorkoutActivityDto.GeneralStrength, today, null)
                 { DraftPreferences = draft };
             var schedule = new MixedActivityScheduleV020(
-                [new(cycling, today.DayOfWeek, SyntheticDurationMinutes, false, 1)],
+                [new(cycling, today.DayOfWeek, SyntheticDurationMinutes, false, 1),
+                 new(strength, today.AddDays(2).DayOfWeek, SyntheticDurationMinutes, true, 1)],
                 [new(cycling, "Scheduled", null, null, null, 1, []),
-                 new(strength, "Omitted", null, null, null, 0, [])], []);
+                 new(strength, "Scheduled", null, null, null, 1, [])], []);
             var preview = new StrengthPlanPreviewResponseV020(StrengthPlanPreviewRule.PolicyId,
-                StrengthPlanPreviewRule.Version, StrengthPlanPreviewRule.RulesetVersion, "Feasible", 0, [], [], [], [], schedule)
+                StrengthPlanPreviewRule.Version, StrengthPlanPreviewRule.RulesetVersion, "Feasible", 0,
+                [strengthSession], [], [], [], schedule)
             {
                 SourceProfileVersion = source.ProfileVersion, SourceInjuryFingerprint = source.InjuryFingerprint,
                 SourceActivePlanId = source.ActivePlanId, SourceActiveRevisionId = source.ActiveRevisionId,
                 SourceHistoryFingerprint = source.HistoryFingerprint, SourceCatalogFingerprint = source.CatalogFingerprint,
                 SourceTimeZoneVersion = source.TimeZoneVersion, SourceExperienceVersion = source.ExperienceVersion,
-                SourceAnswerVersion = source.AnswerVersion
+                SourceAnswerVersion = source.AnswerVersion,
+                SourceMuscleGroupsByExerciseId = source.MuscleGroupsByExerciseId?.ToDictionary(
+                    pair => pair.Key, pair => pair.Value.ToArray())
             };
             var created = await new PostgresStrengthPlanProposalStoreV020(db).SaveAsync(user, request, preview, CancellationToken.None);
             var lease = Xunit.Assert.IsType<PlanningLeaseDto>(created.Lease);
@@ -167,7 +186,7 @@ public sealed class PlanningAcceptanceTransactionTests
                 SourceCatalogFingerprint = fresh.CatalogFingerprint, SourceTimeZoneVersion = fresh.TimeZoneVersion,
                 SourceExperienceVersion = fresh.ExperienceVersion, SourceAnswerVersion = fresh.AnswerVersion };
             var rollbackRequest = request with { DraftPreferences = draft with
-                { AvailableWeekdays = [(int)today.DayOfWeek, (int)today.AddDays(3).DayOfWeek] } };
+                { AvailableWeekdays = [(int)today.DayOfWeek, (int)today.AddDays(2).DayOfWeek] } };
             var rollbackProposal = await new PostgresStrengthPlanProposalStoreV020(db)
                 .SaveAsync(user, rollbackRequest, rollbackPreview, CancellationToken.None);
             var rollbackLease = Xunit.Assert.IsType<PlanningLeaseDto>(rollbackProposal.Lease);

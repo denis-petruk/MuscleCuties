@@ -7,7 +7,7 @@ public static partial class UiTextCatalog
         English["Workout_Session_AdjustmentDaily"] = "Today’s check-in suggests one fewer optional set. Your main work stays the same.";
         English["Workout_Session_AdjustmentPhase"] = "Based on how you usually feel in this phase, today has one fewer optional set.";
         English["Workout_Session_AdjustmentPattern"] = "Your past check-ins and workouts suggest one fewer optional set today.";
-        English["Workout_Session_AdjustmentSafety"] = "Review today’s symptoms before starting this workout.";
+        English["Workout_Session_AdjustmentSafety"] = "Review today's symptoms before starting this workout. This is not medical advice and the app is not a health consultant; ask a qualified professional about pain that is worsening or not settling.";
         English["Workout_Session_PrescriptionWarmup"] = "Warm-up: {0} min";
         English["Workout_Session_PrescriptionMain"] = "Main activity: {0} min";
         English["Workout_Session_PrescriptionCooldown"] = "Cool-down: {0} min";
@@ -24,6 +24,17 @@ public static partial class UiTextCatalog
         English["Workout_Overview_Status_Upcoming"] = "Upcoming";
         English["Injury_Log_ReloadAfterChangeFailed"] = "Your change was saved, but the injury log couldn't reload. Try again before training.";
         English["Injury_Log_ActiveWorkoutPreventsInjury"] = "End or abandon the active workout before recording an injury. Your logged sets will be preserved.";
+        English["Injury_Log_WorseningTrigger_Label"] = "Do any movements make it worse?";
+        English["Injury_Log_WorseningTrigger_NotAnswered"] = "Not sure yet";
+        English["Injury_Log_WorseningTrigger_None"] = "None";
+        English["Injury_Log_WorseningTrigger_OverheadReach"] = "Reaching overhead";
+        English["Injury_Log_WorseningTrigger_DeepKneeFlexion"] = "Deep knee bend";
+        English["Injury_Log_WorseningTrigger_SpinalLoading"] = "Bending or loading the spine";
+        English["Injury_Log_WorseningTrigger_ImpactAndGait"] = "Impact or walking";
+        English["Injury_Log_WorseningTrigger_GripAndWristLoad"] = "Grip or wrist load";
+        English["Injury_Log_ClinicianAdvisedAvoid_Label"] = "A clinician advised avoiding this movement";
+        English["Injury_Log_Safety_StopAndSeekCare"] = "Stop if pain worsens and seek care from a qualified professional. This is not medical advice, and the app is not a health consultant; your strength plan still applies with adjusted movements.";
+        English["Injury_Log_Safety_ClinicianRestriction"] = "A clinician advised avoiding this movement. Your plan keeps strength training and substitutes other movements; this is not medical advice and the app is not a health consultant.";
         English["Workout_StyleOffer_Title"] = "Another strength option";
         English["Workout_StyleOffer_Message"] = "Your updated plan can also use {0}. Review that option?";
         English["Workout_StyleOffer_Review"] = "Review option";
@@ -117,7 +128,7 @@ public static partial class UiTextCatalog
         English["Cycle_Hero_HeaderTitle"] = "TODAY IN YOUR PHASE";
         English["Cycle_Hero_LogActionAccessibility"] = "Log today's symptoms & flow";
         English["Cycle_Hero_PhaseFormat"] = "{0} Phase";
-        English["Cycle_Page_MedicalDisclaimer"] = "Wellness guidance only. Cycle estimates cannot diagnose a condition or predict fertility. Ask a clinician about unusual symptoms.";
+        English["Cycle_Page_MedicalDisclaimer"] = "Not clinically approved. MuscleCuties is not a health consultant, a medical service or a substitute for professional care. Its guidance has not been reviewed or approved by a clinician. Before relying on this app, talk to a qualified professional about your training, your cycle and any injury or pain you have. Workouts and plans are still applied, adjusted to what you tell it.";
         English["Cycle_Page_OpenSettingsAccessibility"] = "Open cycle and personal settings";
         English["Cycle_Page_SettingsAccessibility"] = "Cycle settings";
         English["Cycle_Page_Title"] = "Your cycle";

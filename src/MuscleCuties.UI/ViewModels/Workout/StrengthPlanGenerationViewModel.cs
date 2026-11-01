@@ -913,7 +913,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
 
     private bool CanAcceptProposal() => WorkoutPlanningFlow.CanAccept(IsBusy, IsProposalAccepted,
         IsTrainNavigationPending, _proposalInvalidated, _proposal?.IsPersisted == true,
-        _proposal?.Lease is not null, Preview?.Status == "Feasible", _pendingAcceptance is not null);
+        _proposal?.Lease is not null, Preview?.Status == "Feasible", _pendingAcceptance is not null) &&
+        HasStrengthPreviewSessions;
 
     private bool CanExploreOtherFeatures() => !IsBusy && CanOfferExploreOtherFeatures;
 

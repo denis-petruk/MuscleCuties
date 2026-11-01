@@ -15,6 +15,7 @@ using MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Injury;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
@@ -143,6 +144,7 @@ public sealed class CloudWorkoutInjuryStore(
 {
     private const string InjuriesRoute = "/api/v1/injuries";
     private const string InjuryImpactRoute = "/api/v1/workouts/injuries/impact";
+    private const string ReconcileRoute = "/api/v1/workouts/plan/reconcile";
     private readonly Dictionary<Guid, int> _intIdByGuid = [];
     private readonly Dictionary<int, InjuryObservationRecord> _recordByIntId = [];
     private readonly object _identityLock = new();
@@ -176,7 +178,9 @@ public sealed class CloudWorkoutInjuryStore(
                 record.Pain,
                 record.Since,
                 record.Date,
-                record.IsActive && status != WorkoutInjuryStatus.Cleared));
+                record.IsActive && status != WorkoutInjuryStatus.Cleared,
+                record.WorseningTrigger,
+                record.ClinicianAdvisedAvoid));
         }
 
         return list;
@@ -205,7 +209,9 @@ public sealed class CloudWorkoutInjuryStore(
             status = input.Status.ToString(),
             since = input.Since,
             pain = input.Pain,
-            date = loggedDate
+            date = loggedDate,
+            worseningTrigger = input.WorseningTrigger.ToString(),
+            clinicianAdvisedAvoid = input.ClinicianAdvisedAvoid
         };
 
         var response = await apiClient.SendMutationAsync<object, InjuryObservationRecord>(
@@ -224,6 +230,7 @@ public sealed class CloudWorkoutInjuryStore(
     public async Task ClearInjuryAsync(int injuryId, CancellationToken ct = default)
     {
         var existing = await RequireRecordAsync(injuryId, ct).ConfigureAwait(false);
+        // Clearing an injury must not erase the safety answers the user already gave.
         var body = new
         {
             id = existing.Id,
@@ -231,7 +238,9 @@ public sealed class CloudWorkoutInjuryStore(
             status = WorkoutInjuryStatus.Cleared.ToString(),
             since = existing.Since,
             pain = existing.Pain,
-            date = existing.Date
+            date = existing.Date,
+            worseningTrigger = existing.WorseningTrigger.ToString(),
+            clinicianAdvisedAvoid = existing.ClinicianAdvisedAvoid
         };
 
         var response = await apiClient.SendMutationAsync<object, InjuryObservationRecord>(
@@ -257,8 +266,15 @@ public sealed class CloudWorkoutInjuryStore(
         }
     }
 
-    public Task RefreshPlanAfterInjuryChangeAsync(CancellationToken ct = default)
-        => Task.FromException(new NotSupportedException("Injury plan reconciliation is not available."));
+    public async Task RefreshPlanAfterInjuryChangeAsync(CancellationToken ct = default)
+    {
+        var response = await apiClient.SendMutationAsync<object, WorkoutReconciliationResponse>(
+            HttpMethod.Post, ReconcileRoute, new { },
+            idempotencyKey: Guid.NewGuid().ToString("N"), ct).ConfigureAwait(false);
+        var result = CloudStoreResponse.RequireData(response, "refresh workout plan after injury change");
+        if (string.Equals(result.Status, nameof(WorkoutReconciliationOutcome.NeedsReview), StringComparison.Ordinal))
+            throw new InvalidOperationException("The workout plan needs review after the injury change.");
+    }
 
     private async Task<InjuryObservationRecord?> TryResolveRecordAsync(int injuryId, CancellationToken ct)
     {

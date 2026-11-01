@@ -35,7 +35,6 @@ internal static partial class RussianUiText
         Values["Workout_PhaseAdjustment_UnknownPhase"] = "Текущая фаза цикла недоступна.";
         Values["Workout_PhaseAdjustment_ConfirmPhase"] = "Подтвердите текущую фазу цикла перед проверкой изменений тренировок.";
         Values["Workout_PhaseAdjustment_MissingBaseline"] = "Добавьте описание обычного самочувствия в этой фазе цикла.";
-        Values["Workout_PhaseAdjustment_CurrentSafetyReviewRequired"] = "Текущая запись самочувствия, симптомы или ограничения имеют приоритет. Сначала проверьте их; изменения тренировок на основе фазы не созданы.";
         Values["Workout_PhaseAdjustment_AlreadyReviewed"] = "Вы уже проверили эту фазу для текущего плана.";
         Values["Workout_PhaseAdjustment_NoEligibleSessions"] = "Нет подходящих ближайших тренировок для изменения.";
         Values["Workout_PhaseAdjustment_NoActivePlan"] = "Сначала создайте план тренировок.";

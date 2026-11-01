@@ -18,7 +18,7 @@ internal static class AutomaticInjuryProvenance
 
     internal static async Task<Evidence?> LoadAsync(PostgresDbContext db, Guid userId, Guid planId,
         DateOnly today, IReadOnlyList<StrengthPlanPreviewSessionV020> proposalSessions,
-        StrengthPlanPreviewSourceV020 source, bool strengthAbsent, CancellationToken ct)
+        StrengthPlanPreviewSourceV020 source, CancellationToken ct)
     {
         var logs = await db.WorkoutInjuryLogs.AsNoTracking().Where(row => row.UserId == userId).ToListAsync(ct).ConfigureAwait(false);
         var episodes = await db.WorkoutInjuryEpisodes.AsNoTracking().Where(row => row.UserId == userId).ToListAsync(ct).ConfigureAwait(false);
@@ -100,7 +100,6 @@ internal static class AutomaticInjuryProvenance
                     row.OriginalOriginWorkoutDayExerciseId != first.OriginalOriginWorkoutDayExerciseId)) return null;
             if (expected.Length == 0)
             {
-                if (strengthAbsent) return null;
                 if (exercise.InjuryOriginalExerciseId is not null || exercise.OriginWorkoutDayExerciseId is not null ||
                     first.OriginalSets != exercise.Sets || first.OriginalOptionalSets != exercise.OptionalSets ||
                     first.OriginalReps != exercise.Reps || first.OriginalDurationSeconds != exercise.DurationSeconds ||
@@ -166,7 +165,7 @@ internal static class AutomaticInjuryProvenance
                 session.TemplateId == group.Key.TemplateId && session.TemplateVersion == group.Key.TemplateVersion &&
                 session.SessionIndex == group.Key.SessionIndex).ToArray();
             var selected = sessions.Length == 1 ? sessions[0].Slots.Where(slot => slot.SlotId == group.Key.SlotId).ToArray() : [];
-            if (selected.Length != 1 && !(strengthAbsent && sessions.Length == 0)) return null;
+            if (selected.Length != 1) return null;
             var selectedSlot = selected.SingleOrDefault();
             var alternative = selectedSlot?.ExerciseId;
             var alternativeSets = selectedSlot?.Sets;

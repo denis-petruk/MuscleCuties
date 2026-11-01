@@ -38,6 +38,9 @@ public partial class ProfilePrivacyPage : ContentPage
             ChoiceBody.Text = "You can delete your account and local data from Profile.";
             PolicyButton.Text = "Read privacy policy";
             SemanticProperties.SetDescription(PolicyButton, "Open the full privacy policy");
+            DisclaimerTitle.Text = "Not clinically approved";
+            DisclaimerBody.Text = "MuscleCuties is not a health consultant, a medical service or a substitute for professional care. Its guidance has not been reviewed or approved by a clinician. Before relying on this app, talk to a qualified professional about your training, your cycle and any injury or pain you have.";
+            DisclaimerPlanBody.Text = "Workouts and plans are still applied. The app will keep giving you strength training and a workout plan, adjusted to what you tell it, including when you report an injury.";
             return;
         }
 
@@ -53,6 +56,9 @@ public partial class ProfilePrivacyPage : ContentPage
         ChoiceBody.Text = "Удалить аккаунт и локальные данные можно в профиле.";
         PolicyButton.Text = "Читать политику конфиденциальности";
         SemanticProperties.SetDescription(PolicyButton, "Открыть полную политику конфиденциальности");
+        DisclaimerTitle.Text = "Не одобрено клинически";
+        DisclaimerBody.Text = "MuscleCuties не является медицинским консультантом, медицинской услугой или заменой профессиональной помощи. Рекомендации приложения не проверены и не одобрены врачом. Перед тем как полагаться на приложение, обсудите тренировки, свой цикл и любые травмы или боли с квалифицированным специалистом.";
+        DisclaimerPlanBody.Text = "Тренировки и планы при этом применяются. Приложение продолжит давать силовую нагрузку и план тренировок с учётом того, что вы сообщили, в том числе при травме.";
     }
 
     private static async Task NavigateBackAsync()

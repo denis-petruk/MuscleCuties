@@ -63,7 +63,15 @@ public sealed class PostgresWorkoutReconciliationDispatcher(
                 else if (outcome == WorkoutReconciliationOutcome.NeedsReview) needsReview++;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
-            catch { failed++; }
+            catch (Exception exception)
+            {
+                // Safe operational signal only: no owner ID, connection string, SQL text or health data.
+                var failure = exception is PostgresException postgres
+                    ? $"{postgres.SqlState}:{postgres.ColumnName ?? postgres.TableName ?? "unknown"}:{postgres.MessageText}"
+                    : $"{exception.GetType().Name}:{exception.Message}";
+                Console.Error.WriteLine($"Workout reconciliation account failed ({failure}).");
+                failed++;
+            }
         }
         return new WorkoutReconciliationPage(owners.Count, failed,
             owners.Count < pageSize ? null : owners[^1], deferred, needsReview);

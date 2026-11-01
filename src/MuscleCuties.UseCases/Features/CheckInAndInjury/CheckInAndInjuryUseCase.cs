@@ -56,7 +56,8 @@ public sealed class CheckInAndInjuryUseCase(ICheckInAndInjuryStore store)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (!InjuryObservationRule.IsValid(request.UserId, request.Id, request.SiteFlag, request.Status,
-                request.Since, request.Pain, request.Date, out var normalizedStatus))
+                request.Since, request.Pain, request.Date, request.WorseningTrigger, request.ClinicianAdvisedAvoid,
+                out var normalizedStatus))
             throw new ArgumentOutOfRangeException(nameof(request), "Injury observation fields must be within supported bounds.");
 
         return store.SaveInjuryAsync(request with { Status = normalizedStatus }, cancellationToken);

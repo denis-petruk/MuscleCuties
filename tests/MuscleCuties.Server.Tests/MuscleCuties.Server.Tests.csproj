@@ -16,5 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../services/MuscleCuties.Server/MuscleCuties.Server.csproj" />
+    <ProjectReference Include="../../src/MuscleCuties.Infrastructure/MuscleCuties.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

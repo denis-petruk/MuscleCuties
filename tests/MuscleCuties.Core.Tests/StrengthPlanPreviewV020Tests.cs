@@ -940,19 +940,26 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
-    public async Task ExhaustedStrengthCanLeaveSafeCyclingRemainder()
+    public async Task ExhaustedStrengthWithSafeCyclingRemainderStillRequiresStrength()
     {
         var profile = AddSelectedActivity(Profile(), WorkoutActivityType.Cycling) with
         {
             SelectedActivityTypes = new HashSet<int> { (int)WorkoutActivityType.GeneralStrength, (int)WorkoutActivityType.Cycling }
         };
         var request = Request() with { ExcludedExerciseIds = new HashSet<int> { 101, 102, 103, 104 } };
-        var preview = await new PreviewStrengthPlanV020UseCase(new Source(profile)).ExecuteAsync(Guid.NewGuid(), request);
-        Assert.Equal("Feasible", preview.Status);
-        Assert.Empty(preview.Sessions);
-        Assert.NotNull(preview.MixedActivitySchedule);
-        Assert.Contains(preview.MixedActivitySchedule!.Sessions, session => session.ActivityTypeId == (int)WorkoutActivityType.Cycling);
-        Assert.Contains(preview.MixedActivitySchedule.Activities, activity => activity.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength && activity.Disposition == "Omitted");
+        var store = new ProposalStore();
+        var proposal = await new CreateStrengthPlanProposalV020UseCase(
+                new PreviewStrengthPlanV020UseCase(new Source(profile)), store)
+            .ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.False(proposal.IsPersisted);
+        Assert.Equal("Limited", proposal.Preview.Status);
+        Assert.Empty(proposal.Preview.Sessions);
+        Assert.Contains(StrengthStyleSelectionRule.NoSafeStrengthStyleFitCode, proposal.Preview.LimitationCodes);
+        Assert.NotNull(proposal.Preview.MixedActivitySchedule);
+        Assert.Contains(proposal.Preview.MixedActivitySchedule!.Sessions,
+            session => session.ActivityTypeId == (int)WorkoutActivityType.Cycling);
+        Assert.Equal(0, store.SaveCount);
     }
 
     [Fact]

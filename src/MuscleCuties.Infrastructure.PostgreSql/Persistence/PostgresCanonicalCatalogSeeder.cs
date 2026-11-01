@@ -37,6 +37,9 @@ public sealed record CanonicalCatalogSeedSummary(
 /// </summary>
 public static class PostgresCanonicalCatalogSeeder
 {
+    public const string EmbeddedManifestResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Seed.CanonicalCatalogManifest.json";
+
     public static async Task<CanonicalCatalogSeedSummary> IngestFromManifestAsync(
         PostgresDbContext context,
         string manifestFilePath,
@@ -49,6 +52,32 @@ public static class PostgresCanonicalCatalogSeeder
             throw new FileNotFoundException("Canonical seed identity manifest was not found.", manifestFilePath);
 
         var rawBytes = await File.ReadAllBytesAsync(manifestFilePath, cancellationToken).ConfigureAwait(false);
+        return await IngestAsync(context, rawBytes, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Seeds from the reviewed manifest embedded in this assembly, so seeding needs no external path,
+    /// no operator-supplied checksum and no command-line confirmation.
+    /// </summary>
+    public static async Task<CanonicalCatalogSeedSummary> IngestEmbeddedManifestAsync(
+        PostgresDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        using var stream = typeof(PostgresCanonicalCatalogSeeder).Assembly
+            .GetManifestResourceStream(EmbeddedManifestResourceName)
+            ?? throw new InvalidOperationException("The canonical catalog seed manifest is not embedded in this assembly.");
+        using var buffer = new MemoryStream();
+        await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
+        return await IngestAsync(context, buffer.ToArray(), cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<CanonicalCatalogSeedSummary> IngestAsync(
+        PostgresDbContext context,
+        byte[] rawBytes,
+        CancellationToken cancellationToken)
+    {
         var manifestSha256 = Convert.ToHexStringLower(SHA256.HashData(rawBytes));
         using var document = JsonDocument.Parse(rawBytes);
 

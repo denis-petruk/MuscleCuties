@@ -1,9 +1,7 @@
 using System.Diagnostics;
-using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
-using MuscleCuties.DbMaintenance.Schema;
 using MuscleCuties.DbMaintenance;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
@@ -18,21 +16,16 @@ public static class DatabaseMaintenance
     private const string CleanupDispatchConnectionStringEnvironmentVariable = "ConnectionStrings__PhotoCleanupDispatch";
     private const string CleanupProcessorConnectionStringEnvironmentVariable = "ConnectionStrings__PhotoCleanupProcessor";
     private const string LambdaFunctionEnvironmentVariable = "AWS_LAMBDA_FUNCTION_NAME";
-    private const string MigrateCommand = "migrate";
-    private const string MigrationStatusCommand = "migration-status";
-    private const string MigrationPrerequisitesCommand = "migration-prerequisites";
-    private const string SchemaPreflightCommand = "schema-preflight";
-    private const string SchemaVerifyCommand = "schema-verify";
-    private const string SchemaReconcileCommand = "schema-reconcile";
-    private const string RuntimePrincipalPreflightCommand = "runtime-principal-preflight";
-    private const string RuntimeCandidateConnectionStringEnvironmentVariable = "MC_RUNTIME_CANDIDATE_POSTGRES";
-    private const string SessionLockRunnerCommand = "session-lock-runner";
+    private const string DbInitCommand = "dbinit";
+    private const string DbCheckCommand = "dbcheck";
     private const string SeedCommand = "seed";
-    private const string ReviewCatalogDryRunCommand = "review-catalog-dry-run";
-    private const string ReviewCatalogApplyCommand = "review-catalog-apply";
+    private const string SessionLockRunnerCommand = "session-lock-runner";
     private const string CleanupPhotosCommand = "cleanup-photos";
-    private const string ConfirmationSwitch = "--confirm";
-    private const int Sha256HexLength = 64;
+    private const string CompatibleStatus = "compatible";
+    private const string IncompatibleStatus = "incompatible";
+    private const string ContractVersion = "1.0.0";
+    private const int AdvisoryLockAcquireTimeoutSeconds = 5;
+    private const int AdvisoryLockPollMilliseconds = 100;
     private const int CleanupPageSizeMinimum = 1;
     private const int CleanupPageSizeMaximum = 100;
     private const int CleanupPageCountMinimum = 1;
@@ -51,9 +44,11 @@ public static class DatabaseMaintenance
 
     public static async Task<int> RunAsync(string[] args)
     {
-        if (!TryParse(args, out var command, out var manifestPath, out var expectedSha256))
+        if (!TryParse(args, out var command))
         {
-            Console.Error.WriteLine("Usage: DbMaintenance migration-status | migration-prerequisites | migrate --confirm | schema-preflight <requirements-path> <requirements-sha256> | schema-verify <requirements-path> <requirements-sha256> | schema-reconcile <approved-manifest-path> <manifest-sha256> --confirm | runtime-principal-preflight | session-lock-runner -- <child-command> [args...] | seed <manifest-path> <expected-sha256> --confirm | review-catalog-dry-run <manifest-path> <expected-sha256> | review-catalog-apply <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
+            Console.Error.WriteLine(
+                "Usage: DbMaintenance dbinit | dbcheck | seed | session-lock-runner -- <child-command> [args...] | " +
+                "cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
             return InvalidUsageExitCode;
         }
 
@@ -76,35 +71,17 @@ public static class DatabaseMaintenance
             }
         }
 
-        if (command == RuntimePrincipalPreflightCommand)
-        {
-            try
-            {
-                var candidate = Environment.GetEnvironmentVariable(RuntimeCandidateConnectionStringEnvironmentVariable);
-                if (string.IsNullOrWhiteSpace(candidate))
-                    throw new InvalidOperationException("Candidate connection is required.");
-                var report = await RuntimePrincipalPreflight.EvaluateAsync(candidate);
-                WriteJson(report);
-                return report.CatalogCompatible ? 0 : 1;
-            }
-            catch (Exception exception) when (exception is not OperationCanceledException)
-            {
-                Console.Error.WriteLine($"Runtime principal preflight failed ({exception.GetType().Name}).");
-                return 1;
-            }
-        }
-
         var connectionString = Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable);
-        var isCleanupCommand = args.Length > 0 && args[0] == CleanupPhotosCommand;
+        var isCleanupCommand = command == CleanupPhotosCommand;
         if (!isCleanupCommand && string.IsNullOrWhiteSpace(connectionString))
         {
-            Console.Error.WriteLine("ConnectionStrings__PostgreSql is required in the protected runner environment.");
+            Console.Error.WriteLine($"ConnectionStrings__PostgreSql is required in the protected runner environment.");
             return InvalidUsageExitCode;
         }
 
         try
         {
-            if (command == CleanupPhotosCommand)
+            if (isCleanupCommand)
                 return await RunPhotoCleanupAsync(args);
 
             var connection = new NpgsqlConnectionStringBuilder(connectionString);
@@ -144,83 +121,56 @@ public static class DatabaseMaintenance
                 }
             }
 
-            if (command is SchemaPreflightCommand or SchemaVerifyCommand or SchemaReconcileCommand)
-                return await RunSchemaCommandAsync(command, manifestPath!, expectedSha256!, connection,
-                    args.Contains(ConfirmationSwitch));
-
-            if (command is SeedCommand or ReviewCatalogDryRunCommand or ReviewCatalogApplyCommand)
-            {
-                manifestPath = ResolvePath(manifestPath!);
-                if (!await ManifestMatchesAsync(manifestPath, expectedSha256!))
-                    throw new InvalidOperationException("Manifest SHA-256 does not match the supplied checksum.");
-            }
-
             var options = new DbContextOptionsBuilder<PostgresDbContext>()
-                .UseNpgsql(connection.ConnectionString, provider =>
-                    provider.MigrationsAssembly(typeof(PostgresDbContext).Assembly.GetName().Name))
+                .UseNpgsql(connection.ConnectionString)
                 .Options;
             await using var context = new PostgresDbContext(options);
 
-            if (command == MigrationStatusCommand)
+            if (command == DbInitCommand)
             {
-                var applied = await context.Database.GetAppliedMigrationsAsync();
-                var pending = await context.Database.GetPendingMigrationsAsync();
-                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { Applied = applied, Pending = pending }));
-                return 0;
-            }
-
-            if (command == MigrationPrerequisitesCommand)
-            {
-                var result = await CheckMigrationPrerequisitesAsync(context, connection.ConnectionString);
-                WriteJson(result);
-                return result.Ready ? 0 : 1;
-            }
-
-            if (command == MigrateCommand)
-            {
-                await EnsureRolesExistAsync(context);
-                var prerequisites = await CheckMigrationPrerequisitesAsync(context, connection.ConnectionString);
-                if (!prerequisites.Ready)
+                var result = await PostgresSchemaBootstrap.InitializeAsync(context, seed: true);
+                WriteJson(new
                 {
-                    WriteJson(prerequisites);
-                    return 1;
-                }
-                await context.Database.MigrateAsync();
-                Console.WriteLine("Schema migration completed.");
+                    contract_version = ContractVersion,
+                    status = CompatibleStatus,
+                    created_from_model = result.CreatedFromModel,
+                    security_statements_applied = result.SecurityStatementCount,
+                    schema_fingerprint_sha256 = result.ModelFingerprint,
+                    seeded_rows = result.Seed?.TotalManifestRows ?? 0
+                });
                 return 0;
             }
 
-            if (command == ReviewCatalogDryRunCommand)
+            if (command == SeedCommand)
             {
-                var importer = new PostgresReviewedExerciseCatalogImporterV020(context);
-                var dryRun = await importer.DryRunAsync(manifestPath!);
-                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(dryRun));
-                return dryRun.CanImport ? 0 : 1;
-            }
-
-            if ((await context.Database.GetPendingMigrationsAsync()).Any())
-                throw new InvalidOperationException("Apply schema migrations before catalog writes.");
-
-            if (command == ReviewCatalogApplyCommand)
-            {
-                var importer = new PostgresReviewedExerciseCatalogImporterV020(context);
-                var dryRun = await importer.DryRunAsync(manifestPath!);
-                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(dryRun));
-                if (!dryRun.CanImport)
-                    return 1;
-                await importer.ApplyAsync(manifestPath!);
-                Console.WriteLine("Exercise review metadata applied with separate owner restriction assertion; existing contraindications remain and automatic substitutions remain disabled.");
+                var summary = await PostgresCanonicalCatalogSeeder.IngestEmbeddedManifestAsync(context);
+                WriteJson(new
+                {
+                    contract_version = ContractVersion,
+                    status = CompatibleStatus,
+                    seeded_rows = summary.TotalManifestRows
+                });
                 return 0;
             }
 
-            var summary = await PostgresCanonicalCatalogSeeder.IngestFromManifestAsync(context, manifestPath!);
-            Console.WriteLine($"Canonical seed completed: {summary.TotalManifestRows} manifest rows, SHA-256 {summary.ManifestIntegritySha256}.");
-            return 0;
+            var report = await PostgresSchemaDriftInspector.InspectAsync(context);
+            WriteJson(new
+            {
+                contract_version = ContractVersion,
+                status = report.IsCompatible ? CompatibleStatus : IncompatibleStatus,
+                schema_fingerprint_sha256 = report.ModelFingerprint,
+                recorded_fingerprint_sha256 = report.RecordedFingerprint,
+                model_table_count = report.ModelTableCount,
+                policy_count = report.PolicyCount,
+                failure_codes = report.FailureCodes,
+                details = report.Details
+            });
+            return report.IsCompatible ? 0 : 1;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             // Provider exceptions may include connection strings or object names. Keep runner logs secret-free.
-            Console.Error.WriteLine($"Database maintenance failed ({exception.GetType().Name}). Check the runner's connection, certificate, role, and manifest settings.");
+            Console.Error.WriteLine($"Database maintenance failed ({exception.GetType().Name}). Check the runner's connection, certificate and role settings.");
             return 1;
         }
     }
@@ -261,15 +211,9 @@ public static class DatabaseMaintenance
         return result.OwnersFailed == 0 ? 0 : 1;
     }
 
-    public static bool TryParse(
-        string[] args,
-        out string? command,
-        out string? manifestPath,
-        out string? expectedSha256)
+    public static bool TryParse(string[] args, out string? command)
     {
         command = null;
-        manifestPath = null;
-        expectedSha256 = null;
 
         if (args.Length > 0 && args[0] == SessionLockRunnerCommand)
         {
@@ -279,47 +223,13 @@ public static class DatabaseMaintenance
                 command = SessionLockRunnerCommand;
                 return true;
             }
+
+            return false;
         }
 
-        if (args is [MigrationStatusCommand])
-        {
-            command = MigrationStatusCommand;
-            return true;
-        }
-
-        if (args is [MigrationPrerequisitesCommand])
-        {
-            command = MigrationPrerequisitesCommand;
-            return true;
-        }
-
-        if (args is [RuntimePrincipalPreflightCommand])
-        {
-            command = RuntimePrincipalPreflightCommand;
-            return true;
-        }
-
-        if (args is [MigrateCommand, ConfirmationSwitch])
-        {
-            command = MigrateCommand;
-            return true;
-        }
-
-        if (args is [SchemaPreflightCommand or SchemaVerifyCommand, var schemaPath, var schemaChecksum] &&
-            !string.IsNullOrWhiteSpace(schemaPath) && IsSha256(schemaChecksum))
+        if (args is [DbInitCommand] or [DbCheckCommand] or [SeedCommand])
         {
             command = args[0];
-            manifestPath = schemaPath;
-            expectedSha256 = schemaChecksum;
-            return true;
-        }
-
-        if (args is [SchemaReconcileCommand, var reconcilePath, var reconcileChecksum, ConfirmationSwitch] &&
-            !string.IsNullOrWhiteSpace(reconcilePath) && IsSha256(reconcileChecksum))
-        {
-            command = SchemaReconcileCommand;
-            manifestPath = reconcilePath;
-            expectedSha256 = reconcileChecksum;
             return true;
         }
 
@@ -334,111 +244,7 @@ public static class DatabaseMaintenance
             return true;
         }
 
-        if (args is [ReviewCatalogDryRunCommand, var dryRunPath, var dryRunChecksum] &&
-            !string.IsNullOrWhiteSpace(dryRunPath) && dryRunChecksum.Length == Sha256HexLength &&
-            dryRunChecksum.All(Uri.IsHexDigit))
-        {
-            command = ReviewCatalogDryRunCommand;
-            manifestPath = dryRunPath;
-            expectedSha256 = dryRunChecksum;
-            return true;
-        }
-
-        if (args is [ReviewCatalogApplyCommand, var applyPath, var applyChecksum, ConfirmationSwitch] &&
-            !string.IsNullOrWhiteSpace(applyPath) && applyChecksum.Length == Sha256HexLength &&
-            applyChecksum.All(Uri.IsHexDigit))
-        {
-            command = ReviewCatalogApplyCommand;
-            manifestPath = applyPath;
-            expectedSha256 = applyChecksum;
-            return true;
-        }
-
-        if (args is not [SeedCommand, var path, var checksum, ConfirmationSwitch] ||
-            string.IsNullOrWhiteSpace(path) ||
-            checksum.Length != Sha256HexLength ||
-            !checksum.All(Uri.IsHexDigit))
-            return false;
-
-        command = SeedCommand;
-        manifestPath = path;
-        expectedSha256 = checksum;
-        return true;
-    }
-
-    private static bool IsSha256(string value) =>
-        value.Length == Sha256HexLength && value.All(Uri.IsHexDigit);
-
-    private static async Task<int> RunSchemaCommandAsync(
-        string command,
-        string manifestPath,
-        string expectedSha256,
-        NpgsqlConnectionStringBuilder connection,
-        bool confirmed)
-    {
-        SchemaRequirements requirements;
-        try
-        {
-            if (command is SchemaPreflightCommand or SchemaVerifyCommand)
-            {
-                // The pipeline supplies the reviewed contract path and its exact checksum.
-                requirements = DatabaseSchemaCompatibility.LoadRequirements(ResolvePath(manifestPath), expectedSha256);
-            }
-            else
-            {
-                var requirementsPath = Path.Combine(ResolveRepositoryRoot(), "src", "MuscleCuties.DbMaintenance", "Schema", "SchemaRequirements.json");
-                var requirementsSha256 = DatabaseSchemaCompatibility.ComputeFileSha256(requirementsPath);
-                requirements = DatabaseSchemaCompatibility.LoadRequirements(requirementsPath, requirementsSha256);
-            }
-        }
-        catch (Exception exception) when (exception is SchemaRequirementsException or IOException or UnauthorizedAccessException)
-        {
-            var code = exception is SchemaRequirementsException requirementsException
-                ? requirementsException.Code
-                : SchemaFailureCodes.RequirementsInvalid;
-            var rejected = new SchemaRequirements
-            {
-                ContractVersion = DatabaseSchemaCompatibility.SupportedContractVersion,
-                SourceSha256 = expectedSha256
-            };
-            WriteJson(DatabaseSchemaCompatibility.CreateUnknownResult(rejected, code,
-                "The supplied schema requirements manifest could not be validated."));
-            return InvalidUsageExitCode;
-        }
-
-        var report = await DatabaseSchemaCompatibility.EvaluateAsync(connection.ConnectionString, requirements);
-        if (command is SchemaPreflightCommand or SchemaVerifyCommand)
-        {
-            WriteJson(report);
-            return report.ExitCode;
-        }
-
-        var outcome = await SchemaReconciliation.ExecuteAsync(
-            connection.ConnectionString,
-            ResolvePath(manifestPath),
-            expectedSha256,
-            requirements,
-            ResolveRepositoryRoot(),
-            confirmed);
-        WriteJson(new
-        {
-            contract_version = requirements.ContractVersion,
-            status = outcome.Status,
-            requirements_sha256 = expectedSha256,
-            db_fingerprint_sha256 = outcome.PostFingerprintSha256,
-            migration_history_mode = report.MigrationHistoryMode,
-            failure_codes = outcome.FailureCodes,
-            steps = outcome.Steps
-        });
-        return outcome.Status == SchemaReconciliation.StatusReconciled ? 0 : 1;
-    }
-
-    private static string ResolveRepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "AGENTS.md")))
-            directory = directory.Parent;
-        return directory?.FullName ?? Directory.GetCurrentDirectory();
+        return false;
     }
 
     private static readonly JsonSerializerOptions ResultJsonOptions = new()
@@ -448,65 +254,6 @@ public static class DatabaseMaintenance
 
     private static void WriteJson<T>(T value) =>
         Console.WriteLine(JsonSerializer.Serialize(value, ResultJsonOptions));
-
-    private static string ResolvePath(string path)
-    {
-        if (File.Exists(path))
-            return Path.GetFullPath(path);
-
-        var candidates = new[]
-        {
-            Path.Combine(Directory.GetCurrentDirectory(), path),
-            Path.Combine(AppContext.BaseDirectory, path),
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", path)
-        };
-        return candidates.FirstOrDefault(File.Exists) ?? path;
-    }
-
-    private static async Task<bool> ManifestMatchesAsync(string manifestPath, string expectedSha256)
-    {
-        if (!File.Exists(manifestPath))
-            return false;
-
-        var manifest = await File.ReadAllBytesAsync(manifestPath);
-        var actualSha256 = Convert.ToHexStringLower(SHA256.HashData(manifest));
-        return string.Equals(actualSha256, expectedSha256, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static async Task EnsureRolesExistAsync(PostgresDbContext context)
-    {
-        const string bootstrapRolesSql = """
-            DO $$
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_migrator') THEN
-                    CREATE ROLE musclecuties_migrator NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_app') THEN
-                    CREATE ROLE musclecuties_app NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_auth') THEN
-                    CREATE ROLE musclecuties_auth NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_cleanup_dispatch') THEN
-                    CREATE ROLE musclecuties_cleanup_dispatch NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_cleanup_discovery_owner') THEN
-                    CREATE ROLE musclecuties_cleanup_discovery_owner NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-                END IF;
-            END $$;
-            """;
-        await context.Database.ExecuteSqlRawAsync(bootstrapRolesSql);
-    }
-
-    private static async Task<MigrationPrerequisiteResult> CheckMigrationPrerequisitesAsync(
-        PostgresDbContext context, string connectionString)
-    {
-        var pending = await context.Database.GetPendingMigrationsAsync();
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
-        return await MigrationPrerequisites.CheckAsync(connection,
-            pending.Contains(MigrationPrerequisites.OwnershipMigrationId, StringComparer.Ordinal));
-    }
 
     private static async Task<int> RunSessionLockRunnerAsync(string[] args)
     {
@@ -522,7 +269,7 @@ public static class DatabaseMaintenance
         var connectionString = Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable);
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            Console.Error.WriteLine("ConnectionStrings__PostgreSql is required for session-lock-runner.");
+            Console.Error.WriteLine($"ConnectionStrings__PostgreSql is required for {SessionLockRunnerCommand}.");
             return 1;
         }
 
@@ -534,10 +281,9 @@ public static class DatabaseMaintenance
         await using var npgsqlConnection = new NpgsqlConnection(connection.ConnectionString);
         await npgsqlConnection.OpenAsync();
 
-        using var lockLease = await SchemaReconciliation.TryAcquireAdvisoryLockAsync(npgsqlConnection);
-        if (lockLease is null)
+        if (!await TryAcquireAdvisoryLockAsync(npgsqlConnection))
         {
-            Console.Error.WriteLine("Failed to acquire deployment advisory lock (0x4D435343, 0x53434845) within 5 seconds.");
+            Console.Error.WriteLine($"Failed to acquire deployment advisory lock within {AdvisoryLockAcquireTimeoutSeconds} seconds.");
             return 1;
         }
 
@@ -549,6 +295,23 @@ public static class DatabaseMaintenance
         }
 
         return await ExecuteChildProcessAsync(childCmd, childArgs, npgsqlConnection, backendPid);
+    }
+
+    private static async Task<bool> TryAcquireAdvisoryLockAsync(NpgsqlConnection connection)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(AdvisoryLockAcquireTimeoutSeconds);
+        while (DateTime.UtcNow < deadline)
+        {
+            await using var command = new NpgsqlCommand("SELECT pg_try_advisory_lock(@lock_class, @lock_key)", connection);
+            command.Parameters.AddWithValue("lock_class", DeploymentAdvisoryLock.ClassId);
+            command.Parameters.AddWithValue("lock_key", DeploymentAdvisoryLock.KeyId);
+            if (await command.ExecuteScalarAsync() is true)
+                return true;
+
+            await Task.Delay(AdvisoryLockPollMilliseconds);
+        }
+
+        return false;
     }
 
     private static async Task<int> ExecuteChildProcessAsync(
@@ -631,8 +394,8 @@ public static class DatabaseMaintenance
                 CommandTimeout = LockHealthCommandTimeoutSeconds
             };
             command.Parameters.AddWithValue("backend_pid", backendPid);
-            command.Parameters.AddWithValue("lock_class", SchemaReconciliation.AdvisoryLockClass);
-            command.Parameters.AddWithValue("lock_key", SchemaReconciliation.AdvisoryLockKey);
+            command.Parameters.AddWithValue("lock_class", DeploymentAdvisoryLock.ClassId);
+            command.Parameters.AddWithValue("lock_key", DeploymentAdvisoryLock.KeyId);
             return await command.ExecuteScalarAsync() is true;
         }
         catch (Exception)
