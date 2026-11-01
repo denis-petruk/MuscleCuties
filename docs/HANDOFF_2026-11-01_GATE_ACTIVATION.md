@@ -7,7 +7,7 @@
 > **Read this first.** The code work this document originally planned is **already applied** in the
 > working tree: the approval record is active, and the disclosure is present in both catalogs and the
 > privacy page. `STATUS.md` now records the provisional activation, and the unreferenced phase safety
-> key has been removed. What remains is owner verification, the commit, and repackaging the artifact.
+> key has been removed. The staging API artifact has since been repackaged and deployed; owner UI verification and the separately authorized production release remain.
 > The reconciliation worker is deployed with a real Lambda runtime handler and its EventBridge rule is
 > enabled; staging's schema is current, all staging accounts have been purged, and the DLQ is empty.
 > See `STATUS.md`. Every string quoted below is **CURRENT** (applied and verified with `grep -F`); this
@@ -289,36 +289,17 @@ continues to be prescribed.
 
 ---
 
-## 9. Repackage the artifact — still open, owner action in Rider first
+## 9. Repackage the artifact — completed for staging
 
-The zip predates the gate activation and the catalog changes, so it is stale. Repackaging needs a fresh
-publish, and a publish is a build: **the owner performs it in Rider**. No agent builds, tests or publishes in
-this repository, and this document contains no such step.
+The staging package was rebuilt from `be9589eb` on 2026-11-01, validated, and deployed to
+`musclecuties-backend-api` version 5. The artifact is 8,669,964 bytes, 35 files, no PDBs,
+`linux-arm64` framework-dependent, SHA-256 `d7fc3a89…`, with a manifest and zip integrity verified.
+`/health/live` and `/health/ready` returned HTTP 200. Production remains separately gated; owner UI
+verification remains required.
 
-After the owner's Rider publish output exists, the archive step below is the **owner's own action** — it is
-listed for the owner's benefit, not as an agent check, and it compiles nothing. The only archive inspection an
-agent may run is read-only (`unzip -l`, `unzip -t`).
-
-```bash
-ZIP="artifacts/deploy/MuscleCuties.Server.zip"
-rm -f "$ZIP"
-(cd <published-output-directory> && zip -q -r -X "$OLDPWD/$ZIP" .)
-shasum -a 256 "$ZIP" | tee artifacts/deploy/MuscleCuties.Server.zip.sha256
-```
-
-Then regenerate `artifacts/deploy/build-manifest.json` with the same keys as the current file: `artifact`,
-`architecture` (`arm64`), `configuration` (`Release`), `lambda_runtime` (`dotnet10`),
-`runtime_identifier` (`linux-arm64`), `generated_at_utc`, `source_sha`, `worktree_dirty` (now `false`),
-`schema_fingerprint_sha256`, `zip_bytes`, `zip_sha256`, and `files` (`path`, `bytes`, `sha256`, sorted).
-
-Acceptance: manifest entry count equals the archive count (`unzip -l "$ZIP" | tail -1`), the `.sha256`
-matches the manifest, and `unzip -t` passes. Expect a different size and hash from 8,666,753 bytes /
-`de6b853c…` because `MuscleCuties.Core.dll` and the UI catalog changed.
-
-Packaging constraints verified earlier: framework-dependent, `linux-arm64`, no PDBs, `MuscleCuties.Server`
-apphost present, 35 files. `global.json` pins SDK `10.0.403` with `rollForward: disable`, and the installed
-Lambda packaging tool cannot resolve that SDK, which is why this project packages by publishing and
-zipping.
+`global.json` pins SDK `10.0.403` with `rollForward: disable`, and the installed Lambda packaging tool
+cannot resolve that SDK, which is why this project packages by publishing and zipping. `artifacts/` is
+gitignored.
 
 ---
 
@@ -385,7 +366,7 @@ which must also print `1`.
 5. **Fixture values are not a sign-off.** Never describe them as reviewed.
 6. **Russian is a draft.** Flagged, not native-reviewed.
 7. **`rg` does not exist here.** Use `grep`.
-8. **The artifact is stale.** Do not ship the current zip as if it contained the gate activation.
+8. **The staging artifact is current; production is separate.** Do not use the staging hash as production release evidence.
 
 ---
 
