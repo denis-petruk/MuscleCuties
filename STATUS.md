@@ -504,3 +504,33 @@ The Registration integration suite requires a database and was not run. The
 client needed no change; the deployed API Lambda (modified 2026-11-01T16:15)
 still predates this work and the coded refusals, so nothing is live until the
 backend is deployed. No commit, push or deployment.
+
+**Staging API release of the resilient start fix (2026-11-02):** The database
+was **not** deployed, because nothing needed deploying: read-only `dbcheck`
+against `musclecuties_staging` returned `compatible` with 69 model tables, 51
+policies, no failure codes, and model/recorded fingerprint both
+`8f3a3f584ec386ef40e9d8c96ca0e43c653822d330370d53412c84c79da021c5`. The start
+fix adds no schema object, so `dbinit` there would only have re-applied role
+grants and re-seeded catalogs on the database that is also the production
+target. Packaged the backend from commit `32f5d3a7699fa5dfe2e68ef48b5ab53eaa1f670c`
+(tree `8c9a821ea1c991df7396f61cb59282faac1eecf0`) as framework-dependent
+`linux-arm64`, 35 files, no PDBs, 8,654,817 bytes, SHA-256
+`5e29512baeb04f9f2cf7de62cf2758868d6ae6479a572eb98d28269e65cd46c1`, and
+verified the release contract locally: required root files, ARM64 Skia and
+apphost, `net10.0` runtime, valid deps manifest, embedded exercise catalog, no
+secrets, and the assembly carrying the commit SHA. The CI validator itself
+cannot run outside GitLab (it requires SDK 10.0.403, `.tools/dotnet-lambda`
+and pipeline variables). Deployed to `musclecuties-backend-api` `$LATEST` with
+`CodeSha256` `XilRK66wT58s995izydYho1q5keaVy65jSgmnmXNRsE=` and published
+version **9**; the previous package is saved at
+`/tmp/mc-deploy/rollback-a4iZKyM4.zip` (SHA-256
+`6b88992b23383498c2fea27f8d0db786f0ca52d771bdee168870f61876c9559c`) for
+rollback. `/health/live` and `/health/ready` returned HTTP 200 and an
+unauthenticated POST to `/api/v1/workouts/sessions/start` returned 401, so the
+route is live behind authentication. Two transient Npgsql connection-attempt
+timeouts appeared in the post-deploy log window while the pool warmed;
+readiness recovered and returned 200. No schema, role, secret or other AWS
+resource was modified. The client needs no change: a planned day now starts on
+its own date, an unfinished session for the same day resumes, and an
+unfinished session belonging to a different day still refuses with its own
+code.
