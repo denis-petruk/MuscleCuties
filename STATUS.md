@@ -564,3 +564,20 @@ to `musclecuties-backend-api` `$LATEST`, `CodeSha256`
 `/tmp/mc-deploy/rollback-a4iZKyM4.zip` (the pre-fix build). The database was
 not modified and the client needs no change. An authenticated start was not
 exercised by the agent; the owner re-tests in the app.
+
+**Progress-photo picker asks for a single photo (2026-11-02):** "Add Progress
+Photo" did nothing. The live database settled it: `app.photo_upload_intents`
+held **zero** rows, so the client never called `/api/v1/photos/upload-url` and
+nothing downstream — presigning, the S3 POST, commit, the Lambda role's
+`MuscleCutiesPhotoVaultS3` policy, bucket versioning — was ever exercised. The
+bucket is correctly configured (`musclecuties-media-staging-028417007003`,
+us-east-2, versioning enabled, no objects yet), so the failure was entirely
+client-side. The vault used `MediaPicker.PickPhotosAsync` — the repo's only
+call to the multi-select API — and then kept `FirstOrDefault()`, discarding
+every other selection; on some iOS versions that picker returns an empty list,
+which the page treats as "user cancelled" and returns from silently, leaving a
+button that appears dead. `ProfileImagePicker.PickAndStoreAsync` now calls the
+single-photo `MediaPicker.PickPhotoAsync`, which is what all three callers
+(profile, onboarding, vault) actually use. UI-only change: per the owner's build
+gate the MAUI project was not compiled or run, so this needs a device/simulator
+check by the owner — the backend was not redeployed and no schema changed.
