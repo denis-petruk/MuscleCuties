@@ -36,16 +36,16 @@ public static partial class UiTextCatalog
         English["Workout_Generation_StrengthPlanChoiceHint"] = "Select this strength plan type.";
         English["Workout_Generation_HeavyMainAssignmentFormat"] = "Used as a heavy main in: {0}";
         English["Workout_Generation_HiitUnderlyingActivityTitle"] = "Choose HIIT's underlying cardio activity";
-        English["Workout_Generation_HiitUnderlyingActivityHelp"] = "Choose a continuous cardio activity saved in your preferences. HIIT will replace one session of that activity. Enter its actual history and each prior week's aerobic sessions below, then confirm the required screening or clearance.";
+        English["Workout_Generation_HiitUnderlyingActivityHelp"] = "Choose a saved continuous cardio activity. HIIT replaces one session; enter its history and weekly aerobic counts, then confirm screening.";
         English["Workout_Generation_HiitEvidenceTitle"] = "HIIT activity details";
-        English["Workout_Generation_HiitEvidenceHelp"] = "HIIT is considered only when your selected cardio history is established, all four prior weeks meet the aerobic target, you confirm the required screening or clearance, and no current symptom or injury needs review.";
+        English["Workout_Generation_HiitEvidenceHelp"] = "HIIT needs established cardio history, four weeks at the aerobic target, confirmed screening, and no symptom or injury needing review.";
         English["Workout_Generation_HiitConfirmCurrentWeeks"] = "I confirm these counts describe the four weeks before today.";
         English["Workout_Generation_HiitCardioHistoryTitle"] = "Underlying cardio experience";
-        English["Workout_Generation_HiitCardioHistoryHelp"] = "Enter your actual history for the selected activity. Established experience requires at least {0} consistent weeks, averaging at least {1} sessions per week recently, with fewer than {2} days since your last session.";
+        English["Workout_Generation_HiitCardioHistoryHelp"] = "Enter actual history. Established: {0}+ consistent weeks, {1} sessions/week recently, and under {2} days since the last session.";
         English["Workout_Generation_HiitCardioConsistentWeeks"] = "Consistent weeks in this activity";
         English["Workout_Generation_HiitCardioAverageSessions"] = "Average sessions per week in this activity over the last four weeks";
         English["Workout_Generation_HiitCardioDaysSinceLastSession"] = "Days since your last session in this activity";
-        English["Workout_Generation_HiitAerobicThresholdHelp"] = "For each of the four prior weeks, count aerobic sessions that lasted at least {0} minutes and felt manageable. Every week needs at least {1} such sessions.";
+        English["Workout_Generation_HiitAerobicThresholdHelp"] = "For each of the four prior weeks, count manageable aerobic sessions of at least {0} minutes. Each week needs at least {1}.";
         English["Workout_Generation_HiitPriorWeekLabel"] = "Week {0} before this week";
         English["Workout_Generation_HiitSessionCountPlaceholder"] = "0 or more";
         English["Workout_Generation_HiitWeekCountAccessibility"] = "Count of qualifying sessions for {0}";
@@ -104,7 +104,8 @@ public static partial class UiTextCatalog
         English["Workout_Generation_ExercisePending"] = "Exercise details unavailable";
         English["Workout_Generation_PrescriptionPending"] = "Prescription details unavailable";
         English["Workout_Generation_SlotDetailsFormat"] = "{0} sets · {1}–{2} reps";
-        English["Workout_Generation_LimitationsTitle"] = "What needs attention";
+        English["Workout_Generation_ExerciseConditionsTitle"] = "Exercise conditions";
+        English["Workout_Generation_ExerciseConditionsHelp"] = "Review the setup, range, and technique conditions for these exercises before continuing.";
         English["Workout_Generation_LimitationGeneric"] = "This plan needs more information or does not fit the current planning rules.";
         English["Workout_Generation_Required"] = "Required";
         English["Workout_Generation_LimitationTiming"] = "The saved activity length or warm-up and cool-down details do not fit this plan.";
@@ -147,18 +148,16 @@ public static partial class UiTextCatalog
         English["Workout_Generation_MixedScheduleTitle"] = "Weekly activity schedule";
         English["Workout_Generation_PlannedRestDay"] = "Rest · no workout planned";
         English["Workout_Generation_Reason_YogaInconsistent"] = "The yoga description indicates a demanding class. Choose demanding or correct the class details.";
-        English["Workout_Generation_Reason_NoSafeStrengthContentRemaining"] = "No safe strength exercises remain for your selected strength activities. Every plan needs at least one safe strength session, so adjust your restrictions or equipment and preview again.";
+        English["Workout_Generation_Reason_NoSafeStrengthContentRemaining"] = "No safe strength exercises remain. Every plan needs a safe strength session; adjust restrictions or equipment and preview again.";
         English["Workout_Generation_Reason_NoSafeActivity"] = "No safe activity could be included in this plan. Edit your details or explore other features.";
         English["Workout_Generation_MixedScheduleExplanation"] = "This schedule places your selected activities across the available weekdays.";
         English["Workout_Generation_ScheduleEmpty"] = "No activity sessions could be placed on the saved available weekdays.";
         English["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";
         English["Workout_Generation_OrderedActivityFormat"] = "{0}. {1}";
-        English["Workout_Generation_ActivityOrderNote"] = "Numbers show the recommended order for activities on the same day.";
         English["Workout_Generation_MixedSessionDurationFormat"] = "{0} min";
         English["Workout_Generation_MixedSessionDetailsFormat"] = "{0} · {1}";
         English["Workout_Generation_HigherEffortSession"] = "Higher-effort session";
         English["Workout_Generation_RegularEffortSession"] = "Regular-effort session";
-        English["Workout_Generation_ActivityDecisionsTitle"] = "How each activity fits your plan";
         English["Workout_Generation_ActivityDecisionStatusFormat"] = "{0} · {1}";
         English["Workout_Generation_ActivityFrequencySummaryFormat"] = "Recommended: {0} · Plan goal: {1} · Scheduled: {2}";
         English["Workout_Generation_ActivityFrequencyPerWeekFormat"] = "{0}/week";
@@ -167,8 +166,9 @@ public static partial class UiTextCatalog
         English["Workout_Generation_NotSpecified"] = "Not specified";
         English["Workout_Generation_UnknownActivity"] = "Activity unavailable";
         English["Workout_Generation_UnknownDay"] = "Day unavailable";
-        English["Workout_Generation_StrengthDetailsTitle"] = "Strength session details";
-        English["Workout_Generation_SchedulingNotesTitle"] = "Scheduling notes";
+        English["Workout_Generation_ChooseUnderlyingCardio"] = "Choose a cardio activity";
+        English["Workout_Generation_PlanDetailsTitle"] = "Plan details";
+        English["Workout_Generation_SchedulingNotesTitle"] = "Notes";
         English["Workout_Generation_Disposition_Scheduled"] = "Scheduled";
         English["Workout_Generation_Disposition_Partial"] = "Only some sessions are scheduled";
         English["Workout_Generation_Disposition_Omitted"] = "Not included in the plan";
@@ -213,7 +213,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_Reason_HardDayLimit"] = "The weekly limit for higher-effort days was reached.";
         English["Workout_Generation_Reason_StrengthRecoverySpacing"] = "Fewer strength sessions are scheduled to allow muscle recovery between days.";
         English["Workout_Generation_Reason_NoSafeDay"] = "No suitable available weekday remained for this session.";
-        English["Workout_Generation_Reason_HiitEligibility"] = "HIIT stays blocked unless your selected cardio history is established, each prior week meets the manageable aerobic session target, you confirm the required screening or clearance, and no current symptom or injury needs review.";
+        English["Workout_Generation_Reason_HiitEligibility"] = "HIIT stays blocked without established cardio history, four weeks at the aerobic target, confirmed screening, and no symptom or injury for review.";
         English["Workout_Generation_Reason_HiitUnderlyingCardioUnsupported"] = "Choose a supported continuous cardio activity that is saved in your preferences.";
         English["Workout_Generation_Reason_HiitReplacedCardio"] = "HIIT replaces one continuous cardio session in the plan.";
         English["Workout_Generation_Reason_RestDay"] = "A rest day is kept free and is not counted as a workout session.";
@@ -294,6 +294,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_PromptNoPlanTitle"] = "No active workout plan";
         English["Workout_Generation_PromptNoPlanSubtitle"] = "Set up your workout preferences and generate your personalized strength training plan.";
         English["Workout_Generation_PromptGeneratePlanButton"] = "Generate plan";
+        English["Workout_Generation_ReducedVolumeNotice"] = "This plan uses reduced workout volume to fit your selected duration and schedule.";
     }
 }
 

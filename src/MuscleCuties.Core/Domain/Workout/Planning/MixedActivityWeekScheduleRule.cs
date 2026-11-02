@@ -55,10 +55,13 @@ public static class MixedActivityWeekScheduleRule
 {
     public const int MinimumAvailableWeekdays = 2;
     public const int MaximumAvailableWeekdays = 7;
-    public const int MaximumHardDaysPerWeek = 3;
+    public const int MaximumHardDaysPerWeek = 6;
     public const int MaximumRequestedSessionsPerWeek = MaximumAvailableWeekdays;
     public const int MaximumStrengthSessionsPerDay = 1;
-    public const int MaximumStrengthCompanionsPerDay = 1;
+    public const int MaximumStrengthCompanionsPerDay = 3;
+    public const int MaximumHardSessionsPerDay = 2;
+    public const int MaximumHardSessionsOnAdjustedDay = 3;
+    public const int MinimumHardSessionsForAdjustment = MaximumHardSessionsOnAdjustedDay;
     public const int MaximumSessionsPerDay =
         MaximumStrengthSessionsPerDay + MaximumStrengthCompanionsPerDay;
 
@@ -211,6 +214,8 @@ public static class MixedActivityWeekScheduleRule
             .GroupBy(decision => decision.EffectiveActivity ?? decision.Activity)
             .ToDictionary(group => group.Key, group => group.First(decision => decision.IsEligible).Prescription));
 
+        sessions = ApplyCardioOnlyDayDurations(sessions, decisions);
+
         inputReasons.AddRange(WorkoutScheduleValidationRule.Validate(
             sessions.Select(session => new WorkoutScheduleValidationSession(
                 session.Day, session.Activity, session.IsHardSession, null, session.DurationMinutes,
@@ -234,7 +239,7 @@ public static class MixedActivityWeekScheduleRule
         }).ToArray();
         foreach (var day in sessions.Where(session => session.IsHardSession).GroupBy(session => session.Day))
         {
-            if (day.Count() != MaximumSessionsPerDay) continue;
+            if (day.Count() < MinimumHardSessionsForAdjustment) continue;
             foreach (var session in day)
             {
                 if (!originals.TryGetValue(session.Activity, out var original)) continue;
@@ -248,6 +253,56 @@ public static class MixedActivityWeekScheduleRule
         }
         return sessions;
     }
+
+    private static MixedActivityScheduledSession[] ApplyCardioOnlyDayDurations(
+        MixedActivityScheduledSession[] sessions, IReadOnlyCollection<ActivityDecisionBuilder> decisions)
+    {
+        var experienceByActivity = decisions
+            .Where(decision => decision.Experience is not null)
+            .GroupBy(decision => decision.EffectiveActivity ?? decision.Activity)
+            .ToDictionary(group => group.Key, group => group.First().Experience!.Value);
+        return sessions.Select(session => experienceByActivity.TryGetValue(session.Activity, out var experience)
+            ? ApplyCardioDurationLimits(session, sessions, experience)
+            : session).ToArray();
+    }
+
+    private static MixedActivityScheduledSession ApplyCardioDurationLimits(
+        MixedActivityScheduledSession session, IReadOnlyList<MixedActivityScheduledSession> sessions,
+        ActivityExperience experience)
+    {
+        var isContinuousCardio = IsContinuousCardio(session.Activity);
+        var isRecovery = IsRecoveryActivity(session.Activity);
+        if (!isContinuousCardio && !isRecovery) return session;
+
+        var daySessions = sessions.Where(candidate => candidate.Day == session.Day).ToArray();
+        var hasStrengthOnDay = daySessions.Any(candidate => IsStrengthChoice(candidate.Activity));
+        if (isRecovery && !hasStrengthOnDay) return session;
+
+        var duration = session.DurationMinutes;
+        var isStandaloneCardioDay = isContinuousCardio && !hasStrengthOnDay &&
+            daySessions.Count(candidate => IsContinuousCardio(candidate.Activity)) == OneSessionPerOccurrence;
+        if (isStandaloneCardioDay)
+            duration = Math.Max(duration,
+                CardioSessionDurationRule.StandaloneDayMinutes(session.Activity, experience));
+
+        // Owner rule: work that follows a strength session never runs past 30 minutes, while cardio
+        // without a strength session is only bounded by its modality ceiling.
+        var maximum = isContinuousCardio
+            ? CardioSessionDurationRule.MaximumSessionMinutes(session.Activity)
+            : CardioSessionDurationRule.PostStrengthCardioOrRecoveryMaximumMinutes;
+        if (hasStrengthOnDay)
+            maximum = Math.Min(maximum, CardioSessionDurationRule.PostStrengthCardioOrRecoveryMaximumMinutes);
+
+        duration = Math.Min(duration, maximum);
+        return duration == session.DurationMinutes ? session : session with { DurationMinutes = duration };
+    }
+
+    private static bool IsContinuousCardio(WorkoutActivityType activity) => activity is
+        WorkoutActivityType.Cycling or WorkoutActivityType.Running or WorkoutActivityType.Walking or
+        WorkoutActivityType.Rowing or WorkoutActivityType.Elliptical or WorkoutActivityType.Swimming;
+
+    private static bool IsRecoveryActivity(WorkoutActivityType activity) => activity is
+        WorkoutActivityType.Yoga or WorkoutActivityType.Mobility or WorkoutActivityType.GentleRecovery;
 
     private static void PrepareActivity(ActivityDecisionBuilder decision,
         MixedActivityWeekScheduleContext context,
@@ -283,6 +338,8 @@ public static class MixedActivityWeekScheduleRule
             decision.Block(ActivityNotExplicitlySelected);
             return;
         }
+
+        decision.Experience = evidence.Experience;
 
         if (decision.Activity == WorkoutActivityType.RockClimbing &&
             evidence.HasRopeClimbingCompetence is not true)
@@ -710,16 +767,23 @@ public static class MixedActivityWeekScheduleRule
         ActivityDecisionBuilder decision,
         bool isHard)
     {
-        if (dayState.Activities.Count != MaximumStrengthSessionsPerDay)
+        if (dayState.Activities.Count >= MaximumSessionsPerDay)
             return false;
 
-        var existing = dayState.Activities.Single();
         var incoming = decision.EffectiveActivity ?? decision.Activity;
-        return existing != incoming &&
-               !(IsStrengthChoice(existing) && IsStrengthChoice(incoming)) &&
-               (!dayState.HasHardSession || !isHard ||
-                SameDayDemandAdjustmentRule.Adjust(dayState.Decision!.Prescription) is not null ||
-                SameDayDemandAdjustmentRule.Adjust(decision.Prescription) is not null);
+        if (dayState.Activities.Contains(incoming))
+            return false;
+        if (IsStrengthChoice(incoming) && dayState.Activities.Any(IsStrengthChoice))
+            return false;
+        if (!isHard)
+            return true;
+        if (dayState.HardSessionCount >= MaximumHardSessionsOnAdjustedDay)
+            return false;
+        // Two hard sessions may share a day at full dose; a third needs one of them reduced.
+        if (dayState.HardSessionCount < MaximumHardSessionsPerDay)
+            return true;
+        return SameDayDemandAdjustmentRule.Adjust(dayState.Decision!.Prescription) is not null ||
+               SameDayDemandAdjustmentRule.Adjust(decision.Prescription) is not null;
     }
 
     private static bool IsStrengthCompanion(WorkoutActivityType activity, bool isHard) =>
@@ -759,6 +823,7 @@ public static class MixedActivityWeekScheduleRule
     private sealed class ScheduledDayState
     {
         public bool HasHardSession { get; private set; }
+        public int HardSessionCount { get; private set; }
         public HashSet<WorkoutActivityType> Activities { get; } = [];
         public ActivityDecisionBuilder? Decision { get; private set; }
 
@@ -767,6 +832,7 @@ public static class MixedActivityWeekScheduleRule
             Activities.Add(decision.EffectiveActivity ?? decision.Activity);
             Decision ??= decision;
             HasHardSession |= isHard;
+            if (isHard) HardSessionCount++;
         }
     }
 
@@ -781,6 +847,7 @@ public static class MixedActivityWeekScheduleRule
         public int? TargetSessionsPerWeek { get; set; }
         public int? MaxSessionsPerWeek { get; set; }
         public decimal DurationMinutes { get; set; }
+        public ActivityExperience? Experience { get; set; }
         public bool IsEligible { get; set; }
         public WorkoutActivityType? EffectiveActivity { get; set; }
         public string? FallbackReasonCode { get; set; }

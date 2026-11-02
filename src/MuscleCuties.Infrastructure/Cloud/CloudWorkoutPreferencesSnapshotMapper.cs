@@ -62,7 +62,7 @@ internal static class CloudWorkoutPreferencesSnapshotMapper
             excludedExerciseIds);
     }
 
-    private static IReadOnlySet<int> ParseExcludedExerciseIds(string? json)
+    private static HashSet<int> ParseExcludedExerciseIds(string? json)
     {
         try
         {

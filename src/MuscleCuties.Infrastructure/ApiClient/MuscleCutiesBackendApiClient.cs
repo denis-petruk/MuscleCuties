@@ -54,7 +54,8 @@ public sealed record BackendApiResponse<T>(
     int? ServerConcurrencyVersion = null,
     bool IsOfflineStaleRead = false,
     DateTimeOffset? CachedAtUtc = null,
-    HttpStatusCode? ResponseStatusCode = null);
+    HttpStatusCode? ResponseStatusCode = null,
+    string? RequestId = null);
 
 public interface IMuscleCutiesBackendApiClient
 {
@@ -83,6 +84,7 @@ public sealed class MuscleCutiesBackendApiClient(
 {
     private const string RefreshRoute = "/api/v1/auth/refresh";
     private const string IdempotencyHeaderName = "X-Idempotency-Key";
+    private const string RequestIdHeaderName = "X-Request-Id";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(
@@ -157,7 +159,13 @@ public sealed class MuscleCutiesBackendApiClient(
             return new BackendApiResponse<bool>(BackendApiStatus.Success, true);
 
         var mapped = await MapResponseAsync<object>(response, cancellationToken).ConfigureAwait(false);
-        return new BackendApiResponse<bool>(mapped.Status, false, mapped.ErrorCode, mapped.ServerConcurrencyVersion);
+        return new BackendApiResponse<bool>(
+            mapped.Status,
+            false,
+            mapped.ErrorCode,
+            mapped.ServerConcurrencyVersion,
+            ResponseStatusCode: mapped.ResponseStatusCode,
+            RequestId: mapped.RequestId);
     }
 
     private async Task<HttpResponseMessage> SendWithRefreshRetryAsync(
@@ -175,6 +183,9 @@ public sealed class MuscleCutiesBackendApiClient(
         if (response.StatusCode != HttpStatusCode.Unauthorized || tokens is null || string.IsNullOrWhiteSpace(tokens.RefreshToken))
             return response;
 
+        // The reference must survive the refresh round trip, otherwise a 401 loses the only handle
+        // support has on the rejected request.
+        var rejectedRequestId = ReadRequestId(response);
         response.Dispose();
         var refreshLock = sessionState.Semaphore;
         await refreshLock.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -183,7 +194,7 @@ public sealed class MuscleCutiesBackendApiClient(
         {
             var current = await tokenStore.ReadTokensAsync(cancellationToken).ConfigureAwait(false);
             if (requestVersion != sessionState.Version || current is null || current.AccountId != tokens.AccountId)
-                return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+                return SyntheticFailureResponse(HttpStatusCode.Unauthorized, rejectedRequestId);
 
             if (current.RefreshToken != tokens.RefreshToken)
                 refreshed = current;
@@ -192,7 +203,7 @@ public sealed class MuscleCutiesBackendApiClient(
                 var version = sessionState.Version;
                 var (updated, failureStatus) = await TryRefreshSessionAsync(current, sessionState, version, CancellationToken.None).ConfigureAwait(false);
                 if (version != sessionState.Version)
-                    return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+                    return SyntheticFailureResponse(HttpStatusCode.Unauthorized, rejectedRequestId);
                 if (updated is null)
                 {
                     if (failureStatus is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
@@ -200,7 +211,7 @@ public sealed class MuscleCutiesBackendApiClient(
                         await tokenStore.ClearTokensAsync(cancellationToken).ConfigureAwait(false);
                         await snapshotCache.ClearAsync(cancellationToken).ConfigureAwait(false);
                     }
-                    return new HttpResponseMessage(failureStatus);
+                    return SyntheticFailureResponse(failureStatus, rejectedRequestId);
                 }
                 refreshed = updated;
             }
@@ -271,6 +282,7 @@ public sealed class MuscleCutiesBackendApiClient(
         string? errorCode = null;
         int? conflictVersion = null;
         TResponse? validationData = default;
+        var requestId = ReadRequestId(response);
         try
         {
             using var doc = await JsonDocument.ParseAsync(
@@ -292,6 +304,11 @@ public sealed class MuscleCutiesBackendApiClient(
                 if (doc.RootElement.TryGetProperty("version", out var verProp) && verProp.TryGetInt32(out var ver))
                     conflictVersion = ver;
 
+                if (requestId is null &&
+                    doc.RootElement.TryGetProperty("requestId", out var requestIdProp) &&
+                    requestIdProp.ValueKind == JsonValueKind.String)
+                    requestId = requestIdProp.GetString();
+
                 if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.UnprocessableEntity)
                     try
                     {
@@ -311,19 +328,43 @@ public sealed class MuscleCutiesBackendApiClient(
         return response.StatusCode switch
         {
             HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden =>
-                new BackendApiResponse<TResponse>(BackendApiStatus.Unauthorized, default, errorCode ?? "unauthorized"),
+                new BackendApiResponse<TResponse>(BackendApiStatus.Unauthorized, default,
+                    errorCode ?? "unauthorized", ResponseStatusCode: response.StatusCode, RequestId: requestId),
             HttpStatusCode.Conflict =>
-                new BackendApiResponse<TResponse>(BackendApiStatus.Conflict, default, errorCode ?? "conflict", conflictVersion),
+                new BackendApiResponse<TResponse>(BackendApiStatus.Conflict, default,
+                    errorCode ?? "conflict", conflictVersion, ResponseStatusCode: response.StatusCode, RequestId: requestId),
             HttpStatusCode.BadRequest or HttpStatusCode.UnprocessableEntity =>
                 new BackendApiResponse<TResponse>(BackendApiStatus.ValidationFailed, validationData,
-                    errorCode ?? "validationFailed"),
+                    errorCode ?? "validationFailed", ResponseStatusCode: response.StatusCode, RequestId: requestId),
             HttpStatusCode.NotFound =>
-                new BackendApiResponse<TResponse>(BackendApiStatus.NotFound, default, errorCode ?? "notFound"),
+                new BackendApiResponse<TResponse>(BackendApiStatus.NotFound, default,
+                    errorCode ?? "notFound", ResponseStatusCode: response.StatusCode, RequestId: requestId),
             HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable =>
                 new BackendApiResponse<TResponse>(BackendApiStatus.ServerError, default,
-                    errorCode ?? "serverError", ResponseStatusCode: response.StatusCode),
-            _ => new BackendApiResponse<TResponse>(BackendApiStatus.ServerError, default, errorCode ?? "serverError")
+                    errorCode ?? "serverError", ResponseStatusCode: response.StatusCode, RequestId: requestId),
+            _ => new BackendApiResponse<TResponse>(BackendApiStatus.ServerError, default,
+                errorCode ?? "serverError", ResponseStatusCode: response.StatusCode, RequestId: requestId)
         };
+    }
+
+    private static HttpResponseMessage SyntheticFailureResponse(HttpStatusCode status, string? requestId)
+    {
+        var response = new HttpResponseMessage(status);
+        if (!string.IsNullOrWhiteSpace(requestId))
+            response.Headers.TryAddWithoutValidation(RequestIdHeaderName, requestId);
+        return response;
+    }
+
+    private static string? ReadRequestId(HttpResponseMessage response)
+    {
+        if (!response.Headers.TryGetValues(RequestIdHeaderName, out var values))
+            return null;
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+        }
+        return null;
     }
 
     private sealed record RefreshTokenDto(

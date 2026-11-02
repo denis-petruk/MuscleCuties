@@ -36,7 +36,7 @@ public partial class NutritionViewModel
         {
             Trace.TraceError($"[Nutrition] Food search failed: {exception.GetType().Name}");
             if (version == _foodSearchVersion)
-                AddFoodMessage = "Couldn't load foods. Check your connection and search again.";
+                AddFoodMessage = "Ui_Nutrition_Error_LoadFoods";
         }
         finally
         {
@@ -62,7 +62,7 @@ public partial class NutritionViewModel
         {
             Trace.TraceError($"[Nutrition] More foods failed: {exception.GetType().Name}");
             if (version == _foodSearchVersion)
-                AddFoodMessage = "Couldn't load more foods. Your current results are still available.";
+                AddFoodMessage = "Ui_Nutrition_Error_LoadMoreFoods";
         }
         finally
         {

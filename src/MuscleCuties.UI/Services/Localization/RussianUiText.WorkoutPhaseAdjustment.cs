@@ -7,7 +7,7 @@ internal static partial class RussianUiText
         Values["Workout_PhaseAdjustment_Open"] = "Проверить ближайшие тренировки";
         Values["Workout_PhaseAdjustment_OpenHint"] = "Проверьте возможные изменения ближайших тренировок на основе сохранённого профиля фазы.";
         Values["Workout_PhaseAdjustment_Title"] = "Проверка ближайших тренировок";
-        Values["Workout_PhaseAdjustment_Intro"] = "Если сохранённые данные о фазе предполагают более лёгкий план, проверьте точные изменения ближайших тренировок. План изменится только после выбора «Применить изменения».";
+        Values["Workout_PhaseAdjustment_Intro"] = "Если данные о фазе предполагают более лёгкий план, проверьте изменения ближайших тренировок. План изменится только после «Применить изменения».";
         Values["Workout_PhaseAdjustment_Loading"] = "Проверяем ближайшие тренировки";
         Values["Workout_PhaseAdjustment_LoadFailed"] = "Не удалось загрузить проверку тренировок. План не изменён. Попробуйте ещё раз.";
         Values["Workout_PhaseAdjustment_ConfirmationPrompt"] = "Это соответствует вашему самочувствию сегодня? Проверьте каждое изменение, затем выберите «Применить изменения» или «Оставить текущий план».";

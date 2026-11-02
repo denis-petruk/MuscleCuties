@@ -70,7 +70,6 @@ public sealed class CloudNutritionOverviewStore(
         var suggestions = CloudStoreResponse.RequireData(response, "meal suggestions");
         return suggestions
             .Where(item => excludeConceptNames is null || !excludeConceptNames.Contains(item.ConceptName))
-            .Select(item => GeneratedMealResponseRepair.Repair(item, item.Calories, item.Fats))
             .ToArray();
     }
 
@@ -79,12 +78,7 @@ public sealed class CloudNutritionOverviewStore(
         var response = await apiClient.GetAsync<List<DayMealPlanItemDto>>(
             $"/api/v1/nutrition/meal-plan?date={DateOnly.FromDateTime(DateTime.Now):yyyy-MM-dd}&breakfastPreference={Uri.EscapeDataString(breakfastPreference)}",
             cancellationToken).ConfigureAwait(false);
-        return CloudStoreResponse.RequireData(response, "day meal plan")
-            .Select(item => item.Suggestion is null ? item : item with
-            {
-                Suggestion = GeneratedMealResponseRepair.Repair(
-                    item.Suggestion, item.TargetCalories, item.TargetFats)
-            }).ToArray();
+        return CloudStoreResponse.RequireData(response, "day meal plan");
     }
 
     public async Task<DayMealPlanItemDto> RefreshDayMealAsync(DayMealPlanItemDto item, string breakfastPreference, CancellationToken cancellationToken = default)
@@ -93,12 +87,7 @@ public sealed class CloudNutritionOverviewStore(
             HttpMethod.Post,
             $"/api/v1/nutrition/meal-plan/refresh?breakfastPreference={Uri.EscapeDataString(breakfastPreference)}",
             item, cancellationToken: cancellationToken).ConfigureAwait(false);
-        var refreshed = CloudStoreResponse.RequireData(response, "refresh day meal");
-        return refreshed.Suggestion is null ? refreshed : refreshed with
-        {
-            Suggestion = GeneratedMealResponseRepair.Repair(
-                refreshed.Suggestion, refreshed.TargetCalories, refreshed.TargetFats)
-        };
+        return CloudStoreResponse.RequireData(response, "refresh day meal");
     }
 
     public async Task EnsureReferenceDataReadyAsync(CancellationToken cancellationToken = default)
@@ -211,31 +200,6 @@ public sealed class CloudNutritionDailyLogStore(
 
     public Task ReLogFoodAsync(DateOnly date, MealType mealType, QuickFoodItemSnapshot quickItem, LoggedFoodItemDto draft, CancellationToken cancellationToken = default) =>
         SaveFoodItemAsync(date, draft with { MealType = mealType }, false, cancellationToken);
-
-    public async Task<IReadOnlyList<DailyNutritionSummarySnapshot>> GetDateRangeSummariesAsync(DateOnly start, DateOnly end, CancellationToken cancellationToken = default)
-    {
-        if (end < start) throw new ArgumentOutOfRangeException(nameof(end));
-        var summaries = new List<DailyNutritionSummarySnapshot>();
-        var beforeDate = end.AddDays(1);
-        while (beforeDate > start)
-        {
-            var response = await apiClient.GetAsync<DiaryContracts.NutritionDiaryHistory>(
-                $"{DiaryRoute}/history?beforeDate={beforeDate:yyyy-MM-dd}&pageSize={DiaryPageSize}", cancellationToken)
-                .ConfigureAwait(false);
-            var history = CloudStoreResponse.RequireData(response, "nutrition diary history");
-            foreach (var row in history.Days.Where(row => row.Date >= start && row.Date <= end))
-            {
-                var day = await GetLogForDateAsync(row.Date, cancellationToken).ConfigureAwait(false);
-                summaries.Add(new DailyNutritionSummarySnapshot(row.Date, day.Id, (double)row.Calories,
-                    (double)row.Protein, (double)row.Carbs, (double)row.Fat, day.TargetCalories,
-                    row.WaterIntakeMl, row.ItemsCount));
-            }
-            if (history.NextBeforeDate is null || history.NextBeforeDate >= beforeDate)
-                break;
-            beforeDate = history.NextBeforeDate.Value;
-        }
-        return summaries;
-    }
 
     public async Task UpdateWaterIntakeAsync(DateOnly date, int waterIntakeMl, CancellationToken cancellationToken = default)
     {
@@ -386,6 +350,8 @@ public sealed class CloudFoodCatalogSearchStore(
                 HttpMethod.Post, "/api/v1/nutrition/catalog/barcode", new BarcodeLookupRequest(barcode),
                 cancellationToken: cancellationToken).ConfigureAwait(false);
             if (response.Status == BackendApiStatus.NotFound) continue;
+            if (response.Status is BackendApiStatus.OfflineRejected or BackendApiStatus.ServerError)
+                throw new BarcodeLookupUnavailableException();
             var result = CloudStoreResponse.RequireData(response, "barcode lookup");
             if (result.FoodItem is not null) return MapCatalogItem(result.FoodItem, result.NormalizedBarcode);
         }
@@ -454,6 +420,13 @@ public sealed class CloudRecipeStore(
             HttpMethod.Post, $"{NutritionRoute}/templates", request, cancellationToken: cancellationToken).ConfigureAwait(false), "save meal template");
     }
 
+    public async Task<MealTemplateDto> UpdateMealTemplateAsync(MealTemplateDto template, CancellationToken cancellationToken = default)
+    {
+        var request = new SaveMealAsTemplateRequest(template.Name, template.MealType, template.Items);
+        return CloudStoreResponse.RequireData(await apiClient.SendMutationAsync<SaveMealAsTemplateRequest, MealTemplateDto>(
+            HttpMethod.Put, $"{NutritionRoute}/templates/{template.Id:D}", request, cancellationToken: cancellationToken).ConfigureAwait(false), "update meal template");
+    }
+
     public async Task<IReadOnlyList<MealTemplateDto>> GetMealTemplatesAsync(int? mealType = null, CancellationToken cancellationToken = default) =>
         (await GetBundleAsync(mealType, cancellationToken).ConfigureAwait(false)).Templates;
 
@@ -490,15 +463,6 @@ public sealed class CloudWorkoutOverviewStore(
     public async Task SetSessionOptionalAsync(SetWorkoutSessionOptionalRequest request, CancellationToken cancellationToken) =>
         CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<SetWorkoutSessionOptionalRequest, object>(
             HttpMethod.Put, "/api/v1/workouts/optional-session", request, cancellationToken: cancellationToken).ConfigureAwait(false), "mark optional workout session");
-
-    public async Task<ReadinessAdjustmentProposalDto> ReviewReadinessAdjustmentAsync(ReviewReadinessAdjustmentRequest request, CancellationToken cancellationToken) =>
-        CloudStoreResponse.RequireData(await apiClient.SendMutationAsync<ReviewReadinessAdjustmentRequest, ReadinessAdjustmentProposalDto>(
-            HttpMethod.Post, "/api/v1/workouts/readiness-proposals/review", request, cancellationToken: cancellationToken).ConfigureAwait(false), "review readiness adjustment");
-
-    public async Task<ReadinessAdjustmentDecisionDto> DecideReadinessAdjustmentAsync(DecideReadinessAdjustmentRequest request, bool apply, CancellationToken cancellationToken) =>
-        CloudStoreResponse.RequireData(await apiClient.SendMutationAsync<DecideReadinessAdjustmentRequest, ReadinessAdjustmentDecisionDto>(
-            HttpMethod.Post, apply ? "/api/v1/workouts/readiness-proposals/apply" : "/api/v1/workouts/readiness-proposals/keep",
-            request, cancellationToken: cancellationToken).ConfigureAwait(false), apply ? "apply readiness adjustment" : "keep workout plan");
 }
 
 public sealed class CloudWorkoutSessionActionStore(
@@ -570,6 +534,8 @@ public sealed class CloudWorkoutSessionActionStore(
             throw new WorkoutHiitHistoryConfirmationRequiredException();
         if (response.Status == BackendApiStatus.Conflict && response.ErrorCode == "WorkoutActivityNoLongerSafe")
             throw new WorkoutActivityNoLongerSafeException();
+        if (response.Status == BackendApiStatus.Conflict && WorkoutSessionStartBlockCode.IsKnown(response.ErrorCode))
+            throw new WorkoutSessionStartBlockedException(response.ErrorCode!);
         if (response.Status == BackendApiStatus.OfflineRejected)
             throw new HttpRequestException("Workout session requires a connection.");
         return CloudStoreResponse.RequireData(response, operation);

@@ -128,47 +128,6 @@
                     Style="{StaticResource CardPrimary}"
                     Margin="{StaticResource UiInsets20_0_20_16}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing0}">
-                        <!-- Apple Health Status Row -->
-                        <Border Style="{StaticResource ProfileMenuRow}"
-                                IsVisible="{Binding IsAppleHealthAvailable}">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
-                                                      CommandParameter="ProfileHealthSyncPage" />
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="32,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
-                                <mi:MauiIcon
-                                    Icon="{mi:Fluent HeartPulse32}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="{StaticResource UiDimension20}"
-                                    HeightRequest="{StaticResource UiDimension20}"
-                                    VerticalOptions="Center" />
-                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_AppleHealth}" Style="{StaticResource BodyStrong}" />
-                                    <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_SleepStepsEnergyHeartRate}"
-                                           Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
-                                </Grid>
-                                <Border
-                                    Grid.Column="2"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                                    StrokeShape="{StaticResource UiRoundRectangleRadius8}"
-                                    Padding="{StaticResource UiInsets8_3}"
-                                    VerticalOptions="Center">
-                                    <Label
-                                        Text="{Binding HealthStatusText, Converter={StaticResource LocalizedStringConverter}}"
-                                        FontSize="{StaticResource UiFontSize12}" FontAttributes="{StaticResource UiFontAttributesBold}" VerticalOptions="Center" />
-                                </Border>
-                                <mi:MauiIcon
-                                    Grid.Column="3"
-                                    Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                    WidthRequest="{StaticResource UiDimension16}"
-                                    HeightRequest="{StaticResource UiDimension16}"
-                                    VerticalOptions="Center" />
-                            </Grid>
-                        </Border>
-
-                        <BoxView HeightRequest="{StaticResource UiDimension1}" Margin="{StaticResource UiInsets56_0_0_0}"
-                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
-
                         <!-- Workout Availability Row -->
                         <Border Style="{StaticResource ProfileMenuRow}">
                             <Border.GestureRecognizers>

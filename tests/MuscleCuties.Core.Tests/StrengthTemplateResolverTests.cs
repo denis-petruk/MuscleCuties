@@ -33,6 +33,63 @@ public sealed class StrengthTemplateResolverTests
     }
 
     [Fact]
+    public void Machine_Exercise_Is_Preferred_When_Otherwise_Equal()
+    {
+        var bodyweight = Candidate(11, MovementPattern.SquatPattern);
+        var machine = Candidate(12, MovementPattern.SquatPattern) with
+        {
+            Candidate = Candidate(12, MovementPattern.SquatPattern).Candidate with
+            {
+                RequiredEquipment = new HashSet<ExerciseEquipmentKind>
+                    { ExerciseEquipmentKind.Machine }
+            }
+        };
+        var input = Input(Catalog(bodyweight, machine)) with
+        {
+            EligibilityContext = new ExerciseEligibilityContext(
+                new HashSet<ExerciseEquipmentKind>
+                    { ExerciseEquipmentKind.Bodyweight, ExerciseEquipmentKind.Machine },
+                ActivityExperience.Beginner,
+                new HashSet<int>(),
+                new HashSet<MovementPattern>(),
+                new HashSet<ActivityDemandTag>(),
+                false)
+        };
+
+        var result = StrengthTemplateResolver.Resolve(input, maximumWorkingExercises: 5);
+
+        Assert.Equal(12, result.Slots.Single(slot => slot.SlotId == "knee-dominant").ExerciseId);
+    }
+
+    [Fact]
+    public void Machine_Preference_Does_Not_Override_Unavailable_Equipment()
+    {
+        var bodyweight = Candidate(11, MovementPattern.SquatPattern);
+        var machine = Candidate(12, MovementPattern.SquatPattern) with
+        {
+            Candidate = Candidate(12, MovementPattern.SquatPattern).Candidate with
+            {
+                RequiredEquipment = new HashSet<ExerciseEquipmentKind>
+                    { ExerciseEquipmentKind.Machine }
+            }
+        };
+        var input = Input(Catalog(bodyweight, machine)) with
+        {
+            EligibilityContext = new ExerciseEligibilityContext(
+                new HashSet<ExerciseEquipmentKind> { ExerciseEquipmentKind.Bodyweight },
+                ActivityExperience.Beginner,
+                new HashSet<int>(),
+                new HashSet<MovementPattern>(),
+                new HashSet<ActivityDemandTag>(),
+                false)
+        };
+
+        var result = StrengthTemplateResolver.Resolve(input, maximumWorkingExercises: 5);
+
+        Assert.Equal(11, result.Slots.Single(slot => slot.SlotId == "knee-dominant").ExerciseId);
+    }
+
+    [Fact]
     public void Missing_Reviewed_Catalog_Metadata_Is_Reported_Without_Selecting_Exercise()
     {
         var incomplete = new StrengthExerciseCatalogEntry("Squat", Candidate(1, MovementPattern.SquatPattern).Candidate,

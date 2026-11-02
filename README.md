@@ -63,12 +63,13 @@ GitLab CI runs the suites, packages the Lambda archive, and exposes deployment a
 
 ## Documentation
 
-- [STATUS.md](STATUS.md): dated delivery log, verification evidence and open items.
-- [ROADMAP.md](ROADMAP.md): delivered foundations and active scope.
-- [docs/README.md](docs/README.md): index of delivery, migration and release documents.
-- [Submission readiness](docs/SUBMISSION_READINESS.md): release gates before TestFlight and the App Store.
-- [Operator guide](docs/OPERATOR_ACTION_MANUAL.md): environment, email delivery, database maintenance and device acceptance.
+- [AUDIT.md](AUDIT.md): current pre-first-build state, remaining work and owner actions.
+- [docs/UI_PRESENTATION_DESIGN_SPEC.md](docs/UI_PRESENTATION_DESIGN_SPEC.md): UI implementation contract.
+- [STATUS.md](STATUS.md): dated delivery history and verification evidence.
+- [ROADMAP.md](ROADMAP.md): delivered foundations and development roadmap.
 - [AGENTS.md](AGENTS.md): engineering directive — layer boundaries, privacy invariants and the pre-commit gate.
+
+`docs/infra/` keeps the operational runbooks that the first-build sequence still depends on (release infrastructure, schema compatibility, backup/restore drill).
 
 ## Conventions
 

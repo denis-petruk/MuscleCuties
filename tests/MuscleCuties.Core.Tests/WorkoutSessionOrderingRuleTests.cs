@@ -24,6 +24,23 @@ public sealed class WorkoutSessionOrderingRuleTests
     }
 
     [Fact]
+    public void CardioFollowsStrengthAndRecoveryClosesTheDay()
+    {
+        var ordered = WorkoutSessionOrderingRule.Assign([
+            new(WorkoutActivityType.Mobility, DayOfWeek.Monday, SyntheticSessionMinutes, false),
+            new(WorkoutActivityType.Cycling, DayOfWeek.Monday, SyntheticSessionMinutes, false),
+            new(WorkoutActivityType.GeneralStrength, DayOfWeek.Monday, SyntheticSessionMinutes, true)]);
+
+        Assert.Equal(new[]
+        {
+            WorkoutActivityType.GeneralStrength,
+            WorkoutActivityType.Cycling,
+            WorkoutActivityType.Mobility
+        }, ordered.Select(session => session.Activity));
+        Assert.True(WorkoutSessionOrderingRule.IsValid(ordered));
+    }
+
+    [Fact]
     public void StrengthIsFirstByDefaultAndEitherExplicitOrderIsValid()
     {
         var ordered = WorkoutSessionOrderingRule.Assign([

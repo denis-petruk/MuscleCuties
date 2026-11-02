@@ -45,7 +45,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     [ObservableProperty] private CyclePhase _currentPhase = CyclePhase.Unknown;
     [ObservableProperty] private int _cycleLength;
-    [ObservableProperty] private string _cycleWarningSuggestedActionText = "Use next phase";
+    [ObservableProperty] private string _cycleWarningSuggestedActionText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Warning_UseNextPhase");
     private CyclePhase? _cycleWarningSuggestedPhase;
     [ObservableProperty] private string _cycleWarningText = string.Empty;
     [ObservableProperty] private string _cycleWarningTitle = string.Empty;
@@ -59,7 +60,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     [ObservableProperty] private bool _isCycleWarningPopupVisible;
     [ObservableProperty] private bool _isDatePhaseModalVisible;
     [ObservableProperty] private bool _isLoadError;
-    [ObservableProperty] private string _lastPhaseLogText = "No shift logged yet";
+    [ObservableProperty] private string _lastPhaseLogText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_NoShiftLogged");
     [ObservableProperty] private ObservableCollection<CyclePhaseOptionItem> _phaseEditOptions = new();
     [ObservableProperty] private string _phaseEditStatusText = string.Empty;
     [ObservableProperty] private string _phaseJumpWarningText = string.Empty;
@@ -441,7 +443,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         var selectedPhase = GetSelectedPhase();
         if (selectedPhase is null)
         {
-            PhaseEditStatusText = "Pick the phase that fits this day.";
+            PhaseEditStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_PhaseEdit_ChoosePhase");
             return;
         }
 
@@ -457,8 +459,9 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             phaseOption.IsSelected = phaseOption.Phase == _suggestedPhase.Value;
 
         HasPhaseJumpWarning = false;
-        PhaseEditStatusText =
-            $"{FormatPhaseName(_suggestedPhase.Value)} keeps the cycle in order. Tap Save phase to log it.";
+        PhaseEditStatusText = string.Format(
+            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_PhaseEdit_SuggestedFormat"),
+            FormatPhaseName(_suggestedPhase.Value));
         _suggestedPhase = null;
         OnPropertyChanged(nameof(HasSuggestedPhase));
         SaveDatePhaseCommand.NotifyCanExecuteChanged();
@@ -469,7 +472,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         HasPhaseJumpWarning = false;
         IsDatePhaseModalVisible = false;
         IsCycleWarningPopupVisible = false;
-        CalendarEditHintText = "Easy fix. Tap the day the missed shift really began.";
+        CalendarEditHintText =
+            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_PhaseEdit_ReviewEarlierHint");
         _selectedCalendarDay = null;
         _suggestedPhase = null;
         _cycleWarningSuggestedPhase = null;

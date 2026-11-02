@@ -65,21 +65,21 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         AvailableSites = new List<InjuryFlagOption>
         {
-            new() { Flag = WorkoutInjurySite.Shoulder, Label = "Shoulder" },
-            new() { Flag = WorkoutInjurySite.Neck, Label = "Neck" },
-            new() { Flag = WorkoutInjurySite.LowBack, Label = "Low back" },
-            new() { Flag = WorkoutInjurySite.Hip, Label = "Hip" },
-            new() { Flag = WorkoutInjurySite.Knee, Label = "Knee" },
-            new() { Flag = WorkoutInjurySite.Ankle, Label = "Ankle" },
-            new() { Flag = WorkoutInjurySite.Foot, Label = "Foot" },
-            new() { Flag = WorkoutInjurySite.Wrist, Label = "Wrist" }
+            new() { Flag = WorkoutInjurySite.Shoulder, Label = UiTextCatalog.Get("Injury_Site_Shoulder") },
+            new() { Flag = WorkoutInjurySite.Neck, Label = UiTextCatalog.Get("Injury_Site_Neck") },
+            new() { Flag = WorkoutInjurySite.LowBack, Label = UiTextCatalog.Get("Injury_Site_LowBack") },
+            new() { Flag = WorkoutInjurySite.Hip, Label = UiTextCatalog.Get("Injury_Site_Hip") },
+            new() { Flag = WorkoutInjurySite.Knee, Label = UiTextCatalog.Get("Injury_Site_Knee") },
+            new() { Flag = WorkoutInjurySite.Ankle, Label = UiTextCatalog.Get("Injury_Site_Ankle") },
+            new() { Flag = WorkoutInjurySite.Foot, Label = UiTextCatalog.Get("Injury_Site_Foot") },
+            new() { Flag = WorkoutInjurySite.Wrist, Label = UiTextCatalog.Get("Injury_Site_Wrist") }
         };
 
         AvailableStatuses = new List<InjuryStatusOption>
         {
-            new() { Status = WorkoutInjuryStatus.Acute, Label = "Acute" },
-            new() { Status = WorkoutInjuryStatus.Recovering, Label = "Recovering" },
-            new() { Status = WorkoutInjuryStatus.Cleared, Label = "Cleared" }
+            new() { Status = WorkoutInjuryStatus.Acute, Label = UiTextCatalog.Get("Injury_Status_Acute") },
+            new() { Status = WorkoutInjuryStatus.Recovering, Label = UiTextCatalog.Get("Injury_Status_Recovering") },
+            new() { Status = WorkoutInjuryStatus.Cleared, Label = UiTextCatalog.Get("Injury_Status_Cleared") }
         };
 
         WorseningTriggerOptions = new List<InjuryWorseningOption>
@@ -252,7 +252,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         catch (Exception ex)
         {
             IsLoadError = true;
-            ErrorText = "Couldn't load your injury log. Try again.";
+            ErrorText = "Ui_Workout_Error_InjuryLoad";
             Trace.WriteLine($"[InjuryLog] Load failed ({ex.GetType().Name}).");
         }
         finally
@@ -338,7 +338,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         }
         catch (Exception ex)
         {
-            ErrorText = "Couldn't save this injury. Your changes are still here; try again.";
+            ErrorText = "Ui_Workout_Error_InjurySave";
             Trace.WriteLine($"[InjuryLog] Save failed ({ex.GetType().Name}).");
         }
         finally

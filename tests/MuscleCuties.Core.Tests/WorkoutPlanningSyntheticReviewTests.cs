@@ -204,26 +204,24 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     }
 
     [Fact]
-    public void FlowRule_CanAutomaticallyApplyFirstPlan_RequiresAllSevenPreconditionsSatisfied()
+    public void FlowRule_CanAutomaticallyApplyFirstPlan_RequiresAllSixPreconditionsSatisfied()
     {
-        // All conditions satisfied: first plan, feasible, persisted, no missing answers, no style choice required, no omissions, not reduced
+        // All conditions satisfied: first plan, feasible, persisted, no missing answers, no style choice required, no omissions.
         Assert.True(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
             replacesExistingPlan: false,
             feasible: true,
             persisted: true,
             missingRequiredAnswers: false,
             styleChoiceRequired: false,
-            hasOmissions: false,
-            reducedVolume: false));
+            hasOmissions: false));
 
         // Violations individually block auto-apply:
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(true, true, true, false, false, false, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, false, true, false, false, false, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, false, false, false, false, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, true, false, false, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, true, false, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, false, true, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, false, false, true));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(true, true, true, false, false, false));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, false, true, false, false, false));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, false, false, false, false));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, true, false, false));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, true, false));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, false, true));
     }
 
     [Theory]
@@ -646,14 +644,16 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     }
 
     [Fact]
-    public void ThreeActivitiesOnSameDay_FailsValidationWithTooManySessions()
+    public void FiveActivitiesOnSameDay_FailsValidationWithTooManySessions()
     {
         var sessions = new[]
         {
             new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, IsHard: true,
                 new HashSet<string> { ChestMuscleGroup }),
             new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Mobility, IsHard: false),
-            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Walking, IsHard: false)
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Walking, IsHard: false),
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Yoga, IsHard: false),
+            new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Rowing, IsHard: false)
         };
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions);
@@ -686,7 +686,7 @@ public sealed class WorkoutPlanningSyntheticReviewTests
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions);
         Assert.Contains(WorkoutScheduleValidationRule.MultipleStrengthSessions, reasons);
-        Assert.Contains(WorkoutScheduleValidationRule.MultipleHardSessions, reasons);
+        Assert.DoesNotContain(WorkoutScheduleValidationRule.MultipleHardSessions, reasons);
     }
 
     [Fact]
@@ -761,13 +761,14 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     }
 
     [Fact]
-    public void MultipleHardSessionsOnSameDay_FailsValidation()
+    public void ThreeHardSessionsOnSameDay_FailsValidationWithoutAReduction()
     {
         var sessions = new[]
         {
             new WorkoutScheduleValidationSession(DayOfWeek.Friday, WorkoutActivityType.GeneralStrength, IsHard: true,
                 new HashSet<string> { ChestMuscleGroup }),
-            new WorkoutScheduleValidationSession(DayOfWeek.Friday, WorkoutActivityType.RockClimbing, IsHard: true)
+            new WorkoutScheduleValidationSession(DayOfWeek.Friday, WorkoutActivityType.RockClimbing, IsHard: true),
+            new WorkoutScheduleValidationSession(DayOfWeek.Friday, WorkoutActivityType.Hiit, IsHard: true)
         };
 
         var reasons = WorkoutScheduleValidationRule.Validate(sessions);
@@ -781,7 +782,10 @@ public sealed class WorkoutPlanningSyntheticReviewTests
         {
             new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength, IsHard: true, new HashSet<string> { ChestMuscleGroup }),
             new WorkoutScheduleValidationSession(DayOfWeek.Wednesday, WorkoutActivityType.GeneralStrength, IsHard: true, new HashSet<string> { BackMuscleGroup }),
+            new WorkoutScheduleValidationSession(DayOfWeek.Tuesday, WorkoutActivityType.GeneralStrength, IsHard: true, new HashSet<string> { ChestMuscleGroup }),
+            new WorkoutScheduleValidationSession(DayOfWeek.Thursday, WorkoutActivityType.GeneralStrength, IsHard: true, new HashSet<string> { BackMuscleGroup }),
             new WorkoutScheduleValidationSession(DayOfWeek.Friday, WorkoutActivityType.GeneralStrength, IsHard: true, new HashSet<string> { LegsMuscleGroup }),
+            new WorkoutScheduleValidationSession(DayOfWeek.Saturday, WorkoutActivityType.GeneralStrength, IsHard: true, new HashSet<string> { ChestMuscleGroup }),
             new WorkoutScheduleValidationSession(DayOfWeek.Sunday, WorkoutActivityType.RockClimbing, IsHard: true)
         };
 

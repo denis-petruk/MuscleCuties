@@ -2,7 +2,6 @@ using System.Text.Json;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
-using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Infrastructure.ApiClient;
@@ -18,7 +17,6 @@ using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
-using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
@@ -27,8 +25,6 @@ namespace MuscleCuties.Registration.Tests;
 
 public sealed class CloudNutritionAndWorkoutContractsTests
 {
-    private const int InitialProfileVersion = 1;
-    private const int RefreshedProfileVersion = 2;
     private const float LegacyIngredientGrams = 120f;
     private const float LegacyIngredientCaloriesPer100Grams = 107.5f;
     private const float LegacyIngredientProteinPer100Grams = 6.1f;
@@ -41,12 +37,9 @@ public sealed class CloudNutritionAndWorkoutContractsTests
     private const float MealTargetProtein = 40f;
     private const float MealTargetCarbs = 70f;
     private const float DailyTargetCalories = 2000f;
-    private const float MacroTolerance = 0.001f;
-    private const float NutrientReferenceGrams = 100f;
-    private const float ReferenceOilCaloriesPer100Grams = 884f;
 
     [Xunit.Fact]
-    public async Task CloudGeneratedMealsRepairLegacyEqualSplitAcrossEveryResponseRoute()
+    public async Task CloudGeneratedMealsReturnServerPortionsUnchangedAndPostThemBack()
     {
         var legacyComponents = new[] { "Tofu", "Edamame", "Broccoli", "Jasmine Rice" }
             .Select(name => new MealSuggestionComponentDto(0, name, "Ingredient", "Base",
@@ -75,29 +68,39 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         });
         var store = new CloudNutritionOverviewStore(apiClient);
 
+        var today = new DateOnly(2026, 10, 19);
         var suggestion = Xunit.Assert.Single(await store.GetMealSuggestionsAsync("Dinner", "Savoury", null));
         var planned = Xunit.Assert.Single(await store.GetDayMealPlanAsync("Savoury"));
         var refreshed = await store.RefreshDayMealAsync(legacyPlan, "Savoury");
 
-        AssertRepaired(suggestion);
-        AssertRepaired(Xunit.Assert.IsType<MealSuggestionDto>(planned.Suggestion));
-        AssertRepaired(Xunit.Assert.IsType<MealSuggestionDto>(refreshed.Suggestion));
+        AssertServerPortionsPreserved(legacy, suggestion);
+        AssertServerPortionsPreserved(legacy, Xunit.Assert.IsType<MealSuggestionDto>(planned.Suggestion));
+        AssertServerPortionsPreserved(legacy, Xunit.Assert.IsType<MealSuggestionDto>(refreshed.Suggestion));
+
+        var logRequest = new LogMealRequest(today, "Dinner", TimeSpan.FromHours(19),
+            suggestion.Components
+                .Select(component => new MealIngredientInputDto(0, component.Name, component.Grams, component.Grams,
+                    "g", component.Calories, component.Protein, component.Carbs, component.Fats, "Generated"))
+                .ToArray());
+        await store.LogMealAsync(logRequest);
+
+        var posted = Xunit.Assert.Single(apiClient.RecordedPayloads,
+            record => record.Method == "POST" && record.Path == "/api/v1/nutrition/meals");
+        Xunit.Assert.Same(logRequest, posted.Body);
+        Xunit.Assert.Equal(legacy.Components.Select(component => component.Grams),
+            logRequest.Ingredients.Select(ingredient => ingredient.Grams));
     }
 
-    private static void AssertRepaired(MealSuggestionDto suggestion)
+    private static void AssertServerPortionsPreserved(MealSuggestionDto server, MealSuggestionDto returned)
     {
-        var components = suggestion.Components.ToDictionary(component => component.Name);
-        Xunit.Assert.NotEqual(components["Tofu"].Grams, components["Edamame"].Grams);
-        Xunit.Assert.NotEqual(components["Edamame"].Grams, components["Broccoli"].Grams);
-        Xunit.Assert.NotEqual(components["Broccoli"].Calories, components["Jasmine Rice"].Calories);
-        Xunit.Assert.Equal(ReferenceOilCaloriesPer100Grams, components["Sesame Oil"].Calories);
-        Xunit.Assert.Equal(components["Tofu"].Grams,
-            suggestion.ComponentGroups[0].Items.Single(item => item.Name == "Tofu").Grams);
-        Xunit.Assert.InRange(suggestion.Calories,
-            MealTargetCalories - MacroTolerance, MealTargetCalories + MacroTolerance);
-        Xunit.Assert.InRange(suggestion.Protein - suggestion.Components.Sum(component =>
-                component.Protein * component.Grams / NutrientReferenceGrams),
-            -MacroTolerance, MacroTolerance);
+        Xunit.Assert.Equal(server.Components.Select(component => (component.Name, component.Grams, component.Calories)),
+            returned.Components.Select(component => (component.Name, component.Grams, component.Calories)));
+        Xunit.Assert.Equal(server.ComponentGroups[0].Items.Select(item => (item.Name, item.Grams)),
+            returned.ComponentGroups[0].Items.Select(item => (item.Name, item.Grams)));
+        Xunit.Assert.Equal(server.Calories, returned.Calories);
+        Xunit.Assert.Equal(server.Protein, returned.Protein);
+        Xunit.Assert.Equal(server.Carbs, returned.Carbs);
+        Xunit.Assert.Equal(server.Fats, returned.Fats);
     }
 
     [Xunit.Fact]
@@ -160,39 +163,6 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         Xunit.Assert.Contains(("POST", "/api/v1/nutrition/meals"), apiClient.RecordedCalls);
         Xunit.Assert.Contains(("PUT", "/api/v1/nutrition/meals/77"), apiClient.RecordedCalls);
         Xunit.Assert.Contains(("GET", "/api/v1/nutrition/meals/77/ingredients"), apiClient.RecordedCalls);
-    }
-
-    [Xunit.Fact]
-    public async Task WorkoutPreferenceSaveRefreshesProfileVersionAfterConcurrentProfileUpdate()
-    {
-        var apiClient = new ConflictThenSuccessApiClient();
-        var store = new CloudProfileWorkoutPreferencesStore(apiClient);
-
-        var result = await store.SaveAsync(CreateAllSelectedWorkoutPreferences(), CancellationToken.None);
-
-        Xunit.Assert.Equal(WorkoutPreferencesError.None, result);
-        Xunit.Assert.Equal(new[] { InitialProfileVersion, RefreshedProfileVersion }, apiClient.ExpectedVersions);
-        Xunit.Assert.Equal(2, apiClient.ProfileReads);
-        Xunit.Assert.Equal(2, apiClient.PreferenceWrites);
-    }
-
-    [Xunit.Theory]
-    [Xunit.InlineData(BackendApiStatus.OfflineRejected, "", WorkoutPreferencesError.Offline)]
-    [Xunit.InlineData(BackendApiStatus.Unauthorized, "", WorkoutPreferencesError.SignInRequired)]
-    [Xunit.InlineData(BackendApiStatus.ServerError, "", WorkoutPreferencesError.ServerUnavailable)]
-    [Xunit.InlineData(BackendApiStatus.Conflict, "", WorkoutPreferencesError.ConcurrentUpdate)]
-    [Xunit.InlineData(BackendApiStatus.ValidationFailed, "invalidCatalogReference",
-        WorkoutPreferencesError.ExerciseCatalogChanged)]
-    public async Task WorkoutPreferenceSavePreservesActionableServerFailure(
-        BackendApiStatus status,
-        string errorCode,
-        WorkoutPreferencesError expectedError)
-    {
-        var store = new CloudProfileWorkoutPreferencesStore(new FailedPreferenceWriteApiClient(status, errorCode));
-
-        var result = await store.SaveAsync(CreateAllSelectedWorkoutPreferences(), CancellationToken.None);
-
-        Xunit.Assert.Equal(expectedError, result);
     }
 
     [Xunit.Fact]
@@ -452,14 +422,14 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         var loadedWorkoutPrefs = await workoutPrefsStore.LoadAsync(CancellationToken.None);
         Xunit.Assert.NotNull(loadedWorkoutPrefs);
         Xunit.Assert.Equal(new[] { 1, 3, 5, 6 }, loadedWorkoutPrefs!.AvailableWeekdays);
-        var savedWorkoutPrefs = await workoutPrefsStore.SaveAsync(loadedWorkoutPrefs, CancellationToken.None);
-        Xunit.Assert.Equal(WorkoutPreferencesError.None, savedWorkoutPrefs);
-        Xunit.Assert.Contains(("PUT", "/api/v1/profile/workout-preferences"), apiClient.RecordedCalls);
+        Xunit.Assert.DoesNotContain(("PUT", "/api/v1/profile/workout-preferences"), apiClient.RecordedCalls);
     }
 
     private sealed class RecordingApiClient(Func<string, object> responder) : IMuscleCutiesBackendApiClient
     {
         public List<(string Method, string Path)> RecordedCalls { get; } = [];
+
+        public List<(string Method, string Path, object? Body)> RecordedPayloads { get; } = [];
 
         public Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(
             string relativePath,
@@ -478,6 +448,7 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             CancellationToken cancellationToken = default)
         {
             RecordedCalls.Add((method.Method, relativePath));
+            RecordedPayloads.Add((method.Method, relativePath, payload));
             var raw = responder(relativePath);
             var result = raw is TResponse typed ? typed :
                 raw is JsonElement json && json.ValueKind != JsonValueKind.Undefined
@@ -494,143 +465,5 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             RecordedCalls.Add(("DELETE", relativePath));
             return Task.FromResult(new BackendApiResponse<bool>(BackendApiStatus.Success, true));
         }
-    }
-
-    private sealed class ConflictThenSuccessApiClient : IMuscleCutiesBackendApiClient
-    {
-        public List<int> ExpectedVersions { get; } = [];
-        public int ProfileReads { get; private set; }
-        public int PreferenceWrites { get; private set; }
-
-        public Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(
-            string relativePath,
-            CancellationToken cancellationToken = default)
-        {
-            Xunit.Assert.Equal("/api/v1/profile", relativePath);
-            ProfileReads++;
-            var snapshot = new ServerProfileSnapshot(
-                Name: "Synthetic",
-                DateOfBirth: null,
-                Height: decimal.Zero,
-                Weight: decimal.Zero,
-                Goal: "Strength",
-                WeightGoalPace: "Steady",
-                TrainingExperienceLevel: "Beginner",
-                WorkoutDaysPerWeek: 0,
-                AvailableWorkoutWeekdaysJson: "[]",
-                CycleLength: 0,
-                DietaryTags: string.Empty,
-                ActivitySessionDurationsJson: "{}",
-                EquipmentLevel: Equipment.FullGym.ToString(),
-                PreferredWorkoutActivityTypes: string.Empty,
-                UnitSystem: "Metric",
-                BodyWeightUnit: "kg",
-                FoodMassUnit: "g",
-                HeightUnit: "cm",
-                DistanceUnit: "km",
-                EnergyUnit: "kcal",
-                NutritionGoalsJson: "{}",
-                Version: ProfileReads == 1 ? InitialProfileVersion : RefreshedProfileVersion);
-            return Task.FromResult(new BackendApiResponse<TResponse>(
-                BackendApiStatus.Success, (TResponse)(object)snapshot));
-        }
-
-        public Task<BackendApiResponse<TResponse>> SendMutationAsync<TRequest, TResponse>(
-            HttpMethod method,
-            string relativePath,
-            TRequest payload,
-            string? idempotencyKey = null,
-            CancellationToken cancellationToken = default)
-        {
-            Xunit.Assert.Equal(HttpMethod.Put, method);
-            Xunit.Assert.Equal("/api/v1/profile/workout-preferences", relativePath);
-            using var document = JsonDocument.Parse(JsonSerializer.Serialize(payload,
-                new JsonSerializerOptions(JsonSerializerDefaults.Web)));
-            ExpectedVersions.Add(document.RootElement.GetProperty("expectedVersion").GetInt32());
-            PreferenceWrites++;
-            var status = PreferenceWrites == 1 ? BackendApiStatus.Conflict : BackendApiStatus.Success;
-            return Task.FromResult(new BackendApiResponse<TResponse>(status, default,
-                ServerConcurrencyVersion: ProfileReads + 1));
-        }
-
-        public Task<BackendApiResponse<bool>> DeleteAsync(
-            string relativePath,
-            string? idempotencyKey = null,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(new BackendApiResponse<bool>(BackendApiStatus.Success, true));
-    }
-
-    private sealed class FailedPreferenceWriteApiClient(
-        BackendApiStatus writeStatus,
-        string errorCode) : IMuscleCutiesBackendApiClient
-    {
-        public Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(
-            string relativePath,
-            CancellationToken cancellationToken = default)
-        {
-            Xunit.Assert.Equal("/api/v1/profile", relativePath);
-            var snapshot = new ServerProfileSnapshot(
-                Name: "Synthetic",
-                DateOfBirth: null,
-                Height: decimal.Zero,
-                Weight: decimal.Zero,
-                Goal: "Strength",
-                WeightGoalPace: "Steady",
-                TrainingExperienceLevel: "Beginner",
-                WorkoutDaysPerWeek: 0,
-                AvailableWorkoutWeekdaysJson: "[]",
-                CycleLength: 0,
-                DietaryTags: string.Empty,
-                ActivitySessionDurationsJson: "{}",
-                EquipmentLevel: Equipment.FullGym.ToString(),
-                PreferredWorkoutActivityTypes: string.Empty,
-                UnitSystem: "Metric",
-                BodyWeightUnit: "kg",
-                FoodMassUnit: "g",
-                HeightUnit: "cm",
-                DistanceUnit: "km",
-                EnergyUnit: "kcal",
-                NutritionGoalsJson: "{}",
-                Version: InitialProfileVersion);
-            return Task.FromResult(new BackendApiResponse<TResponse>(
-                BackendApiStatus.Success, (TResponse)(object)snapshot));
-        }
-
-        public Task<BackendApiResponse<TResponse>> SendMutationAsync<TRequest, TResponse>(
-            HttpMethod method,
-            string relativePath,
-            TRequest payload,
-            string? idempotencyKey = null,
-            CancellationToken cancellationToken = default)
-        {
-            Xunit.Assert.Equal(HttpMethod.Put, method);
-            Xunit.Assert.Equal("/api/v1/profile/workout-preferences", relativePath);
-            return Task.FromResult(new BackendApiResponse<TResponse>(writeStatus, default, errorCode));
-        }
-
-        public Task<BackendApiResponse<bool>> DeleteAsync(
-            string relativePath,
-            string? idempotencyKey = null,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(new BackendApiResponse<bool>(BackendApiStatus.Success, true));
-    }
-
-    private static WorkoutPreferencesDto CreateAllSelectedWorkoutPreferences()
-    {
-        var activities = Enum.GetValues<WorkoutActivityType>()
-            .Where(activity => activity != WorkoutActivityType.Other)
-            .Select(activity => (int)activity)
-            .ToArray();
-        var weekdays = Enum.GetValues<DayOfWeek>().Select(day => (int)day).ToArray();
-        var durations = Enum.GetValues<WorkoutActivityType>()
-            .Where(WorkoutPreferencesRule.RequiresSessionDuration)
-            .ToDictionary(activity => (int)activity,
-                activity => WorkoutPreferencesRule.DefaultSessionDurationMinutes(activity)!.Value);
-        var frequencies = Enum.GetValues<WorkoutActivityType>()
-            .Where(WorkoutPreferencesRule.RequiresExplicitWeeklyFrequency)
-            .ToDictionary(activity => (int)activity,
-                activity => ActivityPreferenceDefaults.SessionsPerWeek(activity, weekdays.Length)!.Value);
-        return new WorkoutPreferencesDto(activities, weekdays, durations, Equipment.FullGym.ToString(), frequencies,
-            new HashSet<int>());
     }
 }

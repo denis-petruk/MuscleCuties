@@ -8,6 +8,7 @@ using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Localization;
+using MuscleCuties.UI.Services.Api;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Planning;
@@ -51,7 +52,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private IReadOnlyList<ScheduleDayItem> _datedSchedule = [];
     private IReadOnlyList<WorkoutDayExercisePreview> _dayPreviews = [];
     private WorkoutItem? _featuredWorkout;
-    [ObservableProperty] private string _featuredWorkoutActionText = "Start workout";
+    [ObservableProperty] private string _featuredWorkoutActionText =
+        UiTextCatalog.Get("Dashboard_Workout_StartWorkout");
     [ObservableProperty] private bool _featuredWorkoutHasAction;
     [ObservableProperty] private bool _featuredWorkoutIsEditAction;
     [ObservableProperty] private bool _featuredWorkoutIsRestDay = true;
@@ -64,13 +66,17 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private Color _featuredWorkoutActivityTextColor =
         WorkoutPresentationPalette.Text("STRENGTH");
 
-    [ObservableProperty] private string _featuredWorkoutBadgeText = "Today recovery";
-    [ObservableProperty] private string _featuredWorkoutDurationText = "Flexible";
+    [ObservableProperty] private string _featuredWorkoutBadgeText =
+        UiTextCatalog.Get("Dashboard_Workout_TodayRecovery");
+    [ObservableProperty] private string _featuredWorkoutDurationText =
+        UiTextCatalog.Get("Dashboard_Workout_Flexible");
     [ObservableProperty] private ObservableCollection<string> _featuredWorkoutExercisePreviews = [];
     [ObservableProperty] private string _featuredWorkoutExercisesCount = "0";
     [ObservableProperty] private bool _featuredWorkoutHasMultipleActivities;
-    [ObservableProperty] private string _featuredWorkoutIntensity = "Light";
-    [ObservableProperty] private string _featuredWorkoutSubtitle = "Recovery day";
+    [ObservableProperty] private string _featuredWorkoutIntensity =
+        UiTextCatalog.Get("Dashboard_Workout_IntensityLight");
+    [ObservableProperty] private string _featuredWorkoutSubtitle =
+        UiTextCatalog.Get("Dashboard_Workout_RecoverySubtitle");
     [ObservableProperty] private string _featuredWorkoutTitle = "Living happy life";
     [ObservableProperty] private ObservableCollection<FilterChipItem> _filters = new();
 
@@ -129,10 +135,10 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         NavigateToInjuryLogCommand = new AsyncRelayCommand(OpenInjuryModalAsync);
         Filters = new ObservableCollection<FilterChipItem>
         {
-            new() { Label = "All", IsSelected = true },
-            new() { Label = "Strength" },
-            new() { Label = "Cardio" },
-            new() { Label = "Recovery" }
+            new() { Label = UiTextCatalog.Get("Workout_Filter_All"), IsSelected = true },
+            new() { Label = UiTextCatalog.Get("Workout_Filter_Strength") },
+            new() { Label = UiTextCatalog.Get("Workout_Filter_Cardio") },
+            new() { Label = UiTextCatalog.Get("Workout_Filter_Recovery") }
         };
     }
 
@@ -466,10 +472,10 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             FeaturedWorkoutIsEditAction = false;
             FeaturedWorkoutBadgeText = $"{selectedDay.DayLabel} rest";
             FeaturedWorkoutTitle = selectedDay.WorkoutTitle;
-            FeaturedWorkoutSubtitle = "Recovery day";
-            FeaturedWorkoutDurationText = "Rest day";
+            FeaturedWorkoutSubtitle = UiTextCatalog.Get("Dashboard_Workout_RecoverySubtitle");
+            FeaturedWorkoutDurationText = UiTextCatalog.Get("Dashboard_Workout_RestDay");
             FeaturedWorkoutExercisesCount = "0";
-            FeaturedWorkoutIntensity = "None";
+            FeaturedWorkoutIntensity = UiTextCatalog.Get("Dashboard_Workout_IntensityNone");
             FeaturedWorkoutActionText = string.Empty;
             FeaturedWorkoutActivityBackground = WorkoutPresentationPalette.Background("REST");
             FeaturedWorkoutActivityTextColor = WorkoutPresentationPalette.Text("REST");
@@ -485,15 +491,17 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             FeaturedWorkoutIsRestDay = true;
             FeaturedWorkoutHasAction = false;
             FeaturedWorkoutIsEditAction = false;
-            FeaturedWorkoutBadgeText = "Today recovery";
-            FeaturedWorkoutTitle = HasNoPlan ? "No active plan" : "Living happy life";
+            FeaturedWorkoutBadgeText = UiTextCatalog.Get("Dashboard_Workout_TodayRecovery");
+            FeaturedWorkoutTitle = HasNoPlan
+                ? UiTextCatalog.Get("Dashboard_Prompt_NoActivePlan")
+                : UiTextCatalog.Get("Workout_Page_PlaceholderTitle");
             FeaturedWorkoutSubtitle = HasNoPlan
-                ? "Your training sessions will appear once a plan exists."
-                : "Recovery day";
-            FeaturedWorkoutDurationText = "Rest day";
+                ? UiTextCatalog.Get("Dashboard_Prompt_NoPlanBody")
+                : UiTextCatalog.Get("Dashboard_Workout_RecoverySubtitle");
+            FeaturedWorkoutDurationText = UiTextCatalog.Get("Dashboard_Workout_RestDay");
             FeaturedWorkoutExercisesCount = "0";
             FeaturedWorkoutIntensity = "Light";
-            FeaturedWorkoutActionText = "Start workout";
+            FeaturedWorkoutActionText = UiTextCatalog.Get("Dashboard_Workout_StartWorkout");
             FeaturedWorkoutActivityBackground =
                 WorkoutPresentationPalette.Background("REST");
             FeaturedWorkoutActivityTextColor =
@@ -582,8 +590,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         catch (Exception ex)
         {
             Trace.WriteLine($"[Workout] Strength style offer unavailable ({ex.GetType().Name}).");
-            StyleOfferMessage = UiTextCatalog.Get(ex is HttpRequestException or TaskCanceledException
-                ? "Workout_Generation_ConnectionError" : "Workout_StyleOffer_ActionFailed");
+            StyleOfferMessage = ApiFailurePresenter.FromException(ex, "Workout_StyleOffer_ActionFailed").MessageText;
         }
     }
 
@@ -600,8 +607,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         }
         catch (Exception ex)
         {
-            StyleOfferMessage = UiTextCatalog.Get(ex is HttpRequestException or TaskCanceledException
-                ? "Workout_Generation_ConnectionError" : "Workout_StyleOffer_ActionFailed");
+            StyleOfferMessage = ApiFailurePresenter.FromException(ex, "Workout_StyleOffer_ActionFailed").MessageText;
         }
     }
     private async Task GeneratePlanAsync()

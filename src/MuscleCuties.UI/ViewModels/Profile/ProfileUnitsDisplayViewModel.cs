@@ -75,11 +75,11 @@ public partial class ProfileUnitsDisplayViewModel : ObservableObject
                 EnergyUnit));
             if (!result.Succeeded)
             {
-                StatusMessage = "Complete personal info before units.";
+                StatusMessage = "Ui_Profile_Status_CompletePersonalInfo";
                 return;
             }
 
-            StatusMessage = "Units saved.";
+            StatusMessage = "Ui_Profile_Status_UnitsSaved";
             await _navigateBackAsync();
         }
         finally

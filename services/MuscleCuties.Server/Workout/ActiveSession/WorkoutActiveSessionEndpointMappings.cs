@@ -42,6 +42,8 @@ public static class WorkoutActiveSessionEndpointMappings
             }
             catch (WorkoutActivityNoLongerSafeException exception)
             { return Results.Conflict(new { code = "WorkoutActivityNoLongerSafe", message = exception.Message }); }
+            catch (WorkoutSessionStartBlockedException exception)
+            { return Results.Conflict(new { code = exception.Code, message = exception.Message }); }
             catch (PostgresIdempotencyConflictException) { return Results.Conflict(); }
             catch (InvalidOperationException) { return Results.Conflict(); }
             catch (ArgumentException) { return Results.BadRequest(); }
@@ -60,6 +62,8 @@ public static class WorkoutActiveSessionEndpointMappings
             }
             catch (WorkoutTimingIntervalExpiredException exception)
             { return Results.Conflict(new { code = "WorkoutTimingIntervalExpired", message = exception.Message }); }
+            catch (WorkoutSessionStartBlockedException exception)
+            { return Results.Conflict(new { code = exception.Code, message = exception.Message }); }
             catch (PostgresIdempotencyConflictException) { return Results.Conflict(); }
             catch (InvalidOperationException) { return Results.Conflict(); }
             catch (ArgumentException) { return Results.BadRequest(); }
@@ -112,6 +116,10 @@ public static class WorkoutActiveSessionEndpointMappings
             catch (WorkoutActivityNoLongerSafeException exception)
             {
                 return Results.Conflict(new { code = "WorkoutActivityNoLongerSafe", message = exception.Message });
+            }
+            catch (WorkoutSessionStartBlockedException exception)
+            {
+                return Results.Conflict(new { code = exception.Code, message = exception.Message });
             }
             catch (PostgresIdempotencyConflictException)
             {

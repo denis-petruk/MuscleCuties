@@ -293,7 +293,7 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
     }
 
     [Fact]
-    public void Demanding_Yoga_At_Its_Minimum_Is_Omitted_When_Strength_Occupies_Both_Days()
+    public void Demanding_Yoga_At_Its_Minimum_SharesBoth_Strength_Days()
     {
         var days = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday };
         var powerYogaEvidence = new ActivityPrescriptionContext(
@@ -325,10 +325,11 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         Assert.Equal(2, hvsDecision.TargetSessionsPerWeek);
         Assert.Equal(2, hvsDecision.ScheduledSessionsPerWeek);
 
-        Assert.Equal(0, yogaDecision.ScheduledSessionsPerWeek);
-        Assert.Equal(MixedActivityScheduleDisposition.Omitted, yogaDecision.Disposition);
-        Assert.Contains(MixedActivityWeekScheduleRule.HardDayLimitReached, yogaDecision.Reasons);
-        Assert.DoesNotContain(result.Sessions, session => session.Activity == WorkoutActivityType.Yoga);
+        Assert.Equal(2, yogaDecision.ScheduledSessionsPerWeek);
+        Assert.Equal(MixedActivityScheduleDisposition.Scheduled, yogaDecision.Disposition);
+        Assert.DoesNotContain(MixedActivityWeekScheduleRule.HardDayLimitReached, yogaDecision.Reasons);
+        Assert.All(result.Sessions.Where(session => session.Activity == WorkoutActivityType.Yoga),
+            session => Assert.True(session.IsHardSession));
         Assert.Empty(result.InputReasons);
     }
 
@@ -537,7 +538,7 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var gsSessionDays = result.Sessions.Where(s => s.Activity == WorkoutActivityType.GeneralStrength).Select(s => s.Day).ToHashSet();
         Assert.NotEmpty(yogaSessionDays.Intersect(gsSessionDays));
         Assert.All(result.Sessions.Where(s => s.Activity == WorkoutActivityType.Yoga && gsSessionDays.Contains(s.Day)),
-            session => Assert.NotNull(session.OccurrencePrescription));
+            session => Assert.True(session.IsHardSession));
         Assert.Empty(result.InputReasons);
     }
 

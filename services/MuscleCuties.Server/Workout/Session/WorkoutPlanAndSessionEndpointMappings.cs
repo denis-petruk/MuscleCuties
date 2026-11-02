@@ -1,11 +1,8 @@
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
-using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
-using Npgsql;
 
 namespace MuscleCuties.Server.Workout.Session;
 
@@ -71,73 +68,6 @@ public static class WorkoutPlanAndSessionEndpointMappings
             catch (KeyNotFoundException) { return Results.NotFound(); }
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
             { return Results.BadRequest(new { error = ex.Message }); }
-        });
-
-        group.MapPost("/readiness-proposals/review", async (
-            [FromBody] ReviewReadinessAdjustmentRequest request,
-            ClaimsPrincipal principal,
-            [FromServices] PostgresReadinessAdjustmentStore store,
-            CancellationToken cancellationToken) =>
-        {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            try
-            {
-                var proposal = await store.ReviewAsync(userId, request, cancellationToken).ConfigureAwait(false);
-                return Results.Ok(proposal);
-            }
-            catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
-        });
-
-        group.MapPost("/readiness-proposals/apply", async (
-            [FromBody] DecideReadinessAdjustmentRequest request,
-            ClaimsPrincipal principal,
-            [FromServices] PostgresReadinessAdjustmentStore store,
-            CancellationToken cancellationToken) =>
-        {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            try
-            {
-                return Results.Ok(await store.DecideAsync(userId, request, apply: true,
-                        ct: cancellationToken)
-                    .ConfigureAwait(false));
-            }
-            catch (KeyNotFoundException) { return Results.NotFound(); }
-            catch (DbUpdateConcurrencyException)
-            {
-                return Results.Conflict(new { code = "StaleReadinessProposal" });
-            }
-            catch (PostgresException ex) when (ex.SqlState is PostgresErrorCodes.SerializationFailure or
-                                               PostgresErrorCodes.UniqueViolation)
-            {
-                return Results.Conflict(new { code = "StaleReadinessProposal" });
-            }
-            catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
-        });
-
-        group.MapPost("/readiness-proposals/keep", async (
-            [FromBody] DecideReadinessAdjustmentRequest request,
-            ClaimsPrincipal principal,
-            [FromServices] PostgresReadinessAdjustmentStore store,
-            CancellationToken cancellationToken) =>
-        {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            try
-            {
-                return Results.Ok(await store.DecideAsync(userId, request, apply: false,
-                        ct: cancellationToken)
-                    .ConfigureAwait(false));
-            }
-            catch (KeyNotFoundException) { return Results.NotFound(); }
-            catch (DbUpdateConcurrencyException)
-            {
-                return Results.Conflict(new { code = "StaleReadinessProposal" });
-            }
-            catch (PostgresException ex) when (ex.SqlState is PostgresErrorCodes.SerializationFailure or
-                                               PostgresErrorCodes.UniqueViolation)
-            {
-                return Results.Conflict(new { code = "StaleReadinessProposal" });
-            }
-            catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
         });
 
         group.MapPut("/optional-exercise", async (

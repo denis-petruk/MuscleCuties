@@ -155,7 +155,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             }
 
             _refreshNotifier.InvalidateAll();
-            StatusMessage = "Personal info saved.";
+            StatusMessage = "Ui_Profile_Status_PersonalInfoSaved";
             await _navigateBackAsync();
         }
         finally
@@ -171,7 +171,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(CurrentPassword))
         {
-            PasswordStatusMessage = "Enter your current password.";
+            PasswordStatusMessage = "Ui_Profile_Status_CurrentPasswordRequired";
             return;
         }
 
@@ -209,32 +209,32 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(Name))
         {
-            StatusMessage = "Enter your name.";
+            StatusMessage = "Ui_Profile_Error_NameRequired";
             return false;
         }
 
         if (!_passwordValidator.IsValidEmail(Email))
         {
-            StatusMessage = "Enter a valid email.";
+            StatusMessage = "Ui_Profile_Error_EmailInvalid";
             return false;
         }
 
         if (!_hasStoredBirthDate && !_birthDateWasExplicitlyChanged)
         {
-            StatusMessage = "Select your birth date before saving.";
+            StatusMessage = "Ui_Profile_Error_BirthDateRequired";
             return false;
         }
 
         if (height <= 0f || weight <= 0f)
         {
-            StatusMessage = "Enter valid height and weight.";
+            StatusMessage = "Ui_Profile_Error_HeightWeightInvalid";
             return false;
         }
 
         if (cycleLength is < 0 or > 60 ||
             (!string.IsNullOrWhiteSpace(CycleLength) && cycleLength == 0))
         {
-            StatusMessage = "Cycle length must be between 1 and 60 days.";
+            StatusMessage = "Ui_Profile_Error_CycleLength";
             return false;
         }
 

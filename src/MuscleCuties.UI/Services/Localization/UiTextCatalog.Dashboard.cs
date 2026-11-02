@@ -120,9 +120,6 @@ public static partial class UiTextCatalog
         English["Dashboard_Readiness_NoCurrentCheckIn"] = "Complete today’s check-in to see suggestions based on how you feel.";
         English["Dashboard_Readiness_ReviewPending"] = "Your check-in is saved. Training suggestions based on this check-in are not available yet.";
         English["Dashboard_Readiness_CompleteCheckIn"] = "Complete check-in";
-        English["Dashboard_Readiness_ReviewChanges"] = "Review suggested changes";
-        English["Dashboard_Readiness_ApplyChanges"] = "Apply changes";
-        English["Dashboard_Readiness_KeepPlan"] = "Keep my plan";
         English["Dashboard_CheckIn_IncompleteAllFourRatings"] = "Complete all four ratings to see your check-in score.";
         English["Dashboard_Readiness_ReadinessLabel"] = "Readiness";
         English["Dashboard_Readiness_ReadinessScoreFormat"] = "Readiness score: {0}";
@@ -190,5 +187,18 @@ public static partial class UiTextCatalog
         English["Dashboard_Workout_OpenTodayPlanA11y"] = "Open today's plan";
         English["Dashboard_Workout_SemanticTodayPlan"] = "Today's plan: {0}.";
         English["Dashboard_Workout_StartWorkout"] = "Start workout";
+        English["Dashboard_Photo_CheckInAction"] = "Check in";
+        English["Dashboard_Photo_AddToday"] = "Add today's progress photo";
+        English["Dashboard_Workout_RestDay"] = "Rest day";
+        English["Dashboard_Workout_RecoverySubtitle"] = "Recovery day";
+        English["Dashboard_Workout_TodayRecovery"] = "Today recovery";
+        English["Dashboard_Workout_Flexible"] = "Flexible";
+        English["Dashboard_Workout_IntensityLow"] = "Low";
+        English["Dashboard_Workout_IntensityLight"] = "Light";
+        English["Dashboard_Workout_IntensityNone"] = "None";
+        English["Dashboard_Prompt_NoActivePlan"] = "No active plan";
+        English["Dashboard_Prompt_NoPlanBody"] = "Your training sessions will appear once a plan exists.";
+        English["Dashboard_Readiness_TrendEmpty"] = "Complete a check-in to see readiness history";
+        English["Dashboard_Weight_TrendEmpty"] = "Add weight at three check-ins to see your trend";
     }
 }

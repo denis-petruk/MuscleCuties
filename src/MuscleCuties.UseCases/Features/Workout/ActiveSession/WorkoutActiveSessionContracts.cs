@@ -20,6 +20,41 @@ public sealed class WorkoutTimingIntervalExpiredException : Exception
     public WorkoutTimingIntervalExpiredException() : base("The active interval expired; resume to continue.") { }
 }
 
+/// <summary>
+/// Reasons the server refuses to start or resume a planned activity. Each code maps to one guided
+/// client message so a refusal is never reported as a generic failure.
+/// </summary>
+public static class WorkoutSessionStartBlockCode
+{
+    public const string PlannedWorkoutUnavailable = "WorkoutStartPlannedUnavailable";
+    public const string TimeZoneNotEstablished = "WorkoutStartTimeZoneMissing";
+    public const string NotScheduledToday = "WorkoutStartNotToday";
+    public const string ActiveSessionOrPreviewOpen = "WorkoutStartSessionOrPreviewOpen";
+    public const string PrescriptionChanged = "WorkoutStartPrescriptionChanged";
+    public const string SafetyReviewRequired = "WorkoutStartSafetyReview";
+    public const string ActiveWorkoutInProgress = "WorkoutStartActiveWorkout";
+    public const string SessionNotActive = "WorkoutSessionNotActive";
+
+    public static bool IsKnown(string? code) => code is not null && AllCodes.Contains(code);
+
+    private static readonly IReadOnlySet<string> AllCodes = new HashSet<string>(StringComparer.Ordinal)
+    {
+        PlannedWorkoutUnavailable,
+        TimeZoneNotEstablished,
+        NotScheduledToday,
+        ActiveSessionOrPreviewOpen,
+        PrescriptionChanged,
+        SafetyReviewRequired,
+        ActiveWorkoutInProgress,
+        SessionNotActive
+    };
+}
+
+public sealed class WorkoutSessionStartBlockedException(string code) : InvalidOperationException(code)
+{
+    public string Code { get; } = code;
+}
+
 public sealed record ActiveExerciseSetInput(
     Guid SetId,
     string? ExerciseId,

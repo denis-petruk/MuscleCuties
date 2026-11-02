@@ -359,7 +359,7 @@ public partial class NutritionViewModel
                 DayPlanMeals[currentIndex] = refreshed with
                 {
                     IsRefreshing = false,
-                    ErrorMessage = "Could not refresh this meal. Try again."
+                    ErrorMessage = "Ui_Nutrition_Error_RefreshMeal"
                 };
             }
         }
@@ -386,7 +386,7 @@ public partial class NutritionViewModel
         IsLoadingSuggestions = true;
         DayPlanMeals.Clear();
         MealSuggestionError = string.Empty;
-        DayPlanSummaryText = "Preparing meals around today's remaining targets";
+        DayPlanSummaryText = "Ui_Nutrition_DayPlan_Preparing";
         NotifySuggestionProperties();
 
         try

@@ -229,6 +229,7 @@ public static class StrengthPlanPreviewRule
             return Failure(StrengthPlanPreviewStatus.InvalidInput, experience, InvalidInputCode);
 
         var sessions = new List<StrengthPlanPreviewSession>(templates.Count);
+        var weeklySessionMuscles = new List<IReadOnlyCollection<string>?>();
         var weeklySetsByMuscle = new Dictionary<string, int>(StringComparer.Ordinal);
         var limitations = new List<string>();
         var movementOmissions = new List<string>();
@@ -241,6 +242,9 @@ public static class StrengthPlanPreviewRule
         {
             var template = originalTemplate;
             IReadOnlyList<StrengthSlotSelection> preservedOmissions = [];
+            var coveragePriority = LowerBodyCoverageRule.PriorityExerciseIds(
+                LowerBodyCoverageRule.Evaluate(weeklySessionMuscles).BelowMinimum,
+                data.MuscleGroupsByExerciseId, data.Catalog);
             var selectionInput = new StrengthTemplateSelectionInput(template, activity, data.Goal,
                     prescriptionContext, data.Catalog!, eligibilityContext,
                     data.PreferredExerciseByOriginalId!,
@@ -254,7 +258,8 @@ public static class StrengthPlanPreviewRule
                     ReviewedAllowedExerciseIdsByTemplateSlot: data.ReviewedAllowedExerciseIdsByTemplateSlot,
                     UserConfirmedManageableLoadExerciseIds:
                         choices.UserConfirmedManageableLoadExerciseIds ?? EmptyIds,
-                    GoalPriorityByExerciseId: data.GoalPriorityByExerciseId);
+                    GoalPriorityByExerciseId: MergeCoveragePriority(
+                        data.GoalPriorityByExerciseId, coveragePriority));
             var resolution = StrengthTemplateResolver.Resolve(selectionInput, MaximumWorkingExercises(activity, template));
             if (resolution.Slots.Any(slot => slot.IsRequired && slot.Outcome == StrengthSlotResolutionOutcome.NoSafeCandidate))
             {
@@ -388,6 +393,7 @@ public static class StrengthPlanPreviewRule
                 SlotConditions(template, data),
                 OriginalPlannedWorkingSets: originalWorkingSetsInSession,
                 ActualWorkingSets: actualWorkingSetsInSession));
+            AddSessionMuscles(sessionSlots, data.MuscleGroupsByExerciseId, weeklySessionMuscles);
         }
 
         // Review data must remain a hard prerequisite even when an initial weekday assignment fails.
@@ -434,6 +440,8 @@ public static class StrengthPlanPreviewRule
             .OrderBy(value => value, StringComparer.Ordinal).ToArray();
         var reviewConditions = ExerciseReviewConditions(templates, data);
         var advisories = new List<string>(profileExperienceDecision.ReasonCodes);
+        advisories.AddRange(LowerBodyCoverageRule.Evaluate(weeklySessionMuscles).BelowMinimum
+            .Select(LowerBodyCoverageRule.GapCode));
         advisories.AddRange(movementOmissions);
         if (scheduledSessionsPerWeek == OneSession)
             advisories.Add("OneDayFullBodyHasLimitedWeeklyCoverage");
@@ -517,6 +525,38 @@ public static class StrengthPlanPreviewRule
         WorkoutPreferencesRule.IsValidSessionDuration(activity, minutes);
 
     private static bool IsPositiveIdentifier(int value) => value >= FirstPositiveIdentifier;
+
+    /// <summary>Coverage gaps outrank goal tier priorities so an under-hit muscle gets the accessory slot.</summary>
+    private static IReadOnlyDictionary<int, int> MergeCoveragePriority(
+        IReadOnlyDictionary<int, int>? goalPriorities,
+        IReadOnlyCollection<int> coveragePriorityExerciseIds)
+    {
+        var merged = goalPriorities is null
+            ? new Dictionary<int, int>()
+            : new Dictionary<int, int>(goalPriorities);
+        foreach (var exerciseId in coveragePriorityExerciseIds)
+            merged[exerciseId] = LowerBodyCoverageRule.CoveragePriorityScore;
+        return merged;
+    }
+
+    private static void AddSessionMuscles(
+        IEnumerable<StrengthSlotSelection> slots,
+        IReadOnlyDictionary<int, IReadOnlySet<string>>? muscleGroupsByExerciseId,
+        List<IReadOnlyCollection<string>?> weeklySessionMuscles)
+    {
+        if (muscleGroupsByExerciseId is null) return;
+
+        var muscles = new List<string>();
+        foreach (var slot in slots)
+        {
+            if (slot.ExerciseId is not { } exerciseId) continue;
+            if (!muscleGroupsByExerciseId.TryGetValue(exerciseId, out var groups) || groups is null) continue;
+            muscles.AddRange(groups);
+        }
+
+        if (muscles.Count > 0)
+            weeklySessionMuscles.Add(muscles);
+    }
 
     private static int ScheduledSessionsPerWeekFor(
         WorkoutActivityType activity,

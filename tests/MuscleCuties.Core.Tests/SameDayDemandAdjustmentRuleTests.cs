@@ -24,18 +24,21 @@ public sealed class SameDayDemandAdjustmentRuleTests
     }
 
     [Fact]
-    public void UnadjustedDemandingPairCannotPassScheduleValidation()
+    public void HardPairNeedsNoReductionButAThirdHardSessionDoes()
     {
         var original = Prescription(WorkoutActivityType.RockClimbing, ActivityModality.Climbing);
         var strength = new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.GeneralStrength,
             true, new HashSet<string> { "Legs" });
         var climbing = new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.RockClimbing,
             true, DurationMinutes: ClimbingMinutes, OriginalPrescription: original);
+        var hiit = new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Hiit, true);
+
+        Assert.Empty(WorkoutScheduleValidationRule.Validate([strength, climbing]));
         Assert.Contains(WorkoutScheduleValidationRule.MultipleHardSessions,
-            WorkoutScheduleValidationRule.Validate([strength, climbing]));
+            WorkoutScheduleValidationRule.Validate([strength, climbing, hiit]));
         var adjusted = SameDayDemandAdjustmentRule.Adjust(original)!;
         Assert.Empty(WorkoutScheduleValidationRule.Validate([strength, climbing with
-        { DurationMinutes = ReducedClimbingMinutes, OccurrencePrescription = adjusted }]));
+        { DurationMinutes = ReducedClimbingMinutes, OccurrencePrescription = adjusted }, hiit]));
     }
 
     private static ActivitySessionPrescription Prescription(WorkoutActivityType activity, ActivityModality modality) =>

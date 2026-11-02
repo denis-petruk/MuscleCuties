@@ -7,7 +7,7 @@ public static partial class UiTextCatalog
         English["Workout_PhaseAdjustment_Open"] = "Review upcoming workouts";
         English["Workout_PhaseAdjustment_OpenHint"] = "Review optional changes for upcoming sessions using your saved phase baseline.";
         English["Workout_PhaseAdjustment_Title"] = "Review upcoming workouts";
-        English["Workout_PhaseAdjustment_Intro"] = "If your saved phase baseline suggests a lighter plan, review the exact changes for upcoming sessions. Your plan changes only after you choose Apply changes.";
+        English["Workout_PhaseAdjustment_Intro"] = "If your phase baseline suggests a lighter plan, review the exact changes for upcoming sessions. Nothing changes until you choose Apply changes.";
         English["Workout_PhaseAdjustment_Loading"] = "Checking upcoming sessions";
         English["Workout_PhaseAdjustment_LoadFailed"] = "The workout review could not be loaded. Your plan is unchanged. Try again.";
         English["Workout_PhaseAdjustment_ConfirmationPrompt"] = "Does this reflect how you feel today? Review each change, then choose Apply changes or Keep current plan.";

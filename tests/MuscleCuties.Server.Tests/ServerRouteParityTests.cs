@@ -31,6 +31,7 @@ using MuscleCuties.UseCases.Features.Caching;
 using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
 using MuscleCuties.UseCases.Features.Workout.Injury;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 using Xunit;
 
 namespace MuscleCuties.Server.Tests;
@@ -314,38 +315,45 @@ public sealed class ServerRouteParityTests
     }
 
     [Fact]
-    public async Task LegacyWorkoutPreferencesCannotChangeAppliedPreferences()
+    public async Task RetiredMirrorAndStubRoutesAreNotMapped()
     {
         await using var fixture = await ServerFixture.StartAsync();
-        fixture.SetBearer(Guid.NewGuid());
+        var routes = fixture.Endpoints.Endpoints
+            .OfType<RouteEndpoint>()
+            .Select(endpoint => (Methods: endpoint.Metadata.GetMetadata<HttpMethodMetadata>(), endpoint.RoutePattern.RawText))
+            .Where(route => route.Methods is not null && route.RawText is not null)
+            .Select(route => (route.Methods!.HttpMethods.Single(), route.RawText!.TrimEnd('/')))
+            .ToHashSet();
 
-        var activities = Enum.GetValues<WorkoutActivityType>()
-            .Where(activity => activity != WorkoutActivityType.Other)
-            .Select(activity => (int)activity)
-            .ToArray();
-        var weekdays = Enum.GetValues<DayOfWeek>().Select(day => (int)day).ToArray();
-        var durations = Enum.GetValues<WorkoutActivityType>()
-            .Where(WorkoutPreferencesRule.RequiresSessionDuration)
-            .ToDictionary(activity => (int)activity,
-                activity => WorkoutPreferencesRule.DefaultSessionDurationMinutes(activity)!.Value);
-        var frequencies = Enum.GetValues<WorkoutActivityType>()
-            .Where(WorkoutPreferencesRule.RequiresExplicitWeeklyFrequency)
-            .ToDictionary(activity => (int)activity,
-                activity => ActivityPreferenceDefaults.SessionsPerWeek(activity, weekdays.Length)!.Value);
-
-        var response = await fixture.Client.PutAsJsonAsync("/api/v1/profile/workout-preferences", new
+        foreach (var retired in new (string Method, string Path)[]
         {
-            ExpectedVersion = 1,
-            ActivityTypes = activities,
-            AvailableWeekdays = weekdays,
-            ActivitySessionDurationsMinutes = durations,
-            EquipmentLevel = Equipment.FullGym.ToString(),
-            RequestedSessionsPerWeek = frequencies,
-            ExcludedExerciseIds = new HashSet<int>()
-        });
-
-        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
-        Assert.Null(fixture.Profile.LastWorkoutPreferences);
+            ("POST", "/api/v1/workouts/plan"), ("GET", "/api/v1/workouts/plan"),
+            ("GET", "/api/v1/workout/history"), ("GET", "/api/v1/workout/history/months"),
+            ("PUT", "/api/v1/workout/history/sessions/{sessionId:guid}/notes"),
+            ("GET", "/api/v1/workout/history/personal-records"),
+            ("GET", "/api/v1/workout/injuries/impact"),
+            ("GET", "/api/v1/workout/injuries/exercises/{exerciseDefinitionId:int}/contraindicated"),
+            ("GET", "/api/v1/workout/injuries/exercises/{exerciseDefinitionId:int}/swaps"),
+            ("GET", "/api/v1/workout/injuries/contraindicated/{exerciseDefinitionId:int}"),
+            ("GET", "/api/v1/workout/injuries/swaps/{exerciseDefinitionId:int}"),
+            ("POST", "/api/v1/workout/injuries/swap"),
+            ("GET", "/api/v1/workouts/injuries/contraindicated/{exerciseDefinitionId:int}"),
+            ("GET", "/api/v1/workouts/injuries/swaps/{exerciseDefinitionId:int}"),
+            ("GET", "/api/v1/workouts/exercises/{exerciseDefinitionId:int}/contraindicated"),
+            ("GET", "/api/v1/workouts/exercises/{exerciseDefinitionId:int}/swaps"),
+            ("POST", "/api/v1/workouts/exercises/swap"),
+            ("GET", "/api/v1/workout/exercises/{exerciseDefinitionId:int}/contraindicated"),
+            ("GET", "/api/v1/workout/exercises/{exerciseDefinitionId:int}/swaps"),
+            ("POST", "/api/v1/workout/exercises/swap"),
+            ("PUT", "/api/v1/cycle/phases"),
+            ("PUT", "/api/v1/profile/workout-preferences"),
+            ("POST", "/api/v1/workouts/readiness-proposals/review"),
+            ("POST", "/api/v1/workouts/readiness-proposals/apply"),
+            ("POST", "/api/v1/workouts/readiness-proposals/keep")
+        })
+        {
+            Assert.DoesNotContain(retired, routes);
+        }
     }
 
     [Fact]
@@ -362,6 +370,53 @@ public sealed class ServerRouteParityTests
         });
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task StrengthProposalDeserializesDraftExerciseExclusionsAsASet()
+    {
+        await using var fixture = await ServerFixture.StartAsync();
+        fixture.SetBearer(Guid.NewGuid());
+        int[]?[] exclusionCases = [null, [], [QuizQuestionId], [QuizQuestionId, QuizAnswerId, QuizQuestionId]];
+        var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
+        foreach (var excludedIds in exclusionCases)
+        {
+            var body = new
+            {
+                Activity = (int)WorkoutActivityType.GeneralStrength,
+                LocalDate = DateOnly.MinValue,
+                ActivityHistory = (object?)null,
+                DraftPreferences = new
+                {
+                    ActivityTypes = Array.Empty<int>(),
+                    AvailableWeekdays = Array.Empty<int>(),
+                    ActivitySessionDurationsMinutes = new Dictionary<int, int>(),
+                    ExcludedExerciseIds = excludedIds
+                }
+            };
+            var json = JsonSerializer.Serialize(body, jsonOptions);
+            var request = JsonSerializer.Deserialize<StrengthPlanPreviewRequestV020>(json, jsonOptions);
+            Assert.NotNull(request?.DraftPreferences);
+            if (excludedIds is null)
+                Assert.Null(request.DraftPreferences.ExcludedExerciseIds);
+            else
+                Assert.True(request.DraftPreferences.ExcludedExerciseIds!.SetEquals(excludedIds));
+
+            foreach (var (route, expectedStatus, isProposal) in new[]
+                     {
+                         ("/api/v1/workouts/plan/strength-preview", HttpStatusCode.BadRequest, false),
+                         ("/api/v1/workouts/plan/strength-proposals", HttpStatusCode.OK, true)
+                     })
+            {
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await fixture.Client.PostAsync(route, content);
+                Assert.Equal(expectedStatus, response.StatusCode);
+                using var responseJson = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                var preview = isProposal ? responseJson.RootElement.GetProperty("preview") : responseJson.RootElement;
+                Assert.Equal(nameof(StrengthPlanPreviewStatus.InvalidInput), preview.GetProperty("status").GetString());
+            }
+        }
     }
 
     [Fact]

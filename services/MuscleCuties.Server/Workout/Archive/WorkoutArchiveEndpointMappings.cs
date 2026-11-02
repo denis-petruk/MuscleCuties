@@ -6,13 +6,11 @@ namespace MuscleCuties.Server.Workout.Archive;
 
 public static class WorkoutArchiveEndpointMappings
 {
-    private const string HistoryRoutePlural = "/api/v1/workouts/history";
-    private const string HistoryRouteSingular = "/api/v1/workout/history";
+    private const string HistoryRoute = "/api/v1/workouts/history";
 
     public static IEndpointRouteBuilder MapWorkoutArchiveEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        MapGroup(endpoints.MapGroup(HistoryRoutePlural).RequireAuthorization());
-        MapGroup(endpoints.MapGroup(HistoryRouteSingular).RequireAuthorization());
+        MapGroup(endpoints.MapGroup(HistoryRoute).RequireAuthorization());
 
         return endpoints;
     }

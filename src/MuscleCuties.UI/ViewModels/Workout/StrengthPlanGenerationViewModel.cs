@@ -58,7 +58,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private const string ApplyPlanKey = "Workout_Generation_ApplyPlan";
     private const string CommonCancelKey = "Common_Cancel";
     private const string ReducedVolumeNoticeKey = "Workout_Generation_ReducedVolumeNotice";
-    private const string ReducedVolumeTitleKey = "Workout_Generation_ReducedVolumeTitle";
     private const string ExploreOtherFeaturesKey = "Workout_Generation_ExploreOtherFeatures";
     private const string NoSavedWorkoutHistoryKey = "Workout_Generation_NoSavedWorkoutHistory";
     private const string RecentHistorySummaryFormatKey = "Workout_Generation_RecentHistorySummaryFormat";
@@ -96,7 +95,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private readonly Func<Task>? _navigateToDashboardAsync;
     private readonly IWorkoutAccountCalendarClient? _accountCalendar;
     private readonly IWorkoutOverviewUseCase? _overview;
-    private readonly Func<Task<bool>>? _confirmReducedVolumeAsync;
     private WorkoutPreferencesDto? _draftPreferences;
     private SavedActivityAnswersDto? _savedAnswers;
     private ActivityAnswersPendingSave? _pendingAnswerSave;
@@ -112,6 +110,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private Guid? _activeOtherProposalId;
     private CancellationTokenSource? _leaseRenewalCancellation;
     private bool _historyWasSelfReported;
+    private IReadOnlySet<int>? _pendingAcknowledgedConditionIds;
 
     [ObservableProperty] private ObservableCollection<StrengthPlanRecentWeekDisplay> _recentTrainingWeeks = [];
     [ObservableProperty] private ObservableCollection<StrengthPlanSessionDisplay> _strengthPreviewSessions = [];
@@ -120,6 +119,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     [ObservableProperty] private ObservableCollection<MixedActivityDecisionDisplay> _activityDecisions = [];
     [ObservableProperty] private ObservableCollection<string> _scheduleInputReasons = [];
     [ObservableProperty] private ObservableCollection<string> _previewLimitations = [];
+    [ObservableProperty] private ObservableCollection<string> _previewNotes = [];
+    [ObservableProperty] private ObservableCollection<string> _exerciseReviewConditions = [];
     [ObservableProperty] private StrengthPlanActivityChoice? _selectedActivity;
     [ObservableProperty] private ObservableCollection<StrengthPlanActivityChoice> _fittingStrengthStyleChoices = [];
     [ObservableProperty] private StrengthPlanActivityChoice? _selectedFittingStrengthStyle;
@@ -167,7 +168,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         Func<string, Task<bool>>? confirmReplacementAsync = null,
         Func<Task>? navigateToDashboardAsync = null,
         IWorkoutAccountCalendarClient? accountCalendar = null,
-        Func<Task<bool>>? confirmReducedVolumeAsync = null,
         IWorkoutOverviewUseCase? overview = null)
     {
         _proposalClient = proposalClient;
@@ -181,17 +181,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         _navigateToDashboardAsync = navigateToDashboardAsync;
         _accountCalendar = accountCalendar;
         _overview = overview;
-        _confirmReducedVolumeAsync = confirmReducedVolumeAsync ?? (async () =>
-            await MainThread.InvokeOnMainThreadAsync(() =>
-                Shell.Current.DisplayAlertAsync(
-                    UiTextCatalog.Get(ReducedVolumeTitleKey) is var title && !string.Equals(title, ReducedVolumeTitleKey, StringComparison.Ordinal)
-                        ? title
-                        : "Reduced workout volume",
-                    UiTextCatalog.Get(ReducedVolumeNoticeKey) is var notice && !string.Equals(notice, ReducedVolumeNoticeKey, StringComparison.Ordinal)
-                        ? notice
-                        : "This plan uses reduced workout volume to fit your selected duration and schedule.",
-                    UiTextCatalog.Get(ApplyPlanKey),
-                    UiTextCatalog.Get(CommonCancelKey))));
         EvidenceYesNoChoices = CreateYesNoChoices();
         SwimmingStyleChoices = CreateSwimmingStyleChoices();
         YogaContentChoices = CreateYogaContentChoices();
@@ -232,6 +221,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool CanEditDetailsFromPreview => CanReviewPreview;
     public bool HasFeasiblePreview => CanSubmitProposal;
     public bool HasLimitation => Preview is not null && Preview.Status != "Feasible";
+    public bool HasExerciseReviewConditions => Preview?.Status != "Feasible" &&
+        ExerciseReviewConditions.Count > NoPolicyReasons;
     public bool HasMixedSchedule => Preview?.MixedActivitySchedule is not null;
     public bool HasMixedActivitySessions => MixedActivitySessions.Count > NoPolicyReasons;
     public bool HasNoMixedActivitySessions => !HasMixedActivitySessions;
@@ -273,7 +264,9 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                     !decision.ReasonCodes.Contains("ReplacedWithGeneralStrength")) == true;
     public bool ExpandActivityDecisions => HasLimitation || HasOptionalOmissions;
     public bool HasScheduleInputReasons => ScheduleInputReasons.Count > NoPolicyReasons;
+    public bool HasPreviewNotes => PreviewNotes.Count > NoPolicyReasons;
     public bool HasStrengthPreviewSessions => StrengthPreviewSessions.Count > NoPolicyReasons;
+    public bool HasPlanDetails => HasActivityDecisions || HasStrengthPreviewSessions;
     public bool HasChosenStrengthSummary => Preview?.EffectiveActivityTypeId is not null && HasStrengthPreviewSessions;
     public string ChosenStrengthSummary => Preview?.EffectiveActivityTypeId is { } activity
         ? StrengthPlanGenerationDisplayMapper.FormatLocalized("Workout_Generation_ChosenStrengthSummary",
@@ -314,16 +307,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool CanKeepCurrentPlan => HasExistingPlan && IsBeforePreview;
     public bool RequiresReducedVolumeAcknowledgment =>
         Preview.RequiresReducedVolumeAcknowledgment();
-    public string ReducedVolumeNoticeText
-    {
-        get
-        {
-            var text = UiTextCatalog.Get(ReducedVolumeNoticeKey);
-            return !string.Equals(text, ReducedVolumeNoticeKey, StringComparison.Ordinal)
-                ? text
-                : "This plan uses reduced workout volume to fit your selected duration and schedule.";
-        }
-    }
+    public string ReducedVolumeNoticeText => UiTextCatalog.Get(ReducedVolumeNoticeKey);
     public string ExploreOtherFeaturesButtonText
     {
         get
@@ -431,7 +415,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
 
         if (WorkoutPlanningFlow.CanAutomaticallyApplyFirstPlan(_proposal.ReplacesExistingPlan,
                 _proposal.Preview.Status == "Feasible", _proposal.IsPersisted, HasMissingRequiredAnswers(),
-                _proposal.Preview.StrengthStyleChoiceRequired, HasOptionalOmissions, RequiresReducedVolumeAcknowledgment))
+                _proposal.Preview.StrengthStyleChoiceRequired, HasOptionalOmissions))
         {
             IsBusy = false;
             await AcceptProposalAsync();
@@ -830,6 +814,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private void PopulatePreviewDisplays(StrengthPlanPreviewResponseV020 preview)
     {
         Preview = preview;
+        ExerciseReviewConditions = new ObservableCollection<string>(
+            preview.ExerciseReviewConditions.Select(FormatExerciseCondition).ToArray());
         StrengthPreviewSessions = new ObservableCollection<StrengthPlanSessionDisplay>(
             preview.Sessions.Select(session => StrengthPlanSessionDisplay.From(session, HasOmittedMovements)));
         var mixedSchedule = preview.MixedActivitySchedule;
@@ -864,6 +850,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             PreviewLimitations = new ObservableCollection<string>(HasLimitation
                 ? [PreviewLimitationMessage]
                 : []);
+            PreviewNotes = new ObservableCollection<string>(BuildPreviewNotes());
             StatusMessage = preview.Status == "Feasible" && (_proposal?.IsPersisted ?? false)
             ? preview.AdvisoryCodes.Contains("NoSafeStrengthStyleFit")
                 ? UiTextCatalog.Get("Workout_Generation_Reason_NoSafeStrengthContentRemaining")
@@ -903,6 +890,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             ActivitySessionDurationsMinutes = preferences.ActivitySessionDurationsMinutes,
             RequestedSessionsPerWeek = preferences.RequestedSessionsPerWeek,
             ExcludedExerciseIds = preferences.ExcludedExerciseIds?.ToHashSet(),
+            AcknowledgedExerciseConditionIds = _pendingAcknowledgedConditionIds?.ToHashSet(),
             ActivityEligibilityEvidence = CurrentActivityEvidence(),
             HiitUnderlyingCardioActivity = underlyingCardioActivity,
             HiitEligibilityEvidence = underlyingCardioActivity is { } selectedUnderlyingActivity
@@ -913,8 +901,12 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
 
     private bool CanAcceptProposal() => WorkoutPlanningFlow.CanAccept(IsBusy, IsProposalAccepted,
         IsTrainNavigationPending, _proposalInvalidated, _proposal?.IsPersisted == true,
-        _proposal?.Lease is not null, Preview?.Status == "Feasible", _pendingAcceptance is not null) &&
+        _proposal?.Lease is not null, IsPreviewApplicable, _pendingAcceptance is not null) &&
         HasStrengthPreviewSessions;
+
+    // Apply accepts the visible preview, including exercises that only ask for condition review.
+    private bool IsPreviewApplicable => Preview is { Status: "Feasible" } ||
+        Preview is { Status: "Limited" } preview && preview.ExerciseReviewConditions.Count > NoPolicyReasons;
 
     private bool CanExploreOtherFeatures() => !IsBusy && CanOfferExploreOtherFeatures;
 
@@ -1106,7 +1098,30 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         StatusMessage = NoStatusMessage;
         try
         {
-            if (_proposal.Lease is not { } lease)
+            if (_pendingAcceptance is null && Preview is { Status: "Limited" } limitedPreview &&
+                limitedPreview.ExerciseReviewConditions.Count > NoPolicyReasons)
+            {
+                var conditionIds = limitedPreview.ExerciseReviewConditions
+                    .Select(condition => condition.ExerciseId)
+                    .ToHashSet();
+                await ClosePreviewAsync();
+                _pendingAcknowledgedConditionIds = conditionIds;
+                try
+                {
+                    await CreatePreviewAsync();
+                }
+                finally
+                {
+                    _pendingAcknowledgedConditionIds = null;
+                }
+            }
+            if (!IsPreviewApplicable)
+            {
+                NotifyPreviewChanged();
+                NotifyCommandStates();
+                return;
+            }
+            if (_proposal?.Lease is not { } lease)
             {
                 _proposalInvalidated = true;
                 StatusMessage = UiTextCatalog.Get(PlanChangedKey);
@@ -1116,12 +1131,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             }
             if (_pendingAcceptance is null)
             {
-                if (RequiresReducedVolumeAcknowledgment)
-                {
-                    if (_confirmReducedVolumeAsync is null || !await _confirmReducedVolumeAsync())
-                        return;
-                }
-
                 if (_proposal.ReplacesExistingPlan)
                 {
                     if (_confirmReplacementAsync is null || !await _confirmReplacementAsync(BuildReplacementSummary()))
@@ -1140,10 +1149,14 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                     return;
                 }
                 lease = renewed.Lease;
+                var acceptance = WorkoutPlanningFlow.AcceptanceAcknowledgments(
+                    _proposal.ReplacesExistingPlan,
+                    RequiresReducedVolumeAcknowledgment,
+                    (Preview?.ExerciseReviewConditions ?? []).Select(condition => condition.ExerciseId));
                 _pendingAcceptance = new AcceptStrengthPlanProposalRequestV020(
                     _proposal.ProposalId, lease.LeaseId, lease.Fence, _proposal.ProposalVersion,
-                    ReplacementConfirmed: _proposal.ReplacesExistingPlan,
-                    ReducedVolumeAcknowledged: RequiresReducedVolumeAcknowledgment);
+                    ReplacementConfirmed: acceptance.ReplacementConfirmed,
+                    ReducedVolumeAcknowledged: acceptance.ReducedVolumeAcknowledged);
             }
             var result = await _proposalClient.AcceptAsync(_pendingAcceptance);
             if (result.Status != "Accepted")
@@ -1260,6 +1273,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         ActivityDecisions.Clear();
         ScheduleInputReasons.Clear();
         PreviewLimitations.Clear();
+        PreviewNotes.Clear();
+        ExerciseReviewConditions.Clear();
         if (clearStatus)
             StatusMessage = NoStatusMessage;
 
@@ -1275,6 +1290,14 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         _leaseRenewalCancellation = cancellation;
         _ = RenewLeaseUntilClosedAsync(proposal, cancellation.Token);
     }
+
+    private IEnumerable<string> BuildPreviewNotes() =>
+        ScheduleInputReasons
+            .Concat(PreviewLimitations)
+            .Concat(HasOmittedMovements ? [UiTextCatalog.Get("Workout_Generation_MovementOmitted")] : [])
+            .Concat(HasDurationOmissions ? [DurationOmissionsText] : [])
+            .Where(note => !string.IsNullOrWhiteSpace(note))
+            .Distinct();
 
     private string BuildReplacementSummary()
     {
@@ -1417,6 +1440,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(CanEditDetailsFromPreview));
         OnPropertyChanged(nameof(HasFeasiblePreview));
         OnPropertyChanged(nameof(HasLimitation));
+        OnPropertyChanged(nameof(HasExerciseReviewConditions));
         OnPropertyChanged(nameof(HasDurationChoice));
         OnPropertyChanged(nameof(CanUseLongerDuration));
         OnPropertyChanged(nameof(LongerDurationText));
@@ -1432,7 +1456,9 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(DurationOmissionsText));
         OnPropertyChanged(nameof(ExpandActivityDecisions));
         OnPropertyChanged(nameof(HasScheduleInputReasons));
+        OnPropertyChanged(nameof(HasPreviewNotes));
         OnPropertyChanged(nameof(HasStrengthPreviewSessions));
+        OnPropertyChanged(nameof(HasPlanDetails));
         OnPropertyChanged(nameof(HasChosenStrengthSummary));
         OnPropertyChanged(nameof(ChosenStrengthSummary));
         OnPropertyChanged(nameof(CanEditInputs));
@@ -1587,6 +1613,13 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         TakeOverPreviewCommand.NotifyCanExecuteChanged();
         UseLongerDurationCommand.NotifyCanExecuteChanged();
         UseShorterDurationCommand.NotifyCanExecuteChanged();
+    }
+
+    private static string FormatExerciseCondition(StrengthExerciseReviewConditionV020 condition)
+    {
+        var details = new[] { condition.ExperienceConditions, condition.GeneralConditions }
+            .Where(value => !string.IsNullOrWhiteSpace(value));
+        return $"{condition.ExerciseName}: {string.Join(" ", details)}";
     }
 
     private static DayOfWeek[] NormalizeWeekdays(IReadOnlyList<int>? values) =>

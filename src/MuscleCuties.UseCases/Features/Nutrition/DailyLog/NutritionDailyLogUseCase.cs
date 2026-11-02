@@ -28,9 +28,6 @@ public interface INutritionDailyLogUseCase
     Task ReLogFoodAsync(DateOnly date, MealType mealType, QuickFoodItemSnapshot quickItem, LoggedFoodItemDto draft,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<DailyNutritionSummarySnapshot>> GetDateRangeSummariesAsync(DateOnly start, DateOnly end,
-        CancellationToken cancellationToken = default);
-
     Task UpdateWaterIntakeAsync(DateOnly date, int waterIntakeMl, CancellationToken cancellationToken = default);
     Task UpdateNotesAsync(DateOnly date, string? notes, CancellationToken cancellationToken = default);
 
@@ -117,14 +114,6 @@ public sealed class NutritionDailyLogUseCase(INutritionDailyLogStore store) : IN
         if (draft.MealType != mealType)
             throw new ArgumentException("Meal category cannot differ from requested category.", nameof(draft));
         return store.ReLogFoodAsync(date, mealType, quickItem, draft, cancellationToken);
-    }
-
-    public Task<IReadOnlyList<DailyNutritionSummarySnapshot>> GetDateRangeSummariesAsync(DateOnly start, DateOnly end,
-        CancellationToken cancellationToken = default)
-    {
-        if (end < start)
-            throw new ArgumentOutOfRangeException(nameof(end), "End date cannot precede start date.");
-        return store.GetDateRangeSummariesAsync(start, end, cancellationToken);
     }
 
     public Task UpdateWaterIntakeAsync(DateOnly date, int waterIntakeMl, CancellationToken cancellationToken = default)

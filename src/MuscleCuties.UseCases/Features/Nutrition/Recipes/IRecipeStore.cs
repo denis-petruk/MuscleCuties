@@ -15,6 +15,8 @@ public interface IRecipeStore
     Task<IReadOnlyList<MealTemplateDto>> GetMealTemplatesAsync(int? mealType = null, CancellationToken cancellationToken = default);
     Task<MealTemplateDto?> GetMealTemplateByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task DeleteMealTemplateAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<MealTemplateDto> UpdateMealTemplateAsync(MealTemplateDto template, CancellationToken cancellationToken = default) =>
+        SaveMealTemplateAsync(template, cancellationToken);
 
     Task<RecipeDetailsDto> SaveRecipeAsync(Guid userId, RecipeDetailsDto recipe, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("Tenant-scoped recipe writes require an explicit store implementation.");
@@ -35,4 +37,6 @@ public interface IRecipeStore
         throw new NotSupportedException("Tenant-scoped template reads require an explicit store implementation.");
     Task DeleteMealTemplateAsync(Guid userId, Guid id, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("Tenant-scoped template deletes require an explicit store implementation.");
+    Task<MealTemplateDto> UpdateMealTemplateAsync(Guid userId, MealTemplateDto template, CancellationToken cancellationToken = default) =>
+        SaveMealTemplateAsync(userId, template, cancellationToken);
 }

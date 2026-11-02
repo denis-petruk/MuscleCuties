@@ -43,8 +43,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     private readonly IDashboardOverviewUseCase _overview;
     private readonly ICyclePhaseProjectionUseCase _cyclePhaseProjection;
     private readonly DailyCheckInPresentationSettings _readinessPresentationSettings;
-    private readonly IWorkoutOverviewUseCase? _workoutOverview;
-    private ReadinessAdjustmentProposalDto? _pendingReadinessProposal;
     [ObservableProperty] private float _consumedCalories;
     [ObservableProperty] private float _consumedCarbs;
     [ObservableProperty] private float _consumedFats;
@@ -83,14 +81,17 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private Color _phaseCardBackgroundColor = AppThemeResources.GetColor("AccentSurface", default);
     [ObservableProperty] private Color _phaseCardDividerColor = AppThemeResources.GetColor("InputStroke", default);
     [ObservableProperty] private Color _phaseCardTextColor = AppThemeResources.GetColor("DashboardPhaseCardTextLight", default);
-    [ObservableProperty] private string _photoButtonText = "Check in";
-    [ObservableProperty] private string _photoCheckInText = "Add today's progress photo";
+    [ObservableProperty] private string _photoButtonText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Photo_CheckInAction");
+    [ObservableProperty] private string _photoCheckInText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Photo_AddToday");
     [ObservableProperty] private int _predictedCycleLength = 28;
     [ObservableProperty] private string _readinessLabel = string.Empty;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ReadinessProgress), nameof(CompositeScore))]
     private int _readinessScore;
-    [ObservableProperty] private string _readinessTrendSummary = "Complete a check-in to see readiness history";
+    [ObservableProperty] private string _readinessTrendSummary =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Readiness_TrendEmpty");
     [ObservableProperty] private bool _hasTodayReadinessScore;
     [ObservableProperty] private bool _hasTodayReadinessRecord;
     [ObservableProperty] private bool _todayReadinessReviewPending;
@@ -102,17 +103,12 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private string _todayReadinessEnergyText = "—";
     [ObservableProperty] private string _todayReadinessSorenessText = "—";
     [ObservableProperty] private string _todayReadinessStressText = "—";
-    [ObservableProperty] private bool _canReviewReadiness;
-    [ObservableProperty] private bool _hasReadinessProposalActions;
-    [ObservableProperty] private bool _isReadinessProposalBusy;
-    [ObservableProperty] private bool _isReadinessProposalVisible;
-    [ObservableProperty] private string _readinessProposalSummary = string.Empty;
-    [ObservableProperty] private ObservableCollection<string> _readinessProposalChanges = [];
     [ObservableProperty] private string _recoveryLabel = string.Empty;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RecoveryProgress), nameof(CompositeScore))]
     private int _recoveryScore;
-    [ObservableProperty] private string _sessionProgressText = "Upcoming";
+    [ObservableProperty] private string _sessionProgressText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Workout_Overview_Status_Upcoming");
     [ObservableProperty] private string _sleepGoal = "8h";
     [ObservableProperty] private float _targetCalories;
     [ObservableProperty] private float _targetCarbs;
@@ -122,7 +118,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private IReadOnlyList<DashboardTrendPoint> _trendPoints = [];
     [ObservableProperty] private bool _useDarkTheme;
     [ObservableProperty] private bool _usePhaseCardColor;
-    [ObservableProperty] private string _weightTrendSummary = "Add weight at three check-ins to see your trend";
+    [ObservableProperty] private string _weightTrendSummary =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Weight_TrendEmpty");
 
     [ObservableProperty] private Color _workoutActivityBackground =
         WorkoutPresentationPalette.Background("REST");
@@ -132,12 +129,15 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private Color _workoutActivityTextColor =
         WorkoutPresentationPalette.Text("REST");
 
-    [ObservableProperty] private string _workoutDurationText = "Rest day";
+    [ObservableProperty] private string _workoutDurationText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_RestDay");
     [ObservableProperty] private string _workoutExercisesCount = "0";
     [ObservableProperty] private string _workoutIntensity = "Low";
     [ObservableProperty] private int _workoutStreakDays;
-    [ObservableProperty] private string _workoutSubtitle = "Recovery day";
-    [ObservableProperty] private string _workoutTitle = "Living happy life";
+    [ObservableProperty] private string _workoutSubtitle =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_RecoverySubtitle");
+    [ObservableProperty] private string _workoutTitle =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Workout_Page_PlaceholderTitle");
 
     public DashboardViewModel(
         IDashboardOverviewUseCase overview,
@@ -150,13 +150,11 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         Func<Task> openNutritionAsync,
         Func<Task> openDailyCheckInAsync,
         INutritionChangeNotifier? changeNotifier = null,
-        Func<Task>? openPhotoVaultAsync = null,
-        IWorkoutOverviewUseCase? workoutOverview = null)
+        Func<Task>? openPhotoVaultAsync = null)
     {
         _overview = overview;
         _cyclePhaseProjection = cyclePhaseProjection;
         _readinessPresentationSettings = dailyCheckIn.PresentationSettings;
-        _workoutOverview = workoutOverview;
         _injuries = injuries;
         _openCycleAsync = openCycleAsync;
         _openWorkoutAsync = openWorkoutAsync;
@@ -173,16 +171,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         StartWorkoutCommand = new AsyncRelayCommand(StartWorkoutAsync);
         OpenNutritionCommand = new AsyncRelayCommand(_openNutritionAsync);
         OpenDailyCheckInCommand = new AsyncRelayCommand(_openDailyCheckInAsync);
-        ReviewReadinessAdjustmentCommand = new AsyncRelayCommand(ReviewReadinessAdjustmentAsync);
-        ApplyReadinessAdjustmentCommand = new AsyncRelayCommand(() => DecideReadinessAdjustmentAsync(true));
-        KeepWorkoutPlanCommand = new AsyncRelayCommand(() => DecideReadinessAdjustmentAsync(false));
         OpenPhotoVaultCommand = new AsyncRelayCommand(OpenPhotoVaultAsync);
     }
 
     public AsyncRelayCommand OpenPhotoVaultCommand { get; }
-    public AsyncRelayCommand ReviewReadinessAdjustmentCommand { get; }
-    public AsyncRelayCommand ApplyReadinessAdjustmentCommand { get; }
-    public AsyncRelayCommand KeepWorkoutPlanCommand { get; }
 
     public InjuryLogViewModel InjuryLogVm => _injuryLogVm ??= new InjuryLogViewModel(
         _injuries, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
@@ -447,9 +439,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
 
     private async Task LoadDataCoreAsync()
     {
-        IsReadinessProposalVisible = false;
-        HasReadinessProposalActions = false;
-        _pendingReadinessProposal = null;
         IsBusy = true;
         IsLoadError = false;
         try
@@ -597,74 +586,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         TodayReadinessSorenessText = FormatRating(readiness?.Soreness);
         TodayReadinessStressText = FormatRating(readiness?.Stress);
         OnPropertyChanged(nameof(ReadinessSubtitleText));
-        CanReviewReadiness = _readinessPresentationSettings.AreReadinessSuggestionsEnabled &&
-                             HasTodayReadinessScore && !HasActiveInjuries &&
-                             readiness?.Band is "ConsiderLighterSession" or "ConsiderEasierDay";
-    }
-
-    private async Task ReviewReadinessAdjustmentAsync()
-    {
-        if (_workoutOverview is null || !CanReviewReadiness) return;
-        IsReadinessProposalBusy = true;
-        try
-        {
-            var date = DateOnly.FromDateTime(DateTime.Today);
-            _pendingReadinessProposal = await _workoutOverview.ReviewReadinessAdjustmentAsync(
-                new ReviewReadinessAdjustmentRequest(date, TimeZoneInfo.Local.Id));
-            ReadinessProposalSummary = _pendingReadinessProposal.Summary;
-            ReadinessProposalChanges = new ObservableCollection<string>(
-                _pendingReadinessProposal.Changes.Select(change => change.Description));
-            HasReadinessProposalActions = _pendingReadinessProposal.CanApply &&
-                                          _pendingReadinessProposal.ProposalId != Guid.Empty;
-            IsReadinessProposalVisible = true;
-        }
-        catch (Exception ex)
-        {
-            _pendingReadinessProposal = null;
-            HasReadinessProposalActions = false;
-            ReadinessProposalSummary = ex.Message;
-            ReadinessProposalChanges.Clear();
-            IsReadinessProposalVisible = true;
-        }
-        finally
-        {
-            IsReadinessProposalBusy = false;
-        }
-    }
-
-    private async Task DecideReadinessAdjustmentAsync(bool apply)
-    {
-        if (_workoutOverview is null || _pendingReadinessProposal is not { ProposalId: var id } || id == Guid.Empty)
-            return;
-        IsReadinessProposalBusy = true;
-        var successMessage = string.Empty;
-        try
-        {
-            var request = new DecideReadinessAdjustmentRequest(id,
-                DateOnly.FromDateTime(DateTime.Today), TimeZoneInfo.Local.Id);
-            var result = await _workoutOverview.DecideReadinessAdjustmentAsync(request, apply);
-            ReadinessProposalSummary = result.Message;
-            HasReadinessProposalActions = false;
-            _pendingReadinessProposal = null;
-            ReadinessProposalChanges.Clear();
-            if (result.Applied)
-            {
-                successMessage = result.Message;
-                await RefreshAsync();
-                ReadinessProposalSummary = successMessage;
-                IsReadinessProposalVisible = true;
-            }
-        }
-        catch (Exception ex)
-        {
-            ReadinessProposalSummary = ex.Message;
-            HasReadinessProposalActions = false;
-            _pendingReadinessProposal = null;
-        }
-        finally
-        {
-            IsReadinessProposalBusy = false;
-        }
     }
 
     private static string FormatRating(int? rating) => rating?.ToString(CultureInfo.CurrentCulture) ?? "—";

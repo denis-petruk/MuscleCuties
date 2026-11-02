@@ -149,7 +149,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
         {
             if (_loadedProfile is null)
             {
-                StatusMessage = "Complete personal info before nutrition settings.";
+                StatusMessage = "Ui_Profile_Status_CompletePersonalInfo";
                 return;
             }
 
@@ -159,7 +159,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
                 _loadedProfile, CurrentSelection(), editedGoals));
             if (!saved)
             {
-                StatusMessage = "Complete personal info before nutrition settings.";
+                StatusMessage = "Ui_Profile_Status_CompletePersonalInfo";
                 return;
             }
 
@@ -167,7 +167,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
             if (editedGoals is not null)
                 _hasSavedCustomGoals = _useCase.HasOverrides(editedGoals, CreateCalculatedGoals());
             _refreshNotifier.InvalidateAll();
-            StatusMessage = "Nutrition settings saved.";
+            StatusMessage = "Ui_Profile_Status_NutritionSaved";
             await _navigateAfterSaveAsync();
         }
         catch (Exception ex)

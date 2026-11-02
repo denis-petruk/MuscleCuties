@@ -81,7 +81,6 @@ using MuscleCuties.UseCases.Features.Nutrition.Recipes;
 using MuscleCuties.UseCases.Features.Onboarding.ProfileSetup;
 using MuscleCuties.UseCases.Features.Onboarding.Quiz;
 using MuscleCuties.UseCases.Features.Profile.Feedback;
-using MuscleCuties.UseCases.Features.Profile.HealthSync;
 using MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 using MuscleCuties.UseCases.Features.Profile.Overview;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo;
@@ -414,7 +413,6 @@ public static class MauiProgram
         services.AddSingleton<GetReviewedExerciseExclusionCatalogV020UseCase>();
         services.AddSingleton<IProfileUnitsStore, CloudProfileUnitsStore>();
         services.AddSingleton<IProfileUnitsUseCase, ProfileUnitsUseCase>();
-        services.AddSingleton<IProfileHealthSyncUseCase, ProfileHealthSyncUseCase>();
         services.AddHttpClient<IPhotoVaultStore, MobilePhotoVaultStore>();
         services.AddSingleton<IPhotoVaultUseCase, PhotoVaultUseCase>();
         services.AddSingleton<IProfileFeedbackComposer, LocalProfileFeedbackComposer>();
@@ -507,7 +505,6 @@ public static class MauiProgram
 
         services.AddTransient<ProfileSetupViewModel>(sp => new ProfileSetupViewModel(
             sp.GetRequiredService<IProfileSetupUseCase>(),
-            sp.GetRequiredService<IProfileHealthConnection>(),
             () => NavigateAuthenticatedAsync($"//{nameof(QuizPage)}")));
 
         services.AddSingleton<DashboardViewModel>(sp => new DashboardViewModel(
@@ -521,8 +518,7 @@ public static class MauiProgram
             () => NavigateToAsync("//NutritionPage"),
             () => NavigateToAsync(nameof(DailyCheckInPage)),
             sp.GetService<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier>(),
-            () => NavigateToAsync(nameof(PhotoJourneyVaultPage)),
-            sp.GetRequiredService<IWorkoutOverviewUseCase>()));
+            () => NavigateToAsync(nameof(PhotoJourneyVaultPage))));
 
         services.AddTransient<DailyCheckInViewModel>(sp => new DailyCheckInViewModel(
             sp.GetRequiredService<IDailyCheckInUseCase>(),
@@ -625,8 +621,7 @@ public static class MauiProgram
             sp.GetRequiredService<IProfileRefreshNotifier>(),
             () => NavigateToAsync("//LoginPage"),
             NavigateToAsync,
-            sp.GetRequiredService<ILocalPhotoCacheService>(),
-            sp.GetService<IProfileHealthConnection>()));
+            sp.GetRequiredService<ILocalPhotoCacheService>()));
 
         services.AddTransient<PhotoJourneyVaultViewModel>(sp => new PhotoJourneyVaultViewModel(
             sp.GetRequiredService<IPhotoVaultUseCase>(),
@@ -651,11 +646,6 @@ public static class MauiProgram
             () => NavigateToAsync(".."),
             () => NavigateToAsync(nameof(StrengthPlanGenerationPage)),
             sp.GetRequiredService<INavigationContextService>()));
-
-        services.AddTransient<ProfileHealthSyncViewModel>(sp => new ProfileHealthSyncViewModel(
-            sp.GetRequiredService<IProfileHealthSyncUseCase>(),
-            sp.GetRequiredService<IProfileRefreshNotifier>(),
-            () => NavigateToAsync("..")));
 
         services.AddTransient<ProfileUnitsDisplayViewModel>(sp => new ProfileUnitsDisplayViewModel(
             sp.GetRequiredService<IProfileUnitsUseCase>(),
@@ -702,7 +692,6 @@ public static class MauiProgram
         services.AddTransient<ProfilePersonalInfoPage>();
         services.AddTransient<ProfileNutritionSettingsPage>();
         services.AddTransient<ProfileWorkoutPreferencesPage>();
-        services.AddTransient<ProfileHealthSyncPage>();
         services.AddTransient<ProfileUnitsDisplayPage>();
         services.AddTransient<ProfileFeedbackPage>();
         services.AddTransient<ProfilePrivacyPage>();

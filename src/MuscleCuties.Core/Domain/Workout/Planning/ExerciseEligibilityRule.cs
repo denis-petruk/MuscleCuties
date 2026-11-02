@@ -212,8 +212,9 @@ public static class ExerciseEligibilityRule
         if (context.Experience == ActivityExperience.Unknown &&
             !context.UnknownExperienceAssessmentCompleted)
             reasons.Add(ExerciseEligibilityReason.UnknownExperienceNeedsAssessment);
-        if ((!string.IsNullOrWhiteSpace(candidate.ExperienceConditions) ||
-             !string.IsNullOrWhiteSpace(candidate.ReviewConditions)) &&
+        // ExperienceConditions are coaching guidance, not an individualized safety restriction.
+        // Only an explicit ReviewConditions entry requires a separate acknowledgment.
+        if (!string.IsNullOrWhiteSpace(candidate.ReviewConditions) &&
             context.AcknowledgedExerciseConditionIds?.Contains(candidate.ExerciseId) != true)
             reasons.Add(ExerciseEligibilityReason.ReviewConditionsNeedAcknowledgment);
         if (reasons.Count > 0)

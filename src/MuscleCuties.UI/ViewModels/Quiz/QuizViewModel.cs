@@ -211,7 +211,7 @@ public partial class QuizViewModel : ObservableObject
         {
             Trace.WriteLine($"[QuizViewModel] Question load failed ({ex.GetType().Name}).");
             ClearQuestionState();
-            ErrorMessage = "Questions could not load. Please reopen this page.";
+            ErrorMessage = "Ui_Quiz_Error_LoadQuestions";
             ShowEmptyState(false);
         }
         finally
@@ -255,7 +255,7 @@ public partial class QuizViewModel : ObservableObject
             var selectedAnswers = SelectedAnswers;
             if (selectedAnswers.Count == 0)
             {
-                ErrorMessage = "Choose an answer to continue.";
+                ErrorMessage = "Ui_Quiz_Error_ChooseAnswer";
                 return;
             }
             if (CurrentQuestion.QuestionType == QuizQuestionType.AvailableWeekdays &&
@@ -420,7 +420,7 @@ public partial class QuizViewModel : ObservableObject
         var energyQuestion = GetPairedEnergyQuestion(painQuestion.QuestionType);
         if (energyQuestion is null)
         {
-            ErrorMessage = "This phase check-in could not be saved. Please try again.";
+            ErrorMessage = "Ui_Quiz_Error_PhaseCheckIn";
             return false;
         }
 
@@ -430,7 +430,7 @@ public partial class QuizViewModel : ObservableObject
         var energyAnswer = energyQuestion.Answers.FirstOrDefault(answer => answer.MappedValue == energyValue);
         if (painAnswer is null || energyAnswer is null)
         {
-            ErrorMessage = "This phase check-in could not be saved. Please try again.";
+            ErrorMessage = "Ui_Quiz_Error_PhaseCheckIn";
             return false;
         }
 

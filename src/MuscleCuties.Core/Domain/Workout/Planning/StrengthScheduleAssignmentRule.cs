@@ -95,7 +95,7 @@ public static class StrengthScheduleAssignmentRule
         }).ToArray();
         foreach (var day in result.Where(session => session.IsHard).GroupBy(session => session.Day))
         {
-            if (day.Count() != MixedActivityWeekScheduleRule.MaximumSessionsPerDay) continue;
+            if (day.Count() < MixedActivityWeekScheduleRule.MinimumHardSessionsForAdjustment) continue;
             foreach (var session in day)
             {
                 var adjusted = SameDayDemandAdjustmentRule.Adjust(session.OriginalPrescription);

@@ -22,9 +22,9 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     private readonly IProfileRefreshNotifier _refreshNotifier;
     private readonly IProfileOverviewUseCase _useCase;
     private readonly ILocalPhotoCacheService? _photoCache;
-    private readonly IProfileHealthConnection? _healthConnection;
     [ObservableProperty] private string _accountActionError = string.Empty;
-    [ObservableProperty] private string _activeInjuryBadgeText = "0 Active";
+    [ObservableProperty] private string _activeInjuryBadgeText = string.Format(
+        UiTextCatalog.Get("Profile_Summary_ActiveInjuryFormat"), 0);
     [ObservableProperty] private int _activeInjuryCount;
 
     [ObservableProperty] private int _completedSessions;
@@ -36,13 +36,9 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private bool _hasActiveInjuries;
     [ObservableProperty] private bool _hasVaultPhotos;
 
-    // Health & Training Section
-    [ObservableProperty] private string _healthStatusText = "Tap to Connect";
-
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isBusy;
 
-    [ObservableProperty] private bool _isHealthConnected;
     [ObservableProperty] private bool _isLoadError;
 
     // Private Photo Journey Vault
@@ -51,15 +47,17 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private string _memberSince = string.Empty;
 
     [ObservableProperty] private string _name = string.Empty;
-    [ObservableProperty] private string _nutritionPacingText = "Maintenance";
+    [ObservableProperty] private string _nutritionPacingText = UiTextCatalog.Get("Profile_Summary_Maintenance");
     [ObservableProperty] private int _nutritionStreakDays;
     [ObservableProperty] private string _profileImagePath = string.Empty;
-    [ObservableProperty] private string _availableWeekdaysText = "3 available days / week";
+    [ObservableProperty] private string _availableWeekdaysText = string.Format(
+        UiTextCatalog.Get("Profile_Summary_AvailableDaysFormat"), 3);
 
     // Account & Preferences Section
-    [ObservableProperty] private string _unitsDisplayText = "Metric (kg, cm)";
+    [ObservableProperty] private string _unitsDisplayText = UiTextCatalog.Get("Profile_Summary_MetricUnits");
     [ObservableProperty] private int _vaultPhotoCount;
-    [ObservableProperty] private string _vaultPhotoCountText = "0 photos";
+    [ObservableProperty] private string _vaultPhotoCountText = string.Format(
+        UiTextCatalog.Get("Profile_Summary_PhotoCountFormat"), 0);
     [ObservableProperty] private int _workoutStreakDays;
 
     public ProfileViewModel(
@@ -67,15 +65,13 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         IProfileRefreshNotifier refreshNotifier,
         Func<Task> navigateToLoginAsync,
         Func<string, Task>? navigateToPreferenceAsync = null,
-        ILocalPhotoCacheService? photoCache = null,
-        IProfileHealthConnection? healthConnection = null)
+        ILocalPhotoCacheService? photoCache = null)
     {
         _useCase = useCase;
         _refreshNotifier = refreshNotifier;
         _navigateToLoginAsync = navigateToLoginAsync;
         _navigateToPreferenceAsync = navigateToPreferenceAsync ?? (_ => Task.CompletedTask);
         _photoCache = photoCache;
-        _healthConnection = healthConnection;
 
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         LogoutCommand = new AsyncRelayCommand(LogoutAsync);
@@ -84,8 +80,6 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         ToggleVaultPrivacyCommand = new RelayCommand(ToggleVaultPrivacy);
         OpenVaultCommand = new AsyncRelayCommand(OpenVaultAsync);
     }
-
-    public bool IsAppleHealthAvailable => _healthConnection?.IsAvailable ?? false;
 
     public string UserInitial => !string.IsNullOrWhiteSpace(Name) ? Name[0].ToString().ToUpperInvariant() : "U";
 
@@ -148,18 +142,6 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
             NutritionStreakDays = overview.NutritionStreakDays;
             CurrentPhase = overview.CurrentPhase;
             CyclesTracked = overview.CyclesTracked;
-            if (_healthConnection is { IsAvailable: true })
-            {
-                var connected = await _healthConnection.IsConnectedAsync();
-                IsHealthConnected = connected;
-                HealthStatusText = connected ? "Connected" : "Tap to Connect";
-            }
-            else if (overview.IsHealthConnected is { } connected)
-            {
-                IsHealthConnected = connected;
-                HealthStatusText = connected ? "Connected" : "Not connected";
-            }
-
             ActiveInjuryCount = overview.ActiveInjuryCount;
             HasActiveInjuries = ActiveInjuryCount > 0;
             ActiveInjuryBadgeText = ActiveInjuryCount == 0 ? "0 Active" : $"{ActiveInjuryCount} Active";

@@ -241,22 +241,6 @@
                 </Grid>
             </Grid>
 
-            <Border Style="{StaticResource CardPrimary}" IsVisible="{Binding IsAppleHealthAvailable}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-                    <Label Text="{loc:LocalizedText Onboarding_ProfileSetup_ConnectAppleHealth}" Style="{StaticResource SectionTitle}" LineBreakMode="WordWrap" />
-                    <Label Text="{loc:LocalizedText Onboarding_ProfileSetup_UseSleepStepsActiveEnergyAnd}"
-                           Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap" />
-                    <Button Style="{StaticResource ButtonSecondary}" Text="{Binding HealthConnectionText, Converter={StaticResource LocalizedStringConverter}}"
-                            Command="{Binding ConnectHealthCommand}"
-                            SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ConnectAppleHealthDuringSetup}" />
-                    <Label
-                        Text="{Binding HealthConnectionMessage, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource CaptionLabel}"
-                        LineBreakMode="WordWrap"
-                        IsVisible="{Binding HealthConnectionMessage, Converter={StaticResource StringToBoolConverter}}" />
-                </VerticalStackLayout>
-            </Border>
-
             <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
                 <BoxView HeightRequest="{StaticResource UiDimension1}"
                          Margin="{StaticResource UiInsets0_12_0_4}"

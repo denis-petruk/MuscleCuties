@@ -95,7 +95,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         catch (Exception ex)
         {
             Trace.WriteLine($"[DailyCheckInViewModel] Load failed ({ex.GetType().Name}).");
-            ErrorMessage = "Could not load today's check-in. Please try again.";
+            ErrorMessage = "Ui_Dashboard_Error_CheckInLoad";
         }
     }
 
@@ -137,7 +137,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         catch (Exception ex)
         {
             Trace.WriteLine($"[DailyCheckInViewModel] Save failed ({ex.GetType().Name}).");
-            ErrorMessage = "Could not save your check-in. Please try again.";
+            ErrorMessage = "Ui_Dashboard_Error_CheckInSave";
         }
         finally
         {
