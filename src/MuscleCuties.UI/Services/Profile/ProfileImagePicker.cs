@@ -24,14 +24,14 @@ internal static class ProfileImagePicker
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var pickerTask = MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions
+        // Every caller keeps a single photo, so ask the platform for exactly one. The
+        // multi-select picker returns no results at all on some iOS versions, which reads
+        // as a button that does nothing.
+        var result = await MediaPicker.Default.PickPhotoAsync(new MediaPickerOptions
         {
             Title = uniqueFileName ? "Choose progress photo" : "Choose profile image"
-        });
-        var results = await pickerTask.WaitAsync(cancellationToken);
+        }).WaitAsync(cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
-        var selectedPhotos = results.ToList();
-        var result = selectedPhotos.FirstOrDefault();
 
         if (result is null)
             return null;
