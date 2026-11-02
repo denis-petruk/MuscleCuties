@@ -534,3 +534,33 @@ resource was modified. The client needs no change: a planned day now starts on
 its own date, an unfinished session for the same day resumes, and an
 unfinished session belonging to a different day still refuses with its own
 code.
+
+**Stale readiness occurrence no longer refuses the day (2026-11-02):** After
+the first release the client still received `409` from
+`/api/v1/workouts/sessions/start`. Reading the live state showed why: the
+account's `current_date` was 2026-11-02 while the active plan's first day was
+2026-11-03, there were **zero** session rows, and the day's
+`workout_cycle_readiness_occurrences` row carried `CycleReadinessNormalDose`.
+Because `PostgresCycleReadinessReconciler.ReconcileAsync` returns `false`
+before writing whenever a plan preview is open or any session is unfinished,
+the stored occurrence had gone stale — so `MatchesBaseline` failed and the day
+was refused as `WorkoutStartPrescriptionChanged`, the one remaining coded
+refusal on that path. That refusal had no action behind it: the owner could
+not make the stored prescription match. The start now uses the stored
+adjustment only when it still matches the plan baseline, and otherwise trains
+the plan's current prescription — exactly what the plan preview shows — so a
+stale occurrence can no longer block the day. `SafetyReviewRequired` is still
+refused, but only for an adjustment that matches the baseline, and
+`PlannedWorkoutUnavailable`, unplanned rest, unplanned HIIT and an unfinished
+session on a *different* day still refuse with their own codes. Verified:
+Infrastructure.PostgreSql and Server build with 0 errors, Core 1029/1029 pass,
+package is 35 files with no PDBs at 8,653,536 bytes, SHA-256
+`256a1adc3d117267905059e50d6ce911dd9eda8c1e7b1e9b15bb9e75fa686a7a`, with commit
+`c94b11440bbaeca34008d6c2af72ffc3534d9068` embedded in the assembly. Deployed
+to `musclecuties-backend-api` `$LATEST`, `CodeSha256`
+`JWoa3D0RcmeQUFnlDWzpEd2e2oweex6bFbuedfpoano=`, published version **10**;
+`/health/live` and `/health/ready` returned HTTP 200. Rollback packages:
+`/tmp/mc-deploy/rollback-XilRK66w.zip` (version 9) and
+`/tmp/mc-deploy/rollback-a4iZKyM4.zip` (the pre-fix build). The database was
+not modified and the client needs no change. An authenticated start was not
+exercised by the agent; the owner re-tests in the app.
