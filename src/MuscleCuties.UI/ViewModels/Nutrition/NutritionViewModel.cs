@@ -79,15 +79,19 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private string _phaseAvailability = string.Empty;
     [ObservableProperty] private string _targetSource = string.Empty;
     [ObservableProperty] private string _searchQuery = string.Empty;
-    [ObservableProperty] private string _selectedBreakdownCaloriesText = "0 kcal";
+    [ObservableProperty] private string _selectedBreakdownCaloriesText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Nutrition_Breakdown_ZeroCalories");
     [ObservableProperty] private float _selectedBreakdownCarbsCalories;
     [ObservableProperty] private float _selectedBreakdownFatsCalories;
-    [ObservableProperty] private string _selectedBreakdownFiberText = "0.0g fiber";
+    [ObservableProperty] private string _selectedBreakdownFiberText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Nutrition_Breakdown_ZeroFiber");
     [ObservableProperty] private ObservableCollection<MacroBreakdownItem> _selectedBreakdownMacroItems = new();
-    [ObservableProperty] private string _selectedBreakdownMacrosText = "P 0.0g · C 0.0g · F 0.0g";
+    [ObservableProperty] private string _selectedBreakdownMacrosText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Nutrition_Breakdown_ZeroMacros");
     private MealItem? _selectedBreakdownMeal;
     [ObservableProperty] private ObservableCollection<DailyMicronutrientItem> _selectedBreakdownMicronutrients = new();
-    [ObservableProperty] private string _selectedBreakdownNutrientSummaryText = "No micronutrients tracked yet";
+    [ObservableProperty] private string _selectedBreakdownNutrientSummaryText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Ui_Nutrition_NoMicronutrients");
     [ObservableProperty] private float _selectedBreakdownProteinCalories;
     [ObservableProperty] private string _selectedBreakdownTitle = "Daily nutrition";
     [ObservableProperty] private string _selectedCustomFoodServingUnit = "g";

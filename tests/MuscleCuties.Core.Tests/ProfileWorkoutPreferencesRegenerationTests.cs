@@ -1,21 +1,23 @@
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
+using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.Infrastructure.Cloud;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Core.Tests;
 
 public sealed class ProfileWorkoutPreferencesRegenerationTests
 {
     private const string UnknownNumericEquipmentChoice = "999";
-    private const int LegacyOtherDurationMinutes = 43;
-    private const int YogaSessionsPerWeek = 1;
-    private const int LegacyOtherSessionsPerWeek = 3;
     private const int SavedYogaSessionsPerWeek = 2;
     private const int SavedMobilitySessionsPerWeek = 3;
     private const int StaleOtherSessionsPerWeek = 5;
-    private const int ExpectedOneSave = 1;
+    private const int SyntheticProposalYear = 2026;
+    private const int SyntheticProposalMonth = 11;
+    private const int SyntheticProposalDay = 1;
 
     [Theory]
     [InlineData(null, true)]
@@ -53,8 +55,6 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
         var result = await new ProfileWorkoutPreferencesUseCase(store).LoadAsync();
 
         Assert.Same(saved, result);
-        Assert.Null(store.SavedPreferences);
-        Assert.Equal(0, store.SaveCount);
     }
 
     [Fact]
@@ -65,68 +65,6 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
         var result = await new ProfileWorkoutPreferencesUseCase(store).LoadAsync();
 
         Assert.Null(result);
-        Assert.Equal(0, store.SaveCount);
-    }
-
-    [Fact]
-    public async Task SavingNormalizedPreferencesRemovesLegacyOtherWithoutMutatingLoadedSnapshot()
-    {
-        var saved = new WorkoutPreferencesDto(
-            [(int)WorkoutActivityType.GeneralStrength, (int)WorkoutActivityType.Yoga, (int)WorkoutActivityType.Other],
-            [(int)DayOfWeek.Monday, (int)DayOfWeek.Wednesday],
-            new Dictionary<int, int>
-            {
-                [(int)WorkoutActivityType.GeneralStrength] = WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes,
-                [(int)WorkoutActivityType.Yoga] = ActivitySessionDurationRule.GentleYogaDefaultMinutes,
-                [(int)WorkoutActivityType.Other] = LegacyOtherDurationMinutes
-            },
-            RequestedSessionsPerWeek: new Dictionary<int, int>
-            {
-                [(int)WorkoutActivityType.Yoga] = YogaSessionsPerWeek,
-                [(int)WorkoutActivityType.Other] = LegacyOtherSessionsPerWeek
-            });
-        var store = new FakeStore(saved);
-        var useCase = new ProfileWorkoutPreferencesUseCase(store);
-
-        Assert.Same(saved, await useCase.LoadAsync());
-        Assert.Contains((int)WorkoutActivityType.Other, saved.ActivityTypes);
-
-        var result = await useCase.SaveAsync(saved);
-
-        Assert.True(result.Succeeded);
-        Assert.NotSame(saved, store.SavedPreferences);
-        Assert.Equal([(int)WorkoutActivityType.GeneralStrength, (int)WorkoutActivityType.Yoga], store.SavedPreferences!.ActivityTypes);
-        Assert.Equal(
-            new Dictionary<int, int>
-            {
-                [(int)WorkoutActivityType.GeneralStrength] = WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes,
-                [(int)WorkoutActivityType.Yoga] = ActivitySessionDurationRule.GentleYogaDefaultMinutes
-            },
-            store.SavedPreferences.ActivitySessionDurationsMinutes);
-        Assert.Equal(
-            new Dictionary<int, int> { [(int)WorkoutActivityType.Yoga] = YogaSessionsPerWeek },
-            store.SavedPreferences.RequestedSessionsPerWeek);
-        Assert.Contains((int)WorkoutActivityType.Other, saved.ActivityTypes);
-        Assert.Equal(ExpectedOneSave, store.SaveCount);
-    }
-
-    [Fact]
-    public async Task SavingFlexibleActivityWithoutFrequencyDoesNotPersistOrUpdatePlan()
-    {
-        var store = new FakeStore(null);
-        var preferences = new WorkoutPreferencesDto(
-            [(int)WorkoutActivityType.Yoga],
-            [(int)DayOfWeek.Monday, (int)DayOfWeek.Wednesday],
-            new Dictionary<int, int>
-            {
-                [(int)WorkoutActivityType.Yoga] = ActivitySessionDurationRule.GentleYogaDefaultMinutes
-            });
-
-        var result = await new ProfileWorkoutPreferencesUseCase(store).SaveAsync(preferences);
-
-        Assert.Equal(WorkoutPreferencesError.InvalidPreferences, result.Error);
-        Assert.Null(store.SavedPreferences);
-        Assert.Equal(0, store.SaveCount);
     }
 
     [Fact]
@@ -191,20 +129,65 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
         RequestedActivitySessionsPerWeekJson: requestedFrequenciesJson,
         ExcludedStrengthExerciseIdsJson: excludedExerciseIdsJson);
 
+    [Fact]
+    public async Task WorkoutPreferencesTravelAsDraftPreferencesOnTheAcceptedProposalRoute()
+    {
+        var apiClient = new CapturingProposalApiClient();
+        var store = new CloudStrengthPlanProposalStoreV020(apiClient);
+        var preferences = new WorkoutPreferencesDto(
+            [(int)WorkoutActivityType.GeneralStrength],
+            [(int)DayOfWeek.Monday, (int)DayOfWeek.Wednesday],
+            new Dictionary<int, int>
+            {
+                [(int)WorkoutActivityType.GeneralStrength] =
+                    WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes
+            },
+            Equipment.FullGym.ToString());
+        var request = new StrengthPlanPreviewRequestV020(
+            WorkoutActivityDto.GeneralStrength,
+            new DateOnly(SyntheticProposalYear, SyntheticProposalMonth, SyntheticProposalDay),
+            null) { DraftPreferences = preferences };
+
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            store.CreateAsync(request, CancellationToken.None));
+
+        Assert.Equal(new[] { ("POST", "/api/v1/workouts/plan/strength-proposals") }, apiClient.Calls);
+        Assert.Same(preferences, apiClient.CapturedDraftPreferences);
+    }
+
+    private sealed class CapturingProposalApiClient : IMuscleCutiesBackendApiClient
+    {
+        public List<(string Method, string Path)> Calls { get; } = [];
+        public WorkoutPreferencesDto? CapturedDraftPreferences { get; private set; }
+
+        public Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(
+            string relativePath,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new BackendApiResponse<TResponse>(BackendApiStatus.ServerError, default));
+
+        public Task<BackendApiResponse<TResponse>> SendMutationAsync<TRequest, TResponse>(
+            HttpMethod method,
+            string relativePath,
+            TRequest payload,
+            string? idempotencyKey = null,
+            CancellationToken cancellationToken = default)
+        {
+            Calls.Add((method.Method, relativePath));
+            if (payload is StrengthPlanPreviewRequestV020 request)
+                CapturedDraftPreferences = request.DraftPreferences;
+            return Task.FromResult(new BackendApiResponse<TResponse>(BackendApiStatus.ServerError, default));
+        }
+
+        public Task<BackendApiResponse<bool>> DeleteAsync(
+            string relativePath,
+            string? idempotencyKey = null,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new BackendApiResponse<bool>(BackendApiStatus.ServerError, false));
+    }
+
     private sealed class FakeStore(WorkoutPreferencesDto? saved) : IProfileWorkoutPreferencesStore
     {
-        public WorkoutPreferencesDto? SavedPreferences { get; private set; }
-        public int SaveCount { get; private set; }
-
         public Task<WorkoutPreferencesDto?> LoadAsync(CancellationToken cancellationToken) =>
             Task.FromResult(saved);
-
-        public Task<WorkoutPreferencesError> SaveAsync(
-            WorkoutPreferencesDto preferences, CancellationToken cancellationToken)
-        {
-            SavedPreferences = preferences;
-            SaveCount++;
-            return Task.FromResult(WorkoutPreferencesError.None);
-        }
     }
 }

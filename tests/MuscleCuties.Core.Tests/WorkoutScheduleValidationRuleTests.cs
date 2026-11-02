@@ -46,10 +46,12 @@ public sealed class WorkoutScheduleValidationRuleTests
         var forged = climbing with { OccurrencePrescription = adjusted with { RequiresUserConfirmation = true } };
         var reasons = WorkoutScheduleValidationRule.Validate([strength, forged]);
         Assert.Contains(WorkoutScheduleValidationRule.InvalidOccurrenceAdjustment, reasons);
-        Assert.Contains(WorkoutScheduleValidationRule.MultipleHardSessions, reasons);
-        var wrongDuration = climbing with { DurationMinutes = original.MainMinutes };
+        Assert.DoesNotContain(WorkoutScheduleValidationRule.MultipleHardSessions, reasons);
+        var unadjusted = climbing with { OccurrencePrescription = null };
+        Assert.Empty(WorkoutScheduleValidationRule.Validate([strength, unadjusted]));
         Assert.Contains(WorkoutScheduleValidationRule.MultipleHardSessions,
-            WorkoutScheduleValidationRule.Validate([strength, wrongDuration]));
+            WorkoutScheduleValidationRule.Validate([strength, unadjusted,
+                new WorkoutScheduleValidationSession(DayOfWeek.Monday, WorkoutActivityType.Hiit, true)]));
     }
 
     [Fact]

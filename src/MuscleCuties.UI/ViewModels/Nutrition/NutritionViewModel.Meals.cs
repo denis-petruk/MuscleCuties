@@ -43,25 +43,25 @@ public partial class NutritionViewModel
     {
         if (SelectedFoodResult is null)
         {
-            AddFoodMessage = "Choose an ingredient first.";
+            AddFoodMessage = "Ui_Nutrition_Error_ChooseIngredient";
             return;
         }
 
         if (SelectedServingOption is null)
         {
-            AddFoodMessage = "Choose a serving option.";
+            AddFoodMessage = "Ui_Nutrition_Error_ChooseServing";
             return;
         }
 
         if (!TryParseAmount(FoodGrams, out var amount))
         {
-            AddFoodMessage = "Enter amount greater than zero.";
+            AddFoodMessage = "Ui_Nutrition_Error_AmountPositive";
             return;
         }
 
         if (SelectedFoodResult.Calories <= 0f)
         {
-            AddFoodMessage = "Choose a product with calories listed.";
+            AddFoodMessage = "Ui_Nutrition_Error_ProductCalories";
             return;
         }
 
@@ -91,7 +91,7 @@ public partial class NutritionViewModel
     {
         if (MealIngredients.Count == 0)
         {
-            AddFoodMessage = "Add at least one ingredient to the meal.";
+            AddFoodMessage = "Ui_Nutrition_Error_AddIngredient";
             return;
         }
 
@@ -155,16 +155,16 @@ public partial class NutritionViewModel
         }
         catch (InvalidOperationException)
         {
-            AddFoodMessage = "Check the meal selections and try again.";
+            AddFoodMessage = "Ui_Nutrition_Error_CheckMealSelections";
         }
         catch (ArgumentException)
         {
-            AddFoodMessage = "Check the meal amounts and try again.";
+            AddFoodMessage = "Ui_Nutrition_Error_CheckMealAmounts";
         }
         catch (Exception ex)
         {
             Trace.WriteLine($"[NutritionViewModel] Meal log failed ({ex.GetType().Name}).");
-            AddFoodMessage = "Could not log this meal. Please refresh and try again.";
+            AddFoodMessage = "Ui_Nutrition_Error_LogMeal";
         }
         finally
         {
@@ -189,7 +189,7 @@ public partial class NutritionViewModel
             var ingredients = await _overviewUseCase.GetMealIngredientsAsync(meal.LoggedMealId);
             if (ingredients.Count == 0)
             {
-                AddFoodMessage = "Could not find that meal. Please refresh and try again.";
+                AddFoodMessage = "Ui_Nutrition_Error_MealNotFound";
                 return;
             }
 

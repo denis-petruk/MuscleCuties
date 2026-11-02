@@ -62,7 +62,8 @@ public partial class NutritionViewModel
         MealSuggestions.Clear();
         _shownConceptNames.Clear();
         MealSuggestionError = string.Empty;
-        SuggestionTargetText = "Built around today's targets";
+        SuggestionTargetText =
+            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Nutrition_Suggestions_TargetsTitle");
         IsSuggestionModalVisible = true;
         NotifySuggestionProperties();
         _ = LoadSuggestionsAsync();
@@ -81,7 +82,7 @@ public partial class NutritionViewModel
         DayPlanMeals.Clear();
         _shownConceptNames.Clear();
         MealSuggestionError = string.Empty;
-        DayPlanSummaryText = "Preparing meals around today's remaining targets";
+        DayPlanSummaryText = "Ui_Nutrition_DayPlan_Preparing";
         IsSuggestionModalVisible = true;
         NotifySuggestionProperties();
         _ = LoadDayPlanAsync();

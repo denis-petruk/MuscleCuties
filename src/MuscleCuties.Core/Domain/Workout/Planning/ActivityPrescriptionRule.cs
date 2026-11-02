@@ -111,13 +111,13 @@ public static class ActivityPrescriptionRule
     public const int ContinuousCardioCooldownMinutes = 5;
     public const int BeginnerCardioMainMinutes = 10;
     public const int EstablishedCardioMainMinutesWithoutBaseline = 20;
-    public const int BeginnerCardioSessionsPerWeek = 2;
-    public const int EstablishedCardioSessionsPerWeekWithoutBaseline = 2;
+    public const int BeginnerCardioSessionsPerWeek = 3;
+    public const int EstablishedCardioSessionsPerWeekWithoutBaseline = 4;
     public const int SwimmingWarmupMinutes = 5;
     public const int SwimmingIntervalSeconds = 30;
     public const int BeginnerClimbingVisitMinutes = 45;
     public const int EstablishedClimbingVisitMinutesWithoutBaseline = 60;
-    public const int HiitMaximumSessionsPerWeek = 1;
+    public const int HiitMaximumSessionsPerWeek = 2;
     public const int HiitRequiredAerobicSessionsPerWeek = 3;
     public const int HiitRequiredPriorWeeks = 4;
     public const int HiitMinimumManageableSessionMinutes = 20;

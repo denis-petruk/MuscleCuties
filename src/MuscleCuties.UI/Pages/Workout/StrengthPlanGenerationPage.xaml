@@ -543,10 +543,7 @@
                             <Label Text="{Binding ChosenStrengthSummary}" IsVisible="{Binding HasChosenStrengthSummary}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
                             <Label Text="{loc:LocalizedText Workout_Generation_MixedScheduleTitle}"
                                    Style="{StaticResource SectionTitle}"
-                                   FontSize="{StaticResource UiFontSize17}"
-                                   FontAttributes="{StaticResource UiFontAttributesBold}"
                                    SemanticProperties.HeadingLevel="Level3" />
-                            <Label Text="{loc:LocalizedText Workout_Generation_ActivityOrderNote}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                             <Label Text="{loc:LocalizedText Workout_Generation_ScheduleEmpty}"
                                    IsVisible="{Binding HasNoMixedActivitySessions}"
                                    Style="{StaticResource MutedLabel}"
@@ -565,15 +562,41 @@
                             </VerticalStackLayout>
                         </VerticalStackLayout>
 
-                        <toolkit:Expander IsVisible="{Binding HasActivityDecisions}" IsExpanded="{Binding ExpandActivityDecisions, Mode=OneWay}">
+                        <!-- Consolidated advisory notes: scheduling, omissions and limitations. -->
+                        <VerticalStackLayout IsVisible="{Binding HasPreviewNotes}" Spacing="{StaticResource UiSpacing10}">
+                            <Label Text="{loc:LocalizedText Workout_Generation_SchedulingNotesTitle}"
+                                   Style="{StaticResource SectionTitle}"
+                                   SemanticProperties.HeadingLevel="Level3" />
+                            <Border Style="{StaticResource CardAccent}">
+                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding PreviewNotes}"
+                                                     Spacing="{StaticResource UiSpaceTight}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <Label Text="{Binding .}"
+                                                   Style="{StaticResource MutedLabel}"
+                                                   LineBreakMode="WordWrap" />
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout IsVisible="{Binding HasDurationChoice}" Spacing="{StaticResource UiSpaceTight}">
+                            <Label Text="{loc:LocalizedText Workout_Generation_DurationChoices}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                            <Button Text="{Binding LongerDurationText}" Command="{Binding UseLongerDurationCommand}" IsVisible="{Binding CanUseLongerDuration}" Style="{StaticResource ButtonSecondary}" />
+                            <Button Text="{loc:LocalizedText Workout_Generation_UseShorterDuration}" Command="{Binding UseShorterDurationCommand}" Style="{StaticResource ButtonSecondary}" />
+                        </VerticalStackLayout>
+
+                        <toolkit:Expander IsVisible="{Binding HasPlanDetails}" IsExpanded="{Binding ExpandActivityDecisions, Mode=OneWay}">
   <toolkit:Expander.Header>
     <Grid ColumnDefinitions="*,Auto" Style="{StaticResource DisclosureHeader}">
-      <Label Text="{loc:LocalizedText Workout_Generation_ActivityDecisionsTitle}" Style="{StaticResource BodyStrong}" />
+      <Label Text="{loc:LocalizedText Workout_Generation_PlanDetailsTitle}" Style="{StaticResource BodyStrong}" />
       <Label Grid.Column="1" Text="⌄" Style="{StaticResource MutedLabel}" />
     </Grid>
   </toolkit:Expander.Header>
   <toolkit:Expander.Content>
-    <!-- Activity Decisions Sub-Section -->
+    <!-- Activity decisions and strength sessions live in one details surface. -->
+    <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
                         <VerticalStackLayout IsVisible="{Binding HasActivityDecisions}" Spacing="{StaticResource UiSpacing10}">
 
                             <VerticalStackLayout BindableLayout.ItemsSource="{Binding ActivityDecisions}"
@@ -606,47 +629,8 @@
                             </VerticalStackLayout>
                         </VerticalStackLayout>
 
+                        <!-- Strength Preview Sessions -->
 
-  </toolkit:Expander.Content>
-</toolkit:Expander>
-<!-- Scheduling Notes Sub-Section -->
-                        <VerticalStackLayout IsVisible="{Binding HasScheduleInputReasons}" Spacing="{StaticResource UiSpacing10}">
-                            <Label Text="{loc:LocalizedText Workout_Generation_SchedulingNotesTitle}"
-                                   Style="{StaticResource SectionTitle}"
-                                   FontSize="{StaticResource UiFontSize17}"
-                                   FontAttributes="{StaticResource UiFontAttributesBold}"
-                                   SemanticProperties.HeadingLevel="Level3" />
-                            <Border Style="{StaticResource CardAccent}">
-                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding ScheduleInputReasons}"
-                                                     Spacing="{StaticResource UiSpacing6}">
-                                    <BindableLayout.ItemTemplate>
-                                        <DataTemplate x:DataType="x:String">
-                                            <Label Text="{Binding .}"
-                                                   Style="{StaticResource MutedLabel}"
-                                                   LineBreakMode="WordWrap" />
-                                        </DataTemplate>
-                                    </BindableLayout.ItemTemplate>
-                                </VerticalStackLayout>
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout IsVisible="{Binding HasDurationChoice}" Spacing="{StaticResource UiSpaceTight}">
-                            <Label Text="{loc:LocalizedText Workout_Generation_DurationChoices}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
-                            <Button Text="{Binding LongerDurationText}" Command="{Binding UseLongerDurationCommand}" IsVisible="{Binding CanUseLongerDuration}" Style="{StaticResource ButtonSecondary}" />
-                            <Button Text="{loc:LocalizedText Workout_Generation_UseShorterDuration}" Command="{Binding UseShorterDurationCommand}" Style="{StaticResource ButtonSecondary}" />
-                        </VerticalStackLayout>
-
-                        <Label Text="{loc:LocalizedText Workout_Generation_MovementOmitted}" IsVisible="{Binding HasOmittedMovements}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
-                        <Label Text="{Binding DurationOmissionsText}" IsVisible="{Binding HasDurationOmissions}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
-                        <toolkit:Expander IsVisible="{Binding HasStrengthPreviewSessions}">
-  <toolkit:Expander.Header>
-    <Grid ColumnDefinitions="*,Auto" Style="{StaticResource DisclosureHeader}">
-      <Label Text="{loc:LocalizedText Workout_Generation_StrengthDetailsTitle}" Style="{StaticResource BodyStrong}" />
-      <Label Grid.Column="1" Text="⌄" Style="{StaticResource MutedLabel}" />
-    </Grid>
-  </toolkit:Expander.Header>
-  <toolkit:Expander.Content>
-    <!-- Strength Preview Sessions Sub-Section -->
                         <VerticalStackLayout IsVisible="{Binding HasStrengthPreviewSessions}" Spacing="{StaticResource UiSpaceCompact}">
 
                             <VerticalStackLayout BindableLayout.ItemsSource="{Binding StrengthPreviewSessions}"
@@ -688,20 +672,22 @@
                             </VerticalStackLayout>
                         </VerticalStackLayout>
 
-
+    </VerticalStackLayout>
   </toolkit:Expander.Content>
 </toolkit:Expander>
 
-
-                        <!-- Limitations Sub-Section -->
-                        <VerticalStackLayout IsVisible="{Binding HasLimitation}" Spacing="{StaticResource UiSpacing10}">
-                            <Label Text="{loc:LocalizedText Workout_Generation_LimitationsTitle}"
+                        <!-- Exercise Conditions Sub-Section -->
+                        <VerticalStackLayout IsVisible="{Binding HasExerciseReviewConditions}"
+                                             Spacing="{StaticResource UiSpacing10}">
+                            <Label Text="{loc:LocalizedText Workout_Generation_ExerciseConditionsTitle}"
                                    Style="{StaticResource SectionTitle}"
-                                   FontSize="{StaticResource UiFontSize17}"
-                                   FontAttributes="{StaticResource UiFontAttributesBold}"
                                    SemanticProperties.HeadingLevel="Level3" />
+                            <Label Text="{loc:LocalizedText Workout_Generation_ExerciseConditionsHelp}"
+                                   Style="{StaticResource MutedLabel}"
+                                   LineBreakMode="WordWrap" />
                             <Border Style="{StaticResource CardAccent}">
-                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding PreviewLimitations}" Spacing="{StaticResource UiSpaceMicro}">
+                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding ExerciseReviewConditions}"
+                                                     Spacing="{StaticResource UiSpaceTight}">
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="x:String">
                                             <Label Text="{Binding .}"

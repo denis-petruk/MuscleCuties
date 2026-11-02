@@ -9,6 +9,7 @@ using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDt
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Localization;
+using MuscleCuties.UI.Services.Api;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Workout.Session;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
@@ -199,7 +200,12 @@ public partial class WorkoutSessionViewModel : ObservableObject
             throw;
         }
     }
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasErrorReference))]
+    private string _errorReference = string.Empty;
+
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
+    public bool HasErrorReference => HasError && !string.IsNullOrEmpty(ErrorReference);
     public bool HasNoActivities => !IsBusy && !HasError && ActivityCards.Count == 0;
     public bool HasActivityChoices => !IsBusy && !HasError && ActivityCards.Count > 0;
     public bool HasSwapCandidates => SwapCandidates.Count > 0;
@@ -385,10 +391,10 @@ public partial class WorkoutSessionViewModel : ObservableObject
                     SelectActivity(activity);
             }
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             if (version == _loadVersion)
-                ErrorText = "Could not load this workout. Try again.";
+                ApplyFailure(ApiFailurePresenter.FromException(exception, "Ui_Workout_Error_Load"));
         }
         finally
         {
@@ -428,6 +434,12 @@ public partial class WorkoutSessionViewModel : ObservableObject
             targets.Contains("steady", StringComparison.OrdinalIgnoreCase) ? "Steady effort" :
             "Follow the targets at a comfortable effort";
         ActivityPrescriptionText = FormatPrescription(SelectedActivity.Prescription);
+    }
+
+    private void ApplyFailure(ApiFailureNotice notice)
+    {
+        ErrorText = notice.MessageKey;
+        ErrorReference = notice.ReferenceText;
     }
 
     private static string FormatPrescription(ActivitySessionPrescriptionOutputV020? prescription)
@@ -505,9 +517,14 @@ public partial class WorkoutSessionViewModel : ObservableObject
             ErrorText = "Workout_Session_TimingExpired";
             return;
         }
+        catch (WorkoutSessionStartBlockedException exception)
+        {
+            ErrorText = StartRefusalTextKey(exception.Code);
+            return;
+        }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
         {
-            ErrorText = "Workout_Session_ConnectionRetry";
+            ApplyFailure(ApiFailurePresenter.FromException(exception, "Workout_Session_ConnectionRetry"));
             return;
         }
         catch (Exception)
@@ -527,6 +544,20 @@ public partial class WorkoutSessionViewModel : ObservableObject
         CurrentScreen = SessionScreen.ExerciseFlow;
         SetCurrentExercise(0);
     }
+
+    private const string StartFailedTextKey = "Workout_Session_StartFailed";
+
+    private static string StartRefusalTextKey(string code) => code switch
+    {
+        WorkoutSessionStartBlockCode.PlannedWorkoutUnavailable => "Workout_Session_StartUnavailable",
+        WorkoutSessionStartBlockCode.TimeZoneNotEstablished => "Workout_Session_StartTimeZoneMissing",
+        WorkoutSessionStartBlockCode.NotScheduledToday => "Workout_Session_StartNotToday",
+        WorkoutSessionStartBlockCode.ActiveSessionOrPreviewOpen => "Workout_Session_StartSessionOrPreviewOpen",
+        WorkoutSessionStartBlockCode.PrescriptionChanged => "Workout_Session_StartPrescriptionChanged",
+        WorkoutSessionStartBlockCode.SafetyReviewRequired => "Workout_Session_StartSafetyReview",
+        WorkoutSessionStartBlockCode.ActiveWorkoutInProgress => "Workout_Session_StartActiveWorkout",
+        _ => StartFailedTextKey
+    };
 
     private async Task ConfirmHiitHistoryAsync()
     {
@@ -605,7 +636,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         catch (Exception)
         {
             if (version == _loadVersion)
-                ErrorText = "Could not save this exercise. Your entries are still here. Try again.";
+                ErrorText = "Ui_Workout_Error_SaveExercise";
         }
         finally
         {
@@ -784,7 +815,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         _pendingCompletionSeconds ??= _confirmedActiveSeconds;
         if (_pendingCompletionSeconds <= 0)
         {
-            ErrorText = "Complete at least one second of activity before finishing.";
+            ErrorText = "Ui_Workout_Error_MinimumDuration";
             _pendingCompletionSeconds = null;
             IsTimedActivityRunning = false;
             CurrentScreen = SessionScreen.ActivityIntro;
@@ -1082,7 +1113,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         }
         catch
         {
-            if (version == _swapVersion) SwapErrorText = "Could not load alternatives. Close this panel and try again.";
+            if (version == _swapVersion) SwapErrorText = "Ui_Workout_Error_SwapLoad";
         }
         finally
         {
@@ -1135,7 +1166,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         catch
         {
             if (version == _loadVersion)
-                SwapErrorText = "The exercise may have changed. Reload it before continuing, or leave this session.";
+                SwapErrorText = "Ui_Workout_Error_SwapChanged";
         }
         finally
         {
@@ -1222,12 +1253,12 @@ public partial class WorkoutSessionViewModel : ObservableObject
     {
         if (exercise.UsesStrengthMetrics && (ParsePositiveInt(exercise.LoggedSetsText) == 0 ||
                                              ParsePositiveInt(exercise.LoggedRepsText) == 0))
-            ErrorText = "Add positive sets and reps before logging this exercise.";
+            ErrorText = "Ui_Workout_Error_SetsReps";
         else if (exercise.UsesStrengthMetrics && exercise.UsesWeight &&
                  ParseOptionalFloat(exercise.LoggedWeightText) is null)
-            ErrorText = "Add a valid weight in kg. Use 0 kg for bodyweight.";
+            ErrorText = "Ui_Workout_Error_Weight";
         else if (exercise.UsesDurationMetric && ParseDurationSeconds(exercise.LoggedDurationMinutesText) is null)
-            ErrorText = "Add a positive duration in minutes before logging this exercise.";
+            ErrorText = "Ui_Workout_Error_Duration";
         else if ((exercise.UsesDistanceMetric && InvalidOptionalFloat(exercise.LoggedDistanceKmText)) ||
                  (exercise.UsesHeartRateMetric && InvalidOptionalInt(exercise.LoggedHeartRateText)) ||
                  (exercise.UsesPowerMetric && InvalidOptionalInt(exercise.LoggedPowerWattsText)) ||

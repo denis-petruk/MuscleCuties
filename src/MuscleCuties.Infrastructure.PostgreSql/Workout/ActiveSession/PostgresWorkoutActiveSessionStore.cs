@@ -85,7 +85,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     .ConfigureAwait(false);
                 if (session is null) return null;
                 if (session.IsDeleted || session.CompletedAt is not null || session.PlannedWorkoutDayId is null)
-                    throw new InvalidOperationException("An active planned workout is required.");
+                    throw new WorkoutSessionStartBlockedException(WorkoutSessionStartBlockCode.SessionNotActive);
                 var now = timeProvider.GetUtcNow().UtcDateTime;
                 if ((checkpoint is null || !checkpoint.Pause) &&
                     await context.WorkoutDays.AsNoTracking().AnyAsync(day => day.UserId == userId &&
@@ -201,24 +201,17 @@ public sealed class PostgresWorkoutActiveSessionStore(
                         .ToListAsync(ct).ConfigureAwait(false);
                     var matches = activeDays.Where(day => PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(day.Id) == plannedId).ToArray();
                     if (matches.Length != 1 || matches[0].WorkoutType == nameof(WorkoutType.Rest))
-                        throw new InvalidOperationException("The planned workout is unavailable.");
+                        throw new WorkoutSessionStartBlockedException(WorkoutSessionStartBlockCode.PlannedWorkoutUnavailable);
                     plannedDay = matches[0];
                     planningState = await context.WorkoutAccountPlanningStates.AsNoTracking()
                         .SingleOrDefaultAsync(row => row.UserId == userId, ct).ConfigureAwait(false);
-                    if (planningState?.TimeZoneId is not { } zoneId)
-                    {
-                        if (plannedDay.ActivityTypeId == (int)WorkoutActivityType.Hiit)
-                            throw new WorkoutHiitHistoryConfirmationRequiredException();
-                        throw new InvalidOperationException("Establish the account timezone before starting a workout.");
-                    }
-                    try { localDate = WorkoutAccountCalendarRule.LocalDate(timeProvider.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById(zoneId)); }
-                    catch (TimeZoneNotFoundException) when (plannedDay.ActivityTypeId == (int)WorkoutActivityType.Hiit)
-                    { throw new WorkoutHiitHistoryConfirmationRequiredException(); }
-                    catch (InvalidTimeZoneException) when (plannedDay.ActivityTypeId == (int)WorkoutActivityType.Hiit)
-                    { throw new WorkoutHiitHistoryConfirmationRequiredException(); }
-                    if (plannedDay.Date != localDate)
-                        throw new InvalidOperationException("The planned workout is not scheduled for today.");
-                    if (planningState.SafetyRegenerationPending && (plannedDay.ActivityTypeId is not { } activityType ||
+                    // The client offers Start on every day of the active plan, so a planned day is startable
+                    // on its own date rather than only when that date is today. Gating on today and on an
+                    // established timezone refused legitimate days without a reason the client could show.
+                    if (plannedDay.Date is not { } plannedLocalDate)
+                        throw new WorkoutSessionStartBlockedException(WorkoutSessionStartBlockCode.PlannedWorkoutUnavailable);
+                    localDate = plannedLocalDate;
+                    if (planningState?.SafetyRegenerationPending == true && (plannedDay.ActivityTypeId is not { } activityType ||
                         !Enum.IsDefined((WorkoutActivityType)activityType) || !StrengthStyleSelectionRule.IsStrengthStyle((WorkoutActivityType)activityType)))
                         throw new WorkoutActivityNoLongerSafeException();
                     var plannedExercises = await context.WorkoutDayExercises.AsNoTracking()
@@ -230,17 +223,22 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     {
                         ActivityPrescriptionJson = plannedDay.PlannedActivityPrescriptionJson
                     };
-                    if (!await PostgresCycleReadinessReconciler.ReconcileAsync(context, userId, timeProvider.GetUtcNow(), ct).ConfigureAwait(false))
-                        throw new InvalidOperationException("Finish the active workout or close the plan preview before starting this workout.");
+                    // Readiness reconciliation is best effort. An open preview, an unfinished session or a
+                    // missing timezone leaves it without work; training must continue on the day's own
+                    // prescription in that case instead of failing the start.
+                    await PostgresCycleReadinessReconciler.ReconcileAsync(context, userId, timeProvider.GetUtcNow(), ct).ConfigureAwait(false);
                     var occurrence = await context.WorkoutCycleReadinessOccurrences.AsNoTracking()
                         .SingleOrDefaultAsync(row => row.UserId == userId && row.WorkoutDayId == plannedDay.Id && row.LocalDate == localDate, ct)
                         .ConfigureAwait(false);
                     var adjusted = PlannedPrescriptionSnapshot.Deserialize(occurrence?.PrescriptionJson);
-                    if (!PostgresCycleReadinessReconciler.MatchesBaseline(plannedPrescription, adjusted))
-                        throw new InvalidOperationException("The workout prescription changed. Refresh and try again.");
-                    if (adjusted!.DoseAdjustmentReasonCode == CycleReadinessPrescriptionRule.SafetyReviewRequired)
-                        throw new InvalidOperationException("Review your current symptoms or restrictions before starting this workout.");
-                    plannedPrescription = adjusted!;
+                    if (adjusted is not null)
+                    {
+                        if (!PostgresCycleReadinessReconciler.MatchesBaseline(plannedPrescription, adjusted))
+                            throw new WorkoutSessionStartBlockedException(WorkoutSessionStartBlockCode.PrescriptionChanged);
+                        if (adjusted.DoseAdjustmentReasonCode == CycleReadinessPrescriptionRule.SafetyReviewRequired)
+                            throw new WorkoutSessionStartBlockedException(WorkoutSessionStartBlockCode.SafetyReviewRequired);
+                        plannedPrescription = adjusted;
+                    }
                     plannedPrescriptionJson = plannedPrescription.Serialize();
                 }
 
@@ -272,9 +270,21 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     catch (InvalidTimeZoneException) { throw new WorkoutHiitHistoryConfirmationRequiredException(); }
                 }
 
-                if (plannedDay is not null && await context.WorkoutSessionLogs.AnyAsync(row => row.UserId == userId && !row.IsDeleted &&
-                    row.CompletedAt == null && row.PlannedWorkoutDayId != null, ct).ConfigureAwait(false))
-                    throw new InvalidOperationException("An active workout is already in progress.");
+                if (plannedDay is not null)
+                {
+                    // Re-entering a day that already has an unfinished session resumes it, so a retry after
+                    // an interruption continues the same workout instead of being refused.
+                    var unfinishedForThisDay = await context.WorkoutSessionLogs.AsNoTracking()
+                        .Where(row => row.UserId == userId && !row.IsDeleted && row.CompletedAt == null &&
+                            row.PlannedWorkoutDayId == plannedDay.Id)
+                        .OrderByDescending(row => row.StartedAt).FirstOrDefaultAsync(ct).ConfigureAwait(false);
+                    if (unfinishedForThisDay is not null)
+                        return (await LoadSessionSnapshotAsync(context, userId, unfinishedForThisDay.Id, ct)
+                            .ConfigureAwait(false))!;
+                    if (await context.WorkoutSessionLogs.AnyAsync(row => row.UserId == userId && !row.IsDeleted &&
+                        row.CompletedAt == null && row.PlannedWorkoutDayId != null, ct).ConfigureAwait(false))
+                        throw new WorkoutSessionStartBlockedException(WorkoutSessionStartBlockCode.ActiveWorkoutInProgress);
+                }
 
                 session = new WorkoutSessionLogRecord
                 {

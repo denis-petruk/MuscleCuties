@@ -102,7 +102,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     public bool CanSave => !IsBusy && IsExerciseExclusionCatalogLoaded;
     public string SaveActionText => UiTextCatalog.Get(IsPlanSetupNavigationPending && !HasUnsavedChanges
         ? "Profile_WorkoutPrefs_OpenPlanSetup"
-        : "Profile_WorkoutPrefs_SaveWorkoutPreferences");
+        : "Profile_WorkoutPrefs_ContinueToPlanSetup");
 
     public AsyncRelayCommand BackCommand { get; }
     public AsyncRelayCommand LoadDataCommand { get; }
@@ -280,7 +280,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         {
             Trace.WriteLine($"[ProfileWorkoutPreferencesViewModel] Save failed ({ex.GetType().Name}).");
             StatusMessage = !settingsSaved
-                ? UiTextCatalog.Get("Profile_WorkoutPrefs_SaveFailed")
+                ? UiTextCatalog.Get("Profile_WorkoutPrefs_DraftUnavailable")
                 : UiTextCatalog.Get("Profile_WorkoutPrefs_PlanSetupCouldNotOpen");
         }
         finally

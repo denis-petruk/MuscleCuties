@@ -98,31 +98,9 @@ public sealed record WorkoutPreferencesDto(
     IReadOnlyDictionary<int, int> ActivitySessionDurationsMinutes,
     string? EquipmentLevel = null,
     IReadOnlyDictionary<int, int>? RequestedSessionsPerWeek = null,
-    IReadOnlySet<int>? ExcludedExerciseIds = null);
-
-public enum WorkoutPreferencesError
-{
-    None,
-    ProfileMissing,
-    InvalidPreferences,
-    SaveFailed,
-    Offline,
-    SignInRequired,
-    ServerUnavailable,
-    ConcurrentUpdate,
-    ExerciseCatalogChanged
-}
-
-public sealed record WorkoutPreferencesResult(WorkoutPreferencesError Error)
-{
-    public bool Succeeded => Error == WorkoutPreferencesError.None;
-}
+    HashSet<int>? ExcludedExerciseIds = null);
 
 public interface IProfileWorkoutPreferencesUseCase
 {
     Task<WorkoutPreferencesDto?> LoadAsync(CancellationToken cancellationToken = default);
-
-    Task<WorkoutPreferencesResult> SaveAsync(WorkoutPreferencesDto preferences,
-        CancellationToken cancellationToken = default);
-
 }

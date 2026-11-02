@@ -8,6 +8,7 @@ public interface ISaveMealTemplateUseCase
 {
     Task<MealTemplateDto> ExecuteAsync(SaveMealAsTemplateRequest request, CancellationToken cancellationToken = default);
     Task<MealTemplateDto> ExecuteAsync(Guid userId, SaveMealAsTemplateRequest request, CancellationToken cancellationToken = default);
+    Task<MealTemplateDto> UpdateAsync(Guid userId, Guid id, SaveMealAsTemplateRequest request, CancellationToken cancellationToken = default);
 }
 
 public sealed class SaveMealTemplateUseCase : ISaveMealTemplateUseCase
@@ -29,6 +30,18 @@ public sealed class SaveMealTemplateUseCase : ISaveMealTemplateUseCase
     {
         var template = BuildTemplate(request);
         return await _recipeStore.SaveMealTemplateAsync(userId, template, cancellationToken);
+    }
+
+    public async Task<MealTemplateDto> UpdateAsync(Guid userId, Guid id, SaveMealAsTemplateRequest request, CancellationToken cancellationToken = default)
+    {
+        if (id == Guid.Empty)
+            throw new ArgumentException("A template ID is required.", nameof(id));
+        ArgumentNullException.ThrowIfNull(request);
+
+        var existing = await _recipeStore.GetMealTemplateByIdAsync(userId, id, cancellationToken).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException("Meal template was not found for this user.");
+        var updated = BuildTemplate(request) with { Id = existing.Id, CreatedAtUtc = existing.CreatedAtUtc };
+        return await _recipeStore.UpdateMealTemplateAsync(userId, updated, cancellationToken).ConfigureAwait(false);
     }
 
     private static MealTemplateDto BuildTemplate(SaveMealAsTemplateRequest request)

@@ -36,16 +36,16 @@ internal static partial class RussianUiText
         Values["Workout_Generation_StrengthPlanChoiceHint"] = "Выберите этот тип силового плана.";
         Values["Workout_Generation_HeavyMainAssignmentFormat"] = "Используется как тяжёлое основное упражнение: {0}";
         Values["Workout_Generation_HiitUnderlyingActivityTitle"] = "Выберите кардиоактивность для HIIT";
-        Values["Workout_Generation_HiitUnderlyingActivityHelp"] = "Выберите непрерывную кардиоактивность, сохранённую в предпочтениях. HIIT заменит одно занятие этой активности. Ниже укажите её фактическую историю и занятия за каждую предыдущую неделю, затем подтвердите прохождение необходимого скрининга или наличие допуска.";
+        Values["Workout_Generation_HiitUnderlyingActivityHelp"] = "Выберите сохранённую непрерывную кардиоактивность. HIIT заменит одно занятие; укажите историю, недельные аэробные занятия и подтвердите скрининг.";
         Values["Workout_Generation_HiitEvidenceTitle"] = "Данные для HIIT";
-        Values["Workout_Generation_HiitEvidenceHelp"] = "HIIT рассматривается, только если опыт выбранной кардиоактивности достаточный, все четыре предыдущие недели соответствуют аэробному порогу, вы подтверждаете прохождение необходимого скрининга или наличие допуска, а текущие симптомы или травмы не требуют проверки.";
+        Values["Workout_Generation_HiitEvidenceHelp"] = "HIIT требует достаточной истории кардио, четырёх недель на аэробном пороге, подтверждённого скрининга и отсутствия симптомов или травм для проверки.";
         Values["Workout_Generation_HiitConfirmCurrentWeeks"] = "Подтверждаю, что эти данные относятся к четырём неделям до сегодняшнего дня.";
         Values["Workout_Generation_HiitCardioHistoryTitle"] = "Опыт выбранной кардиоактивности";
-        Values["Workout_Generation_HiitCardioHistoryHelp"] = "Укажите фактическую историю выбранной активности. Для устойчивого опыта нужно не менее {0} регулярных недель, в среднем не менее {1} занятий в неделю за последнее время и менее {2} дней с последнего занятия.";
+        Values["Workout_Generation_HiitCardioHistoryHelp"] = "Укажите историю. Устойчивый опыт: не менее {0} недель, {1} занятий в неделю и менее {2} дней с последнего занятия.";
         Values["Workout_Generation_HiitCardioConsistentWeeks"] = "Недели регулярных занятий этой активностью";
         Values["Workout_Generation_HiitCardioAverageSessions"] = "Среднее число занятий этой активностью в неделю за последние четыре недели";
         Values["Workout_Generation_HiitCardioDaysSinceLastSession"] = "Дней с последнего занятия этой активностью";
-        Values["Workout_Generation_HiitAerobicThresholdHelp"] = "Для каждой из четырёх предыдущих недель укажите число аэробных занятий длительностью не менее {0} минут, которые ощущались переносимыми. В каждой неделе нужно не менее {1} таких занятий.";
+        Values["Workout_Generation_HiitAerobicThresholdHelp"] = "Для каждой из четырёх недель укажите переносимые аэробные занятия от {0} минут. В каждой неделе нужно не менее {1}.";
         Values["Workout_Generation_HiitPriorWeekLabel"] = "Неделя {0} до текущей недели";
         Values["Workout_Generation_HiitSessionCountPlaceholder"] = "0 или больше";
         Values["Workout_Generation_HiitWeekCountAccessibility"] = "Число подходящих занятий за период: {0}";
@@ -104,7 +104,8 @@ internal static partial class RussianUiText
         Values["Workout_Generation_ExercisePending"] = "Описание упражнения недоступно";
         Values["Workout_Generation_PrescriptionPending"] = "Параметры упражнения недоступны";
         Values["Workout_Generation_SlotDetailsFormat"] = "{0} подходов · {1}–{2} повторений";
-        Values["Workout_Generation_LimitationsTitle"] = "Что требует внимания";
+        Values["Workout_Generation_ExerciseConditionsTitle"] = "Условия выполнения упражнений";
+        Values["Workout_Generation_ExerciseConditionsHelp"] = "Перед продолжением проверьте условия выполнения, диапазон движений и технику для этих упражнений.";
         Values["Workout_Generation_LimitationGeneric"] = "Нужны дополнительные сведения или план не соответствует текущим правилам.";
         Values["Workout_Generation_Required"] = "Обязательно";
         Values["Workout_Generation_LimitationTiming"] = "Сохранённая длительность занятия или параметры разминки и заминки не подходят этому плану.";
@@ -147,18 +148,16 @@ internal static partial class RussianUiText
         Values["Workout_Generation_MixedScheduleTitle"] = "Расписание активностей на неделю";
         Values["Workout_Generation_PlannedRestDay"] = "Отдых · тренировка не запланирована";
         Values["Workout_Generation_Reason_YogaInconsistent"] = "Описание указывает на интенсивную йогу. Выберите интенсивную практику или исправьте описание.";
-        Values["Workout_Generation_Reason_NoSafeStrengthContentRemaining"] = "Для выбранных силовых активностей не осталось безопасных упражнений. В каждом плане должна быть хотя бы одна безопасная силовая тренировка, поэтому измените ограничения или оборудование и повторите предпросмотр.";
+        Values["Workout_Generation_Reason_NoSafeStrengthContentRemaining"] = "Безопасных силовых упражнений не осталось. В каждом плане нужна силовая тренировка; измените ограничения или оборудование и повторите предпросмотр.";
         Values["Workout_Generation_Reason_NoSafeActivity"] = "В план не удалось включить безопасные активности. Измените данные или изучите другие возможности.";
         Values["Workout_Generation_MixedScheduleExplanation"] = "Выбранные активности распределяются по доступным дням недели.";
         Values["Workout_Generation_ScheduleEmpty"] = "Не удалось разместить занятия в сохранённые доступные дни недели.";
         Values["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";
         Values["Workout_Generation_OrderedActivityFormat"] = "{0}. {1}";
-        Values["Workout_Generation_ActivityOrderNote"] = "Числа показывают рекомендуемый порядок активностей в течение дня.";
         Values["Workout_Generation_MixedSessionDurationFormat"] = "{0} мин";
         Values["Workout_Generation_MixedSessionDetailsFormat"] = "{0} · {1}";
         Values["Workout_Generation_HigherEffortSession"] = "Тренировка с повышенной нагрузкой";
         Values["Workout_Generation_RegularEffortSession"] = "Обычная нагрузка";
-        Values["Workout_Generation_ActivityDecisionsTitle"] = "Как каждая активность включена в план";
         Values["Workout_Generation_ActivityDecisionStatusFormat"] = "{0} · {1}";
         Values["Workout_Generation_ActivityFrequencySummaryFormat"] = "Рекомендуется: {0} · Цель плана: {1} · Запланировано: {2}";
         Values["Workout_Generation_ActivityFrequencyPerWeekFormat"] = "{0}/нед.";
@@ -167,8 +166,9 @@ internal static partial class RussianUiText
         Values["Workout_Generation_NotSpecified"] = "Не указано";
         Values["Workout_Generation_UnknownActivity"] = "Активность недоступна";
         Values["Workout_Generation_UnknownDay"] = "День недоступен";
-        Values["Workout_Generation_StrengthDetailsTitle"] = "Силовые тренировки: упражнения и подходы";
-        Values["Workout_Generation_SchedulingNotesTitle"] = "Примечания к расписанию";
+        Values["Workout_Generation_ChooseUnderlyingCardio"] = "Выберите кардиоактивность";
+        Values["Workout_Generation_PlanDetailsTitle"] = "Детали плана";
+        Values["Workout_Generation_SchedulingNotesTitle"] = "Примечания";
         Values["Workout_Generation_Disposition_Scheduled"] = "Запланировано";
         Values["Workout_Generation_Disposition_Partial"] = "Запланирована только часть тренировок";
         Values["Workout_Generation_Disposition_Omitted"] = "Не включено в план";
@@ -213,7 +213,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_Reason_HardDayLimit"] = "Достигнут недельный лимит дней с повышенной нагрузкой.";
         Values["Workout_Generation_Reason_StrengthRecoverySpacing"] = "Силовых тренировок стало меньше, чтобы мышцы успевали восстанавливаться между днями.";
         Values["Workout_Generation_Reason_NoSafeDay"] = "Для этой тренировки не осталось подходящего доступного дня.";
-        Values["Workout_Generation_Reason_HiitEligibility"] = "HIIT остаётся заблокированным, если опыт выбранной кардиоактивности не подтверждён, в любой из предыдущих недель не достигнут аэробный порог, вы не подтвердили необходимый скрининг или допуск либо текущие симптомы или травмы требуют проверки.";
+        Values["Workout_Generation_Reason_HiitEligibility"] = "HIIT заблокирован без достаточной истории кардио, четырёх недель на аэробном пороге, подтверждённого скрининга и отсутствия симптомов или травм для проверки.";
         Values["Workout_Generation_Reason_HiitUnderlyingCardioUnsupported"] = "Выберите поддерживаемую непрерывную кардиоактивность, сохранённую в предпочтениях.";
         Values["Workout_Generation_Reason_HiitReplacedCardio"] = "HIIT заменяет одну обычную кардиотренировку в плане.";
         Values["Workout_Generation_Reason_RestDay"] = "День отдыха остаётся свободным и не считается тренировкой.";
@@ -294,6 +294,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_PromptNoPlanTitle"] = "Нет активного плана тренировок";
         Values["Workout_Generation_PromptNoPlanSubtitle"] = "Настройте параметры тренировок и создайте персональный план силовых тренировок.";
         Values["Workout_Generation_PromptGeneratePlanButton"] = "Создать план";
+        Values["Workout_Generation_ReducedVolumeNotice"] = "В этом плане уменьшен объём тренировок, чтобы уложиться в выбранную длительность и расписание.";
     }
 }
 

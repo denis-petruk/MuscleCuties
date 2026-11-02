@@ -27,7 +27,10 @@ public static class WorkoutScheduleValidationRule
 
     public const int MaximumActivitiesPerDay = MixedActivityWeekScheduleRule.MaximumSessionsPerDay;
     public const int MaximumStrengthSessionsPerDay = MixedActivityWeekScheduleRule.MaximumStrengthSessionsPerDay;
-    public const int MaximumHardSessionsPerDay = 1;
+    public const int MaximumHardSessionsPerDay = MixedActivityWeekScheduleRule.MaximumHardSessionsPerDay;
+    public const int MaximumHardSessionsOnAdjustedDay =
+        MixedActivityWeekScheduleRule.MaximumHardSessionsOnAdjustedDay;
+    public const int MinimumHardSessionsForValidAdjustment = MaximumHardSessionsPerDay;
     public const int MaximumHardDaysPerWeek = MixedActivityWeekScheduleRule.MaximumHardDaysPerWeek;
     public const int DaysInWeek = 7;
     public const int NextConsecutiveDayOffset = 1;
@@ -54,12 +57,11 @@ public static class WorkoutScheduleValidationRule
 
             var hard = day.Where(session => session.IsHard).ToArray();
             var adjusted = day.Where(session => session.OccurrencePrescription is not null).ToArray();
-            var hasValidatedAdjustment = day.Count() == MaximumActivitiesPerDay &&
-                hard.Length == MaximumActivitiesPerDay && adjusted.Length == 1 && adjusted.Any(session =>
-                session.IsHard &&
-                session.Activity == session.OriginalPrescription?.Activity &&
-                SameDayDemandAdjustmentRule.IsValid(session.OriginalPrescription,
-                    session.OccurrencePrescription, session.DurationMinutes));
+            var hasValidatedAdjustment = adjusted.Length == 1 && adjusted[0].IsHard &&
+                hard.Length is >= MinimumHardSessionsForValidAdjustment and <= MaximumHardSessionsOnAdjustedDay &&
+                adjusted[0].Activity == adjusted[0].OriginalPrescription?.Activity &&
+                SameDayDemandAdjustmentRule.IsValid(adjusted[0].OriginalPrescription,
+                    adjusted[0].OccurrencePrescription, adjusted[0].DurationMinutes);
             if (adjusted.Length > 0 && !hasValidatedAdjustment)
                 reasons.Add(InvalidOccurrenceAdjustment);
             if (hard.Length > MaximumHardSessionsPerDay && !hasValidatedAdjustment)

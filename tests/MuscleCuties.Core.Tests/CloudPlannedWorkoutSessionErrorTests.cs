@@ -33,6 +33,18 @@ public sealed class CloudPlannedWorkoutSessionErrorTests
     }
 
     [Fact]
+    public async Task StartRefusalKeepsItsReasonCode()
+    {
+        var store = new CloudWorkoutSessionActionStore(new SessionApi(BackendApiStatus.Conflict,
+            WorkoutSessionStartBlockCode.NotScheduledToday));
+
+        var exception = await Assert.ThrowsAsync<WorkoutSessionStartBlockedException>(() =>
+            store.StartPlannedSessionAsync(1, Guid.NewGuid(), DateTime.UnixEpoch, CancellationToken.None));
+
+        Assert.Equal(WorkoutSessionStartBlockCode.NotScheduledToday, exception.Code);
+    }
+
+    [Fact]
     public async Task UnsafeActivityCannotResumeAndIsIdentifiedSeparately()
     {
         var store = new CloudWorkoutSessionActionStore(

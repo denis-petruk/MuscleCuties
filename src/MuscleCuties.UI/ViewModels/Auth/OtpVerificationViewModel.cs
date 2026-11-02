@@ -1,13 +1,17 @@
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Account.Otp.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Auth;
 
 public partial class OtpVerificationViewModel : ObservableObject, IDisposable
 {
-    private const string SendingCodeStatus = "Sending code...";
+    private const string SendingCodeKey = "Auth_Otp_SendingCode";
+    private const string ResendCodeKey = "Auth_Otp_ResendCode";
+
+    private static string SendingCodeStatus => UiTextCatalog.Get(SendingCodeKey);
     private readonly ResendCountdownCoordinator _countdownCoordinator;
     private readonly Func<Task> _navigateBackAsync;
     private readonly Func<Task> _navigateToProfileSetupAsync;
@@ -25,7 +29,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private string _otpCode = string.Empty;
     private CancellationTokenSource? _requestCts;
-    [ObservableProperty] private string _resendButtonText = "Resend in 60s";
+    [ObservableProperty] private string _resendButtonText = UiTextCatalog.Get(ResendCodeKey);
 
     public OtpVerificationViewModel(
         IRegistrationOtpUseCase otp,
@@ -86,14 +90,14 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
             return;
         if (!_session.IsActive)
         {
-            ErrorMessage = "Registration session expired. Please start over.";
+            ErrorMessage = "Ui_Auth_Error_SessionExpired";
             return;
         }
 
         var cleanCode = OtpCode.Trim().Replace(" ", "", StringComparison.Ordinal);
         if (cleanCode.Length != 6 || !cleanCode.All(char.IsDigit))
         {
-            ErrorMessage = "Please enter a valid 6-digit verification code.";
+            ErrorMessage = "Ui_Auth_Error_InvalidVerificationCode";
             return;
         }
 
@@ -111,7 +115,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
                 return;
             if (result.Expired)
             {
-                ErrorMessage = "Registration session expired. Please start over.";
+                ErrorMessage = "Ui_Auth_Error_SessionExpired";
                 return;
             }
 
@@ -123,7 +127,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
 
             if (!_otp.ConfirmSession(_session.SessionId))
             {
-                ErrorMessage = "Registration session expired. Please start over.";
+                ErrorMessage = "Ui_Auth_Error_SessionExpired";
                 return;
             }
 
@@ -139,7 +143,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
         {
             Trace.WriteLine($"[OtpVerificationViewModel] Verification failed ({ex.GetType().Name}).");
             if (!_disposed)
-                ErrorMessage = "Could not verify code. Please check your network and try again.";
+                ErrorMessage = "Ui_Auth_Error_VerifyCode";
         }
         finally
         {
@@ -156,7 +160,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
             return;
         if (!_session.IsActive)
         {
-            ErrorMessage = "Registration session expired. Please start over.";
+            ErrorMessage = "Ui_Auth_Error_SessionExpired";
             return;
         }
 
@@ -174,7 +178,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
                 return;
             if (result.Expired)
             {
-                ErrorMessage = "Registration session expired. Please start over.";
+                ErrorMessage = "Ui_Auth_Error_SessionExpired";
                 return;
             }
 
@@ -185,7 +189,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
             }
 
             OtpCode = string.Empty;
-            InfoMessage = "A new verification code has been sent.";
+            InfoMessage = "Ui_Auth_Info_CodeSent";
             StartCountdown(result.ResendCooldownSeconds > 0 ? result.ResendCooldownSeconds : 60);
         }
         catch (OperationCanceledException) when (_disposed)
@@ -195,7 +199,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
         {
             Trace.WriteLine($"[OtpVerificationViewModel] Resend failed ({ex.GetType().Name}).");
             if (!_disposed)
-                ErrorMessage = "Could not resend code. Please check your network and try again.";
+                ErrorMessage = "Ui_Auth_Error_ResendCode";
         }
         finally
         {
@@ -203,7 +207,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
                 _requestCts = null;
             if (!_disposed && ResendButtonText == SendingCodeStatus)
             {
-                ResendButtonText = "Resend code";
+                ResendButtonText = UiTextCatalog.Get(ResendCodeKey);
                 CanResend = true;
             }
             IsBusy = false;

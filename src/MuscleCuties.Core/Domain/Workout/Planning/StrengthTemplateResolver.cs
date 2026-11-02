@@ -176,6 +176,8 @@ public static class StrengthTemplateResolver
                 .ThenByDescending(entry => slot.MovementSlot == StrengthTemplateSlotId.GoalSpecificAccessory
                     ? goalPriorities.GetValueOrDefault(entry.Candidate.ExerciseId)
                     : 0)
+                // Prefer machines only when the selected equipment profile makes them eligible.
+                .ThenByDescending(entry => entry.Candidate.RequiredEquipment?.Contains(ExerciseEquipmentKind.Machine) == true)
                 .ThenByDescending(entry => slot.PreferredPatterns.Contains(entry.Candidate.Pattern))
                 .ThenBy(entry => entry.Candidate.ExerciseId)
                 .FirstOrDefault();

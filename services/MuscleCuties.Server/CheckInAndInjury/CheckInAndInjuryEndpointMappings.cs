@@ -173,7 +173,6 @@ public static class CheckInAndInjuryEndpointMappings
                 ? Results.NoContent()
                 : Results.NotFound();
         });
-        injuriesGroup.MapDelete("/{id:int}", (int id) => Results.NotFound());
 
         return endpoints;
     }

@@ -81,6 +81,8 @@ public sealed class PlanningAcceptanceTransactionTests
             var weekdays = new[] { (int)today.DayOfWeek, (int)today.AddDays(2).DayOfWeek };
             var strengthExercise = source.Catalog.First(entry =>
                 source.MuscleGroupsByExerciseId?.ContainsKey(entry.Candidate.ExerciseId) == true);
+            var excludedExerciseId = source.Catalog.Select(entry => entry.Candidate.ExerciseId)
+                .First(id => id != strengthExercise.Candidate.ExerciseId);
             var strengthSession = new StrengthPlanPreviewSessionV020(
                 "synthetic-template", "synthetic-version", 1, SyntheticDurationMinutes,
                 [new StrengthPlanSlotOutputV020("synthetic-slot", (int)StrengthMovementSlotDto.KneeDominant,
@@ -90,7 +92,8 @@ public sealed class PlanningAcceptanceTransactionTests
                     SyntheticStrengthRepsInReserve, SyntheticStrengthRestSeconds, [])],
                 [], new Dictionary<string, string>(), today.AddDays(2).DayOfWeek);
             var draft = new WorkoutPreferencesDto([strength, cycling], weekdays,
-                new Dictionary<int, int> { [strength] = SyntheticDurationMinutes, [cycling] = SyntheticDurationMinutes }, "FullGym");
+                new Dictionary<int, int> { [strength] = SyntheticDurationMinutes, [cycling] = SyntheticDurationMinutes },
+                "FullGym", ExcludedExerciseIds: [excludedExerciseId]);
             var request = new StrengthPlanPreviewRequestV020(WorkoutActivityDto.GeneralStrength, today, null)
                 { DraftPreferences = draft };
             var schedule = new MixedActivityScheduleV020(
@@ -111,6 +114,14 @@ public sealed class PlanningAcceptanceTransactionTests
                     pair => pair.Key, pair => pair.Value.ToArray())
             };
             var created = await new PostgresStrengthPlanProposalStoreV020(db).SaveAsync(user, request, preview, CancellationToken.None);
+            var savedInput = await db.WorkoutPlanProposalsV02.AsNoTracking()
+                .Where(row => row.Id == created.ProposalId).Select(row => row.InputSnapshotJson).SingleAsync();
+            using (var snapshotDocument = System.Text.Json.JsonDocument.Parse(savedInput))
+            {
+                var savedExclusions = snapshotDocument.RootElement.GetProperty("request")
+                    .GetProperty("draftPreferences").GetProperty("excludedExerciseIds");
+                Xunit.Assert.Equal(excludedExerciseId, Xunit.Assert.Single(savedExclusions.EnumerateArray()).GetInt32());
+            }
             var lease = Xunit.Assert.IsType<PlanningLeaseDto>(created.Lease);
             var command = new AcceptStrengthPlanProposalRequestV020(created.ProposalId, lease.LeaseId, lease.Fence,
                 created.ProposalVersion, ReplacementConfirmed: true);
@@ -123,6 +134,10 @@ public sealed class PlanningAcceptanceTransactionTests
             Xunit.Assert.Single(await db.WorkoutPlanRevisionsV02.AsNoTracking().Where(row => row.UserId == user).ToListAsync());
             Xunit.Assert.Contains(nameof(WorkoutActivityType.Cycling), (await db.UserProfiles.AsNoTracking()
                 .SingleAsync(row => row.UserId == user)).PreferredWorkoutActivityTypes);
+            var savedProfile = await db.UserProfiles.AsNoTracking().SingleAsync(row => row.UserId == user);
+            using (var exclusionsDocument = System.Text.Json.JsonDocument.Parse(savedProfile.ExcludedStrengthExerciseIdsJson))
+                Xunit.Assert.Equal(excludedExerciseId,
+                    Xunit.Assert.Single(exclusionsDocument.RootElement.EnumerateArray()).GetInt32());
             Xunit.Assert.False((await db.WorkoutPlans.AsNoTracking().SingleAsync(row => row.Id == oldPlan)).IsActive);
             Xunit.Assert.Equal(oldDay, (await db.WorkoutSessionLogs.AsNoTracking().SingleAsync(row => row.Id == session)).PlannedWorkoutDayId);
 

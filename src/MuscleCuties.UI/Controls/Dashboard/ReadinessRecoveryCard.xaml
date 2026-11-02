@@ -157,39 +157,6 @@
                     Command="{Binding OpenDailyCheckInCommand}"
                     IsVisible="{Binding NeedsDailyCheckIn}" />
 
-            <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Dashboard_Readiness_ReviewChanges}"
-                    Command="{Binding ReviewReadinessAdjustmentCommand}"
-                    IsVisible="{Binding CanReviewReadiness}"
-                    IsEnabled="{Binding IsReadinessProposalBusy, Converter={StaticResource InvertedBoolConverter}}" />
-
-            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" IsVisible="{Binding IsReadinessProposalVisible}">
-                <ActivityIndicator IsRunning="{Binding IsReadinessProposalBusy}"
-                                   IsVisible="{Binding IsReadinessProposalBusy}"
-                                   Color="{StaticResource Primary}" />
-                <Label Text="{Binding ReadinessProposalSummary}"
-                       Style="{StaticResource BodyLabel}"
-                       LineBreakMode="WordWrap" />
-                <VerticalStackLayout BindableLayout.ItemsSource="{Binding ReadinessProposalChanges}"
-                                     Spacing="{StaticResource UiSpacing6}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="{x:Type x:String}">
-                            <Label Text="{Binding .}" Style="{StaticResource BodyLabel}"
-                                   LineBreakMode="WordWrap" />
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </VerticalStackLayout>
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
-                      IsVisible="{Binding HasReadinessProposalActions}">
-                    <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Dashboard_Readiness_ApplyChanges}"
-                            Command="{Binding ApplyReadinessAdjustmentCommand}"
-                            IsEnabled="{Binding IsReadinessProposalBusy, Converter={StaticResource InvertedBoolConverter}}" />
-                    <Button Grid.Column="1"
-                            Style="{StaticResource ButtonSecondary}"
-                            Text="{loc:LocalizedText Dashboard_Readiness_KeepPlan}"
-                            Command="{Binding KeepWorkoutPlanCommand}"
-                            IsEnabled="{Binding IsReadinessProposalBusy, Converter={StaticResource InvertedBoolConverter}}" />
-                </Grid>
-            </VerticalStackLayout>
         </VerticalStackLayout>
     </Border>
 </ContentView>

@@ -26,7 +26,12 @@ public static class WorkoutPlanningFlow
             hasLease, feasible, uncertainAcceptance);
 
     public static bool CanAutomaticallyApplyFirstPlan(bool replacesExistingPlan, bool feasible, bool persisted,
-        bool missingRequiredAnswers, bool styleChoiceRequired, bool hasOmissions, bool reducedVolume) =>
+        bool missingRequiredAnswers, bool styleChoiceRequired, bool hasOmissions) =>
         WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(replacesExistingPlan, feasible, persisted,
-            missingRequiredAnswers, styleChoiceRequired, hasOmissions, reducedVolume);
+            missingRequiredAnswers, styleChoiceRequired, hasOmissions);
+
+    public static PlanAcceptanceAcknowledgments AcceptanceAcknowledgments(bool replacesExistingPlan,
+        bool reducedVolumeRequired, IEnumerable<int> exerciseConditionIds) =>
+        WorkoutPlanningFlowRule.AcceptanceAcknowledgments(replacesExistingPlan, reducedVolumeRequired,
+            exerciseConditionIds);
 }

@@ -48,18 +48,6 @@ public sealed record DailyNutritionLogSnapshot(
     IReadOnlyList<LoggedFoodItemDto> Entries
 );
 
-public sealed record DailyNutritionSummarySnapshot(
-    DateOnly Date,
-    Guid LogId,
-    double TotalCalories,
-    double TotalProtein,
-    double TotalCarbs,
-    double TotalFat,
-    double TargetCalories,
-    int WaterIntakeMl,
-    int ItemsCount
-);
-
 public sealed record QuickFoodItemSnapshot(
     string Name,
     double ServingSize,

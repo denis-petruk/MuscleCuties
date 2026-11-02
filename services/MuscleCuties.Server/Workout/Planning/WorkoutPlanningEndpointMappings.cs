@@ -8,7 +8,6 @@ namespace MuscleCuties.Server.Workout.Planning;
 public static class WorkoutPlanningEndpointMappings
 {
     private const string CatalogRoute = "/api/v1/workouts/catalog";
-    private const string LegacyPlanRoute = "/api/v1/workouts/plan";
     private const string StrengthPreviewRoute = "/api/v1/workouts/plan/strength-preview";
     private const string ReconcileRoute = "/api/v1/workouts/plan/reconcile";
     private const string ExerciseExclusionCatalogRoute = "/api/v1/workouts/plan/exercise-exclusions";
@@ -37,11 +36,6 @@ public static class WorkoutPlanningEndpointMappings
     private const string ErrorCodeWorkoutPreferencesRequireProposal = "WorkoutPreferencesRequireProposal";
     private const string ErrorMessageWorkoutPreferencesRequireProposal =
         "Upgrade the app and submit workout preferences with the proposal.";
-    private const string ErrorCodeLegacyPlanBypassDisabled = "LegacyPlanBypassDisabled";
-    private const string ErrorMessageLegacyPlanBypassDisabled =
-        "Direct plan generation is retired. All plans must be created via strength proposals and accepted through canonical lifecycle.";
-    private const string ErrorMessageLegacyPlanReadDisabled =
-        "Direct plan reads are retired. Query /api/v1/workouts/overview or /api/v1/workouts/progress instead.";
 
     public static IEndpointRouteBuilder MapWorkoutPlanningEndpoints(this IEndpointRouteBuilder endpoints)
     {
@@ -62,23 +56,6 @@ public static class WorkoutPlanningEndpointMappings
                 [FromServices] GetWorkoutPlanningCatalogUseCase catalog,
                 CancellationToken cancellationToken) =>
             Results.Ok(await catalog.ExecuteAsync(cancellationToken).ConfigureAwait(false)))
-            .RequireAuthorization();
-
-        // Legacy direct generation is rejected; clients must use the proposal lifecycle.
-        endpoints.MapPost(LegacyPlanRoute, () =>
-            Results.Conflict(new
-            {
-                code = ErrorCodeLegacyPlanBypassDisabled,
-                message = ErrorMessageLegacyPlanBypassDisabled
-            }))
-            .RequireAuthorization();
-
-        endpoints.MapGet(LegacyPlanRoute, () =>
-            Results.Conflict(new
-            {
-                code = ErrorCodeLegacyPlanBypassDisabled,
-                message = ErrorMessageLegacyPlanReadDisabled
-            }))
             .RequireAuthorization();
 
         endpoints.MapGet(ExerciseExclusionCatalogRoute, async (

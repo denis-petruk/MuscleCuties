@@ -28,7 +28,7 @@ public partial class NutritionViewModel
             !TryParseOptionalNutrient(CustomFoodVitaminD, out var vitaminD) ||
             !TryParseOptionalNutrient(CustomFoodCalcium, out var calcium))
         {
-            AddFoodMessage = "Enter valid custom food nutrition.";
+            AddFoodMessage = "Ui_Nutrition_Error_CustomFoodInvalid";
             return;
         }
 
@@ -60,12 +60,12 @@ public partial class NutritionViewModel
         }
         catch (ArgumentException)
         {
-            AddFoodMessage = "Check the food values and try again.";
+            AddFoodMessage = "Ui_Nutrition_Error_CheckFoodValues";
         }
         catch (Exception ex)
         {
             Trace.WriteLine($"[NutritionViewModel] Custom food save failed ({ex.GetType().Name}).");
-            AddFoodMessage = "Couldn't save this food. Your entries are still here; try again.";
+            AddFoodMessage = "Ui_Nutrition_Error_SaveFood";
         }
         finally
         {

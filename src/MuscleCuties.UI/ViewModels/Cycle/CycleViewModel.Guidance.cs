@@ -13,18 +13,20 @@ namespace MuscleCuties.UI.ViewModels.Cycle;
 
 public partial class CycleViewModel
 {
-    private const string PhaseContextText =
-        "A cycle phase is context, not a measurement of hormone levels or today's exercise capacity.";
-    private const string PhaseCheckInText =
-        "Notice how you feel today.";
-    private const string PhaseTrainingText =
-        "Let your check-in and restrictions guide training.";
-    private const string PhaseNutritionText =
-        "Follow your personal nutrition goals.";
-    private const string PhaseRecoveryText =
-        "Rest and activity needs vary. Use your own symptoms and preferences as context.";
-    private const string PhaseTimingText = "Timing varies";
-    private const string PhaseExplorerTagline = "Track your experience";
+    private static string PhaseContextText =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_Context");
+    private static string PhaseCheckInText =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_CheckIn");
+    private static string PhaseTrainingText =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_Training");
+    private static string PhaseNutritionText =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_Nutrition");
+    private static string PhaseRecoveryText =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_Recovery");
+    private static string PhaseTimingText =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_TimingVaries");
+    private static string PhaseExplorerTagline =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_ExplorerTagline");
     [ObservableProperty] private string _dailyCheerText = string.Empty;
     [ObservableProperty] private string _dailyNutritionTipText = string.Empty;
     [ObservableProperty] private string _dailyTrainingTipText = string.Empty;
@@ -76,7 +78,7 @@ public partial class CycleViewModel
 
     public static string GetPhaseEnergyBadge(CyclePhase phase)
     {
-        return "Cycle context";
+        return MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_EnergyBadge");
     }
 
     public static string GetPhaseVectorPath(CyclePhase phase)
@@ -120,7 +122,7 @@ public partial class CycleViewModel
             new()
             {
                 Phase = CyclePhase.Menstrual,
-                Name = "Menstrual",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Name"),
                 Window = PhaseTimingText,
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Menstrual),
@@ -133,7 +135,7 @@ public partial class CycleViewModel
             new()
             {
                 Phase = CyclePhase.Follicular,
-                Name = "Follicular",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Name"),
                 Window = PhaseTimingText,
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Follicular),
@@ -146,7 +148,7 @@ public partial class CycleViewModel
             new()
             {
                 Phase = CyclePhase.Ovulatory,
-                Name = "Ovulatory",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Name"),
                 Window = PhaseTimingText,
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Ovulatory),
@@ -159,7 +161,7 @@ public partial class CycleViewModel
             new()
             {
                 Phase = CyclePhase.Luteal,
-                Name = "Luteal",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Name"),
                 Window = PhaseTimingText,
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Luteal),
@@ -179,14 +181,14 @@ public partial class CycleViewModel
             CyclePhase.Menstrual => new PhaseSummarySheetModel
             {
                 Phase = CyclePhase.Menstrual,
-                Name = "Menstrual Phase",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Title"),
                 Window = PhaseTimingText,
-                Tagline = "Period begins",
-                HormonalSummary = "Bleeding starts a new cycle. Cramps or fatigue may occur, but experiences vary.",
-                TrainingFocus = "Choose effort from today's check-in. Adjust or rest if symptoms interfere.",
-                NutritionFocus = "Follow your nutrition goals, with meals and fluids that feel comfortable.",
-                RecoveryFocus = "Notice pain or fatigue and make room for rest if needed.",
-                QuickRule = "Log bleeding and symptoms to learn your pattern.",
+                Tagline = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Tagline"),
+                HormonalSummary = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Hormonal"),
+                TrainingFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Training"),
+                NutritionFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Nutrition"),
+                RecoveryFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Recovery"),
+                QuickRule = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_QuickRule"),
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Menstrual),
                 BackgroundColor =
                     PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme, default),
@@ -196,14 +198,14 @@ public partial class CycleViewModel
             CyclePhase.Follicular => new PhaseSummarySheetModel
             {
                 Phase = CyclePhase.Follicular,
-                Name = "Follicular Phase",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Title"),
                 Window = PhaseTimingText,
-                Tagline = "Before ovulation",
-                HormonalSummary = "Follicles develop and the uterine lining rebuilds. Timing varies.",
-                TrainingFocus = "Follow your plan and adjust effort to today's energy and restrictions.",
-                NutritionFocus = "Keep your personal nutrition goals; the phase alone does not change targets.",
-                RecoveryFocus = "Track how you feel as the cycle progresses.",
-                QuickRule = "Your check-in matters more than an estimated phase.",
+                Tagline = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Tagline"),
+                HormonalSummary = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Hormonal"),
+                TrainingFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Training"),
+                NutritionFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Nutrition"),
+                RecoveryFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Recovery"),
+                QuickRule = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_QuickRule"),
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Follicular),
                 BackgroundColor =
                     PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme, default),
@@ -213,14 +215,14 @@ public partial class CycleViewModel
             CyclePhase.Ovulatory => new PhaseSummarySheetModel
             {
                 Phase = CyclePhase.Ovulatory,
-                Name = "Ovulatory Phase",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Title"),
                 Window = PhaseTimingText,
-                Tagline = "Around ovulation",
-                HormonalSummary = "An egg may be released in this window. A calendar estimate cannot confirm ovulation.",
-                TrainingFocus = "Use your planned session, adjusting for symptoms or restrictions.",
-                NutritionFocus = "Follow your usual nutrition goals and appetite cues.",
-                RecoveryFocus = "Record any changes you notice; they may differ from cycle to cycle.",
-                QuickRule = "Treat this as an estimate, not a fertility signal.",
+                Tagline = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Tagline"),
+                HormonalSummary = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Hormonal"),
+                TrainingFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Training"),
+                NutritionFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Nutrition"),
+                RecoveryFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Recovery"),
+                QuickRule = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_QuickRule"),
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Ovulatory),
                 BackgroundColor =
                     PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme, default),
@@ -230,14 +232,14 @@ public partial class CycleViewModel
             CyclePhase.Luteal => new PhaseSummarySheetModel
             {
                 Phase = CyclePhase.Luteal,
-                Name = "Luteal Phase",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Title"),
                 Window = PhaseTimingText,
-                Tagline = "After ovulation",
-                HormonalSummary = "Progesterone usually rises after ovulation. Premenstrual symptoms vary between people and cycles.",
-                TrainingFocus = "Keep your plan flexible if symptoms affect comfort.",
-                NutritionFocus = "Follow your goals; if appetite changes, choose satisfying meals.",
-                RecoveryFocus = "Make room for sleep and recovery when you need it.",
-                QuickRule = "Record symptoms instead of assuming the phase predicts how you feel.",
+                Tagline = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Tagline"),
+                HormonalSummary = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Hormonal"),
+                TrainingFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Training"),
+                NutritionFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Nutrition"),
+                RecoveryFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Recovery"),
+                QuickRule = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_QuickRule"),
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Luteal),
                 BackgroundColor =
                     PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme, default),

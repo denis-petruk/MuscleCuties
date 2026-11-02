@@ -248,6 +248,75 @@ public sealed class BackendApiRefreshFailureTests
         }
     }
 
+    private const string SyntheticRequestReference = "0HN7SYNTHETICREFERENCE:00000001";
+
+    [Theory]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.BadGateway)]
+    public async Task ServerFailuresKeepExactStatusAndRequestReference(HttpStatusCode status)
+    {
+        using var handler = new StatusResponseHandler(status, SyntheticRequestReference, body: null);
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri(ApiBaseAddress) };
+        var client = new MuscleCutiesBackendApiClient(
+            httpClient, new RecordingTokenStore(Tokens), new RecordingCache(), new OnlineAuthorityGate());
+
+        var result = await client.GetAsync<object>(ProtectedRoute);
+
+        Assert.Equal(BackendApiStatus.ServerError, result.Status);
+        Assert.Equal(status, result.ResponseStatusCode);
+        Assert.Equal(SyntheticRequestReference, result.RequestId);
+    }
+
+    [Fact]
+    public async Task ProblemDetailsBodySuppliesReferenceAndCodeWhenHeaderIsMissing()
+    {
+        const string body =
+            "{\"status\":500,\"requestId\":\"0HN7BODYONLY:00000002\",\"code\":\"databaseUnavailable\"}";
+        using var handler = new StatusResponseHandler(HttpStatusCode.InternalServerError, null, body);
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri(ApiBaseAddress) };
+        var client = new MuscleCutiesBackendApiClient(
+            httpClient, new RecordingTokenStore(Tokens), new RecordingCache(), new OnlineAuthorityGate());
+
+        var result = await client.GetAsync<object>(ProtectedRoute);
+
+        Assert.Equal(BackendApiStatus.ServerError, result.Status);
+        Assert.Equal("databaseUnavailable", result.ErrorCode);
+        Assert.Equal("0HN7BODYONLY:00000002", result.RequestId);
+        Assert.Equal(HttpStatusCode.InternalServerError, result.ResponseStatusCode);
+    }
+
+    [Fact]
+    public async Task UnauthorizedKeepsStatusForSignInGuidance()
+    {
+        using var handler = new StatusResponseHandler(HttpStatusCode.Unauthorized, SyntheticRequestReference, null);
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri(ApiBaseAddress) };
+        var client = new MuscleCutiesBackendApiClient(
+            httpClient, new RecordingTokenStore(Tokens), new RecordingCache(), new OnlineAuthorityGate());
+
+        var result = await client.GetAsync<object>(ProtectedRoute);
+
+        Assert.Equal(BackendApiStatus.Unauthorized, result.Status);
+        Assert.Equal(HttpStatusCode.Unauthorized, result.ResponseStatusCode);
+        Assert.Equal(SyntheticRequestReference, result.RequestId);
+    }
+
+    private sealed class StatusResponseHandler(HttpStatusCode status, string? requestId, string? body)
+        : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var response = new HttpResponseMessage(status);
+            if (requestId is not null)
+                response.Headers.TryAddWithoutValidation("X-Request-Id", requestId);
+            if (body is not null)
+                response.Content = new StringContent(body, System.Text.Encoding.UTF8, "application/problem+json");
+            return Task.FromResult(response);
+        }
+    }
+
     private sealed class RecordingCache : ILocalCacheService
     {
         public bool Cleared { get; private set; }

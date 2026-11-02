@@ -98,7 +98,7 @@ public partial class CycleViewModel
         {
             Trace.WriteLine($"[Cycle] Could not load symptoms for date ({ex.GetType().Name})");
             if (loadVersion == Volatile.Read(ref _quickLogLoadVersion))
-                QuickLogStatusText = "Could not load the saved entry. Close and try again.";
+                QuickLogStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_LoadFailed");
         }
         finally
         {
@@ -197,7 +197,7 @@ public partial class CycleViewModel
         if (!IsPeriodStarted && !IsPeriodEnded && SelectedFlowIntensity is null &&
             SymptomOptions.All(symptom => !symptom.IsSelected))
         {
-            QuickLogStatusText = "Choose a period update, flow, or symptom before saving.";
+            QuickLogStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_ChooseEntry");
             return;
         }
 
@@ -215,7 +215,7 @@ public partial class CycleViewModel
                     SelectedDate, IsPeriodStarted, IsPeriodEnded, flow,
                     selectedSymptoms)))
             {
-                QuickLogStatusText = "Active cycle account unavailable.";
+                QuickLogStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_AccountUnavailable");
                 return;
             }
 
@@ -226,16 +226,18 @@ public partial class CycleViewModel
         catch (CycleSymptomsNeedActiveCycleIssue)
         {
             IsQuickLogPeriodStartNeeded = true;
-            QuickLogStatusText = "Record a period start before adding symptoms without a known cycle phase.";
+            QuickLogStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_PeriodStartNeeded");
         }
         catch (CyclePhaseOrderIssue ex)
         {
-            QuickLogStatusText = $"This phase would skip a step. Log {ex.SuggestedPhase} first.";
+            QuickLogStatusText = string.Format(
+                MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_PhaseOrderFormat"),
+                ex.SuggestedPhase);
         }
         catch (Exception ex)
         {
             Trace.WriteLine($"[Cycle] Quick log save failed ({ex.GetType().Name}).");
-            QuickLogStatusText = "Could not save log. Please try again.";
+            QuickLogStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_SaveFailed");
         }
         finally
         {

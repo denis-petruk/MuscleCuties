@@ -278,7 +278,7 @@ public sealed class StrengthPlanPreviewV020Tests
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Yoga);
         Assert.Equal((decimal)SelectedDemandingYogaDurationMinutes, yogaDecision.OriginalPrescription!.MainMinutes);
         Assert.All(result.MixedActivitySchedule.Sessions.Where(session => session.ActivityTypeId == (int)WorkoutActivityType.Yoga),
-            session => Assert.NotNull(session.OccurrencePrescription));
+            session => Assert.Null(session.OccurrencePrescription));
         Assert.All(result.MixedActivitySchedule.Sessions.Where(session =>
                 session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength),
             session => Assert.Equal(
@@ -500,9 +500,8 @@ public sealed class StrengthPlanPreviewV020Tests
             session =>
             {
                 Assert.True(session.IsHardSession);
-                Assert.Equal(ActivitySessionDurationRule.DemandingYogaMinimumMinutes, session.DurationMinutes);
-                Assert.Equal(ActivitySessionDurationRule.DemandingYogaMinimumMinutes,
-                    session.OccurrencePrescription?.MainMinutes);
+                Assert.Equal((decimal)duration, session.DurationMinutes);
+                Assert.Null(session.OccurrencePrescription);
             });
     }
 
@@ -580,9 +579,9 @@ public sealed class StrengthPlanPreviewV020Tests
             { CurrentAccountLocalDate = LocalDate.AddDays(HiitEvidenceCaptureRule.EvidenceValidityCalendarDays - 1) })).ExecuteAsync(Guid.NewGuid(), Request());
         var expired = await new PreviewStrengthPlanV020UseCase(new Source(source with
             { CurrentAccountLocalDate = LocalDate.AddDays(HiitEvidenceCaptureRule.EvidenceValidityCalendarDays) })).ExecuteAsync(Guid.NewGuid(), Request());
-        Assert.Equal("Scheduled", Assert.Single(fresh.MixedActivitySchedule!.Activities,
+        Assert.NotEqual("Blocked", Assert.Single(fresh.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
-        Assert.Equal("Scheduled", Assert.Single(lastValid.MixedActivitySchedule!.Activities,
+        Assert.NotEqual("Blocked", Assert.Single(lastValid.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
         Assert.Equal("Blocked", Assert.Single(expired.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);

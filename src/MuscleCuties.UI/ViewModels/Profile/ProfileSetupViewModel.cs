@@ -18,7 +18,6 @@ public partial class ProfileSetupViewModel : ObservableObject
     private const float CentimetersPerInch = 2.54f;
     private const float KilogramsPerPound = 0.453592f;
 
-    private readonly IProfileHealthConnection _healthConnection;
     private readonly Func<Task> _navigateToQuizAsync;
     private readonly IProfileSetupUseCase _useCase;
     [ObservableProperty] private DateTime _birthDate = DateTime.Today.AddYears(-18);
@@ -27,9 +26,6 @@ public partial class ProfileSetupViewModel : ObservableObject
     [ObservableProperty] private int _cycleLength = 28;
     [ObservableProperty] private string _errorMessage = string.Empty;
     private bool _hasLoadedProfile;
-    private bool _isPendingRegistration;
-    [ObservableProperty] private string _healthConnectionMessage = string.Empty;
-    [ObservableProperty] private string _healthConnectionText = "Tap to Connect";
     [ObservableProperty] private bool _isBusy;
 
     [ObservableProperty] private string _name = string.Empty;
@@ -48,15 +44,12 @@ public partial class ProfileSetupViewModel : ObservableObject
 
     public ProfileSetupViewModel(
         IProfileSetupUseCase useCase,
-        IProfileHealthConnection healthConnection,
         Func<Task> navigateToQuizAsync)
     {
         _useCase = useCase;
-        _healthConnection = healthConnection;
         _navigateToQuizAsync = navigateToQuizAsync;
         ContinueCommand = new AsyncRelayCommand(ContinueAsync);
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
-        ConnectHealthCommand = new AsyncRelayCommand(ConnectHealthAsync);
         SelectMetricUnitsCommand = new RelayCommand(() => UseMetricSystem = true);
         SelectImperialUnitsCommand = new RelayCommand(() => UseMetricSystem = false);
         ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
@@ -81,8 +74,6 @@ public partial class ProfileSetupViewModel : ObservableObject
     ];
 
     public bool UseImperialSystem => !UseMetricSystem;
-    public bool IsAppleHealthAvailable => !_isPendingRegistration && _healthConnection.IsAvailable;
-    public AsyncRelayCommand ConnectHealthCommand { get; }
 
     public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions { get; private set; } = [];
 
@@ -114,8 +105,6 @@ public partial class ProfileSetupViewModel : ObservableObject
     private async Task LoadDataAsync()
     {
         var result = await _useCase.LoadAsync();
-        _isPendingRegistration = result.HasPendingRegistration;
-        OnPropertyChanged(nameof(IsAppleHealthAvailable));
         if (result.HasPendingRegistration)
         {
             if (result.Profile is { } staged)
@@ -145,10 +134,6 @@ public partial class ProfileSetupViewModel : ObservableObject
             return;
         }
 
-        if (IsAppleHealthAvailable)
-            HealthConnectionText = await _healthConnection.IsConnectedAsync()
-                ? "Connected"
-                : "Tap to Connect";
         var profile = result.Profile;
         if (profile is null)
             return;
@@ -163,16 +148,6 @@ public partial class ProfileSetupViewModel : ObservableObject
             option.IsSelected =
                 loadedOptions.Any(loaded => loaded.ActivityType == option.ActivityType && loaded.IsSelected);
         _hasLoadedProfile = true;
-    }
-
-    private async Task ConnectHealthAsync()
-    {
-        if (!IsAppleHealthAvailable)
-            return;
-
-        var result = await _healthConnection.ConnectAsync();
-        HealthConnectionText = result.IsConnected ? "Connected" : "Tap to Connect";
-        HealthConnectionMessage = result.Message;
     }
 
     partial void OnUseMetricSystemChanged(bool value)
@@ -191,7 +166,7 @@ public partial class ProfileSetupViewModel : ObservableObject
             age--;
 
         if (age < 18)
-            ErrorMessage = "Please provide a valid date of birth (must be at least 18 years old).";
+            ErrorMessage = "Ui_Onboarding_Error_Age";
         else if (ErrorMessage == "Please provide a valid date of birth (must be at least 18 years old).")
             ErrorMessage = string.Empty;
     }
@@ -225,7 +200,7 @@ public partial class ProfileSetupViewModel : ObservableObject
         {
             if (!_birthDateWasSelected || BirthDate == default)
             {
-                ErrorMessage = "Please provide your date of birth.";
+                ErrorMessage = "Ui_Onboarding_Error_BirthDateRequired";
                 return;
             }
 
@@ -236,7 +211,7 @@ public partial class ProfileSetupViewModel : ObservableObject
 
             if (!WorkoutActivityOptions.Any(option => option.IsSelected && WorkoutPlanningConstants.IsStrengthActivity(option.ActivityType)))
             {
-                ErrorMessage = "At least one strength activity is required for your plan.";
+                ErrorMessage = "Ui_Onboarding_Error_StrengthRequired";
                 return;
             }
 
@@ -266,7 +241,7 @@ public partial class ProfileSetupViewModel : ObservableObject
         catch (Exception ex)
         {
             Trace.WriteLine($"[ProfileSetupViewModel] Setup failed ({ex.GetType().Name}).");
-            ErrorMessage = "We could not finish setup. Please try again.";
+            ErrorMessage = "Ui_Onboarding_Error_SetupFailed";
         }
         finally
         {

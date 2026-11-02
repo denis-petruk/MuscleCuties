@@ -133,7 +133,7 @@ The Lambda-configured host directly equals that RDS endpoint, confirming direct 
 
 Reconciled documentation contradictions:
 
-- `docs/OPERATOR_ACTION_MANUAL.md:31,37` implies deployment on push. Current YAML is manual since commit `4e1f57f1`; preserve the functioning manual behavior.
+- The retired operator manual (removed in the 2026-11-02 documentation consolidation; see `AUDIT.md`) implied deployment on push. Current YAML is manual since commit `4e1f57f1`; preserve the functioning manual behavior.
 - Lambda defaults description claims RDS Proxy; operator guide :45 says direct RDS/no Proxy. Live configured host now confirms this function connects directly to the described RDS instance. Do not add a Proxy merely to match a comment.
 - Historical notes about a duplicate `planning_slot_id` addition are stale: `20261027060000` owns it; `20261027235000` now explicitly leaves it alone. Deployed older variants remain a history question.
 - `docs/ci-injury-clock-20261028.md` records `CS7036` at old `e305858a` from missing `TimeProvider`; this is historical, not a failure of the newly observed passed pipeline. The current pipeline list/failure traces were not exhaustively audited.
@@ -243,7 +243,7 @@ All entries below are **future proposed work**; only this document exists as a c
 | `tests/MuscleCuties.Registration.Integration.Tests/SchemaReconciliationTests.cs` (new, conditional) | Apply twice, wrong starting shape, rollback on injected transactional failure, interrupted nontransactional-index detection, lock contention and resume. |
 | `tests/MuscleCuties.Registration.Integration.Tests/DisposableWorkoutDatabaseSetupTests.cs` | Make CI setup opt-in execution observable and fail setup gate if it did not execute; preserve local host/name safeguards. |
 | `tests/MuscleCuties.Deployment.Tests/MuscleCuties.Deployment.Tests.csproj` (new) | Fixture ZIP and fake AWS/process tests for corrupt archive, missing dependency, stale SHA, revision race, failed smoke, report failure and retry idempotency. Do not write trivial tests that merely duplicate shell text. |
-| `docs/OPERATOR_ACTION_MANUAL.md`, `docs/README.md` | Correct push/manual description, link approved runbooks, exact environment/role ownership, history-mode constraints and recovery evidence. |
+| `AUDIT.md`, `README.md` | Correct push/manual description, link approved runbooks, exact environment/role ownership, history-mode constraints and recovery evidence. |
 | `docs/infra/AWS_LAMBDA_POSTGRES_IMPLEMENTATION_PLAN.md` | Update approved decisions and evidence as future phases close; this phase changes only this file. |
 
 Existing migration classes and model snapshot are evidence, **not proposed edit targets**. Do not rewrite applied historical migrations. Existing same-prefix migration names remain intact. No application feature or mobile UI implementation is included.

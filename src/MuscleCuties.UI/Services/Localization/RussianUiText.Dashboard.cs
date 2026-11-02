@@ -116,9 +116,6 @@ internal static partial class RussianUiText
         Values["Dashboard_Readiness_NoCurrentCheckIn"] = "Заполните сегодняшнюю отметку, чтобы получить подсказки с учётом вашего самочувствия.";
         Values["Dashboard_Readiness_ReviewPending"] = "Отметка сохранена. Рекомендации по тренировке на её основе пока недоступны.";
         Values["Dashboard_Readiness_CompleteCheckIn"] = "Заполнить отметку";
-        Values["Dashboard_Readiness_ReviewChanges"] = "Посмотреть предлагаемые изменения";
-        Values["Dashboard_Readiness_ApplyChanges"] = "Применить изменения";
-        Values["Dashboard_Readiness_KeepPlan"] = "Оставить план без изменений";
         Values["Dashboard_CheckIn_IncompleteAllFourRatings"] = "Заполните все четыре оценки, чтобы увидеть результат отметки.";
         Values["Dashboard_Readiness_ReadinessLabel"] = "Готовность";
         Values["Dashboard_Readiness_ReadinessScoreFormat"] = "Оценка готовности: {0}";
@@ -186,5 +183,18 @@ internal static partial class RussianUiText
         Values["Dashboard_Workout_OpenTodayPlanA11y"] = "Открыть план на сегодня";
         Values["Dashboard_Workout_SemanticTodayPlan"] = "План на сегодня: {0}.";
         Values["Dashboard_Workout_StartWorkout"] = "Начать тренировку";
+        Values["Dashboard_Photo_CheckInAction"] = "Отметиться";
+        Values["Dashboard_Photo_AddToday"] = "Добавить фото прогресса за сегодня";
+        Values["Dashboard_Workout_RestDay"] = "День отдыха";
+        Values["Dashboard_Workout_RecoverySubtitle"] = "День восстановления";
+        Values["Dashboard_Workout_TodayRecovery"] = "Сегодня восстановление";
+        Values["Dashboard_Workout_Flexible"] = "Гибко";
+        Values["Dashboard_Workout_IntensityLow"] = "Низкая";
+        Values["Dashboard_Workout_IntensityLight"] = "Лёгкая";
+        Values["Dashboard_Workout_IntensityNone"] = "Нет";
+        Values["Dashboard_Prompt_NoActivePlan"] = "Нет активного плана";
+        Values["Dashboard_Prompt_NoPlanBody"] = "Тренировки появятся после создания плана.";
+        Values["Dashboard_Readiness_TrendEmpty"] = "Отметьтесь, чтобы увидеть историю готовности";
+        Values["Dashboard_Weight_TrendEmpty"] = "Добавьте вес на трёх отметках, чтобы увидеть динамику";
     }
 }

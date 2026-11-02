@@ -70,7 +70,8 @@ public partial class CycleViewModel
             Trace.WriteLine($"[Cycle] Calendar month load failed ({ex.GetType().Name}).");
             CalendarDays = new ObservableCollection<CycleDayItem>();
             CalendarStripDays = new ObservableCollection<CycleDayItem>();
-            CalendarNavigationStatusText = "Could not load this month. Try another month or return to today.";
+            CalendarNavigationStatusText =
+                MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Calendar_LoadFailed");
         }
     }
 

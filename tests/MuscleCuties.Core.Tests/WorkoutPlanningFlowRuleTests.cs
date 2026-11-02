@@ -64,22 +64,20 @@ public sealed class WorkoutPlanningFlowRuleTests
     }
 
     [Theory]
-    [InlineData(false, true, true, false, false, false, false, true)]
-    [InlineData(true, true, true, false, false, false, false, false)]
-    [InlineData(false, false, true, false, false, false, false, false)]
-    [InlineData(false, true, false, false, false, false, false, false)]
-    [InlineData(false, true, true, true, false, false, false, false)]
-    [InlineData(false, true, true, false, true, false, false, false)]
-    [InlineData(false, true, true, false, false, true, false, false)]
-    [InlineData(false, true, true, false, false, false, true, false)]
-    public void FirstPlanAutoApplyRequiresCompleteSafeUnreducedPersistedProposal(
+    [InlineData(false, true, true, false, false, false, true)]
+    [InlineData(true, true, true, false, false, false, false)]
+    [InlineData(false, false, true, false, false, false, false)]
+    [InlineData(false, true, false, false, false, false, false)]
+    [InlineData(false, true, true, true, false, false, false)]
+    [InlineData(false, true, true, false, true, false, false)]
+    [InlineData(false, true, true, false, false, true, false)]
+    public void FirstPlanAutoApplyRequiresCompleteFeasiblePersistedProposal(
         bool replacesExistingPlan,
         bool feasible,
         bool persisted,
         bool missingRequiredAnswers,
         bool styleChoiceRequired,
         bool hasOmissions,
-        bool reducedVolume,
         bool expectedCanAutoApply)
     {
         var canAutoApply = WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
@@ -88,9 +86,50 @@ public sealed class WorkoutPlanningFlowRuleTests
             persisted,
             missingRequiredAnswers,
             styleChoiceRequired,
-            hasOmissions,
-            reducedVolume);
+            hasOmissions);
 
         Assert.Equal(expectedCanAutoApply, canAutoApply);
+    }
+
+    [Fact]
+    public void FirstPlanAutoApplyDoesNotRequireReducedVolumeAcknowledgment()
+    {
+        Assert.True(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
+            replacesExistingPlan: false,
+            feasible: true,
+            persisted: true,
+            missingRequiredAnswers: false,
+            styleChoiceRequired: false,
+            hasOmissions: false));
+
+        var acceptance = WorkoutPlanningFlowRule.AcceptanceAcknowledgments(
+            replacesExistingPlan: false,
+            reducedVolumeRequired: true,
+            exerciseConditionIds: []);
+
+        Assert.True(acceptance.ReducedVolumeAcknowledged);
+    }
+
+    [Fact]
+    public void AcceptanceAcknowledgments_CarryVisibleConditionIdsAndReplacementConsent()
+    {
+        var acceptance = WorkoutPlanningFlowRule.AcceptanceAcknowledgments(
+            replacesExistingPlan: true,
+            reducedVolumeRequired: true,
+            exerciseConditionIds: [3, 7, 3, 0, -2]);
+
+        Assert.True(acceptance.ReplacementConfirmed);
+        Assert.True(acceptance.ReducedVolumeAcknowledged);
+        Assert.Equal(new HashSet<int> { 3, 7 }, acceptance.AcknowledgedExerciseConditionIds);
+    }
+
+    [Fact]
+    public void AcceptanceAcknowledgments_WithoutReducedVolumeOrConditions_KeepsFlagsClear()
+    {
+        var acceptance = WorkoutPlanningFlowRule.AcceptanceAcknowledgments(false, false, []);
+
+        Assert.False(acceptance.ReplacementConfirmed);
+        Assert.False(acceptance.ReducedVolumeAcknowledged);
+        Assert.Empty(acceptance.AcknowledgedExerciseConditionIds);
     }
 }

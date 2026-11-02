@@ -174,7 +174,7 @@ public sealed class WorkoutCloudContractTests
 
         foreach (var route in new (string Method, string Path)[]
         {
-            ("GET", "/api/v1/workouts/catalog"), ("POST", "/api/v1/workouts/plan"),
+            ("GET", "/api/v1/workouts/catalog"),
             ("POST", "/api/v1/workouts/plan/reconcile"),
             ("GET", "/api/v1/workouts/plan/exercise-exclusions"),
             ("GET", "/api/v1/workouts/overview"), ("POST", "/api/v1/workouts/reschedule"),
@@ -207,8 +207,10 @@ public sealed class WorkoutCloudContractTests
             Xunit.Assert.NotNull(endpoint!.Metadata.GetMetadata<IAuthorizeData>());
         }
 
+        // Retired mirrors and stubs: each of these must stay unmapped so only the canonical route survives.
         foreach (var route in new (string Method, string Path)[]
         {
+            ("POST", "/api/v1/workouts/plan"), ("GET", "/api/v1/workouts/plan"),
             ("GET", "/api/v1/workout/history"), ("GET", "/api/v1/workout/history/months"),
             ("GET", "/api/v1/workout/history/month/{year:int}/{month:int}"),
             ("GET", "/api/v1/workout/history/count"),
@@ -233,8 +235,8 @@ public sealed class WorkoutCloudContractTests
             ("POST", "/api/v1/workout/exercises/swap")
         })
         {
-            Xunit.Assert.True(routes.TryGetValue(route, out var endpoint), $"Missing {route.Method} {route.Path}");
-            Xunit.Assert.NotNull(endpoint!.Metadata.GetMetadata<IAuthorizeData>());
+            Xunit.Assert.False(routes.ContainsKey(route),
+                $"Retired mirror or stub route is still mapped: {route.Method} {route.Path}");
         }
     }
 

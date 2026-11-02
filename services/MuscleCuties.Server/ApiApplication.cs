@@ -105,10 +105,6 @@ public static class ApiApplication
     private const string AuthenticationRoute = "/api/v1/auth";
     private const string EmailChallengeRoute = "/api/v1/email-challenges";
     private const string ProfileUnitsRoute = "/api/v1/profile/units";
-    private const string LegacyWorkoutPreferencesRoute = "/api/v1/profile/workout-preferences";
-    private const string WorkoutPreferencesRequireProposalCode = "WorkoutPreferencesRequireProposal";
-    private const string WorkoutPreferencesRequireProposalMessage =
-        "Change workout preferences through a workout plan proposal.";
 
     public static WebApplication Build(
         WebApplicationBuilder builder,
@@ -257,7 +253,6 @@ public static class ApiApplication
         builder.Services.AddScoped<IServerWorkoutInjuryStore, PostgresWorkoutInjuryStore>();
         builder.Services.AddScoped<ServerWorkoutInjuryUseCase>();
         builder.Services.AddScoped<PostgresWorkoutPlanAndSessionStore>();
-        builder.Services.AddScoped<PostgresReadinessAdjustmentStore>();
         builder.Services.AddScoped<IServerDashboardOverviewStore, PostgresDashboardOverviewStore>();
         builder.Services.AddScoped<ServerDashboardOverviewUseCase>();
         builder.Services.AddHttpContextAccessor();
@@ -570,13 +565,6 @@ public static class ApiApplication
             return MapProfileWrite(await profile.UpdateNutritionPreferencesAsync(new UpdateServerNutritionPreferencesRequest(
                 userId, request.ExpectedVersion, request.Goal, request.WeightGoalPace, request.DietaryTags), cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
-        // Older clients must upgrade: a standalone write would change applied preferences
-        // without atomically replacing the plan through the proposal lifecycle.
-        app.MapPut(LegacyWorkoutPreferencesRoute, () => Results.Conflict(new
-        {
-            code = WorkoutPreferencesRequireProposalCode,
-            message = WorkoutPreferencesRequireProposalMessage
-        })).RequireAuthorization();
         app.MapPut("/api/v1/profile/nutrition-targets", async (
             UpdateServerNutritionTargetsBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
         {

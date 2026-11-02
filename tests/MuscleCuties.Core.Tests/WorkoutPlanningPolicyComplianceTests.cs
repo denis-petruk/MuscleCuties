@@ -290,9 +290,9 @@ public sealed class WorkoutPlanningPolicyComplianceTests
     }
 
     [Fact]
-    public void Hiit_Limits_AtMostOnePerWeek_AndNeverOnSameDayAsStrengthOrClimbing()
+    public void Hiit_Limits_AtMostTwoPerWeek_AndNeverOnSameDayAsStrengthOrClimbing()
     {
-        Assert.Equal(1, ActivityPrescriptionRule.HiitMaximumSessionsPerWeek);
+        Assert.Equal(2, ActivityPrescriptionRule.HiitMaximumSessionsPerWeek);
 
         var context = new MixedActivityWeekScheduleContext(
             SelectedActivities:

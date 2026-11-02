@@ -119,11 +119,25 @@ public sealed class ExerciseEligibilityRuleTests
     }
 
     [Fact]
-    public void Conditional_Review_Requires_Exercise_Specific_Acknowledgment()
+    public void Experience_Guidance_Is_Advisory_And_Does_Not_Block_Eligibility()
     {
         var candidate = Candidate(FirstExerciseId) with
         {
-            ExperienceConditions = "Review setup and demonstrated range.",
+            ExperienceConditions = "Beginner/Returning: start with light load and demonstrate control."
+        };
+
+        var result = ExerciseEligibilityRule.Filter([candidate], Context());
+
+        Assert.Equal(ExerciseEligibilityStatus.Eligible, result.Status);
+        Assert.DoesNotContain(ExerciseEligibilityReason.ReviewConditionsNeedAcknowledgment,
+            result.Decisions.Single().Reasons);
+    }
+
+    [Fact]
+    public void Explicit_Review_Condition_Still_Requires_Acknowledgment()
+    {
+        var candidate = Candidate(FirstExerciseId) with
+        {
             ReviewConditions = "Use only a controlled, tolerated range."
         };
         var missing = ExerciseEligibilityRule.Filter([candidate], Context());
