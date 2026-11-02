@@ -231,10 +231,13 @@ public sealed class PostgresWorkoutActiveSessionStore(
                         .SingleOrDefaultAsync(row => row.UserId == userId && row.WorkoutDayId == plannedDay.Id && row.LocalDate == localDate, ct)
                         .ConfigureAwait(false);
                     var adjusted = PlannedPrescriptionSnapshot.Deserialize(occurrence?.PrescriptionJson);
-                    if (adjusted is not null)
+                    // A stored occurrence can lag the plan whenever reconciliation could not run (an open
+                    // preview or an unfinished session elsewhere). The plan's current prescription is what
+                    // the preview showed the owner, so a stale adjustment is dropped instead of turning the
+                    // day into a refusal that has no action behind it.
+                    if (adjusted is not null &&
+                        PostgresCycleReadinessReconciler.MatchesBaseline(plannedPrescription, adjusted))
                     {
-                        if (!PostgresCycleReadinessReconciler.MatchesBaseline(plannedPrescription, adjusted))
-                            throw new WorkoutSessionStartBlockedException(WorkoutSessionStartBlockCode.PrescriptionChanged);
                         if (adjusted.DoseAdjustmentReasonCode == CycleReadinessPrescriptionRule.SafetyReviewRequired)
                             throw new WorkoutSessionStartBlockedException(WorkoutSessionStartBlockCode.SafetyReviewRequired);
                         plannedPrescription = adjusted;
