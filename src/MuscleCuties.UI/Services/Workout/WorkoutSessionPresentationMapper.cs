@@ -39,6 +39,7 @@ internal static class WorkoutSessionPresentationMapper
             Subtitle = activity.Subtitle,
             MetricText = activity.MetricText,
             SummaryText = activity.SummaryText,
+            Prescription = activity.Prescription,
             ActivityBackground = WorkoutPresentationPalette.Background(activity.Tag),
             ActivityTextColor = WorkoutPresentationPalette.Text(activity.Tag),
             Exercises = new ObservableCollection<WorkoutExerciseItem>(
@@ -60,6 +61,9 @@ internal static class WorkoutSessionPresentationMapper
             ActivityBackground = WorkoutPresentationPalette.Background(source.ActivityTag),
             ActivityTextColor = WorkoutPresentationPalette.Text(source.ActivityTag),
             IsLogged = source.IsLogged,
+            IsOptional = source.IsOptional,
+            OptionalSets = source.OptionalSets,
+            PlannedSets = source.PlannedSets,
             Description = source.Description,
             ImageUrl = source.ImageUrl,
             VideoUrl = source.VideoUrl,

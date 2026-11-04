@@ -4,7 +4,10 @@ using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 using Npgsql;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Cycle.PhaseLog;
@@ -26,9 +29,26 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
         SaveCyclePhaseLogInput input,
         CancellationToken cancellationToken)
     {
-        if (input is null || !Guid.TryParse(input.OwnerId, out var ownerId) || ownerId == Guid.Empty ||
-            !IsSupportedDate(input.LocalDate) || !IsKnownPhase(input.Phase) ||
-            (input.FlowIntensity is { } flow && !Enum.IsDefined(flow)))
+        if (input is null)
+            return Invalid();
+
+        MuscleCuties.Core.Models.Enums.Cycle.CyclePhase phase;
+        MuscleCuties.Core.Models.Enums.Cycle.FlowIntensity? flowIntensity;
+        try
+        {
+            phase = CycleContractMapper.ToCore(input.Phase);
+            flowIntensity = input.FlowIntensity is { } requestedFlow
+                ? CycleContractMapper.ToCore(requestedFlow)
+                : null;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return Invalid();
+        }
+
+        if (!Guid.TryParse(input.OwnerId, out var ownerId) || ownerId == Guid.Empty ||
+            !IsSupportedDate(input.LocalDate) || !IsKnownPhase(phase) ||
+            (flowIntensity is { } flow && !Enum.IsDefined(flow)))
             return Invalid();
 
         var normalizedNote = NormalizeNote(input.Note);
@@ -38,6 +58,7 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
             await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken)
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(db, ownerId, cancellationToken).ConfigureAwait(false);
+            await WorkoutSessionAccountLock.AcquireAsync(db, ownerId, cancellationToken).ConfigureAwait(false);
             await LockOwnerEditAsync(ownerId, cancellationToken).ConfigureAwait(false);
 
             try
@@ -49,7 +70,7 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
                 var logs = await db.CyclePhaseLogs.Where(row => row.UserId == ownerId)
                     .OrderBy(row => row.LocalDate).ThenBy(row => row.Id).ToListAsync(cancellationToken).ConfigureAwait(false);
 
-                var cycle = AlignCycle(ownerId, input.Phase, input.LocalDate, cycles, profile);
+                var cycle = AlignCycle(ownerId, phase, input.LocalDate, cycles, profile);
                 if (cycle is null)
                 {
                     await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
@@ -57,12 +78,10 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
                 }
                 if (profile is not null)
                 {
-                    var manualTracking = CycleTrackingMode.ManualPhaseLogging.ToString();
                     var phaseValue = logs.LastOrDefault(row => row.LocalDate > input.LocalDate)?.Phase
-                                     ?? input.Phase.ToString();
-                    if (profile.CycleTrackingMode != manualTracking || profile.CurrentCyclePhase != phaseValue)
+                                     ?? phase.ToString();
+                    if (profile.CurrentCyclePhase != phaseValue)
                     {
-                        profile.CycleTrackingMode = manualTracking;
                         profile.CurrentCyclePhase = phaseValue;
                         profile.UpdatedAt = timeProvider.GetUtcNow().UtcDateTime;
                     }
@@ -83,13 +102,16 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
                 }
 
                 row.CycleLogId = cycle.Id;
-                row.Phase = input.Phase.ToString();
-                if (input.FlowIntensity.HasValue)
-                    row.FlowIntensity = input.FlowIntensity.Value.ToString();
+                row.Phase = phase.ToString();
+                if (flowIntensity.HasValue)
+                    row.FlowIntensity = flowIntensity.Value.ToString();
                 row.Note = normalizedNote;
                 row.CreatedAt = timeProvider.GetUtcNow().UtcDateTime;
+                await PostgresCycleReadinessReconciler.MarkPendingAsync(db, ownerId, cancellationToken).ConfigureAwait(false);
                 await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(db, ownerId,
+                    timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
                 return new SaveCyclePhaseLogOutput(SaveCyclePhaseLogOutcomeKind.Saved);
             }
             catch (DbUpdateException exception) when (IsUniqueViolation(exception) || exception.InnerException is PostgresException)
@@ -136,8 +158,7 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
         var latestCycleLength = cycles.OrderByDescending(row => row.StartDate).Select(row => row.CycleLength).FirstOrDefault();
         var predictedLength = CyclePhaseRule.NormalizeCycleLength(
             profile?.CycleLength is > 0 ? profile.CycleLength : latestCycleLength is > 0 ? latestCycleLength : DefaultCycleLength);
-        var anchorDay = CyclePhaseRule.GetPhaseAnchorDay(phase, predictedLength);
-        var inferredStart = localDate.AddDays(-(anchorDay - 1));
+        var inferredStart = CyclePhaseRule.GetImpliedCycleStart(phase, localDate, predictedLength);
         if (!IsSupportedDate(inferredStart))
             return null;
         var next = cycles.Where(row => row.StartDate > localDate).OrderBy(row => row.StartDate).FirstOrDefault();

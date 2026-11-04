@@ -3,9 +3,10 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.UI.Models.UI.Profile;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Common;
@@ -21,9 +22,9 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     private readonly IProfileRefreshNotifier _refreshNotifier;
     private readonly IProfileOverviewUseCase _useCase;
     private readonly ILocalPhotoCacheService? _photoCache;
-    private readonly IProfileHealthConnection? _healthConnection;
     [ObservableProperty] private string _accountActionError = string.Empty;
-    [ObservableProperty] private string _activeInjuryBadgeText = "0 Active";
+    [ObservableProperty] private string _activeInjuryBadgeText = UiTextCatalog.Format(
+        "Profile_Summary_ActiveInjuryFormat", 0);
     [ObservableProperty] private int _activeInjuryCount;
 
     [ObservableProperty] private int _completedSessions;
@@ -35,13 +36,9 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private bool _hasActiveInjuries;
     [ObservableProperty] private bool _hasVaultPhotos;
 
-    // Health & Training Section
-    [ObservableProperty] private string _healthStatusText = "Tap to Connect";
-
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isBusy;
 
-    [ObservableProperty] private bool _isHealthConnected;
     [ObservableProperty] private bool _isLoadError;
 
     // Private Photo Journey Vault
@@ -50,16 +47,17 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private string _memberSince = string.Empty;
 
     [ObservableProperty] private string _name = string.Empty;
-    [ObservableProperty] private string _nutritionPacingText = "Maintenance";
+    [ObservableProperty] private string _nutritionPacingText = UiTextCatalog.Get("Profile_Summary_Maintenance");
     [ObservableProperty] private int _nutritionStreakDays;
-    [ObservableProperty] private ObservableCollection<PreferenceItem> _preferences = new();
     [ObservableProperty] private string _profileImagePath = string.Empty;
-    [ObservableProperty] private string _trainingSplitText = "4 days / week";
+    [ObservableProperty] private string _availableWeekdaysText = UiTextCatalog.Format(
+        "Profile_Summary_AvailableDaysFormat", 3);
 
     // Account & Preferences Section
-    [ObservableProperty] private string _unitsDisplayText = "Metric (kg, cm)";
+    [ObservableProperty] private string _unitsDisplayText = UiTextCatalog.Get("Profile_Summary_MetricUnits");
     [ObservableProperty] private int _vaultPhotoCount;
-    [ObservableProperty] private string _vaultPhotoCountText = "0 photos";
+    [ObservableProperty] private string _vaultPhotoCountText = UiTextCatalog.Format(
+        "Profile_Summary_PhotoCountFormat", 0);
     [ObservableProperty] private int _workoutStreakDays;
 
     public ProfileViewModel(
@@ -67,87 +65,29 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         IProfileRefreshNotifier refreshNotifier,
         Func<Task> navigateToLoginAsync,
         Func<string, Task>? navigateToPreferenceAsync = null,
-        ILocalPhotoCacheService? photoCache = null,
-        IProfileHealthConnection? healthConnection = null)
+        ILocalPhotoCacheService? photoCache = null)
     {
         _useCase = useCase;
         _refreshNotifier = refreshNotifier;
         _navigateToLoginAsync = navigateToLoginAsync;
         _navigateToPreferenceAsync = navigateToPreferenceAsync ?? (_ => Task.CompletedTask);
         _photoCache = photoCache;
-        _healthConnection = healthConnection;
 
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         LogoutCommand = new AsyncRelayCommand(LogoutAsync);
         DeleteAccountAndDataCommand = new AsyncRelayCommand(DeleteAccountAndDataAsync);
-        OpenPreferenceCommand = new AsyncRelayCommand<PreferenceItem>(OpenPreferenceAsync);
         OpenRouteCommand = new AsyncRelayCommand<string>(OpenRouteAsync);
         ToggleVaultPrivacyCommand = new RelayCommand(ToggleVaultPrivacy);
         OpenVaultCommand = new AsyncRelayCommand(OpenVaultAsync);
-
-        Preferences = new ObservableCollection<PreferenceItem>
-        {
-            new()
-            {
-                IconGlyph = "PersonPill24",
-                Title = "Personal Info",
-                Subtitle = "Name, email, password, body metrics, cycle, training basics",
-                Route = "ProfilePersonalInfoPage"
-            },
-            new()
-            {
-                IconGlyph = "Food24",
-                Title = "Nutrition Settings",
-                Subtitle = "Dietary preferences, nutrition goal, custom macro and micro targets",
-                Route = "ProfileNutritionSettingsPage"
-            },
-            new()
-            {
-                IconGlyph = "Dumbbell24",
-                Title = "Activity Preferences",
-                Subtitle = "Strength base, optional cardio, climbing, yoga, and recovery choices",
-                Route = "ProfileWorkoutPreferencesPage"
-            },
-            new()
-            {
-                IconGlyph = "HeartPulse32",
-                Title = "Injury Log",
-                Subtitle = "Track injuries and see how they affect your plan",
-                Route = "InjuryLogPage"
-            },
-            new()
-            {
-                IconGlyph = "ChatBubblesQuestion24",
-                Title = "Feedback",
-                Subtitle = "Send a note or report an issue",
-                Route = "ProfileFeedbackPage"
-            },
-            new()
-            {
-                IconGlyph = "ChatSettings24",
-                Title = "Units & Display",
-                Subtitle = "Metric or imperial defaults for body, food, and training",
-                Route = "ProfileUnitsDisplayPage"
-            },
-            new()
-            {
-                IconGlyph = "ShieldLock24",
-                Title = "Privacy",
-                Subtitle = "See what stays on your device and what you choose to share",
-                Route = "ProfilePrivacyPage"
-            }
-        };
     }
-
-    public bool IsAppleHealthAvailable => _healthConnection?.IsAvailable ?? false;
 
     public string UserInitial => !string.IsNullOrWhiteSpace(Name) ? Name[0].ToString().ToUpperInvariant() : "U";
 
     public string UserName => !string.IsNullOrWhiteSpace(Name) ? Name :
-        !string.IsNullOrWhiteSpace(Email) ? Email.Split('@')[0] : UiTextCatalog.Translate("Athlete");
+        !string.IsNullOrWhiteSpace(Email) ? Email.Split('@')[0] : UiTextCatalog.TranslateRuntimeText("Athlete");
 
     public int SessionCount => CompletedSessions;
-    public int PhasesTracked => WorkoutStreakDays;
+    public int PhasesTracked => CyclesTracked;
     public string CyclesTrackedText => CyclesTracked == 1 ? "1 cycle" : $"{CyclesTracked} cycles";
     public string CurrentPhaseLabel => CurrentPhase.ToString();
     public bool HasProfileImage => !string.IsNullOrWhiteSpace(ProfileImagePath) &&
@@ -158,7 +98,6 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     public string ProfileImageSource => HasProfileImage ? ProfileImagePath : string.Empty;
     public AsyncRelayCommand LogoutCommand { get; }
     public AsyncRelayCommand DeleteAccountAndDataCommand { get; }
-    public AsyncRelayCommand<PreferenceItem> OpenPreferenceCommand { get; }
     public AsyncRelayCommand<string> OpenRouteCommand { get; }
     public RelayCommand ToggleVaultPrivacyCommand { get; }
     public AsyncRelayCommand OpenVaultCommand { get; }
@@ -196,28 +135,17 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
             CycleDays = overview.CycleDays;
             ProfileImagePath = overview.ProfileImagePath;
             UnitsDisplayText = $"{overview.UnitSystem} ({overview.BodyWeightUnit}, {overview.HeightUnit})";
-            TrainingSplitText = $"{overview.WorkoutDaysPerWeek} days / week";
+            AvailableWeekdaysText = $"{overview.AvailableWeekdaysCount} available days / week";
             NutritionPacingText = FormatNutritionGoalPace(overview.Goal, overview.WeightGoalPace);
             CompletedSessions = overview.CompletedSessions;
             WorkoutStreakDays = overview.WorkoutStreakDays;
             NutritionStreakDays = overview.NutritionStreakDays;
             CurrentPhase = overview.CurrentPhase;
             CyclesTracked = overview.CyclesTracked;
-            if (_healthConnection is { IsAvailable: true })
-            {
-                var connected = await _healthConnection.IsConnectedAsync();
-                IsHealthConnected = connected;
-                HealthStatusText = connected ? "Connected" : "Tap to Connect";
-            }
-            else if (overview.IsHealthConnected is { } connected)
-            {
-                IsHealthConnected = connected;
-                HealthStatusText = connected ? "Connected" : "Not connected";
-            }
-
             ActiveInjuryCount = overview.ActiveInjuryCount;
             HasActiveInjuries = ActiveInjuryCount > 0;
-            ActiveInjuryBadgeText = ActiveInjuryCount == 0 ? "0 Active" : $"{ActiveInjuryCount} Active";
+            ActiveInjuryBadgeText = UiTextCatalog.Format(
+                "Profile_Summary_ActiveInjuryFormat", ActiveInjuryCount);
             VaultPhotoCount = overview.VaultPhotoCount;
             VaultPhotoCountText = VaultPhotoCount == 1 ? "1 photo" : $"{VaultPhotoCount} photos";
             LatestVaultPhotoPath = overview.LatestVaultPhotoPath;
@@ -282,7 +210,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
 
             if (!result.Succeeded)
             {
-                AccountActionError =
+                AccountActionError = result.FailureMessage ??
                     "Deletion could not be completed. Your local data may still be on this device. Please contact support before handing over the device.";
                 return;
             }
@@ -301,14 +229,6 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         {
             IsBusy = false;
         }
-    }
-
-    private async Task OpenPreferenceAsync(PreferenceItem? item)
-    {
-        if (item is null || string.IsNullOrWhiteSpace(item.Route))
-            return;
-
-        await _navigateToPreferenceAsync(item.Route);
     }
 
     public async Task UpdateProfileImageAsync(string? imagePath)
@@ -353,13 +273,9 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         OnPropertyChanged(nameof(SessionCount));
     }
 
-    partial void OnWorkoutStreakDaysChanged(int value)
-    {
-        OnPropertyChanged(nameof(PhasesTracked));
-    }
-
     partial void OnCyclesTrackedChanged(int value)
     {
+        OnPropertyChanged(nameof(PhasesTracked));
         OnPropertyChanged(nameof(CyclesTrackedText));
     }
 

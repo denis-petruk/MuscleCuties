@@ -1,7 +1,8 @@
 using MuscleCuties.Core.Domain.Cycle;
-using MuscleCuties.Core.Domain.Profile;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Onboarding;
 
@@ -10,8 +11,7 @@ public sealed record StagedProfileObservation(
     DateTime BirthDate,
     float Height,
     float Weight,
-    int CycleLength,
-    int WorkoutDaysPerWeek);
+    int CycleLength);
 
 public sealed record QuizResponseObservation(int QuizQuestionId, int QuizAnswerId);
 
@@ -38,6 +38,11 @@ public sealed record OnboardingValidationResult(bool IsValid, string? ErrorMessa
 
 public static class OnboardingValidationRule
 {
+    public const float MinimumHeightCentimeters = 50f;
+    public const float MaximumHeightCentimeters = 280f;
+    public const float MinimumWeightKilograms = 20f;
+    public const float MaximumWeightKilograms = 400f;
+
     public static OnboardingValidationResult ValidateStagedProfile(
         StagedProfileObservation? staged,
         string? username,
@@ -56,33 +61,37 @@ public static class OnboardingValidationRule
             return OnboardingValidationResult.Failure("Please provide your date of birth.");
         if (birthDateEligibility == BirthDateEligibility.Underage)
             return OnboardingValidationResult.Failure(
-                "Please provide a valid date of birth (must be at least 18 years old).");
+                $"Please provide a valid date of birth (must be at least {BirthDateEligibilityRule.MinimumEligibleAgeYears} years old).");
 
-        if (!float.IsFinite(staged.Height) ||
-            staged.Height < (float)ProfileUpdateValidationRule.MinimumHeightCm ||
-            staged.Height > (float)ProfileUpdateValidationRule.MaximumHeightCm)
+        if (!float.IsFinite(staged.Height) || staged.Height < MinimumHeightCentimeters ||
+            staged.Height > MaximumHeightCentimeters)
             return OnboardingValidationResult.Failure(
-                $"Please provide a valid height between {ProfileUpdateValidationRule.MinimumHeightCm} cm and " +
-                $"{ProfileUpdateValidationRule.MaximumHeightCm} cm.");
+                $"Please provide a valid height between {MinimumHeightCentimeters:0} cm and {MaximumHeightCentimeters:0} cm.");
 
-        if (!float.IsFinite(staged.Weight) ||
-            staged.Weight < (float)ProfileUpdateValidationRule.MinimumWeightKg ||
-            staged.Weight > (float)ProfileUpdateValidationRule.MaximumWeightKg)
+        if (!float.IsFinite(staged.Weight) || staged.Weight < MinimumWeightKilograms ||
+            staged.Weight > MaximumWeightKilograms)
             return OnboardingValidationResult.Failure(
-                $"Please provide a valid weight between {ProfileUpdateValidationRule.MinimumWeightKg} kg and " +
-                $"{ProfileUpdateValidationRule.MaximumWeightKg} kg.");
+                $"Please provide a valid weight between {MinimumWeightKilograms:0} kg and {MaximumWeightKilograms:0} kg.");
 
         if (staged.CycleLength < CycleLengthLimits.Minimum || staged.CycleLength > CycleLengthLimits.Maximum)
             return OnboardingValidationResult.Failure(
-                $"Please provide a valid cycle length between {CycleLengthLimits.Minimum} and " +
-                $"{CycleLengthLimits.Maximum} days.");
+                $"Please provide a valid cycle length between {CycleLengthLimits.Minimum} and {CycleLengthLimits.Maximum} days.");
 
-        if (staged.WorkoutDaysPerWeek < ProfileUpdateValidationRule.MinimumWorkoutDaysPerWeek ||
-            staged.WorkoutDaysPerWeek > ProfileUpdateValidationRule.MaximumWorkoutDaysPerWeek)
-            return OnboardingValidationResult.Failure(
-                $"Please provide valid workout days per week between " +
-                $"{ProfileUpdateValidationRule.MinimumWorkoutDaysPerWeek} and " +
-                $"{ProfileUpdateValidationRule.MaximumWorkoutDaysPerWeek}.");
+        return OnboardingValidationResult.Success();
+    }
+
+    public static OnboardingValidationResult ValidateProfileSetup(
+        StagedProfileObservation? staged,
+        IReadOnlyList<int>? selectedActivityTypes,
+        DateTime now)
+    {
+        var profileResult = ValidateStagedProfile(staged, username: null, now);
+        if (!profileResult.IsValid)
+            return profileResult;
+
+        if (selectedActivityTypes is not { Count: > 0 } ||
+            selectedActivityTypes.Any(value => !Enum.IsDefined((WorkoutActivityType)value)))
+            return OnboardingValidationResult.Failure("Select at least one valid workout activity.");
 
         return OnboardingValidationResult.Success();
     }
@@ -152,7 +161,9 @@ public static class OnboardingValidationRule
                 selected.Select(response => response.QuizAnswerId).Distinct().Count() != selected.Count)
                 return OnboardingValidationResult.Failure("One or more selected answers are invalid.");
 
-            if (question.QuestionType != QuizQuestionType.DietaryPreference && selected.Count > 1)
+            var allowsMultipleAnswers = question.QuestionType is QuizQuestionType.DietaryPreference or
+                QuizQuestionType.AvailableWeekdays;
+            if (!allowsMultipleAnswers && selected.Count > 1)
                 return OnboardingValidationResult.Failure("Conflicting answers selected for a single-choice question.");
 
             if (question.QuestionType == QuizQuestionType.DietaryPreference && selected.Count > 1)
@@ -160,6 +171,38 @@ public static class OnboardingValidationRule
                 var answers = question.Answers.Where(a => selected.Any(s => s.QuizAnswerId == a.Id)).ToList();
                 if (answers.Any(a => a.MappedValue == (int)DietaryTag.None))
                     return OnboardingValidationResult.Failure("Conflicting answers selected for dietary preferences.");
+            }
+
+            if (question.QuestionType == QuizQuestionType.AvailableWeekdays)
+            {
+                var selectedDays = question.Answers
+                    .Where(answer => selected.Any(response => response.QuizAnswerId == answer.Id))
+                    .Select(answer => answer.MappedValue)
+                    .ToArray();
+                if (selectedDays.Length is < WorkoutPreferencesRule.MinimumDaysPerWeek or > WorkoutPreferencesRule.MaximumDaysPerWeek ||
+                    selectedDays.Any(day => !Enum.IsDefined(typeof(DayOfWeek), day)) ||
+                    selectedDays.Distinct().Count() != selectedDays.Length)
+                    return OnboardingValidationResult.Failure("Choose between 2 and 7 available weekdays.");
+            }
+
+            if (question.QuestionType == QuizQuestionType.WorkoutDaysPerWeek)
+            {
+                var selectedAnswer = question.Answers.FirstOrDefault(
+                    answer => answer.Id == selected[0].QuizAnswerId);
+                if (selectedAnswer is null ||
+                    selectedAnswer.MappedValue is < WorkoutPreferencesRule.MinimumDaysPerWeek or > WorkoutPreferencesRule.MaximumDaysPerWeek)
+                    return OnboardingValidationResult.Failure("Choose between 2 and 7 available weekdays.");
+            }
+
+            if (question.QuestionType == QuizQuestionType.SessionDuration)
+            {
+                var selectedAnswer = question.Answers.FirstOrDefault(
+                    answer => answer.Id == selected[0].QuizAnswerId);
+                if (selectedAnswer is null ||
+                    !ActivitySessionDurationRule.TryResolveStrengthQuizSessionDurationMinutes(
+                        selectedAnswer.MappedValue, out _))
+                    return OnboardingValidationResult.Failure(
+                        "Choose a valid strength session length (30, 45, 60, 75, or 90 minutes).");
             }
         }
 
@@ -175,7 +218,7 @@ public static class OnboardingValidationRule
             QuizQuestionType.CurrentCyclePhase,
             QuizQuestionType.Goal,
             QuizQuestionType.ExperienceLevel,
-            QuizQuestionType.WorkoutDaysPerWeek,
+            QuizQuestionType.AvailableWeekdays,
             QuizQuestionType.DietaryPreference,
             QuizQuestionType.SessionDuration,
             QuizQuestionType.Equipment,

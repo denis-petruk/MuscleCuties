@@ -1,6 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 
-public sealed record DashboardOverviewRequest(DateOnly Today);
+public sealed record DashboardOverviewRequest(DateOnly Today, string? TimeZoneId = null);
 
 public sealed record DashboardCalendarRequest(int Year, int Month, DateOnly Today);
 
@@ -20,7 +20,8 @@ public sealed record DashboardWorkoutProgressDto(
     double? HighestSessionVolumeKg,
     int? LongestSessionMinutes,
     double? LongestDistanceKm,
-    int? FastestPaceSecondsPerKm);
+    int? FastestPaceSecondsPerKm,
+    string? HeaviestLiftExerciseName = null);
 
 public sealed record DashboardWorkoutActivityDto(string Tag, string Title, int ExerciseCount);
 
@@ -77,7 +78,8 @@ public sealed record DashboardOverviewResponse(
     IReadOnlyList<DashboardTrendPointDto> TrendPoints,
     DashboardWeeklyNutritionDto? WeeklyNutrition = null,
     IReadOnlyList<DashboardWeeklyWeightDto>? WeeklyWeights = null,
-    DashboardWorkoutProgressDto? WorkoutProgress = null);
+    DashboardWorkoutProgressDto? WorkoutProgress = null,
+    MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts.TodayReadinessCheckInDto? TodayReadiness = null);
 
 public interface IDashboardOverviewStore
 {

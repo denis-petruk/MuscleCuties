@@ -1,13 +1,29 @@
-# .NET and MAUI build outputs
+# ---------------------------------------------------------------------------
+# MuscleCuties — repository ignore rules
+# ---------------------------------------------------------------------------
+
+# Build output
 bin/
 obj/
 /packages/
+*.binlog
 
-# Local secrets, signing material, and machine-specific settings
+# Generated analysis output (local only; regenerate with the graph tool)
+graphify-out/
+
+# Local database-reset marker (development helper source stays versioned)
+.temp-db-reset
+
+# Local secrets, signing material and machine-specific settings
 .env
 .env.*
 !.env.example
-/certs/
+!.env.*.example
+!.env.template
+!.env.*.template
+# Keep signing/private certificates local, but version the public RDS trust bundle.
+/certs/*
+!/certs/global-bundle.pem
 /lambda-environment.json
 /services/postgresql/docker-compose.yml
 **/docker-compose.override.yml
@@ -16,10 +32,11 @@ appsettings.*.local.json
 *.p8
 *.p12
 *.pfx
+*.key
 *.mobileprovision
 *.user
 
-# Test results and code coverage
+# Test results and coverage
 [Tt]est[Rr]esults/
 *.trx
 *.log
@@ -31,39 +48,56 @@ coverage/
 _ReSharper*/
 /artifacts/
 
-# Local editor context and private notes.
-.agents/
-.claude
-AGENTS.md
-.impeccable/
-CLAUDE.md
-.CLAUDE.md
-GEMINI.md
-PRODUCT.md
-DESIGN.md
+# Shared development instructions, skills, reports, templates and run configurations
+# are versioned by default, including AGENTS.md, DESIGN.md, PRODUCT.md, CLAUDE.md,
+# .agents/, .codex/, .claude/, .impeccable/critique/ and .run/.
+# Ignore only private imported context and per-machine agent state.
+/.cloud-attachments/
+/./
+**/.codex/hooks.json
+**/.codex/auth.json
+**/.codex/*.local.*
+**/.codex/sessions/
+**/.codex/cache/
+**/.codex/logs/
+**/.claude/settings.local.json
+**/.impeccable/config.local.json
+**/.impeccable/hook.cache.json
+**/.impeccable/hook.pending.json
 
-# Local project notes.
-ROADMAP.md
-STATUS.md
-docs/EMAIL_DELIVERABILITY.md
-docs/OPERATOR_ACTION_MANUAL.md
-docs/SUBMISSION_READINESS.md
-docs/v1/
-
-# Rider/ReSharper
+# Rider / Visual Studio
 .idea/
-.run/
+.vs/
 riderModule.iml
 /_ReSharper.Caches/
 *.sln.iml
+*.suo
 
-# Generated helper-script bytecode
+# Xcode and iOS build products
+DerivedData/
+xcuserdata/
+*.xcarchive
+*.ipa
+
+# Cloudflare local state
+.wrangler/
+
+# Python helper bytecode
 __pycache__/
 *.pyc
 
 # macOS
 .DS_Store
 ._*
+Thumbs.db
 
-# Local, immutable implementation snapshots (never publish source archives)
+# Local, immutable implementation snapshots
 .foundation-baselines/
+
+# Local scratch
+.scratch/
+
+# Patch residue
+*.orig
+*.rej
+*~

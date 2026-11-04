@@ -9,6 +9,7 @@ public interface IWorkoutOverviewUseCase
         CancellationToken cancellationToken = default);
 
     Task RescheduleAsync(RescheduleWorkoutDayRequest request, CancellationToken cancellationToken = default);
+    Task SetSessionOptionalAsync(SetWorkoutSessionOptionalRequest request, CancellationToken cancellationToken = default);
 }
 
 public sealed class WorkoutOverviewUseCase(IWorkoutOverviewStore store) : IWorkoutOverviewUseCase
@@ -25,5 +26,17 @@ public sealed class WorkoutOverviewUseCase(IWorkoutOverviewStore store) : IWorko
         ArgumentNullException.ThrowIfNull(request);
         WorkoutScheduleMathRule.EnsureValidReschedule(request.WorkoutDayId, request.TargetDate);
         return store.RescheduleAsync(request, cancellationToken);
+    }
+
+    public Task SetSessionOptionalAsync(SetWorkoutSessionOptionalRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (!WorkoutOverviewRule.IsValidSessionOptionality(
+                request.WorkoutDayId,
+                request.IsOptional,
+                request.IsEasierAlternative))
+            throw new ArgumentException("An easier alternative must be explicitly optional.", nameof(request));
+        return store.SetSessionOptionalAsync(request, cancellationToken);
     }
 }

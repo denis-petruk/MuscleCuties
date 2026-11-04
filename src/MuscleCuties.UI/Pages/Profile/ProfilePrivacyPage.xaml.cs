@@ -1,3 +1,4 @@
+using System.Windows.Input;
 using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Pages.Profile;
@@ -6,51 +7,16 @@ public partial class ProfilePrivacyPage : ContentPage
 {
     public const string PrivacyPolicyUrl = "https://musclecuties.app/privacy";
 
+    public ICommand BackCommand { get; }
+
     public ProfilePrivacyPage()
     {
+        BackCommand = new Command(async () => await NavigateBackAsync());
+        BindingContext = this;
         this.InitializeWithTiming(InitializeComponent);
     }
 
-    protected override void OnAppearing()
-    {
-        base.OnAppearing();
-        ApplyLanguage();
-    }
-
-    private void ApplyLanguage()
-    {
-        if (LocalizationService.ActiveLanguage != "ru")
-        {
-            SemanticProperties.SetDescription(BackButton, "Back to Profile");
-            PageTitle.Text = "Privacy";
-            SummaryTitle.Text = "Your data, at a glance";
-            SummaryBody.Text = "Your account and health records are stored in MuscleCuties services.";
-            ServicesTitle.Text = "Other services";
-            EmailBody.Text = "Verification emails use our email provider.";
-            FoodBody.Text = "Food search may send generic names to USDA, never your logs.";
-            HealthBody.Text = "Apple Health steps are read only with your permission.";
-            ChoiceTitle.Text = "Your choices";
-            ChoiceBody.Text = "You can delete your account and local data from Profile.";
-            PolicyButton.Text = "Read privacy policy";
-            SemanticProperties.SetDescription(PolicyButton, "Open the full privacy policy");
-            return;
-        }
-
-        SemanticProperties.SetDescription(BackButton, "Вернуться в профиль");
-        PageTitle.Text = "Конфиденциальность";
-        SummaryTitle.Text = "Ваши данные — кратко";
-        SummaryBody.Text = "Данные аккаунта и здоровья хранятся в сервисах MuscleCuties.";
-        ServicesTitle.Text = "Другие сервисы";
-        EmailBody.Text = "Письма для подтверждения отправляет наш почтовый провайдер.";
-        FoodBody.Text = "При поиске продуктов в USDA могут передаваться общие названия, но не ваши записи.";
-        HealthBody.Text = "Шаги из Apple Health считываются только с вашего разрешения.";
-        ChoiceTitle.Text = "Ваш выбор";
-        ChoiceBody.Text = "Удалить аккаунт и локальные данные можно в профиле.";
-        PolicyButton.Text = "Читать политику конфиденциальности";
-        SemanticProperties.SetDescription(PolicyButton, "Открыть полную политику конфиденциальности");
-    }
-
-    private async void OnBackClicked(object? sender, EventArgs e)
+    private static async Task NavigateBackAsync()
     {
         if (Shell.Current is not { } shell)
             return;
@@ -75,7 +41,7 @@ public partial class ProfilePrivacyPage : ContentPage
 
     public static async Task OpenPrivacyPolicyAsync()
     {
-        var isRussian = LocalizationService.ActiveLanguage == "ru";
+        var isRussian = LocalizationService.ActiveLanguage == LocalizationService.RussianLanguageCode;
         if (Uri.TryCreate(PrivacyPolicyUrl, UriKind.Absolute, out var uri) &&
             uri.Scheme == Uri.UriSchemeHttps && string.IsNullOrEmpty(uri.UserInfo))
         {
@@ -93,10 +59,8 @@ public partial class ProfilePrivacyPage : ContentPage
 
         if (Shell.Current is { } shell)
             await shell.DisplayAlertAsync(
-                isRussian ? "Политика недоступна" : "Privacy policy unavailable",
-                isRussian
-                    ? "Не удалось открыть политику конфиденциальности. Повторите попытку позже."
-                    : "The privacy policy could not be opened. Please try again later.",
-                isRussian ? "Хорошо" : "OK");
+                UiTextCatalog.Get("Profile_Privacy_UnavailableTitle"),
+                UiTextCatalog.Get("Profile_Privacy_UnavailableMessage"),
+                UiTextCatalog.Get("Profile_Privacy_Ok"));
     }
 }

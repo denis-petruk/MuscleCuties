@@ -9,13 +9,22 @@
     <AssetTargetFallback>net8.0;$(AssetTargetFallback)</AssetTargetFallback>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3" PrivateAssets="all" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj" />
+    <ProjectReference Include="../../src/MuscleCuties.Infrastructure/MuscleCuties.Infrastructure.csproj" />
     <ProjectReference Include="../../src/MuscleCuties.Infrastructure.PostgreSql/MuscleCuties.Infrastructure.PostgreSql.csproj" />
     <ProjectReference Include="../../services/MuscleCuties.Server/MuscleCuties.Server.csproj" />
+    <Compile Include="../../src/MuscleCuties.UI/ViewModels/Common/IPageLoadAware.cs" Link="Mobile/IPageLoadAware.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/ViewModels/Workout/InjuryLogViewModel.cs" Link="Mobile/InjuryLogViewModel.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryLogItem.cs" Link="Mobile/InjuryLogItem.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryFlagOption.cs" Link="Mobile/InjuryFlagOption.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryStatusOption.cs" Link="Mobile/InjuryStatusOption.cs" />
   </ItemGroup>
 </Project>

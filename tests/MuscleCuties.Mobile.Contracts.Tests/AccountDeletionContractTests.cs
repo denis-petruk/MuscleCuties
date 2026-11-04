@@ -2,8 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Infrastructure.ApiClient;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
+using MuscleCuties.UI.Services.Profile;
 
 namespace MuscleCuties.Mobile.Contracts.Tests;
 
@@ -75,12 +75,80 @@ public sealed class AccountDeletionContractTests
         Xunit.Assert.True(preload.Invalidated);
     }
 
+    [Xunit.Fact]
+    public async Task AppleAccountDeletionRequestsFreshAuthorizationAndRetriesServerPurge()
+    {
+        var api = new RecordingApiClient(BackendApiStatus.Success, true)
+        {
+            RequireFreshAppleAuthorization = true
+        };
+        var auth = new TestAuthService();
+        var photoCache = new TestPhotoCache();
+        var appleSignIn = new TestAppleSignInService();
+        var tokenStore = new TestSessionTokenStore();
+        var snapshotCache = new TestLocalCacheService();
+        using var provider = new ServiceCollection()
+            .AddSingleton<IAuthService>(auth)
+            .AddSingleton<IAppleSignInService>(appleSignIn)
+            .AddSingleton<IMuscleCutiesBackendApiClient>(api)
+            .AddSingleton(new MobileJourneyCloudGateway(api, tokenStore, snapshotCache, TimeProvider.System))
+            .BuildServiceProvider();
+        var purge = new AppAccountPurgeService(
+            provider.GetRequiredService<IServiceScopeFactory>(),
+            new Lazy<MuscleCuties.Core.Services.IAppPreloadService>(() => new TestPreloadService()),
+            new AccountSessionGate(),
+            photoCache);
+
+        var result = await purge.PurgeAccountDataAsync(ActiveUserId);
+
+        Xunit.Assert.True(result.Succeeded);
+        Xunit.Assert.Equal(2, api.CallCount);
+        Xunit.Assert.Equal("fresh-apple-authorization-code", api.LastDeletionRequest?.AuthorizationCode);
+        Xunit.Assert.Equal(1, appleSignIn.SignInCallCount);
+        Xunit.Assert.True(auth.LoggedOut);
+        Xunit.Assert.True(photoCache.Cleared);
+    }
+
+    [Xunit.Fact]
+    public async Task CancelingAppleReauthorizationKeepsLocalAccountAndPhotoCache()
+    {
+        var api = new RecordingApiClient(BackendApiStatus.Success, true)
+        {
+            RequireFreshAppleAuthorization = true
+        };
+        var auth = new TestAuthService();
+        var photoCache = new TestPhotoCache();
+        var appleSignIn = new TestAppleSignInService { CancelSignIn = true };
+        using var provider = new ServiceCollection()
+            .AddSingleton<IAuthService>(auth)
+            .AddSingleton<IAppleSignInService>(appleSignIn)
+            .AddSingleton<IMuscleCutiesBackendApiClient>(api)
+            .AddSingleton(new MobileJourneyCloudGateway(api, new TestSessionTokenStore(),
+                new TestLocalCacheService(), TimeProvider.System))
+            .BuildServiceProvider();
+        var purge = new AppAccountPurgeService(
+            provider.GetRequiredService<IServiceScopeFactory>(),
+            new Lazy<MuscleCuties.Core.Services.IAppPreloadService>(() => new TestPreloadService()),
+            new AccountSessionGate(),
+            photoCache);
+
+        var result = await purge.PurgeAccountDataAsync(ActiveUserId);
+
+        Xunit.Assert.False(result.Succeeded);
+        Xunit.Assert.True(result.Errors[0].Contains("account has not been deleted", StringComparison.OrdinalIgnoreCase));
+        Xunit.Assert.Equal(1, api.CallCount);
+        Xunit.Assert.False(auth.LoggedOut);
+        Xunit.Assert.False(photoCache.Cleared);
+    }
+
     private sealed class RecordingApiClient(BackendApiStatus status, bool succeeded) : IMuscleCutiesBackendApiClient
     {
         public BackendApiStatus Status { get; set; } = status;
         public bool Succeeded { get; set; } = succeeded;
+        public bool RequireFreshAppleAuthorization { get; set; }
         public int CallCount { get; private set; }
         public (HttpMethod Method, string Path)? Mutation { get; private set; }
+        public AccountDeletionRequest? LastDeletionRequest { get; private set; }
 
         public Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(string path, CancellationToken ct = default) =>
             throw new NotSupportedException();
@@ -93,7 +161,13 @@ public sealed class AccountDeletionContractTests
             {
                 CallCount++;
                 Mutation = (method, path);
-                var data = new AccountDeletionResult(Succeeded, 0, [], string.Empty);
+                LastDeletionRequest = payload as AccountDeletionRequest;
+                var requiresAuthorization = RequireFreshAppleAuthorization &&
+                                           string.IsNullOrWhiteSpace(LastDeletionRequest?.AuthorizationCode);
+                var data = requiresAuthorization
+                    ? new AccountDeletionResult(false, 0, [], "Apple authorization is required.",
+                        AccountDeletionFailureCode.AppleAuthorizationRequired)
+                    : new AccountDeletionResult(Succeeded, 0, [], string.Empty);
                 return Task.FromResult(new BackendApiResponse<TResponse>(Status, (TResponse)(object)data));
             }
 
@@ -174,5 +248,27 @@ public sealed class AccountDeletionContractTests
         public Task<int> GetCurrentUserIdAsync() => Task.FromResult(ActiveUserId);
         public Task<CurrentUserState?> GetCurrentUserStateAsync() => Task.FromResult<CurrentUserState?>(new CurrentUserState(ActiveUserId, true));
         public Task SetCurrentUserAsync(User user) => Task.CompletedTask;
+    }
+
+    private sealed class TestAppleSignInService : IAppleSignInService
+    {
+        public int SignInCallCount { get; private set; }
+        public bool CancelSignIn { get; set; }
+
+        public Task<AppleSignInResult?> SignInAsync(CancellationToken cancellationToken = default)
+        {
+            SignInCallCount++;
+            if (CancelSignIn)
+                return Task.FromResult<AppleSignInResult?>(null);
+
+            return Task.FromResult<AppleSignInResult?>(new AppleSignInResult(
+                "synthetic-apple-user",
+                null,
+                null,
+                AuthorizationCode: "fresh-apple-authorization-code"));
+        }
+
+        public Task<AppleCredentialState> GetCredentialStateAsync(string appleUserId) =>
+            Task.FromResult(AppleCredentialState.Authorized);
     }
 }

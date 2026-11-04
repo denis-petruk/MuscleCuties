@@ -13,7 +13,6 @@ public sealed class PhotoCleanupProcessor(
     private const int MaximumBatchSize = 100;
     private const int MaximumBackoffMinutes = 24 * 60;
     private const int MaximumBackoffExponent = 10;
-    private const string DefaultBucket = "musclecuties-media";
 
     public async Task<PhotoCleanupBatchResult> ProcessOwnerAsync(
         Guid ownerId,
@@ -25,12 +24,12 @@ public sealed class PhotoCleanupProcessor(
         if (batchSize is <= 0 or > MaximumBatchSize) throw new ArgumentOutOfRangeException(nameof(batchSize));
         if (leaseDuration <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(leaseDuration));
 
+        var bucket = S3StorageConfiguration.RequireBucketName(configuration);
         var startedAt = timeProvider.GetUtcNow().UtcDateTime;
         var items = await store.ClaimDueAsync(ownerId, startedAt, leaseDuration, batchSize, cancellationToken).ConfigureAwait(false);
         var completed = 0;
         var retried = 0;
         var fenced = 0;
-        var bucket = configuration["Storage:S3:BucketName"] ?? DefaultBucket;
         foreach (var item in items)
         {
             cancellationToken.ThrowIfCancellationRequested();

@@ -1,0 +1,121 @@
+using MuscleCuties.Core.Models.Enums.Workout;
+
+namespace MuscleCuties.Core.Domain.Workout.Planning;
+
+public sealed record WorkoutScheduleValidationSession(
+    DayOfWeek Day,
+    WorkoutActivityType Activity,
+    bool IsHard,
+    IReadOnlySet<string>? StrengthMuscleGroups = null,
+    decimal? DurationMinutes = null,
+    ActivitySessionPrescription? OriginalPrescription = null,
+    ActivitySessionPrescription? OccurrencePrescription = null);
+
+/// <summary>Checks a proposed repeating week, including its Sunday-to-Monday boundary.</summary>
+public static class WorkoutScheduleValidationRule
+{
+    public const string InvalidDay = "ScheduleInvalidDay";
+    public const string TooManySessions = "ScheduleTooManySessionsOnDay";
+    public const string DuplicateActivity = "ScheduleDuplicateActivityOnDay";
+    public const string MultipleStrengthSessions = "ScheduleMultipleStrengthSessionsOnDay";
+    public const string MultipleHardSessions = "ScheduleMultipleHardSessionsOnDay";
+    public const string InvalidOccurrenceAdjustment = "ScheduleInvalidOccurrenceAdjustment";
+    public const string TooManyHardDays = "ScheduleTooManyHardDays";
+    public const string StrengthMuscleMetadataMissing = "ScheduleStrengthMuscleMetadataMissing";
+    public const string HiitConflict = "ScheduleHiitStrengthOrClimbingConflict";
+    public const string ConsecutiveStrengthMuscleGroups = "ScheduleConsecutiveStrengthMuscleGroups";
+
+    public const int MaximumActivitiesPerDay = MixedActivityWeekScheduleRule.MaximumSessionsPerDay;
+    public const int MaximumStrengthSessionsPerDay = MixedActivityWeekScheduleRule.MaximumStrengthSessionsPerDay;
+    public const int MaximumHardSessionsPerDay = MixedActivityWeekScheduleRule.MaximumHardSessionsPerDay;
+    public const int MaximumHardSessionsOnAdjustedDay =
+        MixedActivityWeekScheduleRule.MaximumHardSessionsOnAdjustedDay;
+    public const int MinimumHardSessionsForValidAdjustment = MaximumHardSessionsPerDay;
+    public const int MaximumHardDaysPerWeek = MixedActivityWeekScheduleRule.MaximumHardDaysPerWeek;
+    public const int DaysInWeek = 7;
+    public const int NextConsecutiveDayOffset = 1;
+    public const int MinimumMuscleCount = 1;
+
+    public static IReadOnlyList<string> Validate(
+        IReadOnlyCollection<WorkoutScheduleValidationSession> sessions,
+        bool requireStrengthMuscles = true)
+    {
+        var reasons = new HashSet<string>(StringComparer.Ordinal);
+        if (sessions.Any(session => !Enum.IsDefined(session.Day)))
+            reasons.Add(InvalidDay);
+
+        foreach (var day in sessions.GroupBy(session => session.Day))
+        {
+            if (day.Count() > MaximumActivitiesPerDay)
+                reasons.Add(TooManySessions);
+
+            if (day.Select(session => session.Activity).Distinct().Count() != day.Count())
+                reasons.Add(DuplicateActivity);
+
+            if (day.Count(session => IsStrength(session.Activity)) > MaximumStrengthSessionsPerDay)
+                reasons.Add(MultipleStrengthSessions);
+
+            var hard = day.Where(session => session.IsHard).ToArray();
+            var adjusted = day.Where(session => session.OccurrencePrescription is not null).ToArray();
+            var hasValidatedAdjustment = adjusted.Length == 1 && adjusted[0].IsHard &&
+                hard.Length is >= MinimumHardSessionsForValidAdjustment and <= MaximumHardSessionsOnAdjustedDay &&
+                adjusted[0].Activity == adjusted[0].OriginalPrescription?.Activity &&
+                SameDayDemandAdjustmentRule.IsValid(adjusted[0].OriginalPrescription,
+                    adjusted[0].OccurrencePrescription, adjusted[0].DurationMinutes);
+            if (adjusted.Length > 0 && !hasValidatedAdjustment)
+                reasons.Add(InvalidOccurrenceAdjustment);
+            if (hard.Length > MaximumHardSessionsPerDay && !hasValidatedAdjustment)
+                reasons.Add(MultipleHardSessions);
+
+            var hasHiit = day.Any(session => session.Activity == WorkoutActivityType.Hiit);
+            var hasStrengthOrClimbing = day.Any(session =>
+                IsStrength(session.Activity) || session.Activity == WorkoutActivityType.RockClimbing);
+
+            if (hasHiit && hasStrengthOrClimbing && !hasValidatedAdjustment)
+                reasons.Add(HiitConflict);
+        }
+
+        if (sessions.Where(session => session.IsHard).Select(session => session.Day).Distinct().Count() >
+            MaximumHardDaysPerWeek)
+        {
+            reasons.Add(TooManyHardDays);
+        }
+
+        if (requireStrengthMuscles && sessions.Any(session => IsStrength(session.Activity) &&
+            (session.StrengthMuscleGroups is null || session.StrengthMuscleGroups.Count < MinimumMuscleCount ||
+             session.StrengthMuscleGroups.Any(string.IsNullOrWhiteSpace))))
+        {
+            reasons.Add(StrengthMuscleMetadataMissing);
+        }
+
+        var strength = sessions
+            .Where(session => IsStrength(session.Activity) && session.StrengthMuscleGroups is not null)
+            .ToArray();
+
+        foreach (var first in strength)
+        {
+            foreach (var second in strength)
+            {
+                if (((int)first.Day + NextConsecutiveDayOffset) % DaysInWeek == (int)second.Day &&
+                    HasMuscleOverlap(first.StrengthMuscleGroups!, second.StrengthMuscleGroups!))
+                {
+                    reasons.Add(ConsecutiveStrengthMuscleGroups);
+                }
+            }
+        }
+
+        return reasons.OrderBy(reason => reason, StringComparer.Ordinal).ToArray();
+    }
+
+    private static bool HasMuscleOverlap(
+        IReadOnlySet<string> firstMuscles,
+        IReadOnlySet<string> secondMuscles)
+    {
+        return firstMuscles.Any(m1 =>
+            secondMuscles.Any(m2 => string.Equals(m1, m2, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private static bool IsStrength(WorkoutActivityType activity) => activity is
+        WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
+        WorkoutActivityType.StrengthHighIntensity;
+}

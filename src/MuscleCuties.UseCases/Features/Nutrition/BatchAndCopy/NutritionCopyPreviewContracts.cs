@@ -1,6 +1,12 @@
-using MuscleCuties.Core.Models.Enums.Nutrition;
+using MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
+
+public enum DiaryCopyModeDto
+{
+    Merge,
+    Overwrite
+}
 
 public sealed record DiaryCopyFoodDto(
     string Identity,
@@ -29,14 +35,14 @@ public sealed record PreviewNutritionCopyRequest(
     DateOnly SourceDate,
     DateOnly TargetDate,
     MealType? MealType,
-    DiaryCopyMode Mode);
+    DiaryCopyModeDto Mode);
 
 public sealed record PreviewNutritionCopyResponse(
     Guid OwnerId,
     DateOnly SourceDate,
     DateOnly TargetDate,
     MealType? MealType,
-    DiaryCopyMode Mode,
+    DiaryCopyModeDto Mode,
     string SourceRevision,
     string TargetRevision,
     IReadOnlyList<DiaryCopyFoodDto> SourceItems,
@@ -51,7 +57,7 @@ public sealed record CommitPreviewedNutritionCopyRequest(
     DateOnly SourceDate,
     DateOnly TargetDate,
     MealType? MealType,
-    DiaryCopyMode Mode,
+    DiaryCopyModeDto Mode,
     string ExpectedSourceRevision,
     string ExpectedTargetRevision);
 

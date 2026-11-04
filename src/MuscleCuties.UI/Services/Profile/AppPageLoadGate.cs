@@ -5,6 +5,7 @@ namespace MuscleCuties.UI.Services.Profile;
 
 internal sealed class AppPageLoadGate : IDisposable
 {
+    private const string ReportedLoadFailure = "Page load reported an error.";
     public static readonly TimeSpan PageFreshnessWindow = TimeSpan.FromMinutes(2);
 
     private readonly TimeSpan _freshnessWindow;
@@ -43,18 +44,22 @@ internal sealed class AppPageLoadGate : IDisposable
                 try
                 {
                     await loadAsync();
+                    if (page.IsLoadError)
+                        throw new InvalidOperationException(ReportedLoadFailure);
                 }
                 catch (Exception ex)
                 {
                     page.IsLoadError = true;
-                    Trace.WriteLine($"[PageLoad] {page.GetType().Name} marked failed ({ex.GetType().Name}).");
+                    Trace.WriteLine(
+                        $"[PageLoad] {page.GetType().Name} marked failed ({ex.GetType().Name}): {ex.Message}");
                     throw;
                 }
             }, force || page.IsLoadError);
         }
         catch (Exception exception)
         {
-            Trace.WriteLine($"[PageLoad] {page.GetType().Name} failed ({exception.GetType().Name}).");
+            Trace.WriteLine(
+                $"[PageLoad] {page.GetType().Name} failed ({exception.GetType().Name}): {exception.Message}");
         }
     }
 
@@ -78,8 +83,9 @@ internal sealed class AppPageLoadGate : IDisposable
         catch (Exception ex)
         {
             // A failed refresh must not leave an old success marked fresh.
+            HasLoaded = false;
             _lastLoadedAtUtc = DateTime.MinValue;
-            Trace.WriteLine($"[PageLoad] Refresh invalidated ({ex.GetType().Name}).");
+            Trace.WriteLine($"[PageLoad] Refresh invalidated ({ex.GetType().Name}): {ex.Message}");
             throw;
         }
         finally

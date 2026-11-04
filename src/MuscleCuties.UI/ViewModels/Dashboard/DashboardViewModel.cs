@@ -5,8 +5,10 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
-using MuscleCuties.Core.Domain.Cycle;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.UI.Resources.Styles;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Models.UI.Dashboard;
 using MuscleCuties.UI.Models.UI.Workout;
@@ -15,8 +17,12 @@ using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.ViewModels.Workout;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
+using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 using MuscleCuties.UseCases.Features.Workout.Injury;
+using MuscleCuties.UseCases.Features.Workout.Overview;
+using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using IPageLoadAware = MuscleCuties.UI.ViewModels.Common.IPageLoadAware;
 
 namespace MuscleCuties.UI.ViewModels.Dashboard;
@@ -25,18 +31,19 @@ namespace MuscleCuties.UI.ViewModels.Dashboard;
     Justification = "Bound in XAML / view model contract.")]
 public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDisposable
 {
+    private readonly IDailyCheckInUseCase _dailyCheckIn;
     private readonly IWorkoutInjuryUseCase _injuries;
+    private readonly Action _invalidateDashboard;
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
     private readonly Func<Task> _openCycleAsync;
-    private readonly Func<Task> _openDailyCheckInAsync;
     private readonly Func<Task> _openNutritionAsync;
     private readonly Func<Task>? _openPhotoVaultAsync;
     private readonly Func<Task> _openWorkoutAsync;
     private readonly Func<int, Task> _openWorkoutSessionAsync;
 
     private readonly IDashboardOverviewUseCase _overview;
-    private DateOnly? _calendarCycleStart;
-    private string _calendarPredictionSource = string.Empty;
+    private readonly ICyclePhaseProjectionUseCase _cyclePhaseProjection;
+    private readonly DailyCheckInPresentationSettings _readinessPresentationSettings;
     [ObservableProperty] private float _consumedCalories;
     [ObservableProperty] private float _consumedCarbs;
     [ObservableProperty] private float _consumedFats;
@@ -57,6 +64,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private string _hydrationConsumed = "2.5 L";
     [ObservableProperty] private string _hydrationGoal = "target";
 
+    private DailyCheckInViewModel? _checkInVm;
     private InjuryLogViewModel? _injuryLogVm;
 
     // Suppresses per-field partial On*Changed notifications during a bulk load so that
@@ -66,24 +74,49 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isBusy;
 
-    [ObservableProperty] private bool _isInjuryModalVisible;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAnyModalVisible))]
+    private bool _isCheckInModalVisible;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAnyModalVisible))]
+    private bool _isInjuryModalVisible;
     [ObservableProperty] private bool _isLoadError;
     [ObservableProperty] private bool _isRefreshing;
     [ObservableProperty] private bool _isRestDay = true;
     [ObservableProperty] private bool _needsDailyCheckIn;
     [ObservableProperty] private int _nutritionStreakDays;
-    [ObservableProperty] private Color _phaseCardBackgroundColor = Color.FromArgb("#FFF1F6");
-    [ObservableProperty] private Color _phaseCardDividerColor = Color.FromArgb("#EBD3DE");
-    [ObservableProperty] private Color _phaseCardTextColor = Color.FromArgb("#8B4E68");
-    [ObservableProperty] private string _photoButtonText = "Check in";
-    [ObservableProperty] private string _photoCheckInText = "Add today's progress photo";
+    [ObservableProperty] private Color _phaseCardBackgroundColor = AppThemeResources.GetColor("AccentSurface", default);
+    [ObservableProperty] private Color _phaseCardDividerColor = AppThemeResources.GetColor("InputStroke", default);
+    [ObservableProperty] private Color _phaseCardTextColor = AppThemeResources.GetColor("DashboardPhaseCardTextLight", default);
+    [ObservableProperty] private string _photoButtonText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Photo_CheckInAction");
+    [ObservableProperty] private string _photoCheckInText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Photo_AddToday");
     [ObservableProperty] private int _predictedCycleLength = 28;
     [ObservableProperty] private string _readinessLabel = string.Empty;
-    [ObservableProperty] private int _readinessScore;
-    [ObservableProperty] private string _readinessTrendSummary = "Complete a check-in to see readiness history";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ReadinessProgress), nameof(CompositeScore))]
+    private int _readinessScore;
+    [ObservableProperty] private string _readinessTrendSummary =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Readiness_TrendEmpty");
+    [ObservableProperty] private bool _hasTodayReadinessScore;
+    [ObservableProperty] private bool _hasTodayReadinessRecord;
+    [ObservableProperty] private bool _todayReadinessReviewPending;
+    [ObservableProperty] private bool _todayReadinessIncomplete;
+    [ObservableProperty] private string _todayReadinessScoreText = string.Empty;
+    [ObservableProperty] private string _todayReadinessBandText = string.Empty;
+    [ObservableProperty] private string _todayReadinessGuidanceText = string.Empty;
+    [ObservableProperty] private string _todayReadinessSleepQualityText = "—";
+    [ObservableProperty] private string _todayReadinessEnergyText = "—";
+    [ObservableProperty] private string _todayReadinessSorenessText = "—";
+    [ObservableProperty] private string _todayReadinessStressText = "—";
     [ObservableProperty] private string _recoveryLabel = string.Empty;
-    [ObservableProperty] private int _recoveryScore;
-    [ObservableProperty] private string _sessionProgressText = "Upcoming";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RecoveryProgress), nameof(CompositeScore))]
+    private int _recoveryScore;
+    [ObservableProperty] private string _sessionProgressText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Workout_Overview_Status_Upcoming");
     [ObservableProperty] private string _sleepGoal = "8h";
     [ObservableProperty] private float _targetCalories;
     [ObservableProperty] private float _targetCarbs;
@@ -93,7 +126,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private IReadOnlyList<DashboardTrendPoint> _trendPoints = [];
     [ObservableProperty] private bool _useDarkTheme;
     [ObservableProperty] private bool _usePhaseCardColor;
-    [ObservableProperty] private string _weightTrendSummary = "Add weight at three check-ins to see your trend";
+    [ObservableProperty] private string _weightTrendSummary =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Weight_TrendEmpty");
 
     [ObservableProperty] private Color _workoutActivityBackground =
         WorkoutPresentationPalette.Background("REST");
@@ -103,31 +137,39 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private Color _workoutActivityTextColor =
         WorkoutPresentationPalette.Text("REST");
 
-    [ObservableProperty] private string _workoutDurationText = "Rest day";
+    [ObservableProperty] private string _workoutDurationText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_RestDay");
     [ObservableProperty] private string _workoutExercisesCount = "0";
     [ObservableProperty] private string _workoutIntensity = "Low";
     [ObservableProperty] private int _workoutStreakDays;
-    [ObservableProperty] private string _workoutSubtitle = "Recovery day";
-    [ObservableProperty] private string _workoutTitle = "Living happy life";
+    [ObservableProperty] private string _workoutSubtitle =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_RecoverySubtitle");
+    [ObservableProperty] private string _workoutTitle =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Workout_Page_PlaceholderTitle");
 
     public DashboardViewModel(
         IDashboardOverviewUseCase overview,
         IWorkoutInjuryUseCase injuries,
+        IDailyCheckInUseCase dailyCheckIn,
+        ICyclePhaseProjectionUseCase cyclePhaseProjection,
         Func<Task> openCycleAsync,
         Func<Task> openWorkoutAsync,
         Func<int, Task> openWorkoutSessionAsync,
         Func<Task> openNutritionAsync,
-        Func<Task> openDailyCheckInAsync,
+        Action invalidateDashboard,
         INutritionChangeNotifier? changeNotifier = null,
         Func<Task>? openPhotoVaultAsync = null)
     {
         _overview = overview;
+        _cyclePhaseProjection = cyclePhaseProjection;
+        _readinessPresentationSettings = dailyCheckIn.PresentationSettings;
+        _dailyCheckIn = dailyCheckIn;
         _injuries = injuries;
         _openCycleAsync = openCycleAsync;
         _openWorkoutAsync = openWorkoutAsync;
         _openWorkoutSessionAsync = openWorkoutSessionAsync;
         _openNutritionAsync = openNutritionAsync;
-        _openDailyCheckInAsync = openDailyCheckInAsync;
+        _invalidateDashboard = invalidateDashboard;
         _openPhotoVaultAsync = openPhotoVaultAsync;
         if (changeNotifier is not null)
             changeNotifier.NutritionChanged += OnNutritionChanged;
@@ -137,11 +179,15 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         OpenWorkoutCommand = new AsyncRelayCommand(_openWorkoutAsync);
         StartWorkoutCommand = new AsyncRelayCommand(StartWorkoutAsync);
         OpenNutritionCommand = new AsyncRelayCommand(_openNutritionAsync);
-        OpenDailyCheckInCommand = new AsyncRelayCommand(_openDailyCheckInAsync);
         OpenPhotoVaultCommand = new AsyncRelayCommand(OpenPhotoVaultAsync);
     }
 
     public AsyncRelayCommand OpenPhotoVaultCommand { get; }
+
+    public bool IsAnyModalVisible => IsInjuryModalVisible || IsCheckInModalVisible;
+
+    public DailyCheckInViewModel CheckInVm => _checkInVm ??= new DailyCheckInViewModel(
+        _dailyCheckIn, _invalidateDashboard, CloseCheckInAfterCompletionAsync);
 
     public InjuryLogViewModel InjuryLogVm => _injuryLogVm ??= new InjuryLogViewModel(
         _injuries, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
@@ -165,7 +211,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         ? "Add a cycle phase to get started"
         : CurrentCycleDay > 0
             ? $"{CurrentPhase} · Day {CurrentCycleDay} / {PredictedCycleLength}"
-            : $"{CurrentPhase} · Start tracking";
+            : $"{CurrentPhase} · Phase selected";
 
     public string WorkoutCountLabel => IsRestDay
         ? "Activity"
@@ -209,10 +255,14 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
 
     public string PhaseShortAdvice => CurrentPhase switch
     {
-        CyclePhase.Menstrual => FirstPresent(CycleInsightText, "Take it easy, prioritize rest"),
-        CyclePhase.Follicular => FirstPresent(CycleInsightText, "Energy rising, great time to train"),
-        CyclePhase.Ovulatory => FirstPresent(CycleInsightText, "Peak energy and strength"),
-        CyclePhase.Luteal => FirstPresent(CycleInsightText, "Moderate intensity, listen to your body"),
+        CyclePhase.Menstrual => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
+            "Take it easy, prioritize rest"),
+        CyclePhase.Follicular => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
+            "Energy rising, great time to train"),
+        CyclePhase.Ovulatory => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
+            "Peak energy and strength"),
+        CyclePhase.Luteal => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
+            "Moderate intensity, listen to your body"),
         _ => string.Empty
     };
 
@@ -258,18 +308,28 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         ? "1 day log streak"
         : $"{NutritionStreakDays} day log streak";
 
+    private const float MaximumScoreProgressDivisor = 100f;
+    private const int MinimumScoreValue = 0;
+    private const int MaximumScoreValue = 100;
+    private const int MinimumRatingScale = 1;
+    private const int MaximumRatingScale = 5;
+    private const double CheckInRecoveryScaleRange = 8.0;
+    private const double CheckInRecoveryWeight = 0.7;
+    private const double BaselineRecoveryWeight = 0.3;
+
     public int CompositeScore => (ReadinessScore + RecoveryScore) / 2;
 
-    [SuppressMessage("Performance", "CA1822:Mark members as static",
-        Justification = "Bound in Dashboard XAML / view model contract.")]
-    public bool HasApprovedScorePolicy => false;
+    public string ReadinessSubtitleText => HasTodayReadinessRecord
+        ? "Dashboard_Readiness_SelfReportedSubtitle"
+        : "Dashboard_Readiness_HealthOrBaselineSubtitle";
 
-    [SuppressMessage("Performance", "CA1822:Mark members as static",
-        Justification = "Bound in Dashboard XAML / view model contract.")]
-    public string ScoreSourceLabel =>
-        "Numerical readiness and recovery guidance is unavailable pending qualified review. You can still record a daily check-in.";
+    public float ReadinessProgress =>
+        Math.Clamp(ReadinessScore / MaximumScoreProgressDivisor, 0f, 1f);
 
-    public bool HasAnyTrend => HasWeightTrend || (HasApprovedScorePolicy && HasReadinessTrend);
+    public float RecoveryProgress =>
+        Math.Clamp(RecoveryScore / MaximumScoreProgressDivisor, 0f, 1f);
+
+    public bool HasAnyTrend => HasWeightTrend;
 
     public float CaloriesProgress =>
         MacroProgressFormatter.CalculateProgress(ConsumedCalories, TargetCalories);
@@ -290,8 +350,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     public AsyncRelayCommand OpenWorkoutCommand { get; }
     public AsyncRelayCommand StartWorkoutCommand { get; }
     public AsyncRelayCommand OpenNutritionCommand { get; }
-    public AsyncRelayCommand OpenDailyCheckInCommand { get; }
-
     public void Dispose()
     {
         _loadGate.Dispose();
@@ -354,6 +412,27 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         IsInjuryModalVisible = false;
     }
 
+    [RelayCommand]
+    private async Task OpenDailyCheckInAsync()
+    {
+        IsCheckInModalVisible = true;
+        await CheckInVm.CheckIfAlreadyCompletedAsync();
+    }
+
+    [RelayCommand]
+    private void CloseCheckInModal() => IsCheckInModalVisible = false;
+
+    /// <summary>
+    /// Submitting or skipping closes the sheet and refreshes the dashboard in place. This replaces
+    /// the navigation to the dashboard route the check-in page performed when it was a page.
+    /// </summary>
+    private async Task CloseCheckInAfterCompletionAsync()
+    {
+        IsCheckInModalVisible = false;
+        Invalidate();
+        await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
+    }
+
     private async Task RefreshAfterInjuryChangeAsync()
     {
         HasActiveInjuries = InjuryLogVm.HasActiveInjuries;
@@ -397,10 +476,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         try
         {
             var today = DateOnly.FromDateTime(DateTime.Today);
-            var summary = await _overview.LoadAsync(new DashboardOverviewRequest(today));
+            var timeZoneId = TimeZoneInfo.Local.Id;
+            var summary = await _overview.LoadAsync(new DashboardOverviewRequest(today, timeZoneId));
             _isBulkLoading = true;
             DisplayName = summary.DisplayName;
-            NeedsDailyCheckIn = summary.NeedsDailyCheckIn;
             HasActiveInjuries = summary.HasActiveInjuries;
             HasActiveCycle = summary.HasActiveCycle;
             CurrentPhase = Enum.TryParse<CyclePhase>(summary.CurrentPhase, true, out var phase) && Enum.IsDefined(phase)
@@ -435,6 +514,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             ReadinessLabel = summary.ReadinessLabel;
             RecoveryScore = summary.RecoveryScore;
             RecoveryLabel = summary.RecoveryLabel;
+            ApplyTodayReadiness(summary.TodayReadiness);
+            NeedsDailyCheckIn = summary.TodayReadiness is not { Status: "Available" };
             TrendPoints = summary.TrendPoints.Select(point =>
                 new DashboardTrendPoint(point.Date, point.WeightKg, point.ReadinessScore)).ToArray();
             HasWeightTrend = TrendPoints.Any(point => point.WeightKg.HasValue);
@@ -466,13 +547,14 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
                     section.Tag, section.Title, section.ExerciseCount,
                     WorkoutPresentationPalette.Background(section.Tag), WorkoutPresentationPalette.Text(section.Tag))));
             HasMultipleActivities = WorkoutActivitySections.Count > 1;
-            _calendarCycleStart = summary.CurrentCycleStartDate;
-            _calendarPredictionSource = summary.PredictionSource;
             _isBulkLoading = false;
             RefreshPhaseCardColors();
             NotifyPhaseProperties();
             NotifyUserLinkedProperties();
             NotifyMacroProperties();
+            OnPropertyChanged(nameof(ReadinessProgress));
+            OnPropertyChanged(nameof(RecoveryProgress));
+            OnPropertyChanged(nameof(CompositeScore));
         }
         catch (Exception ex)
         {
@@ -485,6 +567,60 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             IsBusy = false;
         }
     }
+
+    private void ApplyTodayReadiness(TodayReadinessCheckInDto? readiness)
+    {
+        HasTodayReadinessRecord = readiness is not null;
+        HasTodayReadinessScore = _readinessPresentationSettings.IsReadinessScoreDisplayEnabled &&
+                                 readiness is { Status: "Available", RawScore: { } };
+        TodayReadinessReviewPending = readiness is { Status: "Available" } &&
+                                     !_readinessPresentationSettings.IsReadinessScoreDisplayEnabled;
+        TodayReadinessIncomplete = readiness?.Status == "Incomplete";
+        if (readiness is { Status: "Available" })
+        {
+            if (readiness.RawScore is { } rawScore)
+            {
+                ReadinessScore = (int)Math.Round(
+                    Math.Clamp((double)rawScore, MinimumScoreValue, MaximumScoreValue),
+                    MidpointRounding.AwayFromZero);
+            }
+
+            if (readiness.SleepQuality is { } sq && readiness.Soreness is { } s)
+            {
+                var checkInRecovery = ((sq - MinimumRatingScale) + (MaximumRatingScale - s)) *
+                                      MaximumScoreValue / CheckInRecoveryScaleRange;
+                RecoveryScore = (int)Math.Round(
+                    Math.Clamp(checkInRecovery * CheckInRecoveryWeight + RecoveryScore * BaselineRecoveryWeight,
+                        MinimumScoreValue, MaximumScoreValue),
+                    MidpointRounding.AwayFromZero);
+            }
+        }
+
+        TodayReadinessScoreText = HasTodayReadinessScore
+            ? readiness!.RawScore!.Value.ToString("0.##", CultureInfo.CurrentCulture)
+            : string.Empty;
+        TodayReadinessBandText = readiness?.Band switch
+        {
+            "FeelingReady" => "Dashboard_Readiness_Band_FeelingReady",
+            "ConsiderLighterSession" => "Dashboard_Readiness_Band_ConsiderLighterSession",
+            "ConsiderEasierDay" => "Dashboard_Readiness_Band_ConsiderEasierDay",
+            _ => string.Empty
+        };
+        TodayReadinessGuidanceText = readiness?.Band switch
+        {
+            "FeelingReady" => "Dashboard_Readiness_Guidance_FeelingReady",
+            "ConsiderLighterSession" => "Dashboard_Readiness_Guidance_LighterSession",
+            "ConsiderEasierDay" => "Dashboard_Readiness_Guidance_EasierDay",
+            _ => string.Empty
+        };
+        TodayReadinessSleepQualityText = FormatRating(readiness?.SleepQuality);
+        TodayReadinessEnergyText = FormatRating(readiness?.Energy);
+        TodayReadinessSorenessText = FormatRating(readiness?.Soreness);
+        TodayReadinessStressText = FormatRating(readiness?.Stress);
+        OnPropertyChanged(nameof(ReadinessSubtitleText));
+    }
+
+    private static string FormatRating(int? rating) => rating?.ToString(CultureInfo.CurrentCulture) ?? "—";
 
     private void NotifyPhaseProperties()
     {
@@ -519,20 +655,17 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
 
     private int CalculateDaysLeftInCurrentPhase()
     {
-        var cycleLength = CyclePhaseRule.NormalizeCycleLength(PredictedCycleLength);
-        var currentDay = Math.Clamp(CurrentCycleDay, 1, cycleLength);
-        var daysLeft = 0;
+        return _cyclePhaseProjection.GetDaysRemaining(
+            new CyclePhaseCountdownInputDto(CurrentCycleDay, PredictedCycleLength, CurrentPhase)).DaysRemaining;
+    }
 
-        for (var offset = 1; offset <= cycleLength; offset++)
-        {
-            var projectedDay = (currentDay - 1 + offset) % cycleLength + 1;
-            if (CyclePhaseRule.CalculatePhase(projectedDay, cycleLength) != CurrentPhase)
-                break;
+    private static string GetFirstName(string? fullName)
+    {
+        var trimmed = fullName?.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+            return string.Empty;
 
-            daysLeft++;
-        }
-
-        return daysLeft;
+        return trimmed.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
     }
 
     private static string FirstPresent(params string[] values)
@@ -655,6 +788,5 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     partial void OnNeedsDailyCheckInChanged(bool value)
     {
         OpenDailyCheckInCommand.NotifyCanExecuteChanged();
-        OnPropertyChanged(nameof(ScoreSourceLabel));
     }
 }

@@ -6,4 +6,5 @@ public interface IWorkoutOverviewStore
 {
     Task<WorkoutOverviewResponse> LoadAsync(WorkoutOverviewRequest request, CancellationToken cancellationToken);
     Task RescheduleAsync(RescheduleWorkoutDayRequest request, CancellationToken cancellationToken);
+    Task SetSessionOptionalAsync(SetWorkoutSessionOptionalRequest request, CancellationToken cancellationToken);
 }

@@ -61,8 +61,6 @@
         <string>MuscleCuties opens your photo library when you choose a profile or progress photo.</string>
         <key>NSCameraUsageDescription</key>
         <string>MuscleCuties uses your camera to scan barcodes on food packaging completely offline on your device.</string>
-        <key>NSHealthShareUsageDescription</key>
-        <string>MuscleCuties reads your step count from Apple Health when you connect it for activity context. Steps may be included in a check-in you save to your account. No other Health data is read or written.</string>
         <key>CFBundleURLTypes</key>
         <array>
             <dict>

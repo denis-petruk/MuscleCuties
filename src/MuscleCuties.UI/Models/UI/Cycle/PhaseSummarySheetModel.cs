@@ -1,5 +1,9 @@
 using Microsoft.Maui.Graphics;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
+
+using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Models.UI.Cycle;
 
@@ -15,7 +19,7 @@ public class PhaseSummarySheetModel
     public string RecoveryFocus { get; set; } = string.Empty;
     public string QuickRule { get; set; } = string.Empty;
     public string IconSource { get; set; } = string.Empty;
-    public Color BackgroundColor { get; set; } = Colors.Transparent;
-    public Color TextColor { get; set; } = Colors.Black;
-    public Color AccentColor { get; set; } = Colors.Transparent;
+    public Color BackgroundColor { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
+    public Color TextColor { get; set; } = AppThemeResources.GetRequired<Color>("TextPrimary");
+    public Color AccentColor { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
 }

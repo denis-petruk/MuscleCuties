@@ -49,19 +49,26 @@ public interface INutritionOverviewUseCase
 
 public sealed class NutritionOverviewUseCase(INutritionOverviewStore store) : INutritionOverviewUseCase
 {
-    public Task<NutritionOverviewResponse> GetOverviewAsync(
+    public async Task<NutritionOverviewResponse> GetOverviewAsync(
         NutritionOverviewRequest request,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return store.GetOverviewAsync(request, cancellationToken);
+        var response = await store.GetOverviewAsync(request, cancellationToken).ConfigureAwait(false);
+        return response with
+        {
+            Targets = NutritionTargetContractMapper.WithMealDistribution(
+                response.Targets, request.BreakfastPreference)
+        };
     }
 
-    public Task<NutritionTargetMacrosDto> GetPlanTargetsAsync(
+    public async Task<NutritionTargetMacrosDto> GetPlanTargetsAsync(
         string breakfastPreference,
         CancellationToken cancellationToken = default)
     {
-        return store.GetPlanTargetsAsync(breakfastPreference ?? "Savoury", cancellationToken);
+        var preference = breakfastPreference ?? "Savoury";
+        var targets = await store.GetPlanTargetsAsync(preference, cancellationToken).ConfigureAwait(false);
+        return NutritionTargetContractMapper.WithMealDistribution(targets, preference);
     }
 
     public Task LogMealAsync(
@@ -101,19 +108,19 @@ public sealed class NutritionOverviewUseCase(INutritionOverviewStore store) : IN
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (string.IsNullOrWhiteSpace(request.Name))
-            throw new ArgumentException("Custom food name is required.", nameof(request));
-        if (request.ServingAmount <= 0 || !float.IsFinite(request.ServingAmount))
-            throw new ArgumentException("Serving amount must be positive and finite.", nameof(request));
-        if (request.Calories < 0 || !float.IsFinite(request.Calories) ||
-            request.Protein < 0 || !float.IsFinite(request.Protein) ||
-            request.Carbs < 0 || !float.IsFinite(request.Carbs) ||
-            request.Fats < 0 || !float.IsFinite(request.Fats))
-            throw new ArgumentException("Nutrition metrics must be non-negative finite numbers.", nameof(request));
-        if (new[] { request.IronMilligrams, request.VitaminB12Micrograms,
-                request.VitaminDMicrograms, request.CalciumMilligrams }
-            .Any(value => value is < 0 || value.HasValue && !float.IsFinite(value.Value)))
-            throw new ArgumentException("Micronutrients must be non-negative finite numbers.", nameof(request));
+        if (!CustomFoodCreationRule.IsValidRequest(
+                request.Name,
+                request.ServingAmount,
+                request.ServingUnit,
+                request.Calories,
+                request.Protein,
+                request.Carbs,
+                request.Fats,
+                request.IronMilligrams,
+                request.VitaminB12Micrograms,
+                request.VitaminDMicrograms,
+                request.CalciumMilligrams))
+            throw new ArgumentException("Custom food values are invalid.", nameof(request));
 
         return store.CreateCustomFoodAsync(request, cancellationToken);
     }
@@ -154,11 +161,7 @@ public sealed class NutritionOverviewUseCase(INutritionOverviewStore store) : IN
 
     private static void ValidateMealIngredients(IReadOnlyList<MealIngredientInputDto>? ingredients, string parameterName)
     {
-        if (ingredients is null || !MealIngredientWeightRule.HasIngredients(ingredients.Count))
+        if (ingredients is null || !NutritionLogRule.HasValidIngredients(ingredients.Select(item => item.Grams).ToArray()))
             throw new ArgumentException("A meal requires at least one ingredient.", parameterName);
-
-        foreach (var ingredient in ingredients)
-            if (!MealIngredientWeightRule.IsValidGrams(ingredient.Grams))
-                throw new ArgumentException("Ingredient grams must be positive and finite.", parameterName);
     }
 }

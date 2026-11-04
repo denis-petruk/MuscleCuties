@@ -3,18 +3,25 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Workout;
+using MuscleCuties.UI.Services.Localization;
+using MuscleCuties.UI.Services.Api;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Workout.Session;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
-public enum SessionScreen { DayOverview, ActivityIntro, ExerciseFlow, ActivitySummary }
+public enum SessionScreen { ActivityIntro, ExerciseFlow, ActivitySummary }
 
 public enum CelebrationType { None, SmallCheckmark, MediumFirstTime, BigPR }
+public enum HiitConfirmationChoice { Cancel, Confirm, Update }
 
 public sealed record SessionExerciseProgress(int Index, string Name, bool IsLogged, bool IsCurrent, bool IsSkipped)
 {
@@ -23,20 +30,28 @@ public sealed record SessionExerciseProgress(int Index, string Name, bool IsLogg
                                        (IsLogged ? "logged" : IsSkipped ? "skipped" : "pending");
 }
 
-public partial class WorkoutSessionViewModel : ObservableObject
+public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 {
+    private const int TimingCheckpointIntervalSeconds = 15;
+    private const int SingleConcurrentOperation = 1;
+    private const int NoCompletionWaitMilliseconds = 0;
     private readonly Dictionary<WorkoutActivitySectionItem, Stopwatch> _activityTimers = [];
     private readonly ICycleOverviewUseCase _cycleOverview;
     private readonly Func<string, Task> _navigateAsync;
     private readonly HashSet<int> _prIds = [];
     private readonly Dictionary<int, WorkoutExerciseLogDto> _savedLogs = [];
     private readonly IWorkoutSessionActionUseCase _session;
+    private readonly IStrengthPlanProposalClientV020? _planning;
+    private readonly Func<SavedActivityAnswersDto, Task<HiitConfirmationChoice>>? _confirmHiitAsync;
+    private readonly Func<Task>? _updateHiitAsync;
     private readonly HashSet<int> _skippedIds = [];
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasNoActivities))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasNoActivities), nameof(HasActivityChoices))]
     private ObservableCollection<WorkoutActivitySectionItem> _activityCards = [];
 
     [ObservableProperty] private string _activityIntroIntensity = string.Empty;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasNoActivityPrescription))]
+    private string _activityPrescriptionText = string.Empty;
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasCelebration))]
     private CelebrationType _celebration;
@@ -48,20 +63,25 @@ public partial class WorkoutSessionViewModel : ObservableObject
     private int _currentExerciseIndex;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsDayOverview), nameof(IsActivityIntro), nameof(IsExerciseFlow),
+    [NotifyPropertyChangedFor(nameof(IsActivityIntro), nameof(IsExerciseFlow),
         nameof(IsActivitySummary))]
     private SessionScreen _currentScreen;
 
     [ObservableProperty] private string _cyclePhaseNote = string.Empty;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasDoseAdjustmentNote))]
+    private string _doseAdjustmentNote = string.Empty;
+    public bool HasDoseAdjustmentNote => !string.IsNullOrWhiteSpace(DoseAdjustmentNote);
     [ObservableProperty] private string _dayTitle = "Workout";
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError), nameof(HasNoActivities))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError), nameof(HasNoActivities),
+        nameof(HasActivityChoices))]
     private string _errorText = string.Empty;
 
     [ObservableProperty] private ObservableCollection<string> _exercisePreviewNames = [];
     [ObservableProperty] private ObservableCollection<SessionExerciseProgress> _exerciseProgress = [];
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanInteract), nameof(HasNoActivities))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanInteract), nameof(CanAbandonPlannedSession), nameof(HasNoActivities),
+        nameof(HasActivityChoices))]
     private bool _isBusy;
     [ObservableProperty] private bool _isActivityComplete;
 
@@ -84,7 +104,8 @@ public partial class WorkoutSessionViewModel : ObservableObject
 
     [ObservableProperty] private int _restTimerTotalSeconds;
     private int _restTimerVersion;
-    [ObservableProperty] private WorkoutActivitySectionItem? _selectedActivity;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanStartActivity))]
+    private WorkoutActivitySectionItem? _selectedActivity;
     [ObservableProperty] private string _summaryDuration = "<1 min";
     [ObservableProperty] private int _summaryPrCount;
     [ObservableProperty] private string _summaryStatusText = string.Empty;
@@ -107,25 +128,95 @@ public partial class WorkoutSessionViewModel : ObservableObject
     private int _totalExercisesInActivity;
 
     private int _workoutDayId;
+    private bool _isRestDay;
+    private Guid? _plannedSessionId;
+    private DateTime _plannedSessionStartedAtUtc;
+    private DateTime? _pendingCompletionAtUtc;
+    private int? _pendingCompletionSeconds;
+    private readonly Stopwatch _plannedSessionTimer = new();
+    private readonly SemaphoreSlim _timingGate = new(SingleConcurrentOperation, SingleConcurrentOperation);
+    private readonly SemaphoreSlim _completionGate = new(SingleConcurrentOperation, SingleConcurrentOperation);
+    private CancellationTokenSource? _timingLoopCancellation;
+    private Guid? _timingIntervalId;
+    private Guid? _pendingResumeOperationId;
+    private PendingTimingCheckpoint? _pendingTimingCheckpoint;
+    private int _confirmedActiveSeconds;
+    private bool _sessionCreated;
+    private bool _appSuspended;
+    private sealed record PendingTimingCheckpoint(Guid OperationId, Guid IntervalId, int MeasuredSeconds, bool Pause);
+    [ObservableProperty] private bool _isTimedActivityRunning;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanStartActivity))]
+    private bool _isActivityUnsafe;
 
     public WorkoutSessionViewModel(
         IWorkoutSessionActionUseCase session,
         ICycleOverviewUseCase cycleOverview,
-        Func<string, Task> navigateAsync)
+        Func<string, Task> navigateAsync,
+        IStrengthPlanProposalClientV020? planning = null,
+        Func<SavedActivityAnswersDto, Task<HiitConfirmationChoice>>? confirmHiitAsync = null,
+        Func<Task>? updateHiitAsync = null)
     {
         _session = session;
         _cycleOverview = cycleOverview;
         _navigateAsync = navigateAsync;
+        _planning = planning;
+        _confirmHiitAsync = confirmHiitAsync;
+        _updateHiitAsync = updateHiitAsync;
     }
 
-    public bool IsDayOverview => CurrentScreen == SessionScreen.DayOverview;
+    public void Dispose()
+    {
+        _timingLoopCancellation?.Cancel();
+        _timingLoopCancellation?.Dispose();
+        _timingLoopCancellation = null;
+        _timingGate.Dispose();
+        _completionGate.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     public int WorkoutDayId => _workoutDayId;
     public bool IsActivityIntro => CurrentScreen == SessionScreen.ActivityIntro;
     public bool IsExerciseFlow => CurrentScreen == SessionScreen.ExerciseFlow;
     public bool IsActivitySummary => CurrentScreen == SessionScreen.ActivitySummary;
+    public bool CanAbandonPlannedSession => _sessionCreated && _plannedSessionId.HasValue && !IsBusy && _pendingCompletionAtUtc is null;
+    public bool CanStartActivity => !IsActivityUnsafe && SelectedActivity is not null;
+    public bool HasNoActivityPrescription => string.IsNullOrEmpty(ActivityPrescriptionText);
     public bool CanInteract => !IsBusy;
+
+    public async Task SaveOptionalExerciseAsync(WorkoutExerciseItem item)
+    {
+        if (item.WorkoutDayExerciseId <= 0) return;
+        if (!item.IsOptional) item.OptionalSets = 0;
+        try
+        {
+            await _session.SetExerciseOptionalAsync(new SetWorkoutExerciseOptionalRequest(
+                item.WorkoutDayExerciseId, item.IsOptional, item.IsOptional ? item.OptionalSets : 0));
+        }
+        catch (Exception ex)
+        {
+            ApplyFailure(ApiFailurePresenter.FromException(ex, "Ui_Workout_Error_SaveExercise"));
+            try
+            {
+                var detail = await _session.GetDetailAsync(_workoutDayId);
+                var saved = detail.Exercises.FirstOrDefault(e => e.WorkoutDayExerciseId == item.WorkoutDayExerciseId);
+                if (saved is not null)
+                {
+                    item.IsOptional = saved.IsOptional;
+                    item.OptionalSets = saved.OptionalSets;
+                }
+            }
+            catch { }
+            throw;
+        }
+    }
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasErrorReference))]
+    private string _errorReference = string.Empty;
+
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
+    public bool HasErrorReference => HasError && !string.IsNullOrEmpty(ErrorReference);
     public bool HasNoActivities => !IsBusy && !HasError && ActivityCards.Count == 0;
+    public bool HasActivityChoices => !IsBusy && !HasError && ActivityCards.Count > 0;
     public bool HasSwapCandidates => SwapCandidates.Count > 0;
     public bool HasSwapError => !string.IsNullOrEmpty(SwapErrorText);
     public bool CanDismissSwap => !SwapNeedsReload;
@@ -221,6 +312,8 @@ public partial class WorkoutSessionViewModel : ObservableObject
     // Awaitable for callers and tests; the query setter can start it without async void.
     public async Task LoadSession(int workoutDayId, string? activityTag = null)
     {
+        if (_plannedSessionId.HasValue && !await SuspendTimingAsync())
+            return;
         StopRestTimer();
         var version = ++_loadVersion;
         _workoutDayId = workoutDayId;
@@ -240,7 +333,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         _activityTimers.Clear();
         Celebration = CelebrationType.None;
         IsActivityComplete = false;
-        CurrentScreen = SessionScreen.DayOverview;
+        CurrentScreen = SessionScreen.ActivityIntro;
         ErrorText = string.Empty;
         IsBusy = true;
         try
@@ -249,6 +342,21 @@ public partial class WorkoutSessionViewModel : ObservableObject
                 throw new InvalidOperationException("This workout could not be found. Go back and choose a workout.");
 
             var detail = await _session.GetDetailAsync(workoutDayId);
+            var existingSession = await _session.GetPlannedSessionAsync(workoutDayId);
+            _isRestDay = detail.IsRestDay;
+            _plannedSessionId = existingSession is { IsCompleted: false, IsCanceled: false } ? existingSession.SessionId : null;
+            _sessionCreated = _plannedSessionId.HasValue;
+            IsActivityUnsafe = false;
+            _confirmedActiveSeconds = existingSession?.ConfirmedActiveSeconds ?? 0;
+            _timingIntervalId = null;
+            _pendingResumeOperationId = null;
+            _pendingTimingCheckpoint = null;
+            OnPropertyChanged(nameof(CanAbandonPlannedSession));
+            _plannedSessionStartedAtUtc = existingSession?.StartedAtUtc ?? default;
+            _plannedSessionTimer.Reset();
+            _pendingCompletionAtUtc = null;
+            _pendingCompletionSeconds = null;
+            IsTimedActivityRunning = false;
             string phaseNote;
             try
             {
@@ -262,24 +370,30 @@ public partial class WorkoutSessionViewModel : ObservableObject
 
             if (version != _loadVersion) return;
             DayTitle = detail.Title;
+            DoseAdjustmentNote = detail.DoseAdjustmentReason switch
+            {
+                WorkoutDoseAdjustmentReason.DailyReadiness => UiTextCatalog.Get("Workout_Session_AdjustmentDaily"),
+                WorkoutDoseAdjustmentReason.ProvisionalPhaseFeeling => UiTextCatalog.Get("Workout_Session_AdjustmentPhase"),
+                WorkoutDoseAdjustmentReason.RepeatedPhasePattern => UiTextCatalog.Get("Workout_Session_AdjustmentPattern"),
+                WorkoutDoseAdjustmentReason.SafetyReview => UiTextCatalog.Get("Workout_Session_AdjustmentSafety"),
+                _ => string.Empty
+            };
             ActivityCards = new ObservableCollection<WorkoutActivitySectionItem>(GetActivities(detail));
             foreach (var item in ActivityCards.SelectMany(activity => activity.Exercises).Where(item => item.IsLogged))
                 _savedLogs[item.WorkoutDayExerciseId] = BuildLogInput(item);
             RefreshActivityCards();
             CyclePhaseNote = phaseNote;
             IsBusy = false;
-            if (!string.IsNullOrWhiteSpace(activityTag))
-            {
-                var activity = ActivityCards.FirstOrDefault(item =>
-                    string.Equals(item.Tag, activityTag, StringComparison.OrdinalIgnoreCase));
-                if (activity is not null)
-                    SelectActivity(activity);
-            }
+            var requestedActivity = !string.IsNullOrWhiteSpace(activityTag)
+                ? ActivityCards.FirstOrDefault(item =>
+                    string.Equals(item.Tag, activityTag, StringComparison.OrdinalIgnoreCase))
+                : null;
+            SelectActivity(requestedActivity ?? ActivityCards.FirstOrDefault());
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             if (version == _loadVersion)
-                ErrorText = "Could not load this workout. Try again.";
+                ApplyFailure(ApiFailurePresenter.FromException(exception, "Ui_Workout_Error_Load"));
         }
         finally
         {
@@ -296,7 +410,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
     [RelayCommand]
     private void SelectActivity(WorkoutActivitySectionItem? activity)
     {
-        if (IsBusy || !IsDayOverview || activity is null || !ActivityCards.Contains(activity)) return;
+        if (IsBusy || activity is null || !ActivityCards.Contains(activity)) return;
         SelectedActivity = activity;
         TotalExercisesInActivity = activity.Exercises.Count;
         RefreshActivityIntro();
@@ -318,17 +432,170 @@ public partial class WorkoutSessionViewModel : ObservableObject
         ActivityIntroIntensity = rpe.Success ? $"Target RPE {rpe.Groups[1].Value}" :
             targets.Contains("steady", StringComparison.OrdinalIgnoreCase) ? "Steady effort" :
             "Follow the targets at a comfortable effort";
+        ActivityPrescriptionText = FormatPrescription(SelectedActivity.Prescription);
+    }
+
+    private void ApplyFailure(ApiFailureNotice notice)
+    {
+        ErrorText = notice.MessageKey;
+        ErrorReference = notice.ReferenceText;
+    }
+
+    private static string FormatPrescription(ActivitySessionPrescriptionOutputV020? prescription)
+    {
+        if (prescription is null) return string.Empty;
+        var lines = new List<string>();
+        void AddValue(string key, decimal? value)
+        {
+            if (value is not null)
+                lines.Add(UiTextCatalog.Format(key, value));
+        }
+        AddValue("Workout_Session_PrescriptionWarmup", prescription.WarmupMinutes);
+        AddValue("Workout_Session_PrescriptionMain", prescription.MainMinutes);
+        AddValue("Workout_Session_PrescriptionCooldown", prescription.CooldownMinutes);
+        var intensityKey = prescription.Intensity switch
+        {
+            "Easy" => "Workout_Session_PrescriptionEasy",
+            "Moderate" => "Workout_Session_PrescriptionModerate",
+            "Vigorous" => "Workout_Session_PrescriptionVigorous",
+            _ => null
+        };
+        if (intensityKey is not null) lines.Add(UiTextCatalog.Get(intensityKey));
+        if (prescription.IntervalWorkCount is not null && prescription.IntervalWorkSeconds is not null)
+            lines.Add(UiTextCatalog.Format("Workout_Session_PrescriptionWorkIntervals",
+                prescription.IntervalWorkCount, prescription.IntervalWorkSeconds));
+        if (prescription.IntervalRecoveryCount is not null && prescription.IntervalRecoverySeconds is not null)
+            lines.Add(UiTextCatalog.Format("Workout_Session_PrescriptionRecoveryIntervals",
+                prescription.IntervalRecoveryCount, prescription.IntervalRecoverySeconds));
+        return string.Join(Environment.NewLine, lines);
     }
 
     [RelayCommand]
-    private void StartActivity()
+    private async Task StartActivityAsync()
     {
-        if (IsBusy || !IsActivityIntro || SelectedActivity is not { HasExercises: true }) return;
+        if (_pendingCompletionAtUtc is not null)
+        {
+            ErrorText = "Workout_Session_ConnectionRetry";
+            return;
+        }
+        if (IsBusy || IsActivityUnsafe || !IsActivityIntro || SelectedActivity is null || _isRestDay) return;
+        _appSuspended = false;
+        IsBusy = true;
+        try
+        {
+            _plannedSessionId ??= Guid.NewGuid();
+            if (_plannedSessionStartedAtUtc == default)
+                _plannedSessionStartedAtUtc = DateTime.UtcNow;
+            if (!_sessionCreated)
+            {
+                var started = await _session.StartPlannedSessionAsync(_workoutDayId, _plannedSessionId.Value, _plannedSessionStartedAtUtc);
+                _plannedSessionId = started.SessionId;
+                _sessionCreated = true;
+                _confirmedActiveSeconds = started.ConfirmedActiveSeconds;
+                OnPropertyChanged(nameof(CanAbandonPlannedSession));
+            }
+            await ResumeTimingAsync(_plannedSessionId.Value);
+            if (_appSuspended) return;
+            ErrorText = string.Empty;
+        }
+        catch (WorkoutActivityNoLongerSafeException)
+        {
+            IsActivityUnsafe = true;
+            ErrorText = "Workout_Session_ActivityNoLongerSafe";
+            return;
+        }
+        catch (WorkoutHiitHistoryConfirmationRequiredException)
+        {
+            await ConfirmHiitHistoryAsync();
+            return;
+        }
+        catch (WorkoutTimingIntervalExpiredException)
+        {
+            ErrorText = "Workout_Session_TimingExpired";
+            return;
+        }
+        catch (WorkoutSessionStartBlockedException exception)
+        {
+            ErrorText = StartRefusalTextKey(exception.Code);
+            return;
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        {
+            ApplyFailure(ApiFailurePresenter.FromException(exception, "Workout_Session_ConnectionRetry"));
+            return;
+        }
+        catch (Exception)
+        {
+            ErrorText = "Workout_Session_StartFailed";
+            return;
+        }
+        finally { IsBusy = false; }
         if (!_activityTimers.TryGetValue(SelectedActivity, out var timer))
             _activityTimers[SelectedActivity] = timer = new Stopwatch();
         timer.Start();
+        if (!SelectedActivity.HasExercises)
+        {
+            IsTimedActivityRunning = true;
+            return;
+        }
         CurrentScreen = SessionScreen.ExerciseFlow;
         SetCurrentExercise(0);
+    }
+
+    private const string StartFailedTextKey = "Workout_Session_StartFailed";
+
+    private static string StartRefusalTextKey(string code) => code switch
+    {
+        WorkoutSessionStartBlockCode.PlannedWorkoutUnavailable => "Workout_Session_StartUnavailable",
+        WorkoutSessionStartBlockCode.TimeZoneNotEstablished => "Workout_Session_StartTimeZoneMissing",
+        WorkoutSessionStartBlockCode.NotScheduledToday => "Workout_Session_StartNotToday",
+        WorkoutSessionStartBlockCode.ActiveSessionOrPreviewOpen => "Workout_Session_StartSessionOrPreviewOpen",
+        WorkoutSessionStartBlockCode.PrescriptionChanged => "Workout_Session_StartPrescriptionChanged",
+        WorkoutSessionStartBlockCode.SafetyReviewRequired => "Workout_Session_StartSafetyReview",
+        WorkoutSessionStartBlockCode.ActiveWorkoutInProgress => "Workout_Session_StartActiveWorkout",
+        _ => StartFailedTextKey
+    };
+
+    private async Task ConfirmHiitHistoryAsync()
+    {
+        try
+        {
+            if (_planning is null || _confirmHiitAsync is null)
+            {
+                ErrorText = "Workout_Session_HiitConfirmationRequired";
+                return;
+            }
+            var saved = await _planning.ReadAnswersAsync();
+            var choice = await _confirmHiitAsync(saved);
+            if (choice == HiitConfirmationChoice.Update)
+            {
+                if (_updateHiitAsync is not null) await _updateHiitAsync();
+                return;
+            }
+            if (choice != HiitConfirmationChoice.Confirm || saved.HiitEligibilityEvidence is null ||
+                saved.HiitUnderlyingCardioActivity is null)
+                return;
+            var challenge = await _planning.IssueHiitCaptureChallengeAsync();
+            await _planning.SaveAnswersAsync(new SaveActivityAnswersRequest(saved.Version,
+                saved.ActivityEligibilityEvidence, saved.HiitEligibilityEvidence)
+            {
+                HiitUnderlyingCardioActivity = saved.HiitUnderlyingCardioActivity,
+                HiitCaptureChallengeId = challenge.ChallengeId
+            });
+            ErrorText = "Workout_Session_HiitConfirmedRetry";
+        }
+        catch (WorkoutPreviewAlreadyOpenException)
+        {
+            ErrorText = "Workout_Session_HiitPreviewOpen";
+        }
+        catch (WorkoutPlanningInputsChangedException)
+        {
+            ErrorText = "Workout_Session_HiitAnswersChanged";
+        }
+        catch (Exception)
+        {
+            ErrorText = "Workout_Session_ConnectionRetry";
+        }
     }
 
     [RelayCommand]
@@ -346,7 +613,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
             var log = BuildLogInput(exercise);
             if (version != _loadVersion) return;
             await _session.LogAsync(new LogWorkoutSessionRequest(
-                workoutDayId, DateOnly.FromDateTime(DateTime.Today), [log]));
+                workoutDayId, DateOnly.FromDateTime(DateTime.Today), [log], _plannedSessionId));
             if (version != _loadVersion) return;
             var celebration = GetCelebration(exercise, log);
             _savedLogs[exercise.WorkoutDayExerciseId] = log;
@@ -366,7 +633,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         catch (Exception)
         {
             if (version == _loadVersion)
-                ErrorText = "Could not save this exercise. Your entries are still here. Try again.";
+                ErrorText = "Ui_Workout_Error_SaveExercise";
         }
         finally
         {
@@ -455,6 +722,8 @@ public partial class WorkoutSessionViewModel : ObservableObject
 
     private void ShowSummary()
     {
+        _timingLoopCancellation?.Cancel();
+        _plannedSessionTimer.Stop();
         var activity = SelectedActivity!;
         if (_activityTimers.TryGetValue(activity, out var timer)) timer.Stop();
         var ids = activity.Exercises.Select(exercise => exercise.WorkoutDayExerciseId).ToHashSet();
@@ -478,9 +747,10 @@ public partial class WorkoutSessionViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void FinishActivity()
+    private async Task FinishActivityAsync()
     {
         if (IsBusy || SwapNeedsReload) return;
+        if (!await CompletePlannedSessionAsync()) return;
         PauseActivity();
         CloseSwapPanel();
         RefreshActivityCards();
@@ -488,7 +758,136 @@ public partial class WorkoutSessionViewModel : ObservableObject
         CurrentExercise = null;
         Celebration = CelebrationType.None;
         ErrorText = string.Empty;
-        CurrentScreen = SessionScreen.DayOverview;
+        await _navigateAsync("..");
+    }
+
+    [RelayCommand]
+    private async Task FinishTimedActivityAsync()
+    {
+        if (!IsTimedActivityRunning || !await CompletePlannedSessionAsync()) return;
+        IsTimedActivityRunning = false;
+        await _navigateAsync("..");
+    }
+
+    [RelayCommand]
+    private async Task CompleteSessionAsync()
+    {
+        if (await CompletePlannedSessionAsync())
+            await _navigateAsync("..");
+    }
+
+    private async Task<bool> CompletePlannedSessionAsync()
+    {
+        if (!await _completionGate.WaitAsync(NoCompletionWaitMilliseconds)) return false;
+        try { return await CompletePlannedSessionCoreAsync(); }
+        finally { _completionGate.Release(); }
+    }
+
+    private async Task<bool> CompletePlannedSessionCoreAsync()
+    {
+        if (IsBusy || _plannedSessionId is not { } sessionId) return false;
+        _timingLoopCancellation?.Cancel();
+        _plannedSessionTimer.Stop();
+        try
+        {
+            await CheckpointTimingAsync(pause: true);
+        }
+        catch (WorkoutTimingIntervalExpiredException)
+        {
+            ErrorText = "Workout_Session_TimingExpired";
+            IsTimedActivityRunning = false;
+            CurrentScreen = SessionScreen.ActivityIntro;
+            return false;
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        {
+            ErrorText = "Workout_Session_ConnectionRetry";
+            return false;
+        }
+        catch (Exception)
+        {
+            ErrorText = "Workout_Session_TimingFailed";
+            return false;
+        }
+        _pendingCompletionSeconds ??= _confirmedActiveSeconds;
+        if (_pendingCompletionSeconds <= 0)
+        {
+            ErrorText = "Ui_Workout_Error_MinimumDuration";
+            _pendingCompletionSeconds = null;
+            IsTimedActivityRunning = false;
+            CurrentScreen = SessionScreen.ActivityIntro;
+            return false;
+        }
+        _pendingCompletionAtUtc ??= DateTime.UtcNow;
+        OnPropertyChanged(nameof(CanAbandonPlannedSession));
+        IsBusy = true;
+        try
+        {
+            await _session.FinishPlannedSessionAsync(sessionId, _pendingCompletionAtUtc.Value, _pendingCompletionSeconds.Value);
+            _plannedSessionId = null;
+            OnPropertyChanged(nameof(CanAbandonPlannedSession));
+            _plannedSessionStartedAtUtc = default;
+            _plannedSessionTimer.Reset();
+            _sessionCreated = false;
+            _confirmedActiveSeconds = 0;
+            _timingIntervalId = null;
+            _pendingResumeOperationId = null;
+            _pendingTimingCheckpoint = null;
+            _pendingCompletionAtUtc = null;
+            _pendingCompletionSeconds = null;
+            ErrorText = string.Empty;
+            return true;
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        {
+            ErrorText = "Workout_Session_ConnectionRetry";
+            return false;
+        }
+        catch (Exception)
+        {
+            ErrorText = "Workout_Session_FinishFailed";
+            return false;
+        }
+        finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task AbandonPlannedSessionAsync()
+    {
+        if (_pendingCompletionAtUtc is not null)
+        {
+            ErrorText = "Workout_Session_ConnectionRetry";
+            return;
+        }
+        if (IsBusy || _plannedSessionId is not { } sessionId) return;
+        IsBusy = true;
+        try
+        {
+            await _session.AbandonPlannedSessionAsync(sessionId);
+            _timingLoopCancellation?.Cancel();
+            _plannedSessionId = null;
+            OnPropertyChanged(nameof(CanAbandonPlannedSession));
+            _plannedSessionTimer.Reset();
+            _sessionCreated = false;
+            _timingIntervalId = null;
+            _pendingTimingCheckpoint = null;
+            _pendingResumeOperationId = null;
+            _pendingCompletionAtUtc = null;
+            _pendingCompletionSeconds = null;
+            _confirmedActiveSeconds = 0;
+            _plannedSessionStartedAtUtc = default;
+            IsTimedActivityRunning = false;
+            await _navigateAsync("..");
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        {
+            ErrorText = "Workout_Session_ConnectionRetry";
+        }
+        catch (Exception)
+        {
+            ErrorText = "Workout_Session_AbandonFailed";
+        }
+        finally { IsBusy = false; }
     }
 
     [RelayCommand]
@@ -496,7 +895,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
     {
         if (IsBusy) return;
         StopRestTimer();
-        PauseActivity();
+        if (!await SuspendTimingAsync()) return;
         await _navigateAsync("..");
     }
 
@@ -504,6 +903,11 @@ public partial class WorkoutSessionViewModel : ObservableObject
     private async Task BackAsync()
     {
         if (IsBusy) return;
+        if (_pendingCompletionAtUtc is not null)
+        {
+            ErrorText = "Workout_Session_ConnectionRetry";
+            return;
+        }
         if (SwapNeedsReload)
         {
             await FinishSessionAsync();
@@ -516,26 +920,161 @@ public partial class WorkoutSessionViewModel : ObservableObject
             return;
         }
 
-        if (IsDayOverview)
-        {
-            await FinishSessionAsync();
-            return;
-        }
-
         if (IsExerciseFlow)
         {
-            PauseActivity();
+            if (!await SuspendTimingAsync()) return;
             Celebration = CelebrationType.None;
             ErrorText = string.Empty;
             CurrentScreen = SessionScreen.ActivityIntro;
             return;
         }
 
-        FinishActivity();
+        if (!await SuspendTimingAsync()) return;
+        IsTimedActivityRunning = false;
+        SelectedActivity = null;
+        CurrentExercise = null;
+        await _navigateAsync("..");
+    }
+
+    private async Task ResumeTimingAsync(Guid sessionId)
+    {
+        await _timingGate.WaitAsync();
+        try
+        {
+            await FlushPendingTimingCheckpointAsync(sessionId);
+            _pendingResumeOperationId ??= Guid.NewGuid();
+            var snapshot = await _session.ResumePlannedTimingAsync(sessionId, _pendingResumeOperationId.Value);
+            _pendingResumeOperationId = null;
+            _timingIntervalId = snapshot.TimingIntervalId ?? throw new InvalidOperationException("Workout timing could not resume.");
+            _confirmedActiveSeconds = snapshot.ConfirmedActiveSeconds;
+            _plannedSessionTimer.Restart();
+            if (_appSuspended)
+            {
+                _plannedSessionTimer.Stop();
+                return;
+            }
+            _timingLoopCancellation?.Cancel();
+            _timingLoopCancellation = new CancellationTokenSource();
+            _ = CheckpointTimingLoopAsync(_timingLoopCancellation.Token);
+        }
+        finally { _timingGate.Release(); }
+    }
+
+    private async Task CheckpointTimingAsync(bool pause)
+    {
+        await _timingGate.WaitAsync();
+        try
+        {
+            if (_plannedSessionId is not { } sessionId) return;
+            await FlushPendingTimingCheckpointAsync(sessionId);
+            if (_timingIntervalId is not { } intervalId) return;
+            var measuredSeconds = (int)_plannedSessionTimer.Elapsed.TotalSeconds;
+            _pendingTimingCheckpoint = new PendingTimingCheckpoint(Guid.NewGuid(), intervalId, measuredSeconds, pause);
+            await FlushPendingTimingCheckpointAsync(sessionId);
+        }
+        finally { _timingGate.Release(); }
+    }
+
+    private async Task FlushPendingTimingCheckpointAsync(Guid sessionId)
+    {
+        if (_pendingTimingCheckpoint is not { } pending) return;
+        MuscleCuties.UseCases.Features.Workout.ActiveSession.ActiveWorkoutSessionSnapshot snapshot;
+        try
+        {
+            snapshot = await _session.CheckpointPlannedTimingAsync(sessionId, pending.OperationId,
+                pending.IntervalId, pending.MeasuredSeconds, pending.Pause);
+        }
+        catch (WorkoutTimingIntervalExpiredException)
+        {
+            _pendingTimingCheckpoint = null;
+            _timingIntervalId = null;
+            _plannedSessionTimer.Reset();
+            throw;
+        }
+        _confirmedActiveSeconds = snapshot.ConfirmedActiveSeconds;
+        _timingIntervalId = snapshot.TimingIntervalId;
+        _pendingTimingCheckpoint = null;
+        if (pending.Pause) _plannedSessionTimer.Reset();
+    }
+
+    private async Task CheckpointTimingLoopAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(TimingCheckpointIntervalSeconds));
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                try
+                {
+                    await CheckpointTimingAsync(pause: false);
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        if (ErrorText is "Workout_Session_ConnectionRetry" or "Workout_Session_TimingFailed")
+                            ErrorText = string.Empty;
+                    });
+                }
+                catch (Exception exception)
+                {
+                    _plannedSessionTimer.Stop();
+                    var key = exception is WorkoutTimingIntervalExpiredException ? "Workout_Session_TimingExpired" :
+                        exception is HttpRequestException or TaskCanceledException
+                            ? "Workout_Session_ConnectionRetry" : "Workout_Session_TimingFailed";
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        ErrorText = key;
+                        IsTimedActivityRunning = false;
+                        if (CurrentScreen == SessionScreen.ExerciseFlow)
+                            CurrentScreen = SessionScreen.ActivityIntro;
+                    });
+                    return;
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+    }
+
+    public async Task<bool> SuspendTimingAsync()
+    {
+        _timingLoopCancellation?.Cancel();
+        PauseActivity();
+        try
+        {
+            await CheckpointTimingAsync(pause: true);
+            return true;
+        }
+        catch (WorkoutTimingIntervalExpiredException)
+        {
+            ErrorText = "Workout_Session_TimingExpired";
+            return true;
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        {
+            ErrorText = "Workout_Session_ConnectionRetry";
+            return false;
+        }
+        catch (Exception)
+        {
+            ErrorText = "Workout_Session_TimingFailed";
+            return false;
+        }
+    }
+
+    public async Task SuspendForAppBackgroundAsync()
+    {
+        _appSuspended = true;
+        var wasActive = IsExerciseFlow || IsTimedActivityRunning;
+        var suspend = SuspendTimingAsync();
+        if (wasActive && _pendingCompletionAtUtc is null)
+        {
+            IsTimedActivityRunning = false;
+            CurrentScreen = SessionScreen.ActivityIntro;
+        }
+        await suspend;
     }
 
     private void PauseActivity()
     {
+        _plannedSessionTimer.Stop();
         if (SelectedActivity is not null && _activityTimers.TryGetValue(SelectedActivity, out var timer)) timer.Stop();
     }
 
@@ -565,7 +1104,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         }
         catch
         {
-            if (version == _swapVersion) SwapErrorText = "Could not load alternatives. Close this panel and try again.";
+            if (version == _swapVersion) SwapErrorText = "Ui_Workout_Error_SwapLoad";
         }
         finally
         {
@@ -618,7 +1157,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         catch
         {
             if (version == _loadVersion)
-                SwapErrorText = "The exercise may have changed. Reload it before continuing, or leave this session.";
+                SwapErrorText = "Ui_Workout_Error_SwapChanged";
         }
         finally
         {
@@ -663,6 +1202,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
                 SummaryText = $"{activity.Exercises.Count(exercise => exercise.IsLogged)} of {count} logged" +
                               (skipped > 0 ? $" · {skipped} skipped" : string.Empty),
                 ActivityBackground = activity.ActivityBackground,
+                Prescription = activity.Prescription,
                 ActivityTextColor = activity.ActivityTextColor,
                 Exercises = activity.Exercises
             };
@@ -704,12 +1244,12 @@ public partial class WorkoutSessionViewModel : ObservableObject
     {
         if (exercise.UsesStrengthMetrics && (ParsePositiveInt(exercise.LoggedSetsText) == 0 ||
                                              ParsePositiveInt(exercise.LoggedRepsText) == 0))
-            ErrorText = "Add positive sets and reps before logging this exercise.";
+            ErrorText = "Ui_Workout_Error_SetsReps";
         else if (exercise.UsesStrengthMetrics && exercise.UsesWeight &&
                  ParseOptionalFloat(exercise.LoggedWeightText) is null)
-            ErrorText = "Add a valid weight in kg. Use 0 kg for bodyweight.";
+            ErrorText = "Ui_Workout_Error_Weight";
         else if (exercise.UsesDurationMetric && ParseDurationSeconds(exercise.LoggedDurationMinutesText) is null)
-            ErrorText = "Add a positive duration in minutes before logging this exercise.";
+            ErrorText = "Ui_Workout_Error_Duration";
         else if ((exercise.UsesDistanceMetric && InvalidOptionalFloat(exercise.LoggedDistanceKmText)) ||
                  (exercise.UsesHeartRateMetric && InvalidOptionalInt(exercise.LoggedHeartRateText)) ||
                  (exercise.UsesPowerMetric && InvalidOptionalInt(exercise.LoggedPowerWattsText)) ||

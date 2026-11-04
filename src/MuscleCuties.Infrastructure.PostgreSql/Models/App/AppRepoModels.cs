@@ -113,12 +113,14 @@ public sealed class UserProfileRecord : ITenantRecord
     public string Goal { get; set; } = string.Empty;
     public string WeightGoalPace { get; set; } = string.Empty;
     public string TrainingExperienceLevel { get; set; } = string.Empty;
-    public string CycleTrackingMode { get; set; } = string.Empty;
     public string? CurrentCyclePhase { get; set; }
     public int WorkoutDaysPerWeek { get; set; }
+    public string AvailableWorkoutWeekdaysJson { get; set; } = "[]";
     public int CycleLength { get; set; }
     public string DietaryTags { get; set; } = string.Empty;
-    public int SessionDurationMinutes { get; set; }
+    public string ActivitySessionDurationsJson { get; set; } = "{}";
+    public string RequestedActivitySessionsPerWeekJson { get; set; } = "{}";
+    public string ExcludedStrengthExerciseIdsJson { get; set; } = "[]";
     public string EquipmentLevel { get; set; } = string.Empty;
     public string PhaseBaselinesJson { get; set; } = string.Empty;
     public string PreferredWorkoutActivityTypes { get; set; } = string.Empty;
@@ -268,8 +270,27 @@ public sealed class WorkoutInjuryLogRecord : ITenantRecord
     public string Status { get; set; } = string.Empty;
     public DateOnly Since { get; set; }
     public int Pain { get; set; }
+
+    /// <summary>Closed-set answer to which movements worsen the injury; stored by enum name.</summary>
+    public string WorseningTrigger { get; set; } =
+        nameof(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered);
+
+    /// <summary>Null when unanswered, so an unanswered question is never read as "no restriction".</summary>
+    public bool? ClinicianAdvisedAvoid { get; set; }
+
     public DateOnly Date { get; set; }
+    public DateOnly? ClearedDate { get; set; }
     public DateTime CreatedAt { get; set; }
+}
+
+// An episode keeps its identity across clearance and survives deletion of its source log.
+public sealed class WorkoutInjuryPrescriptionLinkRecord : ITenantRecord
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public Guid WorkoutDayExerciseId { get; set; }
+    public Guid InjuryEpisodeId { get; set; }
+    public int OriginalExerciseId { get; set; }
 }
 
 public sealed class WorkoutPlanRecord : ITenantRecord
@@ -282,6 +303,43 @@ public sealed class WorkoutPlanRecord : ITenantRecord
     public DateTime CreatedAt { get; set; }
 }
 
+/// <summary>Immutable v0.2 proposal and input snapshot; acceptance state changes only inside the API.</summary>
+public sealed class WorkoutPlanProposalV02Record : ITenantRecord
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public Guid PlanId { get; set; }
+    public Guid ExpectedRevisionId { get; set; }
+    public string RulesetVersion { get; set; } = string.Empty;
+    public string TrainingPolicyVersion { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string InputSnapshotJson { get; set; } = "{}";
+    public string ProposalJson { get; set; } = "{}";
+    public string ReasonsJson { get; set; } = "[]";
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime? DecidedAtUtc { get; set; }
+    public Guid? AcceptedRevisionId { get; set; }
+    public int ConcurrencyVersion { get; set; } = 1;
+    public Guid? LeaseId { get; set; }
+    public long LeaseFence { get; set; }
+    public DateTime? LeaseExpiresAtUtc { get; set; }
+}
+
+/// <summary>Append-only accepted v0.2 plan revision; prior revisions remain queryable.</summary>
+public sealed class WorkoutPlanRevisionV02Record : ITenantRecord
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public Guid PlanId { get; set; }
+    public long RevisionNumber { get; set; }
+    public Guid SourceProposalId { get; set; }
+    public string RulesetVersion { get; set; } = string.Empty;
+    public string TrainingPolicyVersion { get; set; } = string.Empty;
+    public string PlanJson { get; set; } = "{}";
+    public string InputSnapshotJson { get; set; } = "{}";
+    public DateTime AcceptedAtUtc { get; set; }
+}
+
 public sealed class WorkoutDayRecord : ITenantRecord
 {
     public Guid Id { get; set; }
@@ -292,6 +350,17 @@ public sealed class WorkoutDayRecord : ITenantRecord
     public string Name { get; set; } = string.Empty;
     public int WeekIndex { get; set; }
     public DateOnly? Date { get; set; }
+    public bool IsOptional { get; set; }
+    public bool IsEasierAlternative { get; set; }
+    public bool IsRemovedByReadiness { get; set; }
+    public bool IsRemovedByUserAdjustment { get; set; }
+    public bool IsRemovedBySafety { get; set; }
+    public Guid? SafetyInjuryId { get; set; }
+    public int? SafetyActivityTypeId { get; set; }
+    public int? ActivityTypeId { get; set; }
+    public int? DayOrder { get; set; }
+    public decimal? PlannedMainDurationMinutes { get; set; }
+    public string? PlannedActivityPrescriptionJson { get; set; }
 }
 
 public sealed class WorkoutDayExerciseRecord : ITenantRecord
@@ -300,15 +369,41 @@ public sealed class WorkoutDayExerciseRecord : ITenantRecord
     public Guid UserId { get; set; }
     public Guid WorkoutDayId { get; set; }
     public int ExerciseId { get; set; }
+    public string? PlanningTemplateId { get; set; }
+    public string? PlanningTemplateVersion { get; set; }
+    public string? PlanningSlotId { get; set; }
+    public int? PlanningSessionIndex { get; set; }
+    // Null for legacy or non-injury prescriptions; never infer provenance from a replacement.
+    public int? InjuryOriginalExerciseId { get; set; }
+    public DateOnly? InjuryRestorationRequiredFromDate { get; set; }
+    public Guid? OriginWorkoutDayExerciseId { get; set; }
     public int Sets { get; set; }
+    public int OptionalSets { get; set; }
     public int Reps { get; set; }
+    public int? TargetRepetitionsInReserve { get; set; }
     public int? DurationSeconds { get; set; }
+    public bool IsOptional { get; set; }
+    public bool IsRemovedByReadiness { get; set; }
 }
 
 public sealed class WorkoutSessionLogRecord : ITenantRecord
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
+    public Guid? PlannedWorkoutDayId { get; set; }
+    public int? UnplannedActivityType { get; set; }
+    public DateOnly? UnplannedCompletionLocalDate { get; set; }
+    public string? UnplannedCompletionTimeZoneId { get; set; }
+    public long? UnplannedCompletionTimeZoneVersion { get; set; }
+    public string? PlannedTimeZoneId { get; set; }
+    public long? PlannedTimeZoneVersion { get; set; }
+    public DateOnly? PlannedLocalDate { get; set; }
+    public int ConfirmedActiveSeconds { get; set; }
+    public Guid? TimingIntervalId { get; set; }
+    public DateTime? TimingIntervalStartedAtUtc { get; set; }
+    public DateTime? TimingIntervalLastConfirmedAtUtc { get; set; }
+    public int TimingIntervalConfirmedSeconds { get; set; }
+    public string? PlannedPrescriptionSnapshotJson { get; set; }
     public string WorkoutName { get; set; } = string.Empty;
     public DateTime StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
@@ -346,6 +441,7 @@ public sealed class WorkoutLogRecord : ITenantRecord
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public Guid WorkoutDayId { get; set; }
+    public Guid? PlannedSessionId { get; set; }
     public DateOnly Date { get; set; }
     public int CompletionPercent { get; set; }
     public string? Notes { get; set; }

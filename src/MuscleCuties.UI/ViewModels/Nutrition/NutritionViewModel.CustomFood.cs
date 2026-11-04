@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
+using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
@@ -8,12 +10,7 @@ public partial class NutritionViewModel
 {
     private void ToggleCustomFoodPanel()
     {
-        InvalidateFoodSearch();
-        _editingIngredient = null;
-        SelectedFoodResult = null;
-        IsFoodFinderExpanded = true;
-        IsCustomFoodPanelVisible = !IsCustomFoodPanelVisible;
-        AddFoodMessage = string.Empty;
+        SelectFoodSource(IsCustomFoodPanelVisible ? MealFoodSource.Search : MealFoodSource.Custom);
     }
 
     private async Task CreateCustomFoodAsync()
@@ -28,7 +25,7 @@ public partial class NutritionViewModel
             !TryParseOptionalNutrient(CustomFoodVitaminD, out var vitaminD) ||
             !TryParseOptionalNutrient(CustomFoodCalcium, out var calcium))
         {
-            AddFoodMessage = "Enter valid custom food nutrition.";
+            AddFoodMessage = "Ui_Nutrition_Error_CustomFoodInvalid";
             return;
         }
 
@@ -49,23 +46,24 @@ public partial class NutritionViewModel
                 vitaminD,
                 calcium));
 
-            var item = CreateFoodSearchResultItem(food);
+            var item = CreateFoodSearchResultItem(NutritionPresentationMapper.FromCustomFood(food));
+            ResetFoodSource();
+            IsCustomFoodPanelVisible = false;
             SelectedFoodResult = item;
             FoodSearchResults = [];
             ResetFoodSearchPaging();
-            IsCustomFoodPanelVisible = false;
             FoodGrams = "1";
             ClearCustomFoodForm();
             AddFoodMessage = $"{item.Name} saved. Add it to this meal when ready.";
         }
         catch (ArgumentException)
         {
-            AddFoodMessage = "Check the food values and try again.";
+            AddFoodMessage = "Ui_Nutrition_Error_CheckFoodValues";
         }
         catch (Exception ex)
         {
             Trace.WriteLine($"[NutritionViewModel] Custom food save failed ({ex.GetType().Name}).");
-            AddFoodMessage = "Couldn't save this food. Your entries are still here; try again.";
+            AddFoodMessage = "Ui_Nutrition_Error_SaveFood";
         }
         finally
         {
@@ -104,7 +102,7 @@ public partial class NutritionViewModel
             return false;
         }
 
-        return amount >= 0f;
+        return float.IsFinite(amount) && amount >= 0f;
     }
 
     private static bool TryParseOptionalNutrient(string value, out float? amount)

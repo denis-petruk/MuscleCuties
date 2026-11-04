@@ -6,16 +6,17 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:commonModels="clr-namespace:MuscleCuties.UI.Models.UI.Common"
-    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     xmlns:workoutControls="clr-namespace:MuscleCuties.UI.Controls.Workout"
     x:DataType="vm:ProfileWorkoutPreferencesViewModel">
 
-    <VerticalStackLayout Spacing="16">
-        <VerticalStackLayout Spacing="5">
+
+    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+        <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
             <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableEquipment}"
                    Style="{StaticResource FormFieldLabel}" />
-            <Border Style="{StaticResource InputContainer}">
+            <Border Style="{StaticResource PickerContainer}">
                 <Picker
                     Title="{loc:LocalizedText Profile_WorkoutPrefs_ChooseEquipment}"
                     ItemsSource="{Binding EquipmentOptions}"
@@ -24,17 +25,73 @@
             </Border>
         </VerticalStackLayout>
 
-        <workoutControls:WorkoutActivityPreferencePicker
-            ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
-            ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
+         <workoutControls:WorkoutActivityPreferencePicker
+             ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
+             ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
 
-        <sharedControls:IconSectionHeader
-            Text="{loc:LocalizedText Profile_WorkoutPrefs_StrengthStyle}"
-            IconGlyph="Flash24"
-            IsVisible="{Binding IsStrengthStyleVisible}" />
-        <workoutControls:StrengthTrainingStylePicker
-            ItemsSource="{Binding StrengthTrainingStyleOptions}"
-            SelectStyleCommand="{Binding SelectStrengthTrainingStyleCommand}"
-            IsVisible="{Binding IsStrengthStyleVisible}" />
+         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+             <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_ExerciseExclusions}"
+                    Style="{StaticResource SectionTitle}"
+                    LineBreakMode="WordWrap"
+                    SemanticProperties.HeadingLevel="Level2" />
+            <Border Style="{StaticResource PickerContainer}">
+                <Entry Placeholder="{loc:LocalizedText Profile_WorkoutPrefs_SearchExercises}"
+                       Text="{Binding ExerciseExclusionSearchText, Mode=TwoWay}"
+                       ReturnType="Search" VerticalOptions="Center" />
+            </Border>
+            <FlexLayout BindableLayout.ItemsSource="{Binding SelectedExerciseExclusions}"
+                        Wrap="Wrap" JustifyContent="Start">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="workoutModels:WorkoutExerciseExclusionOptionItem">
+                        <Border Style="{StaticResource CardSecondary}" Margin="{StaticResource UiInsets0_0_8_8}"
+                                SemanticProperties.Description="{Binding Name}"
+                                SemanticProperties.Hint="{loc:LocalizedText Profile_WorkoutPrefs_RemoveAvoidedExercise}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleCommand}" />
+                            </Border.GestureRecognizers>
+                            <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                <Label Text="{Binding Name}" Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
+                                <Path Data="M6 6L18 18M18 6L6 18" Stroke="{StaticResource Primary}"
+                                      StrokeThickness="{StaticResource UiStrokeWidth2}"
+                                      WidthRequest="{StaticResource UiDimension14}"
+                                      HeightRequest="{StaticResource UiDimension14}"
+                                      VerticalOptions="Center" InputTransparent="True" />
+                            </HorizontalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </FlexLayout>
+            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" IsVisible="{Binding HasExerciseExclusionQuery}"
+                                 BindableLayout.ItemsSource="{Binding FilteredExerciseExclusionOptions}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="workoutModels:WorkoutExerciseExclusionOptionItem">
+                        <Border
+                            Style="{StaticResource CardSecondary}"
+                            SemanticProperties.Description="{Binding Name}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleCommand}" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                                <Label
+                                    Text="{Binding Name}"
+                                    Style="{StaticResource BodyStrong}"
+                                    LineBreakMode="WordWrap"
+                                    VerticalOptions="Center" />
+                                <Path Grid.Column="1" Data="M12 5V19M5 12H19"
+                                      Stroke="{StaticResource Primary}"
+                                      StrokeThickness="{StaticResource UiStrokeWidth2}"
+                                      WidthRequest="{StaticResource UiDimension18}"
+                                      HeightRequest="{StaticResource UiDimension18}" VerticalOptions="Center"
+                                      InputTransparent="True" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+            <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_NoExerciseSearchResults}"
+                   Style="{StaticResource MutedLabel}"
+                   IsVisible="{Binding HasNoExerciseExclusionMatches}"
+                   LineBreakMode="WordWrap" />
+        </VerticalStackLayout>
     </VerticalStackLayout>
 </ContentView>

@@ -1,5 +1,3 @@
-using MuscleCuties.Core.Models.Nutrition;
-
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
 public class MealIngredientItem
@@ -15,8 +13,7 @@ public class MealIngredientItem
     public float Fats { get; set; }
     public string SourceSummary { get; set; } = string.Empty;
 
-    private MacroNutrients MacrosForAmount =>
-        MacroNutrients.FromPer100g(Calories, Protein, Carbs, Fats, Grams);
+    public NutritionMacros MacrosForAmount { get; set; }
 
     public float CaloriesForAmount => MacrosForAmount.Calories;
     public float ProteinForAmount => MacrosForAmount.Protein;
@@ -24,7 +21,7 @@ public class MealIngredientItem
     public float FatsForAmount => MacrosForAmount.Fats;
 
     public string AmountSummary =>
-        $"{ServingAmountText} · {MacrosForAmount.ToNutritionText()}";
+        $"{ServingAmountText} · {MacrosForAmount.NutritionText}";
 
     private string ServingAmountText
     {

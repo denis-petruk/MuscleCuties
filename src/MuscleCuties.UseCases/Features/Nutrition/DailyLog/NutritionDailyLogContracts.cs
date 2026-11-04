@@ -24,7 +24,8 @@ public sealed record LoggedFoodItemDto(
     DateTime LoggedAtTimestamp,
     IReadOnlyList<LoggedIngredientDto> Ingredients,
     string? AcceptedSuggestionName = null,
-    CyclePhase? AcceptedSuggestionPhase = null
+    CyclePhase? AcceptedSuggestionPhase = null,
+    int? LoggedMealId = null
 )
 {
     public bool IsGroupedMeal => Ingredients.Count > 0;
@@ -46,18 +47,6 @@ public sealed record DailyNutritionLogSnapshot(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     IReadOnlyList<LoggedFoodItemDto> Entries
-);
-
-public sealed record DailyNutritionSummarySnapshot(
-    DateOnly Date,
-    Guid LogId,
-    double TotalCalories,
-    double TotalProtein,
-    double TotalCarbs,
-    double TotalFat,
-    double TargetCalories,
-    int WaterIntakeMl,
-    int ItemsCount
 );
 
 public sealed record QuickFoodItemSnapshot(
@@ -82,4 +71,17 @@ public sealed record FastLookupFoodItemDto(
     double Carbs,
     double Fats,
     bool IsCustom
+);
+
+public sealed record SaveFoodItemRequest(
+    DateOnly Date,
+    LoggedFoodItemDto Item,
+    bool RequireExisting = false
+);
+
+public sealed record ReLogFoodRequest(
+    DateOnly Date,
+    MealType MealType,
+    QuickFoodItemSnapshot QuickItem,
+    LoggedFoodItemDto Draft
 );

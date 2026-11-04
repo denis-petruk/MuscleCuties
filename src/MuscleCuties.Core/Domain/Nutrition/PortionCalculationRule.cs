@@ -21,32 +21,19 @@ public sealed record PortionResult(
 
 public static class PortionCalculationRule
 {
-    private const int FatLossGoal = 0;
+    public const float MaxOilGrams = 14f; // Generated oil ceiling.
+    private const float OilFatDensityThreshold = 80f;
+    private const float DefaultSauceMaxGrams = 30f;
+    private const float PortionStepGrams = 5f;
+    private const float MinimumProteinGrams = 50f;
+    private const float MaximumProteinGrams = 300f;
     private const float GramsPerHundred = 100f;
     private const float KcalTolerancePct = 0.15f;
-    private const float RelaxedKcalTolerancePct = 0.25f;
     private const float ProteinDeficitToleranceG = 8f;
-    private const float DeficitTieToleranceG = 0.001f;
-
-    private const float AnchorProteinCalorieThresholdKcal = 300f;
-    private const float HighCalorieAnchorProteinGrams = 12f;
-    private const float LowCalorieAnchorProteinGrams = 8f;
-
-    private const float BaseVegetableGrams = 120f;
-    private const float MinVegetableGrams = 60f;
-    private const float MaxVegetableGrams = 300f;
-    private const float RestDayVegetableMultiplier = 1.5f;
-    private const float FatLossVegetableMultiplier = 1.3f;
-
+    private const float RelaxedKcalTolerancePct = 0.25f;
     private const float MinCarbGrams = 30f;
     private const float MaxCarbGrams = 180f;
     private const float RelaxedMaxCarbGrams = 220f;
-    private const float DefaultCarbGrams = 100f;
-
-    private const float MinPortionGrams = 50f;
-    private const float MaxPortionGrams = 300f;
-    private const float PortionSnapGrams = 5f;
-    private const float MaxSauceGrams = 30f;
 
     public static PortionResult? Solve(
         float targetCalories,
@@ -68,17 +55,15 @@ public static class PortionCalculationRule
         var carbMacros = CalculateCarbPortion(carb, targetCarbs, vegMacros.Carbs, relaxed);
 
         var remainingProteinG = MathF.Max(targetProtein - vegMacros.Protein - carbMacros.Protein, 0f);
-        var minimumAnchorProtein = targetCalories >= AnchorProteinCalorieThresholdKcal
-            ? HighCalorieAnchorProteinGrams
-            : LowCalorieAnchorProteinGrams;
+        var minimumAnchorProtein = targetCalories >= 300f ? 12f : 8f;
         var rawProteinGrams = MathF.Max(
-            remainingProteinG / protein.Protein * GramsPerHundred,
-            minimumAnchorProtein / protein.Protein * GramsPerHundred);
+            remainingProteinG / protein.Protein * 100f,
+            minimumAnchorProtein / protein.Protein * 100f);
 
         var candidateGrams = GenerateProteinCandidateGrams(protein, rawProteinGrams);
         var kcalTolerance = relaxed ? RelaxedKcalTolerancePct : KcalTolerancePct;
 
-        return EvaluateCandidateConvergence(
+        var result = EvaluateCandidateConvergence(
             candidateGrams,
             protein,
             carbMacros,
@@ -89,6 +74,46 @@ public static class PortionCalculationRule
             targetFats,
             minimumAnchorProtein,
             kcalTolerance);
+
+        if (result is not null || sauce is null || sauce.Fats < OilFatDensityThreshold)
+            return result;
+
+        // The oil cap can leave the original whole-food portions short of calories.
+        // Search other serving-sized portions while retaining the existing acceptance rules.
+        var proteinCandidates = GenerateRebalanceCandidates(
+            MinimumProteinGrams, MaximumProteinGrams, protein.ServingGrams);
+        var carbCandidates = GenerateRebalanceCandidates(
+            MinCarbGrams, relaxed ? RelaxedMaxCarbGrams : MaxCarbGrams, carb.ServingGrams);
+        PortionResult? best = null;
+        foreach (var carbGrams in carbCandidates)
+        {
+            var adjustedCarb = new PortionComponentMacros(
+                carbGrams, carb.Calories * carbGrams / GramsPerHundred,
+                carb.Protein * carbGrams / GramsPerHundred,
+                carb.Carbs * carbGrams / GramsPerHundred,
+                carb.Fats * carbGrams / GramsPerHundred);
+            var candidate = EvaluateCandidateConvergence(
+                proteinCandidates, protein, adjustedCarb, vegMacros, sauce,
+                targetCalories, targetProtein, targetFats, minimumAnchorProtein, kcalTolerance);
+            if (candidate is not null && (best is null ||
+                MathF.Abs(candidate.TotalCalories - targetCalories) < MathF.Abs(best.TotalCalories - targetCalories)))
+                best = candidate;
+        }
+
+        return best;
+    }
+
+    private static float[] GenerateRebalanceCandidates(float minimum, float maximum, float servingGrams)
+    {
+        var step = servingGrams > 0f
+            ? servingGrams * MathF.Max(1f, MathF.Ceiling(PortionStepGrams / servingGrams))
+            : PortionStepGrams;
+        var first = MathF.Ceiling(minimum / step);
+        var last = MathF.Floor(maximum / step);
+        var candidates = new List<float>();
+        for (var serving = first; serving <= last; serving++)
+            candidates.Add(serving * step);
+        return candidates.ToArray();
     }
 
     private static bool IsValidTarget(
@@ -114,15 +139,14 @@ public static class PortionCalculationRule
         int userGoal,
         bool isRestDay)
     {
-        var vegMultiplier = (isRestDay ? RestDayVegetableMultiplier : 1f) *
-                            (userGoal == FatLossGoal ? FatLossVegetableMultiplier : 1f);
-        var vegGrams = Math.Clamp(BaseVegetableGrams * vegMultiplier, MinVegetableGrams, MaxVegetableGrams);
+        var vegMultiplier = (isRestDay ? 1.5f : 1f) * (userGoal == 0 ? 1.3f : 1f);
+        var vegGrams = Math.Clamp(120f * vegMultiplier, 60f, 300f);
         return new PortionComponentMacros(
             vegGrams,
-            veg.Calories * vegGrams / GramsPerHundred,
-            veg.Protein * vegGrams / GramsPerHundred,
-            veg.Carbs * vegGrams / GramsPerHundred,
-            veg.Fats * vegGrams / GramsPerHundred);
+            veg.Calories * vegGrams / 100f,
+            veg.Protein * vegGrams / 100f,
+            veg.Carbs * vegGrams / 100f,
+            veg.Fats * vegGrams / 100f);
     }
 
     private static PortionComponentMacros CalculateCarbPortion(
@@ -134,16 +158,16 @@ public static class PortionCalculationRule
         var remainingCarbG = MathF.Max(targetCarbs - vegCarbs, 0f);
         var maxCarbGrams = relaxed ? RelaxedMaxCarbGrams : MaxCarbGrams;
         var carbGrams = carb.Carbs > 0f
-            ? Math.Clamp(remainingCarbG / carb.Carbs * GramsPerHundred, MinCarbGrams, maxCarbGrams)
-            : DefaultCarbGrams;
+            ? Math.Clamp(remainingCarbG / carb.Carbs * 100f, MinCarbGrams, maxCarbGrams)
+            : 100f;
         carbGrams = SnapToServing(carbGrams, carb.ServingGrams);
 
         return new PortionComponentMacros(
             carbGrams,
-            carb.Calories * carbGrams / GramsPerHundred,
-            carb.Protein * carbGrams / GramsPerHundred,
-            carb.Carbs * carbGrams / GramsPerHundred,
-            carb.Fats * carbGrams / GramsPerHundred);
+            carb.Calories * carbGrams / 100f,
+            carb.Protein * carbGrams / 100f,
+            carb.Carbs * carbGrams / 100f,
+            carb.Fats * carbGrams / 100f);
     }
 
     private static float[] GenerateProteinCandidateGrams(
@@ -156,21 +180,19 @@ public static class PortionCalculationRule
 
         if (servingGrams > 0f)
         {
-            var minServings = MathF.Max(1f, MathF.Ceiling(MinPortionGrams / servingGrams));
-            var maxServings = MathF.Max(minServings, MathF.Floor(MaxPortionGrams / servingGrams));
+            var minServings = MathF.Max(1f, MathF.Ceiling(50f / servingGrams));
+            var maxServings = MathF.Max(minServings, MathF.Floor(300f / servingGrams));
 
             var floorServings = Math.Clamp(MathF.Floor(rawProteinGrams / servingGrams), minServings, maxServings);
             var ceilServings = Math.Clamp(MathF.Ceiling(rawProteinGrams / servingGrams), minServings, maxServings);
 
-            downCandidate = Math.Clamp(floorServings * servingGrams, MinPortionGrams, MaxPortionGrams);
-            upCandidate = Math.Clamp(ceilServings * servingGrams, MinPortionGrams, MaxPortionGrams);
+            downCandidate = Math.Clamp(floorServings * servingGrams, 50f, 300f);
+            upCandidate = Math.Clamp(ceilServings * servingGrams, 50f, 300f);
         }
         else
         {
-            downCandidate = Math.Clamp(MathF.Floor(rawProteinGrams / PortionSnapGrams) * PortionSnapGrams,
-                MinPortionGrams, MaxPortionGrams);
-            upCandidate = Math.Clamp(MathF.Ceiling(rawProteinGrams / PortionSnapGrams) * PortionSnapGrams,
-                MinPortionGrams, MaxPortionGrams);
+            downCandidate = Math.Clamp(MathF.Floor(rawProteinGrams / 5f) * 5f, 50f, 300f);
+            upCandidate = Math.Clamp(MathF.Ceiling(rawProteinGrams / 5f) * 5f, 50f, 300f);
         }
 
         return downCandidate.Equals(upCandidate)
@@ -187,17 +209,20 @@ public static class PortionCalculationRule
             return default;
 
         var remainingFatG = MathF.Max(targetFats - currentFats, 0f);
-        var rawSauceGrams = Math.Clamp(remainingFatG / sauce.Fats * GramsPerHundred, 0f, MaxSauceGrams);
+        var isHighFatOrOil = sauce.Fats >= OilFatDensityThreshold;
+        var maxAllowedGrams = isHighFatOrOil ? MaxOilGrams : DefaultSauceMaxGrams;
+        var rawSauceGrams = Math.Clamp(remainingFatG / sauce.Fats * 100f, 0f, maxAllowedGrams);
         if (rawSauceGrams <= 0f)
             return default;
 
-        var sauceGrams = SnapToServing(rawSauceGrams, sauce.ServingGrams);
+        var snappedGrams = SnapToServing(rawSauceGrams, sauce.ServingGrams);
+        var sauceGrams = isHighFatOrOil ? MathF.Min(snappedGrams, maxAllowedGrams) : snappedGrams;
         return new PortionComponentMacros(
             sauceGrams,
-            sauce.Calories * sauceGrams / GramsPerHundred,
-            sauce.Protein * sauceGrams / GramsPerHundred,
-            sauce.Carbs * sauceGrams / GramsPerHundred,
-            sauce.Fats * sauceGrams / GramsPerHundred);
+            sauce.Calories * sauceGrams / 100f,
+            sauce.Protein * sauceGrams / 100f,
+            sauce.Carbs * sauceGrams / 100f,
+            sauce.Fats * sauceGrams / 100f);
     }
 
     private static PortionResult? EvaluateCandidateConvergence(
@@ -218,13 +243,13 @@ public static class PortionCalculationRule
 
         foreach (var pGrams in candidateGrams)
         {
-            var pProtein = protein.Protein * pGrams / GramsPerHundred;
+            var pProtein = protein.Protein * pGrams / 100f;
             if (pProtein < minimumAnchorProtein)
                 continue;
 
-            var pCarbs = protein.Carbs * pGrams / GramsPerHundred;
-            var pFats = protein.Fats * pGrams / GramsPerHundred;
-            var pCalories = protein.Calories * pGrams / GramsPerHundred;
+            var pCarbs = protein.Carbs * pGrams / 100f;
+            var pFats = protein.Fats * pGrams / 100f;
+            var pCalories = protein.Calories * pGrams / 100f;
 
             var sauceMacros = CalculateSaucePortion(sauce, targetFats, pFats + carb.Fats + veg.Fats);
 
@@ -245,8 +270,7 @@ public static class PortionCalculationRule
 
             if (bestSolution is null ||
                 effectiveDeficit < bestEffectiveDeficit ||
-                (MathF.Abs(effectiveDeficit - bestEffectiveDeficit) < DeficitTieToleranceG &&
-                 calorieError < bestCalorieError))
+                (MathF.Abs(effectiveDeficit - bestEffectiveDeficit) < 0.001f && calorieError < bestCalorieError))
             {
                 bestSolution = new PortionResult(
                     pGrams, carb.Grams, veg.Grams, sauceMacros.Grams,
@@ -262,7 +286,7 @@ public static class PortionCalculationRule
     public static float SnapToServing(float targetGrams, float servingGrams)
     {
         if (servingGrams <= 0f)
-            return MathF.Round(targetGrams / PortionSnapGrams) * PortionSnapGrams;
+            return MathF.Round(targetGrams / 5f) * 5f;
 
         var servings = MathF.Max(1f, MathF.Round(targetGrams / servingGrams));
         return servings * servingGrams;

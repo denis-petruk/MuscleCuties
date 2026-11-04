@@ -172,6 +172,31 @@ public static class RecipeEndpointMappings
             }
         });
 
+        group.MapPut("/templates/{id:guid}", async (
+            Guid id,
+            SaveMealAsTemplateRequest request,
+            ClaimsPrincipal principal,
+            [FromServices] ISaveMealTemplateUseCase useCase,
+            CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(principal, out var userId))
+                return Results.Unauthorized();
+
+            try
+            {
+                var result = await useCase.UpdateAsync(userId, id, request, cancellationToken).ConfigureAwait(false);
+                return Results.Ok(result);
+            }
+            catch (KeyNotFoundException)
+            {
+                return Results.NotFound();
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
+        });
+
         group.MapGet("/templates/{id:guid}", async (
             Guid id,
             ClaimsPrincipal principal,

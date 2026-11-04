@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using MuscleCuties.UseCases.Features.Caching;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
@@ -18,6 +19,20 @@ public interface IBackendSessionTokenStore
     Task<BackendSessionTokens?> ReadTokensAsync(CancellationToken cancellationToken = default);
     Task WriteTokensAsync(BackendSessionTokens tokens, CancellationToken cancellationToken = default);
     Task ClearTokensAsync(CancellationToken cancellationToken = default);
+}
+
+internal static class BackendSessionLocks
+{
+    private const int SingleSessionChange = 1;
+    internal sealed class State
+    {
+        public SemaphoreSlim Semaphore { get; } = new(SingleSessionChange, SingleSessionChange);
+        private long version;
+        public long Version => Interlocked.Read(ref version);
+        public void Invalidate() => Interlocked.Increment(ref version);
+    }
+    private static readonly ConditionalWeakTable<IBackendSessionTokenStore, State> Locks = new();
+    public static State For(IBackendSessionTokenStore store) => Locks.GetValue(store, _ => new State());
 }
 
 public enum BackendApiStatus
@@ -39,7 +54,8 @@ public sealed record BackendApiResponse<T>(
     int? ServerConcurrencyVersion = null,
     bool IsOfflineStaleRead = false,
     DateTimeOffset? CachedAtUtc = null,
-    HttpStatusCode? ResponseStatusCode = null);
+    HttpStatusCode? ResponseStatusCode = null,
+    string? RequestId = null);
 
 public interface IMuscleCutiesBackendApiClient
 {
@@ -68,6 +84,7 @@ public sealed class MuscleCutiesBackendApiClient(
 {
     private const string RefreshRoute = "/api/v1/auth/refresh";
     private const string IdempotencyHeaderName = "X-Idempotency-Key";
+    private const string RequestIdHeaderName = "X-Request-Id";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(
@@ -142,13 +159,21 @@ public sealed class MuscleCutiesBackendApiClient(
             return new BackendApiResponse<bool>(BackendApiStatus.Success, true);
 
         var mapped = await MapResponseAsync<object>(response, cancellationToken).ConfigureAwait(false);
-        return new BackendApiResponse<bool>(mapped.Status, false, mapped.ErrorCode, mapped.ServerConcurrencyVersion);
+        return new BackendApiResponse<bool>(
+            mapped.Status,
+            false,
+            mapped.ErrorCode,
+            mapped.ServerConcurrencyVersion,
+            ResponseStatusCode: mapped.ResponseStatusCode,
+            RequestId: mapped.RequestId);
     }
 
     private async Task<HttpResponseMessage> SendWithRefreshRetryAsync(
         Func<HttpRequestMessage> requestFactory,
         CancellationToken cancellationToken)
     {
+        var sessionState = BackendSessionLocks.For(tokenStore);
+        var requestVersion = sessionState.Version;
         var tokens = await tokenStore.ReadTokensAsync(cancellationToken).ConfigureAwait(false);
         using var initialRequest = requestFactory();
         if (tokens is not null && !string.IsNullOrWhiteSpace(tokens.AccessToken))
@@ -158,22 +183,50 @@ public sealed class MuscleCutiesBackendApiClient(
         if (response.StatusCode != HttpStatusCode.Unauthorized || tokens is null || string.IsNullOrWhiteSpace(tokens.RefreshToken))
             return response;
 
+        // The reference must survive the refresh round trip, otherwise a 401 loses the only handle
+        // support has on the rejected request.
+        var rejectedRequestId = ReadRequestId(response);
         response.Dispose();
-        var refreshed = await TryRefreshSessionAsync(tokens, cancellationToken).ConfigureAwait(false);
-        if (refreshed is null)
+        var refreshLock = sessionState.Semaphore;
+        await refreshLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        BackendSessionTokens? refreshed;
+        try
         {
-            await tokenStore.ClearTokensAsync(cancellationToken).ConfigureAwait(false);
-            await snapshotCache.ClearAsync(cancellationToken).ConfigureAwait(false);
-            return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+            var current = await tokenStore.ReadTokensAsync(cancellationToken).ConfigureAwait(false);
+            if (requestVersion != sessionState.Version || current is null || current.AccountId != tokens.AccountId)
+                return SyntheticFailureResponse(HttpStatusCode.Unauthorized, rejectedRequestId);
+
+            if (current.RefreshToken != tokens.RefreshToken)
+                refreshed = current;
+            else
+            {
+                var version = sessionState.Version;
+                var (updated, failureStatus) = await TryRefreshSessionAsync(current, sessionState, version, CancellationToken.None).ConfigureAwait(false);
+                if (version != sessionState.Version)
+                    return SyntheticFailureResponse(HttpStatusCode.Unauthorized, rejectedRequestId);
+                if (updated is null)
+                {
+                    if (failureStatus is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+                    {
+                        await tokenStore.ClearTokensAsync(cancellationToken).ConfigureAwait(false);
+                        await snapshotCache.ClearAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                    return SyntheticFailureResponse(failureStatus, rejectedRequestId);
+                }
+                refreshed = updated;
+            }
         }
+        finally { refreshLock.Release(); }
 
         using var retryRequest = requestFactory();
         retryRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", refreshed.AccessToken);
         return await httpClient.SendAsync(retryRequest, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<BackendSessionTokens?> TryRefreshSessionAsync(
+    private async Task<(BackendSessionTokens? Tokens, HttpStatusCode FailureStatus)> TryRefreshSessionAsync(
         BackendSessionTokens existing,
+        BackendSessionLocks.State sessionState,
+        long version,
         CancellationToken cancellationToken)
     {
         using var refreshRequest = new HttpRequestMessage(HttpMethod.Post, RefreshRoute)
@@ -182,22 +235,32 @@ public sealed class MuscleCutiesBackendApiClient(
         };
         using var refreshResponse = await httpClient.SendAsync(refreshRequest, cancellationToken).ConfigureAwait(false);
         if (!refreshResponse.IsSuccessStatusCode)
-            return null;
+            return (null, refreshResponse.StatusCode);
 
-        var payload = await refreshResponse.Content
-            .ReadFromJsonAsync<RefreshTokenDto>(JsonOptions, cancellationToken)
-            .ConfigureAwait(false);
+        RefreshTokenDto? payload;
+        try
+        {
+            payload = await refreshResponse.Content
+                .ReadFromJsonAsync<RefreshTokenDto>(JsonOptions, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is JsonException or NotSupportedException)
+        {
+            return (null, HttpStatusCode.BadGateway);
+        }
         if (payload is null || string.IsNullOrWhiteSpace(payload.AccessToken) || string.IsNullOrWhiteSpace(payload.RefreshToken))
-            return null;
+            return (null, HttpStatusCode.BadGateway);
 
         var updated = new BackendSessionTokens(
             payload.UserId != Guid.Empty ? payload.UserId : existing.AccountId,
             payload.AccessToken,
             payload.RefreshToken,
-            payload.AccessTokenExpiresAtUtc);
-        await tokenStore.WriteTokensAsync(updated, cancellationToken).ConfigureAwait(false);
-        await snapshotCache.ActivateAccountAsync(updated.AccountId, cancellationToken).ConfigureAwait(false);
-        return updated;
+            payload.AccessExpiresAtUtc);
+        if (version != sessionState.Version)
+            return (null, HttpStatusCode.Unauthorized);
+        await tokenStore.WriteTokensAsync(updated, CancellationToken.None).ConfigureAwait(false);
+        await snapshotCache.ActivateAccountAsync(updated.AccountId, CancellationToken.None).ConfigureAwait(false);
+        return (updated, HttpStatusCode.OK);
     }
 
     private static async Task<BackendApiResponse<TResponse>> MapResponseAsync<TResponse>(
@@ -218,6 +281,8 @@ public sealed class MuscleCutiesBackendApiClient(
 
         string? errorCode = null;
         int? conflictVersion = null;
+        TResponse? validationData = default;
+        var requestId = ReadRequestId(response);
         try
         {
             using var doc = await JsonDocument.ParseAsync(
@@ -238,6 +303,21 @@ public sealed class MuscleCutiesBackendApiClient(
 
                 if (doc.RootElement.TryGetProperty("version", out var verProp) && verProp.TryGetInt32(out var ver))
                     conflictVersion = ver;
+
+                if (requestId is null &&
+                    doc.RootElement.TryGetProperty("requestId", out var requestIdProp) &&
+                    requestIdProp.ValueKind == JsonValueKind.String)
+                    requestId = requestIdProp.GetString();
+
+                if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.UnprocessableEntity)
+                    try
+                    {
+                        validationData = doc.RootElement.Deserialize<TResponse>(JsonOptions);
+                    }
+                    catch (Exception exception) when (exception is JsonException or NotSupportedException)
+                    {
+                        // Some validation bodies contain only an error code.
+                    }
             }
         }
         catch (JsonException)
@@ -248,25 +328,50 @@ public sealed class MuscleCutiesBackendApiClient(
         return response.StatusCode switch
         {
             HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden =>
-                new BackendApiResponse<TResponse>(BackendApiStatus.Unauthorized, default, errorCode ?? "unauthorized"),
+                new BackendApiResponse<TResponse>(BackendApiStatus.Unauthorized, default,
+                    errorCode ?? "unauthorized", ResponseStatusCode: response.StatusCode, RequestId: requestId),
             HttpStatusCode.Conflict =>
-                new BackendApiResponse<TResponse>(BackendApiStatus.Conflict, default, errorCode ?? "conflict", conflictVersion),
+                new BackendApiResponse<TResponse>(BackendApiStatus.Conflict, default,
+                    errorCode ?? "conflict", conflictVersion, ResponseStatusCode: response.StatusCode, RequestId: requestId),
             HttpStatusCode.BadRequest or HttpStatusCode.UnprocessableEntity =>
-                new BackendApiResponse<TResponse>(BackendApiStatus.ValidationFailed, default, errorCode ?? "validationFailed"),
+                new BackendApiResponse<TResponse>(BackendApiStatus.ValidationFailed, validationData,
+                    errorCode ?? "validationFailed", ResponseStatusCode: response.StatusCode, RequestId: requestId),
             HttpStatusCode.NotFound =>
-                new BackendApiResponse<TResponse>(BackendApiStatus.NotFound, default, errorCode ?? "notFound"),
+                new BackendApiResponse<TResponse>(BackendApiStatus.NotFound, default,
+                    errorCode ?? "notFound", ResponseStatusCode: response.StatusCode, RequestId: requestId),
             HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable =>
                 new BackendApiResponse<TResponse>(BackendApiStatus.ServerError, default,
-                    errorCode ?? "serverError", ResponseStatusCode: response.StatusCode),
-            _ => new BackendApiResponse<TResponse>(BackendApiStatus.ServerError, default, errorCode ?? "serverError")
+                    errorCode ?? "serverError", ResponseStatusCode: response.StatusCode, RequestId: requestId),
+            _ => new BackendApiResponse<TResponse>(BackendApiStatus.ServerError, default,
+                errorCode ?? "serverError", ResponseStatusCode: response.StatusCode, RequestId: requestId)
         };
+    }
+
+    private static HttpResponseMessage SyntheticFailureResponse(HttpStatusCode status, string? requestId)
+    {
+        var response = new HttpResponseMessage(status);
+        if (!string.IsNullOrWhiteSpace(requestId))
+            response.Headers.TryAddWithoutValidation(RequestIdHeaderName, requestId);
+        return response;
+    }
+
+    private static string? ReadRequestId(HttpResponseMessage response)
+    {
+        if (!response.Headers.TryGetValues(RequestIdHeaderName, out var values))
+            return null;
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+        }
+        return null;
     }
 
     private sealed record RefreshTokenDto(
         Guid UserId,
         string AccessToken,
         string RefreshToken,
-        DateTimeOffset AccessTokenExpiresAtUtc);
+        DateTimeOffset AccessExpiresAtUtc);
 }
 
 /// <summary>
@@ -593,8 +698,16 @@ public sealed class MobileJourneyCloudGateway(
                     "invalidSessionResponse");
 
             var tokens = new BackendSessionTokens(userId, accessToken, refreshToken, expires);
-            await tokenStore.WriteTokensAsync(tokens, cancellationToken).ConfigureAwait(false);
-            await snapshotCache.ActivateAccountAsync(tokens.AccountId, cancellationToken).ConfigureAwait(false);
+            var sessionState = BackendSessionLocks.For(tokenStore);
+            var sessionLock = sessionState.Semaphore;
+            await sessionLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                sessionState.Invalidate();
+                await tokenStore.WriteTokensAsync(tokens, CancellationToken.None).ConfigureAwait(false);
+                await snapshotCache.ActivateAccountAsync(tokens.AccountId, CancellationToken.None).ConfigureAwait(false);
+            }
+            finally { sessionLock.Release(); }
             return new BackendApiResponse<BackendSessionTokens>(BackendApiStatus.Success, tokens);
         }
 
@@ -609,12 +722,23 @@ public sealed class MobileJourneyCloudGateway(
         DateOnly today,
         CancellationToken cancellationToken = default)
     {
+        return await GetDashboardOverviewAsync(today, null, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<BackendApiResponse<DashboardOverviewResponse>> GetDashboardOverviewAsync(
+        DateOnly today,
+        string? timeZoneId,
+        CancellationToken cancellationToken = default)
+    {
         var tokens = await tokenStore.ReadTokensAsync(cancellationToken).ConfigureAwait(false);
         if (tokens is null || tokens.AccountId == Guid.Empty)
             return new BackendApiResponse<DashboardOverviewResponse>(BackendApiStatus.Unauthorized, null, "unauthenticated");
 
+        var timeZoneQuery = string.IsNullOrWhiteSpace(timeZoneId)
+            ? string.Empty
+            : $"&timeZoneId={Uri.EscapeDataString(timeZoneId)}";
         return await apiClient.GetAsync<DashboardOverviewResponse>(
-            $"/api/v1/dashboard/overview?date={today:yyyy-MM-dd}",
+            $"/api/v1/dashboard/overview?date={today:yyyy-MM-dd}{timeZoneQuery}",
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -643,9 +767,12 @@ public sealed class MobileJourneyCloudGateway(
 
     public async Task LogoutAndPurgeLocalStateAsync(CancellationToken cancellationToken = default)
     {
+        var sessionState = BackendSessionLocks.For(tokenStore);
+        sessionState.Invalidate();
+        var logoutVersion = sessionState.Version;
+        var tokens = await tokenStore.ReadTokensAsync(CancellationToken.None).ConfigureAwait(false);
         try
         {
-            var tokens = await tokenStore.ReadTokensAsync(cancellationToken).ConfigureAwait(false);
             if (tokens is not null && !string.IsNullOrWhiteSpace(tokens.RefreshToken))
             {
                 await apiClient.SendMutationAsync<object, object>(
@@ -658,8 +785,18 @@ public sealed class MobileJourneyCloudGateway(
         }
         finally
         {
-            await tokenStore.ClearTokensAsync(cancellationToken).ConfigureAwait(false);
-            await snapshotCache.ClearAsync(cancellationToken).ConfigureAwait(false);
+            var sessionLock = sessionState.Semaphore;
+            await sessionLock.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+            try
+            {
+                var current = await tokenStore.ReadTokensAsync(CancellationToken.None).ConfigureAwait(false);
+                if (sessionState.Version == logoutVersion && current?.AccountId == tokens?.AccountId)
+                {
+                    await tokenStore.ClearTokensAsync(CancellationToken.None).ConfigureAwait(false);
+                    await snapshotCache.ClearAsync(CancellationToken.None).ConfigureAwait(false);
+                }
+            }
+            finally { sessionLock.Release(); }
         }
     }
 }

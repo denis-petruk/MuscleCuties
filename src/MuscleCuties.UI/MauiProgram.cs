@@ -2,12 +2,10 @@ using System.Diagnostics;
 using System.Security.Authentication;
 using CommunityToolkit.Maui;
 using MauiIcons.Fluent;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Handlers;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Workout.Planning;
-using MuscleCuties.Core.Repositories.Workout.Planning;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Cycle;
@@ -30,8 +28,6 @@ using MuscleCuties.UseCases.Features.Caching;
 using MuscleCuties.Infrastructure.Cycle.Overview;
 using MuscleCuties.Infrastructure.Dashboard.Overview;
 using MuscleCuties.Infrastructure.Nutrition.DailyLog;
-using MuscleCuties.Infrastructure.Profile.HealthSync;
-using MuscleCuties.Infrastructure.Progress;
 using MuscleCuties.Infrastructure.Workout.Media;
 using MuscleCuties.Infrastructure.Cloud;
 using MuscleCuties.UI.Infrastructure.Network;
@@ -47,6 +43,7 @@ using MuscleCuties.UI.Pages.Workout;
 using MuscleCuties.UI.Services;
 using MuscleCuties.UI.Services.Auth;
 using MuscleCuties.UI.Services.Localization;
+using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.Services.Notifications;
 using MuscleCuties.UI.Services.Nutrition;
@@ -74,6 +71,7 @@ using MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using MuscleCuties.UseCases.Features.Dashboard.Overview;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Hydration;
 using MuscleCuties.Infrastructure.Nutrition.Recipes;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
@@ -83,7 +81,6 @@ using MuscleCuties.UseCases.Features.Nutrition.Recipes;
 using MuscleCuties.UseCases.Features.Onboarding.ProfileSetup;
 using MuscleCuties.UseCases.Features.Onboarding.Quiz;
 using MuscleCuties.UseCases.Features.Profile.Feedback;
-using MuscleCuties.UseCases.Features.Profile.HealthSync;
 using MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 using MuscleCuties.UseCases.Features.Profile.Overview;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo;
@@ -93,8 +90,11 @@ using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Progress;
+using MuscleCuties.UseCases.Features.Workout.Archive;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
+using MuscleCuties.UseCases.Features.Workout.Planning;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 #if IOS || MACCATALYST
@@ -106,7 +106,8 @@ namespace MuscleCuties.UI;
 
 public static class MauiProgram
 {
-    private const string ProductionBackendBaseUrl = "https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com";
+    private const string DefaultBackendBaseUrl = "https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com";
+    private const string WorkoutPreferencesAfterOnboardingContextKey = "workout-preferences-after-onboarding";
 #if DEBUG
     private const string DebugBackendBaseUrlPreferenceKey = "backend_api_base_url";
 #endif
@@ -125,7 +126,7 @@ public static class MauiProgram
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "Inter");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                fonts.AddFont("OpenSans-Semibold.ttf", "InterSemibold");
             });
 
         var services = builder.Services;
@@ -155,6 +156,11 @@ public static class MauiProgram
         TimePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
             ClearAndroidInputChrome(handler.PlatformView));
 #elif IOS || MACCATALYST
+        ButtonHandler.Mapper.AppendToMapping("MuscleCutiesButtonCornerRadius", (handler, _) =>
+        {
+            handler.PlatformView.Layer.CornerRadius = (nfloat)handler.VirtualView.CornerRadius;
+            handler.PlatformView.Layer.MasksToBounds = handler.VirtualView.CornerRadius > 0;
+        });
         EntryHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
         {
             handler.PlatformView.BorderStyle = UITextBorderStyle.None;
@@ -264,6 +270,7 @@ public static class MauiProgram
         services.AddScoped<ICyclePhaseNotificationService>(sp =>
             new CyclePhaseNotificationService(
                 sp.GetRequiredService<ICycleOverviewUseCase>(),
+                sp.GetRequiredService<ICyclePhaseProjectionUseCase>(),
                 sp.GetRequiredService<ILocalNotificationService>()));
         services.AddScoped<IFeedbackEmailService, FeedbackEmailService>();
     }
@@ -298,6 +305,7 @@ public static class MauiProgram
         services.AddScoped<ICyclePhaseCalculator, CyclePhaseCalculator>();
         services.AddScoped<ICyclePredictionPlanner, CyclePredictionPlanner>();
         services.AddScoped<IDashboardPlanner, DashboardPlanner>();
+        services.AddScoped<IWorkoutPlanner, WorkoutPlanner>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IAuthService, CloudAuthService>();
         services.AddSingleton<IPendingRegistrationService, PendingRegistrationService>();
@@ -320,15 +328,15 @@ public static class MauiProgram
         services.AddSingleton<ICloudAuthorityGate>(_ => new VersionedCloudAuthorityGate());
         services.AddHttpClient<IMuscleCutiesBackendApiClient, MuscleCutiesBackendApiClient>(client =>
         {
-            var configuredUrl = ProductionBackendBaseUrl;
+            var configuredUrl = DefaultBackendBaseUrl;
 #if DEBUG
-            configuredUrl = Preferences.Get(DebugBackendBaseUrlPreferenceKey, ProductionBackendBaseUrl);
+            configuredUrl = Preferences.Get(DebugBackendBaseUrlPreferenceKey, DefaultBackendBaseUrl);
 #endif
             client.BaseAddress = new Uri(configuredUrl);
             client.Timeout = TimeSpan.FromSeconds(BackendRequestTimeoutSeconds);
         });
         services.AddSingleton(TimeProvider.System);
-        services.AddScoped<MobileJourneyCloudGateway>();
+        services.AddSingleton<MobileJourneyCloudGateway>();
         services.AddSingleton<IPhotoCacheAccountLifecycle>(sp => new PhotoCacheAccountLifecycle(
             async () =>
             {
@@ -337,16 +345,8 @@ public static class MauiProgram
                     .GetCurrentUserIdAsync().ConfigureAwait(false);
             },
             sp.GetRequiredService<ILocalPhotoCacheService>()));
-        services.AddScoped<LocalProgressSummaryStore>(sp => new LocalProgressSummaryStore(
-            sp.GetRequiredService<IAuthService>(),
-            db: null,
-            sp.GetRequiredService<IMuscleCutiesBackendApiClient>(),
-            sp.GetRequiredService<MobileJourneyCloudGateway>()));
-        services.AddSingleton<IProgressSummaryStore,
-            ScopedProgressSummaryStore>();
-        services.AddSingleton<IProgressSummaryUseCase,
-            ProgressSummaryUseCase>();
-        services.AddScoped<IDailyCheckInStore, CloudDailyCheckInStore>();
+        services.AddScoped<CloudDailyCheckInStore>();
+        services.AddSingleton<IDailyCheckInStore, ScopedCloudDailyCheckInStore>();
         services.AddSingleton<IDailyCheckInUseCase,
             DailyCheckInUseCase>();
         services.AddSingleton<IDashboardOverviewStore,
@@ -369,6 +369,7 @@ public static class MauiProgram
             new DailyCheckInNotificationService(
                 sp.GetRequiredService<ILocalNotificationService>(),
                 sp.GetRequiredService<IDailyCheckInStore>()));
+
     }
 
     private static void RegisterMigrationServices(IServiceCollection services)
@@ -408,10 +409,11 @@ public static class MauiProgram
         services.AddSingleton<IProfileNutritionSettingsUseCase, ProfileNutritionSettingsUseCase>();
         services.AddSingleton<IProfileWorkoutPreferencesStore, CloudProfileWorkoutPreferencesStore>();
         services.AddSingleton<IProfileWorkoutPreferencesUseCase, ProfileWorkoutPreferencesUseCase>();
+        services.AddSingleton<IReviewedExerciseExclusionCatalogV020Store,
+            CloudReviewedExerciseExclusionCatalogV020Store>();
+        services.AddSingleton<GetReviewedExerciseExclusionCatalogV020UseCase>();
         services.AddSingleton<IProfileUnitsStore, CloudProfileUnitsStore>();
         services.AddSingleton<IProfileUnitsUseCase, ProfileUnitsUseCase>();
-        services.AddSingleton<IProfileHealthSyncStore, LocalProfileHealthSyncStore>();
-        services.AddSingleton<IProfileHealthSyncUseCase, ProfileHealthSyncUseCase>();
         services.AddHttpClient<IPhotoVaultStore, MobilePhotoVaultStore>();
         services.AddSingleton<IPhotoVaultUseCase, PhotoVaultUseCase>();
         services.AddSingleton<IProfileFeedbackComposer, LocalProfileFeedbackComposer>();
@@ -420,6 +422,7 @@ public static class MauiProgram
         services.AddSingleton<ILocalizationService, LocalizationService>();
         services.AddSingleton<ICycleOverviewStore, CloudCycleOverviewStore>();
         services.AddSingleton<ICycleOverviewUseCase, CycleOverviewUseCase>();
+        services.AddSingleton<ICyclePhaseProjectionUseCase, CyclePhaseProjectionUseCase>();
         services.AddSingleton<ICycleDailyLogStore, CloudCycleDailyLogStore>();
         services.AddSingleton<ICycleDailyLogUseCase, CycleDailyLogUseCase>();
         services.AddSingleton<ICyclePhaseEditStore, CloudCyclePhaseEditStore>();
@@ -437,12 +440,19 @@ public static class MauiProgram
         services.AddSingleton<ILookupBarcodeUseCase, LookupBarcodeUseCase>();
         services.AddSingleton<IRecipeStore, CloudRecipeStore>();
         services.AddSingleton<ICreateRecipeUseCase, CreateRecipeUseCase>();
+        services.AddSingleton<IRecipePortionUseCase, RecipePortionUseCase>();
+        services.AddSingleton<IGetWaterQuickAddDefaultsUseCase, GetWaterQuickAddDefaultsUseCase>();
         services.AddSingleton<ISaveMealTemplateUseCase, SaveMealTemplateUseCase>();
         services.AddSingleton<IGetRecipesAndTemplatesUseCase, GetRecipesAndTemplatesUseCase>();
+        services.AddScoped<IWorkoutArchiveStore, CloudWorkoutArchiveStore>();
+        services.AddScoped<IWorkoutArchiveUseCase, WorkoutArchiveUseCase>();
         services.AddSingleton<IWorkoutInjuryStore, CloudWorkoutInjuryStore>();
         services.AddSingleton<IWorkoutInjuryUseCase, WorkoutInjuryUseCase>();
         services.AddSingleton<IWorkoutOverviewStore, CloudWorkoutOverviewStore>();
         services.AddSingleton<IWorkoutOverviewUseCase, WorkoutOverviewUseCase>();
+        services.AddSingleton<IStrengthPlanProposalClientV020, CloudStrengthPlanProposalStoreV020>();
+        services.AddSingleton<IStrengthStyleOfferClient, CloudStrengthStyleOfferClient>();
+        services.AddSingleton<IWorkoutAccountCalendarClient, WorkoutAccountCalendarClient>();
         services.AddScoped<IWorkoutSessionActionStore, CloudWorkoutSessionActionStore>();
         services.AddScoped<IWorkoutSessionActionUseCase, WorkoutSessionActionUseCase>();
     }
@@ -452,8 +462,8 @@ public static class MauiProgram
         services.AddTransient<LoginViewModel>(sp => new LoginViewModel(
             sp.GetRequiredService<IAccountSignInUseCase>(),
             sp.GetRequiredService<IAccountLoginScheduler>(),
-            () => NavigateThenPreloadDashboardAsync(sp, preloadRemaining: false),
-            () => NavigateAuthenticatedAsync($"//{nameof(ProfileSetupPage)}"),
+            () => NavigateAfterLoginAsync(sp),
+            () => NavigateToProfileSetupAfterLoginAsync(sp),
             () => NavigateToAsync(nameof(RegisterPage)),
             sp.GetRequiredService<IPlatformAccountSignInAdapter>(),
             () => NavigateToAsync(nameof(PasswordRecoveryPage)),
@@ -486,36 +496,38 @@ public static class MauiProgram
 
         services.AddTransient<QuizViewModel>(sp => new QuizViewModel(
             sp.GetRequiredService<IOnboardingQuizUseCase>(),
-            () => NavigateThenPreloadDashboardAsync(sp, preloadRemaining: false),
+            () => NavigateAfterOnboardingAsync(sp),
             () => NavigateToAsync("//LoginPage"),
-            () => NavigateToAsync($"//{nameof(ProfileSetupPage)}")));
+            () => NavigateToAsync($"//{nameof(ProfileSetupPage)}"),
+            () => sp.GetRequiredService<INavigationContextService>()
+                .Set(WorkoutPreferencesAfterOnboardingContextKey, true),
+            weekdays => sp.GetRequiredService<INavigationContextService>()
+                .Set(ProfileWorkoutPreferencesViewModel.OnboardingWeekdaysContextKey, weekdays)));
 
         services.AddTransient<ProfileSetupViewModel>(sp => new ProfileSetupViewModel(
             sp.GetRequiredService<IProfileSetupUseCase>(),
-            sp.GetRequiredService<IProfileHealthConnection>(),
             () => NavigateAuthenticatedAsync($"//{nameof(QuizPage)}")));
 
         services.AddSingleton<DashboardViewModel>(sp => new DashboardViewModel(
             sp.GetRequiredService<IDashboardOverviewUseCase>(),
             sp.GetRequiredService<IWorkoutInjuryUseCase>(),
+            sp.GetRequiredService<IDailyCheckInUseCase>(),
+            sp.GetRequiredService<ICyclePhaseProjectionUseCase>(),
             () => NavigateToAsync("//CyclePage"),
             () => NavigateToAsync("//WorkoutPage"),
             workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId),
             () => NavigateToAsync("//NutritionPage"),
-            () => NavigateToAsync(nameof(DailyCheckInPage)),
+            () => sp.GetRequiredService<IAppPreloadService>().InvalidateDashboard(),
             sp.GetService<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier>(),
             () => NavigateToAsync(nameof(PhotoJourneyVaultPage))));
 
-        services.AddTransient<DailyCheckInViewModel>(sp => new DailyCheckInViewModel(
-            sp.GetRequiredService<IDailyCheckInUseCase>(),
-            () => sp.GetRequiredService<IAppPreloadService>().InvalidateDashboard(),
-            () => NavigateToAsync("//DashboardPage")));
-
         services.AddSingleton<CycleViewModel>(sp => new CycleViewModel(
             sp.GetRequiredService<ICycleOverviewUseCase>(),
+            sp.GetRequiredService<ICyclePhaseProjectionUseCase>(),
             sp.GetRequiredService<ICycleDailyLogUseCase>(),
             sp.GetRequiredService<ICyclePhaseEditUseCase>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
+            sp.GetRequiredService<IDashboardOverviewUseCase>(),
             phase => NavigateWithContextAsync(sp, nameof(CyclePhaseDetailPage), "phase", phase),
             () => DateTime.Today,
             () => NavigateToAsync(nameof(ProfilePersonalInfoPage))));
@@ -526,39 +538,92 @@ public static class MauiProgram
         services.AddSingleton<NutritionViewModel>(sp => new NutritionViewModel(
             sp.GetRequiredService<INutritionOverviewUseCase>(),
             sp.GetRequiredService<IFoodCatalogSearchUseCase>(),
+            sp.GetRequiredService<IRecipePortionUseCase>(),
             NavigateToAsync,
-            sp.GetService<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier>()));
+            sp.GetService<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier>(),
+            sp.GetRequiredService<ILookupBarcodeUseCase>(),
+            sp.GetRequiredService<IBarcodeScannerHardwareService>(),
+            sp.GetRequiredService<ISaveMealTemplateUseCase>(),
+            sp.GetRequiredService<IGetRecipesAndTemplatesUseCase>()));
 
         services.AddSingleton<WorkoutViewModel>(sp => new WorkoutViewModel(
             sp.GetRequiredService<IWorkoutOverviewUseCase>(),
             sp.GetRequiredService<IWorkoutInjuryUseCase>(),
-            sp.GetRequiredService<IProfileWorkoutPreferencesUseCase>(),
-            sp.GetRequiredService<IProfileRefreshNotifier>(),
             NavigateToAsync,
-            workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId)));
+            workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId),
+            sp.GetRequiredService<IStrengthStyleOfferClient>(),
+            async offer =>
+            {
+                var alternatives = offer.AlternativeStyleIds
+                    .Select(id => (WorkoutActivityDto)id)
+                    .Where(WorkoutPlanningConstants.StrengthActivities.Contains)
+                    .Distinct()
+                    .ToArray();
+                if (alternatives.Length == 0) return null;
+                if (alternatives.Length == 1) return alternatives[0];
+                var labels = alternatives.ToDictionary(
+                    style => StrengthPlanGenerationDisplayMapper.ActivityLabel(style), style => style);
+                var selected = await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.DisplayActionSheetAsync(
+                    UiTextCatalog.Get("Workout_StyleOffer_Title"),
+                    UiTextCatalog.Get("Workout_StyleOffer_Keep"), null, labels.Keys.ToArray()));
+                return selected is not null && labels.TryGetValue(selected, out var style) ? style : null;
+            },
+            style => NavigateWithContextAsync(sp, nameof(StrengthPlanGenerationPage),
+                StrengthPlanGenerationViewModel.OfferedStrengthStyleContextKey, style)));
+
+        services.AddTransient<StrengthPlanGenerationViewModel>(sp => new StrengthPlanGenerationViewModel(
+            sp.GetRequiredService<IStrengthPlanProposalClientV020>(),
+            sp.GetRequiredService<IProfileWorkoutPreferencesUseCase>(),
+            sp.GetRequiredService<IWorkoutArchiveUseCase>(),
+            sp.GetRequiredService<IProfileRefreshNotifier>(),
+            () => NavigateToAsync(".."),
+            () => NavigateToAsync("//WorkoutPage"),
+            sp.GetRequiredService<INavigationContextService>(),
+            summary => MainThread.InvokeOnMainThreadAsync(() => Shell.Current.DisplayAlertAsync(
+                UiTextCatalog.Get("Workout_Generation_ReplacementTitle"), summary,
+                UiTextCatalog.Get("Workout_Generation_ApplyPlan"),
+                UiTextCatalog.Get("Workout_Generation_ReplacementCancel"))),
+            () => NavigateToAsync("//DashboardPage"),
+            sp.GetRequiredService<IWorkoutAccountCalendarClient>(),
+            overview: sp.GetRequiredService<IWorkoutOverviewUseCase>()));
+
 
         services.AddTransient<WorkoutSessionViewModel>(sp => new WorkoutSessionViewModel(
             sp.GetRequiredService<IWorkoutSessionActionUseCase>(),
             sp.GetRequiredService<ICycleOverviewUseCase>(),
-            route => NavigateToAsync(route)));
+            route => NavigateToAsync(route),
+            sp.GetRequiredService<IStrengthPlanProposalClientV020>(),
+            ConfirmHiitHistoryAsync,
+            () =>
+            {
+                sp.GetRequiredService<INavigationContextService>().Set(StrengthPlanGenerationViewModel.EditHiitAnswersContextKey, true);
+                return NavigateToAsync(nameof(StrengthPlanGenerationPage));
+            }));
 
         services.AddTransient<FoodLogViewModel>(sp => new FoodLogViewModel(
             sp.GetRequiredService<INutritionDailyLogUseCase>(),
+            sp.GetRequiredService<IRecipePortionUseCase>(),
+            MuscleCuties.UI.Services.Nutrition.NutritionPresentationMapper.FromWaterQuickAddDefaults(
+                sp.GetRequiredService<IGetWaterQuickAddDefaultsUseCase>().Execute()),
             () => NavigateToAsync(".."),
             sp.GetService<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier>(),
             sp.GetRequiredService<ILookupBarcodeUseCase>(),
             sp.GetRequiredService<IBarcodeScannerHardwareService>(),
             sp.GetRequiredService<ISaveMealTemplateUseCase>(),
             sp.GetRequiredService<IGetRecipesAndTemplatesUseCase>(),
-            sp.GetRequiredService<ICreateRecipeUseCase>()));
+            sp.GetRequiredService<ICreateRecipeUseCase>(),
+            sp.GetRequiredService<INutritionOverviewUseCase>()));
+
+        services.AddTransient<WorkoutHistoryViewModel>(sp => new WorkoutHistoryViewModel(
+            sp.GetRequiredService<IWorkoutArchiveUseCase>(),
+            () => NavigateToAsync("..")));
 
         services.AddSingleton<ProfileViewModel>(sp => new ProfileViewModel(
             sp.GetRequiredService<IProfileOverviewUseCase>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
             () => NavigateToAsync("//LoginPage"),
             NavigateToAsync,
-            sp.GetRequiredService<ILocalPhotoCacheService>(),
-            sp.GetService<IProfileHealthConnection>()));
+            sp.GetRequiredService<ILocalPhotoCacheService>()));
 
         services.AddTransient<PhotoJourneyVaultViewModel>(sp => new PhotoJourneyVaultViewModel(
             sp.GetRequiredService<IPhotoVaultUseCase>(),
@@ -578,14 +643,11 @@ public static class MauiProgram
 
         services.AddTransient<ProfileWorkoutPreferencesViewModel>(sp => new ProfileWorkoutPreferencesViewModel(
             sp.GetRequiredService<IProfileWorkoutPreferencesUseCase>(),
+            sp.GetRequiredService<GetReviewedExerciseExclusionCatalogV020UseCase>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
-            () => NavigateToAsync("//ProfilePage"),
-            () => NavigateToAsync("//WorkoutPage")));
-
-        services.AddTransient<ProfileHealthSyncViewModel>(sp => new ProfileHealthSyncViewModel(
-            sp.GetRequiredService<IProfileHealthSyncUseCase>(),
-            sp.GetRequiredService<IProfileRefreshNotifier>(),
-            () => NavigateToAsync("..")));
+            () => NavigateToAsync(".."),
+            () => NavigateToAsync(nameof(StrengthPlanGenerationPage)),
+            sp.GetRequiredService<INavigationContextService>()));
 
         services.AddTransient<ProfileUnitsDisplayViewModel>(sp => new ProfileUnitsDisplayViewModel(
             sp.GetRequiredService<IProfileUnitsUseCase>(),
@@ -605,6 +667,7 @@ public static class MauiProgram
     private static void RegisterPages(IServiceCollection services)
     {
         services.AddTransient<WorkoutSessionPage>();
+        services.AddTransient<StrengthPlanGenerationPage>();
         services.AddTransient<LoginPage>();
         services.AddTransient<AppStartupPage>();
         services.AddTransient<RegisterPage>();
@@ -615,7 +678,6 @@ public static class MauiProgram
                 vm => new ProfileSetupPage(vm)));
         services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<DashboardPage, DashboardViewModel>(sp,
             vm => new DashboardPage(vm)));
-        services.AddTransient<DailyCheckInPage>();
         services.AddSingleton(sp =>
             PageLoadExtensions.CreateWithTiming<CyclePage, CycleViewModel>(sp, vm => new CyclePage(vm)));
         services.AddTransient<CyclePhaseDetailPage>();
@@ -631,12 +693,11 @@ public static class MauiProgram
         services.AddTransient<ProfilePersonalInfoPage>();
         services.AddTransient<ProfileNutritionSettingsPage>();
         services.AddTransient<ProfileWorkoutPreferencesPage>();
-        services.AddTransient<ProfileHealthSyncPage>();
         services.AddTransient<ProfileUnitsDisplayPage>();
         services.AddTransient<ProfileFeedbackPage>();
         services.AddTransient<ProfilePrivacyPage>();
-        services.AddTransient<InjuryLogPage>();
         services.AddTransient<FoodLogPage>();
+        services.AddTransient<WorkoutHistoryPage>();
         services.AddTransient<PhotoJourneyVaultPage>();
         services.AddTransient<PasswordRecoveryPage>();
 
@@ -647,7 +708,6 @@ public static class MauiProgram
     {
 #if DEBUG
         builder.Logging.AddDebug();
-        builder.Logging.AddFilter(DbLoggerCategory.Database.Command.Name, LogLevel.Warning);
 #endif
     }
 
@@ -714,6 +774,54 @@ public static class MauiProgram
             services.GetRequiredService<IAppPreloadService>());
     }
 
+    private static async Task<HiitConfirmationChoice> ConfirmHiitHistoryAsync(SavedActivityAnswersDto saved)
+    {
+        var evidence = saved.HiitEligibilityEvidence;
+        var history = evidence?.UnderlyingCardioHistory;
+        var weeks = evidence?.PreviousFourWeeksAerobicEvidence;
+        if (history is null || weeks is null || saved.HiitUnderlyingCardioActivity is null ||
+            evidence?.ExistingClearanceScreeningSatisfied is null)
+            return HiitConfirmationChoice.Update;
+
+        var summary = UiTextCatalog.Format("Workout_Session_HiitConfirmationSummary",
+            saved.HiitUnderlyingCardioActivity, history.ConsistentParticipationWeeks,
+            history.AverageSessionsPerWeekInRecentFourWeeks, history.LastCompletedSessionDate,
+            string.Join(", ", weeks.OrderBy(week => week.WeekOffsetFromCurrent)
+                .Select(week => week.QualifyingManageableAerobicSessionCount)),
+            UiTextCatalog.Get(evidence.ExistingClearanceScreeningSatisfied == true
+                ? "Workout_Session_HiitAnswerYes" : "Workout_Session_HiitAnswerNo"));
+        var confirm = UiTextCatalog.Get("Workout_Session_HiitConfirm");
+        var update = UiTextCatalog.Get("Workout_Session_HiitUpdate");
+        var selected = await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.DisplayActionSheetAsync(
+            summary, UiTextCatalog.Get("Workout_Session_HiitCancel"), null, confirm, update));
+        return selected == confirm ? HiitConfirmationChoice.Confirm :
+            selected == update ? HiitConfirmationChoice.Update : HiitConfirmationChoice.Cancel;
+    }
+
+    private static async Task NavigateAfterOnboardingAsync(IServiceProvider services)
+    {
+        await NavigateThenPreloadDashboardAsync(services, preloadRemaining: false);
+        services.GetRequiredService<INavigationContextService>()
+            .TryTake<int[]>(ProfileWorkoutPreferencesViewModel.OnboardingWeekdaysContextKey, out _);
+        await NavigateToAsync(nameof(StrengthPlanGenerationPage));
+    }
+
+    private static Task NavigateAfterLoginAsync(IServiceProvider services)
+    {
+        var navigationContext = services.GetRequiredService<INavigationContextService>();
+        if (navigationContext.TryTake<bool>(WorkoutPreferencesAfterOnboardingContextKey, out var pending) && pending)
+            return NavigateAfterOnboardingAsync(services);
+
+        return NavigateThenPreloadDashboardAsync(services, preloadRemaining: false);
+    }
+
+    private static Task NavigateToProfileSetupAfterLoginAsync(IServiceProvider services)
+    {
+        services.GetRequiredService<INavigationContextService>()
+            .TryTake<bool>(WorkoutPreferencesAfterOnboardingContextKey, out _);
+        return NavigateAuthenticatedAsync($"//{nameof(ProfileSetupPage)}");
+    }
+
     private static Task NavigateToExistingLoginAsync(IServiceProvider services, string email)
     {
         services.GetRequiredService<INavigationContextService>()
@@ -749,3 +857,4 @@ public static class MauiProgram
         return queryIndex < 0 ? route : route[..queryIndex];
     }
 }
+

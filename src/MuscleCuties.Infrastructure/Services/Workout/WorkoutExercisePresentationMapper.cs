@@ -7,16 +7,6 @@ namespace MuscleCuties.Core.Services.Workout;
 
 internal static class WorkoutExercisePresentationMapper
 {
-    private const int MinEffortRating = 1;
-    private const int MaxEffortRating = 10;
-    private const int DefaultStrengthSets = 3;
-    private const int RecommendedCadenceMinRpm = 80;
-    private const int RecommendedCadenceMaxRpm = 95;
-    private const float LightLoadCeilingKg = 20f;
-    private const float LightLoadIncrementKg = 1f;
-    private const float StandardLoadIncrementKg = 2.5f;
-    private const float WeightRoundingKg = 0.5f;
-
     public static WorkoutExerciseItem BuildExerciseItem(
         WorkoutDayExercise dayExercise,
         WorkoutType workoutType,
@@ -84,14 +74,14 @@ internal static class WorkoutExercisePresentationMapper
             LoggedCadenceRpmText = currentLog?.CadenceRpm is >= 0
                 ? currentLog.CadenceRpm.Value.ToString()
                 : BuildSuggestedCadenceText(previousLog, metricProfile),
-            LoggedEffortText = currentLog?.EffortRating is >= MinEffortRating and <= MaxEffortRating
+            LoggedEffortText = currentLog?.EffortRating is >= 1 and <= 10
                 ? currentLog.EffortRating.Value.ToString()
                 : BuildSuggestedEffortText(previousLog, metricProfile)
         };
 
         if (item.UsesStrengthMetrics)
         {
-            var setsCount = currentLog?.CompletedSets ?? (dayExercise.Sets > 0 ? dayExercise.Sets : DefaultStrengthSets);
+            var setsCount = currentLog?.CompletedSets ?? (dayExercise.Sets > 0 ? dayExercise.Sets : 3);
             item.EnsureSets(setsCount);
         }
 
@@ -317,8 +307,8 @@ internal static class WorkoutExercisePresentationMapper
                 : $"{FormatPace(previousLog.PaceSecondsPerKm.Value)}/km");
         if (metricProfile.UsesHeartRate && previousLog.AverageHeartRateBpm is > 0)
             parts.Add($"{previousLog.AverageHeartRateBpm.Value} bpm");
-        if (metricProfile.UsesEffort && previousLog.EffortRating is >= MinEffortRating and <= MaxEffortRating)
-            parts.Add($"effort {previousLog.EffortRating.Value}/{MaxEffortRating}");
+        if (metricProfile.UsesEffort && previousLog.EffortRating is >= 1 and <= 10)
+            parts.Add($"effort {previousLog.EffortRating.Value}/10");
 
         return parts.Count == 0 ? "Logged before" : $"Last {string.Join(" with ", parts)}";
     }
@@ -330,8 +320,8 @@ internal static class WorkoutExercisePresentationMapper
     {
         if (metricProfile.UsesPower)
             return previousLog?.PowerWatts is > 0
-                ? $"Start near {previousLog.PowerWatts.Value} W, keep cadence around {RecommendedCadenceMinRpm}-{RecommendedCadenceMaxRpm} rpm, and let heart rate confirm the effort."
-                : $"Log watts first if you have them, cadence around {RecommendedCadenceMinRpm}-{RecommendedCadenceMaxRpm} rpm, plus heart rate and effort.";
+                ? $"Start near {previousLog.PowerWatts.Value} W, keep cadence around 80-95 rpm, and let heart rate confirm the effort."
+                : "Log watts first if you have them, cadence around 80-95 rpm, plus heart rate and effort.";
 
         if (metricProfile.UsesPace)
             return previousLog?.PaceSecondsPerKm is > 0
@@ -426,7 +416,7 @@ internal static class WorkoutExercisePresentationMapper
         WorkoutExerciseLog? previousLog,
         ExerciseMetricProfile metricProfile)
     {
-        return metricProfile.UsesEffort && previousLog?.EffortRating is >= MinEffortRating and <= MaxEffortRating
+        return metricProfile.UsesEffort && previousLog?.EffortRating is >= 1 and <= 10
             ? previousLog.EffortRating.Value.ToString()
             : string.Empty;
     }
@@ -457,9 +447,8 @@ internal static class WorkoutExercisePresentationMapper
         if (!completedTarget)
             return previousWeight;
 
-        var increment = previousWeight < LightLoadCeilingKg ? LightLoadIncrementKg : StandardLoadIncrementKg;
-        var proposed = previousWeight + increment;
-        return (float)Math.Round(proposed / WeightRoundingKg, MidpointRounding.AwayFromZero) * WeightRoundingKg;
+        var increment = previousWeight < 20f ? 1f : 2.5f;
+        return (float)Math.Round((previousWeight + increment) * 2, MidpointRounding.AwayFromZero) / 2f;
     }
 
     internal sealed record ExerciseMetricProfile(

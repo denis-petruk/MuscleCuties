@@ -1,11 +1,13 @@
 using System.Text.Json;
-using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.Infrastructure.Cloud;
 using MuscleCuties.UseCases.Features.Cycle.DailyLog;
 using MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using Xunit;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 
 namespace MuscleCuties.Core.Tests;
 
@@ -16,6 +18,18 @@ public sealed class CloudCycleAndCheckInContractTests
     private const string HistoryRoute = "/api/v1/cycle/history";
     private const string PhaseRoute = "/api/v1/cycle/history/phases";
     private const string CheckInsRoute = "/api/v1/check-ins";
+    private const int PlanningRating = 3;
+    private const int SyntheticSleepHours = 8;
+    private const int SyntheticEnergy = 3;
+    private const int SyntheticPain = 1;
+
+    private static SubmitDailyCheckInRequest ValidCheckInRequest()
+    {
+        var localNow = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimeZoneInfo.Local);
+        return new SubmitDailyCheckInRequest(DateOnly.FromDateTime(localNow.DateTime),
+            SyntheticSleepHours, SyntheticEnergy, SyntheticPain, false, null,
+            PlanningRating, PlanningRating, PlanningRating, TimeZoneInfo.Local.Id);
+    }
 
     [Fact]
     public async Task CheckInStatus_404IsAnEndpointFailure()
@@ -33,7 +47,7 @@ public sealed class CloudCycleAndCheckInContractTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new CloudDailyCheckInStore(api).SubmitAsync(
-                new SubmitDailyCheckInRequest(SampleDate, 8, 3, 1, false, null), CancellationToken.None));
+                ValidCheckInRequest(), CancellationToken.None));
 
         Assert.Empty(api.Mutations);
     }
@@ -51,7 +65,7 @@ public sealed class CloudCycleAndCheckInContractTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new CloudDailyCheckInStore(api).SubmitAsync(
-                new SubmitDailyCheckInRequest(SampleDate, 8, 3, 1, false, null), CancellationToken.None));
+                ValidCheckInRequest(), CancellationToken.None));
 
         Assert.Single(api.Mutations);
     }
@@ -98,9 +112,10 @@ public sealed class CloudCycleAndCheckInContractTests
             MutationResponse = (_, _, _) => (BackendApiStatus.Success, responseJson)
         };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            new CloudCyclePhaseEditStore(api).SaveAsync(
-                new CyclePhaseEditRequest(SampleDateTime, CyclePhase.Menstrual, null), CancellationToken.None));
+        var result = await new CloudCyclePhaseEditStore(api).SaveAsync(
+            new CyclePhaseEditRequest(SampleDateTime, CyclePhase.Menstrual, null), CancellationToken.None);
+
+        Assert.Equal(CyclePhaseEditOutcome.Unavailable, result.Outcome);
 
         var mutation = Assert.Single(api.Mutations);
         Assert.Equal(PhaseRoute, mutation.Path);
@@ -172,7 +187,7 @@ public sealed class CloudCycleAndCheckInContractTests
             }))
         };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<MuscleCuties.UseCases.Features.Cycle.CycleSymptomsNeedActiveCycleIssue>(() =>
             new CloudCycleDailyLogStore(api).SaveAsync(
                 new CycleDailyLogRequest(SampleDateTime, false, false, null, [SymptomType.Cramps]),
                 CancellationToken.None));

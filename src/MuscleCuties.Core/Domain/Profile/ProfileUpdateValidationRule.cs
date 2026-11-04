@@ -8,9 +8,7 @@ public sealed record ProfileUpdateObservation(
     bool SetDateOfBirth,
     decimal? HeightCm,
     decimal? WeightKg,
-    int? CycleLength,
-    int? WorkoutDaysPerWeek,
-    int? SessionDurationMinutes);
+    int? CycleLength);
 
 public static class ProfileUpdateValidationRule
 {
@@ -18,11 +16,11 @@ public static class ProfileUpdateValidationRule
     public const decimal MaximumHeightCm = 280m;
     public const decimal MinimumWeightKg = 20m;
     public const decimal MaximumWeightKg = 400m;
-    public const int MinimumWorkoutDaysPerWeek = 1;
-    public const int MaximumWorkoutDaysPerWeek = 7;
-    public const int MinimumSessionDurationMinutes = 30;
-    public const int MaximumSessionDurationMinutes = 90;
-    public const int SessionDurationIncrementMinutes = 15;
+
+    public static bool IsValidRequiredMeasurements(float heightCm, float weightKg, int cycleLength) =>
+        IsValidHeight(heightCm) &&
+        IsValidWeight(weightKg) &&
+        IsValidCycleLength(cycleLength);
 
     public static bool IsValid(ProfileUpdateObservation? update, DateOnly today)
     {
@@ -34,18 +32,23 @@ public static class ProfileUpdateValidationRule
                 != BirthDateEligibility.Eligible)
             return false;
 
-        if (update.HeightCm is { } height && height is < MinimumHeightCm or > MaximumHeightCm)
+        if (update.HeightCm is { } height && !IsValidHeight((double)height))
             return false;
-        if (update.WeightKg is { } weight && weight is < MinimumWeightKg or > MaximumWeightKg)
+        if (update.WeightKg is { } weight && !IsValidWeight((double)weight))
             return false;
-        if (update.CycleLength is { } cycleLength &&
-            cycleLength is < CycleLengthLimits.Minimum or > CycleLengthLimits.Maximum)
+        if (update.CycleLength is { } cycleLength && !IsValidCycleLength(cycleLength))
             return false;
-        if (update.WorkoutDaysPerWeek is { } days &&
-            days is < MinimumWorkoutDaysPerWeek or > MaximumWorkoutDaysPerWeek)
-            return false;
-        return update.SessionDurationMinutes is not { } duration ||
-               duration is >= MinimumSessionDurationMinutes and <= MaximumSessionDurationMinutes &&
-               duration % SessionDurationIncrementMinutes == 0;
+        return true;
     }
+
+    private static bool IsValidHeight(double heightCm) =>
+        double.IsFinite(heightCm) && heightCm >= (double)MinimumHeightCm &&
+        heightCm <= (double)MaximumHeightCm;
+
+    private static bool IsValidWeight(double weightKg) =>
+        double.IsFinite(weightKg) && weightKg >= (double)MinimumWeightKg &&
+        weightKg <= (double)MaximumWeightKg;
+
+    private static bool IsValidCycleLength(int cycleLength) =>
+        cycleLength >= CycleLengthLimits.Minimum && cycleLength <= CycleLengthLimits.Maximum;
 }
