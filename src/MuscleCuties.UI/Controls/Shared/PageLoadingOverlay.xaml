@@ -2,63 +2,58 @@
 
 <ContentView
     x:Class="MuscleCuties.UI.Controls.Shared.PageLoadingOverlay"
+    x:Name="OverlayRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Common"
+    xmlns:shared="clr-namespace:MuscleCuties.UI.Controls.Shared"
     x:DataType="vm:IPageLoadAware"
     InputTransparent="False">
 
-    <ContentView.Triggers>
-        <MultiTrigger TargetType="ContentView">
-            <MultiTrigger.Conditions>
-                <BindingCondition Binding="{Binding IsPageLoading}" Value="False" />
-                <BindingCondition Binding="{Binding IsLoadError}" Value="False" />
-            </MultiTrigger.Conditions>
-            <Setter Property="IsVisible" Value="False" />
-        </MultiTrigger>
-    </ContentView.Triggers>
-
-    <Grid Padding="24">
+    <Grid Padding="{StaticResource UiInsets24}"
+          BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
         <!-- Loading state -->
         <VerticalStackLayout
             IsVisible="{Binding IsPageLoading}"
             HorizontalOptions="Center"
-            VerticalOptions="Start"
-            Spacing="10">
+            VerticalOptions="Center"
+            Spacing="{StaticResource UiSpacing10}">
             <ActivityIndicator
-                Color="{StaticResource Primary}"
+                        Style="{StaticResource StateBusyInline}"
+               
                 IsRunning="{Binding IsPageLoading}"
                 SemanticProperties.Description="{loc:LocalizedText Dashboard_Shared_LoadingPageDataA11y}" />
             <Label
                 Text="{loc:LocalizedText Dashboard_Shared_LoadingYourData}"
-                Style="{StaticResource MutedLabel}"
-                HorizontalTextAlignment="Center" />
+                Style="{StaticResource MutedCentered}" />
         </VerticalStackLayout>
 
         <!-- Error state -->
         <Grid
-            IsVisible="{Binding IsLoadError}"
-            BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+            IsVisible="{Binding IsLoadError}">
             <VerticalStackLayout
                 HorizontalOptions="Center"
                 VerticalOptions="Center"
-                Spacing="16">
+                Spacing="{StaticResource UiSpaceControl}">
                 <Label
                     Text="{loc:LocalizedText Dashboard_Shared_SomethingWentWrong}"
                     Style="{StaticResource SectionTitle}"
                     HorizontalTextAlignment="Center" />
                 <Label
                     Text="{loc:LocalizedText Dashboard_Shared_CouldNotLoadData}"
-                    Style="{StaticResource MutedLabel}"
-                    HorizontalTextAlignment="Center" />
+                    Style="{StaticResource MutedCentered}" />
                 <Button
                     Text="{loc:LocalizedText Dashboard_Shared_Retry}"
                     Command="{Binding LoadDataCommand}"
-                    Style="{StaticResource ButtonLink}"
-                    HorizontalOptions="Center"
+                    Style="{StaticResource ButtonPrimary}"
                     SemanticProperties.Description="{loc:LocalizedText Dashboard_Shared_RetryLoadingDataA11y}" />
+                <Button x:DataType="shared:PageLoadingOverlay"
+                    Text="{loc:LocalizedText Common_Back}"
+                    Command="{Binding BackCommand, Source={x:Reference OverlayRoot}}"
+                    IsVisible="{Binding HasBackCommand, Source={x:Reference OverlayRoot}}"
+                    Style="{StaticResource ButtonSecondary}" />
             </VerticalStackLayout>
         </Grid>
 

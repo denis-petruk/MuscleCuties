@@ -20,6 +20,7 @@ using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using DiaryMealType = MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts.MealType;
 using DiaryContracts = MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts;
 
@@ -67,7 +68,9 @@ public sealed class CloudNutritionOverviewStore(
             $"/api/v1/nutrition/suggestions?mealType={Uri.EscapeDataString(mealType)}&breakfastPreference={Uri.EscapeDataString(breakfastPreference)}",
             cancellationToken).ConfigureAwait(false);
         var suggestions = CloudStoreResponse.RequireData(response, "meal suggestions");
-        return excludeConceptNames is null ? suggestions : suggestions.Where(item => !excludeConceptNames.Contains(item.ConceptName)).ToArray();
+        return suggestions
+            .Where(item => excludeConceptNames is null || !excludeConceptNames.Contains(item.ConceptName))
+            .ToArray();
     }
 
     public async Task<IReadOnlyList<DayMealPlanItemDto>> GetDayMealPlanAsync(string breakfastPreference, CancellationToken cancellationToken = default)
@@ -198,31 +201,6 @@ public sealed class CloudNutritionDailyLogStore(
     public Task ReLogFoodAsync(DateOnly date, MealType mealType, QuickFoodItemSnapshot quickItem, LoggedFoodItemDto draft, CancellationToken cancellationToken = default) =>
         SaveFoodItemAsync(date, draft with { MealType = mealType }, false, cancellationToken);
 
-    public async Task<IReadOnlyList<DailyNutritionSummarySnapshot>> GetDateRangeSummariesAsync(DateOnly start, DateOnly end, CancellationToken cancellationToken = default)
-    {
-        if (end < start) throw new ArgumentOutOfRangeException(nameof(end));
-        var summaries = new List<DailyNutritionSummarySnapshot>();
-        var beforeDate = end.AddDays(1);
-        while (beforeDate > start)
-        {
-            var response = await apiClient.GetAsync<DiaryContracts.NutritionDiaryHistory>(
-                $"{DiaryRoute}/history?beforeDate={beforeDate:yyyy-MM-dd}&pageSize={DiaryPageSize}", cancellationToken)
-                .ConfigureAwait(false);
-            var history = CloudStoreResponse.RequireData(response, "nutrition diary history");
-            foreach (var row in history.Days.Where(row => row.Date >= start && row.Date <= end))
-            {
-                var day = await GetLogForDateAsync(row.Date, cancellationToken).ConfigureAwait(false);
-                summaries.Add(new DailyNutritionSummarySnapshot(row.Date, day.Id, (double)row.Calories,
-                    (double)row.Protein, (double)row.Carbs, (double)row.Fat, day.TargetCalories,
-                    row.WaterIntakeMl, row.ItemsCount));
-            }
-            if (history.NextBeforeDate is null || history.NextBeforeDate >= beforeDate)
-                break;
-            beforeDate = history.NextBeforeDate.Value;
-        }
-        return summaries;
-    }
-
     public async Task UpdateWaterIntakeAsync(DateOnly date, int waterIntakeMl, CancellationToken cancellationToken = default)
     {
         var day = await GetLogForDateAsync(date, cancellationToken).ConfigureAwait(false);
@@ -315,7 +293,8 @@ public sealed class CloudNutritionDailyLogStore(
             (double)entry.ServingSize, entry.ServingUnit, (double)entry.ServingsCount,
             (double)entry.Calories, (double)entry.Protein, (double)entry.Carbs, (double)entry.Fat,
             entry.LoggedAtUtc, [], entry.AcceptedSuggestionName,
-            Enum.TryParse<CyclePhase>(entry.AcceptedSuggestionPhase, true, out var phase) ? phase : null);
+            Enum.TryParse<CyclePhase>(entry.AcceptedSuggestionPhase, true, out var phase) ? phase : null,
+            entry.LoggedMealId);
     }
 
     private sealed record DiarySaveResponse(string Identity);
@@ -372,6 +351,8 @@ public sealed class CloudFoodCatalogSearchStore(
                 HttpMethod.Post, "/api/v1/nutrition/catalog/barcode", new BarcodeLookupRequest(barcode),
                 cancellationToken: cancellationToken).ConfigureAwait(false);
             if (response.Status == BackendApiStatus.NotFound) continue;
+            if (response.Status is BackendApiStatus.OfflineRejected or BackendApiStatus.ServerError)
+                throw new BarcodeLookupUnavailableException();
             var result = CloudStoreResponse.RequireData(response, "barcode lookup");
             if (result.FoodItem is not null) return MapCatalogItem(result.FoodItem, result.NormalizedBarcode);
         }
@@ -440,6 +421,13 @@ public sealed class CloudRecipeStore(
             HttpMethod.Post, $"{NutritionRoute}/templates", request, cancellationToken: cancellationToken).ConfigureAwait(false), "save meal template");
     }
 
+    public async Task<MealTemplateDto> UpdateMealTemplateAsync(MealTemplateDto template, CancellationToken cancellationToken = default)
+    {
+        var request = new SaveMealAsTemplateRequest(template.Name, template.MealType, template.Items);
+        return CloudStoreResponse.RequireData(await apiClient.SendMutationAsync<SaveMealAsTemplateRequest, MealTemplateDto>(
+            HttpMethod.Put, $"{NutritionRoute}/templates/{template.Id:D}", request, cancellationToken: cancellationToken).ConfigureAwait(false), "update meal template");
+    }
+
     public async Task<IReadOnlyList<MealTemplateDto>> GetMealTemplatesAsync(int? mealType = null, CancellationToken cancellationToken = default) =>
         (await GetBundleAsync(mealType, cancellationToken).ConfigureAwait(false)).Templates;
 
@@ -472,11 +460,87 @@ public sealed class CloudWorkoutOverviewStore(
     public async Task RescheduleAsync(RescheduleWorkoutDayRequest request, CancellationToken cancellationToken) =>
         CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<RescheduleWorkoutDayRequest, object>(
             HttpMethod.Post, "/api/v1/workouts/reschedule", request, cancellationToken: cancellationToken).ConfigureAwait(false), "reschedule workout day");
+
+    public async Task SetSessionOptionalAsync(SetWorkoutSessionOptionalRequest request, CancellationToken cancellationToken) =>
+        CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<SetWorkoutSessionOptionalRequest, object>(
+            HttpMethod.Put, "/api/v1/workouts/optional-session", request, cancellationToken: cancellationToken).ConfigureAwait(false), "mark optional workout session");
 }
 
 public sealed class CloudWorkoutSessionActionStore(
     IMuscleCutiesBackendApiClient apiClient) : IWorkoutSessionActionStore
 {
+    public async Task<IReadOnlyList<PlannedWorkoutSessionHistoryEntry>> GetPlannedSessionHistoryAsync(int workoutDayId, CancellationToken cancellationToken) =>
+        CloudStoreResponse.RequireData(await apiClient.GetAsync<List<PlannedWorkoutSessionHistoryEntry>>(
+            $"/api/v1/workouts/sessions/planned/{workoutDayId}/history", cancellationToken).ConfigureAwait(false), "read workout session history");
+    public async Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(int workoutDayId, CancellationToken cancellationToken)
+    {
+        var response = await apiClient.GetAsync<ActiveWorkoutSessionSnapshot>($"/api/v1/workouts/sessions/planned/{workoutDayId}", cancellationToken).ConfigureAwait(false);
+        return response.Status == BackendApiStatus.NotFound ? null : CloudStoreResponse.RequireData(response, "read planned workout session");
+    }
+
+    public async Task<ActiveWorkoutSessionSnapshot> StartPlannedSessionAsync(int workoutDayId, Guid sessionId, DateTime startedAtUtc, CancellationToken cancellationToken)
+    {
+        var request = new StartWorkoutSessionCommand(sessionId.ToString("N"), sessionId, "Workout", startedAtUtc, PlannedWorkoutDayId: workoutDayId);
+        var response = await apiClient.SendMutationAsync<StartWorkoutSessionCommand, ActiveWorkoutSessionSnapshot>(
+            HttpMethod.Post, "/api/v1/workouts/sessions/start", request, idempotencyKey: sessionId.ToString("N"), cancellationToken).ConfigureAwait(false);
+        return RequirePlannedSession(response, "start planned workout session");
+    }
+
+    public async Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, CancellationToken cancellationToken)
+    {
+        var request = new FinishWorkoutSessionCommand(sessionId.ToString("N"), sessionId, completedAtUtc, totalDurationSeconds, null, null);
+        var response = await apiClient.SendMutationAsync<FinishWorkoutSessionCommand, ActiveWorkoutSessionSnapshot>(
+            HttpMethod.Post, $"/api/v1/workouts/sessions/{sessionId:D}/finish", request, idempotencyKey: sessionId.ToString("N"), cancellationToken).ConfigureAwait(false);
+        return RequirePlannedSession(response, "finish planned workout session");
+    }
+
+    public async Task AbandonPlannedSessionAsync(Guid sessionId, CancellationToken cancellationToken)
+    {
+        var request = new CancelWorkoutSessionCommand(sessionId.ToString("N"), sessionId);
+        var response = await apiClient.SendMutationAsync<CancelWorkoutSessionCommand, ActiveWorkoutSessionSnapshot>(
+            HttpMethod.Post, $"/api/v1/workouts/sessions/{sessionId:D}/cancel", request, idempotencyKey: sessionId.ToString("N"), cancellationToken).ConfigureAwait(false);
+        RequirePlannedSession(response, "abandon planned workout session");
+    }
+
+    public async Task<ActiveWorkoutSessionSnapshot> ResumePlannedTimingAsync(Guid sessionId, Guid operationId,
+        CancellationToken cancellationToken)
+    {
+        var key = operationId.ToString("N");
+        var response = await apiClient.SendMutationAsync<ResumeWorkoutTimingCommand, ActiveWorkoutSessionSnapshot>(
+            HttpMethod.Post, $"/api/v1/workouts/sessions/{sessionId:D}/timing/resume",
+            new ResumeWorkoutTimingCommand(key, sessionId), idempotencyKey: key, cancellationToken).ConfigureAwait(false);
+        if (response.Status == BackendApiStatus.Conflict && response.ErrorCode == "WorkoutActivityNoLongerSafe")
+            throw new WorkoutActivityNoLongerSafeException();
+        return RequirePlannedSession(response, "resume workout timing");
+    }
+
+    public async Task<ActiveWorkoutSessionSnapshot> CheckpointPlannedTimingAsync(Guid sessionId, Guid operationId,
+        Guid intervalId, int measuredSeconds, bool pause, CancellationToken cancellationToken)
+    {
+        var key = operationId.ToString("N");
+        var response = await apiClient.SendMutationAsync<CheckpointWorkoutTimingCommand, ActiveWorkoutSessionSnapshot>(
+            HttpMethod.Post, $"/api/v1/workouts/sessions/{sessionId:D}/timing/checkpoint",
+            new CheckpointWorkoutTimingCommand(key, sessionId, intervalId, measuredSeconds, pause),
+            idempotencyKey: key, cancellationToken).ConfigureAwait(false);
+        if (response.Status == BackendApiStatus.Conflict && response.ErrorCode == "WorkoutTimingIntervalExpired")
+            throw new WorkoutTimingIntervalExpiredException();
+        return RequirePlannedSession(response, "checkpoint workout timing");
+    }
+
+    private static ActiveWorkoutSessionSnapshot RequirePlannedSession(
+        BackendApiResponse<ActiveWorkoutSessionSnapshot> response, string operation)
+    {
+        if (response.Status == BackendApiStatus.Conflict &&
+            response.ErrorCode == WorkoutHiitHistoryConfirmationRequiredException.ErrorCode)
+            throw new WorkoutHiitHistoryConfirmationRequiredException();
+        if (response.Status == BackendApiStatus.Conflict && response.ErrorCode == "WorkoutActivityNoLongerSafe")
+            throw new WorkoutActivityNoLongerSafeException();
+        if (response.Status == BackendApiStatus.Conflict && WorkoutSessionStartBlockCode.IsKnown(response.ErrorCode))
+            throw new WorkoutSessionStartBlockedException(response.ErrorCode!);
+        if (response.Status == BackendApiStatus.OfflineRejected)
+            throw new HttpRequestException("Workout session requires a connection.");
+        return CloudStoreResponse.RequireData(response, operation);
+    }
     public async Task<WorkoutSessionDetailDto> GetDetailAsync(int workoutDayId, CancellationToken cancellationToken) =>
         CloudStoreResponse.RequireData(await apiClient.GetAsync<WorkoutSessionDetailDto>(
             $"/api/v1/workouts/day-sessions/{workoutDayId}", cancellationToken).ConfigureAwait(false), "workout session detail");
@@ -500,6 +564,50 @@ public sealed class CloudWorkoutSessionActionStore(
     public async Task SaveMovementNoteAsync(SaveWorkoutMovementNoteRequest request, CancellationToken cancellationToken) =>
         CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<SaveWorkoutMovementNoteRequest, object>(
             HttpMethod.Put, "/api/v1/workouts/day-exercises/movement-note", request, cancellationToken: cancellationToken).ConfigureAwait(false), "save workout movement note");
+
+    public async Task SetExerciseOptionalAsync(SetWorkoutExerciseOptionalRequest request, CancellationToken cancellationToken) =>
+        CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<SetWorkoutExerciseOptionalRequest, object>(
+            HttpMethod.Put, "/api/v1/workouts/optional-exercise", request, cancellationToken: cancellationToken).ConfigureAwait(false), "mark optional workout exercise");
+}
+
+public sealed class CloudWorkoutArchiveStore(
+    IMuscleCutiesBackendApiClient apiClient) : IWorkoutArchiveStore
+{
+    private const string HistoryRoute = "/api/v1/workouts/history";
+
+    public async Task<IReadOnlyList<WorkoutArchiveSummaryDto>> GetWorkoutHistoryAsync(int limit, int offset, CancellationToken ct = default) =>
+        CloudStoreResponse.RequireData(await apiClient.GetAsync<List<WorkoutArchiveSummaryDto>>(
+            $"{HistoryRoute}?limit={limit}&offset={offset}", ct).ConfigureAwait(false), "workout history");
+
+    public async Task<WorkoutArchiveDetailDto> GetWorkoutSessionDetailAsync(Guid sessionId, CancellationToken ct = default) =>
+        CloudStoreResponse.RequireData(await apiClient.GetAsync<WorkoutArchiveDetailDto>(
+            $"{HistoryRoute}/sessions/{sessionId:D}", ct).ConfigureAwait(false), "workout session detail");
+
+    public async Task UpdateWorkoutSessionNotesAsync(Guid sessionId, string notes, int? rpe, CancellationToken ct = default) =>
+        CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<UpdateWorkoutSessionNotesRequest, object>(
+            HttpMethod.Put, $"{HistoryRoute}/sessions/{sessionId:D}/notes", new UpdateWorkoutSessionNotesRequest(notes, rpe),
+            cancellationToken: ct).ConfigureAwait(false), "update workout notes");
+
+    public async Task<IReadOnlyList<WorkoutArchiveSummaryDto>> GetWorkoutHistoryByMonthAsync(int year, int month, int limit = 100, int offset = 0, CancellationToken ct = default) =>
+        CloudStoreResponse.RequireData(await apiClient.GetAsync<List<WorkoutArchiveSummaryDto>>(
+            $"{HistoryRoute}/month/{year}/{month}?limit={limit}&offset={offset}", ct).ConfigureAwait(false), "monthly workout history");
+
+    public async Task UpdateExerciseSetAsync(Guid setId, double weightKg, int repsCompleted, CancellationToken ct = default) =>
+        CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<UpdateExerciseSetRequest, object>(
+            HttpMethod.Put, $"{HistoryRoute}/sets/{setId:D}", new UpdateExerciseSetRequest(weightKg, repsCompleted),
+            cancellationToken: ct).ConfigureAwait(false), "update workout set");
+
+    public async Task<int> GetTotalSessionsCountAsync(CancellationToken ct = default) =>
+        CloudStoreResponse.RequireData(await apiClient.GetAsync<WorkoutHistoryCountDto>(
+            $"{HistoryRoute}/count", ct).ConfigureAwait(false), "workout history count").Count;
+
+    public async Task<IReadOnlyList<HistoryMonthOptionDto>> GetAvailableHistoryMonthsAsync(CancellationToken ct = default) =>
+        CloudStoreResponse.RequireData(await apiClient.GetAsync<List<HistoryMonthOptionDto>>(
+            $"{HistoryRoute}/months", ct).ConfigureAwait(false), "workout history months");
+
+    public async Task<int> GetWorkoutHistoryCountByMonthAsync(int year, int month, CancellationToken ct = default) =>
+        CloudStoreResponse.RequireData(await apiClient.GetAsync<WorkoutHistoryCountDto>(
+            $"{HistoryRoute}/month/{year}/{month}/count", ct).ConfigureAwait(false), "monthly workout count").Count;
 }
 
 internal static class CloudStoreResponse

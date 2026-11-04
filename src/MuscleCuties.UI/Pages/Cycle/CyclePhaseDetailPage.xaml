@@ -11,14 +11,15 @@
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Cycle"
     x:DataType="vm:CyclePhaseDetailViewModel"
     Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
     SemanticProperties.Description="{loc:LocalizedText Cycle_PhaseDetail_PageAccessibility}">
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="20,40,20,32"
-            Spacing="16"
+            Padding="{DynamicResource PresentationPageContentPadding}"
+            Spacing="{StaticResource UiSpaceControl}"
             HorizontalOptions="Fill"
-            MaximumWidthRequest="640">
+            MaximumWidthRequest="{StaticResource UiDimension640}">
 
             <sharedControls:PageHeader
                 Title="{Binding PhaseName, Converter={StaticResource LocalizedStringConverter}}"
@@ -27,35 +28,30 @@
 
             <!-- Hero phase card -->
             <Border
-                Background="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
-                Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                StrokeShape="RoundRectangle 16"
-                StrokeThickness="1"
-                Padding="22,20"
+                Style="{StaticResource CardPrimary}"
                 SemanticProperties.Description="{Binding PhaseName, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseDetail_OverviewFormat}">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
 
-                    <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                         <Image
                             Source="{Binding PhaseIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                            WidthRequest="16"
-                            HeightRequest="16"
+                            WidthRequest="{StaticResource UiDimension16}"
+                            HeightRequest="{StaticResource UiDimension16}"
                             Aspect="AspectFit"
                             VerticalOptions="Center" />
                         <Label
                             Grid.Column="1"
                             Text="{Binding PhaseWindow, Converter={StaticResource LocalizedStringConverter}}"
                             Style="{StaticResource FormFieldLabel}"
-                            FontSize="14"
-                            TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}" />
+                            TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
+                            LineBreakMode="WordWrap" />
                     </Grid>
 
                     <Label
                         Grid.Row="1"
                         Text="{Binding Headline, Converter={StaticResource LocalizedStringConverter}}"
                         TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                        FontSize="25"
-                        FontAttributes="Bold"
+                        Style="{StaticResource MetricValue}"
                         LineBreakMode="WordWrap"
                         SemanticProperties.HeadingLevel="Level1" />
 
@@ -63,28 +59,24 @@
                         Grid.Row="2"
                         Text="{Binding Hook, Converter={StaticResource LocalizedStringConverter}}"
                         TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                        FontSize="15"
+                        Style="{StaticResource BodyLabel}"
                         LineBreakMode="WordWrap" />
 
                     <sharedControls:PhaseVisualView
                         Grid.Row="3"
                         Source="{Binding PhaseImageSource}"
-                        WidthRequest="150"
-                        HeightRequest="150"
+                        WidthRequest="{StaticResource UiDimension150}"
+                        HeightRequest="{StaticResource UiDimension150}"
                         HorizontalOptions="Center"
-                        Margin="0,4,0,0" />
+                        Margin="{StaticResource UiInsets0_4_0_0}" />
 
                     <Border
                         Grid.Row="4"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource OverlayLight}, Dark={StaticResource OverlayDark}}"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 16"
-                        Padding="14,12">
+                        Style="{StaticResource CardSecondary}">
                         <Label
                             Text="{Binding QuickRule, Converter={StaticResource LocalizedStringConverter}}"
                             TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                            FontSize="14"
-                            FontAttributes="Bold"
+                            Style="{StaticResource BodyStrong}"
                             LineBreakMode="WordWrap" />
                     </Border>
                 </Grid>
@@ -94,10 +86,11 @@
             <Label
                 Text="{loc:LocalizedText Cycle_PhaseDetail_WorkoutsTab}"
                 Style="{StaticResource SectionTitle}"
-                Margin="2,8,2,0"
+                LineBreakMode="WordWrap"
+                Margin="{StaticResource UiInsets2_8_2_0}"
                 SemanticProperties.HeadingLevel="Level2" />
             <Border Style="{StaticResource CardPrimary}">
-                <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
                     <Label
                         Grid.Row="0"
                         Text="{Binding WorkoutLead, Converter={StaticResource LocalizedStringConverter}}"
@@ -107,25 +100,21 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Border
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 20"
-                                    Padding="10,8"
-                                    Margin="0,0,6,6"
-                                    MinimumHeightRequest="44"
+                                    Style="{StaticResource PillBadge}"
+                                    Margin="{StaticResource UiInsets0_0_6_6}"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
-                                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
+                                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                                         <Image
                                             Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                            WidthRequest="16"
-                                            HeightRequest="16"
+                                            WidthRequest="{StaticResource UiDimension16}"
+                                            HeightRequest="{StaticResource UiDimension16}"
                                             Aspect="AspectFit"
                                             VerticalOptions="Center" />
                                         <Label
                                             Grid.Column="1"
                                             Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CardTitle}"
-                                            FontSize="14"
                                             VerticalOptions="Center"
                                             LineBreakMode="WordWrap" />
                                     </Grid>
@@ -138,59 +127,63 @@
 
             <!-- At a glance card -->
             <Border Style="{StaticResource CardPrimary}">
-                <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
                     <Label
                         Grid.Row="0"
                         Text="{loc:LocalizedText Cycle_PhaseDetail_AtAGlanceTitle}"
                         Style="{StaticResource SectionTitle}"
+                        LineBreakMode="WordWrap"
                         SemanticProperties.HeadingLevel="Level2" />
 
-                    <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="24,70,*,60" RowSpacing="10"
-                          ColumnSpacing="8">
+                    <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="24,70,*,60" RowSpacing="{StaticResource UiSpacing10}"
+                          ColumnSpacing="{StaticResource UiSpaceTight}">
                         <Image
                             Source="{Binding TrainingIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                            WidthRequest="18" HeightRequest="18" Aspect="AspectFit" VerticalOptions="Center" />
+                            WidthRequest="{StaticResource UiDimension18}" HeightRequest="{StaticResource UiDimension18}" Aspect="AspectFit" VerticalOptions="Center" />
                         <Label Grid.Column="1" Text="{loc:LocalizedText Cycle_PhaseDetail_TrainingSectionTitle}"
-                               Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
+                               Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" LineBreakMode="WordWrap" />
                         <ProgressBar Grid.Column="2" Progress="{Binding TrainingSignal}"
                                      ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource TrackMutedLight}, Dark={StaticResource TrackMutedDark}}"
                                      VerticalOptions="Center"
                                      SemanticProperties.Description="{Binding TrainingSignalText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseDetail_TrainingLevelFormat}" />
                         <Label Grid.Column="3"
                                Text="{Binding TrainingSignalText, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource CaptionLabel}" FontSize="14" HorizontalTextAlignment="End"
-                               VerticalOptions="Center" />
+                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End"
+                               VerticalOptions="Center"
+                               LineBreakMode="WordWrap" />
 
                         <Image Grid.Row="1"
                                Source="{Binding NutritionIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                               WidthRequest="18" HeightRequest="18" Aspect="AspectFit" VerticalOptions="Center" />
+                               WidthRequest="{StaticResource UiDimension18}" HeightRequest="{StaticResource UiDimension18}" Aspect="AspectFit" VerticalOptions="Center" />
                         <Label Grid.Row="1" Grid.Column="1" Text="{loc:LocalizedText Cycle_PhaseDetail_NutritionSectionTitle}"
-                               Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
+                               Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" LineBreakMode="WordWrap" />
                         <ProgressBar Grid.Row="1" Grid.Column="2" Progress="{Binding NutritionSignal}"
                                      ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource TrackMutedLight}, Dark={StaticResource TrackMutedDark}}"
                                      VerticalOptions="Center"
                                      SemanticProperties.Description="{Binding NutritionSignalText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseDetail_NutritionLevelFormat}" />
                         <Label Grid.Row="1" Grid.Column="3"
                                Text="{Binding NutritionSignalText, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource CaptionLabel}" FontSize="14" HorizontalTextAlignment="End"
-                               VerticalOptions="Center" />
+                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End"
+                               VerticalOptions="Center"
+                               LineBreakMode="WordWrap" />
 
                         <Image Grid.Row="2"
                                Source="{Binding RecoveryIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                               WidthRequest="18" HeightRequest="18" Aspect="AspectFit" VerticalOptions="Center" />
+                               WidthRequest="{StaticResource UiDimension18}" HeightRequest="{StaticResource UiDimension18}" Aspect="AspectFit" VerticalOptions="Center" />
                         <Label Grid.Row="2" Grid.Column="1" Text="{loc:LocalizedText Cycle_PhaseDetail_RecoverySectionTitle}"
-                               Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" />
+                               Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" LineBreakMode="WordWrap" />
                         <ProgressBar Grid.Row="2" Grid.Column="2" Progress="{Binding RecoverySignal}"
                                      ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource TrackMutedLight}, Dark={StaticResource TrackMutedDark}}"
                                      VerticalOptions="Center"
                                      SemanticProperties.Description="{Binding RecoverySignalText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseDetail_RecoveryLevelFormat}" />
                         <Label Grid.Row="2" Grid.Column="3"
                                Text="{Binding RecoverySignalText, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource CaptionLabel}" FontSize="14" HorizontalTextAlignment="End"
-                               VerticalOptions="Center" />
+                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End"
+                               VerticalOptions="Center"
+                               LineBreakMode="WordWrap" />
                     </Grid>
                 </Grid>
             </Border>
@@ -199,37 +192,34 @@
             <Label
                 Text="{loc:LocalizedText Cycle_PhaseDetail_WhyItMattersTitle}"
                 Style="{StaticResource SectionTitle}"
-                Margin="2,8,2,0"
+                LineBreakMode="WordWrap"
+                Margin="{StaticResource UiInsets2_8_2_0}"
                 SemanticProperties.HeadingLevel="Level2" />
             <Border Style="{StaticResource CardPrimary}">
-                <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
                     <Label
                         Grid.Row="0"
                         Text="{Binding WhyLead, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource BodyLabel}"
                         LineBreakMode="WordWrap" />
-                    <VerticalStackLayout Grid.Row="1" Spacing="8" BindableLayout.ItemsSource="{Binding WhyPoints}">
+                    <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}" BindableLayout.ItemsSource="{Binding WhyPoints}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Border
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 14"
-                                    Padding="14,12"
-                                    MinimumHeightRequest="44"
+                                    Style="{StaticResource CardSecondary}"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
-                                    <Grid ColumnDefinitions="22,*" ColumnSpacing="8">
+                                    <Grid ColumnDefinitions="22,*" ColumnSpacing="{StaticResource UiSpaceTight}">
                                         <Image
                                             Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                            WidthRequest="16"
-                                            HeightRequest="16"
+                                            WidthRequest="{StaticResource UiDimension16}"
+                                            HeightRequest="{StaticResource UiDimension16}"
                                             Aspect="AspectFit"
                                             VerticalOptions="Center" />
                                         <Label
                                             Grid.Column="1"
                                             Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CardTitle}"
-                                            FontSize="14"
                                             LineBreakMode="WordWrap" />
                                     </Grid>
                                 </Border>
@@ -241,16 +231,13 @@
 
             <!-- Watch this (warnings) section - expanded by default, prominent styling -->
             <Border
-                Style="{StaticResource CardPrimary}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource WarningSurfaceLight}, Dark={StaticResource WarningSurfaceDark}}"
-                Stroke="{AppThemeBinding Light={StaticResource WarningAccentLight}, Dark={StaticResource WarningAccentDark}}"
-                StrokeThickness="1">
-                <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                Style="{StaticResource CardPrimary}">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                     <Grid
                         Grid.Row="0"
                         ColumnDefinitions="22,*,24"
-                        ColumnSpacing="8"
-                        MinimumHeightRequest="48"
+                        ColumnSpacing="{StaticResource UiSpaceTight}"
+                        MinimumHeightRequest="{StaticResource UiDimension48}"
                         SemanticProperties.Description="{loc:LocalizedText Cycle_PhaseDetail_WatchOutSectionAccessibility}"
                         SemanticProperties.Hint="{loc:LocalizedText Cycle_PhaseDetail_ExpandWatchOutAccessibility}">
                         <Grid.GestureRecognizers>
@@ -258,60 +245,58 @@
                         </Grid.GestureRecognizers>
                         <Image
                             Source="{Binding WatchIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}, ConverterParameter=Warning}"
-                            WidthRequest="20"
-                            HeightRequest="20"
+                            WidthRequest="{StaticResource UiDimension20}"
+                            HeightRequest="{StaticResource UiDimension20}"
                             Aspect="AspectFit"
                             VerticalOptions="Center" />
                         <Label
                             Grid.Column="1"
                             Text="{loc:LocalizedText Cycle_PhaseDetail_WatchThisSectionTitle}"
                             Style="{StaticResource CardTitle}"
-                            FontSize="17"
                             TextColor="{AppThemeBinding Light={StaticResource WarningAccentLight}, Dark={StaticResource WarningAccentDark}}"
                             VerticalOptions="Center"
+                            LineBreakMode="WordWrap"
                             SemanticProperties.HeadingLevel="Level2" />
                         <Label
                             Grid.Column="2"
                             Text="{Binding IsWatchExpanded, Converter={StaticResource BoolToChevronConverter}}"
                             TextColor="{AppThemeBinding Light={StaticResource WarningAccentLight}, Dark={StaticResource WarningAccentDark}}"
-                            FontSize="16"
+                            Style="{StaticResource SectionTitle}"
                             VerticalOptions="Center"
                             HorizontalTextAlignment="End" />
                     </Grid>
 
                     <VerticalStackLayout
                         Grid.Row="1"
-                        Spacing="12"
-                        Margin="0,10,0,0"
+                        Spacing="{StaticResource UiSpaceCompact}"
+                        Margin="{StaticResource UiInsets0_10_0_0}"
                         IsVisible="{Binding IsWatchExpanded}"
                         BindableLayout.ItemsSource="{Binding WatchPoints}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Grid
                                     ColumnDefinitions="Auto,*"
-                                    ColumnSpacing="10"
-                                    MinimumHeightRequest="44"
+                                    ColumnSpacing="{StaticResource UiSpacing10}"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
                                     <Image
                                         Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}, ConverterParameter=Warning}"
-                                        WidthRequest="18"
-                                        HeightRequest="18"
+                                        WidthRequest="{StaticResource UiDimension18}"
+                                        HeightRequest="{StaticResource UiDimension18}"
                                         Aspect="AspectFit"
-                                        Margin="0,4,0,0"
+                                        Margin="{StaticResource UiInsets0_4_0_0}"
                                         VerticalOptions="Start" />
-                                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="3">
+                                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing3}">
                                         <Label
                                             Grid.Row="0"
                                             Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CardTitle}"
-                                            FontSize="15"
                                             TextColor="{AppThemeBinding Light={StaticResource WarningAccentLight}, Dark={StaticResource WarningAccentDark}}"
                                             LineBreakMode="WordWrap" />
                                         <Label
                                             Grid.Row="1"
                                             Text="{Binding Text, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource MutedLabel}"
-                                            FontSize="14"
                                             LineBreakMode="WordWrap" />
                                     </Grid>
                                 </Grid>
@@ -325,10 +310,11 @@
             <Label
                 Text="{loc:LocalizedText Cycle_PhaseDetail_NutritionSectionTitle}"
                 Style="{StaticResource SectionTitle}"
-                Margin="2,8,2,0"
+                LineBreakMode="WordWrap"
+                Margin="{StaticResource UiInsets2_8_2_0}"
                 SemanticProperties.HeadingLevel="Level2" />
             <Border Style="{StaticResource CardPrimary}">
-                <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
                     <Label
                         Grid.Row="0"
                         Text="{Binding NutritionLead, Converter={StaticResource LocalizedStringConverter}}"
@@ -338,25 +324,21 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Border
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 20"
-                                    Padding="10,8"
-                                    Margin="0,0,6,6"
-                                    MinimumHeightRequest="44"
+                                    Style="{StaticResource PillBadge}"
+                                    Margin="{StaticResource UiInsets0_0_6_6}"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
-                                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
+                                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                                         <Image
                                             Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                            WidthRequest="16"
-                                            HeightRequest="16"
+                                            WidthRequest="{StaticResource UiDimension16}"
+                                            HeightRequest="{StaticResource UiDimension16}"
                                             Aspect="AspectFit"
                                             VerticalOptions="Center" />
                                         <Label
                                             Grid.Column="1"
                                             Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CardTitle}"
-                                            FontSize="14"
                                             VerticalOptions="Center"
                                             LineBreakMode="WordWrap" />
                                     </Grid>

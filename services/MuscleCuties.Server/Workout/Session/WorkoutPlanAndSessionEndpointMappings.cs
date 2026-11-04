@@ -53,6 +53,40 @@ public static class WorkoutPlanAndSessionEndpointMappings
             }
         });
 
+        group.MapPut("/optional-session", async (
+            [FromBody] SetWorkoutSessionOptionalRequest request,
+            ClaimsPrincipal principal,
+            [FromServices] PostgresWorkoutPlanAndSessionStore store,
+            CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            try
+            {
+                await store.SetSessionOptionalAsync(userId, request, cancellationToken).ConfigureAwait(false);
+                return Results.Ok();
+            }
+            catch (KeyNotFoundException) { return Results.NotFound(); }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+            { return Results.BadRequest(new { error = ex.Message }); }
+        });
+
+        group.MapPut("/optional-exercise", async (
+            [FromBody] SetWorkoutExerciseOptionalRequest request,
+            ClaimsPrincipal principal,
+            [FromServices] PostgresWorkoutPlanAndSessionStore store,
+            CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            try
+            {
+                await store.SetExerciseOptionalAsync(userId, request, cancellationToken).ConfigureAwait(false);
+                return Results.Ok();
+            }
+            catch (KeyNotFoundException) { return Results.NotFound(); }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+            { return Results.BadRequest(new { error = ex.Message }); }
+        });
+
         group.MapGet("/day-sessions/{workoutDayId:int}", async (
             int workoutDayId,
             ClaimsPrincipal principal,

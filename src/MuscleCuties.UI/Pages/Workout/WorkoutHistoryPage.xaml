@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Workout.WorkoutHistoryPage"
+    x:Name="WorkoutHistoryRoot"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:uiModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
+    xmlns:archive="clr-namespace:MuscleCuties.UseCases.Features.Workout.Archive;assembly=MuscleCuties.UseCases"
+    x:DataType="vm:WorkoutHistoryViewModel"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+
+    <Grid RowDefinitions="Auto,*" ColumnDefinitions="*">
+
+        <!-- Top Navigation Bar -->
+        <Grid
+            Grid.Row="0"
+            Padding="{DynamicResource PresentationPageHeaderPadding}"
+            ColumnDefinitions="Auto,*,Auto"
+            ColumnSpacing="{StaticResource UiSpaceCompact}"
+            BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+
+            <Border
+                Style="{StaticResource HeaderIconButton}"
+                SemanticProperties.Description="{loc:LocalizedText Workout_History_BackButton}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding NavigateBackCommand}" />
+                </Border.GestureRecognizers>
+                <Path
+                    Data="M15 19l-7-7 7-7"
+                    Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                    StrokeThickness="{StaticResource UiStrokeWidth2}"
+                    StrokeLineCap="Round"
+                    StrokeLineJoin="Round"
+                    Aspect="Uniform"
+                    WidthRequest="{StaticResource UiDimension14}"
+                    HeightRequest="{StaticResource UiDimension14}"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+            </Border>
+
+            <Label LineBreakMode="WordWrap"
+                Grid.Column="1"
+                Text="{loc:LocalizedText Workout_History_ArchiveTitle}"
+                Style="{StaticResource PageTitle}"
+                VerticalOptions="Center" />
+
+            <Border
+                Grid.Column="2"
+                Style="{StaticResource HeaderIconButton}"
+                SemanticProperties.Description="{loc:LocalizedText Workout_History_RefreshArchiveAccessibility}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding LoadHistoryCommand}" />
+                </Border.GestureRecognizers>
+                <Path
+                    Data="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                    StrokeThickness="{StaticResource UiStrokeWidth1_8}"
+                    StrokeLineCap="Round"
+                    StrokeLineJoin="Round"
+                    Aspect="Uniform"
+                    WidthRequest="{StaticResource UiDimension16}"
+                    HeightRequest="{StaticResource UiDimension16}"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+            </Border>
+        </Grid>
+
+        <!-- Chronological Virtualized Sessions Feed (No nested ScrollView) -->
+        <CollectionView
+            Grid.Row="1"
+            Margin="{DynamicResource PresentationCollectionHorizontalInset}"
+            ItemsSource="{Binding Sessions}"
+            ItemSizingStrategy="MeasureAllItems"
+            RemainingItemsThreshold="4"
+            RemainingItemsThresholdReachedCommand="{Binding LoadNextPageCommand}"
+            SelectionMode="None">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="{StaticResource UiSpaceCompact}" />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.Header>
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}"                                      Padding="{DynamicResource PresentationCollectionHeaderPadding}"
+                                      MaximumWidthRequest="{StaticResource UiDimension640}"
+                      HorizontalOptions="Center">
+                    <!-- Lifetime summary: both values start on the same edge and wrap rather than clip. -->
+                    <Border
+                        Grid.Row="0"
+                        Style="{StaticResource CardPrimary}">
+                        <!-- Shared rows: a two-line label cannot push one value below the other. -->
+                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto"
+                              ColumnSpacing="{StaticResource UiSpaceControl}"
+                              RowSpacing="{StaticResource UiSpaceMicro}">
+                            <Label Grid.Row="0" Grid.Column="0" LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
+                                   Text="{loc:LocalizedText Workout_History_CompletedSessionsTitle}" />
+                            <Label Grid.Row="0" Grid.Column="1" LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
+                                   Text="{loc:LocalizedText Workout_History_RecordedSetVolumeHeader}" />
+                            <Label Grid.Row="1" Grid.Column="0" LineBreakMode="WordWrap" Style="{StaticResource WorkoutNumber}"
+                                   HorizontalTextAlignment="Start"
+                                   Text="{Binding TotalSessionsCount, Converter={StaticResource LocalizedStringConverter}}" />
+                            <Label Grid.Row="1" Grid.Column="1" LineBreakMode="WordWrap" Style="{StaticResource WorkoutNumber}"
+                                   HorizontalTextAlignment="Start"
+                                   Text="{Binding LifetimeVolumeFormatted, Converter={StaticResource LocalizedStringConverter}}"
+                                   TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Monthly Filter Chips -->
+                    <ScrollView Grid.Row="1" Orientation="Horizontal" HorizontalScrollBarVisibility="Never"
+                                Margin="{StaticResource UiInsets0_2_0_0}">
+                        <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}" BindableLayout.ItemsSource="{Binding AvailableMonths}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="uiModels:MonthFilterItem">
+                                    <Border
+                                        Style="{StaticResource ChoiceCell}"
+                                        SemanticProperties.Description="{Binding DisplayName}">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding SelectMonthCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutHistoryViewModel}}, x:DataType=vm:WorkoutHistoryViewModel}"
+                                                CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
+                                        <!-- Selection surface, stroke, touch target and spoken state all
+                                             come from the one shared choice style. -->
+                                        <Label Style="{StaticResource ChoiceCellLabel}"
+                                               Text="{Binding DisplayName}" />
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </HorizontalStackLayout>
+                    </ScrollView>
+
+                    <!-- Empty State -->
+                    <Border
+                        Grid.Row="2"
+                        IsVisible="{Binding HasNoSessions}"
+                        MaximumWidthRequest="{StaticResource UiDimension640}"
+                        Style="{StaticResource CardPrimary}">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
+                            <Label LineBreakMode="WordWrap" Grid.Row="0" Text="{loc:LocalizedText Workout_History_EmptyStateTitle}"
+                                   Style="{StaticResource StateEmptyTitle}" HorizontalTextAlignment="Center" />
+                            <Label LineBreakMode="WordWrap" Grid.Row="1" Text="{loc:LocalizedText Workout_History_EmptyStateDescription}"
+                                   Style="{StaticResource StateEmptyBody}" />
+                        </Grid>
+                    </Border>
+
+                    <Label LineBreakMode="WordWrap" Style="{StaticResource SectionTitle}"
+                        Grid.Row="3"
+                        Text="{loc:LocalizedText Workout_History_PastSessionsTitle}"
+                        Margin="{StaticResource UiInsets4_4_0_0}" />
+                </Grid>
+            </CollectionView.Header>
+
+            <!-- Workout Session Summary Card ItemTemplate -->
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="archive:WorkoutArchiveSummaryDto">
+                    <Border
+                        Margin="{DynamicResource PresentationCollectionItemMargin}"
+                        MaximumWidthRequest="{StaticResource UiDimension640}"
+                        Style="{StaticResource CardPrimary}"
+                        SemanticProperties.Hint="{loc:LocalizedText Workout_History_OpenSessionHint}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding OpenSessionDetailCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutHistoryViewModel}}, x:DataType=vm:WorkoutHistoryViewModel}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
+                            <!-- Top: Date and RPE Badge -->
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                <Label LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
+                                    Text="{Binding StartedAt, StringFormat='{0:ddd, MMM d, yyyy}'}"
+ />
+                                <Border
+                                    Grid.Column="1"
+                                    IsVisible="{Binding RpeRating, Converter={StaticResource StringToBoolConverter}}"
+                                    StrokeShape="{StaticResource UiRoundRectangleRadius999}"
+                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDeepDark}}"
+                                    Padding="{StaticResource UiInsets8_2}">
+                                    <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}"
+                                        Text="{Binding RpeRating, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_History_RpeFormat}"
+                                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
+                                </Border>
+                            </Grid>
+
+                            <!-- Session Name -->
+                            <Label LineBreakMode="WordWrap" Style="{StaticResource CardTitle}"
+                                Grid.Row="1"
+                                Text="{Binding WorkoutName}" />
+                            <Label LineBreakMode="WordWrap" Grid.Row="2"
+                                   Text="{Binding DetailLabel, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource CaptionLabel}" />
+
+                            <!-- Primary Exercises -->
+                            <!-- Exercise pills wrap inside the card instead of scrolling off the edge. -->
+                            <FlexLayout Grid.Row="3" Direction="Row" Wrap="Wrap" AlignItems="Start"
+                                        JustifyContent="Start"
+                                        BindableLayout.ItemsSource="{Binding PrimaryExercises}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Border
+                                            Style="{StaticResource PillBadge}"
+                                            Padding="{StaticResource UiInsets6_3}"
+                                            Margin="{StaticResource UiInsets0_0_6_6}">
+                                            <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}" Text="{Binding .}"
+ />
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </FlexLayout>
+
+                            <!-- Metric row: three equal columns, left aligned so long values wrap instead of clipping. -->
+                            <Grid Grid.Row="4" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceCompact}"
+                                  Margin="{StaticResource UiInsets0_4_0_0}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                    <Label Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
+                                           Text="{loc:LocalizedText Workout_History_DurationHeader}" />
+                                    <Label Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
+                                           Text="{Binding DurationLabel, Converter={StaticResource LocalizedStringConverter}}" />
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}">
+                                    <Label Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
+                                           Text="{loc:LocalizedText Workout_History_VolumeHeader}" />
+                                    <Label Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
+                                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                                           Text="{Binding VolumeLabel, Converter={StaticResource LocalizedStringConverter}}" />
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Grid.Column="2" Spacing="{StaticResource UiSpaceMicro}">
+                                    <Label Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
+                                           Text="{loc:LocalizedText Workout_History_TotalSetsHeader}" />
+                                    <Label Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
+                                           Text="{Binding SetCountLabel, Converter={StaticResource LocalizedStringConverter}}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.Footer>
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}" Padding="{StaticResource UiInsets16_12}"
+                      HorizontalOptions="Center">
+                    <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}" Grid.Row="0" IsRunning="{Binding IsLoadingMore}"
+                                       IsVisible="{Binding IsLoadingMore}"
+                                       HeightRequest="{StaticResource UiDimension28}" WidthRequest="{StaticResource UiDimension28}" />
+                    <Label LineBreakMode="WordWrap" Grid.Row="1" Text="{loc:LocalizedText Workout_History_LoadingMore}"
+                           Style="{StaticResource MutedCentered}" IsVisible="{Binding IsLoadingMore}" />
+                    <Label LineBreakMode="WordWrap" Grid.Row="2" Text="{loc:LocalizedText Workout_History_AllWorkoutsLoaded}"
+                           Style="{StaticResource MutedCentered}" IsVisible="{Binding IsEndReached}" />
+                    <Button Grid.Row="3" Text="{loc:LocalizedText Workout_History_RetryLoadingButton}" Command="{Binding LoadNextPageCommand}"
+                            IsVisible="{Binding IsError}" Style="{StaticResource ButtonSecondary}" />
+                    <Grid Grid.Row="4" HeightRequest="{StaticResource UiDimension20}" />
+                </Grid>
+            </CollectionView.Footer>
+        </CollectionView>
+
+        <!-- Dedicated Session Detail Sheet Modal Overlay -->
+        <sharedControls:AnimatedModalView
+            Grid.RowSpan="2"
+            IsOpen="{Binding IsDetailSheetVisible}">
+            <Grid>
+            <BoxView Style="{StaticResource ModalBackdrop}">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding CloseSessionDetailCommand}" />
+                </BoxView.GestureRecognizers>
+            </BoxView>
+
+            <Border
+                x:Name="SheetSurface"
+                Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer /> <!-- Absorb taps inside modal -->
+                </Border.GestureRecognizers>
+
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Modal Header -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="{DynamicResource PresentationModalHeaderPadding}">
+                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
+                            <Label LineBreakMode="WordWrap"
+                                Grid.Row="0"
+                                Text="{Binding SelectedSessionDetail.WorkoutName}"
+                                Style="{StaticResource ModalTitle}" />
+                            <Label LineBreakMode="WordWrap"
+                                Grid.Row="1"
+                                Text="{Binding DetailStartedFormatted, Converter={StaticResource LocalizedStringConverter}}"
+                                Style="{StaticResource MutedLabel}" />
+                            <Label LineBreakMode="WordWrap" Grid.Row="2"
+                                   Text="{Binding DetailKindLabel, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource CaptionLabel}" />
+                        </Grid>
+
+                        <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
+                                SemanticProperties.Description="{loc:LocalizedText Common_Close}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding CloseSessionDetailCommand}" />
+                            </Border.GestureRecognizers>
+                            <Path Style="{StaticResource ModalCloseIcon}" />
+                        </Border>
+                    </Grid>
+
+                    <!-- Session content scrolls while the header and save action stay visible. -->
+                    <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Default">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceControl}" Padding="{DynamicResource PresentationModalPagePadding}">
+
+                        <!-- Key Metrics Row -->
+                        <Grid Grid.Row="0" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                            <Border Style="{StaticResource CardSecondary}">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
+                                    <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}" Grid.Row="0" Text="{loc:LocalizedText Workout_History_DurationHeader}"
+ />
+                                    <Label LineBreakMode="WordWrap" Style="{StaticResource BodyLabel}" Grid.Row="1"
+                                           Text="{Binding DetailDurationFormatted, Converter={StaticResource LocalizedStringConverter}}" />
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Column="1" Style="{StaticResource CardSecondary}">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
+                                    <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}" Grid.Row="0" Text="{loc:LocalizedText Workout_History_VolumeHeader}"
+ />
+                                    <Label LineBreakMode="WordWrap" Style="{StaticResource BodyLabel}" Grid.Row="1"
+                                           Text="{Binding DetailVolumeFormatted, Converter={StaticResource LocalizedStringConverter}}"
+                                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Column="2" Style="{StaticResource CardSecondary}">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
+                                    <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}" Grid.Row="0" Text="{loc:LocalizedText Workout_History_RpeHeader}"
+ />
+                                    <Label LineBreakMode="WordWrap" Style="{StaticResource BodyLabel}" Grid.Row="1"
+                                           Text="{Binding DetailRpeFormatted, Converter={StaticResource LocalizedStringConverter}}" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- Sets Breakdown Grouped by Exercise -->
+                        <Label LineBreakMode="WordWrap" Grid.Row="1" Text="{loc:LocalizedText Workout_History_BreakdownTitle}"
+                               Style="{StaticResource SectionTitle}" />
+
+                        <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceCompact}"
+                                             BindableLayout.ItemsSource="{Binding ExerciseGroups}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="uiModels:ExerciseSetsUiGroup">
+                                    <Border
+                                        Style="{StaticResource CardSecondary}">
+                                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
+                                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                                <Label LineBreakMode="WordWrap" Style="{StaticResource BodyLabel}" Text="{Binding ExerciseName}" />
+                                                <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}" Grid.Column="1"
+                                                       Text="{Binding VolumeSummary, Converter={StaticResource LocalizedStringConverter}}"
+ />
+                                            </Grid>
+
+                                            <!-- Sets Rows with Inline Editing -->
+                                            <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceTight}"
+                                                                 BindableLayout.ItemsSource="{Binding EditableSets}">
+                                                <BindableLayout.ItemTemplate>
+                                                    <DataTemplate x:DataType="uiModels:EditableExerciseSetItem">
+                                                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}"
+                                                              Padding="{StaticResource UiInsets0_8_0_0}">
+                                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                                                <Label Text="{Binding SetNumber, StringFormat='#{0}'}"
+                                                                       Style="{StaticResource CardTitle}" LineBreakMode="WordWrap" />
+                                                                <Label Grid.Column="1" Text="{Binding IsWarmup, Converter={StaticResource BoolToWarmupTextConverter}}"
+                                                                       Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                                                            </Grid>
+                                                            <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
+                                                                <Label Text="{loc:LocalizedText Workout_History_KgHeader}"
+                                                                       Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
+                                                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                                                    <Entry Text="{Binding WeightInput}" Keyboard="Numeric"
+                                                                           Style="{StaticResource WorkoutNumberEntry}"
+                                                                           Placeholder="{loc:LocalizedText Workout_History_KgUnit}"
+                                                                           SemanticProperties.Description="{loc:LocalizedText Workout_History_WeightInKgAccessibility}" />
+                                                                </Border>
+                                                            </Grid>
+                                                            <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
+                                                                <Label Text="{loc:LocalizedText Workout_History_RepsHeader}"
+                                                                       Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
+                                                                <Border Grid.Row="1" Style="{StaticResource InputContainer}">
+                                                                    <Entry Text="{Binding RepsInput}" Keyboard="Numeric"
+                                                                           Style="{StaticResource WorkoutNumberEntry}"
+                                                                           Placeholder="{loc:LocalizedText Workout_History_RepsUnit}"
+                                                                           SemanticProperties.Description="{loc:LocalizedText Workout_History_RepsCompletedAccessibility}" />
+                                                                </Border>
+                                                            </Grid>
+                                                            <Button Grid.Row="3" Style="{StaticResource ButtonSecondary}"
+                                                                    Text="{loc:LocalizedText Workout_History_SaveButton}"
+                                                                    Command="{Binding SaveSetEditCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutHistoryViewModel}}, x:DataType=vm:WorkoutHistoryViewModel}"
+                                                                    CommandParameter="{Binding .}"
+                                                                    SemanticProperties.Description="{loc:LocalizedText Workout_History_SaveSetEditAccessibility}" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </BindableLayout.ItemTemplate>
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+
+                        <!-- Retroactive Session Notes & RPE -->
+                        <Grid Grid.Row="3" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}" Margin="{StaticResource UiInsets0_4_0_0}">
+                            <Label LineBreakMode="WordWrap" Grid.Row="0" Text="{loc:LocalizedText Workout_History_NotesAndRpeSectionTitle}"
+                                   Style="{StaticResource SectionTitle}" />
+
+                            <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceMicro}">
+                                <Label LineBreakMode="WordWrap" Style="{StaticResource FormFieldLabel}"
+                                       Text="{loc:LocalizedText Workout_History_PerceivedExertionTitle}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry
+                                        Text="{Binding EditingRpe}"
+                                        Keyboard="Numeric"
+                                        Placeholder="{loc:LocalizedText Workout_History_RpeHeader}"
+                                        SemanticProperties.Description="{loc:LocalizedText Workout_History_RpeSliderAccessibility}" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <Border Grid.Row="2" Style="{StaticResource EditorContainer}">
+                                <Editor
+                                    Text="{Binding EditingNotes}"
+                                    Placeholder="{loc:LocalizedText Workout_History_NotesPlaceholder}" />
+                            </Border>
+                        </Grid>
+                        </Grid>
+                    </ScrollView>
+
+                    <Grid Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}">
+                        <Button Style="{StaticResource ButtonSecondary}"
+                                Text="{loc:LocalizedText Workout_History_SaveNotesAndRpeButton}"
+                                Command="{Binding SaveSessionNotesCommand}" />
+                    </Grid>
+                </Grid>
+            </Border>
+            </Grid>
+        </sharedControls:AnimatedModalView>
+
+        <!-- Initial Loading Indicator -->
+        <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}"
+            Grid.Row="1"
+            IsRunning="{Binding IsLoading}"
+            IsVisible="{Binding IsLoading}"
+           
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            HeightRequest="{StaticResource UiDimension36}"
+            WidthRequest="{StaticResource UiDimension36}" />
+
+        <!-- Status Toast Banner -->
+        <Border
+            Grid.RowSpan="2"
+            HorizontalOptions="Center"
+            VerticalOptions="End"
+            Margin="{StaticResource UiInsets20_0_20_20}"
+            Style="{StaticResource StatusToastSurface}"
+            IsVisible="{Binding IsStatusVisible}"
+            InputTransparent="True">
+            <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}"
+                Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+                TextColor="{AppThemeBinding Light={StaticResource TextOnAccentLight}, Dark={StaticResource TextOnAccentDark}}" />
+        </Border>
+
+    </Grid>
+</ContentPage>

@@ -130,7 +130,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(FeedbackText) && string.IsNullOrWhiteSpace(AdjustmentText))
         {
-            StatusMessage = "Describe an issue or idea before opening the email draft.";
+            StatusMessage = "Ui_Profile_Feedback_Error_Describe";
             return;
         }
 
@@ -148,7 +148,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         catch (Exception ex)
         {
             Trace.WriteLine($"[ProfileFeedbackViewModel] Feedback handoff failed ({ex.GetType().Name}).");
-            StatusMessage = "Could not open email on this device. Please try again from a device with mail set up.";
+            StatusMessage = "Ui_Profile_Feedback_Error_NoMail";
         }
         finally
         {
@@ -175,7 +175,8 @@ public partial class ProfileFeedbackViewModel : ObservableObject
     {
         _attachment = null;
         AttachmentName = string.Empty;
-        AttachmentStatus = "Attachment removed.";
+        AttachmentStatus =
+            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Profile_Feedback_AttachmentRemoved");
         OnPropertyChanged(nameof(HasAttachment));
     }
 }

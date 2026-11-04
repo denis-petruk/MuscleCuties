@@ -1,15 +1,18 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Nutrition;
 using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
+using MuscleCuties.UseCases.Features.Nutrition.Overview;
+using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
+using MuscleCuties.UseCases.Features.Hydration.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
@@ -21,8 +24,10 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     private readonly ISaveMealTemplateUseCase? _saveMealTemplateUseCase;
     private readonly IGetRecipesAndTemplatesUseCase? _getRecipesAndTemplatesUseCase;
     private readonly ICreateRecipeUseCase? _createRecipeUseCase;
+    private readonly IRecipePortionUseCase _recipePortionUseCase;
     private readonly INutritionChangeNotifier? _changeNotifier;
     private readonly INutritionDailyLogUseCase _dailyLogUseCase;
+    private readonly INutritionOverviewUseCase? _overviewUseCase;
     private readonly SemaphoreSlim _dateLoadLock = new(1, 1);
     private readonly Func<Task>? _navigateBackAsync;
     private Guid _currentLogId;
@@ -30,6 +35,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     private DateOnly _draftDate;
     private DateTime _draftTimestamp;
+    private int? _editingLoggedMealId;
+    private IReadOnlyList<NutritionMealIngredient> _editingMealIngredients = [];
 
     [ObservableProperty] private double _editingCalories = 250;
 
@@ -58,6 +65,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _isDatePickerOpen;
 
     [ObservableProperty] private bool _isEditingExisting;
+    [ObservableProperty] private bool _isMealContextLocked;
 
     // Modal state
     [ObservableProperty] private bool _isEditModalVisible;
@@ -77,7 +85,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private DateTime _pickerDate;
 
-    private QuickFoodItemDto? _quickDraft;
+    private QuickFood? _quickDraft;
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(FormattedSelectedDate), nameof(IsSelectedDateToday))]
     private DateOnly _selectedDate;
@@ -112,15 +120,20 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     public FoodLogViewModel(
         INutritionDailyLogUseCase dailyLogUseCase,
+        IRecipePortionUseCase recipePortionUseCase,
+        WaterQuickAddDefaults waterQuickAddDefaults,
         Func<Task>? navigateBackAsync = null,
         INutritionChangeNotifier? changeNotifier = null,
         ILookupBarcodeUseCase? barcodeUseCase = null,
         IBarcodeScannerHardwareService? barcodeHardwareService = null,
         ISaveMealTemplateUseCase? saveMealTemplateUseCase = null,
         IGetRecipesAndTemplatesUseCase? getRecipesAndTemplatesUseCase = null,
-        ICreateRecipeUseCase? createRecipeUseCase = null)
+        ICreateRecipeUseCase? createRecipeUseCase = null,
+        INutritionOverviewUseCase? overviewUseCase = null)
     {
         _dailyLogUseCase = dailyLogUseCase;
+        _recipePortionUseCase = recipePortionUseCase;
+        WaterPresetVolumesMl = new ObservableCollection<int>(waterQuickAddDefaults.VolumesMillilitres);
         _navigateBackAsync = navigateBackAsync;
         _changeNotifier = changeNotifier;
         _barcodeUseCase = barcodeUseCase;
@@ -128,6 +141,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         _saveMealTemplateUseCase = saveMealTemplateUseCase;
         _getRecipesAndTemplatesUseCase = getRecipesAndTemplatesUseCase;
         _createRecipeUseCase = createRecipeUseCase;
+        _overviewUseCase = overviewUseCase;
 
 
         MealSections.Add(BreakfastSection);
@@ -143,8 +157,19 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     }
 
     public bool IsPlainFoodEditor => !IsGroupedEditor;
+    public bool CanDeleteEditingFood => IsEditingExisting && !IsMealContextLocked;
+    public string MealContextSummary =>
+        $"{UiTextCatalog.Get($"Nutrition_MealType_{EditingMealType}")} · {_draftTimestamp:t}";
+    public string EditModalTitle => IsEditingExisting
+        ? (IsMealContextLocked
+            ? UiTextCatalog.Get("Nutrition_Breakdown_EditMeal")
+            : UiTextCatalog.Get("Nutrition_FoodLog_EditEntryTitle"))
+        : UiTextCatalog.Get("Nutrition_FoodLog_LogEntryTitle");
     public ObservableCollection<HistoryIngredientEditor> EditingIngredients { get; } = [];
     public IReadOnlyList<MealType> MealCategories { get; } = Enum.GetValues<MealType>();
+
+    /// <summary>Days shown either side of the selected day, so the seven cells fit one row.</summary>
+    private const int DaysAroundSelectedDate = 3;
 
     public ObservableCollection<DateStripDayItem> DateStripDays { get; } = [];
 
@@ -255,7 +280,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             PickerDate = SelectedDate.ToDateTime(TimeOnly.MinValue);
             PopulateDateStrip(SelectedDate);
             await LoadLogForDateAsync(SelectedDate);
-            OpenEditFood(ToFoodItemEntryDto(item));
+            await OpenEditFoodAsync(NutritionPresentationMapper.FromLoggedFood(item));
         }
         catch { ShowStatus("Could not open this entry. Refresh and try again."); }
     }
@@ -265,8 +290,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         DateStripDays.Clear();
         var today = DateOnly.FromDateTime(DateTime.Today);
 
-        // 14-day rolling window centered around today/selected
-        for (var offset = -7; offset <= 7; offset++)
+        // The strip covers the week around the selected day rather than a longer rolling window.
+        for (var offset = -DaysAroundSelectedDate; offset <= DaysAroundSelectedDate; offset++)
         {
             var dayNumber = centerDate.DayNumber + offset;
             if (dayNumber < DateOnly.MinValue.DayNumber || dayNumber > DateOnly.MaxValue.DayNumber)
@@ -276,6 +301,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             {
                 IsSelected = date == SelectedDate
             };
+            item.Position = DateStripDays.Count;
             DateStripDays.Add(item);
         }
     }
@@ -375,21 +401,25 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    [SuppressMessage("Performance", "CA1822:Mark members as static",
-        Justification = "RelayCommand for ViewModel binding.")]
-    public void ToggleMealSection(MealSectionUiGroup section)
-    {
-        section.IsExpanded = !section.IsExpanded;
-    }
+    public Task OpenAddFoodAsync(MealType mealType) => OpenAddFoodCoreAsync(mealType, null);
 
-    [RelayCommand]
-    public async Task OpenAddFoodAsync(MealType mealType)
+    private async Task OpenAddFoodCoreAsync(MealType mealType, int? minuteOfDay)
     {
         if (IsLoading || IsWriting || IsLoadError)
             return;
         _draftDate = SelectedDate;
-        _draftTimestamp = SelectedDate.ToDateTime(TimeOnly.FromDateTime(DateTime.Now));
+        // The Nutrition meal-entry sheet may hand over the time chosen there; otherwise, now.
+        var hasLogTime = minuteOfDay is int minutes &&
+                         minutes >= TimeSpan.Zero.TotalMinutes &&
+                         minutes < TimeSpan.FromDays(1).TotalMinutes;
+        var loggedAt = hasLogTime
+            ? TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(minuteOfDay!.Value))
+            : TimeOnly.FromDateTime(DateTime.Now);
+        _draftTimestamp = SelectedDate.ToDateTime(loggedAt);
         _quickDraft = null;
+        _editingLoggedMealId = null;
+        _editingMealIngredients = [];
+        IsMealContextLocked = false;
         SetIngredients([]);
         IsEditingExisting = false;
         EditingItemId = Guid.NewGuid();
@@ -410,6 +440,18 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         await LoadFastLoggingShelvesAsync();
     }
 
+    /// <summary>
+    /// Interprets the add-food intent carried by a navigation query. The page only moves the
+    /// raw values, so the meaning of a meal name or a minute of day stays in this layer.
+    /// </summary>
+    public async Task OpenAddFoodIntentAsync(string? mealTypeName, int? minuteOfDay)
+    {
+        if (!Enum.TryParse<MealType>(mealTypeName, true, out var mealType) || !Enum.IsDefined(mealType))
+            return;
+
+        await OpenAddFoodCoreAsync(mealType, minuteOfDay);
+    }
+
     // Kept for callers that pass the meal category as text.
     public void OpenAddFood(string mealTypeStr)
     {
@@ -419,18 +461,59 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    public void OpenEditFood(FoodItemEntryDto item)
+    public Task OpenEditFoodAsync(FoodLogEntry item) => OpenEditFoodCoreAsync(item, false);
+
+    [RelayCommand]
+    private async Task EditMealAsync(MealSectionUiGroup? section)
+    {
+        if (section?.CanEditMeal == true && section.Items.Count == 1)
+            await OpenEditFoodCoreAsync(section.Items[0], true);
+    }
+
+    private async Task OpenEditFoodCoreAsync(FoodLogEntry item, bool lockContext)
     {
         if (IsLoading || IsWriting || IsLoadError)
             return;
+
         _draftDate = item.LoggedAtTimestamp != default ? DateOnly.FromDateTime(item.LoggedAtTimestamp) : SelectedDate;
         _draftTimestamp = item.LoggedAtTimestamp;
         _quickDraft = null;
+        _editingLoggedMealId = item.LoggedMealId;
+        _editingMealIngredients = [];
         SetIngredients(item.Ingredients);
+
+        if (item.LoggedMealId is > 0 && _overviewUseCase is not null)
+        {
+            List<NutritionMealIngredient> ingredients;
+            try
+            {
+                ingredients = (await _overviewUseCase.GetMealIngredientsAsync(item.LoggedMealId.Value))
+                    .Select(NutritionPresentationMapper.ToMealIngredient)
+                    .ToList();
+            }
+            catch
+            {
+                ShowStatus("Could not open this meal. Refresh and try again.");
+                return;
+            }
+
+            if (ingredients.Count == 0)
+            {
+                ShowStatus("This meal has no editable ingredients. Refresh and try again.");
+                return;
+            }
+
+            _editingMealIngredients = ingredients;
+            SetIngredients(_editingMealIngredients
+                .Select(i => new FoodHistoryIngredient(i.FoodItemId, i.Name, i.Grams))
+                .ToList());
+        }
+
         IsFastLoggingVisible = false;
         IsQuickAddCaloriesVisible = false;
         IsBarcodeScannerVisible = false;
         IsEditingExisting = true;
+        IsMealContextLocked = lockContext || item.LoggedMealId is > 0;
         EditingItemId = item.Id;
         _editingLoggedAtTimestamp = item.LoggedAtTimestamp;
         EditingMealType = item.MealType;
@@ -453,10 +536,29 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         IsEditModalVisible = false;
         IsQuickAddCaloriesVisible = false;
         IsBarcodeScannerVisible = false;
+        _editingLoggedMealId = null;
+        _editingMealIngredients = [];
+        IsMealContextLocked = false;
         CancelFoodSearch();
     }
 
-    private void SetIngredients(IReadOnlyList<HistoryIngredientDto> ingredients)
+    partial void OnIsMealContextLockedChanged(bool value) =>
+        NotifyEditingContextProperties();
+
+    partial void OnIsEditingExistingChanged(bool value) =>
+        NotifyEditingContextProperties();
+
+    partial void OnEditingMealTypeChanged(MealType value) =>
+        OnPropertyChanged(nameof(MealContextSummary));
+
+    private void NotifyEditingContextProperties()
+    {
+        OnPropertyChanged(nameof(CanDeleteEditingFood));
+        OnPropertyChanged(nameof(MealContextSummary));
+        OnPropertyChanged(nameof(EditModalTitle));
+    }
+
+    private void SetIngredients(IReadOnlyList<FoodHistoryIngredient> ingredients)
     {
         EditingIngredients.Clear();
         foreach (var ingredient in ingredients)
@@ -464,14 +566,15 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         IsGroupedEditor = ingredients.Count > 0;
     }
 
-    private FoodItemEntryDto BuildDraft()
+    private FoodLogEntry BuildDraft()
     {
         return new(EditingItemId, _currentLogId, EditingMealType,
             EditingItemName.Trim(), EditingServingSize, EditingServingUnit, EditingServingsCount,
             EditingCalories, EditingProtein, EditingCarbs, EditingFat, _draftTimestamp)
         {
-            Ingredients = EditingIngredients.Select(i => new HistoryIngredientDto(i.FoodItemId, i.Name, i.Grams))
-                .ToList()
+            Ingredients = EditingIngredients.Select(i => new FoodHistoryIngredient(i.FoodItemId, i.Name, i.Grams))
+                .ToList(),
+            LoggedMealId = _editingLoggedMealId
         };
     }
 
@@ -489,12 +592,30 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         var date = _draftDate;
         var editing = IsEditingExisting;
         var quick = _quickDraft;
+        var mealId = _editingLoggedMealId;
         await CommitFoodAsync(date, async () =>
         {
-            var loggedItem = ToLoggedFoodItemDto(draft);
-            if (editing) await _dailyLogUseCase.SaveFoodItemAsync(date, loggedItem, true);
+            var loggedItem = NutritionPresentationMapper.ToLoggedFood(draft);
+            if (mealId is > 0)
+            {
+                if (_overviewUseCase is null)
+                    throw new InvalidOperationException("Meal editing is unavailable.");
+
+                var ingredientDtos = NutritionPresentationMapper.ToMealIngredients(
+                    _editingMealIngredients.Select(original =>
+                    {
+                        var amended = EditingIngredients.FirstOrDefault(i => i.FoodItemId == original.FoodItemId);
+                        return amended is null
+                            ? original
+                            : original with { Grams = amended.Grams, Amount = amended.Grams };
+                    }));
+                await _overviewUseCase.UpdateMealAsync(new UpdateMealRequest(
+                    mealId.Value, date, EditingMealType.ToString(), _draftTimestamp.TimeOfDay, ingredientDtos));
+            }
+            else if (editing) await _dailyLogUseCase.SaveFoodItemAsync(date, loggedItem, true);
             else if (quick is not null)
-                await _dailyLogUseCase.ReLogFoodAsync(date, draft.MealType, ToQuickSnapshot(quick), loggedItem);
+                await _dailyLogUseCase.ReLogFoodAsync(date, draft.MealType,
+                    NutritionPresentationMapper.ToQuickSnapshot(quick), loggedItem);
             else await _dailyLogUseCase.SaveFoodItemAsync(date, loggedItem);
         }, editing ? "Item updated." : "Item added.");
     }
@@ -556,7 +677,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task DeleteFoodItemAsync()
     {
-        if (IsWriting || !IsEditingExisting || !IsEditModalVisible) return;
+        if (IsWriting || !CanDeleteEditingFood || !IsEditModalVisible) return;
         var id = EditingItemId;
         await CommitFoodAsync(_draftDate, () => _dailyLogUseCase.DeleteFoodItemAsync(id), "Item deleted.");
     }
@@ -600,7 +721,13 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     [ObservableProperty] private DateOnly _copySourceDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-1));
     [ObservableProperty] private bool _copyOverwriteMode;
     [ObservableProperty] private TimeSpan _editingConsumptionTime = DateTime.Now.TimeOfDay;
-    public ObservableCollection<FoodItemEntryDto> TimelineEntries { get; } = [];
+    [ObservableProperty] private bool _waterReminderOptedIn;
+    [ObservableProperty] private TimeOnly _waterReminderQuietStart = new(22, 0);
+    [ObservableProperty] private TimeOnly _waterReminderQuietEnd = new(7, 0);
+
+    public ObservableCollection<int> WaterPresetVolumesMl { get; }
+
+    public ObservableCollection<FoodLogEntry> TimelineEntries { get; } = [];
     public Dictionary<MealType, double> PerMealCalorieTargets { get; } = new();
 
     [RelayCommand]
@@ -689,11 +816,11 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             foreach (var item in log.Entries)
             {
                 var section = GetSectionForMealType(item.MealType);
-                section.Items.Add(ToFoodItemEntryDto(item));
+                section.Items.Add(NutritionPresentationMapper.FromLoggedFood(item));
             }
 
             foreach (var section in MealSections)
-                section.RefreshSummary();
+                section.RefreshSummary((float)TargetCalories);
 
             TotalCalories = log.TotalCalories;
             TotalProtein = log.TotalProtein;
@@ -723,36 +850,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         }
     }
 
-    private static FoodItemEntryDto ToFoodItemEntryDto(LoggedFoodItemDto item)
-    {
-        return new FoodItemEntryDto(item.Id, item.DailyLogId, item.MealType, item.Name, item.ServingSize,
-            item.ServingUnit,
-            item.ServingsCount, item.Calories, item.Protein, item.Carbs, item.Fat, item.LoggedAtTimestamp)
-        {
-            Ingredients =
-                item.Ingredients.Select(i => new HistoryIngredientDto(i.FoodItemId, i.Name, i.Grams)).ToList(),
-            AcceptedSuggestionName = item.AcceptedSuggestionName,
-            AcceptedSuggestionPhase = item.AcceptedSuggestionPhase
-        };
-    }
-
-    private static LoggedFoodItemDto ToLoggedFoodItemDto(FoodItemEntryDto item)
-    {
-        return new LoggedFoodItemDto(item.Id, item.DailyLogId, item.MealType, item.Name, item.ServingSize,
-            item.ServingUnit,
-            item.ServingsCount, item.Calories, item.Protein, item.Carbs, item.Fat, item.LoggedAtTimestamp,
-            item.Ingredients.Select(i => new LoggedIngredientDto(i.FoodItemId, i.Name, i.Grams)).ToList(),
-            item.AcceptedSuggestionName, item.AcceptedSuggestionPhase);
-    }
-
-    private static QuickFoodItemSnapshot ToQuickSnapshot(QuickFoodItemDto item)
-    {
-        return new QuickFoodItemSnapshot(item.Name, item.ServingSize, item.ServingUnit, item.ServingsCount,
-            item.Calories, item.Protein,
-            item.Carbs, item.Fat, item.Detail, item.SourceId, item.IngredientFoodItemId,
-            item.Ingredients.Select(i => new LoggedIngredientDto(i.FoodItemId, i.Name, i.Grams)).ToList());
-    }
-
     private MealSectionUiGroup GetSectionForMealType(MealType mealType)
     {
         return mealType switch
@@ -762,6 +859,15 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             MealType.Dinner => DinnerSection,
             _ => SnackSection
         };
+    }
+
+    private void RecalculateTotalsFromUi()
+    {
+        var allItems = MealSections.SelectMany(s => s.Items).ToList();
+        TotalCalories = Math.Round(allItems.Sum(i => i.Calories), 1);
+        TotalProtein = Math.Round(allItems.Sum(i => i.Protein), 1);
+        TotalCarbs = Math.Round(allItems.Sum(i => i.Carbs), 1);
+        TotalFat = Math.Round(allItems.Sum(i => i.Fat), 1);
     }
 
     private void ShowStatus(string message)

@@ -3,7 +3,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Nutrition;
-using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Operations;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Diary;
@@ -80,7 +79,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
                 var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
                 var mealFilter = request.MealType?.ToString();
 
-                if (request.Mode == DiaryCopyMode.Overwrite)
+                if (request.Mode == DiaryCopyModeDto.Overwrite)
                 {
                     var targetSnapshotsQuery = context.FoodItemEntries
                         .Where(row => row.UserId == userId && row.LocalDate == request.TargetDate && !row.IsDeleted);
@@ -121,7 +120,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
                     request.TargetDate,
                     mealFilter,
                     nowUtc,
-                    request.Mode == DiaryCopyMode.Overwrite,
+                    request.Mode == DiaryCopyModeDto.Overwrite,
                     ct).ConfigureAwait(false);
             },
             cancellationToken).ConfigureAwait(false);
@@ -407,7 +406,10 @@ public sealed class PostgresNutritionBatchAndCopyStore(
             .Select(row => new DiaryCopyFoodDto(
                 SnapshotPrefix + row.Id.ToString("N"),
                 row.Name,
-                Enum.TryParse<MealType>(row.MealType, true, out var parsed) ? parsed : MealType.Snack,
+                Enum.TryParse<MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts.MealType>(
+                    row.MealType, true, out var parsed)
+                    ? parsed
+                    : MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts.MealType.Snack,
                 row.Calories,
                 row.Protein,
                 row.Carbs,

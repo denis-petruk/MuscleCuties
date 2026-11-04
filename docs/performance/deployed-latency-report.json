@@ -1,0 +1,132 @@
+{
+  "SchemaVersion": 1,
+  "Protocol": "aws-cloudwatch-observed-deployed-latency-v1",
+  "MeasuredAtUtc": "2026-11-03T15:30:24Z",
+  "Region": "us-east-2",
+  "Account": "028417007003",
+  "Function": {
+    "Name": "musclecuties-backend-api",
+    "Version": "$LATEST",
+    "CodeSha256": "JWoa3D0RcmeQUFnlDWzpEd2e2oweex6bFbuedfpoano=",
+    "Runtime": "dotnet10",
+    "Architectures": [
+      "arm64"
+    ],
+    "MemorySizeMb": 1024,
+    "TimeoutSeconds": 27,
+    "Environment": "Staging"
+  },
+  "ApiGateway": {
+    "ApiId": "y2ejsgrc6l",
+    "BaseUrl": "https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com",
+    "LogGroup": "/aws/lambda/musclecuties-backend-api"
+  },
+  "Window": {
+    "Days": 30,
+    "StartUtc": "2026-10-04T15:29:56Z",
+    "EndUtc": "2026-11-03T15:29:56Z"
+  },
+  "Invocations": {
+    "Count": 4244,
+    "DurationMs": {
+      "P50": 100.7552,
+      "P95": 5976.8736,
+      "P99": 6895.2045,
+      "Max": 27000.0
+    }
+  },
+  "WarmInvocations": {
+    "Count": 3713,
+    "DurationMs": {
+      "P50": 76.848,
+      "P95": 4293.3315,
+      "P99": 5392.1764,
+      "Max": 27000.0
+    }
+  },
+  "ColdStarts": {
+    "Count": 531,
+    "InitMs": {
+      "P50": 1239.4703,
+      "P95": 1439.9511,
+      "P99": 1667.8505,
+      "Max": 2100.01
+    },
+    "DurationMs": {
+      "P99": 7859.7965,
+      "Max": 8440.7
+    }
+  },
+  "ApiGatewayLatencyDailyP99Ms": {
+    "Samples": 16,
+    "Min": 2817.6,
+    "Median": 8015.69,
+    "Max": 8841.33
+  },
+  "ApiGatewayIntegrationLatencyDailyP99Ms": {
+    "Samples": 16,
+    "Min": 2814.77,
+    "Median": 8014.87,
+    "Max": 8838.7
+  },
+  "Probe": {
+    "Live": {
+      "Path": "/health/live",
+      "Samples": [
+        {
+          "StatusCode": 200,
+          "TotalMs": 1575.98,
+          "Error": null
+        },
+        {
+          "StatusCode": 200,
+          "TotalMs": 1088.71,
+          "Error": null
+        },
+        {
+          "StatusCode": 200,
+          "TotalMs": 976.81,
+          "Error": null
+        }
+      ],
+      "MedianMs": 1088.71
+    },
+    "Ready": {
+      "Path": "/health/ready",
+      "Samples": [
+        {
+          "StatusCode": 200,
+          "TotalMs": 716.41,
+          "Error": null
+        },
+        {
+          "StatusCode": 200,
+          "TotalMs": 235.48,
+          "Error": null
+        },
+        {
+          "StatusCode": 200,
+          "TotalMs": 229.47,
+          "Error": null
+        }
+      ],
+      "MedianMs": 235.48
+    }
+  },
+  "ProductionDeployment": false,
+  "ProductionP99Available": false,
+  "DiagnosticBudgetMs": 1000,
+  "BudgetBasis": "local 1000 ms handler budget used as a diagnostic comparison, not a production SLA",
+  "Result": "fail",
+  "Failures": [
+    "overall p99 6895.20 ms exceeds 1000 ms",
+    "warm p99 5392.18 ms exceeds 1000 ms",
+    "cold-start init p99 1667.85 ms exceeds 1000 ms"
+  ],
+  "Notes": [
+    "Cold starts are observed Init Duration values from CloudWatch REPORT lines; none were forced.",
+    "No direct Lambda invoke, configuration write, deployment or synthetic user write was performed.",
+    "API Gateway daily p99 values are per-day percentiles; they are summarised, not re-aggregated into a single percentile.",
+    "No separate production deployment was found; these are deployed staging measurements, not production p99."
+  ]
+}

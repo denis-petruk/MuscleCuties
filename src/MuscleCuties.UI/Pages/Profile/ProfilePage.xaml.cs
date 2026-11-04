@@ -17,7 +17,7 @@ public partial class ProfilePage : ContentPage
 
     private static string T(string text)
     {
-        return UiTextCatalog.Translate(text);
+        return UiTextCatalog.TranslateRuntimeText(text);
     }
 
     protected override void OnNavigatedTo(NavigatedToEventArgs args)

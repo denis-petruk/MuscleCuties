@@ -1,9 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using MuscleCuties.Core.Models.Nutrition;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
-public partial class HistoryIngredientEditor(HistoryIngredientDto ingredient) : ObservableObject
+public partial class HistoryIngredientEditor(FoodHistoryIngredient ingredient) : ObservableObject
 {
     [ObservableProperty] private float _grams = ingredient.Grams;
     public int FoodItemId { get; } = ingredient.FoodItemId;

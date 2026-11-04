@@ -9,8 +9,11 @@ public sealed record NutritionTargetMacrosDto(
     float Calories,
     float Protein,
     float Carbs,
-    float Fats
+    float Fats,
+    NutritionMealDistributionDto? MealDistribution = null
 );
+
+public sealed record NutritionMealDistributionDto(float Breakfast, float Lunch, float Dinner, float Snack);
 
 public sealed record NutritionConsumedMacrosDto(
     float Calories,
@@ -49,9 +52,11 @@ public sealed record MealSummaryDto(
     float Carbs,
     float Fats,
     IReadOnlyList<MacroBreakdownItemDto> MacroItems,
-    IReadOnlyList<DailyMicronutrientDto> Micronutrients
+    IReadOnlyList<DailyMicronutrientDto> Micronutrients,
+    string IngredientSummary = ""
 );
 
+/// <summary>Ingredient amount in grams and nutrient densities per 100 grams.</summary>
 public sealed record MealSuggestionComponentDto(
     int FoodItemId,
     string Name,

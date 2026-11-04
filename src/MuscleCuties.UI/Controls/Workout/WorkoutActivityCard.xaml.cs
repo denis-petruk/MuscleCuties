@@ -10,6 +10,12 @@ public partial class WorkoutActivityCard : ContentView
     public static readonly BindableProperty CommandParameterProperty =
         BindableProperty.Create(nameof(CommandParameter), typeof(object), typeof(WorkoutActivityCard));
 
+    public static readonly BindableProperty ToggleOptionalCommandProperty =
+        BindableProperty.Create(nameof(ToggleOptionalCommand), typeof(ICommand), typeof(WorkoutActivityCard));
+
+    public static readonly BindableProperty ToggleEasierAlternativeCommandProperty =
+        BindableProperty.Create(nameof(ToggleEasierAlternativeCommand), typeof(ICommand), typeof(WorkoutActivityCard));
+
     public WorkoutActivityCard()
     {
         InitializeComponent();
@@ -25,5 +31,17 @@ public partial class WorkoutActivityCard : ContentView
     {
         get => GetValue(CommandParameterProperty);
         set => SetValue(CommandParameterProperty, value);
+    }
+
+    public ICommand? ToggleOptionalCommand
+    {
+        get => (ICommand?)GetValue(ToggleOptionalCommandProperty);
+        set => SetValue(ToggleOptionalCommandProperty, value);
+    }
+
+    public ICommand? ToggleEasierAlternativeCommand
+    {
+        get => (ICommand?)GetValue(ToggleEasierAlternativeCommandProperty);
+        set => SetValue(ToggleEasierAlternativeCommandProperty, value);
     }
 }

@@ -1,4 +1,4 @@
-using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Profile.PhotoVault;
 
@@ -8,10 +8,10 @@ public sealed record PhotoVaultEntryDto(
     DateTime Date,
     double? WeightKg,
     string Notes,
-    CyclePhase Phase,
+    CyclePhaseDto Phase,
     bool IsImageAvailable = false);
 
-public sealed record PhotoVaultLoadResult(CyclePhase CurrentPhase, IReadOnlyList<PhotoVaultEntryDto> Photos);
+public sealed record PhotoVaultLoadResult(CyclePhaseDto CurrentPhase, IReadOnlyList<PhotoVaultEntryDto> Photos);
 
 public sealed record PhotoComparisonResult(PhotoVaultEntryDto First, PhotoVaultEntryDto Second);
 
@@ -20,7 +20,7 @@ public sealed record AddPhotoVaultEntryRequest(
     DateTime Date,
     double? WeightKg,
     string Notes,
-    CyclePhase Phase);
+    CyclePhaseDto Phase);
 
 public interface IPhotoVaultUseCase
 {

@@ -1,5 +1,6 @@
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Profile.Overview;
 
@@ -14,11 +15,11 @@ public sealed record ProfileOverviewDto(
     string UnitSystem,
     string BodyWeightUnit,
     string HeightUnit,
-    int WorkoutDaysPerWeek,
+    int AvailableWeekdaysCount,
     int CompletedSessions,
     int WorkoutStreakDays,
     int NutritionStreakDays,
-    CyclePhase CurrentPhase,
+    CyclePhaseDto CurrentPhase,
     int CyclesTracked,
     bool? IsHealthConnected,
     int ActiveInjuryCount,
@@ -30,7 +31,7 @@ public sealed record ProfileOverviewSource(
     CyclePhase PredictedPhase,
     CyclePhase? StoredPhase);
 
-public sealed record ProfilePurgeResult(bool Succeeded, bool AccountFound);
+public sealed record ProfilePurgeResult(bool Succeeded, bool AccountFound, string? FailureMessage = null);
 
 public interface IProfileOverviewUseCase
 {

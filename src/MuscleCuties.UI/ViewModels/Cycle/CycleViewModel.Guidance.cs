@@ -1,9 +1,11 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
+using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Services.Dashboard;
 
@@ -11,18 +13,20 @@ namespace MuscleCuties.UI.ViewModels.Cycle;
 
 public partial class CycleViewModel
 {
-    private const string PhaseContextText =
-        "A cycle phase is context, not a measurement of hormone levels or today's exercise capacity.";
-    private const string PhaseCheckInText =
-        "Notice how you feel today and record any symptoms that matter to you.";
-    private const string PhaseTrainingText =
-        "Use your current check-in and restrictions when reviewing your plan. A phase label alone does not set training intensity.";
-    private const string PhaseNutritionText =
-        "Follow your personal nutrition goals. A phase label alone does not change calorie or macro targets.";
-    private const string PhaseRecoveryText =
-        "Rest and activity needs vary. Use your own symptoms and preferences as context.";
-    private const string PhaseTimingText = "Timing varies";
-    private const string PhaseExplorerTagline = "Track your experience";
+    private static string PhaseContextText =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_Context");
+    private static string PhaseCheckInText =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_CheckIn");
+    private static string PhaseTrainingText =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_Training");
+    private static string PhaseNutritionText =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_Nutrition");
+    private static string PhaseRecoveryText =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_Recovery");
+    private static string PhaseTimingText =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_TimingVaries");
+    private static string PhaseExplorerTagline =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_ExplorerTagline");
     [ObservableProperty] private string _dailyCheerText = string.Empty;
     [ObservableProperty] private string _dailyNutritionTipText = string.Empty;
     [ObservableProperty] private string _dailyTrainingTipText = string.Empty;
@@ -35,16 +39,11 @@ public partial class CycleViewModel
 
     public RelayCommand<PhaseExplorerPillItem> SelectPhaseExplorerPillCommand { get; private set; } = null!;
     public RelayCommand ClosePhaseSummarySheetCommand { get; private set; } = null!;
-    public AsyncRelayCommand OpenFullPhaseGuideCommand { get; private set; } = null!;
-    [SuppressMessage("Performance", "CA1822:Mark members as static",
-        Justification = "Bound in Cycle XAML; keep the unreviewed guide unavailable to this view model.")]
-    public bool IsPhaseGuideAvailable => false;
 
     private void InitializeGuidanceCommands()
     {
         SelectPhaseExplorerPillCommand = new RelayCommand<PhaseExplorerPillItem>(SelectPhaseExplorerPill);
         ClosePhaseSummarySheetCommand = new RelayCommand(ClosePhaseSummarySheet);
-        OpenFullPhaseGuideCommand = new AsyncRelayCommand(OpenFullPhaseGuideAsync);
 
         RefreshGuidanceContent(CurrentPhase, UseDarkTheme);
     }
@@ -59,14 +58,6 @@ public partial class CycleViewModel
     private void ClosePhaseSummarySheet()
     {
         IsPhaseSummarySheetVisible = false;
-    }
-
-    private async Task OpenFullPhaseGuideAsync()
-    {
-        if (!IsPhaseGuideAvailable || SelectedPhaseSummary is null) return;
-        var phase = SelectedPhaseSummary.Phase;
-        IsPhaseSummarySheetVisible = false;
-        await _openPhaseDetailsAsync(phase);
     }
 
     private void RefreshGuidanceContent(CyclePhase phase, bool useDarkTheme)
@@ -87,7 +78,7 @@ public partial class CycleViewModel
 
     public static string GetPhaseEnergyBadge(CyclePhase phase)
     {
-        return "Cycle context";
+        return MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_EnergyBadge");
     }
 
     public static string GetPhaseVectorPath(CyclePhase phase)
@@ -131,53 +122,53 @@ public partial class CycleViewModel
             new()
             {
                 Phase = CyclePhase.Menstrual,
-                Name = "Menstrual",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Name"),
                 Window = PhaseTimingText,
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Menstrual),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, Colors.Red),
+                    PhaseThemePalette.GetPhaseExplorerPillColor(CyclePhase.Menstrual, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, default),
                 IsActivePhase = currentPhase == CyclePhase.Menstrual
             },
             new()
             {
                 Phase = CyclePhase.Follicular,
-                Name = "Follicular",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Name"),
                 Window = PhaseTimingText,
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Follicular),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, Colors.Green),
+                    PhaseThemePalette.GetPhaseExplorerPillColor(CyclePhase.Follicular, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, default),
                 IsActivePhase = currentPhase == CyclePhase.Follicular
             },
             new()
             {
                 Phase = CyclePhase.Ovulatory,
-                Name = "Ovulatory",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Name"),
                 Window = PhaseTimingText,
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Ovulatory),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Orange),
+                    PhaseThemePalette.GetPhaseExplorerPillColor(CyclePhase.Ovulatory, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, default),
                 IsActivePhase = currentPhase == CyclePhase.Ovulatory
             },
             new()
             {
                 Phase = CyclePhase.Luteal,
-                Name = "Luteal",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Name"),
                 Window = PhaseTimingText,
                 Tagline = PhaseExplorerTagline,
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Luteal),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, Colors.Purple),
+                    PhaseThemePalette.GetPhaseExplorerPillColor(CyclePhase.Luteal, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, default),
                 IsActivePhase = currentPhase == CyclePhase.Luteal
             }
         };
@@ -190,70 +181,70 @@ public partial class CycleViewModel
             CyclePhase.Menstrual => new PhaseSummarySheetModel
             {
                 Phase = CyclePhase.Menstrual,
-                Name = "Menstrual Phase",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Title"),
                 Window = PhaseTimingText,
-                Tagline = PhaseExplorerTagline,
-                HormonalSummary = PhaseContextText,
-                TrainingFocus = PhaseTrainingText,
-                NutritionFocus = PhaseNutritionText,
-                RecoveryFocus = PhaseRecoveryText,
-                QuickRule = PhaseCheckInText,
+                Tagline = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Tagline"),
+                HormonalSummary = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Hormonal"),
+                TrainingFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Training"),
+                NutritionFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Nutrition"),
+                RecoveryFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_Recovery"),
+                QuickRule = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Menstrual_QuickRule"),
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Menstrual),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, Colors.Red)
+                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme, default)
             },
             CyclePhase.Follicular => new PhaseSummarySheetModel
             {
                 Phase = CyclePhase.Follicular,
-                Name = "Follicular Phase",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Title"),
                 Window = PhaseTimingText,
-                Tagline = PhaseExplorerTagline,
-                HormonalSummary = PhaseContextText,
-                TrainingFocus = PhaseTrainingText,
-                NutritionFocus = PhaseNutritionText,
-                RecoveryFocus = PhaseRecoveryText,
-                QuickRule = PhaseCheckInText,
+                Tagline = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Tagline"),
+                HormonalSummary = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Hormonal"),
+                TrainingFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Training"),
+                NutritionFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Nutrition"),
+                RecoveryFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_Recovery"),
+                QuickRule = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Follicular_QuickRule"),
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Follicular),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, Colors.Green)
+                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme, default)
             },
             CyclePhase.Ovulatory => new PhaseSummarySheetModel
             {
                 Phase = CyclePhase.Ovulatory,
-                Name = "Ovulatory Phase",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Title"),
                 Window = PhaseTimingText,
-                Tagline = PhaseExplorerTagline,
-                HormonalSummary = PhaseContextText,
-                TrainingFocus = PhaseTrainingText,
-                NutritionFocus = PhaseNutritionText,
-                RecoveryFocus = PhaseRecoveryText,
-                QuickRule = PhaseCheckInText,
+                Tagline = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Tagline"),
+                HormonalSummary = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Hormonal"),
+                TrainingFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Training"),
+                NutritionFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Nutrition"),
+                RecoveryFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_Recovery"),
+                QuickRule = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Ovulatory_QuickRule"),
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Ovulatory),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, Colors.Orange)
+                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme, default)
             },
             CyclePhase.Luteal => new PhaseSummarySheetModel
             {
                 Phase = CyclePhase.Luteal,
-                Name = "Luteal Phase",
+                Name = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Title"),
                 Window = PhaseTimingText,
-                Tagline = PhaseExplorerTagline,
-                HormonalSummary = PhaseContextText,
-                TrainingFocus = PhaseTrainingText,
-                NutritionFocus = PhaseNutritionText,
-                RecoveryFocus = PhaseRecoveryText,
-                QuickRule = PhaseCheckInText,
+                Tagline = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Tagline"),
+                HormonalSummary = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Hormonal"),
+                TrainingFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Training"),
+                NutritionFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Nutrition"),
+                RecoveryFocus = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_Recovery"),
+                QuickRule = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Luteal_QuickRule"),
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Luteal),
                 BackgroundColor =
-                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme, Colors.Transparent),
-                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, Colors.Black),
-                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, Colors.Purple)
+                    PhaseThemePalette.GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme, default),
+                TextColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, default),
+                AccentColor = PhaseThemePalette.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme, default)
             },
             _ => new PhaseSummarySheetModel
             {
@@ -267,9 +258,9 @@ public partial class CycleViewModel
                 RecoveryFocus = PhaseRecoveryText,
                 QuickRule = PhaseCheckInText,
                 IconSource = CyclePhaseAssets.GetIconSource(phase),
-                BackgroundColor = Colors.Transparent,
-                TextColor = Colors.Black,
-                AccentColor = Colors.Gray
+                BackgroundColor = AppThemeResources.GetRequired<Color>("Transparent"),
+                TextColor = AppThemeResources.GetColor(useDarkTheme ? "TextPrimaryDark" : "TextPrimary"),
+                AccentColor = AppThemeResources.GetRequired<Color>("Transparent")
             }
         };
     }

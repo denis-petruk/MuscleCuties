@@ -10,8 +10,6 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 /// <summary>Inspects uploads and transports exact-version bytes for server-only publication.</summary>
 public sealed partial class DefaultS3PhotoObjectInspector : IS3PhotoObjectInspector
 {
-    private const string DefaultBucket = "musclecuties-media";
-    private const string DefaultRegion = "us-east-1";
     private const string Algorithm = "AWS4-HMAC-SHA256";
     private const string ServiceName = "s3";
     private const string RequestType = "aws4_request";
@@ -35,8 +33,8 @@ public sealed partial class DefaultS3PhotoObjectInspector : IS3PhotoObjectInspec
     {
         _httpClient = httpClient;
         _timeProvider = timeProvider;
-        _bucket = configuration["Storage:S3:BucketName"] ?? DefaultBucket;
-        _region = configuration["Storage:S3:Region"] ?? DefaultRegion;
+        _bucket = S3StorageConfiguration.RequireBucketName(configuration);
+        _region = S3StorageConfiguration.RequireRegion(configuration);
         _accessKey = RequiredCredential(configuration, "Storage:S3:AccessKeyId", "AWS_ACCESS_KEY_ID");
         _secretKey = RequiredCredential(configuration, "Storage:S3:SecretAccessKey", "AWS_SECRET_ACCESS_KEY");
         _sessionToken = configuration["Storage:S3:SessionToken"] ?? configuration["AWS_SESSION_TOKEN"];

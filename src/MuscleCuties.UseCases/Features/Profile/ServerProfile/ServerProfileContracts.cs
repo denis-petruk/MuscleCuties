@@ -8,11 +8,11 @@ public sealed record ServerProfileSnapshot(
     string Goal,
     string WeightGoalPace,
     string TrainingExperienceLevel,
-    string CycleTrackingMode,
     int WorkoutDaysPerWeek,
+    string AvailableWorkoutWeekdaysJson,
     int CycleLength,
     string DietaryTags,
-    int SessionDurationMinutes,
+    string ActivitySessionDurationsJson,
     string EquipmentLevel,
     string PreferredWorkoutActivityTypes,
     string UnitSystem,
@@ -26,7 +26,9 @@ public sealed record ServerProfileSnapshot(
     string Email = "",
     string ReproductiveContextJson = "",
     DateTime? CreatedAtUtc = null,
-    string ProfileImagePath = "");
+    string ProfileImagePath = "",
+    string RequestedActivitySessionsPerWeekJson = "{}",
+    string ExcludedStrengthExerciseIdsJson = "[]");
 
 public sealed record UpdateServerProfileRequest(
     Guid UserId,
@@ -39,14 +41,21 @@ public sealed record UpdateServerProfileRequest(
     string? Goal,
     string? WeightGoalPace,
     string? TrainingExperienceLevel,
-    string? CycleTrackingMode,
-    int? WorkoutDaysPerWeek,
     int? CycleLength,
     string? DietaryTags,
-    int? SessionDurationMinutes,
     string? EquipmentLevel,
     string? ReproductiveContextJson = null,
     string? ProfileImagePath = null);
+
+public sealed record ServerProfileHistoryEntry(Guid Id, string Reason, string ProfileJson, DateTime CreatedAtUtc);
+
+public sealed record ServerQuizResponse(int QuestionId, int AnswerId, DateTime AnsweredAtUtc);
+
+public sealed record CorrectServerQuizResponseRequest(
+    Guid UserId,
+    int ExpectedVersion,
+    int QuestionId,
+    int AnswerId);
 
 public sealed record UpdateServerNutritionPreferencesRequest(
     Guid UserId,
@@ -59,9 +68,11 @@ public sealed record UpdateServerWorkoutPreferencesRequest(
     Guid UserId,
     int ExpectedVersion,
     IReadOnlyList<int> ActivityTypes,
-    int StrengthStyle,
-    int DaysPerWeek,
-    string? EquipmentLevel = null);
+    IReadOnlyList<int> AvailableWeekdays,
+    IReadOnlyDictionary<int, int> ActivitySessionDurationsMinutes,
+    string? EquipmentLevel = null,
+    IReadOnlyDictionary<int, int>? RequestedSessionsPerWeek = null,
+    IReadOnlySet<int>? ExcludedExerciseIds = null);
 
 public sealed record UpdateServerNutritionTargetsRequest(
     Guid UserId,
@@ -82,7 +93,10 @@ public sealed record ServerProfileWriteResult(ServerProfileWriteStatus Status, i
 public interface IServerProfileDataStore
 {
     Task<ServerProfileSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<ServerProfileHistoryEntry>> LoadHistoryAsync(Guid userId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<ServerQuizResponse>> LoadQuizResponsesAsync(Guid userId, CancellationToken cancellationToken);
     Task<ServerProfileWriteResult> UpdateProfileAsync(UpdateServerProfileRequest request, CancellationToken cancellationToken);
+    Task<ServerProfileWriteResult> CorrectQuizResponseAsync(CorrectServerQuizResponseRequest request, CancellationToken cancellationToken);
     Task<ServerProfileWriteResult> UpdateNutritionPreferencesAsync(UpdateServerNutritionPreferencesRequest request, CancellationToken cancellationToken);
     Task<ServerProfileWriteResult> UpdateWorkoutPreferencesAsync(UpdateServerWorkoutPreferencesRequest request, CancellationToken cancellationToken);
     Task<ServerProfileWriteResult> UpdateNutritionTargetsAsync(UpdateServerNutritionTargetsRequest request, CancellationToken cancellationToken);

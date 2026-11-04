@@ -25,4 +25,10 @@
         <PackageReference Include="SkiaSharp" Version="3.119.1" />
         <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
     </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="Workout/Planning/ReviewData/ReviewedExerciseCatalogV020.json" />
+        <EmbeddedResource Include="Persistence/Schema/security.sql" />
+        <EmbeddedResource Include="Persistence/Schema/schema_supplement.sql" />
+        <EmbeddedResource Include="Persistence/Seed/CanonicalCatalogManifest.json" />
+    </ItemGroup>
 </Project>

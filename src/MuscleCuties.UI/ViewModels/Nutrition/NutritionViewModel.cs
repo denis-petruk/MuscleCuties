@@ -2,16 +2,19 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UI.Services.Dashboard;
+using MuscleCuties.UI.Services.Localization;
+using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
+using MuscleCuties.UseCases.Features.Nutrition.Recipes;
+using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
@@ -24,6 +27,11 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     private readonly Func<string, Task>? _navigateAsync;
     private readonly INutritionOverviewUseCase _overviewUseCase;
     private readonly IFoodCatalogSearchUseCase _searchUseCase;
+    private readonly IRecipePortionUseCase _recipePortionUseCase;
+    private readonly FoodPortionCatalog _foodPortionCatalog;
+    private readonly ISaveMealTemplateUseCase? _saveMealTemplateUseCase;
+    private readonly IGetRecipesAndTemplatesUseCase? _getRecipesAndTemplatesUseCase;
+    private NutritionMealDistribution? _mealDistribution;
     [ObservableProperty] private string _addFoodMessage = string.Empty;
     [ObservableProperty] private BreakfastPreference _breakfastPreference = BreakfastPreference.Savoury;
     [ObservableProperty] private string _celebrationIconSource = CyclePhaseAssets.FollicularAnimation;
@@ -60,6 +68,16 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     private bool _isBusy;
 
     [ObservableProperty] private bool _isCustomFoodPanelVisible;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsBarcodeSourceVisible), nameof(IsIngredientSearchVisible),
+        nameof(MealEditorTitle))]
+    private MealFoodSource _selectedFoodSource = MealFoodSource.Search;
+
+    public MealFoodSourceTab SearchFoodSourceTab { get; } =
+        new(MealFoodSource.Search) { IsSelected = true };
+    public MealFoodSourceTab BarcodeFoodSourceTab { get; } = new(MealFoodSource.Barcode);
+    public MealFoodSourceTab CustomFoodSourceTab { get; } = new(MealFoodSource.Custom);
+
     [ObservableProperty] private bool _isEditingMeal;
     [ObservableProperty] private bool _isFoodFinderExpanded;
     [ObservableProperty] private bool _isLoadError;
@@ -73,15 +91,19 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private string _phaseAvailability = string.Empty;
     [ObservableProperty] private string _targetSource = string.Empty;
     [ObservableProperty] private string _searchQuery = string.Empty;
-    [ObservableProperty] private string _selectedBreakdownCaloriesText = "0 kcal";
+    [ObservableProperty] private string _selectedBreakdownCaloriesText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Nutrition_Breakdown_ZeroCalories");
     [ObservableProperty] private float _selectedBreakdownCarbsCalories;
     [ObservableProperty] private float _selectedBreakdownFatsCalories;
-    [ObservableProperty] private string _selectedBreakdownFiberText = "0.0g fiber";
+    [ObservableProperty] private string _selectedBreakdownFiberText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Nutrition_Breakdown_ZeroFiber");
     [ObservableProperty] private ObservableCollection<MacroBreakdownItem> _selectedBreakdownMacroItems = new();
-    [ObservableProperty] private string _selectedBreakdownMacrosText = "P 0.0g · C 0.0g · F 0.0g";
+    [ObservableProperty] private string _selectedBreakdownMacrosText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Nutrition_Breakdown_ZeroMacros");
     private MealItem? _selectedBreakdownMeal;
     [ObservableProperty] private ObservableCollection<DailyMicronutrientItem> _selectedBreakdownMicronutrients = new();
-    [ObservableProperty] private string _selectedBreakdownNutrientSummaryText = "No micronutrients tracked yet";
+    [ObservableProperty] private string _selectedBreakdownNutrientSummaryText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Ui_Nutrition_NoMicronutrients");
     [ObservableProperty] private float _selectedBreakdownProteinCalories;
     [ObservableProperty] private string _selectedBreakdownTitle = "Daily nutrition";
     [ObservableProperty] private string _selectedCustomFoodServingUnit = "g";
@@ -101,13 +123,24 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     public NutritionViewModel(
         INutritionOverviewUseCase overviewUseCase,
         IFoodCatalogSearchUseCase searchUseCase,
+        IRecipePortionUseCase recipePortionUseCase,
         Func<string, Task>? navigateAsync = null,
-        INutritionChangeNotifier? changeNotifier = null)
+        INutritionChangeNotifier? changeNotifier = null,
+        MuscleCuties.UseCases.Features.Nutrition.Barcode.ILookupBarcodeUseCase? barcodeUseCase = null,
+        IBarcodeScannerHardwareService? barcodeHardwareService = null,
+        ISaveMealTemplateUseCase? saveMealTemplateUseCase = null,
+        IGetRecipesAndTemplatesUseCase? getRecipesAndTemplatesUseCase = null)
     {
         _overviewUseCase = overviewUseCase;
         _searchUseCase = searchUseCase;
+        _recipePortionUseCase = recipePortionUseCase;
+        _foodPortionCatalog = NutritionPresentationMapper.GetPortionCatalog(recipePortionUseCase);
         _navigateAsync = navigateAsync;
         _changeNotifier = changeNotifier;
+        _barcodeUseCase = barcodeUseCase;
+        _barcodeHardwareService = barcodeHardwareService;
+        _saveMealTemplateUseCase = saveMealTemplateUseCase;
+        _getRecipesAndTemplatesUseCase = getRecipesAndTemplatesUseCase;
         if (_changeNotifier is not null) _changeNotifier.NutritionChanged += OnNutritionChanged;
 
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
@@ -124,12 +157,14 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         EditIngredientCommand = new RelayCommand<MealIngredientItem>(EditIngredient);
         MealEditorBackCommand = new RelayCommand(GoBackInMealEditor);
         LogMealCommand = new AsyncRelayCommand(LogMealAsync, CanLogMeal);
-        SetBreakfastPreferenceCommand = new AsyncRelayCommand<string>(SetBreakfastPreferenceAsync);
+        SetBreakfastPreferenceCommand = new AsyncRelayCommand<string>(SetBreakfastPreferenceAsync, AsyncRelayCommandOptions.AllowConcurrentExecutions);
         ToggleCustomFoodPanelCommand = new RelayCommand(ToggleCustomFoodPanel);
         CreateCustomFoodCommand = new AsyncRelayCommand(CreateCustomFoodAsync, () => !IsBusy);
         OpenMicronutrientsModalCommand = new RelayCommand(OpenDailyBreakdown);
         CloseMicronutrientsModalCommand = new RelayCommand(CloseBreakdownModal);
         OpenMealBreakdownCommand = new RelayCommand<MealItem>(OpenMealBreakdown);
+        EditMealCommand = new AsyncRelayCommand<MealItem>(meal => EditMealAsync(meal));
+        SelectMealTypeCommand = new RelayCommand<MealType>(SelectMealType);
         EditSelectedBreakdownMealCommand =
             new AsyncRelayCommand(EditSelectedBreakdownMealAsync, () => CanEditSelectedBreakdown);
         OpenSuggestMealCommand = new RelayCommand(OpenSuggestMeal);
@@ -145,9 +180,13 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         OpenMealEntryCommand = new RelayCommand(OpenMealEntry);
         CloseMealEntryCommand = new RelayCommand(CloseMealEntry);
         SelectEntryMealTypeCommand = new RelayCommand<MealType>(SelectEntryMealType);
-        StartManualMealCommand = new RelayCommand(StartManualMeal);
+        StartManualMealCommand = new AsyncRelayCommand(StartManualMealAsync);
         StartSuggestedMealCommand = new RelayCommand(StartSuggestedMeal);
         StartDayPlanCommand = new RelayCommand(StartDayPlan);
+        ToggleTemplatePickerCommand = new RelayCommand(ToggleTemplatePicker);
+        LogMealTemplateCommand = new AsyncRelayCommand<MealTemplate>(LogMealTemplateAsync);
+        DeleteMealTemplateCommand = new AsyncRelayCommand<MealTemplate>(DeleteMealTemplateAsync);
+        SaveMealAsTemplateCommand = new AsyncRelayCommand<MealItem>(SaveMealAsTemplateAsync);
         MealIngredients.CollectionChanged += OnMealIngredientsCollectionChanged;
     }
 
@@ -171,15 +210,22 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         ? "Nutrition"
         : $"Phase focus · {CurrentPhaseName}";
 
-    public string CurrentPhaseIconGlyph => MacroProgressFormatter.GetPhaseIconGlyph(CurrentPhase);
+    public string CurrentPhaseIconGlyph =>
+        MacroProgressFormatter.GetPhaseIconGlyph(NutritionPresentationMapper.ToPresentationCyclePhase(CurrentPhase));
 
     public IReadOnlyList<MealType> MealTypes { get; } = Enum.GetValues<MealType>();
 
     [SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "Bound in Nutrition XAML / view model contract.")]
-    public IReadOnlyList<string> CustomFoodServingUnits => FoodServingOptionHelper.CustomFoodUnits;
+    public IReadOnlyList<string> CustomFoodServingUnits => _foodPortionCatalog.SupportedUnits;
 
     public bool HasFoodSearchResults => FoodSearchResults.Count > 0;
+
+    /// <summary>
+    /// True before the user has typed anything, so the finder can invite a search instead of
+    /// claiming that a query returned no matches.
+    /// </summary>
+    public bool IsFoodSearchIdle => string.IsNullOrWhiteSpace(SearchQuery);
     public bool ShowBrowseMoreFoods => HasFoodSearchResults && HasMoreFoodResults;
     public bool HasAddFoodMessage => !string.IsNullOrWhiteSpace(AddFoodMessage);
     public bool HasMealIngredients => MealIngredients.Count > 0;
@@ -192,7 +238,12 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     public bool IsFoodFinderCollapsed => !IsFoodFinderVisible;
 
     public bool IsIngredientSearchVisible =>
-        IsFoodFinderExpanded && SelectedFoodResult is null && !IsCustomFoodPanelVisible;
+        IsFoodFinderExpanded && SelectedFoodSource == MealFoodSource.Search &&
+        SelectedFoodResult is null && !IsCustomFoodPanelVisible;
+
+    public bool IsBarcodeSourceVisible =>
+        IsFoodFinderExpanded && SelectedFoodSource == MealFoodSource.Barcode &&
+        SelectedFoodResult is null;
 
     public bool IsSelectedFoodEditorVisible => SelectedFoodResult is not null;
     public string IngredientActionText => _editingIngredient is null ? "Add ingredient" : "Update ingredient";
@@ -201,46 +252,36 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
 
     public string BreakfastTargetText
     {
-        get
-        {
-            var share = MealDistributionRule.GetShares(BreakfastPreference).Breakfast;
-            return $"Breakfast ({(int)(TargetCalories * share)} kcal)";
-        }
+        get => FormatMealTarget("Breakfast", _mealDistribution?.Breakfast);
     }
 
     public string LunchTargetText
     {
-        get
-        {
-            var share = MealDistributionRule.GetShares(BreakfastPreference).Lunch;
-            return $"Lunch ({(int)(TargetCalories * share)} kcal)";
-        }
+        get => FormatMealTarget("Lunch", _mealDistribution?.Lunch);
     }
 
     public string DinnerTargetText
     {
-        get
-        {
-            var share = MealDistributionRule.GetShares(BreakfastPreference).Dinner;
-            return $"Dinner ({(int)(TargetCalories * share)} kcal)";
-        }
+        get => FormatMealTarget("Dinner", _mealDistribution?.Dinner);
     }
 
     public string SnackTargetText
     {
-        get
-        {
-            var share = MealDistributionRule.GetShares(BreakfastPreference).Snack;
-            return share <= 0f
-                ? "Snack (optional)"
-                : $"Snack ({(int)(TargetCalories * share)} kcal)";
-        }
+        get => _mealDistribution is { Snack: <= 0f }
+            ? "Snack (optional)"
+            : FormatMealTarget("Snack", _mealDistribution?.Snack);
     }
 
     public bool HasMeals => Meals.Count > 0;
     public bool HasNoMeals => Meals.Count == 0;
 
-    public string MealEditorTitle => IsCustomFoodPanelVisible ? "Custom food"
+    public bool IsBreakfastSelected => SelectedMealType == MealType.Breakfast;
+    public bool IsLunchSelected => SelectedMealType == MealType.Lunch;
+    public bool IsDinnerSelected => SelectedMealType == MealType.Dinner;
+    public bool IsSnackSelected => SelectedMealType == MealType.Snack;
+
+    public string MealEditorTitle => IsBarcodeSourceVisible ? UiTextCatalog.Get("Nutrition_MealEditor_ScanBarcodeTitle")
+        : IsCustomFoodPanelVisible ? "Custom food"
         : IsSelectedFoodEditorVisible ? "Portion"
         : IsIngredientSearchVisible ? "Add food"
         : IsEditingMeal ? "Edit meal" : "Log meal";
@@ -285,7 +326,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     }
 
     public string LogMealButtonText => IsEditingMeal ? "Save meal" : "Log meal";
-    public string MealChoiceSummary => $"{SelectedMealType} · {DateTime.Today.Add(SelectedMealTime):t}";
+    public string MealChoiceSummary =>
+        $"{UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}")} · {DateTime.Today.Add(SelectedMealTime):t}";
 
     public string SelectedFoodText => SelectedFoodResult?.Name ?? "No food selected";
     public string SelectedFoodSourceText => SelectedFoodResult?.SourceSummary ?? string.Empty;
@@ -332,6 +374,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     public RelayCommand OpenMicronutrientsModalCommand { get; }
     public RelayCommand CloseMicronutrientsModalCommand { get; }
     public RelayCommand<MealItem> OpenMealBreakdownCommand { get; }
+    public AsyncRelayCommand<MealItem> EditMealCommand { get; }
+    public RelayCommand<MealType> SelectMealTypeCommand { get; }
     public AsyncRelayCommand EditSelectedBreakdownMealCommand { get; }
     public RelayCommand OpenSuggestMealCommand { get; }
     public RelayCommand CloseSuggestionModalCommand { get; }
@@ -346,9 +390,13 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     public RelayCommand OpenMealEntryCommand { get; }
     public RelayCommand CloseMealEntryCommand { get; }
     public RelayCommand<MealType> SelectEntryMealTypeCommand { get; }
-    public RelayCommand StartManualMealCommand { get; }
+    public AsyncRelayCommand StartManualMealCommand { get; }
     public RelayCommand StartSuggestedMealCommand { get; }
     public RelayCommand StartDayPlanCommand { get; }
+    public RelayCommand ToggleTemplatePickerCommand { get; }
+    public AsyncRelayCommand<MealTemplate> LogMealTemplateCommand { get; }
+    public AsyncRelayCommand<MealTemplate> DeleteMealTemplateCommand { get; }
+    public AsyncRelayCommand<MealItem> SaveMealAsTemplateCommand { get; }
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
@@ -378,7 +426,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             CurrentPhaseName = CurrentPhase == CyclePhase.Unknown ? string.Empty : response.CurrentPhaseName;
             PhaseAvailability = response.PhaseAvailability;
             TargetSource = response.TargetSource;
-            ApplyTargetBreakdown(response.TargetBreakdown);
+            ApplyTargetBreakdown(NutritionPresentationMapper.FromTargetBreakdown(response.TargetBreakdown));
             PhaseFocusTitle = response.PhaseFocusTitle;
             PhaseFocusCopy = response.PhaseFocusCopy;
 
@@ -387,15 +435,18 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             TargetProtein = response.Targets.Protein;
             TargetCarbs = response.Targets.Carbs;
             TargetFats = response.Targets.Fats;
+            _mealDistribution = NutritionPresentationMapper.FromMealDistribution(response.Targets.MealDistribution);
 
             ConsumedCalories = response.Consumed.Calories;
             ConsumedProtein = response.Consumed.Protein;
             ConsumedCarbs = response.Consumed.Carbs;
             ConsumedFats = response.Consumed.Fats;
 
-            Meals = new ObservableCollection<MealItem>(response.Meals.Select(MapMealDtoToItem));
+            Meals = new ObservableCollection<MealItem>(
+                response.Meals.Select(m => MapMealDtoToItem(NutritionPresentationMapper.FromMealSummary(m))));
+            RefreshMealTargetShares();
             Micronutrients = new ObservableCollection<DailyMicronutrientItem>(
-                response.Micronutrients.Select(MapMicroDtoToItem));
+                response.Micronutrients.Select(m => MapMicroDtoToItem(NutritionPresentationMapper.FromMicronutrient(m))));
 
             _isBulkLoading = false;
             NotifyDisplayProperties();
@@ -405,6 +456,10 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             IsBusy = false;
         }
     }
+
+    private string FormatMealTarget(string mealName, float? share) => share is { } value
+        ? $"{mealName} ({(int)(TargetCalories * value)} kcal)"
+        : $"{mealName} (— kcal)";
 
     private void ToggleMealEditor()
     {
@@ -455,6 +510,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
 
     private void OpenFoodFinder()
     {
+        ResetFoodSource();
         _editingIngredient = null;
         SelectedFoodResult = null;
         IsCustomFoodPanelVisible = false;
@@ -464,6 +520,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
 
     private void CollapseFoodFinder()
     {
+        ResetFoodSource();
         InvalidateFoodSearch();
         _editingIngredient = null;
         SelectedFoodResult = null;
@@ -480,11 +537,19 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         if (IsBusy)
             return;
 
-        if ((SelectedFoodResult is not null && _editingIngredient is null) || IsCustomFoodPanelVisible)
+        if (SelectedFoodResult is not null && _editingIngredient is null)
+        {
+            SelectedFoodResult = null;
+            IsFoodFinderExpanded = true;
+            AddFoodMessage = string.Empty;
+            return;
+        }
+
+        if (IsCustomFoodPanelVisible || SelectedFoodSource != MealFoodSource.Search)
         {
             SelectedFoodResult = null;
             IsCustomFoodPanelVisible = false;
-            IsFoodFinderExpanded = true;
+            SelectFoodSource(MealFoodSource.Search);
             AddFoodMessage = string.Empty;
             return;
         }
@@ -494,7 +559,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
 
     private void TriggerCelebration()
     {
-        CelebrationIconSource = CyclePhaseAssets.GetVisualSource(CurrentPhase);
+        CelebrationIconSource = CyclePhaseAssets.GetVisualSource(
+            NutritionPresentationMapper.ToPresentationCyclePhase(CurrentPhase));
         CelebrationToken++;
     }
 

@@ -3,8 +3,9 @@ using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
-using MuscleCuties.Core.Domain.Cycle;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Services.Dashboard;
 using MuscleCuties.UI.Services.Profile;
@@ -14,6 +15,8 @@ using MuscleCuties.UseCases.Features.Cycle.DailyLog;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using System.Diagnostics.CodeAnalysis;
 using MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
+using MuscleCuties.UseCases.Features.Dashboard.Overview;
+using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Cycle;
 
@@ -24,12 +27,14 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     private readonly Func<DateTime> _currentDateProvider;
     private readonly List<CycleHistoryItem> _cycleHistory = new();
     private readonly ICycleDailyLogUseCase _dailyLog;
+    private readonly ICyclePhaseProjectionUseCase _phaseProjection;
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
 
     private readonly Func<Task>? _openCycleSettingsAsync;
     private readonly Func<CyclePhase, Task> _openPhaseDetailsAsync;
     private readonly ICycleOverviewUseCase _overview;
     private readonly ICyclePhaseEditUseCase _phaseEdit;
+    private readonly IDashboardOverviewUseCase _dashboardOverview;
     private readonly List<CyclePhaseEntry> _phaseLogs = new();
     private readonly IProfileRefreshNotifier _refreshNotifier;
     private readonly List<CycleSymptomEntry> _symptomLogs = new();
@@ -40,7 +45,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     [ObservableProperty] private CyclePhase _currentPhase = CyclePhase.Unknown;
     [ObservableProperty] private int _cycleLength;
-    [ObservableProperty] private string _cycleWarningSuggestedActionText = "Use next phase";
+    [ObservableProperty] private string _cycleWarningSuggestedActionText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Warning_UseNextPhase");
     private CyclePhase? _cycleWarningSuggestedPhase;
     [ObservableProperty] private string _cycleWarningText = string.Empty;
     [ObservableProperty] private string _cycleWarningTitle = string.Empty;
@@ -54,7 +60,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     [ObservableProperty] private bool _isCycleWarningPopupVisible;
     [ObservableProperty] private bool _isDatePhaseModalVisible;
     [ObservableProperty] private bool _isLoadError;
-    [ObservableProperty] private string _lastPhaseLogText = "No shift logged yet";
+    [ObservableProperty] private string _lastPhaseLogText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_NoShiftLogged");
     [ObservableProperty] private ObservableCollection<CyclePhaseOptionItem> _phaseEditOptions = new();
     [ObservableProperty] private string _phaseEditStatusText = string.Empty;
     [ObservableProperty] private string _phaseJumpWarningText = string.Empty;
@@ -69,16 +76,20 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     public CycleViewModel(
         ICycleOverviewUseCase overview,
+        ICyclePhaseProjectionUseCase phaseProjection,
         ICycleDailyLogUseCase dailyLog,
         ICyclePhaseEditUseCase phaseEdit,
         IProfileRefreshNotifier refreshNotifier,
+        IDashboardOverviewUseCase dashboardOverview,
         Func<CyclePhase, Task>? openPhaseDetailsAsync = null,
         Func<DateTime>? currentDateProvider = null,
         Func<Task>? openCycleSettingsAsync = null)
     {
         _overview = overview;
+        _phaseProjection = phaseProjection;
         _dailyLog = dailyLog;
         _phaseEdit = phaseEdit;
+        _dashboardOverview = dashboardOverview;
         _refreshNotifier = refreshNotifier;
         _openPhaseDetailsAsync = openPhaseDetailsAsync ?? (_ => Task.CompletedTask);
         _currentDateProvider = currentDateProvider ?? (() => DateTime.Today);
@@ -88,7 +99,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         OpenCycleSettingsCommand = new AsyncRelayCommand(OpenCycleSettingsAsync);
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         AdvancePhaseCommand = new AsyncRelayCommand(AdvancePhaseAsync, CanAdvancePhase);
-        OpenCalendarDayCommand = new RelayCommand<CycleDayItem>(OpenCalendarDay);
         CloseDatePhaseModalCommand = new RelayCommand(CloseDatePhaseModal);
         SelectPhaseOptionCommand = new RelayCommand<CyclePhaseOptionItem>(SelectPhaseOption);
         SaveDatePhaseCommand = new AsyncRelayCommand(SaveDatePhaseAsync, CanSaveDatePhase);
@@ -110,13 +120,13 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         ? _cachedPrediction?.PredictionSource == "default"
             ? $"Day {CurrentDay} of an estimated {CycleLength}-day cycle"
             : $"Day {CurrentDay} of {CycleLength}"
-        : "Start cycle tracking";
+        : "No period dates logged";
 
     public string PeriodCountdownText => HasActiveCycle
         ? DaysUntilPeriod == 0 ? "Period due today" : $"Period in {DaysUntilPeriod}d"
         : "Log period start";
 
-    public string PhaseLogActionText => HasActiveCycle ? "Next phase" : "Start cycle";
+    public string PhaseLogActionText => HasActiveCycle ? "Next phase" : "Log menstrual phase";
 
     public string PredictionSummary => HasActiveCycle
         ? _cachedPrediction?.PredictionSource == "default"
@@ -136,7 +146,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     public int CycleDay => CurrentDay;
     public AsyncRelayCommand AdvancePhaseCommand { get; }
-    public RelayCommand<CycleDayItem> OpenCalendarDayCommand { get; }
     public RelayCommand CloseDatePhaseModalCommand { get; }
     public RelayCommand<CyclePhaseOptionItem> SelectPhaseOptionCommand { get; }
     public AsyncRelayCommand SaveDatePhaseCommand { get; }
@@ -146,6 +155,33 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     public AsyncRelayCommand UseCycleWarningSuggestedPhaseCommand { get; }
     public AsyncRelayCommand<PhaseItem> OpenPhaseDetailsCommand { get; }
     public AsyncRelayCommand OpenCycleSettingsCommand { get; }
+
+    private const string PhaseOrderConflictMessage =
+        "This phase would skip a step. Record the missing shift first.";
+    private const string PhaseEditUnavailableTitleKey = "Cycle_PhaseEdit_UnavailableTitle";
+    private const string PhaseEditUnavailableBodyKey = "Cycle_PhaseEdit_UnavailableBody";
+    private const string PhaseEditInvalidTitleKey = "Cycle_PhaseEdit_InvalidTitle";
+    private const string PhaseEditInvalidBodyKey = "Cycle_PhaseEdit_InvalidBody";
+
+    /// <summary>Maps a non-order outcome to localized copy; returns false when the edit saved.</summary>
+    private static bool TryGetPhaseEditFailureCopy(CyclePhaseEditResult result, out string titleKey, out string bodyKey)
+    {
+        switch (result.Outcome)
+        {
+            case CyclePhaseEditOutcome.InvalidInput:
+                titleKey = PhaseEditInvalidTitleKey;
+                bodyKey = PhaseEditInvalidBodyKey;
+                return true;
+            case CyclePhaseEditOutcome.Unavailable:
+                titleKey = PhaseEditUnavailableTitleKey;
+                bodyKey = PhaseEditUnavailableBodyKey;
+                return true;
+            default:
+                titleKey = string.Empty;
+                bodyKey = string.Empty;
+                return false;
+        }
+    }
 
     private DateTime CurrentDate => _currentDateProvider().Date;
 
@@ -234,11 +270,15 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         OnPropertyChanged(nameof(CycleDaySummary));
         OnPropertyChanged(nameof(PredictionSummary));
 
+        var resolvedPhase = await ResolveCurrentPhaseAsync(prediction.CurrentPhase, today);
+        if (loadVersion != Volatile.Read(ref _calendarLoadVersion))
+            return;
+
         HasActiveCycle = prediction.HasActiveCycle;
         CurrentDay = prediction.CurrentDay;
         CycleLength = prediction.PredictedCycleLength;
         DaysUntilPeriod = prediction.DaysUntilPeriod;
-        CurrentPhase = prediction.CurrentPhase;
+        CurrentPhase = resolvedPhase;
 
         var phaseLogs = overview.PhaseLogs;
         var symptomLogs = overview.Symptoms;
@@ -265,6 +305,27 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         NotifyCycleSummaryProperties();
     }
 
+    private async Task<CyclePhase> ResolveCurrentPhaseAsync(CyclePhase predictionPhase, DateTime today)
+    {
+        if (predictionPhase != CyclePhase.Unknown)
+            return predictionPhase;
+
+        try
+        {
+            var dashboard = await _dashboardOverview.LoadAsync(
+                new DashboardOverviewRequest(DateOnly.FromDateTime(today)));
+            if (Enum.TryParse<CyclePhase>(dashboard.CurrentPhase, true, out var selectedPhase) &&
+                Enum.IsDefined(selectedPhase))
+                return selectedPhase;
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Cycle] Phase fallback load failed ({ex.GetType().Name}).");
+        }
+
+        return predictionPhase;
+    }
+
     private void NotifyCycleMutated()
     {
         try
@@ -286,27 +347,30 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         try
         {
             var nextPhase = HasActiveCycle
-                ? CyclePhaseRule.GetNextPhase(CurrentPhase)
+                ? _phaseProjection.GetNextPhase(new NextCyclePhaseInputDto(CurrentPhase)).NextPhase
                 : CyclePhase.Menstrual;
-            var date = CurrentDate;
-            if (!await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(date, nextPhase,
-                    "Manual phase advance")))
-                throw new InvalidOperationException("Active cycle account unavailable.");
+            var result = await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(CurrentDate, nextPhase,
+                "Manual phase advance"));
+
+            if (result.Outcome == CyclePhaseEditOutcome.OrderConflict && result.SuggestedPhase is { } suggestedPhase)
+            {
+                ShowCycleOrderPopup(PhaseOrderConflictMessage, suggestedPhase);
+                return;
+            }
+
+            if (TryGetPhaseEditFailureCopy(result, out var titleKey, out var bodyKey))
+            {
+                ShowCycleWarningPopup(titleKey, bodyKey);
+                return;
+            }
+
             await RefreshCycleDataAsync();
             NotifyCycleMutated();
-        }
-        catch (CyclePhaseOrderIssue ex)
-        {
-            ShowCycleOrderPopup("This phase would skip a step. Record the missing shift first.", ex.SuggestedPhase);
-        }
-        catch (InvalidOperationException)
-        {
-            ShowCycleWarningPopup("Could not change phase yet", "Check the selected date and earlier cycle records.");
         }
         catch (Exception ex)
         {
             Trace.WriteLine($"[Cycle] Phase advance failed ({ex.GetType().Name}).");
-            ShowCycleWarningPopup("Could not save phase", "Please try again.");
+            ShowCycleWarningPopup(PhaseEditUnavailableTitleKey, PhaseEditUnavailableBodyKey);
         }
         finally
         {
@@ -379,7 +443,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         var selectedPhase = GetSelectedPhase();
         if (selectedPhase is null)
         {
-            PhaseEditStatusText = "Pick the phase that fits this day.";
+            PhaseEditStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_PhaseEdit_ChoosePhase");
             return;
         }
 
@@ -395,8 +459,9 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             phaseOption.IsSelected = phaseOption.Phase == _suggestedPhase.Value;
 
         HasPhaseJumpWarning = false;
-        PhaseEditStatusText =
-            $"{FormatPhaseName(_suggestedPhase.Value)} keeps the cycle in order. Tap Save phase to log it.";
+        PhaseEditStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+            "Cycle_PhaseEdit_SuggestedFormat",
+            FormatPhaseName(_suggestedPhase.Value));
         _suggestedPhase = null;
         OnPropertyChanged(nameof(HasSuggestedPhase));
         SaveDatePhaseCommand.NotifyCanExecuteChanged();
@@ -407,7 +472,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         HasPhaseJumpWarning = false;
         IsDatePhaseModalVisible = false;
         IsCycleWarningPopupVisible = false;
-        CalendarEditHintText = "Easy fix. Tap the day the missed shift really began.";
+        CalendarEditHintText =
+            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_PhaseEdit_ReviewEarlierHint");
         _selectedCalendarDay = null;
         _suggestedPhase = null;
         _cycleWarningSuggestedPhase = null;
@@ -426,26 +492,30 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         IsBusy = true;
         try
         {
-            if (!await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(date, phase, note)))
-                throw new InvalidOperationException("Active cycle account unavailable.");
+            var result = await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(date, phase, note));
+
+            if (result.Outcome == CyclePhaseEditOutcome.OrderConflict && result.SuggestedPhase is { } suggestedPhase)
+            {
+                ShowPhaseOrderWarning(PhaseOrderConflictMessage, suggestedPhase);
+                return;
+            }
+
+            if (TryGetPhaseEditFailureCopy(result, out var titleKey, out var bodyKey))
+            {
+                PhaseJumpWarningTitle = titleKey;
+                PhaseJumpWarningText = bodyKey;
+                HasPhaseJumpWarning = true;
+                return;
+            }
+
             CloseDatePhaseModal();
             await RefreshCycleDataAsync();
             NotifyCycleMutated();
         }
-        catch (CyclePhaseOrderIssue ex)
-        {
-            ShowPhaseOrderWarning("This phase would skip a step. Record the missing shift first.", ex.SuggestedPhase);
-        }
-        catch (InvalidOperationException)
-        {
-            PhaseJumpWarningTitle = "Let’s keep the cycle in order";
-            PhaseJumpWarningText = "Check the selected date and earlier cycle records.";
-            HasPhaseJumpWarning = true;
-        }
         catch (Exception ex)
         {
             Trace.WriteLine($"[Cycle] Phase date save failed ({ex.GetType().Name}).");
-            PhaseEditStatusText = "Could not save this phase. Please try again.";
+            PhaseEditStatusText = PhaseEditUnavailableBodyKey;
         }
         finally
         {
@@ -468,7 +538,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         return log is null ? "No shift logged yet" : $"{log.Phase} logged {log.LoggedAt:MMM d}";
     }
 
-    private static ObservableCollection<CycleDayItem> BuildCalendarDays(
+    private ObservableCollection<CycleDayItem> BuildCalendarDays(
         CyclePredictionSummary prediction,
         IReadOnlyCollection<CyclePhaseEntry> phaseLogs,
         IReadOnlyCollection<CycleHistoryItem> cycleHistory,
@@ -506,7 +576,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         return items;
     }
 
-    private static CycleDayItem CreateCalendarDayItem(
+    private CycleDayItem CreateCalendarDayItem(
         DateTime date,
         CyclePredictionSummary prediction,
         IReadOnlyCollection<CyclePhaseEntry> orderedPhaseLogs,
@@ -524,7 +594,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             symptomLogs,
             today,
             selectedDate,
-            useDarkTheme);
+            useDarkTheme,
+            _phaseProjection);
     }
 
     private static Color ResolveDayStrokeColor(
@@ -536,23 +607,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     {
         return CycleCalendarItemBuilder.ResolveDayStrokeColor(phase, isToday, hasRecordedObservation, isEstimated,
             useDarkTheme);
-    }
-
-    private static int ResolveCycleDay(DateTime date, DateTime? cycleStartDate, int cycleLength)
-    {
-        return CycleCalendarItemBuilder.ResolveCycleDay(date, cycleStartDate, cycleLength);
-    }
-
-    private static CyclePhase ResolveCalendarPhase(
-        int cycleDay,
-        DateTime date,
-        int cycleLength,
-        CyclePredictionSummary prediction,
-        CyclePhaseEntry? latestShift,
-        DateTime today)
-    {
-        return CycleCalendarItemBuilder.ResolveCalendarPhase(cycleDay, date, cycleLength, prediction, latestShift,
-            today);
     }
 
     private static Color GetDayBackground(CyclePhase phase, bool isToday, bool useDarkTheme)
@@ -684,16 +738,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         IsCycleWarningPopupVisible = true;
     }
 
-    private void ShowCycleRepairPopup(string message)
-    {
-        _cycleWarningSuggestedPhase = null;
-        CycleWarningSuggestedActionText = "Use next phase";
-        OnPropertyChanged(nameof(HasCycleWarningSuggestedPhase));
-        ShowCycleWarningPopup(
-            "Fix the missed shift first",
-            $"{FormatCycleOrderWarningMessage(message)} Tap \"Forgot to log shift\" and choose when the phase really changed.");
-    }
-
     private void CloseCycleWarningPopup()
     {
         IsCycleWarningPopupVisible = false;
@@ -708,29 +752,29 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         try
         {
             var suggestedPhase = _cycleWarningSuggestedPhase.Value;
-            var date = CurrentDate;
-            if (!await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(date, suggestedPhase,
-                    "Manual phase correction")))
-                throw new InvalidOperationException("Active cycle account unavailable.");
+            var result = await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(CurrentDate, suggestedPhase,
+                "Manual phase correction"));
+
+            if (result.Outcome == CyclePhaseEditOutcome.OrderConflict && result.SuggestedPhase is { } nextSuggestion)
+            {
+                ShowCycleOrderPopup(PhaseOrderConflictMessage, nextSuggestion);
+                return;
+            }
+
+            if (TryGetPhaseEditFailureCopy(result, out var titleKey, out var bodyKey))
+            {
+                ShowCycleWarningPopup(titleKey, bodyKey);
+                return;
+            }
+
             CloseCycleWarningPopup();
             await RefreshCycleDataAsync();
             NotifyCycleMutated();
         }
-        catch (CyclePhaseOrderIssue)
-        {
-            ShowCycleRepairPopup("This phase would skip a step.");
-        }
-        catch (InvalidOperationException)
-        {
-            _cycleWarningSuggestedPhase = null;
-            CycleWarningSuggestedActionText = "Use next phase";
-            OnPropertyChanged(nameof(HasCycleWarningSuggestedPhase));
-            ShowCycleWarningPopup("Could not save that yet", "Check the selected date and earlier cycle records.");
-        }
         catch (Exception ex)
         {
             Trace.WriteLine($"[Cycle] Suggested phase save failed ({ex.GetType().Name}).");
-            ShowCycleWarningPopup("Could not save phase", "Please try again.");
+            ShowCycleWarningPopup(PhaseEditUnavailableTitleKey, PhaseEditUnavailableBodyKey);
         }
         finally
         {
@@ -798,7 +842,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                 DayOfWeekShort = day.DayOfWeekShort,
                 PhaseMarkerColor = day.IsNeutral
                     ? PhaseThemePalette.GetNeutralDividerColor(UseDarkTheme)
-                    : PhaseThemePalette.GetPhaseTextColor(day.Phase, UseDarkTheme, Colors.Gray)
+                    : PhaseThemePalette.GetPhaseTextColor(day.Phase, UseDarkTheme, default)
             }));
 
         RefreshCalendarStrip(CalendarDays, SelectedDate, CurrentDate, UseDarkTheme);

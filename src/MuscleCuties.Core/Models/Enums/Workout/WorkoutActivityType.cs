@@ -9,5 +9,13 @@ public enum WorkoutActivityType
     Hiit,
     Cycling,
     Running,
-    Swimming
+    Swimming,
+    GeneralStrength,
+    Walking,
+    Rowing,
+    Elliptical,
+    Mobility,
+    GentleRecovery,
+    RestDay,
+    Other
 }

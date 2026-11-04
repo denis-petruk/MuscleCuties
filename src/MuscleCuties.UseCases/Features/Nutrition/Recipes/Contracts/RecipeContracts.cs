@@ -93,6 +93,26 @@ public sealed record PreviewRecipePortionRequest(
     float? ServingsCount,
     float? Grams);
 
+public sealed record CalculateRecipePortionRequest(
+    Guid RecipeId,
+    string RecipeName,
+    float ServingsCount,
+    float PerServingGrams,
+    float PerServingCalories,
+    float PerServingProtein,
+    float PerServingCarbs,
+    float PerServingNetCarbs,
+    float PerServingFats,
+    float? RequestedServingsCount,
+    float? RequestedGrams);
+
+public sealed record FoodMassConversionOutputDto(bool Succeeded, float? Grams);
+public sealed record FoodServingOptionOutputDto(string Label, string Unit, float Grams);
+public sealed record FoodPortionCatalogOutputDto(
+    string GramUnit,
+    IReadOnlyList<string> SupportedUnits,
+    IReadOnlyList<FoodServingOptionOutputDto> StandardOptions);
+
 public sealed record RecipePortionPreviewDto(
     Guid RecipeId,
     string RecipeName,

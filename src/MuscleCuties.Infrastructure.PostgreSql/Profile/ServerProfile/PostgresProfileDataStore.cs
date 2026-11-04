@@ -3,32 +3,32 @@ using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Workout.Planning;
-using MuscleCuties.Core.Models.Enums.Cycle;
-using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
-using MuscleCuties.UseCases.Features.Workout.Planning;
-using MuscleCuties.UseCases.Features.Workout.Planning.Contracts;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 
 public sealed class PostgresProfileDataStore(
     PostgresDbContext dbContext,
-    TimeProvider timeProvider,
-    GenerateWorkoutPlanUseCase workoutPlanner)
+    TimeProvider timeProvider)
     : IServerProfileDataStore
 {
     private const string ProfileUpdateReason = "ProfileUpdate";
+    private const string QuizCorrectionReason = "QuizResponseCorrection";
     private const string NutritionPreferencesReason = "NutritionPreferencesUpdate";
     private const string WorkoutPreferencesReason = "WorkoutPreferencesUpdate";
     private const string NutritionTargetsReason = "NutritionTargetsUpdate";
     private const string EmptyJsonObject = "{}";
-    private const string StrengthStylePrefix = "StrengthStyle:";
+    private const int MinimumQuizIdentifier = 1;
     private const int MinimumExpectedProfileVersion = 1;
     private const string ClearedInjuryStatus = "Cleared";
+    private const string ProposedWorkoutPreviewStatus = "Proposed";
+    private const string ExpiredWorkoutPreviewStatus = "Expired";
     private const int DefaultBaselineSteps = 8000;
 
     public async Task<ServerProfileSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken)
@@ -49,6 +49,49 @@ public sealed class PostgresProfileDataStore(
         }).ConfigureAwait(false);
     }
 
+    public async Task<IReadOnlyList<ServerProfileHistoryEntry>> LoadHistoryAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        if (userId == Guid.Empty)
+            return [];
+
+        return await ExecuteTenantTransactionAsync(userId, cancellationToken, async (transaction, token) =>
+        {
+            var rows = await dbContext.UserProfileSnapshots.AsNoTracking()
+                .Where(item => item.UserId == userId)
+                .OrderByDescending(item => item.CreatedAt)
+                .ThenByDescending(item => item.Id)
+                .Select(item => new ServerProfileHistoryEntry(item.Id, item.SnapshotReason, item.ProfileJson, item.CreatedAt))
+                .ToListAsync(token).ConfigureAwait(false);
+            await transaction.CommitAsync(token).ConfigureAwait(false);
+            return (IReadOnlyList<ServerProfileHistoryEntry>)rows.Select(SanitizeHistoryEntry).ToArray();
+        }).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<ServerQuizResponse>> LoadQuizResponsesAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        if (userId == Guid.Empty)
+            return [];
+
+        return await ExecuteTenantTransactionAsync(userId, cancellationToken, async (transaction, token) =>
+        {
+            var rows = await dbContext.UserQuizResponses.AsNoTracking()
+                .Where(item => item.UserId == userId)
+                .OrderBy(item => item.QuizQuestionId)
+                .ThenByDescending(item => item.AnsweredAt)
+                .ThenByDescending(item => item.UserProfileSnapshotId)
+                .ThenByDescending(item => item.Id)
+                .Select(item => new ServerQuizResponse(item.QuizQuestionId, item.QuizAnswerId, item.AnsweredAt))
+                .ToListAsync(token).ConfigureAwait(false);
+            await transaction.CommitAsync(token).ConfigureAwait(false);
+            return (IReadOnlyList<ServerQuizResponse>)rows.GroupBy(item => item.QuestionId)
+                .Select(group => group.First()).OrderBy(item => item.QuestionId).ToArray();
+        }).ConfigureAwait(false);
+    }
+
     public Task<ServerProfileWriteResult> UpdateProfileAsync(
         UpdateServerProfileRequest request,
         CancellationToken cancellationToken) => UpdateAsync(
@@ -63,13 +106,8 @@ public sealed class PostgresProfileDataStore(
             if (request.Weight is not null) profile.Weight = request.Weight.Value;
             if (request.Goal is not null) profile.Goal = request.Goal;
             if (request.WeightGoalPace is not null) profile.WeightGoalPace = request.WeightGoalPace;
-            if (request.TrainingExperienceLevel is not null) profile.TrainingExperienceLevel = request.TrainingExperienceLevel;
-            if (request.CycleTrackingMode is not null) profile.CycleTrackingMode = request.CycleTrackingMode;
-            if (request.WorkoutDaysPerWeek is not null) profile.WorkoutDaysPerWeek = request.WorkoutDaysPerWeek.Value;
             if (request.CycleLength is not null) profile.CycleLength = request.CycleLength.Value;
             if (request.DietaryTags is not null) profile.DietaryTags = request.DietaryTags;
-            if (request.SessionDurationMinutes is not null) profile.SessionDurationMinutes = request.SessionDurationMinutes.Value;
-            if (request.EquipmentLevel is not null) profile.EquipmentLevel = request.EquipmentLevel;
             if (request.ReproductiveContextJson is not null)
             {
                 var parsed = ReproductiveContextCodec.Parse(request.ReproductiveContextJson);
@@ -77,7 +115,46 @@ public sealed class PostgresProfileDataStore(
             }
             if (request.ProfileImagePath is not null)
                 profile.ProfileImagePath = request.ProfileImagePath;
-        }, cancellationToken);
+        }, cancellationToken,
+        profile => (request.TrainingExperienceLevel is null ||
+                    string.Equals(request.TrainingExperienceLevel, profile.TrainingExperienceLevel,
+                        StringComparison.OrdinalIgnoreCase)) &&
+                   WorkoutPreferencesRule.PreservesAppliedEquipment(request.EquipmentLevel,
+                       profile.EquipmentLevel), request.EquipmentLevel is not null,
+        request.SetDateOfBirth || request.ReproductiveContextJson is not null);
+
+    public async Task<ServerProfileWriteResult> CorrectQuizResponseAsync(
+        CorrectServerQuizResponseRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!ValidVersionRequest(request.UserId, request.ExpectedVersion) ||
+            request.QuestionId < MinimumQuizIdentifier || request.AnswerId < MinimumQuizIdentifier)
+            return Invalid();
+
+        return await ExecuteTenantTransactionAsync(request.UserId, cancellationToken, async (transaction, token) =>
+        {
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, request.UserId, token).ConfigureAwait(false);
+            if (await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, request.UserId,
+                    timeProvider.GetUtcNow().UtcDateTime, token).ConfigureAwait(false)) return Conflict(request.ExpectedVersion);
+            var profile = await dbContext.UserProfiles.SingleOrDefaultAsync(
+                item => item.UserId == request.UserId, token).ConfigureAwait(false);
+            if (profile is null) return Missing();
+            if (profile.ConcurrencyVersion != request.ExpectedVersion) return Conflict(profile.ConcurrencyVersion);
+
+            var answerExists = await dbContext.QuizAnswers.AsNoTracking().AnyAsync(
+                answer => answer.Id == request.AnswerId && answer.QuestionId == request.QuestionId, token).ConfigureAwait(false);
+            if (!answerExists) return new ServerProfileWriteResult(ServerProfileWriteStatus.InvalidCatalogReference, profile.ConcurrencyVersion);
+            var now = timeProvider.GetUtcNow().UtcDateTime;
+            var snapshot = AddSnapshot(request.UserId, QuizCorrectionReason, profile, now);
+            dbContext.UserQuizResponses.Add(new UserQuizResponseRecord
+            {
+                Id = Guid.CreateVersion7(), UserId = request.UserId, QuizQuestionId = request.QuestionId,
+                QuizAnswerId = request.AnswerId, AnsweredAt = now, UserProfileSnapshotId = snapshot.Id
+            });
+            profile.UpdatedAt = now;
+            return await SaveVersionedAsync(transaction, profile, token).ConfigureAwait(false);
+        }).ConfigureAwait(false);
+    }
 
     public Task<ServerProfileWriteResult> UpdateNutritionPreferencesAsync(
         UpdateServerNutritionPreferencesRequest request,
@@ -96,112 +173,46 @@ public sealed class PostgresProfileDataStore(
         UpdateServerWorkoutPreferencesRequest request,
         CancellationToken cancellationToken)
     {
-        if (!WorkoutPreferencesRule.IsValid(request.ActivityTypes, request.StrengthStyle, request.DaysPerWeek) ||
+        if (!WorkoutPreferencesRule.IsValid(request.ActivityTypes, request.AvailableWeekdays,
+                request.ActivitySessionDurationsMinutes, request.RequestedSessionsPerWeek) ||
             !WorkoutPreferencesRule.IsValidEquipmentLevel(request.EquipmentLevel) ||
             !ValidVersionRequest(request.UserId, request.ExpectedVersion))
             return Invalid();
 
-        var activities = request.ActivityTypes
+        var serializedActivities = string.Join(',', request.ActivityTypes
             .Select(value => ((WorkoutActivityType)value).ToString())
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(value => value, StringComparer.Ordinal)
-            .ToList();
-        var style = ((StrengthTrainingStyle)request.StrengthStyle).ToString();
-        activities.Add($"{StrengthStylePrefix}{style}");
-        var serialized = string.Join(',', activities);
+            .OrderBy(value => value, StringComparer.Ordinal));
+        var serializedWeekdays = JsonSerializer.Serialize(request.AvailableWeekdays
+            .Select(value => ((DayOfWeek)value).ToString()).OrderBy(value => value, StringComparer.Ordinal));
+        var serializedDurations = JsonSerializer.Serialize(request.ActivitySessionDurationsMinutes
+            .ToDictionary(pair => ((WorkoutActivityType)pair.Key).ToString(), pair => pair.Value,
+                StringComparer.Ordinal));
+        var serializedFrequencies = JsonSerializer.Serialize((request.RequestedSessionsPerWeek ??
+                new Dictionary<int, int>())
+            .ToDictionary(pair => ((WorkoutActivityType)pair.Key).ToString(), pair => pair.Value,
+                StringComparer.Ordinal));
+        var serializedExcludedExerciseIds = JsonSerializer.Serialize((request.ExcludedExerciseIds ??
+                new HashSet<int>()).OrderBy(exerciseId => exerciseId).ToArray());
         return await ExecuteTenantTransactionAsync(request.UserId, cancellationToken, async (transaction, token) =>
         {
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, request.UserId, token).ConfigureAwait(false);
+            if (await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, request.UserId,
+                    timeProvider.GetUtcNow().UtcDateTime, token).ConfigureAwait(false)) return Conflict(request.ExpectedVersion);
             var profile = await dbContext.UserProfiles.SingleOrDefaultAsync(
                 item => item.UserId == request.UserId, token).ConfigureAwait(false);
             if (profile is null) return Missing();
             if (profile.ConcurrencyVersion != request.ExpectedVersion) return Conflict(profile.ConcurrencyVersion);
 
-            if (!Enum.TryParse<UserGoal>(profile.Goal, true, out var goal) || !Enum.IsDefined(goal) ||
-                !Enum.TryParse<TrainingExperienceLevel>(profile.TrainingExperienceLevel, true, out var experience) ||
-                !Enum.IsDefined(experience))
-                return Invalid();
-
-            var equipmentLevel = request.EquipmentLevel ?? profile.EquipmentLevel;
-            var equipment = Enum.TryParse<Equipment>(equipmentLevel, true, out var selectedEquipment) &&
-                            Enum.IsDefined(selectedEquipment)
-                ? selectedEquipment : Equipment.FullGym;
-            var phase = Enum.TryParse<CyclePhase>(profile.CurrentCyclePhase, true, out var currentPhase) &&
-                        Enum.IsDefined(currentPhase) && currentPhase != CyclePhase.Unknown
-                ? currentPhase : CyclePhase.Follicular;
             var now = timeProvider.GetUtcNow().UtcDateTime;
-            var activeInjuryRows = await dbContext.WorkoutInjuryLogs.AsNoTracking()
-                .Where(item => item.UserId == request.UserId && item.Status != ClearedInjuryStatus)
-                .ToListAsync(token).ConfigureAwait(false);
-            var injuries = activeInjuryRows.Select(item => new Injury(
-                (InjuryFlag)item.SiteFlag,
-                Enum.TryParse<InjuryStatus>(item.Status, true, out var injuryStatus)
-                    ? injuryStatus : InjuryStatus.Acute,
-                item.Since)).ToArray();
-
-            GenerateWorkoutPlanResponse generated;
-            try
-            {
-                generated = await workoutPlanner.ExecuteAsync(request.UserId, new GenerateWorkoutPlanRequest(
-                    goal, experience, request.DaysPerWeek, profile.SessionDurationMinutes,
-                    request.ActivityTypes.Select(value => (WorkoutActivityType)value).ToArray(),
-                    (StrengthTrainingStyle)request.StrengthStyle, equipment, phase,
-                    ReproductiveContextCodec.Parse(profile.ReproductiveContextJson).AllowsCyclePhaseTrainingAdjustments,
-                    now, DateOnly.FromDateTime(now), injuries, DefaultBaselineSteps), token).ConfigureAwait(false);
-            }
-            catch (InvalidOperationException)
-            {
-                return new ServerProfileWriteResult(ServerProfileWriteStatus.InvalidCatalogReference, profile.ConcurrencyVersion);
-            }
-
             AddSnapshot(request.UserId, WorkoutPreferencesReason, profile, now);
-            profile.PreferredWorkoutActivityTypes = serialized;
-            profile.WorkoutDaysPerWeek = request.DaysPerWeek;
+            profile.PreferredWorkoutActivityTypes = serializedActivities;
+            profile.AvailableWorkoutWeekdaysJson = serializedWeekdays;
+            profile.ActivitySessionDurationsJson = serializedDurations;
+            profile.RequestedActivitySessionsPerWeekJson = serializedFrequencies;
+            profile.ExcludedStrengthExerciseIdsJson = serializedExcludedExerciseIds;
             if (request.EquipmentLevel is not null)
-                profile.EquipmentLevel = equipment.ToString();
+                profile.EquipmentLevel = request.EquipmentLevel;
             profile.UpdatedAt = now;
-
-            var activePlans = await dbContext.WorkoutPlans
-                .Where(item => item.UserId == request.UserId && item.IsActive)
-                .ToListAsync(token).ConfigureAwait(false);
-            foreach (var activePlan in activePlans)
-                activePlan.IsActive = false;
-
-            var planId = Guid.CreateVersion7();
-            dbContext.WorkoutPlans.Add(new WorkoutPlanRecord
-            {
-                Id = planId,
-                UserId = request.UserId,
-                Name = generated.Name,
-                IsActive = true,
-                CyclePhaseTarget = generated.CyclePhaseTarget.ToString(),
-                CreatedAt = now
-            });
-            foreach (var day in generated.WorkoutDays)
-            {
-                var dayId = Guid.CreateVersion7();
-                dbContext.WorkoutDays.Add(new WorkoutDayRecord
-                {
-                    Id = dayId,
-                    UserId = request.UserId,
-                    WorkoutPlanId = planId,
-                    DayOfWeek = day.DayOfWeek,
-                    WeekIndex = day.WeekIndex,
-                    Date = DateOnly.FromDateTime(day.Date),
-                    WorkoutType = day.WorkoutType.ToString(),
-                    Name = day.Name
-                });
-                foreach (var exercise in day.Exercises)
-                    dbContext.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
-                    {
-                        Id = Guid.CreateVersion7(),
-                        UserId = request.UserId,
-                        WorkoutDayId = dayId,
-                        ExerciseId = exercise.ExerciseId,
-                        Sets = exercise.Sets,
-                        Reps = exercise.Reps,
-                        DurationSeconds = exercise.DurationSeconds
-                    });
-            }
             return await SaveVersionedAsync(transaction, profile, token).ConfigureAwait(false);
         }).ConfigureAwait(false);
     }
@@ -220,23 +231,76 @@ public sealed class PostgresProfileDataStore(
         int expectedVersion,
         string reason,
         Action<UserProfileRecord, DateTime> apply,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Func<UserProfileRecord, bool>? validate = null,
+        bool guardPlanning = false,
+        bool guardPopulation = false)
     {
         if (!ValidVersionRequest(userId, expectedVersion))
             return Invalid();
 
-        return await ExecuteTenantTransactionAsync(userId, cancellationToken, async (transaction, token) =>
+        var result = await ExecuteTenantTransactionAsync(userId, cancellationToken, async (transaction, token) =>
         {
+            if (guardPlanning || guardPopulation)
+            {
+                await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, token).ConfigureAwait(false);
+                if (guardPlanning && !guardPopulation && await WorkoutSessionAccountLock.HasActivePreviewAsync(dbContext, userId,
+                        timeProvider.GetUtcNow().UtcDateTime, token).ConfigureAwait(false)) return Conflict(expectedVersion);
+            }
             var profile = await dbContext.UserProfiles.SingleOrDefaultAsync(
                 item => item.UserId == userId, token).ConfigureAwait(false);
             if (profile is null) return Missing();
             if (profile.ConcurrencyVersion != expectedVersion) return Conflict(profile.ConcurrencyVersion);
+            if (validate is not null && !validate(profile)) return Invalid();
             var now = timeProvider.GetUtcNow().UtcDateTime;
             AddSnapshot(userId, reason, profile, now);
             apply(profile, now);
             profile.UpdatedAt = now;
+            if (guardPopulation)
+                await ApplyPopulationSafetyAsync(userId, profile, now, token).ConfigureAwait(false);
             return await SaveVersionedAsync(transaction, profile, token).ConfigureAwait(false);
         }).ConfigureAwait(false);
+        if (guardPopulation && result.Status == ServerProfileWriteStatus.Saved)
+            await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(dbContext, userId,
+                timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        return result;
+    }
+
+    private async Task ApplyPopulationSafetyAsync(Guid userId, UserProfileRecord profile, DateTime nowUtc,
+        CancellationToken cancellationToken)
+    {
+        var state = await dbContext.WorkoutAccountPlanningStates.SingleOrDefaultAsync(row => row.UserId == userId,
+            cancellationToken).ConfigureAwait(false);
+        DateOnly? today = null;
+        if (state?.TimeZoneId is { } zoneId)
+        {
+            try { today = WorkoutAccountCalendarRule.LocalDate(new DateTimeOffset(nowUtc, TimeSpan.Zero), TimeZoneInfo.FindSystemTimeZoneById(zoneId)); }
+            catch (TimeZoneNotFoundException) { }
+            catch (InvalidTimeZoneException) { }
+        }
+        if (state is not null) state.CycleReadinessPending = true;
+        if (WorkoutPopulationScopeRule.Limitation(profile.DateOfBirth, today,
+                ReproductiveContextCodec.Parse(profile.ReproductiveContextJson).Pregnancy) is null) return;
+        var activePlanIds = await dbContext.WorkoutPlans.AsNoTracking().Where(row => row.UserId == userId && row.IsActive)
+            .Select(row => row.Id).ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        if (activePlanIds.Length > 0 && state is not null) state.SafetyRegenerationPending = true;
+        var days = await dbContext.WorkoutDays.Where(day => day.UserId == userId && activePlanIds.Contains(day.WorkoutPlanId) &&
+            day.WorkoutType != nameof(WorkoutType.Rest) && (today == null || day.Date >= today ||
+                dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId && session.PlannedWorkoutDayId == day.Id &&
+                    !session.IsDeleted && session.CompletedAt == null)) &&
+            (!dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId && session.PlannedWorkoutDayId == day.Id &&
+                !session.IsDeleted && session.CompletedAt != null) || dbContext.WorkoutSessionLogs.Any(session => session.UserId == userId &&
+                    session.PlannedWorkoutDayId == day.Id && !session.IsDeleted && session.CompletedAt == null)))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var day in days) day.IsRemovedBySafety = true;
+        var previews = await dbContext.WorkoutPlanProposalsV02.Where(row => row.UserId == userId && row.Status == ProposedWorkoutPreviewStatus && row.LeaseId != null)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var preview in previews)
+        {
+            preview.Status = ExpiredWorkoutPreviewStatus;
+            preview.DecidedAtUtc = nowUtc;
+            preview.ConcurrencyVersion++;
+        }
     }
 
     private async Task<ServerProfileWriteResult> SaveVersionedAsync(
@@ -306,11 +370,11 @@ public sealed class PostgresProfileDataStore(
         profile.Goal,
         profile.WeightGoalPace,
         profile.TrainingExperienceLevel,
-        profile.CycleTrackingMode,
         profile.WorkoutDaysPerWeek,
+        profile.AvailableWorkoutWeekdaysJson,
         profile.CycleLength,
         profile.DietaryTags,
-        profile.SessionDurationMinutes,
+        profile.ActivitySessionDurationsJson,
         profile.EquipmentLevel,
         profile.PreferredWorkoutActivityTypes,
         profile.UnitSystem,
@@ -324,7 +388,9 @@ public sealed class PostgresProfileDataStore(
         user?.Email ?? string.Empty,
         profile.ReproductiveContextJson,
         user?.CreatedAt,
-        profile.ProfileImagePath);
+        profile.ProfileImagePath,
+        profile.RequestedActivitySessionsPerWeekJson,
+        profile.ExcludedStrengthExerciseIdsJson);
 
     private static string MergeTargets(string currentJson, IReadOnlyDictionary<string, string> updates)
     {
@@ -333,6 +399,13 @@ public sealed class PostgresProfileDataStore(
         foreach (var update in updates)
             targets[update.Key] = JsonNode.Parse(update.Value);
         return targets.ToJsonString();
+    }
+
+    private static ServerProfileHistoryEntry SanitizeHistoryEntry(ServerProfileHistoryEntry entry)
+    {
+        var profile = JsonNode.Parse(entry.ProfileJson) as JsonObject ?? new JsonObject();
+        profile.Remove(nameof(UserProfileRecord.ProfileImagePath));
+        return entry with { ProfileJson = profile.ToJsonString() };
     }
 
     private static bool ValidVersionRequest(Guid userId, int expectedVersion) =>

@@ -2,105 +2,99 @@
 
 <ContentPage
     x:Class="MuscleCuties.UI.Pages.Profile.ProfileWorkoutPreferencesPage"
+    x:Name="Root"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:profileControls="clr-namespace:MuscleCuties.UI.Controls.Profile"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileWorkoutPreferencesViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
-    <ContentPage.Resources>
-        <x:Double x:Key="PlanUpdateMessageSpacing">12</x:Double>
-    </ContentPage.Resources>
 
-    <Grid>
-    <ScrollView>
-        <VerticalStackLayout
-            Padding="20,40,20,32"
-            Spacing="16"
-            HorizontalOptions="Fill"
-            MaximumWidthRequest="640">
-            <sharedControls:PageHeader
-                Title="{loc:LocalizedText Profile_WorkoutPrefs_ActivityPreferences}"
-                BackCommand="{Binding BackCommand}" />
-
-            <Border
-                StrokeShape="RoundRectangle 10"
-                StrokeThickness="1"
-                Stroke="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}"
-                Padding="14,10"
-                SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs}">
-                <Label
-                    Text="{loc:LocalizedText Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs}"
-                    FontFamily="Inter"
-                    FontSize="14"
-                    FontAttributes="Bold"
-                    TextColor="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource SecondaryDarkText}}" />
+    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <sharedControls:PageHeader
+            Title="{loc:LocalizedText Profile_WorkoutPrefs_ActivityPreferences}"
+            BackCommand="{Binding BackCommand, Source={x:Reference Root}}" />
+    </Grid>
+    <ScrollView IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" Grid.Row="1">
+        <VerticalStackLayout Padding="{DynamicResource PresentationFormPagePadding}" Spacing="{StaticResource UiSpaceContent}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+                    <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdays}"
+                           Style="{StaticResource SectionTitle}"
+                           SemanticProperties.HeadingLevel="Level2" />
+                    <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdaysHint}"
+                           Style="{StaticResource MutedLabel}"
+                           LineBreakMode="WordWrap" />
+                    <!-- Seven fixed options read better as one checklist than as a four-plus-three
+                         card grid, whose final row left an unused cell and whose cards could not
+                         hold a full word at large text. -->
+                    <VerticalStackLayout
+                        Spacing="{StaticResource UiSpacing10}"
+                        BindableLayout.ItemsSource="{Binding AvailableWeekdays}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="workoutModels:WorkoutWeekdayOptionItem">
+                                <!-- Onboarding option anatomy: canonical card, option label, radio ring. -->
+                                <Border Style="{StaticResource CardSecondary}"
+                                        SemanticProperties.Description="{Binding Label}"
+                                        SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
+                                    
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfileWorkoutPreferencesViewModel}}, Path=ToggleWeekdayCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                        <Label Text="{Binding Label}"
+                                               Style="{StaticResource AccentLabel}"
+                                               VerticalOptions="Center"
+                                               LineBreakMode="WordWrap" />
+                                        <Border Grid.Column="1" Style="{StaticResource SelectionRadioRing}" VerticalOptions="Center">
+                                            <BoxView WidthRequest="{StaticResource UiDimension8}"
+                                                     HeightRequest="{StaticResource UiDimension8}"
+                                                     CornerRadius="{StaticResource UiCornerRadius4}"
+                                                     Color="{StaticResource ContrastInk}"
+                                                     HorizontalOptions="Center"
+                                                     VerticalOptions="Center"
+                                                     IsVisible="{Binding IsSelected}" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                    <Label Text="{Binding SelectedWeekdayCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_SelectedWeekdaysFormat}" Style="{StaticResource MutedCentered}" />
+                </VerticalStackLayout>
             </Border>
-
-            <VerticalStackLayout Spacing="8">
-                <Label
-                    Text="{loc:LocalizedText Profile_WorkoutPrefs_WorkoutsPerWeek}"
-                    Style="{StaticResource SectionTitle}"
-                    SemanticProperties.HeadingLevel="Level2" />
-                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                    <Label Text="{Binding MinimumDaysPerWeek}" VerticalOptions="Center"
-                           Style="{StaticResource MutedLabel}" />
-                    <Slider x:Name="WorkoutFrequencySlider" Grid.Column="1"
-                            Minimum="{Binding MinimumDaysPerWeek}"
-                            Maximum="{Binding MaximumDaysPerWeek}"
-                            Value="{Binding SliderDaysPerWeek, Mode=TwoWay}"
-                            ThumbColor="{StaticResource Primary}"
-                            MinimumTrackColor="{StaticResource Primary}"
-                            MaximumTrackColor="{StaticResource Gray500}"
-                            SemanticProperties.Description="{Binding DaysPerWeek, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_DaysPerWeekFormat}" />
-                    <Label Grid.Column="2" Text="{Binding MaximumDaysPerWeek}"
-                           VerticalOptions="Center" Style="{StaticResource MutedLabel}" />
-                </Grid>
-                <Label Text="{Binding DaysPerWeek, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_DaysPerWeekFormat}"
-                       HorizontalTextAlignment="Center" Style="{StaticResource SectionTitle}" />
-            </VerticalStackLayout>
 
             <toolkit:LazyView
                 x:Name="PreferenceChoicesLazy"
                 x:TypeArguments="profileControls:ProfileWorkoutPreferencesChoices" />
-
-            <Label
-                Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
-                Style="{StaticResource AccentLabel}"
-                IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
-
-            <Button
-                Text="{loc:LocalizedText Profile_WorkoutPrefs_SaveWorkoutPreferences}"
-                Command="{Binding SaveCommand}"
-                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
-
-            <ActivityIndicator
-                IsRunning="{Binding IsBusy}"
-                IsVisible="{Binding IsBusy}"
-                HorizontalOptions="Center"
-                SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_SavingPreferences}" />
-
         </VerticalStackLayout>
     </ScrollView>
-        <Grid
-            IsVisible="{Binding IsUpdatingPlan}"
-            BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
-            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center"
-                                 Spacing="{StaticResource PlanUpdateMessageSpacing}">
-                <ActivityIndicator
-                    IsRunning="{Binding IsUpdatingPlan}"
-                    Color="{StaticResource Primary}"
-                    SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_UpdatingPlan}" />
-                <Label
-                    Text="{loc:LocalizedText Profile_WorkoutPrefs_UpdatingPlan}"
-                    Style="{StaticResource MutedLabel}"
-                    HorizontalTextAlignment="Center" />
-            </VerticalStackLayout>
-        </Grid>
-    </Grid>
+    <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <Label
+            Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+            Style="{StaticResource AccentLabel}"
+            LineBreakMode="WordWrap"
+            IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+        <Button Style="{StaticResource ButtonPrimary}"
+            Text="{Binding SaveActionText}"
+            Command="{Binding SaveCommand}"
+            IsEnabled="{Binding CanSave}" />
+        <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}"
+            IsRunning="{Binding IsBusy}"
+            IsVisible="{Binding IsBusy}"
+            HorizontalOptions="Center"
+            SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_SavingPreferences}" />
+    </VerticalStackLayout>
+    <sharedControls:PageLoadingOverlay BackCommand="{Binding BackCommand, Source={x:Reference Root}}" Grid.RowSpan="3" />
+</Grid>
 </ContentPage>

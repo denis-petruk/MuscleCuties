@@ -1,6 +1,9 @@
 using MuscleCuties.Core.Domain.Nutrition;
-using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
+using CoreDiaryCopyMode = MuscleCuties.Core.Models.Enums.Nutrition.DiaryCopyMode;
+using CoreMealType = MuscleCuties.Core.Models.Enums.Nutrition.MealType;
+using ContractMealType = MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts.MealType;
+using DiaryCopyModeDto = MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy.DiaryCopyModeDto;
 using Xunit;
 
 namespace MuscleCuties.Core.Tests;
@@ -23,7 +26,7 @@ public sealed class DiaryCopyPreviewTests
         var useCase = new NutritionCopyPreviewUseCase(store);
 
         var preview = await useCase.PreviewAsync(Owner,
-            new PreviewNutritionCopyRequest(SourceDate, TargetDate, MealType.Breakfast, DiaryCopyMode.Merge));
+            new PreviewNutritionCopyRequest(SourceDate, TargetDate, ContractMealType.Breakfast, DiaryCopyModeDto.Merge));
 
         Assert.Equal(0, store.CommitCalls);
         Assert.Equal(2, store.ReadCalls);
@@ -40,15 +43,15 @@ public sealed class DiaryCopyPreviewTests
     [Fact]
     public void SelectedMealOverwriteKeepsUnrelatedMealAndWholeDayOverwriteRemovesIt()
     {
-        var source = new[] { Food("source", MealType.Breakfast, 120m) };
+        var source = new[] { Food("source", CoreMealType.Breakfast, 120m) };
         var target = new[]
         {
-            Food("breakfast", MealType.Breakfast, 90m),
-            Food("dinner", MealType.Dinner, 300m)
+            Food("breakfast", CoreMealType.Breakfast, 90m),
+            Food("dinner", CoreMealType.Dinner, 300m)
         };
 
-        var meal = DiaryCopyProjection.Create(source, target, MealType.Breakfast, DiaryCopyMode.Overwrite);
-        var day = DiaryCopyProjection.Create(source, target, null, DiaryCopyMode.Overwrite);
+        var meal = DiaryCopyProjection.Create(source, target, CoreMealType.Breakfast, CoreDiaryCopyMode.Overwrite);
+        var day = DiaryCopyProjection.Create(source, target, null, CoreDiaryCopyMode.Overwrite);
 
         Assert.Equal(2, meal.ResultingTargetTotals.Count);
         Assert.Equal(420m, meal.ResultingTargetTotals.Calories);
@@ -60,10 +63,10 @@ public sealed class DiaryCopyPreviewTests
     [Fact]
     public void MalformedDuplicateIdentityCannotInflatePreview()
     {
-        var repeated = Food("same-entry", MealType.Breakfast, 120m);
+        var repeated = Food("same-entry", CoreMealType.Breakfast, 120m);
 
         Assert.Throws<ArgumentException>(() => DiaryCopyProjection.Create(
-            [repeated, repeated], [], null, DiaryCopyMode.Merge));
+            [repeated, repeated], [], null, CoreDiaryCopyMode.Merge));
     }
 
     [Fact]
@@ -73,7 +76,7 @@ public sealed class DiaryCopyPreviewTests
         var notifier = new RecordingNotifier();
         var useCase = new NutritionCopyPreviewUseCase(store, notifier);
         var preview = await useCase.PreviewAsync(Owner,
-            new PreviewNutritionCopyRequest(SourceDate, TargetDate, null, DiaryCopyMode.Overwrite));
+            new PreviewNutritionCopyRequest(SourceDate, TargetDate, null, DiaryCopyModeDto.Overwrite));
         store.TargetRevision = ChangedTargetRevision;
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => useCase.CommitAsync(Owner,
@@ -89,7 +92,7 @@ public sealed class DiaryCopyPreviewTests
         var store = SeededStore();
         var useCase = new NutritionCopyPreviewUseCase(store);
         var preview = await useCase.PreviewAsync(Owner,
-            new PreviewNutritionCopyRequest(SourceDate, TargetDate, null, DiaryCopyMode.Merge));
+            new PreviewNutritionCopyRequest(SourceDate, TargetDate, null, DiaryCopyModeDto.Merge));
         store.SourceRevision = "source-v2";
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => useCase.CommitAsync(Owner,
@@ -106,10 +109,10 @@ public sealed class DiaryCopyPreviewTests
         var useCase = new NutritionCopyPreviewUseCase(store);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => useCase.PreviewAsync(Owner,
-            new PreviewNutritionCopyRequest(SourceDate, TargetDate, null, DiaryCopyMode.Merge)));
+            new PreviewNutritionCopyRequest(SourceDate, TargetDate, null, DiaryCopyModeDto.Merge)));
         await Assert.ThrowsAsync<ArgumentException>(() => useCase.CommitAsync(Guid.Empty,
             new CommitPreviewedNutritionCopyRequest(CopyKey, SourceDate, TargetDate, null,
-                DiaryCopyMode.Merge, OriginalSourceRevision, OriginalTargetRevision)));
+                DiaryCopyModeDto.Merge, OriginalSourceRevision, OriginalTargetRevision)));
 
         Assert.Equal(0, store.CommitCalls);
     }
@@ -121,7 +124,7 @@ public sealed class DiaryCopyPreviewTests
         var notifier = new RecordingNotifier();
         var useCase = new NutritionCopyPreviewUseCase(store, notifier);
         var preview = await useCase.PreviewAsync(Owner,
-            new PreviewNutritionCopyRequest(SourceDate, TargetDate, null, DiaryCopyMode.Merge));
+            new PreviewNutritionCopyRequest(SourceDate, TargetDate, null, DiaryCopyModeDto.Merge));
         var command = Commit(preview);
 
         var first = await useCase.CommitAsync(Owner, command);
@@ -139,12 +142,12 @@ public sealed class DiaryCopyPreviewTests
         var store = SeededStore();
         var useCase = new NutritionCopyPreviewUseCase(store);
         var preview = await useCase.PreviewAsync(Owner,
-            new PreviewNutritionCopyRequest(SourceDate, TargetDate, null, DiaryCopyMode.Merge));
+            new PreviewNutritionCopyRequest(SourceDate, TargetDate, null, DiaryCopyModeDto.Merge));
         var command = Commit(preview);
         await useCase.CommitAsync(Owner, command);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => useCase.CommitAsync(Owner,
-            command with { Mode = DiaryCopyMode.Overwrite }));
+            command with { Mode = DiaryCopyModeDto.Overwrite }));
         await Assert.ThrowsAsync<InvalidOperationException>(() => useCase.CommitAsync(OtherOwner,
             command));
 
@@ -159,7 +162,7 @@ public sealed class DiaryCopyPreviewTests
         var useCase = new NutritionCopyPreviewUseCase(store);
 
         var preview = await useCase.PreviewAsync(Owner,
-            new PreviewNutritionCopyRequest(SourceDate, TargetDate, null, DiaryCopyMode.Merge));
+            new PreviewNutritionCopyRequest(SourceDate, TargetDate, null, DiaryCopyModeDto.Merge));
 
         Assert.Empty(preview.SourceItems);
         Assert.Equal(preview.ExistingTargetTotals, preview.ResultingTargetTotals);
@@ -170,10 +173,10 @@ public sealed class DiaryCopyPreviewTests
         new(CopyKey, preview.SourceDate, preview.TargetDate, preview.MealType, preview.Mode,
             preview.SourceRevision, preview.TargetRevision);
 
-    private static DiaryCopyFood Food(string identity, MealType mealType, decimal calories) =>
+    private static DiaryCopyFood Food(string identity, CoreMealType mealType, decimal calories) =>
         new(identity, identity, mealType, calories, decimal.Zero, decimal.Zero, decimal.Zero);
 
-    private static DiaryCopyFoodDto FoodDto(string identity, MealType mealType, decimal calories,
+    private static DiaryCopyFoodDto FoodDto(string identity, ContractMealType mealType, decimal calories,
         string? groupIdentity = null) =>
         new(identity, identity, mealType, calories, decimal.Zero, decimal.Zero, decimal.Zero, groupIdentity);
 
@@ -181,13 +184,13 @@ public sealed class DiaryCopyPreviewTests
     {
         SourceItems =
         [
-            FoodDto("source-a", MealType.Breakfast, 100m, "legacy-group"),
-            FoodDto("source-b", MealType.Breakfast, 100m, "legacy-group")
+            FoodDto("source-a", ContractMealType.Breakfast, 100m, "legacy-group"),
+            FoodDto("source-b", ContractMealType.Breakfast, 100m, "legacy-group")
         ],
         TargetItems =
         [
-            FoodDto("target-a", MealType.Breakfast, 200m),
-            FoodDto("target-dinner", MealType.Dinner, 300m)
+            FoodDto("target-a", ContractMealType.Breakfast, 200m),
+            FoodDto("target-dinner", ContractMealType.Dinner, 300m)
         ]
     };
 
@@ -229,10 +232,10 @@ public sealed class DiaryCopyPreviewTests
                 request.ExpectedTargetRevision != TargetRevision)
                 throw new InvalidOperationException("Refresh stale diary preview.");
             var projection = DiaryCopyProjection.Create(
-                SourceItems.Select(item => Food(item.Identity, item.MealType, item.Calories)).ToArray(),
-                TargetItems.Select(item => Food(item.Identity, item.MealType, item.Calories)).ToArray(),
-                request.MealType,
-                request.Mode);
+                SourceItems.Select(item => Food(item.Identity, ToCoreMealType(item.MealType), item.Calories)).ToArray(),
+                TargetItems.Select(item => Food(item.Identity, ToCoreMealType(item.MealType), item.Calories)).ToArray(),
+                request.MealType is { } mealType ? ToCoreMealType(mealType) : null,
+                request.Mode == DiaryCopyModeDto.Merge ? CoreDiaryCopyMode.Merge : CoreDiaryCopyMode.Overwrite);
             Writes++;
             var response = new CopyNutritionDiaryResponse(Guid.NewGuid(), request.TargetDate,
                 projection.SourceTotals.Count, [], false);
@@ -240,6 +243,15 @@ public sealed class DiaryCopyPreviewTests
             return Task.FromResult(response);
         }
     }
+
+    private static CoreMealType ToCoreMealType(ContractMealType mealType) => mealType switch
+    {
+        ContractMealType.Breakfast => CoreMealType.Breakfast,
+        ContractMealType.Lunch => CoreMealType.Lunch,
+        ContractMealType.Dinner => CoreMealType.Dinner,
+        ContractMealType.Snack => CoreMealType.Snack,
+        _ => throw new ArgumentOutOfRangeException(nameof(mealType))
+    };
 
     private sealed class RecordingNotifier : INutritionBatchAndCopyChangeNotifier
     {

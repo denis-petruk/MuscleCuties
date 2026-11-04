@@ -42,7 +42,8 @@ public class MacroProgressGrid : ContentView
     ];
 
     private static readonly string[] MacroLabels = ["Protein", "Carbs", "Fats"];
-    private static readonly double[] StrokeWidths = [1.7, 1.5, 1.6];
+    private static readonly string[] StrokeWidthResourceKeys =
+        ["UiStrokeWidth1_7", "UiStrokeWidth1_5", "UiStrokeWidth1_6"];
     private readonly BoxView[] _fillBars = new BoxView[3];
     private readonly Path[] _icons = new Path[3];
 
@@ -54,8 +55,8 @@ public class MacroProgressGrid : ContentView
         {
             ColumnDefinitions = [new(), new(), new()],
             RowDefinitions = [new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Auto)],
-            ColumnSpacing = 10,
-            RowSpacing = 4
+            ColumnSpacing = AppThemeResources.GetDouble("UiSpaceCompact"),
+            RowSpacing = AppThemeResources.GetDouble("UiSpaceMicro")
         };
 
         var converter = new PathGeometryConverter();
@@ -63,18 +64,18 @@ public class MacroProgressGrid : ContentView
         for (var i = 0; i < 3; i++)
         {
             var macroColor = AppThemeResources.GetColor(LightKeys[i], DarkKeys[i]);
-            var trackColor = AppThemeResources.GetColor("Gray300", "Gray800");
+            var trackColor = AppThemeResources.GetColor("TrackSubtleLight", "TrackSubtleDark");
 
             var icon = new Path
             {
                 Data = (Geometry?)converter.ConvertFromInvariantString(SvgPaths[i]),
                 Stroke = macroColor,
-                StrokeThickness = StrokeWidths[i],
+                StrokeThickness = AppThemeResources.GetDouble(StrokeWidthResourceKeys[i]),
                 StrokeLineCap = PenLineCap.Round,
                 StrokeLineJoin = PenLineJoin.Round,
                 Aspect = Stretch.Uniform,
-                WidthRequest = 16,
-                HeightRequest = 16,
+                WidthRequest = AppThemeResources.GetDouble("UiDimension15"),
+                HeightRequest = AppThemeResources.GetDouble("UiDimension15"),
                 VerticalOptions = LayoutOptions.Center
             };
             _icons[i] = icon;
@@ -82,13 +83,12 @@ public class MacroProgressGrid : ContentView
             var nameLabel = new Label
             {
                 Text = MacroLabels[i],
-                Style = (Style)Application.Current!.Resources["MutedLabel"],
-                FontSize = 14
+                Style = (Style)Application.Current!.Resources["MutedLabel"]
             };
 
             var header = new HorizontalStackLayout
             {
-                Spacing = 5,
+                Spacing = AppThemeResources.GetDouble("UiSpacing5"),
                 Children = { icon, nameLabel }
             };
             Grid.SetRow(header, 0);
@@ -97,9 +97,7 @@ public class MacroProgressGrid : ContentView
 
             var valueLabel = new Label
             {
-                FontSize = 15,
-                FontAttributes = FontAttributes.Bold,
-                TextColor = AppThemeResources.GetColor("TextPrimary", "TextPrimaryDark")
+                Style = (Style)Application.Current!.Resources["BodyStrong"]
             };
             _valueLabels[i] = valueLabel;
             Grid.SetRow(valueLabel, 1);
@@ -109,19 +107,19 @@ public class MacroProgressGrid : ContentView
             var track = new BoxView
             {
                 Color = trackColor,
-                HeightRequest = 5,
+                HeightRequest = AppThemeResources.GetDouble("UiDimension5"),
                 HorizontalOptions = LayoutOptions.Fill,
-                CornerRadius = 2.5
+                CornerRadius = AppThemeResources.GetDouble("UiCornerRadius2_5")
             };
 
             var fill = new BoxView
             {
                 Color = macroColor,
-                HeightRequest = 5,
+                HeightRequest = AppThemeResources.GetDouble("UiDimension5"),
                 HorizontalOptions = LayoutOptions.Fill,
                 AnchorX = 0,
                 ScaleX = 0,
-                CornerRadius = 2.5
+                CornerRadius = AppThemeResources.GetDouble("UiCornerRadius2_5")
             };
             _fillBars[i] = fill;
 
@@ -216,11 +214,10 @@ public class MacroProgressGrid : ContentView
         {
             var macroColor = AppThemeResources.GetColor(e.RequestedTheme, LightKeys[i], DarkKeys[i]);
             _icons[i].Stroke = macroColor;
-            _valueLabels[i].TextColor = AppThemeResources.GetColor(e.RequestedTheme, "TextPrimary", "TextPrimaryDark");
             _fillBars[i].Color = macroColor;
         }
 
-        var trackColor = AppThemeResources.GetColor(e.RequestedTheme, "Gray300", "Gray800");
+        var trackColor = AppThemeResources.GetColor(e.RequestedTheme, "TrackMutedLight", "TrackMutedDark");
         if (Content is Grid grid)
             foreach (var child in grid.Children)
                 if (child is Grid barContainer && barContainer.Children.Count == 2 &&

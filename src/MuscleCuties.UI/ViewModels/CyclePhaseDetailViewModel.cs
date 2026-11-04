@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
 
 namespace MuscleCuties.UI.ViewModels.Cycle;
@@ -18,7 +20,8 @@ public partial class CyclePhaseDetailViewModel : ObservableObject
     [ObservableProperty] private string _nutritionLead = string.Empty;
     [ObservableProperty] private ObservableCollection<CyclePhaseDetailPoint> _nutritionPoints = new();
     [ObservableProperty] private double _nutritionSignal;
-    [ObservableProperty] private string _nutritionSignalText = "Unknown";
+    [ObservableProperty] private string _nutritionSignalText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Unknown");
     [ObservableProperty] private string _phaseIconGlyph = "QuestionCircle24";
     [ObservableProperty] private string _phaseImageSource = string.Empty;
     [ObservableProperty] private bool _phaseImageUsesAnimation;
@@ -26,9 +29,11 @@ public partial class CyclePhaseDetailViewModel : ObservableObject
     [ObservableProperty] private string _phaseWindow = "No phase estimate";
     [ObservableProperty] private string _quickRule = string.Empty;
     [ObservableProperty] private double _recoverySignal;
-    [ObservableProperty] private string _recoverySignalText = "Unknown";
+    [ObservableProperty] private string _recoverySignalText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Unknown");
     [ObservableProperty] private double _trainingSignal;
-    [ObservableProperty] private string _trainingSignalText = "Unknown";
+    [ObservableProperty] private string _trainingSignalText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Unknown");
     [ObservableProperty] private ObservableCollection<CyclePhaseDetailPoint> _watchPoints = new();
     [ObservableProperty] private string _whyLead = string.Empty;
     [ObservableProperty] private ObservableCollection<CyclePhaseDetailPoint> _whyPoints = new();

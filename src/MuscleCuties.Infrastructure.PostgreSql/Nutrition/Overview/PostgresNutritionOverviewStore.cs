@@ -2,6 +2,8 @@ using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.Core.Models.Enums.Nutrition;
+using MuscleCuties.Core.Models.Nutrition;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Nutrition.Overview;
@@ -22,11 +24,6 @@ public sealed class PostgresNutritionOverviewStore(
     private const float GeneralDefaultCarbs = 200f;
     private const float GeneralDefaultFats = 60f;
 
-    private const float BreakfastCalorieRatio = 0.25f;
-    private const float LunchCalorieRatio = 0.35f;
-    private const float DinnerCalorieRatio = 0.30f;
-    private const float SnackCalorieRatio = 0.10f;
-
     private static readonly (string Group, string Name, string Unit, float Goal)[] StandardMicronutrients =
     [
         ("Fiber", "Fiber", "g", 25f),
@@ -46,47 +43,47 @@ public sealed class PostgresNutritionOverviewStore(
     private static readonly ReferenceConceptItem[] SavouryBreakfastCatalog =
     [
         new("Scrambled Eggs with Toast", "Two scrambled eggs with whole-grain toast and spinach.",
-            380f, 26f, 30f, 16f, ["Eggs", "Whole-Grain Bread", "Spinach", "Olive Oil"]),
+            ["Eggs", "Whole-Grain Bread", "Spinach", "Olive Oil"]),
         new("Tofu Scramble with Vegetables", "Seasoned tofu scramble with bell peppers, onions, and avocado.",
-            370f, 22f, 32f, 17f, ["Tofu", "Bell Peppers", "Onions", "Avocado", "Olive Oil"])
+            ["Tofu", "Bell Peppers", "Onions", "Avocado", "Olive Oil"])
     ];
 
     private static readonly ReferenceConceptItem[] SweetBreakfastCatalog =
     [
         new("Berry Protein Oatmeal", "Rolled oats with vanilla protein powder, chia seeds, and mixed berries.",
-            400f, 32f, 50f, 8f, ["Rolled Oats", "Protein Powder", "Mixed Berries", "Chia Seeds"]),
+            ["Rolled Oats", "Protein Powder", "Mixed Berries", "Chia Seeds"]),
         new("Greek Yogurt Parfait", "Greek yogurt layered with honey, walnuts, and blueberries.",
-            380f, 30f, 44f, 9f, ["Greek Yogurt", "Blueberries", "Walnuts", "Honey"])
+            ["Greek Yogurt", "Blueberries", "Walnuts", "Honey"])
     ];
 
     private static readonly ReferenceConceptItem[] LunchCatalog =
     [
         new("Mediterranean Chicken Rice Bowl", "Grilled chicken breast with brown rice, cucumber, and tzatziki.",
-            550f, 45f, 58f, 14f, ["Chicken Breast", "Brown Rice", "Cucumber", "Tzatziki", "Olive Oil"]),
+            ["Chicken Breast", "Brown Rice", "Cucumber", "Tzatziki", "Olive Oil"]),
         new("Tuna Quinoa Salad", "Flaked tuna with quinoa, mixed greens, cherry tomatoes, and olive oil.",
-            520f, 42f, 50f, 16f, ["Tuna", "Quinoa", "Mixed Greens", "Cherry Tomatoes", "Olive Oil"]),
+            ["Tuna", "Quinoa", "Mixed Greens", "Cherry Tomatoes", "Olive Oil"]),
         new("Chickpea Veggie Power Bowl", "Roasted chickpeas with roasted sweet potato, kale, and tahini drizzle.",
-            500f, 20f, 70f, 16f, ["Chickpeas", "Sweet Potato", "Kale", "Tahini"])
+            ["Chickpeas", "Sweet Potato", "Kale", "Tahini"])
     ];
 
     private static readonly ReferenceConceptItem[] DinnerCatalog =
     [
         new("Baked Salmon with Sweet Potato", "Wild salmon fillet with baked sweet potato and steamed asparagus.",
-            600f, 46f, 52f, 22f, ["Salmon Fillet", "Sweet Potato", "Asparagus", "Olive Oil"]),
+            ["Salmon Fillet", "Sweet Potato", "Asparagus", "Olive Oil"]),
         new("Lean Turkey Chili", "Ground turkey simmered with black beans, diced tomatoes, and brown rice.",
-            560f, 48f, 60f, 14f, ["Ground Turkey", "Black Beans", "Tomatoes", "Brown Rice"]),
+            ["Ground Turkey", "Black Beans", "Tomatoes", "Brown Rice"]),
         new("Tofu Stir-Fry with Edamame", "Crispy tofu with edamame, broccoli, bell peppers, and jasmine rice.",
-            520f, 32f, 64f, 15f, ["Tofu", "Edamame", "Broccoli", "Jasmine Rice", "Sesame Oil"])
+            ["Tofu", "Edamame", "Broccoli", "Bell Peppers", "Jasmine Rice", "Sesame Oil"])
     ];
 
     private static readonly ReferenceConceptItem[] SnackCatalog =
     [
         new("Apple Slices with Peanut Butter", "Crisp apple slices paired with natural creamy peanut butter.",
-            220f, 7f, 28f, 12f, ["Apple", "Peanut Butter"]),
+            ["Apple", "Peanut Butter"]),
         new("Cottage Cheese with Berries", "Low-fat cottage cheese topped with fresh raspberries and blueberries.",
-            200f, 24f, 18f, 3f, ["Cottage Cheese", "Raspberries", "Blueberries"]),
+            ["Cottage Cheese", "Raspberries", "Blueberries"]),
         new("Rice Cakes with Avocado", "Brown rice cakes topped with mashed ripe avocado and sea salt.",
-            210f, 4f, 26f, 11f, ["Rice Cakes", "Avocado", "Sea Salt"])
+            ["Rice Cakes", "Avocado", "Sea Salt"])
     ];
 
     public static int ToStableLoggedMealIntId(Guid mealId)
@@ -244,7 +241,10 @@ public sealed class PostgresNutritionOverviewStore(
                 var cb = items.Sum(i => i.Carbs * (float)i.Grams / 100f);
                 var f = items.Sum(i => i.Fats * (float)i.Grams / 100f);
                 var names = items.Select(i => i.Name).Distinct().Take(3).ToList();
-                var name = names.Count == 0 ? "Logged meal" : string.Join(" + ", names);
+                var ingredientSummary = names.Count == 0 ? string.Empty : string.Join(" + ", names);
+                var name = string.IsNullOrWhiteSpace(meal.AcceptedSuggestionName)
+                    ? (string.IsNullOrWhiteSpace(ingredientSummary) ? "Logged meal" : ingredientSummary)
+                    : meal.AcceptedSuggestionName;
 
                 mealCards.Add(new MealSummaryDto(
                     meal.Id,
@@ -258,7 +258,8 @@ public sealed class PostgresNutritionOverviewStore(
                     string.Empty,
                     c, p, cb, f,
                     BuildMacroBreakdownDtos(c, p, cb, f),
-                    []
+                    [],
+                    ingredientSummary
                 ));
             }
 
@@ -464,14 +465,13 @@ public sealed class PostgresNutritionOverviewStore(
             throw new ArgumentException(error);
         }
 
-        if (new[] { request.IronMilligrams, request.VitaminB12Micrograms,
-                request.VitaminDMicrograms, request.CalciumMilligrams }
-            .Any(value => value is < 0 || value.HasValue && !float.IsFinite(value.Value)))
-            throw new ArgumentException("Micronutrients must be non-negative finite numbers.", nameof(request));
-        if (!CustomFoodCreationRule.TryNormalizeOptionalMicronutrient(request.IronMilligrams, validated.ServingGrams, out var iron) ||
-            !CustomFoodCreationRule.TryNormalizeOptionalMicronutrient(request.VitaminB12Micrograms, validated.ServingGrams, out var vitaminB12) ||
-            !CustomFoodCreationRule.TryNormalizeOptionalMicronutrient(request.VitaminDMicrograms, validated.ServingGrams, out var vitaminD) ||
-            !CustomFoodCreationRule.TryNormalizeOptionalMicronutrient(request.CalciumMilligrams, validated.ServingGrams, out var calcium))
+        if (!CustomFoodCreationRule.TryNormalizeMicronutrients(
+                request.IronMilligrams,
+                request.VitaminB12Micrograms,
+                request.VitaminDMicrograms,
+                request.CalciumMilligrams,
+                validated.ServingGrams,
+                out var micronutrients))
             throw new ArgumentException("Micronutrients are outside the supported range.", nameof(request));
 
         return await db.Database.CreateExecutionStrategy().ExecuteAsync<CustomFoodResultDto>(async () =>
@@ -491,10 +491,10 @@ public sealed class PostgresNutritionOverviewStore(
                 Carbs = (decimal)validated.CarbsPer100Grams,
                 Fats = (decimal)validated.FatsPer100Grams,
                 BrandOwner = string.IsNullOrWhiteSpace(request.CompanySource) ? null : request.CompanySource.Trim(),
-                Iron = iron,
-                VitaminB12 = vitaminB12,
-                VitaminD = vitaminD,
-                Calcium = calcium,
+                Iron = micronutrients.IronMilligramsPer100Grams,
+                VitaminB12 = micronutrients.VitaminB12MicrogramsPer100Grams,
+                VitaminD = micronutrients.VitaminDMicrogramsPer100Grams,
+                Calcium = micronutrients.CalciumMilligramsPer100Grams,
                 DataType = "Custom",
                 ServingSize = (decimal)validated.ServingAmount,
                 ServingSizeUnit = validated.ServingUnit,
@@ -543,7 +543,9 @@ public sealed class PostgresNutritionOverviewStore(
         var entries = new List<LoggedMealEntryRecord>(ingredients.Count);
         foreach (var ingredient in ingredients)
         {
-            var matchedCustom = userCustomFoods.FirstOrDefault(f => ToStableCustomFoodIntId(f.Id) == ingredient.FoodItemId);
+            // Unlinked generated ingredients carry their own nutrient snapshot, not a catalog identity.
+            var isNutrientSnapshot = ingredient.FoodItemId == 0;
+            var matchedCustom = isNutrientSnapshot ? null : userCustomFoods.FirstOrDefault(f => ToStableCustomFoodIntId(f.Id) == ingredient.FoodItemId);
             if (matchedCustom is not null)
             {
                 entries.Add(new LoggedMealEntryRecord
@@ -557,8 +559,9 @@ public sealed class PostgresNutritionOverviewStore(
                 continue;
             }
 
-            var matchedCatalog = catalogFoods.FirstOrDefault(f => f.Id == ingredient.FoodItemId)
-                                 ?? catalogFoods.FirstOrDefault(f => string.Equals(f.Name, ingredient.Name, StringComparison.OrdinalIgnoreCase));
+            var matchedCatalog = isNutrientSnapshot ? null :
+                catalogFoods.FirstOrDefault(f => f.Id == ingredient.FoodItemId)
+                ?? catalogFoods.FirstOrDefault(f => string.Equals(f.Name, ingredient.Name, StringComparison.OrdinalIgnoreCase));
             if (matchedCatalog is not null)
             {
                 entries.Add(new LoggedMealEntryRecord
@@ -573,7 +576,10 @@ public sealed class PostgresNutritionOverviewStore(
             }
 
             var matchedCustomByName = userCustomFoods.FirstOrDefault(f =>
-                string.Equals(f.Name, ingredient.Name, StringComparison.OrdinalIgnoreCase));
+                string.Equals(f.Name, ingredient.Name, StringComparison.OrdinalIgnoreCase) &&
+                (isNutrientSnapshot
+                    ? f.DataType == GeneratedMealSnapshotMetadata.DataType && MatchesNutrientSnapshot(f, ingredient)
+                    : f.DataType != GeneratedMealSnapshotMetadata.DataType));
             if (matchedCustomByName is null)
             {
                 matchedCustomByName = new UserFoodItemRecord
@@ -585,7 +591,7 @@ public sealed class PostgresNutritionOverviewStore(
                     Protein = (decimal)Math.Max(0f, ingredient.Protein),
                     Carbs = (decimal)Math.Max(0f, ingredient.Carbs),
                     Fats = (decimal)Math.Max(0f, ingredient.Fats),
-                    DataType = "Custom",
+                    DataType = isNutrientSnapshot ? GeneratedMealSnapshotMetadata.DataType : "Custom",
                     ServingSize = 100m,
                     ServingSizeUnit = "g",
                     CreatedAt = nowUtc,
@@ -608,6 +614,10 @@ public sealed class PostgresNutritionOverviewStore(
         return entries;
     }
 
+    private static bool MatchesNutrientSnapshot(UserFoodItemRecord food, MealIngredientInputDto ingredient) =>
+        food.Calories == (decimal)ingredient.Calories && food.Protein == (decimal)ingredient.Protein &&
+        food.Carbs == (decimal)ingredient.Carbs && food.Fats == (decimal)ingredient.Fats;
+
     public async Task<NutritionTargetMacrosDto> GetPlanTargetsAsync(
         Guid userId,
         string breakfastPreference,
@@ -624,46 +634,47 @@ public sealed class PostgresNutritionOverviewStore(
         CancellationToken cancellationToken = default)
     {
         var target = await targetStore.LoadAsync(userId, date, cancellationToken).ConfigureAwait(false);
-        var totalCalories = target.Calories > 0 ? target.Calories : GeneralDefaultCalories;
-        var totalProtein = target.Protein > 0 ? target.Protein : GeneralDefaultProtein;
-        var totalCarbs = target.Carbs > 0 ? target.Carbs : GeneralDefaultCarbs;
-        var totalFats = target.Fats > 0 ? target.Fats : GeneralDefaultFats;
+        var totalCalories = float.IsFinite(target.Calories) && target.Calories > 0 ? target.Calories : GeneralDefaultCalories;
+        var totalProtein = float.IsFinite(target.Protein) && target.Protein >= 0 ? target.Protein : GeneralDefaultProtein;
+        var totalCarbs = float.IsFinite(target.Carbs) && target.Carbs >= 0 ? target.Carbs : GeneralDefaultCarbs;
+        var totalFats = float.IsFinite(target.Fats) && target.Fats >= 0 ? target.Fats : GeneralDefaultFats;
+        var shares = GetMealShares(breakfastPreference);
 
         var isSweet = string.Equals(breakfastPreference, "Sweet", StringComparison.OrdinalIgnoreCase);
 
         var breakfastItem = BuildDayMealPlanItem(
             "Breakfast",
-            totalCalories * BreakfastCalorieRatio,
-            totalProtein * BreakfastCalorieRatio,
-            totalCarbs * BreakfastCalorieRatio,
-            totalFats * BreakfastCalorieRatio,
+            totalCalories * shares.Breakfast,
+            totalProtein * shares.Breakfast,
+            totalCarbs * shares.Breakfast,
+            totalFats * shares.Breakfast,
             totalCalories,
             isSweet ? SweetBreakfastCatalog[0] : SavouryBreakfastCatalog[0]);
 
         var lunchItem = BuildDayMealPlanItem(
             "Lunch",
-            totalCalories * LunchCalorieRatio,
-            totalProtein * LunchCalorieRatio,
-            totalCarbs * LunchCalorieRatio,
-            totalFats * LunchCalorieRatio,
+            totalCalories * shares.Lunch,
+            totalProtein * shares.Lunch,
+            totalCarbs * shares.Lunch,
+            totalFats * shares.Lunch,
             totalCalories,
             LunchCatalog[0]);
 
         var dinnerItem = BuildDayMealPlanItem(
             "Dinner",
-            totalCalories * DinnerCalorieRatio,
-            totalProtein * DinnerCalorieRatio,
-            totalCarbs * DinnerCalorieRatio,
-            totalFats * DinnerCalorieRatio,
+            totalCalories * shares.Dinner,
+            totalProtein * shares.Dinner,
+            totalCarbs * shares.Dinner,
+            totalFats * shares.Dinner,
             totalCalories,
             DinnerCatalog[0]);
 
         var snackItem = BuildDayMealPlanItem(
             "Snack",
-            totalCalories * SnackCalorieRatio,
-            totalProtein * SnackCalorieRatio,
-            totalCarbs * SnackCalorieRatio,
-            totalFats * SnackCalorieRatio,
+            totalCalories * shares.Snack,
+            totalProtein * shares.Snack,
+            totalCarbs * shares.Snack,
+            totalFats * shares.Snack,
             totalCalories,
             SnackCatalog[0]);
 
@@ -696,31 +707,35 @@ public sealed class PostgresNutritionOverviewStore(
         return Task.FromResult(refreshed);
     }
 
-    public Task<IReadOnlyList<MealSuggestionDto>> GetMealSuggestionsAsync(
+    public async Task<IReadOnlyList<MealSuggestionDto>> GetMealSuggestionsAsync(
         Guid userId,
         string mealType,
         string breakfastPreference,
         IReadOnlySet<string>? excludeConceptNames = null,
         CancellationToken cancellationToken = default)
     {
+        var target = await targetStore.LoadAsync(userId, DateOnly.FromDateTime(DateTime.UtcNow), cancellationToken)
+            .ConfigureAwait(false);
+        var shares = GetMealShares(breakfastPreference);
         var catalog = GetCatalogForMealType(mealType, breakfastPreference);
         var targetRatio = mealType.ToLowerInvariant() switch
         {
-            "breakfast" => BreakfastCalorieRatio,
-            "lunch" => LunchCalorieRatio,
-            "dinner" => DinnerCalorieRatio,
-            "snack" => SnackCalorieRatio,
-            _ => LunchCalorieRatio
+            "breakfast" => shares.Breakfast,
+            "lunch" => shares.Lunch,
+            "dinner" => shares.Dinner,
+            "snack" => shares.Snack,
+            _ => shares.Lunch
         };
 
-        var targetCals = GeneralDefaultCalories * targetRatio;
+        var targetCals = target.Calories * targetRatio;
 
         var suggestions = catalog
             .Where(c => excludeConceptNames == null || !excludeConceptNames.Contains(c.Name))
-            .Select(c => MapConceptToSuggestion(c, targetCals))
+            .Select(c => MapConceptToSuggestion(c, targetCals, target.Fats * targetRatio))
+            .OfType<MealSuggestionDto>()
             .ToList();
 
-        return Task.FromResult<IReadOnlyList<MealSuggestionDto>>(suggestions);
+        return suggestions;
     }
 
     public Task<NutritionOverviewResponse> GetOverviewAsync(
@@ -783,6 +798,12 @@ public sealed class PostgresNutritionOverviewStore(
         };
     }
 
+    private static MealDistributionShare GetMealShares(string breakfastPreference) =>
+        MealDistributionRule.GetShares(
+            string.Equals(breakfastPreference, nameof(BreakfastPreference.Sweet), StringComparison.OrdinalIgnoreCase)
+                ? BreakfastPreference.Sweet
+                : BreakfastPreference.Savoury);
+
     private static DayMealPlanItemDto BuildDayMealPlanItem(
         string mealType,
         float targetCalories,
@@ -792,7 +813,7 @@ public sealed class PostgresNutritionOverviewStore(
         float dailyTargetCalories,
         ReferenceConceptItem concept)
     {
-        var suggestion = MapConceptToSuggestion(concept, targetCalories);
+        var suggestion = MapConceptToSuggestion(concept, targetCalories, targetFats);
         return new DayMealPlanItemDto(
             mealType,
             targetCalories,
@@ -806,28 +827,28 @@ public sealed class PostgresNutritionOverviewStore(
         );
     }
 
-    private static MealSuggestionDto MapConceptToSuggestion(ReferenceConceptItem concept, float targetCalories)
-    {
-        var baseCals = concept.BaseCalories > 0 ? concept.BaseCalories : 1f;
-        var scale = targetCalories / baseCals;
-        var scaledCalories = targetCalories;
-        var scaledProtein = concept.BaseProtein * scale;
-        var scaledCarbs = concept.BaseCarbs * scale;
-        var scaledFats = concept.BaseFats * scale;
+    public const float MaxGeneratedOilGrams = PortionCalculationRule.MaxOilGrams;
 
-        var components = concept.Ingredients.Select((ing, idx) =>
-            new MealSuggestionComponentDto(
-                idx + 1,
-                ing,
-                "Ingredient",
-                "Base",
-                100f * scale,
-                false,
-                scaledCalories / concept.Ingredients.Count,
-                scaledProtein / concept.Ingredients.Count,
-                scaledCarbs / concept.Ingredients.Count,
-                scaledFats / concept.Ingredients.Count
-            )).ToList();
+    private static MealSuggestionDto? MapConceptToSuggestion(
+        ReferenceConceptItem concept, float targetCalories, float targetFats)
+    {
+        var profiles = GeneratedMealIngredientCatalog.Resolve(concept.Ingredients);
+        var portions = GeneratedMealPortionRule.Calculate(profiles, targetCalories, targetFats);
+        if (portions.Count == 0)
+            return null;
+
+        var components = portions.Select(portion => new MealSuggestionComponentDto(
+            0,
+            portion.Profile.Name,
+            portion.Profile.IsOil ? "Sauce" : "Ingredient",
+            portion.Profile.IsOil ? "SauceOnSide" : "Base",
+            portion.Grams,
+            false,
+            portion.Profile.CaloriesPer100Grams,
+            portion.Profile.ProteinPer100Grams,
+            portion.Profile.CarbsPer100Grams,
+            portion.Profile.FatsPer100Grams)).ToList();
+        var totals = MacroNutrients.Sum(portions.Select(portion => portion.Nutrients));
 
         var group = new MealSuggestionComponentGroupDto("Ingredients", "Food24", components);
 
@@ -837,10 +858,10 @@ public sealed class PostgresNutritionOverviewStore(
             [],
             components,
             [group],
-            scaledCalories,
-            scaledProtein,
-            scaledCarbs,
-            scaledFats,
+            totals.Calories,
+            totals.Protein,
+            totals.Carbs,
+            totals.Fats,
             1.0f,
             "Balanced",
             "Food24",
@@ -896,9 +917,5 @@ public sealed class PostgresNutritionOverviewStore(
     private sealed record ReferenceConceptItem(
         string Name,
         string Description,
-        float BaseCalories,
-        float BaseProtein,
-        float BaseCarbs,
-        float BaseFats,
         IReadOnlyList<string> Ingredients);
 }

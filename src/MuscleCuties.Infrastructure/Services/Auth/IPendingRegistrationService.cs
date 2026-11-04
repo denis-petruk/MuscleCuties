@@ -21,7 +21,6 @@ public sealed record StagedProfileData(
     float Height,
     float Weight,
     string ProfileImagePath,
-    int WorkoutDaysPerWeek,
     int CycleLength,
     IReadOnlySet<WorkoutActivityType> SelectedActivities,
     bool UseMetricSystem = true);

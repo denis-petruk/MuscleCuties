@@ -8,48 +8,34 @@
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Auth"
     x:DataType="vm:RegisterViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
-    <ContentPage.Resources>
-        <x:Double x:Key="PrivacyConsentSpacing">8</x:Double>
-        <x:Double x:Key="PrivacyConsentTouchTargetSize">44</x:Double>
-        <Thickness x:Key="PrivacyPolicyAlignmentInset">8,0,0,0</Thickness>
-    </ContentPage.Resources>
 
-    <ScrollView>
-        <Grid
-            Padding="24,36,24,32"
-            HorizontalOptions="Fill"
-            MaximumWidthRequest="520"
-            RowSpacing="0"
-            RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-
-            <sharedControls:ThemeAwareBrandLogoImage
-                Grid.Row="0"
-                WidthRequest="132"
-                HeightRequest="72"
-                HorizontalOptions="Center"
-                Aspect="AspectFit"
-                SemanticProperties.Description="{loc:LocalizedText Common_MuscleCutiesLogo}" />
-
-            <Label
-                Grid.Row="1"
-                Text="{loc:LocalizedText Auth_Register_CreateYourAccount}"
-                Style="{StaticResource Headline}"
-                Margin="0,20,0,8"
-                SemanticProperties.HeadingLevel="Level1" />
-            <Label
-                Grid.Row="2"
-                Text="{loc:LocalizedText Auth_Register_OneProfileShapedAroundYou}"
-                Style="{StaticResource MutedLabel}"
-                Margin="0,0,0,28" />
-
+    <Grid RowDefinitions="Auto,*,Auto">
+    <VerticalStackLayout Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <Label
+           
+            Text="{loc:LocalizedText Auth_Register_CreateYourAccount}"
+            Style="{StaticResource PageTitle}"
+            LineBreakMode="WordWrap"
+           
+            SemanticProperties.HeadingLevel="Level1" />
+        <Label
+           
+            Text="{loc:LocalizedText Auth_Register_OneProfileShapedAroundYou}"
+            Style="{StaticResource MutedLabel}"
+            LineBreakMode="WordWrap"
+            />
+    </VerticalStackLayout>
+    <ScrollView Grid.Row="1">
+        <VerticalStackLayout Padding="{DynamicResource PresentationAuthPagePadding}" Spacing="{StaticResource PresentationFormSpacing}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
             <Grid
-                Grid.Row="3"
-                RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
-                RowSpacing="18">
-                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="6">
-                    <Label Text="{loc:LocalizedText Auth_Email}" Style="{StaticResource FormFieldLabel}" />
+               
+                RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                RowSpacing="{StaticResource PresentationFormSpacing}">
+                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                    <Label Text="{loc:LocalizedText Auth_Email}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                         <Entry
                             x:Name="RegisterEmail"
@@ -63,9 +49,9 @@
                             SemanticProperties.Hint="{loc:LocalizedText Auth_Register_EnterYourEmailThenPressNext}" />
                     </Border>
                 </Grid>
-
-                <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="6">
-                    <Label Text="{loc:LocalizedText Auth_Register_UsernameLabel}" Style="{StaticResource FormFieldLabel}" />
+            
+                <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                    <Label Text="{loc:LocalizedText Auth_Register_UsernameLabel}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                         <Entry
                             x:Name="RegisterUsername"
@@ -78,9 +64,9 @@
                             SemanticProperties.Hint="{loc:LocalizedText Auth_Register_EnterYourUniqueUsernameThenPress}" />
                     </Border>
                 </Grid>
-
-                <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="6">
-                    <Label Text="{loc:LocalizedText Auth_Password}" Style="{StaticResource FormFieldLabel}" />
+            
+                <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                    <Label Text="{loc:LocalizedText Auth_Password}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                         <Entry
                             x:Name="RegisterPassword"
@@ -94,9 +80,9 @@
                             SemanticProperties.Hint="{loc:LocalizedText Auth_Register_UseAtLeastEightCharactersWith}" />
                     </Border>
                 </Grid>
-
-                <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="6">
-                    <Label Text="{loc:LocalizedText Auth_ConfirmPassword}" Style="{StaticResource FormFieldLabel}" />
+            
+                <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                    <Label Text="{loc:LocalizedText Auth_ConfirmPassword}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                         <Entry
                             x:Name="RegisterConfirmPassword"
@@ -110,20 +96,21 @@
                             SemanticProperties.Hint="{loc:LocalizedText Auth_Register_ReEnterYourPasswordThenPress}" />
                     </Border>
                 </Grid>
-
+            
                 <Label
                     Grid.Row="4"
                     Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource ErrorLabel}"
+                    LineBreakMode="WordWrap"
                     IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
                     SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     SemanticProperties.HeadingLevel="Level3" />
-
+            
                 <Grid Grid.Row="5"
                       ColumnDefinitions="Auto,*"
                       RowDefinitions="Auto,Auto"
-                      ColumnSpacing="{StaticResource PrivacyConsentSpacing}"
-                      RowSpacing="{StaticResource PrivacyConsentSpacing}">
+                      ColumnSpacing="{StaticResource UiSpaceTight}"
+                      RowSpacing="{StaticResource UiSpaceTight}">
                     <CheckBox x:Name="PrivacyConsentCheckBox"
                               Grid.Row="0"
                               Grid.Column="0"
@@ -132,70 +119,66 @@
                               Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource ActionSurfaceDark}}"
                               HorizontalOptions="Start"
                               VerticalOptions="Start"
-                              MinimumWidthRequest="{StaticResource PrivacyConsentTouchTargetSize}"
-                              MinimumHeightRequest="{StaticResource PrivacyConsentTouchTargetSize}"
+                              MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                              MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                               SemanticProperties.Description="{loc:LocalizedText Auth_Register_PrivacyConsent}" />
                     <Label Grid.Row="0"
                            Grid.Column="1"
                            Text="{loc:LocalizedText Auth_Register_PrivacyConsent}"
                            Style="{StaticResource CaptionLabel}"
+                           LineBreakMode="WordWrap"
                            VerticalOptions="Center" />
                     <Button
                         Grid.Row="1"
                         Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Text="{loc:LocalizedText Profile_Privacy_Policy}"
-                        Style="{StaticResource ButtonLink}"
-                        Padding="{StaticResource PrivacyPolicyAlignmentInset}"
+                        Style="{StaticResource ButtonSecondary}"
                         HorizontalOptions="Start"
-                        MinimumHeightRequest="{StaticResource PrivacyConsentTouchTargetSize}"
                         Command="{Binding GoToPrivacyPolicyCommand}"
                         SemanticProperties.Description="{loc:LocalizedText Profile_Privacy_Policy}" />
                 </Grid>
-
-                <Button
-                    Grid.Row="6"
-                    Text="{loc:LocalizedText Auth_CreateAccount}"
-                    Command="{Binding RegisterCommand}"
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                    MinimumHeightRequest="52"
-                    SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreateYourAccount}" />
-
-                <ActivityIndicator
-                    Grid.Row="7"
-                    HorizontalOptions="Center"
-                    IsRunning="{Binding IsBusy}"
-                    IsVisible="{Binding IsBusy}"
-                    SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreatingAccountPleaseWait}" />
-
-                <Button
-                    Grid.Row="8"
-                    Style="{StaticResource PlatformAuthButton}"
-                    Text="{loc:LocalizedText Auth_SignInWithApple}"
-                    Command="{Binding SignInWithAppleCommand}"
-                    IsVisible="{Binding IsAppleSignInAvailable}"
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                    SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
+            
             </Grid>
-
-            <Grid
-                Grid.Row="4"
-                ColumnDefinitions="Auto,Auto"
-                ColumnSpacing="4"
-                HorizontalOptions="Center"
-                Margin="0,24,0,0"
-                MinimumHeightRequest="44"
-                MinimumWidthRequest="44"
-                SemanticProperties.Description="{loc:LocalizedText Auth_Register_ReturnToLogin}"
-                SemanticProperties.Hint="{loc:LocalizedText Auth_Register_DoubleTapToGoBackTo}">
-                <Grid.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding GoBackCommand}" />
-                </Grid.GestureRecognizers>
-                <Label Text="{loc:LocalizedText Auth_Register_AlreadyHaveAnAccount}" Style="{StaticResource MutedLabel}"
-                       VerticalOptions="Center" />
-                <Label Grid.Column="1" Text="{loc:LocalizedText Auth_LogIn}" Style="{StaticResource AccentLabel}"
-                       VerticalOptions="Center" />
-            </Grid>
-        </Grid>
+        </VerticalStackLayout>
     </ScrollView>
+    <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <Button Style="{StaticResource ButtonPrimary}"
+            Text="{loc:LocalizedText Auth_CreateAccount}"
+            Command="{Binding RegisterCommand}"
+            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+            SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreateYourAccount}" />
+        <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}"
+            HorizontalOptions="Center"
+            IsRunning="{Binding IsBusy}"
+            IsVisible="{Binding IsBusy}"
+            SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreatingAccountPleaseWait}" />
+        <Button
+            Style="{StaticResource ButtonSecondary}"
+            Text="{loc:LocalizedText Auth_SignInWithApple}"
+            Command="{Binding SignInWithAppleCommand}"
+            IsVisible="{Binding IsAppleSignInAvailable}"
+            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+            SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
+        <Grid
+            ColumnDefinitions="Auto,Auto"
+            ColumnSpacing="{StaticResource UiSpaceMicro}"
+            HorizontalOptions="Center"
+            MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+            MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
+            SemanticProperties.Description="{loc:LocalizedText Auth_Register_ReturnToLogin}"
+            SemanticProperties.Hint="{loc:LocalizedText Auth_Register_DoubleTapToGoBackTo}">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding GoBackCommand}" />
+            </Grid.GestureRecognizers>
+            <Label Text="{loc:LocalizedText Auth_Register_AlreadyHaveAnAccount}" Style="{StaticResource MutedLabel}"
+                   LineBreakMode="WordWrap"
+                   VerticalOptions="Center" />
+            <Label Grid.Column="1" Text="{loc:LocalizedText Auth_LogIn}" Style="{StaticResource AccentLabel}"
+                   LineBreakMode="WordWrap"
+                   VerticalOptions="Center" />
+        </Grid>
+    </VerticalStackLayout>
+</Grid>
 </ContentPage>

@@ -56,11 +56,11 @@ public partial class ProfileSetupPage : ContentPage
 
     private async Task ShowProfileImageActionsAsync()
     {
-        var choosePhoto = UiTextCatalog.Translate("Choose photo");
-        var useIcon = UiTextCatalog.Translate("Use MuscleCuties icon");
+        var choosePhoto = UiTextCatalog.TranslateRuntimeText("Choose photo");
+        var useIcon = UiTextCatalog.TranslateRuntimeText("Use MuscleCuties icon");
         var action = await DisplayActionSheetAsync(
-            UiTextCatalog.Translate("Profile photo"),
-            UiTextCatalog.Translate("Cancel"),
+            UiTextCatalog.TranslateRuntimeText("Profile photo"),
+            UiTextCatalog.TranslateRuntimeText("Cancel"),
             null,
             choosePhoto,
             useIcon);
@@ -87,8 +87,8 @@ public partial class ProfileSetupPage : ContentPage
         }
         catch
         {
-            await DisplayAlertAsync(UiTextCatalog.Translate("Profile photo"),
-                UiTextCatalog.Translate("Could not change the image on this device right now."), "OK");
+            await DisplayAlertAsync(UiTextCatalog.TranslateRuntimeText("Profile photo"),
+                UiTextCatalog.TranslateRuntimeText("Could not change the image on this device right now."), "OK");
         }
     }
 }

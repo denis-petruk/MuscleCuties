@@ -1,53 +1,16 @@
 using System.Globalization;
 using Microsoft.Maui.Controls;
+using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Resources.Converters;
-
-public class BoolToSelectionStrokeConverter : IValueConverter
-{
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        var isSelected = value is true;
-        if (Application.Current?.Resources.TryGetValue("Primary", out var primary) == true && isSelected)
-            return (Color)primary;
-
-        if (Application.Current?.Resources.TryGetValue("Gray300", out var gray) == true)
-            return (Color)gray;
-
-        return Colors.Transparent;
-    }
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotSupportedException();
-    }
-}
-
-public class BoolToSelectionBgConverter : IValueConverter
-{
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        var isSelected = value is true;
-        if (!isSelected)
-            return Colors.Transparent;
-
-        if (Application.Current?.Resources.TryGetValue("AccentSurface", out var accent) == true)
-            return (Color)accent;
-
-        return Colors.Transparent;
-    }
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotSupportedException();
-    }
-}
 
 public class BoolToEditTitleConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        return value is true ? "Edit Food Entry" : "Log Food Item";
+        return value is true
+            ? UiTextCatalog.Get("Nutrition_FoodLog_EditEntryTitle")
+            : UiTextCatalog.Get("Nutrition_FoodLog_LogEntryTitle");
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -60,7 +23,9 @@ public class BoolToWarmupTextConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        return value is true ? "Warmup" : "Work";
+        return value is true
+            ? UiTextCatalog.Get("Workout_History_WarmupSet")
+            : UiTextCatalog.Get("Workout_History_WorkingSet");
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

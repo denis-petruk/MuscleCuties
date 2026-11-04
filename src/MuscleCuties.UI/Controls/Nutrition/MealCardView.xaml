@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Nutrition.MealCardView"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MuscleCuties.UI.Controls.Nutrition"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    x:DataType="controls:MealCardView">
+
+    <Border
+        Style="{StaticResource CardPrimary}"
+        SemanticProperties.Description="{Binding SemanticDescription, Source={x:Reference Root}}">
+        <Border.GestureRecognizers>
+            <TapGestureRecognizer
+                Command="{Binding OpenCommand, Source={x:Reference Root}}"
+                CommandParameter="{Binding OpenCommandParameter, Source={x:Reference Root}}" />
+        </Border.GestureRecognizers>
+
+        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                <Path
+                    Data="{Binding MealTypeIconData, Source={x:Reference Root}, Converter={StaticResource StringToGeometryConverter}}"
+                    Style="{StaticResource NutritionLineIcon}"
+                    Stroke="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                    StrokeThickness="{StaticResource UiStrokeWidth1_8}"
+                    WidthRequest="{StaticResource UiDimension20}"
+                    HeightRequest="{StaticResource UiDimension20}"
+                    VerticalOptions="Center" />
+
+                <Label
+                    Grid.Column="1"
+                    Text="{Binding Heading, Source={x:Reference Root}}"
+                    Style="{StaticResource BodyStrong}"
+                    LineBreakMode="WordWrap"
+                    VerticalOptions="Center" />
+
+                <VerticalStackLayout
+                    Grid.Column="2"
+                    Spacing="{StaticResource UiSpaceMicro}"
+                    HorizontalOptions="End"
+                    VerticalOptions="Center">
+                    <Label
+                        Text="{Binding CaloriesText, Source={x:Reference Root}}"
+                        Style="{StaticResource BodyStrong}"
+                        HorizontalTextAlignment="End" />
+                    <Label
+                        Text="{Binding TargetShareText, Source={x:Reference Root}}"
+                        Style="{StaticResource MutedLabel}"
+                        FontSize="{StaticResource UiFontSize12}"
+                        HorizontalTextAlignment="End"
+                        IsVisible="{Binding HasTargetShare, Source={x:Reference Root}}" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <Label
+                Text="{Binding MealName, Source={x:Reference Root}}"
+                Style="{StaticResource SectionTitle}"
+                LineBreakMode="WordWrap"
+                IsVisible="{Binding HasMealName, Source={x:Reference Root}}" />
+
+            <Label
+                Text="{Binding IngredientsText, Source={x:Reference Root}}"
+                Style="{StaticResource MutedLabel}"
+                LineBreakMode="WordWrap"
+                IsVisible="{Binding HasIngredients, Source={x:Reference Root}}" />
+
+            <Label
+                Text="{Binding MacrosText, Source={x:Reference Root}}"
+                Style="{StaticResource MutedLabel}"
+                LineBreakMode="WordWrap" />
+
+            <!-- One action row on every meal card: Edit meal when the meal is editable as one
+                 block, then the save-template star. Actions never share the macro line, so the
+                 block keeps the same anatomy with or without the edit action. -->
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                  IsVisible="{Binding HasActions, Source={x:Reference Root}}">
+                    <Button
+                        Grid.Column="1"
+                        Text="{loc:LocalizedText Nutrition_Breakdown_EditMeal}"
+                        Style="{StaticResource ButtonPrimary}"
+                        Command="{Binding EditCommand, Source={x:Reference Root}}"
+                        CommandParameter="{Binding EditCommandParameter, Source={x:Reference Root}}"
+                        HorizontalOptions="End"
+                        IsVisible="{Binding ShowEdit, Source={x:Reference Root}}"
+                        SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakdown_EditMeal}" />
+
+                    <Border
+                        Grid.Column="2"
+                        Style="{StaticResource ModalIconButton}"
+                        IsVisible="{Binding ShowTemplate, Source={x:Reference Root}}"
+                        SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_SaveMealTemplate}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding TemplateCommand, Source={x:Reference Root}}"
+                                CommandParameter="{Binding TemplateCommandParameter, Source={x:Reference Root}}" />
+                        </Border.GestureRecognizers>
+                        <Path
+                            Data="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9z"
+                            Stroke="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                            StrokeThickness="{StaticResource UiStrokeWidth1_5}"
+                            StrokeLineJoin="Round"
+                            Aspect="Uniform"
+                            WidthRequest="{StaticResource UiDimension18}"
+                            HeightRequest="{StaticResource UiDimension18}"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Border>
+            </Grid>
+
+            <ContentView Content="{Binding BelowContent, Source={x:Reference Root}}" />
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

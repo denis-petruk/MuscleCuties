@@ -1,5 +1,7 @@
 using Microsoft.Maui.Graphics;
 
+using MuscleCuties.UI.Resources.Styles;
+
 namespace MuscleCuties.UI.Models.UI.Workout;
 
 /// <summary>
@@ -26,6 +28,9 @@ public sealed class ScheduleDayItem
     /// <summary>WorkoutDayId for navigation. 0 for rest/unassigned days.</summary>
     public int WorkoutDayId { get; init; }
 
+    /// <summary>Second session on a safely paired strength day, when present.</summary>
+    public int? CompanionWorkoutDayId { get; init; }
+
     /// <summary>True when this day is today's date.</summary>
     public bool IsToday { get; init; }
 
@@ -35,9 +40,17 @@ public sealed class ScheduleDayItem
     /// <summary>True for rest days (no workout).</summary>
     public bool IsRestDay { get; init; }
 
+    private const int DaysPerWeek = 7;
+
+    /// <summary>Sunday is day zero in <see cref="DayOfWeek"/>; a Monday-first bar shifts it to the end.</summary>
+    private const int MondayOffsetFromSunday = 6;
+
+    /// <summary>Monday-first column (0..6) this day occupies in the seven-column week bar.</summary>
+    public int Column => ((int)Date.DayOfWeek + MondayOffsetFromSunday) % DaysPerWeek;
+
     /// <summary>Accent color matching the workout type.</summary>
-    public Color AccentColor { get; init; } = Colors.Transparent;
+    public Color AccentColor { get; init; } = AppThemeResources.GetRequired<Color>("Transparent");
 
     /// <summary>Text color matching the workout type.</summary>
-    public Color AccentTextColor { get; init; } = Colors.Transparent;
+    public Color AccentTextColor { get; init; } = AppThemeResources.GetRequired<Color>("TextPrimary");
 }

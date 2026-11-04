@@ -1,6 +1,6 @@
 namespace MuscleCuties.Core.Domain.Nutrition;
 
-/// <summary>Validates legacy custom-food inputs and converts their nutrition to a per-100g basis.</summary>
+/// <summary>Validates custom-food inputs and converts their nutrition to a per-100g basis.</summary>
 public static class CustomFoodCreationRule
 {
     private const float GramsPerNutritionBasis = 100f;
@@ -63,6 +63,51 @@ public static class CustomFoodCreationRule
         return true;
     }
 
+    public static bool IsValidRequest(
+        string? name,
+        float servingAmount,
+        string? servingUnit,
+        float calories,
+        float protein,
+        float carbs,
+        float fats,
+        float? ironMilligrams,
+        float? vitaminB12Micrograms,
+        float? vitaminDMicrograms,
+        float? calciumMilligrams)
+    {
+        if (!TryCreate(name, servingAmount, servingUnit, calories, protein, carbs, fats,
+                out var nutrition, out _))
+            return false;
+
+        return TryNormalizeMicronutrients(
+            ironMilligrams,
+            vitaminB12Micrograms,
+            vitaminDMicrograms,
+            calciumMilligrams,
+            nutrition.ServingGrams,
+            out _);
+    }
+
+    public static bool TryNormalizeMicronutrients(
+        float? ironMilligrams,
+        float? vitaminB12Micrograms,
+        float? vitaminDMicrograms,
+        float? calciumMilligrams,
+        float servingGrams,
+        out CustomFoodMicronutrients micronutrients)
+    {
+        micronutrients = default;
+        if (!TryNormalizeOptionalMicronutrient(ironMilligrams, servingGrams, out var iron) ||
+            !TryNormalizeOptionalMicronutrient(vitaminB12Micrograms, servingGrams, out var vitaminB12) ||
+            !TryNormalizeOptionalMicronutrient(vitaminDMicrograms, servingGrams, out var vitaminD) ||
+            !TryNormalizeOptionalMicronutrient(calciumMilligrams, servingGrams, out var calcium))
+            return false;
+
+        micronutrients = new CustomFoodMicronutrients(iron, vitaminB12, vitaminD, calcium);
+        return true;
+    }
+
     public static bool TryNormalizeOptionalMicronutrient(float? value, float servingGrams, out decimal? perHundredGrams)
     {
         perHundredGrams = null;
@@ -92,3 +137,9 @@ public readonly record struct CustomFoodNutrition(
     float ServingAmount,
     string ServingUnit,
     float ServingGrams);
+
+public readonly record struct CustomFoodMicronutrients(
+    decimal? IronMilligramsPer100Grams,
+    decimal? VitaminB12MicrogramsPer100Grams,
+    decimal? VitaminDMicrogramsPer100Grams,
+    decimal? CalciumMilligramsPer100Grams);
