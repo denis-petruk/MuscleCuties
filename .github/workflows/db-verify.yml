@@ -1,0 +1,64 @@
+name: Database Verification
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify_postgres_compatibility:
+    name: verify_postgres_compatibility
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: ci_disposable_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Initialize disposable PostgreSQL databases
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          export PGPASSWORD='ci_disposable_only'
+          psql -h 127.0.0.1 -U postgres -d postgres -c "CREATE DATABASE mc_test_nutrition_ci;"
+          psql -h 127.0.0.1 -U postgres -d postgres -c "CREATE DATABASE mc_retry_disposable;"
+          psql -h 127.0.0.1 -U postgres -d postgres -c "CREATE DATABASE mc_pg09_disposable;"
+          psql -h 127.0.0.1 -U postgres -d postgres -f services/postgresql/roles-and-grants.sql
+
+      - name: Run PostgreSQL integration tests
+        env:
+          MC_REGISTRATION_WRITE_TEST_POSTGRES: 'Host=127.0.0.1;Port=5432;Database=mc_test_nutrition_ci;Username=postgres;Password=ci_disposable_only'
+          MC_REGISTRATION_TEST_POSTGRES: 'Host=127.0.0.1;Port=5432;Database=mc_test_nutrition_ci;Username=postgres;Password=ci_disposable_only'
+          MC_RETRY_TEST_POSTGRES: 'Host=127.0.0.1;Port=5432;Database=mc_retry_disposable;Username=postgres;Password=ci_disposable_only'
+          MC_PG09_LOAD_POSTGRES: 'Host=127.0.0.1;Port=5432;Database=mc_pg09_disposable;Username=postgres;Password=ci_disposable_only'
+          MC_SCHEMA_COMPATIBILITY_POSTGRES: 'Host=127.0.0.1;Port=5432;Database=postgres;Username=postgres;Password=ci_disposable_only'
+        run: |
+          dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj \
+            --configuration Release \
+            --logger "trx;LogFileName=postgres-integration-tests.trx" \
+            --results-directory test-results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-test-results
+          path: test-results/
+          retention-days: 30
