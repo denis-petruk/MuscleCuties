@@ -153,13 +153,14 @@ public class UiCleanlinessAndReachabilityTests
         var mauiProgramPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "MauiProgram.cs");
         var mauiContent = File.ReadAllText(mauiProgramPath);
         Assert.Contains("fonts.AddFont(\"OpenSans-Regular.ttf\", \"Inter\");", mauiContent);
-        Assert.DoesNotContain("OpenSansSemibold", mauiContent);
+        Assert.Contains("fonts.AddFont(\"OpenSans-Semibold.ttf\", \"InterSemibold\");", mauiContent);
 
         var stylesPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Resources", "Styles", "Styles.xaml");
         var stylesContent = File.ReadAllText(stylesPath);
         var colorsPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Resources", "Styles", "Colors.xaml");
         var colorsContent = File.ReadAllText(colorsPath);
         Assert.Contains("<x:String x:Key=\"AppFontFamily\">Inter</x:String>", colorsContent);
+        Assert.Contains("<x:String x:Key=\"AppFontSemibold\">InterSemibold</x:String>", colorsContent);
         Assert.Contains("Value=\"{StaticResource AppFontFamily}\"", stylesContent);
         Assert.DoesNotContain("Property=\"FontFamily\" Value=\"Inter\"", stylesContent);
 
@@ -339,7 +340,7 @@ public class UiCleanlinessAndReachabilityTests
     }
 
     [Fact]
-    public void Shared_styles_enforce_2_button_styles_4_card_styles_and_shared_surfaces()
+    public void Shared_styles_enforce_2_button_styles_2_card_styles_and_shared_surfaces()
     {
         var stylesPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Resources", "Styles", "Styles.xaml");
         Assert.True(File.Exists(stylesPath), $"Styles.xaml not found at {stylesPath}");
@@ -351,22 +352,117 @@ public class UiCleanlinessAndReachabilityTests
         Assert.Contains("x:Key=\"ButtonSecondary\"", stylesContent);
         Assert.Equal(2, Regex.Matches(stylesContent, "<Style[^>]*TargetType=\"Button\"").Count);
 
-        // 2. Unified input and search containers across all pages.
+        // 2. One picker/search surface and one editor surface; a second alias would be a duplicate style.
         Assert.Contains("x:Key=\"InputContainer\"", stylesContent);
         Assert.Contains("x:Key=\"PickerContainer\"", stylesContent);
         Assert.Contains("x:Key=\"EditorContainer\"", stylesContent);
-        Assert.Contains("x:Key=\"SearchContainer\"", stylesContent);
+        Assert.DoesNotContain("x:Key=\"SearchContainer\"", stylesContent);
 
-        // 3. Four canonical card styles; selection indicators and badges remain utility styles.
+        // 3. Two canonical card styles; selection is a state of the permitted card, not a third design.
         Assert.Contains("x:Key=\"CardPrimary\"", stylesContent);
         Assert.Contains("x:Key=\"CardSecondary\"", stylesContent);
-        Assert.Contains("x:Key=\"CardAccent\"", stylesContent);
-        Assert.Contains("x:Key=\"SelectableCard\"", stylesContent);
-        Assert.Equal(4, Regex.Matches(stylesContent, "<Style x:Key=\"(?:CardPrimary|CardSecondary|CardAccent|SelectableCard)\"").Count);
+        Assert.Equal(2, Regex.Matches(stylesContent, "<Style x:Key=\"(?:CardPrimary|CardSecondary)\"").Count);
+        Assert.DoesNotContain("x:Key=\"CardAccent\"", stylesContent);
+        Assert.DoesNotContain("x:Key=\"SelectableCard\"", stylesContent);
+        Assert.DoesNotContain("BasedOn=\"{StaticResource CardAccent}\"", stylesContent);
+        Assert.DoesNotContain("BasedOn=\"{StaticResource SelectableCard}\"", stylesContent);
         Assert.True(Regex.Matches(stylesContent, "<Style x:Key=\"ModalSurface\"").Count == 1);
-        Assert.True(Regex.Matches(stylesContent, "<Style x:Key=\"SearchContainer\"").Count == 1);
+        Assert.Single(Regex.Matches(stylesContent, "<Style x:Key=\"PickerContainer\"").Cast<Match>());
         Assert.Contains("x:Key=\"SelectionRadioRing\"", stylesContent);
         Assert.Contains("x:Key=\"SelectionCheckbox\"", stylesContent);
+
+        var iconButtonFamilyStyles = Regex.Matches(
+                stylesContent,
+                "<Style x:Key=\"(?<key>[A-Za-z0-9_]*IconButton)\"")
+            .Select(match => match.Groups["key"].Value)
+            .OrderBy(key => key, StringComparer.Ordinal)
+            .ToArray();
+        Assert.Equal(new[] { "HeaderIconButton", "ModalIconButton" }, iconButtonFamilyStyles);
+
+        // 4. The budget is checked by family, not just by the two known keys: a third card shipped
+        //    under a Card-shaped name would otherwise pass while adding a visitable third design.
+        var cardFamilyStyles = Regex.Matches(
+                stylesContent,
+                "<Style x:Key=\"(?<key>[A-Za-z0-9_]*Card[A-Za-z0-9_]*)\" TargetType=\"Border\"")
+            .Select(match => match.Groups["key"].Value)
+            .OrderBy(key => key, StringComparer.Ordinal)
+            .ToArray();
+        Assert.Equal(new[] { "CardPrimary", "CardSecondary" }, cardFamilyStyles);
+    }
+
+    [Fact]
+    public void Soft_minimal_palette_meets_approved_contrast_floors()
+    {
+        var colorsPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Resources", "Styles", "Colors.xaml");
+        var colors = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (Match match in Regex.Matches(File.ReadAllText(colorsPath),
+                     "<Color x:Key=\"(?<key>[^\"]+)\">(?<value>#[0-9A-Fa-f]{6})</Color>"))
+        {
+            colors[match.Groups["key"].Value] = match.Groups["value"].Value;
+        }
+
+        // Normal text keeps a 4.5:1 floor against every surface it is actually composed on.
+        (string Foreground, string Background)[] normalTextPairs =
+        [
+            ("TextPrimary", "PageBackground"),
+            ("TextSecondary", "PageBackground"),
+            ("TextSecondary", "CardSurface"),
+            ("TextSecondary", "CardSurfaceSecondary"),
+            ("ActionPrimaryLight", "CardSurfaceSecondary"),
+            ("ActionSecondaryLight", "CardSurfaceSecondary"),
+            ("SuccessLight", "CardSurfaceSecondary"),
+            ("WarningAccentLight", "CardSurfaceSecondary"),
+            ("ErrorLight", "CardSurfaceSecondary"),
+            ("TextPrimaryDark", "PageBackgroundDark"),
+            ("TextSecondaryDark", "PageBackgroundDark"),
+            ("TextSecondaryDark", "CardSurfaceSecondaryDark"),
+            ("SuccessDark", "CardSurfaceSecondaryDark"),
+            ("TextPrimary", "ActionSurfaceDark")
+        ];
+
+        foreach (var (foreground, background) in normalTextPairs)
+        {
+            var ratio = ContrastRatio(colors[foreground], colors[background]);
+            Assert.True(ratio >= 4.5,
+                $"{foreground} on {background} measures {ratio:F2}:1, below the 4.5:1 normal-text floor.");
+        }
+
+        // Essential non-text boundaries and the primary action fill clear their own floors.
+        (string Foreground, string Background, double Minimum)[] nonTextPairs =
+        [
+            ("ControlBoundaryLight", "CardSurfaceSecondary", 3.0),
+            ("ControlBoundaryDark", "CardSurfaceSecondaryDark", 3.0),
+            ("ControlBoundaryLight", "PageBackground", 3.0),
+            ("White", "ActionPrimaryLight", 4.5)
+        ];
+
+        foreach (var (foreground, background, minimum) in nonTextPairs)
+        {
+            var ratio = ContrastRatio(colors[foreground], colors[background]);
+            Assert.True(ratio >= minimum,
+                $"{foreground} on {background} measures {ratio:F2}:1, below the {minimum:F1}:1 floor.");
+        }
+    }
+
+    private static double ContrastRatio(string foreground, string background)
+    {
+        var first = RelativeLuminance(foreground);
+        var second = RelativeLuminance(background);
+        return (Math.Max(first, second) + 0.05) / (Math.Min(first, second) + 0.05);
+    }
+
+    private static double RelativeLuminance(string hex)
+    {
+        var value = hex.TrimStart('#');
+        return (0.2126 * LinearChannel(value, 0))
+               + (0.7152 * LinearChannel(value, 2))
+               + (0.0722 * LinearChannel(value, 4));
+    }
+
+    private static double LinearChannel(string hex, int offset)
+    {
+        var channel = Convert.ToInt32(hex.Substring(offset, 2), 16) / 255d;
+        return channel <= 0.03928 ? channel / 12.92 : Math.Pow((channel + 0.055) / 1.055, 2.4);
     }
 
     [Fact]
@@ -384,7 +480,7 @@ public class UiCleanlinessAndReachabilityTests
         var allowedSurfaces = new HashSet<string>
         {
             "{StaticResource InputContainer}", "{StaticResource PickerContainer}",
-            "{StaticResource EditorContainer}", "{StaticResource SearchContainer}"
+            "{StaticResource EditorContainer}"
         };
 
         foreach (var file in Directory.GetFiles(uiDir, "*.xaml", SearchOption.AllDirectories)
@@ -436,8 +532,7 @@ public class UiCleanlinessAndReachabilityTests
         {
             "InputContainer",
             "PickerContainer",
-            "EditorContainer",
-            "SearchContainer"
+            "EditorContainer"
         };
 
         var nakedInputs = new List<string>();
@@ -513,8 +608,7 @@ public class UiCleanlinessAndReachabilityTests
         var uiDir = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
         var cardStyles = new HashSet<string>(StringComparer.Ordinal)
         {
-            "{StaticResource CardPrimary}", "{StaticResource CardSecondary}",
-            "{StaticResource CardAccent}", "{StaticResource SelectableCard}"
+            "{StaticResource CardPrimary}", "{StaticResource CardSecondary}"
         };
         var surfaceProperties = new HashSet<string>(StringComparer.Ordinal)
         {

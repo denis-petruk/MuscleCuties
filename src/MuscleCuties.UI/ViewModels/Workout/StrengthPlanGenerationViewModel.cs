@@ -114,13 +114,12 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
 
     [ObservableProperty] private ObservableCollection<StrengthPlanRecentWeekDisplay> _recentTrainingWeeks = [];
     [ObservableProperty] private ObservableCollection<StrengthPlanSessionDisplay> _strengthPreviewSessions = [];
-    [ObservableProperty] private ObservableCollection<MixedActivitySessionDisplay> _mixedActivitySessions = [];
     [ObservableProperty] private ObservableCollection<MixedActivityDayDisplay> _mixedActivityDays = [];
+    [ObservableProperty] private string _restDaysSummary = NoStatusMessage;
     [ObservableProperty] private ObservableCollection<MixedActivityDecisionDisplay> _activityDecisions = [];
     [ObservableProperty] private ObservableCollection<string> _scheduleInputReasons = [];
     [ObservableProperty] private ObservableCollection<string> _previewLimitations = [];
     [ObservableProperty] private ObservableCollection<string> _previewNotes = [];
-    [ObservableProperty] private ObservableCollection<string> _exerciseReviewConditions = [];
     [ObservableProperty] private StrengthPlanActivityChoice? _selectedActivity;
     [ObservableProperty] private ObservableCollection<StrengthPlanActivityChoice> _fittingStrengthStyleChoices = [];
     [ObservableProperty] private StrengthPlanActivityChoice? _selectedFittingStrengthStyle;
@@ -221,11 +220,10 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool CanEditDetailsFromPreview => CanReviewPreview;
     public bool HasFeasiblePreview => CanSubmitProposal;
     public bool HasLimitation => Preview is not null && Preview.Status != "Feasible";
-    public bool HasExerciseReviewConditions => Preview?.Status != "Feasible" &&
-        ExerciseReviewConditions.Count > NoPolicyReasons;
     public bool HasMixedSchedule => Preview?.MixedActivitySchedule is not null;
-    public bool HasMixedActivitySessions => MixedActivitySessions.Count > NoPolicyReasons;
+    public bool HasMixedActivitySessions => MixedActivityDays.Count > NoPolicyReasons;
     public bool HasNoMixedActivitySessions => !HasMixedActivitySessions;
+    public bool HasRestDays => !string.IsNullOrWhiteSpace(RestDaysSummary);
     public bool HasActivityDecisions => ActivityDecisions.Count > NoPolicyReasons;
     public bool HasOmittedMovements => Preview?.AdvisoryCodes.Any(code =>
         code.StartsWith(MovementOmittedAdvisoryPrefix, StringComparison.Ordinal)) == true;
@@ -264,7 +262,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                     !decision.ReasonCodes.Contains("ReplacedWithGeneralStrength")) == true;
     public bool ExpandActivityDecisions => HasLimitation || HasOptionalOmissions;
     public bool HasScheduleInputReasons => ScheduleInputReasons.Count > NoPolicyReasons;
-    public bool HasPreviewNotes => PreviewNotes.Count > NoPolicyReasons;
+    public bool HasPreviewNotes => PreviewNotes.Any(note => !string.IsNullOrWhiteSpace(note));
     public bool HasStrengthPreviewSessions => StrengthPreviewSessions.Count > NoPolicyReasons;
     public bool HasPlanDetails => HasActivityDecisions || HasStrengthPreviewSessions;
     public bool HasChosenStrengthSummary => Preview?.EffectiveActivityTypeId is not null && HasStrengthPreviewSessions;
@@ -307,7 +305,14 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool CanKeepCurrentPlan => HasExistingPlan && IsBeforePreview;
     public bool RequiresReducedVolumeAcknowledgment =>
         Preview.RequiresReducedVolumeAcknowledgment();
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Performance", "CA1822:Mark members as static",
+        Justification = "Target of compiled XAML bindings; must stay an instance member.")]
     public string ReducedVolumeNoticeText => UiTextCatalog.Get(ReducedVolumeNoticeKey);
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Performance", "CA1822:Mark members as static",
+        Justification = "Target of compiled XAML bindings; must stay an instance member.")]
     public string ExploreOtherFeaturesButtonText
     {
         get
@@ -814,28 +819,30 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private void PopulatePreviewDisplays(StrengthPlanPreviewResponseV020 preview)
     {
         Preview = preview;
-        ExerciseReviewConditions = new ObservableCollection<string>(
-            preview.ExerciseReviewConditions.Select(FormatExerciseCondition).ToArray());
         StrengthPreviewSessions = new ObservableCollection<StrengthPlanSessionDisplay>(
             preview.Sessions.Select(session => StrengthPlanSessionDisplay.From(session, HasOmittedMovements)));
         var mixedSchedule = preview.MixedActivitySchedule;
-        MixedActivitySessions = new ObservableCollection<MixedActivitySessionDisplay>(
-            mixedSchedule?.Sessions.Select(StrengthPlanGenerationDisplayMapper.ToMixedActivitySessionDisplay) ??
-            Array.Empty<MixedActivitySessionDisplay>());
-        MixedActivityDays = new ObservableCollection<MixedActivityDayDisplay>(
-                mixedSchedule?.Sessions.Count > NoPolicyReasons ? CalendarWeekdays.Select(day =>
+        var allDays = mixedSchedule?.Sessions.Count > NoPolicyReasons
+            ? CalendarWeekdays.Select(day =>
                 {
-                    var sessions = mixedSchedule.Sessions.Where(session => session.Weekday == day)
+                    var sessions = mixedSchedule.Sessions.Where(session =>
+                            session.Weekday == day &&
+                            session.ActivityTypeId != (int)WorkoutActivityDto.RestDay)
                         .OrderBy(session => session.DayOrder ?? int.MaxValue)
-                        .Select(session => StrengthPlanGenerationDisplayMapper.ToMixedActivitySessionDisplay(session))
+                        .Select(StrengthPlanGenerationDisplayMapper.ToMixedActivitySessionDisplay)
                         .ToArray();
                     return new MixedActivityDayDisplay(
-                        StrengthPlanGenerationDisplayMapper.FullWeekdayLabel(day),
-                        sessions.Length == NoPolicyReasons
-                            ? UiTextCatalog.Get("Workout_Generation_PlannedRestDay")
-                            : string.Join(" · ", sessions.Select(session => session.Activity + " " + session.Duration)),
+                        StrengthPlanGenerationDisplayMapper.ShortWeekdayLabel(day), sessions,
                         sessions.Length == NoPolicyReasons);
-                }) : []);
+                }).ToArray()
+            : Array.Empty<MixedActivityDayDisplay>();
+        var trainingDays = allDays.Where(day => !day.IsRestDay).ToArray();
+        var restDays = allDays.Where(day => day.IsRestDay).Select(day => day.Day).ToArray();
+        MixedActivityDays = new ObservableCollection<MixedActivityDayDisplay>(trainingDays);
+        RestDaysSummary = trainingDays.Length > NoPolicyReasons && restDays.Length > NoPolicyReasons
+            ? StrengthPlanGenerationDisplayMapper.FormatLocalized(
+                "Workout_Generation_RestDaysSummaryFormat", string.Join(" · ", restDays))
+            : NoStatusMessage;
             ActivityDecisions = new ObservableCollection<MixedActivityDecisionDisplay>(
                 mixedSchedule?.Activities
                     .Where(decision => decision.ActivityTypeId != (int)WorkoutActivityDto.RestDay)
@@ -904,7 +911,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         _proposal?.Lease is not null, IsPreviewApplicable, _pendingAcceptance is not null) &&
         HasStrengthPreviewSessions;
 
-    // Apply accepts the visible preview, including exercises that only ask for condition review.
+    // Apply accepts the visible preview; returned condition IDs are acknowledged automatically.
     private bool IsPreviewApplicable => Preview is { Status: "Feasible" } ||
         Preview is { Status: "Limited" } preview && preview.ExerciseReviewConditions.Count > NoPolicyReasons;
 
@@ -1268,13 +1275,12 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         SelectedFittingStrengthStyle = null;
         OnPropertyChanged(nameof(HasFittingStrengthStyleChoices));
         StrengthPreviewSessions.Clear();
-        MixedActivitySessions.Clear();
         MixedActivityDays.Clear();
+        RestDaysSummary = NoStatusMessage;
         ActivityDecisions.Clear();
         ScheduleInputReasons.Clear();
         PreviewLimitations.Clear();
         PreviewNotes.Clear();
-        ExerciseReviewConditions.Clear();
         if (clearStatus)
             StatusMessage = NoStatusMessage;
 
@@ -1440,7 +1446,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(CanEditDetailsFromPreview));
         OnPropertyChanged(nameof(HasFeasiblePreview));
         OnPropertyChanged(nameof(HasLimitation));
-        OnPropertyChanged(nameof(HasExerciseReviewConditions));
         OnPropertyChanged(nameof(HasDurationChoice));
         OnPropertyChanged(nameof(CanUseLongerDuration));
         OnPropertyChanged(nameof(LongerDurationText));
@@ -1449,6 +1454,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(HasMixedSchedule));
         OnPropertyChanged(nameof(HasMixedActivitySessions));
         OnPropertyChanged(nameof(HasNoMixedActivitySessions));
+        OnPropertyChanged(nameof(HasRestDays));
         OnPropertyChanged(nameof(HasActivityDecisions));
         OnPropertyChanged(nameof(HasOptionalOmissions));
         OnPropertyChanged(nameof(HasOmittedMovements));
@@ -1613,13 +1619,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         TakeOverPreviewCommand.NotifyCanExecuteChanged();
         UseLongerDurationCommand.NotifyCanExecuteChanged();
         UseShorterDurationCommand.NotifyCanExecuteChanged();
-    }
-
-    private static string FormatExerciseCondition(StrengthExerciseReviewConditionV020 condition)
-    {
-        var details = new[] { condition.ExperienceConditions, condition.GeneralConditions }
-            .Where(value => !string.IsNullOrWhiteSpace(value));
-        return $"{condition.ExerciseName}: {string.Join(" ", details)}";
     }
 
     private static DayOfWeek[] NormalizeWeekdays(IReadOnlyList<int>? values) =>

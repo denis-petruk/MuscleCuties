@@ -1,6 +1,4 @@
 using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.Core.Models.Nutrition;
-using MuscleCuties.Core.Models.Nutrition.Planning;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
@@ -11,7 +9,7 @@ public class MealSuggestionItem
     public IReadOnlyList<SpiceBlendDetail> SpiceBlends { get; set; } = [];
     public IReadOnlyList<MealSuggestionComponentItem> Components { get; set; } = [];
     public IReadOnlyList<MealSuggestionComponentGroup> ComponentGroups { get; set; } = [];
-    public MacroNutrients Macros { get; set; }
+    public NutritionMacros Macros { get; set; }
     public float Score { get; set; }
     public MealStyle Style { get; set; }
     public string IconGlyph { get; set; } = "Food24";
@@ -186,16 +184,7 @@ public record MealSuggestionComponentGroup(
     string IconGlyph,
     IReadOnlyList<MealSuggestionComponentItem> Items)
 {
-    public string TotalText
-    {
-        get
-        {
-            var totalGrams = Items.Sum(i => i.Grams);
-            var macros = MacroNutrients.Sum(Items.Select(i =>
-                MacroNutrients.FromPer100g(i.Calories, i.Protein, i.Carbs, i.Fats, i.Grams)));
-            return $"{totalGrams:N0}g · {macros.Calories:N0} kcal";
-        }
-    }
+    public string TotalText => $"{Items.Sum(i => i.Grams):N0}g · {Items.Sum(i => i.CaloriesForAmount):N0} kcal";
 }
 
 public class MealSuggestionComponentItem
@@ -210,6 +199,8 @@ public class MealSuggestionComponentItem
     public float Protein { get; set; }
     public float Carbs { get; set; }
     public float Fats { get; set; }
+    public float CaloriesForAmount { get; set; }
+    public string NutritionForAmountText { get; set; } = string.Empty;
 
     public string TypeLabel => ComponentType.ToString();
 
@@ -227,16 +218,14 @@ public class MealSuggestionComponentItem
 
     public string PortionText => $"{Grams:N0}g";
 
-    public string CaloriesText =>
-        $"{MacroNutrients.FromPer100g(Calories, Protein, Carbs, Fats, Grams).Calories:N0} kcal";
+    public string CaloriesText => $"{CaloriesForAmount:N0} kcal";
 
-    public string DetailText =>
-        $"{Grams:N0}g · {MacroNutrients.FromPer100g(Calories, Protein, Carbs, Fats, Grams).ToNutritionText()}";
+    public string DetailText => $"{Grams:N0}g · {NutritionForAmountText}";
 }
 
 public sealed record DayMealPlanItem(
     MealType MealType,
-    MealNutritionTarget Target,
+    NutritionMealTarget Target,
     float DailyCaloriesTarget,
     bool IsAlreadyLogged,
     bool IsRefreshing,

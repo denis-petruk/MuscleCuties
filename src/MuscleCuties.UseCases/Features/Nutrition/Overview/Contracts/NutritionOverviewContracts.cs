@@ -52,7 +52,8 @@ public sealed record MealSummaryDto(
     float Carbs,
     float Fats,
     IReadOnlyList<MacroBreakdownItemDto> MacroItems,
-    IReadOnlyList<DailyMicronutrientDto> Micronutrients
+    IReadOnlyList<DailyMicronutrientDto> Micronutrients,
+    string IngredientSummary = ""
 );
 
 /// <summary>Ingredient amount in grams and nutrient densities per 100 grams.</summary>

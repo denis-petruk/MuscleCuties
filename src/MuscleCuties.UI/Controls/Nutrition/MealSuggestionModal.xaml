@@ -7,7 +7,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:nutritionModels="clr-namespace:MuscleCuties.UI.Models.UI.Nutrition"
-    xmlns:nutritionEnums="clr-namespace:MuscleCuties.Core.Models.Enums.Nutrition;assembly=MuscleCuties.Core"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Nutrition"
     x:DataType="vm:NutritionViewModel"
@@ -22,7 +21,7 @@
 
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource ModalSurface}" VerticalOptions="End">
+            Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
             <Grid RowDefinitions="Auto,Auto,Auto,*">
                 <Grid
                     Grid.Row="0"
@@ -30,7 +29,7 @@
                     RowDefinitions="Auto,Auto"
                     ColumnSpacing="{StaticResource UiSpacing10}"
                     RowSpacing="{StaticResource UiSpaceMicro}"
-                    Padding="{StaticResource PresentationModalHeaderPadding}">
+                    Padding="{DynamicResource PresentationModalHeaderPadding}">
                     <Label
                         Grid.Row="0"
                         Grid.Column="0"
@@ -108,7 +107,7 @@
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding IsSavouryBreakfast}" Value="True">
                                 <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}" />
-                                <Setter Property="TextColor" Value="{StaticResource White}" />
+                                <Setter Property="TextColor" Value="{StaticResource ContrastInk}" />
                             </DataTrigger>
                         </Button.Triggers>
                     </Button>
@@ -122,7 +121,7 @@
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding IsSweetBreakfast}" Value="True">
                                 <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}" />
-                                <Setter Property="TextColor" Value="{StaticResource White}" />
+                                <Setter Property="TextColor" Value="{StaticResource ContrastInk}" />
                             </DataTrigger>
                         </Button.Triggers>
                     </Button>
@@ -137,9 +136,10 @@
                     VerticalOptions="Center"
                     SemanticProperties.Description="{loc:LocalizedText Nutrition_MealSuggestion_FindingMealIdeasFromUsdaFoods}">
                     <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}"
                         Grid.Row="0"
                         IsRunning="{Binding IsLoadingSuggestions}"
-                        Color="{StaticResource Primary}"
+                       
                         WidthRequest="{StaticResource UiDimension32}"
                         HeightRequest="{StaticResource UiDimension32}" />
                     <Label Grid.Row="1"
@@ -154,7 +154,7 @@
                     IsVisible="{Binding HasMealSuggestionError}">
                     <Grid RowDefinitions="Auto,Auto,Auto"
                           RowSpacing="{StaticResource UiSpaceCompact}"
-                          Padding="{StaticResource PresentationModalPagePadding}">
+                          Padding="{DynamicResource PresentationModalPagePadding}">
                         <Path
                             Grid.Row="0"
                             Data="M3 2v7c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2V2M6 2v20M15 2v8h4M19 2v20"
@@ -184,7 +184,7 @@
                     IsVisible="{Binding HasNoMealSuggestions}">
                     <Grid RowDefinitions="Auto,Auto,Auto"
                           RowSpacing="{StaticResource UiSpacing10}"
-                          Padding="{StaticResource PresentationModalPagePadding}">
+                          Padding="{DynamicResource PresentationModalPagePadding}">
                         <Path
                             Grid.Row="0"
                             Data="M12 21V8M12 11c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 15c3 0 5-2 5-5-3 0-5 2-5 5ZM12 19c-3 0-5-2-5-5 3 0 5 2 5 5"
@@ -218,7 +218,7 @@
                     SelectionMode="None"
                     IsVisible="{Binding HasMealSuggestions}"
                     VerticalScrollBarVisibility="Default"
-                    Margin="{StaticResource PresentationModalPagePadding}"
+                    Margin="{DynamicResource PresentationModalPagePadding}"
                     SizeChanged="OnSuggestionsSizeChanged">
                     <CollectionView.ItemsLayout>
                         <GridItemsLayout
@@ -243,7 +243,6 @@
                                         Grid.Column="1"
                                         Text="{Binding ConceptName, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource CardTitle}"
-                                        FontSize="{StaticResource UiFontSize17}"
                                         LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="1"
@@ -264,18 +263,17 @@
                                             StrokeShape="{StaticResource UiRoundRectangleRadius999}"
                                             StrokeThickness="{StaticResource UiStrokeWidth0}"
                                             Padding="{StaticResource UiInsets8_3}"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}">
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDeepDark}}">
                                             <Label
                                                 Text="{Binding StyleLabel, Converter={StaticResource LocalizedStringConverter}}"
                                                 Style="{StaticResource CaptionStrong}"
                                                 TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                                                FontSize="{StaticResource UiFontSize13}" />
+                                                />
                                         </Border>
                                         <Label
                                             Grid.Column="1"
                                             Text="{Binding CaloriesText, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionStrong}"
-                                            FontSize="{StaticResource UiFontSize13}"
                                             VerticalOptions="Center" />
                                     </Grid>
 
@@ -304,7 +302,7 @@
                     IsVisible="{Binding HasNoDayPlanMeals}">
                     <Grid RowDefinitions="Auto,Auto"
                           RowSpacing="{StaticResource UiSpacing10}"
-                          Padding="{StaticResource PresentationModalPagePadding}">
+                          Padding="{DynamicResource PresentationModalPagePadding}">
                         <Label
                             Grid.Row="0"
                             Text="{loc:LocalizedText Nutrition_MealSuggestion_NoMealsLeftToPlan}"
@@ -327,7 +325,7 @@
                     SelectionMode="None"
                     IsVisible="{Binding ShowDayPlanMeals}"
                     VerticalScrollBarVisibility="Default"
-                    Margin="{StaticResource PresentationModalPagePadding}">
+                    Margin="{DynamicResource PresentationModalPagePadding}">
                     <CollectionView.ItemsLayout>
                         <LinearItemsLayout Orientation="Vertical" ItemSpacing="{StaticResource UiSpacing10}" />
                     </CollectionView.ItemsLayout>
@@ -347,7 +345,6 @@
                                         Grid.Column="1"
                                         Text="{Binding MealTypeLabel, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource FormFieldLabel}"
-                                        FontSize="{StaticResource UiFontSize13}"
                                         LineBreakMode="WordWrap"
                                         VerticalOptions="Center" />
                                     <Label
@@ -362,7 +359,6 @@
                                         Grid.ColumnSpan="3"
                                         Text="{Binding MealTitle, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource CardTitle}"
-                                        FontSize="{StaticResource UiFontSize17}"
                                         LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="2"

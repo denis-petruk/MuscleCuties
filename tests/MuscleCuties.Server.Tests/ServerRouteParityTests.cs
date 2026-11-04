@@ -1,5 +1,9 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
@@ -38,6 +42,11 @@ namespace MuscleCuties.Server.Tests;
 
 public sealed class ServerRouteParityTests
 {
+    private const string ColdProcedure = "fresh-host-first-request-v1";
+    private const string WarmProcedure = "shared-host-20-sample-p95-v1";
+    private const string StartupProcedure = "host-start-plus-live-readiness-v1";
+    private const string ReadinessRoute = "/health/live";
+    private const int ReadinessTimeoutSeconds = 30;
     private const string SyntheticConnectionString =
         "Host=127.0.0.1;Port=1;Database=synthetic;Username=synthetic;Password=synthetic";
     private const string SigningKey = "synthetic-server-route-signing-key-for-tests-only";
@@ -132,6 +141,237 @@ public sealed class ServerRouteParityTests
         var response = await fixture.Client.GetAsync(route);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task EveryMappedRouteHasAHandlerAndNonEmptyPattern()
+    {
+        await using var fixture = await ServerFixture.StartAsync();
+        var routes = fixture.Endpoints.Endpoints.OfType<RouteEndpoint>().ToArray();
+
+        Assert.NotEmpty(routes);
+        Assert.All(routes, route =>
+        {
+            Assert.NotNull(route.RequestDelegate);
+            Assert.False(string.IsNullOrWhiteSpace(route.RoutePattern.RawText));
+        });
+    }
+
+    [Fact]
+    public async Task EveryMappedRouteHasMeasuredColdAndWarmP95WithinBudget()
+    {
+        const int budgetMilliseconds = 1000;
+        const int warmSamples = 20;
+        const string reportEnvironmentVariable = "MC_WRITE_LATENCY_REPORT";
+        var databaseConnectionString = Environment.GetEnvironmentVariable("MC_LATENCY_POSTGRES");
+        var owner = Guid.NewGuid();
+
+        await using var mapFixture = await ServerFixture.StartAsync(databaseConnectionString: databaseConnectionString);
+        var routes = mapFixture.Endpoints.Endpoints.OfType<RouteEndpoint>()
+            .Select(endpoint => new
+            {
+                Method = endpoint.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods.FirstOrDefault() ?? "GET",
+                Pattern = endpoint.RoutePattern.RawText ?? string.Empty
+            })
+            .Where(route => !string.IsNullOrWhiteSpace(route.Pattern))
+            .OrderBy(route => route.Pattern, StringComparer.Ordinal)
+            .ThenBy(route => route.Method, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.NotEmpty(routes);
+        var measurements = new List<RouteLatency>();
+        var coldMeasurements = new ConcurrentDictionary<string, ColdMeasurement>(StringComparer.Ordinal);
+        // One fresh host at a time: concurrent hosts would charge one route's startup and JIT to
+        // another. Readiness is measured separately and is not part of the route's cold number.
+        foreach (var route in routes)
+        {
+            var startupStarted = Stopwatch.GetTimestamp();
+            await using var coldFixture = await ServerFixture.StartAsync(databaseConnectionString: databaseConnectionString);
+            coldFixture.SetBearer(owner);
+            coldFixture.Client.Timeout = TimeSpan.FromSeconds(ReadinessTimeoutSeconds);
+            using var readinessTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(ReadinessTimeoutSeconds));
+            using var readiness = await coldFixture.Client.GetAsync(ReadinessRoute, readinessTimeout.Token);
+            Assert.True(readiness.IsSuccessStatusCode,
+                $"Host for {route.Method} {route.Pattern} was not ready: {ReadinessRoute} returned {(int)readiness.StatusCode}.");
+            var startupMilliseconds = Stopwatch.GetElapsedTime(startupStarted).TotalMilliseconds;
+            var cold = await SendMeasuredAsync(coldFixture.Client, route.Method, route.Pattern, budgetMilliseconds);
+            coldMeasurements[$"{route.Method} {route.Pattern}"] = new ColdMeasurement(cold, startupMilliseconds);
+            AppendLatencyProgress(
+                $"startup {startupMilliseconds:F0} ms; cold {cold.Milliseconds:F0} ms {cold.StatusCode} {route.Method} {route.Pattern}");
+        }
+
+        await using var warmFixture = await ServerFixture.StartAsync(databaseConnectionString: databaseConnectionString);
+        warmFixture.SetBearer(owner);
+        warmFixture.Client.Timeout = TimeSpan.FromSeconds(ReadinessTimeoutSeconds);
+
+        foreach (var route in routes)
+        {
+            var cold = coldMeasurements[$"{route.Method} {route.Pattern}"];
+            var warm = new List<double>(warmSamples);
+            for (var sample = 0; sample < warmSamples; sample++)
+            {
+                var measured = await SendMeasuredAsync(warmFixture.Client, route.Method, route.Pattern, budgetMilliseconds);
+                warm.Add(measured.Milliseconds);
+                if (measured.Milliseconds >= budgetMilliseconds)
+                    break;
+            }
+            warm.Sort();
+            var warmP95Index = (int)Math.Ceiling(0.95 * warm.Count) - 1;
+            AppendLatencyProgress($"warm p95 {warm[warmP95Index]:F0} ms ({warm.Count} samples) {route.Method} {route.Pattern}");
+            measurements.Add(new RouteLatency(
+                route.Method,
+                route.Pattern,
+                StartupProcedure,
+                ColdProcedure,
+                WarmProcedure,
+                Math.Round(cold.StartupMs, 2),
+                Math.Round(cold.Response.Milliseconds, 2),
+                Math.Round(warm[warmP95Index], 2),
+                cold.Response.StatusCode,
+                route.Pattern.Contains("/photos", StringComparison.Ordinal)
+                    ? "S3 presigned-URL boundary; only the local handler path is measured"
+                    : null));
+        }
+
+        var overBudget = measurements.Where(route => route.ColdMs >= budgetMilliseconds || route.WarmP95Ms >= budgetMilliseconds).ToArray();
+        var report = new ServerLatencyReport(
+            DateTimeOffset.UtcNow.ToString("O"),
+            $"TestServer in-process; {RuntimeInformation.FrameworkDescription}; {RuntimeInformation.OSDescription}",
+            "Startup = fresh host build, start and first live readiness response; cold = first target request after readiness; warm = 20 requests on one shared host",
+            StartupProcedure,
+            string.IsNullOrWhiteSpace(databaseConnectionString)
+                ? "Synthetic unreachable loopback PostgreSQL; database-dependent work is a fail-fast stand-in"
+                : "Disposable PostgreSQL fixture",
+            budgetMilliseconds,
+            overBudget.Length == 0 ? "pass" : "fail",
+            measurements.OrderBy(route => route.Route, StringComparer.Ordinal)
+                .ThenBy(route => route.Method, StringComparer.Ordinal)
+                .ToArray());
+        var reportPath = Path.Combine(FindRepositoryRoot(), "docs", "performance", "server-latency-report.json");
+        if (string.Equals(Environment.GetEnvironmentVariable(reportEnvironmentVariable), "1", StringComparison.Ordinal))
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!);
+            await File.WriteAllTextAsync(reportPath,
+                JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
+        }
+
+        Assert.True(File.Exists(reportPath), $"Latency report not found at {reportPath}.");
+        var checkedIn = JsonSerializer.Deserialize<ServerLatencyReport>(await File.ReadAllTextAsync(reportPath))
+            ?? throw new InvalidOperationException("Latency report is empty.");
+        var expected = routes.Select(route => $"{route.Method} {route.Pattern}").ToHashSet(StringComparer.Ordinal);
+        var recorded = checkedIn.Routes.Select(route => $"{route.Method} {route.Route}").ToHashSet(StringComparer.Ordinal);
+        var missing = expected.Except(recorded, StringComparer.Ordinal).ToArray();
+        Assert.True(missing.Length == 0,
+            $"Mapped route(s) missing from {RelativeReportPath(reportPath)}:\n" + string.Join("\n", missing));
+        Assert.Equal(expected.Count, recorded.Count);
+        Assert.Equal(StartupProcedure, checkedIn.StartupProcedure);
+        Assert.All(checkedIn.Routes, route =>
+        {
+            Assert.Equal(StartupProcedure, route.StartupProcedure);
+            Assert.Equal(ColdProcedure, route.ColdProcedure);
+            Assert.Equal(WarmProcedure, route.WarmProcedure);
+            Assert.True(route.StartupMs > 0, $"Startup time is missing for {route.Method} {route.Route}.");
+        });
+
+        Assert.True(overBudget.Length == 0,
+            $"{overBudget.Length} route(s) exceeded {budgetMilliseconds} ms:\n" +
+            string.Join("\n", overBudget.Select(route =>
+                $"{route.Method} {route.Route}: cold {route.ColdMs:F1} ms, warm p95 {route.WarmP95Ms:F1} ms")));
+    }
+
+    private static async Task<MeasuredResponse> SendMeasuredAsync(HttpClient client, string method, string pattern, int budgetMilliseconds)
+    {
+        using var request = new HttpRequestMessage(new HttpMethod(method), ExpandRoute(pattern));
+        if (method is "POST" or "PUT" or "PATCH")
+        {
+            request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+        }
+
+        using var requestTimeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(budgetMilliseconds));
+        var started = Stopwatch.GetTimestamp();
+        try
+        {
+            using var response = await client.SendAsync(request, requestTimeout.Token);
+            await response.Content.ReadAsByteArrayAsync();
+            return new MeasuredResponse(Stopwatch.GetElapsedTime(started).TotalMilliseconds, (int)response.StatusCode);
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        {
+            return new MeasuredResponse(Stopwatch.GetElapsedTime(started).TotalMilliseconds, 0);
+        }
+    }
+
+    private static string ExpandRoute(string pattern)
+    {
+        var path = Regex.Replace(pattern, @"\{(?<name>[^}:]+)(?::(?<constraint>[^}]+))?\}", match =>
+        {
+            var name = match.Groups["name"].Value;
+            var constraint = match.Groups["constraint"].Value;
+            if (constraint.Contains("guid", StringComparison.Ordinal) ||
+                name is "id" or "sessionId" or "setId" or "photoId" or "presetId" or "entryId")
+                return Guid.NewGuid().ToString("D");
+            if (name == "year") return "2026";
+            if (name == "month") return "1";
+            if (constraint.Contains("int", StringComparison.Ordinal)) return "1";
+            return "synthetic";
+        });
+
+        return path +
+            "?date=2026-11-03&from=2026-01-01&through=2026-01-31&today=2026-11-03" +
+            "&mealType=breakfast&breakfastPreference=balanced";
+    }
+
+    private static readonly object LatencyProgressLock = new();
+
+    private static void AppendLatencyProgress(string line)
+    {
+        lock (LatencyProgressLock)
+            File.AppendAllText("/tmp/mc-latency-progress.log", line + Environment.NewLine);
+    }
+
+    private static string RelativeReportPath(string path) =>
+        Path.GetRelativePath(FindRepositoryRoot(), path);
+
+    private static string FindRepositoryRoot()
+    {
+        var current = AppContext.BaseDirectory;
+        while (!string.IsNullOrEmpty(current))
+        {
+            if (File.Exists(Path.Combine(current, "MuscleCuties.sln")) || Directory.Exists(Path.Combine(current, ".git")))
+                return current;
+            current = Directory.GetParent(current)?.FullName;
+        }
+
+        throw new InvalidOperationException($"Could not locate repository root from '{AppContext.BaseDirectory}'.");
+    }
+
+    private sealed record MeasuredResponse(double Milliseconds, int StatusCode);
+    private sealed record ColdMeasurement(MeasuredResponse Response, double StartupMs);
+    private sealed record RouteLatency(string Method, string Route, string StartupProcedure, string ColdProcedure,
+        string WarmProcedure, double StartupMs, double ColdMs, double WarmP95Ms, int StatusCode, string? ExternalDependency);
+    private sealed record ServerLatencyReport(string MeasuredAtUtc, string Environment, string MeasurementNote,
+        string StartupProcedure, string DatabaseMode, int BudgetMs, string Result, IReadOnlyList<RouteLatency> Routes);
+
+    [Fact]
+    public async Task Representative_read_routes_stay_within_the_one_second_budget()
+    {
+        const int budgetMilliseconds = 1000;
+        await using var fixture = await ServerFixture.StartAsync();
+        fixture.SetBearer(Guid.NewGuid());
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+        // This representative test measures warm calls only; the all-route gate owns cold and readiness measurement.
+        await fixture.Client.GetAsync("/health/live", timeout.Token);
+        foreach (var route in new[] { "/health/live", QuizRoute, "/api/v1/session" })
+        {
+            var started = Stopwatch.GetTimestamp();
+            using var response = await fixture.Client.GetAsync(route, timeout.Token);
+            var elapsedMilliseconds = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+
+            Assert.True(response.IsSuccessStatusCode, $"Route {route} returned {(int)response.StatusCode}.");
+            Assert.True(elapsedMilliseconds < budgetMilliseconds,
+                $"Route {route} took {elapsedMilliseconds:F1} ms, above the {budgetMilliseconds} ms in-process budget.");
+        }
     }
 
     [Fact]
@@ -510,14 +750,15 @@ public sealed class ServerRouteParityTests
             Client = app.GetTestClient();
         }
 
-        public static async Task<ServerFixture> StartAsync(bool emptyQuiz = false, bool profileThrows = false)
+        public static async Task<ServerFixture> StartAsync(bool emptyQuiz = false, bool profileThrows = false,
+            string? databaseConnectionString = null)
         {
             var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Testing" });
             builder.Logging.ClearProviders();
             builder.WebHost.UseTestServer();
             builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:PostgreSql"] = SyntheticConnectionString,
+                ["ConnectionStrings:PostgreSql"] = databaseConnectionString ?? SyntheticConnectionString,
                 ["Authentication:SigningKey"] = SigningKey,
                 ["Authentication:Issuer"] = Issuer,
                 ["Authentication:Audience"] = Audience

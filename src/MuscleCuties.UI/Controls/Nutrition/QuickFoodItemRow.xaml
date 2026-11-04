@@ -9,12 +9,7 @@
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Nutrition;assembly=MuscleCuties.UI"
     x:DataType="uiModels:QuickFoodItemUiModel">
 
-    <Border
-        StrokeShape="{StaticResource UiRoundRectangleRadius10}"
-        Padding="{StaticResource UiInsets10_8}"
-        MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
-        StrokeThickness="{StaticResource UiStrokeWidth1}">
+    <Border Padding="{StaticResource UiInsets0_12}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}" StrokeThickness="{StaticResource UiStrokeWidth0}">
 
         <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}" RowSpacing="{StaticResource UiSpacing6}">
             <!-- Multi-Select Checkbox -->
@@ -31,7 +26,7 @@
                 <Border Style="{StaticResource SelectionCheckbox}" HorizontalOptions="Center" VerticalOptions="Center"
                         InputTransparent="True">
                     <Path Data="M3 7L6 10L13 3"
-                          Stroke="{StaticResource White}" StrokeThickness="{StaticResource UiStrokeWidth2}"
+                          Stroke="{StaticResource ContrastInk}" StrokeThickness="{StaticResource UiStrokeWidth2}"
                           HorizontalOptions="Center" VerticalOptions="Center"
                           IsVisible="{Binding IsSelected}" />
                 </Border>
@@ -39,14 +34,14 @@
 
             <!-- Name and details -->
             <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
-                <Label Grid.Row="0" Text="{Binding Name}" Style="{StaticResource CardTitle}" FontSize="{StaticResource UiFontSize13}"
+                <Label Grid.Row="0" Text="{Binding Name}" Style="{StaticResource CardTitle}"
                        LineBreakMode="WordWrap" />
                 <Label Grid.Row="1" Text="{Binding Detail, Converter={StaticResource LocalizedStringConverter}}"
-                       Style="{StaticResource MutedLabel}" FontSize="{StaticResource UiFontSize11}" LineBreakMode="WordWrap" />
+                       Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
             </Grid>
             <Label Grid.Row="0" Grid.Column="2"
                    Text="{Binding Calories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_CaloriesValueKcal}"
-                   Style="{StaticResource CaptionStrong}" FontSize="{StaticResource UiFontSize12}" VerticalOptions="Center" />
+                   Style="{StaticResource CaptionStrong}" VerticalOptions="Center" />
             <Button Grid.Row="1" Grid.Column="2"
                     Style="{StaticResource ButtonSecondary}"
                     Text="{loc:LocalizedText Common_Edit}"

@@ -8,12 +8,7 @@
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Nutrition"
     x:DataType="vm:NutritionViewModel">
 
-    <Border
-        Background="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
-        Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-        StrokeShape="{StaticResource UiRoundRectangleRadius16}"
-        StrokeThickness="{StaticResource UiStrokeWidth1}"
-        Padding="{StaticResource UiInsets18_14}">
+    <Border Style="{StaticResource CardSecondary}">
         <Grid RowDefinitions="Auto, Auto, Auto" ColumnDefinitions="*, Auto" RowSpacing="{StaticResource UiSpacing3}" ColumnSpacing="{StaticResource UiSpaceCompact}">
             <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="{StaticResource UiSpacing6}" VerticalOptions="Center">
                 <BoxView
@@ -25,8 +20,7 @@
                 <Label
                     Text="{Binding PhaseFocusBadgeText, Converter={StaticResource LocalizedStringConverter}}"
                     TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                    FontSize="{StaticResource UiFontSize12}"
-                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                    Style="{StaticResource CaptionLabel}"
                     LineBreakMode="WordWrap"
                     VerticalOptions="Center" />
             </HorizontalStackLayout>
@@ -56,16 +50,13 @@
                 Grid.Row="1"
                 Grid.Column="0"
                 Text="{Binding PhaseFocusTitle, Converter={StaticResource LocalizedStringConverter}}"
-                TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                FontSize="{StaticResource UiFontSize18}"
-                FontAttributes="{StaticResource UiFontAttributesBold}"
+                Style="{StaticResource SectionTitle}"
                 LineBreakMode="WordWrap" />
             <Label
                 Grid.Row="2"
                 Grid.Column="0"
                 Text="{Binding PhaseFocusCopy, Converter={StaticResource LocalizedStringConverter}}"
-                TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                FontSize="{StaticResource UiFontSize13}"
+                Style="{StaticResource MutedLabel}"
                 LineBreakMode="WordWrap" />
         </Grid>
     </Border>

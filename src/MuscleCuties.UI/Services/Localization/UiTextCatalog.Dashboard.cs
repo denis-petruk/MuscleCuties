@@ -29,6 +29,11 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_Energy4A11y"] = "Energy 4 of 5";
         English["Dashboard_CheckIn_Energy4Hint"] = "High energy";
         English["Dashboard_CheckIn_Energy5A11y"] = "Energy 5 of 5";
+        English["Dashboard_CheckIn_SleepQuality1A11y"] = "Sleep quality 1 of 5";
+        English["Dashboard_CheckIn_SleepQuality2A11y"] = "Sleep quality 2 of 5";
+        English["Dashboard_CheckIn_SleepQuality3A11y"] = "Sleep quality 3 of 5";
+        English["Dashboard_CheckIn_SleepQuality4A11y"] = "Sleep quality 4 of 5";
+        English["Dashboard_CheckIn_SleepQuality5A11y"] = "Sleep quality 5 of 5";
         English["Dashboard_CheckIn_Energy5Hint"] = "Very high energy";
         English["Dashboard_CheckIn_EnergyTitle"] = "Energy";
         English["Dashboard_CheckIn_EnergySectionTitle"] = "ENERGY";
@@ -38,12 +43,7 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_PlanningSleepQuality"] = "Sleep quality";
         English["Dashboard_CheckIn_PlanningSoreness"] = "Muscle soreness";
         English["Dashboard_CheckIn_PlanningStress"] = "Stress";
-        English["Dashboard_CheckIn_IncompleteAllFourRatings"] = "Complete all four ratings to see your check-in score.";
         English["Dashboard_CheckIn_PlanningSelectRating"] = "Choose a rating";
-        English["Dashboard_Readiness_ScoreExplanation"] = "Based on your reported sleep, energy, soreness, and stress. This is a planning estimate, not a medical assessment or a direct measurement of recovery.";
-        English["Dashboard_Readiness_Band_FeelingReady"] = "Feeling ready";
-        English["Dashboard_Readiness_Band_ConsiderLighterSession"] = "Consider a lighter session";
-        English["Dashboard_Readiness_Band_ConsiderEasierDay"] = "Consider an easier day";
         English["Dashboard_CheckIn_PageTitle"] = "Daily check-in";
         English["Dashboard_CheckIn_PainMild"] = "Mild";
         English["Dashboard_CheckIn_PainMildA11y"] = "Pain: Mild";
@@ -200,5 +200,12 @@ public static partial class UiTextCatalog
         English["Dashboard_Prompt_NoPlanBody"] = "Your training sessions will appear once a plan exists.";
         English["Dashboard_Readiness_TrendEmpty"] = "Complete a check-in to see readiness history";
         English["Dashboard_Weight_TrendEmpty"] = "Add weight at three check-ins to see your trend";
+        English["Common_Selected"] = "Selected";
+        English["Common_NotSelected"] = "Not selected";
+        English["Common_SelectedFilter"] = "Selected filter";
+        English["Dashboard_Workout_Intensity"] = "Intensity";
+        English["Dashboard_Workout_RestGuidance"] =
+            "Rest day: keep movement light and let sleep and hydration do the work.";
+        English["Dashboard_Workout_ViewRestDay"] = "View rest day";
     }
 }

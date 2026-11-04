@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
-using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
-using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
+using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
+using MuscleCuties.UI.Services.Nutrition;
+using MuscleCuties.UI.Navigation;
 using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
@@ -22,6 +22,7 @@ public partial class NutritionViewModel
             return;
 
         _editingIngredient = ingredient;
+        ResetFoodSource();
         IsCustomFoodPanelVisible = false;
         IsFoodFinderExpanded = false;
         SelectedFoodResult = CreateFoodSearchResultItem(
@@ -37,6 +38,20 @@ public partial class NutritionViewModel
                                 ?? new FoodServingOptionItem { Label = "g", Unit = "g", Grams = 1f };
         FoodGrams = FormatAmountInput(ingredient.Grams);
         AddFoodMessage = string.Empty;
+    }
+
+    private void SelectMealType(MealType mealType)
+    {
+        if (!IsMealChoiceLocked)
+            SelectedMealType = mealType;
+    }
+
+    partial void OnSelectedMealTypeChanged(MealType value)
+    {
+        OnPropertyChanged(nameof(IsBreakfastSelected));
+        OnPropertyChanged(nameof(IsLunchSelected));
+        OnPropertyChanged(nameof(IsDinnerSelected));
+        OnPropertyChanged(nameof(IsSnackSelected));
     }
 
     private void AddSelectedFoodAsIngredient()
@@ -100,7 +115,7 @@ public partial class NutritionViewModel
         {
             var date = IsEditingMeal ? DateOnly.FromDateTime(_editingMealDate) : DateOnly.FromDateTime(DateTime.Today);
             var ingredients = MealIngredients
-                .Select(i => new MealIngredientInputDto(
+                .Select(i => new NutritionMealIngredient(
                     i.FoodItemId,
                     i.Name,
                     i.Grams,
@@ -120,7 +135,7 @@ public partial class NutritionViewModel
                     date,
                     SelectedMealType.ToString(),
                     SelectedMealTime,
-                    ingredients));
+                    NutritionPresentationMapper.ToMealIngredients(ingredients)));
                 AddFoodMessage = $"{SelectedMealType} updated at {SelectedMealTime:hh\\:mm}.";
             }
             else
@@ -129,7 +144,7 @@ public partial class NutritionViewModel
                     date,
                     SelectedMealType.ToString(),
                     SelectedMealTime,
-                    ingredients,
+                    NutritionPresentationMapper.ToMealIngredients(ingredients),
                     _acceptedSuggestionName,
                     _acceptedSuggestionPhase?.ToString()));
                 AddFoodMessage = $"{SelectedMealType} logged at {SelectedMealTime:hh\\:mm}.";
@@ -179,7 +194,7 @@ public partial class NutritionViewModel
 
         if (meal.LoggedMealId == 0 && _navigateAsync is not null)
         {
-            await _navigateAsync($"FoodLogPage?entryId={meal.HistoryId}");
+            await _navigateAsync(NutritionNavigation.ToLogEntry(meal.HistoryId));
             return;
         }
 
@@ -193,7 +208,15 @@ public partial class NutritionViewModel
                 return;
             }
 
-            BeginMealEdit(meal, ingredients);
+            BeginMealEdit(meal, ingredients.Select(NutritionPresentationMapper.ToMealIngredient).ToList());
+        }
+        catch (InvalidOperationException)
+        {
+            AddFoodMessage = "This meal could not be opened for editing. Refresh and try again.";
+        }
+        catch (ArgumentException)
+        {
+            AddFoodMessage = "This meal could not be opened for editing. Refresh and try again.";
         }
         finally
         {
@@ -240,7 +263,7 @@ public partial class NutritionViewModel
             if (preferenceVersion != _breakfastPreferenceVersion)
                 return;
 
-            _mealDistribution = targets.MealDistribution;
+            _mealDistribution = NutritionPresentationMapper.FromMealDistribution(targets.MealDistribution);
             TargetCalories = targets.Calories;
             TargetProtein = targets.Protein;
             TargetCarbs = targets.Carbs;
@@ -282,7 +305,7 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(SnackTargetText));
     }
 
-    private void BeginMealEdit(MealItem meal, IReadOnlyList<MealIngredientInputDto> ingredients)
+    private void BeginMealEdit(MealItem meal, IReadOnlyList<NutritionMealIngredient> ingredients)
     {
         MealIngredients = new ObservableCollection<MealIngredientItem>(ingredients.Select(i => new MealIngredientItem
         {
@@ -295,12 +318,15 @@ public partial class NutritionViewModel
             SourceSummary = i.SourceSummary,
             Grams = i.Grams,
             Amount = i.Amount,
-            ServingLabel = i.ServingLabel
+            ServingLabel = i.ServingLabel,
+            MacrosForAmount = NutritionPresentationMapper.FromPer100Grams(
+                i.Calories, i.Protein, i.Carbs, i.Fats, i.Grams)
         }));
 
         _editingMealDate = DateTime.Today;
         _editingMealId = meal.LoggedMealId;
         IsEditingMeal = true;
+        IsMealChoiceLocked = true;
         SelectedMealType = Enum.TryParse<MealType>(meal.MealType, true, out var mt) ? mt : MealType.Snack;
         SelectedMealTime = DateTime.TryParse(meal.Time, out var t) ? t.TimeOfDay : DateTime.Now.TimeOfDay;
         IsMealEditorVisible = true;
@@ -340,6 +366,7 @@ public partial class NutritionViewModel
 
     private void ResetFoodSearchAndSelection()
     {
+        ResetFoodSource();
         SelectedFoodResult = null;
         SearchQuery = string.Empty;
         ServingOptions = [];
@@ -365,7 +392,9 @@ public partial class NutritionViewModel
             SourceSummary = sourceSummary,
             Grams = grams,
             Amount = amount,
-            ServingLabel = servingLabel
+            ServingLabel = servingLabel,
+            MacrosForAmount = NutritionPresentationMapper.FromPer100Grams(
+                calories, protein, carbs, fats, grams)
         };
     }
 

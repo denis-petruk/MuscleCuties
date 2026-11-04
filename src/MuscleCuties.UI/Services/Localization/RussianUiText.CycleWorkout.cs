@@ -200,7 +200,18 @@ internal static partial class RussianUiText
         Values["Workout_Featured_TargetFormat"] = "Цель: {0}";
         Values["Workout_Featured_TempoLabel"] = "Темп:";
         Values["Workout_Featured_WarmupFormat"] = "Разминка: {0}";
+        Values["Workout_History_AllMonths"] = "Все месяцы";
         Values["Workout_History_AllWorkoutsLoaded"] = "Все упражнения загружены";
+        Values["Workout_History_AggregateOnlyNote"] = "Историческая сводка: отдельные подходы не записаны.";
+        Values["Workout_History_DurationMinutesFormat"] = "{0} мин";
+        Values["Workout_History_NotRecorded"] = "Не записано";
+        Values["Workout_History_NoSetDetailsNote"] = "Детали подходов не записаны.";
+        Values["Workout_History_NotesUpdatedMessage"] = "Заметки и РПЭ обновлены.";
+        Values["Workout_History_OpenSessionHint"] = "Открывает подробности тренировки";
+        Values["Workout_History_RpeValueFormat"] = "{0}/10";
+        Values["Workout_History_SetUpdatedFormat"] = "Подход №{0} обновлён ({1:F1} кг × {2} повторений)";
+        Values["Workout_History_TimeZoneUnknownFormat"] = "{0} · часовой пояс неизвестен";
+        Values["Workout_History_ValueKgFormat"] = "{0} кг";
         Values["Workout_History_ArchiveTitle"] = "Архив тренировок";
         Values["Workout_History_BackButton"] = "Назад";
         Values["Workout_History_BreakdownTitle"] = "Разделение упражнений и подходов";
@@ -208,10 +219,18 @@ internal static partial class RussianUiText
         Values["Workout_History_DurationHeader"] = "Продолжительность";
         Values["Workout_History_EmptyStateDescription"] = "Завершенные тренировки появятся здесь с подробными метриками подходов, объема и повторений.";
         Values["Workout_History_EmptyStateTitle"] = "Пока нет тренировок";
+        Values["Workout_History_Error_Load"] = "Не удалось загрузить историю тренировок. Повторите попытку.";
+        Values["Workout_History_Error_Filter"] = "Не удалось отфильтровать историю тренировок. Повторите попытку.";
+        Values["Workout_History_Error_LoadMore"] = "Не удалось загрузить больше тренировок. Повторите попытку.";
+        Values["Workout_History_Error_Detail"] = "Не удалось открыть тренировку. Повторите попытку.";
+        Values["Workout_History_Error_UpdateSet"] = "Не удалось обновить подход. Повторите попытку.";
+        Values["Workout_History_Error_Save"] = "Не удалось сохранить изменения. Повторите попытку.";
         Values["Workout_History_KgHeader"] = "КГ";
         Values["Workout_History_KgUnit"] = "кг";
         Values["Workout_History_LoadingMore"] = "Загрузка дополнительных упражнений...";
         Values["Workout_History_NotesAndRpeSectionTitle"] = "Заметки о сеансе и оценка РПЭ";
+        Values["Workout_History_WarmupSet"] = "Разминка";
+        Values["Workout_History_WorkingSet"] = "Рабочий подход";
         Values["Workout_History_NotesPlaceholder"] = "Запишите темп, технику или отзыв о суставах...";
         Values["Workout_History_PastSessionsTitle"] = "Прошедшие сеансы";
         Values["Workout_History_PerceivedExertionTitle"] = "Воспринимаемое усилие (РУП 1-10)";
@@ -373,5 +392,13 @@ internal static partial class RussianUiText
         Values["Cycle_Phase_Luteal_Nutrition"] = "Следуйте целям; при изменении аппетита выбирайте сытные блюда.";
         Values["Cycle_Phase_Luteal_Recovery"] = "Оставляйте время для сна и восстановления, когда это нужно.";
         Values["Cycle_Phase_Luteal_QuickRule"] = "Записывайте симптомы, а не предполагайте, что фаза предсказывает самочувствие.";
+        Values["Workout_Featured_RestDayBadge"] = "День отдыха";
+        Values["Workout_Featured_RestGuidance"] =
+            "День отдыха: двигайтесь легко, а сон и вода помогут восстановиться.";
+        Values["Workout_Featured_Sleep"] = "Сон";
+        Values["Workout_Featured_Hydration"] = "Вода";
+        Values["Workout_Featured_Duration"] = "Длительность";
+        Values["Workout_Featured_Exercises"] = "Упражнения";
+        Values["Workout_Featured_Intensity"] = "Интенсивность";
     }
 }

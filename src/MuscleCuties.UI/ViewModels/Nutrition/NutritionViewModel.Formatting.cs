@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
-using MuscleCuties.Core.Models.Nutrition;
 using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
@@ -11,12 +11,11 @@ public partial class NutritionViewModel
 {
     private static string BuildNutritionForGrams(FoodSearchResultItem food, float grams)
     {
-        return MacroNutrients
-            .FromPer100g(food.Calories, food.Protein, food.Carbs, food.Fats, grams)
-            .ToNutritionText();
+        return NutritionPresentationMapper.NutritionTextForGrams(
+            food.Calories, food.Protein, food.Carbs, food.Fats, grams);
     }
 
-    private static FoodSearchResultItem CreateFoodSearchResultItem(FoodCatalogItemDto food)
+    private static FoodSearchResultItem CreateFoodSearchResultItem(FoodCatalogItem food)
     {
         return new FoodSearchResultItem
         {
@@ -34,7 +33,7 @@ public partial class NutritionViewModel
         };
     }
 
-    private static FoodSearchResultItem CreateFoodSearchResultItem(CustomFoodResultDto food)
+    private static FoodSearchResultItem CreateFoodSearchResultItem(CustomFoodResult food)
     {
         return new FoodSearchResultItem
         {
@@ -197,7 +196,7 @@ public partial class NutritionViewModel
             : amount.ToString("0.##", CultureInfo.CurrentCulture);
     }
 
-    private static MealItem MapMealDtoToItem(MealSummaryDto dto)
+    private static MealItem MapMealDtoToItem(NutritionMealSummary dto)
     {
         return new MealItem
         {
@@ -206,11 +205,14 @@ public partial class NutritionViewModel
             Time = dto.Time,
             MealType = dto.MealType,
             Name = dto.Name,
+            IngredientsText = string.Equals(dto.IngredientSummary, dto.Name, StringComparison.OrdinalIgnoreCase)
+                ? string.Empty
+                : dto.IngredientSummary,
             CaloriesText = dto.CaloriesText,
             MacrosText = dto.MacrosText,
             FiberText = dto.FiberText,
             NutrientSummaryText = dto.NutrientSummaryText,
-            Macros = new MacroNutrients(dto.Calories, dto.Protein, dto.Carbs, dto.Fats),
+            Macros = NutritionPresentationMapper.FromTotals(dto.Calories, dto.Protein, dto.Carbs, dto.Fats),
             MacroItems = new ObservableCollection<MacroBreakdownItem>(dto.MacroItems.Select(m => new MacroBreakdownItem
             {
                 Name = m.Name,
@@ -223,7 +225,21 @@ public partial class NutritionViewModel
         };
     }
 
-    private static DailyMicronutrientItem MapMicroDtoToItem(DailyMicronutrientDto dto)
+    private const float PercentScale = 100f;
+
+    private void RefreshMealTargetShares()
+    {
+        foreach (var meal in Meals)
+        {
+            meal.TargetShareText = TargetCalories > 0
+                ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+                    "Nutrition_MealCard_TargetShareFormat",
+                    Math.Round(meal.Macros.Calories / TargetCalories * PercentScale))
+                : string.Empty;
+        }
+    }
+
+    private static DailyMicronutrientItem MapMicroDtoToItem(DailyMicronutrient dto)
     {
         return new DailyMicronutrientItem
         {

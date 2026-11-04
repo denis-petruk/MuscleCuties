@@ -32,9 +32,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         return new MixedActivitySessionDisplay(title, details)
         {
             Day = FullWeekdayLabel(session.Weekday),
-            Activity = session.DayOrder is { } order
-                ? FormatLocalized("Workout_Generation_OrderedActivityFormat", order.ToString(CultureInfo.CurrentCulture), ActivityLabel(session.ActivityTypeId))
-                : ActivityLabel(session.ActivityTypeId),
+            Activity = ActivityLabel(session.ActivityTypeId),
             Duration = duration
         };
     }
@@ -123,6 +121,18 @@ internal static class StrengthPlanGenerationDisplayMapper
         DayOfWeek.Friday => "Workout_Generation_FullDayFriday",
         DayOfWeek.Saturday => "Workout_Generation_FullDaySaturday",
         DayOfWeek.Sunday => "Workout_Generation_FullDaySunday",
+        _ => "Workout_Generation_UnknownDay"
+    });
+
+    public static string ShortWeekdayLabel(DayOfWeek weekday) => UiTextCatalog.Get(weekday switch
+    {
+        DayOfWeek.Monday => "Workout_Generation_DayMonday",
+        DayOfWeek.Tuesday => "Workout_Generation_DayTuesday",
+        DayOfWeek.Wednesday => "Workout_Generation_DayWednesday",
+        DayOfWeek.Thursday => "Workout_Generation_DayThursday",
+        DayOfWeek.Friday => "Workout_Generation_DayFriday",
+        DayOfWeek.Saturday => "Workout_Generation_DaySaturday",
+        DayOfWeek.Sunday => "Workout_Generation_DaySunday",
         _ => "Workout_Generation_UnknownDay"
     });
 

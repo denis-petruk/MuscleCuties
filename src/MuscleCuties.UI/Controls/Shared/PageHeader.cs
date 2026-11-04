@@ -56,7 +56,7 @@ public class PageHeader : ContentView
             VerticalOptions = LayoutOptions.Start,
             Command = new Command(() => BackCommand?.Execute(null))
         };
-        SemanticProperties.SetDescription(back, UiTextCatalog.Translate("Back"));
+        SemanticProperties.SetDescription(back, UiTextCatalog.TranslateRuntimeText("Back"));
 
         var title = new Label
         {
@@ -64,7 +64,8 @@ public class PageHeader : ContentView
             VerticalOptions = LayoutOptions.Center,
             LineBreakMode = LineBreakMode.WordWrap
         };
-        title.SetDynamicResource(StyleProperty, "SubHeadline");
+        title.SetDynamicResource(StyleProperty, "PageTitle");
+        SemanticProperties.SetHeadingLevel(title, SemanticHeadingLevel.Level1);
 
         var header = new Grid
         {

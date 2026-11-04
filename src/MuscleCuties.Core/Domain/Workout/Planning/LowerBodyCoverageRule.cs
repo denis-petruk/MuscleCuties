@@ -39,8 +39,8 @@ public static class LowerBodyCoverageRule
     private static readonly string[] AbductorsNames = ["GluteMed", "GluteMedius", "Abductors", "HipAbductors"];
     private static readonly string[] AdductorsNames = ["Adductors", "Adductor", "HipAdductors"];
 
-    private static readonly IReadOnlySet<MovementPattern> AccessoryCoveragePatterns =
-        new HashSet<MovementPattern>
+    private static readonly HashSet<MovementPattern> AccessoryCoveragePatterns =
+        new()
         {
             MovementPattern.HipAbduction,
             MovementPattern.HipAdduction,

@@ -241,7 +241,10 @@ public sealed class PostgresNutritionOverviewStore(
                 var cb = items.Sum(i => i.Carbs * (float)i.Grams / 100f);
                 var f = items.Sum(i => i.Fats * (float)i.Grams / 100f);
                 var names = items.Select(i => i.Name).Distinct().Take(3).ToList();
-                var name = names.Count == 0 ? "Logged meal" : string.Join(" + ", names);
+                var ingredientSummary = names.Count == 0 ? string.Empty : string.Join(" + ", names);
+                var name = string.IsNullOrWhiteSpace(meal.AcceptedSuggestionName)
+                    ? (string.IsNullOrWhiteSpace(ingredientSummary) ? "Logged meal" : ingredientSummary)
+                    : meal.AcceptedSuggestionName;
 
                 mealCards.Add(new MealSummaryDto(
                     meal.Id,
@@ -255,7 +258,8 @@ public sealed class PostgresNutritionOverviewStore(
                     string.Empty,
                     c, p, cb, f,
                     BuildMacroBreakdownDtos(c, p, cb, f),
-                    []
+                    [],
+                    ingredientSummary
                 ));
             }
 

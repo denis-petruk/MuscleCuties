@@ -12,13 +12,10 @@
 
     <Grid
         x:Name="StartupRoot"
-        Padding="{StaticResource PresentationAuthPagePadding}"
-        BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
-        <VerticalStackLayout
-            Spacing="{StaticResource PresentationFormSpacing}"
-            HorizontalOptions="Center"
-            VerticalOptions="Center"
-            MaximumWidthRequest="{StaticResource UiDimension400}">
+       
+        BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}" RowDefinitions="*,Auto">
+    <ScrollView Grid.Row="0">
+        <VerticalStackLayout Padding="{DynamicResource PresentationPageContentPadding}" Spacing="{StaticResource UiSpaceControl}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill" VerticalOptions="Center">
             <Image
                 x:Name="StartupLogo"
                 Source="{AppThemeBinding Light=musclecuties_logo_light_transparent.png, Dark=musclecuties_logo_dark_transparent.png}"
@@ -30,6 +27,7 @@
                 BackgroundColor="{StaticResource Transparent}"
                 SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_LogoA11y}" />
             <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}"
                 x:Name="StartupActivityIndicator"
                 IsRunning="True"
                 HorizontalOptions="Center"
@@ -55,21 +53,24 @@
                 Text="{loc:LocalizedText Dashboard_Startup_UnlockFailedMessage}"
                 Style="{StaticResource MutedCentered}"
                 LineBreakMode="WordWrap" />
-            <Button Style="{StaticResource ButtonPrimary}"
-                x:Name="RetryButton"
-                IsVisible="False"
-                Text="{loc:LocalizedText Dashboard_Shared_Retry}"
-                Clicked="OnRetryClicked"
-                SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_RetryUnlockA11y}"
-                SemanticProperties.Hint="{loc:LocalizedText Dashboard_Startup_RetryUnlockHint}" />
-            <Button
-                x:Name="ResetButton"
-                IsVisible="False"
-                Text="Reset Local Database"
-                Clicked="OnResetClicked"
-                Style="{StaticResource ButtonSecondary}"
-                SemanticProperties.Description="Reset Local Database"
-                SemanticProperties.Hint="Double tap to reset the local database and restart." />
         </VerticalStackLayout>
-    </Grid>
+    </ScrollView>
+    <VerticalStackLayout Grid.Row="1" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <Button Style="{StaticResource ButtonPrimary}"
+            x:Name="RetryButton"
+            IsVisible="False"
+            Text="{loc:LocalizedText Dashboard_Shared_Retry}"
+            Clicked="OnRetryClicked"
+            SemanticProperties.Description="{loc:LocalizedText Dashboard_Startup_RetryUnlockA11y}"
+            SemanticProperties.Hint="{loc:LocalizedText Dashboard_Startup_RetryUnlockHint}" />
+        <Button
+            x:Name="ResetButton"
+            IsVisible="False"
+            Text="{loc:LocalizedText Startup_ResetLocalData}"
+            Clicked="OnResetClicked"
+            Style="{StaticResource ButtonSecondary}"
+            SemanticProperties.Description="{loc:LocalizedText Startup_ResetLocalData}"
+            SemanticProperties.Hint="{loc:LocalizedText Startup_ResetLocalDataHint}" />
+    </VerticalStackLayout>
+</Grid>
 </ContentPage>

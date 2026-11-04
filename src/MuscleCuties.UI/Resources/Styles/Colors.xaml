@@ -7,18 +7,25 @@
     <Color x:Key="Primary">#C85A87</Color>
     <Color x:Key="PrimaryDark">#A6446D</Color>
     <Color x:Key="ActionSurfaceDark">#F0B8CF</Color>
-    <Color x:Key="ActionPressedLight">#8F2F59</Color>
+    <Color x:Key="ActionPressedLight">#6E3149</Color>
     <Color x:Key="DisabledTextLight">#6E5560</Color>
     <Color x:Key="DisabledTextDark">#D7B8C5</Color>
     <Color x:Key="Secondary">#F8DFF1</Color>
     <Color x:Key="SecondaryDarkText">#F0B8CF</Color>
     <Color x:Key="Tertiary">#E8B4C8</Color>
+    <Color x:Key="ActionPrimaryLight">#88435F</Color>
+    <Color x:Key="ActionSecondaryLight">#67444F</Color>
+    <!-- Corrected from the proposed #A47F8D so an essential boundary clears 3:1 on CardSurfaceSecondary. -->
+    <Color x:Key="ControlBoundaryLight">#96707F</Color>
+    <Color x:Key="ControlBoundaryDark">#C9A6B4</Color>
 
-    <Color x:Key="PageBackground">#FFF8FB</Color>
+    <Color x:Key="PageBackground">#FFF9FB</Color>
     <Color x:Key="PageBackgroundDark">#2B1D24</Color>
 
     <Color x:Key="CardSurface">#FFFFFF</Color>
     <Color x:Key="CardSurfaceDark">#3A2931</Color>
+    <Color x:Key="CardSurfaceSecondary">#F7EAF0</Color>
+    <Color x:Key="CardSurfaceSecondaryDark">#46313B</Color>
 
     <Color x:Key="AccentSurface">#FFF1F6</Color>
     <Color x:Key="AccentSurfaceDark">#3A2931</Color>
@@ -50,7 +57,7 @@
 
     <Color x:Key="TextPrimary">#2B1D24</Color>
     <Color x:Key="TextPrimaryDark">#F8EEF4</Color>
-    <Color x:Key="TextSecondary">#6C4B58</Color>
+    <Color x:Key="TextSecondary">#5F4550</Color>
     <Color x:Key="TextSecondaryDark">#D7BFCA</Color>
     <Color x:Key="TextAccent">#A6446D</Color>
     <Color x:Key="PrivacyShieldSurface">#FA2B1D24</Color>
@@ -75,13 +82,14 @@
     <Color x:Key="Gray900">#4C3942</Color>
     <Color x:Key="Gray950">#2B1D24</Color>
 
-    <Color x:Key="ErrorLight">#C0392B</Color>
-    <Color x:Key="ErrorDark">#E57373</Color>
-    <Color x:Key="SuccessLight">#2F7D4D</Color>
+    <Color x:Key="ErrorLight">#A72E27</Color>
+    <Color x:Key="ErrorDark">#F08B8B</Color>
+    <!-- Corrected from the proposed #2F7D4D so success text clears 4.5:1 on CardSurfaceSecondary. -->
+    <Color x:Key="SuccessLight">#2C7548</Color>
     <Color x:Key="SuccessDark">#7FD197</Color>
     <Color x:Key="WarningSurfaceLight">#FFF3E0</Color>
     <Color x:Key="WarningSurfaceDark">#332B1A</Color>
-    <Color x:Key="WarningAccentLight">#986200</Color>
+    <Color x:Key="WarningAccentLight">#7B4E00</Color>
     <Color x:Key="WarningAccentDark">#E0A345</Color>
 
     <Color x:Key="CyclePhaseMenstrualLight">#F9D6D8</Color>
@@ -177,6 +185,7 @@
     <Color x:Key="PhaseThemeSelectedDaySurfaceLight">#F6DDE6</Color>
     <Color x:Key="PhaseThemeSelectedDaySurfaceDark">#4A3240</Color>
     <Color x:Key="CycleNeutralTextLight">#8B7E86</Color>
+    <Color x:Key="CycleNeutralTodaySurface">#1F2937</Color>
     <Color x:Key="CycleNeutralSurfaceLight">#EEF0F2</Color>
     <Color x:Key="CycleFallbackTextLight">#1F2937</Color>
     <Color x:Key="CycleStripDefaultStrokeLight">#E8D8E0</Color>
@@ -198,15 +207,63 @@
     <Color x:Key="DashboardChartTrackLight">#DDDDE3</Color>
     <Color x:Key="DashboardPhaseCardTextLight">#8B4E68</Color>
 
+    <!-- Semantic colour roles. Consumers reference these by intent; the raw palette above is
+         definition-only and guarded against direct use outside this file. Every value below is an
+         exact alias of the palette value it replaces, so adopting a role cannot change rendering. -->
+    <Color x:Key="SurfaceSubtleLight">#F8EEF4</Color>
+    <Color x:Key="SurfaceSubtleDark">#5A424C</Color>
+    <Color x:Key="SurfaceMutedLight">#F0D8E2</Color>
+    <Color x:Key="SurfaceMutedDark">#5A424C</Color>
+    <Color x:Key="SurfaceMutedStrongLight">#F0D8E2</Color>
+    <Color x:Key="SurfaceMutedStrongDark">#725763</Color>
+    <Color x:Key="SurfaceSunkenLight">#FFF8FB</Color>
+    <Color x:Key="SurfaceSunkenDark">#4C3942</Color>
+    <Color x:Key="SurfaceContrastLight">#FFFFFF</Color>
+    <Color x:Key="SurfaceContrastDark">#000000</Color>
+    <Color x:Key="DividerSubtleLight">#F8EEF4</Color>
+    <Color x:Key="DividerSubtleDark">#5A424C</Color>
+    <Color x:Key="TrackSubtleLight">#F8EEF4</Color>
+    <Color x:Key="TrackSubtleDark">#5A424C</Color>
+    <Color x:Key="TrackMutedLight">#F0D8E2</Color>
+    <Color x:Key="TrackMutedDark">#5A424C</Color>
+    <Color x:Key="BorderSubtleLight">#F8EEF4</Color>
+    <Color x:Key="BorderSubtleDark">#5A424C</Color>
+    <Color x:Key="BorderMutedLight">#F0D8E2</Color>
+    <Color x:Key="BorderMutedDark">#5A424C</Color>
+    <Color x:Key="BorderNeutralLight">#8B6C79</Color>
+    <Color x:Key="BorderNeutralDark">#AE8D9B</Color>
+    <Color x:Key="BorderStrongDark">#8B6C79</Color>
+    <Color x:Key="AccentSurfaceMutedLight">#F8DFF1</Color>
+    <Color x:Key="AccentSurfaceMutedDark">#5A424C</Color>
+    <Color x:Key="AccentSurfaceDeepDark">#4C3942</Color>
+    <Color x:Key="TextTertiaryLight">#82606D</Color>
+    <Color x:Key="TextTertiaryDark">#B99AA6</Color>
+    <Color x:Key="TextOnAccentLight">#FFFFFF</Color>
+    <Color x:Key="TextOnAccentDark">#2B1D24</Color>
+    <Color x:Key="ContrastInk">#FFFFFF</Color>
+    <Color x:Key="ControlThumbLight">#FFFFFF</Color>
+    <Color x:Key="ControlThumbDark">#F8EEF4</Color>
+    <Color x:Key="DashboardWeightAccent">#C45A86</Color>
+    <Color x:Key="DashboardReadinessAccent">#5586B5</Color>
+    <Color x:Key="TextHeadingLight">#5B4650</Color>
+    <Color x:Key="TextHeadingDark">#FFFFFF</Color>
+    <Color x:Key="ProgressAccent">#5B4650</Color>
+    <Color x:Key="IconContrastDark">#000000</Color>
+    <Color x:Key="DisabledSurfaceLight">#F0D8E2</Color>
+    <Color x:Key="DisabledSurfaceDark">#5A424C</Color>
+
     <Color x:Key="Transparent">#00000000</Color>
 
     <!-- Shared design tokens needed during root dictionary initialization -->
     <x:String x:Key="AppFontFamily">Inter</x:String>
+    <!-- Open Sans semibold registered under a second alias; the historical regular alias stays intact. -->
+    <x:String x:Key="AppFontSemibold">InterSemibold</x:String>
     <x:Static x:Key="UiFontAttributesBold" Member="FontAttributes.Bold" />
     <x:Static x:Key="UiFontAttributesItalic" Member="FontAttributes.Italic" />
     <x:Static x:Key="UiFontAttributesNone" Member="FontAttributes.None" />
     <x:Int32 x:Key="AuthCodeLength">6</x:Int32>
     <x:Int32 x:Key="UiRadiusControl">14</x:Int32>
+    <x:Int32 x:Key="UiRadiusButton">12</x:Int32>
     <x:Int32 x:Key="UiRadiusCalendarDay">10</x:Int32>
     <x:Double x:Key="UiSpaceMicro">4</x:Double>
     <x:Double x:Key="UiSpaceTight">8</x:Double>
@@ -219,6 +276,7 @@
     <Thickness x:Key="UiInsets14">14</Thickness>
     <Thickness x:Key="UiInsets16">16</Thickness>
     <Thickness x:Key="UiInsets18">18</Thickness>
+    <Thickness x:Key="UiInsets19">19</Thickness>
     <Thickness x:Key="UiInsets20">20</Thickness>
     <Thickness x:Key="UiInsets24">24</Thickness>
     <Thickness x:Key="UiInsets28">28</Thickness>

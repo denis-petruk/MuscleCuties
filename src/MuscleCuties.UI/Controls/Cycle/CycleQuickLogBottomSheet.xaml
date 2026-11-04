@@ -20,7 +20,7 @@
 
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource ModalSurface}" VerticalOptions="End">
+            Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
             <Grid RowDefinitions="Auto, *, Auto">
 
                 <!-- Header (Flattened Grid) -->
@@ -30,7 +30,7 @@
                         WidthRequest="{StaticResource UiDimension40}"
                         HeightRequest="{StaticResource UiDimension4}"
                         CornerRadius="{StaticResource UiCornerRadius2}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceMutedStrongLight}, Dark={StaticResource SurfaceMutedStrongDark}}"
                         HorizontalOptions="Center"
                         Margin="{StaticResource UiInsets0_10_0_10}" />
 
@@ -72,7 +72,7 @@
                     <BoxView
                         Grid.Row="2"
                         HeightRequest="{StaticResource UiDimension1}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
                         Opacity="{StaticResource UiOpacityBackdrop}" />
                 </Grid>
 
@@ -90,19 +90,14 @@
                             <Label
                                 Grid.Row="0"
                                 Text="{loc:LocalizedText Cycle_QuickLog_PeriodStatusSectionTitle}"
-                                FontSize="{StaticResource UiFontSize11}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                Style="{StaticResource CaptionLabel}"
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
 
                             <Grid Grid.Row="1" ColumnDefinitions="*, *" ColumnSpacing="{StaticResource UiSpaceCompact}">
                                 <!-- Period Started Toggle -->
                                 <Border
-                                    StrokeShape="{StaticResource UiRoundRectangleRadius14}"
-                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                                    MinimumHeightRequest="{StaticResource UiDimension48}"
-                                    Padding="{StaticResource UiInsets12_0}"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                                    Style="{StaticResource ChoiceCell}"
                                     SemanticProperties.Description="{loc:LocalizedText Cycle_QuickLog_TogglePeriodStartedAccessibility}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding TogglePeriodStartedCommand}" />
@@ -131,8 +126,7 @@
                                             VerticalOptions="Center" />
                                         <Label
                                             Text="{loc:LocalizedText Cycle_QuickLog_PeriodStarted}"
-                                            FontSize="{StaticResource UiFontSize13}"
-                                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                                            Style="{StaticResource MutedLabel}"
                                             LineBreakMode="WordWrap"
                                             VerticalOptions="Center">
                                             <Label.Triggers>
@@ -150,11 +144,7 @@
                                 <!-- Period Ended Toggle -->
                                 <Border
                                     Grid.Column="1"
-                                    StrokeShape="{StaticResource UiRoundRectangleRadius14}"
-                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                                    MinimumHeightRequest="{StaticResource UiDimension48}"
-                                    Padding="{StaticResource UiInsets12_0}"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                                    Style="{StaticResource ChoiceCell}"
                                     SemanticProperties.Description="{loc:LocalizedText Cycle_QuickLog_TogglePeriodEndedAccessibility}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding TogglePeriodEndedCommand}" />
@@ -184,8 +174,7 @@
                                             VerticalOptions="Center" />
                                         <Label
                                             Text="{loc:LocalizedText Cycle_QuickLog_PeriodEnded}"
-                                            FontSize="{StaticResource UiFontSize13}"
-                                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                                            Style="{StaticResource MutedLabel}"
                                             LineBreakMode="WordWrap"
                                             VerticalOptions="Center">
                                             <Label.Triggers>
@@ -207,8 +196,7 @@
                             <Label
                                 Grid.Row="0"
                                 Text="{loc:LocalizedText Cycle_QuickLog_FlowIntensitySectionTitle}"
-                                FontSize="{StaticResource UiFontSize11}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                Style="{StaticResource CaptionLabel}"
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
 
@@ -216,7 +204,7 @@
                                    BindableLayout.ItemsSource="{Binding FlowOptions}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="cycleModels:FlowOptionItem">
-                                        <Border Style="{StaticResource SelectableCard}"
+                                        <Border Style="{StaticResource CardSecondary}"
                                             MinimumHeightRequest="{StaticResource UiDimension52}"
                                             SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_QuickLog_FlowIntensityFormat}">
                                             <Border.GestureRecognizers>
@@ -232,8 +220,7 @@
                                                 <Label
                                                     Grid.Row="0"
                                                     Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
-                                                    FontSize="{StaticResource UiFontSize13}"
-                                                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                                                    Style="{StaticResource MutedLabel}"
                                                     LineBreakMode="WordWrap"
                                                     HorizontalOptions="Center"
                                                     HorizontalTextAlignment="Center">
@@ -268,8 +255,7 @@
                             <Label
                                 Grid.Row="0"
                                 Text="{loc:LocalizedText Cycle_QuickLog_SymptomsSectionTitle}"
-                                FontSize="{StaticResource UiFontSize11}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                Style="{StaticResource CaptionLabel}"
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
 
@@ -281,7 +267,7 @@
                                 BindableLayout.ItemsSource="{Binding SymptomOptions}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="cycleModels:SymptomOptionItem">
-                                        <Border Style="{StaticResource SelectableCard}"
+                                        <Border Style="{StaticResource CardSecondary}"
                                             FlexLayout.Basis="48%"
                                             Margin="{StaticResource UiInsets0_0_0_10}"
                                             MinimumHeightRequest="{StaticResource UiDimension50}"
@@ -307,8 +293,7 @@
                                                 <Label
                                                     Grid.Column="1"
                                                     Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
-                                                    FontSize="{StaticResource UiFontSize13}"
-                                                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                                                    Style="{StaticResource MutedLabel}"
                                                     LineBreakMode="WordWrap"
                                                     VerticalOptions="Center">
                                                     <Label.Triggers>
@@ -353,7 +338,7 @@
                 <!-- Footer Save Action -->
                 <Grid
                     Grid.Row="2"
-                    Padding="{StaticResource PresentationActionFooterPadding}"
+                    Padding="{DynamicResource PresentationActionFooterPadding}"
                     RowDefinitions="Auto, Auto"
                     RowSpacing="{StaticResource UiSpacing10}">
                     <!-- Recovery for symptoms logged without an active cycle: offers the missing step instead of a dead end. -->

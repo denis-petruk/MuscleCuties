@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.UI.Services.Localization;
@@ -34,10 +33,7 @@ public sealed class ApiFailureNotice
         MessageText = UiTextCatalog.Get(messageKey);
         ReferenceText = string.IsNullOrWhiteSpace(requestId)
             ? string.Empty
-            : string.Format(
-                CultureInfo.CurrentCulture,
-                UiTextCatalog.Get(ApiFailurePresenter.ReferenceFormatKey),
-                requestId);
+            : UiTextCatalog.Format(ApiFailurePresenter.ReferenceFormatKey, requestId);
     }
 
     public string MessageKey { get; }

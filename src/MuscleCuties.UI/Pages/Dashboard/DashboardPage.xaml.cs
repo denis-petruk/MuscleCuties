@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using MuscleCuties.UI.Controls.Dashboard;
 using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.ViewModels.Dashboard;
 using MuscleCuties.UI.ViewModels.Workout;
@@ -15,6 +16,7 @@ public partial class DashboardPage : ContentPage
     private readonly ThemeChangeObserver _themeObserver;
     private readonly DashboardViewModel _viewModel;
     private Task? _deferredCardsLoad;
+    private Task? _checkInModalLoadTask;
     private Task? _injuryModalLoadTask;
 
     public DashboardPage(DashboardViewModel vm)
@@ -76,17 +78,26 @@ public partial class DashboardPage : ContentPage
 
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(DashboardViewModel.IsInjuryModalVisible))
+        var isInjuryModal = e.PropertyName == nameof(DashboardViewModel.IsInjuryModalVisible);
+        if (!isInjuryModal && e.PropertyName != nameof(DashboardViewModel.IsCheckInModalVisible))
             return;
 
         try
         {
-            await MainThread.InvokeOnMainThreadAsync(UpdateInjuryModalAsync);
+            if (isInjuryModal)
+                await MainThread.InvokeOnMainThreadAsync(UpdateInjuryModalAsync);
+            else
+                await MainThread.InvokeOnMainThreadAsync(UpdateCheckInModalAsync);
         }
         catch
         {
-            Trace.WriteLine("[DashboardPage] Could not present injury modal.");
-            _viewModel.CloseInjuryModalCommand.Execute(null);
+            Trace.WriteLine(isInjuryModal
+                ? "[DashboardPage] Could not present injury modal."
+                : "[DashboardPage] Could not present check-in modal.");
+            if (isInjuryModal)
+                _viewModel.CloseInjuryModalCommand.Execute(null);
+            else
+                _viewModel.CloseCheckInModalCommand.Execute(null);
         }
     }
 
@@ -101,10 +112,38 @@ public partial class DashboardPage : ContentPage
             _viewModel.CloseInjuryModalCommand);
     }
 
+    private async Task UpdateCheckInModalAsync()
+    {
+        if (!_viewModel.IsCheckInModalVisible && !CheckInModalLazy.HasLazyViewLoaded)
+            return;
+
+        if (_viewModel.IsCheckInModalVisible)
+            try
+            {
+                await (_checkInModalLoadTask ??= CheckInModalLazy.LoadIfNeededAsync(true).AsTask());
+            }
+            catch
+            {
+                _checkInModalLoadTask = null;
+                throw;
+            }
+
+        if (!CheckInModalLazy.HasLazyViewLoaded)
+            return;
+
+        var modal = (DailyCheckInModal)CheckInModalLazy.Content;
+        var checkInVm = _viewModel.CheckInVm;
+        if (modal.BindingContext != checkInVm)
+            modal.BindingContext = checkInVm;
+        modal.CloseCommand = _viewModel.CloseCheckInModalCommand;
+        modal.IsOpen = _viewModel.IsCheckInModalVisible;
+    }
+
     protected override void OnDisappearing()
     {
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         _viewModel.CloseInjuryModalCommand.Execute(null);
+        _viewModel.CloseCheckInModalCommand.Execute(null);
         _themeObserver.Detach();
         base.OnDisappearing();
     }
@@ -118,6 +157,9 @@ public partial class DashboardPage : ContentPage
     protected override bool OnBackButtonPressed()
     {
         if (PageLoadExtensions.TryCloseModalOnBack(_viewModel.IsInjuryModalVisible, _viewModel.CloseInjuryModalCommand))
+            return true;
+
+        if (PageLoadExtensions.TryCloseModalOnBack(_viewModel.IsCheckInModalVisible, _viewModel.CloseCheckInModalCommand))
             return true;
 
         return base.OnBackButtonPressed();

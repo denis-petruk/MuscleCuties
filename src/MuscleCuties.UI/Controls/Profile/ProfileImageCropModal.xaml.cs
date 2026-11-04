@@ -1,11 +1,10 @@
-using System.Runtime.CompilerServices;
 using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Services.Profile;
 
 namespace MuscleCuties.UI.Controls.Profile;
 
-public partial class ProfileImageCropModal : ContentView
+public partial class ProfileImageCropModal : AnimatedModalView
 {
     private double _currentScale;
     private bool _hasContent;
@@ -18,7 +17,6 @@ public partial class ProfileImageCropModal : ContentView
     {
         _currentScale = AppThemeResources.GetDouble("UiScaleCropMinimum");
         _startScale = _currentScale;
-        IsVisible = false;
     }
 
     protected override void OnSizeAllocated(double width, double height)
@@ -40,7 +38,7 @@ public partial class ProfileImageCropModal : ContentView
         CropImage.Source = ImageSource.FromFile(imagePath);
         ResetTransforms();
         BottomSheetSizing.Apply(SheetSurface, Height);
-        IsVisible = true;
+        IsOpen = true;
         return _tcs.Task;
     }
 
@@ -112,11 +110,7 @@ public partial class ProfileImageCropModal : ContentView
 
     private void Hide()
     {
-        ModalTransition.PlayHide(this, () =>
-        {
-            IsVisible = false;
-            CropImage.Source = null;
-        });
+        IsOpen = false;
     }
 
     private void ResetTransforms()
@@ -144,10 +138,4 @@ public partial class ProfileImageCropModal : ContentView
         _panY = CropImage.TranslationY;
     }
 
-    protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        base.OnPropertyChanged(propertyName);
-        if (propertyName == nameof(IsVisible) && IsVisible)
-            ModalTransition.PlayShow(this);
-    }
 }

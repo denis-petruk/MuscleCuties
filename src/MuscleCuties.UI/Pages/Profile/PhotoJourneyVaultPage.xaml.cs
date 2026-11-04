@@ -66,10 +66,10 @@ public partial class PhotoJourneyVaultPage : ContentPage
 
             // Prompt optional weight entry
             var weightString = await DisplayPromptAsync(
-                UiTextCatalog.Translate("Progress Photo"),
-                UiTextCatalog.Translate("Enter your current weight (optional, kg):"),
-                UiTextCatalog.Translate("Next"),
-                UiTextCatalog.Translate("Skip"),
+                UiTextCatalog.TranslateRuntimeText("Progress Photo"),
+                UiTextCatalog.TranslateRuntimeText("Enter your current weight (optional, kg):"),
+                UiTextCatalog.TranslateRuntimeText("Next"),
+                UiTextCatalog.TranslateRuntimeText("Skip"),
                 keyboard: Keyboard.Numeric);
 
             double? weightKg = null;
@@ -78,16 +78,16 @@ public partial class PhotoJourneyVaultPage : ContentPage
 
             // Prompt optional notes
             var notes = await DisplayPromptAsync(
-                UiTextCatalog.Translate("Progress Photo"),
-                UiTextCatalog.Translate("Add an optional note:"),
-                UiTextCatalog.Translate("Save"),
-                UiTextCatalog.Translate("Skip"));
+                UiTextCatalog.TranslateRuntimeText("Progress Photo"),
+                UiTextCatalog.TranslateRuntimeText("Add an optional note:"),
+                UiTextCatalog.TranslateRuntimeText("Save"),
+                UiTextCatalog.TranslateRuntimeText("Skip"));
 
             if (!await _viewModel.AddPhotoAsync(rawPath, DateTime.Today, weightKg, notes ?? string.Empty))
                 throw new InvalidOperationException("The photo was not saved.");
             if (_viewModel.IsLoadError)
-                await DisplayAlertAsync(UiTextCatalog.Translate("Photo Vault"),
-                    UiTextCatalog.Translate("The photo was saved, but the vault could not refresh. Reopen it to view the photo."),
+                await DisplayAlertAsync(UiTextCatalog.TranslateRuntimeText("Photo Vault"),
+                    UiTextCatalog.TranslateRuntimeText("The photo was saved, but the vault could not refresh. Reopen it to view the photo."),
                     "OK");
         }
         catch
@@ -96,15 +96,15 @@ public partial class PhotoJourneyVaultPage : ContentPage
                 try { File.Delete(rawPath); }
                 catch
                 {
-                    await DisplayAlertAsync(UiTextCatalog.Translate("Photo Vault"),
-                        UiTextCatalog.Translate(
+                    await DisplayAlertAsync(UiTextCatalog.TranslateRuntimeText("Photo Vault"),
+                        UiTextCatalog.TranslateRuntimeText(
                             "The photo could not be saved, and its local copy could not be removed. Please try again."),
                         "OK");
                     return;
                 }
 
-            await DisplayAlertAsync(UiTextCatalog.Translate("Photo Vault"),
-                UiTextCatalog.Translate("Could not add the photo right now. Please try again."), "OK");
+            await DisplayAlertAsync(UiTextCatalog.TranslateRuntimeText("Photo Vault"),
+                UiTextCatalog.TranslateRuntimeText("Could not add the photo right now. Please try again."), "OK");
         }
     }
 }

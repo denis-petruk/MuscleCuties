@@ -8,6 +8,10 @@ public readonly record struct MacroNutrients(
 {
     public static MacroNutrients Empty => new(0f, 0f, 0f, 0f);
 
+    public float ProteinCalories => Protein * 4f;
+    public float CarbsCalories => Carbs * 4f;
+    public float FatsCalories => Fats * 9f;
+
     public static MacroNutrients FromPer100g(
         float calories,
         float protein,

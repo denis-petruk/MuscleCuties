@@ -230,8 +230,8 @@ public partial class CycleViewModel
         }
         catch (CyclePhaseOrderIssue ex)
         {
-            QuickLogStatusText = string.Format(
-                MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_PhaseOrderFormat"),
+            QuickLogStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+                "Cycle_QuickLog_PhaseOrderFormat",
                 ex.SuggestedPhase);
         }
         catch (Exception ex)

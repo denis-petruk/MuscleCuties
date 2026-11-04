@@ -8,7 +8,6 @@ namespace MuscleCuties.UI.ViewModels.Auth;
 public sealed class ResendCountdownCoordinator : IDisposable
 {
     private static string ResendCodeText => UiTextCatalog.Get("Auth_Otp_ResendCode");
-    private static string ResendInFormat => UiTextCatalog.Get("Auth_Otp_ResendInFormat");
     private readonly Action<int, bool, string> _onStateChanged;
     private readonly TimeProvider _timeProvider;
     private bool _disposed;
@@ -33,7 +32,9 @@ public sealed class ResendCountdownCoordinator : IDisposable
 
         var initialSeconds = Math.Max(0, seconds);
         var canResend = initialSeconds == 0;
-        var buttonText = canResend ? ResendCodeText : string.Format(ResendInFormat, initialSeconds);
+        var buttonText = canResend
+            ? ResendCodeText
+            : UiTextCatalog.Format("Auth_Otp_ResendInFormat", initialSeconds);
         _onStateChanged(initialSeconds, canResend, buttonText);
 
         if (canResend) return;
@@ -56,7 +57,9 @@ public sealed class ResendCountdownCoordinator : IDisposable
                 var remaining = Math.Max(0, (int)Math.Ceiling(
                     seconds - _timeProvider.GetElapsedTime(startedAt).TotalSeconds));
                 var canResend = remaining == 0;
-                var buttonText = remaining > 0 ? string.Format(ResendInFormat, remaining) : ResendCodeText;
+                var buttonText = remaining > 0
+                    ? UiTextCatalog.Format("Auth_Otp_ResendInFormat", remaining)
+                    : ResendCodeText;
                 _onStateChanged(remaining, canResend, buttonText);
 
                 if (canResend)

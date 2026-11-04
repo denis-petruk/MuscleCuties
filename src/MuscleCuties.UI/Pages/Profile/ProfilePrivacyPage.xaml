@@ -5,80 +5,91 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:MuscleCuties.UI.Pages.Profile"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     x:DataType="local:ProfilePrivacyPage"
     Shell.NavBarIsVisible="False"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
-
-    <ScrollView>
-        <Grid Padding="{StaticResource PresentationFormPagePadding}"
-              RowSpacing="{StaticResource UiSpaceControl}"
-              MaximumWidthRequest="{StaticResource UiDimension640}"
-              RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+    <Grid RowDefinitions="Auto,*">
+        <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
             <sharedControls:PageHeader
-                Grid.Row="0"
-                x:Name="HeaderView"
-                Title="Privacy"
-                Subtitle="Your data and account security"
+                Title="{loc:LocalizedText Profile_Privacy_Title}"
+                Subtitle="{loc:LocalizedText Profile_Privacy_Subtitle}"
                 BackCommand="{Binding BackCommand}" />
-
-            <Border Grid.Row="1" Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-                    <sharedControls:IconSectionHeader x:Name="SummaryTitle" Text="Your data, at a glance"
-                                                      IconGlyph="ShieldCheckmark24" />
-                    <Label x:Name="SummaryBody"
-                           Text="Your account and health records are stored in MuscleCuties services."
-                           Style="{StaticResource BodyLabel}" />
-                </VerticalStackLayout>
-            </Border>
-
-            <Border Grid.Row="2" Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
-                    <sharedControls:IconSectionHeader x:Name="ServicesTitle" Text="Other services"
-                                                      IconGlyph="LinkSquare24" />
-                    <Label x:Name="EmailBody"
-                           Text="Verification emails use our email provider."
-                           Style="{StaticResource BodyLabel}" />
-                    <BoxView HeightRequest="{StaticResource UiDimension1}" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
-                    <Label x:Name="FoodBody"
-                           Text="Food search may send generic names to USDA, never your logs."
-                           Style="{StaticResource BodyLabel}" />
-                    <BoxView HeightRequest="{StaticResource UiDimension1}" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
-                    <Label x:Name="HealthBody"
-                           Text="Apple Health steps are read only with your permission."
-                           Style="{StaticResource BodyLabel}" />
-                </VerticalStackLayout>
-            </Border>
-
-            <Border Grid.Row="3" Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpacing14}">
-                    <sharedControls:IconSectionHeader x:Name="ChoiceTitle" Text="Your choices"
-                                                      IconGlyph="PersonPill24" />
-                    <Label x:Name="ChoiceBody"
-                           Text="You can delete your account and local data from Profile."
-                           Style="{StaticResource BodyLabel}" />
-                    <Button x:Name="PolicyButton"
-                            Text="Read privacy policy"
-                            Style="{StaticResource ButtonSecondary}"
-                            Clicked="OnPrivacyPolicyClicked"
-                            HorizontalOptions="Fill"
-                            SemanticProperties.Description="Open the full privacy policy" />
-                </VerticalStackLayout>
-            </Border>
-            <Border Grid.Row="4" Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-                    <sharedControls:IconSectionHeader x:Name="DisclaimerTitle"
-                                                      Text="Not clinically approved"
-                                                      IconGlyph="ShieldCheckmark24" />
-                    <Label x:Name="DisclaimerBody"
-                           Text="MuscleCuties is not a health consultant, a medical service or a substitute for professional care. Its guidance has not been reviewed or approved by a clinician. Before relying on this app, talk to a qualified professional about your training, your cycle and any injury or pain you have."
-                           Style="{StaticResource BodyLabel}" />
-                    <Label x:Name="DisclaimerPlanBody"
-                           Text="Workouts and plans are still applied. The app will keep giving you strength training and a workout plan, adjusted to what you tell it, including when you report an injury."
-                           Style="{StaticResource BodyLabel}" />
-                </VerticalStackLayout>
-            </Border>
         </Grid>
-    </ScrollView>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="{DynamicResource PresentationFormPagePadding}" Spacing="{StaticResource UiSpaceControl}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+                <Border Style="{StaticResource CardPrimary}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Privacy_DataTitle}"
+                                                          IconGlyph="ShieldCheckmark24" />
+
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                            <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Privacy_StorageLabel}"
+                                   Style="{StaticResource FormFieldLabel}" />
+                            <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Privacy_StorageBody}"
+                                   Style="{StaticResource BodyLabel}" />
+                        </Grid>
+
+                        <BoxView HeightRequest="{StaticResource UiDimension1}"
+                                 Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
+
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                            <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Privacy_EmailLabel}"
+                                   Style="{StaticResource FormFieldLabel}" />
+                            <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Privacy_EmailBody}"
+                                   Style="{StaticResource BodyLabel}" />
+                        </Grid>
+
+                        <BoxView HeightRequest="{StaticResource UiDimension1}"
+                                 Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
+
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                            <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Privacy_FoodLabel}"
+                                   Style="{StaticResource FormFieldLabel}" />
+                            <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Privacy_FoodBody}"
+                                   Style="{StaticResource BodyLabel}" />
+                        </Grid>
+
+                        <BoxView HeightRequest="{StaticResource UiDimension1}"
+                                 Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
+
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                            <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Privacy_HealthLabel}"
+                                   Style="{StaticResource FormFieldLabel}" />
+                            <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Privacy_HealthBody}"
+                                   Style="{StaticResource BodyLabel}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource CardPrimary}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Privacy_ChoicesTitle}"
+                                                          IconGlyph="PersonPill24" />
+                        <Label Text="{loc:LocalizedText Profile_Privacy_ChoicesBody}"
+                               Style="{StaticResource BodyLabel}" />
+                        <Button Text="{loc:LocalizedText Profile_Privacy_ReadPolicy}"
+                                Style="{StaticResource ButtonSecondary}"
+                                Clicked="OnPrivacyPolicyClicked"
+                                HorizontalOptions="Fill"
+                                SemanticProperties.Description="{loc:LocalizedText Profile_Privacy_OpenPolicyDescription}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource CardSecondary}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Privacy_DisclaimerTitle}"
+                                                          IconGlyph="ShieldLock24" />
+                        <Label Text="{loc:LocalizedText Profile_Privacy_DisclaimerBody}"
+                               Style="{StaticResource BodyLabel}" />
+                        <Label Text="{loc:LocalizedText Profile_Privacy_DisclaimerPlanBody}"
+                               Style="{StaticResource BodyLabel}" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>

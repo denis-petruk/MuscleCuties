@@ -21,7 +21,8 @@
             VerticalOptions="Center"
             Spacing="{StaticResource UiSpacing10}">
             <ActivityIndicator
-                Color="{StaticResource Primary}"
+                        Style="{StaticResource StateBusyInline}"
+               
                 IsRunning="{Binding IsPageLoading}"
                 SemanticProperties.Description="{loc:LocalizedText Dashboard_Shared_LoadingPageDataA11y}" />
             <Label

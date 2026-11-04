@@ -70,7 +70,7 @@ public static class WorkoutPreferencesRule
 
     public static bool HasMinimumDistinctWeekdays(IReadOnlyCollection<DayOfWeek>? availableWeekdays) =>
         availableWeekdays is { Count: >= MinimumDaysPerWeek and <= MaximumDaysPerWeek } &&
-        availableWeekdays.All(day => Enum.IsDefined(typeof(DayOfWeek), day)) &&
+        availableWeekdays.All(day => Enum.IsDefined(day)) &&
         availableWeekdays.Distinct().Count() == availableWeekdays.Count;
 
     public static bool IsValid(

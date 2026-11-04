@@ -14,9 +14,9 @@ public static partial class UiTextCatalog
         English["Workout_StyleOffer_Keep"] = "Keep current style";
         English["Workout_StyleOffer_ActionFailed"] = "Could not update this offer. Please try again.";
         English["Workout_Generation_AnswersRefreshedReview"] = "Your saved answers were refreshed after an interrupted or conflicting save. Review your answers, then try again.";
-        English["Workout_Generation_DurationChoices"] = "Your selected time cannot fit all required movements. Choose a longer session or keep the shorter time and review the movements omitted to fit it.";
+        English["Workout_Generation_DurationChoices"] = "Not enough time for every movement.";
         English["Workout_Generation_UseLongerDuration"] = "Use {0} minutes";
-        English["Workout_Generation_UseShorterDuration"] = "Keep shorter time and review omissions";
+        English["Workout_Generation_UseShorterDuration"] = "Keep shorter time";
         English["Workout_Generation_DurationMovementOmitted"] = "To fit your selected session time: {0}.";
         English["Workout_Generation_PlanSetupBadge"] = "PLAN SETUP";
         English["Workout_Generation_TimingBadge"] = "SESSION TIMING";
@@ -104,8 +104,6 @@ public static partial class UiTextCatalog
         English["Workout_Generation_ExercisePending"] = "Exercise details unavailable";
         English["Workout_Generation_PrescriptionPending"] = "Prescription details unavailable";
         English["Workout_Generation_SlotDetailsFormat"] = "{0} sets · {1}–{2} reps";
-        English["Workout_Generation_ExerciseConditionsTitle"] = "Exercise conditions";
-        English["Workout_Generation_ExerciseConditionsHelp"] = "Review the setup, range, and technique conditions for these exercises before continuing.";
         English["Workout_Generation_LimitationGeneric"] = "This plan needs more information or does not fit the current planning rules.";
         English["Workout_Generation_Required"] = "Required";
         English["Workout_Generation_LimitationTiming"] = "The saved activity length or warm-up and cool-down details do not fit this plan.";
@@ -138,22 +136,21 @@ public static partial class UiTextCatalog
         English["Workout_Generation_ReplacementSummary"] = "Your current plan will be replaced with this schedule:";
         English["Workout_Generation_ReplacementCancel"] = "Cancel";
         English["Workout_Generation_KeepCurrentPlan"] = "Keep current plan";
-        English["Workout_Generation_EditDetails"] = "Edit details and try again";
+        English["Workout_Generation_EditDetails"] = "Edit details";
         English["Workout_Generation_Loading"] = "Loading workout preferences";
         English["Workout_Generation_MissingPreferences"] = "Save your activity preferences before building a plan.";
         English["Workout_Generation_StrengthPreferenceRequired"] = "Choose a strength activity in Activity Preferences before building a plan.";
         English["Workout_Generation_LoadFailed"] = "Workout preferences could not be loaded. Try again.";
         English["Workout_Generation_AvailableDaysMissing"] = "Save 2–7 available weekdays in workout preferences before generating a plan.";
         English["Workout_Generation_SavedAvailabilityFormat"] = "Using your saved training availability: {0}.";
-        English["Workout_Generation_MixedScheduleTitle"] = "Weekly activity schedule";
-        English["Workout_Generation_PlannedRestDay"] = "Rest · no workout planned";
+        English["Workout_Generation_MixedScheduleTitle"] = "Weekly plan";
+        English["Workout_Generation_RestDaysSummaryFormat"] = "Rest days · {0}";
         English["Workout_Generation_Reason_YogaInconsistent"] = "The yoga description indicates a demanding class. Choose demanding or correct the class details.";
         English["Workout_Generation_Reason_NoSafeStrengthContentRemaining"] = "No safe strength exercises remain. Every plan needs a safe strength session; adjust restrictions or equipment and preview again.";
         English["Workout_Generation_Reason_NoSafeActivity"] = "No safe activity could be included in this plan. Edit your details or explore other features.";
         English["Workout_Generation_MixedScheduleExplanation"] = "This schedule places your selected activities across the available weekdays.";
-        English["Workout_Generation_ScheduleEmpty"] = "No activity sessions could be placed on the saved available weekdays.";
+        English["Workout_Generation_ScheduleEmpty"] = "No sessions fit your available days.";
         English["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";
-        English["Workout_Generation_OrderedActivityFormat"] = "{0}. {1}";
         English["Workout_Generation_MixedSessionDurationFormat"] = "{0} min";
         English["Workout_Generation_MixedSessionDetailsFormat"] = "{0} · {1}";
         English["Workout_Generation_HigherEffortSession"] = "Higher-effort session";
@@ -294,7 +291,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_PromptNoPlanTitle"] = "No active workout plan";
         English["Workout_Generation_PromptNoPlanSubtitle"] = "Set up your workout preferences and generate your personalized strength training plan.";
         English["Workout_Generation_PromptGeneratePlanButton"] = "Generate plan";
-        English["Workout_Generation_ReducedVolumeNotice"] = "This plan uses reduced workout volume to fit your selected duration and schedule.";
+        English["Workout_Generation_ReducedVolumeNotice"] = "Plan volume reduced for your schedule.";
     }
 }
 

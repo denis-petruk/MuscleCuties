@@ -15,7 +15,7 @@
                 <VerticalStackLayout Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
                     <Label Text="{loc:LocalizedText Dashboard_Readiness_Title}"
                            Style="{StaticResource SectionTitle}"
-                           FontSize="{StaticResource UiFontSize17}" />
+                           />
                     <Label Text="{Binding ReadinessSubtitleText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource CaptionSmall}"
                            LineBreakMode="WordWrap" />
@@ -27,14 +27,13 @@
                         VerticalOptions="Center"
                         BackgroundColor="{AppThemeBinding Light={StaticResource RestStatusBadgeSurfaceLight}, Dark={StaticResource RestStatusBadgeSurfaceDark}}">
                     <Label Text="{loc:LocalizedText Dashboard_Readiness_CheckInNeeded}"
-                           FontSize="{StaticResource UiFontSize11}"
-                           FontAttributes="{StaticResource UiFontAttributesBold}"
+                           Style="{StaticResource CaptionLabel}"
                            TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}" />
                 </Border>
             </Grid>
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0_4}">
-                <Border Style="{StaticResource CardAccent}">
+                <Border Style="{StaticResource CardSecondary}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
                         <Grid WidthRequest="{StaticResource UiDimension88}" HeightRequest="{StaticResource UiDimension88}" HorizontalOptions="Center">
                             <dashboard:DashboardProgressRing WidthRequest="{StaticResource UiDimension88}"
@@ -43,18 +42,16 @@
                                                              RingColor="{StaticResource Primary}" />
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="{StaticResource UiSpacing0}">
                                 <Label Text="{Binding ReadinessScore}"
-                                       FontSize="{StaticResource UiFontSize22}"
-                                       FontAttributes="{StaticResource UiFontAttributesBold}"
+                                       Style="{StaticResource MetricValue}"
                                        HorizontalOptions="Center"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="/100"
+                                <Label Text="{loc:LocalizedText Dashboard_ReadinessScoreSuffix}"
                                        Style="{StaticResource CaptionTinyCentered}"
                                        HorizontalOptions="Center" />
                             </VerticalStackLayout>
                         </Grid>
                         <Label Text="{loc:LocalizedText Dashboard_Readiness_ReadinessLabel}"
-                               FontAttributes="{StaticResource UiFontAttributesBold}"
-                               FontSize="{StaticResource UiFontSize14}"
+                               Style="{StaticResource BodyStrong}"
                                HorizontalOptions="Center"
                                HorizontalTextAlignment="Center" />
                         <Label Text="{Binding ReadinessLabel, Converter={StaticResource LocalizedStringConverter}}"
@@ -64,7 +61,7 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <Border Grid.Column="1" Style="{StaticResource CardAccent}">
+                <Border Grid.Column="1" Style="{StaticResource CardSecondary}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
                         <Grid WidthRequest="{StaticResource UiDimension88}" HeightRequest="{StaticResource UiDimension88}" HorizontalOptions="Center">
                             <dashboard:DashboardProgressRing WidthRequest="{StaticResource UiDimension88}"
@@ -73,18 +70,16 @@
                                                              RingColor="{StaticResource PrimaryDark}" />
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="{StaticResource UiSpacing0}">
                                 <Label Text="{Binding RecoveryScore}"
-                                       FontSize="{StaticResource UiFontSize22}"
-                                       FontAttributes="{StaticResource UiFontAttributesBold}"
+                                       Style="{StaticResource MetricValue}"
                                        HorizontalOptions="Center"
                                        HorizontalTextAlignment="Center" />
-                                <Label Text="/100"
+                                <Label Text="{loc:LocalizedText Dashboard_ReadinessScoreSuffix}"
                                        Style="{StaticResource CaptionTinyCentered}"
                                        HorizontalOptions="Center" />
                             </VerticalStackLayout>
                         </Grid>
                         <Label Text="{loc:LocalizedText Dashboard_Readiness_RecoveryLabel}"
-                               FontAttributes="{StaticResource UiFontAttributesBold}"
-                               FontSize="{StaticResource UiFontSize14}"
+                               Style="{StaticResource BodyStrong}"
                                HorizontalOptions="Center"
                                HorizontalTextAlignment="Center" />
                         <Label Text="{Binding RecoveryLabel, Converter={StaticResource LocalizedStringConverter}}"
@@ -97,8 +92,7 @@
 
             <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" IsVisible="{Binding HasTodayReadinessScore}">
                 <Label Text="{Binding TodayReadinessBandText, Converter={StaticResource LocalizedStringConverter}}"
-                       FontAttributes="{StaticResource UiFontAttributesBold}"
-                       FontSize="{StaticResource UiFontSize14}" />
+                       Style="{StaticResource BodyStrong}" />
                 <Label Text="{Binding TodayReadinessGuidanceText, Converter={StaticResource LocalizedStringConverter}}"
                        Style="{StaticResource BodyCompact}"
                        LineBreakMode="WordWrap" />
@@ -106,7 +100,7 @@
 
             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
                   IsVisible="{Binding HasTodayReadinessRecord}">
-                <Border Style="{StaticResource CardAccent}">
+                <Border Style="{StaticResource CardSecondary}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                         <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingSleep}"
                                Style="{StaticResource CaptionLabel}" />
@@ -114,7 +108,7 @@
                                FontAttributes="{StaticResource UiFontAttributesBold}" />
                     </Grid>
                 </Border>
-                <Border Grid.Column="1" Style="{StaticResource CardAccent}">
+                <Border Grid.Column="1" Style="{StaticResource CardSecondary}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                         <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingEnergy}"
                                Style="{StaticResource CaptionLabel}" />
@@ -122,7 +116,7 @@
                                FontAttributes="{StaticResource UiFontAttributesBold}" />
                     </Grid>
                 </Border>
-                <Border Grid.Column="2" Style="{StaticResource CardAccent}">
+                <Border Grid.Column="2" Style="{StaticResource CardSecondary}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                         <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingSoreness}"
                                Style="{StaticResource CaptionLabel}" />

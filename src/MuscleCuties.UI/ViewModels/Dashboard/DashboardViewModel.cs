@@ -31,10 +31,11 @@ namespace MuscleCuties.UI.ViewModels.Dashboard;
     Justification = "Bound in XAML / view model contract.")]
 public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDisposable
 {
+    private readonly IDailyCheckInUseCase _dailyCheckIn;
     private readonly IWorkoutInjuryUseCase _injuries;
+    private readonly Action _invalidateDashboard;
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
     private readonly Func<Task> _openCycleAsync;
-    private readonly Func<Task> _openDailyCheckInAsync;
     private readonly Func<Task> _openNutritionAsync;
     private readonly Func<Task>? _openPhotoVaultAsync;
     private readonly Func<Task> _openWorkoutAsync;
@@ -63,6 +64,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private string _hydrationConsumed = "2.5 L";
     [ObservableProperty] private string _hydrationGoal = "target";
 
+    private DailyCheckInViewModel? _checkInVm;
     private InjuryLogViewModel? _injuryLogVm;
 
     // Suppresses per-field partial On*Changed notifications during a bulk load so that
@@ -72,7 +74,13 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isBusy;
 
-    [ObservableProperty] private bool _isInjuryModalVisible;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAnyModalVisible))]
+    private bool _isCheckInModalVisible;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAnyModalVisible))]
+    private bool _isInjuryModalVisible;
     [ObservableProperty] private bool _isLoadError;
     [ObservableProperty] private bool _isRefreshing;
     [ObservableProperty] private bool _isRestDay = true;
@@ -148,19 +156,20 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         Func<Task> openWorkoutAsync,
         Func<int, Task> openWorkoutSessionAsync,
         Func<Task> openNutritionAsync,
-        Func<Task> openDailyCheckInAsync,
+        Action invalidateDashboard,
         INutritionChangeNotifier? changeNotifier = null,
         Func<Task>? openPhotoVaultAsync = null)
     {
         _overview = overview;
         _cyclePhaseProjection = cyclePhaseProjection;
         _readinessPresentationSettings = dailyCheckIn.PresentationSettings;
+        _dailyCheckIn = dailyCheckIn;
         _injuries = injuries;
         _openCycleAsync = openCycleAsync;
         _openWorkoutAsync = openWorkoutAsync;
         _openWorkoutSessionAsync = openWorkoutSessionAsync;
         _openNutritionAsync = openNutritionAsync;
-        _openDailyCheckInAsync = openDailyCheckInAsync;
+        _invalidateDashboard = invalidateDashboard;
         _openPhotoVaultAsync = openPhotoVaultAsync;
         if (changeNotifier is not null)
             changeNotifier.NutritionChanged += OnNutritionChanged;
@@ -170,11 +179,15 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         OpenWorkoutCommand = new AsyncRelayCommand(_openWorkoutAsync);
         StartWorkoutCommand = new AsyncRelayCommand(StartWorkoutAsync);
         OpenNutritionCommand = new AsyncRelayCommand(_openNutritionAsync);
-        OpenDailyCheckInCommand = new AsyncRelayCommand(_openDailyCheckInAsync);
         OpenPhotoVaultCommand = new AsyncRelayCommand(OpenPhotoVaultAsync);
     }
 
     public AsyncRelayCommand OpenPhotoVaultCommand { get; }
+
+    public bool IsAnyModalVisible => IsInjuryModalVisible || IsCheckInModalVisible;
+
+    public DailyCheckInViewModel CheckInVm => _checkInVm ??= new DailyCheckInViewModel(
+        _dailyCheckIn, _invalidateDashboard, CloseCheckInAfterCompletionAsync);
 
     public InjuryLogViewModel InjuryLogVm => _injuryLogVm ??= new InjuryLogViewModel(
         _injuries, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
@@ -337,8 +350,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     public AsyncRelayCommand OpenWorkoutCommand { get; }
     public AsyncRelayCommand StartWorkoutCommand { get; }
     public AsyncRelayCommand OpenNutritionCommand { get; }
-    public AsyncRelayCommand OpenDailyCheckInCommand { get; }
-
     public void Dispose()
     {
         _loadGate.Dispose();
@@ -399,6 +410,27 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     {
         _injuryLogVm?.ResetForm();
         IsInjuryModalVisible = false;
+    }
+
+    [RelayCommand]
+    private async Task OpenDailyCheckInAsync()
+    {
+        IsCheckInModalVisible = true;
+        await CheckInVm.CheckIfAlreadyCompletedAsync();
+    }
+
+    [RelayCommand]
+    private void CloseCheckInModal() => IsCheckInModalVisible = false;
+
+    /// <summary>
+    /// Submitting or skipping closes the sheet and refreshes the dashboard in place. This replaces
+    /// the navigation to the dashboard route the check-in page performed when it was a page.
+    /// </summary>
+    private async Task CloseCheckInAfterCompletionAsync()
+    {
+        IsCheckInModalVisible = false;
+        Invalidate();
+        await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
     }
 
     private async Task RefreshAfterInjuryChangeAsync()

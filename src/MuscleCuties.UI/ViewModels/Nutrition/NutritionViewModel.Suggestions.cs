@@ -2,9 +2,8 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.Core.Models.Nutrition;
-using MuscleCuties.Core.Models.Nutrition.Planning;
 using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
@@ -28,6 +27,7 @@ public partial class NutritionViewModel
     ];
 
     private readonly HashSet<string> _shownConceptNames = new();
+    private bool _returnToMealEditorAfterSuggestion;
     [ObservableProperty] private ObservableCollection<DayMealPlanItem> _dayPlanMeals = new();
     [ObservableProperty] private string _dayPlanSummaryText = string.Empty;
     [ObservableProperty] private bool _isDayPlanMode;
@@ -159,6 +159,8 @@ public partial class NutritionViewModel
 
     private void CloseSuggestionModal()
     {
+        var reopenMealEditor = _returnToMealEditorAfterSuggestion;
+        _returnToMealEditorAfterSuggestion = false;
         _suggestionLoadVersion++;
         _suggestionMealTime = null;
         IsSuggestionModalVisible = false;
@@ -166,6 +168,9 @@ public partial class NutritionViewModel
         IsMealDetailVisible = false;
         _shownConceptNames.Clear();
         NotifySuggestionProperties();
+
+        if (reopenMealEditor)
+            IsMealEditorVisible = true;
     }
 
     private void OpenMealDetail(MealSuggestionItem? item)
@@ -209,7 +214,7 @@ public partial class NutritionViewModel
             if (loadVersion != _suggestionLoadVersion || !IsSuggestionModalVisible)
                 return;
 
-            var items = dtos.Select(MapSuggestionDtoToItem).ToList();
+            var items = dtos.Select(d => MapSuggestionDtoToItem(NutritionPresentationMapper.FromSuggestion(d))).ToList();
             AssignDistinctSuggestionIcons(items);
 
             foreach (var item in items)
@@ -274,7 +279,9 @@ public partial class NutritionViewModel
                 Calories = component.Calories,
                 Protein = component.Protein,
                 Carbs = component.Carbs,
-                Fats = component.Fats
+                Fats = component.Fats,
+                MacrosForAmount = NutritionPresentationMapper.FromPer100Grams(
+                    component.Calories, component.Protein, component.Carbs, component.Fats, component.Grams)
             }));
 
         SelectedMealType = SuggestionMealType;
@@ -317,16 +324,7 @@ public partial class NutritionViewModel
         try
         {
             var refreshedDto = await _overviewUseCase.RefreshDayMealAsync(
-                new DayMealPlanItemDto(
-                    item.MealType.ToString(),
-                    item.Target.Calories,
-                    item.Target.Protein,
-                    item.Target.Carbs,
-                    item.Target.Fats,
-                    item.DailyCaloriesTarget,
-                    item.IsAlreadyLogged,
-                    null,
-                    item.ErrorMessage),
+                NutritionPresentationMapper.ToDayMealPlanRequest(item),
                 BreakfastPreference.ToString());
 
             if (version != _suggestionLoadVersion || !IsSuggestionModalVisible || !IsDayPlanMode)
@@ -337,13 +335,14 @@ public partial class NutritionViewModel
                 return;
 
             var currentIndex = DayPlanMeals.IndexOf(refreshed);
+            var plan = NutritionPresentationMapper.FromDayMealPlan(refreshedDto);
             DayPlanMeals[currentIndex] = refreshed with
             {
                 IsRefreshing = false,
-                Suggestion = refreshedDto.Suggestion is not null
-                    ? MapSuggestionDtoToItem(refreshedDto.Suggestion)
+                Suggestion = plan.Suggestion is not null
+                    ? MapSuggestionDtoToItem(plan.Suggestion)
                     : null,
-                ErrorMessage = refreshedDto.ErrorMessage
+                ErrorMessage = plan.ErrorMessage
             };
         }
         catch (Exception ex)
@@ -400,14 +399,15 @@ public partial class NutritionViewModel
             DayPlanMeals = new ObservableCollection<DayMealPlanItem>(planList.Select(entry =>
             {
                 var mt = Enum.TryParse<MealType>(entry.MealType, true, out var parsedMt) ? parsedMt : MealType.Lunch;
+                var plan = NutritionPresentationMapper.FromDayMealPlan(entry);
                 return new DayMealPlanItem(
                     mt,
-                    new MealNutritionTarget(mt, entry.TargetCalories, entry.TargetProtein, entry.TargetCarbs,
-                        entry.TargetFats),
-                    entry.DailyCaloriesTarget,
-                    entry.IsAlreadyLogged,
+                    NutritionPresentationMapper.FromMealTargetValues(
+                        plan.TargetCalories, plan.TargetProtein, plan.TargetCarbs, plan.TargetFats),
+                    plan.DailyCaloriesTarget,
+                    plan.IsAlreadyLogged,
                     false,
-                    entry.Suggestion is null ? null : MapSuggestionDtoToItem(entry.Suggestion));
+                    plan.Suggestion is null ? null : MapSuggestionDtoToItem(plan.Suggestion));
             }));
         }
         catch (Exception ex)
@@ -454,7 +454,7 @@ public partial class NutritionViewModel
         return $"{calories:N0} kcal target";
     }
 
-    private static MealSuggestionItem MapSuggestionDtoToItem(MealSuggestionDto dto)
+    private static MealSuggestionItem MapSuggestionDtoToItem(NutritionMealSuggestion dto)
     {
         var components = dto.Components.Select(c => new MealSuggestionComponentItem
         {
@@ -467,7 +467,11 @@ public partial class NutritionViewModel
             Calories = c.Calories,
             Protein = c.Protein,
             Carbs = c.Carbs,
-            Fats = c.Fats
+            Fats = c.Fats,
+            CaloriesForAmount = NutritionPresentationMapper
+                .FromPer100Grams(c.Calories, c.Protein, c.Carbs, c.Fats, c.Grams).Calories,
+            NutritionForAmountText = NutritionPresentationMapper
+                .FromPer100Grams(c.Calories, c.Protein, c.Carbs, c.Fats, c.Grams).NutritionText
         }).ToList();
 
         var groups = dto.ComponentGroups.Select(g => new MealSuggestionComponentGroup(
@@ -486,7 +490,11 @@ public partial class NutritionViewModel
                 Calories = ci.Calories,
                 Protein = ci.Protein,
                 Carbs = ci.Carbs,
-                Fats = ci.Fats
+                Fats = ci.Fats,
+                CaloriesForAmount = NutritionPresentationMapper
+                    .FromPer100Grams(ci.Calories, ci.Protein, ci.Carbs, ci.Fats, ci.Grams).Calories,
+                NutritionForAmountText = NutritionPresentationMapper
+                    .FromPer100Grams(ci.Calories, ci.Protein, ci.Carbs, ci.Fats, ci.Grams).NutritionText
             }).ToList()
         )).ToList();
 
@@ -498,7 +506,7 @@ public partial class NutritionViewModel
                 .ToList(),
             Components = components,
             ComponentGroups = groups,
-            Macros = new MacroNutrients(dto.Calories, dto.Protein, dto.Carbs, dto.Fats),
+            Macros = NutritionPresentationMapper.FromTotals(dto.Calories, dto.Protein, dto.Carbs, dto.Fats),
             Score = dto.Score,
             Style = Enum.TryParse<MealStyle>(dto.Style, true, out var s) ? s : MealStyle.Plated,
             IconGlyph = dto.IconGlyph

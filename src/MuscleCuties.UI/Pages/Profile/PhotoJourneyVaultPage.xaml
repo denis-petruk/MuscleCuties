@@ -17,7 +17,7 @@
     <Grid RowDefinitions="Auto,*"
           BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
         <!-- Header -->
-        <Grid Grid.Row="0" Padding="{StaticResource PresentationPageHeaderPadding}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}"
+        <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}"
               VerticalOptions="Center">
             <Border
                 Style="{StaticResource HeaderIconButton}"
@@ -34,7 +34,7 @@
             </Border>
 
             <Grid Grid.Column="1" RowDefinitions="Auto,Auto" VerticalOptions="Center">
-                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" Style="{StaticResource SectionTitle}" FontSize="{StaticResource UiFontSize17}" />
+                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" Style="{StaticResource PageTitle}" />
                 <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_PrivateStoredOnThisDevice}" Style="{StaticResource CaptionSmall}"
                        LineBreakMode="WordWrap" />
             </Grid>
@@ -43,6 +43,7 @@
                 Grid.Column="2"
                 Text="{Binding PrivacyBlurButtonText, Converter={StaticResource LocalizedStringConverter}}"
                 Command="{Binding TogglePrivacyBlurCommand}"
+                IsVisible="{Binding IsEmpty, Converter={StaticResource InvertedBoolConverter}}"
                 Style="{StaticResource ButtonSecondary}" />
         </Grid>
 
@@ -52,7 +53,7 @@
             ItemsSource="{Binding Photos}"
             ItemSizingStrategy="MeasureFirstItem"
             SelectionMode="None"
-            Margin="{StaticResource UiInsets20_0_20_32}"
+            Margin="{DynamicResource PresentationPageContentPadding}"
             MaximumWidthRequest="{StaticResource UiDimension640}">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="{StaticResource UiSpaceControl}" />
@@ -61,15 +62,15 @@
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" Margin="{StaticResource UiInsets0}">
                     <!-- Air-Gap Privacy Card -->
                     <Border Style="{StaticResource CardPrimary}">
-                        <Grid ColumnDefinitions="36,*" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                             <mi:MauiIcon
                                 Icon="{mi:Fluent ShieldLock24}" IconSize="{StaticResource UiDimension24}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                 WidthRequest="{StaticResource UiDimension24}"
                                 HeightRequest="{StaticResource UiDimension24}"
                                 VerticalOptions="Center" />
                             <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_PrivacyFirstPhotoVault}" FontSize="{StaticResource UiFontSize15}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                       TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_PrivacyFirstPhotoVault}"
+                                       Style="{StaticResource BodyStrong}" />
                                 <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_YourPhotosAreStoredLocallyAnd}"
                                        Style="{StaticResource CaptionSmall}"
                                        LineBreakMode="WordWrap" />
@@ -81,30 +82,34 @@
                     <Button Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Profile_PhotoJourney_PlusAddProgressPhoto}"
                         Clicked="OnAddPhotoClicked" />
-                </VerticalStackLayout>
-            </CollectionView.Header>
-            <CollectionView.EmptyView>
-                <!-- Empty State -->
-                <Border
-                    Style="{StaticResource CardPrimary}"
-                    MinimumHeightRequest="{StaticResource UiDimension220}"
-                    HorizontalOptions="Fill">
-                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}"
-                          HorizontalOptions="Center" VerticalOptions="Center">
+
+                    <!-- Empty state sits with the action. MAUI centres CollectionView.EmptyView in
+                         the remaining viewport, which opened a large gap below the button. -->
+                    <VerticalStackLayout
+                        IsVisible="{Binding IsEmpty}"
+                        Spacing="{StaticResource UiSpaceCompact}"
+                        HorizontalOptions="Center">
                         <mi:MauiIcon
-                            Grid.Row="0"
-                            Icon="{mi:Fluent CameraAdd24}" IconSize="{StaticResource UiDimension40}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                            Icon="{mi:Fluent CameraAdd24}"
+                            IconSize="{StaticResource UiDimension40}"
+                            IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                             WidthRequest="{StaticResource UiDimension40}"
                             HeightRequest="{StaticResource UiDimension40}"
                             HorizontalOptions="Center" />
-                        <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_NoProgressPhotoYet}"
-                               Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" FontSize="{StaticResource UiFontSize15}"
+                        <Label Text="{loc:LocalizedText Profile_PhotoJourney_NoProgressPhotoYet}"
+                               Style="{StaticResource SectionTitle}"
+                               HorizontalTextAlignment="Center"
                                LineBreakMode="WordWrap" />
-                        <Label Grid.Row="2" Text="{loc:LocalizedText Profile_PhotoJourney_ChoosePhotosToTrackProgressPhotos}"
-                               Style="{StaticResource CaptionCentered}" FontSize="{StaticResource UiFontSize13}"
+                        <Label Text="{loc:LocalizedText Profile_PhotoJourney_ChoosePhotosToTrackProgressPhotos}"
+                               Style="{StaticResource CaptionCentered}"
                                LineBreakMode="WordWrap" />
-                    </Grid>
-                </Border>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </CollectionView.Header>
+            <CollectionView.EmptyView>
+                <!-- The visible empty state is in the header beside the action; this view must stay
+                     zero-content so it adds no centred block or gap of its own. -->
+                <VerticalStackLayout />
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="profileModels:PhotoVaultItem">
@@ -113,8 +118,7 @@
                             <!-- Photo header / meta -->
                             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
                                 <Label
-                                    Text="{Binding DateFormatted, Converter={StaticResource LocalizedStringConverter}}"
-                                    FontAttributes="{StaticResource UiFontAttributesBold}" FontSize="{StaticResource UiFontSize15}" VerticalOptions="Center" />
+                                    Text="{Binding DateFormatted, Converter={StaticResource LocalizedStringConverter}}" VerticalOptions="Center" Style="{StaticResource BodyStrong}" />
 
                                 <Border
                                     Grid.Column="1"
@@ -122,8 +126,7 @@
                                     IsVisible="{Binding HasWeight}"
                                     Padding="{StaticResource UiInsets8_3}">
                                     <Label
-                                        Text="{Binding WeightFormatted, Converter={StaticResource LocalizedStringConverter}}"
-                                        FontSize="{StaticResource UiFontSize12}" FontAttributes="{StaticResource UiFontAttributesBold}" VerticalOptions="Center" />
+                                        Text="{Binding WeightFormatted, Converter={StaticResource LocalizedStringConverter}}" VerticalOptions="Center" Style="{StaticResource CaptionLabel}" />
                                 </Border>
 
                                 <Button
@@ -172,7 +175,6 @@
                                             Grid.Row="1"
                                             Text="{loc:LocalizedText Profile_PhotoJourney_PhotoHiddenForPrivacy}"
                                             Style="{StaticResource SectionTitle}"
-                                            FontSize="{StaticResource UiFontSize15}"
                                             IsVisible="{Binding IsImageAvailable}"
                                             HorizontalTextAlignment="Center" />
                                         <Label Grid.Row="2"

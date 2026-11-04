@@ -24,7 +24,8 @@ public sealed record LoggedFoodItemDto(
     DateTime LoggedAtTimestamp,
     IReadOnlyList<LoggedIngredientDto> Ingredients,
     string? AcceptedSuggestionName = null,
-    CyclePhase? AcceptedSuggestionPhase = null
+    CyclePhase? AcceptedSuggestionPhase = null,
+    int? LoggedMealId = null
 )
 {
     public bool IsGroupedMeal => Ingredients.Count > 0;

@@ -12,6 +12,7 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(IsFoodFinderVisible));
         OnPropertyChanged(nameof(IsFoodFinderCollapsed));
         OnPropertyChanged(nameof(IsIngredientSearchVisible));
+        OnPropertyChanged(nameof(IsBarcodeSourceVisible));
         OnPropertyChanged(nameof(MealEditorTitle));
         OnPropertyChanged(nameof(IngredientActionText));
     }
@@ -35,6 +36,7 @@ public partial class NutritionViewModel
         MacroProgressFormatter.NotifyCaloriesGoal(OnPropertyChanged);
         NotifyMealTargetProperties();
         NotifySuggestionProperties();
+        RefreshMealTargetShares();
     }
 
     partial void OnConsumedProteinChanged(float value)
@@ -57,6 +59,7 @@ public partial class NutritionViewModel
 
     partial void OnSearchQueryChanged(string value)
     {
+        OnPropertyChanged(nameof(IsFoodSearchIdle));
         SearchFoodCommand.NotifyCanExecuteChanged();
         BrowseMoreFoodsCommand.NotifyCanExecuteChanged();
     }

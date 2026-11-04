@@ -17,7 +17,7 @@
 
     <Grid RowDefinitions="Auto, *">
         <Grid
-            Padding="{StaticResource PresentationPageHeaderPadding}"
+            Padding="{DynamicResource PresentationPageHeaderPadding}"
             ColumnDefinitions="*, Auto"
             ColumnSpacing="{StaticResource UiSpaceCompact}"
             RowDefinitions="Auto, Auto"
@@ -26,7 +26,7 @@
             MaximumWidthRequest="{StaticResource UiDimension640}">
             <Label
                 Text="{Binding CurrentMonthLabel, Converter={StaticResource LocalizedStringConverter}}"
-                Style="{StaticResource Headline}"
+                Style="{StaticResource PageTitle}"
                 LineBreakMode="WordWrap"
                 SemanticProperties.HeadingLevel="Level1" />
             <Label
@@ -60,7 +60,7 @@
 
         <ScrollView Grid.Row="1">
             <VerticalStackLayout
-                Padding="{StaticResource PresentationPageContentPadding}"
+                Padding="{DynamicResource PresentationPageContentPadding}"
                 Spacing="{StaticResource UiSpaceControl}"
                 HorizontalOptions="Fill"
                 MaximumWidthRequest="{StaticResource UiDimension640}">

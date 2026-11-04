@@ -80,7 +80,7 @@ internal static class PhaseThemePalette
 
     public static Color GetNeutralCardTextColor(bool useDarkTheme)
     {
-        return GetThemeColor(useDarkTheme, "DeepMauve", "TextPrimaryDark", default);
+        return GetThemeColor(useDarkTheme, "TextHeadingLight", "TextPrimaryDark", default);
     }
 
     public static Color GetNeutralDividerColor(bool useDarkTheme)

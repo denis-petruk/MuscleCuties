@@ -17,10 +17,11 @@
                     Command="{Binding CloseCommand, Source={x:Reference Root}, x:DataType=injuryControls:InjuryLogModal}" />
             </BoxView.GestureRecognizers>
         </BoxView>
-        <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" VerticalOptions="End">
-            <Grid RowDefinitions="Auto,Auto,*">
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{StaticResource PresentationModalHeaderPadding}">
-                    <Label Text="{loc:LocalizedText Injury_LogTitle}" Style="{StaticResource ModalTitle}"
+        <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" VerticalOptions="End"
+                MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}">
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{DynamicResource PresentationModalHeaderPadding}">
+                    <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Injury_LogTitle}" Style="{StaticResource ModalTitle}"
                            VerticalOptions="Center" />
                     <Button Grid.Column="1" Text="{loc:LocalizedText Common_Add}"
                             Command="{Binding ToggleAddFormCommand}"
@@ -38,6 +39,20 @@
                 </Grid>
                 <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
                 <injuryControls:InjuryLogContent Grid.Row="2" />
+                <!-- Form actions stay on the sheet edge instead of riding the end of a long scroll. -->
+                <Grid Grid.Row="3"
+                      ColumnDefinitions="*,*"
+                      ColumnSpacing="{StaticResource UiSpaceTight}"
+                      Padding="{DynamicResource PresentationModalPagePadding}"
+                      IsVisible="{Binding ShowAddForm}">
+                    <Button Text="{loc:LocalizedText Common_Cancel}"
+                            Command="{Binding CancelEditCommand}"
+                            Style="{StaticResource ButtonSecondary}" />
+                    <Button Grid.Column="1"
+                            Text="{loc:LocalizedText Injury_LogContent_SaveInjury}"
+                            Command="{Binding SaveInjuryCommand}"
+                            Style="{StaticResource ButtonPrimary}" />
+                </Grid>
             </Grid>
         </Border>
     </Grid>

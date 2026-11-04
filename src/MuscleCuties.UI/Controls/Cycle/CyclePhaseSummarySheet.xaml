@@ -19,8 +19,8 @@
 
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource ModalSurface}" VerticalOptions="End">
-            <Grid RowDefinitions="Auto, *, Auto">
+            Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
+            <Grid RowDefinitions="Auto, Auto, Auto">
 
                 <!-- Header (Flattened Grid) -->
                 <Grid RowDefinitions="Auto, Auto, Auto">
@@ -30,7 +30,7 @@
                         WidthRequest="{StaticResource UiDimension40}"
                         HeightRequest="{StaticResource UiDimension4}"
                         CornerRadius="{StaticResource UiCornerRadius2}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceMutedStrongLight}, Dark={StaticResource SurfaceMutedStrongDark}}"
                         HorizontalOptions="Center"
                         Margin="{StaticResource UiInsets0_10_0_10}" />
 
@@ -57,8 +57,7 @@
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding SelectedPhaseSummary.Window, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="{StaticResource UiFontSize13}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                Style="{StaticResource MutedLabel}"
                                 TextColor="{Binding SelectedPhaseSummary.AccentColor}"
                                 LineBreakMode="WordWrap" />
                         </Grid>
@@ -83,25 +82,25 @@
                     <BoxView
                         Grid.Row="2"
                         HeightRequest="{StaticResource UiDimension1}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
                         Opacity="{StaticResource UiOpacityBackdrop}" />
                 </Grid>
 
                 <!-- Scrollable Body (Flattened Grid) -->
-                <ScrollView Grid.Row="1">
+                <ScrollView Grid.Row="1"
+                            MaximumHeightRequest="{StaticResource ModalSheetBodyMaximumHeight}">
                     <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceControl}" Padding="{StaticResource UiInsets20_16_20_16}">
 
                         <!-- Tagline Banner -->
                         <Border
                             Grid.Row="0"
                             BackgroundColor="{Binding SelectedPhaseSummary.BackgroundColor}"
-                            StrokeShape="{StaticResource UiRoundRectangleRadius14}"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius16}"
                             StrokeThickness="{StaticResource UiStrokeWidth0}"
                             Padding="{StaticResource UiInsets16_12}">
                             <Label
                                 Text="{Binding SelectedPhaseSummary.Tagline, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="{StaticResource UiFontSize15}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                Style="{StaticResource BodyStrong}"
                                 TextColor="{Binding SelectedPhaseSummary.TextColor}"
                                 HorizontalOptions="Center"
                                 LineBreakMode="WordWrap" />
@@ -116,8 +115,7 @@
                                 <Label
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Cycle_PhaseSummary_HormonalProfileTitle}"
-                                    FontSize="{StaticResource UiFontSize11}"
-                                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                                    Style="{StaticResource CaptionLabel}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                     VerticalOptions="Center"
                                     LineBreakMode="WordWrap" />
@@ -125,7 +123,7 @@
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding SelectedPhaseSummary.HormonalSummary, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="{StaticResource UiFontSize13}"
+                                Style="{StaticResource MutedLabel}"
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                         </Grid>
@@ -139,8 +137,7 @@
                                 <Label
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Cycle_PhaseSummary_TrainingStrategyTitle}"
-                                    FontSize="{StaticResource UiFontSize11}"
-                                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                                    Style="{StaticResource CaptionLabel}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                     VerticalOptions="Center"
                                     LineBreakMode="WordWrap" />
@@ -148,7 +145,7 @@
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding SelectedPhaseSummary.TrainingFocus, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="{StaticResource UiFontSize13}"
+                                Style="{StaticResource MutedLabel}"
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                         </Grid>
@@ -162,8 +159,7 @@
                                 <Label
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Cycle_PhaseSummary_NutritionStrategyTitle}"
-                                    FontSize="{StaticResource UiFontSize11}"
-                                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                                    Style="{StaticResource CaptionLabel}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                     VerticalOptions="Center"
                                     LineBreakMode="WordWrap" />
@@ -171,7 +167,7 @@
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding SelectedPhaseSummary.NutritionFocus, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="{StaticResource UiFontSize13}"
+                                Style="{StaticResource MutedLabel}"
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                         </Grid>
@@ -185,8 +181,7 @@
                                 <Label
                                     Grid.Column="1"
                                     Text="{loc:LocalizedText Cycle_PhaseSummary_RecoveryTitle}"
-                                    FontSize="{StaticResource UiFontSize11}"
-                                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                                    Style="{StaticResource CaptionLabel}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                     VerticalOptions="Center"
                                     LineBreakMode="WordWrap" />
@@ -194,18 +189,13 @@
                             <Label
                                 Grid.Row="1"
                                 Text="{Binding SelectedPhaseSummary.RecoveryFocus, Converter={StaticResource LocalizedStringConverter}}"
-                                FontSize="{StaticResource UiFontSize13}"
+                                Style="{StaticResource MutedLabel}"
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                         </Grid>
 
                         <!-- Golden Quick Rule -->
-                        <Border
-                            Grid.Row="5"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                            StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                            StrokeThickness="{StaticResource UiStrokeWidth0}"
-                            Padding="{StaticResource UiInsets14_10}">
+                        <Border Grid.Row="5" Style="{StaticResource CardSecondary}">
                             <Grid ColumnDefinitions="Auto, *" ColumnSpacing="{StaticResource UiSpaceTight}">
                                 <Path Data="M9 18h6 M10 21h4 M9 15a7 7 0 1 1 6 0l-1 3h-4z"
                                       Stroke="{StaticResource Primary}" StrokeThickness="{StaticResource UiStrokeWidth1_7}" StrokeLineCap="Round" StrokeLineJoin="Round"
@@ -213,7 +203,7 @@
                                 <Label
                                     Grid.Column="1"
                                     Text="{Binding SelectedPhaseSummary.QuickRule, Converter={StaticResource LocalizedStringConverter}}"
-                                    FontSize="{StaticResource UiFontSize13}"
+                                    Style="{StaticResource MutedLabel}"
                                     FontAttributes="{StaticResource UiFontAttributesItalic}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                     LineBreakMode="WordWrap" />
@@ -226,12 +216,11 @@
                 <!-- Footer Action -->
                 <Grid
                     Grid.Row="2"
-                    Padding="{StaticResource PresentationActionFooterPadding}">
+                    Padding="{DynamicResource PresentationActionFooterPadding}">
                     <Button
                         Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Cycle_PhaseSummary_CloseButton}"
-                        Command="{Binding ClosePhaseSummarySheetCommand}"
-                        HorizontalOptions="End" />
+                        Command="{Binding ClosePhaseSummarySheetCommand}" />
                 </Grid>
 
             </Grid>

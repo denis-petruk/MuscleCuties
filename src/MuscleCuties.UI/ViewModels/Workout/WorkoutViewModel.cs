@@ -5,6 +5,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 using MuscleCuties.UI.Models.UI.Workout;
+using MuscleCuties.UI.Pages.Profile;
+using MuscleCuties.UI.Pages.Workout;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Localization;
@@ -80,6 +82,10 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private string _featuredWorkoutTitle = "Living happy life";
     [ObservableProperty] private ObservableCollection<FilterChipItem> _filters = new();
 
+    // The week picker uses the same chip item and the same shared card selection state as the
+    // filters below it, so the screen has one selection language instead of two.
+    [ObservableProperty] private ObservableCollection<FilterChipItem> _weeks = new();
+
     [ObservableProperty] private bool _hasActiveInjuries;
     [ObservableProperty] private string _injuryBannerSummary = string.Empty;
     private InjuryLogViewModel? _injuryLogVm;
@@ -123,6 +129,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         EmptyWorkoutsActionCommand = new AsyncRelayCommand(HandleEmptyWorkoutsActionAsync, CanUseEmptyWorkoutsAction);
         GeneratePlanCommand = new AsyncRelayCommand(GeneratePlanAsync, () => !IsBusy);
+        OpenHistoryCommand = new AsyncRelayCommand(() => _navigateAsync(nameof(WorkoutHistoryPage)));
         ResumeInProgressWorkoutCommand = new AsyncRelayCommand(ResumeInProgressWorkoutAsync);
         OpenWorkoutCommand = new AsyncRelayCommand<WorkoutItem>(OpenWorkoutAsync);
         ToggleSessionOptionalCommand = new AsyncRelayCommand<WorkoutItem>(ToggleSessionOptionalAsync);
@@ -130,16 +137,30 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         SelectFilterCommand = new RelayCommand<FilterChipItem>(SelectFilter);
         StartFeaturedWorkoutCommand = new AsyncRelayCommand(OpenFeaturedWorkoutAsync);
         SelectWeekCommand = new RelayCommand<int>(SelectWeek);
+        SelectWeekChipCommand = new RelayCommand<FilterChipItem>(SelectWeekChip);
         SelectScheduleDayCommand = new RelayCommand<ScheduleDayItem>(SelectScheduleDay);
         ToggleInjuryBannerCommand = new RelayCommand(() => IsInjuryBannerExpanded = !IsInjuryBannerExpanded);
         NavigateToInjuryLogCommand = new AsyncRelayCommand(OpenInjuryModalAsync);
         Filters = new ObservableCollection<FilterChipItem>
         {
-            new() { Label = UiTextCatalog.Get("Workout_Filter_All"), IsSelected = true },
-            new() { Label = UiTextCatalog.Get("Workout_Filter_Strength") },
-            new() { Label = UiTextCatalog.Get("Workout_Filter_Cardio") },
-            new() { Label = UiTextCatalog.Get("Workout_Filter_Recovery") }
+            new() { Column = 0, Label = UiTextCatalog.Get("Workout_Filter_All"), IsSelected = true },
+            new() { Column = 1, Label = UiTextCatalog.Get("Workout_Filter_Strength") },
+            new() { Column = 2, Label = UiTextCatalog.Get("Workout_Filter_Cardio") },
+            new() { Column = 3, Label = UiTextCatalog.Get("Workout_Filter_Recovery") }
         };
+        Weeks = new ObservableCollection<FilterChipItem>
+        {
+            new() { Column = 0, Index = FirstWeekIndex, Label = UiTextCatalog.Get("Workout_Page_Week1"), IsSelected = true },
+            new() { Column = 1, Index = FirstWeekIndex + 1, Label = UiTextCatalog.Get("Workout_Page_Week2") },
+            new() { Column = 2, Index = FirstWeekIndex + 2, Label = UiTextCatalog.Get("Workout_Page_Week3") },
+            new() { Column = 3, Index = FirstWeekIndex + 3, Label = UiTextCatalog.Get("Workout_Page_Week4") }
+        };
+    }
+
+    private void SyncWeekChips(int weekIndex)
+    {
+        foreach (var week in Weeks)
+            week.IsSelected = week.Index == weekIndex;
     }
 
     public bool HasBlockedExercises => BlockedExerciseNames.Count > 0;
@@ -230,6 +251,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private string SelectedFilterLabel => Filters.FirstOrDefault(f => f.IsSelected)?.Label ?? "All";
     public AsyncRelayCommand EmptyWorkoutsActionCommand { get; }
     public AsyncRelayCommand GeneratePlanCommand { get; }
+    public AsyncRelayCommand OpenHistoryCommand { get; }
     public AsyncRelayCommand ResumeInProgressWorkoutCommand { get; }
     public AsyncRelayCommand<WorkoutItem> OpenWorkoutCommand { get; }
     public AsyncRelayCommand<WorkoutItem> ToggleSessionOptionalCommand { get; }
@@ -237,6 +259,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     public RelayCommand<FilterChipItem> SelectFilterCommand { get; }
     public AsyncRelayCommand StartFeaturedWorkoutCommand { get; }
     public RelayCommand<int> SelectWeekCommand { get; }
+    public RelayCommand<FilterChipItem> SelectWeekChipCommand { get; }
     public RelayCommand<ScheduleDayItem> SelectScheduleDayCommand { get; }
     public RelayCommand ToggleInjuryBannerCommand { get; }
     public AsyncRelayCommand NavigateToInjuryLogCommand { get; }
@@ -319,7 +342,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                 Tag = item.Tag,
                 DayLabel = item.DayLabel,
                 Title = item.DayOrder is { } order
-                    ? string.Format(UiTextCatalog.Get("Workout_Overview_OrderedTitleFormat"), order, item.Title)
+                    ? UiTextCatalog.Format("Workout_Overview_OrderedTitleFormat", order, item.Title)
                     : item.Title,
                 Duration = item.Duration,
                 ExerciseCount = item.ExerciseCount,
@@ -404,10 +427,17 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         // NotifyWorkoutStateProperties() is already called by OnWorkoutsChanged; do not call again.
     }
 
+    private void SelectWeekChip(FilterChipItem? chip)
+    {
+        if (chip is null) return;
+        SelectWeek(chip.Index);
+    }
+
     private void SelectWeek(int weekIndex)
     {
         if (weekIndex < FirstWeekIndex || weekIndex > LastWeekIndex) return;
         SelectedWeekIndex = weekIndex;
+        SyncWeekChips(weekIndex);
         ScheduleDays = new ObservableCollection<ScheduleDayItem>(
             _datedSchedule.Where(day => day.WeekIndex == weekIndex));
         UpdateSessionProgressForSelectedWeek();
@@ -612,7 +642,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     }
     private async Task GeneratePlanAsync()
     {
-        await _navigateAsync("ProfileWorkoutPreferencesPage");
+        await _navigateAsync(nameof(ProfileWorkoutPreferencesPage));
     }
 
     private bool CanUseEmptyWorkoutsAction()

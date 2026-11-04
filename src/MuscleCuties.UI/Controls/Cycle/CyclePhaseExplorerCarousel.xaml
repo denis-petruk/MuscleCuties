@@ -56,22 +56,20 @@
                                 <Grid Grid.Column="1" ColumnDefinitions="*, Auto" VerticalOptions="Center">
                                         <Label
                                             Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
-                                            FontSize="{StaticResource UiFontSize15}"
-                                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                                            Style="{StaticResource BodyStrong}"
                                             TextColor="{Binding TextColor}"
                                             LineBreakMode="WordWrap" />
                                         <Border
                                             Grid.Column="1"
                                             IsVisible="{Binding IsActivePhase}"
-                                            BackgroundColor="{Binding AccentColor}"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}"
                                             StrokeShape="{StaticResource UiRoundRectangleRadius6}"
                                             StrokeThickness="{StaticResource UiStrokeWidth0}"
                                             Padding="{StaticResource UiInsets4_1}">
                                             <Label
                                                 Text="{loc:LocalizedText Cycle_PhaseExplorer_NowBadge}"
-                                                FontSize="{StaticResource UiFontSize11}"
-                                                FontAttributes="{StaticResource UiFontAttributesBold}"
-                                                TextColor="{StaticResource White}"
+                                                Style="{StaticResource CaptionLabel}"
+                                                TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                                 LineBreakMode="WordWrap" />
                                         </Border>
                                 </Grid>

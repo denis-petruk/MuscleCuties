@@ -459,8 +459,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             phaseOption.IsSelected = phaseOption.Phase == _suggestedPhase.Value;
 
         HasPhaseJumpWarning = false;
-        PhaseEditStatusText = string.Format(
-            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_PhaseEdit_SuggestedFormat"),
+        PhaseEditStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+            "Cycle_PhaseEdit_SuggestedFormat",
             FormatPhaseName(_suggestedPhase.Value));
         _suggestedPhase = null;
         OnPropertyChanged(nameof(HasSuggestedPhase));

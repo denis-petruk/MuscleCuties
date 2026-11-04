@@ -16,7 +16,7 @@
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="{StaticResource PresentationPageContentPadding}"
+            Padding="{DynamicResource PresentationPageContentPadding}"
             Spacing="{StaticResource UiSpaceControl}"
             HorizontalOptions="Fill"
             MaximumWidthRequest="{StaticResource UiDimension640}">
@@ -29,7 +29,6 @@
             <!-- Hero phase card -->
             <Border
                 Style="{StaticResource CardPrimary}"
-                Background="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
                 SemanticProperties.Description="{Binding PhaseName, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseDetail_OverviewFormat}">
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
 
@@ -44,7 +43,6 @@
                             Grid.Column="1"
                             Text="{Binding PhaseWindow, Converter={StaticResource LocalizedStringConverter}}"
                             Style="{StaticResource FormFieldLabel}"
-                            FontSize="{StaticResource UiFontSize13}"
                             TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
                             LineBreakMode="WordWrap" />
                     </Grid>
@@ -53,8 +51,7 @@
                         Grid.Row="1"
                         Text="{Binding Headline, Converter={StaticResource LocalizedStringConverter}}"
                         TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                        FontSize="{StaticResource UiFontSize24}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
+                        Style="{StaticResource MetricValue}"
                         LineBreakMode="WordWrap"
                         SemanticProperties.HeadingLevel="Level1" />
 
@@ -62,7 +59,7 @@
                         Grid.Row="2"
                         Text="{Binding Hook, Converter={StaticResource LocalizedStringConverter}}"
                         TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                        FontSize="{StaticResource UiFontSize15}"
+                        Style="{StaticResource BodyLabel}"
                         LineBreakMode="WordWrap" />
 
                     <sharedControls:PhaseVisualView
@@ -75,12 +72,11 @@
 
                     <Border
                         Grid.Row="4"
-                        Style="{StaticResource CardAccent}">
+                        Style="{StaticResource CardSecondary}">
                         <Label
                             Text="{Binding QuickRule, Converter={StaticResource LocalizedStringConverter}}"
                             TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                            FontSize="{StaticResource UiFontSize15}"
-                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                            Style="{StaticResource BodyStrong}"
                             LineBreakMode="WordWrap" />
                     </Border>
                 </Grid>
@@ -119,7 +115,6 @@
                                             Grid.Column="1"
                                             Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CardTitle}"
-                                            FontSize="{StaticResource UiFontSize13}"
                                             VerticalOptions="Center"
                                             LineBreakMode="WordWrap" />
                                     </Grid>
@@ -149,7 +144,7 @@
                                Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" LineBreakMode="WordWrap" />
                         <ProgressBar Grid.Column="2" Progress="{Binding TrainingSignal}"
                                      ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource TrackMutedLight}, Dark={StaticResource TrackMutedDark}}"
                                      VerticalOptions="Center"
                                      SemanticProperties.Description="{Binding TrainingSignalText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseDetail_TrainingLevelFormat}" />
                         <Label Grid.Column="3"
@@ -165,7 +160,7 @@
                                Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" LineBreakMode="WordWrap" />
                         <ProgressBar Grid.Row="1" Grid.Column="2" Progress="{Binding NutritionSignal}"
                                      ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource TrackMutedLight}, Dark={StaticResource TrackMutedDark}}"
                                      VerticalOptions="Center"
                                      SemanticProperties.Description="{Binding NutritionSignalText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseDetail_NutritionLevelFormat}" />
                         <Label Grid.Row="1" Grid.Column="3"
@@ -181,7 +176,7 @@
                                Style="{StaticResource FormFieldLabel}" VerticalOptions="Center" LineBreakMode="WordWrap" />
                         <ProgressBar Grid.Row="2" Grid.Column="2" Progress="{Binding RecoverySignal}"
                                      ProgressColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource TrackMutedLight}, Dark={StaticResource TrackMutedDark}}"
                                      VerticalOptions="Center"
                                      SemanticProperties.Description="{Binding RecoverySignalText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseDetail_RecoveryLevelFormat}" />
                         <Label Grid.Row="2" Grid.Column="3"
@@ -211,7 +206,7 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Border
-                                    Style="{StaticResource CardAccent}"
+                                    Style="{StaticResource CardSecondary}"
                                     MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
                                     <Grid ColumnDefinitions="22,*" ColumnSpacing="{StaticResource UiSpaceTight}">
@@ -225,7 +220,6 @@
                                             Grid.Column="1"
                                             Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CardTitle}"
-                                            FontSize="{StaticResource UiFontSize13}"
                                             LineBreakMode="WordWrap" />
                                     </Grid>
                                 </Border>
@@ -259,7 +253,6 @@
                             Grid.Column="1"
                             Text="{loc:LocalizedText Cycle_PhaseDetail_WatchThisSectionTitle}"
                             Style="{StaticResource CardTitle}"
-                            FontSize="{StaticResource UiFontSize17}"
                             TextColor="{AppThemeBinding Light={StaticResource WarningAccentLight}, Dark={StaticResource WarningAccentDark}}"
                             VerticalOptions="Center"
                             LineBreakMode="WordWrap"
@@ -268,7 +261,7 @@
                             Grid.Column="2"
                             Text="{Binding IsWatchExpanded, Converter={StaticResource BoolToChevronConverter}}"
                             TextColor="{AppThemeBinding Light={StaticResource WarningAccentLight}, Dark={StaticResource WarningAccentDark}}"
-                            FontSize="{StaticResource UiFontSize17}"
+                            Style="{StaticResource SectionTitle}"
                             VerticalOptions="Center"
                             HorizontalTextAlignment="End" />
                     </Grid>
@@ -298,7 +291,6 @@
                                             Grid.Row="0"
                                             Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CardTitle}"
-                                            FontSize="{StaticResource UiFontSize15}"
                                             TextColor="{AppThemeBinding Light={StaticResource WarningAccentLight}, Dark={StaticResource WarningAccentDark}}"
                                             LineBreakMode="WordWrap" />
                                         <Label
@@ -347,7 +339,6 @@
                                             Grid.Column="1"
                                             Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CardTitle}"
-                                            FontSize="{StaticResource UiFontSize13}"
                                             VerticalOptions="Center"
                                             LineBreakMode="WordWrap" />
                                     </Grid>

@@ -200,7 +200,18 @@ public static partial class UiTextCatalog
         English["Workout_Featured_TargetFormat"] = "Target: {0}";
         English["Workout_Featured_TempoLabel"] = "Tempo:";
         English["Workout_Featured_WarmupFormat"] = "Warm-up: {0}";
+        English["Workout_History_AllMonths"] = "All Months";
         English["Workout_History_AllWorkoutsLoaded"] = "All workouts loaded";
+        English["Workout_History_AggregateOnlyNote"] = "Historical aggregate: individual sets were not recorded.";
+        English["Workout_History_DurationMinutesFormat"] = "{0} min";
+        English["Workout_History_NotRecorded"] = "Not recorded";
+        English["Workout_History_NoSetDetailsNote"] = "Set details were not recorded.";
+        English["Workout_History_NotesUpdatedMessage"] = "Notes and RPE updated.";
+        English["Workout_History_OpenSessionHint"] = "Opens session details";
+        English["Workout_History_RpeValueFormat"] = "{0}/10";
+        English["Workout_History_SetUpdatedFormat"] = "Set #{0} updated ({1:F1} kg × {2} reps)";
+        English["Workout_History_TimeZoneUnknownFormat"] = "{0} · time zone unknown";
+        English["Workout_History_ValueKgFormat"] = "{0} kg";
         English["Workout_History_ArchiveTitle"] = "Workout Archive";
         English["Workout_History_BackButton"] = "Back";
         English["Workout_History_BreakdownTitle"] = "Exercises & Sets Breakdown";
@@ -208,10 +219,18 @@ public static partial class UiTextCatalog
         English["Workout_History_DurationHeader"] = "Duration";
         English["Workout_History_EmptyStateDescription"] = "Completed workouts will appear here with detailed set, volume, and rep metrics.";
         English["Workout_History_EmptyStateTitle"] = "No Workout Sessions Yet";
+        English["Workout_History_Error_Load"] = "Could not load your workout history. Try again.";
+        English["Workout_History_Error_Filter"] = "Could not filter your workout history. Try again.";
+        English["Workout_History_Error_LoadMore"] = "Could not load more workouts. Try again.";
+        English["Workout_History_Error_Detail"] = "Could not open this workout. Try again.";
+        English["Workout_History_Error_UpdateSet"] = "Could not update this set. Try again.";
+        English["Workout_History_Error_Save"] = "Could not save your changes. Try again.";
         English["Workout_History_KgHeader"] = "KG";
         English["Workout_History_KgUnit"] = "kg";
         English["Workout_History_LoadingMore"] = "Loading more workouts...";
         English["Workout_History_NotesAndRpeSectionTitle"] = "Session Notes & RPE Rating";
+        English["Workout_History_WarmupSet"] = "Warmup";
+        English["Workout_History_WorkingSet"] = "Work";
         English["Workout_History_NotesPlaceholder"] = "Log pacing notes, technique reflections, or joint feedback...";
         English["Workout_History_PastSessionsTitle"] = "Past Completed Sessions";
         English["Workout_History_PerceivedExertionTitle"] = "Perceived Exertion (RPE 1-10)";
@@ -373,5 +392,13 @@ public static partial class UiTextCatalog
         English["Cycle_Phase_Luteal_Nutrition"] = "Follow your goals; if appetite changes, choose satisfying meals.";
         English["Cycle_Phase_Luteal_Recovery"] = "Make room for sleep and recovery when you need it.";
         English["Cycle_Phase_Luteal_QuickRule"] = "Record symptoms instead of assuming the phase predicts how you feel.";
+        English["Workout_Featured_RestDayBadge"] = "Rest day";
+        English["Workout_Featured_RestGuidance"] =
+            "Rest day: keep movement light and let sleep and hydration do the work.";
+        English["Workout_Featured_Sleep"] = "Sleep";
+        English["Workout_Featured_Hydration"] = "Hydration";
+        English["Workout_Featured_Duration"] = "Duration";
+        English["Workout_Featured_Exercises"] = "Exercises";
+        English["Workout_Featured_Intensity"] = "Intensity";
     }
 }

@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <!-- Owner rule (2026-11-01): iOS only. Android is never targeted, on any host OS. -->
-        <TargetFrameworks>net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
-        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
+        <TargetFrameworks>net10.0-ios</TargetFrameworks>
 
         <OutputType>Exe</OutputType>
         <RootNamespace>MuscleCuties.UI</RootNamespace>
@@ -10,7 +9,9 @@
         <UseMaui>true</UseMaui>
         <SingleProject>true</SingleProject>
 
-        <MauiVersion>10.0.20</MauiVersion>
+        <!-- 10.0.20 can throw NullReferenceException from Button.LayoutButton on iOS when a
+             page pops during layout. 10.0.60 includes dotnet/maui#35284 (fixes #31048). -->
+        <MauiVersion>10.0.60</MauiVersion>
 
         <ApplicationTitle>MuscleCuties</ApplicationTitle>
         <ApplicationId>com.musclecuties.app</ApplicationId>
@@ -27,9 +28,8 @@
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
         <EnableAppleSignInEntitlements>true</EnableAppleSignInEntitlements>
         <EnableAppleHealthEntitlements>true</EnableAppleHealthEntitlements>
-        <!-- MauiXamlInflator SourceGen disabled: causes SIGSEGV in CA::Layer::layout_is_active
-             during Shell structural navigation (ShellContent → TabBar) on iOS. Re-enable when
-             dotnet/maui resolves SourceGen compatibility with Shell TabBar transitions. -->
+        <!-- SourceGen is enabled on the pinned MAUI 10.0.60 baseline. Keep the
+             Shell TabBar navigation check in the owner device pass. -->
         <MauiXamlInflator>SourceGen</MauiXamlInflator>
 
         <EnableTrimAnalyzer>true</EnableTrimAnalyzer>

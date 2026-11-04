@@ -10,7 +10,8 @@
     x:DataType="vm:NutritionViewModel">
 
     <Border Style="{StaticResource CardPrimary}">
-        <Grid RowDefinitions="Auto, 14, Auto, 14, Auto, 14, Auto" ColumnDefinitions="Auto, *, Auto">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto, *, Auto"
+              RowSpacing="{StaticResource UiSpacing14}">
 
             <!-- Row 0: Section header + Micros button -->
             <Grid
@@ -34,39 +35,15 @@
                     LineBreakMode="WordWrap"
                     VerticalOptions="Center" />
             </Grid>
-            <Border
-                Grid.Row="0"
-                Grid.Column="2"
-                StrokeShape="{StaticResource UiRoundRectangleRadius16}"
-                StrokeThickness="{StaticResource UiStrokeWidth0}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
-                Padding="{StaticResource UiInsets10_7}"
-                MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
-                VerticalOptions="Center"
-                SemanticProperties.Description="{loc:LocalizedText Nutrition_Balance_ViewMicronutrientTargets}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding OpenMicronutrientsModalCommand}" />
-                </Border.GestureRecognizers>
-                <Grid ColumnDefinitions="14,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
-                    <Path
-                        Data="M7 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM17 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM7 23a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM9 5l6 4M9 19l6-4M7 7v10"
-                        Style="{StaticResource NutritionLineIcon}"
-                        Stroke="{StaticResource Primary}"
-                        WidthRequest="{StaticResource UiDimension14}"
-                        HeightRequest="{StaticResource UiDimension14}"
-                        VerticalOptions="Center" />
-                    <Label
-                        Grid.Column="1"
-                        Text="{loc:LocalizedText Nutrition_Balance_Micros}"
-                        Style="{StaticResource CaptionStrong}"
-                        VerticalOptions="Center" />
-                </Grid>
-            </Border>
+            <Button Grid.Row="0" Grid.Column="2"
+                    Style="{StaticResource ButtonSecondary}"
+                    Text="{loc:LocalizedText Nutrition_Balance_Micros}"
+                    Command="{Binding OpenMicronutrientsModalCommand}"
+                    SemanticProperties.Description="{loc:LocalizedText Nutrition_Balance_ViewMicronutrientTargets}" />
 
             <!-- Row 2: Calorie icon + value + goal (In-line) -->
             <Grid
-                Grid.Row="2"
+                Grid.Row="1"
                 Grid.Column="0"
                 Grid.ColumnSpan="3"
                 ColumnDefinitions="Auto, *"
@@ -79,38 +56,34 @@
                     WidthRequest="{StaticResource UiDimension22}"
                     HeightRequest="{StaticResource UiDimension22}"
                     VerticalOptions="Center" />
-                <HorizontalStackLayout
+                <!-- The number is the card's headline; the goal is a caption under it, so the two
+                     no longer read as one inline run-on string. -->
+                <VerticalStackLayout
                     Grid.Column="1"
-                    Spacing="{StaticResource UiSpaceMicro}"
+                    Spacing="{StaticResource UiSpacing2}"
                     VerticalOptions="Center">
                     <Label
                         Text="{Binding ConsumedCalories, StringFormat='{0:F0}'}"
-                        Style="{StaticResource AccentLabel}"
-                        FontSize="{StaticResource UiFontSize26}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
-                        VerticalOptions="Center" />
+                        Style="{StaticResource MetricValue}" />
                     <Label
                         Text="{Binding TargetCalories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_TargetCaloriesValueKcal}"
-                        Style="{StaticResource MutedLabel}"
-                        FontSize="{StaticResource UiFontSize15}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
-                        VerticalOptions="Center" />
-                </HorizontalStackLayout>
+                        Style="{StaticResource CaptionLabel}" />
+                </VerticalStackLayout>
             </Grid>
 
             <!-- Row 4: Progress bar -->
             <ProgressBar
-                Grid.Row="4"
+                Grid.Row="2"
                 Grid.Column="0"
                 Grid.ColumnSpan="3"
                 Progress="{Binding CaloriesProgress}"
                 ProgressColor="{StaticResource Primary}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray800}}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource TrackMutedLight}, Dark={StaticResource TrackMutedDark}}"
                 HeightRequest="{StaticResource UiDimension8}" />
 
             <!-- Row 6: Macro grid -->
             <sharedControls:MacroProgressGrid
-                Grid.Row="6"
+                Grid.Row="3"
                 Grid.Column="0"
                 Grid.ColumnSpan="3"
                 ProteinText="{Binding ProteinText}"

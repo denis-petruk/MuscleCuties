@@ -34,12 +34,12 @@ internal static class WorkoutPresentationPalette
             (true, "RECOVERY") => "WorkoutRecoveryTextDark",
             (true, "REST") => "ActionSurfaceDark",
             (true, "STRENGTH") => "WorkoutStrengthTextDark",
-            (true, _) => "Gray500",
+            (true, _) => "TextTertiaryDark",
             (false, "CARDIO") => "RecoveryTextLight",
             (false, "RECOVERY") => "CyclePhaseFollicularTextLight",
             (false, "REST") => "WorkoutRestTextLight",
             (false, "STRENGTH") => "WorkoutStrengthTextLight",
-            _ => "DeepMauve"
+            _ => "TextHeadingLight"
         };
 
         return AppThemeResources.GetColor(key, default);

@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
+using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
@@ -8,12 +10,7 @@ public partial class NutritionViewModel
 {
     private void ToggleCustomFoodPanel()
     {
-        InvalidateFoodSearch();
-        _editingIngredient = null;
-        SelectedFoodResult = null;
-        IsFoodFinderExpanded = true;
-        IsCustomFoodPanelVisible = !IsCustomFoodPanelVisible;
-        AddFoodMessage = string.Empty;
+        SelectFoodSource(IsCustomFoodPanelVisible ? MealFoodSource.Search : MealFoodSource.Custom);
     }
 
     private async Task CreateCustomFoodAsync()
@@ -49,11 +46,12 @@ public partial class NutritionViewModel
                 vitaminD,
                 calcium));
 
-            var item = CreateFoodSearchResultItem(food);
+            var item = CreateFoodSearchResultItem(NutritionPresentationMapper.FromCustomFood(food));
+            ResetFoodSource();
+            IsCustomFoodPanelVisible = false;
             SelectedFoodResult = item;
             FoodSearchResults = [];
             ResetFoodSearchPaging();
-            IsCustomFoodPanelVisible = false;
             FoodGrams = "1";
             ClearCustomFoodForm();
             AddFoodMessage = $"{item.Name} saved. Add it to this meal when ready.";
