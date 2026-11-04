@@ -61,9 +61,13 @@ Owner baseline source: `/Users/denispetruk/RiderProjects/MuscleCuties` (commit `
 
 ## 4. Current Work & Next Safe Step
 
-- **Current Work:** Executing P00 baseline preservation, ref verification, bundle backup, and data classification.
+- **Current Work:**
+  - P00 completed (bundle backup verified, Beta DB classified).
+  - P01–P07, P09, P11 packages implemented in dedicated feature worktrees.
+  - Draft PRs #15 through #23 submitted on GitHub `denis-petruk/MuscleCuties`.
+  - CI pipeline in PR #17 (`platform/p03-ci-scaffold`) verified 100% green across all 8 checks (`verify_source`, `verify_plan_generation`, `verify_postgres_compatibility`, and `required`).
+  - Downstream PRs rebased and pushed to propagate the green CI baseline.
 - **Next Safe Step:**
-  1. Complete P00 bundle backup and test clone.
-  2. Write baseline ledger in `docs/architecture/github-transition/evidence/baseline/P00-baseline-ledger.md`.
-  3. Prepare P01 history reconciliation candidate in an isolated branch `integration/github-history`.
-  4. Submit concrete approval packet to Owner for GitHub `main` minimal protection rule and P01 PR merge.
+  - Owner reviews PR #15 (`integration/github-history`) and approves merge into protected `main`.
+  - Successively merge PR #16 through PR #23.
+  - Request Owner authorization to deploy `staging.yaml` (P08) in AWS account `028417007003`.
