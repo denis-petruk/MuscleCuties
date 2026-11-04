@@ -54,12 +54,35 @@ public static class PostgresSchemaBootstrap
             applied_at_utc = EXCLUDED.applied_at_utc;
         """;
 
+    public static bool IsDisposableTarget(string? connectionString)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString)) return true;
+        try
+        {
+            var builder = new NpgsqlConnectionStringBuilder(connectionString);
+            var host = builder.Host;
+            return host is "127.0.0.1" or "localhost" or "::1" ||
+                   string.Equals(Environment.GetEnvironmentVariable("MC_ALLOW_ENSURE_CREATED"), "true", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public static async Task<SchemaBootstrapResult> InitializeAsync(
         PostgresDbContext context,
         bool seed,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(context);
+
+        var connStr = context.Database.GetConnectionString();
+        if (!IsDisposableTarget(connStr))
+        {
+            throw new InvalidOperationException(
+                "EnsureCreated is strictly forbidden on non-disposable environments. Shared schema must evolve via versioned migrations and compatibility checks.");
+        }
 
         var createdFromModel = await context.Database.EnsureCreatedAsync(cancellationToken).ConfigureAwait(false);
 
